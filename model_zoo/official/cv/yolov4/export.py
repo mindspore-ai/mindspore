@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import ast
 import argparse
 import numpy as np
 
@@ -24,6 +25,8 @@ from src.yolo import YOLOV4CspDarkNet53
 parser = argparse.ArgumentParser(description='yolov4 export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument('--keep_detect', type=ast.literal_eval, default=True,
+                    help='keep the detect module or not, default: True')
 parser.add_argument("--testing_shape", type=int, default=608, help="test shape")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="yolov4", help="output file name.")
@@ -39,7 +42,7 @@ if args.device_target == "Ascend":
 if __name__ == "__main__":
     ts_shape = args.testing_shape
 
-    network = YOLOV4CspDarkNet53()
+    network = YOLOV4CspDarkNet53(keep_detect=args.keep_detect)
     network.set_train(False)
 
     param_dict = load_checkpoint(args.ckpt_file)

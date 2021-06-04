@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import ast
 import argparse
 import numpy as np
 
@@ -25,6 +26,8 @@ from src.config import ConfigYOLOV3DarkNet53
 parser = argparse.ArgumentParser(description="yolov3_darknet53 export")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument('--keep_detect', type=ast.literal_eval, default=True,
+                    help='keep the detect module or not, default: True')
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="yolov3_darknet53", help="output file name.")
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
@@ -37,7 +40,7 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 if __name__ == "__main__":
-    network = YOLOV3DarkNet53(is_training=False)
+    network = YOLOV3DarkNet53(is_training=False, keep_detect=args.keep_detect)
 
     param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(network, param_dict)

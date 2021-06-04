@@ -400,11 +400,12 @@ overall performance
 If you want to infer the network on Ascend 310, you should convert the model to MINDIR:
 
 ```python
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --keep_detect [Bool]
 ```
 
 The ckpt_file parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+`keep_detect` keep the detect module or not, default: True
 
 ## [Inference Process](#contents)
 
