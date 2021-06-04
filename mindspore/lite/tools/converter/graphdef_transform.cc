@@ -44,7 +44,6 @@
 
 using std::string;
 namespace mindspore::lite {
-
 std::vector<schema::CNodeT *> GraphDefTransform::GetGraphNodes() {
   std::vector<schema::CNodeT *> old_nodes{};
   old_nodes.resize(graphDefT->nodes.size());

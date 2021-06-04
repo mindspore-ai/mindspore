@@ -286,7 +286,7 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
 }
 
 FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  MS_ASSERT(nullptr != old_graph);
+  MS_ASSERT(old_graph != nullptr);
   if (config == nullptr) {
     MS_LOG(ERROR) << "config should be specified";
     return nullptr;

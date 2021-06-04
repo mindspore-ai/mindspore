@@ -21,10 +21,13 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kInputSize = 2;
+}
 ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Eltwise>();
 
-  if (proto.bottom_size() < 2) {
+  if (proto.bottom_size() < kInputSize) {
     MS_LOG(ERROR) << "Eltwise Op " << proto.name() << " need at least 2 inputs,but input size is "
                   << proto.bottom_size();
     return nullptr;

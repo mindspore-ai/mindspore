@@ -20,12 +20,15 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr size_t kAxis = 2;
+}  // namespace
 ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Crop>();
 
   if (!proto.has_crop_param()) {
-    prim->set_axis(2);
-    std::vector<int64_t> offsets(2, 0);
+    prim->set_axis(kAxis);
+    std::vector<int64_t> offsets(kAxis, 0);
     prim->set_offsets(offsets);
   } else {
     const caffe::CropParameter &cropParam = proto.crop_param();
@@ -35,7 +38,7 @@ ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, cons
       }
       prim->set_axis(cropParam.axis());
     } else {
-      prim->set_axis(2);
+      prim->set_axis(kAxis);
     }
 
     if (cropParam.offset_size() != 0) {

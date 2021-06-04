@@ -24,9 +24,10 @@
 
 namespace mindspore {
 namespace lite {
-#define kMinInputNum 1
-#define kOutputNum 1
-
+namespace {
+constexpr size_t kMinInputNum = 1;
+constexpr size_t kOutputNum = 1;
+}  // namespace
 STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
 
@@ -219,6 +220,5 @@ NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIte
 void DTypeTransPass::SetInputDataDType(TypeId dataType) { this->inputDataDType = dataType; }
 
 void DTypeTransPass::SetOutputDataDType(TypeId dataType) { this->outputDataDType = dataType; }
-
 }  // namespace lite
 }  // namespace mindspore

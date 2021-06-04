@@ -24,9 +24,11 @@
 
 namespace mindspore {
 namespace lite {
-static const int PROTO_READ_BYTES_LIMIT = INT_MAX;  // Max size of 2 GB minus 1 byte.
-static const int WARNING_THRESHOLD = 536870912 * 2;
-
+namespace {
+// Max size of 2 GB minus 1 byte.
+constexpr int PROTO_READ_BYTES_LIMIT = INT_MAX;
+constexpr int WARNING_THRESHOLD = 536870912 * 2;
+}  // namespace
 bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded_stream,
                                    google::protobuf::Message *proto) {
   if (proto == nullptr) {

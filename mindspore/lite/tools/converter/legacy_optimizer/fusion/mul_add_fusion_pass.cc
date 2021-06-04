@@ -26,12 +26,14 @@
 
 namespace mindspore {
 namespace lite {
-#define MUL_ADD_MATCH_PATH_LEN 2
-#define ADD_OP_BIAS_INDEX 1
-#define MUL_OP_INPUT_INDEX 0
-#define MUL_OP_BIAS_INDEX 1
-#define MUL_OP_INPUT_NUM 2
-#define ADD_OP_INPUT_NUM 2
+namespace {
+constexpr size_t MUL_ADD_MATCH_PATH_LEN = 2;
+constexpr size_t ADD_OP_BIAS_INDEX = 1;
+constexpr size_t MUL_OP_INPUT_INDEX = 0;
+constexpr size_t MUL_OP_BIAS_INDEX = 1;
+constexpr size_t MUL_OP_INPUT_NUM = 2;
+constexpr size_t ADD_OP_INPUT_NUM = 2;
+}  // namespace
 
 STATUS MulAddFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(graph); }
 
@@ -105,7 +107,7 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
   // add node the second tensor is not constant tensor, don't fusion
   auto addNodeInputIndex = addNode->inputIndex;
   if (addNodeInputIndex.size() != ADD_OP_INPUT_NUM) {
-    MS_LOG(ERROR) << "add node input tensors number is invalid! ";  // baNode->name.c_str());
+    MS_LOG(ERROR) << "add node input tensors number is invalid! ";
     return RET_ERROR;
   }
   MS_ASSERT(graph->allTensors.size() > addNodeInputIndex.at(ADD_OP_BIAS_INDEX));

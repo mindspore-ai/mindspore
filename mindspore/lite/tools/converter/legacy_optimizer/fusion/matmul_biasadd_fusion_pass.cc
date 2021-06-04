@@ -27,10 +27,13 @@
 
 namespace mindspore {
 namespace lite {
-#define MATMUL_BIASADD_MATCH_PATH_LEN 2
-#define BIASADD_OP_BIAS_INDEX 1
-#define BIASADD_OP_INPUT_NUM 2
-
+namespace {
+constexpr size_t MATMUL_BIASADD_MATCH_PATH_LEN = 2;
+constexpr size_t BIASADD_OP_BIAS_INDEX = 1;
+constexpr size_t BIASADD_OP_INPUT_NUM = 2;
+constexpr size_t BIASADD_WEIGHT_SHAPE_SIZE = 1;
+constexpr size_t BIASADD_BIAS_DIM_INDEX = 0;
+}  // namespace
 STATUS MatMulBiasAddFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(graph); }
 
 STATUS MatMulBiasAddFusionPass::DefinePattern() {
@@ -177,9 +180,6 @@ STATUS MatMulBiasAddFusionPass::InsertTransposeNode(MetaGraphT *graph, const std
   graph->allTensors.at(index)->refCount = insertNodeIdxList.size();
   return RET_OK;
 }
-
-#define BIASADD_WEIGHT_SHAPE_SIZE 1
-#define BIASADD_BIAS_DIM_INDEX 0
 
 STATUS MatMulBiasAddFusionPass::AddFullConnectionBiasTensor(const std::shared_ptr<Path> &matMulPath,
                                                             const std::shared_ptr<Path> &baPath, MetaGraphT *graph) {

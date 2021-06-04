@@ -35,9 +35,20 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr size_t kStringBufSplitLen = 4;
+constexpr size_t kNumStringBufDim0 = 0;
+constexpr size_t kNumStringBufDim1 = 1;
+constexpr size_t kNumStringBufDim2 = 2;
+constexpr size_t kNumStringBufDim3 = 3;
+constexpr size_t kNumStringBufDim4 = 4;
+constexpr int kNumBufLen = 5;
+constexpr size_t kNumBufSize = 100;
+constexpr int kNumRowLen = 5;
 static const char *DELIM_COLON = ":";
 static const char *DELIM_COMMA = ",";
 static const char *DELIM_SLASH = "/";
+}  // namespace
 
 int Benchmark::GenerateRandomData(size_t size, void *data, TypeId data_type) {
   MS_ASSERT(data != nullptr);
@@ -668,8 +679,7 @@ void BenchmarkFlags::InitInputDataList() {
 }
 
 void BenchmarkFlags::InitResizeDimsList() {
-  std::string content;
-  content = this->resize_dims_in_;
+  std::string content = this->resize_dims_in_;
   std::vector<int> shape;
   auto shape_strs = StringSplit(content, std::string(DELIM_COLON));
   for (const auto &shape_str : shape_strs) {
@@ -934,49 +944,51 @@ int Benchmark::Init() {
 
 int Benchmark::PrintResult(const std::vector<std::string> &title,
                            const std::map<std::string, std::pair<int, float>> &result) {
-  std::vector<size_t> columnLenMax(5);
+  std::vector<size_t> columnLenMax(kNumBufLen);
   std::vector<std::vector<std::string>> rows;
 
   for (auto &iter : result) {
-    char stringBuf[5][100] = {};
+    char stringBuf[kNumBufLen][kNumBufSize] = {};
     std::vector<std::string> columns;
     size_t len = 0;
 
     len = iter.first.size();
-    if (len > columnLenMax.at(0)) {
-      columnLenMax.at(0) = len + 4;
+    if (len > columnLenMax.at(kNumStringBufDim0)) {
+      columnLenMax.at(kNumStringBufDim0) = len + kStringBufSplitLen;
     }
     columns.push_back(iter.first);
 
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / float_t(flags_->loop_count_));
-    if (len > columnLenMax.at(1)) {
-      columnLenMax.at(1) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim1], sizeof(stringBuf[kNumStringBufDim1]), "%f",
+                   iter.second.second / float_t(flags_->loop_count_));
+    if (len > columnLenMax.at(kNumStringBufDim1)) {
+      columnLenMax.at(kNumStringBufDim1) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[1]);
+    columns.emplace_back(stringBuf[kNumStringBufDim1]);
 
-    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second / op_cost_total_);
-    if (len > columnLenMax.at(2)) {
-      columnLenMax.at(2) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim2], sizeof(stringBuf[kNumStringBufDim2]), "%f",
+                   iter.second.second / op_cost_total_);
+    if (len > columnLenMax.at(kNumStringBufDim2)) {
+      columnLenMax.at(kNumStringBufDim2) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[2]);
+    columns.emplace_back(stringBuf[kNumStringBufDim2]);
 
-    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%d", iter.second.first);
-    if (len > columnLenMax.at(3)) {
-      columnLenMax.at(3) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim3], sizeof(stringBuf[kNumStringBufDim3]), "%d", iter.second.first);
+    if (len > columnLenMax.at(kNumStringBufDim3)) {
+      columnLenMax.at(kNumStringBufDim3) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[3]);
+    columns.emplace_back(stringBuf[kNumStringBufDim3]);
 
-    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second);
-    if (len > columnLenMax.at(4)) {
-      columnLenMax.at(4) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim4], sizeof(stringBuf[kNumStringBufDim4]), "%f", iter.second.second);
+    if (len > columnLenMax.at(kNumStringBufDim4)) {
+      columnLenMax.at(kNumStringBufDim4) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[4]);
+    columns.emplace_back(stringBuf[kNumStringBufDim4]);
 
     rows.push_back(columns);
   }
 
   printf("-------------------------------------------------------------------------\n");
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < kNumBufLen; i++) {
     auto printBuf = title[i];
     if (printBuf.size() > columnLenMax.at(i)) {
       columnLenMax.at(i) = printBuf.size();
@@ -986,7 +998,7 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
   }
   printf("\n");
   for (auto &row : rows) {
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < kNumRowLen; j++) {
       auto printBuf = row[j];
       printBuf.resize(columnLenMax.at(j), ' ');
       printf("%s\t", printBuf.c_str());
@@ -999,51 +1011,53 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
 #ifdef ENABLE_ARM64
 int Benchmark::PrintPerfResult(const std::vector<std::string> &title,
                                const std::map<std::string, std::pair<int, struct PerfCount>> &result) {
-  std::vector<size_t> columnLenMax(5);
+  std::vector<size_t> columnLenMax(kNumBufLen);
   std::vector<std::vector<std::string>> rows;
 
   for (auto &iter : result) {
-    char stringBuf[5][100] = {};
+    char stringBuf[kNumBufLen][kNumBufSize] = {};
     std::vector<std::string> columns;
     size_t len = 0;
 
     len = iter.first.size();
-    if (len > columnLenMax.at(0)) {
-      columnLenMax.at(0) = len + 4;
+    if (len > columnLenMax.at(kNumStringBufDim0)) {
+      columnLenMax.at(kNumStringBufDim0) = len + kStringBufSplitLen;
     }
     columns.push_back(iter.first);
 
     float tmp = float_t(flags_->num_threads_) * iter.second.second.value[0] / float_t(flags_->loop_count_) / 1000.0f;
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%.2f", tmp);
-    if (len > columnLenMax.at(1)) {
-      columnLenMax.at(1) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim1], sizeof(stringBuf[kNumStringBufDim1]), "%.2f", tmp);
+    if (len > columnLenMax.at(kNumStringBufDim1)) {
+      columnLenMax.at(kNumStringBufDim1) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[1]);
+    columns.emplace_back(stringBuf[kNumStringBufDim1]);
 
-    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second.value[0] / op_cost_total_);
-    if (len > columnLenMax.at(2)) {
-      columnLenMax.at(2) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim2], sizeof(stringBuf[kNumStringBufDim2]), "%f",
+                   iter.second.second.value[0] / op_cost_total_);
+    if (len > columnLenMax.at(kNumStringBufDim2)) {
+      columnLenMax.at(kNumStringBufDim2) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[2]);
+    columns.emplace_back(stringBuf[kNumStringBufDim2]);
 
     tmp = float_t(flags_->num_threads_) * iter.second.second.value[1] / float_t(flags_->loop_count_) / 1000.0f;
-    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%.2f", tmp);
-    if (len > columnLenMax.at(3)) {
-      columnLenMax.at(3) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim3], sizeof(stringBuf[kNumStringBufDim3]), "%.2f", tmp);
+    if (len > columnLenMax.at(kNumStringBufDim3)) {
+      columnLenMax.at(kNumStringBufDim3) = len + kStringBufSplitLen;
     }
     columns.emplace_back(stringBuf[3]);
 
-    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second.value[1] / op_cost2_total_);
-    if (len > columnLenMax.at(4)) {
-      columnLenMax.at(4) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim4], sizeof(stringBuf[kNumStringBufDim4]), "%f",
+                   iter.second.second.value[1] / op_cost2_total_);
+    if (len > columnLenMax.at(kNumStringBufDim4)) {
+      columnLenMax.at(kNumStringBufDim4) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[4]);
+    columns.emplace_back(stringBuf[kNumStringBufDim4]);
 
     rows.push_back(columns);
   }
 
   printf("-------------------------------------------------------------------------\n");
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < kNumBufLen; i++) {
     auto printBuf = title[i];
     if (printBuf.size() > columnLenMax.at(i)) {
       columnLenMax.at(i) = printBuf.size();
@@ -1053,7 +1067,7 @@ int Benchmark::PrintPerfResult(const std::vector<std::string> &title,
   }
   printf("\n");
   for (auto &row : rows) {
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < kNumRowLen; j++) {
       auto printBuf = row[j];
       printBuf.resize(columnLenMax.at(j), ' ');
       printf("%s\t", printBuf.c_str());

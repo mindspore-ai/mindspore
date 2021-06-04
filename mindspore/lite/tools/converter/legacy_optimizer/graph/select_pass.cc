@@ -26,6 +26,7 @@
 namespace mindspore::lite {
 STATUS SelectPass::Run(mindspore::schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
+  STATUS ret = RET_OK;
   for (size_t i = 0; i < graph->nodes.size(); i++) {
     auto &node = graph->nodes.at(i);
     auto type = node->primitive->value.type;
@@ -34,14 +35,14 @@ STATUS SelectPass::Run(mindspore::schema::MetaGraphT *graph) {
     }
 
     SingleSelectPass pass(graph, i);
-    int ret = pass.Run();
+    ret = pass.Run();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "node: " << node->name << "'s select pass failed: " << ret;
       return ret;
     }
     select_indices_.emplace_back(i);
   }
-  int ret = RemoveSelectNodes();
+  ret = RemoveSelectNodes();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "remove select nodes failed";
     return ret;

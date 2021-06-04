@@ -26,8 +26,10 @@
 
 namespace mindspore {
 namespace lite {
-#define kQuantCastMatchPathLen2 2
-#define kQuantCastMatchPathLen3 3
+namespace {
+constexpr size_t kQuantCastMatchPathLen2 = 2;
+constexpr size_t kQuantCastMatchPathLen3 = 3;
+}  // namespace
 
 STATUS QuantCastFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(graph); }
 
