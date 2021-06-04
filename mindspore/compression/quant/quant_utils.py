@@ -74,8 +74,11 @@ def cal_quantization_params(input_min,
     scale = (input_max - input_min) / (quant_max - quant_min)
 
     # calculate zero point
-    zp_double = quant_min - input_min / scale
-    zp = np.floor(zp_double + 0.5)
+    if data_type == np.int8 and symmetric and not neg_trunc:
+        zp = np.zeros(input_min.shape)
+    else:
+        zp_double = quant_min - input_min / scale
+        zp = np.floor(zp_double + 0.5)
 
     return scale, zp
 
