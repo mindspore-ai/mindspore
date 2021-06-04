@@ -31,11 +31,21 @@ constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
 
 int StrToInt(const char *env) {
-  if (env == nullptr) return 2;
-  if (strcmp(env, "0") == 0) return 0;
-  if (strcmp(env, "1") == 0) return 1;
-  if (strcmp(env, "2") == 0) return 2;
-  if (strcmp(env, "3") == 0) return 3;
+  if (env == nullptr) {
+    return 2;
+  }
+  if (strcmp(env, "0") == 0) {
+    return 0;
+  }
+  if (strcmp(env, "1") == 0) {
+    return 1;
+  }
+  if (strcmp(env, "2") == 0) {
+    return 2;
+  }
+  if (strcmp(env, "3") == 0) {
+    return 3;
+  }
   return 2;
 }
 

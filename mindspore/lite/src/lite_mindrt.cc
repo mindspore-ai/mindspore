@@ -83,5 +83,4 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
 
   return actors;
 }
-
 }  // namespace mindspore::lite
