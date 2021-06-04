@@ -196,24 +196,6 @@ std::string CLErrorCode(cl_int error_code) {
   }
 }
 
-int WriteToBin(const std::string &file_path, void *data, size_t size) {
-  MS_ASSERT(data);
-  std::ofstream out_file;
-
-  out_file.open(file_path.c_str(), std::ios::binary);
-  if (!out_file.good()) {
-    MS_LOG(ERROR) << "file is bad";
-    return -1;
-  }
-
-  if (!out_file.is_open()) {
-    MS_LOG(ERROR) << "file open failed";
-    return -1;
-  }
-  out_file.write(reinterpret_cast<char *>(data), size);
-  return 0;
-}
-
 int GetBroadcastGpuAxis(int ndim, int ori_axis) {
   if (ori_axis >= ndim) {
     return ndim - 1;

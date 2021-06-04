@@ -29,10 +29,6 @@
 #include "src/backend/opencl/cl/program.inc"
 #endif
 
-#ifndef ROUND_UP
-#define ROUND_UP(x, y) ((static_cast<int>(x) + static_cast<int>(y) - (1)) / static_cast<int>(y) * static_cast<int>(y))
-#endif
-
 using mindspore::kernel::CLErrorCode;
 
 namespace mindspore::lite::opencl {
@@ -178,7 +174,7 @@ int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> *platforms) {
 int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
   MS_ASSERT(platforms);
   cl_int ret;
-#if defined(SHARING_MEM_WITH_OPENGL) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
+#if defined(SHARING_MEM_WITH_OPENGL) && defined(CL_HPP_TARGET_OPENCL_VERSION) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
   // create context from glcontext
   MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
   cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
@@ -340,7 +336,8 @@ uint32_t OpenCLRuntime::GetSubGroupSize(const cl::Kernel &kernel, const cl::NDRa
   uint32_t sub_group_size = 0;
 
   if (ADRENO == gpu_info_.type) {
-#if CL_HPP_TARGET_OPENCL_VERSION >= 200 && CL_TARGET_OPENCL_VERSION >= 210 && defined(CL_HPP_USE_CL_SUB_GROUPS_KHR)
+#if defined(CL_HPP_TARGET_OPENCL_VERSION) && CL_HPP_TARGET_OPENCL_VERSION >= 200 && \
+  defined(CL_TARGET_OPENCL_VERSION) && CL_TARGET_OPENCL_VERSION >= 210 && defined(CL_HPP_USE_CL_SUB_GROUPS_KHR)
     cl_int cl_ret;
     sub_group_size = kernel.getSubGroupInfo<CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE>(*device_, range, &cl_ret);
     if (cl_ret != CL_SUCCESS) {
@@ -643,7 +640,7 @@ cl::Kernel OpenCLRuntime::GetKernelFromBinary(const std::string &kernel_name) {
 
 // build program with IL
 cl::Program OpenCLRuntime::CreateProgramFromIL(const std::vector<char> &binary, const std::string &flag) {
-#if CL_HPP_TARGET_OPENCL_VERSION >= 210
+#if defined(CL_HPP_TARGET_OPENCL_VERSION) && CL_HPP_TARGET_OPENCL_VERSION >= 210
   cl::Program program = cl::Program(*context_, binary);
   bool status = BuildProgram(default_build_opts_, program);
   if (!status) {
@@ -752,7 +749,7 @@ void OpenCLRuntime::StoreCache() {
   auto gpu_cache = schema::CreateGpuCache(*fbb, name, version, data);
   fbb->Finish(gpu_cache);
   uint8_t *buf = fbb->GetBufferPointer();
-  lite::WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb->GetSize());
+  WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb->GetSize());
   MS_LOG(INFO) << "store opencl cache ok, size=" << fbb->GetSize();
 }
 

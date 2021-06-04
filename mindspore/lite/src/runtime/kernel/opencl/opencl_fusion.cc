@@ -122,7 +122,7 @@ std::vector<T *> RemoveDuplicationsButKeepOrder(const std::vector<T *> &vec) {
   std::vector<T *> ret;
   std::set<T *> s;
   for (auto *x : vec) {
-    if (0 == s.count(x)) {
+    if (s.count(x) == 0) {
       ret.push_back(x);
       s.insert(x);
     }
