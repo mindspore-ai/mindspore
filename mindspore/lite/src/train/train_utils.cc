@@ -22,9 +22,12 @@
 
 namespace mindspore {
 namespace lite {
-
+namespace {
+constexpr int kMatrixDims = 2;
+}  //  namespace
 float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
-  if ((input->shape().size() != 1) || (input->data_type() != kNumberTypeInt32) || (output->shape().size() != 2)) {
+  if ((input->shape().size() != 1) || (input->data_type() != kNumberTypeInt32) ||
+      (output->shape().size() != kMatrixDims)) {
     MS_LOG(WARNING) << "SparceClassification got a " << input->shape() << "-D input tensor, " << output->shape()
                     << "-D output tensor";
     return 0.0;
@@ -50,7 +53,7 @@ float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *o
 }
 
 float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
-  if ((input->shape().size() != 2) || (output->shape().size() != 2)) {
+  if ((input->shape().size() != kMatrixDims) || (output->shape().size() != kMatrixDims)) {
     MS_LOG(WARNING) << "OneHotClassification got a " << input->shape() << "-D input tensor, " << output->shape()
                     << "-D output tensor";
     return 0.0;
@@ -76,10 +79,11 @@ float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *o
         label = c;
       }
     }
-    if (label == max_idx) accuracy += 1.0;
+    if (label == max_idx) {
+      accuracy += 1.0;
+    }
   }
   return accuracy / (static_cast<float>(batch_size));
 }
-
 }  // namespace lite
 }  // namespace mindspore

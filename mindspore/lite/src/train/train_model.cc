@@ -19,7 +19,6 @@
 #include "src/common/graph_util.h"
 
 namespace mindspore::lite {
-
 TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "The model buf is nullptr";

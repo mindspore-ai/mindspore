@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace lite {
-
 int MultiplicativeLRLambda(float *lr, int epoch, void *lr_cb_data) {
   if ((lr == nullptr) || (lr_cb_data == nullptr)) {
     MS_LOG(ERROR) << "nullptr passed as input to MultiplicativeLRLambda";
@@ -70,6 +69,5 @@ int LRScheduler::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
   }
   return mindspore::session::RET_CONTINUE;
 }
-
 }  // namespace lite
 }  // namespace mindspore

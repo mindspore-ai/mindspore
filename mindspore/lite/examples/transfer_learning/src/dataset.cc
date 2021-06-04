@@ -50,6 +50,10 @@ float CH_MEAN[3] = {0.485, 0.456, 0.406};
 float CH_STD[3] = {0.229, 0.224, 0.225};
 
 using LabelId = std::map<std::string, int>;
+constexpr int kClassNum = 10;
+constexpr int kBGRDim = 2;
+constexpr float kRGBMAX = 255.0f;
+constexpr int kRGBDims = 3;
 
 static char *ReadBitmapFile(const std::string &filename, size_t *size) {
   MS_ASSERT(size != nullptr);
@@ -78,7 +82,7 @@ static char *ReadBitmapFile(const std::string &filename, size_t *size) {
 
   ifs.read(reinterpret_cast<char *>(bmp_image), bitmap_header.image_size_bytes);
 
-  size_t buffer_size = bitmap_header.width * bitmap_header.height * 3;
+  size_t buffer_size = bitmap_header.width * bitmap_header.height * kRGBDims;
   float *hwc_bin_image = new (std::nothrow) float[buffer_size];
   if (hwc_bin_image == nullptr) {
     free(bmp_image);
@@ -95,14 +99,16 @@ static char *ReadBitmapFile(const std::string &filename, size_t *size) {
   for (int h = 0; h < bitmap_header.height; h++) {
     for (int w = 0; w < bitmap_header.width; w++) {
       hwc_bin_image[h * hStride + w * channels + 0] =
-        (((static_cast<float>(bmp_image[(height - h - 1) * hStride + w * channels + 2])) / 255.0) - CH_MEAN[0]) /
+        (((static_cast<float>(bmp_image[(height - h - 1) * hStride + w * channels + kBGRDim])) / kRGBMAX) -
+         CH_MEAN[0]) /
         CH_STD[0];
       hwc_bin_image[h * hStride + w * channels + 1] =
-        (((static_cast<float>(bmp_image[(height - h - 1) * hStride + w * channels + 1])) / 255.0) - CH_MEAN[1]) /
+        (((static_cast<float>(bmp_image[(height - h - 1) * hStride + w * channels + 1])) / kRGBMAX) - CH_MEAN[1]) /
         CH_STD[1];
-      hwc_bin_image[h * hStride + w * channels + 2] =
-        (((static_cast<float>(bmp_image[(height - h - 1) * hStride + w * channels + 0])) / 255.0) - CH_MEAN[2]) /
-        CH_STD[2];
+      hwc_bin_image[h * hStride + w * channels + kBGRDim] =
+        (((static_cast<float>(bmp_image[(height - h - 1) * hStride + w * channels + 0])) / kRGBMAX) -
+         CH_MEAN[kBGRDim]) /
+        CH_STD[kBGRDim];
     }
   }
 
@@ -190,7 +196,7 @@ void DataSet::InitializeBMPFoldersDatabase(std::string dpath) {
 std::vector<FileTuple> DataSet::ReadDir(const std::string dpath) {
   std::vector<FileTuple> vec;
   struct dirent *entry = nullptr;
-  num_of_classes_ = 10;
+  num_of_classes_ = kClassNum;
   for (int class_id = 0; class_id < num_of_classes_; class_id++) {
     std::string dirname = dpath + "/" + std::to_string(class_id);
     DIR *dp = opendir(dirname.c_str());

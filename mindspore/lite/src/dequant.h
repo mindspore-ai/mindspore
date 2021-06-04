@@ -31,7 +31,7 @@ class DequantUtil {
  public:
   static float *DequantWeight(lite::Tensor *input_tensor, bool);
 
-  static int UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
+  static int UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data, size_t weight_len);
 
   static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(OpParameter *op_param,
                                                                      const std::vector<Tensor *> &in_tensors,

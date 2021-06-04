@@ -44,7 +44,7 @@ class HuffmanDecode {
 
   ~HuffmanDecode();
 
-  STATUS DoHuffmanDecode(const std::string &input_str, void *decoded_data);
+  STATUS DoHuffmanDecode(const std::string &input_str, void *decoded_data, size_t data_len);
 
  private:
   std::vector<HuffmanNodePtr> huffman_nodes_;

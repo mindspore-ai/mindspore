@@ -27,7 +27,6 @@ using mindspore::WARNING;
 
 namespace mindspore {
 namespace lite {
-
 ClassificationTrainAccuracyMonitor::ClassificationTrainAccuracyMonitor(int print_every_n, int accuracy_metrics,
                                                                        const std::vector<int> &input_indexes,
                                                                        const std::vector<int> &output_indexes) {
@@ -60,8 +59,8 @@ void ClassificationTrainAccuracyMonitor::EpochBegin(const session::TrainLoopCall
 int ClassificationTrainAccuracyMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
   if (cb_data.step_ > 0) accuracies_.at(cb_data.epoch_).second /= static_cast<float>(cb_data.step_ + 1);
   if ((cb_data.epoch_ + 1) % print_every_n_ == 0) {
-    std::cout << "Epoch (" << cb_data.epoch_ + 1 << "):\tTraining Accuracy is " << accuracies_.at(cb_data.epoch_).second
-              << std::endl;
+    std::cout << "Epoch (" << (cb_data.epoch_ + 1) << "):\tTraining Accuracy is "
+              << accuracies_.at(cb_data.epoch_).second << std::endl;
   }
   return mindspore::session::RET_CONTINUE;
 }
@@ -86,6 +85,5 @@ void ClassificationTrainAccuracyMonitor::StepEnd(const session::TrainLoopCallBac
   }
   accuracies_.at(cb_data.epoch_).second += accuracy;
 }
-
 }  // namespace lite
 }  // namespace mindspore

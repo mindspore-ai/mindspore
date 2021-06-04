@@ -38,7 +38,7 @@ float *DequantUtil::DequantWeight(lite::Tensor *input_tensor, bool channel_first
   }
 }
 
-int DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_int_data) {
+int DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_int_data, size_t data_len) {
   MS_ASSERT(input_tensor != nullptr);
   MS_ASSERT(unpack_int_data != nullptr);
   auto quant_params = input_tensor->quantParams();
@@ -50,7 +50,7 @@ int DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_in
   if (enable_huffman_code) {
     std::string encode_str(input_tensor->data()->begin(), input_tensor->data()->end());
     auto huffman_decode = std::make_unique<lite::HuffmanDecode>();
-    auto ret = huffman_decode->DoHuffmanDecode(encode_str, unpack_int_data);
+    auto ret = huffman_decode->DoHuffmanDecode(encode_str, unpack_int_data, data_len);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DoHuffmanDecode failed.";
       return ret;
@@ -121,5 +121,4 @@ void DequantUtil::RestoreTensorData(const std::map<Tensor *, std::pair<TypeId, v
     tensor->set_data(data);
   }
 }
-
 }  // namespace mindspore::lite
