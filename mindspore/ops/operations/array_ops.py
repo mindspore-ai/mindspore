@@ -3648,7 +3648,7 @@ class ScatterNdUpdate(_ScatterNdOp):
         TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
