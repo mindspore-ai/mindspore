@@ -16,7 +16,7 @@
 
 import sys
 import numpy as np
-from train_utils import SaveInOut, TrainWrap
+from train_utils import save_inout, train_wrap
 from mini_alexnet import AlexNet
 from mindspore import context, Tensor, nn
 from mindspore.train.serialization import export
@@ -31,11 +31,11 @@ n = AlexNet(phase='test')
 loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
 optimizer = nn.Adam(n.trainable_params(), learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                     use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
-net = TrainWrap(n, loss_fn, optimizer)
+net = train_wrap(n, loss_fn, optimizer)
 
 x = Tensor(np.ones([batch, 1, 32, 32]).astype(np.float32) * 0.01)
 label = Tensor(np.zeros([batch, number_of_classes]).astype(np.float32))
 export(net, x, label, file_name="mindir/mini_alexnet_train", file_format='MINDIR')
 
 if len(sys.argv) > 1:
-    SaveInOut(sys.argv[1] + "mini_alexnet", x, label, n, net, sparse=False)
+    save_inout(sys.argv[1] + "mini_alexnet", x, label, n, net, sparse=False)

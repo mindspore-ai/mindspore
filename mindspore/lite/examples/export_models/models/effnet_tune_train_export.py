@@ -17,7 +17,7 @@
 import sys
 from os import path
 import numpy as np
-from train_utils import TrainWrap, SaveT
+from train_utils import train_wrap, save_t
 from effnet import effnet
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, nn
@@ -26,11 +26,13 @@ from mindspore.common.parameter import ParameterTuple
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
 
+
 class TransferNet(nn.Cell):
     def __init__(self, backbone, head):
         super().__init__(TransferNet)
         self.backbone = backbone
         self.head = head
+
     def construct(self, x):
         x = self.backbone(x)
         x = self.head(x)
@@ -56,7 +58,7 @@ trainable_weights_list.extend(n.head.trainable_params())
 trainable_weights = ParameterTuple(trainable_weights_list)
 sgd = nn.SGD(trainable_weights, learning_rate=0.01, momentum=0.9,
              dampening=0.01, weight_decay=0.0, nesterov=False, loss_scale=1.0)
-net = TrainWrap(n, optimizer=sgd, weights=trainable_weights)
+net = train_wrap(n, optimizer=sgd, weights=trainable_weights)
 
 BATCH_SIZE = 8
 X = Tensor(np.random.randn(BATCH_SIZE, 3, 224, 224), mstype.float32)
@@ -66,10 +68,10 @@ export(net, X, label, file_name="mindir/effnet_tune_train", file_format='MINDIR'
 if len(sys.argv) > 1:
     name_prefix = sys.argv[1] + "effnet_tune"
     x_name = name_prefix + "_input1.bin"
-    SaveT(Tensor(X.asnumpy().transpose(0, 2, 3, 1)), x_name)
+    save_t(Tensor(X.asnumpy().transpose(0, 2, 3, 1)), x_name)
 
     l_name = name_prefix + "_input2.bin"
-    SaveT(label, l_name)
+    save_t(label, l_name)
 
     #train network
     n.head.set_train(True)
@@ -80,4 +82,4 @@ if len(sys.argv) > 1:
     n.set_train(False)
     y = n(X)
     y_name = name_prefix + "_output1.bin"
-    SaveT(y, y_name)
+    save_t(y, y_name)

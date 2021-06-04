@@ -14,11 +14,13 @@
 # ============================================================================
 """train_utils."""
 
+import os
 from mindspore import nn, Tensor
 from mindspore.common.parameter import ParameterTuple
 
-def TrainWrap(net, loss_fn=None, optimizer=None, weights=None):
-    """TrainWrap"""
+
+def train_wrap(net, loss_fn=None, optimizer=None, weights=None):
+    """train_wrap"""
     if loss_fn is None:
         loss_fn = nn.SoftmaxCrossEntropyWithLogits()
     loss_net = nn.WithLossCell(net, loss_fn)
@@ -32,22 +34,22 @@ def TrainWrap(net, loss_fn=None, optimizer=None, weights=None):
     return train_net
 
 
-def SaveT(t, file):
+def save_t(t, file):
     x = t.asnumpy()
     x.tofile(file)
 
 
-def SaveInOut(name, x, l, net, net_train, sparse=False, epoch=1):
-    """SaveInOut"""
+def save_inout(name, x, l, net, net_train, sparse=False, epoch=1):
+    """save_inout"""
     x_name = name + "_input1.bin"
     if sparse:
         x_name = name + "_input2.bin"
-    SaveT(Tensor(x.asnumpy().transpose(0, 2, 3, 1)), x_name)
+    save_t(Tensor(x.asnumpy().transpose(0, 2, 3, 1)), x_name)
 
     l_name = name + "_input2.bin"
     if sparse:
         l_name = name + "_input1.bin"
-    SaveT(l, l_name)
+    save_t(l, l_name)
 
     net.set_train(False)
     y = net(x)
@@ -62,10 +64,10 @@ def SaveInOut(name, x, l, net, net_train, sparse=False, epoch=1):
     if isinstance(y, tuple):
         i = 1
         for t in y:
-            with open(name + "_output" + str(i) + ".bin", 'w') as f:
+            with os.fdopen(name + "_output" + str(i) + ".bin", 'w') as f:
                 for j in t.asnumpy().flatten():
                     f.write(str(j)+' ')
             i = i + 1
     else:
         y_name = name + "_output1.bin"
-        SaveT(y, y_name)
+        save_t(y, y_name)

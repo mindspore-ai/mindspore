@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_INCLUDE_TRAIN_CLASSIFICATION_TRAIN_ACCURACY_MONITOR_H_
 #define MINDSPORE_LITE_INCLUDE_TRAIN_CLASSIFICATION_TRAIN_ACCURACY_MONITOR_H_
 #include <vector>
+#include <memory>
 #include <string>
 #include <utility>
 #include <climits>
@@ -44,9 +45,7 @@ class ClassificationTrainAccuracyMonitor : public session::TrainLoopCallBack {
 
  private:
   std::vector<GraphPoint> accuracies_;
-  int accuracy_metrics_ = METRICS_CLASSIFICATION;
-  std::vector<int> input_indexes_ = {1};
-  std::vector<int> output_indexes_ = {0};
+  std::shared_ptr<AccuracyMetrics> accuracy_metrics_;
   int print_every_n_ = 0;
 };
 

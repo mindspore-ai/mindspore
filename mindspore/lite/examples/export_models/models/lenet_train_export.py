@@ -16,7 +16,7 @@
 
 import sys
 import numpy as np
-from train_utils import SaveInOut, TrainWrap
+from train_utils import save_inout, train_wrap
 from official.cv.lenet.src.lenet import LeNet5
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, nn
@@ -28,11 +28,11 @@ n = LeNet5()
 loss_fn = nn.MSELoss()
 optimizer = nn.Adam(n.trainable_params(), learning_rate=1e-2, beta1=0.5, beta2=0.7, eps=1e-2, use_locking=True,
                     use_nesterov=False, weight_decay=0.0, loss_scale=0.3)
-net = TrainWrap(n, loss_fn, optimizer)
+net = train_wrap(n, loss_fn, optimizer)
 
 x = Tensor(np.random.randn(32, 1, 32, 32), mstype.float32)
 label = Tensor(np.zeros([32, 10]).astype(np.float32))
 export(net, x, label, file_name="mindir/lenet_train", file_format='MINDIR')
 
 if len(sys.argv) > 1:
-    SaveInOut(sys.argv[1] + "lenet", x, label, n, net, sparse=False)
+    save_inout(sys.argv[1] + "lenet", x, label, n, net, sparse=False)
