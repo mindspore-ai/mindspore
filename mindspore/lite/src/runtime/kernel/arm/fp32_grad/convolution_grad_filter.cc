@@ -111,7 +111,11 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   count = (count < 0) ? 0 : count;
   int start = stride * task_id;
   int end = start + count;
-
+  int real_chunk;
+  float *mat_a = nullptr;
+  float *mat_b = nullptr;
+  float *mat_c = nullptr;
+  float *im = nullptr;
   if (do_dw_) {
 #ifdef ENABLE_ARM
     stride = UP_DIV(k_h * k_w, thread_num);
@@ -128,13 +132,13 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
     const int kernel_spatial = k_h * k_w;
     for (int i = 0; i < batch; ++i) {
       for (int ci = 0; ci < m; ci += chunk_) {
-        int real_chunk = MSMIN(m - ci, chunk_);
-        float *mat_b = workspace_temp + task_id * ws_size_;
-        float *im = x_addr + (i * in_ch * in_h * in_w);
+        real_chunk = MSMIN(m - ci, chunk_);
+        mat_b = workspace_temp + task_id * ws_size_;
+        im = x_addr + (i * in_ch * in_h * in_w);
         RollingIm2ColPackDwUnitFp32(im, conv_param, mat_b, real_chunk, ci);
         for (int j = start; j < end; ++j) {
-          float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
-          float *mat_c = dw_addr + j * nweights / groups;
+          mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
+          mat_c = dw_addr + j * nweights / groups;
           GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, mat_b + (j * kernel_spatial), n * groups, 1, mat_c, n,
                      mat_workspace);
         }
@@ -145,11 +149,11 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
     for (int i = start; i < end; ++i) {
       for (int ci = 0; ci < m; ci += chunk_) {
         for (int j = 0; j < groups; ++j) {
-          int real_chunk = MSMIN(m - ci, chunk_);
-          float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
-          float *mat_b = workspace_temp + task_id * ws_size_;
-          float *mat_c = dw_addr + j * nweights / groups;
-          float *im = x_addr + (i * in_ch * in_h * in_w) + j * (in_ch / groups);
+          real_chunk = MSMIN(m - ci, chunk_);
+          mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
+          mat_b = workspace_temp + task_id * ws_size_;
+          mat_c = dw_addr + j * nweights / groups;
+          im = x_addr + (i * in_ch * in_h * in_w) + j * (in_ch / groups);
           RollingIm2ColPackUnitFp32(im, conv_param, mat_b, real_chunk, ci);
           GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, mat_b, n, 0, mat_tmp, n, mat_workspace);
           std::unique_lock<std::mutex> merge_lock(lock_);
@@ -158,13 +162,13 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
       }
     }
   } else {
-    float *mat_c = dw_addr;
+    mat_c = dw_addr;
     const size_t in_plane_size = in_ch * in_h * in_w;
     for (int i = start; i < end; ++i) {
       for (int ci = 0; ci < m; ci += chunk_) {
-        int real_chunk = MSMIN(m - ci, chunk_);
-        float *mat_a = dy_addr + i * m * k + ci * out_ch;
-        float *im = x_addr + i * in_plane_size;
+        real_chunk = MSMIN(m - ci, chunk_);
+        mat_a = dy_addr + i * m * k + ci * out_ch;
+        im = x_addr + i * in_plane_size;
         int input_h = ci / out_w * conv_param->stride_h_;
         int input_w = ci % out_w * conv_param->stride_w_;
         int offset = (input_h * in_w + input_w) * in_ch;

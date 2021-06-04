@@ -23,6 +23,9 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t kUnitBufferMultipler = 4 * 4;
+}  // namespace
 int ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param) {
   auto input_channel = conv_param->input_channel_;
   auto output_channel = conv_param->output_channel_;
@@ -82,7 +85,7 @@ int Convolution3x3Int8CPUKernel::InitWeightBias() {
   int iC8 = UP_DIV(input_channel, C8NUM);
   int oC4 = UP_DIV(output_channel, C4NUM);
   // init weight
-  size_t transformed_size = iC8 * C8NUM * oC4 * C4NUM * 16 * sizeof(int16_t);
+  size_t transformed_size = iC8 * C8NUM * oC4 * C4NUM * kUnitBufferMultipler * sizeof(int16_t);
   transformed_filter_addr_ = reinterpret_cast<int16_t *>(malloc(transformed_size));
   if (transformed_filter_addr_ == nullptr) {
     MS_LOG(ERROR) << "malloc transformed_filter_addr_ failed.";
@@ -136,14 +139,14 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  size_t block_unit_buffer_size = thread_count_ * 4 * 4 * C8NUM * sizeof(int16_t);
+  size_t block_unit_buffer_size = thread_count_ * kUnitBufferMultipler * C8NUM * sizeof(int16_t);
   block_unit_buffer_ = reinterpret_cast<int16_t *>(ctx_->allocator->Malloc(block_unit_buffer_size));
   if (block_unit_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc block_unit_buffer_ failed.";
     return RET_ERROR;
   }
 
-  size_t tmp_dst_buffer_size = thread_count_ * TILE_NUM * 16 * oc4 * C4NUM * sizeof(int32_t);
+  size_t tmp_dst_buffer_size = thread_count_ * TILE_NUM * kUnitBufferMultipler * oc4 * C4NUM * sizeof(int32_t);
   tmp_dst_buffer_ = reinterpret_cast<int32_t *>(ctx_->allocator->Malloc(tmp_dst_buffer_size));
   if (tmp_dst_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_dst_buffer_ failed.";

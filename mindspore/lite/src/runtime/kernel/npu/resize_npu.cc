@@ -25,6 +25,9 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Resize;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t SIZE_TENSOR_DIMS = 2;
+}  // namespace
 int ResizeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                OpParameter *opParameter) {
   if (resize_parameter_->method_ != schema::ResizeMethod_LINEAR &&
@@ -45,32 +48,32 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
   ge::TensorPtr sizeTensor = std::make_shared<hiai::Tensor>(sizeTensorDesc);
   vector<int32_t> dataValue = {static_cast<int32_t>(resize_parameter_->new_height_),
                                static_cast<int32_t>(resize_parameter_->new_width_)};
-  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), 2 * sizeof(int32_t));
+  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), SIZE_TENSOR_DIMS * sizeof(int32_t));
   out_size_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
   out_size_->set_attr_value(sizeTensor);
   if (resize_parameter_->method_ == schema::ResizeMethod_LINEAR) {
-    auto op = new (std::nothrow) hiai::op::ResizeBilinearV2(name_);
-    if (op == nullptr) {
-      MS_LOG(ERROR) << " op is nullptr.";
+    auto linear_op = new (std::nothrow) hiai::op::ResizeBilinearV2(name_);
+    if (linear_op == nullptr) {
+      MS_LOG(ERROR) << " linear_op is nullptr.";
       return RET_ERROR;
     }
-    op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
-                               schema::CoordinateTransformMode_ALIGN_CORNERS);
-    op->set_input_x(*npu_inputs[0]);
-    op->set_input_size(*out_size_);
-    op->set_attr_half_pixel_centers(resize_parameter_->preserve_aspect_ratio_);
-    op_ = op;
+    linear_op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
+                                      schema::CoordinateTransformMode_ALIGN_CORNERS);
+    linear_op->set_input_x(*npu_inputs[0]);
+    linear_op->set_input_size(*out_size_);
+    linear_op->set_attr_half_pixel_centers(resize_parameter_->preserve_aspect_ratio_);
+    op_ = linear_op;
   } else if (resize_parameter_->method_ == schema::ResizeMethod_NEAREST) {
-    auto op = new (std::nothrow) hiai::op::ResizeNearestNeighborV2(name_);
-    if (op == nullptr) {
-      MS_LOG(ERROR) << " op is nullptr.";
+    auto nearest_op = new (std::nothrow) hiai::op::ResizeNearestNeighborV2(name_);
+    if (nearest_op == nullptr) {
+      MS_LOG(ERROR) << " nearest_op is nullptr.";
       return RET_ERROR;
     }
-    op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
-                               schema::CoordinateTransformMode_ALIGN_CORNERS);
-    op->set_input_x(*npu_inputs[0]);
-    op->set_input_size(*out_size_);
-    op_ = op;
+    nearest_op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
+                                       schema::CoordinateTransformMode_ALIGN_CORNERS);
+    nearest_op->set_input_x(*npu_inputs[0]);
+    nearest_op->set_input_size(*out_size_);
+    op_ = nearest_op;
   } else {
     MS_LOG(WARNING) << "Unsupported resize method type:" << resize_parameter_->method_;
     return RET_ERROR;

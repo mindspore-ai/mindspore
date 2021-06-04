@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ namespace mindspore::kernel {
 namespace {
 constexpr size_t kScaleInputsSize = 2;
 constexpr size_t kScaleBiasInputsSize = 3;
+constexpr int kOffsetIndex = 2;
 }  // namespace
 ScaleInt8CPUKernel::~ScaleInt8CPUKernel() {
   if (tile_para != nullptr) {
@@ -68,16 +69,16 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
   }
 
   scale_param_->const_offset_ = false;
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == kScaleBiasInputsSize) {
     has_bias_ = true;
-    auto offset_tensor = in_tensors_.at(2);
+    auto offset_tensor = in_tensors_.at(kOffsetIndex);
     auto *offset_ptr = reinterpret_cast<int8_t *>(offset_tensor->data_c());
     // offset may be const value ,can be processed in prepare stage
     if (offset_ptr != nullptr) {
       scale_param_->const_offset_ = true;
       input2_data_ = offset_ptr;
       // need broadcasting
-      if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(2)->ElementsNum()) {
+      if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(kOffsetIndex)->ElementsNum()) {
         input2_data_ = reinterpret_cast<int8_t *>(malloc(out_tensors_.at(0)->Size()));
         if (input2_data_ == nullptr) {
           MS_LOG(ERROR) << "malloc input2_data_  failed.";
@@ -88,7 +89,7 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
           return RET_ERROR;
         }
         malloced_offset_ = true;
-        TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(2)->data_c()),
+        TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data_c()),
                              reinterpret_cast<int8_t *>(input2_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
                              tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
       }
@@ -187,7 +188,7 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
   scale_param_->scale_mul_arg_.right_shift_ = shift < 0 ? -shift : 0;
 
   if (in_tensors_.size() == kScaleBiasInputsSize) {
-    auto offset = in_tensors_.at(2);
+    auto offset = in_tensors_.at(kOffsetIndex);
     auto offset_scale = offset->quant_params().front().scale;
     scale_param_->offset_zp_ = offset->quant_params().front().zeroPoint;
 
@@ -290,7 +291,7 @@ int ScaleInt8CPUKernel::Run() {
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
   input0_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
   output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
-
+  int ret = RET_ERROR;
   // need broadcasting
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
     // scale is passed by previous node, need do broadcasting online
@@ -314,12 +315,12 @@ int ScaleInt8CPUKernel::Run() {
         input1_data_ = nullptr;
         return RET_ERROR;
       }
-      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(2)->data_c()),
+      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data_c()),
                            reinterpret_cast<int8_t *>(input2_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
     }
 
-    auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
     // free memory malloced from memory pool
     if (!scale_param_->const_scale_) {
       ctx_->allocator->Free(input1_data_);
@@ -337,9 +338,9 @@ int ScaleInt8CPUKernel::Run() {
     input1_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
   }
   if (has_bias_ && !scale_param_->const_offset_) {
-    input2_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(2)->data_c());
+    input2_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data_c());
   }
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

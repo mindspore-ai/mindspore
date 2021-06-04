@@ -25,7 +25,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SmoothL1Loss;
 
 namespace mindspore::kernel {
-
 int SmoothL1LossCPUKernel::ReSize() { return RET_OK; }
 
 int SmoothL1LossCPUKernel::Execute(int task_id) {

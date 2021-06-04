@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_PadFusion;
 namespace mindspore::kernel {
-
 namespace {
 constexpr size_t kMirrorPadInputSize = 2;
 }

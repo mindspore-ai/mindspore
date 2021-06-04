@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_ApplyMomentum;
 namespace mindspore::kernel {
 int ApplyMomentumCPUKernel::ReSize() { return RET_OK; }
 
-static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate, float *gradient, float moment,
+static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate, const float *gradient, float moment,
                            bool nesterov, int start, int end) {
   if (nesterov) {
     for (int i = start; i < end; i++) {

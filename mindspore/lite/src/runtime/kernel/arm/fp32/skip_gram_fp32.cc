@@ -27,7 +27,6 @@ using mindspore::lite::StringPack;
 using mindspore::schema::PrimitiveType_SkipGram;
 
 namespace mindspore::kernel {
-
 int SkipGramCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;

@@ -158,8 +158,9 @@ int TransposeCPUKernel::Run() {
   }
   thread_count_ = op_parameter_->thread_num_;
   GetNHNCTransposeFunc(in_tensor, out_tensor, param_);
+  int ret;
   if (NHNCTransposeFunc_ != nullptr) {
-    auto ret = ParallelLaunch(this->context_->thread_pool_, TransposeImpl, this, thread_count_);
+    ret = ParallelLaunch(this->context_->thread_pool_, TransposeImpl, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "NHNCTransposeFunc_ is error!";
     }
@@ -184,18 +185,14 @@ int TransposeCPUKernel::Run() {
       MS_LOG(ERROR) << "Malloc data failed";
       return RET_NULL_PTR;
     }
-  }
-  int ret;
-  if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
+
     ret = ParallelLaunch(this->context_->thread_pool_, TransposeImpl, this, thread_count_);
-  } else {
-    ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param_);
-  }
-  if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
     context_->allocator->Free(dim_size_);
     context_->allocator->Free(position_);
     dim_size_ = nullptr;
     position_ = nullptr;
+  } else {
+    ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param_);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Transpose run failed";

@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DivFusion;
 
 namespace mindspore::kernel {
-
 int DivInt8CPUKernel::Init() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);

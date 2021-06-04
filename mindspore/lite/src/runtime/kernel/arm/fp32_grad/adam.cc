@@ -29,10 +29,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Adam;
 
 namespace mindspore::kernel {
-
 int AdamCPUKernel::ReSize() { return RET_OK; }
 
-static int DoAdam(float *m, float *v, float *gradient, float *weight, float beta1, float beta2, float beta1_power,
+static int DoAdam(float *m, float *v, const float *gradient, float *weight, float beta1, float beta2, float beta1_power,
                   float beta2_power, float eps, float learning_rate, bool nesterov, int start, int end) {
   if ((1.f - beta1_power) <= 0.0f) {
     MS_LOG(ERROR) << "divisor cannot be 0 or below";

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/gatherNd_int8.h"
-#include <string.h>
+#include <cstring>
 #include <limits>
 #include <vector>
 #include "schema/model_generated.h"

@@ -107,6 +107,7 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
   auto output_data = reinterpret_cast<uint8_t *>(out_tensors_[0]->MutableData());
   auto element_num = out_tensors_[0]->ElementsNum();
   auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
+  int error_code;
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {
     MS_ASSERT(op_parameter_->thread_num_ != 0);
     int stride = UP_DIV(element_num, op_parameter_->thread_num_);
@@ -115,14 +116,14 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
       return RET_OK;
     }
 
-    int error_code = arithmetic_run_(tile_data0_ + stride * thread_id, tile_data1_ + stride * thread_id,
-                                     output_data + stride * thread_id, count, &quant_args_);
+    error_code = arithmetic_run_(tile_data0_ + stride * thread_id, tile_data1_ + stride * thread_id,
+                                 output_data + stride * thread_id, count, &quant_args_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Arithmetic run fail! ret: " << error_code;
       return error_code;
     }
   } else if (arithmetic_run_ != nullptr) {
-    int error_code = arithmetic_run_(input0_data, input1_data1, output_data, element_num, &quant_args_);
+    error_code = arithmetic_run_(input0_data, input1_data1, output_data, element_num, &quant_args_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Arithmetic run fail!ret: " << error_code;
       return error_code;

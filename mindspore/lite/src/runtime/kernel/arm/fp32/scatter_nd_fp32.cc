@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/scatter_nd_fp32.h"
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -85,7 +85,6 @@ int ScatterNDCPUKernel::ReSize() {
       return RET_ERROR;
     }
   }
-  // for (size_t i = 0; i < static_cast<size_t>(indice_unit_rank); i++) {}
 
   // calculate unit_size_
   unit_size_ = 1;

@@ -24,6 +24,10 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_InstanceNorm;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int GAMMA_INDEX = 1;
+constexpr int BETA_INDEX = 2;
+}  // namespace
 int InstanceNormNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
   return RET_OK;
@@ -39,16 +43,16 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
   }
   op_->set_input_x(*npu_inputs[0]);
 
-  auto gamma_shape = inputs[1]->shape();
-  std::shared_ptr<ge::Tensor> gamma_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  auto gamma_shape = inputs[GAMMA_INDEX]->shape();
+  std::shared_ptr<ge::Tensor> gamma_tensor = std::make_shared<ge::Tensor>();
   if (gamma_tensor == nullptr) {
     MS_LOG(ERROR) << "new gamma_tensor failed.";
     return RET_ERROR;
   }
   ge::TensorDesc gamma_tensor_desc(lite::ConverterToNPUShape({1, gamma_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                   lite::ConverterToNPUDataType(inputs[1]->data_type()));
+                                   lite::ConverterToNPUDataType(inputs[GAMMA_INDEX]->data_type()));
   gamma_tensor->SetTensorDesc(gamma_tensor_desc);
-  gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[1]->data_c()), inputs[1]->Size());
+  gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[GAMMA_INDEX]->data_c()), inputs[GAMMA_INDEX]->Size());
   gamma_ = new (std::nothrow) hiai::op::Const(name_ + "_gamma");
   if (gamma_ == nullptr) {
     MS_LOG(ERROR) << "New gamma_ const failed.";
@@ -57,16 +61,16 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
   gamma_->set_attr_value(gamma_tensor);
   op_->set_input_gamma(*gamma_);
 
-  auto beta_shape = inputs[2]->shape();
-  std::shared_ptr<ge::Tensor> beta_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  auto beta_shape = inputs[BETA_INDEX]->shape();
+  std::shared_ptr<ge::Tensor> beta_tensor = std::make_shared<ge::Tensor>();
   if (beta_tensor == nullptr) {
     MS_LOG(ERROR) << "new beta_tensor failed.";
     return RET_ERROR;
   }
   ge::TensorDesc beta_tensor_desc(lite::ConverterToNPUShape({1, beta_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                  lite::ConverterToNPUDataType(inputs[2]->data_type()));
+                                  lite::ConverterToNPUDataType(inputs[BETA_INDEX]->data_type()));
   beta_tensor->SetTensorDesc(beta_tensor_desc);
-  beta_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[2]->data_c()), inputs[2]->Size());
+  beta_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[BETA_INDEX]->data_c()), inputs[BETA_INDEX]->Size());
   beta_ = new (std::nothrow) hiai::op::Const(name_ + "_beta");
   if (beta_ == nullptr) {
     MS_LOG(ERROR) << "New beta_ const failed.";

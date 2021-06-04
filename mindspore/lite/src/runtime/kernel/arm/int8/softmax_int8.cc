@@ -30,7 +30,6 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
-
 int SoftmaxInt8CPUKernel::Init() {
   auto ret = SoftmaxBaseCPUKernel::Init();
   if (ret != RET_OK) {

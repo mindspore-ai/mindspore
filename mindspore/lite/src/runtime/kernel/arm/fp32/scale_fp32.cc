@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/scale_fp32.h"
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

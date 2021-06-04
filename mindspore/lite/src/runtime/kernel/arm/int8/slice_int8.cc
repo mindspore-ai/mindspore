@@ -27,7 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
-
 int SliceInt8CPUKernel::Init() {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);

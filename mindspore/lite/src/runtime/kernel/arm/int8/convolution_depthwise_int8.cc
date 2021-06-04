@@ -56,8 +56,8 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   if (filter_per_channel) {
     for (int i = 0; i < weight_tensor->Height() * weight_tensor->Width(); i++) {
       for (int c = 0; c < channel; c++) {
-        int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[c].zp_;
-        packed_weight_[i * channel + c] = (int16_t)(tmp_weight[i * channel + c] - weight_zp);
+        int per_channel_weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[c].zp_;
+        packed_weight_[i * channel + c] = (int16_t)(tmp_weight[i * channel + c] - per_channel_weight_zp);
       }
     }
   } else {

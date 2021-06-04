@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Assign;
 
 namespace mindspore::kernel {
-
 int AssignCPUKernel::ReSize() { return RET_OK; }
 
 int AssignCPUKernel::Execute(int task_id) {

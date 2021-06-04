@@ -240,7 +240,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   // (quant_out - zp_out)*scale_out = sum((quant_in -zp)*scale_in) * (1/num) for each axis in axes
   // quant_out = sum(quant_in-zp) * (scale_in/scale_out) * (1/num)
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
-    if (input->shape().size() == 4 && pattern_ == kernel::HW) {
+    if (input->shape().size() == DIMENSION_4D && pattern_ == kernel::HW) {
       // special case, can use pattern
       ReduceMean4DCalQuantParam();
       pattern_impl_ = true;
@@ -309,8 +309,8 @@ int ReduceInt8CPUKernel::CalculateQuantArgsReduceSumSquare() {
     MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
     return RET_NULL_PTR;
   }
-  double sumsquare_multiplier = quant_arg_.in_scale_ * quant_arg_.in_scale_ / quant_arg_.out_scale_;
-  QuantizeMultiplierSmallerThanOne(sumsquare_multiplier, &qm->multiplier_, &shift);
+  double last_sumsquare_multiplier = quant_arg_.in_scale_ * quant_arg_.in_scale_ / quant_arg_.out_scale_;
+  QuantizeMultiplierSmallerThanOne(last_sumsquare_multiplier, &qm->multiplier_, &shift);
   qm->left_shift_ = shift < 0 ? -shift : 0;
   qm->right_shift_ = shift > 0 ? shift : 0;
   sum_square_multipliers_.push_back(qm);
@@ -469,8 +469,9 @@ int ReduceInt8CPUKernel::Fast4DReduceMeanHWImpl() {
 }
 
 int ReduceInt8CPUKernel::Run() {
+  int ret = RET_ERROR;
   if (!this->valid_shape_) {
-    auto ret = CalculateQuantArgs();
+    ret = CalculateQuantArgs();
     if (ret != RET_OK) {
       return ret;
     }
@@ -480,7 +481,7 @@ int ReduceInt8CPUKernel::Run() {
     return Fast4DReduceMeanHWImpl();
   }
 
-  auto ret = MallocTmpBuffer();
+  ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     FreeTmpBuffer();
     return ret;
@@ -494,13 +495,14 @@ int ReduceInt8CPUKernel::Run() {
     begin_src_data_[i] = static_cast<int32_t>(input_data[i]);
   }
   src_data_ = begin_src_data_;
+  int error_code = RET_ERROR;
   for (size_t i = 0; i < data_buffers_.size(); ++i) {
     GetQuantArgs(i);
     dst_data_ = data_buffers_[i];
     outer_size_ = outer_sizes_[i];
     inner_size_ = inner_sizes_[i];
     axis_size_ = axis_sizes_[i];
-    auto error_code = ParallelLaunch(this->context_->thread_pool_, ReduceInt8Impl, this, context_->thread_num_);
+    error_code = ParallelLaunch(this->context_->thread_pool_, ReduceInt8Impl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -515,7 +517,7 @@ int ReduceInt8CPUKernel::Run() {
   axis_size_ = axis_sizes_.back();
   last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   is_last_axis_ = true;
-  auto error_code = ParallelLaunch(this->context_->thread_pool_, ReduceInt8Impl, this, context_->thread_num_);
+  error_code = ParallelLaunch(this->context_->thread_pool_, ReduceInt8Impl, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

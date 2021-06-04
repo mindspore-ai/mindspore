@@ -31,7 +31,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Dropout;
 
 namespace mindspore::kernel {
-
 int DropoutCPUKernel::Init() {
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
   if (param == nullptr) {

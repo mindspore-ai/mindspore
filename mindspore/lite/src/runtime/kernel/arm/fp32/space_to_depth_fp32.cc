@@ -32,7 +32,6 @@ using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_SpaceToDepth;
 
 namespace mindspore::kernel {
-
 int SpaceToDepthCPUKernel::Init() {
   SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
   if (param->block_size_ <= 0) {
