@@ -179,11 +179,6 @@ TEST_F(TestAD, test_prim_broadcast_shape) {
   AssertExpect("test_prim_broadcast_shape", dg);
 }
 
-TEST_F(TestAD, test_prim_J) {
-  FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimJ), resourcePtr);
-  AssertExpect("test_prim_J", dg);
-}
-
 TEST_F(TestAD, test_prim_switch) {
   FuncGraphPtr dg = Kprim(NewValueNode(prim::kPrimSwitch), resourcePtr);
   AssertExpect("test_prim_switch", dg);

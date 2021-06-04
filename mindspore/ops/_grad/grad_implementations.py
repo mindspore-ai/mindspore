@@ -213,12 +213,6 @@ def bprop_broadcast_shape(shp1, shp2, out, dout):
     return C.zeros_like(shp1), C.zeros_like(shp2)
 
 
-@bprops.register("J")
-def bprop_j(x, out, dout):
-    """Backpropagator for primitive `J`."""
-    return (F.jinv(dout),)
-
-
 @bprops.register("array_reduce")
 def bprop_array_reduce(fn, x, shp, out, dout):
     """Backpropagator for primitive `array_reduce`."""

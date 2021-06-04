@@ -355,28 +355,29 @@ class GradOperation(GradOperation_):
 
     def __call__(self, fn, weights=None):
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
-        if self.grad_fn is None or self.fn != fn:
-            if context.get_context("mode") == context.GRAPH_MODE:
-                if self.get_by_list:
-                    @ms_function(obj=fn)
-                    def after_grad(*args):
-                        return grad_(fn, weights)(*args)
-                else:
-                    @ms_function(obj=fn)
-                    def after_grad(*args):
-                        return grad_(fn)(*args)
+        if self.grad_fn is not None and self.fn == fn:
+            return self.grad_fn
+        if context.get_context("mode") == context.GRAPH_MODE:
+            if self.get_by_list:
+                @ms_function(obj=fn)
+                def after_grad(*args):
+                    return grad_(fn, weights)(*args)
             else:
-                @_wrap_func
-                def after_grad(*args, **kwargs):
-                    if _pynative_exec.check_graph(fn, *args, **kwargs):
-                        print("Another grad step is running")
-                    self._pynative_forward_run(args, kwargs, fn)
-                    _pynative_exec.grad(grad_, fn, weights, *args, **kwargs)
-                    out = _pynative_exec(fn, *args, **kwargs)
-                    _pynative_exec.clear_grad(fn, *args, **kwargs)
-                    return out
-            self.grad_fn = after_grad
-            self.fn = fn
+                @ms_function(obj=fn)
+                def after_grad(*args):
+                    return grad_(fn)(*args)
+        else:
+            @_wrap_func
+            def after_grad(*args, **kwargs):
+                if _pynative_exec.check_graph(fn, *args, **kwargs):
+                    print("Another grad step is running")
+                self._pynative_forward_run(args, kwargs, fn)
+                _pynative_exec.grad(grad_, fn, weights, *args, **kwargs)
+                out = _pynative_exec(fn, *args, **kwargs)
+                _pynative_exec.clear_grad(fn, *args, **kwargs)
+                return out
+        self.grad_fn = after_grad
+        self.fn = fn
         return self.grad_fn
 
 
