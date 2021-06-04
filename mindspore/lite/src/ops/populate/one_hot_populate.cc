@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateOneHotParameter(const void *prim) {
   OneHotParameter *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
   if (one_hot_param == nullptr) {
@@ -34,6 +33,5 @@ OpParameter *PopulateOneHotParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(one_hot_param);
 }
 Registry OneHotParameterRegistry(schema::PrimitiveType_OneHot, PopulateOneHotParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

@@ -34,6 +34,5 @@ OpParameter *PopulateTopKParameter(const void *prim) {
 }
 }  // namespace
 Registry g_topKParameterRegistry(schema::PrimitiveType_TopKFusion, PopulateTopKParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

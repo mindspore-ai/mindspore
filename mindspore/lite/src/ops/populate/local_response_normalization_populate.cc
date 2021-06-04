@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
   LocalResponseNormParameter *lrn_param =
     reinterpret_cast<LocalResponseNormParameter *>(malloc(sizeof(LocalResponseNormParameter)));
@@ -36,9 +35,7 @@ OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
   lrn_param->beta_ = value->beta();
   return reinterpret_cast<OpParameter *>(lrn_param);
 }
-
 Registry LocalResponseNormalizationParameterRegistry(schema::PrimitiveType_LRN, PopulateLocalResponseNormParameter,
                                                      SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

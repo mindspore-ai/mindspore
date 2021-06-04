@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace lite {
 namespace {
-
 OpParameter *PopulateDeconvDwParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
   auto dedepthwise_conv2d_prim = primitive->value_as_DeDepthwiseConv2D();
@@ -75,7 +74,6 @@ OpParameter *PopulateDeconvDwParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(conv_param);
 }
 }  // namespace
-
 Registry g_deDepthwiseConv2DV0ParameterRegistry(schema::v0::PrimitiveType_DeDepthwiseConv2D, PopulateDeconvDwParameter,
                                                 SCHEMA_V0);
 }  // namespace lite

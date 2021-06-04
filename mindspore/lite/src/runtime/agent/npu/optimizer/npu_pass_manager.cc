@@ -18,7 +18,6 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 namespace mindspore::lite {
-
 void NPUPassManager::AddPass(NPUBasePass *pass) { all_pass_.push_back(pass); }
 int NPUPassManager::Run() {
   for (auto pass : all_pass_) {

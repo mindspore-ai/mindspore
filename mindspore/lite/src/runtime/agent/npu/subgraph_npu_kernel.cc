@@ -98,8 +98,7 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
     for (auto in_tensor : node->in_tensors()) {
       if (IsSubGraphInputTensor(in_tensor)) {
         auto tensor_name = node->name() + "_" + std::to_string(count++);
-        hiai::op::Data *data;
-        data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
+        hiai::op::Data *data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
         subgraph_input_op_.push_back(*data);
         node_input_op.push_back(data);
         op_buffer_.push_back(data);
@@ -193,13 +192,9 @@ int SubGraphNpuKernel::Init() {
       MS_LOG(ERROR) << "Build IR model failed.";
       return RET_ERROR;
     }
-
     MS_ASSERT(npu_manager_ != nullptr);
-
     npu_manager_->AddModel(model_buffer_data, GetOMModelName(), context_->GetNpuInfo().frequency_);
-
     executor_ = new (std::nothrow) mindspore::lite::NPUExecutor(GetOMModelName(), npu_manager_);
-
     if (executor_ == nullptr) {
       MS_LOG(ERROR) << "Create NPUExecutor failed.";
       return RET_ERROR;

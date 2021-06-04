@@ -131,7 +131,6 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
         MS_LOG(ERROR) << "Unsupported output data type " << output_data_type;
         return RET_ERROR;
     }
-
   } else {
     MS_LOG(ERROR) << "Unsupported input data type " << input_data_type;
     return RET_ERROR;

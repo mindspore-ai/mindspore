@@ -175,7 +175,6 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
       if (unit.tmp_buffer_ == nullptr) {
         return RET_NULL_PTR;
       }
-
     } else {
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * deconv_param_->oc_div4_ * unit.w_size_ * unit.h_size_ *
                                 DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float16_t));
@@ -184,7 +183,6 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
       }
     }
   }
-
   return RET_OK;
 }
 
@@ -315,7 +313,7 @@ int DeConvWinogradFp16CPUKernel::InitComputeParam() {
 }
 
 int DeConvWinogradFp16CPUKernel::InitDataParam() {
-  /* unit data : weight & winograd data*/
+  // unit data : weight & winograd data
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter(weight_tensor, weight_tensor->data_c());
   if (ret != RET_OK) {
@@ -400,7 +398,7 @@ int DeConvWinogradFp16CPUKernel::Run() {
     ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float16_t));
     ParallelLaunch(this->context_->thread_pool_, DeConvWgFp16Run, this, deconv_param_->thread_num_);
 
-    /*post bias activate and nhwc */
+    // post bias activate and nhwc
     ParallelLaunch(this->context_->thread_pool_, DeConvWgPostFp16Run, this, thread_num_hw_);
   }
 

@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateSliceParameter(const void *prim) {
   SliceParameter *slice_param = reinterpret_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
   if (slice_param == nullptr) {
@@ -35,6 +34,5 @@ OpParameter *PopulateSliceParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(slice_param);
 }
 Registry SliceParameterRegistry(schema::PrimitiveType_SliceFusion, PopulateSliceParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

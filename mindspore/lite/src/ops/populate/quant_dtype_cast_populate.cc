@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
   QuantDTypeCastParameter *parameter =
     reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
@@ -36,6 +35,5 @@ OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
 }
 Registry QuantDTypeCastParameterRegistry(schema::PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter,
                                          SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

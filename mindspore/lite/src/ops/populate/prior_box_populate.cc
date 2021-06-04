@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulatePriorBoxParameter(const void *prim) {
   PriorBoxParameter *prior_box_param = reinterpret_cast<PriorBoxParameter *>(malloc(sizeof(PriorBoxParameter)));
   if (prior_box_param == nullptr) {
@@ -70,6 +69,5 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(prior_box_param);
 }
 Registry PriorBoxParameterRegistry(schema::PrimitiveType_PriorBox, PopulatePriorBoxParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

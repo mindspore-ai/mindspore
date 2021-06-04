@@ -31,8 +31,6 @@ OpParameter *PopulateUniqueParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(unique_param);
 }
 }  // namespace
-
 Registry g_uniqueParameterRegistry(schema::PrimitiveType_Unique, PopulateUniqueParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

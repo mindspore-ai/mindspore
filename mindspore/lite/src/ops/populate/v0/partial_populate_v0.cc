@@ -20,10 +20,11 @@
 namespace mindspore {
 namespace lite {
 namespace {
-typedef struct PartialParameter {
+struct PartialParameter {
   OpParameter op_parameter_;
-  int sub_graph_index_;
-} PartialParameter;
+  int sub_graph_index_ = 0;
+};
+using PartialParameter = PartialParameter;
 
 OpParameter *PopulatePartialParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);

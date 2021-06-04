@@ -35,6 +35,5 @@ OpParameter *PopulateTensorListFromTensorParameter(const void *prim) {
 }
 Registry TensorListFromTensorParameterRegistry(schema::PrimitiveType_TensorListFromTensor,
                                                PopulateTensorListFromTensorParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

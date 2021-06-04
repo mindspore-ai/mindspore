@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateCustomNormalizeParameter(const void *prim) {
   OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
@@ -31,6 +30,5 @@ OpParameter *PopulateCustomNormalizeParameter(const void *prim) {
 }
 Registry CustomNormalizeParameterRegistry(schema::PrimitiveType_CustomNormalize, PopulateCustomNormalizeParameter,
                                           SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

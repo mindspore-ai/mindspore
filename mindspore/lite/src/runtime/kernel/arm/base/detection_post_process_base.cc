@@ -46,8 +46,8 @@ int DetectionPostProcessBaseCPUKernel::Init() {
   params_->selected_ = nullptr;
   params_->anchors_ = nullptr;
   auto anchor_tensor = in_tensors_.at(2);
+  auto quant_param = anchor_tensor->quant_params().front();
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
-    auto quant_param = anchor_tensor->quant_params().front();
     auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data_c());
     MS_ASSERT(anchor_int8 != nullptr);
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
@@ -59,7 +59,6 @@ int DetectionPostProcessBaseCPUKernel::Init() {
                            anchor_tensor->ElementsNum());
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
-    auto quant_param = anchor_tensor->quant_params().front();
     auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data_c());
     MS_ASSERT(anchor_uint8 != nullptr);
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
@@ -144,19 +143,7 @@ void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
   }
 }
 
-int DetectionPostProcessBaseCPUKernel::Run() {
-  MS_ASSERT(context_->allocator != nullptr);
-  int status = GetInputData();
-  if (status != RET_OK) {
-    return status;
-  }
-  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
-  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
-  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data_c());
-
-  num_boxes_ = in_tensors_.at(0)->shape().at(1);
-  num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
+int DetectionPostProcessBaseCPUKernel::MallocParam() {
   params_->decoded_boxes_ = context_->allocator->Malloc(num_boxes_ * 4 * sizeof(float));
   if (params_->decoded_boxes_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->decoded_boxes_ failed.";
@@ -181,7 +168,6 @@ int DetectionPostProcessBaseCPUKernel::Run() {
     FreeAllocatedBuffer();
     return RET_ERROR;
   }
-
   if (params_->use_regular_nms_) {
     params_->scores_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
     if (params_->scores_ == nullptr) {
@@ -221,14 +207,32 @@ int DetectionPostProcessBaseCPUKernel::Run() {
       return RET_ERROR;
     }
   }
+  return RET_OK;
+}
 
+int DetectionPostProcessBaseCPUKernel::Run() {
+  MS_ASSERT(context_->allocator != nullptr);
+  int status = GetInputData();
+  if (status != RET_OK) {
+    return status;
+  }
+  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
+  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
+  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data_c());
+  num_boxes_ = in_tensors_.at(0)->shape().at(1);
+  num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
+  status = MallocParam();
+  if (status != RET_OK) {
+    FreeAllocatedBuffer();
+    return status;
+  }
   status = DecodeBoxes(num_boxes_, input_boxes_, params_->anchors_, params_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "DecodeBoxes error";
     FreeAllocatedBuffer();
     return status;
   }
-
   if (params_->use_regular_nms_) {
     status = DetectionPostProcessRegular(num_boxes_, num_classes_with_bg_, input_scores_, output_boxes, output_classes,
                                          output_scores, output_num, PartialArgSort, params_);

@@ -34,6 +34,5 @@ OpParameter *PopulateTensorListStackParameter(const void *prim) {
 }
 Registry TensorListStackParameterRegistry(schema::PrimitiveType_TensorListStack, PopulateTensorListStackParameter,
                                           SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

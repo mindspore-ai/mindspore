@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateMatMulParameter(const void *prim) {
   MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
@@ -36,6 +35,5 @@ OpParameter *PopulateMatMulParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
 Registry MatMulParameterRegistry(schema::PrimitiveType_MatMul, PopulateMatMulParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

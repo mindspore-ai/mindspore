@@ -31,8 +31,6 @@ OpParameter *PopulateTransposeParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(transpose_param);
 }
 }  // namespace
-
 Registry g_transposeParameterRegistry(schema::PrimitiveType_Transpose, PopulateTransposeParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateResizeParameter(const void *prim) {
   ResizeParameter *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
   if (resize_param == nullptr) {
@@ -38,8 +37,6 @@ OpParameter *PopulateResizeParameter(const void *prim) {
   resize_param->cubic_coeff_ = value->cubic_coeff();
   return reinterpret_cast<OpParameter *>(resize_param);
 }
-
 Registry ResizeParameterRegistry(schema::PrimitiveType_Resize, PopulateResizeParameter, SCHEMA_CUR);
 }  // namespace lite
-
 }  // namespace mindspore

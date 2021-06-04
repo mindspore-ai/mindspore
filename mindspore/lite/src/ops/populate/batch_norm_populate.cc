@@ -34,8 +34,6 @@ OpParameter *PopulateBatchNorm(const void *prim) {
   return reinterpret_cast<OpParameter *>(batch_norm_param);
 }
 }  // namespace
-
 Registry g_batchNormParameterRegistry(schema::PrimitiveType_BatchNorm, PopulateBatchNorm, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

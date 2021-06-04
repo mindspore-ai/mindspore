@@ -38,7 +38,6 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 namespace mindspore::kernel {
-
 int ReduceFp16CPUKernel::Init() {
   auto ret = ReduceBaseCPUKernel::Init();
   if (ret != RET_OK) {

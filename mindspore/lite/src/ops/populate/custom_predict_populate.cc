@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateCustomPredictParameter(const void *prim) {
   PredictParameter *param = reinterpret_cast<PredictParameter *>(malloc(sizeof(PredictParameter)));
   if (param == nullptr) {
@@ -35,6 +34,5 @@ OpParameter *PopulateCustomPredictParameter(const void *prim) {
 }
 Registry CustomPredictParameterRegistry(schema::PrimitiveType_CustomPredict, PopulateCustomPredictParameter,
                                         SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

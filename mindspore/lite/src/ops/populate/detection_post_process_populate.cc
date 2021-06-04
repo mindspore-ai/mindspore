@@ -46,6 +46,5 @@ OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
 }  // namespace
 Registry g_detectionPostProcessParameterRegistry(schema::PrimitiveType_DetectionPostProcess,
                                                  PopulateDetectionPostProcessParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

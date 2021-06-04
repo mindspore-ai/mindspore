@@ -117,7 +117,6 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwFp16Run error: error_code[" << ret << "]";
   }
-
   return ret;
 }
 

@@ -20,12 +20,12 @@
 namespace mindspore {
 namespace lite {
 namespace {
-typedef struct WhileParemeter {
+struct WhileParemeter {
   OpParameter op_parameter_;
-  int body_subgraph_index;
-  int cond_subgraph_index;
-} WhileParemeter;
-
+  int body_subgraph_index = 0;
+  int cond_subgraph_index = 0;
+};
+using WhileParemeter = WhileParemeter;
 OpParameter *PopulateWhileParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
   auto while_prim = primitive->value_as_While();

@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateHashtableLookupParameter(const void *prim) {
   OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
@@ -31,6 +30,5 @@ OpParameter *PopulateHashtableLookupParameter(const void *prim) {
 }
 Registry HashtableLookupParameterRegistry(schema::PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter,
                                           SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore
