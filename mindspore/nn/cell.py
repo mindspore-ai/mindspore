@@ -89,8 +89,8 @@ class Cell(Cell_):
         self._scope = None
         self._phase = 'train'
         self._parameter_layout_dict = {}
-        self._parallel_parameter_name_list = ()
-        self._parallel_parameter_merge_net_dict = {}
+        self.__parallel_parameter_name_list = ()
+        self.__parallel_parameter_merge_net_dict = {}
         self._create_time = int(time.time() * 1e9)
         self.phase_prefix = ""
         self.parameter_broadcast_done = False
@@ -217,23 +217,23 @@ class Cell(Cell_):
 
     @property
     def parallel_parameter_name_list(self):
-        return self._parallel_parameter_name_list
+        return self.__parallel_parameter_name_list
 
     @parallel_parameter_name_list.setter
     def parallel_parameter_name_list(self, value):
         if not isinstance(value, list):
             raise TypeError("'parallel_parameter_name_list' must be list type.")
-        self._parallel_parameter_name_list = value
+        self.__parallel_parameter_name_list = value
 
     @property
     def parallel_parameter_merge_net_dict(self):
-        return self._parallel_parameter_merge_net_dict
+        return self.__parallel_parameter_merge_net_dict
 
     @parallel_parameter_merge_net_dict.setter
     def parallel_parameter_merge_net_dict(self, value):
         if not isinstance(value, dict):
             raise TypeError("'parallel_parameter_merge_net_dict' must be dict type.")
-        self._parallel_parameter_merge_net_dict = value
+        self.__parallel_parameter_merge_net_dict = value
 
     def get_func_graph_proto(self):
         """Return graph binary proto."""
@@ -399,7 +399,7 @@ class Cell(Cell_):
             self._add_attr(key, value)
         self._attr_synced = True
 
-    def _set_attr_for_parameter(self, name, value):
+    def __set_attr_for_parameter(self, name, value):
         """Set attr for parameter."""
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
@@ -413,7 +413,7 @@ class Cell(Cell_):
             raise TypeError("The type of value should be Cell, but got Parameter.")
         self.insert_param_to_cell(name, value)
 
-    def _set_attr_for_parameter_tuple(self, name, value):
+    def __set_attr_for_parameter_tuple(self, name, value):
         """Set attr for parameter tuple."""
         params = self.__dict__.get('_params')
         params_list = self.__dict__.get('_params_list')
@@ -430,7 +430,7 @@ class Cell(Cell_):
         else:
             object.__setattr__(self, name, value)
 
-    def _set_attr_for_cell(self, name, value):
+    def __set_attr_for_cell(self, name, value):
         """Set attr for cell."""
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
@@ -451,11 +451,11 @@ class Cell(Cell_):
         params = self.__dict__.get('_params')
         tensor_list = self.__dict__.get('_tensor_list')
         if isinstance(value, Parameter):
-            self._set_attr_for_parameter(name, value)
+            self.__set_attr_for_parameter(name, value)
         elif isinstance(value, ParameterTuple):
-            self._set_attr_for_parameter_tuple(name, value)
+            self.__set_attr_for_parameter_tuple(name, value)
         elif isinstance(value, Cell):
-            self._set_attr_for_cell(name, value)
+            self.__set_attr_for_cell(name, value)
         elif params and name in params:
             if isinstance(value, Tensor) and self._params[name] is not None:
                 self._params[name].set_data(value)
