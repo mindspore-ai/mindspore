@@ -52,7 +52,6 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(jpeg_turbo_LIBPATH ${jpeg_turbo_LIBPATH}/../bin/)
     set(sqlite_LIBPATH ${sqlite_LIBPATH}/../bin/)
     set(tinyxml2_LIBPATH ${tinyxml2_LIBPATH}/../bin/)
-    set(sentencepiece_LIBPATH ${sentencepiece_LIBPATH}/../bin/)
 else()
     set(INSTALL_LIB_DIR "lib")
 endif()
@@ -133,14 +132,6 @@ if(ENABLE_MINDDATA)
     file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2*)
     install(
         FILES ${TINYXML2_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-    file(GLOB_RECURSE SENTENCEPIECE_LIB_LIST
-        ${sentencepiece_LIBPATH}/libsentencepiece*
-    )
-    install(
-    FILES ${SENTENCEPIECE_LIB_LIST}
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )

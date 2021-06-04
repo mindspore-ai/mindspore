@@ -60,7 +60,7 @@ void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y,
 
 Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
   if (input.size() < 2) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: both image and label columns are required.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: invalid input, both image and label columns are required.");
   }
   std::vector<int64_t> image_shape = input.at(0)->shape().AsVector();
   std::vector<int64_t> label_shape = input.at(1)->shape().AsVector();

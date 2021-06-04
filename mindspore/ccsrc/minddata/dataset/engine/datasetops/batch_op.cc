@@ -351,7 +351,7 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
                     "Invalid parameter, batch_size function should return an integer greater than 0.");
     }
   }
-  return Status(StatusCode::kSuccess, "batch_size function call succeedeed.");
+  return Status(StatusCode::kSuccess, "batch_size function call succeeded.");
 }
 
 Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info) {
