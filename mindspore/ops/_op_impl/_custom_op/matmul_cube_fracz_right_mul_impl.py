@@ -86,9 +86,9 @@ def cus_matmul_cube_fraczrightmul(input_x1, input_x2, input_x3, output_y=None, k
     input_x1 = tik_instance.Tensor("float16", input_x1_shape, name="left_matrix", scope=tik.scope_gm)
     input_x2 = tik_instance.Tensor("float16", input_x2_shape, name="right_matrix", scope=tik.scope_gm)
     input_x3 = tik_instance.Tensor("float32", input_x3_shape, name="matrix_max", scope=tik.scope_gm)
-    resMatmul = tik_instance.Tensor("float32", output_shape, name="output", scope=tik.scope_gm)
-    cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3, resMatmul)
-    tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2, input_x3], outputs=[resMatmul])
+    resmatmul = tik_instance.Tensor("float32", output_shape, name="output", scope=tik.scope_gm)
+    cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3, resmatmul)
+    tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2, input_x3], outputs=[resmatmul])
     return tik_instance
 
 
@@ -177,7 +177,7 @@ def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
         core_m = block_idx // core_n_num
         core_n = block_idx % core_n_num
         res_l0c = tik_instance.Tensor("float32", [no_tile, mo_tile, c0, c0],
-                                      name="resMatmul_L0C", scope=tik.scope_cc)
+                                      name="resmatmul_L0C", scope=tik.scope_cc)
         with tik_instance.for_range(0, loop_k_num, thread_num=thread_num_k) as thread_idx_k:
             if diag_opt:
                 k_idx = (core_n * loop_n_num + cc_n) * no_tile + thread_idx_k * ko_tile_inner
@@ -219,7 +219,7 @@ def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
                 tik_instance.mmad(res_l0c, input_x1_l0a, input_x2_l0b, mo_tile * c0,
                                   ko_tile_inner * c0, no_tile * c0, 1)
         res_ub = tik_instance.Tensor("float32", [no_tile, mo_tile, c0, c0],
-                                     name="resMatmul_ub", scope=tik.scope_ubuf)
+                                     name="resmatmul_ub", scope=tik.scope_ubuf)
         tik_instance.data_move(res_ub, res_l0c, 0, 1, no_tile * mo_tile, 0, 0)
 
         input_3_local_ub = tik_instance.Tensor("float32", (8,), scope=tik.scope_ubuf, name="input_3_local_ub")

@@ -44,6 +44,31 @@ matmul_cube_fracz_left_cast_op_info = TBERegOp("CusMatMulCubeFraczLeftCast") \
     .get_op_info()
 
 
+def _clip_num(num):
+    """clip number"""
+    if num == 0:
+        num = 1
+    return num
+
+
+def _get_block(trans_a, trans_b, m_shape, n_shape, km_shape, kn_shape):
+    """_get_block"""
+    block_in0 = cce.BLOCK_IN
+    block_out0 = cce.BLOCK_OUT
+    if trans_a and km_shape == 1:
+        block_in0 = cce.BLOCK_VECTOR
+
+    if not trans_a and m_shape == 1:
+        block_in0 = cce.BLOCK_VECTOR
+
+    if trans_b and kn_shape == 1:
+        block_out0 = cce.BLOCK_VECTOR
+
+    if not trans_b and n_shape == 1:
+        block_out0 = cce.BLOCK_VECTOR
+    return block_in0, block_out0
+
+
 @op_info_register(matmul_cube_fracz_left_cast_op_info)
 def cus_matmul_cube_fraczleftcast(input_x1, input_x2, bias=None, output_y=None, trans_a=False, trans_b=False,
                                   kernel_name="cus_matmul_cube_fraczleftcast"):
@@ -52,132 +77,113 @@ def cus_matmul_cube_fraczleftcast(input_x1, input_x2, bias=None, output_y=None, 
     data with fractal format.
 
     Parameters:
-    shape_a: list or tuple
+    shape_aa: list or tuple
             Shape of the first tensor a with rank > 1
-    shape_b:  list or tuple
+    shape_bb:  list or tuple
             Shape of the second tensor b with the same type with a,
-            and shape_a, shape_b must be 2 dims
+            and shape_aa, shape_bb must be 2 dims
     src_dtype: str
             The data type of input, support "float32", "float16"
     dst_dtype: str
             The data type of output, support "float32", "float16"
     trans_a: bool
-            If True, shape_a == transposed before multiplication
+            If True, shape_aa == transposed before multiplication
     trans_b: bool
-            If True, shape_b == transposed before multiplication
+            If True, shape_bb == transposed before multiplication
     is_fractal: bool
             If True, the input data format of a and b must be fractal format
-    shape_bias: list or tuple
+    shape_bbias: list or tuple
             Shape of bias, only support the input data format with ND
 
     Returns
     -------
     None
     """
-    shape_a = input_x1.get("ori_shape")
-    shape_b = input_x2.get("ori_shape")
-    print("============")
-    print(input_x1.get("format"), input_x2.get("format"))
-    print(shape_a, shape_b)
-    print("============")
+    shape_aa = input_x1.get("ori_shape")
+    shape_bb = input_x2.get("ori_shape")
     if input_x2.get("format") == "FRACTAL_Z":
-        n, c, h, w = shape_b
+        n, c, h, w = shape_bb
         c0 = 16
         c1 = c // c0
-        if c1 == 0:
-            c1 = 1
-        shape_b = [n, c1 * h * w * c0]
-        shape_a = [n, n]
+        c1 = _clip_num(c1)
+        shape_bb = [n, c1 * h * w * c0]
+        shape_aa = [n, n]
 
     if input_x1.get("format") == "FRACTAL_Z":
-        n, c, h, w = shape_a
+        n, c, h, w = shape_aa
         c0 = 16
         c1 = c // c0
-        if c1 == 0:
-            c1 = 1
-        shape_a = [n, c1 * h * w * c0]
-        shape_b = [c1 * h * w * c0, c1 * h * w * c0]
+        c1 = _clip_num(c1)
+        shape_aa = [n, c1 * h * w * c0]
+        shape_bb = [c1 * h * w * c0, c1 * h * w * c0]
 
     if input_x2.get("format") == "FRACTAL_NZ":
-        shape_a = [shape_b[0], shape_b[0]]
+        shape_aa = [shape_bb[0], shape_bb[0]]
 
     if input_x1.get("format") == "FRACTAL_NZ":
-        shape_b = [shape_a[1], shape_a[1]]
+        shape_bb = [shape_aa[1], shape_aa[1]]
 
-    shape_a = list(shape_a)
-    shape_b = list(shape_b)
+    shape_aa = list(shape_aa)
+    shape_bb = list(shape_bb)
 
-    shape_a = _get_input_shape(shape_a)
-    shape_b = _get_input_shape(shape_b)
+    shape_aa = _get_input_shape(shape_aa)
+    shape_bb = _get_input_shape(shape_bb)
 
     util.check_kernel_name(kernel_name)
-    util.check_shape_rule(shape_a)
-    util.check_shape_rule(shape_b)
-    util.check_shape_size(shape_a, SHAPE_SIZE_LIMIT)
-    util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
+    util.check_shape_rule(shape_aa)
+    util.check_shape_rule(shape_bb)
+    util.check_shape_size(shape_aa, SHAPE_SIZE_LIMIT)
+    util.check_shape_size(shape_bb, SHAPE_SIZE_LIMIT)
 
-    shape_a = [shape_a[1], shape_a[0]]
+    shape_aa = [shape_aa[1], shape_aa[0]]
     trans_a = bool(1 - trans_a)
 
-    shape_b = [shape_b[1], shape_b[0]]
+    shape_bb = [shape_bb[1], shape_bb[0]]
     trans_b = bool(1 - trans_b)
 
-    shape_bias = ()
+    shape_bbias = ()
     if bias is not None and bool(bias):
-        shape_bias = bias.get("shape")
-        shape_bias = list(shape_bias)
-        shape_bias = _get_bias(shape_bias)
+        shape_bbias = bias.get("shape")
+        shape_bbias = list(shape_bbias)
+        shape_bbias = _get_bias(shape_bbias)
 
     src_dtype = input_x1.get("dtype").lower()
-    _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b)
+    _shape_check(shape_aa, shape_bb, shape_bbias, src_dtype, trans_a, trans_b)
 
-    m_shape = shape_a[len(shape_a) - 2]
-    km_shape = shape_a[len(shape_a) - 1]
-    kn_shape = shape_b[len(shape_a) - 2]
-    n_shape = shape_b[len(shape_a) - 1]
+    m_shape = shape_aa[len(shape_aa) - 2]
+    km_shape = shape_aa[len(shape_aa) - 1]
+    kn_shape = shape_bb[len(shape_aa) - 2]
+    n_shape = shape_bb[len(shape_aa) - 1]
 
     if src_dtype == "float16":
         block_reduce = cce.BLOCK_REDUCE
 
-    block_in = cce.BLOCK_IN
-    block_out = cce.BLOCK_OUT
-
-    if trans_a and km_shape == 1:
-        block_in = cce.BLOCK_VECTOR
-
-    if not trans_a and m_shape == 1:
-        block_in = cce.BLOCK_VECTOR
-
-    if trans_b and kn_shape == 1:
-        block_out = cce.BLOCK_VECTOR
-
-    if not trans_b and n_shape == 1:
-        block_out = cce.BLOCK_VECTOR
+    block_in0, block_out0 = _get_block(trans_a, trans_b, m_shape, n_shape, km_shape, kn_shape)
 
     if trans_a:
-        shape_a_temp = (m_shape // block_reduce, km_shape // block_in, block_reduce, block_in)
+        shape_aa_tmp = (m_shape // block_reduce, km_shape // block_in0, block_reduce, block_in0)
     else:
-        shape_a_temp = (m_shape // block_in, km_shape // block_reduce, block_in, block_reduce)
+        shape_aa_tmp = (m_shape // block_in0, km_shape // block_reduce, block_in0, block_reduce)
 
     if trans_b:
-        shape_b_temp = (kn_shape // block_out, n_shape // block_reduce, block_reduce, block_out)
+        shape_bb_tmp = (kn_shape // block_out0, n_shape // block_reduce, block_reduce, block_out0)
     else:
-        shape_b_temp = (kn_shape // block_reduce, n_shape // block_out, block_out, block_reduce)
-    shape_a_temp = (shape_a_temp[0], shape_a_temp[1], shape_a_temp[2], shape_a_temp[3])
-    shape_b_temp = (shape_b_temp[0], shape_b_temp[1], shape_b_temp[2], shape_b_temp[3])
+        shape_bb_tmp = (kn_shape // block_reduce, n_shape // block_out0, block_out0, block_reduce)
+    shape_aa_tmp = (shape_aa_tmp[0], shape_aa_tmp[1], shape_aa_tmp[2], shape_aa_tmp[3])
+    shape_bb_tmp = (shape_bb_tmp[0], shape_bb_tmp[1], shape_bb_tmp[2], shape_bb_tmp[3])
 
     if util.get_product_version() == util.VERSION_MINI:
         tik_instance = tik.Tik(tik.Dprofile("v100", "mini"))
     else:
         tik_instance = tik.Tik(tik.Dprofile("v100", "cloud"))
-    input_x1 = tik_instance.Tensor(input_x1.get("dtype"), shape_a_temp, name="left_matrix", scope=tik.scope_gm)
-    input_x2 = tik_instance.Tensor(input_x2.get("dtype"), shape_b_temp, name="right_matrix", scope=tik.scope_gm)
-    res_matmul = tik_instance.Tensor(output_y.get("dtype"), output_y.get("shape"), name="output", scope=tik.scope_gm)
-    mo_tile, ko_tile, no_tile, diag_opt = get_cus_tile_info(input_x1, input_x2, 128)
-    cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b, res_matmul,
+    input_x1 = tik_instance.Tensor(input_x1.get("dtype"), shape_aa_tmp, name="left_matrix", scope=tik.scope_gm)
+    input_x2 = tik_instance.Tensor(input_x2.get("dtype"), shape_bb_tmp, name="right_matrix", scope=tik.scope_gm)
+    res_matmul0 = tik_instance.Tensor(output_y.get("dtype"), output_y.get("shape"), name="output", scope=tik.scope_gm)
+    mo_tile, ko_tile, no_tile, dig_opt = get_cus_tile_info(input_x1, input_x2, 128)
+    cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b, res_matmul0,
                          mo_tile=mo_tile, ko_tile=ko_tile, no_tile=no_tile,
-                         diag_opt=diag_opt, diag_size=128)
-    tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2], outputs=[res_matmul])
+                         diag_opt=dig_opt, diag_size=128)
+    tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2], outputs=[res_matmul0])
     return tik_instance
 
 

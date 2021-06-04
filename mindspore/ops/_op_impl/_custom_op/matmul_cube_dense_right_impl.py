@@ -68,106 +68,133 @@ def cus_matmul_cube_dense_right(input_x1, input_x2, input_x3, output_y=None,
             core_m_idx = block_index // 16
             core_n_idx = block_index % 16
             matrix_max_scalar = tik_instance.Scalar("float32")
-            matrix_max_local_UB = tik_instance.Tensor("float32", (8,), scope=tik.scope_ubuf,
-                                                      name="matrix_max_local_UB")
-            tik_instance.data_move(matrix_max_local_UB, input_x3, 0, 1, 1, 0, 0)
-            matrix_max_scalar.set_as(matrix_max_local_UB[0])
-
-            resmatmul_local_ub = tik_instance.Tensor("float32", (256 * 128,), scope=tik.scope_ubuf,
-                                                     name="resmatmul_local_ub")
-            resmatmul_local_ub1 = tik_instance.Tensor("float32", (240 * 128,), scope=tik.scope_ubuf,
-                                                      name="resmatmul_local_ub1")
-
-            resmatmul_local_ub_local_l0c = tik_instance.Tensor("float32", (256 * 128,), scope=tik.scope_cc,
-                                                               name="resmatmul_local_ub_local_l0c")
-            resmatmul_local_ub_local_l0c1 = tik_instance.Tensor("float32", (240 * 128,), scope=tik.scope_cc,
-                                                                name="resmatmul_local_ub_local_l0c1")
-
-            input_1_local_l1_local_L0A = tik_instance.Tensor("float16", (256 * 128,), scope=tik.scope_ca,
-                                                             name="input_1_local_l1_local_L0A")
-            input_2_local_l1 = tik_instance.Tensor("float16", (8 * 128 * 16,), scope=tik.scope_cbuf,
-                                                   name="input_2_local_l1")
-            input_2_local_l11 = tik_instance.Tensor("float16", (8 * 128 * 16,), scope=tik.scope_cbuf,
-                                                    name="input_2_local_l11")
-
-            input_1_local_l1 = tik_instance.Tensor("float16", (8 * 256 * 16,), scope=tik.scope_cbuf,
-                                                   name="input_1_local_l1")
-            input_1_local_l11 = tik_instance.Tensor("float16", (8 * 240 * 16,), scope=tik.scope_cbuf,
-                                                    name="input_1_local_l11")
-
-            input_2_local_l1_local_l0b = tik_instance.Tensor("float16", (128 * 128,), scope=tik.scope_cb,
-                                                             name="input_2_local_l1_local_l0b")
-            input_2_local_l1_local_l0b1 = tik_instance.Tensor("float16", (128 * 128,), scope=tik.scope_cb,
-                                                              name="input_2_local_l1_local_l0b1")
+            matrix_max_local_ub = tik_instance.Tensor("float32", (8,), scope=tik.scope_ubuf,
+                                                      name="matrix_max_local_ub")
+            tik_instance.data_move(matrix_max_local_ub, input_x3, 0, 1, 1, 0, 0)
+            matrix_max_scalar.set_as(matrix_max_local_ub[0])
 
             with tik_instance.if_scope(core_m_idx == 0):
-                with tik_instance.for_range(0, 2) as cc1:
-                    tik_instance.data_move(input_2_local_l1, input_x2[core_n_idx * 262144 + core_n_idx * 2048], 0, 8,
-                                           128, 1920, 0)
-                    tik_instance.data_move(input_1_local_l1, input_x1[core_n_idx * 129024 + cc1 * 4096], 0, 8, 256,
-                                           752, 0)
-                    with tik_instance.for_range(0, 8) as cc10:
-                        tik_instance.load2dv1(input_2_local_l1_local_l0b[cc10 * 2048], input_2_local_l1[cc10 * 256], 0,
-                                              8, 8, 0, True)
-                    with tik_instance.for_range(0, 16) as cc101:
-                        tik_instance.load2dv1(input_1_local_l1_local_L0A[cc101 * 2048], input_1_local_l1[cc101 * 256],
-                                              0, 8, 16, 0, False)
-
-                    tik_instance.mmad(resmatmul_local_ub_local_l0c, input_1_local_l1_local_L0A,
-                                      input_2_local_l1_local_l0b, 256, 128, 128, 0)
-                    tik_instance.data_move(resmatmul_local_ub, resmatmul_local_ub_local_l0c, 0, 1, 128, 0, 0)
-                    tik_instance.vmuls(64, resmatmul_local_ub, resmatmul_local_ub, matrix_max_scalar, 255, 1, 1, 8, 8)
-                    tik_instance.vmuls(64, resmatmul_local_ub[255 * 64], resmatmul_local_ub[255 * 64],
-                                       matrix_max_scalar, 255, 1, 1, 8, 8)
-                    tik_instance.vmuls(64, resmatmul_local_ub[510 * 64], resmatmul_local_ub[510 * 64],
-                                       matrix_max_scalar, 2, 1, 1, 8, 8)
-
-                    tik_instance.data_move(resmatmul[core_n_idx * 129024 + cc1 * 4096], resmatmul_local_ub, 0, 8, 512,
-                                           0, 1504)
+                tik_instance, resmatmul = _update_tik1(tik_instance, input_x1, input_x2, core_n_idx,
+                                                       resmatmul, matrix_max_scalar)
             with tik_instance.else_scope():
-                tik_instance.data_move(input_2_local_l1, input_x2[core_n_idx * 262144 + core_n_idx * 2048], 0, 8, 128,
-                                       1920, 0)
-                tik_instance.data_move(input_1_local_l1, input_x1[core_n_idx * 129024 + 2 * 4096], 0, 8, 256, 752, 0)
-                with tik_instance.for_range(0, 8) as cc10:
-                    tik_instance.load2dv1(input_2_local_l1_local_l0b[cc10 * 2048], input_2_local_l1[cc10 * 256], 0, 8,
-                                          8, 0, True)
-                with tik_instance.for_range(0, 16) as cc101:
-                    tik_instance.load2dv1(input_1_local_l1_local_L0A[cc101 * 2048], input_1_local_l1[cc101 * 256],
-                                          0, 8, 16, 0, False)
-
-                tik_instance.mmad(resmatmul_local_ub_local_l0c, input_1_local_l1_local_L0A, input_2_local_l1_local_l0b,
-                                  256, 128, 128, 0)
-                tik_instance.data_move(resmatmul_local_ub, resmatmul_local_ub_local_l0c, 0, 1, 128, 0, 0)
-                tik_instance.vmuls(64, resmatmul_local_ub, resmatmul_local_ub, matrix_max_scalar, 255, 1, 1, 8, 8)
-                tik_instance.vmuls(64, resmatmul_local_ub[255 * 64], resmatmul_local_ub[255 * 64], matrix_max_scalar,
-                                   255, 1, 1, 8, 8)
-                tik_instance.vmuls(64, resmatmul_local_ub[510 * 64], resmatmul_local_ub[510 * 64], matrix_max_scalar,
-                                   2, 1, 1, 8, 8)
-
-                tik_instance.data_move(resmatmul[core_n_idx * 129024 + 2 * 4096], resmatmul_local_ub, 0, 8, 512, 0,
-                                       1504)
-
-                tik_instance.data_move(input_2_local_l11, input_x2[core_n_idx * 262144 + core_n_idx * 2048], 0, 8, 128,
-                                       1920, 0)
-                tik_instance.data_move(input_1_local_l11, input_x1[core_n_idx * 129024 + 12288], 0, 8, 240, 768, 0)
-
-                with tik_instance.for_range(0, 8) as cc102:
-                    tik_instance.load2dv1(input_2_local_l1_local_l0b1[cc102 * 2048], input_2_local_l11[cc102 * 256], 0,
-                                          8, 8, 0, True)
-                with tik_instance.for_range(0, 16) as cc103:
-                    tik_instance.load2dv1(input_1_local_l1_local_L0A[cc103 * 2048], input_1_local_l11[cc103 * 256], 0,
-                                          8, 15, 0, False)
-
-                tik_instance.mmad(resmatmul_local_ub_local_l0c1, input_1_local_l1_local_L0A,
-                                  input_2_local_l1_local_l0b1, 240, 128, 128, 0)
-                tik_instance.data_move(resmatmul_local_ub1, resmatmul_local_ub_local_l0c1, 0, 1, 120, 0, 0)
-
-                tik_instance.vmuls(64, resmatmul_local_ub1, resmatmul_local_ub1, matrix_max_scalar, 255, 1, 1, 8, 8)
-                tik_instance.vmuls(64, resmatmul_local_ub1[255 * 64], resmatmul_local_ub1[255 * 64], matrix_max_scalar,
-                                   225, 1, 1, 8, 8)
-
-                tik_instance.data_move(resmatmul[core_n_idx * 129024 + 12288], resmatmul_local_ub1, 0, 8, 480, 0, 1536)
+                tik_instance, resmatmul = _update_tik2(tik_instance, input_x1, input_x2, core_n_idx,
+                                                       resmatmul, matrix_max_scalar)
 
         tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2, input_x3], outputs=[resmatmul])
         return tik_instance
     return None
+
+
+def _update_tik1(tik_instance, input_x1, input_x2, core_n_idx, resmatmul, matrix_max_scalar):
+    """_update_tik1"""
+    resmatmul_local_ub = tik_instance.Tensor("float32", (256 * 128,), scope=tik.scope_ubuf,
+                                             name="resmatmul_local_ub")
+    resmatmul_local_ub_local_l0c = tik_instance.Tensor("float32", (256 * 128,), scope=tik.scope_cc,
+                                                       name="resmatmul_local_ub_local_l0c")
+    input_1_local_l1_local_l0a = tik_instance.Tensor("float16", (256 * 128,), scope=tik.scope_ca,
+                                                     name="input_1_local_l1_local_l0a")
+    input_2_local_l1 = tik_instance.Tensor("float16", (8 * 128 * 16,), scope=tik.scope_cbuf,
+                                           name="input_2_local_l1")
+
+    input_1_local_l1 = tik_instance.Tensor("float16", (8 * 256 * 16,), scope=tik.scope_cbuf,
+                                           name="input_1_local_l1")
+    input_2_local_l1_local_l0b = tik_instance.Tensor("float16", (128 * 128,), scope=tik.scope_cb,
+                                                     name="input_2_local_l1_local_l0b")
+    with tik_instance.for_range(0, 2) as cc1:
+        tik_instance.data_move(input_2_local_l1, input_x2[core_n_idx * 262144 + core_n_idx * 2048], 0, 8,
+                               128, 1920, 0)
+        tik_instance.data_move(input_1_local_l1, input_x1[core_n_idx * 129024 + cc1 * 4096], 0, 8, 256,
+                               752, 0)
+        with tik_instance.for_range(0, 8) as cc10:
+            tik_instance.load2dv1(input_2_local_l1_local_l0b[cc10 * 2048], input_2_local_l1[cc10 * 256], 0,
+                                  8, 8, 0, True)
+        with tik_instance.for_range(0, 16) as cc101:
+            tik_instance.load2dv1(input_1_local_l1_local_l0a[cc101 * 2048], input_1_local_l1[cc101 * 256],
+                                  0, 8, 16, 0, False)
+
+        tik_instance.mmad(resmatmul_local_ub_local_l0c, input_1_local_l1_local_l0a,
+                          input_2_local_l1_local_l0b, 256, 128, 128, 0)
+        tik_instance.data_move(resmatmul_local_ub, resmatmul_local_ub_local_l0c, 0, 1, 128, 0, 0)
+        tik_instance.vmuls(64, resmatmul_local_ub, resmatmul_local_ub, matrix_max_scalar, 255, 1, 1, 8, 8)
+        tik_instance.vmuls(64, resmatmul_local_ub[255 * 64], resmatmul_local_ub[255 * 64],
+                           matrix_max_scalar, 255, 1, 1, 8, 8)
+        tik_instance.vmuls(64, resmatmul_local_ub[510 * 64], resmatmul_local_ub[510 * 64],
+                           matrix_max_scalar, 2, 1, 1, 8, 8)
+
+        tik_instance.data_move(resmatmul[core_n_idx * 129024 + cc1 * 4096], resmatmul_local_ub, 0, 8, 512,
+                               0, 1504)
+    return tik_instance, resmatmul
+
+
+def _update_tik2(tik_instance, input_x1, input_x2, core_n_idx, resmatmul, matrix_max_scalar):
+    """_update_tik2"""
+    resmatmul_local_ub = tik_instance.Tensor("float32", (256 * 128,), scope=tik.scope_ubuf,
+                                             name="resmatmul_local_ub")
+    resmatmul_local_ub1 = tik_instance.Tensor("float32", (240 * 128,), scope=tik.scope_ubuf,
+                                              name="resmatmul_local_ub1")
+
+    resmatmul_local_ub_local_l0c = tik_instance.Tensor("float32", (256 * 128,), scope=tik.scope_cc,
+                                                       name="resmatmul_local_ub_local_l0c")
+    resmatmul_local_ub_local_l0c1 = tik_instance.Tensor("float32", (240 * 128,), scope=tik.scope_cc,
+                                                        name="resmatmul_local_ub_local_l0c1")
+
+    input_1_local_l1_local_l0a = tik_instance.Tensor("float16", (256 * 128,), scope=tik.scope_ca,
+                                                     name="input_1_local_l1_local_l0a")
+    input_2_local_l1 = tik_instance.Tensor("float16", (8 * 128 * 16,), scope=tik.scope_cbuf,
+                                           name="input_2_local_l1")
+    input_2_local_l11 = tik_instance.Tensor("float16", (8 * 128 * 16,), scope=tik.scope_cbuf,
+                                            name="input_2_local_l11")
+
+    input_1_local_l1 = tik_instance.Tensor("float16", (8 * 256 * 16,), scope=tik.scope_cbuf,
+                                           name="input_1_local_l1")
+    input_1_local_l11 = tik_instance.Tensor("float16", (8 * 240 * 16,), scope=tik.scope_cbuf,
+                                            name="input_1_local_l11")
+
+    input_2_local_l1_local_l0b = tik_instance.Tensor("float16", (128 * 128,), scope=tik.scope_cb,
+                                                     name="input_2_local_l1_local_l0b")
+    input_2_local_l1_local_l0b1 = tik_instance.Tensor("float16", (128 * 128,), scope=tik.scope_cb,
+                                                      name="input_2_local_l1_local_l0b1")
+
+    tik_instance.data_move(input_2_local_l1, input_x2[core_n_idx * 262144 + core_n_idx * 2048], 0, 8, 128,
+                           1920, 0)
+    tik_instance.data_move(input_1_local_l1, input_x1[core_n_idx * 129024 + 2 * 4096], 0, 8, 256, 752, 0)
+    with tik_instance.for_range(0, 8) as cc10:
+        tik_instance.load2dv1(input_2_local_l1_local_l0b[cc10 * 2048], input_2_local_l1[cc10 * 256], 0, 8,
+                              8, 0, True)
+    with tik_instance.for_range(0, 16) as cc101:
+        tik_instance.load2dv1(input_1_local_l1_local_l0a[cc101 * 2048], input_1_local_l1[cc101 * 256],
+                              0, 8, 16, 0, False)
+
+    tik_instance.mmad(resmatmul_local_ub_local_l0c, input_1_local_l1_local_l0a, input_2_local_l1_local_l0b,
+                      256, 128, 128, 0)
+    tik_instance.data_move(resmatmul_local_ub, resmatmul_local_ub_local_l0c, 0, 1, 128, 0, 0)
+    tik_instance.vmuls(64, resmatmul_local_ub, resmatmul_local_ub, matrix_max_scalar, 255, 1, 1, 8, 8)
+    tik_instance.vmuls(64, resmatmul_local_ub[255 * 64], resmatmul_local_ub[255 * 64], matrix_max_scalar,
+                       255, 1, 1, 8, 8)
+    tik_instance.vmuls(64, resmatmul_local_ub[510 * 64], resmatmul_local_ub[510 * 64], matrix_max_scalar,
+                       2, 1, 1, 8, 8)
+
+    tik_instance.data_move(resmatmul[core_n_idx * 129024 + 2 * 4096], resmatmul_local_ub, 0, 8, 512, 0,
+                           1504)
+
+    tik_instance.data_move(input_2_local_l11, input_x2[core_n_idx * 262144 + core_n_idx * 2048], 0, 8, 128,
+                           1920, 0)
+    tik_instance.data_move(input_1_local_l11, input_x1[core_n_idx * 129024 + 12288], 0, 8, 240, 768, 0)
+
+    with tik_instance.for_range(0, 8) as cc102:
+        tik_instance.load2dv1(input_2_local_l1_local_l0b1[cc102 * 2048], input_2_local_l11[cc102 * 256], 0,
+                              8, 8, 0, True)
+    with tik_instance.for_range(0, 16) as cc103:
+        tik_instance.load2dv1(input_1_local_l1_local_l0a[cc103 * 2048], input_1_local_l11[cc103 * 256], 0,
+                              8, 15, 0, False)
+
+    tik_instance.mmad(resmatmul_local_ub_local_l0c1, input_1_local_l1_local_l0a,
+                      input_2_local_l1_local_l0b1, 240, 128, 128, 0)
+    tik_instance.data_move(resmatmul_local_ub1, resmatmul_local_ub_local_l0c1, 0, 1, 120, 0, 0)
+
+    tik_instance.vmuls(64, resmatmul_local_ub1, resmatmul_local_ub1, matrix_max_scalar, 255, 1, 1, 8, 8)
+    tik_instance.vmuls(64, resmatmul_local_ub1[255 * 64], resmatmul_local_ub1[255 * 64], matrix_max_scalar,
+                       225, 1, 1, 8, 8)
+
+    tik_instance.data_move(resmatmul[core_n_idx * 129024 + 12288], resmatmul_local_ub1, 0, 8, 480, 0, 1536)
+    return tik_instance, resmatmul

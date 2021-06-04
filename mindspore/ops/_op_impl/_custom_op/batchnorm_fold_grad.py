@@ -95,12 +95,12 @@ def batchnorm_fold_grad(d_batch_mean, d_batch_std, x, batch_mean, batch_std, dx,
     dtype_mean = d_batch_mean.get("dtype").lower()
     if format_data == "NC1HWC0":
         if len(shape_x) != 5:
-            raise RuntimeError("batchnorm_fold only support shape 5D"
+            raise RuntimeError("batchnorm_fold grad only support shape 5D"
                                "when input format is NC1HWC0")
         shape_mean = (1, shape_x[1], 1, 1, shape_x[4])
     elif format_data == "NCHW":
         if len(shape_x) < 2 or len(shape_x) > 4:
-            raise RuntimeError("batchnorm_fold only support shape 2D to 4D")
+            raise RuntimeError("batchnorm_fold grad only support shape 2D to 4D")
         if shape_x[1] != shape_mean[0]:
             raise RuntimeError("data_format is NCHW, shape_bias must"
                                "be equal to the second axis of shape_x")
