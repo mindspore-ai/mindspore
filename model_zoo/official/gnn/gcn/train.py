@@ -18,8 +18,6 @@ GCN training script.
 """
 import os
 import time
-import argparse
-import ast
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -34,6 +32,10 @@ from src.metrics import LossAccuracyWrapper, TrainNetWrapper
 from src.config import ConfigGCN
 from src.dataset import get_adj_features_labels, get_mask
 
+from model_utils.config import config as default_args
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
+
 
 def t_SNE(out_feature, dim):
     t_sne = manifold.TSNE(n_components=dim, init='pca', random_state=0)
@@ -46,27 +48,79 @@ def update_graph(i, data, scat, plot):
     return scat, plot
 
 
-def train():
-    """Train model."""
-    parser = argparse.ArgumentParser(description='GCN')
-    parser.add_argument('--data_dir', type=str, default='./data/cora/cora_mr', help='Dataset directory')
-    parser.add_argument('--train_nodes_num', type=int, default=140, help='Nodes numbers for training')
-    parser.add_argument('--eval_nodes_num', type=int, default=500, help='Nodes numbers for evaluation')
-    parser.add_argument('--test_nodes_num', type=int, default=1000, help='Nodes numbers for test')
-    parser.add_argument('--save_TSNE', type=ast.literal_eval, default=False, help='Whether to save t-SNE graph')
-    args_opt = parser.parse_args()
-    if not os.path.exists("ckpts"):
-        os.mkdir("ckpts")
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, default_args.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
+    if default_args.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(default_args.data_path, default_args.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(default_args.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if default_args.device_target == "Ascend":
+            device_id = get_device_id()
+            device_num = get_device_num()
+        else:
+            raise ValueError("Not support device_target.")
+
+        if device_id % min(device_num, 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(device_id, zip_file_1, save_dir_1))
+
+    default_args.save_ckptpath = os.path.join(default_args.output_path, default_args.save_ckptpath)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    """Train model."""
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend", save_graphs=False)
     config = ConfigGCN()
-    adj, feature, label_onehot, label = get_adj_features_labels(args_opt.data_dir)
+    adj, feature, label_onehot, label = get_adj_features_labels(default_args.data_dir)
 
     nodes_num = label_onehot.shape[0]
-    train_mask = get_mask(nodes_num, 0, args_opt.train_nodes_num)
-    eval_mask = get_mask(nodes_num, args_opt.train_nodes_num, args_opt.train_nodes_num + args_opt.eval_nodes_num)
-    test_mask = get_mask(nodes_num, nodes_num - args_opt.test_nodes_num, nodes_num)
+    train_mask = get_mask(nodes_num, 0, default_args.train_nodes_num)
+    eval_mask = get_mask(nodes_num, default_args.train_nodes_num,
+                         default_args.train_nodes_num + default_args.eval_nodes_num)
+    test_mask = get_mask(nodes_num, nodes_num - default_args.test_nodes_num, nodes_num)
 
     class_num = label_onehot.shape[1]
     input_dim = feature.shape[1]
@@ -81,7 +135,7 @@ def train():
 
     loss_list = []
 
-    if args_opt.save_TSNE:
+    if default_args.save_TSNE:
         out_feature = gcn_net()
         tsne_result = t_SNE(out_feature.asnumpy(), 2)
         graph_data = []
@@ -108,7 +162,7 @@ def train():
               "train_acc=", "{:.5f}".format(train_accuracy), "val_loss=", "{:.5f}".format(eval_loss),
               "val_acc=", "{:.5f}".format(eval_accuracy), "time=", "{:.5f}".format(time.time() - t))
 
-        if args_opt.save_TSNE:
+        if default_args.save_TSNE:
             out_feature = gcn_net()
             tsne_result = t_SNE(out_feature.asnumpy(), 2)
             graph_data.append(tsne_result)
@@ -116,9 +170,12 @@ def train():
         if epoch > config.early_stopping and loss_list[-1] > np.mean(loss_list[-(config.early_stopping+1):-1]):
             print("Early stopping...")
             break
-    save_checkpoint(gcn_net, "ckpts/gcn.ckpt")
+    if not os.path.isdir(default_args.save_ckptpath):
+        os.makedirs(default_args.save_ckptpath)
+    ckpt_path = os.path.join(default_args.save_ckptpath, "gcn.ckpt")
+    save_checkpoint(gcn_net, ckpt_path)
     gcn_net_test = GCN(config, input_dim, class_num)
-    load_checkpoint("ckpts/gcn.ckpt", net=gcn_net_test)
+    load_checkpoint(ckpt_path, net=gcn_net_test)
     gcn_net_test.add_flags_recursive(fp16=True)
 
     test_net = LossAccuracyWrapper(gcn_net_test, label_onehot, test_mask, config.weight_decay)
@@ -130,10 +187,10 @@ def train():
     print("Test set results:", "loss=", "{:.5f}".format(test_loss),
           "accuracy=", "{:.5f}".format(test_accuracy), "time=", "{:.5f}".format(time.time() - t_test))
 
-    if args_opt.save_TSNE:
+    if default_args.save_TSNE:
         ani = animation.FuncAnimation(fig, update_graph, frames=range(config.epochs + 1), fargs=(graph_data, scat, plt))
         ani.save('t-SNE_visualization.gif', writer='imagemagick')
 
 
 if __name__ == '__main__':
-    train()
+    run_train()

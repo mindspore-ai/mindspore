@@ -87,6 +87,49 @@ sh run_process_data.sh ./data cora
 sh run_process_data.sh ./data citeseer
 ```
 
+- Running on local with Ascend
+
+```bash
+# run train with cora or citeseer dataset, DATASET_NAME is cora or citeseer
+sh run_train.sh [DATASET_NAME]
+```
+
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+```bash
+# Train cora 1p on ModelArts
+# (1) Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set "data_dir='/cache/data/cora'" on default_config.yaml file.
+#          Set "train_nodes_num=140" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_dir='/cache/data/cora'" on the website UI interface.
+#          Add "train_nodes_num=140" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Upload dataset to S3 bucket.
+# (3) Set the code directory to "/path/gcn" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+#
+# Train citeseer 1p on ModelArts
+# (1) Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set "data_dir='/cache/data/citeseer'" on default_config.yaml file.
+#          Set "train_nodes_num=120" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_dir='/cache/data/citeseer'" on the website UI interface.
+#          Add "train_nodes_num=120" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Upload dataset to S3 bucket.
+# (3) Set the code directory to "/path/gcn" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+```
+
 ### [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)
@@ -95,7 +138,16 @@ sh run_process_data.sh ./data citeseer
 .
 └─gcn
   ├─README.md
+  ├─README_CN.md
+  ├─model_utils
+  | ├─__init__.py       # init file
+  | ├─config.py         # Parse arguments
+  | ├─device_adapter.py # Device adapter for ModelArts
+  | ├─local_adapter.py  # Local adapter
+  | └─moxing_adapter.py # Moxing adapter for ModelArts
+  |
   ├─scripts
+  | ├─run_infer_310.sh     # shell script for infer on Ascend 310
   | ├─run_process_data.sh  # Generate dataset in mindrecord format
   | └─run_train.sh         # Launch training, now only Ascend backend is supported.
   |
@@ -105,6 +157,11 @@ sh run_process_data.sh ./data citeseer
   | ├─gcn.py               # GCN backbone
   | └─metrics.py           # Loss and accuracy
   |
+  ├─default_config.py      # Configurations
+  ├─export.py              # export scripts
+  ├─mindspore_hub_conf.py  # mindspore_hub_conf scripts
+  ├─postprocess.py         # postprocess script
+  ├─preprocess.py          # preprocess scripts
   └─train.py               # Train net, evaluation is performed after every training epoch. After the verification result converges, the training stops, then testing is performed.
 ```
 
