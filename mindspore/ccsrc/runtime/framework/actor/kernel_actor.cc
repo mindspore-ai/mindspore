@@ -315,7 +315,8 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
 
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
-    Async(*recorder_aid_, &RecorderActor::RecordMemAddressInfo, kernel_.get(), &launch_info_, device_context_, context);
+    Async(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_, device_context_,
+          context);
   }
 
   // No output.

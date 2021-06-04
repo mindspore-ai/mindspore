@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_RECORDER_ACTOR_H_
 
 #include <memory>
+#include <string>
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
@@ -34,11 +35,11 @@ class RecorderActor : public ActorBase {
   ~RecorderActor() override = default;
 
   // The memory recorder of each node.
-  void RecordMemAddressInfo(const AnfNode *node, const KernelLaunchInfo *launch_info_,
-                            const DeviceContext *device_context, OpContext<DeviceTensor> *op_context);
+  void RecordInfo(const std::string op_name, const KernelLaunchInfo *launch_info_, const DeviceContext *device_context,
+                  OpContext<DeviceTensor> *op_context);
 
   // Clear memory recorder at the step end.
-  void ClearMemAddressInfo(OpContext<DeviceTensor> *op_context);
+  void RecordOnStepEnd(OpContext<DeviceTensor> *op_context);
 };
 }  // namespace runtime
 }  // namespace mindspore
