@@ -14,42 +14,27 @@
 # ============================================================================
 """postprocess for 310 inference"""
 import os
-import json
 import argparse
 import numpy as np
-from mindspore.nn import Top1CategoricalAccuracy, Top5CategoricalAccuracy
-
+from mindspore.nn import Top1CategoricalAccuracy
+from src.model_utils.config import config as cfg
 
 batch_size = 1
 parser = argparse.ArgumentParser(description="postprocess")
-parser.add_argument("--result_dir", type=str, required=True, help="result files path.")
-parser.add_argument("--label_dir", type=str, required=True, help="image file path.")
+label_path = "./preprocess_Result/cifar10_label_ids.npy"
+parser.add_argument("--result_dir", type=str, default="./result_Files", help="result files path.")
+parser.add_argument("--label_dir", type=str, default=label_path, help="image file path.")
+parser.add_argument("--config_path", type=str, default="../default_config.yaml", help="config file path.")
 parser.add_argument('--dataset_name', type=str, choices=["cifar10", "imagenet2012"], default="cifar10")
 args = parser.parse_args()
-
+cfg.config_path = args.config_path
 if __name__ == '__main__':
     top1_acc = Top1CategoricalAccuracy()
     rst_path = args.result_dir
-    if args.dataset_name == "cifar10":
-        from src.config import alexnet_cifar10_cfg as cfg
-        labels = np.load(args.label_dir, allow_pickle=True)
-        for idx, label in enumerate(labels):
-            f_name = os.path.join(rst_path, "alexnet_data_bs" + str(cfg.batch_size) + "_" + str(idx) + "_0.bin")
-            pred = np.fromfile(f_name, np.float32)
-            pred = pred.reshape(cfg.batch_size, int(pred.shape[0] / cfg.batch_size))
-            top1_acc.update(pred, labels[idx])
-        print("acc: ", top1_acc.eval())
-    else:
-        from src.config import alexnet_imagenet_cfg as cfg
-        top5_acc = Top5CategoricalAccuracy()
-        file_list = os.listdir(rst_path)
-        with open(args.label_dir, "r") as label:
-            labels = json.load(label)
-        for f in file_list:
-            label = f.split("_0.bin")[0] + ".JPEG"
-            pred = np.fromfile(os.path.join(rst_path, f), np.float32)
-            pred = pred.reshape(cfg.batch_size, int(pred.shape[0] / cfg.batch_size))
-            top1_acc.update(pred, [labels[label],])
-            top5_acc.update(pred, [labels[label],])
-        print("Top1 acc: ", top1_acc.eval())
-        print("Top5 acc: ", top5_acc.eval())
+    labels = np.load(args.label_dir, allow_pickle=True)
+    for idx, label in enumerate(labels):
+        f_name = os.path.join(rst_path, "alexnet_data_bs" + str(cfg.batch_size) + "_" + str(idx) + "_0.bin")
+        pred = np.fromfile(f_name, np.float32)
+        pred = pred.reshape(cfg.batch_size, int(pred.shape[0] / cfg.batch_size))
+        top1_acc.update(pred, labels[idx])
+    print("acc: ", top1_acc.eval())
