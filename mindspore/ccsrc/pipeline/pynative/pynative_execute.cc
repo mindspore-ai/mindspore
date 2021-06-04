@@ -3247,14 +3247,14 @@ void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
   MS_LOG(DEBUG) << "Enter end graph process.";
   auto &mem_cleaner = pipeline::Resource::mem_cleaner();
   mem_cleaner.EnterPynativeEndGraphProcess();
-  PynativeExecutorTry(grad_executor()->LinkGraph, cell, out, args);
+  (void)PynativeExecutorTry(grad_executor()->LinkGraph, cell, out, args);
   mem_cleaner.LeavePynativeEndGraphProcess();
   MS_LOG(DEBUG) << "Leave end graph process.";
 }
 
 void PynativeExecutor::GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                                const py::args &args) {
-  PynativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, args);
+  (void)PynativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, args);
 }
 
 void PynativeExecutor::Sync() {

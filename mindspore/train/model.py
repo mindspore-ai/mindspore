@@ -49,7 +49,8 @@ def _transfer_tensor_to_tuple(inputs):
 
 
 class _StepSync(Callback):
-    def step_end(self, run_context):
+    @staticmethod
+    def step_end(run_context):
         _pynative_exec.sync()
 
 
