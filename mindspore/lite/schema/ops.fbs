@@ -1158,4 +1158,8 @@ table GenOP {
     global: bool;
     channel_shared: bool;
     axes: [long];
+    keep_dims: bool;
+    reduce_mode: ReduceMode;
+    reduce_to_end: bool;
+    coeff: float;
 }
