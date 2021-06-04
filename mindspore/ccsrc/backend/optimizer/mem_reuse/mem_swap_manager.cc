@@ -108,7 +108,8 @@ void MemSwapManager::RetreatSwapThreshold() {
     if (update_one_decay_step) {
       distance_threshold_ -= distance_decay_step_;
     } else if (distance_threshold_ >= kDistanceLowerBound) {
-      size_t new_distance_decay_step = (distance_threshold_ - kDistanceLowerBound) / 4;
+      static constexpr size_t kDistanceDecayStepFactor = 4;
+      size_t new_distance_decay_step = (distance_threshold_ - kDistanceLowerBound) / kDistanceDecayStepFactor;
       if (new_distance_decay_step < 1) {
         new_distance_decay_step = 1;
       }

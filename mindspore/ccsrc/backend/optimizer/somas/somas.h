@@ -129,8 +129,8 @@ class Somas {
   std::string GetSplitName(const string &scope_name) const;
   size_t CalcLowerBound() const;
   void GenGraphStatisticInfo();
-  SomasParameterPtr GetSomasParameters(AnfNodePtr node, size_t index);
-  SomasParameterPtr CreateSomasParameters(AnfNodePtr node, size_t index);
+  SomasParameterPtr GetSomasParameter(AnfNodePtr node, size_t index);
+  SomasParameterPtr CreateSomasParameter(AnfNodePtr node, size_t index);
   void InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel);
   void InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel);
   void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &calc_tensor,
@@ -156,6 +156,7 @@ class Somas {
   bool LoadSomasResult(const session::KernelGraph *graph, const string filename);
   bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
   bool CalcSomasModelHash(const session::KernelGraph *graph);
+  void UpdateInputTensor(SomasNodePtr node, SomasNodePtr pre_somas_node, SomasTensorPtr input_somas_tensor) const;
 };
 
 using SomasPtr = std::shared_ptr<Somas>;

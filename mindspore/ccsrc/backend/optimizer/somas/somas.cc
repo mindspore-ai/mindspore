@@ -22,7 +22,6 @@
 #include <memory>
 #include <numeric>
 #include <set>
-#include <sstream>
 
 #include "backend/optimizer/somas/somas_node.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
@@ -47,6 +46,8 @@ using mindspore::profiler::TensorMemory;
 namespace mindspore {
 namespace somas {
 constexpr auto kGapSize = 512;
+constexpr auto kRetryIntervalSeconds = 500;
+constexpr size_t kRefNodeTensorNum = 2;
 
 constexpr auto kGraphId = "graph_id";
 constexpr auto kHashId = "hash_id";
@@ -130,31 +131,12 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model hash id is " << hash_id_;
   std::string filename =
     save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(WARNING) << "File path " << filename << " is too long.";
-    return false;
-  }
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(WARNING) << "Get real path failed. path=" << filename;
-    return false;
+  std::ofstream ofs;
+  if (Common::OpenFile(filename, ofs)) {
+    ofs << model_str << std::endl;
+    ofs.close();
   }
 
-  std::ifstream ifs(real_path.value());
-  if (ifs) {
-    MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model file " << real_path.value() << " is exist.";
-    ifs.close();
-    return true;
-  }
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(WARNING) << "Open file '" << real_path.value() << "' failed!";
-    return false;
-  }
-  ofs << model_str << std::endl;
-  ofs.close();
   return true;
 }
 
@@ -185,26 +167,11 @@ bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
 
   std::string filename =
     save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(WARNING) << "File path " << filename << " is too long.";
-    return false;
+  std::ofstream ofs;
+  if (Common::OpenFile(filename, ofs)) {
+    ofs << somas_json.dump() << std::endl;
+    ofs.close();
   }
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(WARNING) << "Get real path failed. path=" << filename;
-    return false;
-  }
-
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(WARNING) << "Open file '" << real_path.value() << "' failed!";
-    return false;
-  }
-
-  ofs << somas_json.dump() << std::endl;
-  ofs.close();
   return true;
 }
 
@@ -225,7 +192,7 @@ bool Somas::LoadSomasResult(const session::KernelGraph *graph, const string file
   } catch (std::exception &e) {
     MS_LOG(WARNING) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
     somas_json_fs.close();
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(kRetryIntervalSeconds));
     std::ifstream retry_tmp(filename);
     if (!retry_tmp.is_open()) {
       MS_LOG(INFO) << "Open json file: " << filename << " error, please check kernel_meta.";
@@ -544,7 +511,7 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
       if ((op_name == kDynamicRNNOpName || op_name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
         continue;
       }
-      auto parameter = GetSomasParameters(prenode_index.first, prenode_index.second);
+      auto parameter = GetSomasParameter(prenode_index.first, prenode_index.second);
       node->input_parameters_map_[real_input_index] = parameter;
       real_input_index++;
       MS_LOG(DEBUG) << "Input  [" << prenode_index.first->fullname_with_scope() << "] is not a real cnode kernel.";
@@ -644,7 +611,7 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
   }
 }
 
-SomasParameterPtr Somas::CreateSomasParameters(AnfNodePtr node, size_t index) {
+SomasParameterPtr Somas::CreateSomasParameter(AnfNodePtr node, size_t index) {
   auto id = parameters_list_.size();
   auto device_addr = AnfAlgo::GetOutputAddr(node, index);
   if (device_addr == nullptr) {
@@ -656,7 +623,7 @@ SomasParameterPtr Somas::CreateSomasParameters(AnfNodePtr node, size_t index) {
   return param;
 }
 
-SomasParameterPtr Somas::GetSomasParameters(AnfNodePtr node, size_t index) {
+SomasParameterPtr Somas::GetSomasParameter(AnfNodePtr node, size_t index) {
   auto key = node.get();
   auto iter = parameters_map_.find(key);
   if (iter != parameters_map_.end()) {
@@ -665,14 +632,14 @@ SomasParameterPtr Somas::GetSomasParameters(AnfNodePtr node, size_t index) {
     if (it != iter->second.end()) {
       return *it;
     } else {
-      auto new_param = CreateSomasParameters(node, index);
+      auto new_param = CreateSomasParameter(node, index);
       iter->second.push_back(new_param);
       return new_param;
     }
   } else {
-    auto new_param = CreateSomasParameters(node, index);
-    parameters_map_[key].push_back(new_param);
-    return new_param;
+    auto param = CreateSomasParameter(node, index);
+    parameters_map_[key].push_back(param);
+    return param;
   }
 }
 
@@ -1304,15 +1271,15 @@ std::map<size_t, size_t> Somas::GetRefTensorsInContiguousList() {
     size_t contiguous_in_ref_list = std::count_if(ref_node_list.begin(), ref_node_list.end(),
                                                   [this](size_t tid) { return tensors_map_[tid]->contiguous_; });
     // Keep info about contiguous and check for errors
-    if (ref_node_list.size() > 2 && contiguous_in_ref_list > 0) {
+    if (ref_node_list.size() > kRefNodeTensorNum && contiguous_in_ref_list > 0) {
       MS_LOG(WARNING) << "Ref node of size greater than two with at least one contiguous tensor in";
     }
-    if (ref_node_list.size() == 2 && contiguous_in_ref_list == 1) {
+    if (ref_node_list.size() == kRefNodeTensorNum && contiguous_in_ref_list == 1) {
       MS_LOG(WARNING) << "Ref node of size two with only one contiguous tensor" << ref_node_list[0] << ":"
                       << tensors_map_[ref_node_list[0]]->contiguous_ << ", " << ref_node_list[1] << ":"
                       << tensors_map_[ref_node_list[1]]->contiguous_;
     }
-    if (ref_node_list.size() == 2 && contiguous_in_ref_list == 2) {
+    if (ref_node_list.size() == kRefNodeTensorNum && contiguous_in_ref_list == kRefNodeTensorNum) {
       ref_tensors_in_contiguous_map[ref_node_list[0]] = ref_node_list[1];
     }
   }
@@ -1389,12 +1356,12 @@ void Somas::UpdateRefTensorsConflict() {
 }
 
 std::string Somas::GetSplitName(const std::string &scope_name) const {
-  auto indx = scope_name.rfind('/');
-  if (indx == std::string::npos) {
+  auto index = scope_name.rfind('/');
+  if (index == std::string::npos) {
     return scope_name;
   } else {
-    if (indx < scope_name.size() - 1) {
-      auto split_name = scope_name.substr(indx + 1);
+    if (index < scope_name.size() - 1) {
+      auto split_name = scope_name.substr(index + 1);
       return split_name;
     }
     return scope_name;
@@ -1517,26 +1484,11 @@ void Somas::DumpParameters(std::ostringstream &oss) const {
 }
 
 void Somas::DumpSomasInfoIR(const string filename) const {
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
-    return;
+  std::ofstream ofs;
+  if (Common::OpenFile(filename, ofs)) {
+    ofs << SomasInfo();
+    ofs.close();
   }
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
-    return;
-  }
-
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
-    return;
-  }
-
-  ofs << SomasInfo();
-  ofs.close();
 }
 
 std::string Somas::Offline() const {
@@ -1585,27 +1537,11 @@ std::string Somas::Offline() const {
 
 void Somas::DumpOfflineIR(const string filename) const {
   MS_LOG(INFO) << "Printing somas-log-from-graph log: " << filename;
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
-    return;
+  std::ofstream ofs;
+  if (Common::OpenFile(filename, ofs)) {
+    ofs << Offline();
+    ofs.close();
   }
-
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
-    return;
-  }
-
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
-    return;
-  }
-
-  ofs << Offline();
-  ofs.close();
 }
 
 std::string Somas::SomasMemory() const {
@@ -1623,15 +1559,15 @@ std::string Somas::SomasMemory() const {
 
   std::map<size_t, std::map<size_t, SomasTensorPtr>> mem_list;
 
-  for (const auto &tensor : tensors_list_) {
-    size_t key = tensor->offset_;
+  for (const auto &output_tensor : tensors_list_) {
+    size_t key = output_tensor->offset_;
     auto iter = mem_list.find(key);
     if (iter == mem_list.end()) {
       std::map<size_t, SomasTensorPtr> id_tensor_map;
-      id_tensor_map[tensor->GetId()] = tensor;
+      id_tensor_map[output_tensor->GetId()] = output_tensor;
       mem_list[key] = id_tensor_map;
     } else {
-      iter->second[tensor->GetId()] = tensor;
+      iter->second[output_tensor->GetId()] = output_tensor;
     }
   }
 
@@ -1652,51 +1588,35 @@ std::string Somas::SomasMemory() const {
   for (const auto &mem : mem_list) {
     auto id_tensor_map = mem.second;
     for (const auto &id_tensor : id_tensor_map) {
-      auto tensor = id_tensor.second;
+      auto place_tensor = id_tensor.second;
       std::string scope_name;
       size_t src_stm_id = 0xffff;
-      if (tensor->GetSourceNode() != nullptr) {
-        scope_name = tensor->GetSourceNode()->scope_full_name_;
-        src_stm_id = tensor->GetSourceNode()->GetStream()->GetId();
+      if (place_tensor->GetSourceNode() != nullptr) {
+        scope_name = place_tensor->GetSourceNode()->scope_full_name_;
+        src_stm_id = place_tensor->GetSourceNode()->GetStream()->GetId();
       } else {
         scope_name = "Somas Tensor";
       }
 
       std::string split_name = GetSplitName(scope_name);
-      oss << "#" << mem_map[tensor->GetOffset()] << "\t" << tensor->GetOffset() << "\t"
-          << tensor->GetOffset() + tensor->GetAlignedSize() << "\t%" << tensor->GetId() << "T\t"
-          << tensor->GetOriginalSize() << "\t" << tensor->GetAlignedSize() << "\t&"
-          << static_cast<void *>(tensor->GetOffset() + mem_base_addr_) << "\t&"
-          << static_cast<void *>(tensor->GetOffset() + mem_base_addr_ + tensor->GetAlignedSize()) << "\t"
-          << tensor_type_name_map[tensor->type_] << "\t" << split_name << "\tstm" << src_stm_id << "\t"
-          << tensor->lifetime_.start_ << "\t" << tensor->lifetime_.end_ << "\n";
+      oss << "#" << mem_map[place_tensor->GetOffset()] << "\t" << place_tensor->GetOffset() << "\t"
+          << place_tensor->GetOffset() + place_tensor->GetAlignedSize() << "\t%" << place_tensor->GetId() << "T\t"
+          << place_tensor->GetOriginalSize() << "\t" << place_tensor->GetAlignedSize() << "\t&"
+          << static_cast<void *>(place_tensor->GetOffset() + mem_base_addr_) << "\t&"
+          << static_cast<void *>(place_tensor->GetOffset() + mem_base_addr_ + place_tensor->GetAlignedSize()) << "\t"
+          << tensor_type_name_map[place_tensor->type_] << "\t" << split_name << "\tstm" << src_stm_id << "\t"
+          << place_tensor->lifetime_.start_ << "\t" << place_tensor->lifetime_.end_ << "\n";
     }
   }
   return oss.str();
 }
 
 void Somas::DumpSomasMemoryIR(const string filename) const {
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
-    return;
+  std::ofstream ofs;
+  if (Common::OpenFile(filename, ofs)) {
+    ofs << SomasMemory();
+    ofs.close();
   }
-
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
-    return;
-  }
-
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
-    return;
-  }
-
-  ofs << SomasMemory();
-  ofs.close();
 }
 
 size_t Somas::CalcLowerBound() const {
@@ -1822,14 +1742,14 @@ void Somas::ConvertToProfilingNode(uint32_t graph_id) {
     std::string name = GetSplitName(node->scope_full_name_);
     node_memory.SetNodeName(name);
     node_memory.SetNodeId(node->GetId());
-    for (const auto &tensor : node->input_tensors_) {
-      node_memory.AddInputTensorId(tensor->GetId());
+    for (const auto &input_tensor : node->input_tensors_) {
+      node_memory.AddInputTensorId(input_tensor->GetId());
     }
-    for (const auto &tensor : node->output_tensors_) {
-      node_memory.AddOutputTensorId(tensor->GetId());
+    for (const auto &output_tensor : node->output_tensors_) {
+      node_memory.AddOutputTensorId(output_tensor->GetId());
     }
-    for (const auto &tensor : node->workspace_tensors_) {
-      node_memory.AddWorkSpaceTensorId(tensor->GetId());
+    for (const auto &workspace_tensor : node->workspace_tensors_) {
+      node_memory.AddWorkSpaceTensorId(workspace_tensor->GetId());
     }
     graph_node->AddNodeMemory(node_memory);
   }
