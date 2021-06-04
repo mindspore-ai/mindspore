@@ -42,7 +42,9 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
 #else
-  struct timeval start_time, end_time;
+  struct timeval start_time {
+    0
+  }, end_time{0};
   (void)gettimeofday(&start_time, nullptr);
 #endif
   MS_LOG(INFO) << "Now entering allreduce fusion";

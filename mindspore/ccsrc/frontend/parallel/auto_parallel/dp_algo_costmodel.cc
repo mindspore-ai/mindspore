@@ -40,7 +40,7 @@ Status GetStrategy(const CostGraphPtr &graph) {
       auto r_edge = node->GetAliveSuccEdges()[0];
       auto n_edge = graph->EliminationOp(node);
       auto elimi_op = std::make_shared<OpElimination>(n_edge, l_edge, node, r_edge);
-      eliminations.emplace_back(std::move(elimi_op));
+      (void)eliminations.emplace_back(std::move(elimi_op));
     }
     if (!flag) {
       auto edges = graph->CheckEdgeElimination();
@@ -49,7 +49,7 @@ Status GetStrategy(const CostGraphPtr &graph) {
         flag = true;
         auto new_edge = graph->EliminationEdges(edges);
         auto elimi_edge = std::make_shared<EdgeElimination>(new_edge, edges);
-        eliminations.emplace_back(std::move(elimi_edge));
+        (void)eliminations.emplace_back(std::move(elimi_edge));
       }
     }
     if (!flag) {
@@ -60,7 +60,7 @@ Status GetStrategy(const CostGraphPtr &graph) {
         auto succ_edge = merge_node->GetAliveSuccEdges()[0];
         auto target_node = graph->EliminationMerge(merge_node);
         auto elimi_merge = std::make_shared<MergeElimination>(merge_node, succ_edge, target_node);
-        eliminations.emplace_back(std::move(elimi_merge));
+        (void)eliminations.emplace_back(std::move(elimi_merge));
       }
     }
     if (!flag) {
@@ -71,7 +71,7 @@ Status GetStrategy(const CostGraphPtr &graph) {
         auto prev_edge = contracted_node->GetAlivePrevEdges()[0];
         auto target_node = graph->EliminationContract(contracted_node);
         auto elimi_contract = std::make_shared<ContractElimination>(target_node, prev_edge, contracted_node);
-        eliminations.emplace_back(std::move(elimi_contract));
+        (void)eliminations.emplace_back(std::move(elimi_contract));
       }
     }
     if (!flag) {
@@ -95,7 +95,7 @@ Status GetStrategy(const CostGraphPtr &graph) {
         auto right_node = l_r_edge->next_operator();
         auto elimi_tri =
           std::make_shared<TriangleElimination>(eliminated_node, left_edge, left_node_cpy, right_edge, right_node);
-        eliminations.emplace_back(std::move(elimi_tri));
+        (void)eliminations.emplace_back(std::move(elimi_tri));
       }
     }
     if (!flag) {
@@ -110,7 +110,7 @@ Status GetStrategy(const CostGraphPtr &graph) {
           succ_nodes.push_back(succ_edges[i]->next_operator());
         }
         auto elimi_star = std::make_shared<StarElimination>(star_center, succ_edges, succ_nodes);
-        eliminations.emplace_back(std::move(elimi_star));
+        (void)eliminations.emplace_back(std::move(elimi_star));
       }
     }
   }
@@ -135,101 +135,102 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
   const auto triangle_star_overwrite = CostModelContext::GetInstance()->triangle_star_strategy_overwrite();
   for (rit = eliminations.rbegin(); rit != eliminations.rend(); ++rit) {
     if ((*rit)->isa<OpElimination>()) {
-      auto elimination = (*rit)->cast<OpEliminationPtr>();
-      auto e = elimination->new_edge_;
-      auto w = elimination->op_;
-      auto left_edge = elimination->left_edge_;
-      auto right_edge = elimination->right_edge_;
-      auto decision = e->selected_cost()->decision_ptr_->cast<OpEliminationDecisionPtr>();
-      w->SetSelectedStrategyAndCost(decision->op_strategy_, decision->middle_cost_);
-      left_edge->set_selected_cost(decision->left_cost_);
-      right_edge->set_selected_cost(decision->right_cost_);
+      auto elimination_op = (*rit)->cast<OpEliminationPtr>();
+      auto e = elimination_op->new_edge_;
+      auto w = elimination_op->op_;
+      auto left_edge_op = elimination_op->left_edge_;
+      auto right_edge_op = elimination_op->right_edge_;
+      auto decision_op = e->selected_cost()->decision_ptr_->cast<OpEliminationDecisionPtr>();
+      w->SetSelectedStrategyAndCost(decision_op->op_strategy_, decision_op->middle_cost_);
+      left_edge_op->set_selected_cost(decision_op->left_cost_);
+      right_edge_op->set_selected_cost(decision_op->right_cost_);
       MS_LOG(INFO) << "Recover opElimination succeeded.";
     } else if ((*rit)->isa<EdgeElimination>()) {
-      auto elimination = (*rit)->cast<EdgeEliminationPtr>();
-      auto new_edge = elimination->new_edge_;
-      MS_EXCEPTION_IF_NULL(new_edge);
-      auto &edges = elimination->edges_;
-      auto decision = new_edge->selected_cost()->decision_ptr_->cast<EdgeEliminationDecisionPtr>();
+      auto elimination_edge = (*rit)->cast<EdgeEliminationPtr>();
+      auto new_edge = elimination_edge->new_edge_;
+      auto &edges = elimination_edge->edges_;
+      auto decision_edge = new_edge->selected_cost()->decision_ptr_->cast<EdgeEliminationDecisionPtr>();
       for (size_t j = 0; j < edges.size(); ++j) {
         MS_EXCEPTION_IF_NULL(edges[j]);
-        edges[j]->set_selected_cost(decision->edges_cost_list_[j]);
+        edges[j]->set_selected_cost(decision_edge->edges_cost_list_[j]);
       }
       MS_LOG(INFO) << "Recover edgeElimination succeeded.";
     } else if ((*rit)->isa<MergeElimination>()) {
-      auto elimination = (*rit)->cast<MergeEliminationPtr>();
-      auto target_node = elimination->target_node_;
-      MS_EXCEPTION_IF_NULL(target_node);
-      auto merged_node = elimination->merged_node_;
-      MS_EXCEPTION_IF_NULL(merged_node);
-      auto merged_edge = elimination->dir_edge_;
-      MS_EXCEPTION_IF_NULL(merged_edge);
-      MS_EXCEPTION_IF_NULL(target_node->selected_cost());
-      MS_EXCEPTION_IF_NULL(target_node->selected_cost()->decision_ptr_);
-      auto decision = target_node->selected_cost()->decision_ptr_->cast<MergeEliminationDecisionPtr>();
-      merged_node->SetSelectedStrategyAndCost(decision->merged_op_strategy_, decision->merged_op_cost_);
-      merged_edge->set_selected_cost(decision->edge_cost_);
-      target_node->SetSelectedStrategyAndCost(decision->target_op_strategy_, decision->target_op_cost_);
+      auto elimination_merge = (*rit)->cast<MergeEliminationPtr>();
+      auto target_node_m = elimination_merge->target_node_;
+      auto merged_node = elimination_merge->merged_node_;
+      auto merged_edge = elimination_merge->dir_edge_;
+      MS_EXCEPTION_IF_NULL(target_node_m->selected_cost());
+      MS_EXCEPTION_IF_NULL(target_node_m->selected_cost()->decision_ptr_);
+      auto decision_merge = target_node_m->selected_cost()->decision_ptr_->cast<MergeEliminationDecisionPtr>();
+      merged_node->SetSelectedStrategyAndCost(decision_merge->merged_op_strategy_, decision_merge->merged_op_cost_);
+      merged_edge->set_selected_cost(decision_merge->edge_cost_);
+      target_node_m->SetSelectedStrategyAndCost(decision_merge->target_op_strategy_, decision_merge->target_op_cost_);
 
       MS_LOG(INFO) << "Recover mergeElimination succeeded.";
     } else if ((*rit)->isa<ContractElimination>()) {
-      auto elimination = (*rit)->cast<ContractEliminationPtr>();
-      auto target_node = elimination->target_node_;
-      auto contracted_node = elimination->contracted_node_;
-      auto contracted_edge = elimination->dir_edge_;
-      auto decision = target_node->selected_cost()->decision_ptr_->cast<ContractEliminationDecisionPtr>();
+      auto elimination_cont = (*rit)->cast<ContractEliminationPtr>();
+      auto target_node = elimination_cont->target_node_;
+      auto contracted_node = elimination_cont->contracted_node_;
+      auto contracted_edge = elimination_cont->dir_edge_;
+      auto decision_cont = target_node->selected_cost()->decision_ptr_->cast<ContractEliminationDecisionPtr>();
 
-      contracted_node->SetSelectedStrategyAndCost(decision->contracted_op_strategy_, decision->contracted_op_cost_);
-      contracted_edge->set_selected_cost(decision->edge_cost_);
-      target_node->SetSelectedStrategyAndCost(decision->target_op_strategy_, decision->target_cost_);
+      contracted_node->SetSelectedStrategyAndCost(decision_cont->contracted_op_strategy_,
+                                                  decision_cont->contracted_op_cost_);
+      contracted_edge->set_selected_cost(decision_cont->edge_cost_);
+      target_node->SetSelectedStrategyAndCost(decision_cont->target_op_strategy_, decision_cont->target_cost_);
       MS_LOG(INFO) << "Recover contractElimination succeeded.";
     } else if ((*rit)->isa<TriangleElimination>()) {
-      auto elimination = (*rit)->cast<TriangleEliminationPtr>();
-      auto left_node = elimination->left_node_;
-      auto left_edge = elimination->left_edge_;
-      auto eliminated_node = elimination->eliminated_node_;
-      auto right_edge = elimination->right_edge_;
-      auto right_node = elimination->right_node_;
-      auto decision = left_node->selected_cost()->decision_ptr_->cast<TriangleEliminationDecisionPtr>();
+      auto elimination_tri = (*rit)->cast<TriangleEliminationPtr>();
+      auto left_node = elimination_tri->left_node_;
+      auto left_edge = elimination_tri->left_edge_;
+      auto eliminated_node = elimination_tri->eliminated_node_;
+      auto right_edge_tri = elimination_tri->right_edge_;
+      auto right_node = elimination_tri->right_node_;
+      auto decision_tri = left_node->selected_cost()->decision_ptr_->cast<TriangleEliminationDecisionPtr>();
 
-      eliminated_node->SetSelectedStrategyAndCost(decision->eliminated_op_strategy_, decision->eliminated_op_cost_);
-      left_edge->set_selected_cost(decision->left_edge_cost_);
-      right_edge->set_selected_cost(decision->right_edge_cost_);
+      eliminated_node->SetSelectedStrategyAndCost(decision_tri->eliminated_op_strategy_,
+                                                  decision_tri->eliminated_op_cost_);
+      left_edge->set_selected_cost(decision_tri->left_edge_cost_);
+      right_edge_tri->set_selected_cost(decision_tri->right_edge_cost_);
       // 'left_node' recovers the strategy.
-      left_node->SetSelectedStrategyAndCost(decision->left_node_strategy_, decision->left_node_cost_);
+      left_node->SetSelectedStrategyAndCost(decision_tri->left_node_strategy_, decision_tri->left_node_cost_);
       if (triangle_star_overwrite) {
         // 'right_node' recovers the strategy.
         MS_LOG(INFO) << "Overwrite the right-node: " << right_node->name() << " in recovering triangle elimination.";
-        right_node->SetSelectedStrategyAndCost(decision->right_node_strategy_, decision->right_node_cost_);
+        right_node->SetSelectedStrategyAndCost(decision_tri->right_node_strategy_, decision_tri->right_node_cost_);
       } else {
         // In this case, 'right_node' is not overwritten strategy, and it checks strategy consistency.
-        right_node->CheckSelectedStrategy(decision->right_node_strategy_);
+        right_node->CheckSelectedStrategy(decision_tri->right_node_strategy_);
       }
       MS_LOG(INFO) << "Recover triangleElimination succeeded.";
     } else if ((*rit)->isa<StarElimination>()) {
-      auto elimination = (*rit)->cast<StarEliminationPtr>();
-      auto merged_node = elimination->eliminated_node_;
-      auto succ_edges = elimination->succ_edges_;
-      auto succ_nodes = elimination->succ_ops_;
+      auto elimination_star = (*rit)->cast<StarEliminationPtr>();
+      auto merged_node_star = elimination_star->eliminated_node_;
+      auto succ_edges = elimination_star->succ_edges_;
+      auto succ_nodes = elimination_star->succ_ops_;
       // decision is hidden in succ_nodes[0]
-      auto decision = succ_nodes[0]->selected_cost()->decision_ptr_->cast<StarEliminationDecisionPtr>();
+      auto decision_star = succ_nodes[0]->selected_cost()->decision_ptr_->cast<StarEliminationDecisionPtr>();
 
-      merged_node->SetSelectedStrategyAndCost(decision->eliminated_op_strategy_, decision->eliminated_op_cost_);
+      merged_node_star->SetSelectedStrategyAndCost(decision_star->eliminated_op_strategy_,
+                                                   decision_star->eliminated_op_cost_);
       for (size_t i = 0; i < succ_edges.size(); ++i) {
-        succ_edges[i]->set_selected_cost(decision->succ_edges_cost_list_[i]);
+        succ_edges[i]->set_selected_cost(decision_star->succ_edges_cost_list_[i]);
       }
       MS_EXCEPTION_IF_NULL(succ_nodes[0]);
-      MS_EXCEPTION_IF_NULL(decision->succ_ops_stra_list_[0]);
-      MS_EXCEPTION_IF_NULL(decision->succ_ops_cost_list_[0]);
+      MS_EXCEPTION_IF_NULL(decision_star->succ_ops_stra_list_[0]);
+      MS_EXCEPTION_IF_NULL(decision_star->succ_ops_cost_list_[0]);
       // Star is eliminated into 'succ_nodes[0]'
-      succ_nodes[0]->SetSelectedStrategyAndCost(decision->succ_ops_stra_list_[0], decision->succ_ops_cost_list_[0]);
+      succ_nodes[0]->SetSelectedStrategyAndCost(decision_star->succ_ops_stra_list_[0],
+                                                decision_star->succ_ops_cost_list_[0]);
       for (size_t k = 1; k < succ_nodes.size(); ++k) {
         if (triangle_star_overwrite) {
           // 'succ_nodes[k]' is overwritten strategy and cost.
-          succ_nodes[k]->SetSelectedStrategyAndCost(decision->succ_ops_stra_list_[k], decision->succ_ops_cost_list_[k]);
+          succ_nodes[k]->SetSelectedStrategyAndCost(decision_star->succ_ops_stra_list_[k],
+                                                    decision_star->succ_ops_cost_list_[k]);
         } else {
           // In this case, 'succ_nodes[k]' is NOT overwritten strategy and cost, however, it checks the strategy.
-          succ_nodes[k]->CheckSelectedStrategy(decision->succ_ops_stra_list_[k]);
+          succ_nodes[k]->CheckSelectedStrategy(decision_star->succ_ops_stra_list_[k]);
         }
       }
       MS_LOG(INFO) << "Recover starElimination succeeded.";
