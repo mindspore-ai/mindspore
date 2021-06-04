@@ -308,7 +308,13 @@ Status GatherPInfo::CheckStrategy(const StrategyPtr &strategy) {
   // parameter strategy is [8, 1], indices strategy is [1, 1], dev num is 16,
   // and dev_matrix is [2, 1, 8, 1, 1], the communication groups are [0, 8] and [0, 1, 2, 3, 4, 5, 6, 7], they
   // can communicate normally, and dev0 to dev7 have the all parameters.
-  repeated_num_in_dev_matrix_right_ = false;
+  auto product_param = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int>());
+  if (product_param == stage_device_size_ || product_param == 1) {
+    repeated_num_in_dev_matrix_right_ = true;
+  } else {
+    repeated_num_in_dev_matrix_right_ = false;
+  }
+  MS_LOG(INFO) << "Set repeated_num_in_dev_matrix_right for gather to " << repeated_num_in_dev_matrix_right_;
   return SUCCESS;
 }
 
