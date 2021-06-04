@@ -25,7 +25,6 @@
 using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore::lite::micro::nnacl {
-
 int BatchnormFP32Coder::Init() {
   auto bn_parameter = reinterpret_cast<BatchNormParameter *>(OperatorCoder::parameter_);
   std::vector<int> input_shapes = input_tensor_->shape();
@@ -51,9 +50,9 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
     MS_LOG(ERROR) << "BatchnormFP32Coder Init error";
     return RET_ERROR;
   }
-  MS_CHECK_TRUE(input_tensors_.size() == 3, "inputs size is not equal to three");
+  MS_CHECK_TRUE(input_tensors_.size() == DIMENSION_3D, "inputs size is not equal to three");
   Tensor *mean_tensor = input_tensors_.at(1);
-  Tensor *var_tensor = input_tensors_.at(2);
+  Tensor *var_tensor = input_tensors_.at(kInputSize1);
   Collect(context,
           {
             "nnacl/fp32/batchnorm.h",

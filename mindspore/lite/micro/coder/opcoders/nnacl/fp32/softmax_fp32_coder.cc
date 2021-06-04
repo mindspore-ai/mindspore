@@ -23,7 +23,6 @@
 using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::lite::micro::nnacl {
-
 int SoftMaxFP32Coder::Prepare(CoderContext *const context) {
   SoftmaxBaseCoder::Init();
   // malloc tmp buffer
@@ -61,7 +60,6 @@ int SoftMaxFP32Coder::DoCode(CoderContext *const context) {
   code.CodeFunction("memset", sum_data_, "0", sum_data_size_);
   code.CodeFunction("Softmax", input_tensor_, output_tensor_, sum_data_, "&softmax_parameter");
   context->AppendCode(code.str());
-
   return RET_OK;
 }
 

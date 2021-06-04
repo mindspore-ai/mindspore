@@ -24,7 +24,6 @@
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::lite::micro::nnacl {
-
 int ActivationFP32Coder::DoCode(CoderContext *const context) {
   // attribute
   auto *activation_parameter = reinterpret_cast<ActivationParameter *>(parameter_);
@@ -32,7 +31,6 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(length, thread_num_);
   int count = MSMIN(stride, length - stride * kDefaultTaskId);
-
   Collect(context,
           {
             "nnacl/fp32/activation_fp32.h",

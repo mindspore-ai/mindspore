@@ -25,7 +25,6 @@
 using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore::lite::micro::nnacl {
-
 int PadFP32Coder::Prepare(CoderContext *const context) {
   pad_param_ = reinterpret_cast<PadParameter *>(parameter_);
   return ReSize();

@@ -43,7 +43,7 @@ int MatMulFP32BaseCoder::ReSize() {
 }
 
 int MatMulFP32BaseCoder::InitBiasData() {
-  if (input_tensors_.size() == 3) {
+  if (input_tensors_.size() == DIMENSION_3D) {
     int max_bias_data = params_->col_align_;
     bias_pack_ptr_size_ = static_cast<size_t>(max_bias_data * sizeof(float));
     if (bias_tensor_->ElementsNum() == 1) {

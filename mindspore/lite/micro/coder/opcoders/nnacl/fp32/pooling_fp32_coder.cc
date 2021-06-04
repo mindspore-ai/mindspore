@@ -26,7 +26,6 @@ using mindspore::schema::PrimitiveType_AvgPoolFusion;
 using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::lite::micro::nnacl {
-
 int PoolingFP32Coder::DoCode(CoderContext *const context) {
   // attribute
   auto pooling_parameter = reinterpret_cast<PoolingParameter *>(parameter_);

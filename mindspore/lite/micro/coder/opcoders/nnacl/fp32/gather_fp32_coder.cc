@@ -25,7 +25,6 @@
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::lite::micro::nnacl {
-
 int GatherFP32Coder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int GatherFP32Coder::DoCode(CoderContext *context) {

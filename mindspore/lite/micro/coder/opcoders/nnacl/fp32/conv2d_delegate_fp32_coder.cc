@@ -23,7 +23,6 @@
 #include "coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.h"
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore::lite::micro::nnacl {
-
 int ConvDelegateCoder::Prepare(CoderContext *const context) {
   // Update shape info of input and output
   SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(parameter_), input_tensor_, output_tensor_);
