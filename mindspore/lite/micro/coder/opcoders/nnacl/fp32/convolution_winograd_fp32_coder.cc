@@ -142,7 +142,7 @@ int ConvolutionWinogradFP32Coder::InitWeightBias() {
   float matrix_b[64];
   float matrix_bt[64];
   float coef = 1.0f;
-  if (input_unit_ == 8) {
+  if (input_unit_ == DIMENSION_8D) {
     coef = 0.5f;
   }
   CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, coef, output_unit_, kernel_unit_);
@@ -182,7 +182,7 @@ std::string ConvolutionWinogradFP32Coder::GetInputTransFunc(int input_unit) {
 
 std::string ConvolutionWinogradFP32Coder::GetOutputTransFunc(int input_unit, int output_unit, ActType act_type) {
   std::string res;
-  if (input_unit == 4 && output_unit < 4) {
+  if (input_unit == DIMENSION_4D && output_unit < DIMENSION_4D) {
     if (act_type == ActType_Relu) {
       return OutputTransFuncReluList4.at(output_unit);
     } else if (act_type == ActType_Relu6) {
@@ -190,7 +190,7 @@ std::string ConvolutionWinogradFP32Coder::GetOutputTransFunc(int input_unit, int
     } else {
       return OutputTransFuncList4.at(output_unit);
     }
-  } else if (input_unit == 6 && output_unit < 6) {
+  } else if (input_unit == DIMENSION_6D && output_unit < DIMENSION_6D) {
     if (act_type == ActType_Relu) {
       return OutputTransFuncReluList6.at(output_unit);
     } else if (act_type == ActType_Relu6) {
@@ -198,7 +198,7 @@ std::string ConvolutionWinogradFP32Coder::GetOutputTransFunc(int input_unit, int
     } else {
       return OutputTransFuncList6.at(output_unit);
     }
-  } else if (input_unit == 8 && output_unit < 8) {
+  } else if (input_unit == DIMENSION_8D && output_unit < DIMENSION_8D) {
     if (act_type == ActType_Relu) {
       return OutputTransFuncReluList8.at(output_unit);
     } else if (act_type == ActType_Relu6) {

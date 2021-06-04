@@ -21,7 +21,6 @@
 
 using mindspore::schema::PrimitiveType_Softmax;
 namespace mindspore::lite::micro::cmsis {
-
 int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
   SoftmaxBaseCoder::Init();
 
@@ -51,7 +50,7 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
 
   const int trailing_dim = static_cast<int>(input_tensor_->shape().size()) - 1;
   const int dims_count = input_tensor_->shape().size();
-  MS_CHECK_TRUE(0 <= trailing_dim && trailing_dim < dims_count, "trailing_dim should be in [0, dims_count)");
+  MS_CHECK_TRUE(trailing_dim >= 0 && trailing_dim < dims_count, "trailing_dim should be in [0, dims_count)");
   num_rows_ = 1;
   for (int i = 0; i < dims_count; ++i) {
     num_rows_ *= (i == trailing_dim) ? 1 : input_tensor_->DimensionSize(i);
@@ -71,11 +70,9 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
 
   Collect(context, {"CMSIS/NN/Include/arm_nnfunctions.h"}, {"arm_softmax_s8.c"});
   code.CodeFunction("arm_softmax_s8", input_tensor_, num_rows_, row_size_, mult_, shift_, diff_min_, output_tensor_);
-
   MS_LOG(INFO) << "SoftMaxInt8Coder has been called";
   context->AppendCode(code.str());
   return RET_OK;
 }
 REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Softmax, CPUOpCoderCreator<SoftMaxInt8Coder>)
-
 }  // namespace mindspore::lite::micro::cmsis

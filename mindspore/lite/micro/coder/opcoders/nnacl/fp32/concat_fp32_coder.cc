@@ -22,7 +22,6 @@
 using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::lite::micro::nnacl {
-
 int ConcatFP32Coder::Prepare(CoderContext *const context) {
   concat_param_ = reinterpret_cast<ConcatParameter *>(parameter_);
   return ReSize();

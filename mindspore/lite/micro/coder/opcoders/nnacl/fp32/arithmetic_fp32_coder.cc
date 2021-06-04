@@ -22,7 +22,6 @@
 #include "coder/log.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 int ArithmeticFP32Coder::Init(CoderContext *const context) {
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);

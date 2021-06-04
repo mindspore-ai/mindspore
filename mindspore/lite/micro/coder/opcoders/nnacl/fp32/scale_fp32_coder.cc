@@ -23,7 +23,6 @@
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::lite::micro::nnacl {
-
 int ScaleFP32Coder::InitScaleOffset() {
   Tensor *scale_tensor = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(scale_tensor);
@@ -40,15 +39,15 @@ int ScaleFP32Coder::InitScaleOffset() {
     scale_ = nullptr;
   }
 
-  if (input_tensors_.size() == 2) {
+  if (input_tensors_.size() == DIMENSION_2D) {
     scale_param_->const_offset_ = true;
     offset_ =
       reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, scale_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(offset_);
     MS_CHECK_RET_CODE(memset_s(offset_, scale_tensor->Size(), 0, scale_tensor->Size()), "memset_s failed!");
-  } else if (input_tensors_.size() == 3 && input_tensors_.at(2)->data_c() != nullptr) {
+  } else if (input_tensors_.size() == DIMENSION_3D && input_tensors_.at(kBiasIndex)->data_c() != nullptr) {
     scale_param_->const_offset_ = true;
-    Tensor *offset_tensor = input_tensors_.at(2);
+    Tensor *offset_tensor = input_tensors_.at(kBiasIndex);
     MS_CHECK_PTR(offset_tensor);
     offset_ =
       reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, offset_tensor->Size(), kOfflinePackWeight));
@@ -98,7 +97,7 @@ int ScaleFP32Coder::CalculateParameter() {
 
 int ScaleFP32Coder::Prepare(CoderContext *const context) {
   this->scale_param_ = reinterpret_cast<ScaleParameter *>(parameter_);
-  if (input_tensors_.size() < 2 || input_tensors_.size() > 3) {
+  if (input_tensors_.size() < DIMENSION_2D || input_tensors_.size() > DIMENSION_3D) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << input_tensors_.size() << " is given.";
     return RET_ERROR;
   }

@@ -21,7 +21,6 @@
 #include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_ReduceFusion;
-
 namespace mindspore::lite::micro::nnacl {
 int ReduceFP32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(ReduceBaseCoder::Init(), "init failed");

@@ -23,7 +23,6 @@
 
 using mindspore::schema::PrimitiveType_Transpose;
 namespace mindspore::lite::micro::nnacl {
-
 int TransposeFp32Coder::Resize() {
   num_unit_ = static_cast<int>(input_tensor_->shape().at(transpose_parameter_->perm_[kNHWC_H]));
   thread_h_num_ = MSMIN(thread_num_, num_unit_);
