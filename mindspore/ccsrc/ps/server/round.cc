@@ -17,10 +17,12 @@
 #include "ps/server/round.h"
 #include <memory>
 #include <string>
+#include "ps/server/server.h"
 
 namespace mindspore {
 namespace ps {
 namespace server {
+class Server;
 Round::Round(const std::string &name, bool check_timeout, size_t time_window, bool check_count, size_t threshold_count)
     : name_(name),
       check_timeout_(check_timeout),
@@ -82,6 +84,14 @@ void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) 
 void Round::LaunchRoundKernel(const std::shared_ptr<core::MessageHandler> &message) {
   if (message == nullptr) {
     MS_LOG(ERROR) << "Message is nullptr.";
+    return;
+  }
+
+  // If the server is still in the process of scaling, refuse the request.
+  if (Server::GetInstance().IsSafeMode()) {
+    MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
+    std::string reason = "The cluster is in safemode.";
+    communicator_->SendResponse(reason.c_str(), reason.size(), message);
     return;
   }
 

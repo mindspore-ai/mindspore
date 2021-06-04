@@ -41,6 +41,16 @@ void Executor::Initialize(const FuncGraphPtr &func_graph, size_t aggregation_cou
   return;
 }
 
+bool Executor::ReInitForScaling() {
+  auto result = std::find_if(param_aggrs_.begin(), param_aggrs_.end(),
+                             [](auto param_aggr) { return !param_aggr.second->ReInitForScaling(); });
+  if (result != param_aggrs_.end()) {
+    MS_LOG(ERROR) << "Reinitializing aggregator of " << result->first << " for scaling failed.";
+    return false;
+  }
+  return true;
+}
+
 bool Executor::initialized() const { return initialized_; }
 
 bool Executor::HandlePush(const std::string &param_name, const UploadData &upload_data) {

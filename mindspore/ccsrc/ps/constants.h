@@ -88,6 +88,16 @@ constexpr int64_t kRetryIntervalInMs = 10;
 
 constexpr int64_t kThreadNum = 32;
 
+// The barrier function which should be called before doing scaling out/in operations.
+// It's easy for us to scale out/in nodes after one iteration is completed and keep consistent.
+using BarrierBeforeScaleOut = std::function<void(void)>;
+using BarrierBeforeScaleIn = std::function<void(void)>;
+
+// These handlers helps worker/server node to reinitialize or recover data after scaling out/in operation of scheduler
+// is done.
+using HandlerAfterScaleOut = std::function<void(void)>;
+using HandlerAfterScaleIn = std::function<void(void)>;
+
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = uint64_t;

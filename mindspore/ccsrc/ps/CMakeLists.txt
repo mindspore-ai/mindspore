@@ -32,6 +32,7 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _PS_SRC_FILES "core/communicator/http_request_handler.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/communicator/ssl_wrapper.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/leader_scaler.cc")
+    list(REMOVE_ITEM _PS_SRC_FILES "core/follower_scaler.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/file_configuration.cc")
 endif()
 

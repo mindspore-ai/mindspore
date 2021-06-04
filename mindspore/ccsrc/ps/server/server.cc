@@ -76,10 +76,12 @@ void Server::Run() {
   InitServerContext();
   InitCluster();
   InitIteration();
+  RegisterCommCallbacks();
   StartCommunicator();
   InitExecutor();
   RegisterRoundKernel();
   MS_LOG(INFO) << "Server started successfully.";
+  safemode_ = false;
 
   // Wait communicators to stop so the main thread is blocked.
   std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
@@ -88,6 +90,8 @@ void Server::Run() {
   MsException::Instance().CheckException();
   return;
 }
+
+bool Server::IsSafeMode() { return safemode_.load(); }
 
 void Server::InitServerContext() {
   PSContext::instance()->GenerateResetterRound();
@@ -122,34 +126,6 @@ bool Server::InitCommunicatorWithServer() {
   communicator_with_server_ =
     server_node_->GetOrCreateTcpComm(scheduler_ip_, scheduler_port_, worker_num_, server_num_, task_executor_);
   MS_EXCEPTION_IF_NULL(communicator_with_server_);
-
-  // Set exception event callbacks for server.
-  auto tcp_comm = std::dynamic_pointer_cast<core::TcpCommunicator>(communicator_with_server_);
-  MS_EXCEPTION_IF_NULL(tcp_comm);
-
-  tcp_comm->RegisterEventCallback(core::ClusterEvent::CLUSTER_TIMEOUT, [&]() {
-    MS_LOG(ERROR) << "Event CLUSTER_TIMEOUT is captured. This is because some nodes(Scheduler/Server/Worker) are not "
-                     "started during network building phase.";
-    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
-    communicator_with_server_->Stop();
-  });
-
-  tcp_comm->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
-    MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
-    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
-    communicator_with_server_->Stop();
-  });
-
-  tcp_comm->RegisterEventCallback(core::ClusterEvent::NODE_TIMEOUT, [&]() {
-    MS_LOG(ERROR)
-      << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
-         "network building phase.";
-    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
-    communicator_with_server_->Stop();
-  });
   return true;
 }
 
@@ -194,13 +170,70 @@ void Server::InitIteration() {
   return;
 }
 
+void Server::RegisterCommCallbacks() {
+  // The message callbacks of round kernels are already set in method InitIteration, so here we don't need to register
+  // rounds' callbacks.
+
+  auto tcp_comm = std::dynamic_pointer_cast<core::TcpCommunicator>(communicator_with_server_);
+  MS_EXCEPTION_IF_NULL(tcp_comm);
+
+  // Set message callbacks for server-to-server communication.
+  DistributedMetadataStore::GetInstance().RegisterMessageCallback(tcp_comm);
+  DistributedCountService::GetInstance().RegisterMessageCallback(tcp_comm);
+
+  // Set exception event callbacks for server.
+  RegisterExceptionEventCallback(tcp_comm);
+
+  if (!server_node_->InitFollowerScaler()) {
+    MS_LOG(EXCEPTION) << "Initializing follower elastic scaler failed.";
+    return;
+  }
+  // Set scaling barriers before scaling.
+  server_node_->RegisterFollowerScalerBarrierBeforeScaleOut("ServerPipeline",
+                                                            std::bind(&Server::ProcessBeforeScalingOut, this));
+  server_node_->RegisterFollowerScalerBarrierBeforeScaleIn("ServerPipeline",
+                                                           std::bind(&Server::ProcessBeforeScalingIn, this));
+  // Set handlers after scheduler scaling operations are done.
+  server_node_->RegisterFollowerScalerHandlerAfterScaleOut("ServerPipeline",
+                                                           std::bind(&Server::ProcessAfterScalingOut, this));
+  server_node_->RegisterFollowerScalerHandlerAfterScaleIn("ServerPipeline",
+                                                          std::bind(&Server::ProcessAfterScalingIn, this));
+}
+
+void Server::RegisterExceptionEventCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
+  MS_EXCEPTION_IF_NULL(communicator);
+  communicator->RegisterEventCallback(core::ClusterEvent::CLUSTER_TIMEOUT, [&]() {
+    MS_LOG(ERROR) << "Event CLUSTER_TIMEOUT is captured. This is because some nodes(Scheduler/Server/Worker) are not "
+                     "started during network building phase.";
+    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
+    communicator_with_server_->Stop();
+  });
+
+  communicator->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
+    MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
+    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
+    communicator_with_server_->Stop();
+  });
+
+  communicator->RegisterEventCallback(core::ClusterEvent::NODE_TIMEOUT, [&]() {
+    MS_LOG(ERROR)
+      << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
+         "network building phase.";
+    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
+    communicator_with_server_->Stop();
+  });
+}
+
 void Server::InitExecutor() {
   if (executor_threshold_ == 0) {
     MS_LOG(EXCEPTION) << "The executor's threshold should greater than 0.";
     return;
   }
   // The train engine instance is used in both push-type and pull-type kernels,
-  // so the required_cnt of these kernels must be the same as update_model_threshold_.
+  // so the required_cnt of these kernels must be the same as executor_threshold_.
   MS_LOG(INFO) << "Required count for push-type and pull-type kernels is " << executor_threshold_;
   Executor::GetInstance().Initialize(func_graph_, executor_threshold_);
   ModelStore::GetInstance().Initialize();
@@ -246,6 +279,79 @@ void Server::StartCommunicator() {
   MS_LOG(INFO) << "Start communicator with worker.";
   std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
                 [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Start(); });
+}
+
+void Server::ProcessBeforeScalingOut() {
+  iteration_->ScalingBarrier();
+  safemode_ = true;
+}
+
+void Server::ProcessBeforeScalingIn() {
+  iteration_->ScalingBarrier();
+  safemode_ = true;
+}
+
+void Server::ProcessAfterScalingOut() {
+  if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    return;
+  }
+  if (!CollectiveOpsImpl::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    return;
+  }
+  if (!DistributedCountService::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "DistributedCountService reinitializing failed.";
+    return;
+  }
+  if (!iteration_->ReInitForScaling()) {
+    MS_LOG(ERROR) << "Iteration reinitializing failed.";
+    return;
+  }
+  if (!Executor::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "Executor reinitializing failed.";
+    return;
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  safemode_ = false;
+}
+
+void Server::ProcessAfterScalingIn() {
+  if (server_node_ == nullptr) {
+    return;
+  }
+
+  if (server_node_->rank_id() == UINT32_MAX) {
+    MS_LOG(WARNING) << "This server the one to be scaled in. Server exiting.";
+    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
+    communicator_with_server_->Stop();
+    return;
+  }
+
+  // If the server is not the one to be scaled in, reintialize modules and recover service.
+  if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    return;
+  }
+  if (!CollectiveOpsImpl::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    return;
+  }
+  if (!DistributedCountService::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "DistributedCountService reinitializing failed.";
+    return;
+  }
+  if (!iteration_->ReInitForScaling()) {
+    MS_LOG(ERROR) << "Iteration reinitializing failed.";
+    return;
+  }
+  if (!Executor::GetInstance().ReInitForScaling()) {
+    MS_LOG(ERROR) << "Executor reinitializing failed.";
+    return;
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  safemode_ = false;
 }
 }  // namespace server
 }  // namespace ps

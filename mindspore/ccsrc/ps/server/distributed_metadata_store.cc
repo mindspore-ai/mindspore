@@ -25,16 +25,19 @@ namespace server {
 void DistributedMetadataStore::Initialize(const std::shared_ptr<core::ServerNode> &server_node) {
   server_node_ = server_node;
   MS_EXCEPTION_IF_NULL(server_node);
-
-  communicator_ =
-    std::dynamic_pointer_cast<core::TcpCommunicator>(server_node_->GetOrCreateTcpComm("", 0, 0, 0, nullptr));
-  MS_EXCEPTION_IF_NULL(communicator_);
-
   local_rank_ = server_node_->rank_id();
   server_num_ = PSContext::instance()->initial_server_num();
-
   InitHashRing();
-  RegisterCallback();
+  return;
+}
+
+void DistributedMetadataStore::RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
+  communicator_ = communicator;
+  MS_EXCEPTION_IF_NULL(communicator_);
+  communicator_->RegisterMsgCallBack(
+    "updateMetadata", std::bind(&DistributedMetadataStore::HandleUpdateMetadataRequest, this, std::placeholders::_1));
+  communicator_->RegisterMsgCallBack(
+    "getMetadata", std::bind(&DistributedMetadataStore::HandleGetMetadataRequest, this, std::placeholders::_1));
   return;
 }
 
@@ -139,6 +142,24 @@ PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
   }
 }
 
+bool DistributedMetadataStore::ReInitForScaling() {
+  // If DistributedMetadataStore is not initialized yet but the scaling event is triggered, do not throw exception.
+  if (server_node_ == nullptr) {
+    return true;
+  }
+
+  MS_LOG(INFO) << "Cluster scaling completed. Reinitialize for distributed metadata store.";
+  local_rank_ = server_node_->rank_id();
+  server_num_ = server_node_->server_num();
+  MS_LOG(INFO) << "After scheduler scaling, this server's rank is " << local_rank_ << ", server number is "
+               << server_num_;
+  InitHashRing();
+
+  // Clear old metadata.
+  metadata_.clear();
+  return true;
+}
+
 void DistributedMetadataStore::InitHashRing() {
   router_ = std::make_shared<ConsistentHashRing>(32);
   MS_EXCEPTION_IF_NULL(router_);
@@ -149,14 +170,6 @@ void DistributedMetadataStore::InitHashRing() {
       return;
     }
   }
-  return;
-}
-
-void DistributedMetadataStore::RegisterCallback() {
-  communicator_->RegisterMsgCallBack(
-    "updateMetadata", std::bind(&DistributedMetadataStore::HandleUpdateMetadataRequest, this, std::placeholders::_1));
-  communicator_->RegisterMsgCallBack(
-    "getMetadata", std::bind(&DistributedMetadataStore::HandleGetMetadataRequest, this, std::placeholders::_1));
   return;
 }
 

@@ -47,6 +47,16 @@ bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
   return true;
 }
 
+bool ParameterAggregator::ReInitForScaling() {
+  auto result = std::find_if(aggregation_kernel_parameters_.begin(), aggregation_kernel_parameters_.end(),
+                             [](auto aggregation_kernel) { return !aggregation_kernel.first->ReInitForScaling(); });
+  if (result != aggregation_kernel_parameters_.end()) {
+    MS_LOG(ERROR) << "Reinitializing aggregation kernel after scaling failed";
+    return false;
+  }
+  return true;
+}
+
 bool ParameterAggregator::UpdateData(const std::map<std::string, Address> &new_data) {
   std::map<std::string, AddressPtr> &name_to_addr = memory_register_->addresses();
   for (const auto &data : new_data) {

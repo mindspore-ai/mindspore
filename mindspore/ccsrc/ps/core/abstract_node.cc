@@ -326,6 +326,37 @@ bool AbstractNode::CollectiveWait(std::pair<uint32_t, uint64_t> request_id, cons
   return res;
 }
 
+bool AbstractNode::InitFollowerScaler() {
+  follower_scaler_ = std::make_unique<FollowerScaler>(this);
+  MS_EXCEPTION_IF_NULL(follower_scaler_);
+  follower_scaler_->RegisterScaleEventCallbacks();
+  return true;
+}
+
+void AbstractNode::RegisterFollowerScalerBarrierBeforeScaleOut(const std::string &module,
+                                                               const BarrierBeforeScaleOut &barrier) {
+  MS_EXCEPTION_IF_NULL(follower_scaler_);
+  follower_scaler_->RegisterBarrierBeforeScaleOut(module, barrier);
+}
+
+void AbstractNode::RegisterFollowerScalerBarrierBeforeScaleIn(const std::string &module,
+                                                              const BarrierBeforeScaleIn &barrier) {
+  MS_EXCEPTION_IF_NULL(follower_scaler_);
+  follower_scaler_->RegisterBarrierBeforeScaleIn(module, barrier);
+}
+
+void AbstractNode::RegisterFollowerScalerHandlerAfterScaleOut(const std::string &module,
+                                                              const HandlerAfterScaleOut &handler) {
+  MS_EXCEPTION_IF_NULL(follower_scaler_);
+  follower_scaler_->RegisterHandlerAfterScaleOut(module, handler);
+}
+
+void AbstractNode::RegisterFollowerScalerHandlerAfterScaleIn(const std::string &module,
+                                                             const HandlerAfterScaleIn &handler) {
+  MS_EXCEPTION_IF_NULL(follower_scaler_);
+  follower_scaler_->RegisterHandlerAfterScaleIn(module, handler);
+}
+
 int32_t AbstractNode::worker_num() const { return worker_num_; }
 
 int32_t AbstractNode::server_num() const { return server_num_; }
