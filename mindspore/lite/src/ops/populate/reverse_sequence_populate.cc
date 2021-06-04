@@ -35,9 +35,7 @@ OpParameter *PopulateReverseSequenceParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(reverse_sequence_param);
 }
 }  // namespace
-
 Registry ReverseSequenceParameterRegistry(schema::PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter,
                                           SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

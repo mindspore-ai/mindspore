@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateSkipGramParameter(const void *prim) {
   SkipGramParameter *skipGramParameter = reinterpret_cast<SkipGramParameter *>(malloc(sizeof(SkipGramParameter)));
   if (skipGramParameter == nullptr) {
@@ -35,6 +34,5 @@ OpParameter *PopulateSkipGramParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(skipGramParameter);
 }
 Registry SkipGramParameterRegistry(schema::PrimitiveType_SkipGram, PopulateSkipGramParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

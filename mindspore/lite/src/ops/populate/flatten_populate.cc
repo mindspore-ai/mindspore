@@ -29,8 +29,6 @@ OpParameter *PopulateFlattenParameter(const void *prim) {
   flatten_param->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(flatten_param);
 }
-
 Registry FlattenParameterRegistry(schema::PrimitiveType_Flatten, PopulateFlattenParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

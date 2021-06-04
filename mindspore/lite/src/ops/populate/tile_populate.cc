@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateTileParameter(const void *prim) {
   TileParameter *tile_param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
   if (tile_param == nullptr) {
@@ -38,8 +37,6 @@ OpParameter *PopulateTileParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(tile_param);
 }
-
 Registry TileParameterRegistry(schema::PrimitiveType_TileFusion, PopulateTileParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

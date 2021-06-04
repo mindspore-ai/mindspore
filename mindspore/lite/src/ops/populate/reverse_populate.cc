@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateReverseParameter(const void *prim) {
   ReverseParameter *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
   if (reverse_param == nullptr) {
@@ -38,8 +37,6 @@ OpParameter *PopulateReverseParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(reverse_param);
 }
-
 Registry ReverseParameterRegistry(schema::PrimitiveType_ReverseV2, PopulateReverseParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

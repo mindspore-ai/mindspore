@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateFusedBatchNorm(const void *prim) {
   BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
   if (batch_norm_param == nullptr) {
@@ -34,8 +33,6 @@ OpParameter *PopulateFusedBatchNorm(const void *prim) {
   batch_norm_param->fused_ = true;
   return reinterpret_cast<OpParameter *>(batch_norm_param);
 }
-
 Registry FusedBatchNormParameterRegistry(schema::PrimitiveType_FusedBatchNorm, PopulateFusedBatchNorm, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

@@ -28,7 +28,6 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-
 int SoftmaxBaseCPUKernel::Init() {
   if (softmax_param_ == nullptr) {
     MS_LOG(ERROR) << "SoftmaxParameter nullptr";

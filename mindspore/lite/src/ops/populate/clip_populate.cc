@@ -30,8 +30,6 @@ OpParameter *PopulateClipParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(act_param);
 }
 }  // namespace
-
 Registry g_clipParameterRegistry(schema::PrimitiveType_Clip, PopulateClipParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

@@ -37,6 +37,5 @@ OpParameter *PopulateRangeParameter(const void *prim) {
 }
 }  // namespace
 Registry g_rangeParameterRegistry(schema::PrimitiveType_Range, PopulateRangeParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

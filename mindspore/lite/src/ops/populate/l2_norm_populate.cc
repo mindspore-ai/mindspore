@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateL2NormParameter(const void *prim) {
   L2NormParameter *l2_norm_parameter = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
   if (l2_norm_parameter == nullptr) {
@@ -54,6 +53,5 @@ OpParameter *PopulateL2NormParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(l2_norm_parameter);
 }
 Registry L2NormParameterRegistry(schema::PrimitiveType_L2NormalizeFusion, PopulateL2NormParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

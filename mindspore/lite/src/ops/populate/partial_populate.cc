@@ -17,11 +17,12 @@
 
 namespace mindspore {
 namespace lite {
-typedef struct PartialParameter {
+struct PartialParameter {
   OpParameter op_parameter_;
-  int sub_graph_index_;
-} PartialParameter;
+  int sub_graph_index_ = 0;
+};
 
+using PartialParameter = PartialParameter;
 OpParameter *PopulatePartialParameter(const void *prim) {
   PartialParameter *partial_parameter = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));
   if (partial_parameter == nullptr) {

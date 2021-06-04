@@ -30,8 +30,6 @@ OpParameter *PopulateFillParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(fill_param);
 }
 }  // namespace
-
 Registry g_fillParameterRegistry(schema::PrimitiveType_Fill, PopulateFillParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

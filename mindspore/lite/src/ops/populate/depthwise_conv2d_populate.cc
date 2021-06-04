@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateConvDwParameter(const void *primitive) {
   ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {

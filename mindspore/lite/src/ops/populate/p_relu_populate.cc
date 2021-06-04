@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulatePReLUParameter(const void *prim) {
   PReluParameter *param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
   if (param == nullptr) {

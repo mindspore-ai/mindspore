@@ -145,7 +145,7 @@ kernel::LiteKernel *DispatchGroupConv(const std::vector<lite::Tensor *> &inputs,
                                       reinterpret_cast<ConvParameter *>(op_parameter)->group_);
 }
 
-/* Class GroupConv Creator Implement Part*/
+/* Class GroupConv Creator Implement Part */
 void GroupConvCreator::SetShapeOfTensors() {
   int new_in_channel = origin_inputs_.at(kWeightIndex)->Channel();
   int new_out_channel;

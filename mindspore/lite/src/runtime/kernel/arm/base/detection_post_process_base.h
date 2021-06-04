@@ -37,7 +37,6 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-
   int thread_num_ = 1;
   int num_boxes_ = 0;
   int num_classes_with_bg_ = 0;
@@ -50,6 +49,7 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
 
  private:
   void FreeAllocatedBuffer();
+  int MallocParam();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_BASE_H_

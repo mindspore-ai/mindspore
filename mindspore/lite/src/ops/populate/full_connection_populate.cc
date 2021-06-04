@@ -44,7 +44,6 @@ OpParameter *PopulateFullconnectionParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
 }  // namespace
-
 Registry g_fullConnRegistry(schema::PrimitiveType_FullConnection, PopulateFullconnectionParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

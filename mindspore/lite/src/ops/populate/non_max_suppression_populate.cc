@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateNonMaxSuppressionParameter(const void *prim) {
   NMSParameter *param = reinterpret_cast<NMSParameter *>(malloc(sizeof(NMSParameter)));
   if (param == nullptr) {
@@ -34,6 +33,5 @@ OpParameter *PopulateNonMaxSuppressionParameter(const void *prim) {
 }
 Registry NonMaxSuppressionParameterRegistry(schema::PrimitiveType_NonMaxSuppression, PopulateNonMaxSuppressionParameter,
                                             SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

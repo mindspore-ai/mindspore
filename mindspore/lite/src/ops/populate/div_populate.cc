@@ -17,7 +17,6 @@
 #include "src/ops/populate/arithmetic_populate.h"
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateDivParameter(const void *prim) {
   ArithmeticParameter *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
@@ -26,8 +25,6 @@ OpParameter *PopulateDivParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-
 Registry g_divParameterRegistry(schema::PrimitiveType_DivFusion, PopulateDivParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

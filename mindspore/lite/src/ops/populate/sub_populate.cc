@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateSubParameter(const void *prim) {
   ArithmeticParameter *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
@@ -30,8 +29,6 @@ OpParameter *PopulateSubParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 Registry g_subParameterRegistry(schema::PrimitiveType_SubFusion, PopulateSubParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

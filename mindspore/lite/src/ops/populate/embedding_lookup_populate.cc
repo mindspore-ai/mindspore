@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateEmbeddingLookupParameter(const void *prim) {
   EmbeddingLookupParameter *param =
     reinterpret_cast<EmbeddingLookupParameter *>(malloc(sizeof(EmbeddingLookupParameter)));
@@ -39,9 +38,7 @@ OpParameter *PopulateEmbeddingLookupParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-
 Registry EmbeddingLookupParameterRegistry(schema::PrimitiveType_EmbeddingLookupFusion, PopulateEmbeddingLookupParameter,
                                           SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

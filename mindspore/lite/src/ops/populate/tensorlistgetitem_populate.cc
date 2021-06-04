@@ -33,6 +33,5 @@ OpParameter *PopulateTensorListGetItemParameter(const void *prim) {
 }
 Registry TensorListGetItemParameterRegistry(schema::PrimitiveType_TensorListGetItem, PopulateTensorListGetItemParameter,
                                             SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

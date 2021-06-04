@@ -36,9 +36,7 @@ OpParameter *PopulateTensorListFromTensorParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(TensorList_param);
 }
 }  // namespace
-
 Registry g_tensorListFromTensorV0ParameterRegistry(schema::v0::PrimitiveType_TensorListFromTensor,
                                                    PopulateTensorListFromTensorParameter, SCHEMA_V0);
-
 }  // namespace lite
 }  // namespace mindspore

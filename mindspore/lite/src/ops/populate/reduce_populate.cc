@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateReduceParameter(const void *prim) {
   ReduceParameter *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
   if (reduce_param == nullptr) {
@@ -36,8 +35,6 @@ OpParameter *PopulateReduceParameter(const void *prim) {
   reduce_param->mode_ = static_cast<int>(value->mode());
   return reinterpret_cast<OpParameter *>(reduce_param);
 }
-
 Registry ReduceParameterRegistry(schema::PrimitiveType_ReduceFusion, PopulateReduceParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

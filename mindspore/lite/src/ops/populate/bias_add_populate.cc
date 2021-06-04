@@ -33,6 +33,5 @@ OpParameter *PopulateBiasAddParameter(const void *prim) {
 }
 }  // namespace
 Registry g_biasAddParameterRegistry(schema::PrimitiveType_BiasAdd, PopulateBiasAddParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

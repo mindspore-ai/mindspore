@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulatePadParameter(const void *prim) {
   PadParameter *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
   if (pad_param == nullptr) {
@@ -34,6 +33,5 @@ OpParameter *PopulatePadParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(pad_param);
 }
 Registry PadParameterRegistry(schema::PrimitiveType_PadFusion, PopulatePadParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

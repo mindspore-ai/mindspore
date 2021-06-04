@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateAssertParameter(const void *prim) {
   OpParameter *assert_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (assert_parameter == nullptr) {

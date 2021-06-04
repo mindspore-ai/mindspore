@@ -27,7 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListSetItem;
 
 namespace mindspore::kernel {
-
 int TensorListSetItemCPUKernel::Init() { return RET_OK; }
 
 int TensorListSetItemCPUKernel::CheckParam() {

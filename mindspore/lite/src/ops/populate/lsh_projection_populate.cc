@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateLshProjectionParameter(const void *prim) {
   LshProjectionParameter *lsh_project_param =
     reinterpret_cast<LshProjectionParameter *>(malloc(sizeof(LshProjectionParameter)));
@@ -36,6 +35,5 @@ OpParameter *PopulateLshProjectionParameter(const void *prim) {
 }
 Registry LshProjectionParameterRegistry(schema::PrimitiveType_LshProjection, PopulateLshProjectionParameter,
                                         SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

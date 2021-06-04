@@ -89,7 +89,7 @@ hiai::op::Data *ConverterToNPUData(Tensor *src, const std::string &name) {
 }
 
 std::shared_ptr<ge::Tensor> ConverterToNPUTensor(Tensor *src) {
-  std::shared_ptr<ge::Tensor> ge_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  std::shared_ptr<ge::Tensor> ge_tensor = std::make_shared<ge::Tensor>();
   if (ge_tensor == nullptr) {
     MS_LOG(ERROR) << "new ge_tensor failed.";
     return ge_tensor;

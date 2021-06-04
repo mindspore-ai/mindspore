@@ -33,6 +33,5 @@ OpParameter *PopulateTensorListReserveParameter(const void *prim) {
 }
 Registry TensorListReserveParameterRegistry(schema::PrimitiveType_TensorListReserve, PopulateTensorListReserveParameter,
                                             SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

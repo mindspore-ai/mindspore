@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateDeconvParameter(const void *prim) {
   ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
@@ -76,7 +75,6 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(conv_param);
 }
-
 Registry g_Deconv2DParameterRegistry(schema::PrimitiveType_Conv2dTransposeFusion, PopulateDeconvParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

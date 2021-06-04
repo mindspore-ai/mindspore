@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace lite {
 namespace {
-
 OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
   auto depth_to_space_prim = primitive->value_as_DepthToSpace();
@@ -38,9 +37,7 @@ OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(depth_space_param);
 }
 }  // namespace
-
 Registry g_depthToSpaceV0ParameterRegistry(schema::v0::PrimitiveType_DepthToSpace, PopulateDepthToSpaceParameter,
                                            SCHEMA_V0);
 }  // namespace lite
-
 }  // namespace mindspore

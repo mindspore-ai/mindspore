@@ -31,6 +31,5 @@ OpParameter *PopulateScatterNDParameter(const void *prim) {
 }
 }  // namespace
 Registry g_scatterNDParameterRegistry(schema::PrimitiveType_ScatterNd, PopulateScatterNDParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore
