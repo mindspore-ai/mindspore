@@ -42,6 +42,9 @@ def get_vm_impl_fn(prim):
     Args:
         prim (Union[Primitive, str]): primitive object or name for operator register.
 
+    Note:
+        This mechanism applied for debugging currently.
+
     Returns:
         function, vm function
     """
