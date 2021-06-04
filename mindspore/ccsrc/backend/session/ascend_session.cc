@@ -922,7 +922,11 @@ void AscendSession::InitRuntimeResource() {
   if (!runtime_instance->Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  DumpInit(device_id_);
+  auto env_hccl_mode = common::GetEnv("MS_ENABLE_HCCL");
+  if (!env_hccl_mode.empty() && env_hccl_mode != std::to_string(0)) {
+    rank_id_ = GetRankId();
+  }
+  DumpInit(rank_id_);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1218,14 +1222,14 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpSetup(kernel_graph.get(), device_id_);
+  E2eDump::DumpSetup(kernel_graph.get(), rank_id_);
   MS_LOG(INFO) << "Finish!";
 }
 
 void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpData(kernel_graph.get(), device_id_);
+  E2eDump::DumpData(kernel_graph.get(), rank_id_);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1242,7 +1246,6 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   }
   auto kernel_runtime = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(kernel_runtime);
-  uint32_t device_id = kernel_runtime->device_id();
   for (auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     std::string name = "graph_build." + std::to_string(graph->graph_id());
@@ -1256,7 +1259,7 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
     if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
-      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(device_id);
+      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);
       std::string target_dir = root_dir + "/graphs";
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
       DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);

@@ -65,8 +65,7 @@ def test_async_dump():
     dump_path = pwd + "/async_dump"
     change_current_dump_json('async_dump.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + "/async_dump.json"
-    device_id = context.get_context("device_id")
-    dump_file_path = dump_path + '/rank_{}/Net/0/0/'.format(device_id)
+    dump_file_path = dump_path + '/rank_0/Net/0/0/'
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
@@ -82,11 +81,7 @@ def run_e2e_dump():
     dump_path = pwd + '/e2e_dump'
     change_current_dump_json('e2e_dump.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump.json'
-    if context.get_context("device_target") == "Ascend":
-        device_id = context.get_context("device_id")
-    else:
-        device_id = 0
-    dump_file_path = dump_path + '/rank_{}/Net/0/0/'.format(device_id)
+    dump_file_path = dump_path + '/rank_0/Net/0/0/'
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
@@ -159,8 +154,8 @@ def test_async_dump_net_multi_layer_mode1():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_name = "test_async_dump_net_multi_layer_mode1"
     json_file = os.path.join(os.getcwd(), "{}.json".format(test_name))
-    device_id = context.get_context("device_id")
-    dump_full_path = os.path.join("/tmp/async_dump/", "{}_{}".format(test_name, device_id))
+    rank_id = 0
+    dump_full_path = os.path.join("/tmp/async_dump/", "{}_{}".format(test_name, rank_id))
     os.system("rm -rf {}/*".format(dump_full_path))
     os.environ["MINDSPORE_DUMP_CONFIG"] = json_file
     weight = Tensor(np.ones((1000, 2048)).astype(np.float32))
@@ -176,7 +171,7 @@ def test_async_dump_net_multi_layer_mode1():
     label = Tensor(np.zeros(shape=(32, 1000)).astype(np.float32))
     net_dict = train_network(inputs, label)
 
-    dump_path = "/tmp/async_dump/{}/rank_{}/test/0/0/".format(test_name, device_id)
+    dump_path = "/tmp/async_dump/{}/rank_{}/test/0/0/".format(test_name, rank_id)
     dump_file = os.listdir(dump_path)
     dump_file_name = ""
     for file in dump_file:

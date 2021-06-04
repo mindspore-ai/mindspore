@@ -2575,4 +2575,23 @@ void DumpGraphExeOrder(const std::string &file_name, const std::string &target_d
   // set file mode to read only by user
   ChangeFileMode(file_path, S_IRUSR);
 }
+
+uint32_t GetRankId() {
+  uint32_t rank_id = 0;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string world_group;
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == kAscendDevice) {
+    world_group = kHcclWorldGroup;
+  } else if (backend == kGPUDevice) {
+    world_group = kNcclWorldGroup;
+  } else {
+    MS_LOG(ERROR) << "Invalid backend: " << backend;
+  }
+  if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
+    MS_LOG(INFO) << "Failed to get rank id.";
+  }
+  return rank_id;
+}
 }  // namespace mindspore

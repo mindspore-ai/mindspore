@@ -236,14 +236,14 @@ void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const st
   }
 }
 
-void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t device_id) {
+void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t cur_iter = dump_json_parser.cur_dump_iter();
   if (dump_json_parser.AsyncDumpEnabled() && dump_json_parser.IsDumpIter(cur_iter)) {
     auto zero_dir_dump_path =
-      dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
+      dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
 
-    auto root_cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/" +
+    auto root_cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/" +
                                    dump_json_parser.net_name() + "/" + std::to_string(graph->graph_id());
 
     auto cur_iter_dump_path = root_cur_iter_dump_path + "/" + std::to_string(cur_iter);
@@ -275,7 +275,7 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t device_id) {
   }
 }
 
-bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, const Debugger *debugger) {
+bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -284,7 +284,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
   if (dump_json_parser.GetIterDumpFlag()) {
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
     MS_LOG(INFO) << "Current graph id is " << graph_id;
-    std::string dump_path = GenerateDumpPath(graph_id, &device_id);
+    std::string dump_path = GenerateDumpPath(graph_id, rank_id);
 
     DumpInput(graph, dump_path, debugger);
     DumpOutput(graph, dump_path, debugger);
@@ -294,9 +294,9 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
     uint32_t current_iter = dump_json_parser.cur_dump_iter();
 
     auto zero_dir_dump_path =
-      dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
+      dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
 
-    auto cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/" +
+    auto cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/" +
                               dump_json_parser.net_name() + "/" + std::to_string(graph->graph_id()) + "/" +
                               std::to_string(current_iter);
 

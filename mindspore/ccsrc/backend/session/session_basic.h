@@ -287,6 +287,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
   uint32_t device_id_;
+  // rank id of physical device
+  uint32_t rank_id_{0};
   std::shared_ptr<Executor> executor_;
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
@@ -301,5 +303,6 @@ using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
 void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
                        const std::vector<CNodePtr> &execution_order);
+uint32_t GetRankId();
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H

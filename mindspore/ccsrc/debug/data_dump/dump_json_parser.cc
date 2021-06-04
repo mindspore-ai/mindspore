@@ -112,7 +112,7 @@ void DumpJsonParser::Parse() {
   JudgeDumpEnabled();
 }
 
-void DumpJsonParser::CopyJsonToDir(uint32_t device_id) {
+void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
   this->Parse();
   if (!IsDumpEnabled()) {
     return;
@@ -123,8 +123,7 @@ void DumpJsonParser::CopyJsonToDir(uint32_t device_id) {
   }
   std::ifstream json_file(dump_config_file.value());
   if (async_dump_enabled_ || e2e_dump_enabled_) {
-    auto realpath =
-      Common::GetRealPath(path_ + "/rank_" + std::to_string(device_id) + "/.dump_metadata/data_dump.json");
+    auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(rank_id) + "/.dump_metadata/data_dump.json");
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
     }
@@ -135,7 +134,7 @@ void DumpJsonParser::CopyJsonToDir(uint32_t device_id) {
   }
 }
 
-void DumpJsonParser::CopyHcclJsonToDir(uint32_t device_id) {
+void DumpJsonParser::CopyHcclJsonToDir(uint32_t rank_id) {
   if (!IsDumpEnabled()) {
     return;
   }
@@ -148,7 +147,7 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t device_id) {
     }
   }
   std::ifstream json_file(config_path);
-  auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(device_id) + "/.dump_metadata/hccl.json");
+  auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(rank_id) + "/.dump_metadata/hccl.json");
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed in CopyHcclJsonToDir.";
   } else {
@@ -159,11 +158,11 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t device_id) {
   }
 }
 
-void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t device_id) {
+void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
   if (!IsDumpEnabled()) {
     return;
   }
-  auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(device_id) + "/.dump_metadata/config.json");
+  auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(rank_id) + "/.dump_metadata/config.json");
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed in CopyMSConfigJsonToDir.";
   } else {
