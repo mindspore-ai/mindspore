@@ -83,6 +83,7 @@ constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kDropoutDoMask = "DropoutDoMask";
 constexpr auto kDropout = "Dropout";
 constexpr auto kDropoutGrad = "DropoutGrad";
+constexpr auto kConv2DTranspose = "Conv2DTranspose";
 
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
@@ -262,7 +263,7 @@ inline const PrimitivePtr kPrimFusedBatchNorm = std::make_shared<Primitive>("Fus
 inline const PrimitivePtr kPrimConv2D = std::make_shared<Primitive>("Conv2D");
 inline const PrimitivePtr kPrimCTCLoss = std::make_shared<Primitive>(kCTCLoss);
 inline const PrimitivePtr kPrimFullConnection = std::make_shared<Primitive>("FullConnection");
-inline const PrimitivePtr kPrimConv2DTranspose = std::make_shared<Primitive>("Conv2DTranspose");
+inline const PrimitivePtr kPrimConv2DTranspose = std::make_shared<Primitive>(kConv2DTranspose);
 inline const PrimitivePtr kPrimGroupConv2DGradInput = std::make_shared<Primitive>("GroupConv2DGradInput");
 inline const PrimitivePtr kPrimBatchNorm = std::make_shared<Primitive>("BatchNorm");
 inline const PrimitivePtr kPrimBatchNormGrad = std::make_shared<Primitive>("BatchNormGrad");
@@ -583,7 +584,6 @@ inline const PrimitivePtr kPrimSpaceToDepth = std::make_shared<Primitive>("Space
 inline const PrimitivePtr kPrimPadFusion = std::make_shared<Primitive>("PadFusion");
 inline const PrimitivePtr kPrimPowFusion = std::make_shared<Primitive>("PowFusion");
 inline const PrimitivePtr kPrimResize = std::make_shared<Primitive>("Resize");
-inline const PrimitivePtr kPrimConv2dTranspose = std::make_shared<Primitive>("Conv2dTranspose");
 inline const PrimitivePtr kPrimArgMinWithValue = std::make_shared<Primitive>("ArgMinWithValue");
 inline const PrimitivePtr kPrimIf = std::make_shared<Primitive>("If");
 inline const PrimitivePtr kPrimAvgPoolFusion = std::make_shared<Primitive>("AvgPoolFusion");

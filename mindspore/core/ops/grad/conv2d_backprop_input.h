@@ -60,6 +60,8 @@ class Conv2DBackpropInput : public PrimitiveC {
   Format get_format() const;
   std::vector<int64_t> get_pad_list() const;
 };
+AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args);
 using PrimConv2DBackpropInputPtr = std::shared_ptr<Conv2DBackpropInput>;
 }  // namespace ops
 }  // namespace mindspore

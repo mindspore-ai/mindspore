@@ -83,7 +83,7 @@ using mindspore::ops::kNameBatchNorm;
 using mindspore::ops::kNameConv2D;
 using mindspore::ops::kNameConv2DBackpropFilter;
 using mindspore::ops::kNameConv2DBackpropInput;
-using mindspore::ops::kNameConv2dTranspose;
+using mindspore::ops::kNameConv2DTranspose;
 using mindspore::ops::kNameDiv;
 using mindspore::ops::kNameElu;
 using mindspore::ops::kNameExp;
@@ -573,7 +573,7 @@ REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrMapCommon<ops::FusedBatchNorm>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropFilter, MoveAttrMapCommon<ops::Conv2DBackpropFilterFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropInput, MoveAttrMapCommon<ops::Conv2DBackpropInputFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2D, MoveAttrMapConv2D)
-REGIST_PRIMITIVE_ADJUST(kNameConv2dTranspose, MoveAttrMapCommon<ops::Conv2dTransposeFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameConv2DTranspose, MoveAttrMapCommon<ops::Conv2dTransposeFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameDiv, MoveAttrMapCommon<ops::DivFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameEluGrad, MoveAttrMapActivationGrad)

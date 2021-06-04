@@ -25,13 +25,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2dTransposeFusion = "Conv2dTransposeFusion";
-class Conv2dTransposeFusion : public Conv2dTranspose {
+class Conv2dTransposeFusion : public Conv2DTranspose {
  public:
-  Conv2dTransposeFusion() : Conv2dTranspose(kNameConv2dTransposeFusion) {
+  Conv2dTransposeFusion() : Conv2DTranspose(kNameConv2dTransposeFusion) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
   ~Conv2dTransposeFusion() = default;
-  MS_DECLARE_PARENT(Conv2dTransposeFusion, Conv2dTranspose);
+  MS_DECLARE_PARENT(Conv2dTransposeFusion, Conv2DTranspose);
   void Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},
             const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1},

@@ -1065,8 +1065,9 @@ def get_bprop_roi_align(self):
 @bprop_getters.register(P.Conv2DBackpropInput)
 def get_bprop_conv2d_backprop_input(self):
     """Grad definition for `Conv2DBackpropInput` operation."""
+    pad_list = self.get_attr_dict()['pad_list']
     filter_grad = G.Conv2DBackpropFilter(
-        self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
+        self.out_channel, self.kernel_size, self.pad_mode, self.pad, pad_list, mode=self.mode,
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     input_grad = P.Conv2D(
