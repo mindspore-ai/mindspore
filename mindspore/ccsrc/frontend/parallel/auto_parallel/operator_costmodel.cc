@@ -733,9 +733,8 @@ void ReshapeCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
 
 double SubCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
                                           int64_t) const {
-  double result;
-  result = ListProduct(inputs[0].slice_shape()) * static_cast<double>(inputs_type_lengths_[0]) +
-           ListProduct(inputs[1].slice_shape()) * static_cast<double>(inputs_type_lengths_[1]);
+  double result = ListProduct(inputs[0].slice_shape()) * static_cast<double>(inputs_type_lengths_[0]) +
+                  ListProduct(inputs[1].slice_shape()) * static_cast<double>(inputs_type_lengths_[1]);
   return result;
 }
 
@@ -1103,8 +1102,7 @@ double ReduceSumCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, 
     return result;
   }
   std::vector<int64_t> dim_list = input0.reduce_dim();
-  std::vector<int64_t>::iterator pos;
-  pos = std::find_if(dim_list.begin(), dim_list.end(), [input0_shape, input0_slice_shape](int64_t index) {
+  auto pos = std::find_if(dim_list.begin(), dim_list.end(), [input0_shape, input0_slice_shape](int64_t index) {
     return input0_shape[LongToSize(index)] != input0_slice_shape[LongToSize(index)];
   });
   if (pos != dim_list.end()) {
@@ -1146,8 +1144,7 @@ double ReduceSumCost::GetForwardComputationCost(const std::vector<TensorInfo> &i
   Shape input0_slice_shape = input0.slice_shape();
   Shape input0_shape = input0.shape();
   if (!cross_batch_ || !IsDataParallel(input0_shape, input0_slice_shape, stage_id)) {
-    std::vector<int64_t>::iterator pos;
-    pos = std::find_if(dim_list.begin(), dim_list.end(), [input0_shape, input0_slice_shape](int64_t index) {
+    auto pos = std::find_if(dim_list.begin(), dim_list.end(), [input0_shape, input0_slice_shape](int64_t index) {
       return input0_shape[LongToSize(index)] != input0_slice_shape[LongToSize(index)];
     });
     if (pos != dim_list.end()) {
@@ -1192,8 +1189,7 @@ double ReduceMeanCost::GetForwardComputationCost(const std::vector<TensorInfo> &
   Shape input0_slice_shape = input0.slice_shape();
   Shape input0_shape = input0.shape();
   if (!cross_batch_ || !IsDataParallel(input0_shape, input0_slice_shape, stage_id)) {
-    std::vector<int64_t>::iterator pos;
-    pos = std::find_if(dim_list.begin(), dim_list.end(), [input0_shape, input0_slice_shape](int64_t index) {
+    auto pos = std::find_if(dim_list.begin(), dim_list.end(), [input0_shape, input0_slice_shape](int64_t index) {
       return input0_shape[LongToSize(index)] != input0_slice_shape[LongToSize(index)];
     });
     if (pos != dim_list.end()) {
@@ -1414,11 +1410,10 @@ void LayerNormCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_o
   is_inputs_should_in_memory_[LAYERNORM_INPUTS_SIZE - 1] = is_parameter_[LAYERNORM_INPUTS_SIZE - 1];
 }
 
-double UniqueCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                      int64_t stage_id) const {
+double UniqueCost::GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const {
   return 0.0;
 }
-double UniqueCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+double UniqueCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
                                        int64_t stage_id) const {
   double result = 0.0;
   if (is_parameter_[0]) {
@@ -1438,15 +1433,15 @@ double UniqueCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, co
   }
   return result;
 }
-double UniqueCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                             const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double UniqueCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                             int64_t) const {
   // In forward phase, the computation cost = slice(A) + slice(B)
   Shape input_slice_shape = inputs[0].slice_shape();
   double result = ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
   return result;
 }
-double UniqueCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                              const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double UniqueCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                              int64_t stage_id) const {
   // In backward phase, the computation cost = (0 or 1) allreduce(slice(B))
   double result = 0.0;
   if (is_parameter_[0]) {
@@ -1470,7 +1465,7 @@ double UniqueCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inp
 }
 
 double GatherV2PCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                         int64_t stage_id) const {
+                                         int64_t) const {
   double result = 0.0;
   if (outputs_type_lengths_.size() != outputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for gatherv2 cost";
@@ -1485,13 +1480,13 @@ double GatherV2PCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, 
   auto index_shape = inputs[1].slice_shape();
   Shape reducescatter_shape = index_shape;
   if (param_shape.size() == 2) {
-    reducescatter_shape.push_back(param_shape.at(1 - axis_));
+    reducescatter_shape.push_back(param_shape.at(LongToSize(1 - axis_)));
   }
   result += ListProduct(reducescatter_shape) * static_cast<double>(outputs_type_lengths_[0]);
   return result;
 }
 
-double GatherV2PCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+double GatherV2PCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
                                           int64_t stage_id) const {
   double result = 0.0;
   CheckGlobalDeviceManager();
@@ -1517,8 +1512,7 @@ double GatherV2PCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
 }
 
 double UniformCandidateSamplerCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                              const std::vector<TensorInfo> &outputs,
-                                                              int64_t stage_id) const {
+                                                              const std::vector<TensorInfo> &, int64_t) const {
   Shape input0_slice_shape = inputs[0].slice_shape();
   if (inputs_type_lengths_.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size()
@@ -1536,8 +1530,8 @@ void UniformCandidateSamplerCost::CalculateInputsInMemory(const std::map<size_t,
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
-double GatherV2PCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double GatherV2PCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                                int64_t) const {
   double result = 0.0;
   Shape input0_slice_shape = inputs[0].slice_shape();
   Shape input1_slice_shape = inputs[1].slice_shape();
@@ -1577,7 +1571,7 @@ double GatherV2PCost::GetBackwardComputationCost(const std::vector<TensorInfo> &
 // The forward communication is determined by whether the slice is column split or row split
 // The number of segments is actually the shape[0] of the output, which is the cost of the AllReduce
 double UnsortedSegmentSumCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
-                                                  const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+                                                  const std::vector<TensorInfo> &outputs, int64_t) const {
   TensorInfo input0 = inputs[0];
   TensorInfo input1 = inputs[1];
   TensorInfo output0 = outputs[0];
@@ -1598,7 +1592,7 @@ double UnsortedSegmentSumCost::GetForwardCommCost(const std::vector<TensorInfo> 
 }
 
 double UnsortedSegmentSumCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
-                                                   const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+                                                   const std::vector<TensorInfo> &outputs, int64_t) const {
   TensorInfo input0 = inputs[0];
   TensorInfo input1 = inputs[1];
   TensorInfo output0 = outputs[0];
@@ -1655,7 +1649,7 @@ void UnsortedSegmentSumCost::CalculateInputsInMemory(const std::map<size_t, bool
 }
 
 double UnsortedSegmentMinCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
-                                                  const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+                                                  const std::vector<TensorInfo> &outputs, int64_t) const {
   TensorInfo input0 = inputs[0];
   TensorInfo input1 = inputs[1];
   TensorInfo output0 = outputs[0];
@@ -1678,7 +1672,7 @@ double UnsortedSegmentMinCost::GetForwardCommCost(const std::vector<TensorInfo> 
 }
 
 double UnsortedSegmentMinCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
-                                                   const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+                                                   const std::vector<TensorInfo> &outputs, int64_t) const {
   TensorInfo input0 = inputs[0];
   TensorInfo input1 = inputs[1];
   TensorInfo output0 = outputs[0];

@@ -111,8 +111,8 @@ CNodeCostMap AllreduceFusion::FindCNode(const AnfNodePtr &from, uint64_t recursi
       return cnode_dist;
     } else {
       auto cnode_dist_next = FindNextCNodes(cnode, recursive_times + 1);
-      for (auto &ele : cnode_dist_next) {
-        cnode_dist[ele.first] = cost + ele.second;
+      for (auto &ele_next : cnode_dist_next) {
+        cnode_dist[ele_next.first] = cost + ele_next.second;
       }
     }
   } else {
@@ -235,9 +235,9 @@ Status FindMirrorAndSetFusion(const AnfNodePtr &para, int64_t fusion) {
     return SUCCESS;
   }
   if (mirror_cnodes.size() > 2) {
-    for (auto &mirror_cnode : mirror_cnodes) {
-      MS_EXCEPTION_IF_NULL(mirror_cnode);
-      MS_LOG(INFO) << mirror_cnode->DebugString();
+    for (auto &mirror_cnode_1 : mirror_cnodes) {
+      MS_EXCEPTION_IF_NULL(mirror_cnode_1);
+      MS_LOG(INFO) << mirror_cnode_1->DebugString();
     }
     MS_EXCEPTION_IF_NULL(para);
     MS_LOG(ERROR) << para->ToString() << " FindMirror is more than 2. " << mirror_cnodes.size()
