@@ -77,6 +77,10 @@ void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> 
                          std::vector<int> shape;
                          (void)std::transform(values.begin(), values.end(), std::back_inserter(shape),
                                               [](const int64_t &value) { return static_cast<int>(value); });
+                         // Empty means scalar. Push one elements for bytes calculation.
+                         if (shape.empty()) {
+                           shape.push_back(1);
+                         }
                          return shape;
                        });
 
