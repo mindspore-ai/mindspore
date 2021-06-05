@@ -118,10 +118,10 @@ void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *
   }
 }
 
-void DumpMemToFile(const std::string &file_path, NotNull<const device::DeviceAddress *> addr,
-                   const ShapeVector &int_shapes, const TypeId &type, bool trans_flag) {
+void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
+                   const TypeId &type, bool trans_flag) {
   auto format = kOpFormat_DEFAULT;
-  auto ret = addr->DumpMemToFile(file_path, format, int_shapes, type, trans_flag);
+  auto ret = addr.DumpMemToFile(file_path, format, int_shapes, type, trans_flag);
   if (!ret) {
     MS_LOG(ERROR) << "DumpMemToFile Failed: flag:" << trans_flag << ", path:" << file_path << ", host_format:" << format
                   << ".!";

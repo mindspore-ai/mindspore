@@ -35,8 +35,8 @@ void GetConstantId(const session::KernelGraph *graph, std::map<std::string, size
 
 void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> int_shapes, bool trans_flag = false);
 
-void DumpMemToFile(const std::string &file_path, NotNull<const device::DeviceAddress *> addr,
-                   const ShapeVector &int_shapes, const TypeId &type, bool trans_flag = false);
+void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
+                   const TypeId &type, bool trans_flag = false);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_DUMP_UTILS_H_

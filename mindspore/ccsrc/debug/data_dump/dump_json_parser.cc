@@ -133,7 +133,7 @@ void DumpJsonParser::CopyJsonToDir() {
     ChangeFileMode(realpath.value(), S_IRUSR);
   }
 }
-bool DumpJsonParser::GetIterDumpFlag() {
+bool DumpJsonParser::GetIterDumpFlag() const {
   return e2e_dump_enabled_ && (iteration_ == 0 || cur_dump_iter_ == iteration_);
 }
 
@@ -265,8 +265,8 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
 void DumpJsonParser::ParseInputOutput(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kInputOutput);
   input_output_ = content;
-  const uint32_t max_inout_num = 2;
-  if (input_output_ < 0 || input_output_ > max_inout_num) {
+  constexpr uint32_t max_inout_num = 2;
+  if (input_output_ > max_inout_num) {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. input_output should be 0, 1, 2";
   }
 }
@@ -314,22 +314,11 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
 }
 
 void DumpJsonParser::JsonConfigToString() {
-  std::string cur_config;
-  cur_config.append("dump_mode:");
-  cur_config.append(std::to_string(dump_mode_));
-  cur_config.append(" path:");
-  cur_config.append(path_);
-  cur_config.append(" net_name:");
-  cur_config.append(net_name_);
-  cur_config.append(" iteration:");
-  cur_config.append(std::to_string(iteration_));
-  cur_config.append(" input_output:");
-  cur_config.append(std::to_string(input_output_));
-  cur_config.append("e2e_enable:");
-  cur_config.append(std::to_string(e2e_dump_enabled_));
-  cur_config.append(" async_dump_enable:");
-  cur_config.append(std::to_string(async_dump_enabled_));
-  MS_LOG(INFO) << cur_config;
+  std::stringstream buffer;
+  buffer << "dump_mode:" << dump_mode_ << " path:" << path_ << " net_name:" << net_name_ << " iteration:" << iteration_
+         << " input_output:" << input_output_ << std::boolalpha << " e2e_enable:" << e2e_dump_enabled_
+         << " async_dump_enable" << async_dump_enabled_;
+  MS_LOG(INFO) << buffer.str();
 }
 
 void DumpJsonParser::JudgeDumpEnabled() {
@@ -415,13 +404,13 @@ bool DumpJsonParser::OutputNeedDump() const {
   return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly;
 }
 
-void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph) {
+void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph) {
   if (!async_dump_enabled_) {
     return;
   }
   MS_LOG(INFO) << "Update async dump kernel list for hccl";
   std::map<std::string, uint32_t> update_kernels;
-  for (const auto &kernel : kernel_graph->execution_order()) {
+  for (const auto &kernel : kernel_graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {

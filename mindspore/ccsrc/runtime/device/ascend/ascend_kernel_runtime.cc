@@ -393,7 +393,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
     return GenDynamicKernel(graph);
   }
   MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
-  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(NOT_NULL(graph));
+  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph);
 #ifdef MEM_REUSE_DEBUG
   if (!EnvConfigParser::GetInstance().GetSysMemreuse()) {
     // Get normal graph ir for memreuse
