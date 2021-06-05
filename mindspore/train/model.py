@@ -142,6 +142,7 @@ class Model:
         self._global_rank = _get_global_rank()
         self._parameter_broadcast = _get_parameter_broadcast()
 
+        self._check_amp_level_arg(optimizer, amp_level)
         self._check_for_graph_cell(kwargs)
         self._train_network = self._build_train_network()
         self._build_eval_network(metrics, eval_network, eval_indexes)
@@ -166,6 +167,12 @@ class Model:
         if 'loss_scale_manager' in kwargs:
             self._loss_scale_manager = kwargs['loss_scale_manager']
             self._loss_scale_manager_set = True
+
+    def _check_amp_level_arg(self, optimizer, amp_level):
+        if optimizer is None and amp_level != "O0":
+            raise ValueError(
+                "Auto mixed precision will not work because optimizer arg is None.Please set amp_level='O0' "
+                "to disable auto mixed precision or set optimizer arg not None to use auto mixed precision.")
 
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
