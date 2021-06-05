@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-
 std::vector<StringPack> ParseTensorBuffer(Tensor *tensor) {
   if (tensor->data_c() == nullptr) {
     MS_LOG(ERROR) << "Tensor data is null, cannot be parsed";

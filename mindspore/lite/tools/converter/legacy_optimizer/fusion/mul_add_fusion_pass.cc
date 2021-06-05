@@ -46,7 +46,7 @@ STATUS MulAddFusionPass::DefinePattern() {
   baOp->types = {schema::PrimitiveType_AddFusion};
   baOp->left = mulOp;
 
-  std::unique_ptr<FusionPattern> fusionPattern(new (std::nothrow) FusionPattern("MulAddFusion"));
+  auto fusionPattern = std::make_unique<FusionPattern>("MulAddFusion");
   if (fusionPattern == nullptr) {
     MS_LOG(ERROR) << "new fusionPattern failed";
     return RET_ERROR;
@@ -139,7 +139,7 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
   MS_ASSERT(addNode != nullptr);
   // replace mulNode as scale
   mulNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
-  std::unique_ptr<ScaleFusionT> scaleParam(new (std::nothrow) ScaleFusionT());
+  auto scaleParam = std::make_unique<ScaleFusionT>();
   if (scaleParam == nullptr) {
     MS_LOG(ERROR) << "new transposeParam failed";
     return RET_ERROR;
@@ -162,7 +162,7 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
     }
   } else {
     // replace addnode as activation
-    std::unique_ptr<ActivationT> activationParam(new ActivationT());
+    auto activationParam = std::make_unique<ActivationT>();
     MS_ASSERT(addNode->primitive != nullptr);
     MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
     activationParam->activation_type = addNode->primitive->value.AsAddFusion()->activation_type;

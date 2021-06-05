@@ -39,7 +39,7 @@ struct DeviceInfoContext::Data {
   std::map<std::string, std::any> params;
 };
 
-Context::Context() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
+Context::Context() : data_(std::make_shared<Data>()) {}
 
 template <class T, typename U = std::remove_cv_t<std::remove_reference_t<T>>>
 static const U &GetValue(const std::shared_ptr<DeviceInfoContext::Data> &data, const std::string &key) {
@@ -95,7 +95,7 @@ std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
   return data_->device_info_list;
 }
 
-DeviceInfoContext::DeviceInfoContext() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
+DeviceInfoContext::DeviceInfoContext() : data_(std::make_shared<Data>()) {}
 
 void CPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   if (data_ == nullptr) {

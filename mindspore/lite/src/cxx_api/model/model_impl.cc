@@ -213,7 +213,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   }
   res.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
+    auto impl = std::make_shared<MSTensor::Impl>(inputs[i]);
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
@@ -251,7 +251,7 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   }
   res.resize(names.size());
   for (size_t i = 0; i < names.size(); i++) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[names[i]]));
+    auto impl = std::make_shared<MSTensor::Impl>(outputs[names[i]]);
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
@@ -276,7 +276,7 @@ MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
     MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
     return MSTensor(nullptr);
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(res));
+  auto impl = std::make_shared<MSTensor::Impl>(res);
   if (impl == nullptr || impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
     return MSTensor(nullptr);
@@ -304,7 +304,7 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
     MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
     return MSTensor(nullptr);
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(res));
+  auto impl = std::make_shared<MSTensor::Impl>(res);
   if (impl == nullptr || impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
     return MSTensor(nullptr);
@@ -327,7 +327,7 @@ std::vector<MSTensor> ModelImpl::GetOutputsByNodeName(const std::string &name) {
   }
   res.resize(outputs.size());
   for (size_t i = 0; i < outputs.size(); i++) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[i]));
+    auto impl = std::make_shared<MSTensor::Impl>(outputs[i]);
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;

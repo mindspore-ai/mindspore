@@ -371,12 +371,12 @@ STATUS SingleSwitchPass::InsertPartialAndMergeAfterSwitch() {
     switch_node_->outputIndex.end());
 
   // insert merge
-  auto merge_node = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
+  auto merge_node = std::make_unique<CNodeT>();
   if (merge_node == nullptr) {
     MS_LOG(ERROR) << "new cnode failed";
     return RET_NULL_PTR;
   }
-  merge_node->primitive = std::unique_ptr<PrimitiveT>(new (std::nothrow) PrimitiveT);
+  merge_node->primitive = std::make_unique<PrimitiveT>();
   if (merge_node->primitive == nullptr) {
     MS_LOG(ERROR) << "new primitiveT failed";
     return RET_NULL_PTR;

@@ -89,7 +89,7 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) 
 STATUS ComputeDataToInt32(const std::unique_ptr<TensorT> &tensor) {
   MS_ASSERT(tensor != nullptr);
   auto bShapeSize = GetShapeSize(*(tensor));
-  std::unique_ptr<int32_t[]> qDatas(new (std::nothrow) int32_t[bShapeSize]);
+  auto qDatas = std::make_unique<int32_t[]>(bShapeSize);
   if (qDatas == nullptr) {
     MS_LOG(ERROR) << "new qDatas failed";
     return RET_ERROR;

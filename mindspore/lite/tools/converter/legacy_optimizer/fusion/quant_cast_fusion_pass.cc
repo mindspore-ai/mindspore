@@ -99,7 +99,7 @@ STATUS QuantCastFusionPass::DefinePattern() {
     dstOp->types = {schema::PrimitiveType_QuantDTypeCast};
     dstOp->left = srcOp;
 
-    std::unique_ptr<FusionPattern> fusionPattern(new (std::nothrow) FusionPattern(kQuantCastFusionPattern));
+    auto fusionPattern = std::make_unique<FusionPattern>(kQuantCastFusionPattern);
     if (fusionPattern == nullptr) {
       MS_LOG(ERROR) << "new fusionPattern failde";
       return RET_ERROR;
@@ -124,7 +124,7 @@ STATUS QuantCastFusionPass::DefinePattern() {
     dstOp->types = {schema::PrimitiveType_QuantDTypeCast};
     dstOp->left = formatOp;
 
-    std::unique_ptr<FusionPattern> fusionPattern(new (std::nothrow) FusionPattern(kQuantCastPassFusionPattern));
+    auto fusionPattern = std::make_unique<FusionPattern>(kQuantCastPassFusionPattern);
     if (fusionPattern == nullptr) {
       MS_LOG(ERROR) << "new fusionPattern failde";
       return RET_ERROR;

@@ -53,7 +53,7 @@ ParameterCell &ParameterCell::operator=(MSTensor &&tensor) {
   return *this;
 }
 
-GraphCell::GraphCell(const Graph &graph) : graph_(std::shared_ptr<Graph>(new (std::nothrow) Graph(graph))) {
+GraphCell::GraphCell(const Graph &graph) : graph_(std::make_shared<Graph>(graph)) {
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid graph.";
   }
@@ -65,7 +65,7 @@ GraphCell::GraphCell(const std::shared_ptr<Graph> &graph) : graph_(graph) {
   }
 }
 
-GraphCell::GraphCell(Graph &&graph) : graph_(std::shared_ptr<Graph>(new (std::nothrow) Graph(graph))) {
+GraphCell::GraphCell(Graph &&graph) : graph_(std::make_shared<Graph>(graph)) {
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid graph.";
   }

@@ -31,7 +31,7 @@ InnerContext::InnerContext(const Context *context) {
   }
 }
 
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
 InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
