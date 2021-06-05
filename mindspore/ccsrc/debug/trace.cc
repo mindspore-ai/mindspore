@@ -122,7 +122,7 @@ class AnalyzedFuncGraphExporter : public AnfExporter {
   AnalyzedFuncGraphExporter() : AnfExporter(true, false) {}
   ~AnalyzedFuncGraphExporter() override = default;
 
-  void ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs);
+  bool ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs);
 
   void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
   void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
@@ -156,9 +156,9 @@ std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs() {
   return tagged_func_graphs;
 }
 
-void OutputAnalyzedGraphWithType(const string &file_path) {
+bool OutputAnalyzedGraphWithType(const string &file_path) {
   AnalyzedFuncGraphExporter exporter;
-  exporter.ExportFuncGraph(file_path, GetCNodeDebugStack());
+  return exporter.ExportFuncGraph(file_path, GetCNodeDebugStack());
 }
 
 std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
@@ -420,11 +420,11 @@ void AnalyzedFuncGraphExporter::ExportOneFuncGraph(std::ofstream &ofs, const Fun
   ofs << "}\n";
 }
 
-void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
+bool AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
                                                 const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs) {
   if (node_cfgs.empty()) {
     MS_LOG(DEBUG) << "Node configs is empty";
-    return;
+    return false;
   }
 
   context_map_.clear();
@@ -433,7 +433,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
   std::ofstream ofs(filename);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
-    return;
+    return false;
   }
 
   param_index = 1;
@@ -484,6 +484,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
   ofs << "# num of total function graphs: " << context_map_.size() << "\n";
 
   ofs.close();
+  return true;
 }
 
 void GetEvalStackInfo(std::ostringstream &oss) {
@@ -505,8 +506,12 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     file_name = realpath.value();
   }
 
-  OutputAnalyzedGraphWithType(file_name);
-  oss << "\nThe function call stack (See file '" << file_name << "' for more details):\n";
+  auto ret = OutputAnalyzedGraphWithType(file_name);
+  oss << "\nThe function call stack";
+  if (ret) {
+    oss << " (See file '" << file_name << "' for more details)";
+  }
+  oss << ":\n";
 
   int index = 0;
   std::string last_location_info = "";

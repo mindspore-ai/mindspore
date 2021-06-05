@@ -1863,9 +1863,9 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     MS_LOG(EXCEPTION) << "Current graph cast failed from " << cell_ptr->ToString();
   }
 
-  TraceGuard guard(current_graph->debug_info()->location());
   auto func_graph = std::make_shared<FuncGraph>();
   func_graph->debug_info()->set_name(current_graph->debug_info()->name() + "_wrapper");
+  func_graph->debug_info()->set_location(current_graph->debug_info()->location());
 
   // Copy all parameters information
   for (auto &para : current_graph->parameters()) {
@@ -1874,6 +1874,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     auto name = orig_param->name();
     param->set_name(name);
     param->debug_info()->set_name(name);
+    param->debug_info()->set_location(param->debug_info()->location());
   }
   func_graph->set_has_vararg(current_graph->has_vararg());
   func_graph->set_has_kwarg(current_graph->has_kwarg());
@@ -1892,6 +1893,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
   }
 
   auto unpacking = func_graph->has_vararg() || func_graph->has_kwarg();
+  TraceGuard guard(current_graph->get_return()->debug_info()->location());
   if (!unpacking) {
     std::vector<AnfNodePtr> inputs;
     inputs.emplace_back(NewValueNode(cell_ptr));

@@ -296,7 +296,6 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   symbol_resolver.Resolve();
   py::object obj = symbol_resolver.result();
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
-  TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
 }
 

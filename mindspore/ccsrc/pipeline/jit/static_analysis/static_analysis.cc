@@ -267,8 +267,7 @@ AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, 
   auto maybe_func_eval_result = func_conf->ObtainEvalResult();
   AbstractBasePtr maybe_func = maybe_func_eval_result->abstract();
   if (maybe_func == nullptr) {
-    MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString()
-                      << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
+    MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString();
   }
   return maybe_func;
 }
@@ -283,7 +282,8 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   }
   AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
   if (func == nullptr) {
-    MS_LOG(EXCEPTION) << "Not AbstractFunction: " << maybe_func->ToString() << ".";
+    MS_LOG(ERROR) << "Can not cast to a AbstractFunction: " << maybe_func->ToString() << ".";
+    MS_EXCEPTION(ValueError) << "This may be not defined, and it can't be a operator. Please check code.";
   }
 
   ConfigPtrList args_conf_list;

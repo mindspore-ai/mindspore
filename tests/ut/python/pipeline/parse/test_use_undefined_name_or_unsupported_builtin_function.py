@@ -292,9 +292,9 @@ def test_call_none_in_if():
             return ret
 
     net = Net()
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(ValueError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
-    assert "Not AbstractFunction: AbstractNone(Value: None)" in str(err.value)
+    assert "not defined" in str(err.value)
     assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(291)" in \
            str(err.value)
     assert "ret = self.func(x)" in str(err.value)
