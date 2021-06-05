@@ -29,7 +29,6 @@
 #include "src/train/optimizer_kernel.h"
 #include "src/sub_graph_kernel.h"
 #include "src/train/train_populate_parameter.h"
-#include "src/runtime/runtime_api.h"
 #include "src/executor.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"

@@ -23,7 +23,6 @@
 #include "nnacl/fp32_grad/layernormgrad_parameter.h"
 #include "nnacl/errorcode.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

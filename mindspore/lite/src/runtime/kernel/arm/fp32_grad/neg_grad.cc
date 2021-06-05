@@ -18,7 +18,6 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH;

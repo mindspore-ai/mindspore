@@ -20,7 +20,6 @@
 #include <utility>
 #include "nnacl/non_max_suppression_parameter.h"
 #include "schema/model_generated.h"
-#include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 

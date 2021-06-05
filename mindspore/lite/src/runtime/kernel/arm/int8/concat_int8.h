@@ -23,7 +23,6 @@
 #include "include/errorcode.h"
 #include "src/inner_kernel.h"
 #include "include/context.h"
-#include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
 class ConcatInt8CPUKernel : public InnerKernel {

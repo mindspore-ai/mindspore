@@ -19,7 +19,6 @@
 #include "nnacl/common_func.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/fp32/conv_common_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 

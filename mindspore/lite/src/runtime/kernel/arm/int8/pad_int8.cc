@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/int8/pad_int8.h"
-#include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 
 using mindspore::lite::RET_ERROR;

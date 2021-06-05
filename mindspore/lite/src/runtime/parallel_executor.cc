@@ -16,7 +16,6 @@
 
 #include <utility>
 #include "src/runtime/parallel_executor.h"
-#include "src/runtime/runtime_api.h"
 #include "src/lite_kernel_util.h"
 
 namespace mindspore::lite {

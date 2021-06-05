@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
-#include "src/runtime/runtime_api.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel/arm/int8/opt_op_handler.h"
 

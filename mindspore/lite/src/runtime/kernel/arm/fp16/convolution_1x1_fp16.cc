@@ -20,7 +20,6 @@
 #include "nnacl/fp16/pack_fp16.h"
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;

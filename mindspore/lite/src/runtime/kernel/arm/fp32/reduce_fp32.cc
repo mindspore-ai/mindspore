@@ -19,7 +19,6 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/fp32/reduce_fp32.h"
 #include "src/runtime/kernel/arm/base/reduce_base.h"
 

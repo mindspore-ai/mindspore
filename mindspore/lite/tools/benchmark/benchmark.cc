@@ -26,7 +26,6 @@
 #include "include/version.h"
 #include "schema/model_generated.h"
 #include "src/common/common.h"
-#include "src/runtime/runtime_api.h"
 #include "src/tensor.h"
 #ifdef ENABLE_ARM64
 #include <linux/perf_event.h>

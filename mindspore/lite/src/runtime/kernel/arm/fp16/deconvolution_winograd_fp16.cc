@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/deconvolution_winograd_fp16.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;

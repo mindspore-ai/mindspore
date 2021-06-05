@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp32/pad_fp32.h"
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

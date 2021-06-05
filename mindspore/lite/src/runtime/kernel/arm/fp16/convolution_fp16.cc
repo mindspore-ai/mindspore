@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include <vector>
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/fp16/conv_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"

@@ -22,7 +22,6 @@
 #include "nnacl/space_to_depth_parameter.h"
 #include "nnacl/base/space_to_depth_base.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

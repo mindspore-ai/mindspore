@@ -21,7 +21,6 @@
 #include "src/kernel_registry.h"
 #include "nnacl/base/unsorted_segment_sum_base.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

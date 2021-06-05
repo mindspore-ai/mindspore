@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/int8/tanh_int8.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

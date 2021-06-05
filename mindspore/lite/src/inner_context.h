@@ -19,7 +19,6 @@
 #include <set>
 #include <string>
 #include "include/context.h"
-#include "src/runtime/runtime_api.h"
 #include "src/runtime/inner_allocator.h"
 #include "thread/inter_threadpool.h"
 #ifdef ENABLE_ARM

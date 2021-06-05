@@ -18,7 +18,6 @@
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/pack.h"
 
 using mindspore::kernel::KERNEL_ARCH;

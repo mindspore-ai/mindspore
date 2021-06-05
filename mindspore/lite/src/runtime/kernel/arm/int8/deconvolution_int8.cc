@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
 #include "src/runtime/kernel/arm/int8/deconvolution_depthwise_int8.h"
-#include "src/runtime/runtime_api.h"
 #include "src/common/utils.h"
 #include "src/runtime/kernel/arm/int8/opt_op_handler.h"
 

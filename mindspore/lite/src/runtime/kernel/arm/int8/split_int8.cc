@@ -19,7 +19,6 @@
 #include "nnacl/split_parameter.h"
 #include "nnacl/int8/split_int8.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;

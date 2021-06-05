@@ -22,7 +22,6 @@
 #include "src/inner_kernel.h"
 #include "nnacl/int8/add_int8.h"
 #include "nnacl/arithmetic.h"
-#include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
 class QuantizedAddCPUKernel : public InnerKernel {

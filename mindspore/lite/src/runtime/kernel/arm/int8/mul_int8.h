@@ -23,7 +23,6 @@
 #include "nnacl/mul_parameter.h"
 #include "nnacl/int8/mul_int8.h"
 #include "nnacl/int8/arithmetic_int8.h"
-#include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
 class MulInt8CPUKernel : public InnerKernel {

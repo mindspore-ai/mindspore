@@ -18,7 +18,6 @@
 #include <limits>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "src/runtime/infer_manager.h"
 

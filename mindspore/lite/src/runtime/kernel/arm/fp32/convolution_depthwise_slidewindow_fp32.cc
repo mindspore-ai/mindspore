@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;

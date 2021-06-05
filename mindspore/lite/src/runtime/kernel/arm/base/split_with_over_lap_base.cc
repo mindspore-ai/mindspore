@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/base/split_with_over_lap_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "src/tensor.h"
 
 using mindspore::kernel::KERNEL_ARCH;

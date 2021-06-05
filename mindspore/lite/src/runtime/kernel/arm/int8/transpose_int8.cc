@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/int8/transpose_int8.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

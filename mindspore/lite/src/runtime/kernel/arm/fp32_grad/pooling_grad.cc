@@ -20,7 +20,6 @@
 #include "nnacl/fp32/pooling_fp32.h"
 #include "nnacl/fp32_grad/pooling_grad.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

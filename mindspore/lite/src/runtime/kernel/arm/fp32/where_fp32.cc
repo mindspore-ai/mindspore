@@ -20,7 +20,6 @@
 #include "nnacl/fp32/where_fp32.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/common_func.h"
 
 using mindspore::kernel::KERNEL_ARCH;

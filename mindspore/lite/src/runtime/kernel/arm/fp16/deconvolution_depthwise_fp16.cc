@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp16/deconvolution_depthwise_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
