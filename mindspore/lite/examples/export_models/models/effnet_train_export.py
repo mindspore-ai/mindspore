@@ -16,7 +16,7 @@
 
 import sys
 import numpy as np
-from train_utils import SaveInOut, TrainWrap
+from train_utils import save_inout, train_wrap
 from effnet import effnet
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, nn
@@ -28,11 +28,11 @@ n = effnet(num_classes=10)
 loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
 optimizer = nn.SGD(n.trainable_params(), learning_rate=0.01, momentum=0.9, dampening=0.0, weight_decay=0.0,
                    nesterov=True, loss_scale=1.0)
-net = TrainWrap(n, loss_fn, optimizer)
+net = train_wrap(n, loss_fn, optimizer)
 
 x = Tensor(np.random.randn(2, 3, 224, 224), mstype.float32)
 label = Tensor(np.zeros([2, 10]).astype(np.float32))
 export(net, x, label, file_name="mindir/effnet_train", file_format='MINDIR')
 
 if len(sys.argv) > 1:
-    SaveInOut(sys.argv[1] + "effnet", x, label, n, net)
+    save_inout(sys.argv[1] + "effnet", x, label, n, net)

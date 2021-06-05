@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decoded_data) {
+STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decoded_data, size_t data_len) {
   if (decoded_data == nullptr) {
     MS_LOG(ERROR) << "decoded_data is nullptr.";
     return RET_ERROR;
@@ -57,8 +57,12 @@ STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decode
   }
 
   size_t len = huffman_decoded_str.length();
-  memcpy(decoded_data, huffman_decoded_str.c_str(), len);
-
+  if (data_len >= len) {
+    memcpy(decoded_data, huffman_decoded_str.c_str(), len);
+  } else {
+    FreeHuffmanNodeTree(root);
+    return RET_ERROR;
+  }
   FreeHuffmanNodeTree(root);
   return RET_OK;
 }
@@ -173,6 +177,5 @@ void HuffmanDecode::FreeHuffmanNodeTree(HuffmanNodePtr root) {
     delete (cur_node);
   }
 }
-
 }  // namespace lite
 }  // namespace mindspore

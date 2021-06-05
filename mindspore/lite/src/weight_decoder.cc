@@ -255,7 +255,7 @@ int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Ten
   }
   auto dst_data = dst_tensor->data_c();
   MS_ASSERT(dst_data != nullptr);
-  ret = HuffmanDecode::DoHuffmanDecode(encode_str, dst_data);
+  ret = HuffmanDecode::DoHuffmanDecode(encode_str, dst_data, dst_tensor->Size());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoHuffmanDecode failed.";
     return ret;

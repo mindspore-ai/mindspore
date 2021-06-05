@@ -44,6 +44,7 @@ class Swish(nn.Cell):
         m = x*s
         return m
 
+
 class AdaptiveAvgPool(nn.Cell):
     def __init__(self, output_size=None):
         super().__init__(AdaptiveAvgPool)
@@ -52,6 +53,7 @@ class AdaptiveAvgPool(nn.Cell):
 
     def construct(self, x):
         return self.mean(x, (2, 3))
+
 
 class SELayer(nn.Cell):
     """
@@ -77,6 +79,7 @@ class SELayer(nn.Cell):
         o = self.act2(o)
         return x * o
 
+
 class DepthwiseSeparableConv(nn.Cell):
     """
     DepthwiseSeparableConv
@@ -84,7 +87,9 @@ class DepthwiseSeparableConv(nn.Cell):
     def __init__(self, in_chs, out_chs, dw_kernel_size=3,
                  stride=1, noskip=False, se_ratio=0.0, drop_connect_rate=0.0):
         super().__init__(DepthwiseSeparableConv)
-        assert stride in [1, 2]
+        if stride not in [1, 2]:
+            print("ERROR")
+            return
         self.has_residual = (stride == 1 and in_chs == out_chs) and not noskip
         self.drop_connect_rate = drop_connect_rate
 
@@ -117,6 +122,7 @@ class DepthwiseSeparableConv(nn.Cell):
             x += residual
         return x
 
+
 def conv_3x3_bn(inp, oup, stride):
     weight = weight_variable()
     return nn.SequentialCell([
@@ -124,6 +130,7 @@ def conv_3x3_bn(inp, oup, stride):
                   padding=1, weight_init=weight, has_bias=False, pad_mode='pad'),
         nn.BatchNorm2d(oup, eps=0.001),  # , momentum=0.1),
         nn.HSwish()])
+
 
 def conv_1x1_bn(inp, oup):
     weight = weight_variable()
@@ -133,13 +140,16 @@ def conv_1x1_bn(inp, oup):
         nn.BatchNorm2d(oup, eps=0.001),
         nn.HSwish()])
 
+
 class InvertedResidual(nn.Cell):
     """
     InvertedResidual
     """
     def __init__(self, in_chs, out_chs, kernel_size, stride, padding, expansion, se_ratio):
         super().__init__(InvertedResidual)
-        assert stride in [1, 2]
+        if stride not in [1, 2]:
+            print("ERROR")
+            return
         mid_chs: int = _make_divisible(in_chs * expansion, 1)
         self.has_residual = (in_chs == out_chs and stride == 1)
         self.drop_connect_rate = 0
@@ -193,6 +203,7 @@ class InvertedResidual(nn.Cell):
         if self.has_residual:
             x += residual
         return x
+
 
 class EfficientNet(nn.Cell):
     """
@@ -294,6 +305,7 @@ class EfficientNet(nn.Cell):
                     Tensor(np.zeros(m.beta.data.shape, dtype="float32")))
             elif isinstance(m, nn.Dense):
                 init_linear_weight(m)
+
 
 def effnet(**kwargs):
     """

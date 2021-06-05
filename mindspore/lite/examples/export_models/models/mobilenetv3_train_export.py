@@ -16,7 +16,7 @@
 
 import sys
 import numpy as np
-from train_utils import SaveInOut, TrainWrap
+from train_utils import save_inout, train_wrap
 from official.cv.mobilenetv3.src.mobilenetV3 import mobilenet_v3_small
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, nn
@@ -28,7 +28,7 @@ n = mobilenet_v3_small(num_classes=10)
 loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False, reduction='mean')
 optimizer = nn.Adam(n.trainable_params(), learning_rate=1e-3, beta1=0.5, beta2=0.7, eps=1e-2, use_locking=True,
                     use_nesterov=False, weight_decay=0.1, loss_scale=0.3)
-net = TrainWrap(n, loss_fn, optimizer)
+net = train_wrap(n, loss_fn, optimizer)
 
 batch = 2
 x = Tensor(np.random.randn(batch, 3, 224, 224), mstype.float32)
@@ -36,4 +36,4 @@ label = Tensor(np.zeros([batch, 10]).astype(np.float32))
 export(net, x, label, file_name="mindir/mobilenetv3_train", file_format='MINDIR')
 
 if len(sys.argv) > 1:
-    SaveInOut(sys.argv[1] + "mobilenetv3", x, label, n, net, sparse=False)
+    save_inout(sys.argv[1] + "mobilenetv3", x, label, n, net, sparse=False)

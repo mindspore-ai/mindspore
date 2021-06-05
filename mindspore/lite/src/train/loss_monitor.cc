@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace lite {
-
 void LossMonitor::Begin(const session::TrainLoopCallBackData &cb_data) {
   if (cb_data.epoch_ == 0) losses_.clear();
 }
@@ -42,7 +41,7 @@ void LossMonitor::EpochBegin(const session::TrainLoopCallBackData &cb_data) {
 int LossMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
   if (cb_data.step_ > 0) losses_.at(cb_data.epoch_).second /= static_cast<float>(cb_data.step_ + 1);
   if (print_every_n_ > 0) {
-    std::cout << "Epoch (" << cb_data.epoch_ + 1 << "):\tLoss is " << losses_.at(cb_data.epoch_).second << std::endl;
+    std::cout << "Epoch (" << (cb_data.epoch_ + 1) << "):\tLoss is " << losses_.at(cb_data.epoch_).second << std::endl;
   }
   return mindspore::session::RET_CONTINUE;
 }
@@ -54,12 +53,11 @@ void LossMonitor::StepEnd(const session::TrainLoopCallBackData &cb_data) {
       auto loss = reinterpret_cast<float *>(it->second->MutableData());
       losses_.at(cb_data.epoch_).second += loss[0];
       if ((cb_data.step_ + 1) % print_every_n_ == 0)
-        std::cout << cb_data.epoch_ + 1 << "." << cb_data.step_ + 1 << ":\tLoss is " << loss[0] << std::endl;
+        std::cout << (cb_data.epoch_ + 1) << "." << (cb_data.step_ + 1) << ":\tLoss is " << loss[0] << std::endl;
       return;
     }
   }
   MS_LOG(WARNING) << "Model does not have a loss output tensor of size 1";
 }
-
 }  // namespace lite
 }  // namespace mindspore

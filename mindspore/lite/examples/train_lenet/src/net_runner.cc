@@ -44,10 +44,20 @@ using mindspore::lite::Model;
 using mindspore::session::TrainLoopCallBack;
 using mindspore::session::TrainLoopCallBackData;
 
+constexpr int kPrintNum = 10;
+constexpr float kScalePoint = 255.0f;
+constexpr int kBatchSize = 2;
+constexpr int kNCHWDims = 4;
+constexpr int kNCHWCDim = 2;
+constexpr int kPrintTimes = 100;
+constexpr int kSaveSteps = 1000;
+constexpr float kLearningRate = 0.7f;
 class Rescaler : public mindspore::session::TrainLoopCallBack {
  public:
   explicit Rescaler(float scale) : scale_(scale) {
-    if (scale_ == 0) scale_ = 1.0;
+    if (scale_ == 0) {
+      scale_ = 1.0;
+    }
   }
   ~Rescaler() override = default;
   void StepBegin(const mindspore::session::TrainLoopCallBackData &cb_data) override {
@@ -68,7 +78,7 @@ bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inpu
   for (size_t i = 0; i < after_inputs.size(); i++) {
     int num2p = (after_inputs.at(i)->ElementsNum());
     printf("in%zu(%d): ", i, num2p);
-    if (num2p > 10) num2p = 10;
+    if (num2p > kPrintNum) num2p = kPrintNum;
     if (after_inputs.at(i)->data_type() == mindspore::kNumberTypeInt32) {
       auto d = reinterpret_cast<int *>(after_inputs.at(i)->MutableData());
       for (int j = 0; j < num2p; j++) printf("%d, ", d[j]);
@@ -101,8 +111,7 @@ void NetRunner::InitAndFigureInputs() {
   context.thread_num_ = 2;
 
   session_ = mindspore::session::LiteSession::CreateTrainSession(ms_file_, &context, true);
-
-  MS_ASSERT(nullptr != session_);
+  MS_ASSERT(session_ != nullptr);
   loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_);
 
   if (verbose_) {
@@ -115,10 +124,10 @@ void NetRunner::InitAndFigureInputs() {
   auto inputs = session_->GetInputs();
   MS_ASSERT(inputs.size() > 1);
   auto nhwc_input_dims = inputs.at(0)->shape();
-  MS_ASSERT(nhwc_input_dims.size() == 4);
+  MS_ASSERT(nhwc_input_dims.size() == kNCHWDims);
   batch_size_ = nhwc_input_dims.at(0);
   h_ = nhwc_input_dims.at(1);
-  w_ = nhwc_input_dims.at(2);
+  w_ = nhwc_input_dims.at(kNCHWCDim);
 }
 
 float NetRunner::CalculateAccuracy(int max_tests) {
@@ -131,7 +140,7 @@ float NetRunner::CalculateAccuracy(int max_tests) {
   test_ds_ = test_ds_->Map({&typecast}, {"label"});
   test_ds_ = test_ds_->Batch(batch_size_, true);
 
-  Rescaler rescale(255.0);
+  Rescaler rescale(kScalePoint);
 
   loop_->Eval(test_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale});
   std::cout << "Eval Accuracy is " << acc_metrics_->Eval() << std::endl;
@@ -162,13 +171,13 @@ int NetRunner::InitDB() {
 }
 
 int NetRunner::TrainLoop() {
-  struct mindspore::lite::StepLRLambda step_lr_lambda(1, 0.7);
+  struct mindspore::lite::StepLRLambda step_lr_lambda(1, kLearningRate);
   mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 1);
 
-  mindspore::lite::LossMonitor lm(100);
+  mindspore::lite::LossMonitor lm(kPrintTimes);
   mindspore::lite::ClassificationTrainAccuracyMonitor am(1);
-  mindspore::lite::CkptSaver cs(1000, std::string("lenet"));
-  Rescaler rescale(255.0);
+  mindspore::lite::CkptSaver cs(kSaveSteps, std::string("lenet"));
+  Rescaler rescale(kScalePoint);
 
   loop_->Train(epochs_, train_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &step_lr_sched});
   return 0;

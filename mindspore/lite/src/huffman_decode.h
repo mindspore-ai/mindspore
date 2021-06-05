@@ -42,7 +42,7 @@ class HuffmanDecode {
  public:
   virtual ~HuffmanDecode() = default;
 
-  static STATUS DoHuffmanDecode(const std::string &input_str, void *decoded_data);
+  static STATUS DoHuffmanDecode(const std::string &input_str, void *decoded_data, size_t data_len);
 
  private:
   HuffmanDecode() = default;

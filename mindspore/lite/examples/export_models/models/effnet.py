@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
 from mindspore import Tensor
 
+
 def weight_variable():
     """weight initial"""
     return TruncatedNormal(0.02)
@@ -40,6 +41,7 @@ def _make_value_divisible(value, factor, min_value=None):
         new_value += factor
     return new_value
 
+
 class Swish(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -58,7 +60,8 @@ class AdaptiveAvgPool(nn.Cell):
         self.output_size = output_size
 
     def construct(self, x):
-        return self.mean(x, (2, 3)) ## This is not a general case
+        return self.mean(x, (2, 3)) # This is not a general case
+
 
 class SELayer(nn.Cell):
     """SELayer"""
@@ -74,24 +77,27 @@ class SELayer(nn.Cell):
         self.act2 = nn.Sigmoid()
 
     def construct(self, x):
-        o = self.avg_pool(x) #.view(b,c)
+        o = self.avg_pool(x) # .view(b,c)
         o = self.conv_reduce(o)
         o = self.act1(o)
         o = self.conv_expand(o)
-        o = self.act2(o) #.view(b, c, 1,1)
+        o = self.act2(o) # .view(b, c, 1,1)
         return x * o
+
 
 class DepthwiseSeparableConv(nn.Cell):
     """DepthwiseSeparableConv"""
     def __init__(self, in_chs, out_chs, dw_kernel_size=3, stride=1, noskip=False, se_ratio=0.0, drop_connect_rate=0.0):
         super().__init__()
-        assert stride in [1, 2]
+        if stride not in [1, 2]:
+            print("ERROR stride param")
+            return
         self.has_residual = (stride == 1 and in_chs == out_chs) and not noskip
         self.drop_connect_rate = drop_connect_rate
 
         self.conv_dw = nn.Conv2d(in_channels=in_chs, out_channels=in_chs, kernel_size=dw_kernel_size, stride=stride,
                                  pad_mode="pad", padding=1, has_bias=False, group=in_chs)
-        self.bn1 = nn.BatchNorm2d(in_chs, eps=0.001) #,momentum=0.1)
+        self.bn1 = nn.BatchNorm2d(in_chs, eps=0.001) # momentum=0.1)
         self.act1 = Swish()
 
        # Squeeze-and-excitation
@@ -101,7 +107,7 @@ class DepthwiseSeparableConv(nn.Cell):
             print("ERRRRRORRRR -- not prepared for this one\n")
 
         self.conv_pw = nn.Conv2d(in_channels=in_chs, out_channels=out_chs, kernel_size=1, stride=stride, has_bias=False)
-        self.bn2 = nn.BatchNorm2d(out_chs, eps=0.001) #,momentum=0.1)
+        self.bn2 = nn.BatchNorm2d(out_chs, eps=0.001) # momentum=0.1)
 
     def construct(self, x):
         """construct"""
@@ -120,12 +126,13 @@ class DepthwiseSeparableConv(nn.Cell):
             x += residual
         return x
 
+
 def conv_3x3_bn(inp, oup, stride):
     weight = weight_variable()
     return nn.SequentialCell([
         nn.Conv2d(in_channels=inp, out_channels=oup, kernel_size=3, stride=stride, padding=1, weight_init=weight,
                   has_bias=False, pad_mode='pad'),
-        nn.BatchNorm2d(oup, eps=0.001),  #, momentum=0.1),
+        nn.BatchNorm2d(oup, eps=0.001),  # momentum=0.1),
         nn.HSwish()])
 
 
@@ -142,7 +149,9 @@ class InvertedResidual(nn.Cell):
     """InvertedResidual"""
     def __init__(self, in_chs, out_chs, kernel_size, stride, padding, expansion, se_ratio):
         super().__init__()
-        assert stride in [1, 2]
+        if stride not in [1, 2]:
+            print("ERROR stride param")
+            return
         mid_chs: int = _make_value_divisible(in_chs * expansion, 1)
         self.has_residual = (in_chs == out_chs and stride == 1)
         self.drop_connect_rate = 0
@@ -210,7 +219,7 @@ class EfficientNet(nn.Cell):
 
         self.conv_stem = nn.Conv2d(in_channels=3, out_channels=stem_size, kernel_size=3, stride=2, has_bias=False)
 
-        self.bn1 = nn.BatchNorm2d(stem_size, eps=0.001) #momentum=0.1)
+        self.bn1 = nn.BatchNorm2d(stem_size, eps=0.001) # momentum=0.1)
         self.act1 = Swish()
         in_chs = stem_size
 
@@ -240,7 +249,7 @@ class EfficientNet(nn.Cell):
         self.blocks = nn.SequentialCell(layers)
 
         self.conv_head = nn.Conv2d(in_channels=320, out_channels=self.num_features_, kernel_size=1)
-        self.bn2 = nn.BatchNorm2d(self.num_features_, eps=0.001) #,momentum=0.1)
+        self.bn2 = nn.BatchNorm2d(self.num_features_, eps=0.001) # momentum=0.1)
         self.act2 = Swish()
         self.global_pool = AdaptiveAvgPool(output_size=(1, 1))
         self.classifier = nn.Dense(self.num_features_, num_classes)
