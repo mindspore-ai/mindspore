@@ -35,7 +35,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto block_shape_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
   auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
   for (size_t i = 0; i < 2; i++) {
-    auto padded = output_shape[i + 2] + paddings[i][0] + paddings[i][1];
+    auto padded = LongToSize(output_shape[i + 2] + paddings[i][0] + paddings[i][1]);
     CheckAndConvertUtils::CheckInteger("padded shape", padded % block_shape_vector.size(), kEqual, 0, prim_name);
     output_shape[i + 2] = padded / block_shape_vector.size();
   }
@@ -58,8 +58,8 @@ void SpaceToBatch::set_paddings(const std::vector<std::vector<int64_t>> &padding
   int64_t w = paddings[0].size();
   std::vector<int64_t> temp_w = {2, 2};
   CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
-  for (int64_t i = 0; i < h; i++) {
-    for (int64_t j = 0; j < w; j++) {
+  for (size_t i = 0; i < LongToSize(h); i++) {
+    for (size_t j = 0; j < LongToSize(w); j++) {
       CheckAndConvertUtils::CheckInteger(kPadding, paddings[i][j], kGreaterEqual, 0, this->name());
     }
   }

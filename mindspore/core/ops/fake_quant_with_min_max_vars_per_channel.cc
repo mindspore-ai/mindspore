@@ -57,7 +57,7 @@ AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisE
   auto max_type = input_args[2]->BuildType();
   std::vector<std::string> type_name = {"x", "min", "max"};
   std::vector<TypePtr> type = {x_type, min_type, max_type};
-  for (int64_t i = 0; i < 3; i++) {
+  for (size_t i = 0; i < 3; i++) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid(type_name[i], type[i], {kFloat16, kFloat32}, op_name);
   }
   auto tensor_type = x_type->cast<TensorTypePtr>();
