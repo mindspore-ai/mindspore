@@ -41,6 +41,7 @@ class AccuracyMetrics : public Metrics {
   std::vector<int> output_indexes_ = {0};
   float total_accuracy_ = 0.0;
   float total_steps_ = 0.0;
+  friend class ClassificationTrainAccuracyMonitor;
 };
 
 }  // namespace lite

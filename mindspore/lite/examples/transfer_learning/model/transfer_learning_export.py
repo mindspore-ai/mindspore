@@ -19,7 +19,7 @@ import mindspore as M
 from mindspore.nn import Cell
 from mindspore.train.serialization import load_checkpoint, export
 from effnet import effnet
-from train_utils import TrainWrap
+from train_utils import train_wrap
 
 
 class TransferNet(Cell):
@@ -51,7 +51,7 @@ HEAD.bias.set_data(M.Tensor(np.zeros(HEAD.bias.data.shape, dtype="float32")))
 
 sgd = M.nn.SGD(HEAD.trainable_params(), learning_rate=0.015, momentum=0.9,
                dampening=0.01, weight_decay=0.0, nesterov=False, loss_scale=1.0)
-net = TrainWrap(HEAD, optimizer=sgd)
+net = train_wrap(HEAD, optimizer=sgd)
 backbone_out = M.Tensor(np.zeros([BATCH_SIZE, 1000]).astype(np.float32))
 export(net, backbone_out, label, file_name="transfer_learning_tod_head", file_format='MINDIR')
 

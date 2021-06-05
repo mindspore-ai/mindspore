@@ -17,12 +17,15 @@
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 
+
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0, pad_mode="valid", has_bias=True):
     return nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding,
                      has_bias=has_bias, pad_mode=pad_mode)
 
+
 def fc_with_initialize(input_channels, out_channels, has_bias=True):
     return nn.Dense(input_channels, out_channels, has_bias=has_bias)
+
 
 class AlexNet(nn.Cell):
     """

@@ -40,6 +40,60 @@ class DequantUtil {
   static void RestoreTensorData(const std::map<Tensor *, std::pair<TypeId, void *>> &tensor_origin_data_map);
 
   template <typename ST, typename DT = float>
+  static DT *DequantPerBatch(lite::Tensor *input_tensor, ST *quant_datas, DT *dequant_datas) {
+    auto per_batch_size = input_tensor->shape().at(0);
+    auto quant_param = input_tensor->quant_params();
+    for (int i = 0; i < per_batch_size; i++) {
+      auto param = quant_param.at(i);
+      auto scale = param.scale;
+      auto zero_point = param.zeroPoint;
+      auto matrix_size = input_tensor->ElementsNum() / per_batch_size;
+      for (int64_t j = 0; j < matrix_size; j++) {
+        dequant_datas[i * matrix_size + j] = static_cast<DT>((quant_datas[i * matrix_size + j] - zero_point) * scale);
+      }
+    }
+    return dequant_datas;
+  }
+  template <typename ST, typename DT = float>
+  static DT *DequantPerChannel(lite::Tensor *input_tensor, ST *quant_datas, DT *dequant_datas, bool channel_first) {
+    auto channels = static_cast<size_t>(input_tensor->Batch());
+    if (!channel_first) {
+      if (input_tensor->shape().size() != 2) {
+        MS_LOG(ERROR) << "unexpected shape size: " << input_tensor->shape().size();
+        free(dequant_datas);
+        return nullptr;
+      }
+      channels = input_tensor->shape()[1];
+    }
+    if (input_tensor->quant_params().size() != channels) {
+      MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->quant_params().size() << channels;
+      free(dequant_datas);
+      return nullptr;
+    }
+    size_t per_channel_size = input_tensor->ElementsNum() / channels;
+    auto quant_param = input_tensor->quant_params();
+    for (size_t i = 0; i < channels; i++) {
+      auto param = quant_param.at(i);
+      auto scale = param.scale;
+      auto zero_point = param.zeroPoint;
+      auto var_corr = param.var_corr;
+      auto mean_corr = param.mean_corr;
+      if (var_corr < 0 || var_corr > 10) {
+        MS_LOG(WARNING) << "unexpected var_corr: " << var_corr;
+        var_corr = 1;
+      }
+      for (size_t j = 0; j < per_channel_size; j++) {
+        auto index = per_channel_size * i + j;
+        if (!channel_first) {
+          index = channels * j + i;
+        }
+        auto dequant_data = (quant_datas[index] - zero_point) * scale;
+        dequant_datas[index] = static_cast<DT>(dequant_data * var_corr + mean_corr);
+      }
+    }
+    return dequant_datas;
+  }
+  template <typename ST, typename DT = float>
   static DT *DequantData(lite::Tensor *input_tensor, bool channel_first = true) {
     const auto *quant_datas = static_cast<const ST *>(input_tensor->MutableData());
     if (quant_datas == nullptr) {
@@ -53,53 +107,9 @@ class DequantUtil {
     }
     if (input_tensor->shape().size() == kPerBatch &&
         input_tensor->quant_params().size() == static_cast<size_t>(input_tensor->shape().at(0))) {  // per batch matmul
-      auto per_batch_size = input_tensor->shape().at(0);
-      auto quant_param = input_tensor->quant_params();
-      for (int i = 0; i < per_batch_size; i++) {
-        auto param = quant_param.at(i);
-        auto scale = param.scale;
-        auto zero_point = param.zeroPoint;
-        auto matrix_size = input_tensor->ElementsNum() / per_batch_size;
-        for (int64_t j = 0; j < matrix_size; j++) {
-          dequant_datas[i * matrix_size + j] = static_cast<DT>((quant_datas[i * matrix_size + j] - zero_point) * scale);
-        }
-      }
+      return DequantPerBatch(input_tensor, quant_datas, dequant_datas);
     } else if (input_tensor->quant_params().size() != kPerTensor) {
-      auto channels = static_cast<size_t>(input_tensor->Batch());
-      if (!channel_first) {
-        if (input_tensor->shape().size() != 2) {
-          MS_LOG(ERROR) << "unexpected shape size: " << input_tensor->shape().size();
-          free(dequant_datas);
-          return nullptr;
-        }
-        channels = input_tensor->shape()[1];
-      }
-      if (input_tensor->quant_params().size() != channels) {
-        MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->quant_params().size() << channels;
-        free(dequant_datas);
-        return nullptr;
-      }
-      size_t per_channel_size = input_tensor->ElementsNum() / channels;
-      auto quant_param = input_tensor->quant_params();
-      for (size_t i = 0; i < channels; i++) {
-        auto param = quant_param.at(i);
-        auto scale = param.scale;
-        auto zero_point = param.zeroPoint;
-        auto var_corr = param.var_corr;
-        auto mean_corr = param.mean_corr;
-        if (var_corr < 0 || var_corr > 10) {
-          MS_LOG(WARNING) << "unexpected var_corr: " << var_corr;
-          var_corr = 1;
-        }
-        for (size_t j = 0; j < per_channel_size; j++) {
-          auto index = per_channel_size * i + j;
-          if (!channel_first) {
-            index = channels * j + i;
-          }
-          auto dequant_data = (quant_datas[index] - zero_point) * scale;
-          dequant_datas[index] = static_cast<DT>(dequant_data * var_corr + mean_corr);
-        }
-      }
+      return DequantPerChannel(input_tensor, quant_datas, dequant_datas, channel_first);
     } else {
       auto quant_param = input_tensor->quant_params();
       auto quant_clusters = input_tensor->quant_clusters();
