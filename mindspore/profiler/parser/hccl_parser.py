@@ -39,14 +39,17 @@ class CommunicationInfo(Enum):
         RDMASEND：Communication operator of RDMA link.
         REDUCE_INLINE：Communication operator of SDMA link.
         MEMCPY：Communication operator of SDMA link.
+        NOTIFY_RECORD: Communication operator of SDMA link.
+        NOTIFY_WAIT: operator of LOCAL.
     """
     RDMA = 'RDMA'
     SDMA = 'SDMA'
     LOCAL = 'LOCAL'
     RDMASEND = 'RDMASend'
-    NOTIFY_WAIT = 'Notify Wait'
     REDUCE_INLINE = 'Reduce Inline'
     MEMCPY = 'Memcpy'
+    NOTIFY_RECORD = 'Notify Record'
+    NOTIFY_WAIT = 'Notify Wait'
 
 
 class HcclParser:
@@ -268,6 +271,10 @@ class HcclParser:
             if link_type_key is None:
                 continue
             if link_type_key in (CommunicationInfo.RDMA.value, CommunicationInfo.SDMA.value):
+                task_type = item.get("args").get("task type")
+                # Filter out the Notify Record operator in SDMA, because it does not transmit the actual amount of data.
+                if task_type == CommunicationInfo.NOTIFY_RECORD.value:
+                    continue
                 if link_type_dict.get(link_type_key):
                     link_type_dict[link_type_key].append(item)
                 else:
@@ -293,9 +300,11 @@ class HcclParser:
         """Calculate src dst link info."""
         result_dict = dict()
         for key, value in src_dst_dict.items():
-            result_dict[key] = dict()
             # Divide information by link type.
             link_type_dict = self._divide_communication_info_by_link_type(value)
+            if not link_type_dict:
+                continue
+            result_dict[key] = dict()
             for link_type_key, link_type_value in link_type_dict.items():
                 if link_type_key == CommunicationInfo.RDMA.value:
                     # Divide information by thread.
