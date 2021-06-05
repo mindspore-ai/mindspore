@@ -141,28 +141,6 @@ set(LITE_SRC
         ${SRC_DIR}/train/train_populate_parameter.cc
         )
 
-if(ENABLE_MINDRT)
-    include_directories(${CORE_DIR}/mindrt/)
-    include_directories(${CORE_DIR}/mindrt/include/)
-    include_directories(${CORE_DIR}/mindrt/src/)
-    set(MINDRT_SRC
-        ${SRC_DIR}/lite_mindrt.cc
-        ${SRC_DIR}/mindrt_executor.cc
-        ${CORE_DIR}/mindrt/src/mindrt.cc
-        ${CORE_DIR}/mindrt/src/actor/actor.cc
-        ${CORE_DIR}/mindrt/src/actor/actormgr.cc
-        ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
-        ${CORE_DIR}/mindrt/src/actor/aid.cc
-        ${CORE_DIR}/mindrt/src/async/async.cc
-        ${CORE_DIR}/mindrt/src/async/future.cc
-        ${CORE_DIR}/mindrt/src/async/uuid_base.cc
-        ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
-        ${CORE_DIR}/mindrt/src/thread/threadpool.cc
-        ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
-        ${CORE_DIR}/mindrt/src/thread/inter_threadpool.cc
-        )
-endif()
-
 file(GLOB PROTO_FILE ""
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/caffe/caffe.proto
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf/proto/*.proto
@@ -179,18 +157,18 @@ ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
-set_property(SOURCE ${MINDRT_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+
 add_executable(converter_lite
         main.cc
         ${CCSRC_SRC}
         ${CONVERTER_SRC}
         ${LITE_SRC}
-        ${MINDRT_SRC}
         )
 add_dependencies(converter_lite fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
 
 target_link_libraries(converter_lite PRIVATE
+        mindrt_mid
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid

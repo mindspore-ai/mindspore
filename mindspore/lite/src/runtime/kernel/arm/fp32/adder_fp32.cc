@@ -26,8 +26,8 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
+using mindspore::schema::Format;
 using mindspore::schema::PrimitiveType_AdderFusion;
-using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
 int AdderCPUKernel::Init() {

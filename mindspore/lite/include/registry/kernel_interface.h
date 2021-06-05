@@ -65,7 +65,7 @@ class MS_API KernelInterface {
 };
 
 /// \brief KernelInterfaceCreator defined a functor to create KernelInterface.
-using KernelInterfaceCreator MS_API = std::function<std::shared_ptr<KernelInterface>()>;
+using KernelInterfaceCreator = std::function<std::shared_ptr<KernelInterface>()>;
 
 /// \brief RegisterKernelInterface defined registration and acquisition of KernelInterface.
 class MS_API RegisterKernelInterface {

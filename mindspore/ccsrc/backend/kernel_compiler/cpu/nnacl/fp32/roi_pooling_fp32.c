@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/roi_pooling_fp32.h"
+#include <float.h>
 #include <math.h>
 #include <string.h>
 #include "nnacl/errorcode.h"
@@ -68,7 +69,7 @@ int ROIPooling(const float *in_ptr, float *out_ptr, const float *roi, float *max
         wend = MSMIN(MSMAX(wend + roi_start_w, 0), width_);
         bool is_empty = (hend <= hstart) || (wend <= wstart);
         for (int j = 0; j < channels_; ++j) {
-          max_c[j] = is_empty ? 0 : -__FLT_MAX__;
+          max_c[j] = is_empty ? 0 : -FLT_MAX;
         }
         int pooled_index = i * param->out_strides_[0] + ph * param->out_strides_[1] + pw * param->out_strides_[2];
         int bd_index = hstart * param->in_strides_[1];

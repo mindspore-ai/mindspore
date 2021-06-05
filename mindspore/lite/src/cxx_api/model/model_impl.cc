@@ -88,10 +88,11 @@ Status ModelImpl::Build() {
     MS_LOG(ERROR) << "Invalid thread affinity.";
     return kLiteInputParamInvalid;
   }
-  lite::DeviceInfo cpu_info = {.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode}};
+  lite::DeviceInfo cpu_info = {0};
+  cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
   model_context.device_list_.push_back({lite::DT_CPU, cpu_info});
   if (device_list.size() == 2) {
-    lite::DeviceInfo device_info;
+    lite::DeviceInfo device_info = {0};
     if (device_list[1]->GetDeviceType() == kMaliGPU) {
       auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
       device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};

@@ -16,7 +16,7 @@
 
 #include "nnacl/fp32/invert_permutation_fp32.h"
 
-inline void InvertPermutation(const int *input, int *output, int num) {
+void InvertPermutation(const int *input, int *output, int num) {
   for (int i = 0; i < num; i++) {
     int index = input[i];
     output[index] = i;
