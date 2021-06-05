@@ -68,6 +68,7 @@ void WorkerNode::CreateTcpServer() {
     MS_LOG(INFO) << "The worker node start a tcp server!";
     server_->Start();
   });
+  server_thread_->detach();
 }
 
 bool WorkerNode::Stop() {
@@ -82,7 +83,6 @@ bool WorkerNode::Stop() {
       }
     }
     server_->Stop();
-    server_thread_->join();
     is_already_stopped_ = true;
   }
   return true;

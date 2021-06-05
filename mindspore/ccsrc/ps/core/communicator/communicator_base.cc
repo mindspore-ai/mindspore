@@ -20,6 +20,11 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+CommunicatorBase::~CommunicatorBase() {
+  running_ = false;
+  Join();
+}
+
 bool CommunicatorBase::SendResponse(const void *rsp_data, size_t rsp_len, std::shared_ptr<MessageHandler> msg_handler) {
   // The rsp_len could be 0 because of ProtoBuffer's feature.
   if (rsp_data == nullptr || msg_handler == nullptr) {

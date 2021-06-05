@@ -42,9 +42,9 @@ class CommunicatorBase {
   using OnNodeEventCallback = std::function<void(const ClusterEvent &)>;
   using TcpMsgCallback = std::function<void(std::shared_ptr<core::TcpConnection> conn,
                                             std::shared_ptr<core::MessageMeta> meta, DataPtr data, size_t size)>;
-  CommunicatorBase() = default;
+  CommunicatorBase() : running_(false) {}
 
-  virtual ~CommunicatorBase() = default;
+  virtual ~CommunicatorBase();
 
   virtual bool Start() = 0;
   virtual bool Stop() = 0;
@@ -59,6 +59,7 @@ class CommunicatorBase {
  protected:
   std::unordered_map<std::string, MessageCallback> msg_callbacks_;
   std::thread running_thread_;
+  bool running_;
 };
 }  // namespace core
 }  // namespace ps

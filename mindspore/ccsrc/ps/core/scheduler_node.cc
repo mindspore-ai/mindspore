@@ -429,6 +429,7 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
   nlohmann::json js;
   js["message"] = "Cluster begin to scale out.";
   resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content_Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
@@ -507,6 +508,7 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
   nlohmann::json js;
   js["message"] = "Cluster begin to scale in.";
   resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content_Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
@@ -543,6 +545,7 @@ void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp
   }
 
   resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content_Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
@@ -562,6 +565,7 @@ void SchedulerNode::ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> r
   js["cluster_state"] = CommUtil::ClusterStateToString(cluster_state);
 
   resp->AddRespString(js.dump());
+  resp->AddRespHeadParam("Content_Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
@@ -601,6 +605,13 @@ RequestProcessResult SchedulerNode::CheckIfNodeIdLegal(const std::vector<std::st
       ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, error_message);
       return result;
     }
+
+    if (node_infos[val].node_role_ == NodeRole::WORKER) {
+      std::string error_message = "The node id:" + val + " is the role of worker, should not be scale in.";
+      MS_LOG(ERROR) << error_message;
+      ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, error_message);
+      return result;
+    }
   }
 
   return result;
@@ -628,7 +639,7 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
 
   http_server_->InitServer();
 
-  http_server_->Start();
+  http_server_->Start(false);
   restful_thread_ = std::make_unique<std::thread>([&]() { http_server_->Wait(); });
 }
 

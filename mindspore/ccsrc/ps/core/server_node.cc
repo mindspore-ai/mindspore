@@ -77,6 +77,7 @@ void ServerNode::CreateTcpServer() {
     MS_LOG(INFO) << "The server node start a tcp server!";
     this->server_->Start();
   });
+  server_thread_->detach();
 }
 
 void ServerNode::Initialize() {
@@ -158,20 +159,13 @@ bool ServerNode::Stop() {
   if (!is_already_stopped_.load()) {
     is_already_stopped_ = true;
     is_finish_ = true;
-    if (heart_beat_thread_->joinable()) {
-      heart_beat_thread_->join();
-    }
     client_to_scheduler_->Stop();
     if (!connected_nodes_.empty()) {
       for (auto &connected_node : connected_nodes_) {
         connected_node.second->Stop();
       }
     }
-    if (client_to_scheduler_thread_->joinable()) {
-      client_to_scheduler_thread_->join();
-    }
     server_->Stop();
-    server_thread_->join();
   }
   return true;
 }
