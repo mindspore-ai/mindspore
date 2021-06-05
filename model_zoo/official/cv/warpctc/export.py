@@ -27,7 +27,7 @@ if config.device_target == "Ascend":
     context.set_context(device_id=get_device_id())
 
 if config.file_format == "AIR" and config.device_target != "Ascend":
-    raise ValueError("export AIR must on Ascend")
+    raise ValueError("Export AIR must on Ascend")
 
 if __name__ == "__main__":
     input_size = m.ceil(config.captcha_height / 64) * 64 * 3

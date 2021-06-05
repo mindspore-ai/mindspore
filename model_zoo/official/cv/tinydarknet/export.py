@@ -23,7 +23,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
-from src.config import imagenet_cfg
+from src.model_utils.config import config as imagenet_cfg
 from src.tinydarknet import TinyDarkNet
 
 if __name__ == '__main__':
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     if args_opt.dataset_name == 'imagenet':
         cfg = imagenet_cfg
     else:
-        raise ValueError("dataset is not support.")
+        raise ValueError("Dataset is not support.")
 
     net = TinyDarkNet(num_classes=cfg.num_classes)
 
