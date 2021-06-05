@@ -215,24 +215,27 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
 // %109 = AssignAdd(%para485, Tensor(34), cnode_u)
 // %110 = UpdateState(cnode_u, xxx)
 static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
+  const size_t monad_index = 2;
+  const size_t tuple_inputs_size = 2;
+  const size_t load_inputs_size = 3;
   auto cnode_load = BroadFirstSearchFirstOf({cnode}, [](const CNodePtr &search_cnode) {
     if (!IsPrimitiveCNode(search_cnode, prim::kPrimLoad)) {
       return false;
     }
-    if (search_cnode->inputs().size() != 3) {
+    if (search_cnode->inputs().size() != load_inputs_size) {
       MS_LOG(EXCEPTION) << "Load CNode should have 3 inputs, but: " << search_cnode->DebugString();
     }
-    return search_cnode->input(2)->isa<CNode>();
+    return search_cnode->input(monad_index)->isa<CNode>();
   });
   if (cnode_load != nullptr) {
     auto const_u_monad = NewValueNode(kUMonad);
     const_u_monad->set_abstract(kUMonad->ToAbstract());
-    const auto &cnode_u = cnode_load->input(2);
+    const auto &cnode_u = cnode_load->input(monad_index);
     MS_LOG(DEBUG) << "Replace Load with CNode U to constant U for cnode: " << cnode_load->DebugString();
     MS_EXCEPTION_IF_NULL(cnode->func_graph());
     MS_EXCEPTION_IF_NULL(cnode->func_graph()->manager());
     auto manager = cnode->func_graph()->manager();
-    manager->SetEdge(cnode_load, 2, const_u_monad);
+    manager->SetEdge(cnode_load, monad_index, const_u_monad);
     // Update the u_monad input of UpdateState from CNode U same as Load to constant U.
     CNodePtr cnode_update_state = nullptr;
     CNodePtr cnode_make_tuple = nullptr;
@@ -263,12 +266,12 @@ static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
       }
     }
     if (cnode_update_state != nullptr) {
-      if (cnode_make_tuple == nullptr || cnode_make_tuple->inputs().size() == 2) {
+      if (cnode_make_tuple == nullptr || cnode_make_tuple->inputs().size() == tuple_inputs_size) {
         // case 1 and case 3: Replace cnode_update_state to cnode_u;
         MS_LOG(DEBUG) << "Replace UpdateState with CNode U: " << cnode_update_state->DebugString()
                       << " ::TO:: " << cnode_u->DebugString();
         manager->Replace(cnode_update_state, cnode_u);
-      } else if (cnode_make_tuple->inputs().size() > 2) {
+      } else if (cnode_make_tuple->inputs().size() > tuple_inputs_size) {
         // case 2: remove cnode_load from cnode_make_tuple;
         MS_LOG(DEBUG) << "Drop " << cnode_load->DebugString() << " from " << cnode_make_tuple->DebugString();
         const auto &make_tuple_inputs = cnode_make_tuple->inputs();
