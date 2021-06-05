@@ -23,7 +23,6 @@
 using mindspore::schema::PrimitiveType_MulFusion;
 
 namespace mindspore::lite::micro::cmsis {
-
 int MulInt8Coder::Prepare(CoderContext *const context) {
   input1_ = OperatorCoder::input_tensors().at(0);
   input2_ = OperatorCoder::input_tensors().at(1);

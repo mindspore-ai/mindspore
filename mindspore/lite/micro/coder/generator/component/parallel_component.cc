@@ -19,7 +19,6 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
-
 void CodeCreateThreadPool(std::ofstream &ofs) {
   ofs << "  int thread_num = 4;\n"
          "  BindMode bind_mode = NO_BIND_MODE;\n"

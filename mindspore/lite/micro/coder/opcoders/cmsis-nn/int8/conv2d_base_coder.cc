@@ -18,7 +18,6 @@
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::lite::micro::cmsis {
-
 int Conv2DBaseCoder::SetQuantArgs() {
   int channel = output_tensor_->Channel();
   size_t channel_data_size = static_cast<size_t>(channel) * sizeof(int32_t);
@@ -37,24 +36,22 @@ int Conv2DBaseCoder::SetQuantArgs() {
       // If per-tensor quantization parameter is specified, broadcast it along the
       // quantization dimension (channels_out).
       MS_CHECK_TRUE(conv_quant_arg_->filter_arg_num_ == static_cast<size_t>(channel), "quant num not match");
-      const auto filter_scale = static_cast<double>(filter_quant_args[i].scale_);
-      const double effective_output_scale = input_scale * filter_scale / output_scale;
-      QuantizeMultiplier(effective_output_scale, &significand, &channel_shift);
+      const auto filter_scale_0 = static_cast<double>(filter_quant_args[i].scale_);
+      const double effective_output_scale_0 = input_scale * filter_scale_0 / output_scale;
+      QuantizeMultiplier(effective_output_scale_0, &significand, &channel_shift);
       output_mult_[i] = significand;
       output_shift_[i] = channel_shift;
     }
   } else {
     // broadcast multiplier and shift to all array if per-tensor
-    const auto filter_scale = static_cast<double>(filter_quant_args[0].scale_);
-    const double effective_output_scale = input_scale * filter_scale / output_scale;
-    QuantizeMultiplier(effective_output_scale, &significand, &channel_shift);
+    const auto filter_scale_1 = static_cast<double>(filter_quant_args[0].scale_);
+    const double effective_output_scale_1 = input_scale * filter_scale_1 / output_scale;
+    QuantizeMultiplier(effective_output_scale_1, &significand, &channel_shift);
     for (int i = 0; i < channel; ++i) {
       output_mult_[i] = significand;
       output_shift_[i] = channel_shift;
     }
   }
-
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::cmsis

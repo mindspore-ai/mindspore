@@ -28,7 +28,6 @@ using mindspore::schema::PrimitiveType_Squeeze;
 using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::lite::micro {
-
 int ReshapeBaseCoder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int ReshapeBaseCoder::DoCode(CoderContext *const context) {
@@ -51,5 +50,4 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Squeeze, CPUOp
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Squeeze, CPUOpCoderCreator<ReshapeBaseCoder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Unsqueeze, CPUOpCoderCreator<ReshapeBaseCoder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Unsqueeze, CPUOpCoderCreator<ReshapeBaseCoder>)
-
 }  // namespace mindspore::lite::micro
