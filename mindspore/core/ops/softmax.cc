@@ -79,8 +79,7 @@ TypePtr SoftMaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 
 AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(SoftMaxInferType(primitive, input_args),
-                                                    SoftMaxInferShape(primitive, input_args));
+  return abstract::MakeAbstract(SoftMaxInferShape(primitive, input_args), SoftMaxInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Softmax, prim::kPrimSoftmax, SoftmaxInfer, nullptr, true);
 }  // namespace ops

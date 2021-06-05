@@ -126,8 +126,7 @@ bool MatMul::get_transpose_b() const {
 AbstractBasePtr MatMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInteger("MatMul infer", input_args.size(), kGreaterEqual, 2, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(MatMulInferType(primitive, input_args),
-                                                    MatMulInferShape(primitive, input_args)->shape());
+  return abstract::MakeAbstract(MatMulInferShape(primitive, input_args), MatMulInferType(primitive, input_args));
 }
 // Add
 REGISTER_PRIMITIVE_C(kNameMatMul, MatMul);

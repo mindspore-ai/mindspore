@@ -30,11 +30,12 @@ AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto x_backprob = input_args[0]->Broaden();
   auto gamma_backprob = input_args[4]->Broaden();
   auto beta_backprob = input_args[4]->Broaden();
-
-  AbstractBasePtrList args_list({x_backprob, gamma_backprob, beta_backprob});
-  return std::make_shared<abstract::AbstractTuple>(args_list);
+  auto shapes = std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+    x_backprob->BuildShape(), gamma_backprob->BuildShape(), beta_backprob->BuildShape()});
+  auto types = std::make_shared<Tuple>(
+    std::vector<TypePtr>{x_backprob->BuildType(), gamma_backprob->BuildType(), beta_backprob->BuildType()});
+  return abstract::MakeAbstract(shapes, types);
 }
-
 void LayerNormGrad::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis) {
   this->set_begin_norm_axis(begin_norm_axis);
   this->set_begin_params_axis(begin_params_axis);

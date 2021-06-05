@@ -313,8 +313,7 @@ Format Conv2D::get_format() const {
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInteger("Conv2d infer", input_args.size(), kGreaterEqual, 2, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(Conv2dInferType(primitive, input_args),
-                                                    Conv2dInferShape(primitive, input_args));
+  return abstract::MakeAbstract(Conv2dInferShape(primitive, input_args), Conv2dInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2D, prim::kPrimConv2D, Conv2dInfer, nullptr, true);
 }  // namespace ops

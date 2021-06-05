@@ -36,8 +36,8 @@ py::object ValuePtrToPyData(const ValuePtr &value);
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                        const std::shared_ptr<py::object> &ret_val);
 
-AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
-                                           const py::object &output = py::none());
+AbstractBasePtr MakePyInferRes2Abstract(const py::object &shape_obj, const py::object &type_obj,
+                                        const py::object &output = py::none());
 void SetValueRange(const AbstractBasePtr &tensor, const py::object &output);
 }  // namespace mindspore
 

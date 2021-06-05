@@ -21,6 +21,7 @@
 #include <string>
 #include <sstream>
 #include <memory>
+#include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "abstract/param_validator.h"
 
@@ -347,6 +348,97 @@ int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list,
     MS_LOG(EXCEPTION) << "num_segments incorrect type in " << op_name;
   }
   return num_segments_value;
+}
+
+AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(shape);
+  MS_EXCEPTION_IF_NULL(type);
+  AbstractBasePtr tensor = nullptr;
+  auto ret_vec = shape->shape();
+  ShapeVector min_shape_vec;
+  ShapeVector max_shape_vec;
+
+  if (shape->IsDynamic()) {
+    if (!shape->min_shape().empty()) {
+      min_shape_vec = shape->min_shape();
+    }
+    if (!shape->max_shape().empty()) {
+      max_shape_vec = shape->max_shape();
+    }
+  }
+
+  auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
+  if (type->isa<TensorType>()) {
+    auto tensor_type = type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, tensor_type->element());
+    tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
+  } else {
+    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, type);
+    tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
+  }
+  return tensor;
+}
+
+AbstractBasePtr MakeMonadAbstract(const MonadTypePtr &type) {
+  if (type->isa<UMonadType>()) {
+    return kUMonad->ToAbstract();
+  } else if (type->isa<IOMonadType>()) {
+    return kIOMonad->ToAbstract();
+  }
+  MS_EXCEPTION(UnknownError) << "Unsupported to convert type " << type->ToString() << " to monad abstract";
+}
+
+AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(base_shape);
+  MS_EXCEPTION_IF_NULL(type);
+  if ((base_shape->isa<Shape>())) {
+    auto shape = base_shape->cast<ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape);
+    auto shape_vec = shape->shape();
+    // if the size of shape list is empty, return an scalar abstract
+    if (shape_vec.empty() && (!type->isa<TensorType>())) {
+      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, type);
+      return abs_scalar;
+    }
+    return MakeAbstractTensor(shape, type);
+  } else if (base_shape->isa<TupleShape>() && type->isa<Tuple>()) {
+    auto shape_tuple = base_shape->cast<TupleShapePtr>();
+    auto type_tuple = type->cast<TuplePtr>();
+    AbstractBasePtrList ptr_list;
+    for (size_t it = 0; it < shape_tuple->size(); ++it) {
+      auto tensor_it = MakeAbstract((*shape_tuple)[it], (*type_tuple)[it]);
+      ptr_list.push_back(tensor_it);
+    }
+    auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
+    return tuple;
+  } else if (base_shape->isa<ListShape>() && type->isa<List>()) {
+    auto shape_list = base_shape->cast<ListShapePtr>();
+    auto type_list = type->cast<ListPtr>();
+    AbstractBasePtrList ptr_list;
+    for (size_t it = 0; it < shape_list->size(); ++it) {
+      auto tensor_it = MakeAbstract((*shape_list)[it], (*type_list)[it]);
+      ptr_list.push_back(tensor_it);
+    }
+    auto list = std::make_shared<abstract::AbstractList>(ptr_list);
+    return list;
+  } else if (base_shape->isa<NoShape>() && type->isa<TypeNone>()) {
+    // AbstractNone indicates there is no output for this CNode node.
+    auto abstract_none = std::make_shared<abstract::AbstractNone>();
+    return abstract_none;
+  } else if (type->isa<Monad>()) {
+    // Return monad abstract if it is monad type.
+    return MakeMonadAbstract(type->cast<MonadTypePtr>());
+  } else {
+    // When sparse enabled, the undetermined might be raised and eliminated in opt passes
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
+    if (enable_sparse) {
+      return std::make_shared<abstract::AbstractUndetermined>();
+    }
+    MS_LOG(EXCEPTION) << "evaluator return invalid shape " << base_shape->ToString() << "or type. " << type->ToString();
+  }
 }
 }  // namespace abstract
 }  // namespace mindspore

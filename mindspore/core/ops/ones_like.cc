@@ -45,8 +45,7 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 AbstractBasePtr OnesLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args));
+  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(OnesLike, prim::kPrimOnesLike, OnesLikeInfer, nullptr, true);
 }  // namespace ops

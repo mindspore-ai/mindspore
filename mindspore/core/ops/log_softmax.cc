@@ -65,8 +65,8 @@ TypePtr LogSoftmaxInferType(const PrimitivePtr &prim, const std::vector<Abstract
 
 AbstractBasePtr LogSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(LogSoftmaxInferType(primitive, input_args),
-                                                    LogSoftmaxInferShape(primitive, input_args)->shape());
+  return abstract::MakeAbstract(LogSoftmaxInferShape(primitive, input_args),
+                                LogSoftmaxInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LogSoftmax, prim::kPrimLogSoftmax, LogSoftmaxInfer, nullptr, true);
 }  // namespace ops
