@@ -16,7 +16,6 @@
 
 #include <jni.h>
 #include "common/ms_log.h"
-#include "common/jni_utils.h"
 #include "include/train/train_session.h"
 #include "include/errorcode.h"
 
@@ -29,7 +28,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_TrainSession_createSe
     return jlong(nullptr);
   }
   auto *lite_context_ptr = static_cast<mindspore::lite::Context *>(pointer);
-  auto session = mindspore::session::TrainSession::CreateSession(JstringToChar(env, model_file_name), lite_context_ptr);
+  auto session = mindspore::session::TrainSession::CreateSession(env->GetStringUTFChars(model_file_name, JNI_FALSE),
+                                                                 lite_context_ptr);
   if (session == nullptr) {
     MS_LOGE("CreateSession failed");
     return jlong(nullptr);
@@ -92,7 +92,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_TrainSession_getInput
     return jlong(nullptr);
   }
   auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(pointer);
-  auto input = train_session_ptr->GetInputsByTensorName(JstringToChar(env, tensor_name));
+  auto input = train_session_ptr->GetInputsByTensorName(env->GetStringUTFChars(tensor_name, JNI_FALSE));
   return jlong(input);
 }
 
@@ -113,7 +113,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_TrainSession_getOut
     return ret;
   }
   auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(pointer);
-  auto inputs = train_session_ptr->GetOutputsByNodeName(JstringToChar(env, node_name));
+  auto inputs = train_session_ptr->GetOutputsByNodeName(env->GetStringUTFChars(node_name, JNI_FALSE));
   for (auto input : inputs) {
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(input));
     env->CallBooleanMethod(ret, array_list_add, tensor_addr);
@@ -177,7 +177,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_TrainSession_getOutpu
     return jlong(nullptr);
   }
   auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(pointer);
-  auto output = train_session_ptr->GetOutputByTensorName(JstringToChar(env, tensor_name));
+  auto output = train_session_ptr->GetOutputByTensorName(env->GetStringUTFChars(tensor_name, JNI_FALSE));
   return jlong(output);
 }
 
@@ -239,7 +239,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_saveT
     return (jboolean) false;
   }
   auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(session_pointer);
-  auto ret = train_session_ptr->SaveToFile(JstringToChar(env, model_file_name));
+  auto ret = train_session_ptr->SaveToFile(env->GetStringUTFChars(model_file_name, JNI_FALSE));
   return (jboolean)(ret == 0);
 }
 
@@ -304,11 +304,8 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setLe
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setupVirtualBatch(JNIEnv *env, jobject thiz,
-                                                                                           jlong session_ptr,
-                                                                                           jint virtualBatchMultiplier,
-                                                                                           jfloat learningRate,
-                                                                                           jfloat momentum) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setupVirtualBatch(
+  JNIEnv *env, jobject thiz, jlong session_ptr, jint virtualBatchMultiplier, jfloat learningRate, jfloat momentum) {
   auto *session_pointer = reinterpret_cast<void *>(session_ptr);
   if (session_pointer == nullptr) {
     MS_LOGE("Session pointer from java is nullptr");
@@ -328,6 +325,6 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setLo
     return (jboolean) false;
   }
   auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(session_pointer);
-  auto ret = train_session_ptr->SetLossName(JstringToChar(env, lossName));
+  auto ret = train_session_ptr->SetLossName(env->GetStringUTFChars(lossName, JNI_FALSE));
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
