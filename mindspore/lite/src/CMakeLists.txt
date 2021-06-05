@@ -157,7 +157,29 @@ add_dependencies(lite_src_mid fbs_src)
 add_library(mindspore-lite SHARED $<TARGET_OBJECTS:lite_src_mid>)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
-add_library(mindspore-lite_static STATIC $<TARGET_OBJECTS:lite_src_mid>)
+if(DEFINED ARCHS)
+    set(MINDSPORE_LITE_PUB_HDRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/context.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/errorcode.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_session.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_types.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_utils.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/model.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/ms_tensor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include/version.h
+            )
+    set(MINDSPORE_LITE_PUB_HDRS_IR_HDRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h
+            )
+    add_library(mindspore-lite_static STATIC
+            ${LITE_SRC}
+            ${MINDSPORE_LITE_PUB_HDRS}
+            ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
+            )
+    add_dependencies(mindspore-lite_static fbs_inner_src)
+else()
+    add_library(mindspore-lite_static STATIC $<TARGET_OBJECTS:lite_src_mid>)
+endif()
 set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-lite")
 set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
@@ -224,44 +246,9 @@ if(PLATFORM_ARM)
 endif()
 
 if(DEFINED ARCHS)
-    set(MINDSPORE_LITE_PUB_HDRS
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/context.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/errorcode.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_session.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_types.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_utils.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/model.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/ms_tensor.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/version.h
-            )
-    set(MINDSPORE_LITE_PUB_HDRS_IR_HDRS
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h
-            )
-    add_library(mindspore_lite STATIC
-            ${MINDSPORE_LITE_PUB_HDRS}
-            ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
-            )
-    add_dependencies(mindspore_lite fbs_src)
-    set_target_properties(mindspore_lite PROPERTIES OUTPUT_NAME "mindspore_lite")
-    set_target_properties(mindspore_lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-    target_link_libraries(mindspore_lite lite_src_mid cpu_kernel_mid nnacl_mid cpu_ops_mid)
-    target_link_libraries(mindspore_lite log)
-
-    if(ENABLE_MINDRT)
-        target_link_libraries(mindspore_lite mindrt_mid)
-    endif()
-
-    if(PLATFORM_ARM)
-        if(PLATFORM_ARM64)
-            target_link_libraries(mindspore_lite cpu_opt_kernel_mid nnacl_optimize_mid)
-        endif()
-        if(ENABLE_FP16)
-            target_link_libraries(mindspore_lite cpu_fp16_kernel_mid nnacl_fp16_mid)
-        endif()
-    endif()
-    set_target_properties(mindspore_lite PROPERTIES FRAMEWORK TRUE)
-    set_target_properties(mindspore_lite PROPERTIES
-            OUTPUT_NAME "mindspore_lite"
+    set_target_properties(mindspore-lite_static PROPERTIES FRAMEWORK TRUE)
+    set_target_properties(mindspore-lite_static PROPERTIES
+            OUTPUT_NAME "mindspore-lite"
             FRAMEWORK_VERSION C
             XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
             XCODE_ATTRIBUTE_INSTALL_PAYH "@rpath"
@@ -272,7 +259,7 @@ if(DEFINED ARCHS)
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS})
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/ir/dtype/)
     ENDFOREACH()
-    target_link_libraries(mindspore_lite)
+    target_link_libraries(mindspore-lite_static)
 endif()
 
 if(NOT WIN32)

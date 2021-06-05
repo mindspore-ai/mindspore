@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #ifdef ENABLE_ARM
+#ifndef MS_COMPILE_IOS
 #include "src/cpu_info.h"
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
@@ -143,4 +144,5 @@ bool CpuInfo::ArmIsSupportFp16() {
   return fp16_flag_;
 }
 }  // namespace mindspore::lite
+#endif
 #endif

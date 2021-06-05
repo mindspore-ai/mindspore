@@ -22,8 +22,9 @@
 #include <map>
 #include <memory>
 #include <string>
+#ifndef MS_COMPILE_IOS
 #include <shared_mutex>
-
+#endif
 #include "actor/actor.h"
 #include "thread/inter_threadpool.h"
 
@@ -83,8 +84,11 @@ class ActorMgr {
   }
   // Map of all local spawned and running processes.
   std::map<std::string, ActorReference> actors;
+#ifndef MS_COMPILE_IOS
   std::shared_mutex actorsMutex;
-
+#else
+  std::mutex actorsMutex;
+#endif
   std::map<std::string, std::string> procotols;
   std::set<std::string> urls;
   std::string delegate;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #ifdef ENABLE_ARM
+#ifndef MS_COMPILE_IOS
 #include <string>
 #ifndef MINDSPORE_LITE_SRC_CPU_INFO_H
 #define MINDSPORE_LITE_SRC_CPU_INFO_H
@@ -47,4 +48,5 @@ class CpuInfo {
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_CPU_INFO_H
+#endif
 #endif

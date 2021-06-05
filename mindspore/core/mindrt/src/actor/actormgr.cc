@@ -114,14 +114,26 @@ void ActorMgr::Finalize() {
 }
 
 ActorBase *ActorMgr::GetActor(const AID &id) {
+#ifndef MS_COMPILE_IOS
   actorsMutex.lock_shared();
+#else
+  actorsMutex.lock();
+#endif
   const auto &actorIt = actors.find(id.Name());
   if (actorIt != actors.end()) {
     auto &result = actorIt->second;
+#ifndef MS_COMPILE_IOS
     actorsMutex.unlock_shared();
+#else
+    actorsMutex.unlock();
+#endif
     return result.get();
   } else {
+#ifndef MS_COMPILE_IOS
     actorsMutex.unlock_shared();
+#else
+    actorsMutex.unlock();
+#endif
     MS_LOG(DEBUG) << "can't find ACTOR with name=" << id.Name().c_str();
     return nullptr;
   }

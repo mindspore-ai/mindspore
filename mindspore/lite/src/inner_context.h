@@ -83,11 +83,15 @@ struct InnerContext : public Context {
   bool fp16_flag_ = false;
 
 #ifdef ENABLE_ARM
+#ifndef MS_COMPILE_IOS
   CpuInfo *cpu_info_ = nullptr;
+#endif
 #endif
 
 #if SUPPORT_NPU
+#ifndef MS_COMPILE_IOS
   NPUManager *npu_manager_ = nullptr;
+#endif
 #endif
 };
 }  // namespace mindspore::lite
