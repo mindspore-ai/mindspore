@@ -27,8 +27,10 @@ std::string GetTimeString() {
   time_t time_seconds = time(0);
   struct tm now_time;
   localtime_s(&now_time, &time_seconds);
-  sprintf_s(buf, buf_len, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
-            now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
+  constexpr int64_t base_year = 1900;
+  constexpr int64_t base_mon = 1;
+  sprintf_s(buf, buf_len, "%d-%d-%d %d:%d:%d", (now_time.tm_year + base_year), (now_time.tm_mon + base_mon),
+            now_time.tm_mday, now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
 #else
   struct timeval cur_time;
   (void)gettimeofday(&cur_time, nullptr);

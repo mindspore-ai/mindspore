@@ -376,7 +376,8 @@ void GenerateReplNodeForDependMakeTuple(
         MS_LOG(EXCEPTION) << "controldepend input size != 3, got " << control_inputs.size();
       }
       // control inputs: primitive, src, dst
-      auto dst_node = control_inputs[2];
+      constexpr size_t control_node_index = 2;
+      auto dst_node = control_inputs[control_node_index];
       if (!IsPrimitiveCNode(dst_node, prim::kPrimSquare) && IsNetOutputNode(graph->manager(), dst_node)) {
         auto gen_node = gen_ctl_depd_func(graph, cond, make_tuple_inputs[idx], dst_node);
         MS_EXCEPTION_IF_NULL(gen_node);

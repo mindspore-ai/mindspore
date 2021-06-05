@@ -532,7 +532,7 @@ void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::Anf
     MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
   }
   if (eval->isa<abstract::FuncGraphEvaluator>() || eval->isa<abstract::MetaFuncGraphEvaluator>()) {
-    graph_infer_stack.emplace(std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>(eval, node));
+    (void)graph_infer_stack.emplace(std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>(eval, node));
   }
 }
 

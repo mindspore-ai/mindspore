@@ -31,7 +31,7 @@
 
 namespace mindspore {
 namespace abstract {
-enum State {
+enum class State {
   SAME,
   X_ONE,
   Y_ONE,
@@ -106,17 +106,17 @@ void ComputeReduceIndex(const std::vector<int64_t> &reverse_x, const std::vector
     const int64_t y_i = reverse_y[i];
     const int64_t reduce_idx = SizeToLong(n - 1 - i);
     if (x_i == y_i) {
-      curr = SAME;
+      curr = State::SAME;
     } else if (x_i == 1) {
       grad_x_reduce_idx->push_back(reduce_idx);
-      curr = X_ONE;
+      curr = State::X_ONE;
     } else if (y_i == 1) {
       grad_y_reduce_idy->push_back(reduce_idx);
-      curr = Y_ONE;
+      curr = State::Y_ONE;
     } else {
       MS_LOG(EXCEPTION) << "not compatible shape input for BroadcastGradientArgs";
     }
-    if (curr == SAME && x_i == 1) {
+    if (curr == State::SAME && x_i == 1) {
       grad_x_reduce_idx->push_back(reduce_idx);
       grad_y_reduce_idy->push_back(reduce_idx);
       continue;

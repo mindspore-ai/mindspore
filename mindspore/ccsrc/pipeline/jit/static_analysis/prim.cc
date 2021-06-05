@@ -748,7 +748,7 @@ inline void AddToManager(const AnalysisEnginePtr &engine, const FuncGraphPtr fun
   manager->AddFuncGraph(func_graph);
 }
 
-enum REQUIRE_TYPE { ATTR, METHOD };
+enum class REQUIRE_TYPE { ATTR, METHOD };
 
 EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
                                    REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD) {
