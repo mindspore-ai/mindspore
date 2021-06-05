@@ -233,6 +233,7 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
   input_desc_json[kJShape] = shape;
   input_desc_json[kJFormat] = format;
   input_desc_json[kJValid] = value;
+  input_desc_json[kJAddrType] = 0;
   input_desc_json[kJParamType] = input_ptr->param_type();
   input_desc_json[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index);
   input_list->emplace_back(input_desc_json);
@@ -463,6 +464,7 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
     output_obj[kJOriFormat] = def_format;
     output_obj[kJName] = output_ptr->name();
     output_obj[kJValid] = true;
+    output_obj[kJAddrType] = 0;
     output_obj[kJParamType] = output_ptr->param_type();
     output_obj[kJRange] = tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(anf_node, *output_idx);
     output_list->emplace_back(output_obj);
@@ -945,6 +947,7 @@ void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_
     ori_shape.emplace_back(1);
   }
   (*output_desc)[kJOriShape] = ori_shape;
+  (*output_desc)[kJAddrType] = 0;
   // !! Note: output_index, only node's output use it
   (*output_desc)[kJOutputIndex] = desc_output_idx;
   // shape

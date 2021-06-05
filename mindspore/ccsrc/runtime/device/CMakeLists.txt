@@ -82,6 +82,9 @@ add_library(_mindspore_runtime_device_obj OBJECT ${DEVICE_SRC_LIST} ${D_SRC_LIST
 if(ENABLE_D)
     file(GLOB_RECURSE GE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/ge_runtime/*.cc")
     set_property(SOURCE ${GE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_GE)
-    target_include_directories(_mindspore_runtime_device_obj PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
+    target_include_directories(_mindspore_runtime_device_obj PRIVATE
+                                ${CMAKE_BINARY_DIR}/proto/graphengine_protos
+                                ${CMAKE_BINARY_DIR}/proto/metadef_protos
+                                )
     add_dependencies(_mindspore_runtime_device_obj graph)
 endif()
