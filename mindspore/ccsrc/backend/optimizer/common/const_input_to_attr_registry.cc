@@ -27,6 +27,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimCast->name(), {1});
   Register(prim::kPrimAvgPoolGradVm->name(), {0});
   Register(prim::kPrimAvgPool3DGrad->name(), {0});
+  Register(kConv2DTransposeOpName, {2});
   Register(prim::kPrimConv2DBackpropInput->name(), {2});
   Register(prim::kPrimConv2DBackpropFilter->name(), {2});
   Register(prim::kPrimConv3DBackpropInput->name(), {2});
