@@ -2,6 +2,8 @@
 
 basepath=$(pwd)
 echo ${basepath}
+test_dir=${basepath}/../../
+echo ${test_dir}
 
 # Example:sh run_ut_gpu.sh -r /home/temp_test -d "8KE5T19620002408"
 while getopts "r:d:" opt; do
@@ -25,11 +27,11 @@ echo ' ' > ${run_ut_result_file}
 run_gpu_ut_log_file=${basepath}/run_gpu_ut_log.txt
 echo 'run gpu ut logs: ' > ${run_gpu_ut_log_file}
 
-ut_gpu_config=${basepath}/ut_gpu.cfg
+ut_gpu_config=${test_dir}/config/ut_gpu.cfg
 
 function Run_gpu_ut() {
-    cp -a ${basepath}/build/lite-test ${ut_test_path}/lite-test || exit 1
-    cp -r ${basepath}/ut/src/runtime/kernel/opencl/test_data ${ut_test_path} || exit 1
+    cp -a ${test_dir}/build/lite-test ${ut_test_path}/lite-test || exit 1
+    cp -r ${test_dir}/ut/src/runtime/kernel/opencl/test_data ${ut_test_path} || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${ut_test_path} /data/local/tmp/ > adb_push_log.txt
@@ -63,7 +65,9 @@ function Run_gpu_ut() {
 Run_gpu_ut
 Run_gpu_ut_status=$?
 
+cat ${run_ut_result_file}
 if [[ $Run_gpu_ut_status == 1 ]]; then
+    cat ${run_gpu_ut_log_file}
     exit 1
 fi
 exit 0
