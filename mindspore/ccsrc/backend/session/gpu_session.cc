@@ -562,7 +562,7 @@ void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
                              const std::vector<int64_t> &tensors_mask) {
   // Check if the graph cache exists.
   if (run_op_graphs_.find(graph_info) != run_op_graphs_.end() &&
-      kOpCacheAllowList.find(op_run_info.op_name) == kOpCacheAllowList.end()) {
+      kOpCacheBlackList.find(op_run_info.op_name) == kOpCacheBlackList.end()) {
     return;
   }
   // Prepare the graph
@@ -606,7 +606,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
     UpdateOutputAbstract(kernel_graph, op_run_info);
   }
   RunOpClearMemory(kernel_graph.get());
-  if (kOpCacheAllowList.find(op_run_info->op_name) != kOpCacheAllowList.end()) {
+  if (kOpCacheBlackList.find(op_run_info->op_name) != kOpCacheBlackList.end()) {
     run_op_graphs_.erase(graph_info);
   }
 }

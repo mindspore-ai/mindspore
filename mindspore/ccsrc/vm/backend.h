@@ -35,6 +35,7 @@
 namespace mindspore {
 namespace compile {
 using OpRunInfo = session::OpRunInfo;
+using GraphOutputInfo = session::GraphOutputInfo;
 using DeviceContext = device::DeviceContext;
 using ActorInfo = runtime::ActorInfo;
 using GraphCompiler = runtime::GraphCompiler;
@@ -114,11 +115,11 @@ class MindRTBackend : public Backend {
                                 std::vector<tensor::TensorPtr> *input_tensors);
 
   // Run Graph in the graph mode.
-  VectorRef RunGraph(const ActorInfo &actor_info, const VectorRef &args);
+  void RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs);
 
   // Run Graph in the pyNative mode.
-  VectorRef RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info, const std::vector<int64_t> *tensors_mask,
-                     const std::vector<tensor::TensorPtr> *input_tensors);
+  void RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info, const std::vector<int64_t> *tensors_mask,
+                const std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs);
 
  private:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
@@ -129,7 +130,8 @@ class MindRTBackend : public Backend {
   std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
 
   // Construct the GraphCompilerInfo by the compilation results of graph, used in PyNative mode.
-  std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const std::vector<int64_t> *tensors_mask,
+  std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const ActorInfo &actor_info,
+                                                                const std::vector<int64_t> *tensors_mask,
                                                                 const std::vector<tensor::TensorPtr> *input_tensors);
 
   // Split complete kernel graph to single op graph in PyNative back

@@ -35,7 +35,10 @@ DatasetIteratorKernel::DatasetIteratorKernel()
 
 DatasetIteratorKernel::~DatasetIteratorKernel() { GpuBufferMgr::GetInstance().Close(handle_); }
 
-void DatasetIteratorKernel::ReleaseResource() { GpuBufferMgr::GetInstance().Close(handle_); }
+void DatasetIteratorKernel::ReleaseResource() {
+  GpuBufferMgr::GetInstance().Close(handle_);
+  handle_ = HandleMgr::INVALID_HANDLE;
+}
 
 const std::vector<size_t> &DatasetIteratorKernel::GetInputSizeList() const { return input_size_list_; }
 
@@ -122,6 +125,13 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
 
 bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs, void *stream) {
+  if (handle_ == HandleMgr::INVALID_HANDLE) {
+    handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, output_size_list_);
+    if (handle_ == HandleMgr::INVALID_HANDLE) {
+      MS_LOG(EXCEPTION) << "Gpu Queue(" << queue_name_ << ") Open Failed";
+    }
+  }
+
   void *addr = nullptr;
   size_t len = 0;
   if (!ReadDevice(&addr, &len)) {

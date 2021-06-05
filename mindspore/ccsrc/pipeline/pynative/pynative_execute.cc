@@ -65,6 +65,8 @@
 #endif
 
 #include "debug/anf_ir_dump.h"
+#include "runtime/framework/actor/actor_common.h"
+#include "runtime/hardware/device_context_manager.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -1688,7 +1690,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     op_exec_info->next_input_index};
 #endif
   VectorRef outputs;
-  if (!compile::IsMindRTUsed()) {
+  if (!IsMindRTUsed()) {
     kSession->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
   } else {
     if (mind_rt_backend == nullptr) {
@@ -1698,7 +1700,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
     }
     const compile::ActorInfo &actor_info =
       mind_rt_backend->CompileGraph(op_run_info, graph_info, &tensors_mask, &input_tensors);
-    outputs = mind_rt_backend->RunGraph(actor_info, &op_run_info, &tensors_mask, &input_tensors);
+    mind_rt_backend->RunGraph(actor_info, &op_run_info, &tensors_mask, &input_tensors, &outputs);
   }
 
   if (op_exec_info->is_dynamic_shape) {
@@ -2788,10 +2790,22 @@ void PynativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::obj
 }
 
 void PynativeExecutor::Sync() {
-  if (kSession == nullptr) {
-    MS_EXCEPTION(NotExistsError) << "No session has been created!";
+  if (!IsMindRTUsed()) {
+    if (kSession == nullptr) {
+      MS_EXCEPTION(NotExistsError) << "No session has been created!";
+    }
+    kSession->SyncStream();
+  } else {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+
+    const auto &device_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
+    MS_EXCEPTION_IF_NULL(device_context);
+    (void)device_context->SyncStream();
   }
-  kSession->SyncStream();
 }
 
 void PynativeExecutor::EnterConstruct(const py::object &cell) {

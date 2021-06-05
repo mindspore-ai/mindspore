@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <map>
+#include <set>
 #include "runtime/hardware/device_context.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/session_factory.h"
@@ -30,6 +31,7 @@
 namespace mindspore {
 using device::DeviceContext;
 using session::CallBackFunc;
+using session::GraphOutputInfo;
 using session::InputTensorInfo;
 using session::KernelGraph;
 using session::KernelWithIndex;
@@ -76,11 +78,19 @@ class GraphCompiler {
   void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
                                       OpRunInfo *run_info, GraphInfo *graph_info);
 
+  // Calculate ref count of PyNative back propagation operators.
+  void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const;
+
+  // Update ref count of PyNative back propagation operators.
+  void UpdateRefCount(const std::set<KernelWithIndex> &input_kernels_with_index,
+                      std::map<KernelWithIndex, size_t> *ref_count,
+                      std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const;
+
   // Handle single op output tensor and recover output of original complete kernel graph.
   void RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
-                          const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
-                          std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs,
-                          std::vector<TensorPtr> *runop_output_tensors);
+                          const std::map<KernelWithIndex, size_t> &ref_count,
+                          std::map<KernelWithIndex, TensorPtr> *op_output_map,
+                          GraphOutputInfo *graph_output_info) const;
 
   // Collect output tensors of back propagation graph for allreduce operators to average gradient,
   // used in PyNative distributed training mode.

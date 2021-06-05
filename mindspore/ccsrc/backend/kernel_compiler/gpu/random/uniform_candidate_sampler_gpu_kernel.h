@@ -41,6 +41,11 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (init_seed_ == 0 && cur_seed_ == 0) {
+      // Update current seed.
+      cur_seed_ = time(NULL);
+      generator_.seed(cur_seed_);
+    }
     VARIABLE_NOT_USED(workspaces);
     T *sampled_candidates = GetDeviceAddress<T>(outputs, 0);
     S *true_expected_count = GetDeviceAddress<S>(outputs, 1);
@@ -87,10 +92,15 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
     num_sampled_ = GetAttr<int64_t>(kernel_node, "num_sampled");
     unique_ = GetAttr<bool>(kernel_node, "unique");
     range_max_ = GetAttr<int64_t>(kernel_node, "range_max");
-    int64_t seed = GetAttr<int64_t>(kernel_node, "seed");
     remove_accidental_hits_ = GetAttr<bool>(kernel_node, "remove_accidental_hits");
-    if (seed == 0) seed = time(NULL);
-    generator_.seed(seed);
+    init_seed_ = GetAttr<int64_t>(kernel_node, "seed");
+    if (init_seed_ == 0) {
+      cur_seed_ = time(NULL);
+      generator_.seed(cur_seed_);
+    } else {
+      generator_.seed(init_seed_);
+    }
+
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (input_shape.size() != 2) {
       MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but UniformCandidateSampler supports only 2-D inputs.";
@@ -102,6 +112,13 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
     }
     InitSizeLists();
     return true;
+  }
+
+  void ReleaseResource() override {
+    // Reset current seed.
+    if (init_seed_ == 0 && cur_seed_ != 0) {
+      cur_seed_ = 0;
+    }
   }
 
  protected:
@@ -174,6 +191,8 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  int64_t init_seed_{0};
+  int64_t cur_seed_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

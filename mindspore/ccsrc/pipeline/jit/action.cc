@@ -43,6 +43,7 @@
 #include "vm/transform.h"
 #include "parse/python_adapter.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#include "runtime/framework/actor/actor_common.h"
 #if (ENABLE_CPU && !_WIN32)
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
@@ -81,9 +82,10 @@ void ExecuteActionForMindRT(const ResourcePtr &res) {
   compile::VmEvalFuncPtr run =
     std::make_shared<compile::VmEvalFunc>([mindrt_bc_ptr, actor_info](const VectorRef &args) -> BaseRef {
       MS_LOG(INFO) << "Execute args size " << args.size();
-      auto outs = mindrt_bc_ptr->RunGraph(actor_info, args);
-      MS_LOG(DEBUG) << "out size " << outs.size();
-      return outs[0];
+      VectorRef outputs;
+      mindrt_bc_ptr->RunGraph(actor_info, args, &outputs);
+      MS_LOG(DEBUG) << "out size " << outputs.size();
+      return outputs[0];
     });
   res->results()[kOutput] = run;
 }
@@ -550,7 +552,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
   }
 
   // The graph compiling of mindRT.
-  if ((backend == kMsConvert) && compile::IsMindRTUsed()) {
+  if ((backend == kMsConvert) && IsMindRTUsed()) {
     TaskEmitActionForMindRT(res);
     return true;
   }
@@ -580,7 +582,7 @@ bool ExecuteAction(const ResourcePtr &res) {
   std::string backend = MsContext::GetInstance()->backend_policy();
 
   // The graph running of mindRT.
-  if ((backend == kMsConvert) && compile::IsMindRTUsed()) {
+  if ((backend == kMsConvert) && IsMindRTUsed()) {
     ExecuteActionForMindRT(res);
     return true;
   }

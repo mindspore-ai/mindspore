@@ -87,7 +87,7 @@ class DeviceContext {
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const = 0;
 
   // Infer kernel shape and update abstract info for dynamic shape kernel.
-  virtual void UpdateKernelDynamicShape(const CNodePtr &kernel) const { AnfAlgo::InferShape(kernel); }
+  virtual void UpdateDynamicShape(const CNodePtr &kernel) const { AnfAlgo::InferShape(kernel); }
 
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,

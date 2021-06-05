@@ -281,17 +281,8 @@ void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::v
                                                  const std::unordered_set<ValueNodePtr> &value_nodes,
                                                  const std::vector<CNodePtr> &execution_order) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " GPU runtime resource";
-  // Release the kernel resource.
-  for (const auto &kernel : execution_order) {
-    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-    if (kernel_mod == nullptr) {
-      continue;
-    }
-    kernel_mod->ReleaseResource();
-  }
   // Clear the output address of graph.
   ClearOutputAddress(inputs, value_nodes, execution_order);
-
   graph_output_map_.erase(graph_id);
 }
 
