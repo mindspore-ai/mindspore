@@ -235,6 +235,8 @@ class BaseContext {
 
   void ClearVisited() { visited_graphs_.clear(); }
 
+  virtual ~BaseContext() {}
+
  private:
   std::set<KernelGraphPtr> visited_graphs_;
 };
@@ -392,14 +394,14 @@ class CallInfoFinder {
           call_sites.push(&sites.back());
         } else {
           // Find a call-return relation.
-          HandleCallReturn(caller, call_site, kg);
+          HandleCallReturn(call_site, kg);
         }
       }
     }
   }
 
   // Handle a call-return relation.
-  void HandleCallReturn(const KernelGraphPtr &caller, CallSite *call_site, const KernelGraphPtr &callee) {
+  void HandleCallReturn(CallSite *call_site, const KernelGraphPtr &callee) {
     // Create a label for the return point.
     if (call_site->return_label == kNoLabel) {
       call_site->return_label = context_.NewLabel();
@@ -415,8 +417,9 @@ class CallInfoFinder {
 
     // Setup label index if there are multi return points.
     const auto n_return_points = call_info.return_points.size();
+    const size_t return_point_sizes = 2;
     if (n_return_points > 1) {
-      if (n_return_points == 2) {
+      if (n_return_points == return_point_sizes) {
         // Create a parameter to store label index.
         const ShapeVector shape = {1};
         auto abs = std::make_shared<abstract::AbstractTensor>(kInt32, shape);
@@ -498,7 +501,6 @@ class CallInfoFinder {
     return GetRealNode(node->cast<CNodePtr>()->input(1));
   }
 
- private:
   const KernelGraphPtr &kernel_graph_;
   AscendAutoMonadContext &context_;
 };
@@ -663,11 +665,9 @@ class AscendAutoMonadConverter {
     return label_goto_switch;
   }
 
-  //
   // Handle return points.
   // use label_goto for single return point;
   // use label_switch for multi return points.
-  //
   void HandleReturnPoints() {
     auto &return_points = call_info_.return_points;
     // No return points.
@@ -920,7 +920,6 @@ class AscendAutoMonadConverter {
     AnfAlgo::SetNodeAttr(kAttrChildGraph, MakeValue(graphs), node);
   }
 
- private:
   const KernelGraphPtr &kernel_graph_;
   AscendAutoMonadContext &context_;
 
@@ -1332,7 +1331,6 @@ class ExecuteOrderGenerator {
   const KernelGraphPtr graph_;
   uint32_t max_label_ = 0;
 };
-
 }  // namespace
 
 void AscendAutoMonad::Run() {

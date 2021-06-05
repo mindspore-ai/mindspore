@@ -241,7 +241,8 @@ static void TransformNormalArgs(const FuncGraphManagerPtr &mng, const FuncGraphP
                                 std::vector<AnfNodePtr> *const transf_args) {
   // bprop_fg has been checked in caller
   // transform except the last 2 parameters: out, dout.
-  auto bprop_fg_param_size = bprop_fg->parameters().size() - 2;
+  const size_t last_parameter_sizes = 2;
+  auto bprop_fg_param_size = bprop_fg->parameters().size() - last_parameter_sizes;
   for (size_t i = 0; i < bprop_fg_param_size; ++i) {
     auto p = bprop_fg->parameters()[i];
     MS_EXCEPTION_IF_NULL(p);
