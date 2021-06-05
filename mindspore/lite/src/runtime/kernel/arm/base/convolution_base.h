@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONVOLUTION_BASE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONVOLUTION_BASE_H_
 
-#include <unistd.h>
 #include <vector>
 #include <string>
 #include <limits>

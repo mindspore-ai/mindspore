@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/invert_permutation_fp32.h"
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
+#include "nnacl/fp32/invert_permutation_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

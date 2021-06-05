@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/string/normalize.h"
+#include <cctype>
 #include <string>
 #include <map>
 #include <regex>

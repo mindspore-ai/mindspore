@@ -32,7 +32,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2DFusion;
-using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
 kernel::InnerKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,

@@ -178,13 +178,21 @@ static inline float32x4_t vrecp(float32x4_t v) {
   MS_STQ_F32(output_ptr + 7 * num, dst##8);
 
 static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
-  static const float data[] = {378.0f, 17325.0f, 135135.0f, 28.0f, 3150.0f, 62370.0f};
+  static const MS_FLOAT32X4 data0 = {378.0f, 378.0f, 378.0f, 378.0f};
+  static const MS_FLOAT32X4 data1 = {17325.0f, 17325.0f, 17325.0f, 17325.0f};
+  static const MS_FLOAT32X4 data2 = {135135.0f, 135135.0f, 135135.0f, 135135.0f};
+  static const MS_FLOAT32X4 data3 = {28.0f, 28.0f, 28.0f, 28.0f};
+  static const MS_FLOAT32X4 data4 = {3150.0f, 3150.0f, 3150.0f, 3150.0f};
+  static const MS_FLOAT32X4 data5 = {62370.0f, 62370.0f, 62370.0f, 62370.0f};
   static const MS_FLOAT32X4 neg = {-1.0f, -1.0f, -1.0f, -1.0f};
   static const MS_FLOAT32X4 pos = {1.0f, 1.0f, 1.0f, 1.0f};
-  MS_FLOAT32X4 square = src * src;
-  MS_FLOAT32X4 a = (((square + data[0]) * square + data[1]) * square + data[2]) * src;
-  MS_FLOAT32X4 b = ((data[3] * square + data[4]) * square + data[5]) * square + data[2];
-  return MS_MINQ_F32(MS_MAXQ_F32(a / b, neg), pos);
+  MS_FLOAT32X4 square = MS_MULQ_F32(src, src);
+  MS_FLOAT32X4 a = MS_MULQ_F32(
+    MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(square, data0), square), data1), square), data2), src);
+  MS_FLOAT32X4 b = MS_ADDQ_F32(
+    MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(data3, square), data4), square), data5), square),
+    data2);
+  return MS_MINQ_F32(MS_MAXQ_F32(MS_DIVQ_F32(a, b), neg), pos);
 }
 
 #ifdef ENABLE_AVX

@@ -112,7 +112,7 @@ int Sigmoid(const float *src, int length, float *dst) {
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   for (; i < length - 4; i += 4) {
-    simd_exp(-(MS_LDQ_F32(src + i)), dst + i);
+    simd_exp(MS_SUBQ_F32(MS_MOVQ_F32(0.0f), MS_LDQ_F32(src + i)), dst + i);
     MS_STQ_F32(dst + i, MS_DIVQ_F32(MS_MOVQ_F32(1.0f), MS_ADDQ_F32(MS_MOVQ_F32(1.0f), MS_LDQ_F32(dst + i))));
   }
 #endif
@@ -240,10 +240,17 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
     }
 #endif
 #if defined(ENABLE_SSE) || defined(ENABLE_ARM)
+    MS_FLOAT32X4 para1 = MS_MOVQ_F32(0.79788456080287f);
+    MS_FLOAT32X4 para2 = MS_MOVQ_F32(0.035677408136f);
+    MS_FLOAT32X4 para3 = MS_MOVQ_F32(1.0f);
+    MS_FLOAT32X4 para4 = MS_MOVQ_F32(0.5f);
     int C4 = DOWN_ROUND(length, C4NUM);
     for (; i < C4; i += C4NUM) {
       MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
-      MS_FLOAT32X4 res = 0.5 * in * (1.0 + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
+      MS_FLOAT32X4 res = MS_MULQ_F32(
+        MS_MULQ_F32(para4, in),
+        MS_ADDQ_F32(para3,
+                    MS_TANHX4_F32(MS_MULQ_F32(MS_ADDQ_F32(para1, MS_MULQ_F32(MS_MULQ_F32(para2, in), in)), in))));
       MS_STQ_F32(dst + i, res);
     }
 #endif
@@ -252,10 +259,13 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
     }
   } else {
 #if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
+    MS_FLOAT32X4 para1 = MS_MOVQ_F32(1.4142135623730951f);
+    MS_FLOAT32X4 para2 = MS_MOVQ_F32(1.0f);
+    MS_FLOAT32X4 para3 = MS_MOVQ_F32(0.5f);
     int C4 = DOWN_ROUND(length, C4NUM);
     for (; i < C4; i += C4NUM) {
       MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
-      MS_FLOAT32X4 res = 0.5 * in * (1.0 + MS_ERFX4_F32(in / 1.4142135623730951f));
+      MS_FLOAT32X4 res = MS_MULQ_F32(MS_MULQ_F32(para3, in), MS_ADDQ_F32(para2, MS_ERFX4_F32(MS_DIVQ_F32(in, para1))));
       MS_STQ_F32(dst + i, res);
     }
 #endif
