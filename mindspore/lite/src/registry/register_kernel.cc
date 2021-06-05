@@ -20,9 +20,6 @@
 
 namespace mindspore {
 namespace kernel {
-const char *const kArchCPU = "CPU";
-const char *const kArchGPU = "GPU";
-
 int RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
                                     const std::string &type, CreateKernel creator) {
   return lite::RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);

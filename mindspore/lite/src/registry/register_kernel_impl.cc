@@ -128,7 +128,13 @@ kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const kernel::Kernel
     return nullptr;
   }
   for (auto &&item : kernel_creators_) {
+    if (item.first != desc.provider) {
+      continue;
+    }
     for (auto &&arch_item : item.second) {
+      if (arch_item.first != desc.arch) {
+        continue;
+      }
       creator = arch_item.second[index];
       if (creator != nullptr) {
         break;

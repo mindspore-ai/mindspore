@@ -229,5 +229,21 @@ class CpuFp16SubGraph : public CpuSubGraph {
   std::map<lite::Tensor *, DataStore *> origin_input_data_;
 };
 #endif
+
+class CustomSubGraph : public SubGraphKernel {
+ public:
+  CustomSubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+                 std::vector<LiteKernel *> nodes, Kernel *kernel)
+      : SubGraphKernel(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
+    subgraph_type_ = kCustomSubGraph;
+    desc_.arch = kernel::KERNEL_ARCH::kCustom;
+  }
+
+  ~CustomSubGraph() override { delete this->executor_; }
+  int Prepare() override;
+  int Init() override { return SubGraphKernel::Init(); }
+  int Execute() override { return Execute(nullptr, nullptr); }
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
+};
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_H

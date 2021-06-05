@@ -286,7 +286,7 @@ int OpenCLRuntime::Init() {
     return ms_ret;
   }
 
-  allocator_ = new (std::nothrow) OpenCLAllocator(this);
+  allocator_ = std::make_shared<OpenCLAllocator>(this);
   if (allocator_ == nullptr) {
     delete device_;
     delete context_;
@@ -312,7 +312,6 @@ int OpenCLRuntime::Uninit() {
   }
   StoreCache();
   program_map_.clear();
-  delete allocator_;
   delete default_command_queue_;
   delete profiling_command_queue_;
   delete context_;

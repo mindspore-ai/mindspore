@@ -54,7 +54,7 @@ class OpenCLRuntime {
 
   cl::Context *Context();
   cl::Device *Device();
-  OpenCLAllocator *GetAllocator() { return allocator_; }
+  std::shared_ptr<OpenCLAllocator> GetAllocator() { return allocator_; }
   cl::CommandQueue *GetDefaultCommandQueue() { return profiling_ ? profiling_command_queue_ : default_command_queue_; }
   uint64_t DeviceGlobalMemoryCacheSize() const;
   int DeviceMaxWorkGroupSize() const;
@@ -174,7 +174,7 @@ class OpenCLRuntime {
   cl::CommandQueue *profiling_command_queue_{nullptr};
   cl::Context *context_{nullptr};
   cl::Device *device_{nullptr};
-  OpenCLAllocator *allocator_{nullptr};
+  std::shared_ptr<OpenCLAllocator> allocator_{nullptr};
   std::map<std::pair<std::string, std::string>, cl::Program> program_map_;
   cl::Program binary_program_;
   uint64_t global_memery_cachesize_{0};

@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KERNEL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KERNEL_H_
 
+#include <memory>
 #include <set>
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
@@ -74,7 +75,7 @@ class OpenCLSubGraph : public SubGraphKernel {
   using PassFunc = int (OpenCLSubGraph::*)(void);
 
  private:
-  lite::opencl::OpenCLAllocator *allocator_{nullptr};
+  std::shared_ptr<lite::opencl::OpenCLAllocator> allocator_{nullptr};
   std::vector<lite::Tensor *> in_convert_tensors_;
   std::vector<lite::Tensor *> out_convert_tensors_;
   std::vector<OpenCLToFormatParameter *> in_parameters_;

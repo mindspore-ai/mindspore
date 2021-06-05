@@ -286,12 +286,12 @@ void Tensor::set_root_tensor(Tensor *tensor) {
   this->quant_clusters_ = this->root_tensor_->quant_clusters_;
 }
 
-int Tensor::MallocData(const mindspore::Allocator *allocator) {
+int Tensor::MallocData(const AllocatorPtr allocator) {
   if (nullptr != this->data_) {
     return RET_OK;
   }
   if (allocator != nullptr) {
-    allocator_ = const_cast<mindspore::Allocator *>(allocator);
+    allocator_ = allocator;
   }
   auto data_size = this->Size();
   if (data_size > kMaxMallocSize) {

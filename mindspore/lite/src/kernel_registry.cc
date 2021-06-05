@@ -39,6 +39,8 @@ using mindspore::kernel::KernelKey;
 
 namespace mindspore::lite {
 namespace {
+const char *const kArchCPU = "CPU";
+const char *const kArchGPU = "GPU";
 void KernelKeyToKernelDesc(const KernelKey &key, kernel::KernelDesc *desc) {
   MS_ASSERT(desc != nullptr);
   desc->data_type = key.data_type;
@@ -158,7 +160,15 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
     if (base_kernel != nullptr) {
       auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
       if (lite_kernel != nullptr) {
-        lite_kernel->set_desc(key);
+        kernel::KernelKey tmp_key = key;
+        if (tmp_key.provider == kArchCPU) {
+          tmp_key.arch = kernel::kCPU;
+        } else if (tmp_key.provider == kArchGPU) {
+          tmp_key.arch = kernel::kGPU;
+        } else {
+          tmp_key.arch = kernel::kCustom;
+        }
+        lite_kernel->set_desc(tmp_key);
         *kernel = lite_kernel;
         return RET_OK;
       }
