@@ -553,7 +553,8 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
 
 QuantConfig = namedtuple("QuantConfig", ['weight', 'activation'])
 
-quant_config_default = QuantConfig(weight=FakeQuantWithMinMaxObserver, activation=FakeQuantWithMinMaxObserver)
+quant_config_default = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
+                                   activation=FakeQuantWithMinMaxObserver.partial_init())
 
 
 class Conv2dBnFoldQuantOneConv(Cell):
