@@ -29,6 +29,7 @@ from .pad_and_shift import _pad_and_shift_aicpu
 from .dropout_genmask import _dropout_genmask_aicpu
 from .dropout2d import _dropout2d_aicpu
 from .dropout3d import _dropout3d_aicpu
+from .dynamic_stitch import _dynamic_stitch_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
 from .topk import _top_k_aicpu
@@ -39,6 +40,7 @@ from .squeeze import _squeeze_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .randperm import _randperm_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
+from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
 from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu

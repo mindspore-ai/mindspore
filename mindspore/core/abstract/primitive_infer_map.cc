@@ -96,6 +96,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimCacheSwapTable, {InferImplCacheSwapTable, nullptr, true}},
     {prim::kPrimUpdateCache, {InferImplUpdateCache, nullptr, true}},
     {prim::kPrimComputeAccidentalHits, {InferImplComputeAccidentalHits, nullptr, true}},
+    {prim::kPrimDynamicStitch, {InferImplDynamicStitch, nullptr, true}},
     {prim::kPrimPadAndShift, {InferImplPadAndShift, nullptr, true}},
     {prim::kPrimDynamicShape, {InferImplDynamicShape, nullptr, true}},
     {prim::kPrimMapUniform, {InferImplMapUniform, nullptr, true}},

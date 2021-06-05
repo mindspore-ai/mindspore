@@ -1022,3 +1022,92 @@ class StackDestroy(PrimitiveWithInfer):
     def __init__(self, index=1):
         """StackDestroy"""
         validator.check_value_type("index", index, [int], self.name)
+
+
+class DynamicStitch(PrimitiveWithCheck):
+    r"""
+    Interleave the values from the data tensors into a single tensor.
+
+    Inputs:
+        - **indices** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
+        - **data** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
+
+    Outputs:
+        Tensor. A stacked Tensor with the same type as `data`.
+
+    Raises:
+        TypeError: If the data types of elements in `data` or `indices` are not the same.
+        ValueError: If the length of `data` or `indices` is not greater than 1.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x1 = Tensor([6], mstype.int32)
+        >>> x2 = Tensor(np.array([4, 1]), mstype.int32)
+        >>> x3 = Tensor(np.array([[5, 2], [0, 3]]), mstype.int32)
+        >>> y1 = Tensor(np.array([[6, 1]]), mstype.int32)
+        >>> y2 = Tensor(np.array([[41, 42], [11, 12]]), mstype.int32)
+        >>> y3 = Tensor(np.array([[[51, 52], [21, 22]], [[1, 2], [31, 32]]]), mstype.int32)
+        >>> stitch = ops.DynamicStitch()
+        >>> output = stitch([x1, x2, x3], [y1, y2, y3])
+        >>> print(output)
+        [[ 1  2]
+         [11 12]
+         [21 22]
+         [31 32]
+         [41 42]
+         [51 52]
+         [61 62]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize DynamicStitch"""
+
+    def check_shape(self, indices_shape, data_shape):
+        validator.check_value_type("shape of indices", indices_shape, [tuple, list], self.name)
+        validator.check_int(len(indices_shape), 1, Rel.GE, "len of indices_shape", self.name)
+        indices_dim0 = len(indices_shape[0])
+        indices_num = len(indices_shape)
+
+        validator.check_value_type("shape of data", data_shape, [tuple, list], self.name)
+        validator.check_int(len(data_shape), 1, Rel.GE, "len of data_shape", self.name)
+        data_dim0 = len(data_shape[0])
+        data_num = len(indices_shape)
+
+        validator.check("size of indices", indices_num, 'size of data', data_num, Rel.EQ, self.name)
+
+        # shape of `data` must start with shape of `indices`
+        for i in range(0, indices_num):
+            indices_dim = len(indices_shape[i])
+            data_dim = len(data_shape[i])
+            validator.check(f"dim of indices[{i}]", indices_dim, f"dim of data[{i}]", data_dim, Rel.LT, self.name)
+            if data_shape[i][:indices_dim] != data_shape[i][:indices_dim]:
+                raise ValueError(f"data[{i}].shape: {data_shape} does not start with indices[{i}].shape: {data_shape}")
+
+        # the last-(data_dim0-indices_dim0)-dim of data shape must end with same shape.
+        base_extra = data_dim0 - indices_dim0
+        for i in range(0, data_num):
+            indices_dim = len(indices_shape[i])
+            data_dim = len(data_shape[i])
+            extra = data_dim - indices_dim
+            validator.check(f"extra dim of data[{i}]", extra,
+                            f"extra dim of data[0]", base_extra, Rel.EQ, self.name)
+            validator.check(f"data[0].shape[{indices_dim0}:]", data_shape[0][indices_dim0:],
+                            f"data[{i}].shape[{len(indices_shape[i])}:]",
+                            data_shape[i][indices_dim:], Rel.EQ, self.name)
+
+        out_shape = [-1] + data_shape[0][indices_dim0:]
+        return out_shape
+
+    def check_dtype(self, indices_type, data_type):
+        validator.check_subclass("indices[0]", indices_type[0], mstype.tensor, self.name)
+        validator.check_subclass("data[0]", data_type[0], mstype.tensor, self.name)
+        indices_num = len(indices_type)
+        for i in range(0, indices_num):
+            validator.check_tensor_dtype_valid(f'indices[{i}]', indices_type[i], mstype.int32, self.name)
+            validator.check_tensor_dtype_valid(f'data[{i}]', data_type[i],
+                                               mstype.number_type + (mstype.bool_,), self.name)
+            validator.check(f"type of data[{i}]", data_type[i], f"type of data[0]", data_type[0], Rel.EQ, self.name)
+        return data_type[0]
