@@ -26,65 +26,112 @@ namespace dataset {
 using uchar = unsigned char;
 using dsize_t = int64_t;
 
-/// \brief Target devices to perform map operation
-enum class MapTargetDevice { kCpu, kGpu, kAscend310 };
+/// \brief Target devices to perform map operation.
+enum class MapTargetDevice {
+  kCpu,       ///< CPU Device.
+  kGpu,       ///< Gpu Device.
+  kAscend310  ///< Ascend310 Device.
+};
 
-/// \brief Possible dataset types for holding the data and client type
-enum class DatasetType { kUnknown, kArrow, kTf };
+/// \brief The initial type of tensor implementation.
+enum class TensorImpl {
+  kNone,      ///< None type tensor.
+  kFlexible,  ///< Flexible type tensor, can be converted to any type.
+  kCv,        ///< CV type tensor.
+  kNP         ///< Numpy type tensor.
+};
 
-/// \brief Possible flavours of Tensor implementations
-enum class TensorImpl { kNone, kFlexible, kCv, kNP };
+/// \brief The mode for shuffling data.
+enum class ShuffleMode {
+  kFalse = 0,   ///< No shuffling is performed.
+  kFiles = 1,   ///< Shuffle files only.
+  kGlobal = 2,  ///< Shuffle both the files and samples.
+  kInfile = 3   ///< Shuffle data within each file.
+};
 
-/// \brief Possible values for shuffle
-enum class ShuffleMode { kFalse = 0, kFiles = 1, kGlobal = 2, kInfile = 3 };
+/// \brief The method of padding.
+enum class BorderType {
+  kConstant = 0,  ///< Fills the border with constant values.
+  kEdge = 1,      ///< Fills the border with the last value on the edge.
+  kReflect = 2,   ///< Reflects the values on the edge omitting the last value of edge.
+  kSymmetric = 3  ///< Reflects the values on the edge repeating the last value of edge.
+};
 
-/// \brief Possible values for Border types
-enum class BorderType { kConstant = 0, kEdge = 1, kReflect = 2, kSymmetric = 3 };
+/// \brief Possible options for Image format types in a batch.
+enum class ImageBatchFormat {
+  kNHWC = 0,  ///< Indicate the input batch is of NHWC format.
+  kNCHW = 1   ///< Indicate the input batch is of NCHW format.
+};
 
-/// \brief Possible values for Image format types in a batch
-enum class ImageBatchFormat { kNHWC = 0, kNCHW = 1 };
+/// \brief Possible options for Image format types.
+enum class ImageFormat {
+  HWC = 0,  ///< Indicate the input batch is of NHWC format
+  CHW = 1,  ///< Indicate the input batch is of NHWC format
+  HW = 2    ///< Indicate the input batch is of NHWC format
+};
 
-/// \brief Possible values for Image format types
-enum class ImageFormat { HWC = 0, CHW = 1, HW = 2 };
+/// \brief Possible options for interpolation method.
+enum class InterpolationMode {
+  kLinear = 0,            ///< Interpolation method is linear interpolation.
+  kNearestNeighbour = 1,  ///< Interpolation method is nearest-neighbor interpolation.
+  kCubic = 2,             ///< Interpolation method is bicubic interpolation.
+  kArea = 3,              ///< Interpolation method is pixel area interpolation.
+  kCubicPil = 4           ///< Interpolation method is bicubic interpolation like implemented in pillow.
+};
 
-/// \brief Possible interpolation modes
-enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3, kCubicPil = 4 };
+/// \brief Possible tokenize modes for JiebaTokenizer.
+enum class JiebaMode {
+  kMix = 0,  ///< Tokenize with MPSegment algorithm.
+  kMp = 1,   ///< Tokenize with Hiddel Markov Model Segment algorithm.
+  kHmm = 2   ///< Tokenize with a mix of MPSegment and HMMSegment algorithm.
+};
 
-/// \brief Possible JiebaMode modes
-enum class JiebaMode { kMix = 0, kMp = 1, kHmm = 2 };
+/// \brief Possible options for SPieceTokenizerOutType.
+enum class SPieceTokenizerOutType {
+  kString = 0,  ///< Output of sentencepiece tokenizer is string type.
+  kInt = 1      ///< Output of sentencepiece tokenizer is int type.
+};
 
-/// \brief Possible values for SPieceTokenizerOutType
-enum class SPieceTokenizerOutType { kString = 0, kInt = 1 };
+/// \brief Possible options for SPieceTokenizerLoadType.
+enum class SPieceTokenizerLoadType {
+  kFile = 0,  ///< Load sentencepiece tokenizer from local sentencepiece vocab file.
+  kModel = 1  ///< Load sentencepiece tokenizer from sentencepiece vocab instance.
+};
 
-/// \brief Possible values for SPieceTokenizerLoadType
-enum class SPieceTokenizerLoadType { kFile = 0, kModel = 1 };
+/// \brief Type options for SentencePiece Model.
+enum class SentencePieceModel {
+  kUnigram = 0,  ///< Based on Unigram model.
+  kBpe = 1,      ///< Based on Byte Pair Encoding (BPE) model.
+  kChar = 2,     ///< Based on Char model.
+  kWord = 3      ///< Based on Word model.
+};
 
-/// \brief Possible values for SentencePieceModel
-enum class SentencePieceModel { kUnigram = 0, kBpe = 1, kChar = 2, kWord = 3 };
-
-/// \brief Possible values for NormalizeForm
+/// \brief Possible options to specify a specific normalize mode.
 enum class NormalizeForm {
-  kNone = 0,
-  kNfc,
-  kNfkc,
-  kNfd,
-  kNfkd,
+  kNone = 0,  ///< Do nothing for input string tensor.
+  kNfc,       ///< Normalize with Normalization Form C.
+  kNfkc,      ///< Normalize with Normalization Form KC.
+  kNfd,       ///< Normalize with Normalization Form D.
+  kNfkd,      ///< Normalize with Normalization Form KD.
 };
 
-/// \brief Possible values for Mask
+/// \brief Possible options for Mask.
 enum class RelationalOp {
-  kEqual = 0,     // ==
-  kNotEqual,      // !=
-  kLess,          // <
-  kLessEqual,     // <=
-  kGreater,       // >
-  kGreaterEqual,  // >=
+  kEqual = 0,     ///< equal to `==`
+  kNotEqual,      ///< equal to `!=`
+  kLess,          ///< equal to `<`
+  kLessEqual,     ///< equal to `<=`
+  kGreater,       ///< equal to `>`
+  kGreaterEqual,  ///< equal to `>=`
 };
 
-/// \brief Possible values for SamplingStrategy
-enum class SamplingStrategy { kRandom = 0, kEdgeWeight = 1 };
+/// \brief Possible options for SamplingStrategy.
+enum class SamplingStrategy {
+  kRandom = 0,     ///< Random sampling with replacement.
+  kEdgeWeight = 1  ///< Sampling with edge weight as probability.
+};
 
-// convenience functions for 32bit int bitmask
+// convenience functions for 32bit int bitmask.
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 
 inline void BitSet(uint32_t *bits, uint32_t bitMask) { *bits |= bitMask; }

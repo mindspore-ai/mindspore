@@ -1389,7 +1389,7 @@ inline std::shared_ptr<MindDataDataset> MindData(
 ///    ShuffleMode::kFalse - No shuffling is performed.
 ///    ShuffleMode::kFiles - Shuffle files only.
 ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
-///    ShuffleMode::kInfile - Shuffle samples in file.
+///    ShuffleMode::kInfile - Shuffle data within each file.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the MindDataDataset.
 inline std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
