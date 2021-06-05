@@ -74,20 +74,6 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     param->multiples_[i] = input1_data[i];
   }
 
-#ifdef SUPPORT_TRAIN
-  const size_t in_dims = input->shape_size_;
-  const size_t delta_dims = in_dims - multiples_size;
-
-  size_t i = 0;
-  for (; i < delta_dims; ++i) {
-    int tmp = input->shape_[i];
-    ShapePush(out_shape, &out_shape_size, tmp);
-  }
-  for (; i < in_dims; ++i) {
-    int tmp = input->shape_[i] * (param->multiples_[i - delta_dims]);
-    ShapePush(out_shape, &out_shape_size, tmp);
-  }
-#else
   int *dims = param->dims_;
   size_t dims_size = param->dims_size_;
   if (dims_size == 0) {
@@ -110,7 +96,6 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
   // change caffe param format to tflite
   TileParamCaffe2Tflite(param, out_shape_size);
-#endif
   SetShapeArray(output, out_shape, out_shape_size);
   return NNACL_OK;
 }

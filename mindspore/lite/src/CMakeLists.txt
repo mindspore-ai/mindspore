@@ -109,33 +109,25 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
             ${CUDA_RUNTIME_SRC}
             )
 endif()
-if(SUPPORT_TRAIN)
-    set(ANF_SRC
-            ${ANF_SRC}
+set(TRAIN_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/transfer_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/train_loop.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/train_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/loss_monitor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/lr_scheduler.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_metrics.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_monitor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
+        )
+if(ENABLE_V0)
+    set(TRAIN_SRC
+            ${TRAIN_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter_v0.cc
             )
-    set(PASS_SRC)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${ANF_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/transfer_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_loop.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/loss_monitor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/lr_scheduler.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_metrics.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_monitor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
-            )
-    if(ENABLE_V0)
-      set(LITE_SRC
-              ${LITE_SRC}
-              ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter_v0.cc
-              )
-    endif()
 endif()
 
 if(ENABLE_MINDRT)
@@ -192,11 +184,19 @@ if(BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(mindspore-lite minddata_eager_mid minddata-lite)
     target_link_libraries(mindspore-lite_static minddata_eager_mid)
 endif()
+
 if(SUPPORT_TRAIN)
-    add_dependencies(mindspore-lite fbs_inner_src)
-    add_dependencies(mindspore-lite_static fbs_inner_src)
-    target_link_libraries(mindspore-lite minddata-lite)
-    target_link_libraries(mindspore-lite_static minddata-lite)
+  add_library(mindspore-lite-train SHARED ${TRAIN_SRC})
+  set_target_properties(mindspore-lite-train PROPERTIES OUTPUT_NAME "mindspore-lite-train")
+  add_dependencies(mindspore-lite-train fbs_src fbs_inner_src)
+  set_target_properties(mindspore-lite-train PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+  target_link_libraries(mindspore-lite-train minddata-lite mindspore-lite)
+
+  add_library(mindspore-lite-train_static STATIC ${TRAIN_SRC})
+  set_target_properties(mindspore-lite-train_static PROPERTIES OUTPUT_NAME "mindspore-lite-train")
+  add_dependencies(mindspore-lite-train_static fbs_inner_src)
+  set_target_properties(mindspore-lite-train_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+  target_link_libraries(mindspore-lite-train_static minddata-lite mindspore-lite)
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -276,11 +276,6 @@ endif()
 
 if(NOT WIN32)
     target_link_libraries(mindspore-lite dl)
-endif()
-
-if(SUPPORT_TRAIN)
-    set_target_properties(mindspore-lite PROPERTIES OUTPUT_NAME "mindspore-lite-train")
-    set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-lite-train")
 endif()
 
 if(ENABLE_MODEL_OBF)

@@ -74,7 +74,7 @@ function Run_Converter() {
 # Run on x86 platform:
 function Run_x86() {
     cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./train/lib:./train/third_party/libjpeg-turbo/lib
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./inference/lib:./inference/third_party/libjpeg-turbo/lib
     # Run mindspore converted train models:
     fail=0
     while read line; do
@@ -141,18 +141,19 @@ function Run_arm() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_train_test_path} || exit 1
-    if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libminddata-lite.so ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/libjpeg-turbo/lib/libjpeg.so* ${benchmark_train_test_path}/ || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/libjpeg-turbo/lib/libturbojpeg.so* ${benchmark_train_test_path}/ || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/lib/libminddata-lite.so ]; then
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/third_party/libjpeg-turbo/lib/libjpeg.so* ${benchmark_train_test_path}/ || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/third_party/libjpeg-turbo/lib/libturbojpeg.so* ${benchmark_train_test_path}/ || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
     fi
     if [ "$1" == arm64 ] || [ "$1" == arm32 ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai.so ${benchmark_train_test_path}/libhiai.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_train_test_path}/libhiai_ir.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_train_test_path}/libhiai_ir_build.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_train_test_path}/libhiai.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_train_test_path}/libhiai_ir.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_train_test_path}/libhiai_ir_build.so || exit 1
     fi
 
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libmindspore-lite-train.so ${benchmark_train_test_path}/libmindspore-lite-train.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/lib/libmindspore-lite.so ${benchmark_train_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/inference/lib/libmindspore-lite-train.so ${benchmark_train_test_path}/libmindspore-lite-train.so || exit 1
     cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/tools/benchmark_train/benchmark_train ${benchmark_train_test_path}/benchmark_train || exit 1
 
     # adb push all needed files to the phone

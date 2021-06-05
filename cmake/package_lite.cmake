@@ -8,27 +8,19 @@ set(OBFUSCATOR_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/obfuscator)
 set(CROPPER_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/cropper)
 set(TEST_CASE_DIR ${TOP_DIR}/mindspore/lite/test/build)
 
-if(SUPPORT_TRAIN)
-    set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/train)
-    set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/train/include)
-    set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/train/lib)
-    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/train/include/dataset)
-    set(TURBO_DIR ${RUNTIME_PKG_NAME}/train/third_party/libjpeg-turbo)
-    set(SECUREC_DIR ${RUNTIME_PKG_NAME}/train/third_party/securec)
-    set(MINDSPORE_LITE_LIB_NAME libmindspore-lite-train)
-    set(BENCHMARK_NAME benchmark_train)
-    set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
-else()
-    set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/inference)
-    set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/inference/include)
-    set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/inference/lib)
-    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/inference/include/dataset)
-    set(TURBO_DIR ${RUNTIME_PKG_NAME}/inference/third_party/libjpeg-turbo)
-    set(SECUREC_DIR ${RUNTIME_PKG_NAME}/inference/third_party/securec)
-    set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
-    set(BENCHMARK_NAME benchmark)
-    set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
-endif()
+set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/inference)
+set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/inference/include)
+set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/inference/lib)
+set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/inference/include/dataset)
+set(TURBO_DIR ${RUNTIME_PKG_NAME}/inference/third_party/libjpeg-turbo)
+set(SECUREC_DIR ${RUNTIME_PKG_NAME}/inference/third_party/securec)
+set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
+set(BENCHMARK_NAME benchmark)
+set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
+
+set(MINDSPORE_LITE_TRAIN_LIB_NAME libmindspore-lite-train)
+set(BENCHMARK_TRAIN_NAME benchmark_train)
+set(BENCHMARK_TRAIN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
 
 if(BUILD_MINDDATA STREQUAL "full")
     install(FILES
@@ -46,7 +38,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite_static.a DESTINATION
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.a DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a
@@ -55,7 +47,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite_static.a DESTINATION
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.a DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a
@@ -63,7 +55,7 @@ if(BUILD_MINDDATA STREQUAL "full")
     else()
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite_static.a DESTINATION
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.a DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib
                 RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -163,6 +155,10 @@ if(PLATFORM_ARM64)
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "*registry.h" EXCLUDE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_TRAIN_LIB_NAME}.so DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_TRAIN_LIB_NAME}.a DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE
@@ -195,6 +191,10 @@ if(PLATFORM_ARM64)
     install(TARGETS wrapper ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(MSLITE_ENABLE_TOOLS)
         install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
+                    ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(MSLITE_ENABLE_TESTCASES)
         install(FILES ${TOP_DIR}/mindspore/lite/build/test/lite-test DESTINATION ${TEST_CASE_DIR}
@@ -212,6 +212,10 @@ elseif(PLATFORM_ARM32)
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "*registry.h" EXCLUDE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_TRAIN_LIB_NAME}.so DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_TRAIN_LIB_NAME}.a DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE
@@ -244,6 +248,10 @@ elseif(PLATFORM_ARM32)
     install(TARGETS wrapper ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(MSLITE_ENABLE_TOOLS)
         install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
+                    ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
 elseif(WIN32)
     get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
@@ -284,6 +292,10 @@ elseif(WIN32)
     endif()
     if(MSLITE_ENABLE_TOOLS)
         install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
+                    ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     install(FILES ${LIB_LIST} DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${flatbuffers_INC} DESTINATION ${RUNTIME_INC_DIR}/third_party/
@@ -310,6 +322,10 @@ else()
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "*registry.h" EXCLUDE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_TRAIN_LIB_NAME}.so DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_TRAIN_LIB_NAME}.a DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE
@@ -365,6 +381,10 @@ else()
     endif()
     if(MSLITE_ENABLE_TOOLS)
         install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
+                    ${RUNTIME_COMPONENT_NAME})
+        endif()
         install(TARGETS cropper RUNTIME DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
