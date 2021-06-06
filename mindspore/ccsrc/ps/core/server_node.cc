@@ -84,6 +84,15 @@ void ServerNode::CreateTcpServer() {
 }
 
 void ServerNode::Initialize() {
+  config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  if (!config_->Initialize()) {
+    MS_LOG(INFO) << "The config file is empty, then init node by context.";
+    InitNodeNum();
+  } else {
+    if (!Recover()) {
+      MS_LOG(WARNING) << "Recover the server node is failed.";
+    }
+  }
   InitServerHandler();
   CreateTcpServer();
   is_already_stopped_ = false;
@@ -91,7 +100,6 @@ void ServerNode::Initialize() {
 
   MS_LOG(INFO) << "[Server start]: 2. Server node create tcp server successful!";
 
-  InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Server node connect to scheduler timedout!";

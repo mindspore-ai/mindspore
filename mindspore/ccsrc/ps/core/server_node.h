@@ -78,5 +78,4 @@ class ServerNode : public AbstractNode {
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_PS_CORE_SERVER_NODE_H_

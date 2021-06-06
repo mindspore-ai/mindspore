@@ -47,6 +47,9 @@ class Configuration {
 
   // Put configuration data to database or config file.
   virtual void Put(const std::string &key, const std::string &defaultvalue) = 0;
+
+  // Determine whether the configuration item exists.
+  virtual bool Exists(const std::string &key) = 0;
 };
 }  // namespace core
 }  // namespace ps

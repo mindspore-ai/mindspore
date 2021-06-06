@@ -148,6 +148,9 @@ class PSContext {
   void set_scheduler_manage_port(uint16_t sched_port);
   uint16_t scheduler_manage_port() const;
 
+  void set_config_file_path(const std::string &path);
+  std::string config_file_path() const;
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -176,7 +179,8 @@ class PSContext {
         client_learning_rate_(0.001),
         secure_aggregation_(false),
         cluster_config_(nullptr),
-        scheduler_manage_port_(0) {}
+        scheduler_manage_port_(0),
+        config_file_path_("") {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -238,6 +242,9 @@ class PSContext {
 
   // The port used by scheduler to receive http requests for scale out or scale in.
   uint16_t scheduler_manage_port_;
+
+  // The path of the configuration file, used to configure the certification path and persistent storage type, etc.
+  std::string config_file_path_;
 };
 }  // namespace ps
 }  // namespace mindspore

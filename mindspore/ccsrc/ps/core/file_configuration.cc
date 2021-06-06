@@ -39,7 +39,7 @@ bool FileConfiguration::Initialize() {
 
 std::string FileConfiguration::Get(const std::string &key, const std::string &defaultvalue) const {
   if (!js.contains(key)) {
-    MS_LOG(WARNING) << "The key:" << key << " is not exit.";
+    MS_LOG(WARNING) << "The key:" << key << " is not exist.";
     return defaultvalue;
   }
   std::string res = js.at(key);
@@ -54,6 +54,12 @@ void FileConfiguration::Put(const std::string &key, const std::string &value) {
   output_file.close();
 }
 
+bool FileConfiguration::Exists(const std::string &key) {
+  if (!js.contains(key)) {
+    return false;
+  }
+  return true;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

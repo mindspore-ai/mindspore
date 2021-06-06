@@ -30,6 +30,8 @@
 #include <vector>
 #include <condition_variable>
 #include <unordered_set>
+#include <deque>
+#include <algorithm>
 
 #include "ps/core/node.h"
 #include "utils/log_adapter.h"
@@ -57,9 +59,6 @@ class NodeManager {
   uint32_t NextRankId(const RegisterMessage &register_message);
 
   void UpdateHeartbeat(const std::string &node_id);
-  bool CheckNodesScaluOutState();
-  void UpdateNodeScaleInState(const std::string &node_id);
-  bool CheckNodesScaleInState();
 
   std::vector<ServersMeta> FetchServersMeta();
   void UpdateCluster();
@@ -126,9 +125,6 @@ class NodeManager {
   std::mutex heartbeat_mutex_;
 
   std::unordered_map<std::string, timeval> heartbeats_;
-  std::unordered_set<std::string> heartbeats_finish_nodes_;
-  std::unordered_set<std::string> heartbeats_scale_out_nodes_;
-  std::unordered_set<std::string> heartbeats_scale_in_nodes_;
   // timeout nodes
   std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
   std::unordered_set<std::string> finish_nodes_id_;

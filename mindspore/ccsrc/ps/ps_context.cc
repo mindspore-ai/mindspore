@@ -317,5 +317,9 @@ core::ClusterConfig &PSContext::cluster_config() {
 void PSContext::set_scheduler_manage_port(uint16_t sched_port) { scheduler_manage_port_ = sched_port; }
 
 uint16_t PSContext::scheduler_manage_port() const { return scheduler_manage_port_; }
+
+void PSContext::set_config_file_path(const std::string &path) { config_file_path_ = path; }
+
+std::string PSContext::config_file_path() const { return config_file_path_; }
 }  // namespace ps
 }  // namespace mindspore

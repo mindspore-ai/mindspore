@@ -36,7 +36,7 @@ enum class ClusterEvent {
 };
 
 struct NodeInfo {
-  NodeInfo() : port_(0), node_role_(NodeRole::SCHEDULER), rank_id_(0) {}
+  NodeInfo() : port_(0), node_role_(NodeRole::SCHEDULER), rank_id_(0), is_alive(false) {}
   // ip
   std::string ip_;
   // the port of this node
@@ -47,6 +47,9 @@ struct NodeInfo {
   NodeRole node_role_;
   // the current Node rank id,the worker node range is:[0,numOfWorker-1], the server node range is:[0, numOfServer-1]
   uint32_t rank_id_;
+
+  // After the node registration is successful, it is alive.If the node's heartbeat times out, then it is not alive
+  bool is_alive;
 };
 }  // namespace core
 }  // namespace ps

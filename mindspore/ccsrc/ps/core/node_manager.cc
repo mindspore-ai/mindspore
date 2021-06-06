@@ -42,7 +42,21 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
     const std::string &ip = register_message.ip();
     uint32_t port = register_message.port();
 
-    rank_id = ++next_server_rank_id_;
+    auto rank_it = std::find_if(registered_nodes_info_.begin(), registered_nodes_info_.end(), [&rank_id](auto item) {
+      bool res = item.second.is_alive == false && item.second.node_role_ == NodeRole::SERVER;
+      if (res) {
+        MS_LOG(INFO) << "The server node id:" << item.first << " rank id:" << rank_id << " is not alive.";
+        rank_id = item.second.rank_id_;
+      }
+      return res;
+    });
+
+    if (rank_it == registered_nodes_info_.end()) {
+      rank_id = ++next_server_rank_id_;
+    } else {
+      registered_nodes_info_.erase((*rank_it).first);
+    }
+
     if (rank_id >= meta_data_->server_num) {
       MS_LOG(WARNING) << "The rank id is greater than the number of servers:" << meta_data_->server_num;
       rank_id = UINT_MAX;
@@ -54,13 +68,29 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
     node_info.rank_id_ = rank_id;
     node_info.ip_ = ip;
     node_info.port_ = port;
+    node_info.is_alive = true;
     registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The server node id:" << node_id << ",node ip: " << node_info.ip_ << ",node port:" << port
                  << " assign rank id:" << rank_id;
   } else if (register_message.role() == NodeRole::WORKER) {
     const std::string &ip = register_message.ip();
     uint32_t port = register_message.port();
-    rank_id = ++next_worker_rank_id_;
+
+    auto rank_it = std::find_if(registered_nodes_info_.begin(), registered_nodes_info_.end(), [&rank_id](auto item) {
+      bool res = item.second.is_alive == false && item.second.node_role_ == NodeRole::WORKER;
+      if (res) {
+        MS_LOG(INFO) << "The worker node id:" << item.first << " rank id:" << rank_id << " is not alive.";
+        rank_id = item.second.rank_id_;
+      }
+      return res;
+    });
+
+    if (rank_it == registered_nodes_info_.end()) {
+      rank_id = ++next_worker_rank_id_;
+    } else {
+      registered_nodes_info_.erase((*rank_it).first);
+    }
+
     if (rank_id >= meta_data_->worker_num) {
       MS_LOG(WARNING) << "The rank id is greater than the number of workers:" << meta_data_->worker_num;
       rank_id = UINT_MAX;
@@ -72,6 +102,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
     node_info.rank_id_ = rank_id;
     node_info.ip_ = ip;
     node_info.port_ = port;
+    node_info.is_alive = true;
     registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The worker node id:" << node_id << " assign rank id:" << rank_id;
   }
@@ -84,12 +115,6 @@ void NodeManager::UpdateHeartbeat(const std::string &node_id) {
   (void)gettimeofday(&current_time, nullptr);
   heartbeats_[node_id] = current_time;
 }
-
-void NodeManager::UpdateNodeScaleInState(const std::string &node_id) { heartbeats_scale_in_nodes_.insert(node_id); }
-
-bool NodeManager::CheckNodesScaluOutState() { return SizeToInt(heartbeats_scale_out_nodes_.size()) == total_node_num_; }
-
-bool NodeManager::CheckNodesScaleInState() { return SizeToInt(heartbeats_scale_in_nodes_.size()) == total_node_num_; }
 
 std::vector<ServersMeta> NodeManager::FetchServersMeta() {
   std::vector<ServersMeta> servers_meta_list;
@@ -115,12 +140,15 @@ void NodeManager::UpdateCluster() {
       if (registered_nodes_info_.count(it->first)) {
         MS_LOG(WARNING) << "The node id:" << it->first << " is timeout!";
         timeout_nodes_info_[it->first] = registered_nodes_info_[it->first];
+        registered_nodes_info_[it->first].is_alive = false;
       }
     }
   }
+
   if (!timeout_nodes_info_.empty()) {
     UpdateClusterState(ClusterState::NODE_TIMEOUT);
     for (auto it = timeout_nodes_info_.begin(); it != timeout_nodes_info_.end(); ++it) {
+      heartbeats_.erase(it->first);
       finish_nodes_id_.insert(it->first);
     }
   }
@@ -149,7 +177,11 @@ void NodeManager::AddScaleOutDoneNode(const std::string &node_id) { scale_out_do
 
 void NodeManager::AddScaleInDoneNode(const std::string &node_id) { scale_in_done_nodes_id_.insert(node_id); }
 
-bool NodeManager::IsAllNodesRegistered() { return SizeToInt(registered_nodes_info_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesRegistered() {
+  int32_t num = std::count_if(registered_nodes_info_.begin(), registered_nodes_info_.end(),
+                              [](auto item) { return item.second.is_alive == true; });
+  return num == total_node_num_;
+}
 
 bool NodeManager::IsAllNodesFinished() { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
 
@@ -175,7 +207,7 @@ void NodeManager::UpdateNodeState(const NodeState &state) {
 void NodeManager::UpdateClusterState(const ClusterState &state) {
   std::lock_guard<std::mutex> lk(cluster_mutex_);
   MS_LOG(INFO) << "[state]: Scheduler change state from:" << CommUtil::ClusterStateToString(cluster_state_) << " to "
-               << state;
+               << CommUtil::ClusterStateToString(state);
   cluster_state_ = state;
 }
 

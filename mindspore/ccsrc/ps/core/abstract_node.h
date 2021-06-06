@@ -29,6 +29,7 @@
 #include "ps/core/follower_scaler.h"
 #include "utils/ms_exception.h"
 #include "ps/constants.h"
+#include "ps/core/recovery_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -44,7 +45,11 @@ class AbstractNode : public Node {
         server_thread_(nullptr),
         worker_num_(-1),
         server_num_(-1),
-        is_current_node_scale_in_(false) {}
+        is_current_node_scale_in_(false),
+        follower_scaler_(nullptr),
+        node_recovery_(nullptr),
+        scheduler_ip_(""),
+        scheduler_port_(0) {}
   ~AbstractNode() override = default;
 
   typedef void (AbstractNode::*ResponseHandler)(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
@@ -105,6 +110,15 @@ class AbstractNode : public Node {
   int32_t worker_num() const;
   int32_t server_num() const;
 
+  void set_worker_num(const int32_t &worker_num);
+  void set_server_num(const int32_t &server_num);
+
+  std::string scheduler_ip() const;
+  void set_scheduler_ip(const std::string &scheduler_ip);
+
+  uint16_t scheduler_port() const;
+  void set_scheduler_port(const uint16_t &scheduler_port);
+
   ClusterState cluster_state() const;
 
  protected:
@@ -159,6 +173,8 @@ class AbstractNode : public Node {
   void InitNodeInfo(const NodeRole &role);
   // Initialize worker num and server num by cluster config.
   void InitNodeNum();
+  // Node recover by cluster config.
+  bool Recover();
 
   // Trigger the callback corresponding to the event.
   void OnEventCallback(const ClusterEvent &event);
@@ -221,6 +237,14 @@ class AbstractNode : public Node {
 
   // Scaler for worker/server node.
   std::unique_ptr<FollowerScaler> follower_scaler_;
+
+  // Recovery for worker/server node.
+  std::unique_ptr<RecoveryBase> node_recovery_;
+
+  // The ip of scheduler.
+  std::string scheduler_ip_;
+  // The port of scheduler.
+  uint16_t scheduler_port_;
 };
 }  // namespace core
 }  // namespace ps
