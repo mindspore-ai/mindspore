@@ -1740,8 +1740,31 @@ class HSwishGrad(_ActivationGrad):
     """Gets the gradient of HSwish operation."""
 
 
-class HSigmoidGrad(_ActivationGrad):
-    """Gets the gradient of HSigmoid operation."""
+class HSigmoidGrad(Primitive):
+    """
+    Gets the gradient of HSigmoid operation.
+
+    Inputs:
+        - **grads** (Tensor) - The gradients of loss to output of HSigmoid function. Currently
+          grads data type only support float16 and float32.
+        - **input_x** (Tensor) - Must be the input `input_x` of the forward operator HSigmoid.
+          Currentlyinput_x data type only support float16 and float32.
+
+    Outputs:
+        - **output** (Tensor) - With the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If shape of `grads` is not the same as `input_x`.
+        TypeError: If dtype of `grads` is not the same as `input_x`.
+        TypeError: If dtype of `grads` or `input_x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['grads', 'input_x'], outputs=['output'])
 
 
 class SigmoidCrossEntropyWithLogitsGrad(PrimitiveWithInfer):
