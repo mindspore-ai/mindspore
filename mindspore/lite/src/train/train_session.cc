@@ -334,7 +334,7 @@ int TrainSession::SetLearningRate(float learning_rate) {
   }
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
-      auto optimizer = reinterpret_cast<kernel::OptimizerKernel *>(kernel);
+      auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
       auto ret = optimizer->SetLearningRate(learning_rate);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << kernel->name() << " failed to set learning rate";
@@ -348,7 +348,7 @@ int TrainSession::SetLearningRate(float learning_rate) {
 float TrainSession::GetLearningRate() {
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
-      auto optimizer = reinterpret_cast<kernel::OptimizerKernel *>(kernel);
+      auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
       return optimizer->GetLearningRate();
     }
   }
@@ -363,7 +363,7 @@ int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr,
 
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
-      auto optimizer = reinterpret_cast<kernel::OptimizerKernel *>(kernel);
+      auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
       auto ret = optimizer->SetOptimizerMode(mod);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << kernel->name() << " failed to set optimizer mode";
@@ -382,7 +382,7 @@ int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr,
     }
 
     if (IsBN(kernel) && kernel->is_trainable()) {
-      auto batchnorm = reinterpret_cast<kernel::BatchnormCPUKernel *>(kernel);
+      auto batchnorm = static_cast<kernel::BatchnormCPUKernel *>(kernel->kernel());
       auto ret = RET_OK;
       if (mod == kernel::OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
         momentum = (momentum < 0.0f) ? (batchnorm->get_momentum() / virtual_batch_multiplier_) : momentum;
@@ -409,7 +409,7 @@ int TrainSession::SetupVirtualBatch(int virtual_batch_multiplier, float lr, floa
 int TrainSession::OptimizerStep() {
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
-      auto optimizer = reinterpret_cast<kernel::OptimizerKernel *>(kernel);
+      auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
       auto ret = optimizer->OptimizerStep();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << kernel->name() << " failed to do optimize step";
