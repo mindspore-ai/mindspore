@@ -634,7 +634,10 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       bool found = false;
       // if async mode
       for (const std::string &file_path : async_file_pool) {
-        if (file_path.find(prefix_dump_file_name) != std::string::npos &&
+        size_t first_dot_pos = file_path.find('.');
+        size_t second_dot_pos = file_path.find('.', first_dot_pos + 1);
+        std::string file_path_op_name = file_path.substr(first_dot_pos + 1, second_dot_pos - first_dot_pos - 1);
+        if (file_path_op_name == prefix_dump_file_name &&
             file_path.find(".output." + std::to_string(slot[i])) != std::string::npos) {
           found = true;
           shape.clear();
