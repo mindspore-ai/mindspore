@@ -758,12 +758,7 @@ void ConvDwInitIndirection(float **indirect_buffer, float *src, float *zero_ptr,
 void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
                            int output_width, int input_stride, bool relu, bool relu6, int kernel) {
   do {
-    float *in[kernel];
-    for (int k = 0; k < kernel; k++) {
-      in[k] = input[k];
-    }
-    input = input + input_stride;
-
+    float **in = input;
     size_t c = channels;
     const float *w = weights;
     float *out = output;
@@ -792,6 +787,7 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
       Relu6Fp32(output, output, channels);
     }
     output += channels;
+    input = input + input_stride;
   } while (--output_width != 0);
 }
 #endif
