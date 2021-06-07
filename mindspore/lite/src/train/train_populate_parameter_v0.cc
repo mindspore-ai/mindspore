@@ -592,7 +592,6 @@ OpParameter *PopulateArithmeticGradParameter(const void *primitive) {
   }
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
-
 }  // namespace
 
 void PopulateTrainV0Parameters() {
@@ -665,5 +664,4 @@ void PopulateTrainV0Parameters() {
   lite::Registry g_sigmoidCrossEntropyWithLogitsGradRegistry(
     schema::v0::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad, DefaultPopulateParameter, mindspore::lite::SCHEMA_V0);
 }
-
 }  // namespace mindspore::kernel

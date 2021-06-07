@@ -63,7 +63,6 @@ class TrainLoop : virtual public session::TrainLoop {
 
  protected:
   static int LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
-  static int LoadPartialData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
 
   session::LiteSession *train_session_ = nullptr;
   unsigned int epoch_ = 0;

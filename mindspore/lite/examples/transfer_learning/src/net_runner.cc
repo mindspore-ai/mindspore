@@ -15,9 +15,9 @@
  */
 
 #include "src/net_runner.h"
-#include <math.h>
 #include <getopt.h>
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -26,6 +26,9 @@
 #include "src/utils.h"
 
 static unsigned int seed = time(NULL);
+constexpr int kBatchNum = 20;
+constexpr int kPrintNum = 10;
+constexpr float kThreshold = 0.9f;
 
 // Definition of callback function after forwarding operator.
 bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
@@ -35,7 +38,7 @@ bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inpu
   for (size_t i = 0; i < after_inputs.size(); i++) {
     int num2p = (after_inputs.at(i)->ElementsNum());
     std::cout << "in" << i << "(" << num2p << "): ";
-    if (num2p > 10) num2p = 10;
+    if (num2p > kPrintNum) num2p = kPrintNum;
     if (after_inputs.at(i)->data_type() == mindspore::kNumberTypeInt32) {
       auto d = reinterpret_cast<int *>(after_inputs.at(i)->MutableData());
       for (int j = 0; j < num2p; j++) {
@@ -53,7 +56,7 @@ bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inpu
     auto d = reinterpret_cast<float *>(after_outputs.at(i)->MutableData());
     int num2p = (after_outputs.at(i)->ElementsNum());
     std::cout << "ou" << i << "(" << num2p << "): ";
-    if (num2p > 10) num2p = 10;
+    if (num2p > kPrintNum) num2p = kPrintNum;
     for (int j = 0; j < num2p; j++) {
       std::cout << d[j] << ", ";
     }
@@ -72,7 +75,7 @@ void NetRunner::InitAndFigureInputs() {
   context.thread_num_ = 1;
 
   session_ = mindspore::session::LiteSession::CreateTransferSession(ms_backbone_file_, ms_head_file_, &context);
-  MS_ASSERT(nullptr != session_);
+  MS_ASSERT(session_ != nullptr);
 
   auto inputs = session_->GetInputs();
   MS_ASSERT(inputs.size() > 1);
@@ -108,7 +111,8 @@ std::vector<int> NetRunner::FillInputData(const std::vector<DataLabelTuple> &dat
   std::fill(labels, labels + inputs.at(label_index_)->ElementsNum(), 0.f);
   for (int i = 0; i < batch_size_; i++) {
     if (serially >= 0) {
-      idx = ++idx % total_size;
+      auto reminder = ++idx % total_size;
+      idx = reminder;
     } else {
       idx = rand_r(&seed) % total_size;
     }
@@ -191,13 +195,13 @@ int NetRunner::TrainLoop() {
     }
 
     std::cout << i + 1 << ": Loss is " << loss << " [min=" << min_loss << "]" << std::endl;
-    if ((i + 1) % 20 == 0) {
+    if ((i + 1) % kBatchNum == 0) {
       session_->Eval();
       float acc = CalculateAccuracy(ds_.test_data(), session_);
       session_->Train();
       if (max_acc < acc) max_acc = acc;
       std::cout << "accuracy on test data = " << acc << " max accuracy = " << max_acc << std::endl;
-      if (acc > 0.9) return 0;
+      if (acc > kThreshold) return 0;
     }
   }
   return 0;

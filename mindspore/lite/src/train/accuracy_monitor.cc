@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace lite {
-
 void AccuracyMonitor::Begin(const session::TrainLoopCallBackData &cb_data) {
   if (cb_data.epoch_ == 0) accuracies_.clear();
 }
@@ -40,6 +39,5 @@ int AccuracyMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
   accuracies_.push_back(std::make_pair(cb_data.epoch_, 0.0));
   return mindspore::session::RET_CONTINUE;
 }
-
 }  // namespace lite
 }  // namespace mindspore
