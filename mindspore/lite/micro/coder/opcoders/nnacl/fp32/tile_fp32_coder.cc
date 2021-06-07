@@ -54,7 +54,6 @@ int TileFP32Coder::DoCode(CoderContext *const context) {
   Collect(context, {"nnacl/fp32/tile.h"}, {"nnacl/fp32/tile.c"});
 
   NNaclFp32Serializer code;
-
   code.CodeStruct("tile_parameter", *tile_param_);
   // call the op function
   code.CodeFunction("Tile", input_tensor_, output_tensor_, "&tile_parameter");
@@ -63,5 +62,4 @@ int TileFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_TileFusion, CPUOpCoderCreator<TileFP32Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

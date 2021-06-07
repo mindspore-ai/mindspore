@@ -55,5 +55,4 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_PowFusion, CPUOpCoderCreator<PowerFP32Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

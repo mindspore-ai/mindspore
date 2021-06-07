@@ -30,7 +30,7 @@ int AddNFP32Coder::DoCode(CoderContext *const context) {
   Collect(context, {"nnacl/kernel/fp32/add_fp32.h"}, {"add_fp32.c", "arithmetic_fp32.c", "arithmetic_base.c"});
   NNaclFp32Serializer code;
   code.CodeFunction("ElementAdd", input0, input1, output_tensor_, elements_num);
-  if (input_tensors_.size() > 2) {
+  if (input_tensors_.size() > DIMENSION_2D) {
     for (size_t i = 2; i < input_tensors_.size(); ++i) {
       code.CodeFunction("ElementAdd", input_tensors_.at(i), output_tensor_, elements_num);
     }
