@@ -1678,8 +1678,8 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     allgather = ReplaceNode(op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name, root);
     MS_LOG(INFO) << "Parallel optimizer is applied before Cast for " << param_name;
   } else {
-    InsertNode(op, cnode, res.second, node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name, root);
-    allgather = cnode->input(res.second)->cast<CNodePtr>();
+    InsertNode(op, cnode, IntToSize(res.second), node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name, root);
+    allgather = cnode->input(IntToSize(res.second))->cast<CNodePtr>();
     MS_LOG(INFO) << "Parallel optimizer is applied before " << GetPrimName(cnode) << " for " << param_name;
   }
   // add fusion flag
