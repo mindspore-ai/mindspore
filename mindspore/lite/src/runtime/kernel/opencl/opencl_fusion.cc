@@ -675,7 +675,6 @@ void DoSpecificFusion(LiteKernel *node, std::set<LiteKernel *> *removed_set, std
       break;
   }
 }  // namespace
-
 }  // namespace
 
 int OpenCLSubGraph::FusionPass() {
@@ -735,5 +734,4 @@ int OpenCLSubGraph::FusionPass() {
   MS_LOG(DEBUG) << "number of kernels(after fusion) : " << nodes_.size();
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

@@ -293,5 +293,4 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
-
 }  // namespace mindspore::kernel

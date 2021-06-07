@@ -102,34 +102,12 @@ int MatMulOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
-int MatMulOpenCLKernel::InitWeights() {
-  if (!in_tensors_[1]->IsConst()) {
-    return RET_OK;
-  }
-  // ABMCI @ ABCICO = ABMCO
+void MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int co) {
   auto allocator = ocl_runtime_->GetAllocator();
-  auto weight_shape = in_tensors_[1]->shape();
-  int weight_ndim = weight_shape.size();
-  std::vector<int> weight_shape_4d(MAX_DIMS, 1);
-  for (int i = 0; i < weight_ndim; i++) {
-    weight_shape_4d[MAX_DIMS - weight_ndim + i] = weight_shape[i];
-  }
-  auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
-  transposeB = param->b_transpose_;
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  int ci;
-  if (transposeB) {
-    ci = weight_shape_4d[3];
-    CO_ = weight_shape_4d[2];
-  } else {
-    ci = weight_shape_4d[2];
-    CO_ = weight_shape_4d[3];
-  }
-  int ci4 = UP_DIV(ci, C4NUM);
-  int co4 = UP_DIV(CO_, C4NUM);
   int a = weight_shape_4d[0];
   int b = weight_shape_4d[1];
-
+  int ci4 = UP_DIV(ci, C4NUM);
+  int co4 = UP_DIV(co, C4NUM);
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size, lite::opencl::MemType::BUF);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
@@ -180,6 +158,33 @@ int MatMulOpenCLKernel::InitWeights() {
       }
     }
   }
+}
+
+int MatMulOpenCLKernel::InitWeights() {
+  if (!in_tensors_[1]->IsConst()) {
+    return RET_OK;
+  }
+  // ABMCI @ ABCICO = ABMCO
+  auto allocator = ocl_runtime_->GetAllocator();
+  auto weight_shape = in_tensors_[1]->shape();
+  int weight_ndim = weight_shape.size();
+  std::vector<int> weight_shape_4d(MAX_DIMS, 1);
+  for (int i = 0; i < weight_ndim; i++) {
+    weight_shape_4d[MAX_DIMS - weight_ndim + i] = weight_shape[i];
+  }
+  auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  transposeB = param->b_transpose_;
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+  int ci;
+  if (transposeB) {
+    ci = weight_shape_4d[3];
+    CO_ = weight_shape_4d[2];
+  } else {
+    ci = weight_shape_4d[2];
+    CO_ = weight_shape_4d[3];
+  }
+
+  PadWeight(weight_shape_4d, ci, CO_);
 
   allocator->UnmapBuffer(padWeight_);
   FreeStoredData(stored_weight_);
@@ -314,5 +319,4 @@ kernel::InnerKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *>
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
-
 }  // namespace mindspore::kernel
