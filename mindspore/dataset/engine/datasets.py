@@ -2912,9 +2912,15 @@ class _ToDevice:
         self._to_device.Send()
 
     def stop_send(self):
+        """
+        send stop send signal to pipeline, it is used when end of sequence is sent at the epoch end.
+        """
         self._to_device.StopSend()
 
     def continue_send(self):
+        """
+        send continue send signal to pipeline, it is used when end of sequence is sent at the epoch end.
+        """
         self._to_device.ContinueSend()
 
     def get_data_info(self):
