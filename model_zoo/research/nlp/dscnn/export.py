@@ -24,10 +24,13 @@ from src.ds_cnn import DSCNN
 from src.models import load_ckpt
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--ckpt_path', type=str, default="", required=True, help='checkpoint path.')
+parser.add_argument('--file_name', type=str, default="dscnn", help='model name.')
+parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
 
 args, model_settings = eval_config(parser)
 network = DSCNN(model_settings, args.model_size_info)
-load_ckpt(network, args.model_dir, False)
-x = np.random.uniform(0.0, 1.0, size=[1, 1, model_settings['spectrogram_length'],
+load_ckpt(network, args.ckpt_path, False)
+x = np.random.uniform(0.0, 1.0, size=[args.per_batch_size, 1, model_settings['spectrogram_length'],
                                       model_settings['dct_coefficient_count']]).astype(np.float32)
-export(network, Tensor(x), file_name=args.model_dir.replace('.ckpt', '.air'), file_format='AIR')
+export(network, Tensor(x), file_name=args.file_name, file_format=args.file_format)

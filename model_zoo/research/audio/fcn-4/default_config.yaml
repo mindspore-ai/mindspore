@@ -44,6 +44,11 @@ model_name: 'MusicTagger-10_543.ckpt'
 file_name: "/cache/data/musicTagger/fcn-4.air" 
 file_format: "MINDIR"
 
+# 310 infer
+pre_result_path: "preprocess_Result"
+post_result_path: "result_Files"
+label_path: "preprocess_Result/label_ids.npy"
+
 ---
 # Config description for each option
 enable_modelarts: 'Whether training on modelarts, default: False'
