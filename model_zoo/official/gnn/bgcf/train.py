@@ -101,6 +101,8 @@ def run_train():
 
     if config.device_target == "Ascend":
         context.set_context(device_id=get_device_id())
+    if config.device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
 
     train_graph, _, sampled_graph_list = load_graph(config.datapath)
     train_ds = create_dataset(train_graph, sampled_graph_list, config.workers, batch_size=config.batch_pairs,
