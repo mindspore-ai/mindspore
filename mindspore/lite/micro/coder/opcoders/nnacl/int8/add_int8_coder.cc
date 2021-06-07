@@ -156,9 +156,9 @@ int AddInt8Coder::DoCode(CoderContext *const context) {
                       support_opt_add_, input0, input1, output_tensor_);
   if (support_parallel_) {
     if (arith_para_->broadcasting_) {
-      code.CodeFunction(kParallelLaunch, "AddBroadcastInt8Run", kRunArgsAddr, gThreadNum, kLhsScale, kRhsScale);
+      code.CodeFunction(kParallelLaunch, "AddBroadcastInt8Run", kRunArgsAddr, gThreadNum);
     } else {
-      code.CodeFunction(kParallelLaunch, "AddInt8Run", kRunArgsAddr, gThreadNum, kLhsScale, kRhsScale);
+      code.CodeFunction(kParallelLaunch, "AddInt8Run", kRunArgsAddr, gThreadNum);
     }
   } else {
     if (arith_para_->broadcasting_) {
