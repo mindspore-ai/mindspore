@@ -74,6 +74,9 @@ class CsvToMR:
 
     @staticmethod
     def check_columns(columns, columns_name):
+        """
+        Validate the columns of csv
+        """
         if not columns:
             return
         if isinstance(columns, list):

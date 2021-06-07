@@ -2767,6 +2767,9 @@ class TransferDataset(Dataset):
             self._to_device.continue_send()
 
     def get_data_info(self):
+        """
+        Get type and shape of current batch
+        """
         if self._to_device is not None:
             return self._to_device.get_data_info()
         raise RuntimeError("Calling get_data_info with bad state.")
