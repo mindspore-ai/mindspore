@@ -114,6 +114,8 @@ def _check_supported(kernel_info):
         if op_name in ("resize_nearest_neighbor_v2_grad_d", "resize_bilinear_v2_grad"):
             attrs_args.pop(-1)
         ret = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+        if isinstance(ret, tuple) and len(ret) == 2:
+            ret = ret[0]
 
     except Exception as e:
         raise TBEException(str(e))

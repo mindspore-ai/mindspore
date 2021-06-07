@@ -8,8 +8,10 @@ file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 if(ENABLE_D OR ENABLE_ACL)
     # build 910 and 310 code into one distro, files needed for 310 mode
     add_compile_definitions(ENABLE_ACL)
-    include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge)
-    include_directories(${CMAKE_BINARY_DIR}/proto/ge)
+    include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge
+                        ${CMAKE_BINARY_DIR}/proto/graphengine_protos
+                        ${CMAKE_BINARY_DIR}/proto/metadef_protos
+                        )
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
             "akg_kernel_register.cc"
             "model/acl/*.cc"

@@ -200,10 +200,25 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   size_t param_num = parameters_indexs.size();
   size_t total_num = input_num + workspace_num + output_num;
   size_t pad_index = param_num;
+
+  if (AnfAlgo::IsDynamicShape(kernel_node)) {
+    parameters_indexs.pop_back();
+  }
   for (; pad_index < total_num; ++pad_index) {
     parameters_indexs.emplace_back(0);
   }
   // process input
+  auto op_info = kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel::OpImplyType::kTBE,
+                                       AnfAlgo::IsDynamicShape(kernel_node));
+  if (op_info != nullptr) {
+    const auto &ref_infos = op_info->ref_infos();
+    for (auto [out, in] : ref_infos) {
+      if (parameters_indexs[in] == 1) {
+        parameters_indexs[in] = 0;
+        parameters_indexs[input_num + workspace_num + out] = 1;
+      }
+    }
+  }
   for (size_t j = 0; j < input_num; ++j) {
     if (parameters_indexs.at(j) == 1) {
       MS_LOG(EXCEPTION) << "Atomic addr clean doesn't support clean input address, input index: " << j;
