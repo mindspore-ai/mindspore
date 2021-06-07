@@ -62,10 +62,10 @@ int FullconnectionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inp
     MS_LOG(ERROR) << "New weight const failed.";
     return RET_ERROR;
   }
-  inputs[1]->set_format(schema::Format_NCHW);
+  inputs[1]->set_format(mindspore::NCHW);
   auto weight_tensor = mindspore::lite::ConverterToNPUTensor(inputs[1]);
   weight_->set_attr_value(weight_tensor);
-  inputs[1]->set_format(schema::Format_NHWC);
+  inputs[1]->set_format(mindspore::NHWC);
   fc_->set_input_x2(*weight_).set_attr_transpose_x2(true);
 
   if (fc_param_->has_bias_) {

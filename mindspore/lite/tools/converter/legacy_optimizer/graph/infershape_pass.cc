@@ -89,7 +89,7 @@ void ConvertString(MetaGraphT *graph, uint32_t index, bool *convert_succ, std::v
   auto &tensorT = graph->allTensors.at(index);
   auto tensor_shape = tensorT->dims;
   lite_tensor = std::make_unique<Tensor>(
-    TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+    TypeId(tensorT->dataType), tensor_shape, static_cast<mindspore::Format>(tensorT->format),
     TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
   if (lite_tensor == nullptr) {
     MS_LOG(ERROR) << "lite tensor is nullptr";
@@ -117,7 +117,7 @@ void ConvertOtherTensor(MetaGraphT *graph, uint32_t index, bool *convert_succ, s
   auto &tensorT = graph->allTensors.at(index);
   auto tensor_shape = tensorT->dims;
   lite_tensor = std::make_unique<Tensor>(
-    TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+    TypeId(tensorT->dataType), tensor_shape, static_cast<mindspore::Format>(tensorT->format),
     TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
   if (lite_tensor == nullptr) {
     MS_LOG(ERROR) << "lite tensor is nullptr";
@@ -227,7 +227,7 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
                  uint32_t i, uint32_t infer_node_index) {
   auto &node = graph->nodes.at(infer_node_index);
   auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
-  output_tensor->format = output_tensors[i]->format();
+  output_tensor->format = static_cast<schema::Format>(output_tensors[i]->format());
   output_tensor->dataType = output_tensors[i]->data_type();
   if (output_tensors[i]->data_type() == kObjectTypeTensorType) {
     auto tensor_list = reinterpret_cast<TensorList *>(output_tensors[i]);

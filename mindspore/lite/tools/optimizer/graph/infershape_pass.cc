@@ -201,9 +201,9 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
       tensor->set_shape(shape);
       tensor->set_data_type(tensor_info->data_type());
       if (primitive->GetAttr(ops::kFormat) != nullptr && i == WEIGHT_INDEX) {
-        tensor->set_format(static_cast<schema::Format>(GetValue<int64_t>(primitive->GetAttr(ops::kFormat))));
+        tensor->set_format(static_cast<mindspore::Format>(GetValue<int64_t>(primitive->GetAttr(ops::kFormat))));
       } else {
-        tensor->set_format(schema::Format::Format_NHWC);
+        tensor->set_format(mindspore::NHWC);
       }
     }
 

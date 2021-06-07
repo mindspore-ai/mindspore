@@ -33,7 +33,7 @@ std::string EnumNameDataType(TypeId type);
 
 std::string GetTensorDataType(TypeId type);
 
-std::string EnumMicroTensorFormat(schema::Format format);
+std::string EnumMicroTensorFormat(mindspore::Format format);
 
 std::string EnumMicroTensorDataType(TypeId type);
 

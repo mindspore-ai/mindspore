@@ -30,7 +30,7 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(Tensor *src);
 
 hiai::op::Data *ConverterToNPUData(Tensor *src, const std::string &name);
 
-ge::Format ConverterToNPUFormat(schema::Format format);
+ge::Format ConverterToNPUFormat(mindspore::Format format);
 
 ge::DataType ConverterToNPUDataType(TypeId type_id);
 

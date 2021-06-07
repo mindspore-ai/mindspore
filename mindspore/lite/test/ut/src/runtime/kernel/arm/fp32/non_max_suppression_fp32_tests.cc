@@ -19,7 +19,6 @@
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/non_max_suppression_fp32.h"
 #include "src/kernel_registry.h"
 #include "src/lite_kernel.h"
-using mindspore::schema::Format_NHWC;
 
 namespace mindspore {
 class TestNMSFp32 : public mindspore::CommonTest {
@@ -63,12 +62,12 @@ void TestNMSFp32::Init(const std::vector<int> &box_tensor_shape, float *box_data
                        const std::vector<int> &score_tensor_shape, float *score_data, int32_t max_output,
                        float iou_threshold, float score_threshold, int center_box_point) {
   box_tensor_.set_data_type(kNumberTypeFloat32);
-  box_tensor_.set_format(Format_NHWC);
+  box_tensor_.set_format(mindspore::NHWC);
   box_tensor_.set_shape(box_tensor_shape);
   box_tensor_.set_data(box_data);
 
   score_tensor_.set_data_type(kNumberTypeFloat32);
-  score_tensor_.set_format(Format_NHWC);
+  score_tensor_.set_format(mindspore::NHWC);
   score_tensor_.set_shape(score_tensor_shape);
   score_tensor_.set_data(score_data);
 

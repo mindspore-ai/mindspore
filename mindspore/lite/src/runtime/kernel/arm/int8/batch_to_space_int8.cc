@@ -36,7 +36,7 @@ BatchToSpaceInt8CPUKernel::~BatchToSpaceInt8CPUKernel() {
 }
 
 int BatchToSpaceInt8CPUKernel::Init() {
-  MS_ASSERT(in_tensors_.at(0)->format() == schema::Format::Format_NHWC);
+  MS_ASSERT(in_tensors_.at(0)->format() == mindspore::NHWC);
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {
     MS_LOG(ERROR) << "Malloc QuantArg for BatchToSpace int8 op failed!";

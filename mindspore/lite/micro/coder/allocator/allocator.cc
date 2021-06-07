@@ -32,7 +32,7 @@ void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocTyp
   size_t type_size = item->second;
   std::vector<int> shape = {1, static_cast<int>(size / type_size)};
   auto cate = type == kOfflinePackWeight ? Tensor::Category::CONST_TENSOR : Tensor::Category::VAR;
-  Tensor *weight = new (std::nothrow) lite::Tensor(type_id, shape, schema::Format_NHWC, cate);
+  Tensor *weight = new (std::nothrow) lite::Tensor(type_id, shape, mindspore::NHWC, cate);
   MS_CHECK_PTR_RET_NULL(weight);
   std::string runtime_addr = kWeightPrefixName + std::to_string(weight_index_++);
   malloc_weights_addr_.insert(std::make_pair(weight, runtime_addr));

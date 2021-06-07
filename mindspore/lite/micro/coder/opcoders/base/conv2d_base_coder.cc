@@ -95,37 +95,38 @@ int Conv2DBaseCoder::MallocConvQuantParams(size_t input_arg_num, size_t filter_a
   return RET_OK;
 }
 
-std::string Conv2DBaseCoder::LayoutTransformFp32(schema::Format src_format, schema::Format dst_format) {
+std::string Conv2DBaseCoder::LayoutTransformFp32(mindspore::Format src_format, mindspore::Format dst_format) {
   std::string ret;
-  if (src_format == schema::Format_NHWC && dst_format == schema::Format_NC4HW4) {
+  if (src_format == mindspore::NHWC && dst_format == mindspore::NC4HW4) {
     ret = "PackNHWCToNC4HW4Fp32";
-  } else if (src_format == schema::Format_NHWC && dst_format == schema::Format_NHWC4) {
+  } else if (src_format == mindspore::NHWC && dst_format == mindspore::NHWC4) {
     ret = "PackNHWCToNHWC4Fp32";
-  } else if (src_format == schema::Format_NC4HW4 && dst_format == schema::Format_NHWC4) {
+  } else if (src_format == mindspore::NC4HW4 && dst_format == mindspore::NHWC4) {
     ret = "PackNC4HW4ToNHWC4Fp32";
-  } else if (src_format == schema::Format_NCHW && dst_format == schema::Format_NC4HW4) {
+  } else if (src_format == mindspore::NCHW && dst_format == mindspore::NC4HW4) {
     ret = "PackNCHWToNC4HW4Fp32";
-  } else if (src_format == schema::Format_NC4HW4 && dst_format == schema::Format_NHWC) {
+  } else if (src_format == mindspore::NC4HW4 && dst_format == mindspore::NHWC) {
     ret = "PackNC4HW4ToNHWCFp32";
   } else {
-    MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(src_format) << " to "
-                  << schema::EnumNameFormat(dst_format);
+    MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(static_cast<schema::Format>(src_format))
+                  << " to " << schema::EnumNameFormat(static_cast<schema::Format>(dst_format));
   }
   return ret;
 }
 
-std::string Conv2DBaseCoder::LayoutTransformInt8(schema::Format src_format, schema::Format dst_format) {
+std::string Conv2DBaseCoder::LayoutTransformInt8(mindspore::Format src_format, mindspore::Format dst_format) {
   std::string ret;
-  if (src_format == schema::Format_NHWC && dst_format == schema::Format_NHWC4) {
+  if (src_format == mindspore::NHWC && dst_format == mindspore::NHWC4) {
     ret = "PackNHWCToNHWC4Int8";
   } else {
-    MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(src_format) << " to "
-                  << schema::EnumNameFormat(dst_format);
+    MS_LOG(ERROR) << "Unsupported transform from " << schema::EnumNameFormat(static_cast<schema::Format>(src_format))
+                  << " to " << schema::EnumNameFormat(static_cast<schema::Format>(dst_format));
   }
   return ret;
 }
 
-std::string Conv2DBaseCoder::LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format) {
+std::string Conv2DBaseCoder::LayoutTransform(TypeId data_type, mindspore::Format src_format,
+                                             mindspore::Format dst_format) {
   std::string ret;
   switch (data_type) {
     case kNumberTypeInt8:
@@ -352,8 +353,8 @@ int Conv2DBaseCoder::Init() {
 
 int Conv2DBaseCoder::CheckLayout(lite::Tensor *input_tensor) {
   mindspore::TypeId data_type = input_tensor->data_type();
-  schema::Format input_format = input_tensor->format();
-  schema::Format execute_format = schema::Format_NHWC4;
+  mindspore::Format input_format = input_tensor->format();
+  mindspore::Format execute_format = mindspore::NHWC4;
   convert_func_ = LayoutTransform(data_type, input_format, execute_format);
   MS_CHECK_TRUE(!convert_func_.empty(), "layout convert func is nullptr.");
   return RET_OK;

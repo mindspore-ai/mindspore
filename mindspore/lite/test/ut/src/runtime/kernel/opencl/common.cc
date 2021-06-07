@@ -24,7 +24,6 @@
 using mindspore::kernel::LiteKernel;
 using mindspore::kernel::OpenCLSubGraph;
 using mindspore::lite::KernelRegistry;
-using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::lite::opencl::test {
 // muti-output
@@ -67,11 +66,11 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
     auto &shape = std::get<0>(input_info);
     auto category = std::get<2>(input_info);
     auto data_type = std::get<3>(input_info);
-    in_tensors.emplace_back(std::make_shared<Tensor>(data_type, shape, Format_NHWC, category));
+    in_tensors.emplace_back(std::make_shared<Tensor>(data_type, shape, mindspore::NHWC, category));
   }
   for (auto outout_info : output_info) {
     const std::vector<int> &output_shape = std::get<0>(outout_info);
-    out_tensors.emplace_back(std::make_shared<Tensor>(std::get<2>(outout_info), output_shape, Format_NHWC, VAR));
+    out_tensors.emplace_back(std::make_shared<Tensor>(std::get<2>(outout_info), output_shape, mindspore::NHWC, VAR));
   }
   // secondly, init weight Tensor's data
   std::vector<Tensor *> kernel_inputs;
@@ -231,7 +230,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
     auto &shape = std::get<0>(input_info);
     auto category = std::get<2>(input_info);
     auto data_type = std::get<3>(input_info);
-    tensors.emplace_back(std::make_shared<Tensor>(data_type, shape, Format_NHWC, category));
+    tensors.emplace_back(std::make_shared<Tensor>(data_type, shape, mindspore::NHWC, category));
   }
   // secondly, init weight Tensor's data
   std::vector<Tensor *> kernel_inputs;
@@ -257,7 +256,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   const std::vector<int> &output_shape = std::get<0>(output_info);
   float *expect_data = std::get<1>(output_info);
-  auto output = Tensor(kNumberTypeFloat32, output_shape, Format_NHWC, VAR);
+  auto output = Tensor(kNumberTypeFloat32, output_shape, mindspore::NHWC, VAR);
 
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> BuildKernels()
   MS_LOG(DEBUG) << "create OpenCLKernel";

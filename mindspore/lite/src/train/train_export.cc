@@ -117,7 +117,7 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite
   auto tensorT = std::make_unique<schema::TensorT>();
   tensorT->nodeType = scTensor->nodeType();
   tensorT->dims = tensor->shape();
-  tensorT->format = tensor->format();
+  tensorT->format = static_cast<schema::Format>(tensor->format());
   tensorT->name = tensor->tensor_name();
   tensorT->refCount = 0;
   tensorT->offset = 0;

@@ -29,7 +29,7 @@ int FullConnectionInt8Coder::Prepare(CoderContext *const context) {
   return RET_OK;
 }
 
-void FullConnectionInt8Coder::ConfigInputOutput() { output_tensor_->set_format(schema::Format_NHWC); }
+void FullConnectionInt8Coder::ConfigInputOutput() { output_tensor_->set_format(mindspore::NHWC); }
 
 int FullConnectionInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;

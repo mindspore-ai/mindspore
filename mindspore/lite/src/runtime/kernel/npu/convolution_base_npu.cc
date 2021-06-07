@@ -83,10 +83,10 @@ int ConvolutionBaseNPUKernel::InitBiasConst(const std::vector<lite::Tensor *> &i
       MS_LOG(ERROR) << "New bias const failed.";
       return RET_ERROR;
     }
-    inputs[BIAS_INDEX]->set_format(schema::Format_NCHW);
+    inputs[BIAS_INDEX]->set_format(mindspore::NCHW);
     auto bias_tensor = mindspore::lite::ConverterToNPUTensor(inputs[BIAS_INDEX]);
     bias_->set_attr_value(bias_tensor);
-    inputs[BIAS_INDEX]->set_format(schema::Format_NHWC);
+    inputs[BIAS_INDEX]->set_format(mindspore::NHWC);
   }
   return RET_OK;
 }

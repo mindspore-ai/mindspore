@@ -15,24 +15,23 @@
  */
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
-#include "schema/ops_generated.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore::kernel {
-LayoutConvertor LayoutTransformFp16(schema::Format src_format, schema::Format dst_format) {
-  if (src_format == schema::Format::Format_NHWC && dst_format == schema::Format::Format_NC4HW4) {
+LayoutConvertor LayoutTransformFp16(mindspore::Format src_format, mindspore::Format dst_format) {
+  if (src_format == mindspore::NHWC && dst_format == mindspore::NC4HW4) {
     return PackNHWCToNC4HW4Fp16;
-  } else if (src_format == schema::Format::Format_NHWC && dst_format == schema::Format::Format_NHWC4) {
+  } else if (src_format == mindspore::NHWC && dst_format == mindspore::NHWC4) {
     return PackNHWCToNHWC4Fp16;
-  } else if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC4) {
+  } else if (src_format == mindspore::NC4HW4 && dst_format == mindspore::NHWC4) {
     return PackNC4HW4ToNHWC4Fp16;
-  } else if (src_format == schema::Format::Format_NCHW && dst_format == schema::Format::Format_NC4HW4) {
+  } else if (src_format == mindspore::NCHW && dst_format == mindspore::NC4HW4) {
     return PackNCHWToNC4HW4Fp16;
-  } else if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC) {
+  } else if (src_format == mindspore::NC4HW4 && dst_format == mindspore::NHWC) {
     return PackNC4HW4ToNHWCFp16;
   } else {
-    MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(src_format) << " to "
-                  << EnumNameFormat(dst_format);
+    MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(static_cast<schema::Format>(src_format)) << " to "
+                  << EnumNameFormat(static_cast<schema::Format>(dst_format));
     return nullptr;
   }
 }

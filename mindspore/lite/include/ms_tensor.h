@@ -21,6 +21,7 @@
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {
+enum Format : int64_t;
 namespace tensor {
 /// \brief MSTensor defined tensor in MindSpore Lite.
 class MS_API MSTensor {
@@ -58,7 +59,19 @@ class MS_API MSTensor {
   virtual TypeId data_type() const = 0;
 
   /// \brief Set data type of current MSTensor.
+  ///
+  /// \param[in] data_type Define data type, which is shown in type_id.h.
   virtual void set_data_type(TypeId data_type) = 0;
+
+  /// \brief Set format of current MSTensor.
+  ///
+  /// \param[in] format Define format of data, which is shown in format.h
+  virtual void set_format(mindspore::Format format) = 0;
+
+  /// \brief Get format of current MSTensor.
+  ///
+  /// \return format, which is shown in format.h
+  virtual mindspore::Format format() const = 0;
 
   /// \brief Get shape of the MindSpore Lite MSTensor.
   ///

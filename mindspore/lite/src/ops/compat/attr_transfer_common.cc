@@ -27,8 +27,8 @@ schema::Tensor *AttrToTensor(void *data, int data_size, bool is_array, TypeId ty
     return nullptr;
   }
   auto dst_tensor =
-    (is_array ? new (std::nothrow) Tensor(type_id, {data_size}, schema::Format_NHWC, Tensor::Category::CONST_TENSOR)
-              : new (std::nothrow) Tensor(type_id, {}, schema::Format_NHWC, Tensor::Category::CONST_SCALAR));
+    (is_array ? new (std::nothrow) Tensor(type_id, {data_size}, mindspore::NHWC, Tensor::Category::CONST_TENSOR)
+              : new (std::nothrow) Tensor(type_id, {}, mindspore::NHWC, Tensor::Category::CONST_SCALAR));
   auto dst_data = dst_tensor->MutableData();
   if (dst_data == nullptr) {
     MS_LOG(ERROR) << "Data from tensor is nullptr";

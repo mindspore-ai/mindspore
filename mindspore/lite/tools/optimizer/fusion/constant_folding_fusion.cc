@@ -85,7 +85,7 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, lite::converte
       return {};
     }
     auto tensor = new (std::nothrow)
-      Tensor(TypeId(data_info.data_type_), data_info.shape_, schema::Format(data_info.format_),
+      Tensor(TypeId(data_info.data_type_), data_info.shape_, static_cast<mindspore::Format>(data_info.format_),
              lite::TensorCategory(0, data_info.shape_.size(), TypeId(data_info.data_type_), data_info.data_.size()));
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "new a tensor is nullptr.";

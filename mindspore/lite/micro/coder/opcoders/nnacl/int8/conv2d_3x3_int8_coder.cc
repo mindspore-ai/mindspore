@@ -109,7 +109,7 @@ int Conv2D3x3Int8Coder::InitTmpBuffer(CoderContext *const context) {
   return RET_OK;
 }
 
-void Conv2D3x3Int8Coder::ConfigInputOutput() { output_tensor_->set_format(schema::Format_NHWC); }
+void Conv2D3x3Int8Coder::ConfigInputOutput() { output_tensor_->set_format(mindspore::NHWC); }
 
 int Conv2D3x3Int8Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "ConvolutionBase init failed.");

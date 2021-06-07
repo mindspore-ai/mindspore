@@ -51,7 +51,7 @@ void SetConvWeightFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_ASSERT(prim != nullptr);
   if (prim->GetAttr(ops::kFormat) != nullptr && inputs.size() > 1) {
-    inputs[1]->set_format(static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat))));
+    inputs[1]->set_format(static_cast<mindspore::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat))));
   }
 }
 
@@ -63,7 +63,7 @@ void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inp
   for (auto &input : inputs) {
     auto shape = input->shape();
     if (shape.size() == 4 && shape[3] == 3 && shape[1] == -1) {
-      input->set_format(schema::Format_NHWC);
+      input->set_format(mindspore::NHWC);
     }
   }
 }
@@ -431,7 +431,7 @@ STATUS NodeInferShape::ConvertToLiteTensor(const std::vector<lite::DataInfo> &da
     lite::Tensor *tensor = nullptr;
     if (data_info.data_type_ != kObjectTypeTensorType) {
       tensor = new (std::nothrow) lite::Tensor(TypeId(data_info.data_type_), data_info.shape_,
-                                               (schema::Format)data_info.format_, tensor_category);
+                                               (mindspore::Format)data_info.format_, tensor_category);
     } else {
       tensor = new (std::nothrow) lite::TensorList(data_info.shape_, std::vector<int>(), tensor_category);
     }
