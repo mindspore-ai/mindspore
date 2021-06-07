@@ -121,7 +121,7 @@ int SubInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int SubInt8Run(void *cdata, int task_id) {
+int SubInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sub_kernel = reinterpret_cast<SubInt8CPUKernel *>(cdata);
   auto ret = sub_kernel->DoExecute(task_id);
   if (ret != RET_OK) {

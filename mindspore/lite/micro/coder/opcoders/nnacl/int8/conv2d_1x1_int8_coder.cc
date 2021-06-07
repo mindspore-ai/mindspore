@@ -88,9 +88,9 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   /* input transpose and input sum */
   code << "if (GetSupportOptFlag()) {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, "OcOptPre", kRunArgsAddr, "args.thread_count_hw");
+    code.CodeFunction(kParallelLaunch, "OcOptPre", kRunArgsAddr, "args.thread_count_hw", kLhsScale, kRhsScale);
   } else {
-    code.CodeFunction("OcOptPre", kRunArgsAddr, kDefaultTaskId);
+    code.CodeFunction("OcOptPre", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
   }
   code << "} else {\n";
   code << "RowMajor2Row16x4MajorInt8(args.input_ptr_, args.packed_input_, args.matmul_param_->row_, "
@@ -107,30 +107,30 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   /* matmul parallel by oc */
   code << "if (GetSupportOptFlag()) {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, "RunArm64OptOc", kRunArgsAddr, "args.thread_count_oc");
+    code.CodeFunction(kParallelLaunch, "RunArm64OptOc", kRunArgsAddr, "args.thread_count_oc", kLhsScale, kRhsScale);
   } else {
-    code.CodeFunction("RunArm64OptOc", kRunArgsAddr, kDefaultTaskId);
+    code.CodeFunction("RunArm64OptOc", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
   }
   code << "} else {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, "RunArmOc", kRunArgsAddr, "args.thread_count_oc");
+    code.CodeFunction(kParallelLaunch, "RunArmOc", kRunArgsAddr, "args.thread_count_oc", kLhsScale, kRhsScale);
   } else {
-    code.CodeFunction("RunArmOc", kRunArgsAddr, kDefaultTaskId);
+    code.CodeFunction("RunArmOc", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
   }
   code << "}\n";
   code << "} else {\n";
   /* matmul parallel by hw */
   code << "if (GetSupportOptFlag()) {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, "RunArm64OptHw", kRunArgsAddr, "args.thread_count_hw");
+    code.CodeFunction(kParallelLaunch, "RunArm64OptHw", kRunArgsAddr, "args.thread_count_hw, kLhsScale, kRhsScale");
   } else {
-    code.CodeFunction("RunArm64OptHw", kRunArgsAddr, kDefaultTaskId);
+    code.CodeFunction("RunArm64OptHw", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
   }
   code << "} else {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, "RunArmHw", kRunArgsAddr, "args.thread_count_hw");
+    code.CodeFunction(kParallelLaunch, "RunArmHw", kRunArgsAddr, "args.thread_count_hw", kLhsScale, kRhsScale);
   } else {
-    code.CodeFunction("RunArmHw", kRunArgsAddr, kDefaultTaskId);
+    code.CodeFunction("RunArmHw", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
   }
   code << "}\n";
   code << "}\n";

@@ -89,7 +89,7 @@ int BatchnormCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int BatchNormRun(void *cdata, int task_id) {
+int BatchNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<BatchnormCPUKernel *>(cdata);
   auto ret = kernel->DoExecute(task_id);
   if (ret != RET_OK) {

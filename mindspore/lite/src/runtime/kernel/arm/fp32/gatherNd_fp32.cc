@@ -113,7 +113,7 @@ int GatherNdCPUKernel::DoGatherNd(int task_id) {
   return RET_OK;
 }
 
-int GatherNdRun(void *cdata, int task_id) {
+int GatherNdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<GatherNdCPUKernel *>(cdata);
   auto ret = g_kernel->DoGatherNd(task_id);
   if (ret != RET_OK) {

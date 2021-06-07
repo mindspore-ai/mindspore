@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore::kernel {
 namespace {
-int CastFp16Run(void *cdata, int task_id) {
+int CastFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "input cdata is nullptr!";
     return RET_ERROR;

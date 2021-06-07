@@ -77,7 +77,7 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
   return RET_OK;
 }
 
-int SpaceToDepthRun(void *cdata, int task_id) {
+int SpaceToDepthRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<SpaceToDepthCPUKernel *>(cdata);
   auto ret = g_kernel->SpaceToDepth(task_id);
   if (ret != RET_OK) {

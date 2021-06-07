@@ -129,7 +129,7 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
   return RET_OK;
 }
 
-int StrideRun(void *cdata, int task_id) {
+int StrideRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto stride = reinterpret_cast<StridedSliceCPUKernel *>(cdata);
   auto ret = stride->FastRunImpl(task_id);
   if (ret != RET_OK) {

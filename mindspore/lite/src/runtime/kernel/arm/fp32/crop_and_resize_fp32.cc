@@ -96,7 +96,7 @@ void CropAndResizeCPUKernel::FreeTmpBuffer() {
   context_->allocator->Free(line_buffer_);
 }
 
-int CropAndResizeImpl(void *cdata, int task_id) {
+int CropAndResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto resize = reinterpret_cast<CropAndResizeCPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {

@@ -136,7 +136,7 @@ int ScatterNDCPUKernel::ScatterND(int task_id) {
   return RET_OK;
 }
 
-int ScatterNDRun(void *cdata, int task_id) {
+int ScatterNDRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<ScatterNDCPUKernel *>(cdata);
   auto ret = g_kernel->ScatterND(task_id);
   if (ret != RET_OK) {

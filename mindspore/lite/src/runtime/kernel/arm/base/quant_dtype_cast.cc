@@ -125,7 +125,7 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
   return RET_OK;
 }
 
-int QuantDTypeCastRun(void *cdata, int task_id) {
+int QuantDTypeCastRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<QuantDTypeCastCPUKernel *>(cdata);
   auto ret = g_kernel->QuantDTypeCast(task_id);
   if (ret != RET_OK) {

@@ -19,8 +19,9 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-
 constexpr int kDefaultSpinCount = 300000;
+
+float PartialScale(int partial, int total) { return (partial * 10.0 / total) / 10.0; }
 
 ThreadPool::~ThreadPool() {
   alive_.store(false);
@@ -37,10 +38,8 @@ void ThreadPool::DestructThreads() {
     worker = nullptr;
   }
   workers_.clear();
-  if (affinity_ != nullptr) {
-    delete affinity_;
-    affinity_ = nullptr;
-  }
+  delete affinity_;
+  affinity_ = nullptr;
   THREAD_INFO("deconstruct threads success");
 }
 
@@ -65,11 +64,18 @@ int ThreadPool::CreateThreads(size_t thread_num) {
   return THREAD_OK;
 }
 
+void ThreadPool::ThreadAsyncRun(Worker *worker) {
+  THREAD_RETURN_IF_NULL(worker);
+  while (alive_) {
+    KernelThreadRun(worker);
+  }
+}
+
 void ThreadPool::KernelThreadRun(Worker *worker) {
   if (worker->active) {
     Task *task = worker->task;
     THREAD_RETURN_IF_NULL(task);
-    task->status |= task->func(task->content, ++task->task_id);
+    task->status |= task->func(task->content, worker->task_id, worker->lhs_scale, worker->rhs_scale);
     {
       std::lock_guard<std::mutex> _l(worker->mutex);
       worker->task = nullptr;
@@ -91,21 +97,18 @@ void ThreadPool::KernelThreadRun(Worker *worker) {
   }
 }
 
-void ThreadPool::ThreadAsyncRun(Worker *worker) {
-  THREAD_RETURN_IF_NULL(worker);
-  while (alive_) {
-    KernelThreadRun(worker);
-  }
-}
-
-int ThreadPool::ParallelLaunch(const Func &func, Contend contend, int task_num) {
+int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) {
   // distribute task to the KernelThread and the free ActorThread,
   // if the task num is greater than the KernelThread num
-  Task task = Task(func, contend);
-  DistributeTask(&task, task_num);
-
-  task.status |= task.func(task.content, 0);
-  ++task.finished;
+  Task task = Task(func, content);
+  Worker *curr = CurrentWorker();
+  if (inter_thread_num_ == thread_num_ || curr == nullptr) {
+    SyncRunTask(&task, task_num);
+  } else {
+    DistributeTask(&task, task_num);
+    task.status |= task.func(task.content, 0, curr->lhs_scale, curr->rhs_scale);
+    ++task.finished;
+  }
   // synchronization
   // wait until the finished is equal to task_num
   while (task.finished != task_num) {
@@ -118,10 +121,28 @@ int ThreadPool::ParallelLaunch(const Func &func, Contend contend, int task_num) 
   return THREAD_OK;
 }
 
+void ThreadPool::SyncRunTask(Task *task, int task_num) const {
+  float per_scale = kMaxScale / task_num;
+  for (int i = 0; i < task_num; ++i) {
+    float lhs_scale = i * per_scale;
+    float rhs_scale = (i + 1) * per_scale;
+    rhs_scale = i == task_num - 1 ? kMaxScale : rhs_scale;
+    task->status |= task->func(task->content, i, lhs_scale, rhs_scale);
+    ++task->finished;
+  }
+}
+
 void ThreadPool::DistributeTask(Task *task, int task_num) {
-  int count = 0;
+  int count = 1;
+  int sum_frequency = 0;
+  std::vector<Worker *> assigned;
+  Worker *curr = CurrentWorker();
+  THREAD_RETURN_IF_NULL(curr);
+  assigned.push_back(curr);
+  sum_frequency += curr->frequency;
+
   Worker *worker;
-  while (count < task_num - 1) {
+  while (count < task_num) {
     {
       std::lock_guard<std::mutex> _l(pool_mutex_);
       if (freelist_.empty()) {
@@ -130,14 +151,46 @@ void ThreadPool::DistributeTask(Task *task, int task_num) {
       worker = freelist_.back();
       freelist_.pop_back();
     }
-    {
-      std::lock_guard<std::mutex> _l(worker->mutex);
-      worker->task = task;
-      worker->active = true;
-    }
-    worker->cond_var.notify_one();
+    assigned.push_back(worker);
+    sum_frequency += worker->frequency;
     count++;
   }
+
+  CalculateScales(assigned, sum_frequency);
+  ActiveWorkers(assigned, task, task_num);
+}
+
+void ThreadPool::CalculateScales(const std::vector<Worker *> &assigned, int sum_frequency) const {
+  // Divide task according to computing power(core frequency)
+  float start = 0.;
+  for (const auto &worker : assigned) {
+    THREAD_RETURN_IF_NULL(worker);
+    worker->lhs_scale = start;
+    start += PartialScale(worker->frequency, sum_frequency);
+    start = start < 1 ? start : 1;
+    worker->rhs_scale = start;
+  }
+}
+
+void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num) const {
+  for (int i = 1; i < task_num; ++i) {
+    Worker *worker = workers[i];
+    THREAD_RETURN_IF_NULL(worker);
+    std::lock_guard<std::mutex> _l(worker->mutex);
+    worker->task = task;
+    worker->task_id = i;
+    worker->active = true;
+    worker->cond_var.notify_one();
+  }
+}
+
+Worker *ThreadPool::CurrentWorker() const {
+  for (const auto &worker : workers_) {
+    if (worker->thread.get_id() == std::this_thread::get_id()) {
+      return worker;
+    }
+  }
+  return nullptr;
 }
 
 int ThreadPool::InitAffinityInfo() {

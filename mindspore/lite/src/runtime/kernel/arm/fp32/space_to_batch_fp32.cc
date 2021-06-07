@@ -58,7 +58,7 @@ int SpaceToBatchCPUKernel::Init() {
   return ReSize();
 }
 
-int SpaceToBatchFp32Run(void *cdata, int task_id) {
+int SpaceToBatchFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto op = reinterpret_cast<SpaceToBatchCPUKernel *>(cdata);
   op->DoRun(task_id);
   return RET_OK;

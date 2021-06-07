@@ -171,13 +171,13 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   return RET_OK;
 }
 
-int DeConvWgFp32Run(void *cdata, int task_id) {
+int DeConvWgFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconvWg = reinterpret_cast<DeConvolutionWinogradCPUKernel *>(cdata);
   deconvWg->DoDeconv(task_id);
   return RET_OK;
 }
 
-int DeConvWgPostFp32Run(void *cdata, int task_id) {
+int DeConvWgPostFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconvWg = reinterpret_cast<DeConvolutionWinogradCPUKernel *>(cdata);
   deconvWg->DeDeconvPost(task_id);
   return RET_OK;

@@ -30,6 +30,6 @@ typedef struct {
   const ConvParameter *conv_param_;
 } ConvDepthwiseInt8Args;
 
-int ConvDepthwiseInt8Run(void *cdata, int task_id);
+int ConvDepthwiseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #endif  // MINDSPORE_LITE_MICRO_INT8_CONVOLUTION_DEPTHWISE_WRAPPER_INT8_WRAPPER_H_

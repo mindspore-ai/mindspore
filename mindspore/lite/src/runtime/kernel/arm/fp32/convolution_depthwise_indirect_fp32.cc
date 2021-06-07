@@ -133,7 +133,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwIndirectRun(void *cdata, int task_id) {
+int ConvDwIndirectRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseIndirectCPUKernel *>(cdata);
   auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {

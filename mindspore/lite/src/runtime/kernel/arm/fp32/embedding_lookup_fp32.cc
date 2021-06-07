@@ -57,7 +57,7 @@ int EmbeddingLookupCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int EmbeddingLookupRun(void *cdata, int task_id) {
+int EmbeddingLookupRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<EmbeddingLookupCPUKernel *>(cdata);
   auto ret = kernel->DoExcute(task_id);
   if (ret != RET_OK) {

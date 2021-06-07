@@ -58,7 +58,7 @@ int ConcatCPUKernel::DoConcat(int task_id) {
   return RET_OK;
 }
 
-int ConcatRun(void *cdata, int task_id) {
+int ConcatRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto concat_kernel = reinterpret_cast<ConcatCPUKernel *>(cdata);
   auto error_code = concat_kernel->DoConcat(task_id);
   if (error_code != RET_OK) {

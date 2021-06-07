@@ -51,7 +51,7 @@ int InstanceNormCPUKernel::DoInstanceNorm(int task_id) {
   return RET_OK;
 }
 
-int InstanceNormRun(void *cdata, int task_id) {
+int InstanceNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<InstanceNormCPUKernel *>(cdata);
   auto ret = kernel->DoInstanceNorm(task_id);
   if (ret != RET_OK) {

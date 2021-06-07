@@ -28,7 +28,7 @@ using mindspore::schema::PrimitiveType_NegGrad;
 
 namespace mindspore::kernel {
 namespace {
-int NegGradRun(void *cdata, int task_id) {
+int NegGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto kernel = reinterpret_cast<NegGradCPUKernel *>(cdata);
   MS_ASSERT(kernel != nullptr);

@@ -30,6 +30,6 @@ typedef struct {
   int64_t count_unit_;
 } ConcatInt8Args;
 
-int ConcatInt8Run(void *cdata, int task_id);
+int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #endif  // MINDSPORE_LITE_MICRO_INT8_CONCAT_WRAPPER_INT8_WRAPPER_H_

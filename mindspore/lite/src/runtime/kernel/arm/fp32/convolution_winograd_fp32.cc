@@ -197,7 +197,7 @@ int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionWinogradImpl(void *cdata, int task_id) {
+int ConvolutionWinogradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<ConvolutionWinogradCPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {

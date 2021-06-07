@@ -149,7 +149,7 @@ void DeConvolutionFp16CPUKernel::FreeRunBuf() {
   return;
 }
 
-static int DeConvFp16Run(void *cdata, int task_id) {
+static int DeConvFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconv = reinterpret_cast<DeConvolutionFp16CPUKernel *>(cdata);
   auto error_code = deconv->DoDeconv(task_id);
   if (error_code != RET_OK) {

@@ -56,8 +56,8 @@ class MulInt8CPUKernel : public InnerKernel {
   int8_t *output_data_ = nullptr;
 };
 
-int MulInt8Run(void *cdata, int task_id);
-int FastHWBroadcatMulInt8Run(void *cdata, int task_id);
+int MulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int FastHWBroadcatMulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MUL_INT8_H_

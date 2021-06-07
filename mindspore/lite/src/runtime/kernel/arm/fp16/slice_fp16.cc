@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
-int SliceFp16Launch(void *cdata, int task_id) {
+int SliceFp16Launch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_ERROR;

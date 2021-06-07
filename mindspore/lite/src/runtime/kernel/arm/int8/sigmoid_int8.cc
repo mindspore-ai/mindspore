@@ -77,7 +77,7 @@ int SigmoidInt8CPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int SigmoidInt8Run(void *cdata, int task_id) {
+int SigmoidInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto activation_kernel = reinterpret_cast<SigmoidInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

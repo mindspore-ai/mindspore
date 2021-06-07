@@ -62,7 +62,7 @@ int ReshapeInt8CPUKernel::Run() {
   return ret;
 }
 
-int ReshapeInt8Run(void *cdata, int task_id) {
+int ReshapeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reshape = reinterpret_cast<ReshapeInt8CPUKernel *>(cdata);
   reshape->DoExecute(task_id);
   return lite::RET_OK;

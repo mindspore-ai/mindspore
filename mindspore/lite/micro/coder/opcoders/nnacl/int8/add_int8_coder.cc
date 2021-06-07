@@ -156,15 +156,15 @@ int AddInt8Coder::DoCode(CoderContext *const context) {
                       support_opt_add_, input0, input1, output_tensor_);
   if (support_parallel_) {
     if (arith_para_->broadcasting_) {
-      code.CodeFunction(kParallelLaunch, "AddBroadcastInt8Run", kRunArgsAddr, gThreadNum);
+      code.CodeFunction(kParallelLaunch, "AddBroadcastInt8Run", kRunArgsAddr, gThreadNum, kLhsScale, kRhsScale);
     } else {
-      code.CodeFunction(kParallelLaunch, "AddInt8Run", kRunArgsAddr, gThreadNum);
+      code.CodeFunction(kParallelLaunch, "AddInt8Run", kRunArgsAddr, gThreadNum, kLhsScale, kRhsScale);
     }
   } else {
     if (arith_para_->broadcasting_) {
-      code.CodeFunction("AddBroadcastInt8Run", kRunArgsAddr, kDefaultTaskId);
+      code.CodeFunction("AddBroadcastInt8Run", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
     } else {
-      code.CodeFunction("AddInt8Run", kRunArgsAddr, kDefaultTaskId);
+      code.CodeFunction("AddInt8Run", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
     }
   }
   context->AppendCode(code.str());

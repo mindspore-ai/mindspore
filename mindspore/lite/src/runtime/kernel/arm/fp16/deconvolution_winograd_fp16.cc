@@ -220,13 +220,13 @@ int DeConvWinogradFp16CPUKernel::DeDeconvPost(int task_id) {
   return RET_OK;
 }
 
-int DeConvWgFp16Run(void *cdata, int task_id) {
+int DeConvWgFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconvWg = reinterpret_cast<DeConvWinogradFp16CPUKernel *>(cdata);
   deconvWg->DoDeconv(task_id);
   return RET_OK;
 }
 
-int DeConvWgPostFp16Run(void *cdata, int task_id) {
+int DeConvWgPostFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconvWg = reinterpret_cast<DeConvWinogradFp16CPUKernel *>(cdata);
   deconvWg->DeDeconvPost(task_id);
   return RET_OK;

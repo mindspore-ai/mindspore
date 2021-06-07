@@ -153,7 +153,7 @@ int PriorBoxCPUKernel::PriorBoxImpl(int task_id) {
   return ret;
 }
 
-int RunPriorBox(void *cdata, int task_id) {
+int RunPriorBox(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto prior_box = reinterpret_cast<PriorBoxCPUKernel *>(cdata);
 
   auto error_code = prior_box->PriorBoxImpl(task_id);

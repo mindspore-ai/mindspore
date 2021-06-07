@@ -35,7 +35,7 @@ int LshProjectionCPUKernel::Init() {
 
 int LshProjectionCPUKernel::ReSize() { return RET_OK; }
 
-int LshProjectionRun(void *cdata, int task_id) {
+int LshProjectionRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LshProjectionCPUKernel *>(cdata);
   return kernel->DoExecute(task_id);
 }

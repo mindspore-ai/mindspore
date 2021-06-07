@@ -58,7 +58,7 @@ class ArithmeticSelfCPUKernel : public InnerKernel {
   ArithmeticSelfFunc func_;
   ArithmeticSelfBoolFunc func_bool_;
 };
-int ArithmeticSelfRun(void *cdata, int task_id);
+int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_SELF_H_

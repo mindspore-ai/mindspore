@@ -67,7 +67,7 @@ int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
   return ret;
 }
 
-static int ReduceFp16Impl(void *cdata, int task_id) {
+static int ReduceFp16Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reduce = reinterpret_cast<ReduceFp16CPUKernel *>(cdata);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {

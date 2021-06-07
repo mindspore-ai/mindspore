@@ -48,7 +48,7 @@ int L2NormInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int L2NormInt8Run(void *cdata, int task_id) {
+int L2NormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<L2NormInt8CPUKernel *>(cdata);
   kernel->DoExecute(task_id);
   return lite::RET_OK;

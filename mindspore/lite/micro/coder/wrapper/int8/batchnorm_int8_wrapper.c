@@ -18,7 +18,7 @@
 #include "nnacl/int8/batchnorm_int8.h"
 #include "nnacl/errorcode.h"
 
-int BatchNormInt8Run(void *cdata, int task_id) {
+int BatchNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   BatchNormArgs *args = (BatchNormArgs *)(cdata);
   BatchNormInt8(args->out_addr_, args->in_addr_, args->alpha_addr_, args->beta_addr_, task_id, args->batchnorm_param_);
   return NNACL_OK;

@@ -70,7 +70,7 @@ int LayerNormFp16CPUKernel::DoLayerNormFp16(int thread_id) {
   return RET_OK;
 }
 
-int LayerNormFp16Run(void *cdata, int task_id) {
+int LayerNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LayerNormFp16CPUKernel *>(cdata);
   auto ret = kernel->DoLayerNormFp16(task_id);
   if (ret != RET_OK) {

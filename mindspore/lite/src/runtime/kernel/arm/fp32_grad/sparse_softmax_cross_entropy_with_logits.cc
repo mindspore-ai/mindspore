@@ -110,7 +110,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
+int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sparse_kernel = reinterpret_cast<SparseSoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
   auto error_code = sparse_kernel->Execute(task_id);
   if (error_code != RET_OK) {

@@ -25,7 +25,7 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int MatmulBaseFP16Run(void *cdata, int task_id) {
+int MatmulBaseFP16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto op = reinterpret_cast<MatmulBaseFP16CPUKernel *>(cdata);
   auto error_code = op->RunImpl(task_id);
   if (error_code != RET_OK) {

@@ -77,7 +77,7 @@ int SparseToDenseCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int SparseToDenseRun(void *cdata, int task_id) {
+int SparseToDenseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto s2ddata = reinterpret_cast<SparseToDenseCPUKernel *>(cdata);
   auto ret = s2ddata->DoExcute(task_id);
   if (ret != RET_OK) {

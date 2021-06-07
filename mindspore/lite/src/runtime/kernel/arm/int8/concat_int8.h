@@ -67,7 +67,7 @@ class ConcatInt8CPUKernel : public InnerKernel {
   ConcatParameter *concat_param_ = nullptr;
 };
 
-int ConcatInt8Run(void *cdata, int task_id);
+int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONCAT_INT8_H_

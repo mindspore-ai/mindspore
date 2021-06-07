@@ -104,7 +104,7 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
   return ret;
 }
 
-int ArithmeticSelfRun(void *cdata, int task_id) {
+int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<ArithmeticSelfCPUKernel *>(cdata);
   auto ret = kernel->DoExecute(task_id);
   if (ret != RET_OK) {

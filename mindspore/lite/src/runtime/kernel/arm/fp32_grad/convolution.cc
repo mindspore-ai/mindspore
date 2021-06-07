@@ -155,7 +155,7 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionTrainRun(void *cdata, int task_id) {
+int ConvolutionTrainRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto conv_kernel = reinterpret_cast<ConvolutionTrainCPUKernel *>(cdata);
   auto error_code = conv_kernel->Execute(task_id);

@@ -96,7 +96,7 @@ int DivInt8CPUKernel::DoExecute(int task_id) {
   return ret;
 }
 
-int DivInt8Run(void *cdata, int task_id) {
+int DivInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto div_kernel = reinterpret_cast<DivInt8CPUKernel *>(cdata);
   auto ret = div_kernel->DoExecute(task_id);
   if (ret != RET_OK) {

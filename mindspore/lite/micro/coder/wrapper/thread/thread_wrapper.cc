@@ -45,7 +45,7 @@ int GetCurrentThreadNum() {
   return g_pool->thread_num();
 }
 
-int ParallelLaunch(int (*func)(void *, int), void *content, int task_num) {
+int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int task_num) {
   if (g_pool == nullptr) {
     return mindspore::THREAD_ERROR;
   }

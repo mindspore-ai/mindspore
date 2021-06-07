@@ -60,7 +60,7 @@ void Convolution1x1Int8CPUKernel::FreeResizeBuf() {
   return;
 }
 
-int Convolution1x1Int8HwRun(void *cdata, int task_id) {
+int Convolution1x1Int8HwRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<Convolution1x1Int8CPUKernel *>(cdata);
   auto error_code = conv->HwRun(task_id);
   if (error_code != RET_OK) {
@@ -70,7 +70,7 @@ int Convolution1x1Int8HwRun(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Int8OcRun(void *cdata, int task_id) {
+int Convolution1x1Int8OcRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<Convolution1x1Int8CPUKernel *>(cdata);
   auto error_code = conv->OcRun(task_id);
   if (error_code != RET_OK) {
@@ -80,7 +80,7 @@ int Convolution1x1Int8OcRun(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Int8OcOptPre(void *cdata, int task_id) {
+int Convolution1x1Int8OcOptPre(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<Convolution1x1Int8CPUKernel *>(cdata);
   auto error_code = conv->OcOptPre(task_id);
   if (error_code != RET_OK) {

@@ -54,7 +54,7 @@ class QuantizedAddCPUKernel : public InnerKernel {
   int8_t *output_data_ = nullptr;
 };
 
-int AddInt8Run(void *cdata, int task_id);
+int AddInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ADD_INT8_H_

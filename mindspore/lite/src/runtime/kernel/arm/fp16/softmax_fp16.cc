@@ -84,7 +84,7 @@ int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
   return RET_OK;
 }
 
-int SoftmaxLastAxisFp16Run(void *cdata, int task_id) {
+int SoftmaxLastAxisFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<SoftmaxFp16CPUKernel *>(cdata);
   auto ret = kernel->DoSoftmaxLastAxis(task_id);
   if (ret != RET_OK) {

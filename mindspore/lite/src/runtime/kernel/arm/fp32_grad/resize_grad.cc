@@ -76,7 +76,7 @@ int ResizeGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ResizeGradRun(void *cdata, int task_id) {
+int ResizeGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto resize_grad_kernel = reinterpret_cast<ResizeGradCPUKernel *>(cdata);
   auto error_code = resize_grad_kernel->Execute(task_id);
   if (error_code != RET_OK) {

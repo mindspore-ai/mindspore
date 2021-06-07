@@ -25,7 +25,6 @@
 #include "actor/actor.h"
 
 namespace mindspore {
-
 class InterThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains inter thread and intra thread

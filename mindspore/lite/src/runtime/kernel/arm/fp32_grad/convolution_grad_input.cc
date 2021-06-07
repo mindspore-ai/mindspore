@@ -123,7 +123,7 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionGradInputRun(void *cdata, int task_id) {
+int ConvolutionGradInputRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto convinput_kernel = reinterpret_cast<ConvolutionGradInputCPUKernel *>(cdata);
   auto error_code = convinput_kernel->Execute(task_id);

@@ -125,7 +125,7 @@ int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-static int ConvolutionFp16Impl(void *cdata, int task_id) {
+static int ConvolutionFp16Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<ConvolutionFP16CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {

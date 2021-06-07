@@ -162,7 +162,7 @@ int ScaleCPUKernel::Scale(int task_id) {
   return RET_OK;
 }
 
-int ScaleRun(void *cdata, int task_id) {
+int ScaleRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto scale = reinterpret_cast<ScaleCPUKernel *>(cdata);
   auto ret = scale->Scale(task_id);
   if (ret != RET_OK) {

@@ -138,7 +138,7 @@ int TransposeCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int TransposeImpl(void *kernel, int task_id) {
+int TransposeImpl(void *kernel, int task_id, float lhs_scale, float rhs_scale) {
   auto transpose = reinterpret_cast<TransposeCPUKernel *>(kernel);
   auto ret = transpose->RunImpl(task_id);
   if (ret != RET_OK) {

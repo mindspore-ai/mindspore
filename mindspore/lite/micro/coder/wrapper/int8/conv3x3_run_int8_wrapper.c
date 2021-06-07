@@ -16,7 +16,7 @@
 
 #include "wrapper/int8/conv3x3_run_int8_wrapper.h"
 
-int Conv3x3Int8Run(void *cdata, int task_id) {
+int Conv3x3Int8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   Conv3x3Int8Args *args = (Conv3x3Int8Args *)cdata;
   Conv3x3Int8(args->input_data, args->transed_weight, args->bias_data, args->output_data, args->tile_buffer,
               args->block_unit_buffer, args->tmp_dst_buffer, args->tmp_out, task_id, args->conv_param);

@@ -32,7 +32,7 @@ using mindspore::schema::PrimitiveType_SqrtGrad;
 
 namespace mindspore::kernel {
 namespace {
-int ArithmeticSelfGradRun(void *cdata, int thread_id) {
+int ArithmeticSelfGradRun(void *cdata, int thread_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto kernel = reinterpret_cast<ArithmeticSelfGradCPUKernel *>(cdata);
   return kernel->DoArithmeticSelfGrad(thread_id);

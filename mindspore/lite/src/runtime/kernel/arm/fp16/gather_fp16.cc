@@ -121,7 +121,7 @@ int GatherFp16CPUKernel::DoGather(int task_id) {
   return error_code;
 }
 
-int GatherRunFp16(void *cdata, int task_id) {
+int GatherRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto gather_kernel = reinterpret_cast<GatherFp16CPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {

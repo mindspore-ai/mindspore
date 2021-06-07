@@ -83,7 +83,7 @@ int TileCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int SimpleTile(void *cdata, int task_id) {
+int SimpleTile(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<TileCPUKernel *>(cdata);
   auto ret = kernel->SimpleTileImpl(task_id);
   if (ret != RET_OK) {

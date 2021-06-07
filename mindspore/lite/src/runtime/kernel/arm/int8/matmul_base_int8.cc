@@ -21,7 +21,7 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int MatmulBaseInt8Run(void *cdata, int task_id) {
+int MatmulBaseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
   auto ret = op->RunImpl(task_id);
   if (ret != RET_OK) {

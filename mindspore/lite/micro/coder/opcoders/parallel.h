@@ -35,6 +35,8 @@ constexpr auto gThreadNum = "g_thread_num";
 constexpr auto kRunArgs = "args";
 constexpr auto kRunArgsAddr = "(void *)&args";
 
+constexpr float kLhsScale = 0;
+constexpr float kRhsScale = 1;
 }  // namespace mindspore::lite::micro
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_PARALLEL_H_

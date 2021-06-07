@@ -211,7 +211,7 @@ int PadCPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddi
   return RET_OK;
 }
 
-int PadImpl(void *cdata, int task_id) {
+int PadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto padKernel = reinterpret_cast<PadCPUKernel *>(cdata);
   int error_code = padKernel->RunImpl(task_id);
   if (error_code != NNACL_OK) {
@@ -235,7 +235,7 @@ int PadCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int MirrorPadImpl(void *cdata, int task_id) {
+int MirrorPadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto padKernel = reinterpret_cast<PadCPUKernel *>(cdata);
   int error_code = padKernel->RunMirrorPadImpl(task_id);
   if (error_code != NNACL_OK) {

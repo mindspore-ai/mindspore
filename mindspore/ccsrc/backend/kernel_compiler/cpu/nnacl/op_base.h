@@ -35,6 +35,7 @@
 
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
 #define MSMAX(x, y) ((x) > (y) ? (x) : (y))
+#define MSCEIL(x) (int)((x) + (((x) - (int)(x)) > 0 ? 1 : 0))
 
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 #define UP_ROUND(x, y) (((x) + (y) - (1)) / (y) * (y))

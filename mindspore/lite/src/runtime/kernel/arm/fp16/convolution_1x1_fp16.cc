@@ -189,7 +189,7 @@ int Convolution1x1FP16CPUKernel::RunHw(int task_id) {
   return RET_OK;
 }
 
-static int Convolution1x1Fp16RunOc(void *cdata, int task_id) {
+static int Convolution1x1Fp16RunOc(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<Convolution1x1FP16CPUKernel *>(cdata);
   auto error_code = conv->RunOc(task_id);
   if (error_code != RET_OK) {
@@ -199,7 +199,7 @@ static int Convolution1x1Fp16RunOc(void *cdata, int task_id) {
   return RET_OK;
 }
 
-static int Convolution1x1Fp16RunHw(void *cdata, int task_id) {
+static int Convolution1x1Fp16RunHw(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<Convolution1x1FP16CPUKernel *>(cdata);
   auto error_code = conv->RunHw(task_id);
   if (error_code != RET_OK) {

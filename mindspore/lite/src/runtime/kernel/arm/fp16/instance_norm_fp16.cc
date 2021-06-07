@@ -96,7 +96,7 @@ int InstanceNormFp16CPUKernel::DoInstanceNorm(int task_id) {
   return RET_OK;
 }
 
-int InstanceNormFp16Run(void *cdata, int task_id) {
+int InstanceNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<InstanceNormFp16CPUKernel *>(cdata);
   auto ret = kernel->DoInstanceNorm(task_id);
   if (ret != RET_OK) {

@@ -124,7 +124,7 @@ int BNGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int BNGradRun(void *cdata, int task_id) {
+int BNGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto bn_kernel = reinterpret_cast<BNGradCPUKernel *>(cdata);
   auto error_code = bn_kernel->Execute(task_id);

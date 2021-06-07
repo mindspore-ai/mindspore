@@ -71,7 +71,7 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
   return RET_OK;
 }
 
-int UnsqueezeIn8Run(void *cdata, int task_id) {
+int UnsqueezeIn8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<Unsqueezeint8CPUKernel *>(cdata);
   auto ret = g_kernel->DoUnsqueeze(task_id);
   if (ret != RET_OK) {

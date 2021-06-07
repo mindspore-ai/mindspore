@@ -25,7 +25,7 @@ using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
 namespace {
-int CropLaunch(void *cdata, int task_id) {
+int CropLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_NULL_PTR;

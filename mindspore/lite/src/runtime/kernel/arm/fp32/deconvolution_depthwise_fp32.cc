@@ -128,7 +128,7 @@ int DeconvolutionDepthwiseCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int DeconvDwRun(void *cdata, int task_id) {
+int DeconvDwRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconv_dw = reinterpret_cast<DeconvolutionDepthwiseCPUKernel *>(cdata);
   auto ret = deconv_dw->Execute(task_id);
   if (ret != RET_OK) {

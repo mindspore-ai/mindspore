@@ -85,7 +85,7 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int ActivationGradRun(void *cdata, int task_id) {
+int ActivationGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto activationGrad_kernel = reinterpret_cast<ActivationGradCPUKernel *>(cdata);
   auto error_code = activationGrad_kernel->DoActivation(task_id);

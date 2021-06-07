@@ -88,7 +88,7 @@ DetectionPostProcessBaseCPUKernel::~DetectionPostProcessBaseCPUKernel() { delete
 
 int DetectionPostProcessBaseCPUKernel::ReSize() { return RET_OK; }
 
-int NmsMultiClassesFastCoreRun(void *cdata, int task_id) {
+int NmsMultiClassesFastCoreRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto KernelData = reinterpret_cast<DetectionPostProcessBaseCPUKernel *>(cdata);
   int ret = NmsMultiClassesFastCore(KernelData->num_boxes_, KernelData->num_classes_with_bg_, KernelData->input_scores_,
                                     PartialArgSort, KernelData->params_, task_id, KernelData->thread_num_);

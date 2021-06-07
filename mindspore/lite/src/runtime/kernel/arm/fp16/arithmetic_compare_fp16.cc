@@ -145,7 +145,7 @@ int ArithmeticCompareFP16CPUKernel::DoArithmetic(int task_id) {
   return ret;
 }
 
-static int ArithmeticsRunFp16(void *cdata, int task_id) {
+static int ArithmeticsRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticCompareFP16CPUKernel *>(cdata);
   auto ret = arithmetic_kernel->DoArithmetic(task_id);
   if (ret != RET_OK) {

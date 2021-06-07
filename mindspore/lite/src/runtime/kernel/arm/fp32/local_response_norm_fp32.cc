@@ -61,7 +61,7 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   return RET_OK;
 }
 
-int LocalResponseNormRun(void *cdata, int task_id) {
+int LocalResponseNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto lrn = reinterpret_cast<LocalResponseNormCPUKernel *>(cdata);
   auto error_code = lrn->DoLocalResponseNorm(task_id);
   if (error_code != RET_OK) {

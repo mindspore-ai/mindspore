@@ -53,7 +53,7 @@ int DoDeconvFp32(const float *packed_input, const float *packed_weight, const fl
   return NNACL_OK;
 }
 
-int DeConvFp32Run(void *cdata, int task_id) {
+int DeConvFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   DeConvFp32Args *args = (DeConvFp32Args *)cdata;
   const MatMulParameter *matmul_param = args->matmul_param_;
   const ConvParameter *conv_param = args->conv_param_;

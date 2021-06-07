@@ -39,7 +39,7 @@ class CropInt8CPUKernel : public CropBaseCPUKernel {
   int DoExecute(int task_id);
 };
 
-int CropInt8Run(void *cdata, int task_id);
+int CropInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 void PadOffset(int input_dim, CropParameter *crop_para);
 }  // namespace mindspore::kernel
 

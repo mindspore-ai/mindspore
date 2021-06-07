@@ -29,7 +29,7 @@ int PowerCPUKernel::Init() { return RET_OK; }
 
 int PowerCPUKernel::ReSize() { return RET_OK; }
 
-int PowerImpl(void *cdata, int task_id) {
+int PowerImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<PowerCPUKernel *>(cdata);
   auto ret = kernel->RunImpl(task_id);
   if (ret != RET_OK) {

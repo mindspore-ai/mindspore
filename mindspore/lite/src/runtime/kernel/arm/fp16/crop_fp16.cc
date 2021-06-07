@@ -35,7 +35,7 @@ int CropFp16CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-static int CropFp16Run(void *cdata, int task_id) {
+static int CropFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<CropFp16CPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {

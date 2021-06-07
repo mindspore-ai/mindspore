@@ -43,7 +43,7 @@ int EluCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int EluRun(void *cdata, int task_id) {
+int EluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto EluData = reinterpret_cast<EluCPUKernel *>(cdata);
   auto ret = EluData->DoExcute(task_id);
   if (ret != RET_OK) {

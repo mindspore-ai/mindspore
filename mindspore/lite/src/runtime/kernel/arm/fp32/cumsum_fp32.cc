@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_CumSum;
 
 namespace mindspore::kernel {
 namespace {
-int CumsumLaunch(void *cdata, int task_id) {
+int CumsumLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "cdata is nullptr!";
     return RET_NULL_PTR;

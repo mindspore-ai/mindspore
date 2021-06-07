@@ -95,7 +95,7 @@ int ConvolutionDepthwise3x3CPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDw3x3Run(void *cdata, int task_id) {
+int ConvDw3x3Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwise3x3CPUKernel *>(cdata);
   auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {

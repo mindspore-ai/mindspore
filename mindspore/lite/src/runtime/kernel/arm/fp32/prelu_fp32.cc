@@ -26,7 +26,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore::kernel {
-static int PReluRun(void *cdata, int task_id) {
+static int PReluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto PRelu = reinterpret_cast<PReluCPUKernel *>(cdata);
   auto ret = PRelu->DoExcute(task_id);
   if (ret != RET_OK) {

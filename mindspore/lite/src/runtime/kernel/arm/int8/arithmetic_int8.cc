@@ -40,7 +40,7 @@ using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
 namespace {
-int ArithmeticsInt8Launch(void *cdata, int task_id) {
+int ArithmeticsInt8Launch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticInt8CPUKernel *>(cdata);
   auto error_code = arithmetic_kernel->DoArithmetic(task_id);
   if (error_code != RET_OK) {

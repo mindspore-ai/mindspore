@@ -110,7 +110,7 @@ void StridedSliceGradCPUKernel::FillOutputDim() {
 
 int StridedSliceGradCPUKernel::ReSize() { return RET_OK; }
 
-int StridedSliceGradImpl(void *cdata, int task_id) {
+int StridedSliceGradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto slice = reinterpret_cast<StridedSliceGradCPUKernel *>(cdata);
   auto error_code = slice->Execute(task_id);

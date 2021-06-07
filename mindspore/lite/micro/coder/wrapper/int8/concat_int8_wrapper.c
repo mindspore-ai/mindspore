@@ -16,7 +16,7 @@
 
 #include "wrapper/int8/concat_int8_wrapper.h"
 
-int ConcatInt8Run(void *cdata, int task_id) {
+int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   ConcatInt8Args *args = (ConcatInt8Args *)cdata;
   int64_t real_dst_count = MSMIN(args->before_axis_size_ - task_id * args->count_unit_, args->count_unit_);
   if (real_dst_count <= 0) {

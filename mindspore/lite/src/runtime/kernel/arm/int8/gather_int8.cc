@@ -85,7 +85,7 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   return GatherInt8(input_ptr, output_ptr, count, inner_size, limit, indices_ptr, indices_element_size, param_);
 }
 
-int GatherInt8Run(void *cdata, int task_id) {
+int GatherInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto gather_kernel = reinterpret_cast<GatherInt8CPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {

@@ -85,7 +85,7 @@ int PoolingGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int PoolingGradImpl(void *cdata, int task_id) {
+int PoolingGradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto pooling = reinterpret_cast<PoolingGradCPUKernel *>(cdata);
   auto error_code = pooling->Execute(task_id);

@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ConstantOfShape;
 
 namespace mindspore::kernel {
-int ConstantOfShapeRun(void *cdata, int task_id) {
+int ConstantOfShapeRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<ConstantOfShapeCPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
