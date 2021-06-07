@@ -14,15 +14,11 @@
 # ============================================================================
 """post process for 310 inference"""
 import os
-import argparse
 import numpy as np
+from src.model_utils.config import config
 
-batch_size = 1
-parser = argparse.ArgumentParser(description="mobilenetv2 acc calculation")
-parser.add_argument("--result_path", type=str, required=True, help="result files path.")
-parser.add_argument("--label_path", type=str, required=True, help="label path.")
-args = parser.parse_args()
 
+config.batch_size = config.batch_size_postprocess
 
 def calcul_acc(labels, preds):
     return sum(1 for x, y in zip(labels, preds) if x == y) / len(labels)
@@ -55,4 +51,4 @@ def get_result(result_path, label_path):
 
 
 if __name__ == '__main__':
-    get_result(args.result_path, args.label_path)
+    get_result(config.result_path, config.label_path)

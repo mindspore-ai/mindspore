@@ -33,6 +33,21 @@ dataset_path=$(get_real_path $2)
 dataset_name="imagenet2012"
 DVPP="CPU"
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+if [ $# -ge 1 ]; then
+  if [ $dataset_name == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  elif [ $dataset_name == 'imagenet2012' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_imagenet.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
+
 device_id=0
 if [ $# == 3 ]; then
     device_id=$3
@@ -60,7 +75,6 @@ export SLOG_PRINT_to_STDOUT=0
 export GLOG_v=2
 export DUMP_GE_GRAPH=2
 
-
 export ASCEND_HOME=/usr/local/Ascend
 
 export PATH=$ASCEND_HOME/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/fwkacllib/bin:$ASCEND_HOME/toolkit/bin:$PATH
@@ -81,7 +95,7 @@ function preprocess_data()
        rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --dataset=$dataset_name --data_path=$dataset_path --result_path=./preprocess_Result/
+    python3.7 ../preprocess.py --config_path=$CONFIG_FILE --dataset=$dataset_name --data_path=$dataset_path --result_path=./preprocess_Result/
 }
 
 function compile_app()
@@ -112,7 +126,7 @@ function infer()
 function cal_acc()
 {
 
-    python3.7 ../postprocess.py --result_dir=./result_Files --label_dir=./preprocess_Result/imagenet_label.json   &> acc.log
+    python3.7 ../postprocess.py --config_path=$CONFIG_FILE --result_dir=./result_Files --label_dir=./preprocess_Result/imagenet_label.json   &> acc.log
 
 }
 

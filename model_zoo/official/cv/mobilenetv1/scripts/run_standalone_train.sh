@@ -59,12 +59,27 @@ export DEVICE_ID=0
 export RANK_ID=0
 export RANK_SIZE=1
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+if [ $# -ge 1 ]; then
+  if [ $1 == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  elif [ $1 == 'imagenet2012' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_imagenet.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
 if [ -d "train" ];
 then
     rm -rf ./train
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
 cd ./train || exit
@@ -72,11 +87,11 @@ echo "start training for device $DEVICE_ID"
 env > env.log
 if [ $# == 2 ]
 then
-    python train.py --dataset=$1 --dataset_path=$PATH1 &> log &
+    python train.py --config_path=$CONFIG_FILE --dataset=$1 --dataset_path=$PATH1 &> log.txt &
 fi
 
 if [ $# == 3 ]
 then
-    python train.py --dataset=$1 --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
+    python train.py --config_path=$CONFIG_FILE --dataset=$1 --dataset_path=$PATH1 --pre_trained=$PATH2 &> log.txt &
 fi
 cd ..

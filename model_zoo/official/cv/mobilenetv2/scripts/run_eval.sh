@@ -15,7 +15,6 @@
 # ============================================================================
 
 
-
 run_ascend()
 {
     # check pretrain_ckpt file
@@ -27,6 +26,7 @@ run_ascend()
 
     # set environment
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    CONFIG_FILE="${BASEPATH}/../default_config.yaml"
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     export DEVICE_ID=0
     export RANK_ID=0
@@ -40,6 +40,7 @@ run_ascend()
 
     # launch
     python ${BASEPATH}/../eval.py \
+            --config_path=$CONFIG_FILE \
             --platform=$1 \
             --dataset_path=$2 \
             --pretrain_ckpt=$3 \
@@ -56,6 +57,7 @@ run_gpu()
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    CONFIG_FILE="${BASEPATH}/../default_config_gpu.yaml"
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     if [ -d "../eval" ];
     then
@@ -65,6 +67,7 @@ run_gpu()
     cd ../eval || exit
 
     python ${BASEPATH}/../eval.py \
+        --config_path=$CONFIG_FILE \
         --platform=$1 \
         --dataset_path=$2 \
         --pretrain_ckpt=$3 \
@@ -81,6 +84,7 @@ run_cpu()
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    CONFIG_FILE="${BASEPATH}/../default_config_cpu.yaml"
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     if [ -d "../eval" ];
     then
@@ -90,6 +94,7 @@ run_cpu()
     cd ../eval || exit
 
     python ${BASEPATH}/../eval.py \
+        --config_path=$CONFIG_FILE \
         --platform=$1 \
         --dataset_path=$2 \
         --pretrain_ckpt=$3 \

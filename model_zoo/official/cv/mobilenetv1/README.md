@@ -1,4 +1,4 @@
-﻿# Mobilenet_V1
+# Mobilenet_V1
 
 - [Mobilenet_V1](#mobilenet_v1)
     - [MobileNetV1 Description](#mobilenetv1-description)
@@ -79,17 +79,23 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ├── MobileNetV1
   ├── README.md              # descriptions about MobileNetV1
   ├── scripts
-  │   ├──run_distribute_train.sh        # shell script for distribute train
-  │   ├──run_standalone_train.sh        # shell script for standalone train
-  │   ├──run_eval.sh                    # shell script for evaluation
+  │   ├──run_distribute_train.sh    # shell script for distribute train
+  │   ├──run_standalone_train.sh    # shell script for standalone train
+  │   ├──run_eval.sh                # shell script for evaluation
   ├── src
-  │   ├──config.py           # parameter configuration
-  │   ├──dataset.py          # creating dataset
-  │   ├──lr_generator.py     # learning rate config
-  │   ├──mobilenet_v1_fpn.py      # MobileNetV1 architecture
-  │   ├──CrossEntropySmooth.py           # loss function
-  ├── train.py               # training script
-  ├── eval.py                # evaluation script
+  │   ├──dataset.py                 # creating dataset
+  │   ├──lr_generator.py            # learning rate config
+  │   ├──mobilenet_v1_fpn.py        # MobileNetV1 architecture
+  │   ├──CrossEntropySmooth.py      # loss function
+  │   └──model_utils
+  │      ├──config.py               # Processing configuration parameters
+  │      ├──device_adapter.py       # Get cloud ID
+  │      ├──local_adapter.py        # Get local ID
+  │      └──moxing_adapter.py       # Parameter processing
+  ├── default_config.yaml           # Training parameter profile(cifar10)
+  ├── default_config_imagenet.yaml  # Training parameter profile(imagenet)
+  ├── train.py                      # training script
+  ├── eval.py                       # evaluation script
 ```
 
 ## [Training process](#contents)

@@ -73,24 +73,30 @@ MobileNetV2总体网络架构如下：
 
 ```python
 ├── MobileNetV2
-  ├── README.md                   # MobileNetV2相关描述
-  ├── ascend310_infer   # 用于310推理
+  ├── README.md                  # MobileNetV2相关描述
+  ├── ascend310_infer            # 用于310推理
   ├── scripts
   │   ├──run_train.sh            # 使用CPU、GPU或Ascend进行训练、微调或增量学习的shell脚本
   │   ├──run_eval.sh             # 使用CPU、GPU或Ascend进行评估的shell脚本
   │   ├──cache_util.sh           # 包含一些使用cache的帮助函数
   │   ├──run_train_nfs_cache.sh  # 使用NFS的数据集进行训练并利用缓存服务进行加速的shell脚本
-  │   ├──run_infer_310.sh   # 使用Dvpp 或CPU算子进行推理的shell脚本
+  │   ├──run_infer_310.sh        # 使用Dvpp 或CPU算子进行推理的shell脚本
   ├── src
   │   ├──aipp.cfg                # aipp配置
-  │   ├──args.py                 # 参数解析
-  │   ├──config.py               # 参数配置
   │   ├──dataset.py              # 创建数据集
   │   ├──launch.py               # 启动python脚本
   │   ├──lr_generator.py         # 配置学习率
   │   ├──mobilenetV2.py          # MobileNetV2架构
   │   ├──models.py               # 加载define_net、Loss、及Monitor
   │   ├──utils.py                # 加载ckpt_file进行微调或增量学习
+  │   └──model_utils
+  │      ├──config.py             # 获取.yaml配置参数
+  │      ├──device_adapter.py     # 获取云上id
+  │      ├──local_adapter.py      # 获取本地id
+  │      └──moxing_adapter.py     # 云上数据准备
+  ├── default_config.yaml         # 训练配置参数(ascend)
+  ├── default_config_cpu.yaml     # 训练配置参数(cpu)
+  ├── default_config_gpu.yaml     # 训练配置参数(gpu)
   ├── train.py                    # 训练脚本
   ├── eval.py                     # 评估脚本
   ├── export.py                   # 模型导出脚本

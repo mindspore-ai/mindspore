@@ -15,16 +15,10 @@
 """postprocess for 310 inference"""
 import os
 import json
-import argparse
 import numpy as np
 from mindspore.nn import Top1CategoricalAccuracy, Top5CategoricalAccuracy
+from src.model_utils.config import config
 
-
-parser = argparse.ArgumentParser(description="postprocess")
-parser.add_argument("--result_dir", type=str, required=True, help="result files path.")
-parser.add_argument("--label_dir", type=str, required=True, help="image file path.")
-parser.add_argument('--dataset_name', type=str, choices=["cifar10", "imagenet2012"], default="imagenet2012")
-args = parser.parse_args()
 
 def calcul_acc(lab, preds):
     return sum(1 for x, y in zip(lab, preds) if x == y) / len(lab)
@@ -32,24 +26,22 @@ def calcul_acc(lab, preds):
 if __name__ == '__main__':
     batch_size = 1
     top1_acc = Top1CategoricalAccuracy()
-    rst_path = args.result_dir
+    rst_path = config.result_dir
     label_list = []
     pred_list = []
 
-    if args.dataset_name == "cifar10":
-        from src.config import config1 as cfg
-        labels = np.load(args.label_dir, allow_pickle=True)
+    if config.dataset_name == "cifar10":
+        labels = np.load(config.label_dir, allow_pickle=True)
         for idx, label in enumerate(labels):
-            f_name = os.path.join(rst_path, "mobilenetv1_data_bs" + str(cfg.batch_size) + "_" + str(idx) + "_0.bin")
+            f_name = os.path.join(rst_path, "mobilenetv1_data_bs" + str(config.batch_size) + "_" + str(idx) + "_0.bin")
             pred = np.fromfile(f_name, np.float32)
-            pred = pred.reshape(cfg.batch_size, int(pred.shape[0] / cfg.batch_size))
+            pred = pred.reshape(config.batch_size, int(pred.shape[0] / config.batch_size))
             top1_acc.update(pred, labels[idx])
         print("acc: ", top1_acc.eval())
     else:
-        from src.config import config2 as cfg
         top5_acc = Top5CategoricalAccuracy()
         file_list = os.listdir(rst_path)
-        with open(args.label_dir, "r") as label:
+        with open(config.label_dir, "r") as label:
             labels = json.load(label)
         for f in file_list:
             label = f.split("_0.bin")[0] + ".JPEG"

@@ -77,13 +77,19 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   │   ├──run_train_nfs_cache.sh  # shell script for train with NFS dataset and leverage caching service for better performance
   ├── src
   │   ├──aipp.cfg                # aipp config
-  │   ├──args.py                 # parse args
-  │   ├──config.py               # parameter configuration
   │   ├──dataset.py              # creating dataset
   │   ├──lr_generator.py         # learning rate config
   │   ├──mobilenetV2.py          # MobileNetV2 architecture
   │   ├──models.py               # contain define_net and Loss, Monitor
   │   ├──utils.py                # utils to load ckpt_file for fine tune or incremental learn
+  │   └──model_utils
+  │      ├──config.py            # Processing configuration parameters
+  │      ├──device_adapter.py    # Get cloud ID
+  │      ├──local_adapter.py     # Get local ID
+  │      └──moxing_adapter.py    # Parameter processing
+  ├── default_config.yaml        # Training parameter profile(ascend)
+  ├── default_config_cpu.yaml    # Training parameter profile(cpu)
+  ├── default_config_gpu.yaml    # Training parameter profile(gpu)
   ├── train.py                   # training script
   ├── eval.py                    # evaluation script
   ├── export.py                  # export mindir script

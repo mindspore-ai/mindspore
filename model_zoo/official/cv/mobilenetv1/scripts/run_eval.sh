@@ -56,16 +56,31 @@ export DEVICE_ID=0
 export RANK_SIZE=$DEVICE_NUM
 export RANK_ID=0
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+if [ $# -ge 1 ]; then
+  if [ $1 == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  elif [ $1 == 'imagenet2012' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_imagenet.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
 if [ -d "eval" ];
 then
     rm -rf ./eval
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python eval.py --dataset=$1 --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
+python eval.py --config_path=$CONFIG_FILE --dataset=$1 --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log_eval.txt &
 cd ..
