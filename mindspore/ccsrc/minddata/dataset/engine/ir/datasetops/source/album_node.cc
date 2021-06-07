@@ -23,6 +23,9 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/album_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
+#endif
 
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
@@ -125,5 +128,45 @@ Status AlbumNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_
   return Status::OK();
 }
 
+Status AlbumNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args, sampler_args;
+  RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
+  args["sampler"] = sampler_args;
+  args["num_parallel_workers"] = num_workers_;
+  args["dataset_dir"] = dataset_dir_;
+  args["decode"] = decode_;
+  args["data_schema"] = schema_path_;
+  args["column_names"] = column_names_;
+  if (cache_ != nullptr) {
+    nlohmann::json cache_args;
+    RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
+    args["cache"] = cache_args;
+  }
+  *out_json = args;
+  return Status::OK();
+}
+
+#ifndef ENABLE_ANDROID
+Status AlbumNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
+                               "Failed to find num_parallel_workers");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("data_schema") != json_obj.end(), "Failed to find data_schema");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("column_names") != json_obj.end(), "Failed to find column_names");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  std::string dataset_dir = json_obj["dataset_dir"];
+  std::string data_schema = json_obj["data_schema"];
+  std::vector<std::string> column_names = json_obj["column_names"];
+  bool decode = json_obj["decode"];
+  std::shared_ptr<SamplerObj> sampler;
+  RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
+  std::shared_ptr<DatasetCache> cache = nullptr;
+  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
+  *ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler, cache);
+  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  return Status::OK();
+}
+#endif
 }  // namespace dataset
 }  // namespace mindspore

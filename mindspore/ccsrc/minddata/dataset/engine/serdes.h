@@ -32,6 +32,7 @@
 #include "minddata/dataset/core/tensor.h"
 
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
+#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/project_node.h"
@@ -43,12 +44,14 @@
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
+#include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
@@ -74,7 +77,9 @@
 #include "minddata/dataset/include/dataset/vision.h"
 
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/affine_ir.h"
+#include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/center_crop_ir.h"

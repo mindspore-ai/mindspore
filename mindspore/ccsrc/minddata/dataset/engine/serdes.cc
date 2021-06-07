@@ -97,15 +97,20 @@ Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<Datase
     RETURN_IF_NOT_OK(ConstructPipeline(json_obj["children"][0], &child_ds));
     RETURN_IF_NOT_OK(CreateNode(child_ds, json_obj, ds));
   } else {
-    // if json object has more than 1 children, the operation must be zip.
-    CHECK_FAIL_RETURN_UNEXPECTED((json_obj["op_type"] == "Zip"), "Failed to find right op_type - zip");
     std::vector<std::shared_ptr<DatasetNode>> datasets;
     for (auto child_json_obj : json_obj["children"]) {
       RETURN_IF_NOT_OK(ConstructPipeline(child_json_obj, &child_ds));
       datasets.push_back(child_ds);
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(datasets.size() > 1, "Should zip more than 1 dataset");
-    *ds = std::make_shared<ZipNode>(datasets);
+    if (json_obj["op_type"] == "Zip") {
+      CHECK_FAIL_RETURN_UNEXPECTED(datasets.size() > 1, "Should zip more than 1 dataset");
+      RETURN_IF_NOT_OK(ZipNode::from_json(datasets, ds));
+    } else if (json_obj["op_type"] == "Concat") {
+      CHECK_FAIL_RETURN_UNEXPECTED(datasets.size() > 1, "Should concat more than 1 dataset");
+      RETURN_IF_NOT_OK(ConcatNode::from_json(json_obj, datasets, ds));
+    } else {
+      return Status(StatusCode::kMDUnexpectedError, "Operation is not supported");
+    }
   }
   return Status::OK();
 }
@@ -125,7 +130,9 @@ Status Serdes::CreateNode(std::shared_ptr<DatasetNode> child_ds, nlohmann::json 
 }
 
 Status Serdes::CreateDatasetNode(nlohmann::json json_obj, std::string op_type, std::shared_ptr<DatasetNode> *ds) {
-  if (op_type == kCelebANode) {
+  if (op_type == kAlbumNode) {
+    RETURN_IF_NOT_OK(AlbumNode::from_json(json_obj, ds));
+  } else if (op_type == kCelebANode) {
     RETURN_IF_NOT_OK(CelebANode::from_json(json_obj, ds));
   } else if (op_type == kCifar10Node) {
     RETURN_IF_NOT_OK(Cifar10Node::from_json(json_obj, ds));
@@ -137,6 +144,8 @@ Status Serdes::CreateDatasetNode(nlohmann::json json_obj, std::string op_type, s
     RETURN_IF_NOT_OK(CocoNode::from_json(json_obj, ds));
   } else if (op_type == kCSVNode) {
     RETURN_IF_NOT_OK(CSVNode::from_json(json_obj, ds));
+  } else if (op_type == kFlickrNode) {
+    RETURN_IF_NOT_OK(FlickrNode::from_json(json_obj, ds));
   } else if (op_type == kImageFolderNode) {
     RETURN_IF_NOT_OK(ImageFolderNode::from_json(json_obj, ds));
   } else if (op_type == kManifestNode) {
@@ -227,6 +236,7 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
 std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>
 Serdes::InitializeFuncPtr() {
   std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> * operation)> ops_ptr;
+  ops_ptr[vision::kAdjustGammaOperation] = &(vision::AdjustGammaOperation::from_json);
   ops_ptr[vision::kAffineOperation] = &(vision::AffineOperation::from_json);
   ops_ptr[vision::kAutoContrastOperation] = &(vision::AutoContrastOperation::from_json);
   ops_ptr[vision::kBoundingBoxAugmentOperation] = &(vision::BoundingBoxAugmentOperation::from_json);
@@ -235,6 +245,13 @@ Serdes::InitializeFuncPtr() {
   ops_ptr[vision::kCutMixBatchOperation] = &(vision::CutMixBatchOperation::from_json);
   ops_ptr[vision::kCutOutOperation] = &(vision::CutOutOperation::from_json);
   ops_ptr[vision::kDecodeOperation] = &(vision::DecodeOperation::from_json);
+#ifdef ENABLE_ACL
+  ops_ptr[vision::kDvppCropJpegOperation] = &(vision::DvppCropJpegOperation::from_json);
+  ops_ptr[vision::kDvppDecodeResizeOperation] = &(vision::DvppDecodeResizeOperation::from_json);
+  ops_ptr[vision::kDvppDecodeResizeCropOperation] = &(vision::DvppDecodeResizeCropOperation::from_json);
+  ops_ptr[vision::kDvppNormalizeOperation] = &(vision::DvppNormalizeOperation::from_json);
+  ops_ptr[vision::kDvppResizeJpegOperation] = &(vision::DvppResizeJpegOperation::from_json);
+#endif
   ops_ptr[vision::kEqualizeOperation] = &(vision::EqualizeOperation::from_json);
   ops_ptr[vision::kGaussianBlurOperation] = &(vision::GaussianBlurOperation::from_json);
   ops_ptr[vision::kHorizontalFlipOperation] = &(vision::HorizontalFlipOperation::from_json);

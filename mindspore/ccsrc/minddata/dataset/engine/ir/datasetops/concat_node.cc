@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/concat_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
+#endif
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
@@ -148,5 +151,32 @@ Status ConcatNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<ConcatNode>(), modified);
 }
+
+Status ConcatNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args, sampler_args;
+  RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
+  args["sampler"] = sampler_args;
+  args["children_flag_and_nums"] = children_flag_and_nums_;
+  args["children_start_end_index"] = children_start_end_index_;
+  *out_json = args;
+  return Status::OK();
+}
+
+#ifndef ENABLE_ANDROID
+Status ConcatNode::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<DatasetNode>> datasets,
+                             std::shared_ptr<DatasetNode> *result) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("children_flag_and_nums") != json_obj.end(),
+                               "Failed to find children_flag_and_nums");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("children_start_end_index") != json_obj.end(),
+                               "Failed to find children_start_end_index");
+  std::shared_ptr<SamplerObj> sampler;
+  RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
+  std::vector<std::pair<int, int>> children_flag_and_nums = json_obj["children_flag_and_nums"];
+  std::vector<std::pair<int, int>> children_start_end_index = json_obj["children_start_end_index"];
+  *result = std::make_shared<ConcatNode>(datasets, sampler, children_flag_and_nums, children_start_end_index);
+  return Status::OK();
+}
+#endif
 }  // namespace dataset
 }  // namespace mindspore

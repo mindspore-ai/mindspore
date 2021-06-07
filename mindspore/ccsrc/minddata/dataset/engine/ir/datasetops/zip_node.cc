@@ -97,5 +97,9 @@ Status ZipNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   return p->VisitAfter(shared_from_base<ZipNode>(), modified);
 }
 
+Status ZipNode::from_json(std::vector<std::shared_ptr<DatasetNode>> datasets, std::shared_ptr<DatasetNode> *result) {
+  *result = std::make_shared<ZipNode>(datasets);
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

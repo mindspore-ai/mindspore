@@ -656,7 +656,7 @@ Status SchemaObj::add_column_char(const std::vector<char> &name, const std::vect
   return Status::OK();
 }
 
-const std::vector<char> SchemaObj::to_json_char() {
+Status SchemaObj::schema_to_json(nlohmann::json *out_json) {
   nlohmann::json json_file;
   json_file["columns"] = data_->columns_;
   std::string str_dataset_type_(data_->dataset_type_);
@@ -667,7 +667,13 @@ const std::vector<char> SchemaObj::to_json_char() {
   if (data_->num_rows_ > 0) {
     json_file["numRows"] = data_->num_rows_;
   }
+  *out_json = json_file;
+  return Status::OK();
+}
 
+const std::vector<char> SchemaObj::to_json_char() {
+  nlohmann::json json_file;
+  this->schema_to_json(&json_file);
   return StringToChar(json_file.dump(2));
 }
 

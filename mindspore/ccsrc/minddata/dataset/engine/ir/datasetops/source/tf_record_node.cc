@@ -204,7 +204,6 @@ Status TFRecordNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
   args["dataset_files"] = dataset_files_;
-  args["schema"] = schema_path_;
   args["columns_list"] = columns_list_;
   args["num_samples"] = num_samples_;
   args["shuffle_global"] = (shuffle_ == ShuffleMode::kGlobal);
@@ -221,7 +220,9 @@ Status TFRecordNode::to_json(nlohmann::json *out_json) {
   if (schema_obj_ != nullptr) {
     schema_obj_->set_dataset_type("TF");
     schema_obj_->set_num_rows(num_samples_);
-    args["schema_json_string"] = schema_obj_->to_json();
+    nlohmann::json schema_json_string;
+    schema_obj_->schema_to_json(&schema_json_string);
+    args["schema_json_string"] = schema_json_string;
   } else {
     args["schema_file_path"] = schema_path_;
   }
@@ -233,7 +234,6 @@ Status TFRecordNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
                                "Failed to find num_parallel_workers");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Failed to find dataset_files");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("schema") != json_obj.end(), "Failed to find schema");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("columns_list") != json_obj.end(), "Failed to find columns_list");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
@@ -241,7 +241,6 @@ Status TFRecordNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_equal_rows") != json_obj.end(), "Failed to find shard_equal_rows");
   std::vector<std::string> dataset_files = json_obj["dataset_files"];
-  std::string schema = json_obj["schema"];
   std::vector<std::string> columns_list = json_obj["columns_list"];
   int64_t num_samples = json_obj["num_samples"];
   ShuffleMode shuffle = static_cast<ShuffleMode>(json_obj["shuffle"]);
@@ -250,8 +249,18 @@ Status TFRecordNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   bool shard_equal_rows = json_obj["shard_equal_rows"];
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
-  *ds = std::make_shared<TFRecordNode>(dataset_files, schema, columns_list, num_samples, shuffle, num_shards, shard_id,
-                                       shard_equal_rows, cache);
+  if (json_obj.find("schema_file_path") != json_obj.end()) {
+    std::string schema_file_path = json_obj["schema_file_path"];
+    *ds = std::make_shared<TFRecordNode>(dataset_files, schema_file_path, columns_list, num_samples, shuffle,
+                                         num_shards, shard_id, shard_equal_rows, cache);
+  } else {
+    CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("schema_json_string") != json_obj.end(),
+                                 "Failed to find either schema_file_path or schema_json_string");
+    std::shared_ptr<SchemaObj> schema_obj = Schema();
+    RETURN_IF_NOT_OK(schema_obj->from_json(json_obj["schema_json_string"]));
+    *ds = std::make_shared<TFRecordNode>(dataset_files, schema_obj, columns_list, num_samples, shuffle, num_shards,
+                                         shard_id, shard_equal_rows, cache);
+  }
   (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
   return Status::OK();
 }

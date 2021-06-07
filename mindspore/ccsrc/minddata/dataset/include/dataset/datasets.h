@@ -528,6 +528,8 @@ class SchemaObj {
   /// \return JSON string of the schema
   std::string to_json() { return CharToString(to_json_char()); }
 
+  Status schema_to_json(nlohmann::json *out_json);
+
   /// \brief Get a JSON string of the schema
   std::string to_string() { return to_json(); }
 
@@ -539,6 +541,11 @@ class SchemaObj {
 
   /// \brief Get the current num_rows
   int32_t get_num_rows() const;
+
+  /// \brief Get schema file from JSON file
+  /// \param[in] json_obj parsed JSON object
+  /// \return Status code
+  Status from_json(nlohmann::json json_obj);
 
   /// \brief Get schema file from JSON file
   /// \param[in] json_string Name of JSON file to be parsed.
@@ -558,11 +565,6 @@ class SchemaObj {
   ///    Support both nlohmann::json::value_t::array and nlohmann::json::value_t::onject.
   /// \return Status code
   Status parse_column(nlohmann::json columns);
-
-  /// \brief Get schema file from JSON file
-  /// \param[in] json_obj parsed JSON object
-  /// \return Status code
-  Status from_json(nlohmann::json json_obj);
 
   // Char constructor of SchemaObj
   explicit SchemaObj(const std::vector<char> &schema_file);

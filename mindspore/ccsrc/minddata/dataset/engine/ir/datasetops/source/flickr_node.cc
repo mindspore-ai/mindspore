@@ -22,6 +22,10 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/flickr_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
+#endif
+
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -146,6 +150,24 @@ Status FlickrNode::to_json(nlohmann::json *out_json) {
     args["cache"] = cache_args;
   }
   *out_json = args;
+  return Status::OK();
+}
+
+Status FlickrNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
+                               "Failed to find num_parallel_workers");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("annotation_file") != json_obj.end(), "Failed to find annotation_file");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  std::string dataset_dir = json_obj["dataset_dir"];
+  std::string annotation_file = json_obj["annotation_file"];
+  bool decode = json_obj["decode"];
+  std::shared_ptr<SamplerObj> sampler;
+  RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
+  std::shared_ptr<DatasetCache> cache = nullptr;
+  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
+  *ds = std::make_shared<FlickrNode>(dataset_dir, annotation_file, decode, sampler, cache);
+  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
   return Status::OK();
 }
 }  // namespace dataset
