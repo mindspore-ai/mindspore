@@ -33,9 +33,9 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   if (axis < 0) {
     axis = axis + dim;
   }
-  auto output_num = x_shape[axis];
+  auto output_num = x_shape[LongToSize(axis)];
   CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterThan, 0, prim_name);
-  auto output_valid_check = x_shape[axis] - output_num;
+  auto output_valid_check = x_shape[LongToSize(axis)] - output_num;
   CheckAndConvertUtils::CheckInteger("The dimension which to unstack divides output_num", output_valid_check, kEqual, 0,
                                      prim_name);
   std::vector<int64_t> infer_shape(x_shape.begin(), x_shape.begin() + axis);

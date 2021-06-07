@@ -35,7 +35,7 @@ void Broadcast::set_group(const std::string &group) {
 }
 int64_t Broadcast::get_root_rank() const {
   auto value_ptr = this->GetAttr(kRootRank);
-  return GetValue<float>(value_ptr);
+  return GetValue<int64_t>(value_ptr);
 }
 
 std::string Broadcast::get_group() const {

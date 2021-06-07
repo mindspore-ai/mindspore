@@ -30,7 +30,7 @@ void SmoothL1LossGrad::set_beta(const float beta) { this->AddAttr(kBeta, MakeVal
 
 float SmoothL1LossGrad::get_beta() const {
   auto value_ptr = this->GetAttr(kBeta);
-  return GetValue<int64_t>(value_ptr);
+  return GetValue<int32_t>(value_ptr);
 }
 
 AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
