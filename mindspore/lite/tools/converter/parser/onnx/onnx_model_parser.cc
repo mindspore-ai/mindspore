@@ -406,14 +406,13 @@ STATUS OnnxModelParser::BuildReturnNode(const FuncGraphPtr &anf_graph, const std
   anf_graph->set_return(returnCnode);
   return RET_OK;
 }
+
 STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_graph,
                                    std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
                                    std::vector<AnfNodePtr> *graph_inputs, ops::PrimitiveC *primitive_c,
                                    std::string loop_name) {
-  if (primitive_c == nullptr || anf_graph == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is nullptr.";
-    return RET_NULL_PTR;
-  }
+  MS_ASSERT(primitive_c != nullptr);
+  MS_ASSERT(anf_graph != nullptr);
   std::vector<AnfNodePtr> op_inputs;
   for (const auto &input_name : onnx_node.input()) {
     if (input_name.empty()) {
@@ -422,68 +421,67 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
 
     if (anf_nodes_map->find(input_name) != anf_nodes_map->end()) {
       op_inputs.push_back(anf_nodes_map->at(input_name));
-    } else {
-      // subgraph may refer root graph nodes
-      std::vector<CNodePtr> need_add_input_nodes;
-      auto ext_subgraph_input = anf_graph->add_parameter();
-      ParameterPtr inner_extra_paramter = nullptr;
-      while (!loop_name.empty() && child_root_map_.find(loop_name) != child_root_map_.end()) {
-        auto cur_node_map = control_nodes_map_[loop_name];
-        if (cur_node_map->find(input_name) != cur_node_map->end()) {
-          auto outside_input_node = cur_node_map->at(input_name);
-          // copy outside input parameter value to inside subgraph
-          ext_subgraph_input->set_abstract(outside_input_node->abstract());
-          ext_subgraph_input->set_name(input_name);
-          if (outside_input_node->isa<Parameter>()) {
-            auto param_value = outside_input_node->cast<ParameterPtr>()->default_param()->cast<ParamValueLitePtr>();
-            auto copy_param_value = std::make_shared<ParamValueLite>();
-            auto copy_data = new (std::nothrow) char[param_value->tensor_size()];
-            if (copy_data == nullptr) {
-              MS_LOG(ERROR) << "new char[] failed";
-              return RET_MEMORY_FAILED;
-            }
-            auto ret =
-              memcpy_s(copy_data, param_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size());
-            if (ret != EOK) {
-              delete[](copy_data);
-              MS_LOG(ERROR) << "memcpy error: " << ret;
-              return RET_ERROR;
-            }
-            copy_param_value->set_tensor_shape(param_value->tensor_shape());
-            copy_param_value->set_format(param_value->format());
-            copy_param_value->set_tensor_type(param_value->tensor_type());
-            copy_param_value->SetTensorData(copy_data, param_value->tensor_size());
-            ext_subgraph_input->set_default_param(copy_param_value);
-          } else {
-            // output inside cnode need make extra input
-            graph_inputs->emplace_back(ext_subgraph_input);
-            if (cur_node_map->find(loop_name) != cur_node_map->end()) {
-              auto control_node = cur_node_map->at(loop_name)->cast<CNodePtr>();
-              control_node->add_input(outside_input_node);
-            } else {
-              MS_LOG(ERROR) << "loop node: " << loop_name << " not found in cur node map.";
-              return RET_ERROR;
-            }
-            for (auto &control_node : need_add_input_nodes) {
-              auto func_graph = control_node->func_graph();
-              auto extra_input_parameter = func_graph->add_parameter();
-              extra_input_parameter->set_name(input_name);
-              extra_input_parameter->set_abstract(outside_input_node->abstract());
-              control_node->add_input(extra_input_parameter);
-            }
+      continue;
+    }
+    // subgraph may refer root graph nodes
+    std::vector<CNodePtr> need_add_input_nodes;
+    auto ext_subgraph_input = anf_graph->add_parameter();
+    ParameterPtr inner_extra_paramter = nullptr;
+    while (!loop_name.empty() && child_root_map_.find(loop_name) != child_root_map_.end()) {
+      auto cur_node_map = control_nodes_map_[loop_name];
+      if (cur_node_map->find(input_name) != cur_node_map->end()) {
+        auto outside_input_node = cur_node_map->at(input_name);
+        // copy outside input parameter value to inside subgraph
+        ext_subgraph_input->set_abstract(outside_input_node->abstract());
+        ext_subgraph_input->set_name(input_name);
+        if (outside_input_node->isa<Parameter>()) {
+          auto param_value = outside_input_node->cast<ParameterPtr>()->default_param()->cast<ParamValueLitePtr>();
+          auto copy_param_value = std::make_shared<ParamValueLite>();
+          auto copy_data = new (std::nothrow) char[param_value->tensor_size()];
+          if (copy_data == nullptr) {
+            MS_LOG(ERROR) << "new char[] failed";
+            return RET_MEMORY_FAILED;
           }
-          op_inputs.push_back(ext_subgraph_input);
-          anf_nodes_map->emplace(input_name, ext_subgraph_input);
-          break;
+          if (memcpy_s(copy_data, param_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size()) !=
+              EOK) {
+            delete[](copy_data);
+            MS_LOG(ERROR) << "memcpy failed";
+            return RET_ERROR;
+          }
+          copy_param_value->set_tensor_shape(param_value->tensor_shape());
+          copy_param_value->set_format(param_value->format());
+          copy_param_value->set_tensor_type(param_value->tensor_type());
+          copy_param_value->SetTensorData(copy_data, param_value->tensor_size());
+          ext_subgraph_input->set_default_param(copy_param_value);
         } else {
+          // output inside cnode need make extra input
+          graph_inputs->emplace_back(ext_subgraph_input);
           if (cur_node_map->find(loop_name) != cur_node_map->end()) {
-            need_add_input_nodes.emplace_back(cur_node_map->at(loop_name)->cast<CNodePtr>());
+            auto control_node = cur_node_map->at(loop_name)->cast<CNodePtr>();
+            control_node->add_input(outside_input_node);
           } else {
             MS_LOG(ERROR) << "loop node: " << loop_name << " not found in cur node map.";
             return RET_ERROR;
           }
-          loop_name = child_root_map_[loop_name];
+          for (auto &control_node : need_add_input_nodes) {
+            auto func_graph = control_node->func_graph();
+            auto extra_input_parameter = func_graph->add_parameter();
+            extra_input_parameter->set_name(input_name);
+            extra_input_parameter->set_abstract(outside_input_node->abstract());
+            control_node->add_input(extra_input_parameter);
+          }
         }
+        op_inputs.push_back(ext_subgraph_input);
+        anf_nodes_map->emplace(input_name, ext_subgraph_input);
+        break;
+      } else {
+        if (cur_node_map->find(loop_name) != cur_node_map->end()) {
+          need_add_input_nodes.emplace_back(cur_node_map->at(loop_name)->cast<CNodePtr>());
+        } else {
+          MS_LOG(ERROR) << "loop node: " << loop_name << " not found in cur node map.";
+          return RET_ERROR;
+        }
+        loop_name = child_root_map_[loop_name];
       }
     }
   }

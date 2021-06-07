@@ -294,7 +294,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
       return RET_NOT_FIND_OP;
     }
     auto cnode = nodes_.find(*caffeInspector.GetGraphOutput().begin())->second;
-    if (nullptr == cnode) {
+    if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }

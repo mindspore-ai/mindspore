@@ -30,6 +30,72 @@ CropperFlags::CropperFlags() {
   AddFlag(&CropperFlags::output_file_, "outputFile", "Output library file path", "");
 }
 
+STATUS CropperFlags::CheckPackageFile() {
+  if (this->package_file_.empty()) {
+    std::cerr << "INPUT MISSING: packageFile is necessary" << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  } else {
+    // Verify whether it is a static library file(.a)
+    if (ValidFileSuffix(this->package_file_, "a") != RET_OK) {
+      return RET_INPUT_PARAM_INVALID;
+    }
+    this->package_file_ = RealPath(this->package_file_.c_str());
+    if (this->package_file_.empty()) {
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+STATUS CropperFlags::CheckModelFile() {
+  if (this->model_file_.empty() && this->model_folder_path_.empty()) {
+    std::cerr << "INPUT MISSING: modelFile or modelFolderPath is necessary" << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  } else if (!this->model_file_.empty() && !this->model_folder_path_.empty()) {
+    std::cerr << "INPUT ILLEGAL: modelFile and modelFolderPath must choose one" << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  } else if (!this->model_folder_path_.empty()) {
+    this->model_folder_path_ = RealPath(this->model_folder_path_.c_str());
+    if (this->model_folder_path_.empty()) {
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+STATUS CropperFlags::CheckConfigFile() {
+  if (this->config_file_.empty()) {
+    std::cerr << "INPUT MISSING: configFile is necessary" << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  this->config_file_ = RealPath(this->config_file_.c_str());
+  if (this->config_file_.empty()) {
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+STATUS CropperFlags::CheckOutputFile() {
+  if (this->output_file_.empty()) {
+    this->output_file_ = this->package_file_;
+  } else {
+    if (ValidFileSuffix(this->output_file_, "a") != RET_OK) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: packageFile need to pass package name, such as libmindspore-lite.a";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    std::string folder_name = this->output_file_.substr(0, this->output_file_.rfind('/'));
+    folder_name = RealPath(folder_name.c_str());
+    // folder does not exist.
+    if (folder_name.empty()) {
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  if (this->output_file_.empty()) {
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
 int CropperFlags::Init(int argc, const char **argv) {
   if (argc == 1) {
     std::cout << this->Usage() << std::endl;
@@ -54,59 +120,26 @@ int CropperFlags::Init(int argc, const char **argv) {
   MS_LOG(INFO) << "configFile = " << this->config_file_;
   MS_LOG(INFO) << "outputFile = " << this->output_file_;
 
-  if (this->package_file_.empty()) {
-    std::cerr << "INPUT MISSING: packageFile is necessary" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  } else {
-    // Verify whether it is a static library file(.a)
-    if (ValidFileSuffix(this->package_file_, "a") != RET_OK) {
-      return RET_INPUT_PARAM_INVALID;
-    }
-    this->package_file_ = RealPath(this->package_file_.c_str());
-    if (this->package_file_.empty()) {
-      return RET_INPUT_PARAM_INVALID;
-    }
+  auto status = CheckPackageFile();
+  if (status != RET_OK) {
+    return status;
   }
 
-  if (this->model_file_.empty() && this->model_folder_path_.empty()) {
-    std::cerr << "INPUT MISSING: modelFile or modelFolderPath is necessary" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  } else if (!this->model_file_.empty() && !this->model_folder_path_.empty()) {
-    std::cerr << "INPUT ILLEGAL: modelFile and modelFolderPath must choose one" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  } else if (!this->model_folder_path_.empty()) {
-    this->model_folder_path_ = RealPath(this->model_folder_path_.c_str());
-    if (this->model_folder_path_.empty()) {
-      return RET_INPUT_PARAM_INVALID;
-    }
+  status = CheckPackageFile();
+  if (status != RET_OK) {
+    return status;
   }
 
-  if (this->config_file_.empty()) {
-    std::cerr << "INPUT MISSING: configFile is necessary" << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  this->config_file_ = RealPath(this->config_file_.c_str());
-  if (this->config_file_.empty()) {
-    return RET_INPUT_PARAM_INVALID;
+  status = CheckConfigFile();
+  if (status != RET_OK) {
+    return status;
   }
 
-  if (this->output_file_.empty()) {
-    this->output_file_ = this->package_file_;
-  } else {
-    if (ValidFileSuffix(this->output_file_, "a") != RET_OK) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: packageFile need to pass package name, such as libmindspore-lite.a";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    std::string folder_name = this->output_file_.substr(0, this->output_file_.rfind('/'));
-    folder_name = RealPath(folder_name.c_str());
-    // folder does not exist.
-    if (folder_name.empty()) {
-      return RET_INPUT_PARAM_INVALID;
-    }
+  status = CheckOutputFile();
+  if (status != RET_OK) {
+    return status;
   }
-  if (this->output_file_.empty()) {
-    return RET_INPUT_PARAM_INVALID;
-  }
+
   return RET_OK;
 }
 }  // namespace cropper
