@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,39 @@ inline void SetData(size_t size, bool pad_zero, size_t src_idx, size_t dst_idx, 
   }
 }
 
+// greatest common divsor
+size_t Gcd(size_t a, size_t b) {
+  if (b == 0) {
+    return 0;
+  }
+  size_t c = b;
+  while (a % b != 0) {
+    c = a % b;
+    a = b;
+    b = c;
+  }
+  return c;
+}
+
+// least common  multiple
+size_t Lcm(size_t a, size_t b) {
+  if (b == 0) {
+    return 0;
+  }
+  size_t ret = (a * b) / (Gcd(a, b));
+  return ret;
+}
+
 template <typename T>
 T DivCeil(T n1, T n2) {
   if (n2 != 0) {
     return (n1 + n2 - 1) / n2;
   }
   return 0;
+}
+
+size_t GetShapeSize(const std::vector<size_t> &shape) {
+  return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
 }
 
 enum class DataTypeTransMode : int {
@@ -367,7 +394,53 @@ std::vector<size_t> PaddingShapeTo4dByDefault(const std::vector<size_t> &shape) 
   }
   return shape_4d;
 }
+
+std::vector<size_t> FracZDeviceShapeWithGroups(const std::vector<size_t> &shape, const int64_t groups = 1) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  size_t group_size = LongToSize(groups);
+  size_t cin_ori = shape[kC];
+  size_t cout_ori = shape[kN] / group_size;
+  size_t e_mult = std::min(Lcm(Lcm(cin_ori, kCubeSize) / cin_ori, Lcm(cout_ori, kCubeSize) / cout_ori), group_size);
+  size_t cin_opt = DivCeil(e_mult * cin_ori, kCubeSize) * kCubeSize;
+  size_t c1_dim = cin_opt / kCubeSize;
+  size_t g_dim = DivCeil(group_size, e_mult);
+  size_t n1 = DivCeil(cout_ori * e_mult, kCubeSize);
+  std::vector<size_t> device_shape;
+  device_shape.push_back(g_dim * c1_dim * shape[kH] * shape[kW]);
+  device_shape.push_back(n1);
+  device_shape.push_back(kNiSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
 }  // namespace
+
+int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index) {
+  if (node == nullptr) {
+    return 1;
+  }
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
+      if (AnfAlgo::GetCNodeName(cnode) == kAllReduceOpName) {
+        // if index not exists in fracz_group_idx, return default value 1
+        auto fz_group_idx = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
+        int64_t out_index = SizeToLong(index);
+        auto fz_iter = std::find(std::begin(fz_group_idx), std::end(fz_group_idx), out_index);
+        if (fz_iter == std::end(fz_group_idx)) {
+          return 1;
+        }
+      }
+      return AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFracZGroup);
+    }
+  } else if (node->isa<Parameter>()) {
+    auto param = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    return param->fracz_group();
+  }
+  return 1;
+}
 
 bool IsNeedPadding(const std::string &format, const size_t shape_size) {
   if (shape_size == 0) {
@@ -536,7 +609,8 @@ std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape) {
   return shape_5d;
 }
 
-std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format) {
+std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
+                                       const int64_t groups) {
   using DeviceShapeTransfer = std::function<std::vector<size_t>(const std::vector<size_t> &)>;
   const std::map<std::string, DeviceShapeTransfer> device_shape_map{{kOpFormat_NCHW, NchwDeviceShape},
                                                                     {kOpFormat_NHWC, NhwcDeviceShape},
@@ -552,6 +626,9 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
 
   if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
     return shape;
+  }
+  if (groups > 1 && format == kOpFormat_FRAC_Z) {
+    return FracZDeviceShapeWithGroups(shape, groups);
   }
   auto temp_shape = shape;
   std::vector<size_t> device_shape;
@@ -598,6 +675,15 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
   return iter->second(temp_shape);
 }
 
+std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
+                                       const AnfNodePtr &node, const size_t index) {
+  int64_t groups = 1;
+  if (format == kOpFormat_FRAC_Z) {
+    groups = GetAttrGroups(node, index);
+  }
+  return TransShapeToDevice(shape, format, groups);
+}
+
 bool CheckArgs(const FormatArgs &args, size_t *size, size_t *total_size) {
   if (args.host_shape.size() != kNchwDims) {
     MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
@@ -637,7 +723,7 @@ bool TransDataType(const TypeIdArgs &args, void *result) {
   return true;
 }
 
-bool TransFormat(const FormatArgs &args, void *result) {
+bool TransFormat(const FormatArgs &args, void *result, int64_t groups) {
   MS_LOG(DEBUG) << "Start trans format.";
   if (abstract::TypeIdSize(args.src_data_type) < 1) {
     MS_LOG(ERROR) << "Invalid datatype..";
@@ -646,6 +732,9 @@ bool TransFormat(const FormatArgs &args, void *result) {
   if (args.device_format == kOpFormat_HWCN || args.device_format == kOpFormat_NHWC) {
     return NchwTo4D(args, result);
   }
+  if (groups > 1 && args.device_format == kOpFormat_FRAC_Z) {
+    return NchwToFracZWithGroups(args, result, groups);
+  }
   auto iter = kTransFormatMapOfHostToDevice.find(args.device_format);
   if (iter == kTransFormatMapOfHostToDevice.end()) {
     MS_LOG(EXCEPTION) << "Unexpected format[" << args.device_format << "]";
@@ -653,7 +742,15 @@ bool TransFormat(const FormatArgs &args, void *result) {
   return iter->second(args, result);
 }
 
-bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result) {
+bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, const size_t index) {
+  int64_t groups = 1;
+  if (args.device_format == kOpFormat_FRAC_Z) {
+    groups = GetAttrGroups(node, index);
+  }
+  return TransFormat(args, result, groups);
+}
+
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, int64_t groups) {
   const std::map<std::string, FormatTransfer> format_trans_map{
     {kOpFormat_FRAC_Z, FracZToNchw},         {kOpFormat_FRAC_NZ, FracNzToNchw},
     {kOpFormat_NC1HWC0, Nc1hwc0ToNchw},      {kOpFormat_C1HWNCoC0, C1hwncoc0ToNchw},
@@ -668,11 +765,22 @@ bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result) {
   if (args.device_format == kOpFormat_HWCN || args.device_format == kOpFormat_NHWC) {
     return ToNchw(args, result);
   }
+  if (groups > 1 && args.device_format == kOpFormat_FRAC_Z) {
+    return FracZToNchwWithGroups(args, result, groups);
+  }
   auto iter = format_trans_map.find(args.device_format);
   if (iter == format_trans_map.end()) {
     MS_LOG(EXCEPTION) << "Unexpected format[" << args.device_format << "]";
   }
   return iter->second(args, result);
+}
+
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, const AnfNodePtr &node, const size_t index) {
+  int64_t groups = 1;
+  if (args.device_format == kOpFormat_FRAC_Z) {
+    groups = GetAttrGroups(node, index);
+  }
+  return TransFormatFromDeviceToHost(args, result, groups);
 }
 
 bool NchwTo4D(const FormatArgs &args, void *result) {
@@ -1465,6 +1573,83 @@ bool FracZ3DToNcdhw(const FormatArgs &args, void *result) {
     }
   }
   return true;
+}
+
+bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_device, int64_t groups) {
+  MS_LOG(DEBUG) << "Trans format from nchw to frac_z";
+  MS_EXCEPTION_IF_NULL(result);
+  if (args.host_shape.size() != kNchwDims) {
+    MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
+    return false;
+  }
+  auto size = abstract::TypeIdSize(args.src_data_type);
+  if (size < 1) {
+    MS_LOG(ERROR) << "Illegal dtype";
+    return false;
+  }
+  auto n_dim = args.host_shape[kN];
+  auto c_dim = args.host_shape[kC];
+  auto h_dim = args.host_shape[kH];
+  auto w_dim = args.host_shape[kW];
+  size_t d_dim = 1;
+  size_t group_size = LongToSize(groups);
+  auto cin_ori = c_dim;
+  auto cout_ori = n_dim / group_size;
+  if (cin_ori == 0 || cout_ori == 0) {
+    MS_LOG(ERROR) << "cin_ori, cout_ori must not equal to 0";
+    return false;
+  }
+  size_t e_mult = std::min(Lcm(Lcm(cin_ori, kCubeSize) / cin_ori, Lcm(cout_ori, kCubeSize) / cout_ori), group_size);
+  size_t cin_opt = DivCeil(e_mult * cin_ori, kCubeSize) * kCubeSize;
+  size_t cout_opt = DivCeil(e_mult * cout_ori, kCubeSize) * kCubeSize;
+  size_t c1_dim = cin_opt / kCubeSize;
+  size_t dst_size = to_device ? GetShapeSize(args.device_shape) * size : GetShapeSize(args.host_shape) * size;
+  if (dst_size == 0) {
+    return true;
+  }
+  auto ret = memset_s(result, dst_size, 0, dst_size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memset failed";
+    return false;
+  }
+  for (size_t g = 0; g < group_size; ++g) {
+    for (size_t d = 0; d < d_dim; ++d) {
+      for (size_t c = 0; c < c_dim; ++c) {
+        for (size_t h = 0; h < h_dim; ++h) {
+          for (size_t w = 0; w < w_dim; ++w) {
+            for (size_t n = 0; n < cout_ori; ++n) {
+              size_t e_val = g % e_mult;
+              size_t dst_ci = e_val * cin_ori + c;
+              size_t dst_co = e_val * cout_ori + n;
+              size_t src_co = g * cout_ori + n;
+              size_t temporary = dst_ci % kCubeSize;
+              size_t dev_idx = (g / e_mult) * d_dim * c1_dim * h_dim * w_dim * cout_opt * kCubeSize +
+                               d * c1_dim * h_dim * w_dim * cout_opt * kCubeSize +
+                               (dst_ci / kCubeSize) * h_dim * w_dim * cout_opt * kCubeSize +
+                               h * w_dim * cout_opt * kCubeSize + w * cout_opt * kCubeSize + dst_co * kCubeSize +
+                               temporary;
+              size_t hst_idx =
+                src_co * c_dim * d_dim * h_dim * w_dim + c * d_dim * h_dim * w_dim + d * h_dim * w_dim + h * w_dim + w;
+              if (to_device) {
+                SetData(size, false, hst_idx, dev_idx, args, result);
+              } else {
+                SetData(size, false, dev_idx, hst_idx, args, result);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool NchwToFracZWithGroups(const FormatArgs &args, void *result, int64_t groups) {
+  return NchwFracZTransWithGroups(args, result, true, groups);
+}
+
+bool FracZToNchwWithGroups(const FormatArgs &args, void *result, int64_t groups) {
+  return NchwFracZTransWithGroups(args, result, false, groups);
 }
 }  // namespace trans
 }  // namespace mindspore

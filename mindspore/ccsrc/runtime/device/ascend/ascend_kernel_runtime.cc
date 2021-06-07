@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -336,6 +336,11 @@ bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                           TypeId type_id) {
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
+}
+
+DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+                                                          TypeId type_id, const AnfNodePtr &node, size_t out_index) {
+  return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, node, out_index);
 }
 
 bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {

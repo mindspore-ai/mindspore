@@ -373,6 +373,9 @@ class Parameter : public ANode {
   void set_used_by_dynamic_kernel(bool used) { is_used_by_dynamic_kernel_ = used; }
   bool is_used_by_dynamic_kernel() { return is_used_by_dynamic_kernel_; }
 
+  void set_fracz_group(int64_t fracz_group) { fracz_group_ = fracz_group; }
+  int64_t fracz_group() { return fracz_group_; }
+
  private:
   std::string name_;
   bool has_default_;
@@ -381,6 +384,8 @@ class Parameter : public ANode {
   ValuePtr default_param_;
   // The count of graphs using the parameter.
   int used_graph_count_;
+  // groups attr in FracZ format
+  int64_t fracz_group_ = 1;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 

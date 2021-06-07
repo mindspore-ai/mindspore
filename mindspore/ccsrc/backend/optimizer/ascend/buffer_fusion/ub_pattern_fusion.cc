@@ -101,6 +101,14 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
   ValuePtr output_names_v = MakeValue(output_names);
   fusion_op->set_attr("input_names", input_names_v);
   fusion_op->set_attr("output_names", output_names_v);
+  for (auto node : anf_nodes) {
+    auto cnode = node->cast<CNodePtr>();
+    if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
+      auto fracz_group = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFracZGroup);
+      fusion_op->set_attr(kAttrFracZGroup, MakeValue(fracz_group));
+      break;
+    }
+  }
   std::vector<AnfNodePtr> fusion_inputs_list = inputs_list;
   auto value_node = std::make_shared<ValueNode>(fusion_op);
   (void)fusion_inputs_list.insert(fusion_inputs_list.begin(), value_node);
