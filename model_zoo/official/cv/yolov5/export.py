@@ -18,8 +18,8 @@ import numpy as np
 import mindspore
 from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
-
-from src.yolo import YOLOV5s
+from src.config import ConfigYOLOV5
+from src.yolo import YOLOV5s_Infer
 
 parser = argparse.ArgumentParser(description='yolov5 export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
@@ -27,7 +27,7 @@ parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--testing_shape", type=int, default=640, help="test shape")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="yolov5", help="output file name.")
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument('--file_format', type=str, choices=["AIR", "MINDIR"], default='AIR', help='file format')
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
 args = parser.parse_args()
@@ -37,14 +37,16 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 if __name__ == "__main__":
-    ts_shape = args.testing_shape
+    config = ConfigYOLOV5()
+    if args.testing_shape:
+        config.test_img_shape = [int(args.testing_shape), int(args.testing_shape)]
+    ts_shape = config.test_img_shape[0]
 
-    network = YOLOV5s(is_training=False)
-    network.set_train(False)
+    network = YOLOV5s_Infer(config.test_img_shape)
 
     param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(network, param_dict)
 
-    input_data = Tensor(np.zeros([args.batch_size, 3, ts_shape, ts_shape]), mindspore.float32)
+    input_data = Tensor(np.zeros([args.batch_size, 12, int(ts_shape/2), int(ts_shape/2)]), mindspore.float32)
 
     export(network, input_data, file_name=args.file_name, file_format=args.file_format)

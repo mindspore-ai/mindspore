@@ -35,14 +35,14 @@ class YOLOv5(nn.Cell):
         self.out_channel = out_channel
         self.backbone = backbone
 
-        self.conv1 = Conv(512, 256, k=1, s=1)#10
-        self.C31 = C3(512, 256, n=1, shortcut=False)#11
+        self.conv1 = Conv(512, 256, k=1, s=1)  # 10
+        self.C31 = C3(512, 256, n=1, shortcut=False)  # 11
         self.conv2 = Conv(256, 128, k=1, s=1)
-        self.C32 = C3(256, 128, n=1, shortcut=False)#13
+        self.C32 = C3(256, 128, n=1, shortcut=False)  # 13
         self.conv3 = Conv(128, 128, k=3, s=2)
-        self.C33 = C3(256, 256, n=1, shortcut=False)#15
+        self.C33 = C3(256, 256, n=1, shortcut=False)  # 15
         self.conv4 = Conv(256, 256, k=3, s=2)
-        self.C34 = C3(512, 512, n=1, shortcut=False)#17
+        self.C34 = C3(512, 512, n=1, shortcut=False)  # 17
 
         self.backblock1 = YoloBlock(128, 255)
         self.backblock2 = YoloBlock(256, 255)
@@ -62,24 +62,24 @@ class YOLOv5(nn.Cell):
 
         backbone4, backbone6, backbone9 = self.backbone(x)
 
-        cv1 = self.conv1(backbone9)#10
+        cv1 = self.conv1(backbone9)  # 10
         ups1 = P.ResizeNearestNeighbor((img_hight / 16, img_width / 16))(cv1)
         concat1 = self.concat((ups1, backbone6))
-        bcsp1 = self.C31(concat1)#13
+        bcsp1 = self.C31(concat1)  # 13
         cv2 = self.conv2(bcsp1)
-        ups2 = P.ResizeNearestNeighbor((img_hight / 8, img_width / 8))(cv2)#15
+        ups2 = P.ResizeNearestNeighbor((img_hight / 8, img_width / 8))(cv2)  # 15
         concat2 = self.concat((ups2, backbone4))
-        bcsp2 = self.C32(concat2)#17
+        bcsp2 = self.C32(concat2)  # 17
         cv3 = self.conv3(bcsp2)
 
         concat3 = self.concat((cv3, cv2))
-        bcsp3 = self.C33(concat3)#20
+        bcsp3 = self.C33(concat3)  # 20
         cv4 = self.conv4(bcsp3)
         concat4 = self.concat((cv4, cv1))
-        bcsp4 = self.C34(concat4)#23
-        small_object_output = self.backblock1(bcsp2) # h/8, w/8
-        medium_object_output = self.backblock2(bcsp3) # h/16, w/16
-        big_object_output = self.backblock3(bcsp4) # h/32, w/32
+        bcsp4 = self.C34(concat4)  # 23
+        small_object_output = self.backblock1(bcsp2)  # h/8, w/8
+        medium_object_output = self.backblock2(bcsp3)  # h/16, w/16
+        big_object_output = self.backblock3(bcsp4)  # h/32, w/32
         return small_object_output, medium_object_output, big_object_output
 
 
@@ -98,6 +98,7 @@ class YoloBlock(nn.Cell):
         YoloBlock(12, 255)
 
     """
+
     def __init__(self, in_channels, out_channels):
         super(YoloBlock, self).__init__()
 
@@ -145,7 +146,7 @@ class DetectionBlock(nn.Cell):
             raise KeyError("Invalid scale value for DetectionBlock")
         self.anchors = Tensor([self.config.anchor_scales[i] for i in idx], ms.float32)
         self.num_anchors_per_scale = 3
-        self.num_attrib = 4+1+self.config.num_classes
+        self.num_attrib = 4 + 1 + self.config.num_classes
         self.lambda_coord = 1
 
         self.sigmoid = nn.Sigmoid()
@@ -199,6 +200,7 @@ class DetectionBlock(nn.Cell):
 
 class Iou(nn.Cell):
     """Calculate the iou of boxes"""
+
     def __init__(self):
         super(Iou, self).__init__()
         self.min = P.Minimum()
@@ -212,8 +214,8 @@ class Iou(nn.Cell):
         """
         box1_xy = box1[:, :, :, :, :, :2]
         box1_wh = box1[:, :, :, :, :, 2:4]
-        box1_mins = box1_xy - box1_wh / F.scalar_to_array(2.0) # topLeft
-        box1_maxs = box1_xy + box1_wh / F.scalar_to_array(2.0) # rightDown
+        box1_mins = box1_xy - box1_wh / F.scalar_to_array(2.0)  # topLeft
+        box1_maxs = box1_xy + box1_wh / F.scalar_to_array(2.0)  # rightDown
 
         box2_xy = box2[:, :, :, :, :, :2]
         box2_wh = box2[:, :, :, :, :, 2:4]
@@ -237,6 +239,7 @@ class YoloLossBlock(nn.Cell):
     """
     Loss block cell of YOLOV5 network.
     """
+
     def __init__(self, scale, config=ConfigYOLOV5()):
         super(YoloLossBlock, self).__init__()
         self.config = config
@@ -356,8 +359,23 @@ class YOLOV5s(nn.Cell):
         return output_big, output_me, output_small
 
 
+class YOLOV5s_Infer(nn.Cell):
+    """
+    YOLOV5 Infer.
+    """
+
+    def __init__(self, inputshape):
+        super(YOLOV5s_Infer, self).__init__()
+        self.network = YOLOV5s(is_training=False)
+        self.inputshape = inputshape
+
+    def construct(self, x):
+        return self.network(x, self.inputshape)
+
+
 class YoloWithLossCell(nn.Cell):
     """YOLOV5 loss."""
+
     def __init__(self, network):
         super(YoloWithLossCell, self).__init__()
         self.yolo_network = network
@@ -366,7 +384,6 @@ class YoloWithLossCell(nn.Cell):
         self.loss_me = YoloLossBlock('m', self.config)
         self.loss_small = YoloLossBlock('s', self.config)
         self.tenser_to_array = P.TupleToArray()
-
 
     def construct(self, x, y_true_0, y_true_1, y_true_2, gt_0, gt_1, gt_2, input_shape):
         input_shape = F.shape(x)[2:4]
@@ -381,6 +398,7 @@ class YoloWithLossCell(nn.Cell):
 
 class TrainingWrapper(nn.Cell):
     """Training wrapper."""
+
     def __init__(self, network, optimizer, sens=1.0):
         super(TrainingWrapper, self).__init__(auto_prefix=False)
         self.network = network
@@ -414,6 +432,7 @@ class TrainingWrapper(nn.Cell):
 
 class Giou(nn.Cell):
     """Calculating giou"""
+
     def __init__(self):
         super(Giou, self).__init__()
         self.cast = P.Cast()
@@ -448,6 +467,7 @@ class Giou(nn.Cell):
         giou = iou - res_mid1
         giou = C.clip_by_value(giou, -1.0, 1.0)
         return giou
+
 
 def xywh2x1y1x2y2(box_xywh):
     boxes_x1 = box_xywh[..., 0:1] - box_xywh[..., 2:3] / 2
