@@ -119,6 +119,8 @@ message SendMetadataMessage {
   int32 worker_num = 2;
   // the current server number.
   int32 server_num = 3;
+  // the current cluster state.
+  ClusterState cluster_state = 4;
 }
 
 message FinishMessage {
