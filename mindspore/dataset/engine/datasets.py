@@ -60,7 +60,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
-    get_prefetch_size, get_dynamic_columns
+    get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
@@ -209,15 +209,15 @@ class Dataset:
         self._input_indexs = ()
         self.saved_output_types = None
         self.saved_output_shapes = None
+        self.dynamic_setting = [False, None]
+        self.saved_min_shapes = None
+        self.saved_max_shapes = None
         self._col_names = None
         self.dataset_size = None
         self._batch_size = None
         self._num_classes = None
         self._repeat_count = None
         self._class_indexing = None
-        self.min_shapes = None
-        self.max_shapes = None
-        self.dynamic_shapes = None
         self._sync = False
 
     def create_ir_tree(self):
@@ -1531,8 +1531,9 @@ class Dataset:
         if self.saved_output_shapes is None:
             runtime_getter = self._init_tree_getters()
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
-            self.saved_output_types = runtime_getter[0].GetOutputTypes()
             self.close_pool()
+        if self.dynamic_setting[0]:
+            self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_output_shapes
 
     def output_types(self):
@@ -1544,7 +1545,6 @@ class Dataset:
         """
         if self.saved_output_types is None:
             runtime_getter = self._init_tree_getters()
-            self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             self.close_pool()
         return self.saved_output_types
@@ -1562,24 +1562,35 @@ class Dataset:
             self.close_pool()
         return self.dataset_size
 
-    def get_dynamic_min_max_shape(self):
+    def set_dynamic_columns(self, columns=None):
+        if not isinstance(columns, dict):
+            raise TypeError("Pass a dict to set dynamic shape, example: {\"data1\": [16, None, 256]}")
+        self.dynamic_setting[0] = True
+        self.dynamic_setting[1] = columns
+
+    def dynamic_min_max_shapes(self):
+        if self.saved_min_shapes is None or self.saved_max_shapes is None:
+            self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
+        return self.saved_min_shapes, self.saved_max_shapes
+
+    def _dynamic_output_shapes(self):
         """
         Get dynamic information of source data.
 
         Returns:
-            lists, min_shapes, max_shapes, dynamic_shapes of source data.
+            lists, dynamic_shapes, min_shapes, max_shapes of source data.
         """
-        # Assume data1 shape is dynamic, data2 shape is fix
-        # {"data1": [batch_size, None, feat_len], "data2": [batch_size, feat_len]}
-        dynamic_columns = get_dynamic_columns()
-        if not dynamic_columns:
+        if not self.dynamic_setting[1]:
             raise RuntimeError("dynamic_columns is not set, call set_dynamic_columns() first.")
 
-        if self.min_shapes is not None and self.max_shapes is not None and self.dynamic_shapes is not None:
-            return self.min_shapes, self.max_shapes, self.dynamic_shapes
+        if self.saved_output_shapes is not None and self.saved_min_shapes is not None and \
+                self.saved_max_shapes is not None:
+            return self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes
 
         logger.warning("Calculating dynamic shape of input data, this will take a few minutes...")
-
+        # Assume data1 shape is dynamic, data2 shape is fix
+        # {"data1": [batch_size, None, feat_len], "data2": [batch_size, feat_len]}
+        dynamic_columns = self.dynamic_setting[1]
         # ["data1", "data2"]
         dataset_columns = self.get_col_names()
         for column in dynamic_columns:
@@ -1633,10 +1644,7 @@ class Dataset:
                 max_shapes.append(fix_shape)
                 min_shapes.append(fix_shape)
                 dynamic_shapes.append(fix_shape)
-        self.min_shapes = min_shapes
-        self.max_shapes = max_shapes
-        self.dynamic_shapes = dynamic_shapes
-        return self.min_shapes, self.max_shapes, self.dynamic_shapes
+        return dynamic_shapes, min_shapes, max_shapes
 
     def num_classes(self):
         """

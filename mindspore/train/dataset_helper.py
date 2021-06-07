@@ -254,8 +254,9 @@ class DatasetHelper:
         """Get the types and shape of current batch."""
         return self.iter.get_data_info()
 
-    def get_dynamic_min_max_shape(self):
-        return self.iter.get_dynamic_min_max_shape()
+    def dynamic_min_max_shapes(self):
+        """Get shape range(min shape, max shape) of dynamic data."""
+        return self.iter.dynamic_min_max_shapes()
 
 class _DatasetIter:
     """Base iter for dataset helper"""
@@ -285,7 +286,7 @@ class _DatasetIter:
         self.release = dataset.__transfer_dataset__.release
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
-        self.get_dynamic_min_max_shape = dataset.__transfer_dataset__.get_dynamic_min_max_shape
+        self.dynamic_min_max_shapes = dataset.__transfer_dataset__.dynamic_min_max_shapes
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(dataset)
 
     def __iter__(self):
