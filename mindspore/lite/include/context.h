@@ -51,6 +51,7 @@ struct DeviceContext {
   DeviceInfo device_info_;
   std::string provider_{};
   std::string provider_device_{};
+  AllocatorPtr allocator_ = nullptr;
 };
 
 /// \brief Context defined for holding environment variables during runtime.

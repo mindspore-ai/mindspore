@@ -36,7 +36,7 @@
 #include "src/inner_kernel.h"
 
 namespace mindspore::kernel {
-enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
+enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
 static const char *const kBuiltin = "Builtin";
 
 struct KernelKey {
@@ -61,7 +61,15 @@ struct KernelKey {
   }
 };
 
-enum SubGraphType { kNotSubGraph = 0, kCpuFP32SubGraph, kCpuFP16SubGraph, kGpuSubGraph, kNpuSubGraph, kApuSubGraph };
+enum SubGraphType {
+  kNotSubGraph = 0,
+  kCpuFP32SubGraph,
+  kCpuFP16SubGraph,
+  kGpuSubGraph,
+  kNpuSubGraph,
+  kApuSubGraph,
+  kCustomSubGraph
+};
 
 class LiteKernel {
  public:

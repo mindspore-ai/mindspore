@@ -183,7 +183,7 @@ int SubGraphNpuKernel::BuildNPUOutputOp() {
   for (auto node : out_nodes_) {
     for (auto tensor : node->out_tensors()) {
       if (std::find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end()) {
-        tensor->set_allocator(Context()->allocator.get());
+        tensor->set_allocator(Context()->allocator);
         this->out_tensor_sorted_[i++] = tensor;
       }
     }

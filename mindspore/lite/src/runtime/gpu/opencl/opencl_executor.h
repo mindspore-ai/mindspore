@@ -27,7 +27,7 @@
 namespace mindspore::lite::opencl {
 class OpenCLExecutor : public Executor {
  public:
-  OpenCLExecutor() : Executor() { allocator_ = ocl_runtime.GetInstance()->GetAllocator(); }
+  OpenCLExecutor() : Executor() { allocator_ = ocl_runtime.GetInstance()->GetAllocator().get(); }
 
   ~OpenCLExecutor() override = default;
 

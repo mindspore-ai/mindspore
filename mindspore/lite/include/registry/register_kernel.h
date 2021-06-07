@@ -28,9 +28,6 @@
 
 namespace mindspore {
 namespace kernel {
-extern const char *const kArchCPU;
-extern const char *const kArchGPU;
-
 /// \brief KernelDesc defined kernel's basic attribute.
 struct MS_API KernelDesc {
   TypeId data_type;     /**< kernel data type argument */

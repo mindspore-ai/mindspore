@@ -145,6 +145,52 @@ void SubGraphKernel::DropNode(LiteKernel *node) {
   lite::VectorErase(&out_nodes_, node);
 }
 
+int CustomSubGraph::Prepare() {
+  auto ret = SubGraphKernel::Prepare();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  if (nodes_.size() < 1) {
+    return RET_OK;
+  }
+  auto provider = nodes_[0]->desc().provider;
+  auto context = this->Context();
+  AllocatorPtr allocator = nullptr;
+  auto iter = std::find_if(context->device_list_.begin(), context->device_list_.end(),
+                           [&provider](const auto &dev) { return dev.provider_ == provider; });
+  if (iter != context->device_list_.end()) {
+    allocator = iter->allocator_;
+  }
+
+  for (size_t i = 0; i < nodes_.size() - 1; ++i) {
+    auto node = nodes_[i];
+    for (auto tensor : node->out_tensors()) {
+      MS_ASSERT(tensor != nullptr);
+      tensor->set_allocator(allocator);
+    }
+  }
+
+  auto node = nodes_[nodes_.size() - 1];
+  for (auto tensor : node->out_tensors()) {
+    MS_ASSERT(tensor != nullptr);
+    tensor->set_allocator(this->Context()->allocator);
+  }
+  return RET_OK;
+}
+
+int CustomSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
+  for (auto kernel : nodes_) {
+    MS_ASSERT(kernel != nullptr);
+    auto ret = kernel->Execute(before, after);
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
+      return ret;
+    }
+  }
+
+  return RET_OK;
+}
+
 int CpuSubGraph::Prepare() {
   auto ret = SubGraphKernel::Prepare();
   if (ret != RET_OK) {
@@ -153,7 +199,7 @@ int CpuSubGraph::Prepare() {
   for (auto node : nodes_) {
     for (auto tensor : node->out_tensors()) {
       MS_ASSERT(tensor != nullptr);
-      tensor->set_allocator(this->Context()->allocator.get());
+      tensor->set_allocator(this->Context()->allocator);
     }
   }
   return RET_OK;
@@ -236,7 +282,7 @@ int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
     tensor->allocator()->SetRefCount(tensor->data_c(), tensor->allocator()->RefCount(float32_data));
   }
   auto *data_store =
-    DataStore::CreateDataStore(float32_data, own_data, tensor->allocator(), this->Context()->allocator.get());
+    DataStore::CreateDataStore(float32_data, own_data, tensor->allocator().get(), this->Context()->allocator.get());
   if (data_store == nullptr) {
     MS_LOG(ERROR) << "Create DataStore failed";
     return RET_ERROR;

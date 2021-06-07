@@ -54,6 +54,17 @@
 namespace mindspore::lite {
 namespace {
 constexpr int kMainSubGraphIndex = 0;
+kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &&input_kernels,
+                                             std::vector<kernel::LiteKernel *> &&output_kernels,
+                                             const std::vector<kernel::LiteKernel *> &kernels, kernel::Kernel *kernel) {
+  auto sub_kernel = new (std::nothrow) kernel::CustomSubGraph(input_kernels, output_kernels, kernels, kernel);
+  if (sub_kernel == nullptr) {
+    MS_LOG(ERROR) << "create custom subgraph failed!";
+    delete kernel;
+    return nullptr;
+  }
+  return sub_kernel;
+}
 }  // namespace
 
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
@@ -850,6 +861,9 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   }
   std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
   std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
+  if (type == kernel::kCustomSubGraph) {
+    return CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, innerkernel);
+  }
   if (type == kernel::kGpuSubGraph) {
 #if GPU_OPENCL
     auto sub_kernel = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, innerkernel);
@@ -966,7 +980,11 @@ kernel::SubGraphType Scheduler::GetKernelSubGraphType(const kernel::LiteKernel *
   if (kernel == nullptr) {
     return kernel::kNotSubGraph;
   }
+
   auto desc = kernel->desc();
+  if (desc.provider != kernel::kBuiltin) {
+    return kernel::kCustomSubGraph;
+  }
   if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
     return kernel::kGpuSubGraph;
   } else if (desc.arch == kernel::KERNEL_ARCH::kNPU) {

@@ -103,11 +103,11 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   size_t Size() const override;
 
-  void set_allocator(mindspore::Allocator *allocator) override { allocator_ = allocator; }
+  void set_allocator(AllocatorPtr allocator) override { allocator_ = allocator; }
 
-  mindspore::Allocator *allocator() const override { return this->allocator_; }
+  AllocatorPtr allocator() const override { return allocator_; }
 
-  virtual int MallocData(const mindspore::Allocator *allocator = nullptr);
+  virtual int MallocData(const AllocatorPtr allocator = nullptr);
 
   virtual void FreeData();
 
@@ -221,7 +221,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   int init_ref_count_ = 0;
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;
-  mindspore::Allocator *allocator_ = nullptr;
+  AllocatorPtr allocator_ = nullptr;
   Tensor *root_tensor_ = nullptr;
   bool own_data_{false};
 };
