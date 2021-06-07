@@ -13,10 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+import mindspore.common.dtype as mstype
+from src.retinahead import retinanetWithLossCell, retinahead
+from src.backbone import resnet152
+from src.config import config
+
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    if name == "retinanet_resnet152":
+        backbone = resnet152()
+        retinaNet = retinahead(backbone, config)
+        net = retinanetWithLossCell(retinaNet, config)
+        net.to_float(mstype.float16)
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")

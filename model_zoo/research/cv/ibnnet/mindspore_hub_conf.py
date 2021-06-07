@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.resnet_ibn import resnet50_ibn_a
+from src.config import cfg
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    if name == "ibnnet":
+        net = resnet50_ibn_a(num_classes=cfg.class_num)
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")

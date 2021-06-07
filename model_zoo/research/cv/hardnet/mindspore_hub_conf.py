@@ -13,10 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.HarDNet import HarDNet85
+from src.config import config
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
-        return net
+    if name == "hardnet":
+        network = HarDNet85(num_classes=config.class_num)
+        return network
+
     raise NotImplementedError(f"{name} is not implemented in the repo")

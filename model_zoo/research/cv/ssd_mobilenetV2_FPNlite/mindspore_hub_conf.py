@@ -13,10 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+import mindspore.common.dtype as mstype
+from src.ssd import SSDWithLossCell, ssd_mobilenet_v2_fpn
+from src.config import config
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    if name == "ssd_mobilenetv2_fpnlite":
+        ssd = ssd_mobilenet_v2_fpn(config=config)
+        net = SSDWithLossCell(ssd, config)
+        net.to_float(mstype.float16)
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")

@@ -13,10 +13,24 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.resnet import resnet50
+from src.config import config1, config2
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    """create net which should give the param if wants to use task_name, default is qudaruplet"""
+    if name == "metric_learn":
+        if "task_name" in kwargs:
+            taskName = kwargs.get("task_name")
+
+        else:
+            taskName = "qudaruplet"
+
+        if taskName == "qudaruplet":
+            config = config2
+
+        elif taskName == "triplet":
+            config = config1
+
+        net = resnet50(class_num=config.class_num)
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")
