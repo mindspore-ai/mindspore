@@ -55,7 +55,8 @@ AnfNodePtr ReplaceOutputEdge(const AnfNodePtr &node, CNodePtr adam_weight_decay,
   // Replace the parameters of the last UpdateState to maintain
   // the execution order of FusedAdamWeightDecay and the following operators.
   // n represents the operator assign_v in {prim::kPrimDepend, next_param, assign_v}
-  const auto &n = node->cast<CNodePtr>()->input(2);
+  const size_t assign_index = 2;
+  const auto &n = node->cast<CNodePtr>()->input(assign_index);
   MS_EXCEPTION_IF_NULL(n);
   const auto &fg = n->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
@@ -70,8 +71,10 @@ AnfNodePtr ReplaceOutputEdge(const AnfNodePtr &node, CNodePtr adam_weight_decay,
   auto &users = iter->second;
   for (auto &user : users) {
     if (IsPrimitiveCNode(user.first, prim::kPrimUpdateState)) {
-      (user.first)->cast<CNodePtr>()->set_input(1, u_input);
-      (user.first)->cast<CNodePtr>()->set_input(2, adam_weight_decay);
+      const size_t monad_index = 1;
+      const size_t adam_weight_decay_index = 2;
+      (user.first)->cast<CNodePtr>()->set_input(monad_index, u_input);
+      (user.first)->cast<CNodePtr>()->set_input(adam_weight_decay_index, adam_weight_decay);
       break;
     }
   }

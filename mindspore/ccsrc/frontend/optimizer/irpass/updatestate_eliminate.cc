@@ -730,7 +730,8 @@ AnfNodePtr EliminateMonadParameterForSwitchCall(const AnfNodePtr &node) {
   if (mgr == nullptr) {
     return nullptr;
   }
-  if (switch_call->inputs().size() < 2) {
+  const size_t switch_call_input_size = 2;
+  if (switch_call->inputs().size() < switch_call_input_size) {
     return nullptr;
   }
   constexpr size_t primary_index = 0;
