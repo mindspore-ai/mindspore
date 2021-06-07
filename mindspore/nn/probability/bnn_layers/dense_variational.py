@@ -131,11 +131,11 @@ class DenseReparam(_DenseVariational):
     Args:
         in_channels (int): The number of input channel.
         out_channels (int): The number of output channel .
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         activation (str, Cell): A regularization function applied to the output of the layer.
             The type of `activation` can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()).
             Note that if the type of activation is Cell, it must be instantiated beforehand.
             Default: None.
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_prior_fn: The prior distribution for weight.
             It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
@@ -220,11 +220,11 @@ class DenseLocalReparam(_DenseVariational):
     Args:
         in_channels (int): The number of input channel.
         out_channels (int): The number of output channel .
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         activation (str, Cell): A regularization function applied to the output of the layer.
             The type of `activation` can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()).
             Note that if the type of activation is Cell, it must be instantiated beforehand.
             Default: None.
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_prior_fn: The prior distribution for weight.
             It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
