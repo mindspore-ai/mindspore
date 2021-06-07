@@ -46,7 +46,6 @@ bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
   if (!rdr_enable_) {
     return false;
   }
-
   if (recorder == nullptr) {
     MS_LOG(ERROR) << "Register recorder module with nullptr.";
     return false;
@@ -56,10 +55,15 @@ bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
   std::pair<std::string, std::string> recorder_key(module, name);
   std::lock_guard<std::mutex> lock(mtx_);
   recorder_container_[recorder_key] = recorder;
+  MS_LOG(INFO) << "RDR record object " << name << " in module \"" << module << "\".";
   return true;
 }
 
 BaseRecorderPtr RecorderManager::GetRecorder(std::string module, std::string name) {
+  if (!rdr_enable_) {
+    return nullptr;
+  }
+  std::lock_guard<std::mutex> lock(mtx_);
   std::pair<std::string, std::string> recorder_key(module, name);
   auto item = recorder_container_.find(recorder_key);
   if (item != recorder_container_.end()) {
@@ -68,11 +72,31 @@ BaseRecorderPtr RecorderManager::GetRecorder(std::string module, std::string nam
   return nullptr;
 }
 
+bool RecorderManager::RdrEnable() const {
+  std::lock_guard<std::mutex> lock(mtx_);
+  return rdr_enable_;
+}
+
+bool RecorderManager::CheckRdrGPUMemIsRecord() const {
+  if (!rdr_enable_) {
+    return false;
+  }
+  std::lock_guard<std::mutex> lock(mtx_);
+  return rdr_has_record_mem_;
+}
+
+void RecorderManager::SetRdrGPUMemIsRecord(bool is_enable) {
+  if (!rdr_enable_) {
+    return;
+  }
+  std::lock_guard<std::mutex> lock(mtx_);
+  rdr_has_record_mem_ = is_enable;
+}
+
 void RecorderManager::TriggerAll() {
   if (!rdr_enable_) {
     return;
   }
-
   bool trigger = false;
   std::lock_guard<std::mutex> lock(mtx_);
   for (auto iter = recorder_container_.begin(); iter != recorder_container_.end(); ++iter) {
@@ -81,11 +105,18 @@ void RecorderManager::TriggerAll() {
   }
   if (!trigger) {
     MS_LOG(WARNING) << "There is no recorder to export.";
+  } else {
+    MS_LOG(INFO) << "RDR export all recorders' info.";
   }
 }
 
 void RecorderManager::ClearAll() {
+  if (!rdr_enable_) {
+    return;
+  }
   std::lock_guard<std::mutex> lock(mtx_);
   recorder_container_.clear();
+  rdr_has_record_mem_ = false;
+  MS_LOG(INFO) << "RDR clear all recorders' info.";
 }
 }  // namespace mindspore

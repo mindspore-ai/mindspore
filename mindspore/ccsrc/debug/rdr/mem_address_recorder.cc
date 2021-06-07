@@ -37,12 +37,23 @@ void GPUMemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMem
   if (op_names_.size() <= id) {
     return;
   }
-
   std::lock_guard<std::mutex> lock(mtx_);
   op_names_[id] = op_name;
   mem_info_inputs_[id] = *(mem_info.inputs_);
   mem_info_workspaces_[id] = *(mem_info.workspaces_);
   mem_info_outputs_[id] = *(mem_info.outputs_);
+}
+
+void GPUMemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo *mem_info) {
+  std::lock_guard<std::mutex> lock(mtx_);
+  if (!printed) {
+    MS_LOG(INFO) << "RDR update gpu mem info.";
+    printed = true;
+  }
+  op_names_.emplace_back(op_name);
+  mem_info_inputs_.emplace_back(mem_info->inputs_);
+  mem_info_workspaces_.emplace_back(mem_info->workspaces_);
+  mem_info_outputs_.emplace_back(mem_info->outputs_);
 }
 
 void GPUMemAddressRecorder::Export() {
@@ -58,6 +69,7 @@ void GPUMemAddressRecorder::Export() {
     MS_LOG(WARNING) << "Open file for saving gpu memory information failed. File path: '" << file_path << "'.";
     return;
   }
+  MS_LOG(INFO) << "RDR export gpu mem info.";
   std::ostringstream mem_info_stream;
   for (size_t i = 0; i < op_names_.size(); i++) {
     mem_info_stream << op_names_[i] << std::endl;
@@ -72,5 +84,15 @@ void GPUMemAddressRecorder::Export() {
   fout << mem_info_stream.str();
   fout.close();
   ChangeFileMode(file_path, S_IRUSR);
+}
+
+void GPUMemAddressRecorder::CleanUp() {
+  std::lock_guard<std::mutex> lock(mtx_);
+  MS_LOG(INFO) << "RDR clean up gpu mem info, kernel size equals " << op_names_.size();
+  op_names_.clear();
+  mem_info_inputs_.clear();
+  mem_info_workspaces_.clear();
+  mem_info_outputs_.clear();
+  printed = false;
 }
 }  // namespace mindspore

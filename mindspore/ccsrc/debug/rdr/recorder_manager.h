@@ -61,7 +61,10 @@ class RecorderManager {
   }
 
   void UpdateRdrEnable();
-  bool RdrEnable() const { return rdr_enable_; }
+  bool RdrEnable() const;
+  bool CheckRdrGPUMemIsRecord() const;
+  void SetRdrGPUMemIsRecord(bool is_enable = true);
+
   bool RecordObject(const BaseRecorderPtr &recorder);
   BaseRecorderPtr GetRecorder(std::string module, std::string name);
   void TriggerAll();
@@ -72,6 +75,7 @@ class RecorderManager {
   ~RecorderManager() {}
 
   bool rdr_enable_{false};
+  bool rdr_has_record_mem_{false};
 
   mutable std::mutex mtx_;
   // <module, name>, BaserRecorderPtr

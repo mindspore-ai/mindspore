@@ -35,6 +35,8 @@
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
+#include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/mem_address_recorder.h"
 
 namespace mindspore {
 namespace device {
@@ -364,7 +366,6 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   if (profiler_inst->GetSyncEnableFlag()) {
     CHECK_RET_WITH_RETURN_ERROR(SyncStream(), "Profiler SyncStream failed.");
   }
-
   return ret;
 }
 
@@ -380,7 +381,23 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
   if (stream_id >= streams_.size()) {
     MS_LOG(EXCEPTION) << "The stream_id: " << stream_id << " is greater than stream array size: " << streams_.size();
   }
-  return GPUDeviceManager::GetInstance().SyncStream(streams_[stream_id]);
+  bool result = GPUDeviceManager::GetInstance().SyncStream(streams_[stream_id]);
+#ifdef ENABLE_DUMP_IR
+  if (!result) {
+    RecorderManager::Instance().TriggerAll();
+  }
+  // clear RDR gpu memory info
+  if (RecorderManager::Instance().CheckRdrGPUMemIsRecord()) {
+    std::string name = "mem_address_list";
+    std::string submodule_name = "KERNEL";
+    auto recorder = RecorderManager::Instance().GetRecorder(submodule_name, name);
+    if (recorder != nullptr) {
+      auto mem_recorder = std::dynamic_pointer_cast<GPUMemAddressRecorder>(recorder);
+      mem_recorder->CleanUp();
+    }
+  }
+#endif
+  return result;
 }
 
 std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {

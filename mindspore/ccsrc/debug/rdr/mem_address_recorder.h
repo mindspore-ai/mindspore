@@ -26,6 +26,7 @@
 namespace mindspore {
 namespace kernel {
 class Address;
+struct KernelLaunchInfo;
 using AddressPtr = std::shared_ptr<Address>;
 }  // namespace kernel
 using AddressPtrList = std::vector<kernel::AddressPtr>;
@@ -42,15 +43,19 @@ class GPUMemAddressRecorder : public BaseRecorder {
 
   virtual void Export();
   void SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info, size_t id);
+  void SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchInfo *mem_info);
+
   void Reset(size_t nsize) {
     op_names_.resize(nsize);
     mem_info_inputs_.resize(nsize);
     mem_info_workspaces_.resize(nsize);
     mem_info_outputs_.resize(nsize);
   }
+  void CleanUp();
 
  private:
   mutable std::mutex mtx_;
+  bool printed{false};
   std::vector<std::string> op_names_;
   std::vector<AddressPtrList> mem_info_inputs_;
   std::vector<AddressPtrList> mem_info_workspaces_;

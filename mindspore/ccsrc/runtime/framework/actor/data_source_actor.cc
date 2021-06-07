@@ -180,8 +180,8 @@ void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
 
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *context) {
   if (recorder_aid_ != nullptr) {
-    Async(*recorder_aid_, &RecorderActor::RecordMemAddressInfo, data_kernel_.get(), &launch_info_, device_context_,
-          context);
+    Async(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &launch_info_,
+          device_context_, context);
   }
 }
 

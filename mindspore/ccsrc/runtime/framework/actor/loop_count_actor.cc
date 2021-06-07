@@ -79,7 +79,7 @@ void LoopCountActor::Execute(OpContext<DeviceTensor> *context) {
 void LoopCountActor::SendOutput(OpContext<DeviceTensor> *context) {
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
-    Async(*recorder_aid_, &RecorderActor::ClearMemAddressInfo, context);
+    Async(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);
   }
 
   // Send loop count to output actor.
