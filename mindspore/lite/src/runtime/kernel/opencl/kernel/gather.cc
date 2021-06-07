@@ -214,5 +214,4 @@ int GatherOpenCLKernel::Run() {
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
-
 }  // namespace mindspore::kernel
