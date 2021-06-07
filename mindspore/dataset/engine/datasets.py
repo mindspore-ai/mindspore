@@ -3049,40 +3049,11 @@ class RangeDataset(MappableDataset):
 class ImageFolderDataset(MappableDataset):
     """
     A source dataset that reads images from a tree of directories.
-
     All images within one folder have the same label.
-    The generated dataset has two columns ['image', 'label'].
-    The shape of the image column is [image_size] if decode flag is False, or [H,W,C]
-    otherwise.
-    The type of the image tensor is uint8. The label is a scalar int32 tensor.
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -3102,7 +3073,7 @@ class ImageFolderDataset(MappableDataset):
             unique index starting from 0).
         decode (bool, optional): Decode the images after reading (default=False).
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into (default=None). When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
@@ -3110,6 +3081,8 @@ class ImageFolderDataset(MappableDataset):
             (default=None, which means no cache is used).
 
     Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -3117,47 +3090,12 @@ class ImageFolderDataset(MappableDataset):
         RuntimeError: If class_indexing is not a dictionary.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
-    Examples:
-        >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
-        >>>
-        >>> # 1) Read all samples (image files) in image_folder_dataset_dir with 8 threads
-        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
-        ...                                 num_parallel_workers=8)
-        >>>
-        >>> # 2) Read all samples (image files) from folder cat and folder dog with label 0 and 1
-        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
-        ...                                 class_indexing={"cat":0, "dog":1})
-        >>>
-        >>> # 3) Read all samples (image files) in image_folder_dataset_dir with extensions .JPEG and .png (case sensitive)
-        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
-        ...                                 extensions=[".JPEG", ".png"])
-    """
+    Note:
+        - The shape of the image column is [image_size] if decode flag is False, or [H,W,C] otherwise.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
 
-    @check_imagefolderdataset
-    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
-                 extensions=None, class_indexing=None, decode=False, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
-                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
-
-        self.dataset_dir = dataset_dir
-        self.extensions = replace_none(extensions, [])
-        self.class_indexing = replace_none(class_indexing, {})
-        self.decode = replace_none(decode, False)
-
-    def parse(self, children=None):
-        return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
-
-
-class MnistDataset(MappableDataset):
-    """
-    A source dataset for reading and parsing the MNIST dataset.
-
-    The generated dataset has two columns ['image', 'label'].
-    The type of the image tensor is uint8. The label is a scalar uint32 tensor.
-    This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
-
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
@@ -3183,26 +3121,69 @@ class MnistDataset(MappableDataset):
          - False
          - not allowed
 
-    Citation of Mnist dataset.
+    Examples:
+        >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (image files) in image_folder_dataset_dir with 8 threads
+        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
+        ...                                 num_parallel_workers=8)
+        >>>
+        >>> # 2) Read all samples (image files) from folder cat and folder dog with label 0 and 1
+        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
+        ...                                 class_indexing={"cat":0, "dog":1})
+        >>>
+        >>> # 3) Read all samples (image files) in image_folder_dataset_dir with extensions .JPEG and .png (case sensitive)
+        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
+        ...                                 extensions=[".JPEG", ".png"])
 
-    .. code-block::
+    About ImageFolderDataset:
+        | You can construct the following directory structure from your dataset files and read by MindSpore's API.
+        | .
+        | └── image_folder_dataset_directory
+        |      ├── class1
+        |      │    ├── 000000000001.jpg
+        |      │    ├── 000000000002.jpg
+        |      │    ├── ...
+        |      ├── class2
+        |      │    ├── 000000000001.jpg
+        |      │    ├── 000000000002.jpg
+        |      │    ├── ...
+        |      ├── class3
+        |      │    ├── 000000000001.jpg
+        |      │    ├── 000000000002.jpg
+        |      │    ├── ...
+        |      ├── classN
+        |      ├── ...
 
-        @article{lecun2010mnist,
-        title        = {MNIST handwritten digit database},
-        author       = {LeCun, Yann and Cortes, Corinna and Burges, CJ},
-        journal      = {ATT Labs [Online]},
-        volume       = {2},
-        year         = {2010},
-        howpublished = {http://yann.lecun.com/exdb/mnist},
-        description  = {The MNIST database of handwritten digits has a training set of 60,000 examples,
-                        and a test set of 10,000 examples. It is a subset of a larger set available from
-                        NIST. The digits have been size-normalized and centered in a fixed-size image.}
-        }
+    """
+
+    @check_imagefolderdataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
+                 extensions=None, class_indexing=None, decode=False, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.extensions = replace_none(extensions, [])
+        self.class_indexing = replace_none(class_indexing, {})
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
+
+
+class MnistDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the MNIST dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be "train", "test" or "all" . "train" will read from 60,000
-            train samples, "test" will read from 10,000 test samples, "all" will read from all 70,000 samples.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 60,000
+            train samples, `test` will read from 10,000 test samples, `all` will read from all 70,000 samples.
             (default=None, will read all samples)
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
@@ -3220,11 +3201,43 @@ class MnistDataset(MappableDataset):
             (default=None, which means no cache is used).
 
     Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
 
     Examples:
         >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
@@ -3233,6 +3246,31 @@ class MnistDataset(MappableDataset):
         >>> dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir, num_samples=3)
         >>>
         >>> # Note: In mnist_dataset dataset, each dictionary has keys "image" and "label"
+
+    About MNIST dataset:
+        | The MNIST database of handwritten digits has a training set of 60,000 examples,
+          and a test set of 10,000 examples. It is a subset of a larger set available from
+          NIST. The digits have been size-normalized and centered in a fixed-size image.
+
+        | Here is the original MNIST dataset structure.
+        | You can unzip the dataset files into this directory structure and read by MindSpore's API.
+        | .
+        | └── mnist_dataset_dir
+        |      ├── t10k-images-idx3-ubyte
+        |      ├── t10k-labels-idx1-ubyte
+        |      ├── train-images-idx3-ubyte
+        |      └── train-labels-idx1-ubyte
+
+        .. code-block::
+
+            @article{lecun2010mnist,
+            title        = {MNIST handwritten digit database},
+            author       = {LeCun, Yann and Cortes, Corinna and Burges, CJ},
+            journal      = {ATT Labs [Online]},
+            volume       = {2},
+            year         = {2010},
+            howpublished = {http://yann.lecun.com/exdb/mnist}
+            }
     """
 
     @check_mnist_cifar_dataset
@@ -3251,6 +3289,8 @@ class MnistDataset(MappableDataset):
 class MindDataset(MappableDataset):
     """
     A source dataset for reading and parsing MindRecord dataset.
+
+    The columns of generated dataset depend on the source MindRecord files.
 
     Args:
         dataset_file (Union[str, list[str]]): If dataset_file is a str, it represents for
@@ -3289,8 +3329,41 @@ class MindDataset(MappableDataset):
             (default=None, which means no cache is used).
 
     Raises:
-        ValueError: If num_shards is specified but shard_id is None.
-        ValueError: If shard_id is specified but num_shards is None.
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
 
     Examples:
         >>> mind_dataset_dir = ["/path/to/mind_dataset_file"] # contains 1 or multiple MindRecord files
@@ -3646,34 +3719,7 @@ class GeneratorDataset(MappableDataset):
     """
     A source dataset that generates data from Python by invoking Python data source each epoch.
 
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
-
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
-         - Expected Order Behavior
-       * - None
-         - None
-         - random order
-       * - None
-         - True
-         - random order
-       * - None
-         - False
-         - sequential order
-       * - Sampler object
-         - None
-         - order defined by sampler
-       * - Sampler object
-         - True
-         - not allowed
-       * - Sampler object
-         - False
-         - not allowed
+    The column names and column types of generated dataset depend on Python data defined by users.
 
     Args:
         source (Union[Callable, Iterable, Random Accessible]):
@@ -3697,7 +3743,7 @@ class GeneratorDataset(MappableDataset):
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
             input is required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            Random accessible input is required. When this argument is specified, 'num_samples' reflects the max sample
+            Random accessible input is required. When this argument is specified, `num_samples`s reflects the max sample
             number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
@@ -3705,6 +3751,46 @@ class GeneratorDataset(MappableDataset):
             option could be beneficial if the Python operation is computational heavy (default=True).
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True (default 6 MB).
+
+    Raises:
+        RuntimeError: If source raises an exception during execution.
+        RuntimeError: If len of column_names does not match output len of source.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
 
     Examples:
         >>> import numpy as np
@@ -3852,6 +3938,8 @@ class TFRecordDataset(SourceDataset):
     """
     A source dataset for reading and parsing datasets stored on disk in TFData format.
 
+    The columns of generated dataset depend on the source TFRecord files.
+
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in a lexicographical order.
@@ -3875,7 +3963,7 @@ class TFRecordDataset(SourceDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into (default=None). When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
@@ -3884,6 +3972,13 @@ class TFRecordDataset(SourceDataset):
             argument should only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> import mindspore.common.dtype as mstype
@@ -3930,12 +4025,47 @@ class ManifestDataset(MappableDataset):
     """
     A source dataset for reading images from a Manifest file.
 
-    The generated dataset has two columns ['image', 'label'].
-    The shape of the image column is [image_size] if decode flag is False, or [H,W,C]
-    otherwise.
-    The type of the image tensor is uint8. The label is a scalar uint64 tensor.
-    This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of a scalar of uint64 type.
+
+    Args:
+        dataset_file (str): File to be read.
+        usage (str, optional): Acceptable usages include `train`, `eval` and `inference` (default=`train`).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, will include all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        class_indexing (dict, optional): A str-to-int mapping from label name to index
+            (default=None, the folder names will be sorted alphabetically and each
+            class will be given a unique index starting from 0).
+        decode (bool, optional): decode the images after reading (default=False).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max number of samples per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If class_indexing is not a dictionary.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - The shape of the image column is [image_size] if decode flag is False, or [H,W,C] otherwise.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
@@ -3962,37 +4092,6 @@ class ManifestDataset(MappableDataset):
        * - Sampler object
          - False
          - not allowed
-
-    Args:
-        dataset_file (str): File to be read.
-        usage (str, optional): Acceptable usages include "train", "eval" and "inference" (default="train").
-        num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, will include all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, will use value set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        class_indexing (dict, optional): A str-to-int mapping from label name to index
-            (default=None, the folder names will be sorted alphabetically and each
-            class will be given a unique index starting from 0).
-        decode (bool, optional): decode the images after reading (default=False).
-        num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, `num_samples` reflects
-            the max number of samples per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
-            argument can only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None, which means no cache is used).
-
-    Raises:
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        RuntimeError: If class_indexing is not a dictionary.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> manifest_dataset_dir = "/path/to/manifest_dataset_file"
@@ -4038,18 +4137,52 @@ class ManifestDataset(MappableDataset):
 class Cifar10Dataset(MappableDataset):
     """
     A source dataset for reading and parsing Cifar10 dataset.
+    This api only supports parsing Cifar10 file in binary version now.
 
-    The generated dataset has two columns ['image', 'label'].
-    The type of the image tensor is uint8. The label is a scalar uint32 tensor.
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 50,000
+            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples.
+            (default=None, all samples)
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
+       * - Parameter `sampler`
+         - Parameter `shuffle`
          - Expected Order Behavior
        * - None
          - None
@@ -4070,48 +4203,6 @@ class Cifar10Dataset(MappableDataset):
          - False
          - not allowed
 
-    Citation of Cifar10 dataset.
-
-    .. code-block::
-
-        @techreport{Krizhevsky09,
-        author       = {Alex Krizhevsky},
-        title        = {Learning multiple layers of features from tiny images},
-        institution  = {},
-        year         = {2009},
-        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html},
-        description  = {The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes,
-                        with 6000 images per class. There are 50000 training images and 10000 test images.}
-        }
-
-    Args:
-        dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be "train", "test" or "all" . "train" will read from 50,000
-            train samples, "test" will read from 10,000 test samples, "all" will read from all 60,000 samples.
-            (default=None, all samples)
-        num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
-            the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None, which means no cache is used).
-
-    Raises:
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
-
     Examples:
         >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
         >>>
@@ -4125,6 +4216,34 @@ class Cifar10Dataset(MappableDataset):
         >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir, num_shards=2, shard_id=0)
         >>>
         >>> # In CIFAR10 dataset, each dictionary has keys "image" and "label"
+
+    About CIFAR-10 dataset:
+        | The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes,
+          with 6000 images per class. There are 50000 training images and 10000 test images.
+          The 10 different classes represent airplanes, cars, birds, cats, deer, dogs, frogs, horses, ships, and trucks.
+
+        | Here is the original CIFAR-10 dataset structure.
+        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+        | .
+        | └── cifar-10-batches-bin
+        |      ├── data_batch_1.bin
+        |      ├── data_batch_2.bin
+        |      ├── data_batch_3.bin
+        |      ├── data_batch_4.bin
+        |      ├── data_batch_5.bin
+        |      ├── test_batch.bin
+        |      ├── readme.html
+        |      └── batches.meta.txt
+
+        .. code-block::
+
+            @techreport{Krizhevsky09,
+            author       = {Alex Krizhevsky},
+            title        = {Learning multiple layers of features from tiny images},
+            institution  = {},
+            year         = {2009},
+            howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
+            }
     """
 
     @check_mnist_cifar_dataset
@@ -4144,17 +4263,50 @@ class Cifar100Dataset(MappableDataset):
     """
     A source dataset for reading and parsing Cifar100 dataset.
 
-    The generated dataset has three columns ['image', 'coarse_label', 'fine_label'].
-    The type of the image tensor is uint8. The coarse and fine labels are each a scalar uint32 tensor.
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
+    The generated dataset has three columns :py:obj:`[image, coarse_label, fine_label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`coarse_label` and :py:obj:`fine_labels` are each a scalar of uint32 type.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 50,000
+            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples.
+            (default=None, all samples)
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, 'num_samples' reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and shuffle
        :widths: 25 25 50
        :header-rows: 1
 
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
+       * - Parameter `sampler`
+         - Parameter `shuffle`
          - Expected Order Behavior
        * - None
          - None
@@ -4175,50 +4327,6 @@ class Cifar100Dataset(MappableDataset):
          - False
          - not allowed
 
-    Citation of Cifar100 dataset.
-
-    .. code-block::
-
-        @techreport{Krizhevsky09,
-        author       = {Alex Krizhevsky},
-        title        = {Learning multiple layers of features from tiny images},
-        institution  = {},
-        year         = {2009},
-        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html},
-        description  = {This dataset is just like the CIFAR-10, except it has 100 classes containing 600 images
-                        each. There are 500 training images and 100 testing images per class. The 100 classes in
-                        the CIFAR-100 are grouped into 20 superclasses. Each image comes with a "fine" label (the
-                        class to which it belongs) and a "coarse" label (the superclass to which it belongs).}
-        }
-
-    Args:
-        dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be "train", "test" or "all" . "train" will read from 50,000
-            train samples, "test" will read from 10,000 test samples, "all" will read from all 60,000 samples.
-            (default=None, all samples)
-        num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        sampler (Sampler, optional): Object used to choose samples from the
-            dataset (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
-            the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None, which means no cache is used).
-
-    Raises:
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
-
     Examples:
         >>> cifar100_dataset_dir = "/path/to/cifar100_dataset_directory"
         >>>
@@ -4229,6 +4337,31 @@ class Cifar100Dataset(MappableDataset):
         >>> dataset = ds.Cifar100Dataset(dataset_dir=cifar100_dataset_dir, num_samples=350, shuffle=True)
         >>>
         >>> # In CIFAR100 dataset, each dictionary has 3 keys: "image", "fine_label" and "coarse_label"
+
+    About CIFAR-100 dataset:
+        | This dataset is just like the CIFAR-10, except it has 100 classes containing 600 images
+          each. There are 500 training images and 100 testing images per class. The 100 classes in
+          the CIFAR-100 are grouped into 20 superclasses. Each image comes with a "fine" label (the
+          class to which it belongs) and a "coarse" label (the superclass to which it belongs).
+
+        | Here is the original CIFAR-100 dataset structure.
+        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+        | .
+        | └── cifar-100-binary
+        |      ├── train.bin
+        |      ├── test.bin
+        |      ├── fine_label_names.txt
+        |      └── coarse_label_names.txt
+
+        .. code-block::
+
+            @techreport{Krizhevsky09,
+            author       = {Alex Krizhevsky},
+            title        = {Learning multiple layers of features from tiny images},
+            institution  = {},
+            year         = {2009},
+            howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
+            }
     """
 
     @check_mnist_cifar_dataset
@@ -4397,21 +4530,69 @@ class VOCDataset(MappableDataset):
     """
     A source dataset for reading and parsing VOC dataset.
 
-    The generated dataset has multiple columns :
+    The generated dataset with different task setting has different output columns:
 
-    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32],
-      ['label', dtype=uint32], ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
-    - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
+    - task = :py:obj:`Detection`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
+        :py:obj:`[label, dtype=uint32]`, :py:obj:`[difficult, dtype=uint32]`, :py:obj:`[truncate, dtype=uint32]`.
+    - task = :py:obj:`Segmentation`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[target,dtype=uint8]`.
 
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str): Set the task type of reading voc data, now only support `Segmentation` or `Detection`
+            (default=`Segmentation`).
+        usage (str): Set the task type of ImageSets(default=`train`). If task is `Segmentation`, image and annotation
+            list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is `Detection`, image and
+            annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage is not set, image and
+            annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
+        class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
+            `Detection` task (default=None, the folder names will be sorted alphabetically and each
+            class will be given a unique index starting from 0).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the dataset
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column named
+            :py:obj:`[_meta-filename, dtype=string]` will be output at the end (default=False).
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If xml of Annotations is an invalid format.
+        RuntimeError: If xml of Annotations loss attribution of `object`.
+        RuntimeError: If xml of Annotations loss attribution of `bndbox`.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If task is not equal 'Segmentation' or 'Detection'.
+        ValueError: If task equal 'Segmentation' but class_indexing is not None.
+        ValueError: If txt related to mode is not exist.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op
+          is added to remove the prefix('_meta-').
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
+       * - Parameter `sampler`
+         - Parameter `shuffle`
          - Expected Order Behavior
        * - None
          - None
@@ -4432,73 +4613,6 @@ class VOCDataset(MappableDataset):
          - False
          - not allowed
 
-    Citation of VOC dataset.
-
-    .. code-block::
-
-        @article{Everingham10,
-        author       = {Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.},
-        title        = {The Pascal Visual Object Classes (VOC) Challenge},
-        journal      = {International Journal of Computer Vision},
-        volume       = {88},
-        year         = {2010},
-        number       = {2},
-        month        = {jun},
-        pages        = {303--338},
-        biburl       = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
-        howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/index.html},
-        description  = {The PASCAL Visual Object Classes (VOC) challenge is a benchmark in visual
-                        object category recognition and detection, providing the vision and machine
-                        learning communities with a standard dataset of images and annotation, and
-                        standard evaluation procedures.}
-        }
-
-    Args:
-        dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
-            (default="Segmentation").
-        usage (str): Set the task type of ImageSets(default="train"). If task is "Segmentation", image and annotation
-            list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is "Detection", image and
-            annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage is not set, image and
-            annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
-        class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
-            "Detection" task (default=None, the folder names will be sorted alphabetically and each
-            class will be given a unique index starting from 0).
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
-        sampler (Sampler, optional): Object used to choose samples from the dataset
-            (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
-            the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None, which means no cache is used).
-        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
-            output at the end ['_meta-filename', dtype=string] (default=False).
-
-    Note:
-        '_meta-filename' won't be output unless an explicit rename dataset op is added to remove the prefix('_meta-').
-
-    Raises:
-        RuntimeError: If xml of Annotations is an invalid format.
-        RuntimeError: If xml of Annotations loss attribution of "object".
-        RuntimeError: If xml of Annotations loss attribution of "bndbox".
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If task is not equal 'Segmentation' or 'Detection'.
-        ValueError: If task equal 'Segmentation' but class_indexing is not None.
-        ValueError: If txt related to mode is not exist.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
-
     Examples:
         >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
         >>>
@@ -4518,6 +4632,52 @@ class VOCDataset(MappableDataset):
         >>>
         >>> # In VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
         >>> # In VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
+
+    About VOC dataset.
+        | The PASCAL Visual Object Classes (VOC) challenge is a benchmark in visual
+          object category recognition and detection, providing the vision and machine
+          learning communities with a standard dataset of images and annotation, and
+          standard evaluation procedures.
+
+        | You can unzip the original VOC-2012 dataset files into this directory structure and read by MindSpore's API.
+        | .
+        | └── voc2012_dataset_dir
+        |      ├── Annotations
+        |      │    ├── 2007_000027.xml
+        |      │    ├── 2007_000032.xml
+        |      │    ├── ...
+        |      ├── ImageSets
+        |      │    ├── Action
+        |      │    ├── Layout
+        |      │    ├── Main
+        |      │    └── Segmentation
+        |      ├── JPEGImages
+        |      │    ├── 2007_000027.jpg
+        |      │    ├── 2007_000032.jpg
+        |      │    ├── ...
+        |      ├── SegmentationClass
+        |      │    ├── 2007_000032.png
+        |      │    ├── 2007_000033.png
+        |      │    ├── ...
+        |      └── SegmentationObject
+        |           ├── 2007_000032.png
+        |           ├── 2007_000033.png
+        |           ├── ...
+
+        .. code-block::
+
+            @article{Everingham10,
+            author       = {Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.},
+            title        = {The Pascal Visual Object Classes (VOC) Challenge},
+            journal      = {International Journal of Computer Vision},
+            volume       = {88},
+            year         = {2010},
+            number       = {2},
+            month        = {jun},
+            pages        = {303--338},
+            biburl       = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
+            howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/index.html}
+            }
     """
 
     @check_vocdataset
@@ -4560,29 +4720,70 @@ class CocoDataset(MappableDataset):
     """
     A source dataset for reading and parsing COCO dataset.
 
-    `CocoDataset` supports four kinds of tasks, which are Object Detection, Keypoint Detection, Stuff Segmentation and
+    CocoDataset supports four kinds of tasks, which are Object Detection, Keypoint Detection, Stuff Segmentation and
     Panoptic Segmentation of 2017 Train/Val/Test dataset.
 
-    The generated dataset has multi-columns :
+    The generated dataset with different task setting has different output columns:
 
-    - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32],
-      ['category_id', dtype=uint32], ['iscrowd', dtype=uint32]].
-    - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32],
-      ['iscrowd',dtype=uint32]].
-    - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
-      ['num_keypoints', dtype=uint32]].
-    - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32],
-      ['category_id', dtype=uint32], ['iscrowd', dtype=uint32], ['area', dtype=uint32]].
+    - task = :py:obj:`Detection`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
+        :py:obj:`[category_id, dtype=uint32]`, :py:obj:`[iscrowd, dtype=uint32]`.
+    - task = :py:obj:`Stuff`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[segmentation,dtype=float32]`, \
+        :py:obj:`[iscrowd,dtype=uint32]`.
+    - task = :py:obj:`Keypoint, output columns: :py:obj:`[image, dtype=uint8]`, \
+        :py:obj:`[keypoints, dtype=float32]`, :py:obj:`[num_keypoints, dtype=uint32]`.
+    - task = :py:obj:`Panoptic`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
+        :py:obj:`[category_id, dtype=uint32]`, :py:obj:`[iscrowd, dtype=uint32]`, :py:obj:`[area, dtype=uint32]`.
 
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. CocoDataset doesn't support
-    PKSampler. The table below shows what input arguments are allowed and their expected behavior.
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        annotation_file (str): Path to the annotation JSON.
+        task (str): Set the task type for reading COCO data.  Supported task types:
+            `Detection`, `Stuff`, `Panoptic` and `Keypoint` (default=`Detection`).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the configuration file).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the dataset
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
+            output at the end :py:obj:`[_meta-filename, dtype=string]` (default=False).
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If parse JSON file failed.
+        ValueError: If task is not in [`Detection`, `Stuff`, `Panoptic`, `Keypoint`].
+        ValueError: If annotation_file is not exist.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op is added
+          to remove the prefix('_meta-').
+        - CocoDataset doesn't support PKSampler.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
+       * - Parameter `sampler`
+         - Parameter `shuffle`
          - Expected Order Behavior
        * - None
          - None
@@ -4602,68 +4803,6 @@ class CocoDataset(MappableDataset):
        * - Sampler object
          - False
          - not allowed
-
-    Citation of Coco dataset.
-
-    .. code-block::
-
-        @article{DBLP:journals/corr/LinMBHPRDZ14,
-        author        = {Tsung{-}Yi Lin and Michael Maire and Serge J. Belongie and
-                         Lubomir D. Bourdev and  Ross B. Girshick and James Hays and
-                         Pietro Perona and Deva Ramanan and Piotr Doll{\'{a}}r and C. Lawrence Zitnick},
-        title         = {Microsoft {COCO:} Common Objects in Context},
-        journal       = {CoRR},
-        volume        = {abs/1405.0312},
-        year          = {2014},
-        url           = {http://arxiv.org/abs/1405.0312},
-        archivePrefix = {arXiv},
-        eprint        = {1405.0312},
-        timestamp     = {Mon, 13 Aug 2018 16:48:13 +0200},
-        biburl        = {https://dblp.org/rec/journals/corr/LinMBHPRDZ14.bib},
-        bibsource     = {dblp computer science bibliography, https://dblp.org},
-        description   = {COCO is a large-scale object detection, segmentation, and captioning dataset.
-                         It contains 91 common object categories with 82 of them having more than 5,000
-                         labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
-                         categories but more instances per category.}
-        }
-
-    Args:
-        dataset_dir (str): Path to the root directory that contains the dataset.
-        annotation_file (str): Path to the annotation JSON.
-        task (str): Set the task type for reading COCO data.  Supported task types:
-            'Detection', 'Stuff', 'Panoptic' and 'Keypoint' (default='Detection').
-        num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the configuration file).
-        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
-            order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
-        sampler (Sampler, optional): Object used to choose samples from the dataset
-            (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
-            the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None, which means no cache is used).
-        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
-            output at the end ['_meta-filename', dtype=string] (default=False).
-
-    Note:
-        '_meta-filename' won't be output unless an explicit rename dataset op is added to remove the prefix('_meta-').
-
-    Raises:
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        RuntimeError: If parse JSON file failed.
-        ValueError: If task is not in ['Detection', 'Stuff', 'Panoptic', 'Keypoint'].
-        ValueError: If annotation_file is not exist.
-        ValueError: If dataset_dir is not exist.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> coco_dataset_dir = "/path/to/coco_dataset_directory/images"
@@ -4690,6 +4829,53 @@ class CocoDataset(MappableDataset):
         ...                          task='Keypoint')
         >>>
         >>> # In COCO dataset, each dictionary has keys "image" and "annotation"
+
+    About COCO dataset:
+        | COCO is a large-scale object detection, segmentation, and captioning dataset.
+          It contains 91 common object categories with 82 of them having more than 5,000
+          labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
+          categories but more instances per category.
+
+        | You can unzip the original COCO-2017 dataset files into this directory structure and read by MindSpore's API.
+        | .
+        | └── coco_dataset_directory
+        |      ├── train2017
+        |      │    ├── 000000000009.jpg
+        |      │    ├── 000000000025.jpg
+        |      │    ├── ...
+        |      ├── test2017
+        |      │    ├── 000000000001.jpg
+        |      │    ├── 000000058136.jpg
+        |      │    ├── ...
+        |      ├── val2017
+        |      │    ├── 000000000139.jpg
+        |      │    ├── 000000057027.jpg
+        |      │    ├── ...
+        |      └── annotations
+        |           ├── captions_train2017.json
+        |           ├── captions_val2017.json
+        |           ├── instances_train2017.json
+        |           ├── instances_val2017.json
+        |           ├── person_keypoints_train2017.json
+        |           └── person_keypoints_val2017.json
+
+        .. code-block::
+
+            @article{DBLP:journals/corr/LinMBHPRDZ14,
+            author        = {Tsung{-}Yi Lin and Michael Maire and Serge J. Belongie and
+                            Lubomir D. Bourdev and  Ross B. Girshick and James Hays and
+                            Pietro Perona and Deva Ramanan and Piotr Doll{\'{a}}r and C. Lawrence Zitnick},
+            title         = {Microsoft {COCO:} Common Objects in Context},
+            journal       = {CoRR},
+            volume        = {abs/1405.0312},
+            year          = {2014},
+            url           = {http://arxiv.org/abs/1405.0312},
+            archivePrefix = {arXiv},
+            eprint        = {1405.0312},
+            timestamp     = {Mon, 13 Aug 2018 16:48:13 +0200},
+            biburl        = {https://dblp.org/rec/journals/corr/LinMBHPRDZ14.bib},
+            bibsource     = {dblp computer science bibliography, https://dblp.org}
+            }
     """
 
     @check_cocodataset
@@ -4725,48 +4911,19 @@ class CocoDataset(MappableDataset):
 
 class CelebADataset(MappableDataset):
     """
-    A source dataset for reading and parsing CelebA dataset. Only support to read `list_attr_celeba.txt` currently,
-    which is the attribute annotations of the dataset.
+    A source dataset for reading and parsing CelebA dataset.
+    Only support to read `list_attr_celeba.txt` currently, which is the attribute annotations of the dataset.
 
-    Note:
-        The generated dataset has two columns ['image', 'attr'].
-        The image tensor is of the uint8 type. The attribute tensor is of the uint32 type and one hot encoded.
-
-    Citation of CelebA dataset.
-
-    .. code-block::
-
-        @article{DBLP:journals/corr/LiuLWT14,
-        author    = {Ziwei Liu and Ping Luo and Xiaogang Wang and Xiaoou Tang},
-        title     = {Deep Learning Face Attributes in the Wild},
-        journal   = {CoRR},
-        volume    = {abs/1411.7766},
-        year      = {2014},
-        url       = {http://arxiv.org/abs/1411.7766},
-        archivePrefix = {arXiv},
-        eprint    = {1411.7766},
-        timestamp = {Tue, 10 Dec 2019 15:37:26 +0100},
-        biburl    = {https://dblp.org/rec/journals/corr/LiuLWT14.bib},
-        bibsource = {dblp computer science bibliography, https://dblp.org},
-        howpublished = {http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html},
-        description  = {CelebFaces Attributes Dataset (CelebA) is a large-scale face attributes dataset
-                        with more than 200K celebrity images, each with 40 attribute annotations.
-                        The images in this dataset cover large pose variations and background clutter.
-                        CelebA has large diversities, large quantities, and rich annotations, including
-                        * 10,177 number of identities,
-                        * 202,599 number of face images, and
-                        * 5 landmark locations, 40 binary attributes annotations per image.
-                        The dataset can be employed as the training and test sets for the following computer
-                        vision tasks: face attribute recognition, face detection, landmark (or facial part)
-                        localization, and face editing & synthesis.}
-        }
+    The generated dataset has two columns: :py:obj:`[image, attr]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`attr` is of the uint32 type and one hot encoded.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_parallel_workers (int, optional): Number of workers to read the data (default=None, will use value set in
             the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        usage (str): one of 'all', 'train', 'valid' or 'test' (default='all', will read all samples).
+        usage (str): one of `all`, `train`, `valid` or `test` (default=`all`, will read all samples).
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
         decode (bool, optional): decode the images after reading (default=False).
         extensions (list[str], optional): List of file extensions to be included in the dataset (default=None).
@@ -4780,9 +4937,109 @@ class CelebADataset(MappableDataset):
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
     Examples:
         >>> celeba_dataset_dir = "/path/to/celeba_dataset_directory"
-        >>> dataset = ds.CelebADataset(dataset_dir=celeba_dataset_dir, usage='train')
+        >>>
+        >>> # Read 5 samples from CelebA dataset
+        >>> dataset = ds.CelebADataset(dataset_dir=celeba_dataset_dir, usage='train', num_samples=5)
+        >>>
+        >>> # Note: In celeba dataset, each data dictionary owns keys "image" and "attr"
+
+    About CelebA dataset:
+        | CelebFaces Attributes Dataset (CelebA) is a large-scale face attributes dataset
+          with more than 200K celebrity images, each with 40 attribute annotations.
+        |
+        | The images in this dataset cover large pose variations and background clutter.
+          CelebA has large diversities, large quantities, and rich annotations, including
+        |   * 10,177 number of identities,
+        |   * 202,599 number of face images, and
+        |   * 5 landmark locations, 40 binary attributes annotations per image.
+        |
+        | The dataset can be employed as the training and test sets for the following computer
+          vision tasks: face attribute recognition, face detection, landmark (or facial part)
+          localization, and face editing & synthesis.
+
+        | Original CelebA dataset structure:
+        | .
+        | └── CelebA
+        |      ├── README.md
+        |      ├── Img
+        |      │    ├── img_celeba.7z
+        |      │    ├── img_align_celeba_png.7z
+        |      │    └── img_align_celeba.zip
+        |      ├── Eval
+        |      │    └── list_eval_partition.txt
+        |      └── Anno
+        |           ├── list_landmarks_celeba.txt
+        |           ├── list_landmarks_align_celeba.txt
+        |           ├── list_bbox_celeba.txt
+        |           ├── list_attr_celeba.txt
+        |           └── identity_CelebA.txt
+
+        | You can unzip the dataset files into the following structure and read by MindSpore's API.
+        | .
+        | └── celeba_dataset_directory
+        |      ├── list_attr_celeba.txt
+        |      ├── 000001.jpg
+        |      ├── 000002.jpg
+        |      ├── 000003.jpg
+        |      ├── ...
+
+        .. code-block::
+
+            @article{DBLP:journals/corr/LiuLWT14,
+            author    = {Ziwei Liu and Ping Luo and Xiaogang Wang and Xiaoou Tang},
+            title     = {Deep Learning Face Attributes in the Wild},
+            journal   = {CoRR},
+            volume    = {abs/1411.7766},
+            year      = {2014},
+            url       = {http://arxiv.org/abs/1411.7766},
+            archivePrefix = {arXiv},
+            eprint    = {1411.7766},
+            timestamp = {Tue, 10 Dec 2019 15:37:26 +0100},
+            biburl    = {https://dblp.org/rec/journals/corr/LiuLWT14.bib},
+            bibsource = {dblp computer science bibliography, https://dblp.org},
+            howpublished = {http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html},
+            }
     """
 
     @check_celebadataset
@@ -4807,32 +5064,67 @@ class CelebADataset(MappableDataset):
 class CLUEDataset(SourceDataset):
     """
     A source dataset that reads and parses CLUE datasets.
-    CLUE, the Chinese Language Understanding Evaluation Benchmark, is a collection of datasets, baselines,
-    pre-trained models, corpus and leaderboard. Supported CLUE classification tasks: 'AFQMC', 'TNEWS', 'IFLYTEK',
-    'CMNLI', 'WSC' and 'CSL'.
+    Supported CLUE classification tasks: `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
 
-    Citation of CLUE dataset.
+    The generated dataset with different task setting has different output columns:
 
-    .. code-block::
+    - task = :py:obj:`AFQMC`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
 
-        @article{CLUEbenchmark,
-        title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
-        author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
-                   Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
-                   Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
-                   Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
-        journal = {arXiv preprint arXiv:2004.05986},
-        year    = {2020},
-        howpublished = {https://github.com/CLUEbenchmark/CLUE},
-        description  = {CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
-                        tasks, including single-sentence classification, sentence pair classification, and machine
-                        reading comprehension.}
-        }
+    - task = :py:obj:`TNEWS`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, :py:obj:`[keywords, dtype=string]`.
+
+    - task = :py:obj:`IFLYTEK`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=string]`, \
+            :py:obj:`[sentence, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
+            :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
+
+    - task = :py:obj:`CMNLI`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
+            :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+    - task = :py:obj:`WSC`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
+            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
+            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, \
+            :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = output columns: :py:obj:`[span1_index, dtype=uint8]`, \
+            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
+            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, :py:obj:`[text, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[span1_index, dtype=uint8]`, \
+            :py:obj:`[span2_index, dtype=uint8]`, :py:obj:`[span1_text, dtype=string]`, \
+            :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint8]`, \
+            :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
+
+    - task = :py:obj:`CSL`
+        - usage = :py:obj:`train`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
+        - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`.
+        - usage = :py:obj:`eval`, output columns: :py:obj:`[id, dtype=uint8]`, \
+            :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for
             a pattern of files. The list will be sorted in a lexicographical order.
-        task (str, optional): The kind of task, one of 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' and 'CSL'.
+        task (str, optional): The kind of task, one of `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
             (default=AFQMC).
         usage (str, optional): Need train, test or eval data (default="train").
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
@@ -4849,15 +5141,47 @@ class CLUEDataset(SourceDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
     Examples:
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
         >>> dataset = ds.CLUEDataset(dataset_files=clue_dataset_dir, task='AFQMC', usage='train')
+
+    About CLUE dataset.
+        | CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
+          tasks, including single-sentence classification, sentence pair classification, and machine
+          reading comprehension.
+
+        | You can unzip the dataset files into the following structure and read by MindSpore's API,
+          such as afqmc dataset:
+        | .
+        | └── afqmc_public
+        |      ├── train.json
+        |      ├── test.json
+        |      └── dev.json
+
+        .. code-block::
+
+            @article{CLUEbenchmark,
+            title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
+            author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
+                    Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
+                    Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+                    Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
+            journal = {arXiv preprint arXiv:2004.05986},
+            year    = {2020},
+            howpublished = {https://github.com/CLUEbenchmark/CLUE}
+            }
     """
 
     @check_cluedataset
@@ -4877,6 +5201,7 @@ class CLUEDataset(SourceDataset):
 class CSVDataset(SourceDataset):
     """
     A source dataset that reads and parses comma-separated values (CSV) datasets.
+    The columns of generated dataset depend on the source CSV files.
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search
@@ -4901,12 +5226,17 @@ class CSVDataset(SourceDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
 
     Examples:
         >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
@@ -4932,7 +5262,7 @@ class CSVDataset(SourceDataset):
 class TextFileDataset(SourceDataset):
     """
     A source dataset that reads and parses datasets stored on disk in text format.
-    The generated dataset has one column ['text'].
+    The generated dataset has one column :py:obj:`[text]` with type string.
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
@@ -4951,11 +5281,17 @@ class TextFileDataset(SourceDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_files are not valid or do not exist.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
 
     Examples:
         >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
@@ -5045,15 +5381,37 @@ class NumpySlicesDataset(GeneratorDataset):
     """
     Creates a dataset with given data slices, mainly for loading Python data into dataset.
 
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
-    below shows what input arguments are allowed and their expected behavior.
+    The column names and column types of generated dataset depend on Python data defined by users.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    Args:
+        data (Union[list, tuple, dict]) Input of given data. Supported data types include: list, tuple, dict and other
+            NumPy formats. Input data will be sliced along the first dimension and generate additional rows, if input is
+            list, there will be one column in each row, otherwise there tends to be multi columns. Large data is not
+            recommended to be loaded in this way as data is loading into memory.
+        column_names (list[str], optional): List of column names of the dataset (default=None). If column_names is not
+            provided, when data is dict, column_names will be its keys, otherwise it will be like column_0, column_1 ...
+        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            Random accessible input is required. When this argument is specified, `num_samples` reflects the max
+            sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
+            when num_shards is also specified. Random accessible input is required.
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
+       * - Parameter `sampler`
+         - Parameter `shuffle`
          - Expected Order Behavior
        * - None
          - None
@@ -5074,24 +5432,14 @@ class NumpySlicesDataset(GeneratorDataset):
          - False
          - not allowed
 
-    Args:
-        data (Union[list, tuple, dict]) Input of given data. Supported data types include: list, tuple, dict and other
-            NumPy formats. Input data will be sliced along the first dimension and generate additional rows, if input is
-            list, there will be one column in each row, otherwise there tends to be multi columns. Large data is not
-            recommended to be loaded in this way as data is loading into memory.
-        column_names (list[str], optional): List of column names of the dataset (default=None). If column_names is not
-            provided, when data is dict, column_names will be its keys, otherwise it will be like column_0, column_1 ...
-        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
-        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
-            (default=None, expected order behavior shown in the table).
-        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
-            input is required (default=None, expected order behavior shown in the table).
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            Random accessible input is required. When this argument is specified, 'num_samples' reflects the max
-            sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
-            when num_shards is also specified. Random accessible input is required.
+    Raises:
+        RuntimeError: If len of column_names does not match output len of data.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> # 1) Input data can be a list
