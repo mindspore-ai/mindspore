@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,10 +64,16 @@ void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis>
 void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
 bool IsNeedPadding(const std::string &format, const size_t shape_size);
-std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format);
+int64_t GetNodeGroups(const AnfNodePtr &node);
+std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
+                                       const int64_t groups = 1);
+std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
+                                       const AnfNodePtr &node, const size_t index);
 bool TransDataType(const TypeIdArgs &args, void *result);
-bool TransFormat(const FormatArgs &args, void *result);
-bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result);
+bool TransFormat(const FormatArgs &args, void *result, int64_t groups = 1);
+bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, const size_t index);
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, int64_t groups = 1);
+bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, const AnfNodePtr &node, const size_t index);
 
 // host to device
 bool NchwTo4D(const FormatArgs &args, void *result);
@@ -79,6 +85,7 @@ bool NchwToFracZc04(const FormatArgs &args, void *result);
 bool NchwToNc1hwc04(const FormatArgs &args, void *result);
 bool NchwToC1hwncoc0(const FormatArgs &args, void *result);
 bool NcdhwToNdc1hwc0(const FormatArgs &args, void *result);
+bool NchwToFracZWithGroups(const FormatArgs &args, void *result, int64_t groups);
 
 // device to host
 bool ToNchw(const FormatArgs &args, void *result);
@@ -89,6 +96,7 @@ bool Nc1hwc04ToNchw(const FormatArgs &args, void *result);
 bool FracZ3DToNcdhw(const FormatArgs &args, void *result);
 bool C1hwncoc0ToNchw(const FormatArgs &args, void *result);
 bool Ndc1hwc0ToNcdhw(const FormatArgs &args, void *result);
+bool FracZToNchwWithGroups(const FormatArgs &args, void *result, int64_t groups);
 using FormatTransfer = std::function<bool(const FormatArgs &, void *)>;
 const std::map<std::string, FormatTransfer> kTransFormatMapOfHostToDevice{
   {kOpFormat_FRAC_Z, NchwToFracZ},           {kOpFormat_FRAC_NZ, NchwToFracNz},

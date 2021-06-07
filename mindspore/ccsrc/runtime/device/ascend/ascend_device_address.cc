@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -480,8 +480,9 @@ std::vector<size_t> AscendDeviceAddress::GetWorkspaceSizeList(const nlohmann::js
 
 std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *host_shape) const {
   std::vector<size_t> device_shape;
+  auto node_index = GetNodeIndex();
   if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
-    device_shape = trans::TransShapeToDevice(*host_shape, format_);
+    device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second);
   } else {
     if (host_shape_.empty()) {
       *host_shape = trans::PaddingShape(*host_shape, format_);
@@ -489,7 +490,7 @@ std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *hos
       host_shape->clear();
       (void)std::transform(host_shape_.begin(), host_shape_.end(), std::back_inserter(*host_shape), LongToSize);
     }
-    device_shape = trans::TransShapeToDevice(*host_shape, format_);
+    device_shape = trans::TransShapeToDevice(*host_shape, format_, node_index.first, node_index.second);
   }
   return device_shape;
 }
@@ -518,11 +519,12 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
   }
   auto host_tmp = std::vector<uint8_t>(size_);
   SyncMemory(host_tmp.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
+  auto node_index = GetNodeIndex();
   if (type_id_ != type) {
     const trans::FormatArgs format_args{host_tmp.data(), size_,        kOpFormat_NCHW, format_,
                                         host_shape,      device_shape, type_id_};
     auto host = std::vector<uint8_t>(size_);
-    sync_ok = trans::TransFormatFromDeviceToHost(format_args, host.data());
+    sync_ok = trans::TransFormatFromDeviceToHost(format_args, host.data(), node_index.first, node_index.second);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
@@ -537,7 +539,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
   } else {
     const trans::FormatArgs format_args{host_tmp.data(), size_,        kOpFormat_NCHW, format_,
                                         host_shape,      device_shape, type_id_};
-    sync_ok = trans::TransFormatFromDeviceToHost(format_args, host_ptr);
+    sync_ok = trans::TransFormatFromDeviceToHost(format_args, host_ptr, node_index.first, node_index.second);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
@@ -604,12 +606,13 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
+  auto node_index = GetNodeIndex();
   std::vector<size_t> device_shape;
   if (format_ == kOpFormat_FRAC_NZ) {
-    device_shape = trans::TransShapeToDevice(host_shape, format_);
+    device_shape = trans::TransShapeToDevice(host_shape, format_, node_index.first, node_index.second);
   } else {
     host_shape = trans::PaddingShape(host_shape, format_);
-    device_shape = trans::TransShapeToDevice(host_shape, format_);
+    device_shape = trans::TransShapeToDevice(host_shape, format_, node_index.first, node_index.second);
   }
   if (type_id_ != type) {
     auto shape_size = abstract::ShapeSize(host_shape);
@@ -623,7 +626,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
     const trans::FormatArgs format_args{host_tmp.data(), size_,        kOpFormat_NCHW, format_,
                                         host_shape,      device_shape, type_id_};
     auto dst_tmp = std::vector<uint8_t>(size_);
-    sync_ok = trans::TransFormat(format_args, dst_tmp.data());
+    sync_ok = trans::TransFormat(format_args, dst_tmp.data(), node_index.first, node_index.second);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
@@ -632,7 +635,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
   } else {
     const trans::FormatArgs format_args{host_ptr, size_, kOpFormat_NCHW, format_, host_shape, device_shape, type_id_};
     auto host_tmp = std::vector<uint8_t>(size_);
-    sync_ok = trans::TransFormat(format_args, host_tmp.data());
+    sync_ok = trans::TransFormat(format_args, host_tmp.data(), node_index.first, node_index.second);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans format failed.";
       return false;

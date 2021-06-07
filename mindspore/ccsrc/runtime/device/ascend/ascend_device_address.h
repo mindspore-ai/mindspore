@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ class AscendDeviceAddress : public DeviceAddress {
   explicit AscendDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id)
       : DeviceAddress(ptr, size, format, type_id) {}
+  explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
+                               const AnfNodePtr &node, size_t out_index)
+      : DeviceAddress(ptr, size, format, type_id, node, out_index) {}
   ~AscendDeviceAddress() override;
   bool SyncDeviceToHost(size_t size, void *host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
