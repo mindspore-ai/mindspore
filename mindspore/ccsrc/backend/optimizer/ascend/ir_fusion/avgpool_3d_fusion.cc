@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kAvgPool3DInputNum = 1;
 constexpr size_t k5DInferDims = 5;
 constexpr size_t kC0 = 16;
 
@@ -229,6 +230,11 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   MS_EXCEPTION_IF_NULL(node);
   auto avg_pool_3d_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(avg_pool_3d_node);
+  if (avg_pool_3d_node->size() != kAvgPool3DInputNum + 1) {
+    MS_LOG(INFO) << "The node " << avg_pool_3d_node->DebugString() << " is not equal to " << kAvgPool3DInputNum
+                 << " inputs. Can not do fusion.";
+    return nullptr;
+  }
   auto dims_in = AnfAlgo::GetPrevNodeOutputInferShape(avg_pool_3d_node, 0);
   auto dims_out = AnfAlgo::GetOutputInferShape(avg_pool_3d_node, 0);
   if (dims_in.size() < k5DInferDims || dims_out.size() < k5DInferDims) {

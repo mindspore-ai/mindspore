@@ -7277,6 +7277,9 @@ class DynamicRNN(PrimitiveWithInfer):
     are learnable weights between the output and the input in the formula. For instance,
     :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
 
+    Note:
+        The `hidden_size` in shape of inputs must be multiple of 16.
+
     Args:
         cell_type (str): A string identifying the cell type in the op. Default: 'LSTM'.
             Only 'LSTM' is currently supported.
@@ -7785,8 +7788,8 @@ class AvgPool3D(Primitive):
         >>> avg_pool3d = ops.AvgPool3D(kernel_size=2, strides=1, pad_mode="valid")
         >>> output = avg_pool3d(input)
         >>> print(output)
-        [[[[[233.5 248.625]]]
-          [[[233.5 238.125]]]]]
+        [[[[[5. 6.]]]
+          [[[17. 18.]]]]]
     """
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", pad=0, ceil_mode=False,

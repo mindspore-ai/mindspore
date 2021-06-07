@@ -1004,7 +1004,7 @@ class MaxPool3DGrad(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, y_dtype, grad_dtype):
         args = {'x_dtype': x_dtype, 'y_dtype': y_dtype, 'grad_dtype': grad_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        return mstype.tensor_type(mstype.float32)
+        return x_dtype
 
 
 class MaxPool3DGradGrad(PrimitiveWithInfer):

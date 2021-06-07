@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kAvgPool3DGradInputNum = 1;
 constexpr size_t k5DInferDims = 5;
 constexpr size_t kKernelDims = 3;
 constexpr size_t kStridesDims = 3;
@@ -208,6 +209,11 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(node);
   auto avg_pool_3d_grad_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(avg_pool_3d_grad_node);
+  if (avg_pool_3d_grad_node->size() != kAvgPool3DGradInputNum + 1) {
+    MS_LOG(INFO) << "The node " << avg_pool_3d_grad_node->DebugString() << " is not equal to " << kAvgPool3DGradInputNum
+                 << " inputs. Can not do fusion.";
+    return nullptr;
+  }
   std::vector<int64_t> kernel_size;
   std::vector<int64_t> strides;
   std::vector<int64_t> pad_list;
