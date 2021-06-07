@@ -46,6 +46,7 @@ matmul_cube_dense_left_op_info = TBERegOp("CusMatMulCubeDenseLeft") \
     .dtype_format(DataType.F16_Default, DataType.F16_FracNZ, DataType.F16_Default, DataType.F16_FracNZ) \
     .get_op_info()
 
+
 def shape_gen1(input_x1, input_x2, output_y, kernel_name, trans_a, trans_b):
     """shape gen1"""
     shape_a = input_x1.get("ori_shape")
@@ -93,6 +94,7 @@ def shape_gen1(input_x1, input_x2, output_y, kernel_name, trans_a, trans_b):
     shape_b = [shape_b[1], shape_b[0]]
     trans_b = bool(1 - trans_b)
     return shape_a, shape_b, trans_a, trans_b, shape_output
+
 
 def shape_gen2(bias, input_x1, output_y, shape_a, shape_b, trans_a, trans_b):
     """shape gen2"""
@@ -143,6 +145,7 @@ def shape_gen2(bias, input_x1, output_y, shape_a, shape_b, trans_a, trans_b):
     shape_b_temp = (shape_b_temp[0], shape_b_temp[1], shape_b_temp[2], shape_b_temp[3])
     format_b = "FRACTAL_NZ"
     return shape_a_temp, format_a, shape_b_temp, format_b, shape_bias, src_dtype, dst_dtype
+
 
 def core(shape_a_temp, shape_b_temp, shape_output, kernel_name):
     """core func"""
@@ -205,6 +208,7 @@ def core(shape_a_temp, shape_b_temp, shape_output, kernel_name):
                                        , resmatmul_local_ub, 0, 16, 224 // 2, 0, 56 * 16 * 2 // 2)
     tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2], outputs=[resmatmul])
     return tik_instance
+
 
 @op_info_register(matmul_cube_dense_left_op_info)
 def cus_matmul_cube_dense_left(input_x1, input_x2, bias=None, output_y=None, trans_a=False, trans_b=False,
