@@ -26,8 +26,8 @@ if [ $# != 2 ] && [ $# != 3 ]
 then
     echo "=============================================================================================================="
     echo "Please run the script as: "
-    echo "bash scripts/run_standalone_Schrodinger_eval.sh [CHECKPOINT] [DATASET] [DEVICE_ID](option, default is 0)"
-    echo "for example: bash scripts/run_standalone_Schrodinger_eval.sh ckpoints/checkpoint_PINNs_Schrodinger-50000_1.ckpt Data/NLS.mat 0"
+    echo "bash scripts/run_standalone_NavierStokes_eval.sh [CHECKPOINT] [DATASET] [DEVICE_ID](option, default is 0)"
+    echo "for example: bash scripts/run_standalone_NavierStokes_eval.sh ckpoints/checkpoint_PINNs_NavierStokes-18000_10.ckpt Data/cylinder_nektar_wake.mat 0"
     echo "=============================================================================================================="
     exit 1
 fi
@@ -42,4 +42,4 @@ fi
 
 ck_path=$(get_real_path $1)
 data_set_path=$(get_real_path $2)
-nohup python ${PROJECT_DIR}/../eval.py --ckpoint_path=$ck_path --scenario=Schrodinger --datapath=$data_set_path > eval.log 2>&1 &
+nohup python ${PROJECT_DIR}/../eval.py --ckpoint_path=$ck_path --scenario=NavierStokes --datapath=$data_set_path > eval.log 2>&1 &

@@ -12,15 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-Network config setting
-"""
-
-
-# config for Schrodinger equation scenario
-config_Sch = {'epoch': 50000, 'lr': 0.0001, 'N0': 50, 'Nb': 50, 'Nf': 20000, 'num_neuron': 100,
-              'seed': 2, 'path': './Data/NLS.mat', 'ck_path': './ckpoints/'}
-
-# config for Navier-Stokes equation scenario
-config_navier = {'epoch': 18000, 'lr': 0.01, 'n_train': 5000, 'path': './Data/cylinder_nektar_wake.mat',
-                 'noise': 0.0, 'num_neuron': 20, 'ck_path': './navier_ckpoints/', 'seed': 0, 'batch_size': 500}

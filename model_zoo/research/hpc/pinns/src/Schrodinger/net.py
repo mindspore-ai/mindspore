@@ -14,10 +14,10 @@
 # ============================================================================
 """Define the PINNs network for the Schrodinger equation."""
 import numpy as np
+import mindspore.common.dtype as mstype
 from mindspore import Parameter, Tensor, nn, ops
 from mindspore.common.initializer import TruncatedNormal, Zero, initializer
 from mindspore.ops import constexpr
-import mindspore.common.dtype as mstype
 
 
 @constexpr
@@ -37,7 +37,7 @@ class neural_net(nn.Cell):
     Neural net to fit the wave function
 
     Args:
-        layers (int): num of neurons for each layer
+        layers (list(int)): num of neurons for each layer
         lb (np.array): lower bound (x, t) of domain
         ub (np.array): upper bound (x, t) of domain
     """
@@ -64,7 +64,7 @@ class neural_net(nn.Cell):
         self.b4 = self._init_biase(4)
 
     def construct(self, x, t):
-        """forward propagation"""
+        """Forward propagation"""
         X = self.concat((x, t))
         X = 2.0*(X - self.lb)/(self.ub - self.lb) - 1.0
 
@@ -98,7 +98,7 @@ class neural_net(nn.Cell):
 
 class Grad_1(nn.Cell):
     """
-    Using the first output to compute gradient.
+    Net has 2 inputs and 2 outputs. Using the first output to compute gradient.
     """
     def __init__(self, net):
         super(Grad_1, self).__init__()
@@ -113,7 +113,7 @@ class Grad_1(nn.Cell):
 
 class Grad_2(nn.Cell):
     """
-    Using the second output to compute gradient.
+    Net has 2 inputs and 2 outputs. Using the second output to compute gradient.
     """
     def __init__(self, net):
         super(Grad_2, self).__init__()

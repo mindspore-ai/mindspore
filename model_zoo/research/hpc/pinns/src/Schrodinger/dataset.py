@@ -29,6 +29,7 @@ class PINNs_training_set:
         Nf (int): number of sampled training data points for the collocation points
         lb (np.array): lower bound (x, t) of domain
         ub (np.array): upper bound (x, t) of domain
+        path (str): path of dataset
     """
     def __init__(self, N0, Nb, Nf, lb, ub, path='./Data/NLS.mat'):
         data = scio.loadmat(path)

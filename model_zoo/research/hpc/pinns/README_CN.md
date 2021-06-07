@@ -3,9 +3,10 @@
 [View English](./README.md)
 
 - [目录](#目录)
-- [PINNs描述](#PINNs描述)
+- [PINNs描述](#pinns描述)
 - [模型架构](#模型架构)
-    - [Schrodinger方程](#Schrodinger方程)
+    - [Schrodinger方程](#schrodinger方程)
+    - [Navier-Stokes方程](#navier-stokes方程)
 - [数据集](#数据集)
 - [特性](#特性)
     - [混合精度](#混合精度)
@@ -16,19 +17,20 @@
     - [脚本参数](#脚本参数)
     - [训练过程](#训练过程)
     - [评估过程](#评估过程)
-        - [评估](#评估)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
-            - [Schrodinger方程场景评估](#Schrodinger方程场景评估)
+            - [Schrodinger方程场景评估](#schrodinger方程场景评估)
+            - [Navier-Stokes方程场景评估](#navier-stokes方程场景评估)
         - [推理性能](#推理性能)
-            - [Schrodinger方程场景推理](#Schrodinger方程场景推理)
+            - [Schrodinger方程场景推理](#schrodinger方程场景推理)
+            - [Navier-Stokes方程场景推理](#navier-stokes方程场景推理)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
 # [PINNs描述](#目录)
 
-PINNs (Physics-informed neural networks)是2019年提出的神经网络。PINNs网络提供了一种全新的用神经网络求解偏微分方程的思路。对现实的物理、生物、工程等系统建模时，常常会用到偏微分方程。而此类问题的特征与机器学习中遇到的大多数问题有两点显著不同：(1)获取数据的成本较高，数据量通常较小；(2)存在大量前人对于此类问题的研究成果作为先验知识而无法被机器学习系统利用，例如各种物理定律等。PINNs网络首先通过适当的构造，将偏微分方程形式的先验知识作为网络的正则化约束引入，进而通过利用这些先验知识强大的约束作用，使得网络能够用很少的数据就训练出很好的结果。PINNs网络在量子力学等场景中经过了成功的验证，能够用很少的数据成功训练网络并对相应的物理系统进行建模。
+PINNs (Physics-informed neural networks)是2019年提出的神经网络。PINNs网络提供了一种全新的用神经网络求解偏微分方程的思路。对现实的物理、生物、工程等系统建模时，常常会用到偏微分方程。而此类问题的特征与机器学习中遇到的大多数问题有两点显著不同：(1)获取数据的成本较高，数据量通常较小；(2)存在大量前人对于此类问题的研究成果作为先验知识而无法被机器学习系统利用，例如各种物理定律等。PINNs网络首先通过适当的构造，将偏微分方程形式的先验知识作为网络的正则化约束引入，进而通过利用这些先验知识强大的约束作用，使得网络能够用很少的数据就训练出很好的结果。PINNs网络在量子力学、流体力学等场景中经过了成功的验证，能够用很少的数据成功训练网络并对相应的物理系统进行建模。
 
 [论文](https://www.sciencedirect.com/science/article/pii/S0021999118307125)：Raissi, Maziar, Paris Perdikaris, and George E. Karniadakis. "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations."*Journal of Computational Physics*. 2019 (378): 686-707.
 
@@ -38,7 +40,11 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
 
 ## [Schrodinger方程](#目录)
 
-针对Schrodinger方程的PINNs分为两部分，首先是一个由5个全连接层组成的神经网络用来拟合待求解的波函数(即薛定谔方程在数据集所描述的量子力学系统下的解)。该神经网络有2个输出分别表示波函数的实部和虚部。之后在这两个输出后面接上一些求导的操作，将这些求导的结果适当的组合起来就可以表示Schrodinger方程，作为神经网络的约束项。将波函数的实部、虚部以及一些相关的偏导数作为整个网络的输出。
+薛定谔方程是量子力学中的基本方程，描述粒子的波函数服从的物理规律。针对Schrodinger方程的PINNs分为两部分，首先是一个由5个全连接层组成的神经网络用来拟合待求解的波函数(即薛定谔方程在数据集所描述的量子力学系统下的解)。该神经网络有2个输出分别表示波函数的实部和虚部。之后在这两个输出后面接上一些求导的操作，将这些求导的结果适当的组合起来就可以表示Schrodinger方程，作为神经网络的约束项。将波函数的实部、虚部以及一些相关的偏导数作为整个网络的输出。
+
+## [Navier-Stokes方程](#目录)
+
+Navier-Stokes方程是流体力学中描述粘性牛顿流体的方程。针对Navier-Stokes方程的PINNs分为两部分，首先构造一个由9个全连接层组成的神经网络，该神经网络的有2个输出分别代表隐函数和压强。该隐函数的导数与速度场有关。在这两个输出后面接上一些求导的操作，将这些求导的结果适当的组合起来就可以表示Navier-Stokes方程，作为神经网络的约束项。整个网络的输出为速度场、压强以及Navier-Stokes方程产生的约束项。
 
 # [数据集](#目录)
 
@@ -51,6 +57,14 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
     - 测试集：整个数据集的全部51456个采样点
 - 数据格式：mat文件
     - 注：该数据集在Schrodinger方程场景中使用。数据将在src/Schrodinger/dataset.py中处理。
+
+使用的数据集：[cylinder nektar wake](https://github.com/maziarraissi/PINNs/tree/master/main/Data), 可参照[论文](https://www.sciencedirect.com/science/article/pii/S0021999118307125)
+
+- 数据集大小：23MB，对二维不可压缩流体的1000000个采样点
+    - 训练集：5000个点
+    - 测试集：整个数据集的1000000个点
+- 数据格式：mat文件
+    - 注：该数据集在Navier-Stokes方程场景中使用。数据将在src/NavierStokes/dataset.py中处理
 
 # [特性](#目录)
 
@@ -80,12 +94,27 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
   export CUDA_VISIBLE_DEVICES=0
   python train.py --scenario=Schrodinger --datapath=[DATASET_PATH] > train.log
   OR
-  bash /scripts/run_standalone_Schrodinger_train.sh [DATASET_PATH]
+  bash scripts/run_standalone_Schrodinger_train.sh [DATASET_PATH]
 
   # 运行评估示例
   python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=Schrodinger --datapath=[DATASET_PATH] > eval.log
   OR
-  bash /scriptsrun_standalone_Schrodinger_eval.sh [CHECKPOINT_PATH] [DATASET_PATH]
+  bash scriptsrun_standalone_Schrodinger_eval.sh [CHECKPOINT_PATH] [DATASET_PATH]
+  ```
+
+- GPU处理器环境运行Navier-Stokes方程场景
+
+  ```shell
+  # 运行训练示例
+  export CUDA_VISIBLE_DEVICES=0
+  python train.py --scenario=NavierStokes --datapath=[DATASET_PATH] --noise=[NOISE] > train.log
+  OR
+  bash scripts/run_standalone_NavierStokes_train.sh [DATASET] [NOISE]
+
+  # 运行评估示例
+  python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=NavierStokes --datapath=[DATASET_PATH] > eval.log
+  OR
+  bash scripts/run_standalone_NavierStokes_eval.sh [CHECKPOINT] [DATASET]
   ```
 
 # [脚本说明](#目录)
@@ -100,13 +129,26 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
         ├── scripts
         │   ├──run_standalone_Schrodinger_train.sh       // Schrodinger方程GPU训练的shell脚本
         |   ├──run_standalone_Schrodinger_eval.sh        // Schrodinger方程GPU评估的shell脚本
+        |   ├──run_standalone_NavierStokes_train.sh     //  Navier-Stokes方程GPU训练的shell脚本
+        |   ├──run_standalone_NavierStokes_eval.sh      //  Navier-Stokes方程GPU训练的shell脚本
         ├── src
-        |   ├──Schrodinger          //Schrodinger方程场景
+        |   ├──Schrodinger          // Schrodinger方程场景
         │   |   ├──dataset.py             //创建数据集
         │   |   ├──net.py          // PINNs (Schrodinger) 架构
+        │   |   ├──loss.py         // PINNs (Schrodinger) 损失函数
+        │   |   ├──train_sch.py     // PINNs (Schrodinger) 训练过程
+        │   |   ├──eval_sch.py      // PINNs (Schrodinger) 评估过程
+        │   |   ├──export_sch.py    //导出 PINNs (Schrodinger) 模型
         │   ├──config.py            // 参数配置
-        ├── train.py               // 训练脚本 (Schrodinger)
-        ├── eval.py                // 评估脚本 (Schrodinger)
+        |   ├──NavierStokes        // Navier-Stokes方程场景
+        │   |   ├──dataset.py             //创建数据集
+        │   |   ├──net.py          // PINNs (Navier-Stokes) 架构
+        │   |   ├──loss.py         // PINNs (Navier-Stokes) 损失函数
+        │   |   ├──train_sch.py     // PINNs (Navier-Stokes) 训练过程
+        │   |   ├──eval_sch.py      // PINNs (Navier-Stokes) 评估过程
+        │   |   ├──export_sch.py    //导出 PINNs (Navier-Stokes) 模型
+        ├── train.py               // 训练脚本
+        ├── eval.py                // 评估脚本
         ├── export.py          // 将checkpoint文件导出为mindir
         ├── requirements          // 运行PINNs网络额外需要的包
 ```
@@ -129,14 +171,50 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
   'ck_path':'./ckpoints/'    #保存checkpoint文件(.ckpt)的路径
   ```
 
+- 配置Navier-Stokes方程场景。
+
+  ```python
+  'epoch':18000    # number of epochs in training
+  'lr': 0.01       # learning rate
+  'n_train':5000   # amount of training data
+  'path':'./Data/cylinder_nektar_wake.mat'  # data set path
+  'noise':0.0     # noise intensity
+  'num_neuron':20  # number of neurons in fully connected hidden layer
+  'ck_path':'./navier_ckpoints/'  # path to save checkpoint files (.ckpt)
+  'seed':0        # random seed
+  'batch_size':500  # batch size
+  ```
+
 更多配置细节请参考脚本`config.py`。
 
 ## [训练过程](#目录)
+
+Schrodinger方程场景
 
 - GPU处理器环境运行Schrodinger方程场景
 
   ```bash
   python train.py --scenario=Schrodinger --datapath=[DATASET_PATH] > train.log 2>&1 &
+  ```
+
+Navier-Stokes方程场景
+
+- GPU处理器环境运行Navier-Stokes方程场景
+
+  ```bash
+  python train.py --scenario='NavierStokes' --datapath=[DATAPATH] --noise=[NOISE]  > train.log 2>&1 &
+  ```
+
+- 以上python命令将在后台运行。您可以通过train.log文件查看结果。
+  可以采用以下方式达到损失值：
+
+  ```bash
+  # grep "loss is " train.log
+  epoch: 1 step: 10, loss is 0.36841542
+  epoch time: 24938.602 ms, per step time: 2493.86 ms
+  epcoh: 2 step: 10, loss is 0.21505485
+  epoch time: 985.929 ms, per step time: 98.593 ms
+  ...
   ```
 
 - 以上python命令将在后台运行。您可以通过train.log文件查看结果。
@@ -158,7 +236,7 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
 
 - 在GPU处理器环境运行Schrodinger方程场景
 
-  在运行以下命令之前，请检查用于评估的检查点路径。请将检查点路径设置为绝对全路径，例如“./ckpt/checkpoint_PINNs_Schrodinger-50000_1.ckpt”。
+  在运行以下命令之前，请检查用于评估的检查点路径。请将检查点路径设置为绝对全路径。
 
   ```bash
   python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=Schrodinger --datapath=[DATASET_PATH] > eval.log
@@ -167,8 +245,24 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
   上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试误差如下：
 
   ```bash
-  # grep "accuracy:" eval.log
+  # grep "evaluation error" eval.log
   evaluation error is: 0.01207
+  ```
+
+- 在GPU处理器环境运行Navier-Stokes方程场景
+
+  在运行以下命令之前，请检查用于评估的检查点路径。请将检查点路径设置为绝对全路径。
+
+  ```bash
+  python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=NavierStokes --datapath=[DATASET_PATH] > eval.log
+  ```
+
+  上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试误差如下：
+
+  ```bash
+  # grep "Error of lambda 1" eval.log
+  Error of lambda 1 is 0.2698
+  Error of lambda 2 is 0.8558
   ```
 
 # [模型描述](#目录)
@@ -196,6 +290,43 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
 | 参数             | 32K                                                          |
 | 微调检查点 | 363K (.ckpt文件) |
 
+#### [Navier-Stokes方程场景评估](#目录)
+
+| 参数          | GPU                                                          |
+| ------------- | ------------------------------------------------------------ |
+| 模型版本      | PINNs (Navier-Stokes)，无噪声版                              |
+| 资源          | NV Tesla V100-32G                                            |
+| 上传日期      | 2021-6-7                                                     |
+| MindSpore版本 | 1.2.0                                                        |
+| 数据集        | cylinder nektar wake                                         |
+| 训练参数      | epoch=18000,  lr=0.01, batch size=500. 详见src/config.py     |
+| 优化器        | Adam                                                         |
+| 损失函数      | src/NavierStokes/loss.py                                     |
+| 输出          | 速度场(x分量、y分量)，压强，对Navier-Stokes方程的拟合(x分量、y分量) |
+| 损失          | 0.0007302                                                    |
+| 速度          | 99毫秒/步                                                    |
+| 总时长        | 4.9431 小时                                                  |
+| 参数          | 3.1K                                                         |
+| 微调检查点    | 39K (.ckpt文件)                                              |
+
+| 参数           | GPU                                                          |
+| -------------- | ------------------------------------------------------------ |
+| 模型版本       | PINNs (Navier-Stokes)，有噪声版                              |
+| 资源           | NV Tesla V100-32G                                            |
+| 上传日期       | 2021-6-7                                                     |
+| MindSpore版本  | 1.2.0                                                        |
+| 数据集         | cylinder nektar wake                                         |
+| 训练集噪声强度 | 0.01                                                         |
+| 训练参数       | epoch=18000,  lr=0.01, batch size=500. 详见src/config.py     |
+| 优化器         | Adam                                                         |
+| 损失函数       | src/NavierStokes/loss.py                                     |
+| 输出           | 速度场(x分量、y分量)，压强，对Navier-Stokes方程的拟合(x分量、y分量) |
+| 损失           | 0.001309                                                     |
+| 速度           | 100毫秒/步                                                   |
+| 总时长         | 5.0084 小时                                                  |
+| 参数           | 3.1K                                                         |
+| 微调检查点     | 39K (.ckpt文件)                                              |
+
 ### [推理性能](#目录)
 
 #### [Schrodinger方程场景推理](#目录)
@@ -209,6 +340,31 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
 | 数据集             | NLS   |
 | 输出             | 波函数的实部与虚部        |
 | 均方误差       | 0.01323 |
+
+#### [Navier-Stokes方程场景推理](#目录)
+
+| 参数                  | GPU                                                 |
+| --------------------- | --------------------------------------------------- |
+| 模型版本              | PINNs (Navier-Stokes), 无噪声版                     |
+| 资源                  | NV Tesla V100-32G                                   |
+| 上传日期              | 2021-6-7                                            |
+| MindSpore 版本        | 1.2.0                                               |
+| 数据集                | cylinder nektar wake                                |
+| 输出                  | Navier-Stokes方程的待定系数$\lambda_1$和$\lambda_2$ |
+| $\lambda_1$误差百分比 | 0.2698%                                             |
+| $\lambda_2$误差百分比 | 0.8558%                                             |
+
+| 参数                  | GPU                                                 |
+| --------------------- | --------------------------------------------------- |
+| 模型版本              | PINNs (Navier-Stokes), 有噪声版                     |
+| 资源                  | NV Tesla V100-32G                                   |
+| 上传日期              | 2021-6-7                                            |
+| MindSpore 版本        | 1.2.0                                               |
+| 数据集                | cylinder nektar wake                                |
+| 训练集噪声强度        | 0.01                                                |
+| 输出                  | Navier-Stokes方程的待定系数$\lambda_1$和$\lambda_2$ |
+| $\lambda_1$误差百分比 | 0.3655%                                             |
+| $\lambda_2$误差百分比 | 2.3851%                                             |
 
 # [随机情况说明](#目录)
 

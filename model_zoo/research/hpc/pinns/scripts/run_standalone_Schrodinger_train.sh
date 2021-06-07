@@ -41,4 +41,4 @@ then
     export DEVICE_ID=$2
 fi
 
-python ${PROJECT_DIR}/../train.py --datapath $data_set_path --scenario Schrodinger > train.log 2>&1 &
+nohup python ${PROJECT_DIR}/../train.py --datapath=$data_set_path --scenario=Schrodinger > train.log 2>&1 &

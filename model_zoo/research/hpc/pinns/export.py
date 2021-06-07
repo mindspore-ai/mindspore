@@ -12,59 +12,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""export checkpoint file into air, onnx, mindir models"""
+"""export checkpoint file into mindir models"""
 import argparse
 
-import numpy as np
-from mindspore import (Tensor, context, export, load_checkpoint,
-                       load_param_into_net)
-import mindspore.common.dtype as mstype
-
 from src import config
-from src.Schrodinger.net import PINNs
+from src.Schrodinger.export_sch import export_sch
+from src.NavierStokes.export_ns import export_ns
+
 
 parser = argparse.ArgumentParser(description='PINNs export')
-parser.add_argument('ck_file', type=str, help='model checkpoint(ckpt) filename')
-parser.add_argument('file_name', type=str, help='export file name')
-
-#only support ‘Schrodinger' for now
+parser.add_argument('--ckpoint_path', type=str, help='model checkpoint(ckpt) filename')
+parser.add_argument('--file_name', type=str, help='export file name')
 parser.add_argument('--scenario', type=str, help='scenario for PINNs', default='Schrodinger')
-
-
-def export_sch(conf_sch, export_format, export_name):
-    """
-    export PINNs for Schrodinger model
-
-    Args:
-        conf_sch (dict): dictionary for configuration, see src/config.py for details
-        export_format (str): file format to export
-        export_name (str): name of exported file
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-
-    num_neuron = conf_sch['num_neuron']
-    layers = [2, num_neuron, num_neuron, num_neuron, num_neuron, 2]
-    lb = np.array([-5.0, 0.0])
-    ub = np.array([5.0, np.pi/2])
-
-    n = PINNs(layers, lb, ub)
-    param_dict = load_checkpoint(ck_file)
-    load_param_into_net(n, param_dict)
-
-    batch_size = conf_sch['N0'] + 2*conf_sch['Nb'] +conf_sch['Nf']
-    inputs = Tensor(np.ones((batch_size, 2)), mstype.float32)
-    export(n, inputs, file_name=export_name, file_format=export_format)
+parser.add_argument('--datapath', type=str, help='path for dataset', default='')
+parser.add_argument('--batch_size', type=int, help='batch size', default=0)
 
 
 if __name__ == '__main__':
     args_opt = parser.parse_args()
-    ck_file = args_opt.ck_file
+    ck_file = args_opt.ckpoint_path
     file_format = 'MINDIR'
     file_name = args_opt.file_name
     pinns_scenario = args_opt.scenario
-    conf = config.config_Sch
-
-    if pinns_scenario == 'Schrodinger':
-        export_sch(conf, file_format, file_name)
+    dataset_path = args_opt.datapath
+    b_size = args_opt.batch_size
+    if pinns_scenario in ['Schrodinger', 'Sch', 'sch', 'quantum']:
+        conf = config.config_Sch
+        num_neuron = conf['num_neuron']
+        N0 = conf['N0']
+        Nb = conf['Nb']
+        Nf = conf['Nf']
+        export_sch(num_neuron, N0=N0, Nb=Nb, Nf=Nf, ck_file=ck_file,
+                   export_format=file_format, export_name=file_name)
+    elif pinns_scenario in ['ns', 'NavierStokes', 'navier', 'Navier']:
+        conf = config.config_navier
+        num_neuron = conf['num_neuron']
+        if dataset_path != '':
+            path = dataset_path
+        else:
+            path = conf['path']
+        if b_size <= 0:
+            batch_size = conf['batch_size']
+        else:
+            batch_size = b_size
+        export_ns(num_neuron, path=path, ck_file=ck_file, batch_size=batch_size,
+                  export_format=file_format, export_name=file_name)
     else:
         print(f'{pinns_scenario} scenario in PINNs is not supported to export for now')
