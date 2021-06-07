@@ -133,7 +133,7 @@ void ConvolutionDelegateCPUKernel::SetInputOutputShapeInfo() {
   conv_param->output_h_ = output->Height();
   conv_param->output_w_ = output->Width();
   conv_param->output_channel_ = output->Channel();
-  conv_param->op_parameter_.thread_num_ = context_->thread_num_;
+  conv_param->op_parameter_.thread_num_ = op_parameter_->thread_num_;
 }
 
 kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
@@ -164,7 +164,7 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_), out_unit,
         origin_weight_, origin_bias_);
     } else {
-      if (conv_param->input_channel_ / context_->thread_num_ > 64) {
+      if (conv_param->input_channel_ / op_parameter_->thread_num_ > 64) {
         kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
           origin_weight_, origin_bias_);
@@ -190,6 +190,8 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
       return nullptr;
     }
   }
+
+  kernel->set_name("act_" + name_);
   return kernel;
 }
 

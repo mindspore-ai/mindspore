@@ -117,7 +117,7 @@ void TileCPUKernel::FillOneDimTileParam() {
 }
 
 int TileCPUKernel::SimpleTileImpl(int task_id) {
-  size_t unit = UP_DIV(tile_parameter_->fast_outer_size_, static_cast<size_t>(context_->thread_num_));
+  size_t unit = UP_DIV(tile_parameter_->fast_outer_size_, static_cast<size_t>(op_parameter_->thread_num_));
   if (unit == 0 && task_id > 0) {
     return RET_OK;
   }
@@ -129,7 +129,7 @@ int TileCPUKernel::SimpleTileImpl(int task_id) {
 
 int TileCPUKernel::RunSimpleTile() {
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(SimpleTile, this, context_->thread_num_);
+               ->thread_pool_->ParallelLaunch(SimpleTile, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSimpleTile error code[" << ret << "]";
     return ret;

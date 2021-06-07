@@ -29,7 +29,7 @@ class MulInt8CPUKernel : public InnerKernel {
  public:
   explicit MulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx_->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(op_parameter_->thread_num_) {
     tile_para = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~MulInt8CPUKernel() override;

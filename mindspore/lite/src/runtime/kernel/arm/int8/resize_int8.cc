@@ -321,7 +321,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       auto out_tensor = out_tensors_.front();
       auto out_c = out_tensor->Channel();
       int plane = out_tensor->Height() * out_tensor->Width();
-      int num = UP_DIV(plane, context_->thread_num_);
+      int num = UP_DIV(plane, op_parameter_->thread_num_);
       int start_index = task_id * num;
       int count = plane - start_index;
       count = count > num ? num : count;
@@ -345,11 +345,11 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       if (same_zp && same_scale) {
         ret =
           ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                          align_corners, task_id, context_->thread_num_);
+                                          align_corners, task_id, op_parameter_->thread_num_);
       } else {
-        ret =
-          ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                    align_corners, multiplier_, quant_in_, quant_out_, task_id, context_->thread_num_);
+        ret = ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
+                                        align_corners, multiplier_, quant_in_, quant_out_, task_id,
+                                        op_parameter_->thread_num_);
       }
       break;
     }
@@ -364,7 +364,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
 
 int ResizeInt8CPUKernel::Run() {
   int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(ResizeInt8Impl, this, context_->thread_num_);
+                     ->thread_pool_->ParallelLaunch(ResizeInt8Impl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

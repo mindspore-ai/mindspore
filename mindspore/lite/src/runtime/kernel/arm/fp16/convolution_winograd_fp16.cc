@@ -158,7 +158,7 @@ int ConvolutionWinogradFP16CPUKernel::Init() {
 void ConvolutionWinogradFP16CPUKernel::AdjustNumberOfThread() {
   auto out_tensor = out_tensors_.front();
   int cal_plane = UP_DIV(out_tensor->Height(), output_unit_) * UP_DIV(out_tensor->Width(), output_unit_);
-  thread_count_ = MSMIN(ctx_->thread_num_, UP_DIV(cal_plane, C8NUM));
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(cal_plane, C8NUM));
   conv_param_->thread_num_ = thread_count_;
 }
 

@@ -299,7 +299,7 @@ int ArithmeticCPUKernel::BatchScalarCalc(int task_id) {
     return RET_ERROR;
   }
   int batch = param_->out_elements_num_ / param_->out_strides_[break_pos_ - 1];
-  int batch_per_thread = UP_DIV(batch, context_->thread_num_);
+  int batch_per_thread = UP_DIV(batch, op_parameter_->thread_num_);
 
   int start_batch = batch_per_thread * task_id;
   int end_batch = MSMIN(start_batch + batch_per_thread, batch);
@@ -327,7 +327,7 @@ int ArithmeticCPUKernel::BatchScalarCalc(int task_id) {
 int ArithmeticCPUKernel::BiasCalc(int task_id) {
   int last_shape = param_->out_shape_[param_->ndim_ - 1];
   int batch = param_->out_elements_num_ / last_shape;
-  int batch_per_thread = UP_DIV(batch, context_->thread_num_);
+  int batch_per_thread = UP_DIV(batch, op_parameter_->thread_num_);
 
   int start_batch = batch_per_thread * task_id;
   int end_batch = MSMIN(start_batch + batch_per_thread, batch);
@@ -360,7 +360,7 @@ int ArithmeticCPUKernel::BiasCalc(int task_id) {
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   auto element_num = out_tensors_[0]->ElementsNum();
-  int stride = UP_DIV(element_num, context_->thread_num_);
+  int stride = UP_DIV(element_num, op_parameter_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -386,7 +386,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   }
   /* need broadcast in runtime */
   if (param_->broadcasting_) {
-    stride = UP_DIV(outside_, context_->thread_num_);
+    stride = UP_DIV(outside_, op_parameter_->thread_num_);
     int out_count = MSMIN(stride, outside_ - stride * task_id);
     if (out_count <= 0) {
       return RET_OK;
@@ -420,7 +420,7 @@ int ArithmeticCPUKernel::Run() {
   }
   output_ptr_ = out_tensors_[0]->data_c();
   return static_cast<const lite::InnerContext *>(this->context_)
-    ->thread_pool_->ParallelLaunch(ArithmeticsRun, this, context_->thread_num_);
+    ->thread_pool_->ParallelLaunch(ArithmeticsRun, this, op_parameter_->thread_num_);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)

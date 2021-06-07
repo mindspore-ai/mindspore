@@ -28,7 +28,6 @@ option(ENABLE_ARM82_A32 "if build fp16 on platform_arm32" off)
 option(OFFLINE_COMPILE "if offline compile OpenCL kernel" off)
 option(ENABLE_VERBOSE "" off)
 option(ENABLE_MINDRT "if support mindrt" on)
-option(SUBGRAPH_SPLIT "if support sub graph split" off)
 option(ENABLE_MODEL_OBF "if support model obfuscation" off)
 option(ENABLE_V0 "support v0 schema" on)
 

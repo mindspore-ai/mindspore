@@ -73,7 +73,7 @@ int SoftmaxFp16CPUKernel::ReSize() {
 }
 
 int SoftmaxFp16CPUKernel::DoSoftmaxLastAxis(int task_id) {
-  int unit = UP_DIV(out_plane_size_, context_->thread_num_);
+  int unit = UP_DIV(out_plane_size_, op_parameter_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, out_plane_size_);
   int channel = softmax_param_->input_shape_[softmax_param_->axis_];
@@ -96,7 +96,7 @@ int SoftmaxLastAxisFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_
 int SoftmaxFp16CPUKernel::Run() {
   if (in_plane_size_ == 1) {
     auto ret = static_cast<const lite::InnerContext *>(this->context_)
-                 ->thread_pool_->ParallelLaunch(SoftmaxLastAxisFp16Run, this, context_->thread_num_);
+                 ->thread_pool_->ParallelLaunch(SoftmaxLastAxisFp16Run, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SoftmaxFp16CPUKernel ParallelLaunch failed, ret: " << ret;
     }

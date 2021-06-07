@@ -26,7 +26,7 @@ class ActivationCPUKernel : public InnerKernel {
  public:
   ActivationCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+      : InnerKernel(param, inputs, outputs, ctx), thread_count_(op_parameter_->thread_num_) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;
     alpha_ = (reinterpret_cast<ActivationParameter *>(param))->alpha_;
     min_val_ = (reinterpret_cast<ActivationParameter *>(param))->min_val_;

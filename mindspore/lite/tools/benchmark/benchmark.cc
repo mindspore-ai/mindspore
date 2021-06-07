@@ -290,6 +290,7 @@ void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
   }
 
   context->thread_num_ = flags_->num_threads_;
+  context->enable_parallel_ = flags_->enable_parallel_;
 }
 
 int Benchmark::CompareOutput() {
@@ -1013,6 +1014,23 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
   return RET_OK;
 }
 
+int Benchmark::CheckThreadNumValid() {
+  if (this->flags_->num_threads_ < 1) {
+    MS_LOG(ERROR) << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0";
+    std::cerr << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0" << std::endl;
+    return RET_ERROR;
+  }
+
+  if (flags_->enable_parallel_) {
+    if (flags_->num_threads_ < 2) {
+      MS_LOG(ERROR) << "enable parallel need more than 1 thread.";
+      std::cerr << "enable parallel need more than 1 thread." << std::endl;
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 int Benchmark::InitDumpConfigFromJson(char *path) {
   auto real_path = RealPath(path);
   std::ifstream ifs(real_path);
@@ -1105,6 +1123,7 @@ int Benchmark::Init() {
   MS_LOG(INFO) << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_;
   MS_LOG(INFO) << "NumThreads = " << this->flags_->num_threads_;
   MS_LOG(INFO) << "Fp16Priority = " << this->flags_->enable_fp16_;
+  MS_LOG(INFO) << "EnableParallel = " << this->flags_->enable_parallel_;
   MS_LOG(INFO) << "calibDataPath = " << this->flags_->benchmark_data_file_;
   std::cout << "ModelPath = " << this->flags_->model_file_ << std::endl;
   std::cout << "InDataPath = " << this->flags_->in_data_file_ << std::endl;
@@ -1115,6 +1134,7 @@ int Benchmark::Init() {
   std::cout << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_ << std::endl;
   std::cout << "NumThreads = " << this->flags_->num_threads_ << std::endl;
   std::cout << "Fp16Priority = " << this->flags_->enable_fp16_ << std::endl;
+  std::cout << "EnableParallel = " << this->flags_->enable_parallel_ << std::endl;
   std::cout << "calibDataPath = " << this->flags_->benchmark_data_file_ << std::endl;
   if (this->flags_->loop_count_ < 1) {
     MS_LOG(ERROR) << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0";
@@ -1122,9 +1142,10 @@ int Benchmark::Init() {
     return RET_ERROR;
   }
 
-  if (this->flags_->num_threads_ < 1) {
-    MS_LOG(ERROR) << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0";
-    std::cerr << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0" << std::endl;
+  auto thread_ret = CheckThreadNumValid();
+  if (thread_ret != RET_OK) {
+    MS_LOG(ERROR) << "Invalid numThreads.";
+    std::cerr << "Invalid numThreads." << std::endl;
     return RET_ERROR;
   }
   static std::vector<std::string> CPU_BIND_MODE_MAP = {"NO_BIND", "HIGHER_CPU", "MID_CPU"};

@@ -30,7 +30,7 @@ class ScaleInt8CPUKernel : public InnerKernel {
  public:
   ScaleInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx_->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(op_parameter_->thread_num_) {
     scale_param_ = reinterpret_cast<ScaleParameter *>(op_parameter_);
   }
   ~ScaleInt8CPUKernel() override;

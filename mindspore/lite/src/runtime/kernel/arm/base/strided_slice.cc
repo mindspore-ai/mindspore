@@ -48,10 +48,10 @@ void StridedSliceCPUKernel::InitFastRunParam() {
   // decide multi-thread launch strategy
   if (outer_ == 1) {
     parallel_on_split_axis_ = true;
-    cal_num_per_thread_ = UP_DIV(out_shape[split_axis_], context_->thread_num_);
+    cal_num_per_thread_ = UP_DIV(out_shape[split_axis_], op_parameter_->thread_num_);
   } else {
     parallel_on_outer_ = true;
-    cal_num_per_thread_ = UP_DIV(outer_, context_->thread_num_);
+    cal_num_per_thread_ = UP_DIV(outer_, op_parameter_->thread_num_);
   }
 }
 
@@ -163,7 +163,7 @@ int StridedSliceCPUKernel::FastRun() {
   input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.front()->data_c());
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data_c());
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(StrideRun, this, context_->thread_num_);
+               ->thread_pool_->ParallelLaunch(StrideRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Stride run error error_code[" << ret << "]";
     return ret;

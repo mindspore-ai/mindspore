@@ -422,7 +422,7 @@ int ReduceInt8CPUKernel::Reduce4DExecute(int task_id) {
       return ReduceMeanNC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
     case HW: {
       // data has been convert into NCHW format for efficiently
-      int num = UP_DIV(c, ctx_->thread_num_);
+      int num = UP_DIV(c, op_parameter_->thread_num_);
       int count = c - task_id * num;
       count = count > num ? num : count;
       int plane = h * w;
@@ -458,7 +458,7 @@ int ReduceInt8CPUKernel::Fast4DReduceMeanHWImpl() {
   PackNHWCToNCHWInt8(reinterpret_cast<void *>(input_data), reinterpret_cast<void *>(nchw_in_data_), input->Batch(),
                      input->Height() * input->Width(), input->Channel());
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ReduceMeanPatternInt8Impl, this, context_->thread_num_);
+               ->thread_pool_->ParallelLaunch(ReduceMeanPatternInt8Impl, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     ctx_->allocator->Free(nchw_in_data_);
     MS_LOG(ERROR) << "Reduce run error, error_code[" << ret << "]";
@@ -503,7 +503,7 @@ int ReduceInt8CPUKernel::Run() {
     inner_size_ = inner_sizes_[i];
     axis_size_ = axis_sizes_[i];
     error_code = static_cast<const lite::InnerContext *>(this->context_)
-                   ->thread_pool_->ParallelLaunch(ReduceInt8Impl, this, context_->thread_num_);
+                   ->thread_pool_->ParallelLaunch(ReduceInt8Impl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -519,7 +519,7 @@ int ReduceInt8CPUKernel::Run() {
   last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   is_last_axis_ = true;
   error_code = static_cast<const lite::InnerContext *>(this->context_)
-                 ->thread_pool_->ParallelLaunch(ReduceInt8Impl, this, context_->thread_num_);
+                 ->thread_pool_->ParallelLaunch(ReduceInt8Impl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
     FreeTmpBuffer();
@@ -532,11 +532,11 @@ int ReduceInt8CPUKernel::Run() {
 int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
   int ret;
   if (!is_last_axis_) {
-    ret =
-      reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, &quant_arg_, task_id, context_->thread_num_);
+    ret = reducer_(outer_size_, inner_size_, axis_size_, src_data_, dst_data_, &quant_arg_, task_id,
+                   op_parameter_->thread_num_);
   } else {
     ret = last_reducer_(outer_size_, inner_size_, axis_size_, src_data_, last_dst_data_, &quant_arg_, task_id,
-                        context_->thread_num_);
+                        op_parameter_->thread_num_);
   }
   return ret;
 }

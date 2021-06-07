@@ -230,7 +230,7 @@ int PadCPUKernel::RunImpl(int task_id) {
   auto output_data = reinterpret_cast<float *>(output->data_c());
   MS_ASSERT(input_data);
   MS_ASSERT(output_data);
-  Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
+  Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
 
   return RET_OK;
 }
@@ -254,10 +254,10 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   /* Fast Mirror pad */
   if (mirror_pad_block_.size() != 0) {
     /* copy center part */
-    Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
+    Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
 
     /* calculate region part */
-    for (size_t i = task_id; i < mirror_pad_block_.size(); i += context_->thread_num_) {
+    for (size_t i = task_id; i < mirror_pad_block_.size(); i += op_parameter_->thread_num_) {
       auto block = mirror_pad_block_[i];
 
       for (int a = 0; a < block.size_[0]; a++) {
@@ -275,7 +275,7 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   }
 
   /* Common Mirror pad */
-  int unit = UP_DIV(output->ElementsNum(), context_->thread_num_);
+  int unit = UP_DIV(output->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
   MirrorPad(input_data, output_data, in_, pad_param_, begin, end);
@@ -405,7 +405,7 @@ int PadCPUKernel::Run() {
       }
     }
     error_code = static_cast<const lite::InnerContext *>(this->context_)
-                   ->thread_pool_->ParallelLaunch(PadImpl, this, context_->thread_num_);
+                   ->thread_pool_->ParallelLaunch(PadImpl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Pad run error, error_code[" << error_code << "]";
       return RET_ERROR;
@@ -419,7 +419,7 @@ int PadCPUKernel::Run() {
     }
 
     error_code = static_cast<const lite::InnerContext *>(this->context_)
-                   ->thread_pool_->ParallelLaunch(MirrorPadImpl, this, context_->thread_num_);
+                   ->thread_pool_->ParallelLaunch(MirrorPadImpl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Pad Reflect or Symmetric mode run error, error_code[" << error_code << "]";
       return RET_ERROR;

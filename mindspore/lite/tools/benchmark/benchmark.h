@@ -81,6 +81,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::loop_count_, "loopCount", "Run loop count", 10);
     AddFlag(&BenchmarkFlags::num_threads_, "numThreads", "Run threads number", 2);
     AddFlag(&BenchmarkFlags::enable_fp16_, "enableFp16", "Enable float16", false);
+    AddFlag(&BenchmarkFlags::enable_parallel_, "enableParallel", "Enable subgraph parallel : true | false", false);
     AddFlag(&BenchmarkFlags::warm_up_loop_count_, "warmUpLoopCount", "Run warm up loop", 3);
     AddFlag(&BenchmarkFlags::time_profiling_, "timeProfiling", "Run time profiling", false);
     AddFlag(&BenchmarkFlags::perf_profiling_, "perfProfiling",
@@ -113,6 +114,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   int loop_count_ = 10;
   int num_threads_ = 2;
   bool enable_fp16_ = false;
+  bool enable_parallel_ = false;
   int warm_up_loop_count_ = 3;
   // MarkAccuracy
   std::string benchmark_data_file_;
@@ -276,6 +278,8 @@ class MS_API Benchmark {
   int MarkPerformance();
 
   int MarkAccuracy();
+
+  int CheckThreadNumValid();
 
  private:
   BenchmarkFlags *flags_;

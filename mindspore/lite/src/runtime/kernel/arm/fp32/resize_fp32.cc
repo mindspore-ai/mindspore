@@ -133,7 +133,7 @@ int ResizeCPUKernel::MallocTmpBuffer() {
 
   {
     line_buffer_ = reinterpret_cast<float *>(
-      malloc(sizeof(float) * x_len * in_tensors_.at(0)->Channel() * 2 * context_->thread_num_));
+      malloc(sizeof(float) * x_len * in_tensors_.at(0)->Channel() * 2 * op_parameter_->thread_num_));
     CHECK_MALLOC_RES(line_buffer_, RET_NULL_PTR)
   }
   return RET_OK;
@@ -174,7 +174,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   MSLITE_CHECK_PTR(output_data);
 
   auto input_shape = input->shape();
-  int unit = UP_DIV(new_height_, context_->thread_num_);
+  int unit = UP_DIV(new_height_, op_parameter_->thread_num_);
   int h_begin = unit * task_id;
   int h_end = std::min(h_begin + unit, new_height_);
   int c = input_shape.at(3);
@@ -188,7 +188,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST): {
       return ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                   calculate_, coordinate_transform_mode_, task_id, context_->thread_num_);
+                                   calculate_, coordinate_transform_mode_, task_id, op_parameter_->thread_num_);
     }
     case static_cast<int>(schema::ResizeMethod_CUBIC): {
       float *line_buffer = line_buffer_ + new_width_ * c * 4 * task_id;
@@ -205,7 +205,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
 
 int ResizeCPUKernel::Run() {
   int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(ResizeImpl, this, context_->thread_num_);
+                     ->thread_pool_->ParallelLaunch(ResizeImpl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

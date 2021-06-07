@@ -62,21 +62,21 @@ int ReduceCPUKernel::CallReduceUnit(int task_id) {
       return RET_NULL_PTR;
     }
     reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
-             static_cast<float *>(dst_data_), task_id, context_->thread_num_);
+             static_cast<float *>(dst_data_), task_id, op_parameter_->thread_num_);
   } else if (data_type_ == kDataTypeBool) {
     if (!bool_reducer_) {
       MS_LOG(ERROR) << "function bool_reducer_ is null.";
       return RET_NULL_PTR;
     }
     bool_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const bool *>(src_data_),
-                  static_cast<bool *>(dst_data_), task_id, context_->thread_num_);
+                  static_cast<bool *>(dst_data_), task_id, op_parameter_->thread_num_);
   } else {
     if (!int_reducer_) {
       MS_LOG(ERROR) << "function int_reducer_ is null.";
       return RET_NULL_PTR;
     }
     int_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const int *>(src_data_),
-                 static_cast<int *>(dst_data_), task_id, context_->thread_num_);
+                 static_cast<int *>(dst_data_), task_id, op_parameter_->thread_num_);
   }
   return RET_OK;
 }
@@ -121,7 +121,7 @@ int ReduceCPUKernel::Run() {
       return RET_ERROR;
     }
     auto error_code = static_cast<const lite::InnerContext *>(this->context_)
-                        ->thread_pool_->ParallelLaunch(ReduceImpl, this, context_->thread_num_);
+                        ->thread_pool_->ParallelLaunch(ReduceImpl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
       FreeTmpBuffer();

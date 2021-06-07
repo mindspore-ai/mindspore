@@ -244,7 +244,7 @@ void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
     src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
   }
   // todo fix tensorlist
-  dst_tensor->set_data(src_tensor->data());
+  dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
 
   if (src_tensor->IsConst() || src_tensor->IsGraphInput()) {
     dst_tensor->set_own_data(false);
@@ -271,7 +271,7 @@ int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
                   << "src tensor: " << src->tensor_name() << " shape: " << src->shape();
     return RET_PARAM_INVALID;
   }
-  auto dst_data = dst->MutableData();
+  auto dst_data = dst->MutableData(); /* using MutableData to sync GPU data */
   auto src_data = src->MutableData();
   auto src_nums_size = src->ElementsNum();
   auto dst_data_type = static_cast<int>(dst->data_type());
@@ -558,8 +558,8 @@ void LiteSwitchOpActor::AsyncFalseBranchOutput(OpContext<Tensor> *context) {
   }
 }
 
-int MindrtInit(bool subgraph_split) {
-  int thread_count = subgraph_split ? 2 : 1;
+int MindrtInit(bool enable_parallel) {
+  int thread_count = enable_parallel ? 2 : 1;
   return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", "", thread_count);
 }
 

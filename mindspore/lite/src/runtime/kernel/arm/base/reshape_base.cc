@@ -34,7 +34,7 @@ int ReshapeBaseCPUKernel::Init() { return ReSize(); }
 
 int ReshapeBaseCPUKernel::ReSize() {
   int in_data_size = in_tensors_.front()->Size();
-  int thread_num = context_->thread_num_;
+  int thread_num = op_parameter_->thread_num_;
   cal_max_num_per_thread_ = UP_DIV(in_data_size, thread_num);
   return RET_OK;
 }
@@ -67,7 +67,7 @@ int ReshapeBaseCPUKernel::Run() {
   input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(kInputIndex)->data_c());
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(kOutputIndex)->data_c());
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ReshapeRun, this, context_->thread_num_);
+               ->thread_pool_->ParallelLaunch(ReshapeRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reshape run error error_code[" << ret << "]";
     return ret;

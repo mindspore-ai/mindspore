@@ -179,7 +179,7 @@ int ArithmeticFP16CPUKernel::Run() {
     return RET_ERROR;
   }
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ArithmeticsRun, this, context_->thread_num_);
+               ->thread_pool_->ParallelLaunch(ArithmeticsRun, this, op_parameter_->thread_num_);
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->MutableData()),
                      output_tensor->ElementsNum());

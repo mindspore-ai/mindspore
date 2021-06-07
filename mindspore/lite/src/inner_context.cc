@@ -30,6 +30,7 @@ namespace mindspore::lite {
 InnerContext::InnerContext(const Context *context) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
+  this->enable_parallel_ = context->enable_parallel_;
   this->device_list_.clear();
   for (auto &device_ctx : context->device_list_) {
     this->device_list_.push_back(device_ctx);
@@ -46,6 +47,7 @@ InnerContext::InnerContext(const Context *context) {
 InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
+  this->enable_parallel_ = context->enable_parallel_;
   bool isUserSetNPU = context->device_list_.end() !=
                       std::find_if(context->device_list_.begin(), context->device_list_.end(),
                                    [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
@@ -77,7 +79,8 @@ int InnerContext::Init() {
     return RET_NOT_SUPPORT;
   }
   if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
-    thread_pool_ = InterThreadPool::CreateThreadPool(1, this->thread_num_);
+    int actor_parallel_thread = this->enable_parallel_ ? 2 : 1;
+    thread_pool_ = InterThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_);
     if (thread_pool_ == nullptr) {
       MS_LOG(ERROR) << "Create ThreadPool failed";
       return RET_NULL_PTR;
