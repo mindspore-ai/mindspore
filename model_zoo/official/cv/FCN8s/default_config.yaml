@@ -52,6 +52,10 @@ flip: False
 freeze_bn: False
 ckpt_file: "/data/mjq/ckpt/FCN8s_1-133_300.ckpt"
 
+# ======================================================================================
+# Export options
+file_name: "fcn8s"
+file_format: MINDIR
 
 ---
 # Help description for each configuration
@@ -83,3 +87,5 @@ data_lst: "list of val data"
 scales: "scales of evaluation"
 flip: "freeze bn"
 ckpt_file: "model to evaluate"
+file_name: "export file name"
+file_format: "export model type"

@@ -12,6 +12,10 @@
         - [训练](#训练)
     - [评估步骤](#评估步骤)
         - [评估](#评估)
+    - [导出过程](#导出过程)
+        - [导出](#导出)
+    - [推理过程](#推理过程)
+        - [推理](#推理)
 - [模型介绍](#模型介绍)
     - [性能](#性能)  
         - [评估性能](#评估性能)
@@ -71,10 +75,12 @@ Dataset used:
     ├── README.md                     // descriptions about all the models
     ├── FCN8s
         ├── README.md                 // descriptions about FCN
+        ├── ascend310_infer           // 实现310推理源代码
         ├── scripts
             ├── run_train.sh
             ├── run_standalone_train.sh
             ├── run_eval.sh
+            ├── run_infer_310.sh         // Ascend推理shell脚本
             ├── build_data.sh
         ├── src
         │   ├──data
@@ -93,6 +99,8 @@ Dataset used:
         │       ├──moxing_adapter.py          // Decorator
         ├── default_config.yaml               // Parameters config
         ├── train.py                 // training script
+        ├── postprogress.py          // 310推理后处理脚本
+        ├── export.py                // 将checkpoint文件导出到air/mindir
         ├── eval.py                  //  evaluation script
 ```
 
@@ -269,6 +277,33 @@ Dataset used:
 
   ```python
   mean IoU  0.6467
+  ```
+
+## 导出过程
+
+### 导出
+
+在导出之前需要修改default_config.yaml配置文件中的ckpt_file配置项，file_name和file_format配置项根据情况修改.
+
+```shell
+python export.py
+```
+
+## 推理过程
+
+### 推理
+
+在还行推理之前我们需要先导出模型。Air模型只能在昇腾910环境上导出，mindir可以在任意环境上导出。batch_size只支持1。
+
+  ```shell
+  # Ascend310 inference
+  bash run_infer_310.sh [MINDIR_PATH] [DATA_LIST_FILE] [IMAGE_PATH] [MASK_PATH] [DEVICE_ID]
+  ```
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+
+  ```python
+  mean IoU  0.0.64519877
   ```
 
 # [模型介绍](#contents)
