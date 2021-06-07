@@ -56,12 +56,12 @@ class Vocab(cde.Vocab):
                 min_frequency=1. max_frequency > total_words is the same as max_frequency = total_words.
                 min_frequency/max_frequency can be None, which corresponds to 0/total_words separately
                 (default=None, all words are included).
-            top_k(int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-                taken. top_k is taken after freq_range. If not enough top_k, all words will be taken (default=None,
-                all words are included).
-            special_tokens(list, optional):  a list of strings, each one is a special token. for example
+            top_k(int, optional): top_k is greater than 0. Number of words to be built into vocab. top_k means most
+                frequent words are taken. top_k is taken after freq_range. If not enough top_k, all words will be taken
+                (default=None, all words are included).
+            special_tokens(list, optional):  A list of strings, each one is a special token. For example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-            special_first(bool, optional): whether special_tokens will be prepended/appended to vocab. If special_tokens
+            special_first(bool, optional): Whether special_tokens will be prepended/appended to vocab. If special_tokens
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:
@@ -76,10 +76,10 @@ class Vocab(cde.Vocab):
         Build a vocab object from a list of word.
 
         Args:
-            word_list(list): a list of string where each element is a word of type string.
-            special_tokens(list, optional):  a list of strings, each one is a special token. for example
+            word_list(list): A list of string where each element is a word of type string.
+            special_tokens(list, optional):  A list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-            special_first(bool, optional): whether special_tokens is prepended or appended to vocab. If special_tokens
+            special_first(bool, optional): Whether special_tokens is prepended or appended to vocab. If special_tokens
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:
@@ -96,13 +96,13 @@ class Vocab(cde.Vocab):
         Build a vocab object from a list of word.
 
         Args:
-            file_path (str): path to the file which contains the vocab list.
-            delimiter (str, optional): a delimiter to break up each line in file, the first element is taken to be
+            file_path (str): Path to the file which contains the vocab list.
+            delimiter (str, optional): A delimiter to break up each line in file, the first element is taken to be
                 the word (default="").
-            vocab_size (int, optional): number of words to read from file_path (default=None, all words are taken).
-            special_tokens (list, optional):  a list of strings, each one is a special token. for example
+            vocab_size (int, optional): Number of words to read from file_path (default=None, all words are taken).
+            special_tokens (list, optional):  A list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-            special_first (bool, optional): whether special_tokens will be prepended/appended to vocab,
+            special_first (bool, optional): Whether special_tokens will be prepended/appended to vocab,
                 If special_tokens is specified and special_first is set to True,
                 special_tokens will be prepended (default=True).
 
@@ -122,7 +122,7 @@ class Vocab(cde.Vocab):
         Build a vocab object from a dict.
 
         Args:
-            word_dict (dict): dict contains word and id pairs, where word should be str and id be int. id is recommended
+            word_dict (dict): Dict contains word and id pairs, where word should be str and id be int. id is recommended
                 to start from 0 and be continuous. ValueError will be raised if id is negative.
 
         Returns:
@@ -134,24 +134,26 @@ class Vocab(cde.Vocab):
 
 class SentencePieceVocab(cde.SentencePieceVocab):
     """
-    SentencePiece obiect that is used to segmentate words
+    SentencePiece object that is used to do words segmentation.
     """
 
     @classmethod
     @check_from_dataset_sentencepiece
     def from_dataset(cls, dataset, col_names, vocab_size, character_coverage, model_type, params):
         """
-        Build a sentencepiece from a dataset
+        Build a SentencePiece from a dataset.
 
         Args:
-            dataset(Dataset): Dataset to build sentencepiece.
+            dataset(Dataset): Dataset to build SentencePiece.
             col_names(list): The list of the col name.
             vocab_size(int): Vocabulary size.
             character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
-                languages. with rich character set like Japanese or Chinese and 1.0 for other languages with small
+                languages with rich character set like Japanese or Chinese and 1.0 for other languages with small
                 character set.
-            model_type(SentencePieceModel): Choose from UNIGRAM (default), BPE, CHAR, or WORD. The input sentence
-                must be pretokenized when using word type.
+            model_type(SentencePieceModel): It can be any of [SentencePieceModel.UNIGRAM, SentencePieceModel.BPE,
+                SentencePieceModel.CHAR, SentencePieceModel.WORD], default is SentencePieceModel.UNIGRAM. The input
+                sentence must be pre-tokenized when using word type.
+
             params(dict): A dictionary with no incoming parameters.
 
         Returns:
@@ -168,13 +170,15 @@ class SentencePieceVocab(cde.SentencePieceVocab):
         Build a SentencePiece object from a list of word.
 
         Args:
-            file_path(list): Path to the file which contains the sentencepiece list.
-            vocab_size(int): Vocabulary size, the type of uint32_t.
+            file_path(list): Path to the file which contains the SentencePiece list.
+            vocab_size(int): Vocabulary size.
             character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
-                languages. with rich character set like Japanse or Chinese and 1.0 for other languages with small
+                languages with rich character set like Japanese or Chinese and 1.0 for other languages with small
                 character set.
-            model_type(SentencePieceModel): Choose from unigram (default), bpe, char, or word. The input sentence
-                must be pretokenized when using word type.
+            model_type(SentencePieceModel): It can be any of [SentencePieceModel.UNIGRAM, SentencePieceModel.BPE,
+                SentencePieceModel.CHAR, SentencePieceModel.WORD], default is SentencePieceModel.UNIGRAM. The input
+                sentence must be pre-tokenized when using word type.
+
             params(dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
                 library).
 
@@ -193,10 +197,10 @@ class SentencePieceVocab(cde.SentencePieceVocab):
     @check_save_model
     def save_model(cls, vocab, path, filename):
         """
-        Save model to filepath
+        Save model into given filepath.
 
         Args:
-            vocab(SentencePieceVocab): A sentencepiece object.
+            vocab(SentencePieceVocab): A SentencePiece object.
             path(str): Path to store model.
             filename(str): The name of the file.
         """
@@ -208,7 +212,7 @@ def to_str(array, encoding='utf8'):
     Convert NumPy array of `bytes` to array of `str` by decoding each element based on charset `encoding`.
 
     Args:
-        array (numpy.ndarray): Array of type `bytes` representing strings.
+        array (numpy.ndarray): Array of `bytes` type representing strings.
         encoding (str): Indicating the charset for decoding.
 
     Returns:
@@ -226,7 +230,7 @@ def to_bytes(array, encoding='utf8'):
     Convert NumPy array of `str` to array of `bytes` by encoding each element based on charset `encoding`.
 
     Args:
-        array (numpy.ndarray): Array of type `str` representing strings.
+        array (numpy.ndarray): Array of `str` type representing strings.
         encoding (str): Indicating the charset for encoding.
 
     Returns:
