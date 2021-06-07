@@ -46,8 +46,8 @@ class PoolGrad : public PrimitiveC {
   std::vector<int64_t> get_strides() const;
   PadMode get_pad_mode() const;
   Format get_format() const;
-  std::vector<int64_t> _grad_check_vector(const std::string arg_name, const std::vector<int64_t> arg_val,
-                                          const std::string op_name);
+  std::vector<int64_t> _grad_check_vector(const std::string &arg_name, const std::vector<int64_t> arg_val,
+                                          const std::string &op_name);
 };
 }  // namespace ops
 }  // namespace mindspore

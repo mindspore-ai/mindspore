@@ -30,7 +30,7 @@ void BatchNormFold::Init(const float momentum, const float epsilon, const bool i
 }
 
 void BatchNormFold::set_momentum(const float momentum) {
-  CheckAndConvertUtils::CheckInRange<int64_t>(kMomentum, momentum, kIncludeBoth, {0.0, 1.0}, this->name());
+  CheckAndConvertUtils::CheckInRange<float>(kMomentum, momentum, kIncludeBoth, {0.0, 1.0}, this->name());
   this->AddAttr(kMomentum, MakeValue(momentum));
 }
 

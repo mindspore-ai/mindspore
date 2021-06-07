@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace ops {
-std::vector<int64_t> PoolGrad::_grad_check_vector(std::string arg_name, std::vector<int64_t> arg_val,
-                                                  std::string op_name) {
+std::vector<int64_t> PoolGrad::_grad_check_vector(const std::string &arg_name, std::vector<int64_t> arg_val,
+                                                  const std::string &op_name) {
   std::vector<int64_t> ret;
   std::string error_msg = "For '" + op_name + "'" + " the '" + arg_name +
                           "' should be a vector of one or two or four "
