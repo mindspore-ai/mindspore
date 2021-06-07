@@ -61,6 +61,7 @@ bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
 #endif  // ENABLE_D
 void TriggerAll();
 void ClearAll();
+void ClearGPUMemAddressInfo();
 }  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_

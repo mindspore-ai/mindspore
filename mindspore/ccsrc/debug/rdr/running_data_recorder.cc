@@ -119,5 +119,20 @@ bool UpdateGPUMemAddressInfo(const SubModuleId module, const std::string &name, 
 void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 
 void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
+
+void ClearGPUMemAddressInfo() {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return;
+  }
+  if (RecorderManager::Instance().CheckRdrGPUMemIsRecord()) {
+    std::string name = "mem_address_list";
+    std::string submodule_name = "KERNEL";
+    auto recorder = RecorderManager::Instance().GetRecorder(submodule_name, name);
+    if (recorder != nullptr) {
+      auto mem_recorder = std::dynamic_pointer_cast<GPUMemAddressRecorder>(recorder);
+      mem_recorder->CleanUp();
+    }
+  }
+}
 }  // namespace RDR
 }  // namespace mindspore
