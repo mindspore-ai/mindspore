@@ -64,16 +64,14 @@ void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
     if (manager_.lock()) {
       manager_.lock()->SetEdge(return_, 1, value);
     } else {
-      return_->set_input(1, value);
+      constexpr auto first_data_index = 1;
+      return_->set_input(first_data_index, value);
     }
   }
 
   return_->set_abstract(value->abstract());
-
   AnfNodePtr input0 = return_->input(0);
-
-  PrimitivePtr return_prim = prim::kPrimReturn;
-  auto f = std::make_shared<PrimitiveAbstractClosure>(return_prim, input0);
+  auto f = std::make_shared<PrimitiveAbstractClosure>(prim::kPrimReturn, input0);
   input0->set_abstract(f);
 }
 
@@ -83,11 +81,11 @@ void FuncGraph::DumpFuncGraph(const std::string &path) {
   }
 }
 
-void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph,
-                                  std::vector<AnfNodePtr> *specialized_parameter_list,
-                                  std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes, int variable_args_count,
-                                  int pos_args_input_count) {
+void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int variable_args_count,
+                                  int pos_args_input_count, std::vector<AnfNodePtr> *specialized_parameter_list,
+                                  std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   // if there is variable argument, pass the input arguments that does not match positional args to it as a tuple
+  MS_EXCEPTION_IF_NULL(specialized_graph);
   if (specialized_graph->has_vararg()) {
     TraceGuard trace_guard(
       std::make_shared<TraceGenerateVarArg>(specialized_graph->GetVariableArgParameter()->debug_info()));
@@ -119,9 +117,9 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph,
 }
 
 void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
-                                 std::vector<AnfNodePtr> *specialized_parameter_list,
                                  const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list,
-                                 std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) {
+                                 std::vector<AnfNodePtr> *specialized_parameter_list,
+                                 std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   std::vector<AnfNodePtr> kwarg_keys_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> kwarg_values_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
 
@@ -171,13 +169,13 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
     }
   }
 
-  GenerateKwargReplNode(specialized_graph, repl_nodes, kwarg_keys_tuple_nodes, kwarg_values_tuple_nodes);
+  GenerateKwargReplNode(specialized_graph, kwarg_keys_tuple_nodes, kwarg_values_tuple_nodes, repl_nodes);
 }
 
 void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
-                                      std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes,
                                       const std::vector<AnfNodePtr> &kwarg_keys_tuple_nodes,
-                                      const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes) {
+                                      const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes,
+                                      std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   if (has_kwarg()) {
     MS_EXCEPTION_IF_NULL(specialized_graph);
     TraceGuard guard(
@@ -204,12 +202,13 @@ bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr> 
 
 void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
                                      const std::vector<AnfNodePtr> &specialized_parameter_list,
-                                     std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) {
+                                     std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   MS_EXCEPTION_IF_NULL(specialized_graph);
   for (size_t i = 0; i < specialized_graph->parameters().size() - hyper_param_count(); ++i) {
-    auto param_node = specialized_graph->parameters()[i];
+    MS_EXCEPTION_IF_NULL(specialized_graph->parameters()[i]);
+    auto param_node = specialized_graph->parameters()[i]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_node);
-    auto param_name = param_node->cast<ParameterPtr>()->name();
+    auto param_name = param_node->name();
     auto node_itr = std::find(specialized_parameter_list.begin(), specialized_parameter_list.end(), param_node);
     if (node_itr != specialized_parameter_list.end()) {
       continue;
@@ -262,10 +261,10 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
     specialized_parameter_list.push_back(specialized_graph->parameters()[i]);
   }
 
-  GenerateVarParams(specialized_graph, &specialized_parameter_list, &repl_nodes, variable_args_count,
-                    pos_args_input_count);
+  GenerateVarParams(specialized_graph, variable_args_count, pos_args_input_count, &specialized_parameter_list,
+                    &repl_nodes);
 
-  GenerateKwParams(specialized_graph, &specialized_parameter_list, kwarg_list, &repl_nodes);
+  GenerateKwParams(specialized_graph, kwarg_list, &specialized_parameter_list, &repl_nodes);
 
   GenerateDefaultValue(specialized_graph, specialized_parameter_list, &repl_nodes);
 

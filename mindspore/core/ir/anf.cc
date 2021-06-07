@@ -72,6 +72,13 @@ void CNode::set_inputs(const std::vector<AnfNodePtr> &inputs) {
   input_tensor_num_ = -1;
 }
 
+const AnfNodePtr &CNode::input(size_t i) const {
+  if (i >= inputs_.size()) {
+    MS_LOG(EXCEPTION) << "i:" << i << "out of range:" << inputs_.size() << ",cnode:" << DebugString();
+  }
+  return inputs_.at(i);
+}
+
 std::string CNode::DebugString(int recursive_level) const {
   std::ostringstream buffer;
   if (recursive_level > 0) {
@@ -406,6 +413,7 @@ std::string GetAttrTarget(const PrimitivePtr &primitive, const ValuePtr &att_tar
     primitive->EraseAttr(primitive_target);
     return default_target;
   }
+  MS_EXCEPTION_IF_NULL(att_target);
   if (!att_target->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
   }

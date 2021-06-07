@@ -60,8 +60,9 @@ abstract::AbstractBasePtr FuncGraph::ToAbstract() {
 }
 
 AnfNodePtr FuncGraph::output() const {
+  constexpr size_t return_input_num = 2;
   // If return value is set, return should have two inputs.
-  if (return_ != nullptr && return_->inputs().size() == 2) {
+  if (return_ != nullptr && return_->inputs().size() == return_input_num) {
     return return_->input(1);
   } else {
     // If not set yet, return nullptr.
@@ -74,6 +75,7 @@ const std::vector<AnfNodePtr> FuncGraph::get_inputs() const {
   for (auto const &node : parameters_) {
     MS_EXCEPTION_IF_NULL(node);
     auto parameter = dyn_cast<Parameter>(node);
+    MS_EXCEPTION_IF_NULL(parameter);
     if (!parameter->has_default()) {
       input_params.push_back(parameter);
     }
@@ -114,6 +116,7 @@ ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
 bool FuncGraph::has_flag(const std::string &key) {
   auto iter = attrs_.find(key);
   if (iter != attrs_.cend()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
     if (iter->second->isa<BoolImm>()) {
       return GetValue<bool>(iter->second);
     }
@@ -246,8 +249,10 @@ const AnfNodeCounterMap &FuncGraph::free_variables() const { return free_variabl
 void FuncGraph::CopyFreeVariables(const FuncGraphPtr &source) {
   auto &others = source->free_variables();
   for (auto it = others.begin(); it != others.end(); it++) {
-    if (it->first->func_graph().get() != this) {
-      (void)AddFreeVariable(it->first, it->second);
+    const auto &free_var = it->first;
+    MS_EXCEPTION_IF_NULL(free_var);
+    if (free_var->func_graph().get() != this) {
+      (void)AddFreeVariable(free_var, it->second);
     }
   }
 }
@@ -296,7 +301,6 @@ std::vector<AnfNodePtr> FuncGraph::free_variables_nodes() {
       nodes.push_back(utils::cast<AnfNodePtr>(key));
     }
   }
-
   return nodes;
 }
 
@@ -399,6 +403,7 @@ void FuncGraph::DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair) {
 const std::unordered_map<AnfNodePtr, int> &FuncGraph::j_value_nodes() const { return j_value_nodes_; }
 
 void FuncGraph::CopyJValueNodes(const FuncGraphPtr &source) {
+  MS_EXCEPTION_IF_NULL(source);
   auto &others = source->j_value_nodes();
   for (const auto &other : others) {
     AddJValueNode(other.first, other.second);
@@ -545,14 +550,18 @@ std::string FuncGraph::GetVariableArgName() {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 2 + hyper_param_count";
     }
-    return parameters_[parameters_.size() - hyper_param_count_ - min_param_num]->cast<ParameterPtr>()->name();
+    const auto &parameter = parameters_[parameters_.size() - hyper_param_count_ - min_param_num]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    return parameter->name();
   }
 
   if (parameters_.size() < hyper_param_count_ + 1) {
     MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                       << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
   }
-  return parameters_[parameters_.size() - hyper_param_count_ - 1]->cast<ParameterPtr>()->name();
+  const auto &parameter = parameters_[parameters_.size() - hyper_param_count_ - 1]->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(parameter);
+  return parameter->name();
 }
 
 AnfNodePtr FuncGraph::GetVariableKwargParameter() {
@@ -572,7 +581,9 @@ std::string FuncGraph::GetVariableKwargName() {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
     }
-    return parameters_[parameters_.size() - hyper_param_count_ - 1]->cast<ParameterPtr>()->name();
+    const auto &parameter = parameters_[parameters_.size() - hyper_param_count_ - 1]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    return parameter->name();
   }
   return "";
 }
