@@ -80,6 +80,7 @@ class _Loss(Cell):
     def construct(self, base, target):
         raise NotImplementedError
 
+
 @constexpr
 def _check_input_type(param_name, input_data, allow_dtype, cls_name):
     if input_data is not None and not isinstance(input_data, allow_dtype):
