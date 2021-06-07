@@ -889,14 +889,14 @@ void OperatorInfo::ReplacePreEdges(const std::shared_ptr<OperatorInfo> &op, cons
     MS_LOG(ERROR) << name_ << ": ReplacePreEdges: the op is null.";
     return;
   }
-  std::vector<std::shared_ptr<Edge>> new_pre_edges;
+  std::vector<std::shared_ptr<Edge>> update_pre_edges;
   for (auto &edge : prev_edges_) {
     if (edge->prev_operator() != op) {
-      new_pre_edges.push_back(edge);
+      update_pre_edges.push_back(edge);
     }
   }
-  new_pre_edges.push_back(replace_edge);
-  prev_edges_ = new_pre_edges;
+  update_pre_edges.push_back(replace_edge);
+  prev_edges_ = update_pre_edges;
 }
 
 void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op,
@@ -905,14 +905,14 @@ void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op,
     MS_LOG(ERROR) << name_ << ": ReplaceSuccEdges: the op is null";
     return;
   }
-  std::vector<std::shared_ptr<Edge>> new_succ_edges;
+  std::vector<std::shared_ptr<Edge>> update_pre_edges;
   for (auto &edge : succ_edges_) {
     if (edge->next_operator() != op) {
-      new_succ_edges.push_back(edge);
+      update_pre_edges.push_back(edge);
     }
   }
-  new_succ_edges.push_back(replace_edge);
-  succ_edges_ = new_succ_edges;
+  update_pre_edges.push_back(replace_edge);
+  succ_edges_ = update_pre_edges;
 }
 
 std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
