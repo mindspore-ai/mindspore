@@ -303,7 +303,9 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   }
 
   std::vector<VectorPtr> resp;
-  worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(cmd), &resp);
+  if (!worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(cmd), &resp)) {
+    MS_LOG(ERROR) << "Worker send failed!";
+  }
   int64_t single_id_len = SizeToLong(lookup_result->size() / lookup_ids.size());
   std::unordered_map<Key, std::shared_ptr<std::pair<float *, int64_t>>> id_addr_map;
   std::shared_ptr<std::vector<float>> values = std::make_shared<std::vector<float>>();
@@ -676,7 +678,7 @@ void Worker::PullData(const std::vector<Key> &keys, std::vector<float> *const va
 }
 
 void Worker::LookupIdPartitioner(const EmbeddingTableLookup &send, PartitionEmbeddingMessages *partition,
-                                 const std::map<int64_t, int64_t> &attrs) {
+                                 const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
 
   const Key &key = send.key();

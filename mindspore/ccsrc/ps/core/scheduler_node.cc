@@ -46,7 +46,7 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   HeartbeatMessage heartbeat_message;
-  CHECK_RETURN_TYPE(heartbeat_message.ParseFromArray(data, size));
+  CHECK_RETURN_TYPE(heartbeat_message.ParseFromArray(data, SizeToInt(size)));
 
   node_manager_.UpdateHeartbeat(heartbeat_message.node_id());
 

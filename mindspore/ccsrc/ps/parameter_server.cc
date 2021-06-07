@@ -237,10 +237,11 @@ void ParameterServer::UpdateWeights() {
         shapes.push_back(indices_shape);
 
         if (original_optim_inputs_shape_.count(key) != 0) {
-          std::transform(
-            (*(original_optim_inputs_shape_[key])).begin(), (*(original_optim_inputs_shape_[key])).end(),
-            std::back_inserter(shapes),
-            [](std::shared_ptr<std::vector<size_t>> input_shapes) -> std::vector<size_t> { return *input_shapes; });
+          std::transform((*(original_optim_inputs_shape_[key])).begin(), (*(original_optim_inputs_shape_[key])).end(),
+                         std::back_inserter(shapes),
+                         [](const std::shared_ptr<std::vector<size_t>> &input_shapes) -> std::vector<size_t> {
+                           return *input_shapes;
+                         });
         }
         optimizer->ReInit(shapes);
         optim_info->ComputeMean(shapes, worker_num_, pserver_num_, server_node_->rank_id());
@@ -377,7 +378,7 @@ void ParameterServer::UpdateEmbeddings(const Key &key, const LookupIds &lookup_i
   table_lookup_op->UpdateEmbeddings(table_ptr->data(), lookup_ids.data(), vals.data(), lookup_ids.size());
 }
 
-inline bool ParameterServer::ReadyForUpdateWeights() {
+inline bool ParameterServer::ReadyForUpdateWeights() const {
   return grads_accum_counter_.size() > 0 && grad_accum_count_ == grads_accum_counter_.size();
 }
 
@@ -387,9 +388,7 @@ inline bool ParameterServer::ReadyForPush(const Key &key) {
     MS_LOG(EXCEPTION) << "The weights in server is empty. Many reasons could cause this: 1.The Worker didn't send "
                          "kInitWeightsCmd command. 2.The Server failed to initialize weights.";
   }
-  MS_LOG(INFO) << "The grad_accum_count_:" << grad_accum_count_ << " the weights_:" << weights_.size()
-               << " the token:" << (tokens_[key] <= 0);
-  return grad_accum_count_ < weights_.size() && tokens_[key] <= 0;
+  return grad_accum_count_ < weights_.size() && tokens_[key] == 0;
 }
 
 inline bool ParameterServer::ReadyForPull(const Key &key) {
@@ -623,7 +622,7 @@ void ParameterServer::ServerHandler::HandleInitInputsShape(const DataPtr &data, 
 void ParameterServer::ServerHandler::HandleInitEmbeddings(const DataPtr &data, size_t size, const VectorPtr &) {
   std::unique_lock<std::mutex> lock(ps_->mutex());
   EmbeddingTableMeta embedding_table_meta;
-  CHECK_RETURN_TYPE(embedding_table_meta.ParseFromArray(data.get(), size));
+  CHECK_RETURN_TYPE(embedding_table_meta.ParseFromArray(data.get(), SizeToInt(size)));
   const Key &key = embedding_table_meta.key();
   MS_LOG(INFO) << "Initializing embedding table for key:" << key;
   std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =

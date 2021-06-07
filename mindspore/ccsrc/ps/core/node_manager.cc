@@ -82,7 +82,7 @@ void NodeManager::UpdateHeartbeat(const std::string &node_id) {
 
 void NodeManager::UpdateNodeFinishState(const std::string &node_id) { heartbeats_finish_nodes_.insert(node_id); }
 
-bool NodeManager::CheckNodesFinishState() { return heartbeats_finish_nodes_.size() == nodes_info_.size(); }
+bool NodeManager::CheckNodesFinishState() const { return heartbeats_finish_nodes_.size() == nodes_info_.size(); }
 
 std::vector<ServersMeta> NodeManager::FetchServersMeta() {
   std::vector<ServersMeta> servers_meta_list;

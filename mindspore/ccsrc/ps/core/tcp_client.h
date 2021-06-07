@@ -63,10 +63,10 @@ class TcpClient {
   void StartWithNoBlock();
   void SetMessageCallback(const OnMessage &cb);
   bool SendMessage(const CommMessage &message) const;
-  bool SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size);
+  bool SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size);
   void StartTimer(const uint32_t &time);
   void set_timer_callback(const OnTimer &timer);
-  const event_base &eventbase();
+  const event_base &eventbase() const;
 
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
