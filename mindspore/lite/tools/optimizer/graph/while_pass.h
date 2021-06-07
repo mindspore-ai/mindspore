@@ -32,7 +32,7 @@ class WhilePass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  ValueNodePtr GetSwitchAnfPrim();
+  static ValueNodePtr GetSwitchAnfPrim();
 
   const size_t kWhileMinInputSize = 3;
   const size_t kWhileCondIndex = 1;

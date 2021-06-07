@@ -16,7 +16,6 @@
 #include "tools/optimizer/graph/if_pass.h"
 #include <vector>
 #include <memory>
-#include "mindspore/lite/include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
 #include "ops/switch.h"
@@ -33,7 +32,8 @@ ValueNodePtr IfPass::GetSwitchAnfPrim() {
   return switch_anf_prim;
 }
 
-void IfPass::ReplaceInput(const std::vector<AnfNodePtr> &node_list, AnfNodePtr new_input_cnode, std::string para_name) {
+void IfPass::ReplaceInput(const std::vector<AnfNodePtr> &node_list, const AnfNodePtr &new_input_cnode,
+                          const std::string &para_name) {
   for (auto &node : node_list) {
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);

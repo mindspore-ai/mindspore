@@ -34,7 +34,7 @@ class OnnxInputAdjustOpPass : public Pass {
   static STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                                const std::string &attr_name);
   static STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS AdjustResize(const CNodePtr &cnode);
+  static STATUS AdjustResize(const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::opt

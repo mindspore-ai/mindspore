@@ -16,7 +16,6 @@
 
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include <dirent.h>
-#include <sys/stat.h>
 #include <future>
 #include <map>
 #include <memory>
@@ -43,7 +42,6 @@
 #include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
-#include "src/common/file_utils.h"
 #include "src/common/utils.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 
@@ -246,25 +244,24 @@ STATUS DivergInfo::ComputeThreshold() {
     return RET_OK;
   }
 
-  if (method_x == kMethodOutlier && this->min_datas.size() > 0) {
+  if (method_x == kMethodOutlier && !this->min_datas.empty()) {
     this->percent_result = OutlierMethod(min_datas, max_datas);
     this->best_T = std::max(std::fabs(percent_result.first), std::fabs(percent_result.second));
     return RET_OK;
   }
 
-  const constexpr int quant_bint_nums = 128;
-  int threshold = quant_bint_nums;
+  int threshold = INT8_MAX + 1;
   float min_kl = FLT_MAX;
-  float after_threshold_sum = std::accumulate(this->histogram.begin() + quant_bint_nums, this->histogram.end(), 0.0f);
+  float after_threshold_sum = std::accumulate(this->histogram.begin() + INT8_MAX + 1, this->histogram.end(), 0.0f);
 
-  for (int i = quant_bint_nums; i < this->bin_num; ++i) {
-    std::vector<float> quantized_histogram(quant_bint_nums, 0);
+  for (int i = INT8_MAX + 1; i < this->bin_num; ++i) {
+    std::vector<float> quantized_histogram(INT8_MAX + 1, 0);
     std::vector<float> reference_histogram(this->histogram.begin(), this->histogram.begin() + i);
     std::vector<float> expanded_histogram(i, 0);
     reference_histogram[i - 1] += after_threshold_sum;
     after_threshold_sum -= this->histogram[i];
     // handle bins for computing KL.
-    HandleBinForKL(quant_bint_nums, i, &quantized_histogram, &expanded_histogram);
+    HandleBinForKL(INT8_MAX + 1, i, &quantized_histogram, &expanded_histogram);
     auto KLDivergence = [](std::vector<float> p, std::vector<float> q) {
       auto sum = 0.0f;
       std::for_each(p.begin(), p.end(), [&sum](float item) { sum += item; });
@@ -316,9 +313,9 @@ std::pair<CNodePtr, float> DivergInfo::GetScale() {
 
 std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
   int zero_point = 0;
-  if (quant_min == 0 && quant_max == 255) {
-    zero_point = 128;
-  } else if (quant_min == -127 && quant_max == 127) {
+  if (quant_min == 0 && quant_max == UINT8_MAX) {
+    zero_point = INT8_MAX + 1;
+  } else if (quant_min == INT_LEAST8_MIN + 1 && quant_max == INT8_MAX) {
     zero_point = 0;
   } else {
     MS_LOG(WARNING) << "unexpected quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
@@ -901,7 +898,7 @@ STATUS PostTrainingQuantizer::PreProcess() {
   }
   // 3. collect to be quantized operators
   // from user input
-  QuantStrategy strategy(10);
+  QuantStrategy strategy(MILLISECONDS_BASE);
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     AnfNodePtr anf = std::dynamic_pointer_cast<AnfNode>(cnode);
@@ -925,7 +922,7 @@ STATUS PostTrainingQuantizer::PreProcess() {
 }
 
 STATUS PostTrainingQuantizer::CheckFp32TensorVec(const std::string &node_name,
-                                                 const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) const {
+                                                 const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) {
   MS_ASSERT(tensor_vec != nullptr);
   if (tensor_vec.empty()) {
     MS_LOG(ERROR) << "node: " << node_name << " input tensors is 0";
@@ -1461,7 +1458,7 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
           return false;
         }
         while (!OpInputDataHandle(STORE, callParam.node_name, &fp32_op_input)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
         }
       }
       return true;
@@ -1473,7 +1470,7 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         vector<float> fp32_op_input;
         while (!OpInputDataHandle(FETCH, callParam.node_name, &fp32_op_input)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
         }
         auto tensor = beforeInputs[0];
         MS_ASSERT(tensor != nullptr);
@@ -1532,7 +1529,7 @@ KernelCallBack PostTrainingQuantizer::GetInt8AfterCallBack() {
     if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
       vector<float> fp32_op_output_ch_mean;
       while (!OpOutputChMeanDataHandle(FETCH, callParam.node_name, &fp32_op_output_ch_mean)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
       }
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);
@@ -1642,7 +1639,7 @@ KernelCallBack PostTrainingQuantizer::GetFloatAfterCallBack() {
         fp32_op_output_ch_mean[i] = sum;
       }
       while (!OpOutputChMeanDataHandle(STORE, callParam.node_name, &fp32_op_output_ch_mean)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
       }
     }
     return true;

@@ -94,9 +94,8 @@ const BaseRef TfNormFusion::DefinePattern() const {
   return add2_ref;
 }
 
-CNodePtr TfNormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                      const schema::PrimitiveType type, float epsilon, int begin_norm_axis,
-                                      int begin_params_axis) const {
+CNodePtr TfNormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, schema::PrimitiveType type,
+                                      float epsilon, int begin_norm_axis, int begin_params_axis) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   auto norm_primitive = std::make_unique<schema::PrimitiveT>();
@@ -130,7 +129,7 @@ CNodePtr TfNormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const Equi
 
 bool TfNormFusion::GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
                                       const std::vector<int> &params_shape, schema::PrimitiveType *type,
-                                      int *begin_norm_axis, int *begin_params_axis) const {
+                                      int *begin_norm_axis, int *begin_params_axis) {
   MS_ASSERT(input_node != nullptr);
   MS_ASSERT(type != nullptr);
   MS_ASSERT(begin_norm_axis != nullptr);

@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ class ConvTransformFusion : public PatternProcessPass {
   virtual void InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
   void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
   void CalNewWeightTensor(const CNodePtr &, const ParamValueLitePtr &, int, const float *) const;
-  void CalNewBiasTensor(float *, int, bool, const float *, const float *) const;
+  static void CalNewBiasTensor(float *, int, bool, const float *, const float *);
   void SetFmkType(FmkType type) { this->fmk_type_ = type; }
 
  private:

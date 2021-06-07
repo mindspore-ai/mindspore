@@ -166,8 +166,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeTFLITE(const CNodePtr &conv_node,
   return lite::RET_OK;
 }
 
-lite::STATUS WeightFormatHardCodePass::HardCodeTF(const CNodePtr &conv_node,
-                                                  const ParamValueLitePtr &param_value) const {
+lite::STATUS WeightFormatHardCodePass::HardCodeTF(const CNodePtr &conv_node, const ParamValueLitePtr &param_value) {
   MS_ASSERT(conv_cnode != nullptr);
   MS_ASSERT(param_value != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));

@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ class FunctionalizeControlOpPass : public Pass {
 
  protected:
   STATUS BuildWhileSubgraph(const FuncGraphPtr &func_graph);
-  STATUS BuildIfSubgraph(const FuncGraphPtr &func_graph);
+  static STATUS BuildIfSubgraph(const FuncGraphPtr &func_graph);
   std::vector<std::pair<std::string, std::vector<AnfNodePtr>>> node_clusters_{};
   std::vector<CNodePtr> loop_cond_nodes_{};
 };

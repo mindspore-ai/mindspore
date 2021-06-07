@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -162,12 +162,12 @@ void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kern
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return;
   }
-  if (0 != memset_s(trans_scale, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float))) {
+  if (memset_s(trans_scale, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float)) != 0) {
     MS_LOG(ERROR) << "memset transScale failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     return;
   }
-  if (0 != memset_s(trans_bias, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float))) {
+  if (memset_s(trans_bias, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float)) != 0) {
     MS_LOG(ERROR) << "memset transBias failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     return;
@@ -215,7 +215,7 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
   }
   auto new_weight_tensor = std::make_shared<ParamValueLite>();
   if (new_weight_tensor == nullptr) {
-    delete temp_weight_data;
+    delete[] temp_weight_data;
     MS_LOG(ERROR) << "new ParamValueLite failed";
     return;
   }
@@ -226,7 +226,7 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
   auto ret = memcpy_s(temp_weight_data, weight_tensor->tensor_shape_size() * sizeof(float),
                       weight_tensor->tensor_addr(), weight_tensor->tensor_shape_size() * sizeof(float));
   if (ret != EOK) {
-    delete temp_weight_data;
+    delete[] temp_weight_data;
     MS_LOG(ERROR) << "memcpy_s error:" << ret;
     return;
   }
@@ -244,7 +244,7 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
     bias_data = new (std::nothrow) float[kernel_num];
     if (bias_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
-      delete temp_weight_data;
+      delete[] temp_weight_data;
       return;
     }
   }
@@ -257,7 +257,7 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
   auto new_weight_paramter = func_graph->add_parameter();
   if (new_weight_paramter == nullptr) {
     MS_LOG(ERROR) << "new_weight_paramter is nullptr";
-    delete temp_weight_data;
+    delete[] temp_weight_data;
     return;
   }
   new_weight_paramter->set_default_param(new_weight_tensor);
@@ -282,7 +282,7 @@ void ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const Pa
   }
   MS_ASSERT(new_weight_data != nullptr);
   auto data_size = weight_shape_size * sizeof(float);
-  if (0 != memset_s(tmp_weight_data, data_size, 0, data_size)) {
+  if (memset_s(tmp_weight_data, data_size, 0, data_size) != 0) {
     MS_LOG(ERROR) << "memset newWeightData failed";
     delete[] tmp_weight_data;
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
@@ -312,7 +312,7 @@ void ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const Pa
 }
 
 void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool bias_flag, const float *trans_scale,
-                                           const float *trans_bias) const {
+                                           const float *trans_bias) {
   MS_ASSERT(bias_data != nullptr);
   MS_ASSERT(trans_bias != nullptr);
   MS_ASSERT(trans_scale != nullptr);

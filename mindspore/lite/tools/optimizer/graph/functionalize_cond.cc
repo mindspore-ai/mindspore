@@ -104,7 +104,7 @@ int FunctionalizeCond::PosInInputNodes(const CNodePtr &node) {
   return index - input_nodes_.begin();
 }
 
-STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, std::string graph_name) {
+STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, const std::string &graph_name) {
   std::vector<AnfNodePtr> nodes_need_drop{};
   for (auto &cnode : graph->GetOrderedCnodes()) {
     for (auto &input_node : cnode->inputs()) {
@@ -134,7 +134,8 @@ STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, std::
   return RET_OK;
 }
 
-FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::string name, BranchType branch_type) {
+FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, const std::string &name,
+                                                  BranchType branch_type) {
   auto graph = FunctionalizeControlOpPass::NewFuncGraph(name, mindspore::lite::converter::FmkType_TF);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "new graph Partial Node return nullptr";

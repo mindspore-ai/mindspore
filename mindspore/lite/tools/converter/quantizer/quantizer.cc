@@ -17,7 +17,6 @@
 #include "mindspore/lite/tools/converter/quantizer/quantizer.h"
 
 namespace mindspore::lite::quant {
-
 STATUS Quantizer::GenerateQuantParam() { return RET_OK; }
 
 STATUS Quantizer::RemoveFakeQuant() { return RET_OK; }

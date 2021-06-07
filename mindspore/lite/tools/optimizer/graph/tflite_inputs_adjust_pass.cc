@@ -20,8 +20,6 @@
 #include "ops/batch_to_space_nd.h"
 #include "ops/fusion/arg_max_fusion.h"
 #include "ops/fusion/arg_min_fusion.h"
-#include "ops/fusion/pad_fusion.h"
-#include "ops/fusion/reduce_fusion.h"
 #include "ops/op_utils.h"
 #include "ops/resize.h"
 #include "ops/space_to_batch.h"

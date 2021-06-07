@@ -38,7 +38,7 @@ class WeightFormatHardCodePass : public Pass {
   lite::STATUS HardCodeONNX(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
   lite::STATUS HardCodeMS(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
   lite::STATUS HardCodeTFLITE(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeTF(const CNodePtr &conv_node, const ParamValueLitePtr &param_value) const;
+  static lite::STATUS HardCodeTF(const CNodePtr &conv_node, const ParamValueLitePtr &param_value);
 
  private:
   QuantType quant_type = schema::QuantType_QUANT_NONE;

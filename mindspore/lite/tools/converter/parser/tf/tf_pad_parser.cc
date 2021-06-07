@@ -31,7 +31,6 @@ ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
   if (tf_op.op() == "Pad") {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
     prim->set_constant_value(0.0f);
-
   } else if (tf_op.op() == "MirrorPad") {
     tensorflow::AttrValue attr_value;
     if (!TensorFlowUtils::FindAttrValue(tf_op, "mode", &attr_value)) {

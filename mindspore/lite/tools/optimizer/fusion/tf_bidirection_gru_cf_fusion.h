@@ -37,8 +37,8 @@ class TfBidirectionGruCfFusion : public TfBidirectionGruFusion {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  BaseRef DefineGruCellPattern(const BaseRef &in_ta_read, const BaseRef &switch3_true,
-                               const std::vector<VarPtr> &vars) const;
+  static BaseRef DefineGruCellPattern(const BaseRef &in_ta_read, const BaseRef &switch3_true,
+                                      const std::vector<VarPtr> &vars);
   const BaseRef DefineBidirectionRnnPattern(const BaseRef &input, const std::vector<VarPtr> &vars,
                                             const VarPtr &init_state) const;
 };

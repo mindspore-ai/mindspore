@@ -18,6 +18,7 @@
 
 #include <string>
 #include <set>
+#include <utility>
 #include <vector>
 #include <map>
 #include "backend/optimizer/common/pass.h"
@@ -34,16 +35,16 @@ typedef enum { kThenBranch = 0, kElseBranch = 1 } BranchType;
 // Precondition: While loops must have been functionalized.
 class FunctionalizeCond {
  public:
-  FunctionalizeCond(FuncGraphPtr fg, CNodePtr merge_node) : fg_(fg), merge_node_(merge_node) {}
+  FunctionalizeCond(FuncGraphPtr fg, CNodePtr merge_node) : fg_(std::move(fg)), merge_node_(std::move(merge_node)) {}
 
   STATUS Process();
 
  private:
   STATUS GetSwitchBranchType(const CNodePtr &switch_cnode, BranchType *branch_type);
   STATUS BranchSubGraphAddNodes(const FuncGraphPtr &graph, const AnfNodePtr &root_node, BranchType branch_type);
-  FuncGraphPtr CreateBranchGraph(const AnfNodePtr &node, std::string name, BranchType branch_type);
+  FuncGraphPtr CreateBranchGraph(const AnfNodePtr &node, const std::string &name, BranchType branch_type);
   int PosInInputNodes(const CNodePtr &node);
-  STATUS IdentifySubgraphInput(const FuncGraphPtr &graph, std::string graph_name);
+  STATUS IdentifySubgraphInput(const FuncGraphPtr &graph, const std::string &graph_name);
   CNodePtr CreateNewIf(const FuncGraphPtr &else_branch, const FuncGraphPtr &then_branch);
   STATUS VerifyPredictNode();
 

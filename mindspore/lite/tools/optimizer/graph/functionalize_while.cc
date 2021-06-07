@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ CNodePtr FunctionalizeWhile::BlongToWhichExternalEnter(const CNodePtr &node) {
     return node;
   }
   CNodePtr aim_node = nullptr;
-  std::deque<AnfNodePtr> todo(256);
+  std::deque<AnfNodePtr> todo(UINT8_MAX + 1);
   todo.clear();
   for (auto &input_node : node->inputs()) {
     if (FunctionalizeControlOpPass::IsEnter(input_node) && WhileNodeExternalInputIsContain(input_node)) {
@@ -132,7 +132,7 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeInput() {
 }
 
 STATUS FunctionalizeWhile::IdentifyWhileNodeExternalInput() {
-  std::deque<AnfNodePtr> todo(128);
+  std::deque<AnfNodePtr> todo(INT8_MAX + 1);
   std::vector<CNodePtr> merge_nodes{};
   todo.clear();
   for (size_t i = 1; i < loop_cond_node_->inputs().size(); i++) {
@@ -278,7 +278,7 @@ STATUS FunctionalizeWhile::BuildWhileNode() {
 
 // nodes between loop_cond op and merge op be added into cond_func_graph
 STATUS FunctionalizeWhile::CondSubgraphAddNodes() {
-  std::deque<AnfNodePtr> todo(512);
+  std::deque<AnfNodePtr> todo((UINT8_MAX + 1) * 2);
   todo.clear();
   for (size_t i = 1; i < loop_cond_node_->inputs().size(); i++) {
     todo.push_back(loop_cond_node_->input(i));
@@ -393,7 +393,7 @@ STATUS FunctionalizeWhile::BuildCondGraph() {
 
 // nodes between next_iteration op and switch op will be added into body_func_graph
 STATUS FunctionalizeWhile::BodySubgraphAddNodes() {
-  std::deque<AnfNodePtr> todo(512);
+  std::deque<AnfNodePtr> todo((UINT8_MAX + 1) * 2);
   todo.clear();
   for (auto &node : node_cluster_) {
     if (FunctionalizeControlOpPass::IsNextIteration(node)) {

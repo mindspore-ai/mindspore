@@ -48,12 +48,12 @@ class TfNormFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  bool GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
-                          const std::vector<int> &params_shape, schema::PrimitiveType *type, int *begin_norm_axis,
-                          int *begin_params_axis) const;
+  static bool GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
+                                 const std::vector<int> &params_shape, schema::PrimitiveType *type,
+                                 int *begin_norm_axis, int *begin_params_axis);
   bool CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type, float *epsilon, int *begin_norm_axis,
                     int *begin_params_axis) const;
-  CNodePtr CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const schema::PrimitiveType type,
+  CNodePtr CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, schema::PrimitiveType type,
                           float epsilon, int begin_norm_axis, int begin_params_axis) const;
 
  protected:

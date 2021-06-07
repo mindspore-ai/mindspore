@@ -99,7 +99,7 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   return true;
 }
 
-bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
+bool QuantStrategy::CanOpPostQuantized(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
   if (!node->isa<mindspore::CNode>()) {
     return false;
@@ -377,7 +377,7 @@ static bool SearchUpperBound(const std::vector<float> &data, const size_t &index
 
 static float CalPercentile(const std::vector<float> &data, const int &outlier_percent) {
   const int size = data.size();
-  float val = outlier_percent / 100.0 * size;
+  float val = outlier_percent / PERCENT_BASE * size;
   int index = std::ceil(val);
   float result;
   if (index - val > 0) {
@@ -392,7 +392,7 @@ std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<
   std::sort(max_datas.begin(), max_datas.end());
   std::sort(min_datas.begin(), min_datas.end());
   float min_val = CalPercentile(min_datas, percent);
-  float max_val = CalPercentile(max_datas, 100 - percent);
+  float max_val = CalPercentile(max_datas, PERCENT_BASE - percent);
   std::reverse(max_datas.begin(), max_datas.end());
   MS_ASSERT(min_val < max_val);
   MS_ASSERT(min_datas.size() == max_datas.size());
@@ -569,12 +569,12 @@ void ParseImagePath(PostQuantConfig *post_quant_config, std::string raw_image_pa
   post_quant_config->image_paths.push_back(raw_image_paths);
 }
 
-void ParseBatchCount(PostQuantConfig *post_quant_config, std::string value) {
+void ParseBatchCount(PostQuantConfig *post_quant_config, const std::string &value) {
   MS_ASSERT(post_quant_config != nullptr);
   post_quant_config->batch_count = std::stoul(value);
 }
 
-void ParseThreadNum(PostQuantConfig *post_quant_config, std::string value) {
+void ParseThreadNum(PostQuantConfig *post_quant_config, const std::string &value) {
   MS_ASSERT(post_quant_config != nullptr);
   post_quant_config->thread_num = std::stoul(value);
 }
@@ -596,7 +596,7 @@ void ParseMixed(PostQuantConfig *post_quant_config, std::string value) {
   }
 }
 
-void ParseMeanErrorThreshold(PostQuantConfig *post_quant_config, std::string value) {
+void ParseMeanErrorThreshold(PostQuantConfig *post_quant_config, const std::string &value) {
   MS_ASSERT(post_quant_config != nullptr);
   post_quant_config->mean_error_threshold = std::stof(value);
 }
@@ -623,7 +623,7 @@ STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_conf
     return RET_ERROR;
   }
 #ifdef _WIN32
-  if (_fullpath(resolved_path.get(), config_file.c_str(), 1024) != nullptr) {
+  if (_fullpath(resolved_path.get(), config_file.c_str(), MAX_NUM_1024) != nullptr) {
     config_file = string(resolved_path.get());
   }
 #else
@@ -711,7 +711,7 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   }
   meta_graph->version = Version();
 
-  flatbuffers::FlatBufferBuilder builder(1024);
+  flatbuffers::FlatBufferBuilder builder(MAX_NUM_1024);
   auto offset = schema::MetaGraph::Pack(builder, meta_graph);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
@@ -782,10 +782,7 @@ STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t cou
       string file_name(image_dir->d_name);
       if (file_name != "." && file_name != "..") {
         const std::string file_path = image_path + "/" + file_name;
-        if (multi_input || count == 0) {
-          AddImage(file_path, input_i);
-          count++;
-        } else if (count < count_limited) {
+        if (multi_input || count == 0 || count < count_limited) {
           AddImage(file_path, input_i);
           count++;
         } else {
@@ -833,9 +830,8 @@ STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
                   << " input tensor size: " << tensor->Size();
     return RET_ERROR;
   }
-  auto ret = memcpy_s(data, tensor->Size(), bin_buf, size);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error: " << ret;
+  if (memcpy_s(data, tensor->Size(), bin_buf, size) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
     delete[] bin_buf;
     return RET_ERROR;
   }
@@ -861,8 +857,7 @@ FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
     }
     auto old_cnode = old_cnode_iter->second;
     auto inputs = cnode->inputs();
-    for (size_t i = 0; i < inputs.size(); i++) {
-      auto input_node = inputs[i];
+    for (const auto &input_node : inputs) {
       if (input_node->isa<Parameter>()) {
         auto param_node = input_node->cast<ParameterPtr>();
         if (param_node->has_default()) {
@@ -874,7 +869,13 @@ FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
             MS_LOG(ERROR) << "malloc data error, size: " << old_param_value->tensor_size();
             return nullptr;
           }
-          memcpy(copyed_data, old_param_value->tensor_addr(), old_param_value->tensor_size());
+
+          if (memcpy_s(copyed_data, old_param_value->tensor_size(), old_param_value->tensor_addr(),
+                       old_param_value->tensor_size()) != EOK) {
+            MS_LOG(ERROR) << "memcpy data failed.";
+            free(copyed_data);
+            return nullptr;
+          }
 
           new_param_value->set_tensor_size(old_param_value->tensor_size());
           new_param_value->set_tensor_addr(copyed_data);
@@ -924,7 +925,7 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, ParamVal
   }
 }
 
-STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int new_size) {
+STATUS UpdateTensorDataAndSize(const ParamValueLitePtr &weight, void *quant_datas, int new_size) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(new_size > 0);
   delete[] reinterpret_cast<char *>(weight->tensor_addr());
@@ -933,7 +934,11 @@ STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int 
     MS_LOG(ERROR) << "new data error";
     return RET_ERROR;
   }
-  memcpy(new_tensor_data, quant_datas, new_size);
+  if (memcpy_s(new_tensor_data, new_size, quant_datas, new_size) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    delete[] new_tensor_data;
+    return RET_ERROR;
+  }
 
   weight->set_tensor_size(new_size);
   weight->set_tensor_addr(new_tensor_data);
@@ -959,5 +964,4 @@ void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_coun
   *desired_max = max;
   *desired_min = min;
 }
-
 }  // namespace mindspore::lite::quant

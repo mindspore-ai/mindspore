@@ -35,15 +35,14 @@ class TfLstmCellFusion : public TfliteLstmCellFusion {
  private:
   AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const override;
   CNodePtr CreateLSTMNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const EquivPtr &body_equiv,
-                          const std::string &base_name, const float zoneout_cell,
-                          const float zoneout_hidden) const override;
+                          const std::string &base_name, float zoneout_cell, float zoneout_hidden) const override;
 
-  lite::STATUS SplitWeights(const AnfNodePtr &weight, const ParameterPtr &weight_i, const ParameterPtr &weight_c,
-                            int hidden_size) const;
-  lite::STATUS SetWeightAbstractAndDefault(const ParameterPtr &weight, const std::vector<int> &shape,
-                                           const float *const data_ptr, const int hidden_size) const;
+  static lite::STATUS SplitWeights(const AnfNodePtr &weight, const ParameterPtr &weight_i, const ParameterPtr &weight_c,
+                                   int hidden_size);
+  static lite::STATUS SetWeightAbstractAndDefault(const ParameterPtr &weight, const std::vector<int> &shape,
+                                                  const float *data_ptr, int hidden_size);
   lite::STATUS PopulateBiasNode(const EquivPtr &body_equiv, const ParameterPtr &new_bias, const AnfNodePtr &old_bias,
-                                const int hidden_size) const;
+                                int hidden_size) const;
 
  private:
   VarPtr forget_bias_ = nullptr;

@@ -30,9 +30,11 @@ class OnnxPadAdjustPass : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  ParameterPtr CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data);
-  CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node, const std::vector<int> &shape);
-  CNodePtr NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node, std::vector<int> perm);
+  static ParameterPtr CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data);
+  static CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                   const std::vector<int> &shape);
+  static CNodePtr NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                     const std::vector<int> &perm);
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ONNX_PAD_ADJUST_PASS_H_

@@ -20,7 +20,6 @@
 #include "ops/mat_mul.h"
 #include "schema/inner/model_generated.h"
 #include "src/param_value_lite.h"
-#include "utils/utils.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"

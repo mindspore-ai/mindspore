@@ -21,7 +21,7 @@
 #include "include/errorcode.h"
 
 namespace mindspore::opt {
-static constexpr size_t kTransposeInput = 1;
+constexpr size_t kTransposeInput = 1;
 constexpr size_t kTransposeInputNum = 3;
 const std::vector<int> kPermNCHW{0, 3, 1, 2};
 const std::vector<int> kPermNHWC{0, 2, 3, 1};

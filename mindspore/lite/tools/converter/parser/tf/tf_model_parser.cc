@@ -173,7 +173,6 @@ STATUS GetInt64Value(const tensorflow::TensorProto &tensor_proto, const tensorfl
   param_value->SetTensorData(tensor_data, shape_size * sizeof(int32_t));
   return RET_OK;
 }
-
 }  // namespace
 
 STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_proto,
@@ -423,7 +422,7 @@ FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::strin
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return nullptr;
   }
-  status = ReadProtoFromBinaryFile((const char *)modelFile.c_str(), tf_root_graph_.get());
+  status = ReadProtoFromBinaryFile(modelFile, tf_root_graph_.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Open modelFile for TF converter failed!";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

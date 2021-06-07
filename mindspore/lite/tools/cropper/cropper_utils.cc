@@ -32,7 +32,7 @@ int ValidFileSuffix(const std::string &filename, const std::string &suffix) {
     return RET_ERROR;
   }
 }
-int ValidFile(std::ifstream &in_file, const char *file_path) {
+int ValidFile(std::ifstream &in_file, const std::string &file_path) {
   if (!in_file.good()) {
     std::cerr << "file: " << file_path << " is not exist" << std::endl;
     MS_LOG(ERROR) << "file: " << file_path << " is not exist";
