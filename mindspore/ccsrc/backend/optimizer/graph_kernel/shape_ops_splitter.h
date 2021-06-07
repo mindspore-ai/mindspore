@@ -32,7 +32,7 @@ class ShapeOpsSplitter : public Pass {
 
  private:
   bool Process(const FuncGraphPtr &func_graph);
-  bool IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng);
+  bool IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) const;
   std::vector<PrimitivePtr> shape_ops_;
 };
 using ShapeOpsSplitterPtr = std::shared_ptr<ShapeOpsSplitter>;

@@ -246,7 +246,7 @@ bool ExtendOutputForUpdateState::ProcessIndex(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(mng);
   for (auto user : mng->node_users()[getitems_[index]]) {
     if (IsPrimitiveCNode(user.first, prim::kPrimUpdateState)) {
-      user.first->cast<CNodePtr>()->set_input(static_cast<size_t>(user.second), new_node);
+      user.first->cast<CNodePtr>()->set_input(IntToSize(user.second), new_node);
     }
   }
   return true;
@@ -268,7 +268,7 @@ bool MergeOutputForUpdateState::Run(const FuncGraphPtr &func_graph) {
         if (node_set.insert(gt_input).second) {
           inputs.push_back(input);
         }
-      } else if (!HasAbstractUMonad(input)) /*filter the UMonad that was added in "ExtendOutputForUpdateState" */ {
+      } else if (!HasAbstractUMonad(input)) { /* filter the UMonad that was added in "ExtendOutputForUpdateState" */
         if (node_set.insert(input).second) {
           inputs.push_back(input);
         }

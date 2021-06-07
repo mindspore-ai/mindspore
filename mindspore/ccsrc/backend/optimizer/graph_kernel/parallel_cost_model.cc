@@ -113,7 +113,7 @@ FusionInfoPtr ParallelCostModel::ProcessFusionInfo(const py::object &fusion_type
   return fusion_info;
 }
 
-ParallelCostModelPtr ParellelCostModelWarehouse::GetParallelCostModel(const std::string &target) {
+ParallelCostModelPtr ParellelCostModelWarehouse::GetParallelCostModel(const std::string &target) const {
   if (target != kGPUDevice) {
     MS_LOG(EXCEPTION) << "Parallel cost model only support " << kGPUDevice << " now.";
   }

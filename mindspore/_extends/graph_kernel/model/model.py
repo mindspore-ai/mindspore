@@ -109,7 +109,8 @@ class PrimLib:
             """Process elemwise and broadcast relation"""
             out_shape = op.output.shape
             in_shape = op.inputs[input_idx].shape
-            assert len(out_shape) >= len(in_shape)
+            if len(out_shape) < len(in_shape):
+                raise ValueError("input/output size is abnormal")
             axis_relation, elem_relation = [], []
             delta = len(out_shape) - len(in_shape)
             if delta > 0:
@@ -492,7 +493,8 @@ class AddControlBuddy(GraphVisitor):
     def visit(self, op):
         """Visit op node"""
         if op.prim == "MakeTuple":
-            assert len(op.output.to_ops) == 1
+            if len(op.output.to_ops) != 1:
+                raise ValueError("operator's output size is abnormal")
             owner = op.output.to_ops[0]
             if owner in self.buddies:
                 self.buddies[owner].append(op)

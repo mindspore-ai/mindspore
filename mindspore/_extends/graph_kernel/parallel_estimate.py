@@ -19,6 +19,7 @@ import traceback
 from mindspore import log as logger
 from . import model
 
+
 def estimate_ops(json_str: str):
     """Call costmodel to estimate ops."""
     try:
@@ -34,6 +35,7 @@ def estimate_ops(json_str: str):
     except jd.JSONDecodeError:
         logger.error(traceback.format_exc())
         return None
+
 
 def estimate_calulation_amount(json_str: str):
     """Call costmodel to estimate calculation amount of op."""

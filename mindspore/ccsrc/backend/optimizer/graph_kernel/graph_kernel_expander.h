@@ -49,7 +49,7 @@ class GraphKernelExpander : public Pass {
  private:
   ExpanderPtr GetExpander(const AnfNodePtr &node);
   bool DoExpand(const FuncGraphPtr &func_graph);
-  bool CanExpand(const CNodePtr &node) {
+  bool CanExpand(const CNodePtr &node) const {
     return std::any_of(expand_ops_.begin(), expand_ops_.end(),
                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
   }
