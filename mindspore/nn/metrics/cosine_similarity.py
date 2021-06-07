@@ -51,6 +51,8 @@ class CosineSimilarity(Metric):
         reduction = validator.check_value_type("reduction", reduction, [str])
         self.reduction = validator.check_string(reduction, reduction_list, "reduction")
         self.zero_diagonal = validator.check_value_type("zero_diagonal", zero_diagonal, [bool])
+        self._is_update = False
+        self.sqr_mtx_res = 0
         self.clear()
 
     def clear(self):

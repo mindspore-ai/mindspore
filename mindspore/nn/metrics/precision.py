@@ -54,6 +54,11 @@ class Precision(EvaluationBase):
     def __init__(self, eval_type='classification'):
         super(Precision, self).__init__(eval_type)
         self.eps = sys.float_info.min
+        self._class_num = 0
+        self._true_positives_average = 0
+        self._positives_average = 0
+        self._true_positives = 0
+        self._positives = 0
         self.clear()
 
     def clear(self):
@@ -88,30 +93,9 @@ class Precision(EvaluationBase):
         """
         if len(inputs) != 2:
             raise ValueError('Precision need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
-        y_pred = self._convert_data(inputs[0])
-        y = self._convert_data(inputs[1])
-        if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
-            y = y.argmax(axis=1)
-        self._check_shape(y_pred, y)
-        self._check_value(y_pred, y)
 
-        if self._class_num == 0:
-            self._class_num = y_pred.shape[1]
-        elif y_pred.shape[1] != self._class_num:
-            raise ValueError('Class number not match, last input data contain {} classes, but current data contain {} '
-                             'classes'.format(self._class_num, y_pred.shape[1]))
-
-        class_num = self._class_num
-        if self._type == "classification":
-            if y.max() + 1 > class_num:
-                raise ValueError('y_pred contains {} classes less than y contains {} classes.'.
-                                 format(class_num, y.max() + 1))
-            y = np.eye(class_num)[y.reshape(-1)]
-            indices = y_pred.argmax(axis=1).reshape(-1)
-            y_pred = np.eye(class_num)[indices]
-        elif self._type == "multilabel":
-            y_pred = y_pred.swapaxes(1, 0).reshape(class_num, -1)
-            y = y.swapaxes(1, 0).reshape(class_num, -1)
+        y_pred, y = self._check_inputs_shape(inputs)
+        y_pred, y, self._class_num = self._check_inputs(y_pred, y, self._class_num)
 
         positives = y_pred.sum(axis=0)
         true_positives = (y * y_pred).sum(axis=0)

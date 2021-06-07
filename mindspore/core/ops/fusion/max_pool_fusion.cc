@@ -58,7 +58,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   if (pool_prim->get_format() == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
-  CheckAndConvertUtils::CheckInteger("x_rank", in_shape.size(), kEqual, 4, op_name);
+  CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, 4, op_name);
   auto kernel_size = pool_prim->get_kernel_size();
   auto pad_mode = pool_prim->get_pad_mode();
   auto batch = in_shape[0];

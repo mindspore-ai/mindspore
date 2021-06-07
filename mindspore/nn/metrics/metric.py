@@ -14,6 +14,7 @@
 # ============================================================================
 """Metric base class."""
 from abc import ABCMeta, abstractmethod
+from scipy.ndimage import morphology
 import numpy as np
 from mindspore.common.tensor import Tensor
 
@@ -67,34 +68,64 @@ class Metric(metaclass=ABCMeta):
                 return True
         return False
 
-    def _binary_clf_curve(self, preds, target, sample_weights=None, pos_label=1):
-        """Calculate True Positives and False Positives per binary classification threshold."""
-        if sample_weights is not None and not isinstance(sample_weights, np.ndarray):
-            sample_weights = np.array(sample_weights)
+    @staticmethod
+    def _get_surface_distance(y_pred_edges, y_edges, distance_metric):
+        """
+        Calculate the surface distances from `y_pred_edges` to `y_edges`.
 
-        if preds.ndim > target.ndim:
-            preds = preds[:, 0]
-        desc_score_indices = np.argsort(-preds)
+         Args:
+            y_pred_edges (np.ndarray): the edge of the predictions.
+            y_edges (np.ndarray): the edge of the ground truth.
+            distance_metric (string): The parameter of calculating Hausdorff distance supports three
+                                      measurement methods, "euclidean", "chessboard" or "taxicab".
+                                      Default: "euclidean".
+        """
 
-        preds = preds[desc_score_indices]
-        target = target[desc_score_indices]
+        if not np.any(y_pred_edges):
+            return np.array([])
 
-        if sample_weights is not None:
-            weight = sample_weights[desc_score_indices]
+        if not np.any(y_edges):
+            dis = np.full(y_edges.shape, np.inf)
         else:
-            weight = 1.
+            if distance_metric == "euclidean":
+                dis = morphology.distance_transform_edt(~y_edges)
+            else:
+                dis = morphology.distance_transform_cdt(~y_edges, metric=distance_metric)
 
-        distinct_value_indices = np.where(preds[1:] - preds[:-1])[0]
-        threshold_idxs = np.pad(distinct_value_indices, (0, 1), constant_values=target.shape[0] - 1)
-        target = np.array(target == pos_label).astype(np.int64)
-        tps = np.cumsum(target * weight, axis=0)[threshold_idxs]
+        surface_distance = dis[y_pred_edges]
 
-        if sample_weights is not None:
-            fps = np.cumsum((1 - target) * weight, axis=0)[threshold_idxs]
-        else:
-            fps = 1 + threshold_idxs - tps
+        return surface_distance
 
-        return fps, tps, preds[threshold_idxs]
+    def _check_surface_distance_inputs(self, inputs):
+        """
+        Checks the values of y_pred and y.
+
+        Args:
+            y_pred (Tensor): Predict array.
+            y (Tensor): Target array.
+        """
+        y_pred = self._convert_data(inputs[0])
+        y = self._convert_data(inputs[1])
+        label_idx = inputs[2]
+
+        if not isinstance(label_idx, (int, float)):
+            raise TypeError("The data type of label_idx must be int or float, but got {}.".format(type(label_idx)))
+
+        if label_idx not in y_pred and label_idx not in y:
+            raise ValueError("The label_idx should be in y_pred or y, but {} is not.".format(label_idx))
+
+        if y_pred.size == 0 or y_pred.shape != y.shape:
+            raise ValueError("y_pred and y should have same shape, but got {}, {}.".format(y_pred.shape, y.shape))
+
+        if y_pred.dtype != bool:
+            y_pred = y_pred == label_idx
+        if y.dtype != bool:
+            y = y == label_idx
+
+        y_pred_edges = morphology.binary_erosion(y_pred) ^ y_pred
+        y_edges = morphology.binary_erosion(y) ^ y
+
+        return y_pred_edges, y_edges
 
     def __call__(self, *inputs):
         """
@@ -186,6 +217,52 @@ class EvaluationBase(Metric):
                 raise ValueError('{} case, y_pred shape need equal with y shape, but got y_pred: {} and y: {}'.
                                  format(self._type, y_pred.shape, y.shape))
 
+    def _check_inputs_shape(self, inputs):
+        """
+        Checks the values of y_pred and y.
+
+        Args:
+            y_pred (Tensor): Predict array.
+            y (Tensor): Target array.
+        """
+        y_pred = self._convert_data(inputs[0])
+        y = self._convert_data(inputs[1])
+        if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
+            y = y.argmax(axis=1)
+        self._check_shape(y_pred, y)
+        self._check_value(y_pred, y)
+
+        return y_pred, y
+
+    def _check_inputs(self, y_pred, y, class_nums):
+        """
+        Checks the values of y_pred, y and class_nums.
+
+        Args:
+            y_pred (Tensor): Predict array.
+            y (Tensor): Target array.
+            class_nums(int): Class number.
+        """
+        if class_nums == 0:
+            class_nums = y_pred.shape[1]
+        elif y_pred.shape[1] != class_nums:
+            raise ValueError('Class number not match, last input data contain {} classes, but current data contain {} '
+                             'classes'.format(class_nums, y_pred.shape[1]))
+
+        class_num = class_nums
+        if self._type == "classification":
+            if y.max() + 1 > class_num:
+                raise ValueError('y_pred contains {} classes less than y contains {} classes.'.
+                                 format(class_num, y.max() + 1))
+            y = np.eye(class_num)[y.reshape(-1)]
+            indices = y_pred.argmax(axis=1).reshape(-1)
+            y_pred = np.eye(class_num)[indices]
+        elif self._type == "multilabel":
+            y_pred = y_pred.swapaxes(1, 0).reshape(class_num, -1)
+            y = y.swapaxes(1, 0).reshape(class_num, -1)
+
+        return y_pred, y, class_nums
+
     def _check_value(self, y_pred, y):
         """
         Checks the values of y_pred and y.
@@ -206,7 +283,8 @@ class EvaluationBase(Metric):
         """
         raise NotImplementedError
 
-    def update(self, *inputs):
+    @classmethod
+    def update(cls, *inputs):
         """
         A interface describes the behavior of updating the internal evaluation result.
 

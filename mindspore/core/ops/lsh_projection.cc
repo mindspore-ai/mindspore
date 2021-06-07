@@ -40,7 +40,7 @@ AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto op_name = LshProjection_prim->name();
   auto input0 = CheckAndConvertUtils::ConvertShapePtrToShape("input0_shape", input_args[0]->BuildShape(), op_name);
   auto input1 = CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input_args[1]->BuildShape(), op_name);
-  CheckAndConvertUtils::CheckInteger("input0_shape", input0.size(), kEqual, 2, op_name);
+  CheckAndConvertUtils::CheckInteger("input0_shape", SizeToLong(input0.size()), kEqual, 2, op_name);
   CheckAndConvertUtils::CheckInteger("input0_shape_dimen_1", input0[1], kLessEqual, 32, op_name);
   CheckAndConvertUtils::CheckInteger("input1_shape", input1.size(), kGreaterEqual, 1, op_name);
 

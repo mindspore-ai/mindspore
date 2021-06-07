@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """RootMeanSquareSurfaceDistance."""
-from scipy.ndimage import morphology
 import numpy as np
 from mindspore._checkparam import Validator as validator
 from .metric import Metric
@@ -47,10 +46,14 @@ class RootMeanSquareDistance(Metric):
 
     def __init__(self, symmetric=False, distance_metric="euclidean"):
         super(RootMeanSquareDistance, self).__init__()
+        self._y_pred_edges = 0
+        self._is_update = False
         self.distance_metric_list = ["euclidean", "chessboard", "taxicab"]
         distance_metric = validator.check_value_type("distance_metric", distance_metric, [str])
-        self.distance_metric = validator.check_string(distance_metric, self.distance_metric_list, "distance_metric")
+        validator.check_string(distance_metric, self.distance_metric_list, "distance_metric")
+        self.distance_metric = distance_metric
         self.symmetric = validator.check_value_type("symmetric", symmetric, [bool])
+        self._y_edges = 0
         self.clear()
 
     def clear(self):
@@ -58,30 +61,6 @@ class RootMeanSquareDistance(Metric):
         self._y_pred_edges = 0
         self._y_edges = 0
         self._is_update = False
-
-    def _get_surface_distance(self, y_pred_edges, y_edges):
-        """
-        Calculate the surface distances from `y_pred_edges` to `y_edges`.
-
-         Args:
-            y_pred_edges (np.ndarray): the edge of the predictions.
-            y_edges (np.ndarray): the edge of the ground truth.
-        """
-
-        if not np.any(y_pred_edges):
-            return np.array([])
-
-        if not np.any(y_edges):
-            dis = np.full(y_edges.shape, np.inf)
-        else:
-            if self.distance_metric == "euclidean":
-                dis = morphology.distance_transform_edt(~y_edges)
-            elif self.distance_metric in self.distance_metric_list[-2:]:
-                dis = morphology.distance_transform_cdt(~y_edges, metric=self.distance_metric)
-
-        surface_distance = dis[y_pred_edges]
-
-        return surface_distance
 
     def update(self, *inputs):
         """
@@ -96,27 +75,10 @@ class RootMeanSquareDistance(Metric):
             ValueError: If the number of the inputs is not 3.
         """
         if len(inputs) != 3:
-            raise ValueError('MeanSurfaceDistance need 3 inputs (y_pred, y, label), but got {}.'.format(len(inputs)))
-        y_pred = self._convert_data(inputs[0])
-        y = self._convert_data(inputs[1])
-        label_idx = inputs[2]
+            raise ValueError('RootMeanSurfaceDistance need 3 inputs (y_pred, y, label), '
+                             'but got {}.'.format(len(inputs)))
 
-        if not isinstance(label_idx, (int, float)):
-            raise TypeError("The data type of label_idx must be int or float, but got {}.".format(type(label_idx)))
-
-        if label_idx not in y_pred and label_idx not in y:
-            raise ValueError("The label_idx should be in y_pred or y, but {} is not.".format(label_idx))
-
-        if y_pred.size == 0 or y_pred.shape != y.shape:
-            raise ValueError("y_pred and y should have same shape, but got {}, {}.".format(y_pred.shape, y.shape))
-
-        if y_pred.dtype != bool:
-            y_pred = y_pred == label_idx
-        if y.dtype != bool:
-            y = y == label_idx
-
-        self._y_pred_edges = morphology.binary_erosion(y_pred) ^ y_pred
-        self._y_edges = morphology.binary_erosion(y) ^ y
+        self._y_pred_edges, self._y_edges = self._check_surface_distance_inputs(inputs)
         self._is_update = True
 
     def eval(self):
@@ -126,7 +88,8 @@ class RootMeanSquareDistance(Metric):
         if self._is_update is False:
             raise RuntimeError('Call the update method before calling eval.')
 
-        residual_mean_square_distance = self._get_surface_distance(self._y_pred_edges, self._y_edges)
+        residual_mean_square_distance = Metric._get_surface_distance(self._y_pred_edges, self._y_edges,
+                                                                     self.distance_metric)
 
         if residual_mean_square_distance.shape == (0,):
             return np.inf
@@ -136,7 +99,8 @@ class RootMeanSquareDistance(Metric):
         if not self.symmetric:
             return rms_surface_distance
 
-        contrary_residual_mean_square_distance = self._get_surface_distance(self._y_edges, self._y_pred_edges)
+        contrary_residual_mean_square_distance = Metric._get_surface_distance(self._y_edges, self._y_pred_edges,
+                                                                              self.distance_metric)
         if contrary_residual_mean_square_distance.shape == (0,):
             return np.inf
 

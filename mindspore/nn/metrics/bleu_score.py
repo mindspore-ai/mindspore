@@ -45,6 +45,14 @@ class BleuScore(Metric):
             raise ValueError('The n_gram value ranged from 1 to 4, but got {}'.format(n_gram))
 
         self.smooth = validator.check_value_type("smooth", smooth, [bool])
+        self._numerator = np.zeros(self.n_gram)
+        self._trans_len = 0
+        self._precision_scores = np.zeros(self.n_gram)
+        self._ref_len = 0
+        self._r = 0.0
+        self._denominator = np.zeros(self.n_gram)
+        self._is_update = False
+        self._c = 0.0
         self.clear()
 
     def clear(self):
