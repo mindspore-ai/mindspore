@@ -70,8 +70,8 @@ class TcpConnection {
 };
 
 using OnServerReceiveMessage =
-  std::function<void(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                     const void *data, size_t size)>;
+  std::function<void(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                     const Protos &protos, const void *data, size_t size)>;
 
 class TcpServer {
  public:

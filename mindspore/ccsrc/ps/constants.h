@@ -142,6 +142,13 @@ const std::map<std::string, OptimOriginIdx> kOptimToPSSendIdx = {{kApplyMomentum
                         << " is out of bound.";                                                 \
     }                                                                                           \
   }
+
+#define CHECK_RETURN_TYPE(_condition)                    \
+  do {                                                   \
+    if (!(_condition)) {                                 \
+      MS_LOG(ERROR) << "Parse protobuf message failed."; \
+    }                                                    \
+  } while (false)
 }  // namespace ps
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PS_CONSTANTS_H_

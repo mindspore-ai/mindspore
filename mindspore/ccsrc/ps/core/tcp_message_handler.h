@@ -28,11 +28,13 @@
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 #include "utils/convert_utils_base.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-using messageReceive = std::function<void(std::shared_ptr<MessageMeta>, const Protos &, const void *, size_t size)>;
+using messageReceive =
+  std::function<void(const std::shared_ptr<MessageMeta> &, const Protos &, const void *, size_t size)>;
 constexpr int kHeaderLen = 16;
 
 class TcpMessageHandler {

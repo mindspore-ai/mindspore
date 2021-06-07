@@ -311,7 +311,7 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   int64_t value_offset = 0;
   for (size_t i = 0; i < resp.size(); ++i) {
     KVMessage message;
-    message.ParseFromArray(resp.at(i)->data(), resp.at(i)->size());
+    CHECK_RETURN_TYPE(message.ParseFromArray(resp.at(i)->data(), resp.at(i)->size()));
     for (auto j = 0; j < message.values_size(); j++) {
       values->push_back(message.values(j));
     }
@@ -624,7 +624,7 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
 }
 
 void Worker::PushData(const std::vector<Key> &keys, const std::vector<float> &vals, const std::vector<int> &lens,
-                      int cmd, int64_t priority) {
+                      int cmd, int64_t) {
   KVMessage kvs;
   *kvs.mutable_keys() = {keys.begin(), keys.end()};
   *kvs.mutable_values() = {vals.begin(), vals.end()};
@@ -823,7 +823,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
 }
 
 void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *partition,
-                                   const std::map<int64_t, int64_t> &attrs) {
+                                   const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
   partition->resize(LongToSize(server_num_));
   auto keys = send.keys();
@@ -916,7 +916,7 @@ void Worker::UpdateEmbeddingPartitioner(const KVMessage &send, PartitionKVMessag
 }
 
 void Worker::BroadcastPartitioner(const KVMessage &send, PartitionKVMessages *partition,
-                                  const std::map<int64_t, int64_t> &attrs) {
+                                  const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
   partition->resize(LongToSize(server_num_));
   for (size_t i = 0; i < LongToSize(server_num_); i++) {
@@ -952,7 +952,7 @@ void Worker::SendForPush(int cmd, const KVMessage &send, const KVPartitioner &pa
 }
 
 void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &partitioner,
-                         const std::map<int64_t, int64_t> &attrs, std::vector<float> *vals, std::vector<int> *lens) {
+                         const std::map<int64_t, int64_t> &, std::vector<float> *vals, std::vector<int> *lens) {
   MS_EXCEPTION_IF_NULL(vals);
   PartitionKVMessages messages;
   partitioner(send, &messages, {});
@@ -980,7 +980,7 @@ void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &pa
   vals->clear();
   for (size_t i = 0; i < resp.size(); ++i) {
     KVMessage message;
-    message.ParseFromArray(resp.at(i)->data(), SizeToInt(resp.at(i)->size()));
+    CHECK_RETURN_TYPE(message.ParseFromArray(resp.at(i)->data(), SizeToInt(resp.at(i)->size())));
     std::copy(message.values().begin(), message.values().end(), std::back_inserter(*vals));
 
     if (lens) {

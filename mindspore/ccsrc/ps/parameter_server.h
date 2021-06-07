@@ -92,8 +92,8 @@ class ParameterServer {
     explicit ServerHandler(ParameterServer *ps) : ps_(ps) {}
     ~ServerHandler() = default;
     void Init();
-    void operator()(std::shared_ptr<core::TcpConnection> conn, std::shared_ptr<core::MessageMeta> meta, DataPtr data,
-                    size_t size);
+    void operator()(const std::shared_ptr<core::TcpConnection> &conn, const std::shared_ptr<core::MessageMeta> &meta,
+                    const DataPtr &data, size_t size);
     void HandlePushReq(const DataPtr &data, size_t size, const VectorPtr &res);
     void HandlePullReq(const DataPtr &data, size_t size, const VectorPtr &res);
     void HandleInitWeights(const DataPtr &data, size_t size, const VectorPtr &res);

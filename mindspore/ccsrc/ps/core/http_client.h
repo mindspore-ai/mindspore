@@ -80,9 +80,9 @@ class HttpClient {
 
   void AddHeaders(const std::map<std::string, std::string> &headers, const struct evhttp_request *request,
                   const std::shared_ptr<HttpMessageHandler> &handler);
-  void InitRequest(std::shared_ptr<HttpMessageHandler> handler, const std::string &url,
+  void InitRequest(const std::shared_ptr<HttpMessageHandler> &handler, const std::string &url,
                    const struct evhttp_request *request);
-  Status CreateRequest(std::shared_ptr<HttpMessageHandler> handler, struct evhttp_connection *connection,
+  Status CreateRequest(const std::shared_ptr<HttpMessageHandler> &handler, struct evhttp_connection *connection,
                        struct evhttp_request *request, HttpMethod method);
 
   bool Start();

@@ -165,7 +165,7 @@ void HttpClient::AddHeaders(const std::map<std::string, std::string> &headers, c
   }
 }
 
-void HttpClient::InitRequest(std::shared_ptr<HttpMessageHandler> handler, const std::string &url,
+void HttpClient::InitRequest(const std::shared_ptr<HttpMessageHandler> &handler, const std::string &url,
                              const struct evhttp_request *request) {
   MS_EXCEPTION_IF_NULL(request);
   MS_EXCEPTION_IF_NULL(handler);
@@ -179,8 +179,9 @@ void HttpClient::InitRequest(std::shared_ptr<HttpMessageHandler> handler, const 
                 << ", The port is:" << handler->GetUriPort() << ", The request_url is:" << handler->GetRequestPath();
 }
 
-Status HttpClient::CreateRequest(std::shared_ptr<HttpMessageHandler> handler, struct evhttp_connection *connection,
-                                 struct evhttp_request *request, HttpMethod method) {
+Status HttpClient::CreateRequest(const std::shared_ptr<HttpMessageHandler> &handler,
+                                 struct evhttp_connection *connection, struct evhttp_request *request,
+                                 HttpMethod method) {
   MS_EXCEPTION_IF_NULL(handler);
   MS_EXCEPTION_IF_NULL(connection);
   MS_EXCEPTION_IF_NULL(request);
