@@ -75,8 +75,8 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
   int output_dim = static_cast<int>(output_tensor_->shape().size());
   concat_param_->output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
   MS_CHECK_PTR(concat_param_->output_shapes_);
-  memcpy(reinterpret_cast<void *>(concat_param_->output_shapes_), output_tensor_->shape().data(),
-         sizeof(int) * output_dim);
+  memcpy_s(reinterpret_cast<void *>(concat_param_->output_shapes_), output_dim * sizeof(int),
+           output_tensor_->shape().data(), sizeof(int) * output_dim);
   for (int i = axis_ + 1; i < output_dim; i++) {
     after_axis_size *= concat_param_->output_shapes_[i];
   }

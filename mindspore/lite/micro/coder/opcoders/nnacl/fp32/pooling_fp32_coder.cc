@@ -45,42 +45,25 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
   code.CodeStruct("pooling_parameter", *pooling_parameter);
   float minf = -FLT_MAX;
   float maxf = FLT_MAX;
-  if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
-    Collect(context, {"nnacl/fp32/pooling_fp32.h"}, {"pooling_fp32.c"});
-    switch (pooling_parameter->act_type_) {
-      case ActType_Relu: {
-        minf = 0.f;
-        break;
-      }
-      case ActType_Relu6: {
-        minf = 0.f;
-        maxf = 6.f;
-        break;
-      }
-      default: {
-        MS_LOG(INFO) << "no actype";
-        break;
-      }
+  Collect(context, {"nnacl/fp32/pooling_fp32.h"}, {"pooling_fp32.c"});
+  switch (pooling_parameter->act_type_) {
+    case ActType_Relu: {
+      minf = 0.f;
+      break;
     }
-
+    case ActType_Relu6: {
+      minf = 0.f;
+      maxf = 6.f;
+      break;
+    }
+    default: {
+      MS_LOG(INFO) << "no actype";
+      break;
+    }
+  }
+  if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
     code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
   } else {
-    Collect(context, {"nnacl/fp32/pooling_fp32.h"}, {"pooling_fp32.c"});
-    switch (pooling_parameter->act_type_) {
-      case ActType_Relu: {
-        minf = 0.f;
-        break;
-      }
-      case ActType_Relu6: {
-        minf = 0.f;
-        maxf = 6.f;
-        break;
-      }
-      default: {
-        MS_LOG(INFO) << "no actype";
-        break;
-      }
-    }
     code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
   }
 
