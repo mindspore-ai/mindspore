@@ -92,6 +92,20 @@ Status RandomColorAdjustOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status RandomColorAdjustOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("brightness") != op_params.end(), "Fail to find brightness");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("contrast") != op_params.end(), "Fail to find contrast");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("saturation") != op_params.end(), "Fail to find saturation");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("hue") != op_params.end(), "Fail to find hue");
+  std::vector<float> brightness = op_params["brightness"];
+  std::vector<float> contrast = op_params["contrast"];
+  std::vector<float> saturation = op_params["saturation"];
+  std::vector<float> hue = op_params["hue"];
+  *operation = std::make_shared<vision::RandomColorAdjustOperation>(brightness, contrast, saturation, hue);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

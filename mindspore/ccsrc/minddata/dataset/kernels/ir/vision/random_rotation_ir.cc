@@ -117,6 +117,22 @@ Status RandomRotationOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status RandomRotationOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Fail to find degrees");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resample") != op_params.end(), "Fail to find resample");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("expand") != op_params.end(), "Fail to find expand");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("center") != op_params.end(), "Fail to find center");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Fail to find fill_value");
+  std::vector<float> degrees = op_params["degrees"];
+  InterpolationMode resample = static_cast<InterpolationMode>(op_params["resample"]);
+  bool expand = op_params["expand"];
+  std::vector<float> center = op_params["center"];
+  std::vector<uint8_t> fill_value = op_params["fill_value"];
+  *operation = std::make_shared<vision::RandomRotationOperation>(degrees, resample, expand, center, fill_value);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

@@ -35,6 +35,11 @@ std::string EqualizeOperation::Name() const { return kEqualizeOperation; }
 Status EqualizeOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> EqualizeOperation::Build() { return std::make_shared<EqualizeOp>(); }
+
+Status EqualizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::EqualizeOperation>();
+  return Status::OK();
+}
 #endif
 }  // namespace vision
 }  // namespace dataset

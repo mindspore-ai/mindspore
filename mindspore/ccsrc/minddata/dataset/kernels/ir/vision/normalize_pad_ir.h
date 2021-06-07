@@ -49,6 +49,8 @@ class NormalizePadOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<float> mean_;
   std::vector<float> std_;

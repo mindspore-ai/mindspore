@@ -45,6 +45,16 @@ Status NormalizeOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status NormalizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("mean") != op_params.end(), "Fail to find mean");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("std") != op_params.end(), "Fail to find std");
+  std::vector<float> mean = op_params["mean"];
+  std::vector<float> std = op_params["std"];
+  *operation = std::make_shared<vision::NormalizeOperation>(mean, std);
+  return Status::OK();
+}
+
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -63,6 +63,16 @@ Status ResizeWithBBoxOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status ResizeWithBBoxOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("interpolation") != op_params.end(), "Fail to find interpolation");
+  std::vector<int32_t> size = op_params["size"];
+  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
+  *operation = std::make_shared<vision::ResizeWithBBoxOperation>(size, interpolation);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

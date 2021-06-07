@@ -35,6 +35,11 @@ std::string InvertOperation::Name() const { return kInvertOperation; }
 Status InvertOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> InvertOperation::Build() { return std::make_shared<InvertOp>(); }
+
+Status InvertOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::InvertOperation>();
+  return Status::OK();
+}
 #endif
 }  // namespace vision
 }  // namespace dataset

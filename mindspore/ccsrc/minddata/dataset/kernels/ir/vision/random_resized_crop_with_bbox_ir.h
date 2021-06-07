@@ -34,7 +34,7 @@ namespace dataset {
 
 namespace vision {
 
-constexpr char kRandomResizedCropWithBBoxOperation[] = "RandomResizedCropWithBBoxOperation";
+constexpr char kRandomResizedCropWithBBoxOperation[] = "RandomResizedCropWithBBox";
 
 class RandomResizedCropWithBBoxOperation : public TensorOperation {
  public:
@@ -51,6 +51,8 @@ class RandomResizedCropWithBBoxOperation : public TensorOperation {
   std::string Name() const override;
 
   Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   std::vector<int32_t> size_;

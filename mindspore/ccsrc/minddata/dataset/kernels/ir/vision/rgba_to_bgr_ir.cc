@@ -41,6 +41,11 @@ std::shared_ptr<TensorOp> RgbaToBgrOperation::Build() {
   std::shared_ptr<RgbaToBgrOp> tensor_op = std::make_shared<RgbaToBgrOp>();
   return tensor_op;
 }
+
+Status RgbaToBgrOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::RgbaToBgrOperation>();
+  return Status::OK();
+}
 #endif
 }  // namespace vision
 }  // namespace dataset

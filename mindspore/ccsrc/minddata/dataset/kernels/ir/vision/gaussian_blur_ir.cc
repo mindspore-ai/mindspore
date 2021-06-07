@@ -64,6 +64,15 @@ Status GaussianBlurOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
+Status GaussianBlurOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("kernel_size") != op_params.end(), "Fail to find kernel_size");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("sigma") != op_params.end(), "Fail to find sigma");
+  std::vector<int32_t> kernel_size = op_params["kernel_size"];
+  std::vector<float> sigma = op_params["sigma"];
+  *operation = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma);
+  return Status::OK();
+}
+
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

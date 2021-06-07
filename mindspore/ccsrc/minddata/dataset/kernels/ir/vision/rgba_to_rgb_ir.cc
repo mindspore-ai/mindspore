@@ -40,6 +40,11 @@ std::shared_ptr<TensorOp> RgbaToRgbOperation::Build() {
   std::shared_ptr<RgbaToRgbOp> tensor_op = std::make_shared<RgbaToRgbOp>();
   return tensor_op;
 }
+
+Status RgbaToRgbOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::RgbaToRgbOperation>();
+  return Status::OK();
+}
 #endif
 }  // namespace vision
 }  // namespace dataset

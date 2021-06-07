@@ -50,6 +50,8 @@ class RandomCropDecodeResizeOperation : public RandomResizedCropOperation {
   std::string Name() const override;
 
   Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 };
 
 }  // namespace vision

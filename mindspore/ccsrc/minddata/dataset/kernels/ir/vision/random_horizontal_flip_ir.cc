@@ -48,6 +48,14 @@ Status RandomHorizontalFlipOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["prob"] = probability_;
   return Status::OK();
 }
+
+Status RandomHorizontalFlipOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("prob") != op_params.end(), "Fail to find prob");
+  float prob = op_params["prob"];
+  *operation = std::make_shared<vision::RandomHorizontalFlipOperation>(prob);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

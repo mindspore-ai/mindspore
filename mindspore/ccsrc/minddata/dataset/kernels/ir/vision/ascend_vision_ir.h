@@ -59,6 +59,8 @@ class DvppCropJpegOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<uint32_t> crop_;
 };
@@ -77,6 +79,8 @@ class DvppDecodeResizeOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<uint32_t> resize_;
 };
@@ -94,6 +98,8 @@ class DvppDecodeResizeCropOperation : public TensorOperation {
   std::string Name() const override { return kDvppDecodeResizeCropOperation; }
 
   Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   std::vector<uint32_t> crop_;
@@ -136,6 +142,8 @@ class DvppNormalizeOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<float> mean_;
   std::vector<float> std_;
@@ -154,6 +162,8 @@ class DvppResizeJpegOperation : public TensorOperation {
   std::string Name() const override { return kDvppResizeJpegOperation; }
 
   Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   std::vector<uint32_t> resize_;
