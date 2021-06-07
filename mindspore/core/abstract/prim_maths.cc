@@ -128,9 +128,9 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
     auto axis_ptr_list =
       axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
     if (!axis_ptr_list.size()) {
-      if (keep_dims_value) shape->insert(shape->end(), x_shape.size(), 1);
+      if (keep_dims_value) (void)shape->insert(shape->end(), x_shape.size(), 1);
     } else {
-      shape->insert(shape->end(), x_shape.begin(), x_shape.end());
+      (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
       ValuePtrList axis_items = axis_ptr_list;
       ValuePtrList::iterator it;
       ValuePtrList::reverse_iterator it_re;
@@ -146,18 +146,18 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
         for (it_re = axis_items.rbegin(); it_re != axis_items.rend(); ++it_re) {
           axis_value = GetValue<int64_t>(*it_re);
           axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
-          shape->erase(shape->begin() + axis_value);
+          (void)shape->erase(shape->begin() + axis_value);
         }
       }
     }
   } else if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
-    shape->insert(shape->end(), x_shape.begin(), x_shape.end());
+    (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
     int64_t axis_value = GetValue<int64_t>(axis);
     axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
     if (keep_dims_value) {
       shape->at(axis_value) = 1;
     } else {
-      shape->erase(shape->begin() + axis_value);
+      (void)shape->erase(shape->begin() + axis_value);
     }
   } else {
     MS_LOG(EXCEPTION) << "Axis should be one of types: [int/tuple/list].";
