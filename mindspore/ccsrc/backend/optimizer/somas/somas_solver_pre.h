@@ -152,8 +152,8 @@ struct SomasSolverTensorDesc {
   SomasSolverTensorDesc(size_t index, size_t size, size_t offset, bool blifelong)
       : index_(index), size_(size), offset_(offset), lifelong_(blifelong) {
     constraints_ = 0;
-    right_ = NULL;
-    left_ = NULL;
+    right_ = nullptr;
+    left_ = nullptr;
     blocked_ = false;
   }
 

@@ -51,7 +51,7 @@ size_t FootPrint::Result() {
   std::shared_ptr<FootPrint> foot_print = shared_from_this();
   size_t upperbound = 0;
   uint32_t total_footprints = 0;
-  while (foot_print != NULL) {
+  while (foot_print != nullptr) {
     foot_print->printStats();
 
     upperbound = foot_print->getOffset();
@@ -136,7 +136,7 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
     }
     for (size_t i = 0; i < m_starts_.size(); i++) {
       auto allocated_tensor = m_starts_[i]->m_start_tensor_;
-      while (allocated_tensor != NULL) {
+      while (allocated_tensor != nullptr) {
         if ((*constraints)[block.m_start_tensor_->index_].IsBitTrue(allocated_tensor->index_) == false) {
           l_interval.emplace_back(Interval(allocated_tensor));
         }
@@ -147,11 +147,11 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
     int64_t start_offset = static_cast<int64_t>(m_offset_);
     for (size_t i = 0; i < m_starts_.size(); i++) {
       auto allocated_tensor = m_starts_[i]->m_start_tensor_;
-      while (allocated_tensor != NULL) {
+      while (allocated_tensor != nullptr) {
         int64_t allocated_offset = static_cast<int64_t>(allocated_tensor->offset_);
         int64_t allocated_size = static_cast<int64_t>(allocated_tensor->size_);
         int64_t accumulator = 0;
-        for (auto block_tensor = block.m_start_tensor_; block_tensor != NULL; block_tensor = block_tensor->right_) {
+        for (auto block_tensor = block.m_start_tensor_; block_tensor != nullptr; block_tensor = block_tensor->right_) {
           int64_t end_placement = allocated_offset + allocated_size - accumulator;
           if ((*constraints)[block_tensor->index_].IsBitTrue(allocated_tensor->index_) == false &&
               end_placement > start_offset) {
@@ -175,7 +175,7 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
   return bretval;
 }
 void FootPrint::addElem(BlockTensor *block, const size_t &offset) {
-  if (m_foot_print_next_ == NULL) {
+  if (m_foot_print_next_ == nullptr) {
     m_foot_print_next_ = std::make_shared<FootPrint>();
     size_t newoffset = m_offset_ + block->m_size_;
     m_foot_print_next_->setOffset(newoffset);
@@ -217,7 +217,7 @@ bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<F
   uint32_t startscount = 0;
   size_t offset = foot_print->getOffset();
   m_tensors_allocated_ = 0;
-  SomasSolverTensorDescPtr tensor = NULL;
+  SomasSolverTensorDescPtr tensor = nullptr;
 
   for (size_t i = 0; i < (*block_tensors_v).size(); i++) {
     BlockTensor &block = (*block_tensors_v)[i];
@@ -249,7 +249,7 @@ bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<F
         break;
       }
       // go to the next footprint slot
-      if (p->Next() != NULL) {
+      if (p->Next() != nullptr) {
         p = p->Next();
       } else if (bpushed == false) {  // something went wrong
         MS_LOG(WARNING) << "Could not allocate memory for tensor: " << tensor->index_;

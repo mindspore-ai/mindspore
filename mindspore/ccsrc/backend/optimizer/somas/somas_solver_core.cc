@@ -206,7 +206,7 @@ void SomasSolverCore::BuildBlocks() {
       pTensor->blocked_ = true;
       pTensor = pTensor->right_;
       tensors_block_count++;
-    } while (pTensor != NULL);
+    } while (pTensor != nullptr);
 
     // add to the list
     this->block_tensors_.emplace_back(bTensor);
@@ -355,13 +355,13 @@ size_t SomasSolverCore::FindSolutions() {
 }
 
 void SomasSolverCore::Destroy(std::shared_ptr<FootPrint> &pFootprint) {
-  while (pFootprint != NULL) {
-    if (pFootprint->Next() != NULL) {
+  while (pFootprint != nullptr) {
+    if (pFootprint->Next() != nullptr) {
       std::shared_ptr<FootPrint> &p = pFootprint;
       pFootprint = pFootprint->Next();
-      p = NULL;
+      p = nullptr;
     } else {
-      pFootprint = NULL;
+      pFootprint = nullptr;
     }
   }
 }

@@ -250,30 +250,28 @@ void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const Ten
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string filename = save_graphs_path + "/" + "somas_solver_input_" + std::to_string(graph->graph_id()) + ".ir";
-  std::ofstream ofs;
-  if (Common::OpenFile(filename, ofs)) {
-    for (auto &t : tensors) {
-      ofs << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
-    }
-
-    for (auto &t1 : tensors) {
-      for (auto &t2 : tensors) {
-        size_t idx1 = t1.first;
-        size_t idx2 = t2.first;
-        if ((idx1 != idx2) && (*pConstraints)[idx1].IsBitTrue(idx2) == false) {
-          ofs << "C " << idx1 << " " << idx2 << std::endl;
-        }
-      }
-    }
-    for (auto &s : continuous_v) {
-      ofs << "S";
-      for (auto idx : s) {
-        ofs << " " << idx;
-      }
-      ofs << std::endl;
-    }
-    ofs.close();
+  std::ostringstream oss;
+  for (auto &t : tensors) {
+    oss << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
   }
+
+  for (auto &t1 : tensors) {
+    for (auto &t2 : tensors) {
+      size_t idx1 = t1.first;
+      size_t idx2 = t2.first;
+      if ((idx1 != idx2) && (*pConstraints)[idx1].IsBitTrue(idx2) == false) {
+        oss << "C " << idx1 << " " << idx2 << std::endl;
+      }
+    }
+  }
+  for (auto &s : continuous_v) {
+    oss << "S";
+    for (auto idx : s) {
+      oss << " " << idx;
+    }
+    oss << std::endl;
+  }
+  Common::SaveStringToFile(filename, oss.str());
   MS_LOG(INFO) << "SomasSolver input Log done";
 }
 
