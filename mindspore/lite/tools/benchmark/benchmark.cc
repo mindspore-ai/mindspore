@@ -45,6 +45,7 @@ constexpr size_t kNumStringBufDim4 = 4;
 constexpr int kNumBufLen = 5;
 constexpr size_t kNumBufSize = 100;
 constexpr int kNumRowLen = 5;
+constexpr int kNumPrintMin = 5;
 static const char *DELIM_COLON = ":";
 static const char *DELIM_COMMA = ",";
 static const char *DELIM_SLASH = "/";
@@ -339,7 +340,7 @@ int Benchmark::CompareStringData(const std::string &name, tensor::MSTensor *tens
     std::vector<std::string> calib_strings = iter->second->strings_data;
     std::vector<std::string> output_strings = MSTensorToStrings(tensor);
     size_t compare_num = std::min(calib_strings.size(), output_strings.size());
-    size_t print_num = std::min(compare_num, static_cast<size_t>(5));
+    size_t print_num = std::min(compare_num, static_cast<size_t>(kNumPrintMin));
 
     std::cout << "Data of node " << name << " : " << std::endl;
     for (size_t i = 0; i < compare_num; i++) {

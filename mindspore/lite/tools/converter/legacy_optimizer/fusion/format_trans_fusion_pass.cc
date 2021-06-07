@@ -32,7 +32,6 @@ constexpr size_t kFormatTransMatchPathLen2 = 2;
 constexpr size_t kFormatTransMatchPathLen3 = 3;
 }  // namespace
 namespace lite {
-
 STATUS FormatTransFusionPass::DefinePattern() {
   // nchw2nhwc + nhwc2nchw  ||  nhwc2nchw + nchw2nhwc
   {
