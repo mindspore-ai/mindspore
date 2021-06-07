@@ -54,8 +54,8 @@ class SVI:
         Optimize the parameters by training the probability network, and return the trained network.
 
         Args:
-            epochs (int): Total number of iterations on the data. Default: 10.
             train_dataset (Dataset): A training dataset iterator.
+            epochs (int): Total number of iterations on the data. Default: 10.
 
         Outputs:
             Cell, the trained probability network.
