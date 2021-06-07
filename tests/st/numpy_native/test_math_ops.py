@@ -2212,30 +2212,30 @@ def test_histogramdd():
         for range in [None, [[0, 5], [2, 7], [1, 3]]]:
             mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range)
             onp_res = onp.histogramdd(x, bins=bins, range=range)
-            match_all_arrays(mnp_res[0], onp_res[0], error=3)
-            match_all_arrays(mnp_res[1], onp_res[1], error=3)
+            match_all_arrays(mnp_res[0], onp_res[0], error=1)
+            match_all_arrays(mnp_res[1], onp_res[1], error=1)
             mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range, density=True)
             onp_res = onp.histogramdd(x, bins=bins, range=range, density=True)
-            match_all_arrays(mnp_res[0], onp_res[0], error=3)
-            match_all_arrays(mnp_res[1], onp_res[1], error=3)
+            match_all_arrays(mnp_res[0], onp_res[0], error=1)
+            match_all_arrays(mnp_res[1], onp_res[1], error=1)
             mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range, weights=to_tensor(weights))
             onp_res = onp.histogramdd(x, bins=bins, range=range, weights=weights)
-            match_all_arrays(mnp_res[0], onp_res[0], error=3)
-            match_all_arrays(mnp_res[1], onp_res[1], error=3)
+            match_all_arrays(mnp_res[0], onp_res[0], error=1)
+            match_all_arrays(mnp_res[1], onp_res[1], error=1)
             mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range,
                                       weights=to_tensor(weights), density=True)
 
             mnp_res = mnp.histogramdd(mnp_y, bins=bins, range=range, weights=to_tensor(weights),
                                       density=True)
             onp_res = onp.histogramdd(y, bins, range=range, weights=weights, density=True)
-            match_all_arrays(mnp_res[0], onp_res[0], error=3)
-            match_all_arrays(mnp_res[1], onp_res[1], error=3)
+            match_all_arrays(mnp_res[0], onp_res[0], error=1)
+            match_all_arrays(mnp_res[1], onp_res[1], error=1)
 
     bins = onp.arange(24).reshape(3, 8)
     mnp_res = mnp.histogramdd(to_tensor(x), bins=to_tensor(bins))
     onp_res = onp.histogramdd(x, bins=bins)
-    match_all_arrays(mnp_res[0], onp_res[0], error=3)
-    match_all_arrays(mnp_res[1], onp_res[1], error=3)
+    match_all_arrays(mnp_res[0], onp_res[0], error=1)
+    match_all_arrays(mnp_res[1], onp_res[1], error=1)
 
 
 @pytest.mark.level1
@@ -2252,17 +2252,17 @@ def test_histogram2d():
     for bins in [(5, 7), 4, [onp.arange(5).tolist(), onp.arange(2, 10).tolist()], [8, [1, 2, 3]]]:
         # pylint: disable=redefined-builtin
         for range in [None, [(3, 3), (2, 20)]]:
-            match_res(mnp.histogram2d, onp.histogram2d, x, y, bins=bins, range=range, error=3)
+            match_res(mnp.histogram2d, onp.histogram2d, x, y, bins=bins, range=range, error=1)
             match_res(mnp.histogram2d, onp.histogram2d, x, y, bins=bins, range=range, density=True,
-                      error=3)
+                      error=1)
             mnp_res = mnp.histogram2d(to_tensor(x), to_tensor(y), bins=bins, range=range,
                                       weights=to_tensor(weights))
             onp_res = onp.histogram2d(x, y, bins=bins, range=range, weights=weights)
-            match_all_arrays(mnp_res, onp_res, error=3)
+            match_all_arrays(mnp_res, onp_res, error=1)
             mnp_res = mnp.histogram2d(to_tensor(x), to_tensor(y), bins=bins, range=range,
                                       weights=to_tensor(weights), density=True)
             onp_res = onp.histogram2d(x, y, bins=bins, range=range, weights=weights, density=True)
-            match_all_arrays(mnp_res, onp_res, error=3)
+            match_all_arrays(mnp_res, onp_res, error=1)
 
 
 @pytest.mark.level1
