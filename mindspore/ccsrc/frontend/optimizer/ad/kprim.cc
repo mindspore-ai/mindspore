@@ -120,7 +120,7 @@ void ExportBpropToMindIR(const PrimitivePtr &prim, const FuncGraphPtr &func_grap
     return;
   }
   std::ofstream fout(bprop_mindir_realpath.value());
-  mind_ir::ModelProto fg_model = GetBinaryProto(func_graph);
+  mind_ir::ModelProto fg_model = GetBinaryProto(func_graph, false);
   if (!fg_model.SerializeToOstream(&fout)) {
     MS_LOG(WARNING) << "Failed to cache the bprop of op \"" << prim->name() << "\" to file \""
                     << bprop_mindir_realpath.value() << "\".";

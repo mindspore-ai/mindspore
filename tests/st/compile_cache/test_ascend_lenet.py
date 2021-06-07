@@ -92,3 +92,4 @@ def test_lenet():
     label1 = Tensor(np.ones([32]).astype(np.int32))
     net1 = LeNet()
     train(net1, data1, label1)
+    context.set_context(save_compile_cache=False, load_compile_cache=False)

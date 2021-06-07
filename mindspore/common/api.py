@@ -182,9 +182,9 @@ class _MindSporeFunction:
         if key not in ms_compile_cache.keys():
             is_compile = False
             if self.obj is None:
-                is_compile = self._executor.compile(self.fn, args_list, phase, True)
+                is_compile = self._executor.compile(self.fn, args_list, phase, True, "")
             else:
-                is_compile = self._executor.compile(self.obj, args_list, phase, True)
+                is_compile = self._executor.compile(self.obj, args_list, phase, True, "")
             if not is_compile:
                 raise RuntimeError("Executor compile failed.")
             if context.get_context("enable_ge"):
@@ -445,6 +445,7 @@ class _Executor:
         self._executor = Executor_.get_instance()
         self.compile_cache = {}
         self._executor.set_py_exe_path(sys.executable)
+        self.queue_name = ""
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,
                      input_indexs, phase='dataset'):
@@ -471,6 +472,7 @@ class _Executor:
                                  input_indexs=input_indexs,
                                  phase=phase):
             raise RuntimeError("Failure to init and dataset subgraph!")
+        self.queue_name = queue_name
         return True
 
     def _build_data_graph(self, obj, phase):
@@ -526,7 +528,7 @@ class _Executor:
         enable_debug_runtime = context.get_context("enable_debug_runtime")
         enable_ge = context.get_context("enable_ge")
         use_vm = not enable_ge or (enable_debug_runtime and context.get_context("mode") == context.PYNATIVE_MODE)
-        result = self._executor.compile(obj, args_list, phase, use_vm)
+        result = self._executor.compile(obj, args_list, phase, use_vm, self.queue_name)
         self.compile_cache[phase] = phase
         if not result:
             raise RuntimeError("Executor compile failed.")
