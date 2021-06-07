@@ -302,5 +302,4 @@ void FreeTmpWeight(lite::Tensor *tensor) {
     tensor->set_data(nullptr);
   }
 }
-
 }  // namespace mindspore::kernel

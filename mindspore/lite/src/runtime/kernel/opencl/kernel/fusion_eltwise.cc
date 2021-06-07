@@ -69,9 +69,9 @@ std::pair<bool, FusionEltwiseParameter *> CheckSupportOrCreateParam(
     EltwiseOperator act_operator = Activation2Operator(act_type);
     support = SupportedOperators.count(operator_) && SupportedOperators.count(act_operator);
     if (node_type == schema::PrimitiveType_ScaleFusion) {
-      support = support && node->in_tensors().size() == 3 && scale_param->axis_ == -1;
+      support = support && node->in_tensors().size() == INPUT_TENSOR_SIZE_3 && scale_param->axis_ == -1;
     } else {
-      support = support && (node->in_tensors().size() == 2);
+      support = support && (node->in_tensors().size() == INPUT_TENSOR_SIZE_2);
     }
     if (create_param) {
       param = new (std::nothrow) FusionEltwiseParameter(operator_, node->name(), node->in_tensors(), replace_map);
@@ -292,8 +292,9 @@ std::string FusionEltwiseOpenCLKernel::Codegen() {
     MS_ASSERT(tensor);
     auto shape = in_tensors_[i]->shape();
     bool is_scalar = IsScalar(shape);
-    bool is_vector = shape.size() == 1 && shape.front() == output.C;
-    bool _111C = shape.size() == 4 && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output.C;
+    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == output.C;
+    bool _111C =
+      shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output.C;
     if (tensor->IsConst()) {
       if (!is_scalar) {
         code << "  FLT4 in" << i << " = input" << i << "[";
@@ -426,5 +427,4 @@ int FusionEltwiseOpenCLKernel::GetTensorIdx(lite::Tensor *in_tensor) {
     return 0;
   }
 }
-
 }  // namespace mindspore::kernel

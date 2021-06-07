@@ -103,5 +103,4 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Fill, OpenCLKernelCreator<Fil
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Shape, OpenCLKernelCreator<FillOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Fill, OpenCLKernelCreator<FillOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Shape, OpenCLKernelCreator<FillOpenCLKernel>);
-
 }  // namespace mindspore::kernel
