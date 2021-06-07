@@ -1052,7 +1052,8 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::IsCommunicationOp(kernel)) {
+    if (AnfAlgo::IsCommunicationOp(kernel) && AnfAlgo::GetCNodeName(kernel) != kHcomSendOpName &&
+        AnfAlgo::GetCNodeName(kernel) != kReceiveOpName) {
       AllocCommunicationOpInputDynamicRes(kernel);
       AllocCommunicationOpOutputDynamicRes(kernel);
     }
@@ -1120,9 +1121,6 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
 void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, bool, const DeviceAddressPtrList addr_list,
                                                   size_t total_size, std::vector<size_t> size_list) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  if (!is_need_alloc_memory) {
-    return;
-  }
   auto ret = mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Malloc device memory failed.";

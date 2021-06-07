@@ -51,6 +51,7 @@
 #endif
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
+#include "backend/optimizer/gpu/concat_outputs_for_all_gather.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
 #include "debug/anf_ir_dump.h"
@@ -175,6 +176,8 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
   pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
+  pm->AddPass(std::make_shared<opt::AllGatherFusion>());
+  pm->AddPass(std::make_shared<opt::ConcatOutputsForAllGather>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
   optimizer->AddPassManager(pm);
