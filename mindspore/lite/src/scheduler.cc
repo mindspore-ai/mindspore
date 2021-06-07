@@ -52,9 +52,6 @@
 #include "include/registry/kernel_interface.h"
 
 namespace mindspore::lite {
-using kernel::KERNEL_ARCH::kCPU;
-using kernel::KERNEL_ARCH::kGPU;
-using kernel::KERNEL_ARCH::kNPU;
 namespace {
 constexpr int kMainSubGraphIndex = 0;
 }  // namespace
@@ -391,7 +388,7 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 
   if (context_->IsGpuEnabled()) {
     // support more data type like int32
-    kernel::KernelKey gpu_desc{kGPU, desc.data_type, desc.type};
+    kernel::KernelKey gpu_desc{kernel::KERNEL_ARCH::kGPU, desc.data_type, desc.type};
     if (desc.data_type == kNumberTypeFloat32 && context_->IsGpuFloat16Enabled()) {
       gpu_desc.data_type = kNumberTypeFloat16;
     }
@@ -422,7 +419,7 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 int Scheduler::FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel) {
   MS_ASSERT(op_parameter != nullptr);
-  kernel::KernelKey npu_desc{kNPU, desc.data_type, desc.type};
+  kernel::KernelKey npu_desc{kernel::KERNEL_ARCH::kNPU, desc.data_type, desc.type};
   if (context_->IsNpuEnabled()) {
     if (npu_desc.data_type == kNumberTypeFloat16) {
       npu_desc.data_type = kNumberTypeFloat32;
@@ -454,7 +451,7 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   int ret = RET_NOT_SUPPORT;
   auto prim_type = GetPrimitiveType(node->primitive_);
   if (prim_type == schema::PrimitiveType_Custom) {
-    kernel::KernelKey desc{kCPU, data_type, prim_type, "", ""};
+    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, "", ""};
     ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
                                                    node->primitive_);
     if (ret == RET_OK && *kernel != nullptr) {
@@ -470,7 +467,8 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   }
   for (auto &&device : context_->device_list_) {
     if (!device.provider_.empty()) {
-      kernel::KernelKey desc{kCPU, data_type, prim_type, device.provider_device_, device.provider_};
+      kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, device.provider_device_,
+                             device.provider_};
       ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
                                                      node->primitive_);
       if (ret == RET_OK && *kernel != nullptr) {
@@ -501,7 +499,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     return nullptr;
   }
   op_parameter->is_train_session_ = is_train_session_;
-  kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
 #ifdef SUPPORT_GPU
   if (node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType) {
     status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
@@ -670,12 +668,12 @@ bool Scheduler::KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_typ
     case kernel::SubGraphType::kApuSubGraph:
       return false;
     case kernel::SubGraphType::kGpuSubGraph:
-      return kernel.desc().arch == kGPU;
+      return kernel.desc().arch == kernel::KERNEL_ARCH::kGPU;
     case kernel::SubGraphType::kNpuSubGraph:
-      return kernel.desc().arch == kNPU;
+      return kernel.desc().arch == kernel::KERNEL_ARCH::kNPU;
     case kernel::SubGraphType::kCpuFP16SubGraph: {
       auto desc = kernel.desc();
-      if (desc.arch != kCPU) {
+      if (desc.arch != kernel::KERNEL_ARCH::kCPU) {
         return false;
       }
       return (desc.data_type == kNumberTypeFloat16 || desc.data_type == kNumberTypeInt32 ||
@@ -683,7 +681,7 @@ bool Scheduler::KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_typ
     }
     case kernel::SubGraphType::kCpuFP32SubGraph: {
       auto desc = kernel.desc();
-      if (desc.arch != kCPU) {
+      if (desc.arch != kernel::KERNEL_ARCH::kCPU) {
         return false;
       }
       return (desc.data_type == kNumberTypeFloat32 || desc.data_type == kNumberTypeFloat ||

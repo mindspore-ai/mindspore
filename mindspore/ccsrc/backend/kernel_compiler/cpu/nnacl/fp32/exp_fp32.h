@@ -18,6 +18,9 @@
 #define MINDSPORE_NNACL_FP32_EXP_H_
 
 #include "nnacl/op_base.h"
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#endif
 
 typedef struct ExpParameter {
   // Primitive parameter
@@ -50,13 +53,13 @@ static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
                                  {1.0f, 1.0f, 1.0f, 1.0f}};
 
   input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
-  MS_INT32X4 integer = MS_CVTQPS_EPI32(input / param[0]);
-  MS_FLOAT32X4 decimal = input - MS_CVTQEPI32_PS(integer) * param[0];
+  MS_INT32X4 integer = MS_CVTQPS_EPI32(MS_DIVQ_F32(input, param[0]));
+  MS_FLOAT32X4 decimal = MS_SUBQ_F32(input, MS_MULQ_F32(MS_CVTQEPI32_PS(integer), param[0]));
   MS_INT32X4 int_exp = MS_SLLIQ_EPI32(MS_ADDQ_EPI32(integer, MS_MOVQ_EPI32(127)), 23);
-  MS_FLOAT32X4 decimal_exp =
-    param[5] +
-    decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  MS_STQ_F32(dst, decimal_exp * MS_CAST_F32_S32(int_exp));
+  MS_FLOAT32X4 tmp = MS_MULQ_F32(decimal, (MS_ADDQ_F32(param[2], MS_MULQ_F32(decimal, param[1]))));
+  tmp = MS_MULQ_F32(decimal, MS_ADDQ_F32(param[4], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[3], tmp))));
+  MS_FLOAT32X4 decimal_exp = MS_ADDQ_F32(param[5], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[5], tmp)));
+  MS_STQ_F32(dst, MS_MULQ_F32(decimal_exp, MS_CAST_F32_S32(int_exp)));
 }
 #endif
 
@@ -91,7 +94,8 @@ static inline void single_exp(float src, float *dst) {
   src = MSMAX(-88.0f, MSMIN(88.0f, src));
   int integer = src / param[0];
   float decimal = src - integer * param[0];
-  fi int_exp = {.i = (integer + 127) << 23};
+  fi int_exp;
+  int_exp.i = (integer + 127) << 23;
   float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
   *dst = int_exp.f * decimal_exp;

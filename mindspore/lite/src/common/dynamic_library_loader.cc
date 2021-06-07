@@ -24,8 +24,8 @@
 #include <windows.h>
 #endif
 
-#define LOG_ERROR(content, args...) \
-  { printf("[ERROR] %s|%d|%s: " #content "\r\n", __FILE__, __LINE__, __func__, ##args); }
+#define LOG_ERROR(content) \
+  { printf("[ERROR] %s|%d|%s: " #content "\r\n", __FILE__, __LINE__, __func__); }
 
 namespace mindspore {
 namespace lite {

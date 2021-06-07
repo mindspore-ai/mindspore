@@ -88,7 +88,7 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
             return NNACL_ERR;
           }
 #if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-          tmp_avg = tmp_avg / MS_MOVQ_F32(real_count);
+          tmp_avg = MS_DIVQ_F32(tmp_avg, MS_MOVQ_F32(real_count));
           tmp_avg = MS_MAXQ_F32(tmp_avg, min_value);
           tmp_avg = MS_MINQ_F32(tmp_avg, max_value);
           MS_STQ_F32(dst_c_ptr, tmp_avg);
