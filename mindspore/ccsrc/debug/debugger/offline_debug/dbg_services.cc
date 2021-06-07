@@ -176,19 +176,11 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
 
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::vector<std::string> file_paths;
-  auto t1 = std::chrono::high_resolution_clock::now();
 
   tensor_list = debug_services->ReadNeededDumpedTensors(iteration, &file_paths);
 
   debug_services->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
                                    file_paths, &tensor_list, false, true, true, &device_id, &root_graph_id);
-
-  auto t2 = std::chrono::high_resolution_clock::now();
-
-  /* Getting number of milliseconds as a double. */
-  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-
-  MS_LOG(INFO) << "CheckWatchpoints Took: " << ms_double.count() / 1000 << "s";
 
   std::vector<watchpoint_hit_t> hits;
   for (unsigned int i = 0; i < name.size(); i++) {

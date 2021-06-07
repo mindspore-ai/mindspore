@@ -863,6 +863,7 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
     tensor_list = debug_services_->GetNodeTensor(kernel);
   }
   std::vector<std::string> file_list;
+  MS_LOG(INFO) << "checkwatchpoints call for step " << num_step_;
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
                                     file_list, &tensor_list, initial_suspend_, watchnode.empty(), recheck);
   std::list<WatchpointHit> hits;
