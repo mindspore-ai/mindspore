@@ -39,13 +39,13 @@ bool E2eDump::IsDeviceTargetGPU() {
 }
 
 void E2eDump::DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
-                               NotNull<const device::DeviceAddress *> addr, const ShapeVector &int_shapes,
-                               const TypeId &type, bool trans_flag, size_t slot, const Debugger *debugger) {
+                               const device::DeviceAddress &addr, const ShapeVector &int_shapes, const TypeId &type,
+                               bool trans_flag, size_t slot, const Debugger *debugger) {
 #ifdef ENABLE_DEBUGGER
   auto format = kOpFormat_DEFAULT;
   MS_EXCEPTION_IF_NULL(debugger);
   auto ret = debugger->DumpTensorToFile(original_kernel_name, trans_flag, file_path, format, int_shapes, type,
-                                        addr->type_id(), addr->format(), slot);
+                                        addr.type_id(), addr.format(), slot);
   if (!ret) {
     MS_LOG(ERROR) << "DumpTensorToFile Failed: flag:" << trans_flag << ", path:" << file_path
                   << ", host_format:" << format;
@@ -83,15 +83,15 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(node, j);
+    MS_EXCEPTION_IF_NULL(addr);
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
     auto type = AnfAlgo::GetOutputInferDataType(node, j);
     std::string file_path = dump_path + '/' + *kernel_name + '_' + "output_" + std::to_string(j);
     if (IsDeviceTargetGPU()) {
-      DumpGPUMemToFile(file_path, node->fullname_with_scope(), NOT_NULL(addr), int_shapes, type, trans_flag, j,
-                       debugger);
+      DumpGPUMemToFile(file_path, node->fullname_with_scope(), *addr, int_shapes, type, trans_flag, j, debugger);
     } else {
-      DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type, trans_flag);
+      DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
     }
   }
 }
@@ -146,10 +146,11 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
     auto type = AnfAlgo::GetOutputInferDataType(input, index);
     std::string file_path = dump_path + '/' + *kernel_name + '_' + "input_" + std::to_string(j);
+    MS_EXCEPTION_IF_NULL(addr);
     if (IsDeviceTargetGPU()) {
-      DumpGPUMemToFile(file_path, tensor_name, NOT_NULL(addr), int_shapes, type, trans_flag, slot, debugger);
+      DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, trans_flag, slot, debugger);
     } else {
-      DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type, trans_flag);
+      DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
     }
   }
 }
@@ -188,9 +189,9 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
 
   std::string file_path = dump_path + '/' + dump_name + '_' + "output_0";
   if (IsDeviceTargetGPU()) {
-    DumpGPUMemToFile(file_path, node_name, NOT_NULL(addr), int_shapes, type, trans_flag, 0, debugger);
+    DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, trans_flag, 0, debugger);
   } else {
-    DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type, trans_flag);
+    DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
   }
 }
 

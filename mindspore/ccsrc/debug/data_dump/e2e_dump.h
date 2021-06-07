@@ -48,8 +48,8 @@ class E2eDump {
                                      const Debugger *debugger);
 
   static void DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
-                               NotNull<const device::DeviceAddress *> addr, const ShapeVector &int_shapes,
-                               const TypeId &type, bool trans_flag, size_t slot, const Debugger *debugger);
+                               const device::DeviceAddress &addr, const ShapeVector &int_shapes, const TypeId &type,
+                               bool trans_flag, size_t slot, const Debugger *debugger);
   static bool IsDeviceTargetGPU();
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
                                 bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger);

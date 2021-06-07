@@ -66,13 +66,13 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(input, index);
-    std::string tensor_name = node->fullname_with_scope();
 
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes));
     auto type = AnfAlgo::GetOutputInferDataType(input, index);
     std::string file_path = dump_path + '/' + *kernel_name + '_' + "input_" + std::to_string(j);
-    DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
+    MS_EXCEPTION_IF_NULL(addr);
+    DumpMemToFile(file_path, *addr, int_shapes, type);
   }
 }
 
@@ -89,7 +89,8 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes));
     auto type = AnfAlgo::GetOutputInferDataType(node, j);
     std::string file_path = dump_path + '/' + *kernel_name + '_' + "output_" + std::to_string(j);
-    DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
+    MS_EXCEPTION_IF_NULL(addr);
+    DumpMemToFile(file_path, *addr, int_shapes, type);
   }
 }
 
@@ -126,7 +127,7 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
 
   std::string file_path = dump_path + '/' + dump_name + '_' + "output_0";
-  DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
+  DumpMemToFile(file_path, *addr, int_shapes, type);
 }
 
 void CPUE2eDump::DumpParametersAndConst(const session::KernelGraph *graph) {
