@@ -92,7 +92,7 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
         code.CodeBaseStruct("ResizeInt8Args", kRunArgs, input_tensor_, output_tensor_, "input_shape", "output_shape",
                             align_corners, gThreadNum);
         if (support_parallel_) {
-          code.CodeFunction(kParallelLaunch, "ResizeInt8Run", kRunArgsAddr, gThreadNum, kLhsScale, kRhsScale);
+          code.CodeFunction(kParallelLaunch, "ResizeInt8Run", kRunArgsAddr, gThreadNum);
         } else {
           code.CodeFunction("ResizeInt8Run", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
         }
