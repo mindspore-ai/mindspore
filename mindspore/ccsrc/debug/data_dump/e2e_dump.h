@@ -34,8 +34,8 @@ class E2eDump {
  public:
   E2eDump() = default;
   ~E2eDump() = default;
-  static void DumpSetup(const session::KernelGraph *graph, uint32_t device_id);
-  static bool DumpData(const session::KernelGraph *graph, uint32_t device_id, const Debugger *debugger = nullptr);
+  static void DumpSetup(const session::KernelGraph *graph, uint32_t rank_id);
+  static bool DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                             std::string *kernel_name, const Debugger *debugger);

@@ -26,6 +26,7 @@
 #include "runtime/rt_model.h"
 #include "runtime/device/ascend/ge_types_convert.h"
 #include "proto/op_mapping_info.pb.h"
+#include "utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DEBUGGER
@@ -138,8 +139,15 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
     MS_LOG(EXCEPTION) << "Dump path invalid";
   }
   uint32_t graph_id = kernel_graph_->graph_id();
-  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  dump_info->set_dump_path("/" + dump_path + "/rank_" + std::to_string(device_id) + "/");
+  uint32_t rank_id = 0;
+  auto env_hccl_mode = common::GetEnv("MS_ENABLE_HCCL");
+  if (!env_hccl_mode.empty() && env_hccl_mode != std::to_string(0)) {
+    // get actual rank id if hcck is initiated.
+    if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
+      MS_LOG(INFO) << "Failed to get rank id.";
+    }
+  }
+  dump_info->set_dump_path("/" + dump_path + "/rank_" + std::to_string(rank_id) + "/");
   MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path;
   dump_info->set_model_name("_");
   dump_info->set_dump_step("0");

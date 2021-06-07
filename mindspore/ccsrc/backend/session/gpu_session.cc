@@ -62,6 +62,7 @@
 #include "debug/debugger/proto_exporter_stub.h"
 #endif
 #include "debug/data_dump/dump_json_parser.h"
+#include "debug/data_dump/dump_utils.h"
 #include "debug/tensor_load.h"
 #include "debug/dump_proto.h"
 #include "runtime/device/gpu/gpu_kernel_build.h"
@@ -109,10 +110,13 @@ void GPUSession::Init(uint32_t device_id) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+  if (collective_inited) {
+    rank_id_ = GetRankId();
+  }
   auto &json_parser = DumpJsonParser::GetInstance();
   // Dump json config file if dump is enabled
-  json_parser.CopyJsonToDir(device_id);
-  json_parser.CopyMSCfgJsonToDir(device_id);
+  json_parser.CopyJsonToDir(rank_id_);
+  json_parser.CopyMSCfgJsonToDir(rank_id_);
   MS_LOG(INFO) << "Set device id " << device_id << " for gpu session.";
   InitExecutor(kGPUDevice, device_id);
 }
@@ -349,7 +353,6 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  uint32_t device_id = runtime_instance->device_id();
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
   // Dump .pb graph before graph optimization
@@ -403,7 +406,7 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   }
   if (json_parser.e2e_dump_enabled()) {
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
-    std::string root_dir = json_parser.path() + "/rank_" + std::to_string(device_id);
+    std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);
     std::string target_dir = root_dir + "/graphs";
     std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
     DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
@@ -600,7 +603,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    E2eDump::DumpData(kernel_graph.get(), device_id_, debugger_.get());
+    E2eDump::DumpData(kernel_graph.get(), rank_id_, debugger_.get());
   } else {
     DumpJsonParser::GetInstance().UpdateDumpIter();
   }
