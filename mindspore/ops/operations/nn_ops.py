@@ -435,8 +435,8 @@ class Mish(PrimitiveWithInfer):
         >>> mish = ops.Mish()
         >>> output = mish(input_x)
         >>> print(output)
-        [[-3.034014e-01 3.997413e+00 -2.682209e-03]
-        [ 1.943959e+00 -3.357619e-02 8.999999e+00]]
+        [[-0.30273438  3.9974136 -0.015625]
+         [ 1.9439697  -0.02929688 8.999999]]
     """
 
     @prim_attr_register
