@@ -23,9 +23,8 @@
 #include <fstream>
 #include <memory>
 #include "include/errorcode.h"
-#include "src/common/utils.h"
 #include "src/tensor.h"
-#include "src/train/loss_kernel.h"
+#include "src/common/utils.h"
 #include "src/train/optimizer_kernel.h"
 #include "src/sub_graph_kernel.h"
 #include "src/train/train_populate_parameter.h"
@@ -58,7 +57,7 @@ std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size)
   }
   size_t fsize = static_cast<size_t>(tellg_ret);
 
-  std::unique_ptr<char[]> buf(new (std::nothrow) char[fsize]);
+  auto buf = std::make_unique<char[]>(fsize);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << filename;
     ifs.close();
@@ -237,7 +236,7 @@ int TrainSession::Train() {
   train_mode_ = true;
   virtual_batch_idx_ = 0;
   for (auto kernel : this->train_kernels_) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Train();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << kernel->name() << " failed to set train mode";

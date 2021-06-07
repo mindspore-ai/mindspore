@@ -38,6 +38,10 @@ def save_t(t, file):
     x = t.asnumpy()
     x.tofile(file)
 
+def save_txt(t, file):
+    with os.fdopen(file, 'w') as f:
+        for j in t.asnumpy().flatten():
+            f.write(str(j)+' ')
 
 def save_inout(name, x, l, net, net_train, sparse=False, epoch=1):
     """save_inout"""
@@ -64,9 +68,8 @@ def save_inout(name, x, l, net, net_train, sparse=False, epoch=1):
     if isinstance(y, tuple):
         i = 1
         for t in y:
-            with os.fdopen(name + "_output" + str(i) + ".bin", 'w') as f:
-                for j in t.asnumpy().flatten():
-                    f.write(str(j)+' ')
+            y_name = name + "_output" + str(i) + ".bin"
+            save_txt(t, y_name)
             i = i + 1
     else:
         y_name = name + "_output1.bin"

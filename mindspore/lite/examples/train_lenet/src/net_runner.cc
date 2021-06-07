@@ -91,7 +91,7 @@ bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inpu
     auto d = reinterpret_cast<float *>(after_outputs.at(i)->MutableData());
     int num2p = (after_outputs.at(i)->ElementsNum());
     printf("ou%zu(%d): ", i, num2p);
-    if (num2p > 10) num2p = 10;
+    if (num2p > kPrintNum) num2p = kPrintNum;
     for (int j = 0; j < num2p; j++) printf("%f, ", d[j]);
     printf("\n");
   }
