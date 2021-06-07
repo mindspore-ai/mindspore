@@ -196,5 +196,4 @@ int StackOpenCLKernel::Run() {
 }
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Stack, OpenCLKernelCreator<StackOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Stack, OpenCLKernelCreator<StackOpenCLKernel>);
-
 }  // namespace mindspore::kernel

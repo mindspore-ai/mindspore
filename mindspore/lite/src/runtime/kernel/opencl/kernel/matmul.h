@@ -47,6 +47,9 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   bool act_weight_{false};
   std::vector<int> inShape{std::vector<int>(MAX_DIMS, 1)};
   std::vector<int> outShape{std::vector<int>(MAX_DIMS, 1)};
+
+ private:
+  void PadWeight(std::vector<int> weight_shape_4d, int ci, int co);
 };
 }  // namespace mindspore::kernel
 

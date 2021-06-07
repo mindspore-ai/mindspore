@@ -110,7 +110,6 @@ int BatchNormOpenCLKernel::Initweight() {
       memcpy(offset_, in_tensors_.at(2)->data_c(), weight_size);
       memcpy(mean_, in_tensors_.at(3)->data_c(), weight_size);
       memcpy(variance_, in_tensors_.at(4)->data_c(), weight_size);
-
     } else {
       auto scale_fp32 = reinterpret_cast<float *>(scale_);
       auto offset_fp32 = reinterpret_cast<float *>(offset_);

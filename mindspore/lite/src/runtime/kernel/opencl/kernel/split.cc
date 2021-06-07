@@ -58,7 +58,8 @@ int SplitOpenCLKernel::RunAxis0() {
 
 int SplitOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<SplitParameter *>(this->op_parameter_);
-  if ((out_tensors_.size() != 2 || (out_tensors_.size() != OUTPUT_TENSOR_SIZE_3 && param->split_dim_ == 0)) &&
+  if ((out_tensors_.size() != OUTPUT_TENSOR_SIZE_2 ||
+       (out_tensors_.size() != OUTPUT_TENSOR_SIZE_3 && param->split_dim_ == 0)) &&
       in_tensors_.size() != INPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;

@@ -122,5 +122,4 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatchND, OpenCLKernelC
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatchND, OpenCLKernelCreator<SpaceToBatchNDOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatch, OpenCLKernelCreator<SpaceToBatchNDOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatch, OpenCLKernelCreator<SpaceToBatchNDOpenCLKernel>);
-
 }  // namespace mindspore::kernel

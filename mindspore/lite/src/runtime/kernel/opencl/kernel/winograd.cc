@@ -75,7 +75,6 @@ std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, si
   return dst;
 }
 #endif
-
 }  // namespace
 
 void WinogradOpenCLKernel::BuildKernel() {

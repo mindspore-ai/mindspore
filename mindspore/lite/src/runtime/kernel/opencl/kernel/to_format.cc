@@ -105,5 +105,4 @@ int ToFormatOpenCLKernel::InferShape() {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel
