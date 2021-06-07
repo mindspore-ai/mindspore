@@ -286,11 +286,12 @@ AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
 
   const auto &inputs = node->inputs();
   // Inputs should be [list_getitem, list, item]
-  const size_t expect_inputs_size = 3;
-  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
-
-  AnfNodePtr data = inputs[1];
-  AnfNodePtr cons = inputs[2];
+  constexpr size_t expect_input_size = 3;
+  CheckInputsSize(inputs.size(), expect_input_size, GetCNodeFuncName(node));
+  constexpr size_t real_input_index = 1;
+  constexpr size_t index_input_index = 2;
+  AnfNodePtr data = inputs[real_input_index];
+  AnfNodePtr cons = inputs[index_input_index];
   MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(cons);
 
@@ -337,9 +338,10 @@ AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
   // Inputs should be [make_keyword_arg, key, value]
-  const size_t expect_inputs_size = 3;
-  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
-  return inputs[2];
+  constexpr size_t expect_input_size = 3;
+  constexpr size_t value_inputs_index = 2;
+  CheckInputsSize(inputs.size(), expect_input_size, GetCNodeFuncName(node));
+  return inputs[value_inputs_index];
 }
 
 AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) {
@@ -455,10 +457,10 @@ AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node, const int64_
 
   const auto &inputs = node->inputs();
   // Inputs should be [sparse_getattr, sparse]
-  const size_t expect_inputs_size = 2;
-  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
-
-  AnfNodePtr sparse = inputs[1];
+  constexpr size_t expect_input_index = 2;
+  CheckInputsSize(inputs.size(), expect_input_index, GetCNodeFuncName(node));
+  constexpr size_t sparse_index = 1;
+  AnfNodePtr sparse = inputs[sparse_index];
   MS_EXCEPTION_IF_NULL(sparse);
   auto cons_node = NewValueNode(index);
   AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(index));
@@ -492,13 +494,16 @@ bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager
       new_node = ConvertMakeSparseToMakeTuple(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetIndices) ||
                IsPrimitiveCNode(node, prim::kPrimRowTensorGetIndices)) {
-      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 0);
+      constexpr int64_t indices_index = 0;
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, indices_index);
     } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetValues) ||
                IsPrimitiveCNode(node, prim::kPrimRowTensorGetValues)) {
-      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 1);
+      constexpr int64_t value_index = 1;
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, value_index);
     } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetDenseShape) ||
                IsPrimitiveCNode(node, prim::kPrimRowTensorGetDenseShape)) {
-      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, 2);
+      constexpr int64_t shape_index = 2;
+      new_node = ConvertSparseGetAttrToTupleGetItem(cnode, shape_index);
     }
 
     if (new_node != nullptr) {

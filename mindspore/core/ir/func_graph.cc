@@ -191,15 +191,15 @@ GraphDebugInfoPtr FuncGraph::debug_info() {
   return this->debug_info_;
 }
 
-const AnfNodeSet &FuncGraph::nodes() { return nodes_; }
+const AnfNodeSet &FuncGraph::nodes() const { return nodes_; }
 
 void FuncGraph::CopyNodes(const FuncGraphPtr &source) { nodes_ = source->nodes(); }
 
 void FuncGraph::ClearNodes() { nodes_.clear(); }
 
-void FuncGraph::AddNode(AnfNodePtr node) { nodes_.add(node); }
+void FuncGraph::AddNode(const AnfNodePtr &node) { nodes_.add(node); }
 
-void FuncGraph::DropNode(AnfNodePtr node) {
+void FuncGraph::DropNode(const AnfNodePtr &node) {
   nodes_.erase(node);
   auto graph = node->func_graph();
   // Remove the node from order list.
@@ -208,7 +208,7 @@ void FuncGraph::DropNode(AnfNodePtr node) {
   }
 }
 
-const AnfNodeCounterMap &FuncGraph::value_nodes() { return value_nodes_; }
+const AnfNodeCounterMap &FuncGraph::value_nodes() const { return value_nodes_; }
 
 void FuncGraph::CopyValueNodes(const FuncGraphPtr &source) {
   auto &others = source->value_nodes();
@@ -219,7 +219,7 @@ void FuncGraph::CopyValueNodes(const FuncGraphPtr &source) {
 
 void FuncGraph::ClearValueNodes() { value_nodes_.clear(); }
 
-void FuncGraph::AddValueNode(AnfNodePtr node, int count) {
+void FuncGraph::AddValueNode(const AnfNodePtr &node, int count) {
   if (value_nodes_.count(node) == 0) {
     value_nodes_[node] = count;
   } else {
@@ -227,7 +227,7 @@ void FuncGraph::AddValueNode(AnfNodePtr node, int count) {
   }
 }
 
-void FuncGraph::DropValueNode(AnfNodePtr node) {
+void FuncGraph::DropValueNode(const AnfNodePtr &node) {
   if (value_nodes_.count(node) != 0) {
     if (value_nodes_[node] == 1) {
       (void)value_nodes_.erase(node);
@@ -241,7 +241,7 @@ void FuncGraph::DropValueNode(AnfNodePtr node) {
   }
 }
 
-const AnfNodeCounterMap &FuncGraph::free_variables() { return free_variables_; }
+const AnfNodeCounterMap &FuncGraph::free_variables() const { return free_variables_; }
 
 void FuncGraph::CopyFreeVariables(const FuncGraphPtr &source) {
   auto &others = source->free_variables();
@@ -254,7 +254,7 @@ void FuncGraph::CopyFreeVariables(const FuncGraphPtr &source) {
 
 void FuncGraph::ClearFreeVariables() { free_variables_.clear(); }
 
-bool FuncGraph::AddFreeVariable(AnfNodePtr node, int count) {
+bool FuncGraph::AddFreeVariable(const AnfNodePtr &node, int count) {
   if (free_variables_.count(node) == 0) {
     free_variables_[node] = count;
     return true;
@@ -264,7 +264,7 @@ bool FuncGraph::AddFreeVariable(AnfNodePtr node, int count) {
   }
 }
 
-bool FuncGraph::DropFreeVariable(AnfNodePtr node) {
+bool FuncGraph::DropFreeVariable(const AnfNodePtr &node) {
   if (free_variables_.count(node) != 0) {
     if (free_variables_[node] == 1) {
       (void)free_variables_.erase(node);
@@ -313,7 +313,7 @@ std::vector<FuncGraphPtr> FuncGraph::free_variables_func_graphs() {
   return func_graphs;
 }
 
-const FuncGraphCounterMap &FuncGraph::func_graphs_used() { return func_graphs_used_; }
+const FuncGraphCounterMap &FuncGraph::func_graphs_used() const { return func_graphs_used_; }
 
 void FuncGraph::CopyFuncGraphsUsed(const FuncGraphPtr &source) {
   auto &others = source->func_graphs_used();
@@ -325,7 +325,7 @@ void FuncGraph::CopyFuncGraphsUsed(const FuncGraphPtr &source) {
 
 void FuncGraph::ClearFuncGraphsUsed() { func_graphs_used_.clear(); }
 
-bool FuncGraph::AddFuncGraphUsed(FuncGraphPtr fg, int count) {
+bool FuncGraph::AddFuncGraphUsed(const FuncGraphPtr &fg, int count) {
   if (func_graphs_used_.count(fg) == 0) {
     func_graphs_used_[fg] = count;
     return true;
@@ -335,7 +335,7 @@ bool FuncGraph::AddFuncGraphUsed(FuncGraphPtr fg, int count) {
   }
 }
 
-bool FuncGraph::DropFuncGraphUsed(FuncGraphPtr fg) {
+bool FuncGraph::DropFuncGraphUsed(const FuncGraphPtr &fg) {
   if (func_graphs_used_.count(fg) != 0) {
     if (func_graphs_used_[fg] == 1) {
       (void)func_graphs_used_.erase(fg);
@@ -358,7 +358,7 @@ const FuncGraphSet &FuncGraph::func_graphs_used_total() {
   return used;
 }
 
-const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() { return func_graph_cnodes_index_; }
+const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() const { return func_graph_cnodes_index_; }
 
 void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
   auto &others = source->func_graph_cnodes_index();
@@ -374,7 +374,7 @@ void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
 
 void FuncGraph::ClearFuncGraphCNodesIndex() { func_graph_cnodes_index_.clear(); }
 
-void FuncGraph::AddFuncGraphCNodeIndex(CNodeIndexPairPtr pair, int count) {
+void FuncGraph::AddFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair, int count) {
   if (func_graph_cnodes_index_.count(pair) == 0) {
     func_graph_cnodes_index_[pair] = count;
   } else {
@@ -382,7 +382,7 @@ void FuncGraph::AddFuncGraphCNodeIndex(CNodeIndexPairPtr pair, int count) {
   }
 }
 
-void FuncGraph::DropFuncGraphCNodeIndex(CNodeIndexPairPtr pair) {
+void FuncGraph::DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair) {
   if (func_graph_cnodes_index_.count(pair) != 0) {
     if (func_graph_cnodes_index_[pair] == 1) {
       (void)func_graph_cnodes_index_.erase(pair);
@@ -396,7 +396,7 @@ void FuncGraph::DropFuncGraphCNodeIndex(CNodeIndexPairPtr pair) {
   }
 }
 
-const std::unordered_map<AnfNodePtr, int> &FuncGraph::j_value_nodes() { return j_value_nodes_; }
+const std::unordered_map<AnfNodePtr, int> &FuncGraph::j_value_nodes() const { return j_value_nodes_; }
 
 void FuncGraph::CopyJValueNodes(const FuncGraphPtr &source) {
   auto &others = source->j_value_nodes();

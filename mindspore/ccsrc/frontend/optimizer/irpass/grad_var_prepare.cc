@@ -30,7 +30,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::vector<AnfNodePtr> inputs_y,
-                                          AnfNodePtr func_node, bool is_unpack, bool sens_param) {
+                                          const AnfNodePtr &func_node, bool is_unpack, bool sens_param) {
   MS_EXCEPTION_IF_NULL(func_node);
   FuncGraphPtr func_graph = origin_node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -42,8 +42,8 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
     nodes.push_back(func_node);
     // {unpackcall, {GradOperation, ...}, args...}
     const size_t inputs_begin_index = 2;
-    std::transform(inputs_y.begin() + inputs_begin_index, inputs_y.end(), std::back_inserter(nodes),
-                   [](const AnfNodePtr &node) { return node; });
+    (void)std::transform(inputs_y.begin() + inputs_begin_index, inputs_y.end(), std::back_inserter(nodes),
+                         [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNodeBefore(origin_node, nodes);
   } else {
     auto unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>("unpack_graph", sens_param, false);
@@ -51,8 +51,8 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
     nodes.push_back(func_node);
     // {{GradOperation, ...}, args...}
     const size_t inputs_begin_index = 1;
-    std::transform(inputs_y.begin() + inputs_begin_index, inputs_y.end(), std::back_inserter(nodes),
-                   [](const AnfNodePtr &node) { return node; });
+    (void)std::transform(inputs_y.begin() + inputs_begin_index, inputs_y.end(), std::back_inserter(nodes),
+                         [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNodeBefore(origin_node, nodes);
   }
   return unpack_graph_node;
