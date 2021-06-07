@@ -17,6 +17,7 @@
 import mindspore.nn as nn
 from mindspore.common.parameter import ParameterTuple
 
+
 def train_wrap(net, loss_fn=None, optimizer=None, weights=None):
     """
     train_wrap

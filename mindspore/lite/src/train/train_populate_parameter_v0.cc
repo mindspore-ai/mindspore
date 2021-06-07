@@ -89,20 +89,22 @@ OpParameter *DefaultPopulateParameter(const void *primitive) {
 
   return param;
 }
-
-OpParameter *PopulateSmoothL1LossParameter(const void *primitive) {
+SmoothL1LossParameter *MallocSmoothL1LossParam(const void *primitive) {
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
     return nullptr;
   }
-  auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
   SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
   if (p == nullptr) {
     MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
     return nullptr;
   }
+  return p;
+}
+OpParameter *PopulateSmoothL1LossParameter(const void *primitive) {
+  auto p = MallocSmoothL1LossParam(primitive);
   p->op_parameter_.type_ = schema::PrimitiveType_SmoothL1Loss;
-
+  auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
   auto smoothL1Loss_prim = prim->value_as_SmoothL1Loss();
 
   p->beta_ = smoothL1Loss_prim->beta();
@@ -110,18 +112,9 @@ OpParameter *PopulateSmoothL1LossParameter(const void *primitive) {
 }
 
 OpParameter *PopulateSmoothL1LossGradParameter(const void *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-  auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
-  SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
-  if (p == nullptr) {
-    MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
-    return nullptr;
-  }
+  auto p = MallocSmoothL1LossParam(primitive);
   p->op_parameter_.type_ = schema::PrimitiveType_SmoothL1LossGrad;
-
+  auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
   auto smoothL1LossGrad_prim = prim->value_as_SmoothL1LossGrad();
 
   p->beta_ = smoothL1LossGrad_prim->beta();
@@ -327,9 +320,23 @@ OpParameter *PopulateActivationGradParameter(const void *primitive) {
   return reinterpret_cast<OpParameter *>(act_param);
 }
 
+void SetConvActivation(ConvParameter *param, schema::v0::ActivationType activation_type) {
+  switch (activation_type) {
+    case schema::v0::ActivationType_RELU:
+      param->act_type_ = ActType_Relu;
+      break;
+    case schema::v0::ActivationType_RELU6:
+      param->act_type_ = ActType_Relu6;
+      break;
+    default:
+      param->act_type_ = ActType_No;
+      break;
+  }
+}
+
 OpParameter *PopulateConvolutionGradFilterParameter(const void *primitive) {
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    MS_LOG(ERROR) << "Primitive is nullptr when populating conv grad filter parameter for op.";
     return nullptr;
   }
   auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
@@ -360,31 +367,21 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *primitive) {
   param->pad_l_ = convolutionGradFilter_prim->padLeft();
   param->pad_r_ = convolutionGradFilter_prim->padRight();
   param->group_ = convolutionGradFilter_prim->group();
+  SetConvActivation(param, convolutionGradFilter_prim->activationType());
   param->act_type_ = ActType_No;
-  switch (convolutionGradFilter_prim->activationType()) {
-    case schema::v0::ActivationType_RELU:
-      param->act_type_ = ActType_Relu;
-      break;
-    case schema::v0::ActivationType_RELU6:
-      param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      break;
-  }
-
   return reinterpret_cast<OpParameter *>(param);
 }
 
 OpParameter *PopulateConvolutionGradInputParameter(const void *primitive) {
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    MS_LOG(ERROR) << "Primitive is nullptr when populating conv grad input parameter for op.";
     return nullptr;
   }
   auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
 
   ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
+    MS_LOG(ERROR) << "malloc Param for conv grad input failed.";
     return nullptr;
   }
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropInputFusion;
@@ -409,16 +406,7 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *primitive) {
   param->pad_r_ = convolutionGradInput_prim->padRight();
   param->group_ = convolutionGradInput_prim->group();
   param->act_type_ = ActType_No;
-  switch (convolutionGradInput_prim->activationType()) {
-    case schema::v0::ActivationType_RELU:
-      param->act_type_ = ActType_Relu;
-      break;
-    case schema::v0::ActivationType_RELU6:
-      param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      break;
-  }
+  SetConvActivation(param, convolutionGradInput_prim->activationType());
 
   return reinterpret_cast<OpParameter *>(param);
 }
@@ -456,17 +444,7 @@ OpParameter *PopulateGroupConvolutionGradInputParameter(const void *primitive) {
   param->pad_l_ = groupConvolutionGradInput_prim->padLeft();
   param->pad_r_ = groupConvolutionGradInput_prim->padRight();
   param->group_ = groupConvolutionGradInput_prim->group();
-  param->act_type_ = ActType_No;
-  switch (groupConvolutionGradInput_prim->activationType()) {
-    case schema::v0::ActivationType_RELU:
-      param->act_type_ = ActType_Relu;
-      break;
-    case schema::v0::ActivationType_RELU6:
-      param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      break;
-  }
+  SetConvActivation(param, groupConvolutionGradInput_prim->activationType());
 
   return reinterpret_cast<OpParameter *>(param);
 }

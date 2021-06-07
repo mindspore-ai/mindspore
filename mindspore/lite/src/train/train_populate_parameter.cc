@@ -184,6 +184,20 @@ void SetConvParam(ConvParameter *param, const flatbuffers::Vector<int64_t> *kern
   param->pad_r_ = pad_list->Get(kNHWCCDim);
 }
 
+void SetConvActivation(ConvParameter *param, schema::ActivationType activation_type) {
+  switch (activation_type) {
+    case schema::ActivationType_RELU:
+      param->act_type_ = ActType_Relu;
+      break;
+    case schema::ActivationType_RELU6:
+      param->act_type_ = ActType_Relu6;
+      break;
+    default:
+      param->act_type_ = ActType_No;
+      break;
+  }
+}
+
 OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
@@ -196,17 +210,7 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   SetConvParam(param, value->kernel_size(), value->stride(), value->dilation(), value->pad_list());
   param->group_ = value->group();
-  param->act_type_ = ActType_No;
-  switch (value->activation_type()) {
-    case schema::ActivationType_RELU:
-      param->act_type_ = ActType_Relu;
-      break;
-    case schema::ActivationType_RELU6:
-      param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      break;
-  }
+  SetConvActivation(param, value->activation_type());
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -220,19 +224,8 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *prim) {
   auto value = primitive->value_as_Conv2DBackpropInputFusion();
   param->op_parameter_.type_ = primitive->value_type();
   SetConvParam(param, value->kernel_size(), value->stride(), value->dilation(), value->pad_list());
+  SetConvActivation(param, value->activation_type());
   param->group_ = value->group();
-  param->act_type_ = ActType_No;
-  switch (value->activation_type()) {
-    case schema::ActivationType_RELU:
-      param->act_type_ = ActType_Relu;
-      break;
-    case schema::ActivationType_RELU6:
-      param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      break;
-  }
-
   return reinterpret_cast<OpParameter *>(param);
 }
 
