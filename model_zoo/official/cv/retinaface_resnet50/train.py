@@ -33,6 +33,9 @@ from src.lr_schedule import adjust_learning_rate
 def train(cfg):
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU', save_graphs=False)
+    if context.get_context("device_target") == "GPU":
+        # Enable graph kernel
+        context.set_context(enable_graph_kernel=True, graph_kernel_flags="--enable_parallel_fusion")
     if cfg['ngpu'] > 1:
         init("nccl")
         context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
