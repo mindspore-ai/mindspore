@@ -47,11 +47,9 @@ class Loss(Cell):
     """
     def __init__(self, reduction='mean'):
         super(Loss, self).__init__()
-        if reduction is None:
-            reduction = 'none'
 
         if reduction not in ('mean', 'sum', 'none'):
-            raise ValueError(f"reduction method for {reduction.lower()} is not supported")
+            raise ValueError(f"reduction method for {reduction} is not supported")
 
         self.average = True
         self.reduce = True
