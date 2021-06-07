@@ -43,7 +43,7 @@ int Executor::CheckInputs(const std::vector<Tensor *> &in_tensors) {
 int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                   const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(nullptr != allocator);
+  MS_ASSERT(allocator != nullptr);
   auto ret = this->CheckInputs(in_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CheckInputs failed";

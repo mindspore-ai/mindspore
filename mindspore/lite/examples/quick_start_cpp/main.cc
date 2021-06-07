@@ -23,7 +23,9 @@
 #include "include/model.h"
 #include "include/context.h"
 #include "include/lite_session.h"
-
+namespace {
+constexpr int kNumPrintOfOutData = 50;
+}
 std::string RealPath(const char *path) {
   const size_t max = 4096;
   if (path == nullptr) {
@@ -129,7 +131,7 @@ int Run(mindspore::session::LiteSession *session) {
               << " tensor elements num is:" << tensor.second->ElementsNum() << std::endl;
     auto out_data = reinterpret_cast<float *>(tensor.second->MutableData());
     std::cout << "output data is:";
-    for (int i = 0; i < tensor.second->ElementsNum() && i <= 50; i++) {
+    for (int i = 0; i < tensor.second->ElementsNum() && i <= kNumPrintOfOutData; i++) {
       std::cout << out_data[i] << " ";
     }
     std::cout << std::endl;
