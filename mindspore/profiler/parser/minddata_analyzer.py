@@ -58,13 +58,6 @@ class MinddataProfilingAnalyzer:
         # Save output filename
         self._save_path = self._get_save_path(output_path)
 
-        # These are the threshold values used in the pipeline bottleneck algorithm
-        self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 5.0  # Use low maximum, to trigger bottleneck processing
-        self._BATCH_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 90.0
-        self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 50.0
-        self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM = 75.0
-        self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM = 10.0
-
     @property
     def save_path(self):
         """
@@ -522,134 +515,32 @@ class MinddataProfilingAnalyzer:
         in the MindData pipeline.
 
         Args:
-            summary_dict (dict): Input summary pipeline information.
+            summary_dict (dict): Input summary pipeline information.  This is updated the following additional
+                key-value pairs, each value is a list ordered by increasing op id:
+                    avg_cpu_pct_per_worker: Average CPU utilization percentage per worker
 
         Returns:
-            Empty {} dictionary if no potential bottleneck op is identified.
-            Dictionary consists of:
-                avg_cpu_pct_per_worker: Average CPU utilization percentage per worker for each op,
-                    a list ordered by increasing op id.  (This is provided if it needed in the bottleneck
-                    algorithm calculation.)
-                bottleneck_warning: Information on the bottleneck op and reason it is identified as
-                    a potential bottleneck.
-                    (This is returned only if a potential bottleneck is identified.)
-                bottleneck_suggestion: Suggestion on how to resolve the bottleneck.
-                    (This is returned only if a potential bottleneck is identified.)
+            Dictionary with the following information, if applicable:
+            - CPU utilization analysis
+            - queue utilization analysis
+            - bottleneck warning: Information on the bottleneck op
+                (This is returned only if a potential bottleneck is identified.)
+            - bottleneck suggestion: Reason why the subject op is it is identified as
+                a potential bottleneck, plus suggestion on how to resolve the bottleneck.
+                (This is returned only if a potential bottleneck is identified.)
         """
-        return_dict = {}
-
-        # Check if pipeline does not contain a DeviceQueue op
-        op_names = summary_dict.get('op_names')
-
-        if 'DeviceQueue' not in op_names:
-            # No need for further bottleneck processing
-            return return_dict
-
-        # FIXME: Comment out current logic for now, to allow bottleneck processing to proceed
-        #        for all cases in which there is a DeviceQueueOp in the pipeline.
-        #        The logic needs to be adjusted to handle if the DeviceQueueOp's child is EpochCtrl
-        #        which is an inline op without metrics.
-        # # Search for the DeviceQueue op in pipeline
-        # for op_id, op_name in enumerate(op_names):
-        #     if op_name == 'DeviceQueue':
-        #         # Obtain DeviceQueue's input queue
-        #         queue_empty_freq_pct = summary_dict.get('queue_empty_freq_pct')
-        #         child_id = summary_dict.get('children_ids')[op_id][0]
-        #
-        #         # No need for further bottleneck processing, if DeviceQueue's input queue empty frequency
-        #         # percentage is below the maximum threshold
-        #         if queue_empty_freq_pct[child_id] < self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
-        #             msg = summary_dict.get('pipeline_ops')[op_id] + \
-        #                   ' with child op ' + summary_dict.get('pipeline_ops')[child_id] + \
-        #                   ' and input queue_empty_freq_pct ' + str(queue_empty_freq_pct[child_id]) + \
-        #                   '% is below threshold of ' + \
-        #                   str(self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM) + \
-        #                   '%. No further bottleneck processing is required.'
-        #             logger.info(msg)
-        #             return return_dict
-        #
-        #         # stop for loop processing since DeviceQueue op is found
-        #         break
 
         # Build list: average CPU utilization percentage per worker - for each op
         avg_cpu_pct_per_worker = []
         for c, n in zip(summary_dict.get('avg_cpu_pct'), summary_dict.get('num_workers')):
-            avg_cpu_pct_per_worker.append(round(c / n if n != 0 else -1, 2))
-        return_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
+            avg_cpu_pct_per_worker.append(round(c / n if (n != 0 and c >= 0) else -1, 2))
+        summary_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
 
-        # Find all leaf ops (i.e. ops that do not have children)
-        bottleneck_found = False
-        queue_empty_freq_pct = summary_dict.get('queue_empty_freq_pct')
-        for op_id, children_ids in enumerate(summary_dict.get('children_ids')):
-            if children_ids == []:
-                # Check if current leaf op has output queue with empty frequency percentage above the maximum threshold
-                if queue_empty_freq_pct[op_id] > self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
-                    bottleneck_found = True
-                    leaf_nameid = summary_dict.get('pipeline_ops')[op_id]
-                    warning_msg = leaf_nameid + \
-                                  ' has output queue that is empty ' + str(queue_empty_freq_pct[op_id]) + \
-                                  '% of the time. This is more than the threshold of ' + \
-                                  str(self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM) + \
-                                  '%. Operators with frequent empty output queues can cause ' + \
-                                  'the next operator to be waiting on it most of the time.'
-                    # Compose bottleneck message and improvement suggestion
-                    if avg_cpu_pct_per_worker[op_id] > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM:
-                        suggestion_msg = 'Increase num_workers for ' + leaf_nameid + \
-                                         '. Current num_workers value is ' + \
-                                         str(summary_dict.get('num_workers')[op_id]) + '.'
-                    else:
-                        suggestion_msg = 'Increase prefetch_size for ' + leaf_nameid + '.'
-
-                    # Log a warning for the bottleneck leaf op
-                    logger.warning(warning_msg)
-                    logger.warning('Suggestion: ' + suggestion_msg)
-
-        # Note: For the case where >1 leaf ops are identified to have bottleneck characteristics,
-        # select the last processed leaf op as the bottleneck.
-        if bottleneck_found:
-            return_dict['bottleneck_warning'] = [warning_msg]
-            return_dict['bottleneck_suggestion'] = [suggestion_msg]
-            return return_dict
-
-        # Identify op with largest average CPU utilization percentage per worker
-        max_cpu_worker_value = max(avg_cpu_pct_per_worker)
-        max_cpu_worker_opid = avg_cpu_pct_per_worker.index(max_cpu_worker_value)
-        max_cpu_worker_opname = summary_dict.get('op_names')[max_cpu_worker_opid]  # Needed for processing
-        max_cpu_worker_opnameid = summary_dict.get('pipeline_ops')[max_cpu_worker_opid]  # Needed for output messages
-
-        if (avg_cpu_pct_per_worker[max_cpu_worker_opid] > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM) and \
-                max_cpu_worker_opname in ('Map', 'Batch'):
-            # Map or Batch is the op with the largest average CPU utilization percentage per worker
-            bottleneck_found = True
-            warning_msg = max_cpu_worker_opnameid + ' has ' + str(avg_cpu_pct_per_worker[max_cpu_worker_opid]) + \
-                          '% average CPU utilization per worker. This is above threshold of ' + \
-                          str(self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM) + '% average CPU utilization per worker.'
-            suggestion_msg = 'Increase num_workers for ' + max_cpu_worker_opnameid + \
-                             '. Current num_workers value is ' + \
-                             str(summary_dict.get('num_workers')[max_cpu_worker_opid]) + '.'
-        elif (avg_cpu_pct_per_worker[max_cpu_worker_opid] < self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM) and \
-                max_cpu_worker_opname == 'Batch':
-            # This batch op has average CPU utilization percentage per worker below minimum threshold
-            # Check this batch op's input queue
-            queue_empty_freq_pct = summary_dict.get('queue_empty_freq_pct')
-            # Note: Batch op has exactly one child op
-            child_id = summary_dict.get('children_ids')[max_cpu_worker_opid][0]
-            if queue_empty_freq_pct[child_id] > self._BATCH_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
-                bottleneck_found = True
-                warning_msg = max_cpu_worker_opnameid + ' has ' + str(avg_cpu_pct_per_worker[max_cpu_worker_opid]) + \
-                              '% average CPU utilization per worker. This is below threshold of ' + \
-                              str(self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM) + \
-                              '% average CPU utilization per worker. Also ' + \
-                              max_cpu_worker_opnameid + ' has an input queue that is empty ' + \
-                              str(round(queue_empty_freq_pct[child_id], 2)) + '% of the time.'
-                suggestion_msg = 'Increase prefetch_size for ' + max_cpu_worker_opnameid + '.'
-
-        if bottleneck_found:
-            logger.warning(warning_msg)
-            logger.warning('Suggestion: ' + suggestion_msg)
-            return_dict['bottleneck_warning'] = [warning_msg]
-            return_dict['bottleneck_suggestion'] = [suggestion_msg]
-            return return_dict
+        try:
+            bottleneck_analyzer = BottleneckAnalyzer(summary_dict)
+            return_dict = bottleneck_analyzer.analyze()
+        except IndexError:
+            return_dict = {}
 
         return return_dict
 
@@ -729,3 +620,166 @@ class MinddataProfilingAnalyzer:
         self._save_as_csv_file(summary_dict)
         # Return summary output dictionary (format#3)
         return summary_dict
+
+
+class BottleneckAnalyzer:
+    """ analyzer for bottleneck """
+
+    def __init__(self, summary_dict):
+        """ constructor for BottleneckAnalyzer """
+        self.pipeline_ops = summary_dict["pipeline_ops"]
+        self.op_names = summary_dict["op_names"]
+        self.op_ids = summary_dict["op_ids"]
+        self.num_workers = summary_dict["num_workers"]
+        self.queue_average_size = summary_dict["queue_average_size"]
+        self.queue_utilization_pct = summary_dict["queue_utilization_pct"]
+        self.queue_empty_freq_pct = summary_dict["queue_empty_freq_pct"]
+        self.children_ids = summary_dict["children_ids"]
+        self.parent_id = summary_dict["parent_id"]
+        self.avg_cpu_pct = summary_dict["avg_cpu_pct"]
+        self.avg_cpu_pct_per_worker = summary_dict["avg_cpu_pct_per_worker"]
+
+        self.op_id_not_exist = -1
+        self.queue_usage_not_exist = -1
+        self.non_multithreaded_ops = set(["Barrier",
+                                          "Concat",
+                                          "EpochCtrl",
+                                          "Rename",
+                                          "Repeat",
+                                          "Shuffle",
+                                          "Skip",
+                                          "Take",
+                                          "Zip"])
+
+        # These are the threshold values used in the pipeline bottleneck analyzer algorithm
+        self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM = 75.0
+        self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM = 20.0
+        self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 50
+        self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM = 60
+        self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM = 50
+        self._IN_QUEUE_UTIL_PCT_MAXIMUM = 10
+
+    def analyze(self):
+        """ analyze all op's usage """
+        detailed_analysis = {}
+
+        cpu_analysis = self.analyze_cpu_usage()
+        queue_analysis = self.analyze_queue_usage()
+
+        if cpu_analysis:
+            detailed_analysis["cpu_analysis_details"] = cpu_analysis
+
+        if queue_analysis:
+            detailed_analysis["queue_analysis_details"] = queue_analysis
+
+        bottleneck, suggestion = self.analyze_bottleneck()
+
+        if bottleneck[0]:
+            detailed_analysis["bottleneck_warning"] = bottleneck
+            detailed_analysis["bottleneck_suggestion"] = suggestion
+
+        return detailed_analysis
+
+    def __get_non_inline_child_recur(self, cur_op_id):
+        """get the child id of cur op which isn't an inline op"""
+        if cur_op_id == self.op_id_not_exist or not self.children_ids[cur_op_id]:
+            return self.op_id_not_exist
+        cur_child_id = self.children_ids[cur_op_id][0]
+        if self.queue_average_size[cur_child_id] != -1:
+            return cur_child_id
+        return self.__get_non_inline_child_recur(cur_child_id)
+
+    def analyze_cpu_usage(self):
+        """ analyze cpu usage of each op """
+        cpu_usage_analysis = []
+        for op_id in self.op_ids:
+            if op_id == self.op_id_not_exist or self.op_names[op_id] in self.non_multithreaded_ops:
+                continue
+            elif self.avg_cpu_pct_per_worker[op_id] > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM and \
+                    self.op_names[op_id]:
+                cpu_usage_analysis.append(
+                    ("{} is using {}% CPU per worker."
+                     " Setting num_parallel_workers"
+                     ">{} might bring extra performance.").format(self.pipeline_ops[op_id],
+                                                                  self.avg_cpu_pct_per_worker[op_id],
+                                                                  self.num_workers[op_id]))
+            elif self.avg_cpu_pct_per_worker[op_id] < self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM and \
+                    self.num_workers[op_id] > 1:
+                cpu_usage_analysis.append(
+                    ("{} is using {}% CPU per worker. Using num_parallel_workers={} might not bring as much benefit"
+                     " due to low CPU usage per worker.").format(self.pipeline_ops[op_id],
+                                                                 self.avg_cpu_pct_per_worker[op_id],
+                                                                 self.num_workers[op_id]))
+        return cpu_usage_analysis
+
+    def analyze_queue_usage(self):
+        """ analyze queue usage of each op """
+        queue_usage_analysis = []
+        for op_id in self.op_ids:
+            if op_id == self.op_id_not_exist or self.op_names[op_id] in self.non_multithreaded_ops:
+                continue
+            elif self.op_names[op_id] == "Batch":
+                pass
+            else:
+                in_op_id, out_q = self.__get_non_inline_child_recur(
+                    op_id), self.queue_utilization_pct[op_id]
+                if in_op_id == self.op_id_not_exist and out_q != self.queue_usage_not_exist:
+                    # This is a leaf node since input queue does not exist and output queue exists
+                    if out_q < self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
+                        queue_usage_analysis.append(("Leaf op {} is using {}% of its output queue."
+                                                     "Setting num_parallel_workers"
+                                                     ">{} might speed up I/O.").format(self.pipeline_ops[op_id],
+                                                                                       out_q,
+                                                                                       self.num_workers[op_id]))
+                elif self.op_names[op_id] == "DeviceQueue" and in_op_id != self.op_id_not_exist:
+                    # if this is device_queue op,
+                    if self.queue_empty_freq_pct[in_op_id] > self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
+                        queue_usage_analysis.append((
+                            "{}'s input queue is empty {}% of the time. This might indicate dataset bottlenecks."
+                            " Hence host cannot keep up with the device {}% of the time."
+                            " Device waits whenever input queue is empty.").format(self.pipeline_ops[op_id],
+                                                                                   self.queue_empty_freq_pct[in_op_id],
+                                                                                   self.queue_empty_freq_pct[in_op_id]))
+                elif in_op_id != self.op_id_not_exist and out_q != self.queue_usage_not_exist:
+                    in_q = self.queue_utilization_pct[in_op_id]
+                    if in_q != self.queue_usage_not_exist and in_q - out_q > self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM:
+                        queue_usage_analysis.append((
+                            "{}'s input queue usage={}% is greater output queue usage={}%."
+                            " This indicates child op {} might be producing faster than its parent {} can consume."
+                            " If this op has low CPU utilization, try increasing "
+                            "prefetch_size or increasing num_workers.").format(self.pipeline_ops[op_id],
+                                                                               in_q, out_q, self.pipeline_ops[in_op_id],
+                                                                               self.pipeline_ops[op_id]))
+        return queue_usage_analysis
+
+    def analyze_bottleneck(self):
+        """ analyze bottleneck by using both cpu and queue usage """
+        bottleneck, suggestion = "", ""
+        for op_id in reversed(self.op_ids):
+            in_op_id, out_q = self.__get_non_inline_child_recur(
+                op_id), self.queue_utilization_pct[op_id]
+            wkr_cpu = self.avg_cpu_pct_per_worker[op_id]
+            if op_id == self.op_id_not_exist or \
+                    self.op_names[op_id] in self.non_multithreaded_ops \
+                    or self.op_names[op_id] == "DeviceQueue":
+                continue
+            elif wkr_cpu > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM:
+                bottleneck = self.pipeline_ops[op_id]
+                suggestion = "{} has high CPU utilization per worker of {}%".format(
+                    self.pipeline_ops[op_id], wkr_cpu)
+                suggestion += " Try increasing num_parallel_workers above {}.".format(self.num_workers[op_id])
+                break
+            elif wkr_cpu < self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM:
+                in_op_id = self.__get_non_inline_child_recur(op_id)
+                in_q_usage = self.queue_utilization_pct[in_op_id]
+                if in_op_id != self.op_id_not_exist and (
+                        in_q_usage < self._IN_QUEUE_UTIL_PCT_MAXIMUM or out_q -
+                        in_q_usage > self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM):
+                    bottleneck = self.pipeline_ops[op_id]
+                    suggestion = "{} has low CPU utilization per worker of {}%".format(
+                        self.pipeline_ops[op_id], wkr_cpu)
+                    suggestion += " and abnormal queue usage. Try increasing prefetch_size."
+
+                    break
+
+        return [bottleneck], [suggestion]
