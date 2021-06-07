@@ -40,13 +40,6 @@ class InnerKernel : public Kernel {
               const lite::Context *ctx)
       : op_parameter_(parameter), in_tensors_(std::move(in_tensors)), out_tensors_(std::move(out_tensors)) {
     context_ = ctx;
-    if (parameter != nullptr && parameter->thread_num_ == 0) {
-      if (ctx != nullptr) {
-        op_parameter_->thread_num_ = ctx->thread_num_;
-      } else {
-        op_parameter_->thread_num_ = 1;
-      }
-    }
   }
 
   virtual ~InnerKernel() {

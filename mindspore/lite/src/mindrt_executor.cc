@@ -77,9 +77,7 @@ int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inp
 
 int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
                             const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) {
-  MS_ASSERT(kernels.size() != 0);
-
-  auto ret = MindrtInit(ctx->enable_parallel_);
+  auto ret = MindrtInit();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindrtInit failed";
     return ret;

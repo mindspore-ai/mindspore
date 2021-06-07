@@ -73,13 +73,18 @@ class SearchSubGraph {
   ~SearchSubGraph() = default;
 
  public:
-  void SubGraphSplitByOutput();
-  void SubGraphSplitByMiddle();
-  void SubGraphSplitByOffLineParallel();
+  void SubGraphSplit();
 
  private:
+  void SubGraphSplitByOutput();
   void InitSearchSubGraphByOutput();
+
+ private:
+  void SubGraphSplitByMiddle();
   void InitSearchSubGraphByMiddle();
+
+ private:
+  void SubGraphSplitByOffLineParallel();
 
  private:
   void InitSearchTensor();

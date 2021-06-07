@@ -42,7 +42,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   }
   ~LiteOpActor() override {
     for (auto map : isolate_input_map_) {
-      auto isolate_input_tensor = map.second;
+      auto isolate_input_tensor = map.first;
       isolate_input_tensor->set_data(nullptr);
       delete isolate_input_tensor;
     }
@@ -67,7 +67,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   void SetPartialMap(const std::unordered_map<size_t, AID> &partial_map) { subgraph_index_to_actor = partial_map; }
 
  protected:
-  int CheckInputData();
   int SetInputData();
   void SetOutputData(OpContext<Tensor> *context);
   void AsyncOutput(OpContext<Tensor> *context);
@@ -89,7 +88,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  private:
   kernel::LiteKernel *partial_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
-  std::unordered_map<Tensor *, Tensor *> isolate_input_map_;
+  std::unordered_map<Tensor *, Tensor *> isolate_input_map_; /* <calculate-tensor,  src-input-tensor> */
 };
 
 class LiteSwitchOpActor : public LiteOpActor {
@@ -104,14 +103,7 @@ class LiteSwitchOpActor : public LiteOpActor {
       return;
     }
 
-    int ret = CheckInputData();
-    if (ret != RET_OK) {
-      input_op_datas_.erase(op_uuid);
-      context->SetFailed(ret);
-      return;
-    }
-
-    ret = SetInputData();
+    auto ret = SetInputData();
     if (ret != RET_OK) {
       input_op_datas_.erase(op_uuid);
       context->SetFailed(ret);
@@ -182,7 +174,7 @@ class LiteSwitchOpActor : public LiteOpActor {
   std::vector<OpDataPtr<Tensor>> false_branch_outputs_data_;
 };
 
-int MindrtInit(bool subgraph_split = false);
+int MindrtInit();
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
 
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,

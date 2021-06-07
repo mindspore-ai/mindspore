@@ -277,17 +277,17 @@ function Run_mindrt_parallel() {
 
         data_path="/data/local/tmp/input_output/"
         output=${data_path}'output/'${model_name}'.ms.out'
-        input=${model_name}.ms.bin
+        input=${data_path}'input/'${model_name}'.ms.bin'
         model=${model_name}'.ms'
         echo ${model_name} >> "${run_parallel_log_file}"
         echo "run mindrt parallel test : ${model_name}"
 
-        ########## RUN CPU-GPU parallel
+        ########## RUN CPU-CPU parallel
         echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
 
-        echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
-        echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
+        echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
+        echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
 
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
         if [ $? = 0 ]; then
@@ -296,12 +296,12 @@ function Run_mindrt_parallel() {
             run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
         fi
 
-        ########## RUN CPU-CPU parallel
+        ########## RUN CPU-GPU parallel
         echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
 
-        echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
-        echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
+        echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
+        echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
 
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
         if [ $? = 0 ]; then
@@ -486,7 +486,7 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
 
     if [[ ${Run_mindrt_parallel_status} != 0 ]];then
         echo "Run_mindrt_parallel failed"
-        cat ${run_gpu_log_file}
+        cat ${run_parallel_log_file}
     fi
 
     echo "Run_parallel is ended"

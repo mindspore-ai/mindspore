@@ -40,6 +40,7 @@ kernel::LiteKernel *NPUPassUtils::CreateNchw2NhwcKernel(const std::vector<Tensor
   }
   memset(transpose_param, 0, sizeof(TransposeParameter));
   transpose_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
+  transpose_param->op_parameter_.thread_num_ = ctx->thread_num_;
   transpose_param->perm_[0] = 0;
   transpose_param->perm_[1] = 2;
   transpose_param->perm_[2] = 3;
@@ -76,6 +77,7 @@ kernel::LiteKernel *NPUPassUtils::CreateNhwc2NchwKernel(const std::vector<Tensor
   }
   memset(transpose_param, 0, sizeof(TransposeParameter));
   transpose_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
+  transpose_param->op_parameter_.thread_num_ = ctx->thread_num_;
   transpose_param->perm_[0] = 0;
   transpose_param->perm_[1] = 3;
   transpose_param->perm_[2] = 1;
