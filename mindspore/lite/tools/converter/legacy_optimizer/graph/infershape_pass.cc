@@ -40,6 +40,7 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
     return;
   }
   for (auto &tensor : *input_tensors) {
+    tensor->set_data(nullptr);
     delete tensor;
     tensor = nullptr;
   }
@@ -47,6 +48,7 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
     return;
   }
   for (auto &tensor : *output_tensors) {
+    tensor->set_data(nullptr);
     delete tensor;
     tensor = nullptr;
   }
@@ -134,10 +136,10 @@ void ConvertOtherTensor(MetaGraphT *graph, uint32_t index, bool *convert_succ, s
     *convert_succ = false;
     return;
   }
-  if (memcpy_s(lite_tensor->data_c(), lite_tensor->Size(), tensorT->data.data(), tensorT->data.size()) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed";
-    *convert_succ = false;
-    return;
+  if (lite_tensor->root_tensor() != nullptr) {
+    lite_tensor->root_tensor()->set_data(tensorT->data.data());
+  } else {
+    lite_tensor->set_data(tensorT->data.data());
   }
   lite_tensors->emplace_back(lite_tensor.release());
 }
