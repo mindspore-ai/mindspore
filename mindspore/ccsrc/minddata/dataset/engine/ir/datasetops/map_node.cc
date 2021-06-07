@@ -22,6 +22,9 @@
 #include <utility>
 #include <vector>
 
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
+#endif
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
@@ -154,7 +157,6 @@ Status MapNode::to_json(nlohmann::json *out_json) {
     RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
     args["cache"] = cache_args;
   }
-
   std::vector<nlohmann::json> ops;
   std::vector<int32_t> cbs;
   for (auto op : operations_) {
@@ -176,6 +178,26 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+#ifndef ENABLE_ANDROID
+Status MapNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
+                          std::shared_ptr<DatasetNode> *result) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
+                               "Failed to find num_parallel_workers");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Failed to find input_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Failed to find output_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("project_columns") != json_obj.end(), "Failed to find project_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("operations") != json_obj.end(), "Failed to find operations");
+  std::vector<std::string> input_columns = json_obj["input_columns"];
+  std::vector<std::string> output_columns = json_obj["output_columns"];
+  std::vector<std::string> project_columns = json_obj["project_columns"];
+  std::vector<std::shared_ptr<TensorOperation>> operations;
+  RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(json_obj["operations"], &operations));
+  *result = std::make_shared<MapNode>(ds, operations, input_columns, output_columns, project_columns);
+  (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  return Status::OK();
+}
+#endif
 
 // Gets the dataset size
 Status MapNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,

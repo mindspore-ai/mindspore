@@ -229,6 +229,33 @@ Status TFRecordNode::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
+Status TFRecordNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
+                               "Failed to find num_parallel_workers");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Failed to find dataset_files");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("schema") != json_obj.end(), "Failed to find schema");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("columns_list") != json_obj.end(), "Failed to find columns_list");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_equal_rows") != json_obj.end(), "Failed to find shard_equal_rows");
+  std::vector<std::string> dataset_files = json_obj["dataset_files"];
+  std::string schema = json_obj["schema"];
+  std::vector<std::string> columns_list = json_obj["columns_list"];
+  int64_t num_samples = json_obj["num_samples"];
+  ShuffleMode shuffle = static_cast<ShuffleMode>(json_obj["shuffle"]);
+  int32_t num_shards = json_obj["num_shards"];
+  int32_t shard_id = json_obj["shard_id"];
+  bool shard_equal_rows = json_obj["shard_equal_rows"];
+  std::shared_ptr<DatasetCache> cache = nullptr;
+  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
+  *ds = std::make_shared<TFRecordNode>(dataset_files, schema, columns_list, num_samples, shuffle, num_shards, shard_id,
+                                       shard_equal_rows, cache);
+  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  return Status::OK();
+}
+
 // Note: The following two functions are common among NonMappableSourceNode and should be promoted to its parent class.
 // TFRecord by itself is a non-mappable dataset that does not support sampling.
 // However, if a cache operator is injected at some other place higher in the tree, that cache can

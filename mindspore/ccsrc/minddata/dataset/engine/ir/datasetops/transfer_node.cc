@@ -126,5 +126,25 @@ Status TransferNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status TransferNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
+                               std::shared_ptr<DatasetNode> *result) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("queue_name") != json_obj.end(), "Failed to find queue_name");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("device_type") != json_obj.end(), "Failed to find device_type");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("device_id") != json_obj.end(), "Failed to find device_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("send_epoch_end") != json_obj.end(), "Failed to find send_epoch_end");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("total_batch") != json_obj.end(), "Failed to find total_batch");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("create_data_info_queue") != json_obj.end(),
+                               "Failed to find create_data_info_queue");
+  std::string queue_name = json_obj["queue_name"];
+  std::string device_type = json_obj["device_type"];
+  int32_t device_id = json_obj["device_id"];
+  bool send_epoch_end = json_obj["send_epoch_end"];
+  int32_t total_batch = json_obj["total_batch"];
+  bool create_data_info_queue = json_obj["create_data_info_queue"];
+  *result = std::make_shared<TransferNode>(ds, queue_name, device_type, device_id, send_epoch_end, total_batch,
+                                           create_data_info_queue);
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

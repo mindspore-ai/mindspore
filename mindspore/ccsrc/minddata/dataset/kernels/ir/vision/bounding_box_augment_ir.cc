@@ -18,6 +18,7 @@
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
 #endif
 
@@ -54,6 +55,20 @@ Status BoundingBoxAugmentOperation::to_json(nlohmann::json *out_json) {
   args["transform"] = op_item;
   args["ratio"] = ratio_;
   *out_json = args;
+  return Status::OK();
+}
+
+Status BoundingBoxAugmentOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transform") != op_params.end(), "Failed to find transform");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Failed to find ratio");
+  std::vector<std::shared_ptr<TensorOperation>> transforms;
+  std::vector<nlohmann::json> json_operations = {};
+  json_operations.push_back(op_params["transform"]);
+  RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(json_operations, &transforms));
+  float ratio = op_params["ratio"];
+  CHECK_FAIL_RETURN_UNEXPECTED(transforms.size() == 1,
+                               "Expect size one of transforms parameter, but got:" + std::to_string(transforms.size()));
+  *operation = std::make_shared<vision::BoundingBoxAugmentOperation>(transforms[0], ratio);
   return Status::OK();
 }
 #endif
