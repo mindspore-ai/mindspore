@@ -219,6 +219,14 @@ class Tensor {
 
   Status to_json(nlohmann::json *out_json);
 
+  template <typename T>
+  Status to_json_convert(nlohmann::json *args);
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<Tensor> *tensor);
+
+  template <typename T>
+  static Status from_json_convert(nlohmann::json json_data, TensorShape shape, std::shared_ptr<Tensor> *tensor);
+
   /// Get item located at `index`, caller needs to provide the type.
   /// \tparam T
   /// \param[in] index vector<dsize_t>

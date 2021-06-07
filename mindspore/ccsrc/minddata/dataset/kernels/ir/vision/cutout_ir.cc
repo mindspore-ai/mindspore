@@ -53,8 +53,8 @@ Status CutOutOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status CutOutOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("length") != op_params.end(), "Fail to find length");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_patches") != op_params.end(), "Fail to find num_patches");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("length") != op_params.end(), "Failed to find length");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_patches") != op_params.end(), "Failed to find num_patches");
   int32_t length = op_params["length"];
   int32_t num_patches = op_params["num_patches"];
   *operation = std::make_shared<vision::CutOutOperation>(length, num_patches);

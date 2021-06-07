@@ -55,7 +55,7 @@ Status CenterCropOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status CenterCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
   std::vector<int32_t> size = op_params["size"];
   *operation = std::make_shared<CenterCropOperation>(size);
   return Status::OK();

@@ -53,7 +53,7 @@ Status RandomHorizontalFlipWithBBoxOperation::to_json(nlohmann::json *out_json) 
 
 Status RandomHorizontalFlipWithBBoxOperation::from_json(nlohmann::json op_params,
                                                         std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("prob") != op_params.end(), "Fail to find prob");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("prob") != op_params.end(), "Failed to find prob");
   float prob = op_params["prob"];
   *operation = std::make_shared<vision::RandomHorizontalFlipWithBBoxOperation>(prob);
   return Status::OK();

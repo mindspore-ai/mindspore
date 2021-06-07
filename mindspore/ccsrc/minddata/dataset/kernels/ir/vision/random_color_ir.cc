@@ -64,7 +64,7 @@ Status RandomColorOperation::to_json(nlohmann::json *out_json) {
 }
 
 Status RandomColorOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Fail to find degrees");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Failed to find degrees");
   std::vector<float> degrees = op_params["degrees"];
   CHECK_FAIL_RETURN_UNEXPECTED(degrees.size() == 2, "The number of degrees should be 2");
   float t_lb = degrees[0];

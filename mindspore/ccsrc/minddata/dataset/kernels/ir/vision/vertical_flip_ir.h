@@ -43,6 +43,8 @@ class VerticalFlipOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 };
 
 }  // namespace vision
