@@ -55,13 +55,12 @@ bool IsMetaGraphObfuscated(const T &meta_graph) {
 template <typename T = schema::MetaGraph>
 DeObfuscator *GetModelDeObfuscator(const T &meta_graph, Model *model) {
   auto meta_data = meta_graph.obfMetaData();
-  auto decrypt_table = meta_graph.decryptTable();
   auto *model_deobfuscator = new (std::nothrow) DeObfuscator();
   if (model_deobfuscator == nullptr) {
     MS_LOG(ERROR) << "new model deobfuscator fail!";
     return nullptr;
   }
-  if (!InitModelDeObfuscator(model, model_deobfuscator, meta_data, decrypt_table, meta_graph.nodes()->size())) {
+  if (!InitModelDeObfuscator(model, model_deobfuscator, meta_data, nullptr, meta_graph.nodes()->size())) {
     MS_LOG(ERROR) << "init model deobfuscator fail!";
     delete model_deobfuscator;
     return nullptr;
