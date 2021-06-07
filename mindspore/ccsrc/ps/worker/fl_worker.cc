@@ -35,7 +35,11 @@ void FLWorker::Run() {
   MS_LOG(INFO) << "Initialize cluster config for worker. Worker number:" << worker_num_
                << ", Server number:" << server_num_ << ", Scheduler ip:" << scheduler_ip_
                << ", Scheduler port:" << scheduler_port_;
+
   worker_node_ = std::make_shared<core::WorkerNode>();
+  MS_EXCEPTION_IF_NULL(worker_node_);
+
+  InitializeFollowerScaler();
   worker_node_->Start();
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
   return;
@@ -43,6 +47,11 @@ void FLWorker::Run() {
 
 bool FLWorker::SendToServer(uint32_t server_rank, void *data, size_t size, core::TcpUserCommand command,
                             std::shared_ptr<std::vector<unsigned char>> *output) {
+  // If the worker is in safemode, do not communicate with server.
+  while (safemode_.load()) {
+    std::this_thread::yield();
+  }
+
   std::shared_ptr<unsigned char[]> message;
   std::unique_ptr<unsigned char[]> message_addr = std::make_unique<unsigned char[]>(size);
   MS_EXCEPTION_IF_NULL(message_addr);
@@ -58,10 +67,12 @@ bool FLWorker::SendToServer(uint32_t server_rank, void *data, size_t size, core:
   }
 
   if (output != nullptr) {
-    if (!worker_node_->Send(core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command), output)) {
-      MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
-      return false;
-    }
+    do {
+      if (!worker_node_->Send(core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command), output)) {
+        MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
+        return false;
+      }
+    } while (std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size()) == kClusterSafeMode);
   } else {
     if (!worker_node_->Send(core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command))) {
       MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
@@ -69,6 +80,100 @@ bool FLWorker::SendToServer(uint32_t server_rank, void *data, size_t size, core:
     }
   }
   return true;
+}
+
+uint32_t FLWorker::server_num() const { return server_num_; }
+
+uint32_t FLWorker::worker_num() const { return worker_num_; }
+
+uint64_t FLWorker::worker_step_num_per_iteration() const { return worker_step_num_per_iteration_; }
+
+void FLWorker::InitializeFollowerScaler() {
+  if (!worker_node_->InitFollowerScaler()) {
+    MS_LOG(EXCEPTION) << "Initializing follower elastic scaler failed.";
+    return;
+  }
+
+  // Set scaling barriers before scaling.
+  worker_node_->RegisterFollowerScalerBarrierBeforeScaleOut("WorkerPipeline",
+                                                            std::bind(&FLWorker::ProcessBeforeScalingOut, this));
+  worker_node_->RegisterFollowerScalerBarrierBeforeScaleIn("WorkerPipeline",
+                                                           std::bind(&FLWorker::ProcessBeforeScalingOut, this));
+
+  // Set handlers after scheduler scaling operations are done.
+  worker_node_->RegisterFollowerScalerHandlerAfterScaleOut("WorkerPipeline",
+                                                           std::bind(&FLWorker::ProcessAfterScalingOut, this));
+  worker_node_->RegisterFollowerScalerHandlerAfterScaleIn("WorkerPipeline",
+                                                          std::bind(&FLWorker::ProcessAfterScalingIn, this));
+  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(CustomEvent::kIterationRunning),
+                                            std::bind(&FLWorker::HandleIterationRunningEvent, this));
+  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(CustomEvent::kIterationCompleted),
+                                            std::bind(&FLWorker::HandleIterationCompletedEvent, this));
+}
+
+void FLWorker::HandleIterationRunningEvent() {
+  MS_LOG(INFO) << "Worker iteration starts, safemode is " << safemode_.load();
+  iteration_state_ = IterationState::kRunning;
+  if (safemode_.load() == true) {
+    safemode_ = false;
+  }
+}
+
+void FLWorker::HandleIterationCompletedEvent() {
+  MS_LOG(INFO) << "Worker iteration completes";
+  iteration_state_ = IterationState::kCompleted;
+}
+
+void FLWorker::ProcessBeforeScalingOut() {
+  MS_LOG(INFO) << "Starting Worker scaling out barrier.";
+  while (iteration_state_.load() != IterationState::kCompleted) {
+    std::this_thread::yield();
+  }
+  MS_LOG(INFO) << "Ending Worker scaling out barrier. Switch to safemode.";
+  safemode_ = true;
+}
+
+void FLWorker::ProcessBeforeScalingIn() {
+  MS_LOG(INFO) << "Starting Worker scaling in barrier.";
+  while (iteration_state_.load() != IterationState::kCompleted) {
+    std::this_thread::yield();
+  }
+  MS_LOG(INFO) << "Ending Worker scaling in barrier. Switch to safemode.";
+  safemode_ = true;
+}
+
+void FLWorker::ProcessAfterScalingOut() {
+  if (worker_node_ = nullptr) {
+    return;
+  }
+
+  MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize for worker.";
+  while (iteration_state_.load() != IterationState::kCompleted) {
+    std::this_thread::yield();
+  }
+  server_num_ = worker_node_->server_num();
+  worker_num_ = worker_node_->worker_num();
+  MS_LOG(INFO) << "After scheduler scaling out, worker number is " << worker_num_ << ", server number is "
+               << server_num_ << ". Exit safemode.";
+  std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
+  safemode_ = false;
+}
+
+void FLWorker::ProcessAfterScalingIn() {
+  if (worker_node_ = nullptr) {
+    return;
+  }
+
+  MS_LOG(INFO) << "Cluster scaling in completed. Reinitialize for worker.";
+  while (iteration_state_.load() != IterationState::kCompleted) {
+    std::this_thread::yield();
+  }
+  server_num_ = worker_node_->server_num();
+  worker_num_ = worker_node_->worker_num();
+  MS_LOG(INFO) << "After scheduler scaling in, worker number is " << worker_num_ << ", server number is " << server_num_
+               << ". Exit safemode.";
+  std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
+  safemode_ = false;
 }
 }  // namespace worker
 }  // namespace ps

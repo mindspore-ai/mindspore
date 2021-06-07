@@ -23,12 +23,14 @@ namespace mindspore {
 namespace ps {
 namespace server {
 class Server;
-Round::Round(const std::string &name, bool check_timeout, size_t time_window, bool check_count, size_t threshold_count)
+Round::Round(const std::string &name, bool check_timeout, size_t time_window, bool check_count, size_t threshold_count,
+             bool server_num_as_threshold)
     : name_(name),
       check_timeout_(check_timeout),
       time_window_(time_window),
       check_count_(check_count),
-      threshold_count_(threshold_count) {}
+      threshold_count_(threshold_count),
+      server_num_as_threshold_(server_num_as_threshold) {}
 
 void Round::Initialize(const std::shared_ptr<core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
                        FinishIterCb finish_iteration_cb) {
@@ -71,6 +73,27 @@ void Round::Initialize(const std::shared_ptr<core::CommunicatorBase> &communicat
     DistributedCountService::GetInstance().RegisterCounter(name_, threshold_count_,
                                                            {first_count_handler, last_count_handler});
   }
+}
+
+bool Round::ReInitForScaling(uint32_t server_num) {
+  // If this round requires up-to-date server number as threshold count, update threshold_count_.
+  if (server_num_as_threshold_) {
+    MS_LOG(INFO) << "Round " << name_ << " uses up-to-date server number " << server_num << " as its threshold count.";
+    threshold_count_ = server_num;
+  }
+  if (check_count_) {
+    auto first_count_handler = std::bind(&Round::OnFirstCountEvent, this, std::placeholders::_1);
+    auto last_count_handler = std::bind(&Round::OnLastCountEvent, this, std::placeholders::_1);
+    DistributedCountService::GetInstance().RegisterCounter(name_, threshold_count_,
+                                                           {first_count_handler, last_count_handler});
+  }
+
+  if (kernel_ == nullptr) {
+    MS_LOG(ERROR) << "Reinitializing for round " << name_ << " failed: round kernel is nullptr.";
+    return false;
+  }
+  kernel_->InitKernel(threshold_count_);
+  return true;
 }
 
 void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) {

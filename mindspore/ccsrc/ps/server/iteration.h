@@ -31,7 +31,7 @@ enum class IterationState {
   // This iteration is still in process.
   kRunning,
   // This iteration is completed and the next iteration is not started yet.
-  kEnd
+  kCompleted
 };
 
 // In server's logic, Iteration is the minimum execution unit. For each execution, it consists of multiple kinds of
@@ -42,6 +42,12 @@ class Iteration {
     static Iteration instance;
     return instance;
   }
+
+  // Register callbacks for other servers to synchronize iteration information from leader server.
+  void RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator);
+
+  // Register event callbacks for iteration state synchronization.
+  void RegisterEventCallback(const std::shared_ptr<core::ServerNode> &server_node);
 
   // Add a round for the iteration. This method will be called multiple times for each round.
   void AddRound(const std::shared_ptr<Round> &round);
@@ -54,28 +60,49 @@ class Iteration {
   // If the timer expires, we consider this iteration as invalid.
   void ProceedToNextIter(bool is_iteration_valid);
 
-  // Set current iteration state to running.
+  // Set current iteration state to running and trigger events about kIterationRunning.
   void SetIterationRunning();
+
+  // Set current iteration state to completed and trigger the event about kIterationCompleted.
+  void SetIterationCompleted();
 
   // The barrier function for elastic scaling. The scaling out/in operation should be done only after this iteration is
   // completed.
   void ScalingBarrier();
 
   // Reinitialize rounds after scaling operations are done.
-  bool ReInitForScaling();
+  // The server number after scaling is required in some rounds.
+  bool ReInitForScaling(uint32_t server_num, uint32_t server_rank);
 
   const std::vector<std::shared_ptr<Round>> &rounds();
 
   bool is_last_iteration_valid() const;
 
  private:
-  Iteration() : iteration_state_(IterationState::kEnd), iteration_num_(1), is_last_iteration_valid_(true) {
+  Iteration()
+      : server_node_(nullptr),
+        communicator_(nullptr),
+        iteration_state_(IterationState::kCompleted),
+        iteration_num_(1),
+        is_last_iteration_valid_(true) {
     LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   }
   ~Iteration() = default;
   Iteration(const Iteration &) = delete;
   Iteration &operator=(const Iteration &) = delete;
 
+  // The server does not need to handle the iteration events for now.
+  void HandleIterationRunningEvent() {}
+  void HandleIterationCompletedEvent() {}
+
+  // Synchronize iteration form the leader server(Rank 0).
+  bool SyncIteration(uint32_t rank);
+  void HandleSyncIterationRequest(const std::shared_ptr<core::MessageHandler> &message);
+
+  std::shared_ptr<core::ServerNode> server_node_;
+  std::shared_ptr<core::TcpCommunicator> communicator_;
+
+  // All the rounds in the server.
   std::vector<std::shared_ptr<Round>> rounds_;
 
   // The iteration is either running or completed at any time.

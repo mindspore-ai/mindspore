@@ -118,6 +118,7 @@ table RequestPushWeight{
 table ResponsePushWeight{
   retcode:int;
   reason:string;
+  iteration:int;
 }
 
 table RequestGetModel{
@@ -151,6 +152,7 @@ table RequestPullWeight{
 table ResponsePullWeight{
   retcode:int;
   reason:string;
+  iteration:int;
   feature_map:[FeatureMap];
 }
 

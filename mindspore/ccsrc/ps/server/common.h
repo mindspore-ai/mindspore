@@ -45,11 +45,18 @@ enum CommType { HTTP = 0, TCP };
 enum AggregationType { FedAvg = 0, FedAdam, FedAdagarg, FedMeta, qffl, DenseGradAccum, SparseGradAccum };
 
 struct RoundConfig {
+  // The name of round. Please refer to round kernel *.cc files.
   std::string name;
+  // Whether this round has the time window limit.
   bool check_timeout = false;
+  // The length of the time window. Only used when check_timeout is set to true.
   size_t time_window = 3000;
+  // Whether this round has to check the request count has reached the threshold.
   bool check_count = false;
+  // This round's request threshold count. Only used when check_count is set to true.
   size_t threshold_count = 0;
+  // Whether this round uses the server as threshold count. This is vital for some rounds in elastic scaling scenario.
+  bool server_num_as_threshold = false;
 };
 
 using mindspore::kernel::Address;

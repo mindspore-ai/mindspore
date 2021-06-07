@@ -34,28 +34,14 @@ namespace server {
 class Round {
  public:
   explicit Round(const std::string &name, bool check_timeout = true, size_t time_window = 3000,
-                 bool check_count = false, size_t threshold_count = 8);
+                 bool check_count = false, size_t threshold_count = 8, bool server_num_as_threshold = false);
   ~Round() = default;
 
   void Initialize(const std::shared_ptr<core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
                   FinishIterCb finish_iteration_cb);
 
   // Reinitialize count service and round kernel of this round after scaling operations are done.
-  bool ReInitForScaling() {
-    if (check_count_) {
-      auto first_count_handler = std::bind(&Round::OnFirstCountEvent, this, std::placeholders::_1);
-      auto last_count_handler = std::bind(&Round::OnLastCountEvent, this, std::placeholders::_1);
-      DistributedCountService::GetInstance().RegisterCounter(name_, threshold_count_,
-                                                             {first_count_handler, last_count_handler});
-    }
-
-    if (kernel_ == nullptr) {
-      MS_LOG(ERROR) << "Reinitializing for round " << name_ << " failed: round kernel is nullptr.";
-      return false;
-    }
-    kernel_->InitKernel(threshold_count_);
-    return true;
-  }
+  bool ReInitForScaling(uint32_t server_num);
 
   // Bind a round kernel to this Round. This method should be called after Initialize.
   void BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel);
@@ -93,6 +79,9 @@ class Round {
   // The threshold count for this round when check_count_ is set to true. The logic of this round has to check whether
   // the round message count has reached threshold_count_.
   size_t threshold_count_;
+
+  // Whether this round uses the server number as its threshold count.
+  bool server_num_as_threshold_;
 
   std::shared_ptr<core::CommunicatorBase> communicator_;
 

@@ -153,3 +153,13 @@ message PBMetadataWithName {
   string name = 1;
   PBMetadata metadata = 2;
 }
+
+message SyncIterationRequest {
+  // The rank of the server which sends this synchronizing iteration request to the leader server.
+  uint32 rank = 1;
+}
+
+message SyncIterationResponse {
+  // The current iteration number.
+  uint64 iteration = 1;
+}

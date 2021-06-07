@@ -24,6 +24,7 @@ parser.add_argument("--server_num", type=int, default=2)
 parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
 parser.add_argument("--scheduler_port", type=int, default=8113)
 parser.add_argument("--fl_server_port", type=int, default=6666)
+parser.add_argument("--scheduler_manage_port", type=int, default=11202)
 
 if __name__ == "__main__":
     args, _ = parser.parse_known_args()
@@ -34,6 +35,7 @@ if __name__ == "__main__":
     scheduler_ip = args.scheduler_ip
     scheduler_port = args.scheduler_port
     fl_server_port = args.fl_server_port
+    scheduler_manage_port = args.scheduler_manage_port
 
     cmd_sched = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && rm -rf ${execute_path}/scheduler/ &&"
     cmd_sched += "mkdir ${execute_path}/scheduler/ &&"
@@ -47,6 +49,7 @@ if __name__ == "__main__":
     cmd_sched += " --scheduler_ip=" + scheduler_ip
     cmd_sched += " --scheduler_port=" + str(scheduler_port)
     cmd_sched += " --fl_server_port=" + str(fl_server_port)
+    cmd_sched += " --scheduler_manage_port=" + str(scheduler_manage_port)
     cmd_sched += " > scheduler.log 2>&1 &"
 
     subprocess.call(['bash', '-c', cmd_sched])

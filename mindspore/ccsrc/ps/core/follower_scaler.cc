@@ -28,6 +28,8 @@ FollowerScaler::FollowerScaler(AbstractNode *node) : node_(node), scaling_state_
       ProcessBeforeScaleOut();
     }
   });
+  process_before_scale_out_thread_.detach();
+
   process_before_scale_in_thread_ = std::thread([&]() {
     while (true) {
       std::unique_lock<std::mutex> lock(scale_in_mtx_);
@@ -38,6 +40,7 @@ FollowerScaler::FollowerScaler(AbstractNode *node) : node_(node), scaling_state_
       ProcessBeforeScaleIn();
     }
   });
+  process_before_scale_in_thread_.detach();
 
   process_after_scale_out_thread_ = std::thread([&]() {
     while (true) {
@@ -46,6 +49,8 @@ FollowerScaler::FollowerScaler(AbstractNode *node) : node_(node), scaling_state_
       ProcessAfterScaleOut();
     }
   });
+  process_after_scale_out_thread_.detach();
+
   process_after_scale_in_thread_ = std::thread([&]() {
     while (true) {
       std::unique_lock<std::mutex> lock(scale_in_mtx_);
@@ -53,6 +58,7 @@ FollowerScaler::FollowerScaler(AbstractNode *node) : node_(node), scaling_state_
       ProcessAfterScaleIn();
     }
   });
+  process_after_scale_in_thread_.detach();
 }
 
 void FollowerScaler::RegisterScaleEventCallbacks() {
