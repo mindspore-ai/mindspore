@@ -40,6 +40,7 @@ from mindspore.compression.export import quant_export
 from mindspore.parallel._tensor import _load_tensor, _reshape_param_data, _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
 from mindspore.parallel._cell_wrapper import get_allgather_cell
+from mindspore.communication.management import get_rank, get_group_size
 from .._c_expression import load_mindir
 
 
@@ -1141,6 +1142,19 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             param_unique_strategy = _remove_repeated_slices(train_strategy[param.name])
             _param_unique_strategy = _convert_to_layout(param.name, param_unique_strategy)
             split_param = _merge_and_split(sliced_params, _param_unique_strategy, predict_strategy)
+        opt_shard_group = predict_strategy[param.name][5]
+        if opt_shard_group:
+            data = split_param.data.asnumpy()
+            rank = get_rank(opt_shard_group)
+            size = get_group_size(opt_shard_group)
+            try:
+                data_slice = np.split(data, size)[rank]
+            except BaseException as e:
+                logger.error("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
+                             " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
+                raise RuntimeError(e.__str__())
+            split_param = Parameter(Tensor(data_slice), param.name,
+                                    split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param
 
     if param_not_in_strategy:

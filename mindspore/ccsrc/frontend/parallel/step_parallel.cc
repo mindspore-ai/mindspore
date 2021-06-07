@@ -1585,6 +1585,37 @@ std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &graph, const Anf
   return std::make_pair(nullptr, 0);
 }
 
+CNodePtr InsertAllGatherAfterCast(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  // skip Load moving down and assume it only has one node user
+  CNodePtr res = cnode;
+  if (IsSomePrimitive(res, LOAD)) {
+    res = manager->node_users()[cnode].begin()->first->cast<CNodePtr>();
+  }
+  // return true only if cnode is Cast from fp32 to fp16
+  if (!IsSomePrimitive(res, CAST)) {
+    return nullptr;
+  }
+  auto node_type = res->Type();
+  MS_EXCEPTION_IF_NULL(node_type);
+  if (!node_type->isa<mindspore::TensorType>()) {
+    MS_LOG(EXCEPTION) << "Unknown type.";
+  }
+  auto input_element_type = node_type->cast<mindspore::TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(input_element_type);
+  auto type_id = input_element_type->type_id();
+
+  if (type_id != kNumberTypeFloat32) {
+    return res;
+  } else {
+    return nullptr;
+  }
+}
+
 static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group, const std::pair<AnfNodePtr, int> &res,
                               const AnfNodePtr &node, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(res.first);
@@ -1596,19 +1627,20 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   MS_EXCEPTION_IF_NULL(cnode_prim);
   Operator op;
   CNodePtr allgather;
+  CNodePtr cast_node = InsertAllGatherAfterCast(cnode);
   if (op_name == MINI_STEP_ALL_GATHER) {
     op = CreateMiniStepAllGatherOp(group);
     auto param_name = node->cast<ParameterPtr>()->name();
-    if (cnode_prim->name() == CAST) {
-      allgather = ReplaceMirrorNode(root, op, cnode, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name);
+    if (cast_node) {
+      allgather = ReplaceMirrorNode(root, op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name);
     } else {
       InsertMirrorNode(root, op, cnode, IntToSize(res.second), node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name);
       allgather = cnode->input(IntToSize(res.second))->cast<CNodePtr>();
     }
   } else {
     op = CreateAllGatherOp(group);
-    if (cnode_prim->name() == CAST) {
-      allgather = ReplaceNode(op, cnode, graph, PARALLEL_OPTIMIZER_ALLGATHER);
+    if (cast_node) {
+      allgather = ReplaceNode(op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER);
     } else {
       InsertNode(op, cnode, IntToSize(res.second), node, graph, PARALLEL_OPTIMIZER_ALLGATHER);
       allgather = cnode->input(IntToSize(res.second))->cast<CNodePtr>();
