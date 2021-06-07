@@ -572,7 +572,7 @@ build_lite()
       if [ "$(uname)" == "Darwin" ]; then
         cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="arm64" -DENABLE_BITCODE=0                   \
               -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM64="on" -DENABLE_NEON="on" -DENABLE_FP16="on" \
-              -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="off" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off"       \
+              -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="on" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off"        \
               -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp -G Xcode ..
       else
         checkndk
@@ -586,9 +586,9 @@ build_lite()
       fi
     elif [[ "${local_lite_platform}" == "arm32" ]]; then
       if [ "$(uname)" == "Darwin" ]; then
-        cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="armv7;armv7s" -DENABLE_BITCODE=0 \
-              -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM32="on" -DENABLE_NEON="on"         \
-              -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="off"                                                 \
+        cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="armv7;armv7s" -DENABLE_BITCODE=0     \
+              -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM32="on" -DENABLE_NEON="on"             \
+              -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="on" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off" \
               -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp -G Xcode ..
       else
         checkndk
@@ -606,7 +606,7 @@ build_lite()
               -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
     fi
     if [ "$(uname)" == "Darwin" ]; then
-      xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore_lite -target mindspore_lite -sdk iphoneos -quiet
+      xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet
     else
       make -j$THREAD_NUM && make install && make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
@@ -625,12 +625,12 @@ build_lite()
     else
         if [ "$(uname)" == "Darwin" ]; then
           mkdir -p ${BASEPATH}/output
-          cp -r ${BASEPATH}/mindspore/lite/build/src/Release-iphoneos/mindspore_lite.framework ${BASEPATH}/output/mindspore_lite.framework
+          cp -r ${BASEPATH}/mindspore/lite/build/src/Release-iphoneos/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
           cd ${BASEPATH}/output
-          tar -zcvf mindspore_lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz mindspore_lite.framework/
-          sha256sum mindspore_lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz > \
-                    mindspore_lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz.sha256
-          rm -r mindspore_lite.framework
+          tar -zcvf mindspore-lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz mindspore-lite.framework/
+          sha256sum mindspore-lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz > \
+                    mindspore-lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz.sha256
+          rm -r mindspore-lite.framework
         else
           mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         fi

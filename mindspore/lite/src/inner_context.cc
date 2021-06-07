@@ -35,8 +35,10 @@ InnerContext::InnerContext(const Context *context) {
     this->device_list_.push_back(device_ctx);
   }
 #ifdef ENABLE_ARM
+#ifndef MS_COMPILE_IOS
   cpu_info_ = new CpuInfo;
   fp16_flag_ = cpu_info_->ArmIsSupportFp16();
+#endif
 #endif
 }
 
@@ -61,8 +63,10 @@ InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
   }
   this->npu_manager_ = npu_manager;
 #ifdef ENABLE_ARM
+#ifndef MS_COMPILE_IOS
   cpu_info_ = new CpuInfo;
   fp16_flag_ = cpu_info_->ArmIsSupportFp16();
+#endif
 #endif
 }
 #endif
@@ -121,7 +125,9 @@ InnerContext::~InnerContext() {
     this->thread_pool_ = nullptr;
   }
 #ifdef ENABLE_ARM
+#ifndef MS_COMPILE_IOS
   delete cpu_info_;
+#endif
 #endif
 }
 
