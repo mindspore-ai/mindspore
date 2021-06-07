@@ -239,6 +239,7 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client) {
   std::vector<ServersMeta> servers_meta_list = node_manager_.FetchServersMeta();
   send_metadata_message.set_worker_num(node_manager_.worker_num());
   send_metadata_message.set_server_num(node_manager_.server_num());
+  send_metadata_message.set_cluster_state(node_manager_.GetClusterState());
 
   *send_metadata_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 

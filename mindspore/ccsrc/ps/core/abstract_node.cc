@@ -475,7 +475,9 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   send_meta_message.ParseFromArray(data, size);
   worker_num_ = send_meta_message.worker_num();
   server_num_ = send_meta_message.server_num();
-  MS_LOG(WARNING) << "The send metadata worker num:" << worker_num_ << ", server num:" << server_num_;
+  current_cluster_state_ = send_meta_message.cluster_state();
+  MS_LOG(INFO) << "The send metadata worker num:" << worker_num_ << ", server num:" << server_num_
+               << ", cluster state is:" << current_cluster_state_;
 
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {
