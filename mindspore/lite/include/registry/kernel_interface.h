@@ -125,9 +125,9 @@ class MS_API KernelInterfaceReg {
 /// \param[in] provider Define the identification of user.
 /// \param[in] op_type Define the ordinary op type.
 /// \param[in] creator Define the KernelInterface create function.
-#define REGISTER_KERNEL_INTERFACE(provider, op_type, creator)                               \
-  namespace {                                                                               \
-  static KernelInterfaceReg g_##provider##op_type##_inter_reg(#provider, op_type, creator); \
+#define REGISTER_KERNEL_INTERFACE(provider, op_type, creator)                                                  \
+  namespace {                                                                                                  \
+  static mindspore::kernel::KernelInterfaceReg g_##provider##op_type##_inter_reg(#provider, op_type, creator); \
   }  // namespace
 
 /// \brief Defined registering macro to register custom op, which called by user directly.
@@ -135,9 +135,9 @@ class MS_API KernelInterfaceReg {
 /// \param[in] provider Define the identification of user.
 /// \param[in] op_type Define the concrete type of a custom op.
 /// \param[in] creator Define the KernelInterface create function.
-#define REGISTER_CUSTOM_KERNEL_INTERFACE(provider, op_type, creator)                                \
-  namespace {                                                                                       \
-  static KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(#provider, #op_type, creator); \
+#define REGISTER_CUSTOM_KERNEL_INTERFACE(provider, op_type, creator)                                                   \
+  namespace {                                                                                                          \
+  static mindspore::kernel::KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(#provider, #op_type, creator); \
   }  // namespace
 }  // namespace kernel
 }  // namespace mindspore
