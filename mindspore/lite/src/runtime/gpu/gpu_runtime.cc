@@ -27,5 +27,4 @@
 
 namespace mindspore::lite::gpu {
 const GpuInfo &GpuRuntime::GetGpuInfo() { return gpu_info_; }
-
 }  // namespace mindspore::lite::gpu

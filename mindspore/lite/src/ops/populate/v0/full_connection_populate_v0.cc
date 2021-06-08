@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace lite {
 namespace {
-
 OpParameter *PopulateFullconnectionParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
   auto full_connection_prim = primitive->value_as_FullConnection();
