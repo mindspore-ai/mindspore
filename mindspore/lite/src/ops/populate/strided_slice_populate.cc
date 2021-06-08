@@ -39,6 +39,5 @@ OpParameter *PopulateStridedSliceParameter(const void *prim) {
 }
 
 Registry StridedSliceParameterRegistry(schema::PrimitiveType_StridedSlice, PopulateStridedSliceParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore
