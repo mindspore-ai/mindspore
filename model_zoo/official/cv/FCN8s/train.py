@@ -46,16 +46,17 @@ def train():
     args = parse_args()
     cfg = FCN8s_VOC2012_cfg
     device_num = int(os.environ.get("DEVICE_NUM", 1))
+    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
+                        device_target="Ascend", device_id=args.device_id)
     # init multicards training
+    args.rank = 0
+    args.group_size = 1
     if device_num > 1:
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=device_num)
         init()
-    args.rank = get_rank()
-    args.group_size = get_group_size()
-
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
-                        device_target="Ascend", device_id=args.device_id)
+        args.rank = get_rank()
+        args.group_size = get_group_size()
 
     # dataset
     dataset = data_generator.SegDataset(image_mean=cfg.image_mean,
