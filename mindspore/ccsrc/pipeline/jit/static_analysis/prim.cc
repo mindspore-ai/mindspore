@@ -1055,6 +1055,8 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     }
 
     std::string name = refkey->tag();
+    MS_EXCEPTION_IF_NULL(node_conf->node());
+    MS_EXCEPTION_IF_NULL(node_conf->node()->func_graph());
     const auto &manager = node_conf->node()->func_graph()->manager();
     auto node = FindParameterNodeByString(manager, name);
     if (node == nullptr) {
@@ -1217,6 +1219,8 @@ class PartialEvaluator : public Evaluator {
 
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
+    MS_EXCEPTION_IF_NULL(args_conf_list[0]);
+    MS_EXCEPTION_IF_NULL(args_conf_list[0]->ObtainEvalResult());
     auto arg0_value = args_conf_list[0]->ObtainEvalResult()->abstract();
     AbstractBasePtrList args_spec_list{arg0_value};
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
@@ -1232,6 +1236,7 @@ class PartialEvaluator : public Evaluator {
     // Sometimes, node[0] in out_conf becomes phi0;
     if (func->isa<PrimitiveAbstractClosure>()) {
       auto prim_func = dyn_cast<PrimitiveAbstractClosure>(func);
+      MS_EXCEPTION_IF_NULL(prim_func->prim());
       if (prim_func->prim()->isa<prim::DoSignaturePrimitive>()) {
         prim::DoSignaturePrimitivePtr do_signature_prim = dyn_cast<prim::DoSignaturePrimitive>(prim_func->prim());
         return HandleDoSignature(engine, do_signature_prim->function(), out_conf);

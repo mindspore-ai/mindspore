@@ -203,6 +203,7 @@ bool IsAllFuncInValueSequence(const std::vector<ValuePtr> &value_vec) {
     return false;
   }
   for (auto &elem : value_vec) {
+    MS_EXCEPTION_IF_NULL(elem);
     if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
       const auto &vec = GetValue<ValuePtrList>(elem);
       auto is_graph = IsAllFuncInValueSequence(vec);
@@ -221,6 +222,7 @@ AnfNodePtr TransformToMakeTupleNodes(const FuncGraphManagerPtr &manager, const F
   std::vector<AnfNodePtr> nodes;
   nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (auto &elem : value_vec) {
+    MS_EXCEPTION_IF_NULL(elem);
     AnfNodePtr node = nullptr;
     if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
       const auto &vec = GetValue<std::vector<ValuePtr>>(elem);

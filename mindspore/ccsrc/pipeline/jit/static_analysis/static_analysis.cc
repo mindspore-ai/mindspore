@@ -210,6 +210,8 @@ void AnalysisEngine::CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf) {
     return;
   }
   auto &previous_stack = list.back();
+  MS_EXCEPTION_IF_NULL(previous_stack->node());
+  MS_EXCEPTION_IF_NULL(conf->node());
   auto previous_cnode_fg = previous_stack->node()->func_graph();
   auto current_cnode_fg = conf->node()->func_graph();
   if (previous_cnode_fg != current_cnode_fg) {  // Normal.
@@ -664,6 +666,10 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   AbstractBasePtrList out_specs;
   EvaluatorPtr last_eval = nullptr;
   AbstractBasePtr last_abstract = nullptr;
+  const size_t evaluators_size = 2;
+  if (evaluators.size() < evaluators_size) {
+    MS_LOG(ERROR) << "evaluators size is less than 2";
+  }
   multi_poss_[evaluators[0]] = evaluators[1];
   multi_poss_[evaluators[1]] = evaluators[0];
   AbstractBasePtrList args_spec_list;

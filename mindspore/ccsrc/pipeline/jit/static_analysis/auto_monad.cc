@@ -346,6 +346,7 @@ class SideEffectFinder {
 
   static void PushToOrderList(const FuncGraphPtr &fg, const CNodePtr &cnode, OrderedSet<CNodePtr> *new_order_list) {
     MS_EXCEPTION_IF_NULL(cnode);
+    MS_EXCEPTION_IF_NULL(new_order_list);
     if (new_order_list->contains(cnode)) {
       return;
     }
@@ -554,6 +555,7 @@ class SideEffectFinder {
   }
 
   EffectInfo TraceTupleCNodeEffectInfo(const CNodePtr &cnode, std::stack<int64_t> *tuple_indexes) {
+    MS_EXCEPTION_IF_NULL(tuple_indexes);
     auto prim = GetPrimitive(cnode);
     // Trace MakeTuple.
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {

@@ -86,6 +86,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
 
   // Find parent context and create new context.
   AnalysisContextPtr parent_context = GetParentContext(fg_evaluator, graph_func);
+  MS_EXCEPTION_IF_NULL(parent_context);
   auto new_context = parent_context->NewFuncGraphContext(fg, args_abs_list);
 
   // Evaluate the parameters with new context.

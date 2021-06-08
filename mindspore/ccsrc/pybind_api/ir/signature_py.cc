@@ -32,8 +32,8 @@ static ValuePtr PyArgToValue(const py::object &arg) {
 // Bind SignatureEnumRW as a python class.
 REGISTER_PYBIND_DEFINE(SignatureEnumRW, ([](const py::module *m) {
                          (void)py::class_<Signature>(*m, "Signature")
-                           .def(py::init([](std::string name, SignatureEnumRW rw, SignatureEnumKind kind,
-                                            py::object arg_default, SignatureEnumDType dtype) {
+                           .def(py::init([](const std::string name, SignatureEnumRW rw, SignatureEnumKind kind,
+                                            const py::object arg_default, SignatureEnumDType dtype) {
                              auto default_value = PyArgToValue(arg_default);
                              return Signature(name, rw, kind, default_value, dtype);
                            }));

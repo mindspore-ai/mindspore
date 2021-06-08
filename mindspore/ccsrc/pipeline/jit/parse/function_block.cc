@@ -169,14 +169,18 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
     return MakeResolveClassMember(bits_str);
   }
   py::tuple namespace_info = parser_.ast()->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
+  const size_t namespace_info_size = 2;
   // If namespace is None, the symbol is an undefined name or an unsupported builtin function.
   if (namespace_info[0].is_none()) {
     // If the size of namespace_var is greater than or equal to 3, the error information is stored in namespace_var[2].
-    if (namespace_info.size() >= 3) {
-      MS_EXCEPTION(NameError) << namespace_info[2].cast<std::string>();
+    if (namespace_info.size() > namespace_info_size) {
+      MS_EXCEPTION(NameError) << namespace_info[namespace_info_size].cast<std::string>();
     }
     // If the size of namespace_var is less than 3, the default error information is used.
     MS_EXCEPTION(NameError) << "The name \'" << value << "\' is not defined.";
+  }
+  if (namespace_info.size() < namespace_info_size) {
+    MS_EXCEPTION(NameError) << "namespace_info is less than 2";
   }
 
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, namespace_info[0]);
@@ -186,6 +190,10 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
 
 AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
   py::tuple namespace_var = parser_.ast()->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL, value);
+  const size_t namespace_var_size = 2;
+  if (namespace_var.size() < namespace_var_size) {
+    MS_EXCEPTION(NameError) << "namespace_var is less than 2";
+  }
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_COMMON_OPS, namespace_var[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
   return MakeResolve(name_space, symbol);
@@ -216,6 +224,7 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
     MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " pred_blocks_ " << pred->func_graph_->ToString();
     AnfNodePtr arg_node = pred->ReadVariable(var);
     CNodePtr jump = pred->jumps_[this];
+    MS_EXCEPTION_IF_NULL(jump);
     jump->add_input(arg_node);
   }
 }
@@ -225,6 +234,7 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const Parame
   for (auto &prev : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(prev);
     AnfNodePtr temp_node = prev->ReadVariable(var);
+    MS_EXCEPTION_IF_NULL(temp_node);
     MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " phi " << phi->ToString() << " for var " << var
                   << " is " << temp_node->DebugString();
     if (temp_node != phi) {
@@ -448,7 +458,8 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   AnfNodePtr old_output = nullptr;
   auto return_node = func_graph()->get_return();
   if (return_node) {
-    if (return_node->inputs().empty()) {
+    const size_t return_input_size = 2;
+    if (return_node->inputs().size() < return_input_size) {
       MS_LOG(EXCEPTION) << "Length of inputs of output node is less than 2";
     }
     old_output = return_node->input(1);
@@ -460,6 +471,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   // We add this attribute for @constexpr use scene, since we must infer them before other nodes.
   // That means isolated nodes will be evaluated first. It's not complete, but works in most scenes.
   depend_node->AddAttr(kAttrTopoSortRhsFirst, MakeValue(true));
+  MS_EXCEPTION_IF_NULL(state);
   MS_LOG(INFO) << "Attached for side-effect nodes, depend_node: " << depend_node->DebugString()
                << ", state: " << state->DebugString(2);
   func_graph()->set_output(depend_node, true);
