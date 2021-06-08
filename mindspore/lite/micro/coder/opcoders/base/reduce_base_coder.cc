@@ -36,39 +36,37 @@ int ReduceBaseCoder::CheckInputsOutputs() const {
 }
 
 int ReduceBaseCoder::CheckParameters() {
-  size_t input_rank = input_tensor_->shape().size();
-  if (static_cast<size_t>(num_axes_) > input_rank) {
+  int input_rank = static_cast<int>(input_tensor_->shape().size());
+  if (num_axes_ > input_rank) {
     MS_LOG(ERROR) << "Reduce op invalid num of reduce axes " << num_axes_ << " larger than input rank " << input_rank;
     return RET_ERROR;
   }
-
-  for (auto i = 0; i < num_axes_; i++) {
-    if (axes_[i] < -static_cast<int>(input_rank) || axes_[i] >= static_cast<int>(input_rank)) {
-      MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in [" << static_cast<int>(input_rank)
-                    << ", " << input_rank - 1 << "].";
+  for (int i = 0; i < num_axes_; i++) {
+    if (axes_[i] < -input_rank || axes_[i] >= input_rank) {
+      MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in [" << -input_rank << ", "
+                    << input_rank - 1 << "].";
       return RET_ERROR;
     }
     if (axes_[i] < 0) {
-      axes_[i] += static_cast<int>(input_rank);
+      axes_[i] += input_rank;
     }
   }
 
   if (reduce_to_end_) {
     // actual num of axes to reduce
-    num_axes_ = static_cast<int>(input_rank) - axes_[0];
+    num_axes_ = input_rank - axes_[0];
     MS_CHECK_TRUE(num_axes_ <= MAX_SHAPE_SIZE, "invalid num_axes_, greater than 8.");
-    for (auto j = 1; j < num_axes_; ++j) {
+    for (int j = 1; j < num_axes_; ++j) {
       axes_[j] = axes_[0] + j;
     }
   }
 
   if (num_axes_ == 0) {
-    for (size_t i = 0; i < input_rank; i++) {
+    for (int i = 0; i < input_rank; i++) {
       axes_[i] = i;
     }
-    num_axes_ = static_cast<int>(input_rank);
+    num_axes_ = (input_rank);
   }
-
   return RET_OK;
 }
 
