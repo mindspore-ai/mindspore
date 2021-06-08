@@ -81,6 +81,7 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::FETCH_METADATA] = &SchedulerNode::ProcessFetchMetadata;
   handlers_[NodeCommand::SCALE_OUT_DONE] = &SchedulerNode::ProcessScaleOutDone;
   handlers_[NodeCommand::SCALE_IN_DONE] = &SchedulerNode::ProcessScaleInDone;
+  handlers_[NodeCommand::SEND_EVENT] = &SchedulerNode::ProcessSendEvent;
 }
 
 void SchedulerNode::CreateTcpServer() {
@@ -230,6 +231,27 @@ void SchedulerNode::ProcessScaleInDone(std::shared_ptr<TcpServer> server, std::s
   }
 }
 
+void SchedulerNode::ProcessSendEvent(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                                     std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(server);
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  EventMessage event_message;
+  event_message.ParseFromArray(data, size);
+  std::string node_id = event_message.node_id();
+  uint32_t event = event_message.event();
+  MS_LOG(INFO) << "The scheduler process a event message from node id:" << node_id;
+
+  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    auto client = GetOrCreateClient(kvs.second);
+    SendEvent(client, event);
+  }
+}
+
 void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
@@ -302,6 +324,24 @@ void SchedulerNode::SendScaleInDone(const std::shared_ptr<TcpClient> &client) {
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << "is sending scale_in_done to workers and servers!";
+}
+
+void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const uint32_t &event) {
+  MS_EXCEPTION_IF_NULL(client);
+  auto message_meta = std::make_shared<MessageMeta>();
+  message_meta->set_cmd(NodeCommand::SEND_EVENT);
+
+  EventRespMessage event_resp_message;
+  event_resp_message.set_event(event);
+
+  if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, event_resp_message.SerializeAsString().data(),
+                       event_resp_message.ByteSizeLong())) {
+    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                      << " the node id:" << node_info_.node_id_ << " send event resp timeout!";
+  }
+
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << "is sending event resp to workers and servers!";
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {
