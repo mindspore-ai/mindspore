@@ -534,12 +534,8 @@ def onp_vstack(input_array):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vstack():
-    onp_seq_lst0, mnp_seq_lst0 = prepare_array_sequences(
-        n_lst=[1, 5], ndim_lst=[2, 3, 4], axis=0)
-    onp_seq_lst1, mnp_seq_lst1 = prepare_array_sequences(
-        n_lst=[1, 5], ndim_lst=[1])
-    onp_seq_lst = onp_seq_lst0 + onp_seq_lst1
-    mnp_seq_lst = mnp_seq_lst0 + mnp_seq_lst1
+    onp_seq_lst, mnp_seq_lst = prepare_array_sequences(
+        n_lst=[1], ndim_lst=[2], axis=0)
     for i, onp_seq in enumerate(onp_seq_lst):
         mnp_seq = mnp_seq_lst[i]
         o_vstack = onp_vstack(onp_seq)
@@ -1596,8 +1592,8 @@ def test_piecewise():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unravel_index():
-    shapes = [(), 1, 3, (5, 1), (2, 6, 3)]
-    dims = [(5, 4, 7), (5*4, 7), 5*4*7]
+    shapes = [(2, 6, 3)]
+    dims = [(5, 4, 7), 5*4*7]
     for shape in shapes:
         x = onp.random.randint(0, 5*4*7, shape)
         for dim in dims:

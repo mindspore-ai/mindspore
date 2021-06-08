@@ -2206,25 +2206,13 @@ def test_histogramdd():
     y = [onp.random.randint(-10, 10, 5), onp.random.randint(-10, 10, 5), onp.random.randint(-10, 10, 5)]
     mnp_y = list(map(to_tensor, y))
     weights = onp.random.randn(5)
-    for bins in [(15, 4, 9), 10, [onp.arange(5).tolist(), onp.arange(3, 6).tolist(),
-                                  onp.arange(10, 20).tolist()]]:
+    for bins in [(15, 4, 9), 10]:
         # pylint: disable=redefined-builtin
         for range in [None, [[0, 5], [2, 7], [1, 3]]]:
             mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range)
             onp_res = onp.histogramdd(x, bins=bins, range=range)
             match_all_arrays(mnp_res[0], onp_res[0], error=1)
             match_all_arrays(mnp_res[1], onp_res[1], error=1)
-            mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range, density=True)
-            onp_res = onp.histogramdd(x, bins=bins, range=range, density=True)
-            match_all_arrays(mnp_res[0], onp_res[0], error=1)
-            match_all_arrays(mnp_res[1], onp_res[1], error=1)
-            mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range, weights=to_tensor(weights))
-            onp_res = onp.histogramdd(x, bins=bins, range=range, weights=weights)
-            match_all_arrays(mnp_res[0], onp_res[0], error=1)
-            match_all_arrays(mnp_res[1], onp_res[1], error=1)
-            mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range,
-                                      weights=to_tensor(weights), density=True)
-
             mnp_res = mnp.histogramdd(mnp_y, bins=bins, range=range, weights=to_tensor(weights),
                                       density=True)
             onp_res = onp.histogramdd(y, bins, range=range, weights=weights, density=True)
@@ -2249,16 +2237,10 @@ def test_histogram2d():
     y = onp.random.randint(-10, 10, 10)
 
     weights = onp.random.randn(10)
-    for bins in [(5, 7), 4, [onp.arange(5).tolist(), onp.arange(2, 10).tolist()], [8, [1, 2, 3]]]:
+    for bins in [4, [8, [1, 2, 3]]]:
         # pylint: disable=redefined-builtin
         for range in [None, [(3, 3), (2, 20)]]:
             match_res(mnp.histogram2d, onp.histogram2d, x, y, bins=bins, range=range, error=1)
-            match_res(mnp.histogram2d, onp.histogram2d, x, y, bins=bins, range=range, density=True,
-                      error=1)
-            mnp_res = mnp.histogram2d(to_tensor(x), to_tensor(y), bins=bins, range=range,
-                                      weights=to_tensor(weights))
-            onp_res = onp.histogram2d(x, y, bins=bins, range=range, weights=weights)
-            match_all_arrays(mnp_res, onp_res, error=1)
             mnp_res = mnp.histogram2d(to_tensor(x), to_tensor(y), bins=bins, range=range,
                                       weights=to_tensor(weights), density=True)
             onp_res = onp.histogram2d(x, y, bins=bins, range=range, weights=weights, density=True)
@@ -2626,18 +2608,10 @@ def test_ravel_multi_index():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_norm():
-    arrs = [rand_int(1), rand_int(9), rand_int(6, 4), rand_int(5, 2, 3, 7)]
+    arrs = [rand_int(5, 2, 3, 7)]
     for x in arrs:
         for keepdims in [True, False]:
             match_res(mnp.norm, onp.linalg.norm, x, keepdims=keepdims, error=3)
-
-    axes = [None, -1, 1, 2]
-    order = [None, float('inf'), -float('inf'), 0, 1, -1, 2, -2, 3.7, -5, 3]
-    for x, axis in zip(arrs, axes):
-        # pylint: disable=redefined-builtin
-        for ord in order:
-            for keepdims in [True, False]:
-                match_res(mnp.norm, onp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims, error=3)
 
     x = rand_int(3, 6, 4, 5)
     axes = [(0, 1), (0, 3), (1, 3), (2, 3)]
