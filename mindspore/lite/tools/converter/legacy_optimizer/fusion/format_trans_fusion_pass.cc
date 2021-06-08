@@ -23,7 +23,6 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
-
 namespace mindspore {
 namespace {
 std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
