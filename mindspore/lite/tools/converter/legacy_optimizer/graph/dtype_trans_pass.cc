@@ -267,7 +267,7 @@ NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIte
   } else {
     tile_name = exist_node_name + "_post";
   }
-  auto trans_node = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
+  auto trans_node = std::make_unique<CNodeT>();
   if (trans_node == nullptr) {
     MS_LOG(ERROR) << "new TransNode failed";
     *error_code = RET_ERROR;

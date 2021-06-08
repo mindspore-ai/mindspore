@@ -35,7 +35,7 @@ static int RunKernel(void *data, int index, float lhs_scale, float rhs_scale) {
   auto kernel = executor->GetReadyKernel(index);
   auto ret = kernel->Execute();
   executor->SetResult(index, ret);
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
     return 0;
   }
@@ -46,7 +46,7 @@ static int RunKernel(void *data, int index, float lhs_scale, float rhs_scale) {
 int ParallelExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                           const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                           const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(nullptr != allocator);
+  MS_ASSERT(allocator != nullptr);
   for (auto &inTensor : in_tensors) {
     if (inTensor == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
@@ -69,7 +69,7 @@ int ParallelExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::ve
   std::vector<kernel::LiteKernel *> newReadyKernels;
   while (!readyKernels.empty()) {
     results.resize(readyKernels.size(), RET_OK);
-    if (0 != thread_pool_->ParallelLaunch(RunKernel, this, readyKernels.size())) {
+    if (thread_pool_->ParallelLaunch(RunKernel, this, readyKernels.size()) != 0) {
       MS_LOG(ERROR) << "ParallelLaunch failed ";
       return RET_ERROR;
     }
@@ -94,8 +94,6 @@ int ParallelExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::ve
     readyKernels.clear();
     readyKernels = std::move(newReadyKernels);
   }
-
   return RET_OK;
 }
-
 }  // namespace mindspore::lite

@@ -74,7 +74,7 @@ STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std:
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(bnNode != nullptr);
   bnNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
-  std::unique_ptr<ScaleFusionT> scaleParam(new (std::nothrow) ScaleFusionT());
+  auto scaleParam = std::make_unique<ScaleFusionT>();
   if (scaleParam == nullptr) {
     MS_LOG(ERROR) << "new scaleParam failed";
     return RET_ERROR;
@@ -101,7 +101,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(bnNode != nullptr);
   GetTransParam(graph, bnNode);
-  newScaleWeightTensor = std::unique_ptr<TensorT>(new (std::nothrow) TensorT);
+  newScaleWeightTensor = std::make_unique<TensorT>();
   if (newScaleWeightTensor == nullptr) {
     MS_LOG(ERROR) << "new weightTensor failed";
     return RET_ERROR;
@@ -123,7 +123,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
     return RET_ERROR;
   }
 
-  newScaleBiasTensor = std::unique_ptr<TensorT>(new (std::nothrow) TensorT);
+  newScaleBiasTensor = std::make_unique<TensorT>();
   if (newScaleBiasTensor == nullptr) {
     MS_LOG(ERROR) << "new weightTensor failed";
     return RET_ERROR;

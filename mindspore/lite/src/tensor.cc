@@ -25,7 +25,9 @@
 
 namespace mindspore {
 namespace lite {
-#define kMaxMallocSize 1024 * 1024 * 300
+namespace {
+constexpr int kMaxMallocSize = 1024 * 1024 * 300;
+}  // namespace
 Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const schema::Format &format, Category category)
     : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
@@ -73,7 +75,7 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data) {
 }
 
 Tensor::~Tensor() {
-  if (nullptr != this->data_ && this->own_data_) {
+  if (this->data_ != nullptr && this->own_data_) {
     if (this->allocator_ != nullptr) {
       this->allocator_->Free(this->data_);
     } else {
@@ -287,7 +289,7 @@ void Tensor::set_root_tensor(Tensor *tensor) {
 }
 
 int Tensor::MallocData(const AllocatorPtr allocator) {
-  if (nullptr != this->data_) {
+  if (this->data_ != nullptr) {
     return RET_OK;
   }
   if (allocator != nullptr) {
@@ -303,7 +305,7 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
   } else {
     this->data_ = allocator_->Malloc(data_size);
   }
-  if (nullptr == this->data_) {
+  if (this->data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc tensor data failed, size=" << data_size;
     return RET_ERROR;
   }
@@ -312,13 +314,13 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
 }
 
 void Tensor::FreeData() {
-  if (nullptr == this->data_) {
+  if (this->data_ == nullptr) {
     return;
   }
   if (!this->own_data_) {
     return;
   }
-  if (nullptr == allocator_) {
+  if (allocator_ == nullptr) {
     free(this->data_);
     this->data_ = nullptr;
   } else {

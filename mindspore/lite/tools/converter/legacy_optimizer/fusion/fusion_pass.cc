@@ -112,7 +112,6 @@ STATUS FusionPass::MatchPatterns(schema::MetaGraphT *graph) {
 STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pattern) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(pattern != nullptr);
-  //  std::vector<std::unordered_map<std::string, Path *>> patternMatchPaths;
   auto outputOp = pattern->GetPatternOp(pattern->GetOutput());
   if (outputOp == nullptr) {
     MS_LOG(ERROR) << "Can not find the output of the pattern";

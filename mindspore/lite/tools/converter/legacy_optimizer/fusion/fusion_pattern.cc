@@ -23,8 +23,6 @@
 
 namespace mindspore {
 namespace lite {
-// using namespace std;
-
 FusionPattern::FusionPattern(std::string name) { this->name = std::move(name); }
 
 FusionPattern::~FusionPattern() = default;
@@ -50,7 +48,7 @@ FusionPattern &FusionPattern::AddPatternOp(const std::string &id, const std::vec
     hasError = true;
   }
 
-  std::shared_ptr<PatternOp> op(new PatternOp());
+  auto op = std::make_shared<PatternOp>();
   if (op == nullptr) {
     MS_LOG(ERROR) << "new an object failed";
     hasError = true;
