@@ -483,10 +483,10 @@ class HyperMap(HyperMap_):
             the operations should be put in the first input of the instance.
 
     Inputs:
-        - **args** (Tuple[sequence]) - If `ops` is `None`, all the inputs should be sequences with the same length.
+        - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be sequences with the same length.
           And each row of the sequences will be the inputs of the operation.
 
-          If `ops` is not `None`, the first input is the operation, and the others are inputs.
+          If `ops` is `None`, the first input is the operation, and the others are inputs.
 
     Outputs:
         Sequence or nested sequence, the sequence of output after applying the function.
@@ -558,7 +558,7 @@ class Map(Map_):
           and each row of the sequences. e.g. If args length is 2, and for `i` in length of each sequence
           `(args[0][i], args[1][i])` will be the input of the operation.
 
-          If `ops` is not `None`, the first input is the operation, and the other is inputs.
+          If `ops` is `None`, the first input is the operation, and the other is inputs.
 
     Outputs:
         Sequence, the sequence of output after applying the function. e.g. `operation(args[0][i], args[1][i])`.
