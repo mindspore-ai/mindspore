@@ -61,7 +61,7 @@ class Profiler {
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
   void SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration);
-  uint64_t GetHostMonoTimeStamp();
+  uint64_t GetHostMonoTimeStamp() const;
   virtual void SaveProfileData() = 0;
   virtual void ClearInst() = 0;
   bool enable_flag_ = false;

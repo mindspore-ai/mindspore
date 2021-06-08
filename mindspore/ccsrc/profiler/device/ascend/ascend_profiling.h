@@ -43,15 +43,13 @@ class AscendProfiler {
     return instance;
   }
 
-  void RecordEvent(EventType event_type, const char *fmt, ...);
-
   void Reset();
 
   void Dump(std::ostream &os);
 
  private:
   std::vector<Event> events_;
-  std::atomic_int counter_;
+  std::atomic_uint32_t counter_;
 };
 }  // namespace ascend
 }  // namespace profiler

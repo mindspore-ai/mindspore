@@ -29,26 +29,6 @@ const int kIndent = 8;
 
 AscendProfiler::AscendProfiler() : counter_(0) { Reset(); }
 
-void AscendProfiler::RecordEvent(EventType event_type, const char *fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-
-  char buf[kEventDescMax];
-  if (vsnprintf_s(buf, kEventDescMax, kEventDescMax - 1, fmt, args) == -1) {
-    MS_LOG(ERROR) << "format failed:" << fmt;
-    va_end(args);
-    return;
-  }
-
-  va_end(args);
-  std::string event = buf;
-  auto index = counter_++;
-  auto &evt = events_[index];
-  evt.timestamp = std::chrono::system_clock::now();
-  evt.desc = std::move(event);
-  evt.event_type = event_type;
-}
-
 void AscendProfiler::Dump(std::ostream &output_stream) {
   MS_LOG(INFO) << "start dump async profiling info";
   if (events_.empty()) {
@@ -60,7 +40,7 @@ void AscendProfiler::Dump(std::ostream &output_stream) {
   std::vector<decltype(start)> prev_timestamps;
   prev_timestamps.resize(kMaxEventTypes, start);
 
-  for (int i = 0; i < counter_; ++i) {
+  for (uint32_t i = 0; i < counter_; ++i) {
     auto &evt = events_[i];
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(evt.timestamp - start).count();
     auto &prev_ts = prev_timestamps[evt.event_type];

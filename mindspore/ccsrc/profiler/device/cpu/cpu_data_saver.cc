@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace profiler {
 namespace cpu {
-void CpuDataSaver::WriteFile(std::string out_path_dir) {
+void CpuDataSaver::WriteFile(const std::string out_path_dir) {
   if (op_detail_infos_.empty() || op_type_infos_.empty()) {
     MS_LOG(INFO) << "No cpu operation detail infos to write.";
     return;

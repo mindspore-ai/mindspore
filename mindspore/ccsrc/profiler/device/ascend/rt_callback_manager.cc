@@ -23,17 +23,6 @@ namespace profiler {
 namespace ascend {
 CallbackManager::CallbackManager(rtStream_t stream) : stream_(stream) {}
 
-Status CallbackManager::Init() {
-  MS_LOG(INFO) << "CallbackManager init, Start to async process event";
-  ret_future_ = std::async([&] { return CallbackProcess(); });
-  if (!ret_future_.valid()) {
-    MS_LOG(ERROR) << "Failed to init callback manager.";
-    return kFail;
-  }
-
-  return kSuccess;
-}
-
 Status CallbackManager::CallbackProcess() {
   std::pair<rtEvent_t, std::pair<rtCallback_t, const void *>> entry;
   while (true) {
@@ -50,15 +39,15 @@ Status CallbackManager::CallbackProcess() {
     auto rt_err = rtEventSynchronize(event);
     if (rt_err != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "rtEventSynchronize failed. ret:" << rt_err;
-      auto ret = rtEventDestroy(event);
-      if (ret != RT_ERROR_NONE) {
+      rt_err = rtEventDestroy(event);
+      if (rt_err != RT_ERROR_NONE) {
         MS_LOG(ERROR) << "rtEventDestroy failed";
       }
       return kFail;
     }
 
-    auto ret = rtEventDestroy(event);
-    if (ret != RT_ERROR_NONE) {
+    rt_err = rtEventDestroy(event);
+    if (rt_err != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "rtEventDestroy failed";
     }
 
@@ -120,7 +109,7 @@ void CallbackManager::RtCallbackFunc(const void *data) {
 }
 
 Status CallbackManager::RegisterCallback(const std::function<void()> &callback) {
-  auto func = std::unique_ptr<std::function<void()>>(new (std::nothrow) std::function<void()>(callback));
+  auto func = std::make_unique<std::function<void()>>(callback);
   if (func == nullptr) {
     MS_LOG(ERROR) << "callback is nullptr";
     return kInvalidParam;

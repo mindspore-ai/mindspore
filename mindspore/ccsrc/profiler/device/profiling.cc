@@ -16,9 +16,9 @@
 
 #include "profiler/device/profiling.h"
 
-#include <time.h>
 #include <cxxabi.h>
 #include <cmath>
+#include <ctime>
 #include "profiler/device/cpu/cpu_data_saver.h"
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace profiler {
-uint64_t Profiler::GetHostMonoTimeStamp() {
+uint64_t Profiler::GetHostMonoTimeStamp() const {
   struct timespec ts;
 #if defined(_WIN32) || defined(_WIN64)
   clock_gettime(CLOCK_MONOTONIC, &ts);

@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace profiler {
-OpDetailInfo::OpDetailInfo(std::shared_ptr<OpInfo> op_info, float proportion)
+OpDetailInfo::OpDetailInfo(const std::shared_ptr<OpInfo> op_info, float proportion)
     : op_info_(op_info), proportion_(proportion) {
   // op_full_name is like 'xxx/xxx/{op_type}-op{node_id}'
   op_full_name_ = op_info->op_name;
@@ -72,7 +72,7 @@ void DataSaver::AddOpDetailInfoForType(const OpDetailInfo &op_detail_info) {
   }
 }
 
-float DataSaver::GetTotalOpTime(const OpInfoMap &op_info_maps) {
+float DataSaver::GetTotalOpTime(const OpInfoMap &op_info_maps) const {
   float sum = 0;
   sum = std::accumulate(op_info_maps.begin(), op_info_maps.end(), sum,
                         [](float i, auto iter) { return i + iter.second.op_host_cost_time; });
@@ -80,7 +80,7 @@ float DataSaver::GetTotalOpTime(const OpInfoMap &op_info_maps) {
   return sum;
 }
 
-void DataSaver::WriteOpType(const std::string &saver_base_dir) {
+void DataSaver::WriteOpType(const std::string &saver_base_dir) const {
   std::string file_path = saver_base_dir + "/" + op_side_ + "_op_type_info_" + device_id_ + ".csv";
   std::ofstream ofs(file_path);
   // check if the file is writable
@@ -110,7 +110,7 @@ void DataSaver::WriteOpType(const std::string &saver_base_dir) {
   MS_LOG(INFO) << "Write " << op_type_infos_.size() << " op type infos into file: " << file_path;
 }
 
-void DataSaver::WriteOpDetail(const std::string &saver_base_dir) {
+void DataSaver::WriteOpDetail(const std::string &saver_base_dir) const {
   std::string file_path = saver_base_dir + "/" + op_side_ + "_op_detail_info_" + device_id_ + ".csv";
   std::ofstream ofs(file_path);
   if (!ofs.is_open()) {
@@ -139,7 +139,7 @@ void DataSaver::WriteOpDetail(const std::string &saver_base_dir) {
   MS_LOG(INFO) << "Write " << op_detail_infos_.size() << " op detail infos into file: " << file_path;
 }
 
-void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
+void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) const {
   std::string file_path = saver_base_dir + "/" + op_side_ + "_op_execute_timestamp_" + device_id_ + ".txt";
   std::ofstream ofs(file_path);
   // check if the file is writable
@@ -167,7 +167,7 @@ void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
   ChangeFileMode(file_path);
 }
 
-void DataSaver::ChangeFileMode(const std::string &file_path) {
+void DataSaver::ChangeFileMode(const std::string &file_path) const {
   if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
     MS_LOG(WARNING) << "Modify file: " << file_path << " to rw fail.";
     return;

@@ -53,14 +53,11 @@ namespace mindspore {
 namespace profiler {
 namespace ascend {
 CallbackManager::CallbackManager(rtStream_t stream) : stream_(stream) {}
-Status CallbackManager::Init() { return kSuccess; }
 Status CallbackManager::Destroy() { return kSuccess; }
 Status CallbackManager::RegisterCallback(rtCallback_t callback, const void *user_data) { return kSuccess; }
 Status CallbackManager::RegisterCallback(const std::function<void()> &callback) { return kSuccess; }
 
 AscendProfiler::AscendProfiler() : counter_(0) { Reset(); }
-
-void AscendProfiler::RecordEvent(EventType event_type, const char *fmt, ...) {}
 
 void AscendProfiler::Dump(std::ostream &output_stream) {}
 
