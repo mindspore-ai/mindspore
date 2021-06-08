@@ -55,6 +55,5 @@ class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
  private:
   cl_int4 output_shape_ = {};
 };
-
 }  // namespace mindspore::kernel
 #endif

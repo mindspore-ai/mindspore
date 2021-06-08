@@ -448,19 +448,15 @@ GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_
 
   if (device_name == "QUALCOMM Adreno(TM)") {
     info.type = ADRENO;
-    sscanf(device_version.c_str(), "%*s%f%*s%d", &info.opencl_version, &info.model_num);
   } else if (device_name.find("Mali") != std::string::npos) {
     info.type = MALI;
 
     // Mali type MALI-G or MALI_T
     if (device_name.find("Mali-G") != std::string::npos) {
       info.type = MALI_G;
-      sscanf(device_name.c_str(), "Mali-G%d", &info.model_num);
     } else if (device_name.find("Mali-T") != std::string::npos) {
       info.type = MALI_T;
-      sscanf(device_name.c_str(), "Mali-T%d", &info.model_num);
     }
-    sscanf(device_version.c_str(), "%*s%f%*s", &info.opencl_version);
   }
   return info;
 }

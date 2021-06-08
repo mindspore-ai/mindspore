@@ -45,6 +45,5 @@ class ActivationOpenCLKernel : public OpenCLKernel {
   float alpha_;
   GpuTensorInfo outShape;
 };
-
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ACTIVATION_H_
