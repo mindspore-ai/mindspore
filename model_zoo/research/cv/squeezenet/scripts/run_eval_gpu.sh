@@ -62,22 +62,6 @@ export DEVICE_ID=$3
 export RANK_SIZE=$DEVICE_NUM
 export RANK_ID=0
 
-BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
-CONFIG_FILE="${BASE_PATH}/squeezenet_cifar10_config.yaml"
-
-if [ $1 == "squeezenet" ] && [ $2 == "cifar10" ]; then
-    CONFIG_FILE="${BASE_PATH}/squeezenet_cifar10_config.yaml"
-elif [ $1 == "squeezenet" ] && [ $2 == "imagenet" ]; then
-    CONFIG_FILE="${BASE_PATH}/squeezenet_imagenet_config.yaml"
-elif [ $1 == "squeezenet_residual" ] && [ $2 == "cifar10" ]; then
-    CONFIG_FILE="${BASE_PATH}/squeezenet_residual_cifar10_config.yaml"
-elif [ $1 == "squeezenet_residual" ] && [ $2 == "imagenet" ]; then
-    CONFIG_FILE="${BASE_PATH}/squeezenet_residual_imagenet_config.yaml"
-else
-     echo "error: the selected dataset is not in supported set{squeezenet, squeezenet_residual, cifar10, imagenet}"
-exit 1
-fi
-
 if [ -d "eval" ];
 then
     rm -rf ./eval
@@ -85,11 +69,8 @@ fi
 mkdir ./eval
 cp ./eval.py ./eval
 cp -r ./src ./eval
-cp -r ./model_utils ./eval
-cp -r ./*.yaml ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python eval.py --net_name=$1 --dataset=$2 --data_path=$PATH1 --checkpoint_file_path=$PATH2 --device_target="GPU" \
---config_path=$CONFIG_FILE --output_path './output' &> log &
+python eval.py --net=$1 --dataset=$2 --dataset_path=$PATH1 --checkpoint_path=$PATH2 --device_target="GPU" &> log &
 cd ..
