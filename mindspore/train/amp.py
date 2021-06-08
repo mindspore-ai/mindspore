@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Auto mixed precision."""
-from easydict import EasyDict as edict
-
 from .. import nn
 from .._checkparam import Validator as validator
 from .._checkparam import Rel
@@ -162,23 +160,22 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
 
     _check_kwargs(kwargs)
     config = dict(_config_level[level], **kwargs)
-    config = edict(config)
 
-    if config.cast_model_type == mstype.float16:
+    if config["cast_model_type"] == mstype.float16:
         network.to_float(mstype.float16)
 
-        if config.keep_batchnorm_fp32:
+        if config["keep_batchnorm_fp32"]:
             _do_keep_batchnorm_fp32(network)
 
     if loss_fn:
-        network = _add_loss_network(network, loss_fn, config.cast_model_type)
+        network = _add_loss_network(network, loss_fn, config["cast_model_type"])
 
     if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
         network = _VirtualDatasetCell(network)
 
     loss_scale = 1.0
-    if config.loss_scale_manager is not None:
-        loss_scale_manager = config.loss_scale_manager
+    if config["loss_scale_manager"] is not None:
+        loss_scale_manager = config["loss_scale_manager"]
         loss_scale = loss_scale_manager.get_loss_scale()
         update_cell = loss_scale_manager.get_update_cell()
         if update_cell is not None:
