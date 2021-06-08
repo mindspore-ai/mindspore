@@ -127,6 +127,13 @@ __global__ void LossInitKernel(T *loss) {
 }
 
 template <typename T>
+__global__ void InitZero(T *array, int size) {
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+    array[i] = static_cast<T>(0.);
+  }
+}
+
+template <typename T>
 __global__ void KLDivLossKernel(const int input_size, const int reduction, const T *input_x, const T *input_y, T *loss,
                                 T *tmp_loss) {
   T epsilon = 1e-6;
@@ -332,6 +339,50 @@ void NLLLoss(const int n, const int c, const int reduction, const T *input, cons
   CopyEqual<<<1, 1, 0, stream>>>(tmp_target_weight, total_weight, 1);
 }
 
+template <typename T, typename S>
+__global__ void NLLLossGradKernel(const int n, const int c, const int reduction, const T *input, const int32_t *target,
+                                  const S *weight, const S *total_weight, const T *dloss, T *dinput) {
+  int input_idx;
+  int target_class;
+  S tmp_quot;
+  if (reduction == 0) {
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
+      target_class = static_cast<int>(target[i]);
+
+      input_idx = (i * c) + target_class;
+
+      MultiplyDevice(-weight[target_class], dloss[i], dinput + input_idx);
+    }
+  } else if (reduction == 1) {
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
+      target_class = static_cast<int>(target[i]);
+
+      input_idx = (i * c) + target_class;
+
+      tmp_quot = (-weight[target_class]) / *total_weight;
+      MultiplyDevice(tmp_quot, dloss[0], dinput + input_idx);
+    }
+  } else if (reduction == 2) {
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
+      target_class = static_cast<int>(target[i]);
+
+      input_idx = (i * c) + target_class;
+
+      MultiplyDevice(-weight[target_class], dloss[0], dinput + input_idx);
+    }
+  }
+}
+
+template <typename T, typename S>
+void NLLLossGrad(const int n, const int c, const int reduction, const T *input, const int32_t *target, const S *weight,
+                 const S *total_weight, const T *dloss, T *dinput, cudaStream_t stream) {
+  int input_size = n * c;
+  InitZero<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(dinput, input_size);
+
+  NLLLossGradKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, reduction, input, target, weight, total_weight,
+                                                               dloss, dinput);
+}
+
 template void KLDivLoss<float>(const int &input_size, const int &reduction, const float *input_x, const float *input_y,
                                float *loss, float *tmp_loss, cudaStream_t stream);
 
@@ -354,6 +405,14 @@ template void NLLLoss<float, half>(const int n, const int c, const int reduction
                                    const int32_t *target, const half *weight, float *loss, half *total_weight,
                                    float *tmp_loss, half *tmp_target_weight, cudaStream_t stream);
 
+template void NLLLossGrad<float, float>(const int n, const int c, const int reduction, const float *input,
+                                        const int32_t *target, const float *weight, const float *total_weight,
+                                        const float *dloss, float *dinput, cudaStream_t stream);
+
+template void NLLLossGrad<float, half>(const int n, const int c, const int reduction, const float *input,
+                                       const int32_t *target, const half *weight, const half *total_weight,
+                                       const float *dloss, float *dinput, cudaStream_t stream);
+
 template void KLDivLoss<half>(const int &input_size, const int &reduction, const half *input_x, const half *input_y,
                               half *loss, half *tmp_loss, cudaStream_t stream);
 
@@ -375,3 +434,11 @@ template void NLLLoss<half, half>(const int n, const int c, const int reduction,
 template void NLLLoss<half, float>(const int n, const int c, const int reduction, const half *input,
                                    const int32_t *target, const float *weight, half *loss, float *total_weight,
                                    half *tmp_loss, float *tmp_target_weight, cudaStream_t stream);
+
+template void NLLLossGrad<half, half>(const int n, const int c, const int reduction, const half *input,
+                                      const int32_t *target, const half *weight, const half *total_weight,
+                                      const half *dloss, half *dinput, cudaStream_t stream);
+
+template void NLLLossGrad<half, float>(const int n, const int c, const int reduction, const half *input,
+                                       const int32_t *target, const float *weight, const float *total_weight,
+                                       const half *dloss, half *dinput, cudaStream_t stream);
