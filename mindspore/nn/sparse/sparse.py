@@ -21,13 +21,14 @@ class SparseToDense(Cell):
     """
     Converts a sparse tensor into dense.
 
-    Not yet supported by any backend at the moment.
-
     Inputs:
         - **sparse_tensor** (:class:`mindspore.SparseTensor`): the sparse tensor to convert.
 
     Outputs:
         Tensor, converted from sparse tensor.
+
+    Args:
+        sparse_tensor (SparseTensor): the sparse tensor to convert.
 
     Raises:
         TypeError: If the`sparse_tensor.indices` data type is neither int32 nor int64.
