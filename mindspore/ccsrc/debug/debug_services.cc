@@ -653,6 +653,9 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
 }
 
 void ReplaceSrcFileName(const bool is_sync_mode, std::string *dump_style_name) {
+  if (dump_style_name == nullptr) {
+    return;
+  }
   const std::string strsrc = "/";
   std::string strdst;
   if (is_sync_mode) {

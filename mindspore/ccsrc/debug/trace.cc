@@ -62,11 +62,17 @@ std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
 }
 
 std::string GetGraphParamString(const FuncGraphPtr &graph, abstract::AbstractBasePtrList args_spec_list) {
+  MS_EXCEPTION_IF_NULL(graph);
   std::ostringstream oss;
   oss << "graph:" << graph->ToString() << " with args[";
   auto params = graph->parameters();
+  if (params.size() < args_spec_list.size()) {
+    MS_EXCEPTION(ValueError) << "The size of parameters less than args_spec_list's size.";
+  }
   for (size_t i = 0; i < args_spec_list.size(); i++) {
-    oss << params[i]->ToString() << ":<" << GetAbstractStr(args_spec_list[i]) << ">,";
+    auto parameter = params[i];
+    MS_EXCEPTION_IF_NULL(parameter);
+    oss << parameter->ToString() << ":<" << GetAbstractStr(args_spec_list[i]) << ">,";
   }
   oss << "]";
   oss << GetDebugInfo(graph->debug_info(), kSourceLineTipDiscard);
@@ -124,8 +130,8 @@ class AnalyzedFuncGraphExporter : public AnfExporter {
 
   bool ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs);
 
-  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
-  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
+  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph) override;
+  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph) override;
   void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map);
 
@@ -149,7 +155,9 @@ std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs() {
   auto &list = GetCNodeDebugStack();
   for (size_t i = 0; i < list.size(); ++i) {
     auto node_cfg = list[i];
+    MS_EXCEPTION_IF_NULL(node_cfg);
     auto fg = node_cfg->context()->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
     auto node = node_cfg->node();
     tagged_func_graphs[fg][node] = i;
   }

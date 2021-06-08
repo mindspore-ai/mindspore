@@ -315,10 +315,11 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
   buffer_ << "<tr><td>parameters</td></tr>";
   int count = 0;
   for (auto &parameter : key->parameters()) {
+    MS_EXCEPTION_IF_NULL(parameter);
     buffer_ << "<tr><td>";
     buffer_ << parameter->ToString();
     auto param = parameter->cast<ParameterPtr>();
-    if (param->has_default()) {
+    if (param && param->has_default()) {
       auto tensor_v = param->default_param();
       if (tensor_v && tensor_v->isa<tensor::Tensor>()) {
         auto tensor = tensor_v->cast<tensor::TensorPtr>();
