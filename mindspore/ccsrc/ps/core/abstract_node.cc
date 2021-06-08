@@ -50,11 +50,6 @@ void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const 
                       << " is not match the current node id:" << node_info_.node_id_;
   }
 
-  if (register_resp_message.rank_id() < 0) {
-    MS_LOG(EXCEPTION) << "The rank id is wrong.";
-  }
-  node_info_.rank_id_ = register_resp_message.rank_id();
-
   // Receive the Register message, indicating that the scheduler is alive, so update the time point at which the
   // scheduler is alive
   UpdateSchedulerTime();
@@ -497,9 +492,13 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   send_meta_message.ParseFromArray(data, size);
   worker_num_ = send_meta_message.worker_num();
   server_num_ = send_meta_message.server_num();
+  if (send_meta_message.rank_id() < 0) {
+    MS_LOG(EXCEPTION) << "The rank id is wrong.";
+  }
+  node_info_.rank_id_ = send_meta_message.rank_id();
   current_cluster_state_ = send_meta_message.cluster_state();
   MS_LOG(INFO) << "The send metadata worker num:" << worker_num_ << ", server num:" << server_num_
-               << ", cluster state is:" << current_cluster_state_;
+               << ", cluster state is:" << current_cluster_state_ << ", the rank id:" << node_info_.rank_id_;
 
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {

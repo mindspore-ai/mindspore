@@ -90,7 +90,7 @@ class SchedulerNode : public Node {
                         std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
 
   // After scheduler collects all registered message, it actively sends finish to the node connected by the client.
-  void SendMetadata(const std::shared_ptr<TcpClient> &client);
+  void SendMetadata(const std::shared_ptr<TcpClient> &client, uint32_t rank_id);
   // After scheduler collects all finish message, it actively sends finish to the node connected by the client.
   void SendFinish(const std::shared_ptr<TcpClient> &client);
 
