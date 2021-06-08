@@ -79,6 +79,7 @@ message GnnGraphDataRequestPb {
   GnnRandomWalkPb random_walk = 6;
   int32 strategy = 7;
   repeated IdPairPb node_pair = 8;
+  int32 format = 9; // output format for GET_ALL_NEIGHBORS function
 }
 
 message GnnGraphDataResponsePb {

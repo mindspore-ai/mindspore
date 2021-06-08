@@ -1051,7 +1051,6 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
   inputImage_ = std::make_shared<DvppDataInfo>();
   inputImage_->format = format;
   APP_ERROR ret =
-    // GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
     GetJpegImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
@@ -1153,7 +1152,6 @@ APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelF
   inputImage_ = std::make_shared<DvppDataInfo>();
   inputImage_->format = format;
   APP_ERROR ret =
-    // GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
     GetPngImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
@@ -1268,8 +1266,6 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
   }
 
   // Copy the image data from host to device
-  // ret = aclrtMemcpyAsync(inDevBuff, imageInfo.lenOfByte, imageInfo.data.get(), imageInfo.lenOfByte,
-  //                       ACL_MEMCPY_HOST_TO_DEVICE, dvppStream_);
   ret = aclrtMemcpyAsync(inDevBuff, imageInfo.lenOfByte, imageInfo.data, imageInfo.lenOfByte, ACL_MEMCPY_HOST_TO_DEVICE,
                          dvppStream_);
   if (ret != APP_ERR_OK) {
@@ -1319,7 +1315,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat 
 
   // Get the buffer size(On device) of decode output according to the input data and output format
   uint32_t outBufferSize;
-  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
+
   ret = GetJpegDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBufferSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
@@ -1377,7 +1373,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
 
   // Get the buffer size of decode output according to the input data and output format
   uint32_t outBuffSize;
-  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
+
   ret = GetPngDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";

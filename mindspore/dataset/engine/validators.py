@@ -1108,7 +1108,7 @@ def check_gnn_get_all_neighbors(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [node_list, neighbour_type], _ = parse_user_args(method, *args, **kwargs)
+        [node_list, neighbour_type, _], _ = parse_user_args(method, *args, **kwargs)
 
         check_gnn_list_or_ndarray(node_list, 'node_list')
         type_check(neighbour_type, (int,), "neighbour_type")

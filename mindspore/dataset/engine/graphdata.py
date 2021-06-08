@@ -24,6 +24,7 @@ from mindspore._c_dataengine import GraphDataClient
 from mindspore._c_dataengine import GraphDataServer
 from mindspore._c_dataengine import Tensor
 from mindspore._c_dataengine import SamplingStrategy as Sampling
+from mindspore._c_dataengine import OutputFormat as Format
 
 from .validators import check_gnn_graphdata, check_gnn_get_all_nodes, check_gnn_get_all_edges, \
     check_gnn_get_nodes_from_edges, check_gnn_get_edges_from_nodes, check_gnn_get_all_neighbors, \
@@ -39,6 +40,19 @@ class SamplingStrategy(IntEnum):
 DE_C_INTER_SAMPLING_STRATEGY = {
     SamplingStrategy.RANDOM: Sampling.DE_SAMPLING_RANDOM,
     SamplingStrategy.EDGE_WEIGHT: Sampling.DE_SAMPLING_EDGE_WEIGHT,
+}
+
+
+class OutputFormat(IntEnum):
+    NORMAL = 0
+    COO = 1
+    CSR = 2
+
+
+DE_C_INTER_OUTPUT_FORMAT = {
+    OutputFormat.NORMAL: Format.DE_FORMAT_NORMAL,
+    OutputFormat.COO: Format.DE_FORMAT_COO,
+    OutputFormat.CSR: Format.DE_FORMAT_CSR,
 }
 
 
@@ -185,20 +199,65 @@ class GraphData:
         return self._graph_data.get_edges_from_nodes(node_list).as_array()
 
     @check_gnn_get_all_neighbors
-    def get_all_neighbors(self, node_list, neighbor_type):
+    def get_all_neighbors(self, node_list, neighbor_type, output_format=OutputFormat.NORMAL):
         """
         Get `neighbor_type` neighbors of the nodes in `node_list`.
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (int): Specify the type of neighbor.
+            output_format (OutputFormat, optional): Output storage format (default=OutputFormat.NORMAL)
+                It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
 
         Returns:
+            For NORMAL format or COO format
             numpy.ndarray, array of neighbors.
+            If CSR format is specified, two numpy.ndarrays will return.
+            The first is offset table, the second is neighbors
 
         Examples:
+            We try to use the following example to illustrate the definition of these formats. 1 represents connected
+            between two nodes, and 0 represents not connected.
+            Raw Data:
+                0   1   2   3
+            0   0   1   0   0
+            1   0   0   1   0
+            2   1   0   0   1
+            3   1   0   0   0
+
+            Normal format
             >>> nodes = graph_dataset.get_all_nodes(node_type=1)
             >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2)
+            NORMAL:
+                dst_0   dst_1
+            0     1       -1
+            1     2       -1
+            2     0       3
+            3     1       -1
+
+            COO format
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> neighbors_coo = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
+                                                                output_format=OutputFormat.COO)
+            COO:
+            src     dst
+            0       1
+            1       2
+            2       0
+            2       3
+            3       1
+
+            CSR format
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
+                                                                              output_format=OutputFormat.CSR)
+            CSR:
+            offset table:           dst table:
+            0                       1
+            1                       2
+            2                       0
+            4                       3
+                                    1
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -206,7 +265,13 @@ class GraphData:
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
-        return self._graph_data.get_all_neighbors(node_list, neighbor_type).as_array()
+        result_list = self._graph_data.get_all_neighbors(node_list, neighbor_type,
+                                                         DE_C_INTER_OUTPUT_FORMAT[output_format]).as_array()
+        if output_format == OutputFormat.CSR:
+            offset_table = result_list[:len(node_list)]
+            neighbor_table = result_list[len(node_list):]
+            return offset_table, neighbor_table
+        return result_list
 
     @check_gnn_get_sampled_neighbors
     def get_sampled_neighbors(self, node_list, neighbor_nums, neighbor_types, strategy=SamplingStrategy.RANDOM):

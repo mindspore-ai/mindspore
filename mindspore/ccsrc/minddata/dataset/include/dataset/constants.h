@@ -131,7 +131,14 @@ enum class SamplingStrategy {
   kEdgeWeight = 1  ///< Sampling with edge weight as probability.
 };
 
-// convenience functions for 32bit int bitmask.
+/// \brief Possible values for output format in get all neighbors function of gnn dataset
+enum class OutputFormat {
+  kNormal = 0,  ///< Normal format>
+  kCoo = 1,     ///< COO format>
+  kCsr = 2      ///< CSR format>
+};
+
+// convenience functions for 32bit int bitmask
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 
 inline void BitSet(uint32_t *bits, uint32_t bitMask) { *bits |= bitMask; }

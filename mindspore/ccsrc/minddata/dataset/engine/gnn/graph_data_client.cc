@@ -140,7 +140,7 @@ Status GraphDataClient::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType
 }
 
 Status GraphDataClient::GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
-                                        std::shared_ptr<Tensor> *out) {
+                                        const OutputFormat &format, std::shared_ptr<Tensor> *out) {
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -149,6 +149,7 @@ Status GraphDataClient::GetAllNeighbors(const std::vector<NodeIdType> &node_list
     request.add_id(static_cast<google::protobuf::int32>(node_id));
   }
   request.add_type(static_cast<google::protobuf::int32>(neighbor_type));
+  request.set_format(static_cast<google::protobuf::int32>(format));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
 #endif
   return Status::OK();

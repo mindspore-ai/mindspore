@@ -39,7 +39,7 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<DeviceTensor> &
       RETURN_STATUS_UNEXPECTED(error);
     }
     std::shared_ptr<DvppDataInfo> CropOut(processor_->Get_Croped_DeviceData());
-    // std::cout << "Decoded size: " << decoded_width << ", " << decoded_height << std::endl;
+
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output);
