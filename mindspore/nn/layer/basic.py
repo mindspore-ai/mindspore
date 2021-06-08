@@ -52,7 +52,8 @@ class L1Regularizer(Cell):
         scale (int, float): l1 regularization factor which greater than 0.
 
     Inputs:
-        - **weights** (Tensor) - The input tensor
+        - **weights** (Tensor) - The input of L1Regularizer with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, which dtype is higher precision data type between mindspore.float32 and weights dtype,
@@ -102,7 +103,7 @@ class Dropout(Cell):
 
     The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}`    during training so
     that the output layer remains at a similar scale. During inference, this
-    layer returns the same tensor as the input.
+    layer returns the same tensor as the `x`.
 
     This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
@@ -116,19 +117,20 @@ class Dropout(Cell):
     Args:
         keep_prob (float): The keep rate, greater than 0 and less equal than 1. E.g. rate=0.9,
                    dropping out 10% of input units. Default: 0.5.
-        dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
+        dtype (:class:`mindspore.dtype`): Data type of `x`. Default: mindspore.float32.
 
     Inputs:
-        - **input** (Tensor) - The input of Dropout with data type of float16 or float32.
+        - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, output tensor with the same shape as the input.
+        Tensor, output tensor with the same shape as the `x`.
 
     Raises:
         TypeError: If `keep_prob` is not a float.
-        TypeError: If dtype of `input` is not neither float16 nor float32.
+        TypeError: If dtype of `x` is not neither float16 nor float32.
         ValueError: If `keep_prob` is not in range (0, 1].
-        ValueError: If length of shape of `input` is less than 1.
+        ValueError: If length of shape of `x` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -177,25 +179,31 @@ class Flatten(Cell):
     Flattens a tensor without changing dimension of batch size on the 0-th axis.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened.
+        - **x** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened. The data type is Number.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions
+          and the shape can't be ().
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
         the product of the remaining dimensions.
 
     Raises:
-        TypeError: If `input` is not a subclass of Tensor.
+        TypeError: If `x` is not a subclass of Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
+        >>> x = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
         >>> net = nn.Flatten()
-        >>> output = net(input)
+        >>> output = net(x)
         >>> print(output)
         [[1.2 1.2 2.1 2.1]
          [2.2 2.2 3.2 3.2]]
+        >>> print(f"before flatten the x shape is {x.shape}")
+        before flatten the x shape is  (2, 2, 2)
+        >>> print(f"after flatten the output shape is {output.shape}")
+        after flatten the output shape is (2，4)
     """
 
     def __init__(self):
@@ -220,26 +228,27 @@ class Dense(Cell):
     Applies dense connected layer for the input. This layer implements the operation as:
 
     .. math::
-        \text{outputs} = \text{activation}(\text{inputs} * \text{kernel} + \text{bias}),
+        \text{outputs} = \text{activation}(\text{X} * \text{kernel} + \text{bias}),
 
-    where :math:`\text{activation}` is the activation function passed as the activation
+    where :math:`X` is the input tensors, :math:`\text{activation}` is the activation function passed as the activation
     argument (if passed in), :math:`\text{kernel}` is a weight matrix with the same
-    data type as the inputs created by the layer, and :math:`\text{bias}` is a bias vector
-    with the same data type as the inputs created by the layer (only if has_bias is True).
+    data type as the :math:`X` created by the layer, and :math:`\text{bias}` is a bias vector
+    with the same data type as the :math:`X` created by the layer (only if has_bias is True).
 
     Args:
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
+            same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (Union[str, Cell, Primitive]): activate function applied to the output of the fully connected layer,
             eg. 'ReLU'.Default: None.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(*, in\_channels)`.
+        - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
+          to :math:`in\_channels` in `Inputs`
 
     Outputs:
         Tensor of shape :math:`(*, out\_channels)`.
@@ -257,9 +266,9 @@ class Dense(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.array([[180, 234, 154], [244, 48, 247]]), mindspore.float32)
+        >>> x = Tensor(np.array([[180, 234, 154], [244, 48, 247]]), mindspore.float32)
         >>> net = nn.Dense(3, 4)
-        >>> output = net(input)
+        >>> output = net(x)
         >>> print(output.shape)
         (2, 4)
     """
@@ -368,25 +377,25 @@ class ClipByNorm(Cell):
                                             Default: None, all dimensions to calculate.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape N-D. The type must be float32 or float16.
+        - **x** (Tensor) - Tensor of shape N-D. The type must be float32 or float16.
         - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)`.
           Or a tensor shape can be broadcast to input shape.
 
     Outputs:
-        Tensor, clipped tensor with the same shape as the input, whose type is float32.
+        Tensor, clipped tensor with the same shape as the `x`, whose type is float32.
 
     Raises:
         TypeError: If `axis` is not one of None, int, tuple.
-        TypeError: If dtype of `input` is neither float32 nor float16.
+        TypeError: If dtype of `x` is neither float32 nor float16.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.ClipByNorm()
-        >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
+        >>> x = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> clip_norm = Tensor(np.array([100]).astype(np.float32))
-        >>> output = net(input, clip_norm)
+        >>> output = net(x, clip_norm)
         >>> print(output.shape)
         (4, 16)
 
@@ -450,11 +459,12 @@ class Norm(Cell):
                    the dimensions in `axis` are removed from the output shape. Default: False.
 
     Inputs:
-        - **input** (Tensor) - Tensor which is not empty.
+        - **x** (Tensor) - Tensor which is not empty. The data type should be float16 or float32.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, output tensor with dimensions in 'axis' reduced to 1 will be returned if 'keep_dims' is True;
-        otherwise a Tensor with dimensions in 'axis' removed is returned.
+        otherwise a Tensor with dimensions in 'axis' removed is returned. The data type is the same with `x`
 
     Raises:
         TypeError: If `axis` is neither an int nor tuple.
@@ -465,10 +475,32 @@ class Norm(Cell):
 
     Examples:
         >>> net = nn.Norm(axis=0)
-        >>> input = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
-        >>> output = net(input)
+        >>> x = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
+        >>> print(x.shape)
+        (2, 4)
+        >>> output = net(x)
         >>> print(output)
         [4.472136 4.1231055 9.486833 6.0827627]
+        >>> print(output.shape)
+        (4,)
+        >>> net = nn.Norm(axis=0, keep_dims=True)
+        >>> x = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
+        >>> print(x.shape)
+        (2, 4)
+        >>> output = net(x)
+        >>> print(output)
+        [4.472136 4.1231055 9.486833 6.0827627]
+        >>> print(output.shape)
+        (1, 4)
+        >>> net = nn.Norm(axis=1)
+        >>> x = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
+        >>> print(x.shape)
+        (2, 4)
+        >>> output = net(x)
+        >>> print(output)
+        [10.677078 7.071068]
+        >>> print(output.shape)
+        (2,)
     """
 
     def __init__(self, axis=(), keep_dims=False):
@@ -535,11 +567,12 @@ class OneHot(Cell):
                                           data type of indices. Default: mindspore.float32.
 
     Inputs:
-        - **indices** (Tensor) - A tensor of indices with data type of int32 or int64 and arbitrary shape.
+        - **indices** (Tensor) - A tensor of indices with data type of int32 or int64.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, the one-hot tensor of data type `dtype` with dimension at `axis` expanded to `depth` and filled with
-        on_value and off_value.
+        on_value and off_value. The dimension of the `Outputs` is equal to the dimension of the `indices` plus one.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
@@ -551,6 +584,7 @@ class OneHot(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # 1st sample: add new coordinates at axis 1
         >>> net = nn.OneHot(depth=4, axis=1)
         >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
         >>> output = net(indices)
@@ -563,6 +597,46 @@ class OneHot(Cell):
           [0. 0.]
           [0. 1.]
           [0. 0.]]]
+        >>> # The results are shown below:
+        >>> print(output.shape)
+        (2, 4, 2)
+        >>> # 2nd sample: add new coordinates at axis 0
+        >>> net = nn.OneHot(depth=4, axis=0)
+        >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
+        >>> output = net(indices)
+        >>> print(output)
+        [[[0. 0.]
+          [1. 0.]]
+         [[1. 0.]
+          [0. 0.]]
+         [[0. 0.]
+          [0. 1.]]
+         [[0. 1.]
+          [0. 0.]]]
+        >>> # The results are shown below:
+        >>> print(output.shape)
+        (4, 2, 2)
+        >>> # 3rd sample: add new coordinates at the last dimension.
+        >>> net = nn.OneHot(depth=4, axis=-1)
+        >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
+        >>> output = net(indices)
+        >>> # The results are shown below:
+        >>> print(output)
+        [[[0. 1. 0. 0.]
+          [0. 0. 0. 1.]]
+         [[1. 0. 0. 0.]
+          [0. 0. 1. 0.]]]
+        >>> print(output.shape)
+        (2, 2, 4)
+        >>> indices = Tensor([1, 3, 0, 2], dtype=mindspore.int32)
+        >>> output = net(indices)
+        >>> print(output)
+        [[0. 1. 0. 0.]
+         [0. 0. 0. 1.]
+         [1. 0. 0. 0.]
+         [0. 0. 1. 0.]]
+        >>> print(output.shape)
+        (4， 4)
     """
 
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
@@ -584,28 +658,38 @@ class Pad(Cell):
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
-            paddings are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
+            paddings are int type. For `D` th dimension of the `x`, paddings[D, 0] indicates how many sizes to be
             extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
             be extended behind of the `D` th dimension of the input tensor. The padded size of each dimension D of the
             output is: :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`
+            eg:
+
+            - mode = "CONSTANT".
+            - paddings = [[1,1], [2,2]].
+            - x = [[1,2,3], [4,5,6], [7,8,9]].
+            - The above can be seen: 1st dimension of x is 3, 2nd dimension of x is 3.
+            - Substitute into the formula to get:
+            - 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 4.
+            - 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
+            - so output.shape is (4, 7)
 
         mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor.
 
     Outputs:
         Tensor, the tensor after padding.
 
-        - If `mode` is "CONSTANT", it fills the edge with 0, regardless of the values of the `input_x`.
-          If the `input_x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
+        - If `mode` is "CONSTANT", it fills the edge with 0, regardless of the values of the `x`.
+          If the `x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
           Outputs is [[0,0,0,0,0,0,0], [0,0,1,2,3,0,0], [0,0,4,5,6,0,0], [0,0,7,8,9,0,0], [0,0,0,0,0,0,0]].
         - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
-          If the `input_x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
+          If the `x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
           Outputs is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
         - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
-          according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
+          according to the symmetry axis, except that it includes the symmetry axis. If the `x`
           is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the Outputs is
           [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
 
@@ -619,23 +703,86 @@ class Pad(Cell):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as P
         >>> import mindspore.nn as nn
         >>> import numpy as np
+        >>> # If `mode` is "CONSTANT"
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="CONSTANT")
         ...     def construct(self, x):
         ...         return self.pad(x)
-        >>> x = np.array([[0.3, 0.5, 0.2], [0.5, 0.7, 0.3]], dtype=np.float32)
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindsprore.float32)
         >>> pad = Net()
-        >>> output = pad(Tensor(x))
+        >>> output = pad(x)
         >>> print(output)
-        [[0.         0.         0.         0.         0.         0.        0.         ]
-         [0.         0.         0.3        0.5        0.2        0.        0.         ]
-         [0.         0.         0.5        0.7        0.3        0.        0.         ]
-         [0.         0.         0.         0.         0.         0.        0.         ]]
+        [[0. 0. 0. 0. 0. 0. 0.]
+         [0. 0. 1. 2. 3. 0. 0.]
+         [0. 0. 4. 5. 6. 0. 0.]
+         [0. 0. 0. 0. 0. 0. 0.]]
+        >>> # Another way to call
+        >>> pad = ops.Pad(paddings=((1, 1), (2, 2)))
+        >>> # From the above code, we can see following:
+        >>> # "paddings=((1, 1), (2, 2))",
+        >>> # paddings[0][0] = 1, indicates a row of values is filled top of the input data in the 1st dimension.
+        >>> # Shown as follows:
+        >>> # [[0. 0. 0.]
+        >>> #  [1. 2. 3.]
+        >>> #  [4. 5. 6.]]
+        >>> # paddings[0][1] = 1 indicates a row of values is filled below input data in the 1st dimension.
+        >>> # Shown as follows:
+        >>> # [[0. 0. 0.]
+        >>> #  [1. 2. 3.]
+        >>> #  [4. 5. 6.]
+        >>> #  [0. 0. 0.]]
+        >>> # paddings[1][0] = 2, indicates 2 rows of values is filled in front of input data in the 2nd dimension.
+        >>> # Shown as follows:
+        >>> # [[0. 0. 0. 0. 0.]
+        >>> #  [0. 0. 1. 2. 3.]
+        >>> #  [0. 0. 4. 5. 6.]
+        >>> #  [0. 0. 0. 0. 0.]]
+        >>> # paddings[1][1] = 2, indicates 2 rows of values is filled in front of input data in the 2nd dimension.
+        >>> # Shown as follows:
+        >>> # [[0. 0. 0. 0. 0. 0. 0.]
+        >>> #  [0. 0. 1. 2. 3. 0. 0.]
+        >>> #  [0. 0. 4. 5. 6. 0. 0.]
+        >>> #  [0. 0. 0. 0. 0. 0. 0.]]
+        >>> output = pad(x)
+        >>> print(output)
+        [[0. 0. 0. 0. 0. 0. 0.]
+         [0. 0. 1. 2. 3. 0. 0.]
+         [0. 0. 4. 5. 6. 0. 0.]
+         [0. 0. 0. 0. 0. 0. 0.]]
+        >>> # if mode is "REFLECT"
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="REFLECT")
+        ...     def construct(self, x):
+        ...         return self.pad(x)
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindsprore.float32)
+        >>> pad = Net()
+        >>> output = pad(x)
+        >>> print(output)
+        [[6. 5. 4. 5. 6. 5. 4.]
+         [3. 2. 1. 2. 3. 2. 1.]
+         [6. 5. 4. 5. 6. 5. 4.]
+         [3. 2. 1. 2. 3. 2. 1.]]
+        >>> # if mode is "SYMMETRIC"
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="SYMMETRIC")
+        ...     def construct(self, x):
+        ...         return self.pad(x)
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindsprore.float32)
+        >>> pad = Net()
+        >>> output = pad(x)
+        >>> print(output)
+        [[2. 1. 1. 2. 3. 3. 2.]
+         [2. 1. 1. 2. 3. 3. 2.]
+         [5. 4. 4. 5. 6. 6. 5.]
+         [5. 4. 4. 5. 6. 6. 5.]]
     """
 
     def __init__(self, paddings, mode="CONSTANT"):
@@ -721,9 +868,18 @@ class ResizeBilinear(Cell):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> tensor = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
+        >>> x = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
         >>> resize_bilinear = nn.ResizeBilinear()
-        >>> result = resize_bilinear(tensor, size=(5,5))
+        >>> result = resize_bilinear(x, size=(5,5))
+        >>> print(x)
+        [[[[1. 2. 3. 4.]
+           [5. 6. 7. 8.]]]]
+        >>> print(result)
+        [[[[1.        1.8.      2.6       3.4       4.       ]
+           [2.6       3.4       4.2000003 5.        5.6000004]
+           [4.2       5.0000005 5.8       6.6       7.2      ]
+           [5.        5.8       6.6       7.4       8.       ]
+           [5.        5.8       6.6       7.4000006 8.       ]]]]
         >>> print(result.shape)
         (1, 1, 5, 5)
     """
@@ -758,11 +914,11 @@ class Unfold(Cell):
             - valid: Means that the taken patch area must be completely covered in the original image.
 
     Inputs:
-        - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
+        - **x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
           data type is number.
 
     Outputs:
-        Tensor, a 4-D tensor whose data type is same as `input_x`,
+        Tensor, a 4-D tensor whose data type is same as `x`,
         and the shape is [out_batch, out_depth, out_row, out_col] where `out_batch` is the same as the `in_batch`.
 
         :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
@@ -781,7 +937,15 @@ class Unfold(Cell):
 
     Examples:
         >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])
+        >>> # As stated in the above code:
+        >>> # ksize_row = 2, ksize_col = 2, rate_row = 2, rate_col = 2, stride_row = 2, stride_col = 2.
         >>> image = Tensor(np.ones([2, 3, 6, 6]), dtype=mstype.float16)
+        >>> # in_batch = 2, in_depth = 3, in_row = 6, in_col = 6.
+        >>> # Substituting the formula to get:
+        >>> # out_batch = in_batch = 2
+        >>> # out_depth = 2 * 2 * 3 = 12
+        >>> # out_row = (6 - (2 + (2 - 1) * (2 - 1))) // 2 + 1 = 2
+        >>> # out_col = (6 - (2 + (2 - 1) * (2 - 1))) // 2 + 1 = 2
         >>> output = net(image)
         >>> print(output.shape)
         (2, 12, 2, 2)
@@ -827,11 +991,12 @@ class Tril(Cell):
     Returns a tensor with elements above the kth diagonal zeroed.
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor. The data type is Number.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **k** (Int) - The index of diagonal. Default: 0
 
     Outputs:
-        Tensor, has the same type as input `x`.
+        Tensor, has the same shape and type as input `x`.
 
     Raises:
         TypeError: If `k` is not an int.
@@ -841,12 +1006,50 @@ class Tril(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
         >>> tril = nn.Tril()
         >>> result = tril(x)
         >>> print(result)
-        [[1   0]
-         [3   4]]
+        [[ 1,  0,  0,  0],
+         [ 5,  6,  0,  0],
+         [10, 11, 12,  0],
+         [14, 15, 16, 17]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
+        >>> tril = nn.Tril()
+        >>> result = tril(x, 1)
+        >>> print(result)
+        [[ 1,  2,  0,  0],
+         [ 5,  6,  7,  0],
+         [10, 11, 12,  13],
+         [14, 15, 16, 17]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
+        >>> tril = nn.Tril()
+        >>> result = tril(x, 2)
+        >>> print(result)
+        [[ 1,  2,  3,  0],
+         [ 5,  6,  7,  8],
+         [10, 11, 12,  13],
+         [14, 15, 16, 17]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
+        >>> tril = nn.Tril()
+        >>> result = tril(x, -1)
+        >>> print(result)
+        [[ 0,  0,  0,  0],
+         [ 5,  0,  0,  0],
+         [10, 11,  0,  0],
+         [14, 15, 16,  0]]))
     """
 
     def __init__(self):
@@ -875,11 +1078,12 @@ class Triu(Cell):
     Returns a tensor with elements below the kth diagonal zeroed.
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor. The data type is Number.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **k** (Int) - The index of diagonal. Default: 0
 
     Outputs:
-        Tensor, has the same type as input `x`.
+        Tensor, has the same type and shape as input `x`.
 
     Raises:
         TypeError: If `k` is not an int.
@@ -889,12 +1093,50 @@ class Triu(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
         >>> triu = nn.Triu()
         >>> result = triu(x)
         >>> print(result)
-        [[1 2]
-         [0 4]]
+        [[ 1,  2,  3,  4],
+         [ 0,  6,  7,  8],
+         [ 0,  0, 12, 13],
+         [ 0,  0,  0, 17]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
+        >>> triu = nn.Triu()
+        >>> result = triu(x, 1)
+        >>> print(result)
+        [[ 0,  2,  3,  4],
+         [ 0,  0,  7,  8],
+         [ 0,  0,  0, 13],
+         [ 0,  0,  0,  0]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
+        >>> triu = nn.Triu()
+        >>> result = triu(x, 2)
+        >>> print(result)
+        [[ 0,  0,  3,  4],
+         [ 0,  0,  0,  8],
+         [ 0,  0,  0,  0],
+         [ 0,  0,  0,  0]]))
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        >>>                      [ 5,  6,  7,  8],
+        >>>                      [10, 11, 12, 13],
+        >>>                      [14, 15, 16, 17]]))
+        >>> triu = nn.Triu()
+        >>> result = triu(x, -1)
+        >>> print(result)
+        [[ 1,  2,  3,  4],
+         [ 5,  6,  7,  8],
+         [ 0,  11, 12, 13],
+         [ 0,  0,  16, 17]]))
     """
 
     def __init__(self):
@@ -937,6 +1179,7 @@ class MatrixDiag(Cell):
     Inputs:
         - **x** (Tensor) - The diagonal values. It can be one of the following data types:
           float32, float16, int32, int8, and uint8.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same type as input `x`. The shape must be x.shape + (x.shape[-1], ).
@@ -951,9 +1194,39 @@ class MatrixDiag(Cell):
         >>> x = Tensor(np.array([1, -1]), mindspore.float32)
         >>> matrix_diag = nn.MatrixDiag()
         >>> output = matrix_diag(x)
+        >>> print(x.shape)
+        (2,)
         >>> print(output)
         [[ 1.  0.]
          [ 0. -1.]]
+        >>> print(output.shape)
+        (2, 2)
+        >>> x = Tensor(np.array([[1, -1], [1, -1]]), mindspore.float32)
+        >>> matrix_diag = nn.MatrixDiag()
+        >>> output = matrix_diag(x)
+        >>> print(x.shape)
+        (2, 2)
+        >>> print(output)
+        [[[ 1.  0.]
+          [ 0. -1.]]
+         [[ 1.  0.]
+          [ 0. -1.]]]
+        >>> print(output.shape)
+        (2, 2, 2)
+        >>> x = Tensor(np.array([[1, -1, 1], [1, -1, 1]]), mindspore.float32)
+        >>> matrix_diag = nn.MatrixDiag()
+        >>> output = matrix_diag(x)
+        >>> print(x.shape)
+        (2, 3)
+        >>> print(output)
+        [[[ 1.  0.  0.]
+          [ 0. -1.  0.]
+          [ 0.  0.  1.]
+         [[ 1.  0.  0.]
+          [ 0. -1.  0.]
+          [ 0.  0.  1.]]]
+        >>> print(output.shape)
+        (2, 3, 3)
     """
 
     def __init__(self):
@@ -992,13 +1265,23 @@ class MatrixDiagPart(Cell):
         ``Ascend``
 
     Examples:
-        >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
+        >>> x = Tensor([[[-1, 0], [0, 1]],
+        ...             [[-1, 0], [0, 1]],
+        ...             [[-1, 0], [0, 1]]], mindspore.float32)
         >>> matrix_diag_part = nn.MatrixDiagPart()
         >>> output = matrix_diag_part(x)
         >>> print(output)
         [[-1.  1.]
          [-1.  1.]
          [-1.  1.]]
+        >>> x = Tensor([[-1, 0, 0, 1],
+        ...             [-1, 0, 0, 1],
+        ...             [-1, 0, 0, 1],
+        ...             [-1, 0, 0, 1], mindspore.float32)
+        >>> matrix_diag_part = nn.MatrixDiagPart()
+        >>> output = matrix_diag_part(x)
+        >>> print(output)
+        [-1 0 0 1]
     """
 
     def __init__(self):

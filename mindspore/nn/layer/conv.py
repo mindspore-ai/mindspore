@@ -124,7 +124,7 @@ class Conv2d(_Conv):
     where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of
     the convolution kernel. The full kernel has shape
     :math:`(C_{out}, C_{in} // \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where group is the group number to split the input in the channel dimension.
+    where group is the group number to split the input `x` in the channel dimension.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
     :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
@@ -149,7 +149,7 @@ class Conv2d(_Conv):
             "same", "valid", "pad". Default: "same".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
+              the input `x`. The total number of padding will be calculated in horizontal and vertical
               directions and evenly distributed to top and bottom, left and right if possible. Otherwise, the
               last extra padding will be done from the bottom and the right side. If this mode is set, `padding`
               must be 0.
@@ -158,10 +158,10 @@ class Conv2d(_Conv):
               without padding. Extra pixels will be discarded. If this mode is set, `padding`
               must be 0.
 
-            - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
+            - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
 
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input `x`. If `padding` is one integer,
                     the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
                     with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
@@ -169,7 +169,7 @@ class Conv2d(_Conv):
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater or equal to 1 and bounded by the height and width of the
-                                      input. Default: 1.
+                                      input `x`. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. If the group is equal to `in_channels` and `out_channels`,
             this 2D convolution layer also can be called 2D depthwise convolution layer. Default: 1.
@@ -187,7 +187,7 @@ class Conv2d(_Conv):
             Default: 'NCHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
           or :math:`(N, H_{in}, W_{in}, C_{in})`.
 
     Outputs:
@@ -306,7 +306,7 @@ class Conv1d(_Conv):
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
     of kernel and it has shape :math:`(\text{ks_w})`, where :math:`\text{ks_w}` is the width of the convolution kernel.
     The full kernel has shape :math:`(C_{out}, C_{in} // \text{group}, \text{ks_w})`, where group is the group number
-    to split the input in the channel dimension.
+    to split the input `x` in the channel dimension.
 
     If the 'pad_mode' is set to be "valid", the output width will be
     :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
@@ -325,7 +325,7 @@ class Conv1d(_Conv):
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid", "pad". Default: "same".
 
-            - same: Adopts the way of completion. The output width will be the same as the input.
+            - same: Adopts the way of completion. The output width will be the same as the input `x`.
               The total number of padding will be calculated in the horizontal
               direction and evenly distributed to left and right if possible. Otherwise, the
               last extra padding will be done from the bottom and the right side. If this mode is set, `padding`
@@ -335,15 +335,15 @@ class Conv1d(_Conv):
               without padding. Extra pixels will be discarded. If this mode is set, `padding`
               must be 0.
 
-            - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
+            - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
 
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (int): Implicit paddings on both sides of the input `x`. Default: 0.
         dilation (int): The data type is int. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater or equal to 1 and bounded by the height and width of the
-                                      input. Default: 1.
+                                      input `x`. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -358,7 +358,7 @@ class Conv1d(_Conv):
             Initializer for more details. Default: 'zeros'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, W_{out})`.
@@ -520,7 +520,7 @@ class Conv3d(_Conv):
             "same", "valid", "pad". Default: "same".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be the same as
-              the input. The total number of padding will be calculated in depth, horizontal and vertical
+              the input `x`. The total number of padding will be calculated in depth, horizontal and vertical
               directions and evenly distributed to head and tail, top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the tail, bottom and the right side.
               If this mode is set, `padding` must be 0.
@@ -529,10 +529,10 @@ class Conv3d(_Conv):
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `padding`
               must be 0.
 
-            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `padding` will
-              be padded to the input Tensor borders. `padding` must be greater than or equal to 0.
+            - pad: Implicit paddings on both sides of the input `x` in depth, height, width. The number of `padding`
+              will be padded to the input Tensor borders. `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int])): Implicit paddings on both sides of the input.
+        padding (Union(int, tuple[int])): Implicit paddings on both sides of the input `x`.
             The data type is int or a tuple of 6 integers. Default: 0. If `padding` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to padding.
             If `paddings` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal to
@@ -541,7 +541,7 @@ class Conv3d(_Conv):
             : math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
             Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
-            Its value must be greater or equal to 1 and bounded by the height and width of the input. Default: 1.
+            Its value must be greater or equal to 1 and bounded by the height and width of the input `x`. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1. Only 1 is currently supported.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -557,7 +557,7 @@ class Conv3d(_Conv):
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
           Currently input data type only support float16 and float32.
 
     Outputs:
@@ -663,7 +663,7 @@ class Conv3dTranspose(_Conv):
     Compute a 3D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
 
-    Input is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+    `x` is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
 
     If the 'pad_mode' is set to be "pad", the height and width of output are defined as:
 
@@ -689,7 +689,7 @@ class Conv3dTranspose(_Conv):
             "pad", "same", "valid". Default: "same".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be the same as
-              the input. The total number of padding will be calculated in depth, horizontal and vertical
+              the input `x`. The total number of padding will be calculated in depth, horizontal and vertical
               directions and evenly distributed to head and tail, top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the tail, bottom and the right side.
               If this mode is set, `padding` and `output_padding` must be 0.
@@ -698,7 +698,7 @@ class Conv3dTranspose(_Conv):
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `padding`
               and `output_padding` must be 0.
 
-            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
+            - pad: Implicit paddings on both sides of the input `x` in depth, height, width. The number of `pad` will
               be padded to the input Tensor borders. `padding` must be greater than or equal to 0.
 
         padding (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `padding` is an integer,
@@ -709,7 +709,7 @@ class Conv3dTranspose(_Conv):
             : math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
             Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
-            Its value must be greater or equal to 1 and bounded by the height and width of the input. Default: 1.
+            Its value must be greater or equal to 1 and bounded by the height and width of the input `x`. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1. Only 1 is currently supported.
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: 0.
@@ -727,7 +727,7 @@ class Conv3dTranspose(_Conv):
         data_format (str): The optional value for data format. Currently only support 'NCDHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
           Currently input data type only support float16 and float32.
 
     Outputs:
@@ -857,7 +857,7 @@ class Conv2dTranspose(_Conv):
     Compute a 2D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
 
-    Input is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+    `x` is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
 
     If the 'pad_mode' is set to be "pad", the height and width of output are defined as:
 
@@ -886,12 +886,12 @@ class Conv2dTranspose(_Conv):
         pad_mode (str): Select the mode of the pad. The optional values are
             "pad", "same", "valid". Default: "same".
 
-            - pad: Implicit paddings on both sides of the input.
+            - pad: Implicit paddings on both sides of the input `x`.
 
             - same: Adopted the way of completion.
 
             - valid: Adopted the way of discarding.
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input `x`. If `padding` is one integer,
                     the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
                     with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
@@ -899,7 +899,7 @@ class Conv2dTranspose(_Conv):
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater than or equal to 1 and bounded by the height and width of the
-                                      input. Default: 1.
+                                      input `x`. Default: 1.
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. This does not support for Davinci devices when group > 1. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -914,7 +914,7 @@ class Conv2dTranspose(_Conv):
             Initializer for more details. Default: 'zeros'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -1042,7 +1042,7 @@ class Conv1dTranspose(_Conv):
     Compute a 1D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
 
-    Input is typically of shape :math:`(N, C, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+    `x` is typically of shape :math:`(N, C, W)`, where :math:`N` is batch size and :math:`C` is channel number.
 
     If the 'pad_mode' is set to be "pad", the width of output is defined as:
 
@@ -1062,17 +1062,17 @@ class Conv1dTranspose(_Conv):
         pad_mode (str): Select the mode of the pad. The optional values are
             "pad", "same", "valid". Default: "same".
 
-            - pad: Implicit paddings on both sides of the input.
+            - pad: Implicit paddings on both sides of the input `x`.
 
             - same: Adopted the way of completion.
 
             - valid: Adopted the way of discarding.
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (int): Implicit paddings on both sides of the input `x`. Default: 0.
         dilation (int): The data type is int. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater or equal to 1 and bounded by the width of the
-                                      input. Default: 1.
+                                      input `x`. Default: 1.
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. This is not support for Davinci devices when group > 1. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -1087,7 +1087,7 @@ class Conv1dTranspose(_Conv):
             Initializer for more details. Default: 'zeros'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, W_{out})`.

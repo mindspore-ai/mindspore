@@ -61,7 +61,7 @@ class TimeDistributed(Cell):
     The time distributed layer.
 
     Time distributed is a wrapper which allows to apply a layer to every temporal slice of an input.
-    And the input should be at least 3D.
+    And the `x` should be at least 3D.
     There are two cases in the implementation.
     When reshape_with_axis provided, the reshape method will be chosen, which is more efficient;
     otherwise, the method of dividing the inputs along time axis will be used, which is more general.
@@ -73,7 +73,8 @@ class TimeDistributed(Cell):
         reshape_with_axis(int): The axis which will be reshaped with time_axis. Default: None.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, T, *)`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, T, *)`,
+          where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor of shape :math:`(N, T, *)`

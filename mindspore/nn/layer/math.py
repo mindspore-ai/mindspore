@@ -56,8 +56,6 @@ class ReduceLogSumExp(Cell):
     Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
     then calculate logarithm of the sum.
 
-    The dtype of the tensor to be reduced is number.
-
     .. math::
 
         ReduceLogSumExp(x) = \log(\sum(e^x))
@@ -91,9 +89,9 @@ class ReduceLogSumExp(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = nn.ReduceLogSumExp(1, keep_dims=True)
-        >>> output = op(input_x)
+        >>> output = op(x)
         >>> print(output.shape)
         (3, 1, 5, 6)
     """
@@ -187,10 +185,11 @@ class LGamma(Cell):
         lgamma(+/-inf) = +inf
 
     Thus, the behaviour of LGamma follows:
-    when x > 0.5, return log(Gamma(x))
-    when x < 0.5 and is not an integer, return the real part of Log(Gamma(x)) where Log is the complex logarithm
-    when x is an integer less or equal to 0, return +inf
-    when x = +/- inf, return +inf
+
+    - when x > 0.5, return log(Gamma(x))
+    - when x < 0.5 and is not an integer, return the real part of Log(Gamma(x)) where Log is the complex logarithm
+    - when x is an integer less or equal to 0, return +inf
+    - when x = +/- inf, return +inf
 
     Inputs:
         - **x** (Tensor) - The input tensor. Only float16, float32 are supported.
@@ -205,9 +204,9 @@ class LGamma(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
+        >>> x = Tensor(np.array([2, 3, 4]).astype(np.float32))
         >>> op = nn.LGamma()
-        >>> output = op(input_x)
+        >>> output = op(x)
         >>> print(output)
         [3.5762787e-07 6.9314754e-01 1.7917603e+00]
     """
@@ -317,9 +316,9 @@ class DiGamma(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
+        >>> x = Tensor(np.array([2, 3, 4]).astype(np.float32))
         >>> op = nn.DiGamma()
-        >>> output = op(input_x)
+        >>> output = op(x)
         >>> print(output)
         [0.42278463  0.92278427 1.2561178]
     """
@@ -581,10 +580,10 @@ class IGamma(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
-        >>> input_x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
         >>> igamma = nn.IGamma()
-        >>> output = igamma(input_a, input_x)
+        >>> output = igamma(a, x)
         >>> print (output)
         [0.593994  0.35276785  0.21486944  0.13337152]
     """
@@ -670,10 +669,10 @@ class LBeta(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
-        >>> input_y = Tensor(np.array([2.0, 3.0, 14.0, 15.0]).astype(np.float32))
+        >>> x = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> y = Tensor(np.array([2.0, 3.0, 14.0, 15.0]).astype(np.float32))
         >>> lbeta = nn.LBeta()
-        >>> output = lbeta(input_y, input_x)
+        >>> output = lbeta(y, x)
         >>> print(output)
         [-1.7917596  -4.094345  -12.000229  -14.754799]
     """
@@ -820,15 +819,16 @@ class MatMul(Cell):
 
     nn.MatMul will be deprecated in future versions. Please use ops.matmul instead.
 
-    - If both x1 and x2 are 1-dimensional, the dot product is returned.
-    - If the dimensions of x1 and x2 are all not greater than 2,  the matrix-matrix product will be returned. Note if
-      one of 'x1' and 'x2' is 1-dimensional, the argument will first be expanded to 2 dimension. After the matrix
-      multiply, the expanded dimension will be removed.
-    - If at least one of x1 and x2 is N-dimensional (N>2), the none-matrix dimensions(batch) of inputs will be
-      broadcasted and must be broadcastable. Note if one of 'x1' and 'x2' is 1-dimensional, the argument will first be
-      expanded to 2 dimension and then the none-matrix dimensions will be broadcasted. After the matrix multiply, the
-      expanded dimension will be removed. For example, if `x1` is a :math:`(j \times 1 \times n \times m)` tensor and
-      `x2` is a :math:`(k \times m \times p)` tensor, the output will be a :math:`(j \times k \times n \times p)`
+    - If both `x1` and `x2` are 1-dimensional, the dot product is returned.
+    - If the dimensions of `x1` and `x2` are all not greater than 2,  the matrix-matrix product will
+      be returned. Note if one of 'x1' and 'x2' is 1-dimensional, the argument will first be
+      expanded to 2 dimension. After the matrix multiply, the expanded dimension will be removed.
+    - If at least one of `x1` and `x2` is N-dimensional (N>2), the none-matrix dimensions(batch) of inputs
+      will be broadcasted and must be broadcastable. Note if one of 'x1' and 'x2' is 1-dimensional,
+      the argument will first be expanded to 2 dimension and then the none-matrix dimensions will be broadcasted.
+      after the matrix multiply, the expanded dimension will be removed. For example,
+      if `x1` is a :math:`(j \times 1 \times n \times m)` tensor and
+      `x2` is b :math:`(k \times m \times p)` tensor, the output will be a :math:`(j \times k \times n \times p)`
       tensor.
 
     Args:
@@ -836,25 +836,25 @@ class MatMul(Cell):
         transpose_x2 (bool): If true, `b` is transposed before multiplication. Default: False.
 
     Inputs:
-        - **input_x1** (Tensor) - The first tensor to be multiplied.
-        - **input_x2** (Tensor) - The second tensor to be multiplied.
+        - **x1** (Tensor) - The first tensor to be multiplied.
+        - **x2** (Tensor) - The second tensor to be multiplied.
 
     Outputs:
         Tensor, the shape of the output tensor depends on the dimension of input tensors.
 
     Raises:
         TypeError: If `transpose_x1` or `transpose_x2` is not a bool.
-        ValueError: If the column of matrix dimensions of `input_x1` is not equal to
-                    the row of matrix dimensions of `input_x2`.
+        ValueError: If the column of matrix dimensions of `x1` is not equal to
+                    the row of matrix dimensions of `x2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.MatMul()
-        >>> input_x1 = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-        >>> output = net(input_x1, input_x2)
+        >>> x1 = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
+        >>> output = net(x1, x2)
         >>> print(output.shape)
         (3, 2, 4)
     """
@@ -918,24 +918,50 @@ class Moments(Cell):
                           If false, don't keep these dimensions. Default: None.
 
     Inputs:
-        - **input_x** (Tensor) - The tensor to be calculated. Only float16 and float32 are supported.
+        - **x** (Tensor) - The tensor to be calculated. Only float16 and float32 are supported.
+            :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Outputs:
-        - **mean** (Tensor) - The mean of input x, with the same date type as input x.
-        - **variance** (Tensor) - The variance of input x, with the same date type as input x.
+        - **mean** (Tensor) - The mean of `x`, with the same date type as input `x`.
+        - **variance** (Tensor) - The variance of `x`, with the same date type as input `x`.
 
     Raises:
         TypeError: If `axis` is not one of int, tuple, None.
         TypeError: If `keep_dims` is neither bool nor None.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> x = Tensor(np.array([[[[1, 2, 3, 4], [3, 4, 5, 6]]]]), mindspore.float32)
+        >>> net = nn.Moments(axis=0, keep_dims=True)
+        >>> output = net(x)
+        >>> print(output)
+        (Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
+        [[[[ 1.00000000e+00, 2.00000000e+00, 3.00000000e+00, 4.00000000e+00],
+           [ 3.00000000e+00, 4.00000000e+00, 5.00000000e+00, 6.00000000e+00]]]]),
+        Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
+        [[[[ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+           [ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00]]]]))
+        >>> net = nn.Moments(axis=1, keep_dims=True)
+        >>> output = net(x)
+        >>> print(output)
+        (Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
+        [[[[ 1.00000000e+00, 2.00000000e+00, 3.00000000e+00, 4.00000000e+00],
+           [ 3.00000000e+00, 4.00000000e+00, 5.00000000e+00, 6.00000000e+00]]]]),
+        Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
+        [[[[ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+           [ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00]]]]))
+        >>> net = nn.Moments(axis=2, keep_dims=True)
+        >>> output = net(x)
+        >>> print(output)
+        (Tensor(shape=[1, 1, 1, 4], dtype=Float32, value=
+        [[[[ 1.00000000e+00, 2.00000000e+00, 3.00000000e+00, 4.00000000e+00]]]]),
+        Tensor(shape=[1, 1, 1, 4], dtype=Float32, value=
+        [[[[ 1.00000000e+00, 1.00000000e+00, 1.00000000e+00, 1.00000000e+00]]]]))
         >>> net = nn.Moments(axis=3, keep_dims=True)
-        >>> input_x = Tensor(np.array([[[[1, 2, 3, 4], [3, 4, 5, 6]]]]), mindspore.float32)
-        >>> output = net(input_x)
+        >>> output = net(x)
         >>> print(output)
         (Tensor(shape=[1, 1, 2, 1], dtype=Float32, value=
         [[[[ 2.50000000e+00],
@@ -983,22 +1009,22 @@ class MatInverse(Cell):
     Calculates the inverse of Positive-Definite Hermitian matrix using Cholesky decomposition.
 
     Inputs:
-        - **a** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
+        - **x** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
           With float16 or float32 data type.
 
     Outputs:
-        Tensor, has the same dtype as the `a`.
+        Tensor, has the same dtype as the `x`.
 
     Raises:
-        TypeError: If dtype of `a` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``
 
     Examples:
-        >>> input_a = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
+        >>> x = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
         >>> op = nn.MatInverse()
-        >>> output = op(input_a)
+        >>> output = op(x)
         >>> print(output)
         [[49.36112  -13.555558  2.1111116]
          [-13.555558  3.7777784  -0.5555557]
@@ -1024,22 +1050,22 @@ class MatDet(Cell):
     Calculates the determinant of Positive-Definite Hermitian matrix using Cholesky decomposition.
 
     Inputs:
-        - **a** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
+        - **x** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
           With float16 or float32 data type.
 
     Outputs:
-        Tensor, has the same dtype as the `a`.
+        Tensor, has the same dtype as the `x`.
 
     Raises:
-        TypeError: If dtype of `a` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``
 
     Examples:
-        >>> input_a = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
+        >>> x = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
         >>> op = nn.MatDet()
-        >>> output = op(input_a)
+        >>> output = op(x)
         >>> print(output)
         35.999996
     """

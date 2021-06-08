@@ -105,7 +105,7 @@ class MaxPool2d(_PoolNd):
             Default: 'NCHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -115,7 +115,7 @@ class MaxPool2d(_PoolNd):
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
         ValueError: If `kernel_size` or `strides` is less than 1.
-        ValueError: If length of shape of `input` is not equal to 4.
+        ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -173,7 +173,7 @@ class MaxPool1d(_PoolNd):
               will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C, L_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, L_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C, L_{out}))`.
@@ -183,7 +183,7 @@ class MaxPool1d(_PoolNd):
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
         ValueError: If `kernel_size` or `strides` is less than 1.
-        ValueError: If length of shape of `input` is not equal to 4.
+        ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -263,7 +263,7 @@ class AvgPool2d(_PoolNd):
 
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -273,7 +273,7 @@ class AvgPool2d(_PoolNd):
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
         ValueError: If `kernel_size` or `strides` is less than 1.
-        ValueError: If length of shape of `input` is not equal to 4.
+        ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -336,7 +336,7 @@ class AvgPool1d(_PoolNd):
 
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
@@ -345,7 +345,7 @@ class AvgPool1d(_PoolNd):
         TypeError: If `kernel_size` or `stride` is not an int.
         ValueError: If `pad_mode` is neither 'same' nor 'valid' with not case sensitive.
         ValueError: If `kernel_size` or `strides` is less than 1.
-        ValueError: If length of shape of `input` is not equal to 3.
+        ValueError: If length of shape of `x` is not equal to 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

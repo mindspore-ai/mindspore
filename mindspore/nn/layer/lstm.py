@@ -90,17 +90,17 @@ class LSTM(Cell):
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked LSTM . Default: 1.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
-        batch_first (bool): Specifies whether the first dimension of input is batch_size. Default: False.
+        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0].
         bidirectional (bool): Specifies whether it is a bidirectional LSTM. Default: False.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
+        - **x** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
           (batch_size, seq_len, `input_size`).
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32 or
           mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-          Data type of `hx` must be the same as `input`.
+          Data type of `hx` must be the same as `x`.
 
     Outputs:
         Tuple, a tuple contains (`output`, (`h_n`, `c_n`)).
@@ -318,25 +318,26 @@ class LSTMCell(Cell):
     `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
     <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
 
-    LSTMCell is a single-layer RNN, you can achieve multi-layer RNN by stacking LSTMCell.
+    Note:
+        LSTMCell is a single-layer RNN, you can achieve multi-layer RNN by stacking LSTMCell.
 
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
-        batch_first (bool): Specifies whether the first dimension of input is batch_size. Default: False.
+        batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0].
         bidirectional (bool): Specifies whether this is a bidirectional LSTM. If set True,
             number of directions will be 2 otherwise number of directions is 1. Default: False.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`).
+        - **x** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`).
         - **h** - data type mindspore.float32 or
           mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
         - **c** - data type mindspore.float32 or
           mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
-          Data type of `h' and 'c' must be the same of `input`.
+          Data type of `h' and 'c' must be the same of `x`.
         - **w** - data type mindspore.float32 or
           mindspore.float16 and shape (`weight_size`, 1, 1).
           The value of `weight_size` depends on `input_size`, `hidden_size` and `bidirectional`

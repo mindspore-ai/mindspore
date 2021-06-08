@@ -110,10 +110,10 @@ class SequentialCell(Cell):
         args (list, OrderedDict): List of subclass of Cell.
 
     Inputs:
-        - **input** (Tensor) - Tensor with shape according to the first Cell in the sequence.
+        - **x** (Tensor) - Tensor with shape according to the first Cell in the sequence.
 
     Outputs:
-        Tensor, the output Tensor with shape depending on the input and defined sequence of Cells.
+        Tensor, the output Tensor with shape depending on the input `x` and defined sequence of Cells.
 
     Raises:
         TypeError: If the type of the `args` is not list or OrderedDict.

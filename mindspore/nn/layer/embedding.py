@@ -57,7 +57,7 @@ class Embedding(Cell):
     the corresponding word embeddings.
 
     Note:
-        When 'use_one_hot' is set to True, the type of the input must be mindspore.int32.
+        When 'use_one_hot' is set to True, the type of the `x` must be mindspore.int32.
 
     Args:
         vocab_size (int): Size of the dictionary of embeddings.
@@ -66,16 +66,16 @@ class Embedding(Cell):
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
             Refer to class `initializer` for the values of string when a string
             is specified. Default: 'normal'.
-        dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
+        dtype (:class:`mindspore.dtype`): Data type of `x`. Default: mindspore.float32.
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
                                  will be initialized to zero. Default: None. The feature is inactivated.
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{input_length})`. The elements of
+        - **x** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{x_length})`. The elements of
           the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
-          be zero.
+          be zero. The data type is int32 or int64.
 
     Outputs:
-        Tensor of shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
+        Tensor of shape :math:`(\text{batch_size}, \text{x_length}, \text{embedding_size})`.
 
     Raises:
         TypeError: If `vocab_size` or `embedding_size` is not an int.
@@ -87,10 +87,9 @@ class Embedding(Cell):
 
     Examples:
         >>> net = nn.Embedding(20000, 768,  True)
-        >>> input_data = Tensor(np.ones([8, 128]), mindspore.int32)
-        >>>
+        >>> x = Tensor(np.ones([8, 128]), mindspore.int32)
         >>> # Maps the input word IDs to word embedding.
-        >>> output = net(input_data)
+        >>> output = net(x)
         >>> result = output.shape
         >>> print(result)
         (8, 128, 768)

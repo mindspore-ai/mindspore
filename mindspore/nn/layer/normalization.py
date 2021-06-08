@@ -303,7 +303,7 @@ class BatchNorm1d(_BatchNorm):
             the running mean and variance. Default: None.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in})`.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
@@ -322,9 +322,9 @@ class BatchNorm1d(_BatchNorm):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.BatchNorm1d(num_features=4)
-        >>> input_tensor = Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
-        ...                                 [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
-        >>> output = net(input_tensor)
+        >>> x = Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
+        ...                      [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
+        >>> output = net(x)
         >>> print(output)
         [[ 0.6999965   0.4999975  0.4999975  0.59999704 ]
          [ 0.4999975   0.399998   0.59999704 0.89999545 ]]
@@ -407,7 +407,7 @@ class BatchNorm2d(_BatchNorm):
             Default: 'NCHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -427,8 +427,8 @@ class BatchNorm2d(_BatchNorm):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.BatchNorm2d(num_features=3)
-        >>> input_tensor = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
-        >>> output = net(input_tensor)
+        >>> x = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
+        >>> output = net(x)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]
@@ -512,7 +512,7 @@ class BatchNorm3d(Cell):
         data_format (str): The optional value for data format is 'NCDHW'. Default: 'NCDHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, D_{out},H_{out}, W_{out})`.
@@ -532,8 +532,8 @@ class BatchNorm3d(Cell):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.BatchNorm3d(num_features=3)
-        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
-        >>> output = net(input_tensor)
+        >>> x = Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
+        >>> output = net(x)
         >>> print(output.shape)
         (16, 3, 10, 32, 32)
     """
@@ -614,7 +614,7 @@ class GlobalBatchNorm(_BatchNorm):
             mean and variance. Default: None.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -645,8 +645,8 @@ class GlobalBatchNorm(_BatchNorm):
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
         >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, device_num_each_group=2)
-        >>> input_tensor = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
-        >>> output = global_bn_op(input_tensor)
+        >>> x = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
+        >>> output = global_bn_op(x)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]
@@ -733,7 +733,7 @@ class SyncBatchNorm(_BatchNorm):
             synchronization across all devices.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -765,8 +765,8 @@ class SyncBatchNorm(_BatchNorm):
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
         >>> sync_bn_op = nn.SyncBatchNorm(num_features=3, process_groups=[[0, 1], [2, 3]])
-        >>> input_tensor = Tensor(np.ones([1, 3, 2, 2]), mstype.float32)
-        >>> output = sync_bn_op(input_tensor)
+        >>> x = Tensor(np.ones([1, 3, 2, 2]), mstype.float32)
+        >>> output = sync_bn_op(x)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]
@@ -836,11 +836,11 @@ class LayerNorm(Cell):
         epsilon (float): A value added to the denominator for numerical stability. Default: 1e-7.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of 'input_x' is :math:`(x_1, x_2, ..., x_R)`,
+        - **x** (Tensor) - The shape of 'x' is :math:`(x_1, x_2, ..., x_R)`,
           and `input_shape[begin_norm_axis:]` is equal to `normalized_shape`.
 
     Outputs:
-        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input_x`.
+        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `x`.
 
     Raises:
         TypeError: If `normalized_shape` is neither a list nor tuple.
@@ -931,11 +931,11 @@ class InstanceNorm2d(Cell):
             The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Data type: float16 or float32.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Data type: float16 or float32.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, H, W)`. Same type and
-        shape as the `input_x`.
+        shape as the `x`.
 
     Supported Platforms:
         ``GPU``
@@ -958,8 +958,8 @@ class InstanceNorm2d(Cell):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.InstanceNorm2d(3)
-        >>> input_tensor = Tensor(np.ones([2, 3, 2, 2]), mindspore.float32)
-        >>> output = net(input_tensor)
+        >>> x = Tensor(np.ones([2, 3, 2, 2]), mindspore.float32)
+        >>> output = net(x)
         >>> print(output.shape)
         (2, 3, 2, 2)
     """
@@ -1050,10 +1050,10 @@ class GroupNorm(Cell):
             'he_uniform', etc. Default: 'zeros'. If beta_init is a Tensor, the shape must be [num_channels].
 
     Inputs:
-        - **input_x** (Tensor) - The input feature with shape [N, C, H, W].
+        - **x** (Tensor) - The input feature with shape [N, C, H, W].
 
     Outputs:
-        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input_x`.
+        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `x`.
 
     Raises:
         TypeError: If `num_groups` or `num_channels` is not an int.
