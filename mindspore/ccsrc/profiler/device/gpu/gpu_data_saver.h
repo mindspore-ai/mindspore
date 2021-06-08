@@ -63,15 +63,18 @@ using AllActivityInfos = std::unordered_map<uint32_t, DeviceActivityInfos>;  // 
 
 class GpuDataSaver : public DataSaver {
  public:
-  GpuDataSaver() = default;
+  GpuDataSaver() = delete;
+
+  GpuDataSaver(ProfilingTraceInfo step_trace_op_name, const std::vector<OneStepStartEndInfo> &all_step_start_end_info)
+      : step_trace_op_name_(step_trace_op_name), all_step_start_end_info_(all_step_start_end_info) {
+    step_trace_op_name_from_graph_ = step_trace_op_name;
+  }
 
   ~GpuDataSaver() = default;
 
   GpuDataSaver(const GpuDataSaver &) = delete;
 
   GpuDataSaver &operator=(const GpuDataSaver &) = delete;
-
-  void SetStepTraceOpName(ProfilingTraceInfo trace_op_name);
 
   void ParseEvent(const std::vector<Event> &events);
 
@@ -86,10 +89,14 @@ class GpuDataSaver : public DataSaver {
 
   void WriteStepTrace(const std::string &saver_base_dir);
 
+  void WriteStepTraceAsyncLaunchKernel(const std::string &saver_base_dir);
+
   void WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time);
 
   AllActivityInfos activity_infos_;
-  ProfilingTraceInfo step_trace_op_name;
+  ProfilingTraceInfo step_trace_op_name_from_graph_;
+  ProfilingTraceInfo step_trace_op_name_;
+  const std::vector<OneStepStartEndInfo> &all_step_start_end_info_;
 };
 }  // namespace gpu
 }  // namespace profiler

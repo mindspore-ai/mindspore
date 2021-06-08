@@ -20,6 +20,7 @@ import stat
 import struct
 from collections import namedtuple
 from decimal import Decimal
+from abc import abstractmethod
 
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException, \
     JobIdMismatchException, ProfilerIOException, ProfilerRawFileException
@@ -43,9 +44,11 @@ class BaseStepTraceParser:
         job_id (int): The job id used to define the start of new step. Default: 0.
         skip_first_step (bool): Whether skip the first step or not.
         is_training_mode (bool): Whether in training mode or not.
+        is_gpu_kernel_async_launch (bool): Whether is gpu kernel async launch or not.
     """
 
-    def __init__(self, input_dir, output_file_path, job_id=0, skip_first_step=False, is_training_mode=True):
+    def __init__(self, input_dir, output_file_path, job_id=0, skip_first_step=False,
+                 is_training_mode=True, is_gpu_kernel_async_launch=False):
         self._input_dir = input_dir
         self._output_path = output_file_path
         self._job_id = job_id
@@ -56,6 +59,7 @@ class BaseStepTraceParser:
         self._tag_map = {}
         self._is_training_mode = is_training_mode
         self._step_end_tag_id = 255
+        self._is_gpu_kernel_async_launch = is_gpu_kernel_async_launch
 
     @property
     def output_file(self):
@@ -78,7 +82,10 @@ class BaseStepTraceParser:
         """Parse step trace files and save the result."""
         try:
             source_files = self._get_step_trace_files()
-            self._parse(source_files)
+            if self._is_gpu_kernel_async_launch:
+                self._parse_async_launch(source_files)
+            else:
+                self._parse(source_files)
             self._save()
         except IOError as err:
             log.warning(err)
@@ -175,6 +182,7 @@ class BaseStepTraceParser:
         log.info("Find %d step trace files.", len(file_paths))
         return file_paths
 
+    @abstractmethod
     def _parse(self, source_files):
         """Parse source step trace files."""
 
@@ -368,34 +376,48 @@ class GpuStepTraceParser(BaseStepTraceParser):
             dict, parsed point info.
         """
         fp_start, bp_end = 0, 1
+        all_step_points = []
+        all_step_fp = []
+        all_step_bp = []
         try:
-            with open(source_file, 'r') as f:
-                lines = f.readlines()
-                fp_start_name = lines[fp_start].split()[0]
-                bp_end_name = lines[bp_end].split()[0]
+            with open(source_file, 'r') as f_obj:
+                if self._is_gpu_kernel_async_launch:
+                    for line in f_obj:
+                        line = line.strip().split()
+                        all_step_fp.append(line[1].split(',')[0])
+                        all_step_bp.append(line[2].split(',')[0])
+                else:
+                    lines = f_obj.readlines()
+                    all_step_fp.append(lines[fp_start].split()[0])
+                    all_step_bp.append(lines[bp_end].split()[0])
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {source_file}', err)
             raise ProfilerIOException
 
-        if self._is_training_mode:
-            points = {
-                'fp_start': fp_start_name,
-                'bp_end': bp_end_name
-            }
-        else:
-            points = {
-                'fp_start': fp_start_name,
-            }
-        if os.path.exists(output_path):
-            return points
+        for fp_name, bp_name in zip(all_step_fp, all_step_bp):
+            if self._is_training_mode:
+                points = {
+                    'fp_start': fp_name,
+                    'bp_end': bp_name
+                }
+            else:
+                points = {
+                    'fp_start': fp_name,
+                }
+            all_step_points.append(points)
+
         try:
             with open(output_path, 'w') as json_file:
-                json.dump(points, json_file)
+                if self._is_gpu_kernel_async_launch:
+                    json.dump(all_step_points, json_file)
+                else:
+                    json.dump(all_step_points[0], json_file)
             os.chmod(output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             log.warning('Failed to save point info. %s', err)
             raise ProfilerIOException
-        return points
+
+        return all_step_points[0]
 
     def _get_step_trace_files(self):
         """Get step trace files."""
@@ -451,6 +473,43 @@ class GpuStepTraceParser(BaseStepTraceParser):
                 reduce_info['ops'] = reduce_time_info
                 step_trace['reduce'] = reduce_info
             self._record_trace_event(step_trace)
+        self._record_average_info()
+        log.info("Finish to parse step trace file.")
+
+    def _parse_async_launch(self, source_file):
+        """Parse source step trace files generated from async launch kernel."""
+        log.info("Start to parse step trace file.")
+        source_file = validate_and_normalize_path(source_file)
+
+        try:
+            with open(source_file, 'r') as f_obj:
+                for line in f_obj:
+                    line = line.strip().split()
+                    start_time = int(line[0].split(',')[1][:-1])
+                    fp_time = int(line[1].split(',')[1][:-1])
+                    bp_time = int(line[2].split(',')[1][:-1])
+                    end_time = int(line[3].split(',')[1][:-1])
+                    reduce_info = {}
+                    reduce_time_info = []
+                    for reduce_item in line[4:]:
+                        # add communication op start and end time, time unit from ns to 10ns.
+                        reduce_time_info.append(reduce_item.split(',')[1][:-1])
+                        reduce_time_info.append(reduce_item.split(',')[2][:-1])
+                    step_trace = {
+                        'start': start_time,
+                        'fp': fp_time,
+                        'bp': bp_time,
+                        'end': end_time
+                    }
+                    if reduce_time_info:
+                        reduce_info['ops'] = reduce_time_info
+                    step_trace['reduce'] = reduce_info
+                    self._record_trace_event(step_trace)
+
+        except (IOError, OSError) as err:
+            log.warning(f'Failed to read {source_file}', err)
+            raise ProfilerIOException
+
         self._record_average_info()
         log.info("Finish to parse step trace file.")
 

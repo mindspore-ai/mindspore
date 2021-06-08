@@ -22,6 +22,9 @@
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
+#if ENABLE_GPU
+#include "profiler/device/gpu/gpu_profiling.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -39,6 +42,7 @@ class RecorderActor : public ActorBase {
                   OpContext<DeviceTensor> *op_context);
 
   // Clear memory recorder at the step end.
+  // Record fp_start and iter_end op name and timestamp at the step end. (GPU)
   void RecordOnStepEnd(OpContext<DeviceTensor> *op_context);
 };
 }  // namespace runtime

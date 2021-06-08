@@ -132,6 +132,7 @@ class GPUProfiler : public Profiler {
   void ProcessEvents();
   void RegisterProfilingOp(std::shared_ptr<ProfilingOp> node);
   void SetStepTraceOpName(ProfilingTraceInfo trace_op_name);
+  void RecordOneStepStartEndInfo();
   std::string ProfileDataPath() const { return profile_data_path_; }
 
  private:
@@ -142,6 +143,7 @@ class GPUProfiler : public Profiler {
   void AddEvent(Event &&event);
   void SetRunTimeData(const std::string &op_name, void *stream);
   void FixOpNameByCorrelationId(Event *event);
+  void RecordOneStepStartEndInfo(std::string op_name);
 
   static std::shared_ptr<GPUProfiler> profiler_inst_;
   bool enable_flag_ = false;
@@ -174,6 +176,7 @@ class GPUProfiler : public Profiler {
   std::string profile_data_path_;
   std::map<std::string, std::shared_ptr<ProfilingOp>> profiling_op_;
   ProfilingTraceInfo step_trace_op_name;
+  std::mutex record_mutex_;
 };
 }  // namespace gpu
 }  // namespace profiler

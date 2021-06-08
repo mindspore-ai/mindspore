@@ -359,6 +359,7 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
+
   auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
   MS_EXCEPTION_IF_NULL(kernel_graph);
 

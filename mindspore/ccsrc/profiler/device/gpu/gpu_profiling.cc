@@ -25,6 +25,7 @@
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
+#include "runtime/framework/actor/actor_common.h"
 
 namespace mindspore {
 namespace profiler {
@@ -432,6 +433,8 @@ void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
     op_cupti_time_start_ = GetCUPTITimeStamp();
   }
   SetRunTimeData(op_name, stream);
+
+  if (IsMindRTUsed()) RecordOneStepStartEndInfo(op_name);
 }
 
 void GPUProfiler::OpDataProducerEnd() {
@@ -487,13 +490,36 @@ void GPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
     MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
   } else {
-    GpuDataSaver dataSaver;
-    dataSaver.SetStepTraceOpName(step_trace_op_name);
+    GpuDataSaver dataSaver(step_trace_op_name, all_step_start_end_info_);
     dataSaver.ParseOpInfo(op_info_map_);
     dataSaver.ParseEvent(events_);
     dataSaver.WriteFile(profile_data_path_, base_time_);
     SaveExtraProfileData();
   }
+}
+
+void GPUProfiler::RecordOneStepStartEndInfo() {
+  std::lock_guard<std::mutex> locker(record_mutex_);
+  step_start_end_info_.iter_end_timestamp = GetCUPTITimeStamp();
+  all_step_start_end_info_.push_back(step_start_end_info_);
+  step_start_end_info_.iter_start_op_name = "";
+  step_start_end_info_.fp_start_op_name = "";
+}
+
+void GPUProfiler::RecordOneStepStartEndInfo(const std::string op_name) {
+  std::lock_guard<std::mutex> locker(record_mutex_);
+  if (step_start_end_info_.iter_start_op_name.empty()) {
+    step_start_end_info_.iter_start_op_name = op_name;
+    step_start_end_info_.fp_start_op_name = op_name;
+  }
+
+  std::string fp_start_op_name = step_start_end_info_.fp_start_op_name;
+
+  auto op_type_begin_iter = fp_start_op_name.rfind('/') + 1;
+  auto op_type_end_iter = fp_start_op_name.rfind('-');
+  auto op_type = fp_start_op_name.substr(op_type_begin_iter, op_type_end_iter - op_type_begin_iter);
+  if (op_type == "InitDataSetQueue" || op_type == "GetNext") step_start_end_info_.fp_start_op_name = op_name;
+  step_start_end_info_.iter_end_op_name = op_name;
 }
 
 void GPUProfiler::ClearInst() {
