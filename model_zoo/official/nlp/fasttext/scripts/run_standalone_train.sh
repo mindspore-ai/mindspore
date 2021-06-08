@@ -34,6 +34,9 @@ DATANAME=$(basename $DATASET)
 echo $DATANAME
 DEVICEID=$2
 
+config_path="./${DATANAME}_config.yaml"
+echo "config path is : ${config_path}"
+
 export DEVICE_NUM=1
 export DEVICE_ID=$DEVICEID
 export RANK_ID=0
@@ -46,10 +49,12 @@ then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp -r ../src ./train
+cp -r ../model_utils ./train
 cp -r ../scripts/*.sh ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py  --data_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
+python train.py --config_path $config_path --dataset_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
 cd ..

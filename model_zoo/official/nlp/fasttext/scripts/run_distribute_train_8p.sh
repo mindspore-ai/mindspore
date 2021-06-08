@@ -48,6 +48,8 @@ echo $RANK_TABLE_FILE
 export RANK_SIZE=8
 export DEVICE_NUM=8
 
+config_path="./${DATANAME}_config.yaml"
+echo "config path is : ${config_path}"
 
 for((i=0;i<=7;i++));
 do
@@ -55,12 +57,14 @@ do
     mkdir ${current_exec_path}/device$i
     cd ${current_exec_path}/device$i || exit
     cp ../../*.py ./
+    cp ../../*.yaml ./
     cp -r ../../src ./
+    cp -r ../../model_utils ./
     cp -r ../*.sh ./
     export RANK_ID=$i
     export DEVICE_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
-    python ../../train.py --data_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
+    python ../../train.py --config_path $config_path --dataset_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
     cd ${current_exec_path} || exit
 done
 cd ${current_exec_path} || exit

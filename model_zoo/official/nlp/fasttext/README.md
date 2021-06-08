@@ -63,17 +63,66 @@ architecture. In the following sections, we will introduce how to run the script
 
 After dataset preparation, you can start training and evaluation as follows:
 
-```bash
-# run training example
-cd ./scripts
-sh run_standalone_train.sh [TRAIN_DATASET] [DEVICEID]
+- Running on Ascend
 
-# run distributed training example
-sh run_distribute_train.sh [TRAIN_DATASET] [RANK_TABLE_PATH]
+    ```bash
+    # run training example
+    cd ./scripts
+    sh run_standalone_train.sh [TRAIN_DATASET] [DEVICEID]
 
-# run evaluation example
-sh run_eval.sh [EVAL_DATASET_PATH] [DATASET_NAME] [MODEL_CKPT] [DEVICEID]
-```
+    # run distributed training example
+    sh run_distribute_train.sh [TRAIN_DATASET] [RANK_TABLE_PATH]
+
+    # run evaluation example
+    sh run_eval.sh [EVAL_DATASET_PATH] [DATASET_NAME] [MODEL_CKPT] [DEVICEID]
+    ```
+
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    ```python
+    # run standalone training example
+    # (1) Add "config_path='/path_to_code/[DATASET_NAME]_config.yaml'" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on [DATASET_NAME]_config.yaml file.
+    #          Set "dataset_path='/cache/data/[DATASET_NAME]'" on [DATASET_NAME]_config.yaml file.
+    #          Set "data_name='[DATASET_NAME]'" on [DATASET_NAME]_config.yaml file.
+    #          (option)Set "device_target='GPU'" on [DATASET_NAME]_config.yaml file if run with GPU.
+    #          (option)Set other parameters on [DATASET_NAME]_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "dataset_path='/cache/data/[DATASET_NAME]'" on the website UI interface.
+    #          Add "data_name='[DATASET_NAME]'" on the website UI interface.
+    #          (option)Set "device_target='GPU'" on the website UI interface if run with GPU.
+    #          (option)Set other parameters on the website UI interface.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/fasttext" on the website UI interface.
+    # (5) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # run evaluation example
+    # (1) Add "config_path='/path_to_code/[DATASET_NAME]_config.yaml'" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on [DATASET_NAME]_config.yaml file.
+    #          Set "dataset_path='/cache/data/[DATASET_NAME]'" on [DATASET_NAME]_config.yaml file.
+    #          Set "data_name='[DATASET_NAME]'" on [DATASET_NAME]_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on [DATASET_NAME]_config.yaml file.
+    #          Set "model_ckpt='/cache/checkpoint_path/model.ckpt'" on [DATASET_NAME]_config.yaml file.
+    #          (option)Set "device_target='GPU'" on [DATASET_NAME]_config.yaml file if run with GPU.
+    #          (option)Set other parameters on [DATASET_NAME]_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "dataset_path='/cache/data/[DATASET_NAME]'" on the website UI interface.
+    #          Add "data_name='[DATASET_NAME]'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+    #          Add "model_ckpt='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          (option)Set "device_target='GPU'" on the website UI interface if run with GPU.
+    #          (option)Set other parameters on the website UI interface.
+    # (3) Upload or copy your pretrained model to S3 bucket.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/fasttext" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
 
 ## [Script Description](#content)
 
@@ -82,8 +131,13 @@ The FastText network script and code result are as follows:
 ```text
 ├── fasttext
   ├── README.md                              // Introduction of FastText model.
+  ├── model_utils
+  │   ├──__init__.py                        // module init file
+  │   ├──config.py                          // Parse arguments
+  │   ├──device_adapter.py                  // Device adapter for ModelArts
+  │   ├──local_adapter.py                   // Local adapter
+  │   ├──moxing_adapter.py                  // Moxing adapter for ModelArts
   ├── src
-  │   ├──config.py                           // Configuration instance definition.
   │   ├──create_dataset.py                   // Dataset preparation.
   │   ├──fasttext_model.py                   // FastText model architecture.
   │   ├──fasttext_train.py                   // Use FastText model architecture.
@@ -96,6 +150,11 @@ The FastText network script and code result are as follows:
   │   ├──run_distributed_train_gpu.sh        // shell script for distributed train on GPU.
   │   ├──run_eval_gpu.sh                     // shell script for standalone eval on GPU.
   │   ├──run_standalone_train_gpu.sh         // shell script for standalone train on GPU.
+  ├── ag_config.yaml                         // ag dataset arguments
+  ├── dbpedia_config.yaml                    // dbpedia dataset arguments
+  ├── yelpp_config.yaml                      // yelpp dataset arguments
+  ├── mindspore_hub_conf.py                  // mindspore hub scripts
+  ├── export.py                              // Export API entry.
   ├── eval.py                                // Infer API entry.
   ├── requirements.txt                       // Requirements of third party package.
   ├── train.py                               // Train API entry.

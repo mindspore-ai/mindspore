@@ -34,6 +34,8 @@ DATANAME=$(basename $DATASET)
 
 echo $DATANAME
 
+config_path="./${DATANAME}_config.yaml"
+echo "config path is : ${config_path}"
 
 if [ -d "distribute_train" ];
 then
@@ -41,11 +43,13 @@ then
 fi
 mkdir ./distribute_train
 cp ../*.py ./distribute_train
+cp ../*.yaml ./distribute_train
 cp -r ../src ./distribute_train
+cp -r ../model_utils ./distribute_train
 cp -r ../scripts/*.sh ./distribute_train
 cd ./distribute_train || exit
 echo "start training for $2 GPU devices"
 
 mpirun -n $2 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
-python ../../train.py --device_target GPU --run_distribute True --data_path $DATASET --data_name $DATANAME
+python ../../train.py --config_path $config_path --device_target GPU --run_distribute True --dataset_path $DATASET --data_name $DATANAME
 cd ..

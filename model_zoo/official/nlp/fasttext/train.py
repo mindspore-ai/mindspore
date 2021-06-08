@@ -15,9 +15,8 @@
 """FastText for train"""
 import os
 import time
-import argparse
-import ast
 from mindspore import context
+from mindspore.communication.management import init, get_rank
 from mindspore.nn.optim import Adam
 from mindspore.common import set_seed
 from mindspore.train.model import Model
@@ -28,41 +27,23 @@ from mindspore.train.callback import Callback, TimeMonitor
 from mindspore.communication import management as MultiDevice
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
 from src.load_dataset import load_dataset
 from src.lr_schedule import polynomial_decay_scheduler
 from src.fasttext_train import FastTextTrainOneStepCell, FastTextNetWithLoss
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--data_path', type=str, required=True, help='FastText input data file path.')
-parser.add_argument('--data_name', type=str, required=True, default='ag', help='dataset name. eg. ag, dbpedia')
-parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
-                    help='device where the code will be implemented (default: Ascend)')
-parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute, default: false.')
-
-args = parser.parse_args()
-
-if args.data_name == "ag":
-    from src.config import config_ag as config_ascend
-    from src.config import config_ag_gpu as config_gpu
-elif args.data_name == 'dbpedia':
-    from src.config import config_db as config_ascend
-    from src.config import config_db_gpu as config_gpu
-elif args.data_name == 'yelp_p':
-    from  src.config import config_yelpp as config_ascend
-    from src.config import config_yelpp_gpu as config_gpu
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
 
 def get_ms_timestamp():
     t = time.time()
     return int(round(t * 1000))
+
 set_seed(5)
 time_stamp_init = False
 time_stamp_first = 0
-rank_id = os.getenv('DEVICE_ID')
-context.set_context(
-    mode=context.GRAPH_MODE,
-    save_graphs=False,
-    device_target=args.device_target)
-config = config_ascend if args.device_target == 'Ascend' else config_gpu
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=config.device_target)
 
 class LossCallBack(Callback):
     """
@@ -142,7 +123,7 @@ def _build_training_pipeline(pre_dataset, run_distribute=False):
     net_with_grads = FastTextTrainOneStepCell(net_with_loss, optimizer=optimizer)
     net_with_grads.set_train(True)
     model = Model(net_with_grads)
-    loss_monitor = LossCallBack(rank_ids=rank_id)
+    loss_monitor = LossCallBack(rank_ids=config.rank_id)
     dataset_size = pre_dataset.get_dataset_size()
     time_monitor = TimeMonitor(data_size=dataset_size)
     ckpt_config = CheckpointConfig(save_checkpoint_steps=decay_steps * config.epoch,
@@ -150,12 +131,14 @@ def _build_training_pipeline(pre_dataset, run_distribute=False):
     callbacks = [time_monitor, loss_monitor]
     if not run_distribute:
         ckpt_callback = ModelCheckpoint(prefix='fasttext',
-                                        directory=os.path.join('./', 'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
+                                        directory=os.path.join(config.save_ckpt_dir,
+                                                               'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
                                         config=ckpt_config)
         callbacks.append(ckpt_callback)
     if run_distribute and MultiDevice.get_rank() % 8 == 0:
         ckpt_callback = ModelCheckpoint(prefix='fasttext',
-                                        directory=os.path.join('./', 'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
+                                        directory=os.path.join(config.save_ckpt_dir,
+                                                               'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
                                         config=ckpt_config)
         callbacks.append(ckpt_callback)
     print("Prepare to Training....")
@@ -186,6 +169,7 @@ def set_parallel_env():
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
                                       device_num=MultiDevice.get_group_size(),
                                       gradients_mean=True)
+
 def train_paralle(input_file_path):
     """
     Train model on multi device
@@ -195,8 +179,8 @@ def train_paralle(input_file_path):
     set_parallel_env()
     print("Starting traning on multiple devices. |~ _ ~| |~ _ ~| |~ _ ~| |~ _ ~|")
     batch_size = config.batch_size
-    if args.device_target == 'GPU':
-        batch_size = config.distribute_batch_size
+    if config.device_target == 'GPU':
+        batch_size = config.distribute_batch_size_gpu
 
     preprocessed_data = load_dataset(dataset_path=input_file_path,
                                      batch_size=batch_size,
@@ -207,8 +191,76 @@ def train_paralle(input_file_path):
                                      shuffle=False)
     _build_training_pipeline(preprocessed_data, True)
 
-if __name__ == "__main__":
-    if args.run_distribute:
-        train_paralle(args.data_path)
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.save_ckpt_dir = os.path.join(config.output_path, config.save_ckpt_dir)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    '''run train.'''
+    if config.device_target == "Ascend":
+        config.rank_id = get_device_id()
+    elif config.device_target == "GPU":
+        init("nccl")
+        config.rank_id = get_rank()
     else:
-        train_single(args.data_path)
+        raise ValueError("Not support device target: {}".format(config.device_target))
+
+    if config.run_distribute:
+        train_paralle(config.dataset_path)
+    else:
+        train_single(config.dataset_path)
+
+if __name__ == "__main__":
+    run_train()
