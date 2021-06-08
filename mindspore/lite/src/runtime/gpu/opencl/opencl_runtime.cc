@@ -466,7 +466,6 @@ GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_
   if (device_name == "QUALCOMM Adreno(TM)") {
     info.type = ADRENO;
     sscanf(device_version.c_str(), "%*s%f%*s%d", &info.opencl_version, &info.model_num);
-
   } else if (device_name.find("Mali") != std::string::npos) {
     info.type = MALI;
 
@@ -480,7 +479,6 @@ GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_
     }
     sscanf(device_version.c_str(), "%*s%f%*s", &info.opencl_version);
   }
-
   return info;
 }
 
@@ -784,5 +782,4 @@ cl::Buffer *OpenCLRuntime::CreateSharedMemoryBuffer(size_t size, void *host_ptr)
   }
   return buffer;
 }
-
 }  // namespace mindspore::lite::opencl
