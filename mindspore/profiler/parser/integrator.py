@@ -355,10 +355,10 @@ class Integrator:
         self._aicore_detail_data_load()
         if filter_condition is None:
             filter_condition = {}
-        self._filter(filter_condition)
+        filter_result = self._filter(filter_condition)
 
         type_detail_cache = {}
-        for detail_info in self._result:
+        for detail_info in filter_result:
             op_type = detail_info[1]
             if op_type not in op_type_order:
                 continue
@@ -403,13 +403,21 @@ class Integrator:
         is_display_full_op_name = filter_condition.get(
             'is_display_full_op_name', True
         )
-        self._set_display_col_name(is_display_detail, is_display_full_op_name)
+
+        self._display_col_names_detail = self._col_names_detail[0:4]
+        if is_display_full_op_name:
+            self._display_col_names_detail.append(self._col_names_detail[4])
+        if is_display_detail:
+            self._display_col_names_detail.append(self._col_names_detail[5])
+
         if is_display_detail and is_display_full_op_name:
-            self._result = list(filter(_inner_filter, self._aicore_detail_data))
+            result = list(filter(_inner_filter, self._aicore_detail_data))
         else:
-            self._result = list(
+            result = list(
                 map(_inner_map, filter(_inner_filter, self._aicore_detail_data))
             )
+
+        return result
 
     def _default_filter(self, item, condition):
         """
@@ -462,22 +470,6 @@ class Integrator:
             return False
 
         return True
-
-    def _set_display_col_name(self, is_display_detail, is_display_full_op_name):
-        """
-        Set the display column name according to the filter condition.
-
-        Args:
-            is_display_detail (bool): Whether to display the detailed operator
-                information.
-            is_display_full_op_name (bool): Whether to display the operator full
-                name.
-        """
-        self._display_col_names_detail = self._col_names_detail[0:4]
-        if is_display_full_op_name:
-            self._display_col_names_detail.append(self._col_names_detail[4])
-        if is_display_detail:
-            self._display_col_names_detail.append(self._col_names_detail[5])
 
 
 class BaseTimelineGenerator:

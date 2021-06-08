@@ -298,7 +298,8 @@ class GpuStepTraceParser(BaseStepTraceParser):
         self._record_average_info()
         log.info("Finish to parse step trace file.")
 
-    def _get_single_reduce_event_info(self, field_name, start_point, end_point):
+    @staticmethod
+    def _get_single_reduce_event_info(field_name, start_point, end_point):
         """
         Get single reduce info.
 

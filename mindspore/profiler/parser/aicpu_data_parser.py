@@ -116,8 +116,7 @@ class DataPreProcessParser:
 
                 result_list.append(result)
                 # Calculate the total time.
-                total_time = result[2]
-                ai_cpu_total_time_summary += total_time
+                ai_cpu_total_time_summary += result[2]
                 # Increase node serial number.
                 serial_number += 1
             elif "Node" in node_line and "Thread" not in thread_line:

@@ -35,39 +35,45 @@ class MinddataParser:
             list[Union[str, float]], the converted data.
         """
         result = list()
+
+        def _process_one_step(one_step):
+            if one_step:
+                node_info = one_step.split(", ")
+                node_name, node_start, node_end, queue_size = "", 0, 0, 0
+                if node_info:
+                    node_name = node_info[0].replace("Node:", "")
+
+                if len(node_info) > 3 and "queue" in node_info[1]:
+                    queue_size = node_info[1].replace("queue size:", "")
+                    queue_size = int(queue_size) if queue_size.isdigit() else queue_size
+                    node_start = node_info[2].replace("Run start:", "")
+                    node_start = int(node_start) if node_start.isdigit() else node_start
+                    node_end = node_info[3].replace("Run end:", "")
+                    node_end = int(node_end) if node_end.isdigit() else node_end
+                elif len(node_info) > 3 and "Run" in node_info[1]:
+                    queue_size = node_info[3].replace("queue size:", "")
+                    queue_size = int(queue_size) if queue_size.isdigit() else queue_size
+                    node_start = node_info[1].replace("Run start:", "")
+                    node_start = int(node_start) if node_start.isdigit() else node_start
+                    node_end = node_info[2].replace("Run end:", "")
+                    node_end = int(node_end) if node_end.isdigit() else node_end
+
+                one_step_list = [node_name, node_start, node_end, queue_size]
+                result.append(one_step_list)
+
         try:
             minddata_aicpu_source_path = validate_and_normalize_path(minddata_aicpu_source_path)
             with open(minddata_aicpu_source_path) as source_data_file:
                 source_data = source_data_file.read()
                 step_data = source_data.split("\x00")
                 for one_step in step_data:
-                    if one_step:
-                        node_info = one_step.split(", ")
-                        node_name, node_start, node_end, queue_size = "", 0, 0, 0
-                        if node_info:
-                            node_name = node_info[0].replace("Node:", "")
-
-                        if len(node_info) > 3 and "queue" in node_info[1]:
-                            queue_size = node_info[1].replace("queue size:", "")
-                            queue_size = int(queue_size) if queue_size.isdigit() else queue_size
-                            node_start = node_info[2].replace("Run start:", "")
-                            node_start = int(node_start) if node_start.isdigit() else node_start
-                            node_end = node_info[3].replace("Run end:", "")
-                            node_end = int(node_end) if node_end.isdigit() else node_end
-                        elif len(node_info) > 3 and "Run" in node_info[1]:
-                            queue_size = node_info[3].replace("queue size:", "")
-                            queue_size = int(queue_size) if queue_size.isdigit() else queue_size
-                            node_start = node_info[1].replace("Run start:", "")
-                            node_start = int(node_start) if node_start.isdigit() else node_start
-                            node_end = node_info[2].replace("Run end:", "")
-                            node_end = int(node_end) if node_end.isdigit() else node_end
-
-                        one_step_list = [node_name, node_start, node_end, queue_size]
-                        result.append(one_step_list)
+                    _process_one_step(one_step)
         except OSError:
             logger.error("Open get_next profiling file error.")
 
         return result
+
+
 
     @staticmethod
     def execute(source_path, output_path, device_id):

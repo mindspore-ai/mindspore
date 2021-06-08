@@ -46,14 +46,14 @@ class HWTSLogParser:
         file_name = get_file_join_name(self._input_path, self._source_file_target)
         if not file_name:
             file_name = get_file_join_name(self._input_path, self._source_file_target_old)
-            if not file_name:
-                data_path = os.path.join(self._input_path, "data")
-                file_name = get_file_join_name(data_path, self._source_file_target)
-                if not file_name:
-                    file_name = get_file_join_name(data_path, self._source_file_target_old)
-                    if not file_name:
-                        msg = "Fail to find hwts log file, under profiling directory"
-                        raise RuntimeError(msg)
+        if not file_name:
+            data_path = os.path.join(self._input_path, "data")
+            file_name = get_file_join_name(data_path, self._source_file_target)
+        if not file_name:
+            file_name = get_file_join_name(data_path, self._source_file_target_old)
+        if not file_name:
+            msg = "Fail to find hwts log file, under profiling directory"
+            raise RuntimeError(msg)
 
         return file_name
 
@@ -110,7 +110,7 @@ class HWTSLogParser:
 
                 if int(task_id) < 25000:
                     task_id = str(stream_id) + "_" + str(task_id)
-                result_data += ("%-14s %-4s %-8s %-9s %-8s %-15s %s\n" %(log_type[int(ms_type, 2)], cnt, core_id,
+                result_data += ("%-14s %-4s %-8s %-9s %-8s %-15s %s\n" % (log_type[int(ms_type, 2)], cnt, core_id,
                                                                          blk_id, task_id, syscnt, stream_id))
 
         fwrite_format(self._output_filename, data_source=self._dst_file_title, is_start=True)
