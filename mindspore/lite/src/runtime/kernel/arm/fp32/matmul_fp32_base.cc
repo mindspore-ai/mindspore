@@ -189,8 +189,8 @@ int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
     } else {
       for (int i = 0; i < params_->batch; i++) {
         const float *src_data = src_ptr + i * params_->deep_ * params_->col_;
-        float *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_;
-        RowMajor2ColMajor(src_data, dst, params_->deep_, params_->col_);
+        float *dst_data = b_pack_ptr_ + i * params_->deep_ * params_->col_;
+        RowMajor2ColMajor(src_data, dst_data, params_->deep_, params_->col_);
       }
     }
     return RET_OK;

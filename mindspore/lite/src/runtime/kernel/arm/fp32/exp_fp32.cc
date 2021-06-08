@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/exp_fp32.h"
-#include <math.h>
+#include <cmath>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 

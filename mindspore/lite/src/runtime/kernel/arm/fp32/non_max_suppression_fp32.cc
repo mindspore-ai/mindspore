@@ -39,6 +39,10 @@ constexpr size_t kScoreTensorIndex = 1;
 constexpr size_t kMaxOutputNumTensorIndex = 2;
 constexpr size_t kIoUThresholdTensorIndex = 3;
 constexpr size_t kScoreThresholdTensorIndex = 4;
+constexpr size_t kYIndexA = 0;
+constexpr size_t kYIndexB = 2;
+constexpr size_t kXIndexA = 1;
+constexpr size_t kXIndexB = 3;
 constexpr int kBoxPointNum = 4;
 }  // namespace
 
@@ -118,8 +122,8 @@ int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int ba
       above_score_candidates.reserve(box_num);
       for (auto k = 0; k < box_num; ++k) {
         if (per_class_scores[k] > score_threshold_) {
-          above_score_candidates.emplace_back(per_class_scores[k], k, center_point_box_, box[0], box[1], box[2],
-                                              box[3]);
+          above_score_candidates.emplace_back(per_class_scores[k], k, center_point_box_, box[kYIndexA], box[kXIndexA],
+                                              box[kYIndexB], box[kXIndexB]);
         }
         box += kBoxPointNum;
       }
