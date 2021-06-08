@@ -82,6 +82,7 @@ def minmax_update_perchannel(x, min_val, max_val, min_up, max_up,
                              kernel_name="minmax_update_perchannel"):
     """MinMaxUpdatePerChannel op"""
     x_shape = x.get("ori_shape")
+    x_format = x.get("format")
     x_dtype = x.get("dtype")
     min_shape = min_val.get("ori_shape")
     min_dtype = min_val.get("dtype")
