@@ -32,18 +32,6 @@ INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
 
 _config = cde.GlobalContext.config_manager()
-_dynamic_columns = dict()
-
-
-def set_dynamic_columns(columns=None):
-    global _dynamic_columns
-    if not isinstance(columns, dict):
-        raise TypeError("Pass a dict to set dynamic shape, example: {\"data1\": [16, None, 256]}")
-    _dynamic_columns = columns
-
-
-def get_dynamic_columns():
-    return _dynamic_columns
 
 
 def _init_device_info():
