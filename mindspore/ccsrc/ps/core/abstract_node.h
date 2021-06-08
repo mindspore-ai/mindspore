@@ -68,8 +68,13 @@ class AbstractNode : public Node {
   // Send scale_in_done instructions to the scheduler.
   void set_scale_in_done();
 
+  // The worker/server sends the event to the scheduler, and then the scheduler broadcasts this event to all nodes.
+  void BroadcastEvent(const uint32_t &event);
+
   // Set the callback corresponding to the event.
   void RegisterEventCallback(const ClusterEvent &event, const EventCallback &event_cb);
+  // Set the callback corresponding to the custom event.
+  void RegisterCustomEventCallback(const uint32_t &event, const EventCallback &event_cb);
 
   bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
             const uint32_t &timeout = kCommTimeoutInSeconds);
@@ -129,6 +134,10 @@ class AbstractNode : public Node {
   void ProcessScaleInDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
                           const void *data, size_t size);
 
+  // The worker/server processes the SEND_EVENT message from scheduelr
+  void ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
+                    const void *data, size_t size);
+
   void StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client);
   void UpdateSchedulerTime();
   bool CheckSchedulerTimeout() const;
@@ -153,6 +162,8 @@ class AbstractNode : public Node {
 
   // Trigger the callback corresponding to the event.
   void OnEventCallback(const ClusterEvent &event);
+  // Trigger the callback corresponding to the custom event.
+  void OnCustomEventCallback(const uint32_t &event);
 
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
@@ -200,6 +211,13 @@ class AbstractNode : public Node {
 
   // Each ClusterEvent corresponds to a EventCallback to process the event.
   std::map<ClusterEvent, EventCallback> event_to_callback_;
+
+  // Each custom event corresponds to a EventCallback to process the event.
+  // This event is sent to the scheduler, and then the scheduler broadcasts this event to all nodes.
+  // for example:
+  // In order to ensure the consistency of the cluster, the server broadcasts an iteration_end event to notify all other
+  // nodes to modify the iteration status
+  std::map<uint32_t, EventCallback> custom_event_to_callback_;
 
   // Scaler for worker/server node.
   std::unique_ptr<FollowerScaler> follower_scaler_;

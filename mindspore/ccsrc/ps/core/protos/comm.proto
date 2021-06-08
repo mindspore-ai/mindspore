@@ -37,6 +37,8 @@ enum NodeCommand {
   SCALE_OUT_DONE = 10;
   // This command is used to synchronize the scale in status of the cluster
   SCALE_IN_DONE = 11;
+  // This command is used to send user defined event.
+  SEND_EVENT = 12;
 }
 
 enum NodeRole {
@@ -159,4 +161,15 @@ message ScaleOutDoneMessage {
 // This message is sent to the scheduler to notify the completion of scale out
 message ScaleInDoneMessage {
   string node_id = 1;
+}
+
+// This message is sent to the scheduler to notify the completion of scale out
+message EventMessage {
+  uint32 event = 1;
+  string node_id = 2;
+}
+
+// schedulerd broadcasts the event to all other nodes through this message
+message EventRespMessage {
+  uint32 event = 1;
 }

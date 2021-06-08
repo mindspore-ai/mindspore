@@ -139,8 +139,30 @@ void AbstractNode::set_scale_in_done() {
                << " the node id:" << node_info_.node_id_ << "is send scale_in_done to scheduler!";
 }
 
+void AbstractNode::BroadcastEvent(const uint32_t &event) {
+  auto message_meta = std::make_shared<MessageMeta>();
+  message_meta->set_cmd(NodeCommand::SEND_EVENT);
+
+  EventMessage event_message;
+  event_message.set_event(event);
+  event_message.set_node_id(node_info_.node_id_);
+
+  if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF, event_message.SerializeAsString().data(),
+                       event_message.ByteSizeLong())) {
+    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                      << " the node id:" << node_info_.node_id_ << " scale_in_done timeout!";
+  }
+
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << "is send event to scheduler!";
+}
+
 void AbstractNode::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
   event_to_callback_.try_emplace(event, event_cb);
+}
+
+void AbstractNode::RegisterCustomEventCallback(const uint32_t &event, const EventCallback &event_cb) {
+  custom_event_to_callback_.try_emplace(event, event_cb);
 }
 
 bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
@@ -531,6 +553,18 @@ void AbstractNode::ProcessScaleInDone(std::shared_ptr<TcpConnection> conn, std::
   current_cluster_state_ = ClusterState::CLUSTER_READY;
 }
 
+void AbstractNode::ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                                const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  EventRespMessage event_resp_message;
+  event_resp_message.ParseFromArray(data, size);
+  uint32_t event = event_resp_message.event();
+  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  OnCustomEventCallback(event);
+}
+
 void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
                                    const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
@@ -790,6 +824,7 @@ void AbstractNode::InitCommandHandler() {
   handlers_[NodeCommand::FINISH] = nullptr;
   handlers_[NodeCommand::SCALE_OUT_DONE] = nullptr;
   handlers_[NodeCommand::SCALE_IN_DONE] = nullptr;
+  handlers_[NodeCommand::SEND_EVENT] = nullptr;
 }
 
 void AbstractNode::InitServerHandler() {
@@ -801,6 +836,7 @@ void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::SCALE_IN] = &AbstractNode::ProcessScaleIn;
   server_handler_[NodeCommand::SCALE_OUT_DONE] = &AbstractNode::ProcessScaleOutDone;
   server_handler_[NodeCommand::SCALE_IN_DONE] = &AbstractNode::ProcessScaleInDone;
+  server_handler_[NodeCommand::SEND_EVENT] = &AbstractNode::ProcessEvent;
 }
 
 void AbstractNode::InitNodeInfo(const NodeRole &role) {
@@ -824,6 +860,15 @@ void AbstractNode::OnEventCallback(const ClusterEvent &event) {
   } else {
     MS_LOG(INFO) << "Trigger the event:" << event;
     event_to_callback_[event]();
+  }
+}
+
+void AbstractNode::OnCustomEventCallback(const uint32_t &event) {
+  if (!custom_event_to_callback_.count(event)) {
+    MS_LOG(WARNING) << "The event callback of " << event << " is not set.";
+  } else {
+    MS_LOG(INFO) << "Trigger the event:" << event;
+    custom_event_to_callback_[event]();
   }
 }
 }  // namespace core
