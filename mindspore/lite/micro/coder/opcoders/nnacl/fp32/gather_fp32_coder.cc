@@ -64,5 +64,4 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Gather, CPUOpCoderCreator<GatherFP32Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

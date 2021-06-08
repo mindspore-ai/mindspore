@@ -63,7 +63,8 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
     auto in_shape = input_tensors_.at(i)->shape();
     concat_param_->input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
     MS_CHECK_PTR(concat_param_->input_shapes_[i]);
-    memcpy(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), in_shape.data(), sizeof(int) * in_shape.size());
+    memcpy_s(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), sizeof(int) * in_shape.size(), in_shape.data(),
+             sizeof(int) * in_shape.size());
   }
 
   before_axis_size = 1;
