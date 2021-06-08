@@ -910,10 +910,14 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
     MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                       << " trace: " << trace::DumpSourceLines(node);
   }
+  std::string node_name = "";
+  if (node_ptr->isa<CNode>()) {
+    node_name = GetCNodeName(node_ptr);
+  }
   auto abstract_ptr = node_ptr->abstract();
   if (shapes.empty()) {
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
-  } else if (shapes.size() == 1) {
+  } else if (shapes.size() == 1 && node_name != prim::kPrimMakeTuple->name()) {
     // single output handle
     ShapeVector shape_int;
     abstract::AbstractTensorPtr abstract = nullptr;
