@@ -15,6 +15,8 @@
  */
 #include "pybind_api/random_normal/philox_generator.h"
 
+static constexpr uint64_t kShiftNum = 32;
+static constexpr uint64_t kGenerateNum = 10;
 namespace mindspore {
 void PhiloxGenerator::Jump() {
   if ((++counter_[0] == 0) && (++counter_[1] == 0) && (++counter_[2] == 0)) {
@@ -25,20 +27,20 @@ void PhiloxGenerator::Jump() {
 void PhiloxGenerator::JumpStep(uint64_t step) {
   uint64_t min_counter, max_counter;
   min_counter = static_cast<uint64_t>(counter_[1]);
-  min_counter = min_counter << 32;
+  min_counter = min_counter << kShiftNum;
   min_counter += counter_[0];
 
   max_counter = static_cast<uint64_t>(counter_[3]);
-  max_counter = max_counter << 32;
+  max_counter = max_counter << kShiftNum;
   max_counter += counter_[2];
   min_counter += step;
   if (min_counter < step) {
     max_counter++;
   }
   counter_[0] = static_cast<uint32_t>(min_counter);
-  counter_[1] = static_cast<uint32_t>(min_counter >> 32);
+  counter_[1] = static_cast<uint32_t>(min_counter >> kShiftNum);
   counter_[2] = static_cast<uint32_t>(max_counter);
-  counter_[3] = static_cast<uint32_t>(max_counter >> 32);
+  counter_[3] = static_cast<uint32_t>(max_counter >> kShiftNum);
 }
 
 std::array<uint32_t, gResultNum> PhiloxGenerator::Compute(const std::array<uint32_t, gResultNum> &counter_,
@@ -48,7 +50,7 @@ std::array<uint32_t, gResultNum> PhiloxGenerator::Compute(const std::array<uint3
   for (size_t i = 0; i < gResultNum; i += 2) {
     uint64_t temp = static_cast<uint64_t>(keyConstant[i]) * counter_[i];
     min_value[i] = static_cast<uint32_t>(temp);
-    max_value[i] = static_cast<uint32_t>(temp >> 32);
+    max_value[i] = static_cast<uint32_t>(temp >> kShiftNum);
   }
   std::array<uint32_t, gResultNum> result;
   result[0] = (max_value[2] ^ counter_[1] ^ key_var_[0]);
@@ -59,7 +61,7 @@ std::array<uint32_t, gResultNum> PhiloxGenerator::Compute(const std::array<uint3
 }
 
 std::array<uint32_t, gResultNum> PhiloxGenerator::operator()() {
-  for (size_t i = 0; i < 10; i++) {
+  for (size_t i = 0; i < kGenerateNum; i++) {
     counter_ = Compute(counter_, key_var_);
     key_var_[0] += keyConstant[1];
     key_var_[1] += keyConstant[3];
