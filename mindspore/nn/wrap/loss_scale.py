@@ -326,7 +326,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         return loss, cond, scaling_sens
 
     def set_sense_scale(self, sens):
-        """If the user has set the sens in the training process and wants to reassign the value, he can call
+        """
+        If the user has set the sens in the training process and wants to reassign the value, he can call
         this function again to make modification, and sens needs to be of type Tensor."""
         if self.scale_sense and isinstance(sens, Tensor):
             self.scale_sense.set_data(sens)

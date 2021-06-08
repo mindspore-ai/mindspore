@@ -183,8 +183,9 @@ class ProximalAdagrad(Optimizer):
 
     @Optimizer.target.setter
     def target(self, value):
-        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-           optimizer operation."""
+        """
+        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+        optimizer operation."""
         if not isinstance(value, str):
             raise TypeError("The value must be str type, but got value type is {}".format(type(value)))
 
