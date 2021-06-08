@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
 #include "acl/acl_tdt.h"
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
 

@@ -16,26 +16,28 @@
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
 
 namespace mindspore {
-extern std::set<void **> acl_handle_set;
+extern std::map<void **, std::thread *> acl_handle_map;
 namespace dataset {
-
-void TdtHandle::AddHandle(acltdtChannelHandle **handle) {
+void TdtHandle::AddHandle(acltdtChannelHandle **handle, std::thread *use_thread) {
   if (*handle != nullptr) {
-    acl_handle_set.insert(reinterpret_cast<void **>(handle));
+    acl_handle_map.insert({reinterpret_cast<void **>(handle), use_thread});
   }
 }
 
 void TdtHandle::DelHandle(acltdtChannelHandle **handle) {
   void **void_handle = reinterpret_cast<void **>(handle);
-  acl_handle_set.erase(void_handle);
+  acl_handle_map.erase(void_handle);
 }
 
 bool TdtHandle::DestroyHandle() {
   bool destroy_all = true;
-  for (auto it = acl_handle_set.begin(); it != acl_handle_set.end(); it++) {
-    acltdtChannelHandle **handle = reinterpret_cast<acltdtChannelHandle **>(*it);
+  for (auto &item : acl_handle_map) {
+    acltdtChannelHandle **handle = reinterpret_cast<acltdtChannelHandle **>(item.first);
     if (*handle != nullptr) {
       acltdtStopChannel(*handle);
+      if (item.second != nullptr && item.second->joinable()) {
+        item.second->join();
+      }
       if (acltdtDestroyChannel(*handle) != ACL_SUCCESS) {
         destroy_all = false;
       } else {
