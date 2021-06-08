@@ -41,7 +41,8 @@ class TFModelParser : public ModelParser {
   FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
 
  private:
-  static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, const ParamValueLitePtr &param_value);
+  static STATUS ConvertConstVariant(const tensorflow::VariantTensorDataProto &variant,
+                                    const ParamValueLitePtr &param_value);
   STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
                             const TypeId &type, const ParameterPtr &parameter, std::vector<int64_t> *shape_vector);
   static STATUS GetValueFromType(const tensorflow::TensorProto &tensor_proto,
@@ -63,6 +64,8 @@ class TFModelParser : public ModelParser {
                     const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                     const FuncGraphPtr &func_graph_ptr, std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
   STATUS ConvertRootGraphOutputs();
+
+  void UpdateMap(const CNodePtr &cnode, const FuncGraphPtr &sub_func_graph, const std::string &sub_graph_name);
 
   STATUS ConvertSubgraph();
 
@@ -93,6 +96,7 @@ class TFModelParser : public ModelParser {
   std::map<std::string, AnfNodePtr> function_while_map_;  // tf function name->while_node_name
   std::map<std::string, AnfNodePtr> function_if_map_;     // tf function name->if_node
   std::vector<std::pair<CNodePtr, std::vector<std::string>>> nodes_with_null_input_{};
+  std::map<CNodePtr, FuncGraphPtr> while_cond_map_, while_body_map_, if_then_map_, if_else_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

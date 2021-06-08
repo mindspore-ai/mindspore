@@ -41,9 +41,9 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &con
   quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
   quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
   // parse type_id_
-  if (this->bit_num_ > 0 && this->bit_num_ <= MAX_BIT) {
+  if (this->bit_num_ > 0 && this->bit_num_ <= kMaxBit) {
     type_id_ = kNumberTypeInt8;
-  } else if (this->bit_num_ <= (MAX_BIT * 2)) {
+  } else if (this->bit_num_ <= (kMaxBit * 2)) {
     type_id_ = kNumberTypeInt16;
   } else {
     MS_LOG(ERROR) << "invalid input bits";
@@ -538,96 +538,97 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
     }
     auto op_name = cnode->fullname_with_scope();
     MS_LOG(DEBUG) << "process node: " << op_name << " type: " << primitive->name();
-    if (quant_strategy_->CanConvOpQuantized(cnode) || quant_strategy_->CanMulOpQuantized(cnode)) {
-      auto input_node = cnode->input(2);
-      ParameterPtr param_node;
-      ParamValueLitePtr param_value;
-      status = GetParamNodeAndValue(input_node, op_name, &param_node, &param_value);
-      if (status == RET_CONTINUE) {
-        continue;
-      }
-      // copy origin data in case to recover
-      auto *raw_data = static_cast<float *>(param_value->tensor_addr());
-      auto elem_count = param_value->tensor_shape_size();
-      auto val = std::make_unique<float>(elem_count);
-      std::unique_ptr<float[]> origin_data(val.release());
-      auto ret = memcpy_s(origin_data.get(), sizeof(float) * elem_count, raw_data, param_value->tensor_size());
-      if (ret != EOK) {
-        MS_LOG(ERROR) << "memcpy fail: "
-                      << " dst size: " << sizeof(float) * elem_count << " src size: " << param_value->tensor_size();
+    if (!quant_strategy_->CanConvOpQuantized(cnode) && !quant_strategy_->CanMulOpQuantized(cnode)) {
+      continue;
+    }
+    auto input_node = cnode->input(2);
+    ParameterPtr param_node;
+    ParamValueLitePtr param_value;
+    status = GetParamNodeAndValue(input_node, op_name, &param_node, &param_value);
+    if (status == RET_CONTINUE) {
+      continue;
+    }
+    // copy origin data in case to recover
+    auto *raw_data = static_cast<float *>(param_value->tensor_addr());
+    auto elem_count = param_value->tensor_shape_size();
+    auto val = std::make_unique<float>(elem_count);
+    std::unique_ptr<float[]> origin_data(val.release());
+    auto ret = memcpy_s(origin_data.get(), sizeof(float) * elem_count, raw_data, param_value->tensor_size());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy fail: "
+                    << " dst size: " << sizeof(float) * elem_count << " src size: " << param_value->tensor_size();
+      return RET_ERROR;
+    }
+    // 1. try quant
+    for (size_t bit_num_t = 2; bit_num_t <= kMaxBit; bit_num_t++) {
+      status = TryQuant(bit_num_t, param_node, param_value, primitive);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "TryQuant failed.";
         return RET_ERROR;
       }
-      // 1. try quant
-      for (size_t bit_num_t = 2; bit_num_t <= MAX_BIT; bit_num_t++) {
-        status = TryQuant(bit_num_t, param_node, param_value, primitive);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "TryQuant failed.";
-          return RET_ERROR;
-        }
-        // 2. evaluate the quant
-        // 2.1 create quant session, get input, output tensor
-        flags.quantType = schema::QuantType_WeightQuant;
-        auto quant_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
-        auto quant_session = std::unique_ptr<session::LiteSession>(quant_sm.session);
-        if (quant_session == nullptr) {
-          MS_LOG(ERROR) << "create session error: " << status;
-          delete quant_sm.model;
-          return RET_ERROR;
-        }
-        auto quant_inputs = quant_session->GetInputs();
+      // 2. evaluate the quant
+      // 2.1 create quant session, get input, output tensor
+      flags.quantType = schema::QuantType_WeightQuant;
+      auto quant_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
+      auto quant_session = std::unique_ptr<session::LiteSession>(quant_sm.session);
+      if (quant_session == nullptr) {
+        MS_LOG(ERROR) << "create session error: " << status;
+        delete quant_sm.model;
+        return RET_ERROR;
+      }
+      auto quant_inputs = quant_session->GetInputs();
 
-        auto mean_error = 0.0f;
-        for (size_t i = 0; i < image_cnt; i++) {
-          if (!config_param_.input_shapes.empty()) {
-            status = quant_session->Resize(quant_inputs, {config_param_.input_shapes[i]});
-            if (status != RET_OK) {
-              MS_LOG(ERROR) << "session Resize fail";
-              delete quant_sm.model;
-              return RET_ERROR;
-            }
-          }
-
-          // set multi-input data
-          for (size_t input_index = 0; input_index < quant_inputs.size(); input_index++) {
-            status = CopyInputDataToTensor(input_index, i, images_, quant_inputs[input_index]);
-            if (status != RET_OK) {
-              MS_LOG(ERROR) << "generate input data from images failed!";
-              delete quant_sm.model;
-              return RET_ERROR;
-            }
-          }
-          status = quant_session->RunGraph();
+      auto mean_error = 0.0f;
+      for (size_t i = 0; i < image_cnt; i++) {
+        if (!config_param_.input_shapes.empty()) {
+          status = quant_session->Resize(quant_inputs, {config_param_.input_shapes[i]});
           if (status != RET_OK) {
-            MS_LOG(ERROR) << "quant session run error";
+            MS_LOG(ERROR) << "session Resize fail";
             delete quant_sm.model;
             return RET_ERROR;
           }
-          // 3. compare between quant and fp32
-          auto quant_outputs = quant_session->GetOutputs();
-          mean_error += CompareOutputData<float>(fp32_output_tensors_[i], quant_outputs);
-        }  // end_for: calib data loop
-        delete quant_sm.model;
-        mean_error = mean_error / image_cnt;
-        if (mean_error <= config_param_.mean_error_threshold) {
-          MS_LOG(DEBUG) << "op: " << op_name << " got mixed bit: " << bit_num_t << " mean_error: " << mean_error;
-          opname_bit_[op_name] = bit_num_t;
-          break;
-        } else if (bit_num_t != MAX_BIT) {
-          MS_LOG(DEBUG) << "op: " << op_name << " intermediate bit: " << bit_num_t << " mean_error: " << mean_error
-                        << " [recover]";
-          // recover
-          status = UpdateTensorDataAndSize(param_value, origin_data.get(), sizeof(float) * elem_count);
+        }
+
+        // set multi-input data
+        for (size_t input_index = 0; input_index < quant_inputs.size(); input_index++) {
+          status = CopyInputDataToTensor(input_index, i, images_, quant_inputs[input_index]);
           if (status != RET_OK) {
-            MS_LOG(ERROR) << "UpdateTensorDataAndSize fail";
+            MS_LOG(ERROR) << "generate input data from images failed!";
+            delete quant_sm.model;
             return RET_ERROR;
           }
-        } else {
-          MS_LOG(DEBUG) << "op: " << op_name << " set bit: " << bit_num_t << " mean_error: " << mean_error;
-          opname_bit_[op_name] = bit_num_t;
         }
-      }  // end bit loop
-    }    //  if: conv and matmul
-  }      // end loop: all cnode
+        status = quant_session->RunGraph();
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "quant session run error";
+          delete quant_sm.model;
+          return RET_ERROR;
+        }
+        // 3. compare between quant and fp32
+        auto quant_outputs = quant_session->GetOutputs();
+        mean_error += CompareOutputData<float>(fp32_output_tensors_[i], quant_outputs);
+      }  // end_for: calib data loop
+      delete quant_sm.model;
+      mean_error = mean_error / image_cnt;
+      if (mean_error <= config_param_.mean_error_threshold) {
+        MS_LOG(DEBUG) << "op: " << op_name << " got mixed bit: " << bit_num_t << " mean_error: " << mean_error;
+        opname_bit_[op_name] = bit_num_t;
+        break;
+      } else if (bit_num_t != kMaxBit) {
+        MS_LOG(DEBUG) << "op: " << op_name << " intermediate bit: " << bit_num_t << " mean_error: " << mean_error
+                      << " [recover]";
+        // recover
+        status = UpdateTensorDataAndSize(param_value, origin_data.get(), sizeof(float) * elem_count);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "UpdateTensorDataAndSize fail";
+          return RET_ERROR;
+        }
+      } else {
+        MS_LOG(DEBUG) << "op: " << op_name << " set bit: " << bit_num_t << " mean_error: " << mean_error;
+        opname_bit_[op_name] = bit_num_t;
+      }
+    }  // end bit loop
+  }    // end loop: all cnode
   return status;
 }
 
@@ -722,7 +723,7 @@ STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   if (config_param_.mixed) {
-    bit_num_ = MAX_BIT;
+    bit_num_ = kMaxBit;
     quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
     quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
     type_id_ = kNumberTypeInt8;

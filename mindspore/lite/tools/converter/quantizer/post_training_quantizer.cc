@@ -898,7 +898,7 @@ STATUS PostTrainingQuantizer::PreProcess() {
   }
   // 3. collect to be quantized operators
   // from user input
-  QuantStrategy strategy(MILLISECONDS_BASE);
+  QuantStrategy strategy(kMillisecondsBase);
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     AnfNodePtr anf = std::dynamic_pointer_cast<AnfNode>(cnode);
@@ -1458,7 +1458,7 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
           return false;
         }
         while (!OpInputDataHandle(STORE, callParam.node_name, &fp32_op_input)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
+          std::this_thread::sleep_for(std::chrono::milliseconds(kMillisecondsBase));
         }
       }
       return true;
@@ -1470,7 +1470,7 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         vector<float> fp32_op_input;
         while (!OpInputDataHandle(FETCH, callParam.node_name, &fp32_op_input)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
+          std::this_thread::sleep_for(std::chrono::milliseconds(kMillisecondsBase));
         }
         auto tensor = beforeInputs[0];
         MS_ASSERT(tensor != nullptr);
@@ -1529,7 +1529,7 @@ KernelCallBack PostTrainingQuantizer::GetInt8AfterCallBack() {
     if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
       vector<float> fp32_op_output_ch_mean;
       while (!OpOutputChMeanDataHandle(FETCH, callParam.node_name, &fp32_op_output_ch_mean)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kMillisecondsBase));
       }
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);
@@ -1639,7 +1639,7 @@ KernelCallBack PostTrainingQuantizer::GetFloatAfterCallBack() {
         fp32_op_output_ch_mean[i] = sum;
       }
       while (!OpOutputChMeanDataHandle(STORE, callParam.node_name, &fp32_op_output_ch_mean)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BASE));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kMillisecondsBase));
       }
     }
     return true;

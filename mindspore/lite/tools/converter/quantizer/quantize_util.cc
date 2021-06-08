@@ -377,7 +377,7 @@ static bool SearchUpperBound(const std::vector<float> &data, const size_t &index
 
 static float CalPercentile(const std::vector<float> &data, const int &outlier_percent) {
   const int size = data.size();
-  float val = outlier_percent / PERCENT_BASE * size;
+  float val = outlier_percent / kPercentBase * size;
   int index = std::ceil(val);
   float result;
   if (index - val > 0) {
@@ -392,7 +392,7 @@ std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<
   std::sort(max_datas.begin(), max_datas.end());
   std::sort(min_datas.begin(), min_datas.end());
   float min_val = CalPercentile(min_datas, percent);
-  float max_val = CalPercentile(max_datas, PERCENT_BASE - percent);
+  float max_val = CalPercentile(max_datas, kPercentBase - percent);
   std::reverse(max_datas.begin(), max_datas.end());
   MS_ASSERT(min_val < max_val);
   MS_ASSERT(min_datas.size() == max_datas.size());
@@ -623,7 +623,7 @@ STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_conf
     return RET_ERROR;
   }
 #ifdef _WIN32
-  if (_fullpath(resolved_path.get(), config_file.c_str(), MAX_NUM_1024) != nullptr) {
+  if (_fullpath(resolved_path.get(), config_file.c_str(), kMaxNum1024) != nullptr) {
     config_file = string(resolved_path.get());
   }
 #else
@@ -711,7 +711,7 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   }
   meta_graph->version = Version();
 
-  flatbuffers::FlatBufferBuilder builder(MAX_NUM_1024);
+  flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
   auto offset = schema::MetaGraph::Pack(builder, meta_graph);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);

@@ -44,12 +44,11 @@
 #include "src/common/file_utils.h"
 
 namespace mindspore::lite::quant {
-constexpr size_t UINT8_QUANTIZATION = 8;
-constexpr size_t WEIGHT_INDEX = 1;
-constexpr size_t MAX_BIT = 8;
-constexpr size_t MAX_NUM_1024 = 1024;
-constexpr size_t PERCENT_BASE = 100;
-constexpr size_t MILLISECONDS_BASE = 10;
+constexpr size_t kUint8Quantization = 8;
+constexpr size_t kMaxBit = 8;
+constexpr size_t kMaxNum1024 = 1024;
+constexpr size_t kPercentBase = 100;
+constexpr size_t kMillisecondsBase = 10;
 
 const char kMethodMaxMin[] = "MAX_MIN";
 const char kMethodKL[] = "KL";
@@ -106,7 +105,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
                              int quant_min, int num_bits);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange = false,
-                             int numBits = UINT8_QUANTIZATION);
+                             int numBits = kUint8Quantization);
 
 std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<float> max_datas);
 
@@ -257,11 +256,6 @@ STATUS DoPerChannelQuant(const ParamValueLitePtr &weight, const QuantType &quant
     }
     quant_params->emplace_back(quant_param);
   }
-  auto status = UpdateTensorDataAndSize(weight, quant_datas->data(), quant_datas->size() * sizeof(T));
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -372,6 +366,10 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const PrimitivePtr &primitiv
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per channel quant failed.";
       return ret;
+    }
+    if (UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(T)) != RET_OK) {
+      MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
+      return RET_ERROR;
     }
   } else {
     ret = DoPerLayerQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_data);

@@ -143,14 +143,12 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
   if (ParseVecAttr(onnx_node, &kernels, &strides, &dilation, &pads) != RET_OK) {
     return nullptr;
   }
-  if (dilation.empty()) {
-    prim->set_dilation({1, 1});
-  } else {
+  prim->set_dilation({1, 1});
+  if (!dilation.empty()) {
     prim->set_dilation(dilation);
   }
-  if (pads.empty()) {
-    prim->set_pad_list({0, 0, 0, 0});
-  } else {
+  prim->set_pad_list({0, 0, 0, 0});
+  if (!pads.empty()) {
     prim->set_pad_list(pads);
   }
   if (!kernels.empty()) {
@@ -168,10 +166,9 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
   prim->set_out_channel(channel_out);
 
   // parse activationType
+  prim->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);
   if (onnx_node.op_type() == "ConvRelu" || onnx_node.op_type() == "Int8ConvRelu") {
     prim->set_activation_type(mindspore::ActivationType::RELU);
-  } else {
-    prim->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);
   }
 
   if (group == channel_in && channel_in == channel_out) {

@@ -92,7 +92,6 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_REDUCE_PROD, "ReduceProd"},
   {tflite::BuiltinOperator_REDUCE_MAX, "ReduceMax"},
   {tflite::BuiltinOperator_REDUCE_MIN, "ReduceMin"},
-  // {tflite::BuiltinOperator_REDUCE_ANY, "ReduceAny"},
   {tflite::BuiltinOperator_SCATTER_ND, "ScatterNd"},
   {tflite::BuiltinOperator_MAXIMUM, "Maximum"},
   {tflite::BuiltinOperator_MINIMUM, "Minimum"},

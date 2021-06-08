@@ -26,8 +26,8 @@
 
 namespace mindspore::lite {
 namespace {
-constexpr size_t BIAS_SIZE = 3;
-constexpr size_t BIAS_ADD_SIZE = 2;
+constexpr size_t kBiasSize = 3;
+constexpr size_t kBiasAddSize = 2;
 }  // namespace
 STATUS QuantParamCalcer::ComputeConstQuantParam(const schema::TensorT &tensor, QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
@@ -129,8 +129,8 @@ int ConvCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
     MS_LOG(DEBUG) << "Call CommonCalcer::Calc failed: " << status;
     return status;
   }
-  if (node.inputIndex.size() == BIAS_SIZE) {
-    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(BIAS_SIZE - 1));
+  if (node.inputIndex.size() == kBiasSize) {
+    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(kBiasSize - 1));
     for (auto &quantParam : biasTensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
     }
@@ -144,8 +144,8 @@ int BiasAddCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
     MS_LOG(DEBUG) << "Call CommonCalcer::Calc failed: " << status;
     return status;
   }
-  if (node.inputIndex.size() == BIAS_ADD_SIZE) {
-    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(BIAS_ADD_SIZE - 1));
+  if (node.inputIndex.size() == kBiasAddSize) {
+    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(kBiasAddSize - 1));
     for (auto &quantParam : biasTensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
     }

@@ -40,10 +40,8 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   }
   auto act_node = node->cast<CNodePtr>();
   if (CheckIfCNodeIsNull(act_node) != lite::RET_OK ||
-      CheckInputSize(act_node, kActivationInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  if (!CheckPrimitiveType(act_node, prim::kPrimActivation)) {
+      CheckInputSize(act_node, kActivationInputsLength) != lite::RET_OK ||
+      !CheckPrimitiveType(act_node, prim::kPrimActivation)) {
     return nullptr;
   }
   auto act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(act_node->input(0));
@@ -70,11 +68,8 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
       if (prim->GetAttr(ops::kActivationType) == nullptr ||
           static_cast<mindspore::ActivationType>(GetValue<int64_t>(prim->GetAttr(ops::kActivationType))) ==
             mindspore::NO_ACTIVATION) {
-        if (act_prim->get_activation_type() == mindspore::RELU) {
-          prim->AddAttr(ops::kActivationType, MakeValue<int64_t>(mindspore::RELU));
-        } else {
-          prim->AddAttr(ops::kActivationType, MakeValue<int64_t>(mindspore::RELU6));
-        }
+        auto type = act_prim->get_activation_type() == mindspore::RELU ? mindspore::RELU : mindspore::RELU6;
+        prim->AddAttr(ops::kActivationType, MakeValue<int64_t>(type));
         return pre_node;
       }
     } else {
