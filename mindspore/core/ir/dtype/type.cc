@@ -132,7 +132,7 @@ TypeId FloatBitsToTypeId(const int nbits) {
 }
 
 const std::string &TypeIdLabel(const TypeId &v) {
-  static std::string unknown("[Unknown Type Id]");
+  static const std::string unknown("[Unknown Type Id]");
   auto iter = g_type_2_lable.find(v);
   if (iter != g_type_2_lable.end()) {
     return iter->second;
