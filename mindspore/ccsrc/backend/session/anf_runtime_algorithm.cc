@@ -1050,13 +1050,17 @@ void AnfRuntimeAlgorithm::SetOutputTypeAndDetailShape(const std::vector<TypeId> 
   MS_EXCEPTION_IF_NULL(node);
   auto node_ptr = node->cast<AnfNodePtr>();
   MS_EXCEPTION_IF_NULL(node_ptr);
+  std::string node_name = "";
+  if (node_ptr->isa<CNode>()) {
+    node_name = GetCNodeName(node_ptr);
+  }
   if (types.size() != shapes.size()) {
     MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  if (shapes.empty()) {
+  if (shapes.empty() && node_name != prim::kPrimMakeTuple->name()) {
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
-  } else if (shapes.size() == 1) {
+  } else if (shapes.size() == 1 && node_name != prim::kPrimMakeTuple->name()) {
     // single output handle
     auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
     node->set_abstract(abstract);
@@ -1077,15 +1081,19 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
                                                      const std::vector<std::vector<size_t>> &shapes, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   auto node_ptr = node->cast<AnfNodePtr>();
+  std::string node_name = "";
+  if (node_ptr->isa<CNode>()) {
+    node_name = GetCNodeName(node_ptr);
+  }
   MS_EXCEPTION_IF_NULL(node_ptr);
   if (types.size() != shapes.size()) {
     MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                       << " trace: " << trace::DumpSourceLines(node);
   }
   auto abstract_ptr = node_ptr->abstract();
-  if (shapes.empty()) {
+  if (shapes.empty() && node_name != prim::kPrimMakeTuple->name()) {
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
-  } else if (shapes.size() == 1) {
+  } else if (shapes.size() == 1 && node_name != prim::kPrimMakeTuple->name()) {
     // single output handle
     ShapeVector shape_int;
     abstract::AbstractTensorPtr abstract = nullptr;
