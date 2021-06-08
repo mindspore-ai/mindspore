@@ -28,11 +28,11 @@ batch_norm_op_info = TBERegOp("BatchNormFoldD") \
     .compute_cost(10) \
     .kernel_name("batchnorm_fold") \
     .partial_flag(True) \
-    .attr("momentum", "optional", "float", "all") \
-    .attr("epsilon", "optional", "float", "all") \
-    .attr("is_training", "optional", "bool", "all") \
-    .attr("freeze_bn", "optional", "int", "all") \
-    .attr("format", "optional", "str", "all") \
+    .attr("momentum", "optional", "float", "all", "0.9") \
+    .attr("epsilon", "optional", "float", "all", "0.00001") \
+    .attr("is_training", "optional", "bool", "all", "true") \
+    .attr("freeze_bn", "optional", "int", "all", "0") \
+    .attr("format", "optional", "str", "all", "NCHW") \
     .input(0, "x", False, "required", "all") \
     .input(1, "x_sum", False, "required", "all") \
     .input(2, "x_square_sum", False, "required", "all") \
@@ -55,43 +55,6 @@ batch_norm_op_info = TBERegOp("BatchNormFoldD") \
 def _batchnorm_fold_tbe():
     """_BatchNormFold TBE register"""
     return
-
-
-def _batchnorm_fold_compute(x_input, x_sum, x_square_sum, mean, variance, momentum, epsilon):
-    """_batchnorm_fold_compute"""
-    shape_x = te.lang.cce.util.shape_to_list(x_input.shape)
-    num = shape_x[0] * shape_x[2] * shape_x[3]
-    num_rec = 1.0 / num
-
-    # compute the mean of x
-    batch_mean = te.lang.cce.vmuls(x_sum, num_rec)
-
-    # compute the variance of x
-    variance_div = te.lang.cce.vmuls(x_square_sum, num_rec)
-    mean_square = te.lang.cce.vmul(batch_mean, batch_mean)
-    batch_var_biased = te.lang.cce.vsub(variance_div, mean_square)
-    batch_std = te.lang.cce.vsqrt(te.lang.cce.vadds(batch_var_biased, epsilon))
-    if num == 1:
-        batch_var_scaler = 0.0
-    else:
-        batch_var_scaler = float(num) / (num - 1)
-    batch_var_unbiased = te.lang.cce.vmuls(batch_var_biased, batch_var_scaler)
-
-    factor = 1.0 - momentum
-    factor_reverse = momentum
-    mean_mul = te.lang.cce.vmuls(batch_mean, factor)
-    mean_mul_rev = te.lang.cce.vmuls(mean, factor_reverse)
-    mean_updated = te.lang.cce.vadd(mean_mul, mean_mul_rev)
-
-    var_mul = te.lang.cce.vmuls(batch_var_unbiased, factor)
-    var_mul_rev = te.lang.cce.vmuls(variance, factor_reverse)
-    variance_updated = te.lang.cce.vadd(var_mul, var_mul_rev)
-
-    y = te.lang.cce.vadds(x_input, 0.0)
-    running_mean = te.lang.cce.vadds(mean, 0.0)
-    running_std = te.lang.cce.vsqrt(te.lang.cce.vadds(variance, epsilon))
-    res = [y, batch_mean, batch_std, running_mean, running_std, mean_updated, variance_updated]
-    return res
 
 
 @util.check_input_type(dict, dict, dict, dict, dict,
@@ -145,7 +108,39 @@ def batchnorm_fold(x, x_sum, x_square_sum, mean, variance,
     mean = tvm.placeholder(shape_mean, name="mean", dtype=dtype_mean.lower())
     variance = tvm.placeholder(shape_mean, name="variance", dtype=dtype_variance.lower())
 
-    res = _batchnorm_fold_compute(x_input, x_sum, x_square_sum, mean, variance, momentum, epsilon)
+    shape_x = te.lang.cce.util.shape_to_list(x_input.shape)
+    num = shape_x[0] * shape_x[2] * shape_x[3]
+    num_rec = 1.0 / num
+
+    # compute the mean of x
+    batch_mean = te.lang.cce.vmuls(x_sum, num_rec)
+
+    # compute the variance of x
+    variance_div = te.lang.cce.vmuls(x_square_sum, num_rec)
+    mean_square = te.lang.cce.vmul(batch_mean, batch_mean)
+    batch_var_biased = te.lang.cce.vsub(variance_div, mean_square)
+    batch_std = te.lang.cce.vsqrt(te.lang.cce.vadds(batch_var_biased, epsilon))
+    if num == 1:
+        batch_var_scaler = 0.0
+    else:
+        batch_var_scaler = float(num) / (num - 1)
+    batch_var_unbiased = te.lang.cce.vmuls(batch_var_biased, batch_var_scaler)
+
+    factor = 1.0 - momentum
+    factor_reverse = momentum
+    mean_mul = te.lang.cce.vmuls(batch_mean, factor)
+    mean_mul_rev = te.lang.cce.vmuls(mean, factor_reverse)
+    mean_updated = te.lang.cce.vadd(mean_mul, mean_mul_rev)
+
+    var_mul = te.lang.cce.vmuls(batch_var_unbiased, factor)
+    var_mul_rev = te.lang.cce.vmuls(variance, factor_reverse)
+    variance_updated = te.lang.cce.vadd(var_mul, var_mul_rev)
+
+    y = te.lang.cce.vadds(x_input, 0.0)
+    running_mean = te.lang.cce.vadds(mean, 0.0)
+    running_std = te.lang.cce.vsqrt(te.lang.cce.vadds(variance, epsilon))
+    res = [y, batch_mean, batch_std, running_mean, running_std, mean_updated, variance_updated]
+
     with tvm.target.cce():
         sch = generic.auto_schedule(res)
     config = {"name": kernel_name,

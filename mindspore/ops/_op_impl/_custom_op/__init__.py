@@ -14,3 +14,22 @@
 # ============================================================================
 
 """custom ops"""
+from .batchnorm_fold import _batchnorm_fold_tbe
+from .batchnorm_fold2 import _batchnorm_fold2_tbe
+from .batchnorm_fold2_grad import _batchnorm_fold2_grad_tbe
+from .batchnorm_fold2_grad_reduce import _batchnorm_fold2_grad_reduce_tbe
+from .batchnorm_fold_grad import _batchnorm_fold_grad_tbe
+from .correction_mul import _correction_mul_tbe
+from .correction_mul_grad import _correction_mul_grad_tbe
+from .fake_learned_scale_quant_perlayer import _fake_learned_scale_quant_perlayer_tbe
+from .fake_learned_scale_quant_perlayer_grad import _fake_learned_scale_quant_perlayer_grad_d_tbe
+from .fake_learned_scale_quant_perlayer_grad_reduce import _fake_learned_scale_quant_perlayer_grad_d_reduce_tbe
+from .fake_learned_scale_quant_perchannel import _fake_learned_scale_quant_perchannel_tbe
+from .fake_learned_scale_quant_perchannel_grad import _fake_learned_scale_quant_perchannel_grad_d_tbe
+from .fake_learned_scale_quant_perchannel_grad_reduce import _fake_learned_scale_quant_perchannel_grad_d_reduce_tbe
+from .fake_quant_perchannel import _fake_quant_perchannel_tbe
+from .fake_quant_perchannel_grad import _fake_quant_perchannel_grad_tbe
+from .fake_quant_perlayer import _fake_quant_per_layer_tbe
+from .fake_quant_perlayer_grad import _fake_quant_per_layer_grad_tbe
+from .minmax_update_perchannel import _minmax_update_perchannel_tbe
+from .minmax_update_perlayer import _minmax_update_perlayer_tbe
