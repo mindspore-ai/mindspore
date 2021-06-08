@@ -59,12 +59,12 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     int32_t start_ind = l_len_ - std::min(l_len_, n - 1);
     int32_t end_ind = offsets.size() - r_len_ + std::min(r_len_, n - 1);
     if (end_ind - start_ind <= n) {
-      res.emplace_back(std::string());  // push back empty string
+      (void)res.emplace_back(std::string());  // push back empty string
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(end_ind - n >= 0, "Ngram: get offsets failed.");
 
       for (int ind = start_ind; ind < end_ind - n; ind++) {
-        res.emplace_back(str_buffer.substr(offsets[ind], offsets[ind + n] - offsets[ind] - separator_.size()));
+        (void)res.emplace_back(str_buffer.substr(offsets[ind], offsets[ind + n] - offsets[ind] - separator_.size()));
       }
     }
   }
@@ -89,7 +89,7 @@ Status NgramOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<
     // if len_with_padding - n < 0, this would return an empty string
     num_elements += std::max(len_with_padding - n, 0);
   }
-  outputs.emplace_back(TensorShape({num_elements}));
+  (void)outputs.emplace_back(TensorShape({num_elements}));
   CHECK_FAIL_RETURN_UNEXPECTED(outputs.size() == NumOutput(), "Ngram: incorrect num of outputs\n");
   return Status::OK();
 }

@@ -149,7 +149,7 @@ class String {
       if (buffer_ == nullptr) {
         MS_C_EXCEPTION("malloc data failed");
       }
-      strncpy(buffer_, other.buffer_ + pos, size_);
+      strncpy_s(buffer_, size_ + 1, other.buffer_ + pos, size_);
       buffer_[size_] = '\0';
     }
   }
@@ -269,7 +269,7 @@ class String {
       MS_C_EXCEPTION("malloc data failed");
     }
     memcpy(tmp, this->buffer_, size_ + 1);
-    strncat(tmp, str.buffer_, str.size_);
+    strncat_s(tmp, new_size + 1, str.buffer_, str.size_);
     tmp[new_size] = '\0';
     free(buffer_);
     buffer_ = tmp;

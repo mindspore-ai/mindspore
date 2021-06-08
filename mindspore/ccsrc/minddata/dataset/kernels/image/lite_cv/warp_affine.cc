@@ -30,7 +30,7 @@ namespace mindspore {
 namespace dataset {
 static int16_t BWBlock_i[TAB_SZ2][2][2];
 
-static double SrcValue(double *src, const int &y, const int &x) { return (src + y * 3)[x]; }
+static double SrcValue(const double *src, const int &y, const int &x) { return (src + y * 3)[x]; }
 
 static double &DstValue(double *dst, const int &y, const int &x) { return (dst + y * 3)[x]; }
 
