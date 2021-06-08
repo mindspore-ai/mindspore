@@ -313,26 +313,23 @@ __global__ void NLLLossKernel(const int n, const int c, const T *input, const in
 
 template <typename T, typename S>
 void NLLLoss(const int n, const int c, const int reduction, const T *input, const int32_t *target, const S *weight,
-             S *tmp_weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream) {
-  CopyEqual<<<GET_BLOCKS(c), GET_THREADS, 0, stream>>>(weight, tmp_weight, c);
-  Sum(tmp_weight, c, stream);
-
-  // copy sum of weight (tmp_weight[0]) to total_weight
-  CopyEqual<<<1, 1, 0, stream>>>(tmp_weight, total_weight, 1);
-
+             T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream) {
   // if reduction != "none"
   if (reduction != 0) {
     NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, tmp_loss);
-    if (reduction == 1) {
-      // prepare denominator for mean reduction
-      Sum(tmp_target_weight, n, stream);
-    }
+    // sum target weights after populating them
+    Sum(tmp_target_weight, n, stream);
     // reduce tmp_loss
     Reduce(tmp_loss, n, tmp_target_weight, reduction, loss, stream);
   } else {
     // no reduction, output directly to loss
     NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, loss);
+    // sum target weights after populatin them
+    Sum(tmp_target_weight, n, stream);
   }
+
+  // copy sum of weight (tmp_target_weight[0]) to total_weight
+  CopyEqual<<<1, 1, 0, stream>>>(tmp_target_weight, total_weight, 1);
 }
 
 template void KLDivLoss<float>(const int &input_size, const int &reduction, const float *input_x, const float *input_y,
@@ -350,13 +347,12 @@ template void BinaryCrossEntropyLossGrad<float>(const int &input_size, const int
                                                 float *dx, cudaStream_t stream);
 
 template void NLLLoss<float, float>(const int n, const int c, const int reduction, const float *input,
-                                    const int32_t *target, const float *weight, float *tmp_weight, float *loss,
-                                    float *total_weight, float *tmp_loss, float *tmp_target_weight,
-                                    cudaStream_t stream);
+                                    const int32_t *target, const float *weight, float *loss, float *total_weight,
+                                    float *tmp_loss, float *tmp_target_weight, cudaStream_t stream);
 
 template void NLLLoss<float, half>(const int n, const int c, const int reduction, const float *input,
-                                   const int32_t *target, const half *weight, half *tmp_weight, float *loss,
-                                   half *total_weight, float *tmp_loss, half *tmp_target_weight, cudaStream_t stream);
+                                   const int32_t *target, const half *weight, float *loss, half *total_weight,
+                                   float *tmp_loss, half *tmp_target_weight, cudaStream_t stream);
 
 template void KLDivLoss<half>(const int &input_size, const int &reduction, const half *input_x, const half *input_y,
                               half *loss, half *tmp_loss, cudaStream_t stream);
@@ -373,9 +369,9 @@ template void BinaryCrossEntropyLossGrad<half>(const int &input_size, const int 
                                                cudaStream_t stream);
 
 template void NLLLoss<half, half>(const int n, const int c, const int reduction, const half *input,
-                                  const int32_t *target, const half *weight, half *tmp_weight, half *loss,
-                                  half *total_weight, half *tmp_loss, half *tmp_target_weight, cudaStream_t stream);
+                                  const int32_t *target, const half *weight, half *loss, half *total_weight,
+                                  half *tmp_loss, half *tmp_target_weight, cudaStream_t stream);
 
 template void NLLLoss<half, float>(const int n, const int c, const int reduction, const half *input,
-                                   const int32_t *target, const float *weight, float *tmp_weight, half *loss,
-                                   float *total_weight, half *tmp_loss, float *tmp_target_weight, cudaStream_t stream);
+                                   const int32_t *target, const float *weight, half *loss, float *total_weight,
+                                   half *tmp_loss, float *tmp_target_weight, cudaStream_t stream);

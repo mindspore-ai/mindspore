@@ -31,5 +31,5 @@ void KLDivLossGrad(const int &input_size, const int &reduction, const T *input_x
                    T *dx, T *dy, cudaStream_t stream);
 template <typename T, typename S>
 void NLLLoss(const int n, const int c, const int reduction, const T *input, const int32_t *target, const S *weight,
-             S *tmp_weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream);
+             T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_LOSS_WITH_REDUCTION_IMPL_CUH
