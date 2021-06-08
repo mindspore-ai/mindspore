@@ -87,6 +87,7 @@ def _check_input_type(param_name, input_data, allow_dtype, cls_name):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{allow_dtype}', "
                         f"but got '{F.typeof(input_data)}'")
 
+
 class L1Loss(_Loss):
     r"""
     L1Loss creates a criterion to measure the mean absolute error (MAE) between :math:`x` and :math:`y` element-wise,
@@ -415,6 +416,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
             labels = self.one_hot(labels, F.shape(logits)[-1], self.on_value, self.off_value)
         x = self.softmax_cross_entropy(logits, labels)[0]
         return self.get_loss(x)
+
 
 @constexpr
 def _check_label_dtype(labels_dtype, cls_name):

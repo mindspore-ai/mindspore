@@ -97,6 +97,8 @@ def _make_directory(path: str):
         except PermissionError as e:
             logger.error("No write permission on the directory(%r), error = %r", path, e)
             raise TypeError("No write permission on the directory.")
+        finally:
+            pass
     return real_path
 
 
@@ -238,6 +240,8 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
     except BaseException as e:
         logger.error("Failed to read the file `%s`, please check the correct of the file.", file_name)
         raise ValueError(e.__str__())
+    finally:
+        pass
 
     if proto_format == "MINDIR" and not display_data:
         for param_proto in model.graph.parameter:
