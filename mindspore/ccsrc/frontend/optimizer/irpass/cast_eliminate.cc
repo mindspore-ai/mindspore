@@ -52,12 +52,14 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
   }
 
   src_type = src_type->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(src_type);
 
   // tgt type check
   auto tgt_type = GetValueNode<TypePtr>(tgt_);
   if (tgt_type->isa<TensorType>()) {
     tgt_type = tgt_type->cast<TensorTypePtr>()->element();
   }
+  MS_EXCEPTION_IF_NULL(tgt_type);
 
   if (src_type->type_id() == tgt_type->type_id()) {
     // If 2nd input of cast is a depend, can't erase cast directly, but should replace cast with a new depend.

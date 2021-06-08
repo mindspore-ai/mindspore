@@ -174,6 +174,7 @@ AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state, const CN
     auto inputs = depend->inputs();
     inputs.pop_back();
     auto fg = depend->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
     auto new_depend = fg->NewCNode(inputs);
     new_depend->set_abstract(depend->abstract());
     mgr->Replace(depend, new_depend);
@@ -250,6 +251,7 @@ AnfNodePtr EliminateUpdateStateWithMakeTupleFunc(const CNodePtr &update_state, c
   if (input_node != nullptr) {
     auto update_state_op = NewValueNode(prim::kPrimUpdateState);
     auto fg = update_state->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
     auto new_update_state = fg->NewCNode({update_state_op, update_state->input(kInputIndex), input_node});
     new_update_state->set_abstract(update_state->abstract());
     new_update_state->set_scope(update_state->scope());

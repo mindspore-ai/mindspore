@@ -107,7 +107,6 @@ class VirtualOutputEliminater : public AnfVisitor {
       return nullptr;
     }
     auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->inputs().size() <= 1) {
       return nullptr;
     }
@@ -125,7 +124,6 @@ class ReceiveEliminater : public AnfVisitor {
       return nullptr;
     }
     auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->inputs().size() == 1) {
       return nullptr;
     }

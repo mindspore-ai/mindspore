@@ -97,7 +97,7 @@ class InlinerBase : public AnfVisitor {
     auto &inputs = cnode->inputs();
     // G
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
+    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
       return nullptr;
     }
 

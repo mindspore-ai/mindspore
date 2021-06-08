@@ -51,6 +51,9 @@ class SwitchLayerDeferInline : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     auto cnode = node->cast<CNodePtr>();
     auto tuple = dyn_cast<abstract::AbstractTuple>(cnode->input(2)->abstract());
+    if (tuple == nullptr) {
+      return nullptr;
+    }
     for (auto elem : tuple->elements()) {
       auto abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(elem);
       if (abstract != nullptr) {
