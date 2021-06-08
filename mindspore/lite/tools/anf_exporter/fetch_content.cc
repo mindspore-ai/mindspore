@@ -110,40 +110,6 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
   return RET_OK;
 }
 
-int FetchFromDefaultParam(const ParameterPtr &param_node, DataInfo *data_info) {
-  MS_ASSERT(param_node != nullptr && data_info != nullptr);
-  ShapeVector shape_vector;
-  TypeId data_type;
-  auto status = GetDataTypeAndShape(param_node, &data_type, &shape_vector);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "get data type and shape from param node failed.";
-    return RET_ERROR;
-  }
-  data_info->data_type_ = data_type;
-  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
-  size_t offset = 0;
-  if (!shape_vector.empty() && data_type == kObjectTypeString) {
-    status = GetShapeVectorFromStringTensor(tensor_info, &shape_vector, &offset);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "get shape vector from string tensor failed.";
-      return RET_ERROR;
-    }
-  }
-  std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
-  data_info->shape_ = dims;
-  if (tensor_info != nullptr && tensor_info->Size() != 0) {
-    if (data_type != kObjectTypeTensorType || tensor_info->Size() >= kTensorListMinSize) {
-      data_info->data_.resize(tensor_info->Size() - offset);
-      if (EOK != memcpy_s(data_info->data_.data(), data_info->data_.size(),
-                          static_cast<uint8_t *>(tensor_info->data_c()) + offset, tensor_info->Size() - offset)) {
-        MS_LOG(ERROR) << "memcpy_s failed.";
-        return RET_ERROR;
-      }
-    }
-  }
-  return RET_OK;
-}
-
 int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, converter::FmkType fmk_type,
                          bool train_flag, DataInfo *data_info) {
   MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
@@ -260,6 +226,50 @@ int FetchFromSequenceValue(const ValueNodePtr &value_node, const PrimitivePtr &p
 }
 }  // namespace
 
+int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info) {
+  MS_ASSERT(param_node != nullptr && data_info != nullptr);
+  ShapeVector shape_vector;
+  TypeId data_type;
+  auto status = GetDataTypeAndShape(param_node, &data_type, &shape_vector);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "get data type and shape from param node failed.";
+    return RET_ERROR;
+  }
+  data_info->data_type_ = data_type;
+  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+  size_t offset = 0;
+  if (!shape_vector.empty() && data_type == kObjectTypeString) {
+    status = GetShapeVectorFromStringTensor(tensor_info, &shape_vector, &offset);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "get shape vector from string tensor failed.";
+      return RET_ERROR;
+    }
+  }
+  std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
+  data_info->shape_ = dims;
+  if (tensor_info != nullptr && tensor_info->Size() != 0) {
+    if (data_type != kObjectTypeTensorType || tensor_info->Size() >= kTensorListMinSize) {
+      data_info->data_.resize(tensor_info->Size() - offset);
+      if (EOK != memcpy_s(data_info->data_.data(), data_info->data_.size(),
+                          static_cast<uint8_t *>(tensor_info->data_c()) + offset, tensor_info->Size() - offset)) {
+        MS_LOG(ERROR) << "memcpy_s failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+
+  data_info->format_ = GetFormatByFmk(fmk_type);
+  if (data_info->format_ < 0) {
+    MS_LOG(ERROR) << "don't support current fmk: " << fmk_type;
+    return RET_ERROR;
+  }
+  if (data_info->format_ != mindspore::NHWC && data_info->format_ != mindspore::NCHW) {
+    MS_LOG(ERROR) << "schema tensor format is wrong, " << data_info->format_;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
                                DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
@@ -268,13 +278,9 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
     MS_LOG(ERROR) << "input node is not parameter node.";
     return RET_ERROR;
   }
-  data_info->format_ = GetFormatByFmk(fmk_type);
-  if (data_info->format_ < 0) {
-    MS_LOG(ERROR) << "don't support current fmk: " << fmk_type;
-    return RET_ERROR;
-  }
-  if (data_info->format_ != mindspore::NHWC && data_info->format_ != mindspore::NCHW) {
-    MS_LOG(ERROR) << "schema tensor format is wrong, " << data_info->format_;
+
+  if (FetchFromDefaultParam(param_node, fmk_type, data_info) != RET_OK) {
+    MS_LOG(ERROR) << "fetch information from default param failed.";
     return RET_ERROR;
   }
 
@@ -286,10 +292,7 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
       (index == 2 && prim->GetAttr(ops::kFormat) != nullptr)) {
     data_info->format_ = mindspore::KHWC;
   }
-  if (FetchFromDefaultParam(param_node, data_info) != RET_OK) {
-    MS_LOG(ERROR) << "fetch information from default param failed.";
-    return RET_ERROR;
-  }
+
   QuantParamHolderPtr quant_param_holder =
     prim->GetAttr("quant_params") == nullptr ? nullptr : prim->GetAttr("quant_params")->cast<QuantParamHolderPtr>();
   if (quant_param_holder != nullptr && quant_param_holder->enable_huffman_code() &&

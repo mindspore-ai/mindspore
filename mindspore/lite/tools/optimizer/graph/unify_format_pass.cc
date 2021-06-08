@@ -625,8 +625,8 @@ STATUS UnifyFormatPass::HandleGraphMultiNode(const FuncGraphPtr &func_graph, con
 
 void UnifyFormatPass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
-  sub_inputs_map_[sub_graph] = {};
   auto sub_inputs = sub_graph->get_inputs();
+  sub_inputs_map_[sub_graph] = sub_inputs;
   for (auto &node : sub_inputs) {
     auto param_node = node->cast<ParameterPtr>();
     MS_ASSERT(param_node != nullptr);
@@ -649,7 +649,6 @@ void UnifyFormatPass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr
       if (utils::isa<ParameterPtr>(cnode->input(index))) {
         if (cnode->input(index)->cast<ParameterPtr>()->has_default()) {
           param_node->set_default_param(cnode->input(index)->cast<ParameterPtr>()->default_param());
-          sub_inputs_map_[sub_graph].push_back(param_node);
         }
         continue;
       }
@@ -664,7 +663,6 @@ void UnifyFormatPass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr
         param_node->set_default_param(std::make_shared<tensor::Tensor>((TypeId)data_info.data_type_, shape_vec,
                                                                        data_info.data_.data(), data_info.data_.size()));
       }
-      sub_inputs_map_[sub_graph].push_back(param_node);
     }
   }
 }
@@ -679,8 +677,11 @@ void UnifyFormatPass::ResetSubGraphInput() {
       auto param_node = sub_graph->add_parameter();
       MS_ASSERT(param_node != nullptr);
       param_node->set_abstract(sub_input->abstract()->Clone());
-      param_node->set_name(sub_input->name());
+      param_node->set_name(sub_input->fullname_with_scope());
       manager->Replace(sub_input, param_node);
+      auto sub_param_input = sub_input->cast<ParameterPtr>();
+      MS_ASSERT(sub_param_input != nullptr);
+      sub_param_input->set_default_param(nullptr);
     }
   }
 }

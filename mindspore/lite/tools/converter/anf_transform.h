@@ -49,18 +49,6 @@ class AnfTransform {
 
   static int RunConstFoldPass(const FuncGraphPtr &olde_graph, const converter::Flags *config);
 
-  static int RunPrecedingPass(const FuncGraphPtr &old_graph, const converter::Flags &config);
-
-  static int RunConv1DAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
-
-  static int RunAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
-
-  static int RunMindirAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
-
-  static int RunOnnxAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
-
-  static int RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
-
   static int RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   static STATUS RunPluginPass(const FuncGraphPtr &old_graph, int position);

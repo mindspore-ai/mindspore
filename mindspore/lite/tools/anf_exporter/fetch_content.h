@@ -35,6 +35,9 @@ struct DataInfo {
   std::vector<uint8_t> data_;
   DataInfo() : enable_huffman_code_(false), format_(0), data_type_(0) {}
 };
+
+int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info);
+
 int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
                                DataInfo *data_info);
 int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
