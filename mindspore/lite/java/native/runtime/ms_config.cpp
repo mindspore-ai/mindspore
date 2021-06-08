@@ -23,7 +23,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
   auto *context = new (std::nothrow) mindspore::lite::Context();
   if (context == nullptr) {
     MS_LOGE("new Context fail!");
-    return (jlong)context;
+    return (jlong) nullptr;
   }
 
   auto &cpu_device_ctx = context->device_list_[0];
@@ -40,11 +40,12 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
     }
     case 2:  // DT_NPU
       MS_LOGE("We only support CPU and GPU now.");
-      return (jlong)context;
-      break;
+      delete context;
+      return (jlong) nullptr;
     default:
       MS_LOGE("Invalid device_type : %d", device_type);
-      return (jlong)context;
+      delete context;
+      return (jlong) nullptr;
   }
 
   switch (cpu_bind_mode) {
@@ -59,7 +60,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
       break;
     default:
       MS_LOGE("Invalid cpu_bind_mode : %d", cpu_bind_mode);
-      return (jlong)context;
+      delete context;
+      return (jlong) nullptr;
   }
 
   cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = enable_float16;
