@@ -89,10 +89,12 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
-  std::set<TypePtr> valid_x_type = {kTensorType};
-  CheckAndConvertUtils::CheckSubClass("input_x", x_type, valid_x_type, prim_name);
-  auto type = CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_x_type, prim_name);
-  return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
+  if (!x_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
+                            << " input must be tensor type but got " << x_type->ToString();
+  }
+  auto mask_dtype = kUInt8;
+  return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, mask_dtype});
 }
 }  // namespace
 AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -103,6 +105,5 @@ AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(shapes, types);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLUV2, prim::kPrimReluV2, ReLUV2Infer, nullptr, true);
-
 }  // namespace ops
 }  // namespace mindspore
