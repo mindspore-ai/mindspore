@@ -101,6 +101,5 @@ class GpuRuntimeWrapper {
  private:
   T *gpu_runtime_{nullptr};
 };
-
 }  // namespace mindspore::lite::gpu
 #endif  // MINDSPORE_LITE_SRC_GPU_RUNTIME_H_

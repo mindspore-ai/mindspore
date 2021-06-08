@@ -100,7 +100,6 @@ class OpenCLAllocator : public mindspore::Allocator {
   int shift_factor_ = 6;
   bool lock_flag_ = false;
 };
-
 }  // namespace mindspore::lite::opencl
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_OPENCL_ALLOCATOR_H_
