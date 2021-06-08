@@ -475,12 +475,11 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
         anf_nodes_map->emplace(input_name, ext_subgraph_input);
         break;
       } else {
-        if (cur_node_map->find(loop_name) != cur_node_map->end()) {
-          need_add_input_nodes.emplace_back(cur_node_map->at(loop_name)->cast<CNodePtr>());
-        } else {
+        if (cur_node_map->find(loop_name) == cur_node_map->end()) {
           MS_LOG(ERROR) << "loop node: " << loop_name << " not found in cur node map.";
           return RET_ERROR;
         }
+        need_add_input_nodes.emplace_back(cur_node_map->at(loop_name)->cast<CNodePtr>());
         loop_name = child_root_map_[loop_name];
       }
     }

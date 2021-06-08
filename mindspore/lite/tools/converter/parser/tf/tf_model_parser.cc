@@ -242,13 +242,9 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::VariantTensorDataPro
     tensor_list_data.insert(tensor_list_data.end(), single_tensor_data.begin(), single_tensor_data.end());
   }
   auto tensor_data_ptr = new (std::nothrow) int[tensor_list_data.size()];
-  if (tensor_data_ptr == nullptr) {
-    MS_LOG(ERROR) << "tensor_data is nullptr";
-    return RET_NULL_PTR;
-  }
-  if (EOK != ::memcpy_s(tensor_data_ptr, tensor_list_data.size() * sizeof(int), tensor_list_data.data(),
-                        tensor_list_data.size() * sizeof(int))) {
-    MS_LOG(ERROR) << "memcpy_s failed";
+  if (tensor_data_ptr == nullptr || memcpy_s(tensor_data_ptr, tensor_list_data.size() * sizeof(int),
+                                             tensor_list_data.data(), tensor_list_data.size() * sizeof(int)) != EOK) {
+    MS_LOG(ERROR) << "copy data failed";
     return RET_NULL_PTR;
   }
   param_value->SetTensorData(tensor_data_ptr, tensor_list_data.size() * sizeof(int));
@@ -663,12 +659,9 @@ STATUS TFModelParser::ConvertSubgraph() {
     MS_LOG(ERROR) << "Convert subgraph is failed.";
     return RET_ERROR;
   }
-  if (ControlFlowNodePostProcess(while_cond_map_, while_body_map_) != RET_OK) {
-    MS_LOG(ERROR) << "while node post process failed";
-    return RET_ERROR;
-  }
-  if (ControlFlowNodePostProcess(if_then_map_, if_else_map_) != RET_OK) {
-    MS_LOG(ERROR) << "if node post process failed";
+  if (ControlFlowNodePostProcess(while_cond_map_, while_body_map_) != RET_OK ||
+      (ControlFlowNodePostProcess(if_then_map_, if_else_map_) != RET_OK)) {
+    MS_LOG(ERROR) << "while/if node post process failed";
     return RET_ERROR;
   }
   return RET_OK;
