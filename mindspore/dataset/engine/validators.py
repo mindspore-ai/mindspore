@@ -461,11 +461,11 @@ def check_pad_info(key, val):
         type_check(val, (tuple,), "value in pad_info")
 
         if val[0] is not None:
-            type_check(val[0], (list,), "pad_shape")
+            type_check(val[0], (list,), "shape in pad_info")
 
             for dim in val[0]:
                 if dim is not None:
-                    check_pos_int32(dim, "dim in pad_shape")
+                    check_pos_int32(dim, "dim of shape in pad_info")
         if val[1] is not None:
             type_check(val[1], (int, float, str, bytes), "pad_value")
 

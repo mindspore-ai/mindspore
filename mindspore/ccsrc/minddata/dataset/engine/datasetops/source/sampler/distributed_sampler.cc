@@ -53,7 +53,7 @@ Status DistributedSamplerRT::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "Invalid parameter, num_samples must be greater than 0, but got " +
                                                    std::to_string(num_samples_) + ".\n");
   CHECK_FAIL_RETURN_UNEXPECTED(
-    num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0" + std::to_string(num_rows_) + ".\n");
+    num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_) + ".\n");
   CHECK_FAIL_RETURN_UNEXPECTED(
     device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,
     "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
@@ -87,9 +87,8 @@ Status DistributedSamplerRT::InitSampler() {
 Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
   if (cnt_ > samples_per_tensor_) {
     RETURN_STATUS_UNEXPECTED(
-      "Number of samples(cnt) that have already been filled in to Tensor should be less than or "
-      "equal to samples_per_tensor, but got cnt: " +
-      std::to_string(cnt_) + ", samples_per_tensor: " + std::to_string(samples_per_tensor_));
+      "Sampler index must be less than or equal to num_samples(total rows in dataset), but got:" +
+      std::to_string(cnt_) + ", samples_per_tensor(num_samples): " + std::to_string(samples_per_tensor_));
   } else if (cnt_ == samples_per_tensor_ && (non_empty_ || !even_dist_)) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
     if (!samples_per_tensor_) {
@@ -150,7 +149,7 @@ Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
 }
 
 Status DistributedSamplerRT::ResetSampler() {
-  CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_tensor_, "ERROR Reset() called early/late");
+  CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_tensor_, "[Internal ERROR] Reset() Sampler called early or late.");
   cnt_ = 0;
 
   if (shuffle_ == true) {

@@ -300,7 +300,7 @@ def test_coco_case_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "invalid node found in json" in str(e)
+        assert "required node not found in JSON" in str(e)
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_CATEGORY_ID_FILE, task="Detection")
@@ -316,7 +316,7 @@ def test_coco_case_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "failed to open json file" in str(e)
+        assert "failed to open JSON file" in str(e)
 
     try:
         sampler = ds.PKSampler(3)

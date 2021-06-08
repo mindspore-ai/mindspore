@@ -66,7 +66,7 @@ Status AlbumOp::PrescanEntry() {
   dirname_offset_ = folder_path_.length();
   std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
   if (!folder.Exists() || dirItr == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_path_ + ".");
   }
   MS_LOG(INFO) << "Album folder Path found: " << folder_path_ << ".";
 
@@ -84,7 +84,8 @@ Status AlbumOp::PrescanEntry() {
   num_rows_ = image_rows_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API AlbumDataset. Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with AlbumDataset API. Check file path:" + folder_path_ +
+      ".");
   }
   return Status::OK();
 }
@@ -210,7 +211,7 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &label));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid data, column type is neither int32 nor int64, it is " +
+    RETURN_STATUS_UNEXPECTED("Invalid data, column type in data_schema is neither int32 nor int64, it is " +
                              data_schema_->column(col_num).type().ToString());
   }
   row->push_back(std::move(label));
@@ -239,7 +240,7 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t co
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &float_array));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid data, column type is neither float32 nor float64, it is " +
+    RETURN_STATUS_UNEXPECTED("Invalid data, column type in data_schema is neither float32 nor float64, it is " +
                              data_schema_->column(col_num).type().ToString());
   }
   row->push_back(std::move(float_array));

@@ -554,7 +554,7 @@ def test_generator_error_2():
         for _ in data1:
             pass
     print("========", str(info.value))
-    assert "Generator should return a tuple of numpy arrays" in str(info.value)
+    assert "Generator should return a tuple of NumPy arrays" in str(info.value)
 
 
 def test_generator_error_3():

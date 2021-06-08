@@ -37,7 +37,8 @@ FilterOp::FilterOp(const std::vector<std::string> &in_col_names, int32_t num_wor
 Status FilterOp::LaunchThreadsAndInitOp() {
   // The operator class just starts off threads by calling the tree_ function.
   if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] Pipeline init failed, Execution tree not set.");
   }
   filter_queues_.Init(num_workers_, oc_queue_size_);
   RETURN_IF_NOT_OK(filter_queues_.Register(tree_->AllTasks()));

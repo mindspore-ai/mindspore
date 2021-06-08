@@ -27,7 +27,7 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
   // Here, it is just a getter method to return the value.  However, it is invalid if there is
   // not a value set for this count, so generate a failure if that is the case.
   if (num == nullptr || num_rows_ == -1) {
-    RETURN_STATUS_UNEXPECTED("RandomAccessOp has not computed its num rows yet.");
+    RETURN_STATUS_UNEXPECTED("Get num rows in Dataset failed, num_rows has not been set yet.");
   }
   (*num) = num_rows_;
   return Status::OK();
@@ -45,7 +45,7 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   if (HasChildSampler()) {
     child_sampler = std::dynamic_pointer_cast<SamplerRT>(child_[0]);
     if (!child_sampler) {
-      std::string err_msg("Cannot handshake, child is not a sampler object.");
+      std::string err_msg("[Internal ERROR] Cannot handshake, child is not a sampler object.");
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
 
@@ -53,7 +53,7 @@ Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
     RETURN_IF_NOT_OK(child_sampler->HandshakeRandomAccessOp(op));
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "RandomAccessOp is nullptr\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "RandomAccessOp init failed, as it is nullptr.");
 
   // If there's a child sampler, set the row count to be it's sample count
   if (HasChildSampler()) {
@@ -99,11 +99,11 @@ Status SamplerRT::GetAllIdsThenReset(py::array *data) {
   sample_ids = sample_row[0];
 
   // check this tensorRow is not a ctrl tensorRow
-  CHECK_FAIL_RETURN_UNEXPECTED(sample_row.Flags() == TensorRow::kFlagNone, "ERROR ctrl row received");
+  CHECK_FAIL_RETURN_UNEXPECTED(sample_row.Flags() == TensorRow::kFlagNone, "[Internal ERROR] ctrl row received.");
 
   // perform error checking! Next TensorRow supposed to be EOE since last one already contains all ids for current epoch
   RETURN_IF_NOT_OK(GetNextSample(&sample_row));
-  CHECK_FAIL_RETURN_UNEXPECTED(sample_row.eoe(), "ERROR Non EOE received");
+  CHECK_FAIL_RETURN_UNEXPECTED(sample_row.eoe(), "[Internal ERROR] Non EOE received in the end of epoch.");
   // Reset Sampler since this is the end of the epoch
   RETURN_IF_NOT_OK(ResetSampler());
 
@@ -176,7 +176,7 @@ bool SamplerRT::HasChildSampler() const { return !child_.empty(); }
 
 Status SamplerRT::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
   if (child_ids_.empty()) {
-    RETURN_STATUS_UNEXPECTED("Trying to get associated child id, but there are no child ids!");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Trying to get associated child id, but there are no child ids!");
   }
 
   std::shared_ptr<Tensor> sample_ids = child_ids_[0];

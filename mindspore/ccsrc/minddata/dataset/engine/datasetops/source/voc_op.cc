@@ -208,7 +208,8 @@ Status VOCOp::ParseAnnotationIds() {
   num_rows_ = image_ids_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API VOCDataset. Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with VOCDataset API. Check file in directory:" +
+      folder_path_);
   }
   return Status::OK();
 }

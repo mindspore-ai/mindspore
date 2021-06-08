@@ -56,7 +56,7 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
     if (cursor.find(key_chain[i]) != cursor.end()) {
       cursor = cursor[key_chain[i]];
     } else {
-      RETURN_STATUS_UNEXPECTED("Invalid data, failed to find key: " + key_chain[i]);
+      RETURN_STATUS_UNEXPECTED("Invalid data, in given JSON file, failed to find key: " + key_chain[i]);
     }
   }
   std::string final_str = key_chain.back();
@@ -110,7 +110,7 @@ Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t e
       js = nlohmann::json::parse(line);
     } catch (const std::exception &err) {
       // Catch any exception and convert to Status return code
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse json file: " + file);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse JSON file: " + file);
     }
     int cols_count = cols_to_keyword_.size();
     TensorRow tRow(cols_count, nullptr);
@@ -208,8 +208,13 @@ Status ClueOp::CalculateNumRowsPerShard() {
     num_rows_ += count;
   }
   if (num_rows_ == 0) {
+    std::stringstream ss;
+    for (int i = 0; i < clue_files_list_.size(); ++i) {
+      ss << " " << clue_files_list_[i];
+    }
+    std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API CLUEDataset. Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with CLUEDataset API. Check file path:" + file_list);
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));

@@ -94,10 +94,11 @@ Status CelebAOp::ParseAttrFile() {
     num_rows_in_attr_file_ = static_cast<int64_t>(std::stoul(rows_num));  // First line is rows number in attr file
   } catch (std::invalid_argument &e) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, failed to convert rows_num from attr_file to unsigned long, invalid argument: " + rows_num);
+      "Invalid data, failed to convert rows_num from attr_file to unsigned long, invalid value: " + rows_num + ".");
   } catch (std::out_of_range &e) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, failed to convert rows_num from attr_file to unsigned long, out of range: " + rows_num);
+      "Invalid data, failed to convert rows_num from attr_file to unsigned long, value out of range: " + rows_num +
+      ".");
   }
 
   (void)getline(attr_file, attr_name);  // Second line is attribute name,ignore it
@@ -142,10 +143,10 @@ bool CelebAOp::CheckDatasetTypeValid() {
   try {
     type = std::stoi(vec[1]);
   } catch (std::invalid_argument &e) {
-    MS_LOG(WARNING) << "Invalid data, failed to convert to unsigned long, invalid argument: " << vec[1] << ".";
+    MS_LOG(WARNING) << "Invalid data, failed to convert to int, invalid value: " << vec[1] << ".";
     return false;
   } catch (std::out_of_range &e) {
-    MS_LOG(WARNING) << "Invalid data, failed to convert to unsigned long, out of range: " << vec[1] << ".";
+    MS_LOG(WARNING) << "Invalid data, failed to convert to int, value out of range: " << vec[1] << ".";
     return false;
   }
   // train:0, valid=1, test=2
@@ -187,9 +188,12 @@ Status CelebAOp::ParseImageAttrInfo() {
         try {
           value = std::stoi(split[label_index]);
         } catch (std::invalid_argument &e) {
-          RETURN_STATUS_UNEXPECTED("Invalid data, failed to convert to ulong, invalid argument: " + split[label_index]);
+          RETURN_STATUS_UNEXPECTED("Invalid data, failed to convert item from attr_file to int, corresponding value: " +
+                                   split[label_index] + ".");
         } catch (std::out_of_range &e) {
-          RETURN_STATUS_UNEXPECTED("Conversion to int failed, out of range: " + split[label_index]);
+          RETURN_STATUS_UNEXPECTED(
+            "Invalid data, failed to convert item from attr_file to int as out of range, corresponding value: " +
+            split[label_index] + ".");
         }
         image_labels.second.push_back(value);
       }
@@ -203,7 +207,8 @@ Status CelebAOp::ParseImageAttrInfo() {
   num_rows_ = image_labels_vec_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API CelebADataset. Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with CelebADataset API. Check attr_file in directory:" +
+      folder_path_ + ".");
   }
   MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_ << ".";
   return Status::OK();

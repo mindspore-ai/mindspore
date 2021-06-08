@@ -57,12 +57,14 @@ DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampl
 // Adds a operator to become our child.
 Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
   if (std::dynamic_pointer_cast<DeviceQueueOp>(child) != nullptr) {
-    std::string err_msg("DeviceQueueOp cannot be added as a child, DeviceQueueOp must be a root node");
+    std::string err_msg(
+      "DeviceQueueOp cannot be added as a child. DeviceQueueOp must be a root node, which means no operator should be "
+      "after device_queue operation.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   if (operator_id_ == kInvalidOperatorId) {
     std::string err_msg(
-      "Cannot add child node.  Tree node connections can only"
+      "Cannot add child node. Tree node connections can only "
       "be made if the node belongs to a tree.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -70,7 +72,7 @@ Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
   // disallow relationships with other trees
   if (tree_ != child->tree_) {
     std::string err_msg(
-      "Cannot add child node.  Tree node connections can only be made if both nodes belong to the same tree.");
+      "Cannot add child node. Tree node connections can only be made if both nodes belong to the same tree.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   child_.push_back(child);
@@ -81,7 +83,7 @@ Status DatasetOp::AddChild(std::shared_ptr<DatasetOp> child) {
 Status DatasetOp::RemoveChild(std::shared_ptr<DatasetOp> child) {
   if (operator_id_ == kInvalidOperatorId) {
     std::string err_msg(
-      "Cannot remove child node.  Tree node connections can only"
+      "Cannot remove child node. Tree node connections can only "
       "be made if the node belongs to a tree.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -89,7 +91,7 @@ Status DatasetOp::RemoveChild(std::shared_ptr<DatasetOp> child) {
   // disallow relationships with other trees
   if (tree_ != child->tree_) {
     std::string err_msg(
-      "Cannot remove child node.  Tree node connections can only be made if both nodes belong to the same tree.");
+      "Cannot remove child node. Tree node connections can only be made if both nodes belong to the same tree.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -130,11 +132,11 @@ void DatasetOp::RemoveParent(const DatasetOp *parent) {
 // Removes this node from the tree and connects it's parent/child together
 Status DatasetOp::Remove() {
   if (parent_.size() > 1) {
-    std::string err_msg("No support for op removal if the operator has more than one parent");
+    std::string err_msg("No support for op removal if the operator has more than one parent.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   if (child_.size() > 1) {
-    std::string err_msg("No support for op removal if the operator has more than one child");
+    std::string err_msg("No support for op removal if the operator has more than one child.");
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -290,7 +292,7 @@ Status DatasetOp::GetClassIndexing(std::vector<std::pair<std::string, std::vecto
     return child_[child_.size() - 1]->GetClassIndexing(output_class_indexing);
   } else {
     *output_class_indexing = {};
-    RETURN_STATUS_UNEXPECTED("Trying to get class index from leaf node, missing override");
+    RETURN_STATUS_UNEXPECTED("Trying to get class index from leaf node, missing override.");
   }
 }
 

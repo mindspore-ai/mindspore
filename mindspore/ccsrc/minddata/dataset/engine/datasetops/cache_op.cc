@@ -123,7 +123,7 @@ Status CacheOp::CacheAllRows(int32_t worker_id) {
         // from again.
         RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&row));
         if (!row.eof()) {
-          RETURN_STATUS_UNEXPECTED("Cache op expects to get an eof after eoe from child.");
+          RETURN_STATUS_UNEXPECTED("[Internal ERROR] Cache op expects to get an eof after eoe from child.");
         }
         break;
       }
@@ -173,7 +173,7 @@ Status CacheOp::WaitForCachingAllRows() {
       case CacheServiceState::kNone:
       case CacheServiceState::kError:
       default:
-        RETURN_STATUS_UNEXPECTED("Unexpected state: " + std::to_string(out));
+        RETURN_STATUS_UNEXPECTED("Unexpected Cache server state: " + std::to_string(out));
     }
   } while (!BuildPhaseDone);
   // Get statistics from the server, and if we are not the one to create the cache,

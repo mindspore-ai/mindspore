@@ -115,7 +115,7 @@ Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
     }
     RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
+  RETURN_STATUS_UNEXPECTED("[Internal ERROR] Unexpected nullptr received in worker.");
 }
 
 }  // namespace dataset

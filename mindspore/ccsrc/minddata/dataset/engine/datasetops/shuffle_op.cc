@@ -96,7 +96,7 @@ Status ShuffleOp::AddRowToShuffleBuffer(TensorRow new_shuffle_row) {
   } else {
     if (!(*shuffle_buffer_)[shuffle_last_row_idx_].empty()) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                    "Last row of shuffle buffer should not be occupied!");
+                    "[Internal ERROR] Last row of shuffle buffer should not be occupied!");
     }
     (*shuffle_buffer_)[shuffle_last_row_idx_] = std::move(new_shuffle_row);
   }
@@ -206,7 +206,7 @@ Status ShuffleOp::InitShuffleBuffer() {
   // rows.
   if (shuffle_buffer_state_ != kShuffleStateInit) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid shuffle buffer state (SHUFFLE_STATE_INIT expected)");
+                  "Invalid shuffle buffer state, shuffle buffer should be init first or reset after each epoch.");
   }
 
   // Before we drop into the fetching loop, call the fetch once for the first time
@@ -221,7 +221,7 @@ Status ShuffleOp::InitShuffleBuffer() {
   }
 
   if (new_row.empty()) {
-    RETURN_STATUS_UNEXPECTED("Unable to fetch a single row for shuffle buffer.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, unable to fetch a single row for shuffle buffer.");
   }
 
   // Now fill the rest of the shuffle buffer until we are unable to get the next row or we reached

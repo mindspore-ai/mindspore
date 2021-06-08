@@ -169,7 +169,7 @@ void BatchOp::Print(std::ostream &out, bool show_all) const {
 
 Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size) {
   if ((*src)->size() != batch_size) {
-    RETURN_STATUS_UNEXPECTED("[Internal Batch ERROR] Source table size does not match the batch_size");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Source table size does not match the batch_size.");
   }
 
   if (batch_size == 1) {
@@ -201,9 +201,12 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
           }
           // Don't do anything if the tensor has no data
         } else {
+          std::stringstream shape1, shape2;
+          first_shape.Print(shape1);
+          old_tensor->shape().Print(shape2);
           RETURN_STATUS_UNEXPECTED(
             "Invalid data, expect same shape for each data row, but got inconsistent data shapes in column " +
-            std::to_string(i));
+            std::to_string(i) + " expected shape for this column is:" + shape1.str() + ", got shape:" + shape2.str());
         }
       }
     } else {  // handle string column differently
@@ -253,7 +256,8 @@ Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchIn
 
 Status BatchOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(worker_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
@@ -330,23 +334,24 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized.");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized.");
     }
     try {
       py::object size = batch_size_func_(info);
       *batch_size = size.cast<int32_t>();
       if (*batch_size <= 0) {
         return Status(StatusCode::kMDPyFuncException,
-                      "Invalid parameter, batch size function should return an integer greater than 0.");
+                      "Invalid parameter, batch_size function should return an integer greater than 0, but got: " +
+                        std::to_string(*batch_size));
       }
     } catch (const py::error_already_set &e) {
       return Status(StatusCode::kMDPyFuncException, e.what());
     } catch (const py::cast_error &e) {
       return Status(StatusCode::kMDPyFuncException,
-                    "Invalid parameter, batch size function should return an integer greater than 0.");
+                    "Invalid parameter, batch_size function should return an integer greater than 0.");
     }
   }
-  return Status(StatusCode::kSuccess, "Batch size func call succeed.");
+  return Status(StatusCode::kSuccess, "batch_size function call succeedeed.");
 }
 
 Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info) {
@@ -354,7 +359,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized.");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized.");
     }
     try {
       // Prepare batch map call back parameters
@@ -373,11 +378,12 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       py::object ret_py_obj = batch_map_func_(*input_args);
       // Parse batch map return value
       py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
-      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple), "Batch map function should return a tuple.");
-      CHECK_FAIL_RETURN_UNEXPECTED(
-        ret_tuple.size() == out_col_names_.size(),
-        "Incorrect number of columns returned. expects: " + std::to_string(out_col_names_.size()) +
-          " gets: " + std::to_string(ret_tuple.size()));
+      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple),
+                                   "per_batch_map function should return a tuple.");
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_tuple.size() == out_col_names_.size(),
+                                   "Incorrect number of columns returned in per_batch_map function. Expects: " +
+                                     std::to_string(out_col_names_.size()) +
+                                     " got: " + std::to_string(ret_tuple.size()));
       for (size_t i = 0; i < ret_tuple.size(); i++) {
         TensorRow output_batch;
         // If user returns a type that is neither a list nor an array, issue a error msg.
@@ -399,7 +405,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       return Status(StatusCode::kMDPyFuncException, e.what());
     } catch (const py::cast_error &e) {
       return Status(StatusCode::kMDPyFuncException,
-                    "Invalid parameter, batch map function should return a tuple of list of numpy array.");
+                    "Invalid parameter, per_batch_map function of batch should return a tuple of list of numpy array.");
     }
   }
   return Status::OK();
@@ -488,9 +494,12 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
 }
 
 Status BatchOp::ComputeColMap() {
-  CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1,
-                               "Batch has " + std::to_string(child_.size()) + " child/children, expects only 1 child.");
-  CHECK_FAIL_RETURN_UNEXPECTED(!(child_[0]->column_name_id_map().empty()), "BatchOp child map is empty.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    child_.size() == 1,
+    "Batch operator expects only 1 child node, but number of children nodes is: " + std::to_string(child_.size()) +
+      ". Check your script how many node composed into Batch node.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!(child_[0]->column_name_id_map().empty()),
+                               "Column of Batch operator's child is empty.");
 
   if (in_col_names_.empty()) {  // if per_batch_map is not set, do not need to deal with out_col_names
     column_name_id_map_ = child_[0]->column_name_id_map();
@@ -502,7 +511,7 @@ Status BatchOp::ComputeColMap() {
 
   // check all input columns exist
   for (const auto &col : in_col_names_) {
-    CHECK_FAIL_RETURN_UNEXPECTED(child_map_.find(col) != child_map_.end(), "col:" + col + " doesn't exist.");
+    CHECK_FAIL_RETURN_UNEXPECTED(child_map_.find(col) != child_map_.end(), "col:" + col + " doesn't exist in dataset.");
   }
 
   // following logic deals with per_batch_map
@@ -538,7 +547,7 @@ Status BatchOp::ComputeColMap() {
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(column_name_id_map_.size() == (child_map_no_in_col.size() + out_col_names_.size()),
-                               "Key error in column_name_id_map_. output_columns is NOT set correctly!");
+                               "Key error in column_name_id_map_. output_columns in batch is not set correctly!");
   return Status::OK();
 }
 

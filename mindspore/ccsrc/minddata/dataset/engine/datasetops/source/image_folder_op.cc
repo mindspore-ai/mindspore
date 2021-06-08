@@ -73,8 +73,8 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API ImageFolderDataset. "
-      "Please check file path or dataset API.");
+      "Invalid data, data file may not be suitable to read with ImageFolderDataset API. Check file path: " +
+      folder_path_);
   }
   // free memory of two queues used for pre-scan
   folder_name_queue_->Reset();
@@ -120,7 +120,7 @@ void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
 Status ImageFolderOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED("No images found in dataset, please check if Op read images successfully or not.");
+      RETURN_STATUS_UNEXPECTED("No images found in dataset, try iterate dataset to check if read images success.");
     } else {
       RETURN_STATUS_UNEXPECTED(
         "Map containing image-index pair is nullptr or has been set in other place,"

@@ -369,7 +369,7 @@ def test_multi_col_map():
     # test exceptions
     assert "output_columns with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], 233)
     assert "column_order with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], ["col1"], 233)
-    assert "output_columns is NOT set correctly" in batch_map_config(2, 2, split_col, ["col2"], ["col1"])
+    assert "output_columns in batch is not set correctly" in batch_map_config(2, 2, split_col, ["col2"], ["col1"])
     assert "Incorrect number of columns" in batch_map_config(2, 2, split_col, ["col2"], ["col3", "col4", "col5"])
     assert "col-1 doesn't exist" in batch_map_config(2, 2, split_col, ["col-1"], ["col_x", "col_y"])
 

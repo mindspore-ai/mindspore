@@ -46,7 +46,7 @@ Status WeightedRandomSamplerRT::InitSampler() {
     "Invalid parameter, num_samples and num_rows must be greater than 0, but got num_rows: " +
       std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
   CHECK_FAIL_RETURN_UNEXPECTED(samples_per_tensor_ > 0,
-                               "Invalid parameter, samples_per_tensor must be greater than 0, but got " +
+                               "Invalid parameter, samples_per_tensor(num_samples) must be greater than 0, but got " +
                                  std::to_string(samples_per_tensor_) + ".\n");
 
   if (weights_.size() > static_cast<size_t>(num_rows_)) {

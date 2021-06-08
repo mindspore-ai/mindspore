@@ -141,10 +141,10 @@ void ManifestOp::Print(std::ostream &out, bool show_all) const {
 Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_labelname_.empty()) {
     if (image_labelname_.empty()) {
-      RETURN_STATUS_UNEXPECTED("No image found in dataset, please check if Op read images successfully or not.");
+      RETURN_STATUS_UNEXPECTED("No image found in dataset. Try iterate dataset to check if read images success.");
     } else {
       RETURN_STATUS_UNEXPECTED(
-        "Map for storaging image-index pair is nullptr or has been set in other place,"
+        "[Internal ERROR] Map for containing image-index pair is nullptr or has been set in other place,"
         "it must be empty before using GetClassIds.");
     }
   }
@@ -181,7 +181,7 @@ Status ManifestOp::ParseManifestFile() {
       std::string image_file_path = js.value("source", "");
       if (image_file_path == "") {
         file_handle.close();
-        RETURN_STATUS_UNEXPECTED("Invalid data, source is not found in Manifest file: " + file_ + " at line " +
+        RETURN_STATUS_UNEXPECTED("Invalid data, 'source' is not found in Manifest file: " + file_ + " at line " +
                                  std::to_string(line_count));
       }
       // If image is not JPEG/PNG/GIF/BMP, drop it
@@ -193,7 +193,7 @@ Status ManifestOp::ParseManifestFile() {
       std::string usage = js.value("usage", "");
       if (usage == "") {
         file_handle.close();
-        RETURN_STATUS_UNEXPECTED("Invalid data, usage is not found in Manifest file: " + file_ + " at line " +
+        RETURN_STATUS_UNEXPECTED("Invalid data, 'usage' is not found in Manifest file: " + file_ + " at line " +
                                  std::to_string(line_count));
       }
       (void)std::transform(usage.begin(), usage.end(), usage.begin(), ::tolower);
@@ -208,8 +208,8 @@ Status ManifestOp::ParseManifestFile() {
         classes.insert(label_name);
         if (label_name == "") {
           file_handle.close();
-          RETURN_STATUS_UNEXPECTED("Invalid data, label name is not found in Manifest file: " + file_ + " at line " +
-                                   std::to_string(line_count));
+          RETURN_STATUS_UNEXPECTED("Invalid data, 'name' of label is not found in Manifest file: " + file_ +
+                                   " at line " + std::to_string(line_count));
         }
         if (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) {
           if (label_index_.find(label_name) == label_index_.end()) {
@@ -278,7 +278,7 @@ Status ManifestOp::CountDatasetInfo() {
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API ManifestDataset. Please check file path: " + file_);
+      "Invalid data, data file may not be suitable to read with ManifestDataset API. Check file path: " + file_);
   }
   return Status::OK();
 }

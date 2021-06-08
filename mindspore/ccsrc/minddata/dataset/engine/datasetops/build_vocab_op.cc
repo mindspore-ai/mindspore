@@ -97,7 +97,7 @@ Status BuildVocabOp::operator()() {
     for (std::string col : col_names_) {
       auto itr = column_name_id_map_.find(col);
       CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
-                                   "Invalid parameter, column name: " + col + " does not exist.");
+                                   "Invalid parameter, column name: " + col + " does not exist in dataset.");
       col_ids_.push_back(itr->second);
     }
   } else {
@@ -113,7 +113,7 @@ Status BuildVocabOp::operator()() {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no op should be after from_dataset (repeat detected)");
+    CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no operator should be after from_dataset (repeat detected)");
     eoe_warning = true;
   }
 
@@ -137,7 +137,7 @@ Status BuildVocabOp::CollectorThread() {
       ++num_quited_worker;
     }
   }  // all frequencies are obtained
-  CHECK_FAIL_RETURN_UNEXPECTED(!word_cnt_.empty(), "Invalid data, no words in the dataset.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!word_cnt_.empty(), "Invalid data, there are no words in the dataset.");
   std::vector<std::string> words;
   // make sure enough is reserved, this will become a partially sorted list eventually
   words.reserve(wrkr_map->size());

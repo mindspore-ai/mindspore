@@ -130,7 +130,7 @@ Status DeviceQueueOp::operator()() {
 
 #ifdef ENABLE_DUMP_IR
   if (md_channel_info_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "RDR module init failed.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "[Internal ERROR] RDR module init failed.");
   }
 #endif
   if (device_type_ == DeviceType::Ascend) {
@@ -236,9 +236,9 @@ Status DeviceQueueOp::SendDataToAscend() {
           return Status::OK();
         }
         return Status(StatusCode::kMDTDTPushFailure,
-                      "TDT Push data into device Failed, please check the first error or TraceBack first, following are"
+                      "TDT Push data into device Failed, check the first error or TraceBack first, following are"
                       " several possible checking way: 1) if training is not ready, still in network graph compiling"
-                      " stage, please check error raised by Network used operator or environment configuration. 2) if"
+                      " stage, check error raised by Network used operator or environment configuration. 2) if"
                       " interrupt in middle process of training, may check whether dataset sending num and network"
                       " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
                       " try find ascend host log or checking info log etc.");
@@ -289,12 +289,12 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow currRow, bool isProfilingEnable, in
       return Status::OK();
     }
     return Status(StatusCode::kMDTDTPushFailure,
-                  "TDT Push data into device Failed, please check the first error or TraceBack first, following are"
+                  "TDT Push data into device Failed, check the first error or TraceBack first, following are"
                   " several possible checking way: 1) if training is not ready, still in network graph compiling"
-                  " stage, please check error raised by Network used operator or environment configuration. 2) if"
+                  " stage, check error raised by Network used operator or environment configuration. 2) if"
                   " interrupt in middle process of training, may check whether dataset sending num and network"
                   " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
-                  " try find ascend host log or checking info log ects.");
+                  " try find ascend host log or checking info log ects or search this in mindspore's FAQ.");
   }
   if (create_data_info_queue_) {
     DATA_INFO data_info;
@@ -405,7 +405,8 @@ Status DeviceQueueOp::PushDataToGPU() {
       }
       handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, data_size, release_function);
       if (handle == INVALID_HANDLE) {
-        return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Failed to open channel for sending data.");
+        return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                      "[Internal ERROR] Failed to open channel for sending data.");
       }
       is_open = true;
     }
@@ -413,7 +414,8 @@ Status DeviceQueueOp::PushDataToGPU() {
     // Data prefetch only when PS mode enables cache.
     if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_,
                                                         items[0].data_type_)) {
-      return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__, "Failed to prefetch data.");
+      return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
+                    "Failed to prefetch data in current PS mode(cache data when sending).");
     }
     RETURN_IF_NOT_OK(RetryPushData(handle, items));
     send_batch++;
@@ -471,7 +473,8 @@ Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataI
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
       if (ret == BlockQueueStatus_T::ERROR_INPUT) {
-        return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Invalid input data, please check it.");
+        return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                      "Invalid data, check the output of dataset with creating iterator and print data item.");
       } else {
         if (!stop_send_) {
           if (!flagLog) {
@@ -576,7 +579,7 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
       MS_LOG(ERROR) << "memcpy_s failed!";
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "memcpy_s failed.");
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "memcpy failed when using memcpy_s do copy.");
     }
   }
 

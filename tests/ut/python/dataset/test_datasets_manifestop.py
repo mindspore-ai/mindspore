@@ -167,7 +167,7 @@ def test_manifest_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "Invalid data, source is not found in Manifest file" in str(e)
+        assert "Invalid data, 'source' is not found in Manifest file" in str(e)
 
     NO_USAGE_DATA_FILE = "../data/dataset/testManifestData/invalidNoUsage.manifest"
     try:
@@ -176,7 +176,7 @@ def test_manifest_dataset_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "Invalid data, usage is not found in Manifest file" in str(e)
+        assert "Invalid data, 'usage' is not found in Manifest file" in str(e)
 
 
 if __name__ == '__main__':

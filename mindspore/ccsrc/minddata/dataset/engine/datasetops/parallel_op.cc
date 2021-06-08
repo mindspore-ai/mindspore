@@ -44,7 +44,7 @@ ParallelOp::ParallelOp(int32_t num_workers, int32_t op_connector_size, std::shar
 // Creates the internal worker connector for the parallel op if the derived class wants to use it
 Status ParallelOp::CreateWorkerConnector(int32_t worker_connector_size) {
   if (worker_connector_size == 0) {
-    RETURN_STATUS_UNEXPECTED("Worker connector size 0 is invalid.");
+    RETURN_STATUS_UNEXPECTED("Create Worker Connector failed, as given connector size 0 is invalid.");
   }
   num_producers_ = 1;
   worker_connector_size_ = worker_connector_size;
