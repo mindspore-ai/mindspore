@@ -250,6 +250,34 @@ result: {'top_5_accuracy': 0.9988982371794872, 'top_1_accuracy': 0.9502283653846
 result: {'top_1_accuracy': 0.7606515786082474, 'top_5_accuracy': 0.9271504510309279}
 ```
 
+## 推理过程
+
+### [导出MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`file_format` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [DEVICE_ID]
+```
+
+- `DATASET` 为数据集类型，如cifar10, cifar100等。
+- `DATA_PATH`为数据集路径。  
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到精度计算结果。
+
 # 模型描述
 
 ## 性能
