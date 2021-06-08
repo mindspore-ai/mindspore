@@ -59,6 +59,7 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node);
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr,
                         const TensorPtr &tensor = nullptr, const std::vector<AnfNodePtr> &host_parameters = {});
 bool IsKernelActor(const AnfNodePtr &node);
+bool IsSwitchActor(const AnfNodePtr &node);
 // The skip kernel doesn't run, it exists in the inplace optimizer.
 bool IsSkippedKernelActor(const AnfNodePtr &node);
 

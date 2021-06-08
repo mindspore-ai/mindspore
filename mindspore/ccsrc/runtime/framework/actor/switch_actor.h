@@ -87,6 +87,8 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // Fetch the args of switch branch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
   void SendOutput(OpContext<DeviceTensor> *context);
+  // Erase input data and input controls when finish switch launch.
+  void EraseInput(OpContext<DeviceTensor> *context);
   void SendMemoryFreeReq(OpContext<DeviceTensor> *context);
 
   // All inputs of the switch actor, excluding weight and tensor.
@@ -107,6 +109,8 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   const AID memory_manager_aid_;
   // The dependent input data number.
   size_t input_datas_num_{0};
+  // The dependent input controls number.
+  size_t input_controls_num_{0};
   CNodePtr node_;
 
   //  The output_data_ corresponds to the output_data_arrows_ one by one.

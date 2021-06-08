@@ -612,7 +612,12 @@ AnfNodePtr SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, Kernel
   if (!pre_graph_out.empty() && !AnfAlgo::IsRealKernel(node)) {
     pre_graph_out = AnfAlgo::GetAllOutput(node, {prim::kPrimTupleGetItem, prim::kPrimUpdateState});
   }
-  for (const auto &parameter : parameters) {
+
+  for (size_t i = 0; i < parameters.size(); ++i) {
+    const auto &parameter = parameters[i];
+    // In control flow, if the input of the cnode is a call node, it will be processed as a make_tuple input,
+    // which needs to be linked when processing the internal node.
+    graph->CacheInternalParameterToFrontNode(parameter, {node, i});
     auto valid_inputs = graph->MutableValidInputs();
     MS_EXCEPTION_IF_NULL(valid_inputs);
     auto graph_inputs = graph->MutableInputs();
