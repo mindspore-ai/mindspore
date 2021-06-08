@@ -96,9 +96,11 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args)
   } else {
     grads = py::cast<py::tuple>(grads_obj);
   }
-  if (grads.size() != py_args.size() - 2) {
+  constexpr int not_real_input_args_size = 2;
+  if (grads.size() != py_args.size() - not_real_input_args_size) {
     MS_EXCEPTION(ValueError) << "For user define net bprop, the gradients number: " << grads.size()
-                             << " is not equal to the args number: " << py_args.size() - 2 << ".";
+                             << " is not equal to the args number: " << (py_args.size() - not_real_input_args_size)
+                             << ".";
   }
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_CHECK_BPROP_FLAG)) {
     for (size_t i = 0; i < grads.size(); i++) {

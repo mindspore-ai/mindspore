@@ -1094,7 +1094,6 @@ class AutoMonadConverter {
   // Clean no side effect dependency nodes.
   //   From:  output = Depend(output, StopGrad)
   //          return output
-  //
   //   To:    return output
   void ClearIsolatedNodes() const {
     auto output = GetGraphOutput();

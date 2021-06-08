@@ -760,7 +760,7 @@ void Pipeline::Run() {
 #ifdef ENABLE_DUMP_IR
       if (mindspore::RecorderManager::Instance().RdrEnable()) {
         MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
-        std::string name = GetBaseNameForIR(i, action.first);
+        std::string name = GetBaseNameForIR(SizeToLong(i), action.first);
         if (graph != nullptr) {
           auto graph_clone = BasicClone(graph);
           if (graph_clone != nullptr) {
@@ -781,7 +781,7 @@ void Pipeline::Run() {
 
       if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
         user_graph = graph;
-        std::string base_name = GetBaseNameForIR(i, action.first);
+        std::string base_name = GetBaseNameForIR(SizeToLong(i), action.first);
 
         // generate IR file in dot format, which can be converted to svg file using graphviz dot command
         draw::Draw(base_name + ".dot", graph);
@@ -967,7 +967,7 @@ void ExecutorPy::UpdataParamNodeDefaultInput(const std::string &phase,
   }
 }
 
-void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) {
+void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) const {
 #ifdef ENABLE_GE
   RunGEInitGraph(init_params, phase);
 #endif
@@ -990,7 +990,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!context::IsTsdOpened(ms_context) || !context::IsGeInited(ms_context)) {
-    (void)InitPipeline();
+    InitPipeline();
   }
 #endif
   if (iter_num == -1) {

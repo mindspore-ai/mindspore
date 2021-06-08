@@ -744,8 +744,8 @@ void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graph
 
 // ============================================= MindSpore IR Importer =============================================
 
-enum Token : int {
-  TOK_INVALID = 0,   // invalid token
+enum class Token {
+  TOK_INVALID,       // invalid token
   TOK_LPARENTHESIS,  // ( left parenthesis
   TOK_RPARENTHESIS,  // ) right parenthesis
   TOK_LBRACKET,      // [ left bracket
@@ -771,29 +771,29 @@ enum Token : int {
 };
 
 std::map<Token, const char *> token_text = {
-  {TOK_INVALID, "invalid"},      // invalid token
-  {TOK_LPARENTHESIS, "("},       // ( left parenthesis
-  {TOK_RPARENTHESIS, ")"},       // ) right parenthesis
-  {TOK_LBRACKET, "["},           // [ left bracket
-  {TOK_RBRACKET, "]"},           // ] right bracket
-  {TOK_LBRACE, "{"},             // { left brace
-  {TOK_RBRACE, "}"},             // } right brace
-  {TOK_COMMA, ","},              // , comma
-  {TOK_EQUALITY, "="},           // = equality
-  {TOK_COLON, ":"},              // : colon
-  {TOK_STAR, "*"},               // * start
-  {TOK_VARIABLE, nullptr},       // variable
-  {TOK_AT_FILE, nullptr},        // @file
-  {TOK_PARAMETER, nullptr},      // parameter
-  {TOK_IDENTIFIER, nullptr},     // identifier
-  {TOK_FUNCGRAPH, "funcgraph"},  // keyword 'funcgraph'
-  {TOK_RETURN, nullptr},         // id prim::return
-  {TOK_STRING, nullptr},         // string
-  {TOK_NUMBER, nullptr},         // number
-  {TOK_COMMENT, nullptr},        // comment
-  {TOK_EOL, "\n"},               // end of line
-  {TOK_EOF, ""},                 // end of file
-  {TOK_ERROR, "error"}           // file read error
+  {Token::TOK_INVALID, "invalid"},      // invalid token
+  {Token::TOK_LPARENTHESIS, "("},       // ( left parenthesis
+  {Token::TOK_RPARENTHESIS, ")"},       // ) right parenthesis
+  {Token::TOK_LBRACKET, "["},           // [ left bracket
+  {Token::TOK_RBRACKET, "]"},           // ] right bracket
+  {Token::TOK_LBRACE, "{"},             // { left brace
+  {Token::TOK_RBRACE, "}"},             // } right brace
+  {Token::TOK_COMMA, ","},              // , comma
+  {Token::TOK_EQUALITY, "="},           // = equality
+  {Token::TOK_COLON, ":"},              // : colon
+  {Token::TOK_STAR, "*"},               // * start
+  {Token::TOK_VARIABLE, nullptr},       // variable
+  {Token::TOK_AT_FILE, nullptr},        // @file
+  {Token::TOK_PARAMETER, nullptr},      // parameter
+  {Token::TOK_IDENTIFIER, nullptr},     // identifier
+  {Token::TOK_FUNCGRAPH, "funcgraph"},  // keyword 'funcgraph'
+  {Token::TOK_RETURN, nullptr},         // id prim::return
+  {Token::TOK_STRING, nullptr},         // string
+  {Token::TOK_NUMBER, nullptr},         // number
+  {Token::TOK_COMMENT, nullptr},        // comment
+  {Token::TOK_EOL, "\n"},               // end of line
+  {Token::TOK_EOF, ""},                 // end of file
+  {Token::TOK_ERROR, "error"}           // file read error
 };
 
 class Lexer {
@@ -817,16 +817,16 @@ class Lexer {
   bool IsSingleCharToken(char ch, Token *token_ptr) const {
     // clang-format off
     std::unordered_map<char, Token> char_to_token = {
-      {'(', TOK_LPARENTHESIS},
-      {')', TOK_RPARENTHESIS},
-      {'[', TOK_LBRACKET},
-      {']', TOK_RBRACKET},
-      {'{', TOK_LBRACE},
-      {'}', TOK_RBRACE},
-      {',', TOK_COMMA},
-      {'=', TOK_EQUALITY},
-      {':', TOK_COLON},
-      {'*', TOK_STAR}};
+      {'(', Token::TOK_LPARENTHESIS},
+      {')', Token::TOK_RPARENTHESIS},
+      {'[', Token::TOK_LBRACKET},
+      {']', Token::TOK_RBRACKET},
+      {'{', Token::TOK_LBRACE},
+      {'}', Token::TOK_RBRACE},
+      {',', Token::TOK_COMMA},
+      {'=', Token::TOK_EQUALITY},
+      {':', Token::TOK_COLON},
+      {'*', Token::TOK_STAR}};
     // clang-format on
 
     auto iter = char_to_token.find(ch);
@@ -853,26 +853,26 @@ class Lexer {
   Token GetNextTokenInner() {
 #endif
     tok_idx = 0;
-    Token tok = TOK_ERROR;
+    Token tok = Token::TOK_ERROR;
     char ch = SkipTabAndSpace();
     if (ch == CODE_EOF) {
-      return TOK_EOF;
+      return Token::TOK_EOF;
     } else if (ch == CODE_ERROR) {
-      return TOK_ERROR;
+      return Token::TOK_ERROR;
     } else if (IsSingleCharToken(ch, &tok)) {
       return tok;
     } else if (ch == '\r') {
       char c = GetChar();
       if (c == '\n') {
         line_++;
-        return TOK_EOL;
+        return Token::TOK_EOL;
       }
       UnGetChar(c);
       line_++;
-      return TOK_EOL;
+      return Token::TOK_EOL;
     } else if (ch == '\n') {
       line_++;
-      return TOK_EOL;
+      return Token::TOK_EOL;
     } else if (ch == '#') {
       return ParseComment(ch);
     } else if (ch == '"') {
@@ -886,13 +886,13 @@ class Lexer {
     } else if (IsAlpha(ch) || ch == '_') {
       return ParseIdentifier(ch);
     } else {
-      return TOK_ERROR;
+      return Token::TOK_ERROR;
     }
   }
 
   Token SkipWhiteToken() {
     Token tok = GetNextToken();
-    while (tok == TOK_EOL || tok == TOK_COMMENT) {
+    while (tok == Token::TOK_EOL || tok == Token::TOK_COMMENT) {
       tok = GetNextToken();
     }
     return tok;
@@ -913,7 +913,7 @@ class Lexer {
     }
     tok_buf[0] = '#';
     tok_buf[1] = '\0';
-    return TOK_COMMENT;
+    return Token::TOK_COMMENT;
   }
 
   Token ParseString() {
@@ -933,7 +933,7 @@ class Lexer {
       c = GetChar();
     }
     tok_buf[tok_idx] = '\0';
-    return TOK_STRING;
+    return Token::TOK_STRING;
   }
 
   Token ParseVariableOrParameter(char ch) {
@@ -955,26 +955,26 @@ class Lexer {
     std::string param_key = "%para";
     if (strncmp(tok_buf, param_key.c_str(), param_key.size()) == 0) {
       if (tok_idx <= param_key.size()) {
-        return TOK_ERROR;
+        return Token::TOK_ERROR;
       }
       for (auto i = static_cast<unsigned>(param_key.size()); i < tok_idx; ++i) {
         if (!IsDigit(tok_buf[i])) {
-          return TOK_ERROR;
+          return Token::TOK_ERROR;
         }
       }
-      return TOK_PARAMETER;
+      return Token::TOK_PARAMETER;
     }
 
     // judge local variable: %[0-9]+
     if (tok_idx == 1) {
-      return TOK_ERROR;
+      return Token::TOK_ERROR;
     }
     for (unsigned i = 1; i < tok_idx; ++i) {
       if (!IsDigit(tok_buf[i])) {
-        return TOK_ERROR;
+        return Token::TOK_ERROR;
       }
     }
-    return TOK_VARIABLE;
+    return Token::TOK_VARIABLE;
   }
 
   Token ParseAtFile() {
@@ -991,10 +991,10 @@ class Lexer {
     UnGetChar(c);
 
     if (tok_idx == 0) {
-      return TOK_ERROR;
+      return Token::TOK_ERROR;
     }
 
-    return TOK_AT_FILE;
+    return Token::TOK_AT_FILE;
   }
 
   Token ParseNumber(char ch) {
@@ -1010,7 +1010,7 @@ class Lexer {
     }
     UnGetChar(c);
     tok_buf[tok_idx] = '\0';
-    return TOK_NUMBER;
+    return Token::TOK_NUMBER;
   }
 
   Token ParseIdentifier(char ch) {
@@ -1028,12 +1028,12 @@ class Lexer {
     tok_buf[tok_idx] = '\0';
 
     if (strcmp(tok_buf, "funcgraph") == 0) {
-      return TOK_FUNCGRAPH;
+      return Token::TOK_FUNCGRAPH;
     }
     if (strcmp(tok_buf, "Primitive::return") == 0) {
-      return TOK_RETURN;
+      return Token::TOK_RETURN;
     }
-    return TOK_IDENTIFIER;
+    return Token::TOK_IDENTIFIER;
   }
 
   // Suppose the file only contain ASCII character
@@ -1126,8 +1126,8 @@ class IrParser {
   }
 
   Token ParseParent(FuncGraphPtr *const parent_ptr) {
-    if (lexer_.GetNextToken() != TOK_IDENTIFIER) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_IDENTIFIER) {
+      return Token::TOK_ERROR;
     }
 
     std::string parent_name = lexer_.GetTokenText();
@@ -1141,8 +1141,8 @@ class IrParser {
       *parent_ptr = func_graphs_map_iter->second;
     }
 
-    if (lexer_.GetNextToken() != TOK_RBRACKET) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_RBRACKET) {
+      return Token::TOK_ERROR;
     }
 
     return lexer_.GetNextToken();
@@ -1152,12 +1152,12 @@ class IrParser {
     cnodes_.clear();
 
     Token tok = lexer_.SkipWhiteToken();
-    if (tok != TOK_FUNCGRAPH) {
-      error_flag_ = tok != TOK_EOF;
+    if (tok != Token::TOK_FUNCGRAPH) {
+      error_flag_ = tok != Token::TOK_EOF;
       return nullptr;
     }
 
-    if (lexer_.GetNextToken() != TOK_IDENTIFIER) {
+    if (lexer_.GetNextToken() != Token::TOK_IDENTIFIER) {
       error_flag_ = true;
       return nullptr;
     }
@@ -1173,14 +1173,14 @@ class IrParser {
 
     FuncGraphPtr parent = nullptr;
     tok = lexer_.GetNextToken();
-    if (tok == TOK_LBRACKET) {
+    if (tok == Token::TOK_LBRACKET) {
       tok = ParseParent(&parent);
       if (parent != nullptr) {
         parents_map_[func_graph] = parent;
       }
     }
 
-    if (tok != TOK_LPARENTHESIS) {
+    if (tok != Token::TOK_LPARENTHESIS) {
       error_flag_ = true;
       return nullptr;
     }
@@ -1190,7 +1190,7 @@ class IrParser {
       return nullptr;
     }
 
-    if (lexer_.SkipWhiteToken() != TOK_LBRACE) {
+    if (lexer_.SkipWhiteToken() != Token::TOK_LBRACE) {
       error_flag_ = true;
       return nullptr;
     }
@@ -1208,13 +1208,13 @@ class IrParser {
 
   FuncGraphPtr ParseStatements(const FuncGraphPtr &func_graph) {
     Token tok = lexer_.SkipWhiteToken();
-    while (tok == TOK_VARIABLE) {
+    while (tok == Token::TOK_VARIABLE) {
       if (ParseStatement(func_graph) == nullptr) {
         return nullptr;
       }
       tok = lexer_.SkipWhiteToken();
     }
-    if (tok == TOK_RETURN) {
+    if (tok == Token::TOK_RETURN) {
       return ParseReturn(func_graph);
     }
     return nullptr;
@@ -1224,10 +1224,10 @@ class IrParser {
     std::string var_name = lexer_.GetTokenText();
     Token tok = lexer_.GetNextToken();
     AbstractBasePtr type = nullptr;
-    if (tok == TOK_COLON) {
+    if (tok == Token::TOK_COLON) {
       tok = ParseType(func_graph, &type);
     }
-    if (tok != TOK_EQUALITY) {
+    if (tok != Token::TOK_EQUALITY) {
       return nullptr;
     }
 
@@ -1235,7 +1235,7 @@ class IrParser {
     AnfNodePtr node = nullptr;
     ValuePtr val = nullptr;
     tok = ParseItem(func_graph, &node, &val);
-    if (tok != TOK_LPARENTHESIS) {
+    if (tok != Token::TOK_LPARENTHESIS) {
       return nullptr;
     }
     inputs.push_back(node);
@@ -1247,10 +1247,10 @@ class IrParser {
     }
 
     tok = lexer_.GetNextToken();
-    if (tok == TOK_COMMENT) {
+    if (tok == Token::TOK_COMMENT) {
       tok = lexer_.GetNextToken();
     }
-    if (tok != TOK_EOL) {
+    if (tok != Token::TOK_EOL) {
       return nullptr;
     }
 
@@ -1262,7 +1262,7 @@ class IrParser {
   }
 
   FuncGraphPtr ParseReturn(FuncGraphPtr func_graph) {
-    if (lexer_.GetNextToken() != TOK_LPARENTHESIS) {
+    if (lexer_.GetNextToken() != Token::TOK_LPARENTHESIS) {
       return nullptr;
     }
 
@@ -1271,19 +1271,19 @@ class IrParser {
     Token tok = ParseItem(func_graph, &input1, &value, lexer_.GetNextToken());
     int lineno = lexer_.GetLineNo();
 
-    if (tok != TOK_RPARENTHESIS) {
+    if (tok != Token::TOK_RPARENTHESIS) {
       return nullptr;
     }
 
     tok = lexer_.GetNextToken();
-    if (tok == TOK_COMMENT) {
+    if (tok == Token::TOK_COMMENT) {
       tok = lexer_.GetNextToken();
     }
-    if (tok != TOK_EOL) {
+    if (tok != Token::TOK_EOL) {
       return nullptr;
     }
 
-    if (lexer_.SkipWhiteToken() != TOK_RBRACE) {
+    if (lexer_.SkipWhiteToken() != Token::TOK_RBRACE) {
       return nullptr;
     }
 
@@ -1405,7 +1405,7 @@ class IrParser {
 
   template <typename T>
   Token ParseTypeVector(const FuncGraphPtr &func_graph, Token tok, const std::string &type, T *const ptr = nullptr) {
-    if (tok != TOK_LBRACKET) {
+    if (tok != Token::TOK_LBRACKET) {
       MS_LOG(EXCEPTION) << "Illegal case, , wrong token start symbol.";
       return tok;
     }
@@ -1415,7 +1415,7 @@ class IrParser {
     do {
       tok = lexer_.GetNextToken();
       if (first_flag) {
-        if (tok == TOK_RBRACKET) {
+        if (tok == Token::TOK_RBRACKET) {
           return lexer_.GetNextToken();
         }
         first_flag = false;
@@ -1423,9 +1423,9 @@ class IrParser {
       T elem = nullptr;
       tok = ParseOneType(func_graph, tok, &elem);
       elems.push_back(elem);
-      if (tok == TOK_STAR) {
-        if (lexer_.GetNextToken() != TOK_NUMBER) {
-          return TOK_ERROR;
+      if (tok == Token::TOK_STAR) {
+        if (lexer_.GetNextToken() != Token::TOK_NUMBER) {
+          return Token::TOK_ERROR;
         }
         int num_elems = StringToScalar<int>(lexer_.GetTokenText());
         if (num_elems < 1 || num_elems > NUM_MAX_SEQUENCE_ELEMS) {
@@ -1437,9 +1437,9 @@ class IrParser {
         }
         tok = lexer_.GetNextToken();
       }
-    } while (tok == TOK_COMMA);
-    if (tok != TOK_RBRACKET) {
-      return TOK_ERROR;
+    } while (tok == Token::TOK_COMMA);
+    if (tok != Token::TOK_RBRACKET) {
+      return Token::TOK_ERROR;
     }
     if (type == "Tuple") {
       SetTupleType(ptr, elems);
@@ -1453,7 +1453,7 @@ class IrParser {
 
   template <typename T>
   Token ParseTypeArray(const FuncGraphPtr &func_graph, Token tok, T *const ptr = nullptr) {
-    if (tok != TOK_LPARENTHESIS) {
+    if (tok != Token::TOK_LPARENTHESIS) {
       if (ptr != nullptr) {
         SetBasicType(ptr, std::make_shared<TensorType>());
       }
@@ -1463,11 +1463,11 @@ class IrParser {
     TypePtr elem_type = nullptr;
     ShapeVector shape;
     tok = ParseOneType(func_graph, lexer_.GetNextToken(), &elem_type);
-    if (tok != TOK_RPARENTHESIS) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_RPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
     tok = lexer_.GetNextToken();
-    if (tok != TOK_LBRACKET) {
+    if (tok != Token::TOK_LBRACKET) {
       // NOTICE: if shape.size == 0, is this ok?
       SetArrayType(ptr, elem_type, shape);
       return tok;
@@ -1476,14 +1476,14 @@ class IrParser {
     do {
       tok = lexer_.GetNextToken();
       // case: Array(I32)[]
-      if (tok != TOK_NUMBER) {
+      if (tok != Token::TOK_NUMBER) {
         break;
       }
       shape.push_back(StringToScalar<int>(lexer_.GetTokenText()));
       tok = lexer_.GetNextToken();
-    } while (tok == TOK_COMMA);
-    if (tok != TOK_RBRACKET) {
-      return TOK_ERROR;
+    } while (tok == Token::TOK_COMMA);
+    if (tok != Token::TOK_RBRACKET) {
+      return Token::TOK_ERROR;
     }
 
     SetArrayType(ptr, elem_type, shape);
@@ -1579,8 +1579,8 @@ class IrParser {
 
   template <typename T>
   Token ParseOneType(const FuncGraphPtr &func_graph, Token tok, T *const ptr = nullptr) {
-    if (tok != TOK_IDENTIFIER) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_IDENTIFIER) {
+      return Token::TOK_ERROR;
     }
     std::string type = lexer_.GetTokenText();
     TypeId typeId = kTypeUnknown;
@@ -1595,21 +1595,21 @@ class IrParser {
       return ParseTypeVector(func_graph, lexer_.GetNextToken(), type, ptr);
     } else if (type == "Func") {
       tok = lexer_.GetNextToken();
-      if (tok != TOK_LBRACKET) {
+      if (tok != Token::TOK_LBRACKET) {
         SetBasicType(ptr, std::make_shared<Function>());
         return tok;
       }
       MS_LOG(EXCEPTION) << "Need to process function parameter types at line " << lexer_.GetLineNo();
     } else if (type == "JT") {
       tok = lexer_.GetNextToken();
-      if (tok != TOK_LBRACKET) {
+      if (tok != Token::TOK_LBRACKET) {
         return tok;
       }
       T elem = nullptr;
       tok = ParseOneType(func_graph, lexer_.GetNextToken(), &elem);
       SetJTaggedType(ptr, elem);
-      if (tok != TOK_RBRACKET) {
-        return TOK_ERROR;
+      if (tok != Token::TOK_RBRACKET) {
+        return Token::TOK_ERROR;
       }
       return lexer_.GetNextToken();
     } else if (type == "SymType") {
@@ -1631,24 +1631,24 @@ class IrParser {
 
   Token ParseAttributes(const FuncGraphPtr &func_graph, const PrimitivePtr &prim) {
     Token tok = ParseAttribute(func_graph, prim);
-    while (tok == TOK_COMMA) {
+    while (tok == Token::TOK_COMMA) {
       tok = ParseAttribute(func_graph, prim);
     }
-    if (tok != TOK_RBRACKET) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_RBRACKET) {
+      return Token::TOK_ERROR;
     }
     return lexer_.GetNextToken();
   }
 
   Token ParseAttribute(const FuncGraphPtr &func_graph, const PrimitivePtr &prim) {
     Token tok = lexer_.GetNextToken();
-    if (tok != TOK_IDENTIFIER) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_IDENTIFIER) {
+      return Token::TOK_ERROR;
     }
     std::string attr_name = lexer_.GetTokenText();
 
-    if (lexer_.GetNextToken() != TOK_EQUALITY) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_EQUALITY) {
+      return Token::TOK_ERROR;
     }
 
     ValuePtr value = nullptr;
@@ -1665,7 +1665,7 @@ class IrParser {
 
   FuncGraphPtr ParseParameters(FuncGraphPtr func_graph) {
     Token tok = lexer_.SkipWhiteToken();
-    while (tok == TOK_PARAMETER) {
+    while (tok == Token::TOK_PARAMETER) {
       ParameterPtr param = std::make_shared<Parameter>(func_graph);
       param->set_name(lexer_.GetTokenText());
       param_nodes_[lexer_.GetTokenText()] = param;
@@ -1675,13 +1675,13 @@ class IrParser {
 
       tok = lexer_.GetNextToken();
       // parse type
-      if (tok == TOK_COLON) {
+      if (tok == Token::TOK_COLON) {
         AbstractBasePtr type = nullptr;
         tok = ParseType(func_graph, &type);
       }
       // parse default value
-      if (tok == TOK_EQUALITY) {
-        if (lexer_.GetNextToken() != TOK_AT_FILE) {
+      if (tok == Token::TOK_EQUALITY) {
+        if (lexer_.GetNextToken() != Token::TOK_AT_FILE) {
           MS_LOG(EXCEPTION) << "Expect @file at line " << lexer_.GetLineNo();
         }
 
@@ -1692,28 +1692,28 @@ class IrParser {
 
         tok = lexer_.GetNextToken();
       }
-      if (tok == TOK_COMMENT || tok == TOK_EOL) {
+      if (tok == Token::TOK_COMMENT || tok == Token::TOK_EOL) {
         tok = lexer_.SkipWhiteToken();
       }
 
       Token next = tok;
-      if (next == TOK_RPARENTHESIS) {
+      if (next == Token::TOK_RPARENTHESIS) {
         return func_graph;
-      } else if (next == TOK_COMMA) {
+      } else if (next == Token::TOK_COMMA) {
         tok = lexer_.SkipWhiteToken();
       } else {
         return nullptr;
       }
     }
-    return tok == TOK_RPARENTHESIS ? func_graph : nullptr;
+    return tok == Token::TOK_RPARENTHESIS ? func_graph : nullptr;
   }
 
   FuncGraphPtr ParseArguments(FuncGraphPtr func_graph, std::vector<AnfNodePtr> *const inputs_ptr) {
     Token tok = ParseArgument(func_graph, inputs_ptr);
-    while (tok == TOK_COMMA) {
+    while (tok == Token::TOK_COMMA) {
       tok = ParseArgument(func_graph, inputs_ptr);
     }
-    if (tok != TOK_RPARENTHESIS) {
+    if (tok != Token::TOK_RPARENTHESIS) {
       return nullptr;
     }
     return func_graph;
@@ -1745,14 +1745,14 @@ class IrParser {
 
   template <typename T, typename V>
   Token ParseScalar(ValuePtr *const val_ptr) {
-    if (lexer_.GetNextToken() != TOK_NUMBER) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_NUMBER) {
+      return Token::TOK_ERROR;
     }
     std::stringstream ss;
     ss << lexer_.GetTokenText();
 
-    if (lexer_.GetNextToken() != TOK_RPARENTHESIS) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_RPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
 
     V val;
@@ -1764,7 +1764,7 @@ class IrParser {
 
   template <typename VT, typename V, typename T>
   Token ParseScalar(ValuePtr *const val_ptr, Token tok) {
-    if (tok != TOK_LPARENTHESIS) {
+    if (tok != Token::TOK_LPARENTHESIS) {
       *val_ptr = std::make_shared<T>();
       return tok;
     }
@@ -1774,7 +1774,7 @@ class IrParser {
 
   template <typename VT, typename V, typename T, const unsigned nbits>
   Token ParseScalar(ValuePtr *const val_ptr, Token tok) {
-    if (tok != TOK_LPARENTHESIS) {
+    if (tok != Token::TOK_LPARENTHESIS) {
       *val_ptr = std::make_shared<T>(nbits);
       return tok;
     }
@@ -1794,47 +1794,47 @@ class IrParser {
   Token ParseTensor(ValuePtr *const val_ptr) {
     // parse type
     TypeId type;
-    if (lexer_.GetNextToken() != TOK_LPARENTHESIS) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_LPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
-    if (lexer_.GetNextToken() != TOK_NUMBER) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_NUMBER) {
+      return Token::TOK_ERROR;
     }
     type = static_cast<TypeId>(StringToScalar<int>(lexer_.GetTokenText()));
-    if (lexer_.GetNextToken() != TOK_RPARENTHESIS) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_RPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
 
     // parse shape
     ShapeVector shape;
     Token tok = lexer_.GetNextToken();
-    if (tok != TOK_LBRACKET) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_LBRACKET) {
+      return Token::TOK_ERROR;
     }
 
     do {
       tok = lexer_.GetNextToken();
       // consider case: Tensor(23)[]
-      if (tok != TOK_NUMBER) {
+      if (tok != Token::TOK_NUMBER) {
         break;
       }
       shape.push_back(StringToScalar<int>(lexer_.GetTokenText()));
 
       tok = lexer_.GetNextToken();
-    } while (tok == TOK_COMMA);
+    } while (tok == Token::TOK_COMMA);
 
-    if (tok != TOK_RBRACKET) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_RBRACKET) {
+      return Token::TOK_ERROR;
     }
 
-    if (lexer_.GetNextToken() != TOK_AT_FILE) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_AT_FILE) {
+      return Token::TOK_ERROR;
     }
 
     py::object tensor_obj = LoadObject(lexer_.GetTokenText());
     py::array tensor_data = py::cast<py::array>(tensor_obj);
     if (!tensor_data) {
-      return TOK_ERROR;
+      return Token::TOK_ERROR;
     }
     *val_ptr = TensorPy::MakeTensor(tensor_data, TypeIdToType(type));
 
@@ -1842,47 +1842,47 @@ class IrParser {
   }
 
   Token ParsePrimType(Token tok, PrimType *prim_type_ptr) {
-    if (tok != TOK_LBRACE) {
+    if (tok != Token::TOK_LBRACE) {
       return tok;
     }
-    if (lexer_.GetNextToken() != TOK_IDENTIFIER) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_IDENTIFIER) {
+      return Token::TOK_ERROR;
     }
     if (lexer_.GetTokenText() != "prim_type") {
-      return TOK_ERROR;
+      return Token::TOK_ERROR;
     }
-    if (lexer_.GetNextToken() != TOK_EQUALITY) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_EQUALITY) {
+      return Token::TOK_ERROR;
     }
-    if (lexer_.GetNextToken() != TOK_NUMBER) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_NUMBER) {
+      return Token::TOK_ERROR;
     }
     int val = 0;
     std::stringstream ss;
     ss << lexer_.GetTokenText();
     ss >> val;
     *prim_type_ptr = PrimType(val);
-    if (lexer_.GetNextToken() != TOK_RBRACE) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_RBRACE) {
+      return Token::TOK_ERROR;
     }
     return lexer_.GetNextToken();
   }
 
   Token ParseMultitypeFuncGraphItem(const prim::MultitypeFuncGraphPtr &mt_func_graph, Token tok) {
-    if (tok != TOK_LPARENTHESIS) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_LPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
     TypePtrList type_list;
     do {
       TypePtr type = nullptr;
       tok = ParseOneType(nullptr, lexer_.GetNextToken(), &type);
       type_list.push_back(type);
-    } while (tok == TOK_COMMA);
-    if (tok != TOK_RPARENTHESIS) {
-      return TOK_ERROR;
+    } while (tok == Token::TOK_COMMA);
+    if (tok != Token::TOK_RPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
-    if (lexer_.GetNextToken() != TOK_AT_FILE) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_AT_FILE) {
+      return Token::TOK_ERROR;
     }
 
     // load Python function from serialized file
@@ -1894,27 +1894,27 @@ class IrParser {
   }
 
   Token ParseMultitypeFuncGraph(const prim::MultitypeFuncGraphPtr &mt_func_graph, Token tok) {
-    if (tok != TOK_LBRACE) {
+    if (tok != Token::TOK_LBRACE) {
       return tok;
     }
     do {
       tok = ParseMultitypeFuncGraphItem(mt_func_graph, lexer_.GetNextToken());
-    } while (tok == TOK_COMMA);
-    if (tok != TOK_RBRACE) {
-      return TOK_ERROR;
+    } while (tok == Token::TOK_COMMA);
+    if (tok != Token::TOK_RBRACE) {
+      return Token::TOK_ERROR;
     }
     return lexer_.GetNextToken();
   }
 
   Token ParseBoolValue(const std::string &key, bool *val_ptr) {
-    if (lexer_.GetNextToken() != TOK_IDENTIFIER || lexer_.GetTokenText() != key) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_IDENTIFIER || lexer_.GetTokenText() != key) {
+      return Token::TOK_ERROR;
     }
-    if (lexer_.GetNextToken() != TOK_EQUALITY) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_EQUALITY) {
+      return Token::TOK_ERROR;
     }
-    if (lexer_.GetNextToken() != TOK_NUMBER) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_NUMBER) {
+      return Token::TOK_ERROR;
     }
     bool value = false;
     {
@@ -1931,26 +1931,26 @@ class IrParser {
   }
 
   Token ParseValueGradOperation(const std::string &name, ValuePtr *const val_ptr) {
-    if (lexer_.GetNextToken() != TOK_LBRACE) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_LBRACE) {
+      return Token::TOK_ERROR;
     }
     // get_all=0, get_by_list=1, sens_param=1
     bool get_all = false;
     Token tok = ParseBoolValue("get_all", &get_all);
-    if (tok != TOK_COMMA) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_COMMA) {
+      return Token::TOK_ERROR;
     }
 
     bool get_by_list = false;
     tok = ParseBoolValue("get_by_list", &get_by_list);
-    if (tok != TOK_COMMA) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_COMMA) {
+      return Token::TOK_ERROR;
     }
 
     bool sens_param = false;
     tok = ParseBoolValue("sens_param", &sens_param);
-    if (tok != TOK_RBRACE) {
-      return TOK_ERROR;
+    if (tok != Token::TOK_RBRACE) {
+      return Token::TOK_ERROR;
     }
 
     *val_ptr = std::make_shared<prim::GradOperation>(name, get_all, get_by_list, sens_param);
@@ -1959,15 +1959,15 @@ class IrParser {
   }
 
   Token ParseSymbolicKeyInstance(const FuncGraphPtr &func_graph, AnfNodePtr *const node_ptr = nullptr) {
-    if (lexer_.GetNextToken() != TOK_LPARENTHESIS) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_LPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
-    if (lexer_.GetNextToken() != TOK_PARAMETER) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_PARAMETER) {
+      return Token::TOK_ERROR;
     }
     std::string param_name = lexer_.GetTokenText();
-    if (lexer_.GetNextToken() != TOK_RPARENTHESIS) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_RPARENTHESIS) {
+      return Token::TOK_ERROR;
     }
     auto param_nodes_iter = param_nodes_.find(param_name);
     if (param_nodes_iter == param_nodes_.end()) {
@@ -1990,8 +1990,8 @@ class IrParser {
   }
 
   Token ParsePrimitivePy(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *const val_ptr) {
-    if (lexer_.GetNextToken() != TOK_AT_FILE) {
-      return TOK_ERROR;
+    if (lexer_.GetNextToken() != Token::TOK_AT_FILE) {
+      return Token::TOK_ERROR;
     }
 
     // restore python function of PrimitivePy from serialized file
@@ -2007,7 +2007,7 @@ class IrParser {
     } else {
       auto len = strlen("PrimitivePy::");
       if (id.size() < len) {
-        return TOK_ERROR;
+        return Token::TOK_ERROR;
       }
       ptr = std::make_shared<PrimitivePy>(id.substr(len), py_obj);
     }
@@ -2018,7 +2018,7 @@ class IrParser {
     if (prim_type != kPrimTypeUnknown) {
       ptr->set_prim_type(prim_type);
     }
-    if (next != TOK_LBRACKET) {
+    if (next != Token::TOK_LBRACKET) {
       return next;
     }
     // parse attributes
@@ -2037,7 +2037,7 @@ class IrParser {
       *val_ptr = std::make_shared<prim::HyperMapPy>();
       Token next = lexer_.GetNextToken();
       // process case: fn_leaf is not null
-      if (next == TOK_LBRACE) {
+      if (next == Token::TOK_LBRACE) {
         MS_LOG(EXCEPTION) << "Need to process fn_leaf at line " << lexer_.GetLineNo();
       }
       return next;
@@ -2052,9 +2052,9 @@ class IrParser {
       return lexer_.GetNextToken();
     } else if (Match(id, "NameSpace::")) {
       std::string module_name = id.substr(strlen("NameSpace::"));
-      if (lexer_.GetNextToken() != TOK_AT_FILE) {
+      if (lexer_.GetNextToken() != Token::TOK_AT_FILE) {
         MS_LOG(ERROR) << "Expect TOK_AT_FILE at line " << lexer_.GetLineNo();
-        return TOK_ERROR;
+        return Token::TOK_ERROR;
       }
       // load Python module information from serialized file
       py::object py_obj = LoadObject(lexer_.GetTokenText());
@@ -2145,7 +2145,7 @@ class IrParser {
   Token SetListOrTupleValue(const FuncGraphPtr &func_graph, Token left_tok, Token next, bool node_is_valid,
                             const std::vector<ValuePtr> &elems, const std::vector<AnfNodePtr> &nodes,
                             ValuePtr *const val_ptr, AnfNodePtr *node_ptr) {
-    if (left_tok == TOK_LPARENTHESIS && next == TOK_RPARENTHESIS) {
+    if (left_tok == Token::TOK_LPARENTHESIS && next == Token::TOK_RPARENTHESIS) {
       if (node_is_valid && node_ptr != nullptr) {
         MS_EXCEPTION_IF_NULL(func_graph);
         *node_ptr = func_graph->NewCNode(nodes);
@@ -2153,14 +2153,14 @@ class IrParser {
         *val_ptr = std::make_shared<ValueTuple>(elems);
       }
       return lexer_.GetNextToken();
-    } else if (left_tok == TOK_LBRACKET && next == TOK_RBRACKET) {
+    } else if (left_tok == Token::TOK_LBRACKET && next == Token::TOK_RBRACKET) {
       if (node_is_valid && node_ptr != nullptr) {
         MS_LOG(EXCEPTION) << "Encounter valid node in value list";
       }
       *val_ptr = std::make_shared<ValueList>(elems);
       return lexer_.GetNextToken();
     } else {
-      return TOK_ERROR;
+      return Token::TOK_ERROR;
     }
   }
 
@@ -2175,15 +2175,15 @@ class IrParser {
     AnfNodePtr node = nullptr;
     bool node_is_valid = false;
     bool first_flag = true;
-    Token next = TOK_ERROR;
+    Token next = Token::TOK_ERROR;
     do {
       next = lexer_.GetNextToken();
       if (first_flag) {
         first_flag = false;
         // case (), zero elements
-        if ((left_tok == TOK_LPARENTHESIS && next == TOK_RPARENTHESIS) ||
-            (left_tok == TOK_LBRACKET && next == TOK_RBRACKET)) {
-          if (left_tok == TOK_LPARENTHESIS) {
+        if ((left_tok == Token::TOK_LPARENTHESIS && next == Token::TOK_RPARENTHESIS) ||
+            (left_tok == Token::TOK_LBRACKET && next == Token::TOK_RBRACKET)) {
+          if (left_tok == Token::TOK_LPARENTHESIS) {
             *val_ptr = std::make_shared<ValueTuple>(elems);
           } else {
             *val_ptr = std::make_shared<ValueList>(elems);
@@ -2200,48 +2200,48 @@ class IrParser {
       } else {
         nodes.push_back(std::make_shared<ValueNode>(elem));
       }
-    } while (next == TOK_COMMA);
+    } while (next == Token::TOK_COMMA);
 
     return SetListOrTupleValue(func_graph, left_tok, next, node_is_valid, elems, nodes, val_ptr, node_ptr);
   }
 
   Token ParseValue(const FuncGraphPtr &func_graph, Token tok, ValuePtr *const val_ptr, AnfNodePtr *node_ptr = nullptr) {
     // tuple or list
-    if (tok == TOK_LPARENTHESIS || tok == TOK_LBRACKET) {
+    if (tok == Token::TOK_LPARENTHESIS || tok == Token::TOK_LBRACKET) {
       return ParseListOrTupleValue(func_graph, tok, val_ptr, node_ptr);
-    } else if (tok == TOK_IDENTIFIER) {
+    } else if (tok == Token::TOK_IDENTIFIER) {
       return ParseValueBasic(func_graph, lexer_.GetTokenText(), val_ptr, node_ptr);
-    } else if (tok == TOK_STRING) {
+    } else if (tok == Token::TOK_STRING) {
       *val_ptr = std::make_shared<StringImm>(lexer_.GetTokenText());
       return lexer_.GetNextToken();
     }
     MS_LOG(ERROR) << "Parse error!";
-    return TOK_ERROR;
+    return Token::TOK_ERROR;
   }
 
   Token ParseItem(const FuncGraphPtr &func_graph, AnfNodePtr *node_ptr, ValuePtr *const val_ptr,
-                  Token tok = TOK_INVALID) {
-    if (tok == TOK_INVALID) {
+                  Token tok = Token::TOK_INVALID) {
+    if (tok == Token::TOK_INVALID) {
       tok = lexer_.GetNextToken();
     }
-    if (tok == TOK_VARIABLE) {
+    if (tok == Token::TOK_VARIABLE) {
       auto cnodes_iter = cnodes_.find(lexer_.GetTokenText());
       if (cnodes_iter == cnodes_.end()) {
         MS_LOG(EXCEPTION) << "Can not find definition of '" << lexer_.GetTokenText() << "'";
       }
       *node_ptr = cnodes_iter->second;
-    } else if (tok == TOK_PARAMETER) {
+    } else if (tok == Token::TOK_PARAMETER) {
       AnfNodePtr param = FindParameter(func_graph, lexer_.GetTokenText());
       if (param == nullptr) {
         MS_LOG(EXCEPTION) << "Can not find definition of '" << lexer_.GetTokenText() << "' at line "
                           << lexer_.GetLineNo();
       }
       *node_ptr = param;
-    } else if (tok == TOK_IDENTIFIER || tok == TOK_LPARENTHESIS || tok == TOK_STRING) {
+    } else if (tok == Token::TOK_IDENTIFIER || tok == Token::TOK_LPARENTHESIS || tok == Token::TOK_STRING) {
       ValuePtr value;
       AnfNodePtr node;
       tok = ParseValue(func_graph, tok, &value, &node);
-      if (tok == TOK_ERROR) {
+      if (tok == Token::TOK_ERROR) {
         MS_LOG(ERROR) << "Parse value error!";
         return tok;
       }
@@ -2262,13 +2262,13 @@ class IrParser {
 
   Token ParseArgument(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *const inputs_ptr) {
     Token tok = lexer_.GetNextToken();
-    if (tok == TOK_RPARENTHESIS) {
+    if (tok == Token::TOK_RPARENTHESIS) {
       return tok;
     }
     AnfNodePtr node = nullptr;
     ValuePtr value = nullptr;
     tok = ParseItem(func_graph, &node, &value, tok);
-    if (tok != TOK_ERROR) {
+    if (tok != Token::TOK_ERROR) {
       MS_EXCEPTION_IF_NULL(inputs_ptr);
       inputs_ptr->push_back(node);
     }

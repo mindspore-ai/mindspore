@@ -524,7 +524,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
 void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
   static std::unordered_map<std::string, enum LocDumpMode> dump_level_map = {
     {std::to_string(kOff), kOff}, {std::to_string(kTopStack), kTopStack}, {std::to_string(kWholeStack), kWholeStack}};
-  static auto dump_level_in_env = common::GetEnv("ENV_DUMP_IR_LINE_LEVEL");
+  static const auto dump_level_in_env = common::GetEnv("ENV_DUMP_IR_LINE_LEVEL");
   auto it = dump_level_map.find(dump_level_in_env);
   if (it == dump_level_map.end()) {
     return;

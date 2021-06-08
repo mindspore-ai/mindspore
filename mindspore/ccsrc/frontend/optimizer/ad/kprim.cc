@@ -279,7 +279,8 @@ void KPrim::TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const Func
                                       std::vector<AnfNodePtr> *const transf_args) {
   MS_EXCEPTION_IF_NULL(mng);
   TransformNormalArgs(mng, bprop_fg, outer, transf_args);
-  auto bprop_fg_param_size = bprop_fg->parameters().size() - 2;
+  constexpr size_t need_filter_params_size = 2;
+  auto bprop_fg_param_size = bprop_fg->parameters().size() - need_filter_params_size;
   // current_primal_fg may have extra parameters after AutoMonad
   const auto &current_primal_fg_params = current_primal_fg->parameters();
   if (bprop_fg_param_size < current_primal_fg_params.size()) {
@@ -326,7 +327,10 @@ void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check
 
   std::vector<AnfNodePtr> inputs;
   inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-  inputs.insert(inputs.begin() + 1, bprop_fg->parameters().begin(), bprop_fg->parameters().end() - 2);
+  constexpr int primitive_size = 1;
+  constexpr int bprop_offset = 2;
+  inputs.insert(inputs.begin() + primitive_size, bprop_fg->parameters().begin(),
+                bprop_fg->parameters().end() - bprop_offset);
   AnfNodePtr params = bprop_fg->NewCNode(inputs);
 
   inputs.clear();

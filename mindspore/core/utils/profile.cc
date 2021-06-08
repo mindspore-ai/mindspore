@@ -309,7 +309,8 @@ void DumpTime::Save() {
   file_out_ << "{\n";
   file_out_ << "    \"traceEvents\": [" << std::endl;
   file_ss_ >> file_out_.rdbuf();
-  (void)file_out_.seekp(-7, std::ios::end);
+  constexpr int offset = -7;
+  (void)file_out_.seekp(offset, std::ios::end);
   file_out_ << "    ]" << std::endl << "    ,\n";
   file_out_ << "    \"displayTimeUnit\": \"ms\"" << std::endl;
   file_out_ << "}";
