@@ -44,6 +44,7 @@ void SwitchActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
+    EraseInput(context);
     SendOutput(context);
   }
 }
@@ -235,6 +236,25 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     MS_EXCEPTION_IF_NULL(data);
     data->data_ = input_device_tensors_[data_arrow->from_output_index_];
     Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
+  }
+}
+
+void SwitchActor::EraseInput(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (input_datas_num_ != 0) {
+    auto ret = input_op_datas_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input data failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+  }
+
+  if (input_controls_num_ != 0) {
+    auto ret = input_op_controls_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input controls failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   }
 }
 

@@ -22,6 +22,8 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include <unordered_map>
+#include "runtime/framework/control_node_parser.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/hardware/device_context.h"
@@ -47,6 +49,7 @@ class OutputActor : public OpActor<DeviceTensor> {
     outputs_.resize(outputs_num);
     output_nodes_.resize(outputs_num);
     device_contexts_.resize(outputs_num);
+    device_tensor_store_keys_[kMainBranchID] = std::vector<std::pair<size_t, AnfNodePtr>>();
   }
   ~OutputActor() override = default;
 
@@ -56,6 +59,8 @@ class OutputActor : public OpActor<DeviceTensor> {
   // The output actor collects output result when receive the data of actor.
   void CollectOutput(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
                      OpContext<DeviceTensor> *context);
+
+  void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context);
 
   std::vector<TensorPtr> &outputs() { return outputs_; }
 
@@ -74,9 +79,13 @@ class OutputActor : public OpActor<DeviceTensor> {
   size_t outputs_num_;
   size_t current_outputs_num_;
   bool need_loop_count_;
+  int branch_id_{kMainBranchID};
 
-  // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
-  std::vector<std::pair<size_t, AnfNodePtr>> device_tensor_store_keys_;
+  // Pair<branch_id, <index, node>> points to the dependent device tensor store, branch_id is the output branch id.
+  // In general, the branch id is 0, which means there is only one output branch in the actor set. When there are
+  // multiple possible output branches in the actor set, different branch ids correspond to their own related nodes.
+  // The index is the position of node in the output, node is the key of the device tensor store.
+  std::unordered_map<size_t, std::vector<std::pair<size_t, AnfNodePtr>>> device_tensor_store_keys_;
 };
 
 using OutputActorPtr = std::shared_ptr<OutputActor>;

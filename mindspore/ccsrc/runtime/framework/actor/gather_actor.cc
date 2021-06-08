@@ -58,8 +58,8 @@ void GatherActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
 
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
+    EraseInput(context);
     SendOutput(context);
-    input_op_datas_.erase(context->sequential_num_);
   }
 }
 
@@ -86,8 +86,8 @@ void GatherActor::FetchBackendInputNode(const FuncGraphPtr &func_graph,
   // 2. Output the kernel actor.
   for (const auto parameters : func_iter->second) {
     if (parameters.size() != graph_inputs.size()) {
-      MS_LOG(EXCEPTION) << "Parameters num is invalid, current:" << parameters.size()
-                        << " need:" << graph_inputs.size();
+      MS_LOG(EXCEPTION) << "Parameters num is invalid, current:" << parameters.size() << " need:" << graph_inputs.size()
+                        << " func_graph:" << func_iter->first->ToString();
     }
 
     for (size_t i = 0; i < parameters.size(); ++i) {
@@ -133,20 +133,11 @@ void GatherActor::FetchBackendInputNode(const FuncGraphPtr &func_graph,
 void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
 
-  // Send output data.
-  for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
-  }
-
-  // Send output control.
-  auto source_aid = const_cast<AID *>(&GetAID());
-  for (auto &output_control : output_control_arrows_) {
-    Async(output_control, &OpActor::RunOpControl, source_aid, context);
-  }
-
+  // Branch arrow and result arrow must be executed before the data arrow and control arrow, otherwise the output
+  // actor may receive the loop count message first and cause the output to be abnormal.
   if (branch_id_ > kInvalidBranchID) {
     Async(loop_count_aid_, &LoopCountActor::CollectBranchId, branch_id_, context);
+    Async(output_aid_, &OutputActor::CollectBranchId, branch_id_, context);
   }
 
   // Send graph output result.
@@ -160,8 +151,21 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
           input_device_tensors_[from_index]) {
         Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, backend_node.second,
               result_arrow->to_input_index_, context);
+        break;
       }
     }
+  }
+
+  // Send output data.
+  for (auto &output_data : output_data_) {
+    MS_EXCEPTION_IF_NULL(output_data);
+    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
+  }
+
+  // Send output control.
+  auto source_aid = const_cast<AID *>(&GetAID());
+  for (auto &output_control : output_control_arrows_) {
+    Async(output_control, &OpActor::RunOpControl, source_aid, context);
   }
 }
 
@@ -209,5 +213,23 @@ bool GatherActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   return true;
 }
 
+void GatherActor::EraseInput(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (input_datas_num_ != 0) {
+    auto ret = input_op_datas_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input data failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+  }
+
+  if (input_controls_num_ != 0) {
+    auto ret = input_op_controls_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input controls failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore

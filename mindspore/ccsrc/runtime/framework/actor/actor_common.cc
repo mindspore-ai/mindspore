@@ -44,6 +44,8 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsSwitchActor(const AnfNodePtr &node) { return AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch); }
+
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor,
                         const std::vector<AnfNodePtr> &host_parameters) {
   MS_EXCEPTION_IF_NULL(node);

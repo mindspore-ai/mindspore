@@ -37,8 +37,9 @@ namespace runtime {
 // Gather actor is the entrance of sub funcgraph. Graph input is sent to it and sent to other actors by gather actor.
 class GatherActor : public OpActor<DeviceTensor> {
  public:
-  GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid)
-      : OpActor(name), data_nodes_(parameters), loop_count_aid_(loop_count_aid) {}
+  GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid,
+              const AID output_aid)
+      : OpActor(name), data_nodes_(parameters), loop_count_aid_(loop_count_aid), output_aid_(output_aid) {}
   ~GatherActor() override = default;
 
   // Get the index of the parameter, the data_node needs to be the front node.
@@ -61,6 +62,8 @@ class GatherActor : public OpActor<DeviceTensor> {
   // Check whether satisfy the condition for launch.
   bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
   void SendOutput(OpContext<DeviceTensor> *context) const;
+  // Erase input data and input controls when finish gather launch.
+  void EraseInput(OpContext<DeviceTensor> *context);
 
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;
@@ -83,6 +86,7 @@ class GatherActor : public OpActor<DeviceTensor> {
   size_t input_controls_num_{0};
 
   const AID loop_count_aid_;
+  const AID output_aid_;
 
   // Cache unique output data by output index to modify the output data effectively.
   std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_by_output_index_;

@@ -30,8 +30,8 @@ void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *c
   auto sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
 
-  if (CheckExecuteCondition(context)) {
-    Execute(context);
+  if (CheckLoopCountIncreaseCondition(context)) {
+    IncreaseLoopCount(context);
   }
 }
 
@@ -39,8 +39,8 @@ void LoopCountActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor
   MS_EXCEPTION_IF_NULL(context);
   branch_id_ = branch_id;
 
-  if (CheckExecuteCondition(context)) {
-    Execute(context);
+  if (CheckLoopCountIncreaseCondition(context)) {
+    IncreaseLoopCount(context);
   }
 }
 
@@ -53,7 +53,7 @@ void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
   SendOutput(context);
 }
 
-void LoopCountActor::Execute(OpContext<DeviceTensor> *context) {
+void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   auto ret = input_op_controls_.erase(sequential_num);
@@ -100,7 +100,7 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *context) {
   }
 }
 
-bool LoopCountActor::CheckExecuteCondition(OpContext<DeviceTensor> *context) {
+bool LoopCountActor::CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   if (branch_id_ == kInvalidBranchID) {
@@ -108,8 +108,7 @@ bool LoopCountActor::CheckExecuteCondition(OpContext<DeviceTensor> *context) {
   }
 
   if (branch_id_ >= SizeToInt(branch_id_to_input_controls_num_.size())) {
-    MS_LOG(ERROR) << "Branch id is invalid, id:" << branch_id_
-                  << " total branch num:" << branch_id_to_input_controls_num_.size();
+    MS_LOG(ERROR) << "Branch id is invalid, id:" << branch_id_;
   }
   return input_op_controls_[sequential_num].size() == branch_id_to_input_controls_num_[branch_id_];
 }

@@ -512,12 +512,18 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   runtime::KernelMapPosition outputs_order;
   size_t outputs_num = 0;
   const auto &all_branch_output = ControlNodeParser::FetchAllBranchOutputs(root_graph);
-  for (const auto &branch_output : all_branch_output) {
+  for (int j = 0; j < SizeToInt(all_branch_output.size()); ++j) {
+    // In general, there is only one output branch, and the branch id is 0 at this time. In the control flow,
+    // there are multi-branch output scenarios. Different branches may have different weight nodes. When output
+    // actor run, the corresponding weight node needs to be obtained according to different branches. Therefore,
+    // the branch of the output nodes needs to be recorded.
+    const int branch_id = ((all_branch_output.size() == 1 ? runtime::kMainBranchID : (j + runtime::kSubBranchStartID)));
+    const auto &branch_output = all_branch_output[j];
     size_t position = 0;
     auto outputs = AnfAlgo::GetAllOutputWithIndex(branch_output);
     outputs_num = outputs.size();
     for (const auto &output : outputs) {
-      outputs_order.emplace(output, position++);
+      outputs_order[output] = {branch_id, position++};
     }
   }
 
@@ -562,7 +568,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
 
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
     for (const auto &output : outputs) {
-      outputs_order.emplace(output, position++);
+      outputs_order[output] = {runtime::kMainBranchID, position++};
     }
   }
 

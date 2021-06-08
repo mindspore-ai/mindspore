@@ -60,10 +60,10 @@ class LoopCountActor : public DebugAwareActor {
  private:
   friend class GraphScheduler;
 
-  void Execute(OpContext<DeviceTensor> *context);
+  void IncreaseLoopCount(OpContext<DeviceTensor> *context);
   void SendOutput(OpContext<DeviceTensor> *context);
 
-  bool CheckExecuteCondition(OpContext<DeviceTensor> *context);
+  bool CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *context);
   // The loop count is constant, the current count is increased after each step running finished.
   size_t loop_count_;
   size_t current_count_;
@@ -87,7 +87,7 @@ class LoopCountActor : public DebugAwareActor {
 
   // When the result of the graph is sent to the output actor, the gather actor of the graph needs
   // to send branch_id to the output actor to determine the corresponding weight.
-  int branch_id_{kInvalidBranchID};
+  int branch_id_{kMainBranchID};
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;
