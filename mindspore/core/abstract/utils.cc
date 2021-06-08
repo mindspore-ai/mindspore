@@ -55,6 +55,8 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
   // calculate dynamic shape
   ShapeVector min_dims(dims.size());
   ShapeVector max_dims(dims.size());
+  MS_EXCEPTION_IF_NULL(shape1);
+  MS_EXCEPTION_IF_NULL(shape2);
   for (size_t i = 0; i < dims.size(); ++i) {
     if (dims[i] != Shape::SHP_ANY) {
       min_dims[i] = max_dims[i] = dims[i];
@@ -143,7 +145,8 @@ AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_spec_list) {
   }
   AbstractBasePtr arg_spec_tmp = args_spec_list[0];
   MS_EXCEPTION_IF_NULL(arg_spec_tmp);
-  for (auto arg_spec : args_spec_list) {
+  for (const auto &arg_spec : args_spec_list) {
+    MS_EXCEPTION_IF_NULL(arg_spec);
     arg_spec_tmp = arg_spec_tmp->Join(arg_spec);
     MS_EXCEPTION_IF_NULL(arg_spec_tmp);
   }
@@ -158,6 +161,7 @@ AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const Abstrac
   AbstractBasePtrList joined_list;
   bool changes = false;
   for (std::size_t i = 0; i < spec1.size(); i++) {
+    MS_EXCEPTION_IF_NULL(spec1[i]);
     auto joined_elem = spec1[i]->Join(spec2[i]);
     MS_EXCEPTION_IF_NULL(joined_elem);
     if (joined_elem != spec1[i]) {
