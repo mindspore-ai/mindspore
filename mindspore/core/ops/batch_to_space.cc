@@ -50,14 +50,14 @@ AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto prim = primitive->cast<PrimBatchToSpacePtr>();
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), common_valid_types, prim_name);
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kEqual, 4, prim_name);
+  CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
   auto block_size = prim->get_block_size();
   auto crops = prim->get_crops();
   auto out_shape = x_shape;

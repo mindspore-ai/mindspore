@@ -21,8 +21,7 @@
 #include "ir/tensor.h"
 
 namespace mindspore {
-bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, int64_t seed, int64_t seed2,
-                      const py::object &output_tensor) {
+bool InitRandomNormal(std::vector<int64_t> out_shape, int64_t seed, int64_t seed2, const py::object &output_tensor) {
   if (out_shape.size() == 0) {
     std::cout << "output data shape is error" << std::endl;
   }
@@ -44,13 +43,14 @@ bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, 
   std::vector<std::thread> threads(thread_num);
   seed = (seed == 0 && seed2 == 0) ? clock() : seed;
   mindspore::PhiloxGenerator generator = mindspore::PhiloxGenerator(seed, seed2);
+  float *offset_ptr = nullptr;
   if (thread_num != 1) {
     for (uint32_t i = 0; i < thread_num - 1; i++) {
-      float *offset_ptr = start_ptr + batchSize * i;
+      offset_ptr = start_ptr + batchSize * i;
       threads[i] = std::thread(mindspore::FillRandoms<mindspore::NormalDistribution<mindspore::PhiloxGenerator, float>>,
                                generator, offset_ptr, batchSize, i);
     }
-    float *offset_ptr = start_ptr + batchSize * (thread_num - 1);
+    offset_ptr = start_ptr + batchSize * (thread_num - 1);
     threads[thread_num - 1] =
       std::thread(mindspore::FillRandoms<mindspore::NormalDistribution<mindspore::PhiloxGenerator, float>>, generator,
                   offset_ptr, total_count - (thread_num - 1) * batchSize, thread_num - 1);

@@ -53,6 +53,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -62,14 +63,14 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 
 void SpaceToBatchND::set_paddings(std::vector<std::vector<int64_t>> paddings) {
-  CheckAndConvertUtils::CheckInteger(kPaddings, paddings.size(), kEqual, 2, this->name());
+  CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings.size()), kEqual, 2, this->name());
   int64_t h = paddings.size();
   int64_t w = paddings[0].size();
   std::vector<int64_t> temp_w = {2, 2};
   CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
   for (int64_t i = 0; i < h; i++) {
     for (int64_t j = 0; j < w; j++) {
-      CheckAndConvertUtils::CheckInteger(kPaddings, paddings[i][j], kGreaterEqual, 0, this->name());
+      CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings[i][j]), kGreaterEqual, 0, this->name());
     }
   }
   this->AddAttr(kPaddings, MakeValue(paddings));
@@ -80,9 +81,9 @@ std::vector<std::vector<int64_t>> SpaceToBatchND::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 void SpaceToBatchND::set_block_shape(std::vector<int64_t> block_shape) {
-  CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape.size(), kEqual, 2, this->name());
+  CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, 2, this->name());
   for (int64_t i = 0; i < (int64_t)block_shape.size(); i++) {
-    CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1, this->name());
+    CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape[i]), kGreaterEqual, 1, this->name());
   }
   this->AddAttr(kBlockShape, MakeValue(block_shape));
 }
