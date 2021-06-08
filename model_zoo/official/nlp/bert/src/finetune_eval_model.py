@@ -71,7 +71,7 @@ class BertSquadModel(nn.Cell):
                                has_bias=True).to_float(config.compute_type)
         self.num_labels = num_labels
         self.dtype = config.dtype
-        self.log_softmax = P.LogSoftmax(axis=1)
+        self.log_softmax = P.LogSoftmax(axis=-1)
         self.is_training = is_training
 
     def construct(self, input_ids, input_mask, token_type_id):
@@ -81,7 +81,10 @@ class BertSquadModel(nn.Cell):
         logits = self.dense1(sequence)
         logits = P.Cast()(logits, self.dtype)
         logits = P.Reshape()(logits, (batch_size, seq_length, self.num_labels))
-        logits = self.log_softmax(logits)
+        logits = P.Transpose()(logits, (0, 2, 1))
+        logits_shape = P.Shape()(logits)
+        logits = self.log_softmax(P.Reshape()(logits, (-1, logits_shape[2])))
+        logits = P.Transpose()(P.Reshape()(logits, logits_shape), (0, 2, 1))
         return logits
 
 class BertNERModel(nn.Cell):

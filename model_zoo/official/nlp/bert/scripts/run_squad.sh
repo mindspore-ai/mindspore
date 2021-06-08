@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the script as: "
+echo "Please run the scipt as: "
 echo "bash scripts/run_squad.sh"
 echo "for example: bash scripts/run_squad.sh"
 echo "assessment_method include: [Accuracy]"
@@ -26,8 +26,9 @@ CUR_DIR=`pwd`
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
+
 python ${PROJECT_DIR}/../run_squad.py  \
-    --device_target="Ascend" \
+    --device_target="GPU" \
     --do_train="true" \
     --do_eval="false" \
     --device_id=0 \
@@ -35,12 +36,11 @@ python ${PROJECT_DIR}/../run_squad.py  \
     --num_class=2 \
     --train_data_shuffle="true" \
     --eval_data_shuffle="false" \
-    --train_batch_size=32 \
+    --train_batch_size=16 \
     --eval_batch_size=1 \
-    --vocab_file_path="" \
-    --save_finetune_checkpoint_path="" \
-    --load_pretrain_checkpoint_path="" \
-    --load_finetune_checkpoint_path="" \
-    --train_data_file_path="" \
-    --eval_json_path="" \
-    --schema_file_path="" > squad_log.txt 2>&1 &
+    --vocab_file_path="/home/marcel/Mindspore/bert_uncased_L-12_H-768_A-12/vocab.txt" \
+    --save_finetune_checkpoint_path="./checkpoint" \
+    --load_pretrain_checkpoint_path="/home/marcel/Mindspore/bertbase_ascend_v111_zhwiki_offical_nlp_bs256_loss3.7.ckpt" \
+    --train_data_file_path="/data/squad1/train.tf_record" \
+    --eval_json_path="/data/squad1/dev-v1.1.json" \
+    --schema_file_path="/home/marcel/Mindspore/squad_schema.json" > squad_log.txt 2>&1
