@@ -5153,7 +5153,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 5.93602717e-01,  3.92571449e-01],
-         [ 9.72582996e-01,  4.92249995e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+         [ 9.72582996e-02,  4.92249995e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 5.69999993e-01,  5.19999981e-01],
          [ 1.89999998e-01,  6.20000005e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 8.90999973e-01,  6.99999988e-01],
@@ -5413,7 +5413,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
         [[ 5.99638879e-01,  3.99296492e-01],
          [ 9.97817814e-02,  4.99281585e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 6.90000057e-01,  9.90000010e-01],
-         [ 1.06441569e-01,  1.24000001e+00]]))
+         [ 2.10000008e-01,  1.24000001e+00]]))
     """
 
     __mindspore_signature__ = (
@@ -6578,8 +6578,8 @@ class ApplyFtrl(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
         >>> output = net(input_x)
         >>> print(output)
-        [[ 0.0390525,  0.11492836],
-         [ 0.00066425, 0.15075898]])
+        [[ 0.0390525,  0.11492836]
+         [ 0.00066425, 0.15075898]]
     """
 
     @prim_attr_register
