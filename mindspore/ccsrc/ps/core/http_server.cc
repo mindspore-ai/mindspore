@@ -81,17 +81,11 @@ void HttpServer::SetAllowedMethod(u_int16_t methods) {
 
 void HttpServer::SetMaxHeaderSize(size_t num) {
   MS_EXCEPTION_IF_NULL(event_http_);
-  if (num < 0) {
-    MS_LOG(EXCEPTION) << "The header num:" << num << "is less than 0!";
-  }
   evhttp_set_max_headers_size(event_http_, num);
 }
 
 void HttpServer::SetMaxBodySize(size_t num) {
   MS_EXCEPTION_IF_NULL(event_http_);
-  if (num < 0) {
-    MS_LOG(EXCEPTION) << "The max body num:" << num << "is less than 0!";
-  }
   evhttp_set_max_body_size(event_http_, num);
 }
 

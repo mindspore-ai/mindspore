@@ -32,6 +32,8 @@
 #include <list>
 #include <map>
 #include <functional>
+#include <algorithm>
+
 #include "ir/func_graph.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -132,7 +134,7 @@ class ParameterServer {
   WeightPtr weight(const Key &key);
   void DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, KVMessage *res);
   void UpdateEmbeddings(const Key &key, const LookupIds &lookup_ids, const Values &vals);
-  inline bool ReadyForUpdateWeights();
+  inline bool ReadyForUpdateWeights() const;
   inline bool ReadyForPush(const Key &key);
   inline bool ReadyForPull(const Key &key);
   inline void ResetGradAccumCount();

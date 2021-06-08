@@ -57,7 +57,7 @@ class NodeManager {
   int NextRankId(const RegisterMessage &register_message);
   void UpdateHeartbeat(const std::string &node_id);
   void UpdateNodeFinishState(const std::string &node_id);
-  bool CheckNodesFinishState();
+  bool CheckNodesFinishState() const;
   std::vector<ServersMeta> FetchServersMeta();
   void UpdateClusterState();
   void CheckClusterTimeout();
