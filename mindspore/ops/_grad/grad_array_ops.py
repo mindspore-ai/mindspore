@@ -1065,8 +1065,8 @@ def get_bprop_masked_select(self):
     """Generate bprop for MaskedSelect"""
     op = G.MaskedSelectGrad()
 
-    def bprop(x, mask, dout):
+    def bprop(x, mask, out, dout):
         dx = op(x, mask, dout)
-        return (dx,)
+        return (dx, zeros_like(mask))
 
     return bprop
