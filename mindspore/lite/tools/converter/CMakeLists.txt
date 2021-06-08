@@ -206,3 +206,8 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::flatbuffers
         pthread
         )
+
+if(ENABLE_MODEL_OBF)
+    target_link_libraries(converter_lite PRIVATE
+            ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+endif()
