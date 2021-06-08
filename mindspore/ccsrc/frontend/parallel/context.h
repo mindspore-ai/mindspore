@@ -97,8 +97,8 @@ class ParallelContext {
 
   void set_optimizer_weight_shard_size(int64_t optimizer_weight_shard_size);
   int64_t optimizer_weight_shard_size() const { return optimizer_weight_shard_size_; }
-  void set_optimizer_weight_shard_integrated_save(bool optimizer_weight_shard_integrated_save);
-  bool optimizer_weight_shard_integrated_save() const { return optimizer_weight_shard_integrated_save_; }
+  void set_optimizer_weight_shard_aggregated_save(bool optimizer_weight_shard_aggregated_save);
+  bool optimizer_weight_shard_aggregated_save() const { return optimizer_weight_shard_aggregated_save_; }
 
   void SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group);
   const std::vector<uint32_t> GetAllReduceFusionSplitIndices(const std::string &group) const;
@@ -158,7 +158,7 @@ class ParallelContext {
   bool init_param_shape_;
   std::string communi_parallel_mode_;
   int64_t optimizer_weight_shard_size_;
-  bool optimizer_weight_shard_integrated_save_;
+  bool optimizer_weight_shard_aggregated_save_;
 };
 
 }  // namespace parallel

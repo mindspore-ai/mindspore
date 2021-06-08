@@ -70,7 +70,7 @@ void ParallelContext::Reset() {
   grad_accumulation_step_ = 1;
   communi_parallel_mode_ = ALL_GROUP_PARALLEL;
   optimizer_weight_shard_size_ = -1;
-  optimizer_weight_shard_integrated_save_ = false;
+  optimizer_weight_shard_aggregated_save_ = false;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -138,8 +138,8 @@ void ParallelContext::set_optimizer_weight_shard_size(int64_t optimizer_weight_s
   optimizer_weight_shard_size_ = optimizer_weight_shard_size;
 }
 
-void ParallelContext::set_optimizer_weight_shard_integrated_save(bool optimizer_weight_shard_integrated_save) {
-  optimizer_weight_shard_integrated_save_ = optimizer_weight_shard_integrated_save;
+void ParallelContext::set_optimizer_weight_shard_aggregated_save(bool optimizer_weight_shard_aggregated_save) {
+  optimizer_weight_shard_aggregated_save_ = optimizer_weight_shard_aggregated_save;
 }
 
 void ParallelContext::SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group) {

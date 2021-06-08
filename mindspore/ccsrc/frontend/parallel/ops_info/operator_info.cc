@@ -557,7 +557,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     MS_LOG(INFO) << "Parallel optimizer: create allgather group " << allgather_group.name();
   }
   // save in tensor_layout for strategy ckpt
-  auto integrated_save = ParallelContext::GetInstance()->optimizer_weight_shard_integrated_save();
+  auto integrated_save = ParallelContext::GetInstance()->optimizer_weight_shard_aggregated_save();
   if (!integrated_save) {
     tensor_layout->set_opt_weight_shard_size(LongToInt(optimizer_weight_shard_size));
     int64_t opt_weight_shard_step =
