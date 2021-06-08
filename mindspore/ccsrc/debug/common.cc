@@ -290,7 +290,7 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
   return s.str();
 }
 
-bool Common::OpenFile(const std::string filename, std::ofstream &ofs) {
+bool Common::SaveStringToFile(const std::string filename, const std::string string_info) {
   if (filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return false;
@@ -301,13 +301,18 @@ bool Common::OpenFile(const std::string filename, std::ofstream &ofs) {
     return false;
   }
 
-  ChangeFileMode(real_path.value(), S_IRUSR | S_IWUSR);
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs;
   ofs.open(real_path.value());
 
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
     return false;
   }
+  ofs << string_info << std::endl;
+  ofs.close();
+  // set file mode to read only by user
+  ChangeFileMode(real_path.value(), S_IRUSR);
   return true;
 }
 }  // namespace mindspore

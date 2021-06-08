@@ -91,7 +91,7 @@ class BlockTensor {
   unordered_map<uint32_t, size_t> offsets_;
   size_t m_size_;
   BlockTensor()
-      : m_start_tensor_(NULL),
+      : m_start_tensor_(nullptr),
         offsets_candidates_(),
         m_current_sol_(0),
         m_bre_allocate_(true),
@@ -108,7 +108,7 @@ class BlockTensor {
     m_size_ = bt.m_size_;
     return *this;
   }
-  bool Alone() const { return ((NULL == m_start_tensor_->right_) && (NULL == m_start_tensor_->left_)); }
+  bool Alone() const { return ((nullptr == m_start_tensor_->right_) && (nullptr == m_start_tensor_->left_)); }
 };
 
 class FootPrint : public std::enable_shared_from_this<FootPrint> {
@@ -118,7 +118,7 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
 
   FootPrint()
       : m_solId_(0),
-        m_foot_print_next_(NULL),
+        m_foot_print_next_(nullptr),
         m_offset_(0),
         m_starts_({}),
         m_alignment_(0),
