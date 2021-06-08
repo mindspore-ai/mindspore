@@ -50,6 +50,8 @@ class TopKCategoricalAccuracy(Metric):
         if k < 1:
             raise ValueError('k must be at least 1, but got {}'.format(k))
         self.k = k
+        self._correct_num = 0
+        self._samples_num = 0
         self.clear()
 
     def clear(self):
@@ -73,7 +75,7 @@ class TopKCategoricalAccuracy(Metric):
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
-        if y_pred.ndim == y.ndim and self._check_onehot_data(y):
+        if y_pred.ndim == y.ndim and Metric._check_onehot_data(y):
             y = y.argmax(axis=1)
         indices = np.argsort(-y_pred, axis=1)[:, :self.k]
         repeated_y = y.reshape(-1, 1).repeat(self.k, axis=1)
