@@ -37,8 +37,6 @@ enum InitState { UnInit = 0, InitSuccess = 1, InitFailed = 2 };
 
 struct GpuInfo {
   GpuType type = OTHER;
-  int model_num = 0;
-  float opencl_version = 0;
 };
 class OpenCLRuntimeWrapper;
 class OpenCLRuntime {

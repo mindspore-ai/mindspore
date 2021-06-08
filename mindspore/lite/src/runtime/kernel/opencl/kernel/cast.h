@@ -39,6 +39,5 @@ class CastOpenCLKernel : public OpenCLKernel {
  private:
   GpuTensorInfo shape_;
 };
-
 }  // namespace mindspore::kernel
 #endif

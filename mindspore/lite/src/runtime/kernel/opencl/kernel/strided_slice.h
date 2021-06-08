@@ -46,6 +46,5 @@ class StridedSliceOpenCLKernel : public OpenCLKernel {
   cl_int4 stride_{{1, 1, 1, 1}};
   cl_int4 size_{};
 };
-
 }  // namespace mindspore::kernel
 #endif
