@@ -608,20 +608,21 @@ class Searcher:
                     job.parent_step.add_child(step)
                 job_queue.extend(sub_job_queue)
 
-    def _process_job(self, job, sample_input, job_queue):
+    def _prepare_job(self, job, sample_input):
         """
-        Process a job.
+        Prepare a job for process.
 
         Args:
             job (_SearchJob): Search job to be processed.
             sample_input (numpy.ndarray): Image tensor in NCHW(N=1) format.
-            job_queue (list[_SearchJob]): Job queue.
 
         Returns:
-            tuple[list[EditStep], _StopReason], result edit stop and the stop reason.
-        """
-        edit_steps = []
+            numpy.ndarray, the image tensor workpiece.
 
+        Raise:
+            OriginalOutputError: Be raised if network output of the original image is not strictly larger than the
+                threshold.
+        """
         # make the network output with the original image is strictly larger than the threshold
         if job.layer == 0:
             original_output = self._network(Tensor(sample_input))[0, job.class_idx].asnumpy().item()
@@ -644,9 +645,29 @@ class Searcher:
                                    self._by_masking)
 
         job.on_start(sample_input, workpiece, self._compiled_mask, self._network)
+        return workpiece
+
+    def _process_job(self, job, sample_input, job_queue):
+        """
+        Process a job.
+
+        Args:
+            job (_SearchJob): Search job to be processed.
+            sample_input (numpy.ndarray): Image tensor in NCHW(N=1) format.
+            job_queue (list[_SearchJob]): Job queue.
+
+        Returns:
+            tuple[list[EditStep], _StopReason], result edit stop and the stop reason.
+
+        Raise:
+            OriginalOutputError: Be raised if network output of the original image is not strictly larger than the
+                threshold.
+        """
+        workpiece = self._prepare_job(job, sample_input)
+
         start_output = self._network(Tensor(workpiece))[0, job.class_idx].asnumpy().item()
         last_output = start_output
-
+        edit_steps = []
         # greedy search loop
         while True:
 
