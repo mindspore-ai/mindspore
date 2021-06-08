@@ -81,12 +81,15 @@ class ResidualBlock(nn.Cell):
 
         out_chls = out_channels // self.expansion
         self.conv1 = _conv1x1(in_channels, out_chls, stride=1)
+        self.conv1.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
         self.bn1 = _fused_bn(out_chls, momentum=momentum)
 
         self.conv2 = _conv3x3(out_chls, out_chls, stride=stride)
+        self.conv2.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
         self.bn2 = _fused_bn(out_chls, momentum=momentum)
 
         self.conv3 = _conv1x1(out_chls, out_channels, stride=1)
+        self.conv3.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
         self.bn3 = _fused_bn(out_channels, momentum=momentum)
 
         self.relu = P.ReLU()
@@ -95,6 +98,7 @@ class ResidualBlock(nn.Cell):
         if self.downsample:
             self.conv_down_sample = _conv1x1(in_channels, out_channels,
                                              stride=stride)
+            self.conv_down_sample.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
             self.bn_down_sample = _fused_bn(out_channels, momentum=momentum)
         elif self.stride != 1:
             self.maxpool_down = nn.MaxPool2d(kernel_size=1, stride=2, pad_mode='same')
@@ -143,6 +147,7 @@ class ResNet(nn.Cell):
                              "layer_num, inchannel, outchannel list must be 4!")
 
         self.conv1 = _conv7x7(3, 64, stride=2)
+        self.conv1.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
         self.bn1 = _fused_bn(64)
         self.relu = P.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')

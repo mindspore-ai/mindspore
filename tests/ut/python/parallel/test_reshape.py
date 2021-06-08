@@ -535,6 +535,7 @@ class ParallelReduceMeanNet(nn.Cell):
         self.conv = nn.Conv2d(in_channels=conv_in_channel, out_channels=conv_out_channel,
                               kernel_size=1, stride=1, pad_mode='valid', has_bias=True,
                               weight_init='ones', bias_init='ones')
+        self.conv.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
         self.reduce_mean = P.ReduceMean(keep_dims=reducemean_keep_dims)
         self.flat = nn.Flatten()
         self.reducemean_axis = reducemean_axis

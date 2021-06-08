@@ -55,5 +55,6 @@
 #include "frontend/parallel/ops_info/topk_info.h"
 #include "frontend/parallel/ops_info/scatter_update_info.h"
 #include "frontend/parallel/ops_info/virtual_output_info.h"
+#include "frontend/parallel/ops_info/conv2d_info.h"
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_
