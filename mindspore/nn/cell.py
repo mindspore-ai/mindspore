@@ -195,6 +195,10 @@ class Cell(Cell_):
     def phase(self):
         return self._phase
 
+    @property
+    def auto_parallel_mode(self):
+        return self._auto_parallel_mode
+
     @phase.setter
     def phase(self, value):
         if not isinstance(value, str):
@@ -578,10 +582,10 @@ class Cell(Cell_):
         self.argspec = inspect.getfullargspec(fn)
         self._construct_inputs_num = fn.__code__.co_argcount
         self._construct_inputs_names = fn.__code__.co_varnames
+        if self._construct_inputs_num <= 0 or self._construct_inputs_names[0] != 'self' or \
+                self._construct_inputs_num - 1 > len(self._construct_inputs_names):
+            raise ValueError("Auto parallel parameter set error.")
 
-        assert self._construct_inputs_num > 0
-        assert self._construct_inputs_names[0] == 'self'
-        assert self._construct_inputs_num - 1 <= len(self._construct_inputs_names)
         self._construct_inputs_names = self._construct_inputs_names[1:self._construct_inputs_num]
         self._construct_inputs_num = self._construct_inputs_num - 1
 

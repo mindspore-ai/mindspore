@@ -22,6 +22,7 @@ from mindspore.train.summary.summary_record import _cache_summary_tensor_data
 
 _cur_net = None
 
+
 def set_cur_net(net):
     """
     Set current net for which we are using to save checkpoint.

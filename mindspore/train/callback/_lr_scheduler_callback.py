@@ -22,6 +22,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.train.callback._callback import Callback
 from mindspore.ops import functional as F
 
+
 class LearningRateScheduler(Callback):
     """
     Change the learning_rate during training.

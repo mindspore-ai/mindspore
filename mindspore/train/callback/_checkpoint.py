@@ -26,11 +26,11 @@ from mindspore._checkparam import Validator
 from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import save_checkpoint, _save_graph
 from mindspore.parallel._ps_context import _is_role_pserver, _get_ps_mode_rank
+from mindspore.parallel._cell_wrapper import destroy_allgather_cell
 from ._callback import Callback, set_cur_net
 from ...common.tensor import Tensor
 
 _cur_dir = os.getcwd()
-_save_dir = _cur_dir
 
 
 def _check_file_name_prefix(file_name_prefix):
@@ -51,18 +51,17 @@ def _chg_ckpt_file_name_if_same_exist(directory, prefix):
     pre_len = len(prefix)
     for filename in files:
         name_ext = os.path.splitext(filename)
-        if name_ext[-1] != ".ckpt":
-            continue
         # find same prefix file
-        if filename.find(prefix) == 0 and not filename[pre_len].isalpha():
-            # add the max suffix + 1
-            index = filename[pre_len:].find("-")
-            if index == 0:
-                suffix_num = max(suffix_num, 1)
-            elif index != -1:
-                num = filename[pre_len+1:pre_len+index]
-                if num.isdigit():
-                    suffix_num = max(suffix_num, int(num)+1)
+        if name_ext[-1] != ".ckpt" or filename.find(prefix) != 0 or filename[pre_len].isalpha():
+            continue
+        # add the max suffix + 1
+        index = filename[pre_len:].find("-")
+        if index == 0:
+            suffix_num = max(suffix_num, 1)
+        elif index != -1:
+            num = filename[pre_len+1:pre_len+index]
+            if num.isdigit():
+                suffix_num = max(suffix_num, int(num)+1)
 
     if suffix_num != 0:
         prefix = prefix + "_" + str(suffix_num)
@@ -244,6 +243,8 @@ class ModelCheckpoint(Callback):
         self._last_time = time.time()
         self._last_time_for_keep = time.time()
         self._last_triggered_step = 0
+        self._cur_time_for_keep = time.time()
+        self._cur_time = time.time()
 
         if _check_file_name_prefix(prefix):
             self._prefix = prefix
@@ -310,7 +311,6 @@ class ModelCheckpoint(Callback):
             if thread.getName() == "asyn_save_ckpt":
                 thread.join()
 
-        from mindspore.parallel._cell_wrapper import destroy_allgather_cell
         destroy_allgather_cell()
 
     def _check_save_ckpt(self, cb_params, force_to_save):
@@ -355,8 +355,6 @@ class ModelCheckpoint(Callback):
                                                                self._cur_time_for_keep)
 
             # generate the new checkpoint file and rename it.
-            global _save_dir
-            _save_dir = self._directory
             cur_file = os.path.join(self._directory, cur_ckpoint_file)
             self._last_time_for_keep = time.time()
             self._last_triggered_step = cb_params.cur_step_num
@@ -413,10 +411,9 @@ class CheckpointManager:
                 mid_name = filename[len(prefix):-5]
                 flag = True
                 for char in mid_name:
-                    if char.isalpha():
-                        flag = False
+                    flag = not char.isalpha()
                 if flag:
-                    self._ckpoint_filelist.append(directory + '/' + filename)
+                    self._ckpoint_filelist.append(os.path.join(directory, filename))
 
     def remove_ckpoint_file(self, file_name):
         """Remove the specified checkpoint file from this checkpoint manager and also from the directory."""
