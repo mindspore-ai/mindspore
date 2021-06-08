@@ -320,7 +320,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 ```
 
 The ckpt_file parameter is required,
-`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+`file_format` should be in ["AIR", "MINDIR"]
 
 ### Infer on Ascend310
 
@@ -331,7 +331,7 @@ Before performing inference, the mindir file must be exported by `export.py` scr
 bash run_infer_310.sh [MINDIR_PATH] [DATASET_NAME] [NEED_PREPROCESS] [DEVICE_ID]
 ```
 
-- `NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'.
+- `NEED_PREPROCESS` means weather the original dataset processed in the mindrecord format needs to be converted to the binary format, it's value is 'y' or 'n'.
 - `DEVICE_ID` is optional, default value is 0.
 
 ### result
