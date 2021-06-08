@@ -23,7 +23,9 @@
 #include "include/model.h"
 #include "include/context.h"
 #include "include/lite_session.h"
-
+namespace {
+constexpr int kNumPrintOfOutData = 50;
+}
 std::string RealPath(const char *path) {
   const size_t max = 4096;
   if (path == nullptr) {
@@ -90,7 +92,7 @@ void GenerateRandomData(int size, void *data, Distribution distribution) {
   std::mt19937 random_engine;
   int elements_num = size / sizeof(T);
   (void)std::generate_n(static_cast<T *>(data), elements_num,
-                        [&]() { return static_cast<T>(distribution(random_engine)); });
+                        [&distribution, &random_engine]() { return static_cast<T>(distribution(random_engine)); });
 }
 
 int GenerateInputDataWithRandom(std::vector<mindspore::tensor::MSTensor *> inputs) {
@@ -129,7 +131,7 @@ int Run(mindspore::session::LiteSession *session) {
               << " tensor elements num is:" << tensor.second->ElementsNum() << std::endl;
     auto out_data = reinterpret_cast<float *>(tensor.second->MutableData());
     std::cout << "output data is:";
-    for (int i = 0; i < tensor.second->ElementsNum() && i <= 50; i++) {
+    for (int i = 0; i < tensor.second->ElementsNum() && i <= kNumPrintOfOutData; i++) {
       std::cout << out_data[i] << " ";
     }
     std::cout << std::endl;

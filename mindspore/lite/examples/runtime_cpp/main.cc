@@ -659,16 +659,16 @@ int RunCallback(const char *model_path) {
   GetInputsByTensorNameAndSetData(session);
 
   // Definition of callback function before forwarding operator.
-  auto before_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                              const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                              const mindspore::CallBackParam &call_param) {
+  auto before_call_back = [](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                             const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                             const mindspore::CallBackParam &call_param) {
     std::cout << "Before forwarding " << call_param.node_name << " " << call_param.node_type << std::endl;
     return true;
   };
   // Definition of callback function after forwarding operator.
-  auto after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                             const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                             const mindspore::CallBackParam &call_param) {
+  auto after_call_back = [](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                            const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                            const mindspore::CallBackParam &call_param) {
     std::cout << "After forwarding " << call_param.node_name << " " << call_param.node_type << std::endl;
     return true;
   };

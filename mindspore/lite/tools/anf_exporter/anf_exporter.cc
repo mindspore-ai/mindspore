@@ -238,8 +238,8 @@ int AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &m
 int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const size_t subgraph_index,
                                      const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                      schema::CNodeT *return_node) {
-  MS_ASSERT(nullptr != meta_graphT);
-  MS_ASSERT(nullptr != return_node);
+  MS_ASSERT(meta_graphT != nullptr);
+  MS_ASSERT(return_node != nullptr);
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     if (input_node == nullptr) {
@@ -556,8 +556,8 @@ int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, cons
 
 int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                 schema::CNodeT *fb_node) {
-  MS_ASSERT(nullptr != meta_graphT);
-  MS_ASSERT(nullptr != fb_node);
+  MS_ASSERT(meta_graphT != nullptr);
+  MS_ASSERT(fb_node != nullptr);
   if (cnode->inputs().size() <= 1) {
     return RET_OK;
   }
