@@ -1423,13 +1423,8 @@ bool SlicePreposePass::Run(const FuncGraphPtr &graph) {
         continue;
       }
       auto slice_cnode = node->cast<CNodePtr>();
-      if (!CheckIsAllInputsParam(slice_cnode)) {  // only support begin and size is const tensor.
-        MS_LOG(INFO) << "SlicePrepose not support input is variable now";
-        continue;
-      }
-      auto slice_node = GetSlice(slice_cnode);
-      if (slice_node == nullptr) {
-        MS_LOG(ERROR) << "slice is nullptr";
+      // only support begin and size is const tensor.
+      if (!CheckIsAllInputsParam(slice_cnode) || GetSlice(slice_cnode)) {
         continue;
       }
       auto preceed_node = slice_cnode->input(1);

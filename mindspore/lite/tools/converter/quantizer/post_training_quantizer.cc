@@ -402,25 +402,26 @@ STATUS Calibrator::ComputeThreshold() {
       auto cnode = input_infos[i]->cnode;
       bool already_computed = false;
       auto input = cnode->input(i + 1);
-      if (input->isa<mindspore::CNode>()) {
-        auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input);
-        for (const auto &outputs_diverg_info : outputs_diverg_info_) {
-          if (already_computed) {
+      if (!input->isa<mindspore::CNode>()) {
+        input_infos[i]->ComputeThreshold();
+        continue;
+      }
+      auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input);
+      for (const auto &outputs_diverg_info : outputs_diverg_info_) {
+        if (already_computed) {
+          break;
+        }
+        for (const auto &output_diverg_info : outputs_diverg_info.second) {
+          auto output_diverg_cnode = output_diverg_info->cnode;
+          if (output_diverg_cnode == input_cnode && NodePrimitiveType(input_cnode) != ops::kNameTupleGetItem) {
+            *(input_infos[i]) = *output_diverg_info;
+            input_infos[i]->cnode = cnode;
+            already_computed = true;
             break;
-          }
-          for (const auto &output_diverg_info : outputs_diverg_info.second) {
-            auto output_diverg_cnode = output_diverg_info->cnode;
-            if (output_diverg_cnode == input_cnode) {
-              if (NodePrimitiveType(input_cnode) != ops::kNameTupleGetItem) {
-                *(input_infos[i]) = *output_diverg_info;
-                input_infos[i]->cnode = cnode;
-                already_computed = true;
-                break;
-              }
-            }
           }
         }
       }
+
       if (!already_computed) {
         input_infos[i]->ComputeThreshold();
       }
