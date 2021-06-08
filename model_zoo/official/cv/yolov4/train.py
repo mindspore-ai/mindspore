@@ -241,22 +241,22 @@ if __name__ == "__main__":
         network = TrainingWrapper(network, opt)
         network.set_train()
 
-    if config.rank_save_ckpt_flag or config.run_eval:
+    if args.rank_save_ckpt_flag or args.run_eval:
         cb_params = _InternalCallbackParam()
         cb_params.train_network = network
-        cb_params.epoch_num = config.max_epoch * config.steps_per_epoch // config.ckpt_interval
+        cb_params.epoch_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
         cb_params.cur_epoch_num = 1
         run_context = RunContext(cb_params)
 
-    if config.rank_save_ckpt_flag:
+    if args.rank_save_ckpt_flag:
         # checkpoint save
         ckpt_max_num = 10
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_interval,
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
                                        keep_checkpoint_max=ckpt_max_num)
-        save_ckpt_path = os.path.join(config.outputs_dir, 'ckpt_' + str(config.rank) + '/')
+        save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=save_ckpt_path,
-                                  prefix='{}'.format(config.rank))
+                                  prefix='{}'.format(args.rank))
         ckpt_cb.begin(run_context)
 
     if args.run_eval:
@@ -310,15 +310,15 @@ if __name__ == "__main__":
             time_used = time.time() - t_end
             epoch = int(i / args.steps_per_epoch)
             fps = args.per_batch_size * (i - old_progress) * args.group_size / time_used
-            if config.rank == 0:
+            if args.rank == 0:
                 args.logger.info('epoch[{}], iter[{}], {}, {:.2f} imgs/sec, '
                                  'lr:{}'.format(epoch, i, loss_meter, fps, lr[i]))
             t_end = time.time()
             loss_meter.reset()
             old_progress = i
 
-        if (i + 1) % config.steps_per_epoch == 0 and (config.run_eval or config.rank_save_ckpt_flag):
-            if config.run_eval:
+        if (i + 1) % args.steps_per_epoch == 0 and (args.run_eval or args.rank_save_ckpt_flag):
+            if args.run_eval:
                 eval_cb.epoch_end(run_context)
                 network.set_train()
             cb_params.cur_epoch_num += 1
