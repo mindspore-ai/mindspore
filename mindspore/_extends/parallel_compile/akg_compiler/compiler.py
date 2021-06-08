@@ -14,7 +14,6 @@
 # ============================================================================
 """Providing akg compile with json"""
 import sys
-from .get_file_path import get_akg_path
 
 
 def run_compiler(op_json):
@@ -28,6 +27,7 @@ def run_compiler(op_json):
     Returns:
         None
     """
+    from get_file_path import get_akg_path
     sys.path.insert(0, get_akg_path())
     p = __import__("akg", globals(), locals(), ['ms'], 0)
     func = getattr(p.ms, "compilewithjson")
