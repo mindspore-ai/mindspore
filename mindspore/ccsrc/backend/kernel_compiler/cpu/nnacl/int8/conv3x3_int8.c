@@ -16,7 +16,7 @@
 
 #include "nnacl/int8/conv3x3_int8.h"
 
-void Conv3x3Int8InputUnit(int16_t *tmp_data, int16_t *trans_input_data, size_t step, int input_zp) {
+void Conv3x3Int8InputUnit(const int16_t *tmp_data, int16_t *trans_input_data, size_t step, int input_zp) {
 #ifdef ENABLE_ARM
   int16x8_t zp = vdupq_n_s16(input_zp);
 
@@ -101,7 +101,7 @@ void Conv3x3Int8InputUnit(int16_t *tmp_data, int16_t *trans_input_data, size_t s
   vst1q_s16(trans_input_data + 15 * step, m33);
 #else
   for (int i = 0; i < C8NUM; i++) {
-    int16_t *local_ptr = tmp_data + i;
+    const int16_t *local_ptr = tmp_data + i;
     int16_t d00 = local_ptr[0] - input_zp;
     int16_t d01 = (local_ptr + C8NUM)[0] - input_zp;
     int16_t d02 = (local_ptr + 2 * C8NUM)[0] - input_zp;

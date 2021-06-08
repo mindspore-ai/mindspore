@@ -54,7 +54,7 @@ void BatchToSpaceNoCropForNHWCInt8(const int8_t *input, int8_t *output, const in
 }
 
 void BatchToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int *in_shape, int out_n, const int *block,
-                             const int *crops, QuantArg *in_quant_arg, QuantArg *out_quant_arg) {
+                             const int *crops, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   int block_h = block[0];
   int block_w = block[1];
   int in_h = in_shape[1];

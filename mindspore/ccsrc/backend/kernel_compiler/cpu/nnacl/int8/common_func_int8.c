@@ -58,7 +58,7 @@ void PostFuncInt8C4(const int32_t *in, const int32_t *bias, int8_t *out, size_t 
 }
 
 #ifdef ENABLE_ARM
-int16x8_t LoadAndAddOffset(int8_t *data, int index, int offset) {
+int16x8_t LoadAndAddOffset(const int8_t *data, int index, int offset) {
   int8x8_t input_s8 = vld1_s8(data + index);
   int16x8_t input_s16 = vmovl_s8(input_s8);
   return vaddq_s16(input_s16, vdupq_n_s16(offset));

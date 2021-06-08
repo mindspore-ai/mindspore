@@ -40,7 +40,7 @@ using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
 class ArithmeticSelfInt8CPUKernel : public InnerKernel {
-  typedef int (*ArithmeticSelfInt8Run)(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+  typedef int (*ArithmeticSelfInt8Run)(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
  public:
   explicit ArithmeticSelfInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

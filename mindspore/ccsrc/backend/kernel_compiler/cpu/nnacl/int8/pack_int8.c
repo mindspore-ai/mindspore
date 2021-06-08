@@ -17,7 +17,7 @@
 #include "nnacl/int8/pack_int8.h"
 
 #ifdef ENABLE_ARM32
-void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_sum, int32_t *filter_zp_ptr,
+void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_sum, const int32_t *filter_zp_ptr,
                                      size_t plane_size, size_t input_channel, size_t output_channel) {
   size_t hw4 = UP_ROUND(plane_size, C4NUM);
   size_t ic16 = UP_ROUND(input_channel, C16NUM);
@@ -48,7 +48,7 @@ void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_s
 }
 #endif
 
-void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, int32_t *filter_zp_ptr,
+void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, const int32_t *filter_zp_ptr,
                                 size_t plane_size, size_t input_channel, size_t output_channel) {
   size_t hw4 = UP_ROUND(plane_size, C4NUM);
   size_t ic16 = UP_ROUND(input_channel, C16NUM);
@@ -79,7 +79,7 @@ void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, i
 }
 
 void Conv1x1PreOptPeroc(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
-                        size_t output_channel, size_t plane_size, int32_t *filter_zp, size_t inputsum_stride) {
+                        size_t output_channel, size_t plane_size, const int32_t *filter_zp, size_t inputsum_stride) {
   int ic4 = UP_ROUND(input_channel, C4NUM);
   int oc8 = UP_ROUND(output_channel, C8NUM);
   int hw8 = UP_ROUND(plane_size, C8NUM);
@@ -507,7 +507,7 @@ void Conv1x1PreOptPeroc(const int8_t *src_input, int8_t *packed_input, int32_t *
 }
 
 void Conv1x1PreOptPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, size_t input_channel,
-                       size_t plane_size, ConvParameter *conv_param) {
+                       size_t plane_size, const ConvParameter *conv_param) {
   int ic4 = UP_ROUND(input_channel, C4NUM);
   size_t hw_8div = plane_size / C8NUM * C8NUM;
   size_t ic_4div = input_channel / C4NUM * C4NUM;
@@ -737,8 +737,8 @@ void Conv1x1PreOptPert(const int8_t *src_input, int8_t *packed_input, int32_t *i
 }
 
 void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int real_cal_num,
-                           int block_index, int32_t *filter_zp, int32_t *input_sum, ConvParameter *conv_param,
-                           bool per_channel, bool is_optimize) {
+                           int block_index, const int32_t *filter_zp, int32_t *input_sum,
+                           const ConvParameter *conv_param, bool per_channel, bool is_optimize) {
   // input format : nhwc
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -905,7 +905,8 @@ void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight
   }
 }
 
-void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, int32_t *filter_zp, ConvParameter *conv_param) {
+void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, const int32_t *filter_zp,
+                          const ConvParameter *conv_param) {
   size_t hw = conv_param->output_h_ * conv_param->output_w_;
   size_t hw4 = UP_ROUND(hw, C4NUM);
   size_t ic16 = UP_ROUND(conv_param->input_channel_, C16NUM);

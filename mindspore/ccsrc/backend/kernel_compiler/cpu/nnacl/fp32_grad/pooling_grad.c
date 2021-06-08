@@ -18,7 +18,7 @@
 #include <float.h>
 #include "nnacl/fp32_grad/pooling_grad.h"
 
-void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, PoolingParameter *pooling_param) {
+void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, const PoolingParameter *pooling_param) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
@@ -101,7 +101,7 @@ static int32x4_t MaxIndex(float32x4_t in, float32x4_t *max, int32x4_t index, int
 #endif
 
 void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_ptr, int output_batch,
-                    PoolingParameter *pooling_param) {
+                    const PoolingParameter *pooling_param) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;

@@ -163,8 +163,8 @@ void AddInt8(const int8_t *input0, const int8_t *input1, int8_t *output, int siz
   return;
 }
 
-void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size, AddQuantParameter *params,
-                AddQuantQrgs *ptr_args, AddQuantQrgs *ele_args) {
+void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size,
+                const AddQuantParameter *params, const AddQuantQrgs *ptr_args, const AddQuantQrgs *ele_args) {
   int ptr_left_shift = (1 << params->left_shift_) * (1 << ptr_args->left_shift_);
   int ele_left_shift = (1 << params->left_shift_) * (1 << ele_args->left_shift_);
   int index = 0;
@@ -303,7 +303,8 @@ void AddInt8Rounding(__m128i *in1, __m128i *in2, __m128i *in3, __m128i *in4, con
   *in4 = _mm_sub_epi32(_mm_rshr_epi32(*in4, right_shift), _mm_cmpgt_epi32(in4_remainder, vin1_remainder_threshold));
 }
 
-void AddInt8_AVX2(const int8_t *input0, const int8_t *input1, int8_t *output, int size, AddQuantParameter *params) {
+void AddInt8_AVX2(const int8_t *input0, const int8_t *input1, int8_t *output, int size,
+                  const AddQuantParameter *params) {
   const int in0_left_shift = (1 << params->left_shift_) * (1 << params->in0_args_.left_shift_);
   const int in1_left_shift = (1 << params->left_shift_) * (1 << params->in1_args_.left_shift_);
   const __m128i min_vec = _mm_set1_epi8(params->min_);
@@ -415,8 +416,8 @@ void AddInt8_AVX2(const int8_t *input0, const int8_t *input1, int8_t *output, in
   return;
 }
 
-void AddOptInt8_AVX2(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size, AddQuantParameter *params,
-                     AddQuantQrgs *ptr_args, AddQuantQrgs *ele_args) {
+void AddOptInt8_AVX2(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size,
+                     const AddQuantParameter *params, const AddQuantQrgs *ptr_args, const AddQuantQrgs *ele_args) {
   // input0: ptr_in
   // input1: element_in
   // load quant parameters of input0 and input1

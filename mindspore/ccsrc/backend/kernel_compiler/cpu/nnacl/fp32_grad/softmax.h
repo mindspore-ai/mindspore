@@ -23,7 +23,7 @@ extern "C" {
 
 void SoftMaxP1(const float *input_ptr, float *output_ptr, float *sum_data, int start, int count, int length,
                int inner_size);
-void SoftMaxP2(const float *input_ptr, float *output_ptr, float *sum_data, int start, int count, int length,
+void SoftMaxP2(const float *input_ptr, float *output_ptr, const float *sum_data, int start, int count, int length,
                int inner_size);
 
 #ifdef __cplusplus

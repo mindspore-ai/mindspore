@@ -88,7 +88,7 @@ int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8
   return NNACL_OK;
 }
 
-void DeConvWeightTransInt8(int8_t *src, int8_t *dst, int input_channel, int output_channel, int plane,
+void DeConvWeightTransInt8(const int8_t *src, int8_t *dst, int input_channel, int output_channel, int plane,
                            bool support_optimize_) {
   /* optimize normal -> same layout */
   int ic16 = UP_ROUND(input_channel, C16NUM);
