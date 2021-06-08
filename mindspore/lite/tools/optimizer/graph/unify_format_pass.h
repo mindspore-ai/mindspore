@@ -73,7 +73,7 @@ class UnifyFormatPass : public Pass {
   TransposeStrategy transpose_strategy_;
   std::set<AnfNodePtr> pre_insert_trans_;
   std::set<AnfNodePtr> post_insert_trans_;
-  std::unordered_map<FuncGraphPtr, std::vector<ParameterPtr>> sub_inputs_map_;
+  std::unordered_map<FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_;
 };
 }  // namespace opt
 }  // namespace mindspore
