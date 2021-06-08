@@ -105,7 +105,7 @@ void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   const int64_t old_channel = input_shape_[1];
   const int64_t old_height = input_shape_[2];
   const int64_t old_width = input_shape_[3];
-  int64_t dim_offset = SizeToLong(output_shape_.size()) - 2;
+  size_t dim_offset = output_shape_.size() - 2;
 
   const int64_t padded_height = output_shape_[dim_offset];
   const int64_t padded_width = output_shape_[dim_offset + 1];
