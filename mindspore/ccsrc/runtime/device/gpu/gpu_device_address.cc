@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 #include "runtime/device/gpu/gpu_device_manager.h"
-#include "runtime/device/kernel_runtime_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
@@ -86,15 +85,15 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
     return SyncHostToDevice(size, host_ptr);
   }
 
+  // PyNative mode need copy async to improve performance.
   MS_EXCEPTION_IF_NULL(host_ptr);
   bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
     return true;
   }
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kGPUDevice, device_id);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  return runtime_instance->MemcpyAsync(ptr_, host_ptr, size, 0);
+  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(stream);
+  return GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream);
 }
 
 void GPUDeviceAddress::ClearDeviceMemory() {
