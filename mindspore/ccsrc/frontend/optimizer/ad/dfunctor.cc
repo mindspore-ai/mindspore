@@ -456,7 +456,8 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
       node,
       sens,
     });
-    fv_adjoint->second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), 3);
+    constexpr size_t sens_index = 3;
+    fv_adjoint->second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), sens_index);
     MS_LOG(DEBUG) << "AttachFvDoutToTape add fv sens " << sens->ToString() << " to " << new_grad_fv->ToString() << " "
                   << fv->ToString() << " " << primal_graph_->ToString() << ".";
   }
@@ -478,7 +479,8 @@ AnfNodePtr DFunctor::AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv) {
       node,
       sens,
     });
-    fv_adjoint.second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), 3);
+    constexpr size_t sens_index = 3;
+    fv_adjoint.second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), sens_index);
     MS_LOG(DEBUG) << "AttachIndirectFvDoutToTape add indirect fv sens " << sens->ToString() << " to "
                   << new_grad_fv->ToString() << ".";
   }
@@ -511,8 +513,9 @@ void DFunctor::MapMorphism() {
     param_adjoints.push_back(param_adjoint->second);
   }
   auto tape_output = tape_->NewCNode(inputs);
+  constexpr size_t offset_num = 2;
   for (size_t i = 0; i < param_adjoints.size(); ++i) {
-    param_adjoints[i]->RegisterDoutUser(tape_output, i + 2);
+    param_adjoints[i]->RegisterDoutUser(tape_output, i + offset_num);
   }
   tape_->set_output(tape_output);
   // Set output for k_graph_, K:: cnode->forward_app.

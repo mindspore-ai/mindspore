@@ -292,7 +292,7 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
           continue;
         }
         auto repl_n = cloned->cast<CNodePtr>();
-        repl_n->set_input(n.second, param);
+        repl_n->set_input(IntToSize(n.second), param);
       }
     }
     MS_LOG(DEBUG) << "Fg0 used_global_parameters size :" << fg->used_global_parameters().size();
