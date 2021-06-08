@@ -125,6 +125,8 @@ class KernelGraph : public FuncGraph {
   void SetExecOrderByDefault();
   uint32_t graph_id() const { return graph_id_; }
   void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
+  uint32_t root_graph_id() const { return root_graph_id_; }
+  void set_root_graph_id(uint32_t root_graph_id) { root_graph_id_ = root_graph_id; }
 
   // and a new front to backend anf relation to maop
   void FrontBackendlMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf);
@@ -344,6 +346,7 @@ class KernelGraph : public FuncGraph {
   std::vector<CNodePtr> mem_reuse_exec_order_;
   uint32_t graph_id_;
   uint32_t stream_distinction_label_;
+  uint32_t root_graph_id_{0};
 
   // record map bettween front anf and backend anf,use two map implement bidirectional map
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_backend_anf_map_;

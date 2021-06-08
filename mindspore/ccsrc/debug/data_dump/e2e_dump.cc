@@ -208,7 +208,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
   std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(task_id) + '.' +
-                          std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input.0";
+                          std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output.0";
   if (IsDeviceTargetGPU()) {
     DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
   } else {
