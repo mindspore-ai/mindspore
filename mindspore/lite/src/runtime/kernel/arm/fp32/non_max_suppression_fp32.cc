@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,10 @@ constexpr size_t kScoreTensorIndex = 1;
 constexpr size_t kMaxOutputNumTensorIndex = 2;
 constexpr size_t kIoUThresholdTensorIndex = 3;
 constexpr size_t kScoreThresholdTensorIndex = 4;
+constexpr size_t kYIndexA = 0;
+constexpr size_t kYIndexB = 2;
+constexpr size_t kXIndexA = 1;
+constexpr size_t kXIndexB = 3;
 constexpr int kBoxPointNum = 4;
 }  // namespace
 
@@ -103,17 +107,17 @@ void ExpandDims(std::vector<int> *shape, size_t size) {
   }
 }
 
-int NonMaxSuppressionCPUKernel::Run() {
+int NonMaxSuppressionCPUKernel::GetCalculateData() {
   auto box_tensor = in_tensors_.at(kBoxTensorIndex);
   if (box_tensor == nullptr) {
     return RET_ERROR;
   }
-  bool simple_out = false;
+  simple_out_ = false;
   auto box_dims = box_tensor->shape();  // batch, box_num, 4
   constexpr size_t kBoxTensorDims = 3;
   if (box_dims.size() != kBoxTensorDims) {
     ExpandDims(&box_dims, kBoxTensorDims - box_dims.size());
-    simple_out = true;
+    simple_out_ = true;
   }
   constexpr size_t kBoxCoordIndex = 2;
   if (box_dims[kBoxCoordIndex] != kBoxPointNum) {
@@ -146,37 +150,45 @@ int NonMaxSuppressionCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  int batch_num = score_dims.at(kBatchIndex);
+  batch_num_ = score_dims.at(kBatchIndex);
   constexpr size_t kClassIndex = 1;
-  int class_num = score_dims.at(kClassIndex);
-  int box_num = score_dims.at(kScoreDimsBoxNumIndex);
-  float *scores_data = reinterpret_cast<float *>(score_tensor->data_c());
-  if (scores_data == nullptr) {
+  class_num_ = score_dims.at(kClassIndex);
+  box_num_ = score_dims.at(kScoreDimsBoxNumIndex);
+  scores_data_ = reinterpret_cast<float *>(score_tensor->data_c());
+  if (scores_data_ == nullptr) {
     MS_LOG(ERROR) << "score tensor data nullptr";
     return RET_ERROR;
   }
-  float *box_data = reinterpret_cast<float *>(box_tensor->data_c());
-  if (box_data == nullptr) {
+  box_data_ = reinterpret_cast<float *>(box_tensor->data_c());
+  if (box_data_ == nullptr) {
     MS_LOG(ERROR) << "box tensor data nullptr";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int NonMaxSuppressionCPUKernel::Run() {
+  int ret = GetCalculateData();
+  if (ret != RET_OK) {
+    return ret;
+  }
 
   std::vector<NMSBox> selected_box_per_class;
-  selected_box_per_class.reserve(std::min(static_cast<int32_t>(box_num), max_output_per_class_));
+  selected_box_per_class.reserve(std::min(static_cast<int32_t>(box_num_), max_output_per_class_));
   std::vector<NMSIndex> selected_index;
 
-  for (auto i = 0; i < batch_num; ++i) {
-    int batch_offset = i * class_num * box_num;
-    for (auto j = 0; j < class_num; ++j) {
+  for (auto i = 0; i < batch_num_; ++i) {
+    int batch_offset = i * class_num_ * box_num_;
+    for (auto j = 0; j < class_num_; ++j) {
       // per batch per class filter
-      float *per_class_scores = scores_data + batch_offset + j * box_num;
-      float *box = box_data + i * box_num * kBoxPointNum;
+      float *per_class_scores = scores_data_ + batch_offset + j * box_num_;
+      float *box = box_data_ + i * box_num_ * kBoxPointNum;
       std::vector<NMSBox> above_score_candidates;
-      above_score_candidates.reserve(box_num);
-      for (auto k = 0; k < box_num; ++k) {
+      above_score_candidates.reserve(box_num_);
+      for (auto k = 0; k < box_num_; ++k) {
         if (per_class_scores[k] > score_threshold_) {
-          above_score_candidates.emplace_back(per_class_scores[k], k, center_point_box_, box[0], box[1], box[2],
-                                              box[3]);
+          above_score_candidates.emplace_back(per_class_scores[k], k, center_point_box_, box[kYIndexA], box[kXIndexA],
+                                              box[kYIndexB], box[kXIndexB]);
         }
         box += kBoxPointNum;
       }
@@ -214,7 +226,7 @@ int NonMaxSuppressionCPUKernel::Run() {
   }
   auto output = out_tensors_.at(0);
   int selected_num = static_cast<int>(selected_index.size());
-  if (!simple_out) {
+  if (!simple_out_) {
     const int output_last_dim = 3;
     output->set_shape({selected_num, output_last_dim});
     MS_ASSERT(output_last_dim * sizeof(int32_t) == sizeof(NMSIndex));
