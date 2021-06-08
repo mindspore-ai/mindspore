@@ -354,9 +354,9 @@ class GradOperation(GradOperation_):
                 fn(*args, **new_kwargs)
 
     def __call__(self, fn, weights=None):
-        grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
         if self.grad_fn is not None and self.fn == fn:
             return self.grad_fn
+        grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
         if context.get_context("mode") == context.GRAPH_MODE:
             if self.get_by_list:
                 @ms_function(obj=fn)
