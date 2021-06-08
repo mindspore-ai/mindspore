@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,20 @@ class NonMaxSuppressionCPUKernel : public LiteKernel {
 
  private:
   int GetParams();
+  int GetCalculateData();
 
  private:
-  int center_point_box_;
-  float iou_threshold_;
-  float score_threshold_;
-  int32_t max_output_per_class_;
+  int center_point_box_ = 0;
+  float iou_threshold_ = 0.0f;
+  float score_threshold_ = 0.0f;
+  int32_t max_output_per_class_ = 0;
   NMSParameter *param_ = nullptr;
+  bool simple_out_ = false;
+  int batch_num_ = 0;
+  int class_num_ = 0;
+  int box_num_ = 0;
+  float *scores_data_ = nullptr;
+  float *box_data_ = nullptr;
 };
 
 typedef struct NMSIndex {
