@@ -43,7 +43,7 @@ bool RangeCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const s
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = outputs[0]->size / sizeof(T);
   for (size_t i = 0; i < elem_num; i++) {
-    T val_ = start_ + i * delta_;
+    T val_ = start_ + static_cast<T>(i) * delta_;
     if (val_ > limit_) {
       break;
     }
