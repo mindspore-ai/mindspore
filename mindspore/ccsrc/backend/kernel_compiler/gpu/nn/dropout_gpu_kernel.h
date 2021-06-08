@@ -87,6 +87,9 @@ class DropoutGpuFwdKernel : public GpuKernel {
     int64_t seed = GetAttr<int64_t>(kernel_node, "Seed0");
     if (seed == 0) {
       seed = GetAttr<int64_t>(kernel_node, "Seed1");
+      if (seed == 0) {
+        seed = time(NULL);
+      }
     }
     seed_ = static_cast<uint64_t>(seed);
 
