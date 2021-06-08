@@ -75,6 +75,7 @@ def parse_args():
     args_opt.max_predict_img_size = cfg.max_predict_img_size
     args_opt.last_model_name = cfg.last_model_name
     args_opt.saved_model_file_path = cfg.saved_model_file_path
+    args_opt.is_train = False
 
     return args_opt
 

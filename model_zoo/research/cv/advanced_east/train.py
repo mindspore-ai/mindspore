@@ -67,6 +67,7 @@ def parse_args():
     args_opt.last_model_name = cfg.last_model_name
     args_opt.saved_model_file_path = cfg.saved_model_file_path
     args_opt.ds_sink_mode = cfg.ds_sink_mode
+    args_opt.is_train = True
     return args_opt
 
 
