@@ -26,27 +26,27 @@ void IndexGeneratorHelper(int8_t depth, std::vector<dsize_t> *numbers,
                           std::vector<std::vector<dsize_t>> *matrix) {
   // for loop changes if its an index instead of a slice object
   if (depth > 0) {
-    dsize_t new_depth = depth - 1;
-    dsize_t curr_ind = numbers->size() - depth;
+    int8_t new_depth = depth - 1;
+    size_t curr_ind = static_cast<size_t>(numbers->size() - depth);
 
     if (slice_list[curr_ind].slice_.valid()) {
       dsize_t increment = slice_list[curr_ind].slice_.step_;
 
       if (increment > 0) {
-        for (int i = slice_list[curr_ind].slice_.start_; i < slice_list[curr_ind].slice_.stop_;
+        for (dsize_t i = slice_list[curr_ind].slice_.start_; i < slice_list[curr_ind].slice_.stop_;
              i = i + slice_list[curr_ind].slice_.step_) {
           (*numbers)[curr_ind] = i;
           IndexGeneratorHelper(new_depth, numbers, slice_list, matrix);
         }
       } else {
-        for (int j = slice_list[curr_ind].slice_.start_; j > slice_list[curr_ind].slice_.stop_;
+        for (dsize_t j = slice_list[curr_ind].slice_.start_; j > slice_list[curr_ind].slice_.stop_;
              j = j + slice_list[curr_ind].slice_.step_) {
           (*numbers)[curr_ind] = j;
           IndexGeneratorHelper(new_depth, numbers, slice_list, matrix);
         }
       }
     } else {
-      for (int k = 0; k < slice_list[curr_ind].indices_.size(); k++) {
+      for (size_t k = 0; k < slice_list[curr_ind].indices_.size(); k++) {
         (*numbers)[curr_ind] = slice_list[curr_ind].indices_[k];
         IndexGeneratorHelper(new_depth, numbers, slice_list, matrix);
       }
