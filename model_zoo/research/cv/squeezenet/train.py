@@ -14,6 +14,7 @@
 # ============================================================================
 """train squeezenet."""
 import os
+import argparse
 from mindspore import context
 from mindspore import Tensor
 from mindspore.nn.optim.momentum import Momentum
@@ -23,45 +24,55 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.common import set_seed
-from model_utils.config import config
-from model_utils.device_adapter import get_device_num
-from model_utils.moxing_adapter import moxing_wrapper
 from src.lr_generator import get_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
 
+parser = argparse.ArgumentParser(description='Image classification')
+parser.add_argument('--net', type=str, default='squeezenet', choices=['squeezenet', 'squeezenet_residual'],
+                    help='Model.')
+parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'imagenet'], help='Dataset.')
+parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
+parser.add_argument('--device_num', type=int, default=1, help='Device num.')
+parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
+parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
+args_opt = parser.parse_args()
+
 set_seed(1)
 
-if config.net_name == "squeezenet":
+if args_opt.net == "squeezenet":
     from src.squeezenet import SqueezeNet as squeezenet
-    if config.dataset == "cifar10":
+    if args_opt.dataset == "cifar10":
+        from src.config import config1 as config
         from src.dataset import create_dataset_cifar as create_dataset
     else:
+        from src.config import config2 as config
         from src.dataset import create_dataset_imagenet as create_dataset
 else:
     from src.squeezenet import SqueezeNet_Residual as squeezenet
-    if config.dataset == "cifar10":
+    if args_opt.dataset == "cifar10":
+        from src.config import config3 as config
         from src.dataset import create_dataset_cifar as create_dataset
     else:
+        from src.config import config4 as config
         from src.dataset import create_dataset_imagenet as create_dataset
 
-@moxing_wrapper()
-def train_net():
-    """train net"""
-    target = config.device_target
-    ckpt_save_dir = config.output_path
+if __name__ == '__main__':
+    target = args_opt.device_target
+    ckpt_save_dir = config.save_checkpoint_path
 
     # init context
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=target)
-    if config.run_distribute:
+    if args_opt.run_distribute:
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(device_id=device_id,
                                 enable_auto_mixed_precision=True)
             context.set_auto_parallel_context(
-                device_num=config.device_num,
+                device_num=args_opt.device_num,
                 parallel_mode=ParallelMode.DATA_PARALLEL,
                 gradients_mean=True)
             init()
@@ -69,13 +80,14 @@ def train_net():
         else:
             init()
             context.set_auto_parallel_context(
-                device_num=get_device_num(),
+                device_num=get_group_size(),
                 parallel_mode=ParallelMode.DATA_PARALLEL,
                 gradients_mean=True)
-        ckpt_save_dir = ckpt_save_dir + "/ckpt_" + str(get_rank()) + "/"
+        ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(
+            get_rank()) + "/"
 
     # create dataset
-    dataset = create_dataset(dataset_path=config.data_path,
+    dataset = create_dataset(dataset_path=args_opt.dataset_path,
                              do_train=True,
                              repeat_num=1,
                              batch_size=config.batch_size,
@@ -86,8 +98,8 @@ def train_net():
     net = squeezenet(num_classes=config.class_num)
 
     # load checkpoint
-    if config.pre_trained:
-        param_dict = load_checkpoint(config.pre_trained)
+    if args_opt.pre_trained:
+        param_dict = load_checkpoint(args_opt.pre_trained)
         load_param_into_net(net, param_dict)
 
     # init lr
@@ -102,7 +114,7 @@ def train_net():
     lr = Tensor(lr)
 
     # define loss
-    if config.dataset == "imagenet":
+    if args_opt.dataset == "imagenet":
         if not config.use_label_smooth:
             config.label_smooth_factor = 0.0
         loss = CrossEntropySmooth(sparse=True,
@@ -146,7 +158,7 @@ def train_net():
         config_ck = CheckpointConfig(
             save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
             keep_checkpoint_max=config.keep_checkpoint_max)
-        ckpt_cb = ModelCheckpoint(prefix=config.net_name + '_' + config.dataset,
+        ckpt_cb = ModelCheckpoint(prefix=args_opt.net + '_' + args_opt.dataset,
                                   directory=ckpt_save_dir,
                                   config=config_ck)
         cb += [ckpt_cb]
@@ -155,6 +167,3 @@ def train_net():
     model.train(config.epoch_size - config.pretrain_epoch_size,
                 dataset,
                 callbacks=cb)
-
-if __name__ == '__main__':
-    train_net()
