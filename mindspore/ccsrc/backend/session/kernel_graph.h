@@ -72,6 +72,7 @@ class KernelGraph : public FuncGraph {
     start_label_ = graph.start_label_;
     end_goto_ = graph.end_goto_;
     internal_parameter_to_front_node_map_ = graph.internal_parameter_to_front_node_map_;
+    graph_output_to_front_node_map_ = graph.graph_output_to_front_node_map_;
     front_to_internal_outputs_map_ = graph.front_to_internal_outputs_map_;
     internal_outputs_to_front_map_ = graph.internal_outputs_to_front_map_;
     internal_outputs_tensor_map_ = graph.internal_outputs_tensor_map_;
@@ -206,15 +207,24 @@ class KernelGraph : public FuncGraph {
   void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, size_t src_output_idx,
                              size_t dst_output_idx);
   void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node);
-  // Cache the internal parameter and  corresponding to front node into internal_parameter_to_front_node_map_.
-  void CacheInternalParameterToFrontNode(const AnfNodePtr &parameter, const AnfWithOutIndex &front_node_with_index);
-  AnfWithOutIndex GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const;
   AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
   bool IsInternalOutput(const AnfNodePtr &node, size_t output_idx) const;
   bool IsInternalOutput(const AnfNodePtr &node) const;
   bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, size_t output_idx) const;
   void AddInternalOutputTensor(const AnfNodePtr &node, size_t output_idx, const tensor::TensorPtr &tensor);
   tensor::TensorPtr GetInternalOutputTensor(const AnfNodePtr &node, size_t output_idx);
+
+  // Cache the internal parameter and corresponding to front node into internal_parameter_to_front_node_map_.
+  void CacheInternalParameterToFrontNode(const AnfNodePtr &parameter, const AnfWithOutIndex &front_node_with_index);
+  AnfWithOutIndex GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const;
+
+  // Cache the backend graph output nodes and corresponding to front nodes with output index into
+  // graph_output_to_front_node_map_.
+  void CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtr &backend_graph_output, const AnfNodePtr &front_node);
+  AnfWithOutIndex GetFrontNodeWithIndexByGraphOutput(const AnfWithOutIndex &backend_graph_output_with_index) const;
+  // Update the related map of backend graph output nodes by modified backend output nodes.
+  void UpdateGraphOutputMap(const std::vector<AnfWithOutIndex> &old_outputs,
+                            const std::vector<AnfWithOutIndex> &new_outputs);
 
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
@@ -376,10 +386,15 @@ class KernelGraph : public FuncGraph {
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
+
   // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is
   // related to the input of this kernel graph. The first of unordered map is the input of this kernel graph, the second
   // of unordered map is front node corresponding to the output of previous kernel graph.
   std::unordered_map<AnfNodePtr, AnfWithOutIndex> internal_parameter_to_front_node_map_;
+  // The first of map is the backend graph output of this kernel graph, the second of map is front node corresponding to
+  // the backend node with index.
+  std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_to_front_node_map_;
+
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<size_t, std::pair<AnfNodePtr, bool>>>
     internal_outputs_to_front_map_;

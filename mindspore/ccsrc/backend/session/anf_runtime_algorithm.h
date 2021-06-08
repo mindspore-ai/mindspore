@@ -72,6 +72,7 @@ class AnfRuntimeAlgorithm {
                                                      prim::kPrimMakeTuple});
   static std::vector<AnfNodePtr> GetAllOutput(const AnfNodePtr &node,
                                               const std::vector<PrimitivePtr> &return_types = {});
+  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node);
   // get cnode primitive
   static AnfNodePtr GetCNodePrimitiveNode(const CNodePtr &node);
   static void SetNodeInput(const CNodePtr &node, const AnfNodePtr &input_node, size_t index);

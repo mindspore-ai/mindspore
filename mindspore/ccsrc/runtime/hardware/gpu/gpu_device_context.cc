@@ -184,10 +184,14 @@ void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   // Optimization pass which is irrelevant to device type or format.
   OptimizeGraphWithoutDeviceInfo(graph);
 
+  FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
   SetOperatorInfo(graph->execution_order());
 
   // Optimization pass which is relevant to device type or format.
   OptimizeGraphWithDeviceInfo(graph);
+
+  // Run final optimization.
+  opt::CommonFinalOptimization(graph);
 
   // Graph kernel fusion optimization
   if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
@@ -270,6 +274,7 @@ void GPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr>
 
 void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
   SetOperatorInfo(graph->execution_order());
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();

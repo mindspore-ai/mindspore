@@ -23,6 +23,7 @@
 #include "utils/trace_base.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
+#include "backend/optimizer/common/common_backend_optimization.h"
 #include "backend/optimizer/cpu/insert_cast_cpu.h"
 #include "backend/optimizer/cpu/insert_format_transform_op.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
@@ -74,6 +75,9 @@ void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 
   SetOperatorInfo(graph->execution_order());
   OptimizeGraphImpl(graph);
+
+  // Run final optimization.
+  opt::CommonFinalOptimization(graph);
 
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = graph->execution_order();

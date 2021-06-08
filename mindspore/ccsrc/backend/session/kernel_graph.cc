@@ -1106,7 +1106,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     MS_LOG(INFO) << "Node is not internal output";
     return;
   }
-  MS_LOG(INFO) << "Replace internal node " << node->DebugString() << " To " << new_node->DebugString();
+  MS_LOG(INFO) << "Replace internal output node " << node->DebugString() << " to " << new_node->DebugString();
   auto &front_nodes = iter->second;
   // Move specified front node to new node mapping
   auto front_node_iter = front_nodes.find(src_output_idx);
@@ -1137,6 +1137,85 @@ AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &p
     return iter->second;
   }
   return AnfWithOutIndex();
+}
+
+void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtr &backend_graph_output,
+                                                       const AnfNodePtr &front_node) {
+  if ((backend_graph_output == nullptr) || (front_node == nullptr)) {
+    return;
+  }
+
+  auto backend_outputs = AnfAlgo::GetAllOutputWithIndex(backend_graph_output);
+  auto front_outputs = AnfAlgo::GetAllOutputWithIndex(front_node);
+  if (backend_outputs.size() != front_outputs.size()) {
+    MS_LOG(INFO) << "The size(" << backend_outputs.size()
+                 << ") of backend output: " << backend_graph_output->DebugString() << " is not equal to the size("
+                 << front_outputs.size() << ") of front output: " << front_node->DebugString();
+    return;
+  }
+
+  for (size_t i = 0; i < backend_outputs.size(); ++i) {
+    auto backend_output = backend_outputs[i];
+    auto front_output = front_outputs[i];
+    graph_output_to_front_node_map_[backend_output] = front_output;
+    MS_LOG(INFO) << "Backend output: " << backend_output.first->fullname_with_scope()
+                 << " with index: " << backend_output.second
+                 << " map to front node: " << front_output.first->fullname_with_scope()
+                 << " with index: " << front_output.second;
+  }
+}
+
+AnfWithOutIndex KernelGraph::GetFrontNodeWithIndexByGraphOutput(
+  const AnfWithOutIndex &backend_graph_output_with_index) const {
+  const auto &iter = graph_output_to_front_node_map_.find(backend_graph_output_with_index);
+  if (iter != graph_output_to_front_node_map_.end()) {
+    return iter->second;
+  }
+  return AnfWithOutIndex();
+}
+
+void KernelGraph::UpdateGraphOutputMap(const std::vector<AnfWithOutIndex> &old_outputs,
+                                       const std::vector<AnfWithOutIndex> &new_outputs) {
+  MS_LOG(INFO) << "The size of old outputs: " << old_outputs.size()
+               << ", the size of new outputs: " << new_outputs.size();
+  if (old_outputs.size() != new_outputs.size()) {
+    MS_LOG(EXCEPTION) << "The size of old outputs is not equal to the size of new outputs.";
+  }
+
+  for (size_t i = 0; i < old_outputs.size(); ++i) {
+    auto old_output = old_outputs[i];
+    auto new_output = new_outputs[i];
+    if (old_output == new_output) {
+      continue;
+    }
+
+    // Update the graph output map.
+    if (graph_output_to_front_node_map_.count(old_output) > 0) {
+      MS_LOG(INFO) << "Replace backend output node " << old_output.first->fullname_with_scope() << " with index "
+                   << old_output.second << " to " << new_output.first->fullname_with_scope() << " with index "
+                   << new_output.second;
+      graph_output_to_front_node_map_[new_output] = graph_output_to_front_node_map_[old_output];
+      graph_output_to_front_node_map_.erase(old_output);
+    }
+
+    // Update the internal output map.
+    if (IsInternalOutput(old_output.first, old_output.second)) {
+      ReplaceInternalOutput(old_output.first, new_output.first, old_output.second, new_output.second);
+    }
+
+    if (old_output.first == new_output.first) {
+      continue;
+    }
+    // Update the front backend node map.
+    if (backend_front_anf_map_.count(old_output.first) > 0) {
+      MS_LOG(INFO) << "Replace backend output node " << old_output.first->fullname_with_scope() << " to "
+                   << new_output.first->fullname_with_scope();
+      auto front_node = backend_front_anf_map_[old_output.first];
+      front_backend_anf_map_[front_node] = new_output.first;
+      backend_front_anf_map_[new_output.first] = front_node;
+      (void)backend_front_anf_map_.erase(old_output.first);
+    }
+  }
 }
 
 AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const {

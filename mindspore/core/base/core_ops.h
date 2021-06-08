@@ -372,6 +372,7 @@ inline const PrimitivePtr kPrimMemCpyAsync = std::make_shared<Primitive>("memcpy
 inline const PrimitivePtr kPrimFill = std::make_shared<Primitive>("Fill");
 inline const PrimitivePtr kPrimFusedPushWeight = std::make_shared<Primitive>("FusedPushWeight");
 inline const PrimitivePtr kPrimFusedPullWeight = std::make_shared<Primitive>("FusedPullWeight");
+inline const PrimitivePtr kPrimInitDataSetQueue = std::make_shared<Primitive>("InitDataSetQueue");
 
 // Quant ops
 inline const PrimitivePtr kPrimBatchNormFold = std::make_shared<Primitive>("BatchNormFold");

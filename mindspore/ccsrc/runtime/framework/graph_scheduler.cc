@@ -74,6 +74,17 @@ AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const Ker
   return front_node;
 }
 
+KernelWithIndex FetchFrontNodeWithIndexByGraphOutput(const KernelWithIndex &output_with_index,
+                                                     const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto front_node_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
+  // PyNative forward graph does not has front node, using backend node instead.
+  if (front_node_with_index.first == nullptr) {
+    front_node_with_index = output_with_index;
+  }
+  return front_node_with_index;
+}
+
 //  The branch processing of PrepareDataForValueNode that value type is tensor.
 void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value,
                                    const DeviceContext *device_context) {
@@ -649,18 +660,16 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info, 
 void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_compiler_info) {
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    const auto &outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
-    for (const auto &output : outputs) {
-      const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
+    auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
+    for (const auto &output_with_index : outputs) {
       auto output_kernel = output_with_index.first;
       MS_EXCEPTION_IF_NULL(output_kernel);
-      const auto &front_node = graph->GetFrontAnfByBackendAnf(output_kernel);
-      if (front_node == nullptr) {
+      auto origin_output_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
+      if (origin_output_with_index.first == nullptr) {
         continue;
       }
 
       auto actor_output_index = output_with_index.second;
-      auto origin_output_with_index = KernelWithIndex(front_node, actor_output_index);
       OpActor<DeviceTensor> *actor = nullptr;
       if (IsKernelActor(output_kernel)) {
         actor = FetchActor(output_kernel->fullname_with_scope());
@@ -684,7 +693,8 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
 
       MS_EXCEPTION_IF_NULL(actor);
       MS_LOG(INFO) << "Cache the graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
-                   << " to actor:" << actor->GetAID().Name() << " with output index:" << actor_output_index;
+                   << " with index: " << output_with_index.second << " to actor:" << actor->GetAID().Name()
+                   << " with index:" << actor_output_index;
       graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(actor, actor_output_index));
     }
   }
@@ -1302,20 +1312,22 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
   const std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
     prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   for (const auto &real_depend_input : real_depend_inputs) {
+    auto real_depend_input_with_idx = AnfAlgo::VisitKernelWithReturnType(real_depend_input, 0, false, return_types);
+    auto real_depend_kernel = real_depend_input_with_idx.first;
     // The monad node and make tuple node need recursion.
-    if (AnfAlgo::IsOneOfPrimitiveCNode(real_depend_input, recursion_prims)) {
-      LinkControlArrowByAutoMonad(to_actor, real_depend_input);
+    if (AnfAlgo::IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
+      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel);
       continue;
     }
 
-    if (!IsKernelActor(real_depend_input)) {
+    if (!IsKernelActor(real_depend_kernel)) {
       continue;
     }
     // Link the control arrow between the kernel actors.
-    const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_input->fullname_with_scope()));
-    MS_EXCEPTION_IF_NULL(from_actor);
-    MS_LOG(INFO) << "Link control arrow by auto monad, from actor:  " << from_actor->GetAID().Name()
+    const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_kernel->fullname_with_scope()));
+    MS_LOG(INFO) << "Link control arrow by auto monad, from actor:  " << real_depend_kernel->fullname_with_scope()
                  << ", to actor: " << to_actor->GetAID().Name();
+    MS_EXCEPTION_IF_NULL(from_actor);
     from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
     to_actor->input_controls_num_++;
   }
@@ -1427,12 +1439,10 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
     ++number;
-    const auto &outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
-    for (const auto &output : outputs) {
-      const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
+    auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
+    for (const auto &output_with_index : outputs) {
       MS_EXCEPTION_IF_NULL(output_with_index.first);
-      const auto &front_node = FetchFrontNodeByBackendNode(output_with_index.first, graph);
-      auto origin_output_with_index = KernelWithIndex(front_node, output_with_index.second);
+      auto origin_output_with_index = FetchFrontNodeWithIndexByGraphOutput(output_with_index, graph);
       const auto &iter = graph_compiler_info.origin_outputs_order_.find(origin_output_with_index);
       if (iter == graph_compiler_info.origin_outputs_order_.end()) {
         continue;
@@ -1618,12 +1628,12 @@ void GraphScheduler::LinkDataArrowByCallInput(const GraphCompilerInfo &graph_com
   // Collect the output of each funcgraph.
   for (const auto &func_graph : func_graphs) {
     // The output of funcgraph can only have one.
-    const auto &outputs = AnfAlgo::GetAllOutput(func_graph->output(), {prim::kPrimTupleGetItem});
+    auto outputs = AnfAlgo::GetAllOutputWithIndex(func_graph->output());
     if (outputs.size() != 1) {
       MS_LOG(EXCEPTION) << "Output of func graph is more than one, func graph:" << func_graph->ToString();
     }
 
-    auto output_with_index = AnfAlgo::VisitKernelWithReturnType(outputs[0], 0);
+    auto output_with_index = outputs[0];
     if (IsKernelActor(output_with_index.first)) {
       // Input is a kernel actor.
       const auto &iter = front_node_to_actor_.find(output_with_index.first);

@@ -514,30 +514,10 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   const auto &all_branch_output = ControlNodeParser::FetchAllBranchOutputs(root_graph);
   for (const auto &branch_output : all_branch_output) {
     size_t position = 0;
-    if (AnfAlgo::CheckPrimitiveType(branch_output, prim::kPrimMakeTuple)) {
-      const auto &outputs = AnfAlgo::GetAllOutput(branch_output, {prim::kPrimTupleGetItem});
-      outputs_num = outputs.size();
-
-      for (const auto &output : outputs) {
-        const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
-        MS_EXCEPTION_IF_NULL(output_with_index.first);
-        // The InitDataSetQueue kernel has no output.
-        if (AnfAlgo::GetCNodeName(output_with_index.first) == kInitDatasetQueueOpName) {
-          continue;
-        }
-        outputs_order.emplace(output_with_index, position++);
-      }
-    } else if (branch_output->isa<CNode>()) {
-      outputs_num = AnfAlgo::GetOutputTensorNum(branch_output);
-      for (size_t i = 0; i < outputs_num; i++) {
-        const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(branch_output, i, false);
-        MS_EXCEPTION_IF_NULL(output_with_index.first);
-        // The InitDataSetQueue kernel has no output.
-        if (AnfAlgo::GetCNodeName(output_with_index.first) == kInitDatasetQueueOpName) {
-          continue;
-        }
-        outputs_order.emplace(output_with_index, position++);
-      }
+    auto outputs = AnfAlgo::GetAllOutputWithIndex(branch_output);
+    outputs_num = outputs.size();
+    for (const auto &output : outputs) {
+      outputs_order.emplace(output, position++);
     }
   }
 
@@ -580,17 +560,12 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
     device_contexts.emplace_back(graph_info_to_context.second);
     name.append(graph_info_to_context.first);
 
-    const auto &outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+    auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
     for (const auto &output : outputs) {
-      const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
-      MS_EXCEPTION_IF_NULL(output_with_index.first);
-      // The InitDataSetQueue kernel has no output.
-      if (AnfAlgo::GetCNodeName(output_with_index.first) == kInitDatasetQueueOpName) {
-        continue;
-      }
-      outputs_order.emplace(output_with_index, position++);
+      outputs_order.emplace(output, position++);
     }
   }
+
   std::vector<std::vector<int64_t> *> tensors_mask_list(1, const_cast<std::vector<int64_t> *>(tensors_mask));
   std::vector<std::vector<TensorPtr> *> input_tensors_list(1,
                                                            const_cast<std::vector<tensor::TensorPtr> *>(input_tensors));
