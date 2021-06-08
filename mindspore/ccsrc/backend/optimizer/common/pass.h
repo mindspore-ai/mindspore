@@ -24,6 +24,9 @@
 
 namespace mindspore {
 namespace opt {
+class CacheManager;
+using CacheManagerPtr = std::shared_ptr<CacheManager>;
+
 // @brief ANF Graph level optimization base pass
 class Pass {
  public:
@@ -31,9 +34,12 @@ class Pass {
   virtual ~Pass() = default;
   virtual bool Run(const FuncGraphPtr &func_graph) = 0;
   virtual std::string name() const { return name_; }
+  void SetCacheManager(const CacheManagerPtr &cm) { cache_manager_ = cm; }
+  const CacheManagerPtr &GetCacheManager() const { return cache_manager_; }
 
  private:
   const std::string name_;
+  CacheManagerPtr cache_manager_;
 };
 using PassPtr = std::shared_ptr<Pass>;
 }  // namespace opt

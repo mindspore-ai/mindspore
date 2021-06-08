@@ -46,19 +46,33 @@ std::shared_ptr<VectorRef> ExpandList(const std::vector<BaseRef> &list) {
   return new_list;
 }
 
-bool DefaultVisitor::Visit(const VectorRef &v_any, BaseRef *const visit_out) const {
+static BaseRef GetVar(const BaseRef &x) {
+  if (utils::isa<AnfNodePtr>(x)) {
+    auto node = utils::cast<AnfNodePtr>(x);
+    MS_LOG(DEBUG) << "TypeString [" + node->type_name() + "]";
+    if (node->isa<VarNode>()) {
+      MS_LOG(DEBUG) << "IsVarNode " + node->cast<VarNodePtr>()->var_->ToString();
+      return node->cast<VarNodePtr>()->var_;
+    }
+  }
+  return x;
+}
+
+bool Visitor::Visit(const VectorRef &v_any, VectorRef *const values_ref, BaseRef *const visit_out) const {
   std::vector<BaseRef> out;
-  (void)std::transform(v_any.begin(), v_any.end(), std::back_inserter(out),
-                       [this](const BaseRef &item) { return fn_(item); });
+  for (const auto &element : v_any) {
+    out.push_back(element);
+    values_ref->push_back(GetVar(element));
+  }
   if (visit_out != nullptr) {
     *visit_out = ExpandList(out);
   }
   return true;
 }
 
-bool DefaultVisitor::Visit(const BaseRef &any, BaseRef *const visit_out) const {
+bool Visitor::Visit(const BaseRef &any, VectorRef *const values_ref, BaseRef *const visit_out) const {
   if (utils::isa<Seq>(any)) {
-    return Visit(utils::cast<Seq>(any), visit_out);
+    return Visit(utils::cast<Seq>(any), values_ref, visit_out);
   } else if (utils::isa<AnfNodePtr>(any)) {
     auto nodeptr = utils::cast<AnfNodePtr>(any);
     AnfNodePtr output;
@@ -66,7 +80,7 @@ bool DefaultVisitor::Visit(const BaseRef &any, BaseRef *const visit_out) const {
     if (visit_out == nullptr) {
       p_output = nullptr;
     }
-    Visit(nodeptr, fn_, p_output);
+    Visit(nodeptr, values_ref, p_output);
     if (visit_out != nullptr) {
       *visit_out = output;
     }
@@ -76,14 +90,14 @@ bool DefaultVisitor::Visit(const BaseRef &any, BaseRef *const visit_out) const {
   return false;
 }
 
-void DefaultVisitor::Visit(const AnfNodePtr &node, const VisitFn &fn, AnfNodePtr *output) const {
+void Visitor::Visit(const AnfNodePtr &node, VectorRef *const values_ref, AnfNodePtr *output) const {
   if (node->isa<CNode>()) {
-    Visit(node->cast<CNodePtr>(), fn, output);
+    Visit(node->cast<CNodePtr>(), values_ref, output);
     return;
   }
 
   if (node->isa<ValueNode>()) {
-    Visit(node->cast<ValueNodePtr>(), fn, output);
+    Visit(node->cast<ValueNodePtr>(), values_ref, output);
     return;
   }
 
@@ -92,17 +106,17 @@ void DefaultVisitor::Visit(const AnfNodePtr &node, const VisitFn &fn, AnfNodePtr
   }
 }
 
-void DefaultVisitor::Visit(const CNodePtr &cnode, const VisitFn &fn, AnfNodePtr *output) const {
+void Visitor::Visit(const CNodePtr &cnode, VectorRef *const values_ref, AnfNodePtr *output) const {
   // if output is nullptr, it's not required to make the new CNode node.
   if (output == nullptr) {
     for (auto &inp : cnode->inputs()) {
-      (void)fn(inp);
+      auto var = GetVar(inp);
+      values_ref->push_back(var);
     }
-
     if (cnode->func_graph() != nullptr) {
-      (void)fn(cnode->func_graph());
+      values_ref->push_back(GetVar(cnode->func_graph()));
     } else {
-      (void)fn(cnode->func_graph_as_var());
+      values_ref->push_back(GetVar(cnode->func_graph_as_var()));
     }
     return;
   }
@@ -110,7 +124,10 @@ void DefaultVisitor::Visit(const CNodePtr &cnode, const VisitFn &fn, AnfNodePtr 
   std::vector<AnfNodePtr> new_inputs;
   std::vector<BaseRef> after_cnode_fn;
   std::shared_ptr<VectorRef> out;
-  (void)std::transform(cnode->inputs().begin(), cnode->inputs().end(), std::back_inserter(after_cnode_fn), fn);
+  for (auto &input : cnode->inputs()) {
+    after_cnode_fn.push_back(input);
+    values_ref->push_back(GetVar(input));
+  }
   if (CheckIfNeedExpand(after_cnode_fn)) {
     out = ExpandList(after_cnode_fn);
   }
@@ -130,13 +147,15 @@ void DefaultVisitor::Visit(const CNodePtr &cnode, const VisitFn &fn, AnfNodePtr 
   BaseRef any_fg;
   AnfNodePtr new_cnode = nullptr;
   if (cnode->func_graph() != nullptr) {
-    any_fg = fn(cnode->func_graph());
+    any_fg = cnode->func_graph();
+    values_ref->push_back(GetVar(any_fg));
     if (!utils::isa<FuncGraphPtr>(any_fg)) {
       MS_LOG(EXCEPTION) << "VisitError, fn not return the same type FuncGraphPtr";
     }
     new_cnode = std::make_shared<CNode>(new_inputs, utils::cast<FuncGraphPtr>(any_fg));
   } else {
-    any_fg = fn(cnode->func_graph_as_var());
+    any_fg = cnode->func_graph_as_var();
+    values_ref->push_back(GetVar(any_fg));
     if (utils::isa<VarPtr>(any_fg)) {
       new_cnode = std::make_shared<CNode>(new_inputs, utils::cast<VarPtr>(any_fg));
     } else if (utils::isa<FuncGraphPtr>(any_fg)) {
@@ -149,8 +168,9 @@ void DefaultVisitor::Visit(const CNodePtr &cnode, const VisitFn &fn, AnfNodePtr 
   *output = new_cnode;
 }
 
-void DefaultVisitor::Visit(const ValueNodePtr &vnode, const VisitFn &fn, AnfNodePtr *output) const {
-  const BaseRef &value = utils::cast<ValuePtr>(fn(vnode->value()));
+void Visitor::Visit(const ValueNodePtr &vnode, VectorRef *const values_ref, AnfNodePtr *output) const {
+  values_ref->push_back(GetVar(vnode->value()));
+  const BaseRef &value = utils::cast<ValuePtr>(vnode->value());
   if (utils::isa<ValuePtr>(value)) {
     if (output != nullptr) {
       auto ct = NewValueNode(utils::cast<ValuePtr>(value));

@@ -32,9 +32,7 @@ namespace opt {
 PatternProcessPass::PatternProcessPass(const std::string &name, bool multigraph)
     : NodePass(name),
       multigraph_(multigraph),
-      pattern_engine_(PatternEngine(std::make_shared<DefaultVisitor>(),
-                                    std::function<bool(const BaseRef &, const BaseRef &)>(AnfEqual),
-                                    std::function<bool(const BaseRef &, const BaseRef &)>(CNodeTypeEqual))),
+      pattern_engine_(PatternEngine(std::make_shared<Visitor>())),
       primitive_vars_(std::make_shared<PrimitiveVarMap>()) {}
 
 const BaseRef PatternProcessPass::DefinePattern() const {
@@ -53,11 +51,14 @@ AnfNodePtr PatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNode
     Build();
   }
 
-  auto empty_equiv = std::make_shared<Equiv>();
-  MS_EXCEPTION_IF_NULL(primitive_vars_);
-  EquivPtr equiv = pattern_engine_.Match(pattern_, node, *primitive_vars_, empty_equiv);
-  if (equiv != nullptr && !equiv->empty()) {
-    return Process(func_graph, node, equiv);
+  auto primitive = GetCNodePrimitive(pattern_);
+  if (IsPrimitiveCNode(node, primitive)) {
+    auto empty_equiv = std::make_shared<Equiv>();
+    MS_EXCEPTION_IF_NULL(primitive_vars_);
+    EquivPtr equiv = pattern_engine_.Match(pattern_, node, *primitive_vars_, empty_equiv);
+    if (equiv != nullptr && !equiv->empty()) {
+      return Process(func_graph, node, equiv);
+    }
   }
   return nullptr;
 }

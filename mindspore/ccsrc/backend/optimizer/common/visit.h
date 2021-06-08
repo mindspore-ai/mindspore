@@ -31,28 +31,15 @@
 
 // namespace to support utils definition
 namespace mindspore {
-using VisitFn = std::function<BaseRef(const BaseRef &)>;
-
 class Visitor {
  public:
-  virtual void SetFn(VisitFn fn) = 0;
-  virtual bool Visit(const BaseRef &e, BaseRef *out) const = 0;
-  virtual bool Visit(const VectorRef &e, BaseRef *out) const = 0;
-  virtual ~Visitor() = default;
-};
-
-class DefaultVisitor : public Visitor {
- public:
-  DefaultVisitor() : fn_(nullptr) {}
-  ~DefaultVisitor() override = default;
-  void SetFn(VisitFn fn) override { fn_ = fn; };
-  bool Visit(const VectorRef &e, BaseRef *out) const override;
-  bool Visit(const BaseRef &e, BaseRef *out) const override;
-  void Visit(const AnfNodePtr &node, const VisitFn &fn, AnfNodePtr *output) const;
-  void Visit(const CNodePtr &cnode, const VisitFn &fn, AnfNodePtr *output) const;
-  void Visit(const ValueNodePtr &vnode, const VisitFn &fn, AnfNodePtr *output) const;
-
-  VisitFn fn_;
+  Visitor() {}
+  ~Visitor() = default;
+  bool Visit(const VectorRef &e, VectorRef *const values_ref, BaseRef *out) const;
+  bool Visit(const BaseRef &e, VectorRef *const values_ref, BaseRef *out) const;
+  void Visit(const AnfNodePtr &node, VectorRef *const values_ref, AnfNodePtr *output) const;
+  void Visit(const CNodePtr &cnode, VectorRef *const values_ref, AnfNodePtr *output) const;
+  void Visit(const ValueNodePtr &vnode, VectorRef *const values_ref, AnfNodePtr *output) const;
 };
 
 std::shared_ptr<VectorRef> ExpandList(const std::vector<BaseRef> &list);

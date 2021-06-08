@@ -55,9 +55,7 @@ class MultipleOutputPatternProcessPass : public PatternProcessPass {
  public:
   explicit MultipleOutputPatternProcessPass(const std::string &name = "", bool multigraph = true)
       : PatternProcessPass(name, multigraph),
-        child_pattern_engine_(PatternEngine(std::make_shared<DefaultVisitor>(),
-                                            std::function<bool(const BaseRef &, const BaseRef &)>(AnfEqual),
-                                            std::function<bool(const BaseRef &, const BaseRef &)>(CNodeTypeEqual))),
+        child_pattern_engine_(PatternEngine(std::make_shared<Visitor>())),
         child_primitive_vars_(std::make_shared<PrimitiveVarMap>()) {}
   ~MultipleOutputPatternProcessPass() override = default;
   virtual BaseRef DefineAnotherPattern() const = 0;
