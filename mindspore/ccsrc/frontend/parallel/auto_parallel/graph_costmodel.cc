@@ -322,7 +322,7 @@ CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList &cost_list, d
 }
 
 CostPtrList CostGraph::SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_cost_list,
-                                                                 double available_memory) {
+                                                                 double available_memory) const {
   CostPtrList selected_cost_list(all_cost_list.size(), nullptr);
   double minimum = DBL_MAX, total_memory = 0.0;
   CostPtrList ret(all_cost_list.size(), nullptr);
@@ -389,8 +389,8 @@ Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<Operato
     MS_EXCEPTION_IF_NULL(one_component);
     if (one_component->GetOperators().size() == 1) {
       MS_LOG(INFO) << "There are 1 operator in a component in the final graph.";
-      auto cost_list = one_component->CreateFinalSingleCostList(one_component->GetOperators()[0]);
-      all_list.push_back(cost_list);
+      auto cost_list_1 = one_component->CreateFinalSingleCostList(one_component->GetOperators()[0]);
+      all_list.push_back(cost_list_1);
     } else if (one_component->GetOperators().size() == 2) {
       MS_LOG(INFO) << "There are 2 operators in a component in the final graph.";
       OperatorInfoPtr u, v;
@@ -430,8 +430,8 @@ Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<Operato
     MS_EXCEPTION_IF_NULL(connected_components[k]);
     if (connected_components[k]->GetOperators().size() == 1) {
       auto u = connected_components[k]->GetOperators()[0];
-      auto decision = selected_cost->decision_ptr_->cast<FinalSingleDecisionPtr>();
-      u->SetSelectedStrategyAndCost(decision->u_strategy_, decision->u_cost_);
+      auto decision_f = selected_cost->decision_ptr_->cast<FinalSingleDecisionPtr>();
+      u->SetSelectedStrategyAndCost(decision_f->u_strategy_, decision_f->u_cost_);
       MS_LOG(INFO) << "Searching the strategy for the component " << k << " final graph ended.";
     } else if (connected_components[k]->GetOperators().size() == 2) {
       OperatorInfoPtr u = nullptr, v = nullptr;
@@ -627,9 +627,9 @@ std::vector<std::shared_ptr<Edge>> CostGraph::CheckEdgeElimination() const {
     MS_EXCEPTION_IF_NULL(op);
     if (!op->is_alive()) continue;
     std::map<void *, int64_t> count;
-    for (auto &edge : op->GetAliveSuccEdges()) {
-      MS_EXCEPTION_IF_NULL(edge);
-      auto v = edge->next_operator();
+    for (auto &edge_su : op->GetAliveSuccEdges()) {
+      MS_EXCEPTION_IF_NULL(edge_su);
+      auto v = edge_su->next_operator();
       count[v.get()]++;
     }
     for (auto &pair : count) {
@@ -754,7 +754,7 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
     // replace the old successive edges with the new ones.
     op1->ReplaceSuccEdge(ith_edge->next_operator(), new_edge);
     ith_edge->next_operator()->ReplacePreEdge(op1, new_edge);
-    (void)op1_new_succ_edges->erase(op1_new_succ_edges->begin() + i);
+    (void)op1_new_succ_edges->erase(op1_new_succ_edges->begin() + SizeToLong(i));
     (void)op1_new_succ_edges->emplace(op1_new_succ_edges->begin() + i, new_edge);
   }
   for (size_t i = 0; i < op2_old_succ_edges->size(); ++i) {
@@ -779,8 +779,8 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
     // replace the old successive edges with the new ones.
     destination->ReplacePreEdge(op2, new_edge);
     op1->AddSuccEdge(new_edge);
-    (void)op2_new_succ_edges->erase(op2_new_succ_edges->begin() + i);
-    (void)op2_new_succ_edges->emplace(op2_new_succ_edges->begin() + i, new_edge);
+    (void)op2_new_succ_edges->erase(op2_new_succ_edges->begin() + SizeToLong(i));
+    (void)op2_new_succ_edges->emplace(op2_new_succ_edges->begin() + SizeToLong(i), new_edge);
   }
   return std::make_pair(*op1_new_succ_edges, *op2_new_succ_edges);
 }
@@ -1477,11 +1477,11 @@ Status CostGraph::InitReshapeStrategy() {
     if (ops_[i]->name().find(RESHAPEINFO) != std::string::npos) {
       auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(ops_[i]);
       auto in_edges = GetOriginalPrevEdges(ops_[i]);
-      auto pre_iter = std::find_if(in_edges.begin(), in_edges.end(), [&](std::shared_ptr<Edge> edge) {
+      auto pre_iter = std::find_if(in_edges.begin(), in_edges.end(), [&](const std::shared_ptr<Edge> &edge) {
         return edge->prev_operator()->name() == reshape_info->pre_operator_name();
       });
       auto out_edges = GetOriginalNextEdges(ops_[i]);
-      auto next_iter = std::find_if(out_edges.begin(), out_edges.end(), [&](std::shared_ptr<Edge> edge) {
+      auto next_iter = std::find_if(out_edges.begin(), out_edges.end(), [&](const std::shared_ptr<Edge> &edge) {
         return edge->next_operator()->name() == reshape_info->next_operator_name();
       });
       bool reshape_is_first_op = reshape_info->pre_operator_name() == reshape_info->name();
@@ -1495,10 +1495,10 @@ Status CostGraph::InitReshapeStrategy() {
         std::shared_ptr<OperatorInfo> pre_op_info;
         if (reshape_is_first_op) {
           pre_op_info = reshape_info;
-          pre_info = pre_op_info->inputs_tensor_info()[pre_index];
+          pre_info = pre_op_info->inputs_tensor_info()[LongToSize(pre_index)];
         } else {
           pre_op_info = (*pre_iter)->prev_operator();
-          pre_info = pre_op_info->outputs_tensor_info()[pre_index];
+          pre_info = pre_op_info->outputs_tensor_info()[LongToSize(pre_index)];
         }
         reshape_info->SetInputLayout(pre_info.tensor_layout());
         if (pre_iter != in_edges.end()) {
@@ -1515,7 +1515,8 @@ Status CostGraph::InitReshapeStrategy() {
       if (next_iter != out_edges.end()) {
         MS_LOG(DEBUG) << "Set reshape output layout by " << reshape_info->next_operator_name();
         int64_t next_index = reshape_info->next_operator_index();
-        reshape_info->SetOutputLayout((*next_iter)->next_operator()->inputs_tensor_info()[next_index].tensor_layout());
+        reshape_info->SetOutputLayout(
+          (*next_iter)->next_operator()->inputs_tensor_info()[LongToSize(next_index)].tensor_layout());
       }
       if (reshape_info->Init(nullptr) != SUCCESS) {
         return FAILED;
@@ -1531,9 +1532,9 @@ Status CostGraph::InitSelectedStrategy() {
     if (op->name().find(RESHAPEINFO) != std::string::npos) {
       continue;
     }
-    auto result = op->InitSelectedStrategy(op->selected_strategy());
-    if (result != SUCCESS) {
-      return result;
+    auto result_op = op->InitSelectedStrategy(op->selected_strategy());
+    if (result_op != SUCCESS) {
+      return result_op;
     }
   }
   auto result = InitReshapeStrategy();
