@@ -14,13 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-# download dataset file to ./
-DATA_URL=https://paddlenlp.bj.bcebos.com/datasets/DGU_datasets.tar.gz
-wget --no-check-certificate ${DATA_URL}
-# unzip dataset file to ./DGU_datasets
-tar -zxvf DGU_datasets.tar.gz
+mkdir -p pretrainModel
+cd pretrainModel
 
-cd src
-# download vocab file to ./src/
-VOCAB_URL=https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-vocab.txt
-wget --no-check-certificate ${VOCAB_URL}
+# download pretrain model file to ./pretrainModel/
+MODEL_BERT_BASE="https://paddlenlp.bj.bcebos.com/models/transformers/bert-base-uncased.pdparams"
+wget --no-check-certificate ${MODEL_BERT_BASE}
+# convert pdparams to mindspore ckpt
+python ../src/pretrainmodel_convert.py

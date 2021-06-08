@@ -19,7 +19,6 @@ Bert finetune and evaluation script.
 
 import os
 import time
-import moxing as mox
 import mindspore.common.dtype as mstype
 import mindspore.ops as P
 
@@ -138,7 +137,7 @@ def run_dgu(args_input):
     if target == "Ascend":
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_input.device_id)
     elif target == "GPU":
-        context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+        context.set_context(mode=context.GRAPH_MODE, device_target="GPU", device_id=args_input.device_id)
         if net_cfg.compute_type != mstype.float32:
             logger.warning('GPU only support fp32 temporarily, run with fp32.')
             net_cfg.compute_type = mstype.float32
@@ -160,12 +159,6 @@ def run_dgu(args_input):
             eval_metric = metric_class("classification")
         else:
             eval_metric = metric_class()
-
-        #eval the newest saved model
-#         load_finetune_checkpoint_path = LoadNewestCkpt(save_finetune_checkpoint_path, \
-#             args_input.save_steps, epoch_num, args_input.task_name)
-#         print("eval model: ",load_finetune_checkpoint_path)
-#         do_eval(eval_ds, BertCLS, num_class, eval_metric, load_finetune_checkpoint_path)
         #load model from path and eval
         if args_input.eval_ckpt_path:
             do_eval(eval_ds, BertCLS, num_class, eval_metric, args_input.eval_ckpt_path)
@@ -206,8 +199,6 @@ def set_bert_cfg():
 if __name__ == '__main__':
     TASK_CLASSES = {
         'udc': (data.UDCv1, metric.RecallAtK),
-        'dstc2': (data.DSTC2, metric.JointAccuracy),
-        'atis_slot': (data.ATIS_DSF, metric.F1Score),
         'atis_intent': (data.ATIS_DID, Accuracy),
         'mrda': (data.MRDA, Accuracy),
         'swda': (data.SwDA, Accuracy)
@@ -221,6 +212,7 @@ if __name__ == '__main__':
     save_finetune_checkpoint_path = args_opt.checkpoints_path + args_opt.task_name
     save_finetune_checkpoint_path = make_directory(save_finetune_checkpoint_path)
     if args_opt.is_modelarts_work == 'true':
+        import moxing as mox
         local_load_pretrain_checkpoint_path = args_opt.local_model_name_or_path
         local_data_path = '/cache/data/' + args_opt.task_name
         mox.file.copy_parallel(args_opt.data_url + args_opt.task_name, local_data_path)

@@ -20,7 +20,7 @@ nohup python3 ./run_dgu.py \
     --task_name=udc \
     --do_train="true" \
     --do_eval="true" \
-    --device_target="Ascend" \
+    --device_target="GPU" \
     --device_id=0  \
     --model_name_or_path=./pretrainModel/base-BertCLS-111.ckpt  \
     --train_data_file_path=./data/udc/udc_train.mindrecord  \
@@ -34,7 +34,7 @@ nohup python3 ./run_dgu.py \
     --task_name=atis_intent \
     --do_train="true" \
     --do_eval="true" \
-    --device_target="Ascend" \
+    --device_target="GPU" \
     --device_id=1  \
     --model_name_or_path=./pretrainModel/base-BertCLS-111.ckpt  \
     --train_data_file_path=./data/atis_intent/atis_intent_train.mindrecord  \
@@ -48,7 +48,7 @@ nohup python3 ./run_dgu.py \
     --task_name=mrda \
     --do_train="true" \
     --do_eval="true" \
-    --device_target="Ascend" \
+    --device_target="GPU" \
     --device_id=2  \
     --model_name_or_path=./pretrainModel/base-BertCLS-111.ckpt  \
     --train_data_file_path=./data/mrda/mrda_train.mindrecord  \
@@ -62,7 +62,7 @@ nohup python3 ./run_dgu.py \
     --task_name=swda \
     --do_train="true" \
     --do_eval="true" \
-    --device_target="Ascend" \
+    --device_target="GPU" \
     --device_id=3   \
     --model_name_or_path=./pretrainModel/base-BertCLS-111.ckpt  \
     --train_data_file_path=./data/swda/swda_train.mindrecord  \

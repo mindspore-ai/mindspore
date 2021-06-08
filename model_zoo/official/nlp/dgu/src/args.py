@@ -23,13 +23,13 @@ def parse_args():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument(
         "--task_name",
-        default=None,
+        default="udc",
         type=str,
         required=True,
         help="The name of the task to train.")
     parser.add_argument(
         "--device_target",
-        default="Ascend",
+        default="GPU",
         type=str,
         help="The device to train.")
     parser.add_argument(
@@ -44,7 +44,7 @@ def parse_args():
         help="Path to pre-trained bert model or shortcut name.")
     parser.add_argument(
         "--local_model_name_or_path",
-        default='/cache/pretrainModel/bert-base-uncased.ckpt',
+        default='/cache/pretrainModel/bert-BertCLS-111.ckpt',
         type=str,
         help="local Path to pre-trained bert model or shortcut name, for online work.")
     parser.add_argument(
@@ -61,14 +61,14 @@ def parse_args():
         "--max_seq_len",
         default=None,
         type=int,
-        help="The maximum total input sequence length after tokenization for trainng. "
-        "Sequences longer than this will be truncated, sequences shorter will be padded.")
+        help="The maximum total input sequence length after tokenization for trainng.\
+        Sequences longer than this will be truncated, sequences shorter will be padded.")
     parser.add_argument(
         "--eval_max_seq_len",
         default=None,
         type=int,
-        help="The maximum total input sequence length after tokenization for evaling. "
-        "Sequences longer than this will be truncated, sequences shorter will be padded.")
+        help="The maximum total input sequence length after tokenization for evaling.\
+        Sequences longer than this will be truncated, sequences shorter will be padded.")
     parser.add_argument(
         "--learning_rate",
         default=None,
@@ -103,7 +103,9 @@ def parse_args():
     parser.add_argument(
         "--train_batch_size", type=int, default=32, help="Train batch size, default is 32")
     parser.add_argument(
-        "--eval_batch_size", type=int, default=None, help="Eval batch size, default is 1")
+        "--eval_batch_size", type=int, default=None,
+        help="Eval batch size, default is None. if the eval_batch_size parameter is not passed in,\
+        It will be assigned the same value as train_batch_size")
     parser.add_argument(
         "--eval_data_file_path", type=str, default="", help="Data path, it is better to use absolute path")
     parser.add_argument(
