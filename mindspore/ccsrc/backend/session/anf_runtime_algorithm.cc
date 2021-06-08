@@ -301,30 +301,38 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
   std::vector<KernelWithIndex> ret;
   std::vector<KernelWithIndex> ret_empty;
 
-  // The MakeTuple node need expand and recurse.
+  // The makeTuple node need expand and recurse.
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
     auto make_tuple = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
-      auto input_i_vector = GetAllOutputWithIndex(make_tuple->input(i));
-      (void)std::copy(input_i_vector.begin(), input_i_vector.end(), std::back_inserter(ret));
+      auto make_tuple_output = GetAllOutputWithIndex(make_tuple->input(i));
+      (void)std::copy(make_tuple_output.begin(), make_tuple_output.end(), std::back_inserter(ret));
     }
     return ret;
   }
 
-  auto outputs_num = AnfAlgo::GetOutputTensorNum(node);
-  if (!IsRealCNodeKernel(node)) {
-    outputs_num = 1;
+  // The depend node need get the real node.
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+    auto depend_node = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(depend_node);
+    auto real_output = GetAllOutputWithIndex(depend_node->input(kRealInputIndexInDepend));
+    (void)std::copy(real_output.begin(), real_output.end(), std::back_inserter(ret));
+    return ret;
   }
+
+  const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimMakeTuple};
   // The output may be the tuple, so need visit all the outputs of node.
+  auto outputs_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < outputs_num; ++i) {
-    const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false);
+    const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false, return_types);
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
-    // The MakeTuple node need recurse.
-    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimMakeTuple)) {
-      auto input_vector = GetAllOutputWithIndex(output_with_index.first);
-      (void)std::copy(input_vector.begin(), input_vector.end(), std::back_inserter(ret));
+    // The depend and makeTuple node need recurse.
+    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimDepend) ||
+        AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimMakeTuple)) {
+      auto output_vector = GetAllOutputWithIndex(output_with_index.first);
+      (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
       continue;
     }
 

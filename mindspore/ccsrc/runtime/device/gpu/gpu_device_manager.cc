@@ -43,6 +43,11 @@ void GPUDeviceManager::InitDevice() {
 }
 
 void GPUDeviceManager::ReleaseDevice() {
+  // Avoid repeated release device resource.
+  if (!dev_alive_) {
+    return;
+  }
+
   for (CudaDeviceStream stream : gpu_streams_) {
     if (stream != nullptr) {
       CHECK_OP_RET_WITH_ERROR(CudaDriver::DestroyStream(stream), "Failed to destroy CUDA stream.");
