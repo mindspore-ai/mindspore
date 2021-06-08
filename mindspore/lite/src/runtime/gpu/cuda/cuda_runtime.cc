@@ -75,5 +75,4 @@ CudaRuntime::~CudaRuntime() { Uninit(); }
 
 const GpuInfo &CudaRuntime::GetGpuInfo() { return gpu_info_; }
 bool CudaRuntime::GetFp16Enable() const { return true; }
-
 }  // namespace mindspore::lite::cuda
