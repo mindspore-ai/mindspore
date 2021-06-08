@@ -28,7 +28,7 @@ def test_maskrcnn_export():
     export maskrcnn air.
     """
     old_list = ["(config=config)", "(net, param_dict_new)"]
-    new_list = ["(config=config\\n)    '''", "(net, param_dict_new)\\n    '''"]
+    new_list = ["(config=config)\\n    '''", "(net, param_dict_new)\\n    '''"]
 
     cur_path = os.getcwd()
     model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
