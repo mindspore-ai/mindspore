@@ -78,7 +78,7 @@ AbstractBasePtr BatchNormFoldInfer(const abstract::AnalysisEnginePtr &, const Pr
     CheckAndConvertUtils::ConvertShapePtrToShape("global_step_shape", input_args[3]->BuildShape(), op_name);
   CheckAndConvertUtils::Check("mean_shape", mean_shape, kEqual, "gamma_shape", variance_shape, op_name);
   CheckAndConvertUtils::Check("mean_shape[0]", mean_shape[0], kEqual, "input channel", x_shape[1], op_name);
-  CheckAndConvertUtils::CheckInteger("global step shape len", global_step_shape.size(), kEqual, 1, op_name);
+  CheckAndConvertUtils::CheckInteger("global step shape len", SizeToLong(global_step_shape.size()), kEqual, 1, op_name);
 
   auto mean_type = input_args[1]->BuildType();
   auto variance_type = input_args[2]->BuildType();

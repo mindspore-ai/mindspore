@@ -29,8 +29,8 @@ class Perplexity(Metric):
         = \\exp \\big(-\\frac{1}{N} \\sum_{i=1}^N \\log q(x_i)\\big)
 
     Args:
-        ignore_label (int): Index of an invalid label to be ignored when counting. If set to `None`, it will include all
-                            entries. Default: -1.
+        ignore_label (int): Index of an invalid label to be ignored when counting. If set to `None`,
+                            it will include all entries. Default: -1.
 
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))

@@ -108,6 +108,9 @@ class HausdorffDistance(Metric):
                                                                                            percentile, [float])
         self.directed = directed if directed is None else validator.check_value_type("directed", directed, [bool])
         self.crop = crop if crop is None else validator.check_value_type("crop", crop, [bool])
+        self.y_pred_edges = 0
+        self._is_update = False
+        self.y_edges = 0
         self.clear()
 
     def _is_tuple_rep(self, tup, dim):
@@ -138,7 +141,8 @@ class HausdorffDistance(Metric):
 
         return tuple(inputs)
 
-    def _is_iterable_sequence(self, inputs):
+    @staticmethod
+    def _is_iterable_sequence(inputs):
         """
         Determine if the input is an iterable sequence and it is not a string.
         """

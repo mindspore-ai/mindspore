@@ -66,7 +66,9 @@ class ConfusionMatrix(Metric):
             )
 
         self.normalize = normalize
+        self.confusion_matrix = np.zeros((self.num_classes, self.num_classes))
         self.threshold = validator.check_value_type("threshold", threshold, [float])
+        self._is_update = False
         self.clear()
 
     def clear(self):
@@ -215,8 +217,8 @@ class ConfusionMatrixMetric(Metric):
               The shape of `y_pred` is :math:`(N, C, ...)` or :math:`(N, ...)`.
               As for classification tasks, `y_pred` should has the shape [BN] where N is larger than 1.
               As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
-            - **y** (ndarray) - Compute the true value of the measure. It must be one-hot format and first dim is batch.
-              The shape of `y` is :math:`(N, C, ...)`.
+            - **y** (ndarray) - Compute the true value of the measure. It must be one-hot format and first
+              dim is batch. The shape of `y` is :math:`(N, C, ...)`.
 
         Raises:
             ValueError: If the number of the inputs is not 2.
@@ -333,8 +335,9 @@ class _ConfusionMatrix:
 
 def _get_confusion_matrix(y_pred, y, skip_channel=True):
     """
-    The confusion matrix is calculated. An array of shape [BC4] is returned. The third dimension represents each channel
-    of each sample in the input batch.Where B is the batch size and C is the number of classes to be calculated.
+    The confusion matrix is calculated. An array of shape [BC4] is returned. The third dimension represents
+    each channel of each sample in the input batch.Where B is the batch size and C is the number of classes
+    to be calculated.
 
     Args:
         y_pred (ndarray): input data to compute. It must be one-hot format and first dim is batch.

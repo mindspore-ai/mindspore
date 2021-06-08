@@ -23,7 +23,7 @@ class Fbeta(Metric):
     r"""
     Calculates the fbeta score.
 
-    Fbeta score is a weighted mean of precison and recall.
+    Fbeta score is a weighted mean of precision and recall.
 
     .. math::
         F_\beta=\frac{(1+\beta^2) \cdot true\_positive}
@@ -55,7 +55,7 @@ class Fbeta(Metric):
         self._true_positives = 0
         self._actual_positives = 0
         self._positives = 0
-        self._class_num = 0
+        self.__class_num = 0
 
     def update(self, *inputs):
         """
@@ -75,12 +75,12 @@ class Fbeta(Metric):
         if y_pred.ndim == y.ndim and self._check_onehot_data(y):
             y = y.argmax(axis=1)
 
-        if self._class_num == 0:
-            self._class_num = y_pred.shape[1]
-        elif y_pred.shape[1] != self._class_num:
+        if self.__class_num == 0:
+            self.__class_num = y_pred.shape[1]
+        elif y_pred.shape[1] != self.__class_num:
             raise ValueError('Class number not match, last input data contain {} classes, but current data contain {} '
-                             'classes'.format(self._class_num, y_pred.shape[1]))
-        class_num = self._class_num
+                             'classes'.format(self.__class_num, y_pred.shape[1]))
+        class_num = self.__class_num
 
         if y.max() + 1 > class_num:
             raise ValueError('y_pred contains {} classes less than y contains {} classes.'.
@@ -108,7 +108,7 @@ class Fbeta(Metric):
             Float, computed result.
         """
         validator.check_value_type("average", average, [bool], self.__class__.__name__)
-        if self._class_num == 0:
+        if self.__class_num == 0:
             raise RuntimeError('Input number of samples can not be 0.')
 
         fbeta = (1.0 + self.beta ** 2) * self._true_positives / \

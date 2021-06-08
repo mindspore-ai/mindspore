@@ -316,7 +316,8 @@ class Optimizer(Cell):
             return weight_decay
         raise TypeError("Weight decay should be int or float.")
 
-    def _preprocess_grad_centralization(self, grad_centralization):
+    @staticmethod
+    def _preprocess_grad_centralization(grad_centralization):
         if not isinstance(grad_centralization, bool):
             raise TypeError("The gradients centralization should be bool")
         return grad_centralization
@@ -440,7 +441,7 @@ class Optimizer(Cell):
                 weight_decay_ = weight_decay * self.loss_scale
 
             if 'grad_centralization' in group_param.keys():
-                self.grad_centralization = self._preprocess_grad_centralization(group_param['grad_centralization'])
+                self.grad_centralization = Optimizer._preprocess_grad_centralization(group_param['grad_centralization'])
                 for param in group_param['params']:
                     validator.check_value_type("parameter", param, [Parameter], self.cls_name)
                     if "conv" not in param.name and self.grad_centralization is True:

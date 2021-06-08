@@ -23,6 +23,8 @@ try:
     from tqdm import trange
 except (ImportError, AttributeError):
     trange = range
+finally:
+    pass
 
 
 class OcclusionSensitivity(Metric):
@@ -37,7 +39,8 @@ class OcclusionSensitivity(Metric):
     the occluded area is more important in the decision-making process.
 
     Args:
-        pad_val (float): What values need to be entered in the image when a part of the image is occluded. Default: 0.0.
+        pad_val (float): What values need to be entered in the image when a part of the image is occluded.
+                         Default: 0.0.
         margin (Union[int, Sequence]): Create a cuboid / cube around the voxel you want to occlude. Default: 2.
         n_batch (int): number of images in a batch before inference. Default: 128.
         b_box (Sequence): Bounding box on which to perform the analysis. The output image will also match in size.
@@ -73,6 +76,9 @@ class OcclusionSensitivity(Metric):
         self.margin = validator.check_value_type("margin", margin, [int, list])
         self.n_batch = validator.check_value_type("n_batch", n_batch, [int])
         self.b_box = b_box if b_box is None else validator.check_value_type("b_box", b_box, [list])
+        self._baseline = 0
+        self._is_update = False
+        self._sensitivity_im = 0
         self.clear()
 
     def clear(self):
@@ -81,14 +87,16 @@ class OcclusionSensitivity(Metric):
         self._sensitivity_im = 0
         self._is_update = False
 
-    def _check_input_bounding_box(self, b_box, im_shape):
+    @staticmethod
+    def _check_input_bounding_box(b_box, im_shape):
         """Check that the bounding box (if supplied) is as expected."""
         # If no bounding box has been supplied, set min and max to None
         if b_box is None:
             b_box_min = b_box_max = None
         else:
             if len(b_box) != 2 * len(im_shape):
-                raise ValueError("Bounding box should contain upper and lower for all dimensions (except batch number)")
+                raise ValueError("Bounding box should contain upper and lower "
+                                 "for all dimensions (except batch number)")
 
             b_box_min = np.array(b_box[::2])
             b_box_max = np.array(b_box[1::2])
@@ -101,9 +109,12 @@ class OcclusionSensitivity(Metric):
 
         return b_box_min, b_box_max
 
-    def _append_to_sensitivity_im(self, model, batch_images, batch_ids, sensitivity_im):
-        """For a given number of images, the probability of predicting a given label is obtained. Attach to previous
-        assessment."""
+    @staticmethod
+    def _append_to_sensitivity_im(model, batch_images, batch_ids, sensitivity_im):
+        """
+        For a given number of images, the probability of predicting a given label is obtained. Attach to previous
+        assessment.
+        """
         batch_images = np.vstack(batch_images)
         batch_ids = np.expand_dims(batch_ids, 1)
         model_numpy = model(Tensor(batch_images)).asnumpy()
@@ -144,8 +155,7 @@ class OcclusionSensitivity(Metric):
         elif np.prod(label.shape) != y_pred.shape[0]:
             raise RuntimeError("Expected as many labels as batches.")
 
-        y_pred_shape = np.array(y_pred.shape[1:])
-        b_box_min, b_box_max = self._check_input_bounding_box(self.b_box, y_pred_shape)
+        b_box_min, b_box_max = OcclusionSensitivity._check_input_bounding_box(self.b_box, np.array(y_pred.shape[1:]))
 
         temp = model(Tensor(y_pred)).asnumpy()
         self._baseline = temp[0, label].item()
@@ -155,7 +165,7 @@ class OcclusionSensitivity(Metric):
 
         sensitivity_im = np.empty(0, dtype=float)
 
-        output_im_shape = y_pred_shape if self.b_box is None else b_box_max - b_box_min + 1
+        output_im_shape = np.array(y_pred.shape[1:]) if self.b_box is None else b_box_max - b_box_min + 1
         num_required_predictions = np.prod(output_im_shape)
 
         for i in trange(num_required_predictions):
@@ -164,12 +174,11 @@ class OcclusionSensitivity(Metric):
                 idx += b_box_min
 
             min_idx = [max(0, i - self.margin) for i in idx]
-            max_idx = [min(j, i + self.margin) for i, j in zip(idx, y_pred_shape)]
+            max_idx = [min(j, i + self.margin) for i, j in zip(idx, np.array(y_pred.shape[1:]))]
 
-            occlu_im = y_pred.copy()
-            occlu_im[(...,) + tuple(slice(i, j) for i, j in zip(min_idx, max_idx))] = self.pad_val
+            y_pred.copy()[(...,) + tuple(slice(i, j) for i, j in zip(min_idx, max_idx))] = self.pad_val
 
-            batch_images.append(occlu_im)
+            batch_images.append(y_pred.copy())
             batch_ids.append(label)
 
             if len(batch_images) == self.n_batch or i == num_required_predictions - 1:
