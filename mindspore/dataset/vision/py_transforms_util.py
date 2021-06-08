@@ -1378,7 +1378,7 @@ def random_color(img, degrees):
     """
 
     if not is_pil(img):
-        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
+        raise TypeError(augment_error_message.format(type(img)))
 
     v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
     return ImageEnhance.Color(img).enhance(v)
@@ -1398,7 +1398,7 @@ def random_sharpness(img, degrees):
     """
 
     if not is_pil(img):
-        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
+        raise TypeError(augment_error_message.format(type(img)))
 
     v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
     return ImageEnhance.Sharpness(img).enhance(v)
@@ -1419,7 +1419,7 @@ def auto_contrast(img, cutoff, ignore):
     """
 
     if not is_pil(img):
-        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
+        raise TypeError(augment_error_message.format(type(img)))
 
     return ImageOps.autocontrast(img, cutoff, ignore)
 
@@ -1437,7 +1437,7 @@ def invert_color(img):
     """
 
     if not is_pil(img):
-        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
+        raise TypeError(augment_error_message.format(type(img)))
 
     return ImageOps.invert(img)
 
@@ -1455,7 +1455,7 @@ def equalize(img):
     """
 
     if not is_pil(img):
-        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
+        raise TypeError(augment_error_message.format(type(img)))
 
     return ImageOps.equalize(img)
 
