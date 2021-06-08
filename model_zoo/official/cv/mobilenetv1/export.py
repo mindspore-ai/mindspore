@@ -13,44 +13,25 @@
 # limitations under the License.
 # ============================================================================
 
-import argparse
 import numpy as np
 
 from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint
 
 from src.mobilenet_v1 import mobilenet_v1 as mobilenet
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
 
-parser = argparse.ArgumentParser(description="mobilenetv1 export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--dataset", type=str, default="imagenet2012", help="Dataset, either cifar10 or imagenet2012")
-parser.add_argument('--width', type=int, default=224, help='input width')
-parser.add_argument('--height', type=int, default=224, help='input height')
-parser.add_argument("--file_name", type=str, default="mobilenetv1", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-
-if args.dataset == "cifar10":
-    from src.config import config1 as config
-else:
-    from src.config import config2 as config
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 
 if __name__ == "__main__":
-    target = args.device_target
+    target = config.device_target
     if target != "GPU":
-        context.set_context(device_id=args.device_id)
+        context.set_context(device_id=get_device_id())
 
     network = mobilenet(class_num=config.class_num)
-
-    param_dict = load_checkpoint(args.ckpt_file, net=network)
-
+    param_dict = load_checkpoint(config.ckpt_file, net=network)
     network.set_train(False)
-
-    input_data = Tensor(np.zeros([config.batch_size, 3, args.height, args.width]).astype(np.float32))
-
-    export(network, input_data, file_name=args.file_name, file_format=args.file_format)
+    input_data = Tensor(np.zeros([config.batch_size, 3, config.height, config.width]).astype(np.float32))
+    export(network, input_data, file_name=config.file_name, file_format=config.file_format)

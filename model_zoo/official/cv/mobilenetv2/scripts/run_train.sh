@@ -48,6 +48,8 @@ run_ascend()
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    CONFIG_FILE="${BASEPATH}/../default_config.yaml"
+
     VISIABLE_DEVICES=$3
     IFS="," read -r -a CANDIDATE_DEVICE <<< "$VISIABLE_DEVICES"
     if [ ${#CANDIDATE_DEVICE[@]} -ne $2 ]
@@ -71,11 +73,13 @@ run_ascend()
         rm -rf ./rank$i
         mkdir ./rank$i
         cp ../*.py ./rank$i
+        cp ../*.yaml ./rank$i
         cp -r ../src ./rank$i
         cd ./rank$i || exit
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
         python train.py \
+            --config_path=$CONFIG_FILE \
             --platform=$1 \
             --dataset_path=$5 \
             --pretrain_ckpt=$PRETRAINED_CKPT \
@@ -119,6 +123,8 @@ run_gpu()
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    CONFIG_FILE="${BASEPATH}/../default_config_gpu.yaml"
+
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     if [ -d "../train" ];
     then
@@ -130,6 +136,7 @@ run_gpu()
     export CUDA_VISIBLE_DEVICES="$3"
     mpirun -n $2 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
     python ${BASEPATH}/../train.py \
+        --config_path=$CONFIG_FILE \
         --platform=$1 \
         --dataset_path=$4 \
         --pretrain_ckpt=$PRETRAINED_CKPT \
@@ -165,6 +172,8 @@ run_cpu()
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    CONFIG_FILE="${BASEPATH}/../default_config_cpu.yaml"
+
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     if [ -d "../train" ];
     then
@@ -174,6 +183,7 @@ run_cpu()
     cd ../train || exit
 
     python ${BASEPATH}/../train.py \
+        --config_path=$CONFIG_FILE \
         --platform=$1 \
         --dataset_path=$2 \
         --pretrain_ckpt=$PRETRAINED_CKPT \

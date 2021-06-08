@@ -33,40 +33,99 @@ from mindspore.common import set_seed
 
 from src.dataset import create_dataset, extract_features
 from src.lr_generator import get_lr
-from src.config import set_config
-
-from src.args import train_parse_args
 from src.utils import context_device_init, switch_precision, config_ckpoint
 from src.models import CrossEntropyWithLabelSmooth, define_net, load_ckpt
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+
 
 set_seed(1)
+config.device_id = get_device_id()
+config.rank_id = get_rank_id()
+config.rank_size = get_device_num()
+config.run_distribute = config.rank_size > 1.
 
-if __name__ == '__main__':
-    args_opt = train_parse_args()
-    args_opt.dataset_path = os.path.abspath(args_opt.dataset_path)
-    config = set_config(args_opt)
+
+def modelarts_pre_process():
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),\
+                    int(int(time.time() - s_time) % 60)))
+                print("Extract Done")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+        print("#" * 200, os.listdir(save_dir_1))
+        print("#" * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
+
+        config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+    config.pretrain_ckpt = os.path.join(config.output_path, config.pretrain_ckpt)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_mobilenetv2():
+    config.dataset_path = os.path.join(config.dataset_path, 'train')
+    print('\nconfig: \n', config)
     start = time.time()
-
-    print(f"train args: {args_opt}\ncfg: {config}")
-
     # set context and device init
     context_device_init(config)
 
     # define network
-    backbone_net, head_net, net = define_net(config, args_opt.is_training)
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config,
-                             enable_cache=args_opt.enable_cache, cache_session_id=args_opt.cache_session_id)
+    backbone_net, head_net, net = define_net(config, config.is_training)
+    dataset = create_dataset(dataset_path=config.dataset_path, do_train=True, config=config,
+                             enable_cache=config.enable_cache, cache_session_id=config.cache_session_id)
     step_size = dataset.get_dataset_size()
     if config.platform == "GPU":
         context.set_context(enable_graph_kernel=True)
-    if args_opt.pretrain_ckpt:
-        if args_opt.freeze_layer == "backbone":
-            load_ckpt(backbone_net, args_opt.pretrain_ckpt, trainable=False)
-            step_size = extract_features(backbone_net, args_opt.dataset_path, config)
-        elif args_opt.filter_head:
-            load_ckpt(backbone_net, args_opt.pretrain_ckpt)
+    if config.pretrain_ckpt:
+        if config.freeze_layer == "backbone":
+            load_ckpt(backbone_net, config.pretrain_ckpt, trainable=False)
+            step_size = extract_features(backbone_net, config.dataset_path, config)
+        elif config.filter_head:
+            load_ckpt(backbone_net, config.pretrain_ckpt)
         else:
-            load_ckpt(net, args_opt.pretrain_ckpt)
+            load_ckpt(net, config.pretrain_ckpt)
     if step_size == 0:
         raise ValueError("The step_size of dataset is zero. Check if the images' count of train dataset is more \
             than batch_size in config.py")
@@ -92,7 +151,7 @@ if __name__ == '__main__':
                        total_epochs=epoch_size,
                        steps_per_epoch=step_size))
 
-    if args_opt.pretrain_ckpt == "" or args_opt.freeze_layer != "backbone":
+    if config.pretrain_ckpt == "" or config.freeze_layer != "backbone":
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
@@ -111,7 +170,7 @@ if __name__ == '__main__':
         network = TrainOneStepCell(network, opt)
         network.set_train()
 
-        features_path = args_opt.dataset_path + '_features'
+        features_path = config.dataset_path + '_features'
         idx_list = list(range(step_size))
         rank = 0
         if config.run_distribute:
@@ -136,5 +195,9 @@ if __name__ == '__main__':
                 save_checkpoint(net, os.path.join(save_ckpt_path, f"mobilenetv2_{epoch+1}.ckpt"))
         print("total cost {:5.4f} s".format(time.time() - start))
 
-    if args_opt.enable_cache:
+    if config.enable_cache:
         print("Remember to shut down the cache server via \"cache_admin --stop\"")
+
+
+if __name__ == '__main__':
+    train_mobilenetv2()

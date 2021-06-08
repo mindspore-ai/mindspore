@@ -50,15 +50,30 @@ then
 exit 1
 fi 
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+if [ $# -ge 1 ]; then
+  if [ $1 == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  elif [ $1 == 'imagenet2012' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_imagenet.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
 if [ -d "eval" ];
 then
     rm -rf ./eval
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
-python eval.py --dataset=$1 --dataset_path=$PATH1 --checkpoint_path=$PATH2 --device_target=CPU &> log &
+python eval.py --config_path=$CONFIG_FILE --dataset=$1 --dataset_path=$PATH1 --checkpoint_path=$PATH2 --device_target=CPU &> log_eval_cpu.txt &
 cd ..

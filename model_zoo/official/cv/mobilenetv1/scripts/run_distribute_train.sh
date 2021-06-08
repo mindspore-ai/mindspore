@@ -68,6 +68,20 @@ export RANK_TABLE_FILE=$PATH1
 export SERVER_ID=0
 rank_start=$((DEVICE_NUM * SERVER_ID))
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+if [ $# -ge 1 ]; then
+  if [ $1 == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  elif [ $1 == 'imagenet2012' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_imagenet.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
 for((i=0; i<${DEVICE_NUM}; i++))
 do
     export DEVICE_ID=${i}
@@ -75,6 +89,7 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
+    cp ../*.yaml ./train_parallel$i
     cp *.sh ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
@@ -82,12 +97,12 @@ do
     env > env.log
     if [ $# == 3 ]
     then    
-        python train.py --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
+        python train.py --config_path=$CONFIG_FILE --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log.txt &
     fi
     
     if [ $# == 4 ]
     then
-        python train.py --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log &
+        python train.py --config_path=$CONFIG_FILE --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log.txt &
     fi
 
     cd ..
