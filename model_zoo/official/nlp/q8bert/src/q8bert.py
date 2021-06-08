@@ -13,7 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 
-"""Tinybert model"""
+"""q8bert model"""
 
 import re
 import mindspore.nn as nn
@@ -27,8 +27,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.communication.management import get_group_size
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.context import ParallelMode
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from .q8bert_model import BertModel, TinyBertModel, BertModelCLS
+from mindspore.train.serialization import load_checkpoint
+from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
+from .q8bert_model import BertModelCLS
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
@@ -57,12 +58,22 @@ def _clip_grad(clip_type, clip_value, grad):
         new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad
 
+
+_grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
+grad_overflow = P.FloatStatus()
+@_grad_overflow.register("Tensor")
+def _tensor_grad_overflow(grad):
+    return grad_overflow(grad)
+
+
 grad_scale = C.MultitypeFuncGraph("grad_scale")
 reciprocal = P.Reciprocal()
+
 
 @grad_scale.register("Tensor", "Tensor")
 def tensor_grad_scale(scale, grad):
     return grad * reciprocal(scale)
+
 
 class ClipGradients(nn.Cell):
     """
@@ -100,6 +111,7 @@ class ClipGradients(nn.Cell):
             new_grads = new_grads + (t,)
         return new_grads
 
+
 class SoftCrossEntropy(nn.Cell):
     """SoftCrossEntropy loss"""
     def __init__(self):
@@ -116,88 +128,6 @@ class SoftCrossEntropy(nn.Cell):
 
         return self.cast(loss, mstype.float32)
 
-class BertNetworkWithLoss_gd(nn.Cell):
-    """
-    Provide bert pre-training loss through network.
-    Args:
-        config (BertConfig): The config of BertModel.
-        is_training (bool): Specifies whether to use the training mode.
-        use_one_hot_embeddings (bool): Specifies whether to use one-hot for embeddings. Default: False.
-    Returns:
-        Tensor, the loss of the network.
-    """
-    def __init__(self, teacher_config, teacher_ckpt, student_config, is_training, use_one_hot_embeddings=False,
-                 is_att_fit=True, is_rep_fit=True):
-        super(BertNetworkWithLoss_gd, self).__init__()
-        # load teacher model
-        self.teacher = BertModel(teacher_config, False, use_one_hot_embeddings)
-        param_dict = load_checkpoint(teacher_ckpt)
-        new_param_dict = {}
-        for key, value in param_dict.items():
-            new_key = re.sub('^bert.bert.', 'teacher.', key)
-            new_param_dict[new_key] = value
-        load_param_into_net(self.teacher, new_param_dict)
-        # no_grad
-        self.teacher.set_train(False)
-        params = self.teacher.trainable_params()
-        for param in params:
-            param.requires_grad = False
-        # student model
-        self.bert = TinyBertModel(student_config, is_training, use_one_hot_embeddings)
-        self.cast = P.Cast()
-        self.fit_dense = nn.Dense(student_config.hidden_size,
-                                  teacher_config.hidden_size).to_float(teacher_config.compute_type)
-        self.teacher_layers_num = teacher_config.num_hidden_layers
-        self.student_layers_num = student_config.num_hidden_layers
-        self.layers_per_block = int(self.teacher_layers_num / self.student_layers_num)
-        self.is_att_fit = is_att_fit
-        self.is_rep_fit = is_rep_fit
-        self.loss_mse = nn.MSELoss()
-        self.select = P.Select()
-        self.zeroslike = P.ZerosLike()
-        self.dtype = teacher_config.dtype
-
-    def construct(self,
-                  input_ids,
-                  input_mask,
-                  token_type_id):
-        """general distill network with loss"""
-        # teacher model
-        _, _, _, teacher_seq_output, teacher_att_output = self.teacher(input_ids, token_type_id, input_mask)
-        # student model
-        _, _, _, student_seq_output, student_att_output = self.bert(input_ids, token_type_id, input_mask)
-        total_loss = 0
-        if self.is_att_fit:
-            selected_teacher_att_output = ()
-            selected_student_att_output = ()
-            for i in range(self.student_layers_num):
-                selected_teacher_att_output += (teacher_att_output[(i + 1) * self.layers_per_block - 1],)
-                selected_student_att_output += (student_att_output[i],)
-            att_loss = 0
-            for i in range(self.student_layers_num):
-                student_att = selected_student_att_output[i]
-                teacher_att = selected_teacher_att_output[i]
-                student_att = self.select(student_att <= self.cast(-100.0, mstype.float32), self.zeroslike(student_att),
-                                          student_att)
-                teacher_att = self.select(teacher_att <= self.cast(-100.0, mstype.float32), self.zeroslike(teacher_att),
-                                          teacher_att)
-                att_loss += self.loss_mse(student_att, teacher_att)
-            total_loss += att_loss
-        if self.is_rep_fit:
-            selected_teacher_seq_output = ()
-            selected_student_seq_output = ()
-            for i in range(self.student_layers_num + 1):
-                selected_teacher_seq_output += (teacher_seq_output[i * self.layers_per_block],)
-                fit_dense_out = self.fit_dense(student_seq_output[i])
-                fit_dense_out = self.cast(fit_dense_out, self.dtype)
-                selected_student_seq_output += (fit_dense_out,)
-            rep_loss = 0
-            for i in range(self.student_layers_num + 1):
-                teacher_rep = selected_teacher_seq_output[i]
-                student_rep = selected_student_seq_output[i]
-                rep_loss += self.loss_mse(student_rep, teacher_rep)
-            total_loss += rep_loss
-        return self.cast(total_loss, mstype.float32)
 
 class BertTrainWithLossScaleCell(nn.Cell):
     """
@@ -235,7 +165,7 @@ class BertTrainWithLossScaleCell(nn.Cell):
         self.get_status = P.NPUGetFloatStatus()
         self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
+        self.depend_parameter_use = P.Depend()
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -288,6 +218,7 @@ class BertTrainWithLossScaleCell(nn.Cell):
             succ = self.optimizer(grads)
         ret = (loss, cond, scaling_sens)
         return F.depend(ret, succ)
+
 
 class BertTrainCell(nn.Cell):
     """
@@ -343,6 +274,7 @@ class BertTrainCell(nn.Cell):
         succ = self.optimizer(grads)
         return F.depend(loss, succ)
 
+
 class BertNetworkWithLoss_td(nn.Cell):
     """
     Provide bert pre-training loss through network.
@@ -377,13 +309,13 @@ class BertNetworkWithLoss_td(nn.Cell):
             for key, value in param_dict.items():
                 new_key = re.sub('tinybert_', 'bert_', 'bert.' + key)
                 new_param_dict[new_key] = value
-            load_param_into_net(self.bert, new_param_dict)
+            load_nonquant_param_into_quant_net(self.bert, new_param_dict)
         else:
             new_param_dict = {}
             for key, value in param_dict.items():
                 new_key = re.sub('tinybert_', 'bert_', key)
                 new_param_dict[new_key] = value
-            load_param_into_net(self.bert, new_param_dict)
+            load_nonquant_param_into_quant_net(self.bert, new_param_dict)
         self.cast = P.Cast()
         self.student_layers_num = student_config.num_hidden_layers
         self.is_predistill = is_predistill
@@ -421,6 +353,7 @@ class BertNetworkWithLoss_td(nn.Cell):
         total_loss += cls_loss
         return self.cast(total_loss, mstype.float32)
 
+
 class BertEvaluationWithLossScaleCell(nn.Cell):
     """
     specifically defined for finetuning where only four inputs tensor are needed.
@@ -445,11 +378,18 @@ class BertEvaluationWithLossScaleCell(nn.Cell):
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.cast = P.Cast()
-        self.alloc_status = P.NPUAllocFloatStatus()
-        self.get_status = P.NPUGetFloatStatus()
-        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.gpu_target = False
+        if context.get_context("device_target") == "GPU":
+            self.gpu_target = True
+            self.float_status = P.FloatStatus()
+            self.addn = P.AddN()
+            self.reshape = P.Reshape()
+        else:
+            self.alloc_status = P.NPUAllocFloatStatus()
+            self.get_status = P.NPUGetFloatStatus()
+            self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
+        self.depend_parameter_use = P.Depend()
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -467,6 +407,7 @@ class BertEvaluationWithLossScaleCell(nn.Cell):
                   sens=None):
         """Defines the computation performed."""
         weights = self.weights
+        init = False
         loss = self.network(input_ids,
                             input_mask,
                             token_type_id,
@@ -475,9 +416,12 @@ class BertEvaluationWithLossScaleCell(nn.Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
+        if not self.gpu_target:
+            init = self.alloc_status()
+            clear_before_grad = self.clear_before_grad(init)
+            F.depend(loss, init)
+            self.depend_parameter_use(clear_before_grad, scaling_sens)
         # alloc status and clear should be right before gradoperation
-        init = self.alloc_status()
-        self.clear_before_grad(init)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
                                                  token_type_id,
@@ -485,11 +429,19 @@ class BertEvaluationWithLossScaleCell(nn.Cell):
                                                  self.cast(scaling_sens,
                                                            mstype.float32))
         # apply grad reducer on grads
-        grads = self.grad_reducer(grads)
-        grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
+        grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
-        self.get_status(init)
-        flag_sum = self.reduce_sum(init, (0,))
+        if self.reducer_flag:
+            grads = self.grad_reducer(grads)
+        if not self.gpu_target:
+            flag = self.get_status(init)
+            flag_sum = self.reduce_sum(init, (0,))
+            F.depend(grads, flag)
+            F.depend(flag, flag_sum)
+        else:
+            flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
+            flag_sum = self.addn(flag_sum)
+            flag_sum = self.reshape(flag_sum, (()))
         if self.is_distributed:
             # sum overflow flag over devices
             flag_reduce = self.allreduce(flag_sum)
@@ -503,7 +455,7 @@ class BertEvaluationWithLossScaleCell(nn.Cell):
             succ = False
         else:
             succ = self.optimizer(grads)
-        ret = (loss, cond, scaling_sens)
+        ret = (loss, cond)
         return F.depend(ret, succ)
 
 

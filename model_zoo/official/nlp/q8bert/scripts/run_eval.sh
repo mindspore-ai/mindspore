@@ -14,27 +14,30 @@
 # limitations under the License.
 # ============================================================================
 
+echo "=============================================================================================================="
+echo "Please run the script as: "
+echo "bash run_eval.sh [TASK_NAME] [DEVICE_TARGET] [EVAL_DATA_DIR] [LOAD_CKPT_PATH]"
+echo "for example: bash run_eval.sh STS-B Ascend /path/sts-b/eval.tf_record /path/xxx.ckpt"
+echo "=============================================================================================================="
+
+
+task_name=$1
+device_target=$2
+eval_data_dir=$3
+load_ckpt_path=$4
+
 mkdir -p ms_log
 PROJECT_DIR=$(cd "$(dirname "$0")"; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 
-python ${PROJECT_DIR}/../run_train.py \
-    --device_target="Ascend" \
+python ${PROJECT_DIR}/../eval.py \
+    --device_target=$device_target \
     --device_id=0 \
-    --do_eval="true" \
-    --epoch_num=3 \
-    --task_name="" \
-    --do_shuffle="true" \
-    --enable_data_sink="true" \
-    --data_sink_steps=100 \
-    --save_ckpt_step=100 \
-    --max_ckpt_num=1 \
-    --load_ckpt_path="" \
-    --train_data_dir="" \
-    --eval_data_dir="" \
-    --device_id="" \
-    --logging_step=100\
-    --do_quant="true" > log.txt 2>&1 &
+    --task_name=$task_name \
+    --do_shuffle="False" \
+    --load_ckpt_path=$load_ckpt_path \
+    --eval_data_dir=$eval_data_dir \
+    --do_quant="True" > eval_log.txt 2>&1 &
 
