@@ -30,10 +30,16 @@ if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
 if __name__ == '__main__':
-    net = AlexNet(num_classes=config.num_classes)
-
-    param_dict = load_checkpoint(config.ckpt_file)
-    load_param_into_net(net, param_dict)
-
-    input_arr = Tensor(np.zeros([config.batch_size, 3, config.image_height, config.image_width]), ms.float32)
-    export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+    if config.dataset_name == 'imagenet':
+        net = AlexNet(num_classes=config.num_classes)
+        param_dict = load_checkpoint(config.ckpt_file)
+        load_param_into_net(net, param_dict)
+        input_arr = Tensor(np.zeros([1, 3, config.image_height, config.image_width]), ms.float32)
+        export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+    else:
+        net = AlexNet(num_classes=config.num_classes)
+        param_dict = load_checkpoint(config.ckpt_file)
+        load_param_into_net(net, param_dict)
+        input_arr = Tensor(np.zeros([config.batch_size, 3, config.image_height, config.image_width]), ms.float32)
+        export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+        

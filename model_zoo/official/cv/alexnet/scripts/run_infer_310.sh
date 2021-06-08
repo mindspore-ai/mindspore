@@ -14,8 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 3 || $# -gt 4 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+if [[ $# -lt 4 || $# -gt 5 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATASET_NAME] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+    DATASET_NAME can choose from ['cifar10', 'imagenet2012'].
     NEED_PREPROCESS means weather need preprocess or not, it's value is 'y' or 'n'.
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
@@ -29,26 +30,27 @@ get_real_path(){
     fi
 }
 model=$(get_real_path $1)
-dataset_name='cifar10'
+if [ $2 == 'cifar10' ] || [ $2 == 'imagenet2012' ]; then
+  dataset_name=$2
+else
+  echo "DATASET_NAME can choose from ['cifar10', 'imagenet2012']"
+  exit 1
+fi
 
+dataset_path=$(get_real_path $3)
 
-dataset_path=$(get_real_path $2)
-
-if [ "$3" == "y" ] || [ "$3" == "n" ];then
-    need_preprocess=$3
+if [ "$4" == "y" ] || [ "$4" == "n" ];then
+    need_preprocess=$4
 else
   echo "weather need preprocess or not, it's value must be in [y, n]"
   exit 1
 fi
 
 device_id=0
-if [ $# == 4 ]; then
-    device_id=$4
+if [ $# == 5 ]; then
+    device_id=$5
 fi
-BASEPATH=$(dirname "$(pwd)") 
-config_path=$BASEPATH"/default_config.yaml"
-echo "base path :"$BASEPATH
-echo "config path :"$config_path 
+
 echo "mindir name: "$model
 echo "dataset name: "$dataset_name
 echo "dataset path: "$dataset_path
@@ -57,22 +59,17 @@ echo "device id: "$device_id
 
 export ASCEND_HOME=/usr/local/Ascend/
 if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
-    export PATH=$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/atc/bin:$PATH
-    export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/ascend-toolkit/latest/atc/lib64:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ons:$LD_LIBRARY_PATH
+    export PATH=$ASCEND_HOME/fwkacllib/bin:$ASCEND_HOME/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/atc/bin:$PATH
+    export LD_LIBRARY_PATH=$ASCEND_HOME/fwkacllib/lib64:/usr/local/lib:$ASCEND_HOME/ascend-toolkit/latest/atc/lib64:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ons:$LD_LIBRARY_PATH
     export TBE_IMPL_PATH=$ASCEND_HOME/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe
-    export PYTHONPATH=${TBE_IMPL_PATH}:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/python/site-packages:$PYTHONPATH
+    export PYTHONPATH=$ASCEND_HOME/fwkacllib/python/site-packages:${TBE_IMPL_PATH}:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/python/site-packages:$PYTHONPATH
     export ASCEND_OPP_PATH=$ASCEND_HOME/ascend-toolkit/latest/opp
 else
-    export PATH=$ASCEND_HOME/atc/ccec_compiler/bin:$ASCEND_HOME/atc/bin:$PATH
-    export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/atc/lib64:$ASCEND_HOME/acllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ons:$LD_LIBRARY_PATH
-    export PYTHONPATH=$ASCEND_HOME/atc/python/site-packages:$PYTHONPATH
+    export PATH=$ASCEND_HOME/fwkacllib/bin:$ASCEND_HOME/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/atc/ccec_compiler/bin:$ASCEND_HOME/atc/bin:$PATH
+    export LD_LIBRARY_PATH=$ASCEND_HOME/fwkacllib/lib64:/usr/local/lib:$ASCEND_HOME/atc/lib64:$ASCEND_HOME/acllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ons:$LD_LIBRARY_PATH
+    export PYTHONPATH=$ASCEND_HOME/fwkacllib/python/site-packages:$ASCEND_HOME/atc/python/site-packages:$PYTHONPATH
     export ASCEND_OPP_PATH=$ASCEND_HOME/opp
 fi
-export SLOG_PRINT_to_STDOUT=0
-export GLOG_v=2
-export DUMP_GE_GRAPH=2
-
-
 export ASCEND_HOME=/usr/local/Ascend
 
 export PATH=$ASCEND_HOME/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/fwkacllib/bin:$ASCEND_HOME/toolkit/bin:$PATH
@@ -86,15 +83,13 @@ export NPU_HOST_LIB=/usr/local/Ascend/acllib/lib64/stub
 export ASCEND_OPP_PATH=/usr/local/Ascend/opp
 export ASCEND_AICPU_PATH=/usr/local/Ascend
 export LD_LIBRARY_PATH=/usr/local/lib64/:$LD_LIBRARY_PATH
-
-
 function preprocess_data()
 {
     if [ -d preprocess_Result ]; then
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --config_path=$config_path --dataset_name=$dataset_name --data_path=$dataset_path 
+    python3.7 ../preprocess.py --dataset_name=$dataset_name --data_path=$dataset_path #--result_path=./preprocess_Result/
 }
 
 function compile_app()
@@ -115,13 +110,16 @@ function infer()
     mkdir result_Files
     mkdir time_Result
 
-    ../ascend310_infer/out/main --mindir_path=$model --dataset_name=$dataset_name --input0_path=./preprocess_Result/00_data --device_id=$device_id  &> infer.log
-
+    if [ "$dataset_name" == "cifar10" ]; then
+        ../ascend310_infer/out/main --mindir_path=$model --dataset_name=$dataset_name --input0_path=./preprocess_Result/00_data --device_id=$device_id  &> infer.log
+    else
+        ../ascend310_infer/out/main --mindir_path=$model --dataset_name=$dataset_name --input0_path=$dataset_path --device_id=$device_id  &> infer.log
+    fi
 }
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py  --dataset_name=$dataset_name  &> acc.log
+    python3.7 ../postprocess.py --dataset_name=$dataset_name  &> acc.log
 }
 
 if [ $need_preprocess == "y" ]; then
