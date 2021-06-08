@@ -31,7 +31,7 @@ class SparseToDense(PrimitiveWithInfer):
         - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
             Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
         - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
-            The shape should be :math:`(n,).
+            The shape should be :math:`(n,)`.
         - **sparse_shape** (tuple(int)) - A positive int tuple which specifies the shape of sparse tensor,
             should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
 
@@ -102,7 +102,7 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
             Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
         - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
-            Support float16, float32, float64, int32, int64. The shape should be :math:`(n,).
+            Support float16, float32, float64, int32, int64. The shape should be :math:`(n,)`.
         - **sparse_shape** (tuple(int)) - A positive int tuple which specifies the shape of sparse tensor,
             should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
         - **dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.

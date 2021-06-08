@@ -27,17 +27,17 @@
 #include "utils/check_convert_utils.h"
 namespace mindspore {
 namespace ops {
-constexpr auto kNameConv2dTranspose = "Conv2dTranspose";
-class Conv2dTranspose : public PrimitiveC {
+constexpr auto kNameConv2DTranspose = "Conv2DTranspose";
+class Conv2DTranspose : public PrimitiveC {
  public:
-  Conv2dTranspose() : PrimitiveC(kNameConv2dTranspose) {
+  Conv2DTranspose() : PrimitiveC(kNameConv2DTranspose) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
-  explicit Conv2dTranspose(const std::string k_name) : PrimitiveC(k_name) {
+  explicit Conv2DTranspose(const std::string k_name) : PrimitiveC(k_name) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
-  ~Conv2dTranspose() = default;
-  MS_DECLARE_PARENT(Conv2dTranspose, PrimitiveC);
+  ~Conv2DTranspose() = default;
+  MS_DECLARE_PARENT(Conv2DTranspose, PrimitiveC);
   void Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},
             const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1},
@@ -66,9 +66,9 @@ class Conv2dTranspose : public PrimitiveC {
   Format get_format() const;
   std::vector<int64_t> get_pad_list() const;
 };
-AbstractBasePtr Conv2dTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr Conv2DTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimConv2dTransposePtr = std::shared_ptr<Conv2dTranspose>;
+using PrimConv2DTransposePtr = std::shared_ptr<Conv2DTranspose>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_H_

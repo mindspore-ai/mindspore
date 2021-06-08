@@ -441,7 +441,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         return out
 
 
-class Conv2DBackpropFilter(PrimitiveWithInfer):
+class Conv2DBackpropFilter(Primitive):
     """
     Computes the gradients of convolution with respect to the filter.
 
@@ -499,21 +499,6 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
         self.add_prim_attr('data_format', self.format)
-
-    def __infer__(self, doutput, x, w_size):
-        w_size_v = w_size['value']
-        validator.check_value_type('w_size', w_size_v, [tuple], self.name)
-        for i, dim_len in enumerate(w_size_v):
-            validator.check_value_type("w_size[%d]" % i, dim_len, [int], self.name)
-        args = {"x": x['dtype'], "doutput": doutput['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.int8, mstype.int32, mstype.float16, mstype.float32],
-                                                      self.name)
-        out = {
-            'value': None,
-            'shape': w_size_v,
-            'dtype': doutput['dtype'],
-        }
-        return out
 
 
 class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):

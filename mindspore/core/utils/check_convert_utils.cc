@@ -109,6 +109,7 @@ static std::map<std::string, AttrConverterPair> ReductionMap = {
 
 static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrConvertMap = {
   {"Conv2D", FormatAndPadAttrMap},
+  {"Conv2DTranspose", FormatAndPadUpperAttrMap},
   {"Conv2DBackpropInput", FormatAndPadUpperAttrMap},
   {"Conv2DBackpropFilter", FormatAndPadUpperAttrMap},
   {"Conv3D", FormatAndPadAttrMap},

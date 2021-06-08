@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,31 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <set>
 
 #include "ops/grad/conv2d_backprop_input.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
 void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
                 const std::vector<int64_t> &x_size_v) {
-  auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
-  auto stride = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
-  auto dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
-  auto pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPadList));
-  auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
-  if (std::all_of(pad_list.begin(), pad_list.end(), [](int64_t elem) -> bool { return elem != 0; })) {
-    primitive->AddAttr(kPadList, MakeValue(pad_list));
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  // check
+  auto kernel_size =
+    CheckAndConvertUtils::CheckAttrIntOrTupleInt("kernel_size", primitive->GetAttr(kKernelSize), prim_name);
+  auto stride = CheckAndConvertUtils::CheckAttrIntOrTupleInt("stride", primitive->GetAttr(kStride), prim_name);
+  auto dilation = CheckAndConvertUtils::CheckAttrIntOrTupleInt("dilation", primitive->GetAttr(kDilation), prim_name);
+  // default pad mode is valid
+  auto attr_pad_list_prt = primitive->GetAttr(kPadList);
+  auto pad_mode = GetValue<int64_t>(primitive->GetAttr(kPadMode));
+  ShapeVector pad_list = {0, 0, 0, 0};
+  if (!attr_pad_list_prt->isa<None>()) {
+    pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
   } else if (pad_mode == SAME) {
-    auto stride_h = stride[0];
-    auto stride_w = stride[1];
+    auto stride_h = stride[2];
+    auto stride_w = stride[3];
     auto kernel_h = kernel_size[0];
     auto kernel_w = kernel_size[1];
     auto dilation_h = dilation[2];
@@ -43,7 +51,7 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
     pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
     auto pad_top = pad_needed_h / 2;
     auto pad_bottom = pad_needed_h - pad_top;
-    auto pad_needed_w = (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[2];
+    auto pad_needed_w = (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3];
     pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
     auto pad_left = pad_needed_w / 2;
     auto pad_right = pad_needed_w - pad_left;
@@ -53,34 +61,44 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   }
   primitive->AddAttr(kPadList, MakeValue(pad_list));
 }
+
+abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto x_size_v = input_args[2]->BuildValue();
+  auto ret_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("x_size", x_size_v, prim_name);
+  auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
+  ShapeVector tmp_shape = {dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]};
+  auto dout_shape_norm = format == Format::NCHW ? dout_shape : tmp_shape;
+  SetPadList(primitive, dout_shape_norm, ret_shape);
+  return std::make_shared<abstract::Shape>(ret_shape);
+}
+
+TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  // check
+  std::map<std::string, TypePtr> types;
+  types.emplace("doutput", input_args[0]->BuildType());
+  types.emplace("w", input_args[1]->BuildType());
+  std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
+}
+}  // namespace
 AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 3, prim_name);
+  // check
+  CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, 3, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto doutput = input_args[0];
-  auto x_size = input_args[2];
-  auto x_size_value = x_size->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(x_size);
-  auto x_size_v = GetValue<std::vector<int64_t>>(x_size_value);
-  // infer dtype
-  auto dtype = doutput->BuildType();
-  if (!dtype->isa<TensorType>()) {
-    MS_LOG(EXCEPTION) << "Conv2DBackpropInputInfer doutput must be tensor but got" << dtype->ToString();
-  }
-  auto input_tensor_type = dtype->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor_type);
-  auto element = input_tensor_type->element();
-  // infer shape
-  auto dout_shape = doutput->BuildShape();
-  MS_EXCEPTION_IF_NULL(doutput);
-  auto dout_shapeptr = dout_shape->cast<abstract::ShapePtr>();
-  auto dout_shape_norm = dout_shapeptr->shape();
-  SetPadList(primitive, dout_shape_norm, x_size_v);
-  return std::make_shared<abstract::AbstractTensor>(element, std::make_shared<abstract::Shape>(x_size_v));
+  auto abs = std::make_shared<abstract::AbstractTensor>(Conv2DBackpropInputInferType(primitive, input_args),
+                                                        Conv2DBackpropInputInferShape(primitive, input_args));
+  return abs;
 }
 
 void Conv2DBackpropInput::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode,
@@ -200,6 +218,7 @@ std::vector<int64_t> Conv2DBackpropInput::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
-REGISTER_PRIMITIVE_C(kNameConv2DBackpropInput, Conv2DBackpropInput);
+REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput, Conv2DBackpropInputInfer, nullptr,
+                             true);
 }  // namespace ops
 }  // namespace mindspore
