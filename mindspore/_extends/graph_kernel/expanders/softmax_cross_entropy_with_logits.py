@@ -36,7 +36,7 @@ class SoftmaxCrossEntropyWithLogits(Expander):
         softmax_log = graph_builder.emit('Log', [data_softmax_safety])
         label_mul_log = graph_builder.emit('Mul', [label, softmax_log])
         tmp_res = data_expsum = graph_builder.emit('ReduceSum', [label_mul_log], attrs={
-            'reduce_axis': axis, 'keep_dims': True})
+            'reduce_axis': axis, 'keep_dims': False})
         loss = graph_builder.emit('Neg', [tmp_res])
         dlogits = graph_builder.emit('Sub', [data_softmax, label])
         return loss, dlogits
