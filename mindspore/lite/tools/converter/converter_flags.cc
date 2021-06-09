@@ -45,7 +45,10 @@ Flags::Flags() {
   AddFlag(&Flags::bitNumIn, "bitNum", "Weight quantization bitNum", "8");
   AddFlag(&Flags::quantWeightSizeStr, "quantWeightSize", "Weight quantization size threshold", "0");
   AddFlag(&Flags::quantWeightChannelStr, "quantWeightChannel", "Channel threshold for weight quantization", "16");
-  AddFlag(&Flags::configFile, "configFile", "Configuration for post-training, offline split op to parallel", "");
+  AddFlag(&Flags::configFile, "configFile",
+          "Configuration for post-training, offline split op to parallel,"
+          "and converter for nnie",
+          "");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device. "
           "true | false",

@@ -145,7 +145,7 @@ class CpuFp32SubGraph : public CpuSubGraph {
                   std::vector<LiteKernel *> nodes, Kernel *kernel)
       : CpuSubGraph(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP32SubGraph;
-    static std::atomic_int index = 0;
+    static std::atomic_int index = {0};
     this->set_name("CpuFP32SubGraph" + std::to_string(index++));
     desc_.data_type = kNumberTypeFloat32;
   }

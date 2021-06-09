@@ -42,6 +42,7 @@ void InterThreadPool::ThreadAsyncRun(Worker *worker) {
 }
 
 void InterThreadPool::ActorThreadRun() {
+#ifndef SUPPORT_NNIE
   ActorReference actor;
   {
     std::unique_lock<std::mutex> _l(actor_mutex_);
@@ -54,6 +55,7 @@ void InterThreadPool::ActorThreadRun() {
   }
   actor->Run();
   finish_cond_var_.notify_one();
+#endif
 }
 
 void InterThreadPool::EnqueReadyActor(const ActorReference &actor) {

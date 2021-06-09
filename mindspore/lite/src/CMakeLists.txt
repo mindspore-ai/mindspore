@@ -14,6 +14,9 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64)
         -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
         -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+        if(TARGET_HIMIX200)
+            string(REPLACE "-fno-rtti " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+        endif()
     endif()
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND APPLE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstrict-aliasing -ffunction-sections \
@@ -25,7 +28,10 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     endif()
 endif()
 
-set(API_SRC
+if(TARGET_HIMIX200)
+    set(API_SRC)
+else()
+    set(API_SRC
         ${CORE_DIR}/utils/status.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
@@ -35,7 +41,8 @@ set(API_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model_impl.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/graph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/tensor_impl.cc
-)
+        )
+endif()
 
 if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
@@ -138,6 +145,16 @@ if(ENABLE_MINDRT)
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
+elseif(TARGET_HIMIX200)
+    include_directories(${CORE_DIR}/mindrt)
+    include_directories(${CORE_DIR}/mindrt/include)
+    include_directories(${CORE_DIR}/mindrt/src)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
+        ${CORE_DIR}/mindrt/src/thread/inter_threadpool.cc
+        ${CORE_DIR}/mindrt/src/thread/threadpool.cc
+        )
 endif()
 
 add_subdirectory(ops)
@@ -199,7 +216,7 @@ if(SUPPORT_NPU)
     target_link_libraries(mindspore-lite npu_kernel_mid)
     target_link_libraries(mindspore-lite_static npu_kernel_mid)
 endif()
-if(PLATFORM_ARM32 OR PLATFORM_ARM64)
+if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX200)
     target_link_libraries(mindspore-lite log)
     target_link_libraries(mindspore-lite_static log)
 endif()
@@ -222,12 +239,15 @@ if(SUPPORT_TRAIN)
   target_link_libraries(mindspore-lite-train_static minddata-lite mindspore-lite)
 endif()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if(NOT APPLE AND PLATFORM_ARM)
-        set(NDK_STRIP
-            "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
+if(NOT APPLE AND PLATFORM_ARM AND NOT TARGET_HIMIX200)
+    set(NDK_STRIP
+        "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
+endif()
+
+if(NOT APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if(PLATFORM_ARM)
         add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
-                            ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
+                ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
     elseif(NOT WIN32)
         add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
     endif()

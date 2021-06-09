@@ -17,6 +17,7 @@
 #include "base/base.h"
 #include <atomic>
 #include <mutex>
+#include <string>
 #include <unordered_map>
 
 namespace mindspore {
@@ -32,7 +33,7 @@ uint32_t Base::GetTypeId(const char *const type_name) {
   if (it != t->map.end()) {
     return it->second;
   }
-  uint32_t tid = ++(t->type_counter);
+  uint32_t tid = std::hash<std::string>()(type_name);
   t->map[type_name] = tid;
   return tid;
 }

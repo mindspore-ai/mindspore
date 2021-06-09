@@ -31,7 +31,9 @@ typedef struct ArgElement {
     int32_t i_data_;
     float f_data_;
 #ifdef ENABLE_ARM
+#ifndef SUPPORT_NNIE
     float16_t f16_data_;
+#endif
 #endif
   } data_;
 } ArgElement;

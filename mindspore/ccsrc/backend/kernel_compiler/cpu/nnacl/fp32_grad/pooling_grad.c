@@ -146,7 +146,8 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
 #ifdef ENABLE_ARM
               uint32x4_t index = {val_idx, val_idx + 1, val_idx + 2, val_idx + 3};
               float32x4_t in = vld1q_f32(inPtr + val_idx);
-              max_idx = MaxIndex(in, &max_val, index, max_idx);
+              max_idx = vreinterpretq_u32_s32(
+                MaxIndex(in, &max_val, vreinterpretq_s32_u32(index), vreinterpretq_s32_u32(max_idx)));
 #else
               float val[4] = {inPtr[val_idx], inPtr[val_idx + 1], inPtr[val_idx + 2], inPtr[val_idx + 3]};
               for (int i = 0; i < 4; i++) {

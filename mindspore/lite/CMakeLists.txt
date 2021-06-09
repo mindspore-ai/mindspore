@@ -3,7 +3,12 @@ project(Lite)
 
 set(BUILD_LITE "on")
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.3.0)
+if(TOOLCHAIN_NAME STREQUAL "himix200")
+  set(TARGET_HIMIX200 on)
+  add_compile_definitions(SUPPORT_NNIE)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.3.0 AND NOT TARGET_HIMIX200)
     message(FATAL_ERROR "GCC version ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
 endif()
 
@@ -22,6 +27,7 @@ option(MSLITE_ENABLE_AVX "enable AVX instruction set, only x86_64 support" off)
 option(MSLITE_ENABLE_CONVERTER "enable converter, only x86_64 support" on)
 option(MSLITE_ENABLE_TOOLS "enable tools" on)
 option(MSLITE_ENABLE_TESTCASES "enable testcase" off)
+option(MSLITE_ENABLE_NNIE "enable NNIE" off)
 
 # Option that can be configured through manually
 option(ENABLE_ARM82_A32 "if build fp16 on platform_arm32" off)
@@ -54,6 +60,9 @@ if(DEFINED ENV{MSLITE_ENABLE_TOOLS})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_TESTCASES})
     set(MSLITE_ENABLE_TESTCASES $ENV{MSLITE_ENABLE_TESTCASES})
+endif()
+if(DEFINED ENV{MSLITE_ENABLE_NNIE})
+    set(MSLITE_ENABLE_NNIE $ENV{MSLITE_ENABLE_NNIE})
 endif()
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
@@ -197,6 +206,9 @@ else()
     -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
     -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+    if(TARGET_HIMIX200)
+        set(CMAKE_CXX_FLAGS "-Wno-error=maybe-uninitialized ${CMAKE_CXX_FLAGS}")
+    endif()
     if(NOT WIN32)
         set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_SHARED_LINKER_FLAGS}")
         set(CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_EXE_LINKER_FLAGS}")

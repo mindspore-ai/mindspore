@@ -132,45 +132,49 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     fbb.Clear();
     return lite::RET_ERROR;
   }
-  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
-  if (parameter_gen == nullptr) {
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
-    FreeTensors(&inputs);
-    FreeTensors(&outputs);
-    fbb.Clear();
-    return lite::RET_ERROR;
-  }
-  auto parameter = parameter_gen(prim);
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr.";
-    FreeTensors(&inputs);
-    FreeTensors(&outputs);
-    fbb.Clear();
-    return lite::RET_ERROR;
-  }
-  RectifyFormat(cnode, inputs, fmk_type_);
-  auto status = KernelInferShape(inputs, outputs, parameter);
-  if (status == lite::RET_OK) {
-    anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
-  }
-  if (status == lite::RET_OK || status == lite::RET_INFER_INVALID) {
-    auto set_status = SetCNodeAbstract(cnode, outputs, status);
-    if (set_status != lite::RET_OK) {
-      MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
+  auto ret = KernelInferShape(inputs, outputs, prim, {});
+  if (ret == lite::RET_NOT_SUPPORT) {
+    auto parameter_gen =
+      lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
+    if (parameter_gen == nullptr) {
+      MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
       FreeTensors(&inputs);
       FreeTensors(&outputs);
-      free(parameter);
       fbb.Clear();
-      return set_status;
+      return lite::RET_ERROR;
     }
-  } else {
-    MS_LOG(ERROR) << "infer shape failed.";
+    auto parameter = parameter_gen(prim);
+    if (parameter == nullptr) {
+      MS_LOG(ERROR) << "parameter is nullptr.";
+      FreeTensors(&inputs);
+      FreeTensors(&outputs);
+      fbb.Clear();
+      return lite::RET_ERROR;
+    }
+    RectifyFormat(cnode, inputs, fmk_type_);
+    ret = KernelInferShape(inputs, outputs, parameter);
+    if (ret == lite::RET_OK) {
+      anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
+    }
+    if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
+      auto set_status = SetCNodeAbstract(cnode, outputs, ret);
+      if (set_status != lite::RET_OK) {
+        MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
+        FreeTensors(&inputs);
+        FreeTensors(&outputs);
+        free(parameter);
+        fbb.Clear();
+        return set_status;
+      }
+    } else {
+      MS_LOG(ERROR) << "infer shape failed.";
+    }
+    FreeTensors(&inputs);
+    FreeTensors(&outputs);
+    free(parameter);
   }
-  FreeTensors(&inputs);
-  FreeTensors(&outputs);
-  free(parameter);
   fbb.Clear();
-  return status;
+  return ret;
 }
 
 std::vector<int> NodeInferShape::GetInputShape(const CNodePtr &cnode, size_t index) {

@@ -139,7 +139,7 @@ class LiteSession : public session::LiteSession {
   std::unordered_map<Tensor *, Tensor *> graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
   Executor *executor_ = nullptr;
   Model *model_ = nullptr;
-  std::atomic<bool> is_running_ = false;
+  std::atomic<bool> is_running_ = {false};
   bool is_train_session_ = false;
   friend class TransferSession;
 #if SUPPORT_NPU
