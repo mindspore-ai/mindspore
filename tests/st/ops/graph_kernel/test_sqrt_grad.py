@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -54,6 +55,10 @@ def test_sqrt_grad(shape_x, shape_dout, dtype):
     assert np.allclose(expect_np, output_np, rtol, atol)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_sqrt_grad_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_sqrt_grad((16, 16), (16, 16), np.float16)

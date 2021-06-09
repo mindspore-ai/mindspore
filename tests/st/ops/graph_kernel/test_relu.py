@@ -46,6 +46,7 @@ def test_relu(shape, dtype):
 
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -54,6 +55,11 @@ def test_relu_gpu():
     test_relu((4, 3), np.int32)
     test_relu((12, 1), np.float16)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_relu_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_relu((4, 3), np.int32)

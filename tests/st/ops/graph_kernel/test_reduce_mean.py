@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,6 +48,10 @@ def test_reduce_mean_gpu():
     test_reduce_mean()
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_reduce_mean_ascend():
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_reduce_mean()
