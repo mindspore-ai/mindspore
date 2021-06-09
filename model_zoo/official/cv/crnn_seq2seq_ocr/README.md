@@ -211,7 +211,7 @@ Check the `eval/log` and you will get outputs as following:
 ```shell
 character precision = 0.967522
 
-Annotation precision precision = 0.635204
+Annotation precision precision = 0.746213
 ```
 
 # Model Description
@@ -246,5 +246,5 @@ Annotation precision precision = 0.635204
 | Dataset             | FSNS                        |
 | batch_size          | 32                          |
 | outputs             | Annotation Precision, Character Precision            |
-| Accuracy            | Annotation Precision=63.52%, Character Precision=96.75% |
+| Accuracy            | Annotation Precision=74.62%, Character Precision=96.75% |
 | Model for inference | 12M (.ckpt file)           |
