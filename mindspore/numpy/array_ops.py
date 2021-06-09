@@ -2148,8 +2148,8 @@ def choose(a, choices, mode='clip'):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
-            [20, 21, 22, 23], [30, 31, 32, 33]]
+        >>> choices = [[0,   1,  2,  3], [10, 11, 12, 13],
+        ...            [20, 21, 22, 23], [30, 31, 32, 33]]
         >>> print(np.choose([2, 3, 1, 0], choices))
         [20 31 12  3]
         >>> print(np.choose([2, 4, 1, 0], choices, mode='clip'))
@@ -2160,8 +2160,8 @@ def choose(a, choices, mode='clip'):
         >>> choices = [-10, 10]
         >>> print(np.choose(a, choices))
         [[ 10 -10  10]
-        [-10  10 -10]
-        [ 10 -10  10]]
+         [-10  10 -10]
+         [ 10 -10  10]]
     """
     a = _to_tensor(a)
     if not _check_is_int(F.dtype(a)):
