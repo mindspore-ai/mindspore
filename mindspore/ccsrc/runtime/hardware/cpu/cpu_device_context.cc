@@ -136,6 +136,7 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                                     bool) const {
   MS_EXCEPTION_IF_NULL(kernel);
+  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
 
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);

@@ -139,6 +139,8 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> memory_alloc_list_;
   // input + output + workspace
   std::vector<DeviceTensor *> memory_free_list_;
+  // The device tensor of external reference is not the real data of this kernel, but need add to the memory_free_list_.
+  std::vector<DeviceTensor *> external_reference_tensors_;
 
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;

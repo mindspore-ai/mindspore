@@ -45,6 +45,40 @@ void MemoryManagerActor::AllocateMemory(std::vector<DeviceTensor *> *alloc_list,
   Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
 
+void MemoryManagerActor::AllocateContinuousMemory(std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
+                                                  std::vector<std::vector<size_t>> *size_list_list,
+                                                  std::vector<size_t> *total_size_list,
+                                                  std::vector<const DeviceContext *> *device_contexts,
+                                                  OpContext<DeviceTensor> *op_context, const AID from_aid) {
+  MS_EXCEPTION_IF_NULL(alloc_list_list);
+  MS_EXCEPTION_IF_NULL(size_list_list);
+  MS_EXCEPTION_IF_NULL(total_size_list);
+  MS_EXCEPTION_IF_NULL(device_contexts);
+  MS_EXCEPTION_IF_NULL(op_context);
+  if (((*alloc_list_list).size() != (*size_list_list).size()) ||
+      ((*size_list_list).size() != (*total_size_list).size()) ||
+      ((*total_size_list).size() != (*device_contexts).size())) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(
+      (*op_context), "The size of alloc_list_list, size_list_list, total_size_list and device_contexts are not equal.");
+  }
+
+  for (size_t i = 0; i < (*alloc_list_list).size(); ++i) {
+    auto &alloc_list = (*alloc_list_list)[i];
+    auto &size_list = (*size_list_list)[i];
+    auto &total_size = (*total_size_list)[i];
+    auto &device_context = (*device_contexts)[i];
+    // Allocate memory through the device context.
+    if (!device_context->AllocateContinuousMemory(alloc_list, total_size, size_list)) {
+      std::string error_info = "Device memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
+                               ", alloc size: " + std::to_string(total_size);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+    }
+  }
+
+  // Call back to the from actor to process after memory allocation finished.
+  Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+}
+
 void MemoryManagerActor::AllocateBatchMemory(std::vector<DeviceTensor *> *alloc_list,
                                              std::vector<const DeviceContext *> *device_contexts,
                                              OpContext<DeviceTensor> *op_context, const AID from_aid) {
@@ -127,6 +161,11 @@ void MemoryManagerActor::FreeBatchMemory(std::vector<DeviceTensor *> *free_list,
       device_tensor->ResetRefCount();
     }
   }
+}
+
+void MemoryManagerActor::Wait(OpContext<DeviceTensor> *op_context, const AID from_aid) {
+  // Call back to the from actor to process.
+  Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
 }  // namespace runtime
 }  // namespace mindspore

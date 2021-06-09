@@ -271,7 +271,7 @@ class GraphScheduler {
 
   // The operation of the map of actor_name_to_actor_.
   void InsertActor(OpActor<DeviceTensor> *actor);
-  OpActor<DeviceTensor> *FetchActor(const std::string actor_name) const;
+  OpActor<DeviceTensor> *FetchActor(const std::string &actor_name) const;
 
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;

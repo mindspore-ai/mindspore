@@ -233,6 +233,8 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
   pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
   pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
+  pm->AddPass(std::make_shared<opt::AllGatherFusion>());
+  pm->AddPass(std::make_shared<opt::ConcatOutputsForAllGather>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
   optimizer->AddPassManager(pm);
@@ -314,6 +316,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                                     bool is_dynamic_shape) const {
   MS_EXCEPTION_IF_NULL(kernel);
+  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
@@ -324,8 +327,10 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   MS_EXCEPTION_IF_NULL(profiler_inst);
   bool ret = true;
   if (!profiler_inst->GetEnableFlag()) {
+    std::lock_guard<std::mutex> locker(launch_mutex_);
     ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
   } else {
+    std::lock_guard<std::mutex> locker(launch_mutex_);
     ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
   }
 
@@ -347,8 +352,6 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  std::lock_guard<std::mutex> locker(launch_mutex_);
-
   auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
@@ -378,7 +381,6 @@ bool GPUDeviceContext::DoLaunchKernel(KernelMod *kernel_mod, const std::vector<A
                                       const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  std::lock_guard<std::mutex> locker(launch_mutex_);
   return kernel_mod->Launch(inputs, workspace, outputs, streams_.front());
 }
 
