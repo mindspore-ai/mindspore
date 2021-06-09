@@ -258,6 +258,10 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
 #endif
 
 Status Tensor::CreateFromFile(const std::string &path, std::shared_ptr<Tensor> *out) {
+  Path file(path);
+  if (file.IsDirectory()) {
+    RETURN_STATUS_UNEXPECTED("Invalid file found: " + path + ", should be file, but got directory.");
+  }
   std::ifstream fs;
   fs.open(path, std::ios::binary | std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + path);

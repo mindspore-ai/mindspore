@@ -30,7 +30,7 @@ namespace mindspore {
 namespace dataset {
 static int16_t BWBlock_i[TAB_SZ2][2][2];
 
-static double SrcValue(double *src, const int &y, const int &x) { return (src + y * 3)[x]; }
+static double SrcValue(const double *src, const int &y, const int &x) { return (src + y * 3)[x]; }
 
 static double &DstValue(double *dst, const int &y, const int &x) { return (dst + y * 3)[x]; }
 
@@ -206,12 +206,13 @@ static void RemapBilinearNotCurMoreC(int dx, const int16_t *HW, const uint16_t *
   }
 }
 
-static void RemapBilinearNotCur(const int &cn, const int &H1, int dx, const int16_t *HW, const uint16_t *FHW,
+static void RemapBilinearNotCur(const int &cn, const int &H1, int *dx_count, const int16_t *HW, const uint16_t *FHW,
                                 const int16_t *wblock, size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr) {
   const int kCur1CCount = 1;  // For RemapBilinearNotCur1C
   const int kCur2CCount = 2;  // For RemapBilinearNotCur2C
   const int kCur3CCount = 3;  // For RemapBilinearNotCur3C
   const int kCur4CCount = 4;  // For RemapBilinearNotCur4C
+  int &dx = *dx_count;
   if (cn == kCur1CCount) {
     for (; dx < H1; dx++, dst_ptr++) {
       RemapBilinearNotCur1C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
@@ -320,7 +321,7 @@ static void RemapBilinear(const LiteMat &_src, LiteMat &_dst, const LiteMat &_hw
         int length = 0;
         dst_ptr += length * cn;
         dx += length;
-        RemapBilinearNotCur(cn, H1, dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
+        RemapBilinearNotCur(cn, H1, &dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
       } else {
         if (cn == 1) {
           for (; dx < H1; dx++, dst_ptr++) {
