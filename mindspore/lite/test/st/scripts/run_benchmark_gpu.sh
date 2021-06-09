@@ -291,9 +291,9 @@ function Run_mindrt_parallel() {
 
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
         if [ $? = 0 ]; then
-            run_result='mindrt_parallel_CPU_GPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
         else
-            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
         fi
 
         ########## RUN CPU-GPU parallel
@@ -305,9 +305,9 @@ function Run_mindrt_parallel() {
 
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
         if [ $? = 0 ]; then
-            run_result='mindrt_parallel_CPU_CPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
         else
-            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
         fi
     done < ${models_mindrt_parallel_config}
 }

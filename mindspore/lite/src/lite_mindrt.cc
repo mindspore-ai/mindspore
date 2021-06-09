@@ -40,10 +40,6 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
     return;
   }
 
-  for (auto &arrow : output_data_arrows()) {
-    kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
-  }
-
   ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
                   *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
   if (ret != RET_OK) {
@@ -277,6 +273,7 @@ int LiteOpActor::SetInputData() {
     /* infershape done in runtime */
     dst_tensor->set_shape(src_tensor->shape());
     dst_tensor->set_format(src_tensor->format());
+    dst_tensor->ResetRefCount();
 
     if (src_tensor->data_type() != dst_tensor->data_type()) {
       CopyInputData(dst_tensor, src_tensor);

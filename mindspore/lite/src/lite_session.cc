@@ -378,7 +378,6 @@ void LiteSession::IsolateOutputTensor() {
     if (src_tensor->data_type() == kNumberTypeFloat16) {
       src_tensor->set_data_type(kNumberTypeFloat32);
     }
-    src_tensor->MallocData();
     src_tensor->set_ref_count(1);
 
     graph_output_map_.insert(std::make_pair(new_tensor, src_tensor));
