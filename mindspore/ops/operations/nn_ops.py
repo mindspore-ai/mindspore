@@ -3279,6 +3279,8 @@ class ResizeBilinear(PrimitiveWithInfer):
     def __init__(self, size, align_corners=False):
         validator.check_value_type("size", size, [tuple, list], self.name)
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        for i, value in enumerate(size):
+            validator.check_positive_int(value, f'{i}th value of size', self.name)
 
     def infer_shape(self, input_shape):
         validator.check("input shape rank", len(input_shape), "", 4, Rel.EQ, self.name)
