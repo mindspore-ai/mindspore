@@ -35,8 +35,7 @@
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
-#include "debug/rdr/recorder_manager.h"
-#include "debug/rdr/mem_address_recorder.h"
+#include "debug/rdr/running_data_recorder.h"
 
 namespace mindspore {
 namespace device {
@@ -389,18 +388,10 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
   bool result = GPUDeviceManager::GetInstance().SyncStream(streams_[stream_id]);
 #ifdef ENABLE_DUMP_IR
   if (!result) {
-    RecorderManager::Instance().TriggerAll();
+    mindspore::RDR::TriggerAll();
   }
   // clear RDR gpu memory info
-  if (RecorderManager::Instance().CheckRdrGPUMemIsRecord()) {
-    std::string name = "mem_address_list";
-    std::string submodule_name = "KERNEL";
-    auto recorder = RecorderManager::Instance().GetRecorder(submodule_name, name);
-    if (recorder != nullptr) {
-      auto mem_recorder = std::dynamic_pointer_cast<GPUMemAddressRecorder>(recorder);
-      mem_recorder->CleanUp();
-    }
-  }
+  mindspore::RDR::ClearGPUMemAddressInfo();
 #endif
   return result;
 }
