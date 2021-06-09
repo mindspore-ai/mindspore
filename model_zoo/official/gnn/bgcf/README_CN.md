@@ -343,18 +343,18 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 ```
 
 参数ckpt_file为必填项，
-`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+`file_format` 必须在 ["AIR", "MINDIR"]中选择。
 
 ### 在Ascend310执行推理
 
-在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
 
 ```shell
 # Ascend310 inference
 bash run_infer_310.sh [MINDIR_PATH] [DATASET_NAME] [NEED_PREPROCESS] [DEVICE_ID]
 ```
 
-- `NEED_PREPROCESS` 表示数据是否需要预处理，取值范围为 'y' 或者 'n'。
+- `NEED_PREPROCESS` 表示数据是否需要将推理中处理为mindrecord格式的原始数据集转换为二进制格式，取值范围为 'y' 或者 'n'。
 - `DEVICE_ID` 可选，默认值为0。
 
 ### 结果
