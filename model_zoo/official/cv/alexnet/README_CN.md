@@ -15,6 +15,10 @@
         - [训练](#训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出MindIR)
+        - [在Ascend310执行推理](#在Ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -261,7 +265,7 @@ train.py和config.py中主要参数如下：
 
 ## 推理过程
 
-### [导出MindIR](#contents)
+### 导出MindIR
 
 ```shell
 python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
@@ -277,10 +281,11 @@ python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_NAME] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
 ```
 
 - `MINDIR_PATH` mindir文件路径
+- `DATASET_NAME` 使用的推理数据集名称，默认为`cifar10`，可在`cifar10`或者`imagenet2012`中选择
 - `DATASET_PATH` 推理数据集路径
 - `NEED_PREPROCESS` 表示数据集是否需要预处理，可在`y`或者`n`中选择，如果选择`y`，cifar10数据集将被处理为bin格式。
 - `DEVICE_ID` 可选，默认值为0。
