@@ -27,8 +27,8 @@
 namespace mindspore {
 class InterThreadPool : public ThreadPool {
  public:
-  // create ThreadPool that contains inter thread and intra thread
-  static InterThreadPool *CreateThreadPool(size_t inter_thread_num, size_t intra_thread_num);
+  // create ThreadPool that contains actor thread and kernel thread
+  static InterThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num);
   // create ThreadPool that contains only actor thread
   static InterThreadPool *CreateThreadPool(size_t thread_num);
   ~InterThreadPool() override;
@@ -36,18 +36,18 @@ class InterThreadPool : public ThreadPool {
   void EnqueReadyActor(const ActorReference &actor);
 
  private:
-  explicit InterThreadPool(size_t inter_thread_num) { inter_thread_num_ = inter_thread_num; }
+  int CreateThreads(size_t actor_thread_num, size_t all_thread_num);
 
-  void ThreadAsyncRun(Worker *worker) override;
+  void AsyncRunMultiTask(Worker *worker);
 
-  void ActorThreadRun();
+  bool RunPoolQueueActorTask(Worker *worker);
+
+  bool PopActorFromQueue(ActorBase **actor);
+
+  size_t actor_thread_num_{0};
 
   std::mutex actor_mutex_;
-  std::condition_variable actor_cond_var_;
   std::queue<ActorReference> actor_queue_;
-  std::condition_variable finish_cond_var_;
-
-  std::atomic_bool exit_{false};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_INTER_THREADPOOL_H_
