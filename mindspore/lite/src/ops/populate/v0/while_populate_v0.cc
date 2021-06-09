@@ -39,7 +39,7 @@ OpParameter *PopulateWhileParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc WhileParemeter failed.";
     return nullptr;
   }
-  memset(while_paremeter, 0, sizeof(WhileParemeter));
+  memset(reinterpret_cast<void *>(while_paremeter), 0, sizeof(WhileParemeter));
 
   while_paremeter->op_parameter_.type_ = schema::PrimitiveType_While;
   while_paremeter->body_subgraph_index = while_prim->bodySubgraphIndex();

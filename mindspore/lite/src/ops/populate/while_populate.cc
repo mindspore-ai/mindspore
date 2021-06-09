@@ -38,7 +38,7 @@ OpParameter *PopulateWhileParemeter(const void *prim) {
     MS_LOG(ERROR) << "malloc WhileParemeter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(WhileParemeter));
+  memset(reinterpret_cast<void *>(param), 0, sizeof(WhileParemeter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->body_subgraph_index = value->body_subgraph_index();

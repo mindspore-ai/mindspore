@@ -118,4 +118,11 @@ static inline float16x8_t MS_ERFX8_F16(float16x8_t src) {
   dst[7] = erff(src[7]);
   return dst;
 }
+
+static inline float32x4_t MS_VMLAL_F16(float16x4_t x, float16x4_t dy, float32x4_t sum) {
+  float32x4_t x_fp32 = MS_CVT_F32_F16(x);
+  float32x4_t dy_fp32 = MS_CVT_F32_F16(dy);
+  return vmlaq_f32(sum, x_fp32, dy_fp32);
+}
+
 #endif  // MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_FP16_H_
