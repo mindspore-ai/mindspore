@@ -1599,6 +1599,7 @@ class Dataset:
         """Reset the dataset for next epoch."""
 
     def is_shuffled(self):
+        """Returns True if the dataset or its children is shuffled."""
         for input_dataset in self.children:
             if input_dataset.is_shuffled():
                 return True
@@ -1606,6 +1607,7 @@ class Dataset:
         return False
 
     def is_sharded(self):
+        """Returns True if the dataset or its children is sharded."""
         for input_dataset in self.children:
             if input_dataset.is_sharded():
                 return True
