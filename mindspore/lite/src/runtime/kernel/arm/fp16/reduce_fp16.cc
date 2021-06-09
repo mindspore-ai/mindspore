@@ -142,5 +142,29 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceFp16CPUKernel>)
+/* creator func */
+kernel::InnerKernel *CpuReduceFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_ReduceFusion);
+
+  auto reduce_param = reinterpret_cast<ReduceParameter *>(opParameter);
+  if (reduce_param->mode_ != ReduceMode_ReduceMean && reduce_param->mode_ != ReduceMode_ReduceMax) {
+    MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << reduce_param->mode_;
+    return nullptr;
+  }
+
+  kernel::InnerKernel *kernel = nullptr;
+  kernel = new (std::nothrow)
+    kernel::ReduceFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  if (kernel == nullptr) {
+    MS_LOG(DEBUG) << "Create reduce fp16 kernel failed.";
+    free(opParameter);
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ReduceFusion, CpuReduceFp16KernelCreator)
 }  // namespace mindspore::kernel

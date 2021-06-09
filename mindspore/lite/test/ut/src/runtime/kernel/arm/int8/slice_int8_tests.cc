@@ -62,7 +62,9 @@ TEST_F(TestSliceInt8, SliceInt8) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};
@@ -112,7 +114,9 @@ TEST_F(TestSliceInt8, Slice5D) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};
@@ -162,7 +166,9 @@ TEST_F(TestSliceInt8, Slice6D) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};
@@ -212,7 +218,9 @@ TEST_F(TestSliceInt8, Slice7D) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};
@@ -263,7 +271,9 @@ TEST_F(TestSliceInt8, Slice8D) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};
@@ -314,7 +324,9 @@ TEST_F(TestSliceInt8, SliceDiffQuantArgs) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {8, 23, 34, -25, -58, 53, -49, 60, 52, 41, -57, 34};
@@ -367,7 +379,9 @@ TEST_F(TestSliceInt8, SliceSingleThread) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};
@@ -419,7 +433,9 @@ TEST_F(TestSliceInt8, Slice4Thread) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[12] = {16, 45, 67, -49, -115, 106, -98, 119, 103, 81, -114, 68};

@@ -77,7 +77,10 @@ TEST_F(TestUnsqueezeInt8, Unsqueeze_1) {
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor->shape();
   ASSERT_EQ(output_tensor_shape, output_shape);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8};
   PrintData("output data", output, output_size);

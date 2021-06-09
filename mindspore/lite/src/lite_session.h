@@ -31,6 +31,7 @@
 #include "src/executor.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
+#include "include/delegate.h"
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
@@ -150,6 +151,7 @@ class LiteSession : public session::LiteSession {
 #elif GPU_VULKAN
   gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime> *vk_runtime_wrap_{nullptr};
 #endif
+  std::shared_ptr<Delegate> delegate_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

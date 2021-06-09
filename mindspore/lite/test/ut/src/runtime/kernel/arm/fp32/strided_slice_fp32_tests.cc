@@ -159,7 +159,10 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   auto *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   delete ctx;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 2, 0.000001));
@@ -209,7 +212,10 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   auto *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   delete ctx;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 4, 0.000001));
@@ -266,7 +272,10 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   auto *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   delete ctx;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 12, 0.000001));
@@ -323,7 +332,10 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   auto *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   delete ctx;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 8, 0.000001));
@@ -372,7 +384,10 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   auto *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   delete ctx;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 1, 0.000001));
@@ -429,7 +444,10 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   auto *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   delete ctx;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 5, 0.000001));
@@ -579,7 +597,10 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   auto *kernel =
     creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   delete ctx;
 
   ASSERT_EQ(0, CompareOutputData(output_data, correct, 490, 0.000001));

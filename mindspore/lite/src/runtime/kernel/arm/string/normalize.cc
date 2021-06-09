@@ -148,13 +148,6 @@ kernel::InnerKernel *CpuNormalizeKernelCreator(const std::vector<lite::Tensor *>
     free(parameter);
     return nullptr;
   }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
 

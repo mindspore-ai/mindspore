@@ -38,7 +38,8 @@ int TransOut2InputDimIndex(int out_dim_index, int left_pad, int in_dim, int offs
   if (out_dim_index < left_pad) {
     // left pad
     const int index_sum = left_pad + offset - 1;
-    return MSMAX(index_sum - out_dim_index, offset);
+    int in_index = MSMAX(index_sum - out_dim_index, offset);
+    return MSMIN(in_index, in_dim - 1);
   }
   out_dim_index -= left_pad;
   if (out_dim_index < in_dim) {

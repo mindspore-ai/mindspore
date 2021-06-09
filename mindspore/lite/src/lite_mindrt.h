@@ -185,6 +185,7 @@ class LiteSwitchOpActor : public LiteOpActor {
 int MindrtInit(bool subgraph_split = false);
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
 
-std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels);
+std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
+                                                        const lite::InnerContext *ctx);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_LITE_MINDRT_H_

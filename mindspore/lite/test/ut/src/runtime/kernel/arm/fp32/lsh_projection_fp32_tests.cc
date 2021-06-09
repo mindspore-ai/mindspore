@@ -66,7 +66,9 @@ TEST_F(TestLshProjectionFp32, Dense1DInputs) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   std::vector<int32_t> except_result = {0, 0, 0, 1, 0, 0};
@@ -106,7 +108,9 @@ TEST_F(TestLshProjectionFp32, Sparse1DInputs) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   std::vector<int32_t> except_result = {0, 5, 8};
@@ -150,7 +154,9 @@ TEST_F(TestLshProjectionFp32, Sparse3DInputs) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   std::vector<int32_t> except_result = {2, 5, 9};

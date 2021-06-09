@@ -79,14 +79,6 @@ kernel::InnerKernel *CpuNegGradFp32KernelCreator(const std::vector<lite::Tensor 
     free(param);
     return nullptr;
   }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
 

@@ -88,6 +88,8 @@ void TestNMSFp32::Init(const std::vector<int> &box_tensor_shape, float *box_data
   ASSERT_NE(creator_, nullptr);
   kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
   ASSERT_NE(kernel_, nullptr);
+  auto ret = kernel_->Init();
+  EXPECT_EQ(0, ret);
 }
 
 TEST_F(TestNMSFp32, TestCase1) {

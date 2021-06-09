@@ -88,7 +88,10 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   ASSERT_NE(kernel_obj, nullptr);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel_obj->workspace_size());
 
-  kernel_obj->Run();
+  auto ret = kernel_obj->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel_obj->Run();
+  EXPECT_EQ(0, ret);
   std::cout << "==========dx==========\n";
   auto dx = reinterpret_cast<float *>(outputs[0]->MutableData());
   for (int i = 0; i < 7; i++) std::cout << dx[i] << " ";
@@ -188,6 +191,9 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   }
   float *curr_mean = reinterpret_cast<float *>(mean_tensor.MutableData());
   float *curr_var = reinterpret_cast<float *>(var_tensor.MutableData());
+
+  auto ret = kernel_obj->Init();
+  EXPECT_EQ(0, ret);
 
   kernel_obj->Train();
   kernel_obj->set_trainable(true);

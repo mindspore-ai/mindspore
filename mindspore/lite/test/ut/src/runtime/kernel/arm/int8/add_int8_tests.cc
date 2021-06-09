@@ -60,7 +60,9 @@ TEST_F(TestQuantizedAdd, Add) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[10] = {-64, 76, 13, -13, -64, 76, 13, -13, -64, 76};  // -0.5 0.6 0.1 -0.1

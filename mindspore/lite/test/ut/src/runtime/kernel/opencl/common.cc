@@ -119,6 +119,12 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
     free(op_parameter);
     FAIL();
   }
+  auto ret = inner_kernel->Init();
+  if (ret != RET_OK) {
+    std::cerr << "kernel init failed.";
+    free(op_parameter);
+    FAIL();
+  }
   std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
   auto *kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
   if (kernel == nullptr) {
@@ -275,6 +281,12 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   auto *inner_kernel = creator(kernel_inputs, {&output}, op_parameter, nullptr, key);
   if (inner_kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
+    free(op_parameter);
+    FAIL();
+  }
+  auto ret = inner_kernel->Init();
+  if (ret != RET_OK) {
+    std::cerr << "kernel init failed.";
     free(op_parameter);
     FAIL();
   }

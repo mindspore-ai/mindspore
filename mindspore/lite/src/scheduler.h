@@ -19,6 +19,7 @@
 
 #include <utility>
 #include <vector>
+#include <memory>
 #include <map>
 #include "src/sub_graph_kernel.h"
 #include "src/inner_context.h"
@@ -26,21 +27,29 @@
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #endif
+#include "include/delegate.h"
 
 namespace mindspore::lite {
 class Scheduler {
  public:
-  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors, bool is_train_session)
-      : context_(ctx), src_model_(src_model), src_tensors_(src_tensors), is_train_session_(is_train_session) {}
+  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors, bool is_train_session,
+            std::shared_ptr<Delegate> delegate = nullptr)
+      : context_(ctx),
+        src_model_(src_model),
+        src_tensors_(src_tensors),
+        is_train_session_(is_train_session),
+        delegate_(delegate) {}
 #if SUPPORT_NPU
   Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors, bool is_train_session,
-            NPUManager *npu_manager = nullptr, NPUPassManager *npu_pass_manager = nullptr)
+            NPUManager *npu_manager = nullptr, NPUPassManager *npu_pass_manager = nullptr,
+            std::shared_ptr<Delegate> delegate = nullptr)
       : context_(ctx),
         src_model_(src_model),
         src_tensors_(src_tensors),
         npu_manager_(npu_manager),
         npu_pass_manager_(npu_pass_manager),
-        is_train_session_(is_train_session) {}
+        is_train_session_(is_train_session),
+        delegate_(delegate) {}
 #endif
   ~Scheduler() = default;
 
@@ -71,6 +80,9 @@ class Scheduler {
 
   int FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel);
+
+  int ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels);
+
   // schedule a partial node to a subgraph_kernel
   kernel::LiteKernel *SchedulePartialToKernel(const lite::Model::Node *src_node);
   // schedule a node to a kernel
@@ -120,6 +132,8 @@ class Scheduler {
   std::vector<size_t> graph_output_node_indexes_;
   std::map<int, OpParameter *> op_parameters_;
   bool is_train_session_ = false;
+  std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
+  std::shared_ptr<Delegate> delegate_ = nullptr;
 };
 }  // namespace mindspore::lite
 

@@ -60,7 +60,9 @@ TEST_F(TestL2NormInt8, norm) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   int8_t expect[10] = {-93, -70, -47, -23, 0, 15, 38, 53, 61, 91};
   for (int i = 0; i < 10; ++i) {

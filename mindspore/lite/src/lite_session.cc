@@ -383,6 +383,21 @@ void LiteSession::IsolateOutputTensor() {
 
     /* set new tensor for calculate */
     for (auto subgraph : kernels_) {
+      /* subgraph input and output */
+      for (size_t i = 0; i < subgraph->in_tensors().size(); i++) {
+        if (subgraph->in_tensors()[i] == src_tensor) {
+          subgraph->set_in_tensor(new_tensor, i);
+        }
+      }
+      for (size_t i = 0; i < subgraph->out_tensors().size(); i++) {
+        if (subgraph->out_tensors()[i] == src_tensor) {
+          subgraph->set_out_tensor(new_tensor, i);
+        }
+      }
+
+      if (subgraph->desc().delegate != nullptr) {
+        continue;
+      }
       /* node input and output */
       auto nodes = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
       for (size_t i = 0; i < nodes.size(); i++) {
@@ -396,18 +411,6 @@ void LiteSession::IsolateOutputTensor() {
           if (node->in_tensors()[j] == src_tensor) {
             node->set_in_tensor(new_tensor, j);
           }
-        }
-      }
-
-      /* subgraph input and output */
-      for (size_t i = 0; i < subgraph->in_tensors().size(); i++) {
-        if (subgraph->in_tensors()[i] == src_tensor) {
-          subgraph->set_in_tensor(new_tensor, i);
-        }
-      }
-      for (size_t i = 0; i < subgraph->out_tensors().size(); i++) {
-        if (subgraph->out_tensors()[i] == src_tensor) {
-          subgraph->set_out_tensor(new_tensor, i);
         }
       }
     }
@@ -450,6 +453,9 @@ bool LiteSession::IfUseMindrtExecutor() {
 #endif
 
   for (auto kernel : kernels_) {
+    if (kernel->desc().delegate != nullptr) {
+      continue;
+    }
     auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
     if (sub_graph->nodes()[0]->type() == schema::PrimitiveType_Merge) {
       use_mindrt_run = false; /* control-flow model */
@@ -489,9 +495,9 @@ int LiteSession::CompileGraph(Model *model) {
   }
   // scheduler kernels
 #if SUPPORT_NPU
-  Scheduler scheduler(context_, model, &tensors_, is_train_session_, npu_manager_, npu_pass_manager_);
+  Scheduler scheduler(context_, model, &tensors_, is_train_session_, npu_manager_, npu_pass_manager_, delegate_);
 #else
-  Scheduler scheduler(context_, model, &tensors_, is_train_session_);
+  Scheduler scheduler(context_, model, &tensors_, is_train_session_, delegate_);
 #endif
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
@@ -529,14 +535,13 @@ int LiteSession::CompileGraph(Model *model) {
 #ifdef ENABLE_MINDRT
   }
 #endif
-
-  if (nullptr == executor_) {
+  if (executor_ == nullptr) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);
     return RET_ERROR;
   }
 
-  ret = executor_->Prepare(this->kernels_, this->inputs_, this->outputs_);
+  ret = executor_->Prepare(this->kernels_, this->inputs_, this->outputs_, context_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare executor failed: " << ret;
     is_running_.store(false);
@@ -555,10 +560,14 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   // find in_kernels and out_kernels for subgraphs
   for (auto kernel : this->kernels_) {
     kernel->FindInoutKernels(this->kernels_);
-    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-    MS_ASSERT(sub_graph != nullptr);
-    auto kernel_in_subgraph = sub_graph->nodes();
-    all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
+    if (kernel->desc().delegate != nullptr) {
+      all_kernels.push_back(kernel);
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      MS_ASSERT(sub_graph != nullptr);
+      auto kernel_in_subgraph = sub_graph->nodes();
+      all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
+    }
   }
 
   if (!use_mindrt_run) {
@@ -645,6 +654,16 @@ int LiteSession::Init(const Context *context) {
     MS_LOG(ERROR) << "Init Context failed";
     is_running_.store(false);
     return ret;
+  }
+  if (context->delegate != nullptr) {
+    delegate_ = context->delegate;
+  }
+  if (delegate_ != nullptr) {
+    auto delegate_ret = delegate_->Init();
+    if (delegate_ret != RET_OK) {
+      MS_LOG(ERROR) << "Delegate init failed";
+      return RET_ERROR;
+    }
   }
   ret = KernelRegistry::GetInstance()->Init();
   if (ret != RET_OK) {

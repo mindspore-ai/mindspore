@@ -604,6 +604,8 @@ using TensorPtrVector = Vector<mindspore::schema::Tensor *>;
 using Uint32Vector = Vector<uint32_t>;
 class Allocator;
 using AllocatorPtr = void *;
+class Delegate;
+using DelegatePtr = void *;
 using DeviceContextVector = Vector<lite::DeviceContext>;
 using KernelCallBack = void (*)(void *, void *);
 #else
@@ -612,6 +614,9 @@ using KernelCallBack = void (*)(void *, void *);
 /// \note List public class and interface for reference.
 class Allocator;
 using AllocatorPtr = std::shared_ptr<Allocator>;
+
+class Delegate;
+using DelegatePtr = std::shared_ptr<Delegate>;
 
 using TensorPtrVector = std::vector<mindspore::schema::Tensor *>;
 using Uint32Vector = std::vector<uint32_t>;

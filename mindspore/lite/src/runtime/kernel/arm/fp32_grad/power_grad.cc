@@ -96,14 +96,6 @@ kernel::InnerKernel *CpuPowerGradFp32KernelCreator(const std::vector<lite::Tenso
     free(opParameter);
     return nullptr;
   }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
 

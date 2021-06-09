@@ -94,13 +94,6 @@ kernel::InnerKernel *CpuSmoothL1LossFp32KernelCreator(const std::vector<lite::Te
     MS_LOG(ERROR) << "new SmoothL1Loss failed";
     return nullptr;
   }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
 

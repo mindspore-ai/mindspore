@@ -156,7 +156,10 @@ TEST_F(LstmFp32, LstmForwardFp32Accuracy) {
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   // op run
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::cout << "==================output data=================" << std::endl;
   std::vector<float> output0_data = {-0.0702, 0.1225,  0.0876,  -0.0357, -0.0227, -0.2294,
@@ -304,7 +307,10 @@ TEST_F(LstmFp32, LstmBackwardFp32Accuracy) {
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   // op run
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::cout << "==================output data=================" << std::endl;
   std::vector<float> output0_data = {-0.2922, -0.1416, 0.0077,  -0.0422, -0.0585, 0.2061,  -0.2385, -0.0146,

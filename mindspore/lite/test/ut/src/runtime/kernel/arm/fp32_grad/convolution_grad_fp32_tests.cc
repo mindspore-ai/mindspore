@@ -119,6 +119,9 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -196,6 +199,8 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop
@@ -272,6 +277,8 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
   kernel->Run();
 
@@ -345,6 +352,8 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -420,6 +429,8 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop
@@ -496,6 +507,8 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   int loop_count = 100;
@@ -673,6 +686,8 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop
@@ -780,6 +795,8 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
   mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop

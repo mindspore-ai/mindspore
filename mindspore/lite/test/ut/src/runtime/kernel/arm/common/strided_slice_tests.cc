@@ -78,7 +78,9 @@ TEST_F(TestStridedSlice, StridedSlice) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   float expect[2] = {0.2390374, 0.05051243};
   ASSERT_NEAR(output_data[0], expect[0], 0.001);
@@ -120,7 +122,9 @@ TEST_F(TestStridedSlice, 7d) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   float expect[2] = {0.92039955, 0.49574447};
   ASSERT_NEAR(output_data[0], expect[0], 0.001);
@@ -163,7 +167,9 @@ TEST_F(TestStridedSlice, 8d) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   int8_t expect[4] = {-9, -7};
   for (unsigned int i = 0; i < sizeof(expect); ++i) {
@@ -206,7 +212,9 @@ TEST_F(TestStridedSlice, FastRun7d) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   float expect[4] = {0.92039955, 0.49574447, 0.02647042, 0.4566604};
   ASSERT_NEAR(output_data[0], expect[0], 0.001);
@@ -251,7 +259,9 @@ TEST_F(TestStridedSlice, FastRun7dSingleThread) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   float expect[4] = {0.92039955, 0.49574447, 0.02647042, 0.4566604};
   ASSERT_NEAR(output_data[0], expect[0], 0.001);
@@ -295,7 +305,9 @@ TEST_F(TestStridedSlice, StridedSliceInt8) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   int8_t expect[4] = {-6, -5, 7, 8};
   for (unsigned int i = 0; i < sizeof(expect); ++i) {

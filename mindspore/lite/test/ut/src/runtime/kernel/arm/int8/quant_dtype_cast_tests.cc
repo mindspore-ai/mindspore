@@ -70,7 +70,10 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   for (int i = 0; i < out_size; ++i) {
     std::cout << output[i] << " ";
@@ -116,7 +119,10 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   for (int i = 0; i < out_size; ++i) {
     std::cout << output[i] << " ";
