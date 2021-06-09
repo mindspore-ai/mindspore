@@ -443,11 +443,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
 bool LiteSession::IfUseMindrtExecutor() {
   bool use_mindrt_run = true;
 #ifdef ENABLE_MINDRT
-#ifdef SUPPORT_TRAIN
-  use_mindrt_run = false;
-#else
-  use_mindrt_run = true;
-#endif
+  use_mindrt_run = (is_train_session_) ? false : true;
 #else
   use_mindrt_run = false;
 #endif
