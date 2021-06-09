@@ -73,7 +73,6 @@ message RegisterMessage {
 
 message RegisterRespMessage {
   string node_id = 1;
-  uint32 rank_id = 2;
 }
 
 message HeartbeatMessage {
@@ -123,6 +122,8 @@ message SendMetadataMessage {
   int32 server_num = 3;
   // the current cluster state.
   ClusterState cluster_state = 4;
+  // The rank id of the node that received this message.
+  uint32 rank_id = 5;
 }
 
 message FinishMessage {
@@ -163,13 +164,13 @@ message ScaleInDoneMessage {
   string node_id = 1;
 }
 
-// This message is sent to the scheduler to notify the completion of scale out
+// This message is sent by the worker/server to the scheduler, and the scheduler is broadcast the event to all other nodes.
 message EventMessage {
   uint32 event = 1;
   string node_id = 2;
 }
 
-// schedulerd broadcasts the event to all other nodes through this message
+// scheduler broadcasts the event to all other nodes through this message
 message EventRespMessage {
   uint32 event = 1;
 }

@@ -127,7 +127,6 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
 
   RegisterRespMessage register_resp_message;
   register_resp_message.set_node_id(node_id);
-  register_resp_message.set_rank_id(rank_id);
 
   server->SendMessage(conn, meta, Protos::PROTOBUF, register_resp_message.SerializeAsString().data(),
                       register_resp_message.ByteSizeLong());
@@ -137,8 +136,9 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
     auto node_infos = node_manager_.nodes_info();
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
-      SendMetadata(client);
-      MS_LOG(INFO) << "Send meta data to" << kvs.first;
+      SendMetadata(client, kvs.second.rank_id_);
+      MS_LOG(INFO) << "Send meta data to node id:" << kvs.first
+                   << ", The rank id of the node that received this message is:" << kvs.second.rank_id_;
     }
     wait_start_cond_.notify_all();
   }
@@ -252,7 +252,7 @@ void SchedulerNode::ProcessSendEvent(std::shared_ptr<TcpServer> server, std::sha
   }
 }
 
-void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client) {
+void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint32_t rank_id) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
   message_meta->set_cmd(NodeCommand::SEND_METADATA);
@@ -262,6 +262,7 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client) {
   send_metadata_message.set_worker_num(node_manager_.worker_num());
   send_metadata_message.set_server_num(node_manager_.server_num());
   send_metadata_message.set_cluster_state(node_manager_.GetClusterState());
+  send_metadata_message.set_rank_id(rank_id);
 
   *send_metadata_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
