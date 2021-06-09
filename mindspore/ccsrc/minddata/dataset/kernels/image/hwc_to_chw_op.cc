@@ -33,7 +33,9 @@ Status HwcToChwOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
   TensorShape out = TensorShape{in[2], in[0], in[1]};
   if (inputs[0].Rank() == 3) outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kMDUnexpectedError, "HWC2CHW: invalid input shape.");
+  return Status(
+    StatusCode::kMDUnexpectedError,
+    "HWC2CHW: invalid input shape, expected 3D input, but got input dimension is:" + std::to_string(inputs[0].Rank()));
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -403,11 +403,15 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   }
   // account for integer overflow
   if (y < 0 || (y + h) > input_cv->shape()[0] || (y + h) < 0) {
-    RETURN_STATUS_UNEXPECTED("Crop: invalid y coordinate value for crop");
+    RETURN_STATUS_UNEXPECTED(
+      "Crop: invalid y coordinate value for crop, "
+      "y coordinate value exceeds the boundary of the image.");
   }
   // account for integer overflow
   if (x < 0 || (x + w) > input_cv->shape()[1] || (x + w) < 0) {
-    RETURN_STATUS_UNEXPECTED("Crop: invalid x coordinate value for crop");
+    RETURN_STATUS_UNEXPECTED(
+      "Crop: invalid x coordinate value for crop, "
+      "x coordinate value exceeds the boundary of the image.");
   }
   try {
     TensorShape shape{h, w};
@@ -751,7 +755,9 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
       Normalize<double>(input, output, mean, std);
       break;
     default:
-      RETURN_STATUS_UNEXPECTED("Normalize: unsupported type.");
+      RETURN_STATUS_UNEXPECTED(
+        "Normalize: unsupported type, currently supported types include "
+        "[bool,int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t,float16,float,double].");
   }
 
   if (input->Rank() == MIN_IMAGE_DIMENSION) {
@@ -965,7 +971,7 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 
 Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue) {
   if (hue > 0.5 || hue < -0.5) {
-    RETURN_STATUS_UNEXPECTED("AdjustHue: hue value is not in [-0.5, 0.5].");
+    RETURN_STATUS_UNEXPECTED("AdjustHue: invalid parameter, hue is not within [-0.5, 0.5].");
   }
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);

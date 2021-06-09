@@ -244,11 +244,15 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
   // account for integer overflow
   if (y < 0 || (y + h) > input->shape()[0] || (y + h) < 0) {
-    RETURN_STATUS_UNEXPECTED("Crop: invalid y coordinate value for crop");
+    RETURN_STATUS_UNEXPECTED(
+      "Crop: invalid y coordinate value for crop"
+      "y coordinate value exceeds the boundary of the image.");
   }
   // account for integer overflow
   if (x < 0 || (x + w) > input->shape()[1] || (x + w) < 0) {
-    RETURN_STATUS_UNEXPECTED("Crop: invalid x coordinate value for crop");
+    RETURN_STATUS_UNEXPECTED(
+      "Crop: invalid x coordinate value for crop"
+      "x coordinate value exceeds the boundary of the image.");
   }
 
   try {

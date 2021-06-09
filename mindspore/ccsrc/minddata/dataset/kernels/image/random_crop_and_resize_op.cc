@@ -69,9 +69,9 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {
   *crop_width = w_in;
   *crop_height = h_in;
-  CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "RandomCropAndResize: Width is 0");
-  CHECK_FAIL_RETURN_UNEXPECTED(h_in != 0, "RandomCropAndResize: Height is 0");
-  CHECK_FAIL_RETURN_UNEXPECTED(aspect_lb_ > 0, "RandomCropAndResize: aspect lower bound must be greater than zero");
+  CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "RandomCropAndResize: Width cannot be 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(h_in != 0, "RandomCropAndResize: Height cannot be 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(aspect_lb_ > 0, "RandomCropAndResize: aspect lower bound must be greater than zero.");
   for (int32_t i = 0; i < max_iter_; i++) {
     double const sample_scale = rnd_scale_(rnd_);
     // In case of non-symmetrical aspect ratios, use uniform distribution on a logarithmic sample_scale.
