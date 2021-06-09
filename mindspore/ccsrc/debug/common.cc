@@ -275,7 +275,7 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
   static size_t g_id = 0;
   std::ostringstream s;
   auto i = filename.rfind(suffix);
-  int spaces = 4;
+  const int spaces = 4;
   if (i >= filename.size()) {
     s << filename;
     s << "_" << std::setfill('0') << std::setw(spaces) << g_id;
