@@ -187,14 +187,19 @@ class Primitive(Primitive_):
 
         Examples:
             >>> class AddN(Primitive):
-            >>>     @prim_attr_register
-            >>>     def __init__(self):
-            >>>         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
-            >>>     def check_elim(self, inputs):
-            >>>         if len(inputs) != 1:
-            >>>             return (False, None)
-            >>>         if isinstance(inputs[0], Tensor):
-            >>>             return (True, inputs[0])
+            ...     @prim_attr_register
+            ...     def __init__(self):
+            ...         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
+            ...     def check_elim(self, inputs):
+            ...         if len(inputs) != 1:
+            ...             return (False, None)
+            ...         if isinstance(inputs[0], Tensor):
+            ...             return (True, inputs[0])
+            >>> addn = AddN()
+            >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32
+            >>> output = addn.check_elim((input_x,))
+            >>> print(output)
+            (True, Tensor(shape = [3], dtype = Float32, value = [1，0000000e+00,2，0000000e+00，3，0000000e+00]))
     """
         return (False, None)
 
