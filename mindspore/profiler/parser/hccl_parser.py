@@ -358,7 +358,7 @@ class HcclParser:
         rdma_communication_wait_time = rdma_communication_wait_time/1e3
         rdma_communication_size = rdma_communication_size/1e3
         rdma_communication_time = rdma_communication_time/1e3
-        rdma_bandwidth = rdma_communication_size/rdma_communication_time/1e3 \
+        rdma_bandwidth = rdma_communication_size/(rdma_communication_time/1e3) \
             if rdma_communication_size else 0
 
         return [rdma_communication_time, rdma_communication_size, rdma_bandwidth, rdma_communication_wait_time]
@@ -384,7 +384,7 @@ class HcclParser:
         # The unit of sdma_communication_size is k_byte and The unit of sdma_communication_time is ms.
         sdma_communication_time = sdma_communication_time/1e3
         sdma_communication_size = sdma_communication_size/1e3
-        sdma_bandwidth = sdma_communication_size/sdma_communication_time/1e3 \
+        sdma_bandwidth = sdma_communication_size/(sdma_communication_time/1e3) \
             if sdma_communication_size else 0
         return [sdma_communication_time, sdma_communication_size, sdma_bandwidth]
 
