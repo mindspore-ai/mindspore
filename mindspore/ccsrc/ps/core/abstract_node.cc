@@ -30,14 +30,14 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   register_message.set_ip(node_info_.ip_);
   register_message.set_port(node_info_.port_);
 
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " begin to register to the scheduler!";
+
   if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, register_message.SerializeAsString().data(),
                        register_message.ByteSizeLong())) {
     MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                       << " the node id:" << node_info_.node_id_ << " register timeout!";
   }
-
-  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is registering to scheduler!";
 }
 
 void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
@@ -94,12 +94,6 @@ void AbstractNode::set_ready_for_scale_in() {
   if (!is_current_node_scale_in_) {
     Register(client_to_scheduler_);
     connected_nodes_.clear();
-  } else {
-    current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
-    node_info_.rank_id_ = UINT32_MAX;
-    SendScaleInFinishMessage(client_to_scheduler_, kScaleInTimeoutInSenconds);
-    MS_LOG(WARNING) << "[Event]:Trigger cluster scale in done event.";
-    OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
 }
 
@@ -150,7 +144,7 @@ void AbstractNode::BroadcastEvent(const uint32_t &event) {
   if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF, event_message.SerializeAsString().data(),
                        event_message.ByteSizeLong())) {
     MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " scale_in_done timeout!";
+                      << " the node id:" << node_info_.node_id_ << " send event timeout!";
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -493,6 +487,11 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
+  if (is_current_node_scale_in_) {
+    MS_LOG(WARNING) << "Trigger cluster scale in done event.";
+    OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
+    return;
+  }
   SendMetadataMessage send_meta_message;
   send_meta_message.ParseFromArray(data, size);
   worker_num_ = send_meta_message.worker_num();
@@ -567,20 +566,6 @@ void AbstractNode::ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared
   uint32_t event = event_resp_message.event();
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   OnCustomEventCallback(event);
-}
-
-void AbstractNode::SendScaleInFinishMessage(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout) {
-  auto meta = std::make_shared<MessageMeta>();
-  meta->set_cmd(NodeCommand::SCALE_IN_FINISH);
-
-  std::string finish_message = node_info_.node_id_;
-
-  MS_LOG(INFO) << "The scale in node id:" << node_info_.node_id_ << " send a scale in finish message to scheduler.";
-
-  if (!SendMessageSync(client, meta, Protos::RAW, finish_message.data(), finish_message.length(), timeout)) {
-    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                    << " the node id:" << node_info_.node_id_ << " send scale in finish Message timeout!";
-  }
 }
 
 void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
@@ -699,7 +684,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
     return connected_nodes_[rank_id];
   } else {
     if (nodes_address_.find(std::make_pair(NodeRole::SERVER, rank_id)) == nodes_address_.end()) {
-      MS_LOG(EXCEPTION) << "Worker node Fetch servers failed!";
+      MS_LOG(EXCEPTION) << "Worker receive nodes info from scheduler failed!";
     }
     std::string ip = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].first;
     uint16_t port = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].second;
@@ -847,7 +832,6 @@ void AbstractNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_OUT_DONE] = nullptr;
   handlers_[NodeCommand::SCALE_IN_DONE] = nullptr;
   handlers_[NodeCommand::SEND_EVENT] = nullptr;
-  handlers_[NodeCommand::SCALE_IN_FINISH] = nullptr;
 }
 
 void AbstractNode::InitServerHandler() {

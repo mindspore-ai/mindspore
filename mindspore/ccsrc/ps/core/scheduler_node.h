@@ -78,10 +78,6 @@ class SchedulerNode : public Node {
                      std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
   void ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
                             std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  // After receiving the scale in node's scale_in_finish message,then wait for all others nodes are registered to the
-  // scheduler.
-  void ProcessScaleInFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                            std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
 
   // Process scale_out_done messages from workers/servers
   void ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,

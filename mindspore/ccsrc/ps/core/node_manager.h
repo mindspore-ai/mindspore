@@ -86,6 +86,7 @@ class NodeManager {
   bool IsAllNodesScaleInDone();
 
   std::unordered_map<std::string, NodeInfo> &nodes_info();
+  std::unordered_map<std::string, NodeInfo> &registered_nodes_info();
   // After all the nodes are registered successfully, the nodes info can be updated.
   void UpdateNodesInfo();
 

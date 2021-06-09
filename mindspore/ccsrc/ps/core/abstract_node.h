@@ -138,10 +138,6 @@ class AbstractNode : public Node {
   void ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
                     const void *data, size_t size);
 
-  // The scale in node needs to send a scale_in_finish message to the scheduler before trigger the event:
-  // CLUSTER_SCALE_IN_DONE.
-  void SendScaleInFinishMessage(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout);
-
   void StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client);
   void UpdateSchedulerTime();
   bool CheckSchedulerTimeout() const;
