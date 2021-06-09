@@ -178,7 +178,9 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Calculate random labels
   std::vector<int64_t> rand_indx;
-  for (int64_t i = 0; i < images.size(); i++) rand_indx.push_back(i);
+  CHECK_FAIL_RETURN_UNEXPECTED(images.size() <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
+                               "The size of \"images\" must not be more than \"INT64_MAX\".");
+  for (int64_t idx = 0; idx < static_cast<int64_t>(images.size()); idx++) rand_indx.push_back(idx);
   std::shuffle(rand_indx.begin(), rand_indx.end(), rnd_);
   std::gamma_distribution<float> gamma_distribution(alpha_, 1);
   std::uniform_real_distribution<double> uniform_distribution(0.0, 1.0);
@@ -190,7 +192,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   int64_t num_classes = label_shape.size() == value_three ? label_shape[dimension_two] : label_shape[1];
 
   // Compute labels and images
-  for (int64_t i = 0; i < image_shape[0]; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(image_shape[0]); i++) {
     // Calculating lambda
     // If x1 is a random variable from Gamma(a1, 1) and x2 is a random variable from Gamma(a2, 1)
     // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)
@@ -203,8 +205,8 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
       // Compute image
       RETURN_IF_NOT_OK(ComputeImage(input, rand_indx[i], lam, &label_lam, &images[i]));
       // Compute labels
-      RETURN_IF_NOT_OK(
-        ComputeLabel(input, rand_indx[i], i, row_labels, num_classes, label_shape.size(), label_lam, &out_labels));
+      RETURN_IF_NOT_OK(ComputeLabel(input, rand_indx[i], static_cast<int64_t>(i), row_labels, num_classes,
+                                    label_shape.size(), label_lam, &out_labels));
     }
   }
 
