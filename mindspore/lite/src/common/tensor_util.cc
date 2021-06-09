@@ -231,6 +231,10 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
                     << "check the model and assign the input shape with method Resize().";
       return RET_ERROR;
     }
+    if (tensor->format() != mindspore::NHWC) {
+      MS_LOG(ERROR) << "model input's format mey be changed, which should keep default value NHWC";
+      return RET_FORMAT_ERR;
+    }
   }
   return RET_OK;
 }

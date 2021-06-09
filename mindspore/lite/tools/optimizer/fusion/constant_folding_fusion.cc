@@ -145,6 +145,9 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
                                   lite::InnerContext *context) {
   MS_ASSERT(cnode != nullptr && context != nullptr);
   auto prim_t = lite::GetPrimitiveT(cnode->input(0));
+  if (prim_t == nullptr) {
+    return nullptr;
+  }
   flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
   auto prim = lite::ConvertToPrimitive(prim_t.get(), &fbb);
   if (prim == nullptr) {
@@ -283,6 +286,10 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
   for (size_t i = 1; i < any_node->inputs().size(); i++) {
     auto input_node = any_node->input(i);
     if (!input_node->isa<CNode>() || !CheckIsAllInputsParam(input_node)) {
+      continue;
+    }
+    if (CheckPrimitiveType(input_node, prim::kPrimTupleGetItem) ||
+        CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
       continue;
     }
     auto input_cnode = input_node->cast<CNodePtr>();

@@ -598,13 +598,11 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
-  STATUS ret;
-  //  CheckGraphInputFormat(inputs_);
-  //  if (ret != RET_OK) {
-  //    MS_LOG(ERROR) << "model input's format mey be changed, which should be NHWC.";
-  //    return ret;
-  //  }
-
+  STATUS ret = CheckTensorsInvalid(inputs_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CheckInputs failed.";
+    return ret;
+  }
   MS_ASSERT(this->context_);
   if (before == nullptr && after == nullptr) {
     ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());

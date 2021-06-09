@@ -24,11 +24,6 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                   const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(allocator != nullptr);
-  auto ret = CheckTensorsInvalid(in_tensors);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CheckInputs failed";
-    return ret;
-  }
   // clear ref_count
   for (auto *kernel : kernels) {
     for (auto *tensor : kernel->in_tensors()) {
@@ -45,7 +40,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
     auto cur_kernel = kernel_queue.front();
     kernel_queue.pop();
     MS_ASSERT(cur_kernel != nullptr);
-    ret = cur_kernel->Execute(before, after);
+    int ret = cur_kernel->Execute(before, after);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "run kernel failed, name: " << cur_kernel->name();
       return ret;
