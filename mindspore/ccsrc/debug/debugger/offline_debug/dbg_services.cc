@@ -218,8 +218,10 @@ std::string GetTensorFullName(tensor_info_t info) {
   if (info.is_parameter) {
     // scopes in node name are separated by '/'
     // use the name without scope if truncate is true
-    std::size_t found = node_name.find_last_of("/");
-    node_name = node_name.substr(found + 1);
+    auto found = node_name.find_last_of("/");
+    if (found != std::string::npos) {
+      node_name = node_name.substr(found + 1);
+    }
   }
   return node_name + ":" + std::to_string(info.slot);
 }

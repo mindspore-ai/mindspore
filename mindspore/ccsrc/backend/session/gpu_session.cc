@@ -445,6 +445,9 @@ void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
   if (debugger_) {
     debugger_->PreExecute(kernel_graph, graph_sum_);
   }
+
+  DumpSetup(kernel_graph);
+
 #if ENABLE_CPU && ENABLE_GPU
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
@@ -459,13 +462,12 @@ void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY)) {
     Summary(kernel_graph.get());
   }
-  bool dump_enabled = DumpDataEnabledIteration();
+
   // debug used for dump
-  if (debugger_ && dump_enabled) {
+  if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
     Dump(kernel_graph);
-  } else {
-    DumpJsonParser::GetInstance().UpdateDumpIter();
   }
+
   if (debugger_) {
     debugger_->PostExecute();
   }
@@ -598,6 +600,13 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   if (kOpCacheAllowList.find(op_run_info->op_name) != kOpCacheAllowList.end()) {
     run_op_graphs_.erase(graph_info);
   }
+}
+
+void GPUSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_LOG(INFO) << "Start!";
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  E2eDump::DumpSetup(kernel_graph.get(), rank_id_);
+  MS_LOG(INFO) << "Finish!";
 }
 
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {

@@ -148,6 +148,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   bool TensorExistsInCurrent(const std::string &tensor_name);
 
+  // check if dump using debugger backend is enabled
+  bool CheckDebuggerDumpEnabled() const;
+
  private:
   // private constructor for singleton
   Debugger();
@@ -158,9 +161,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void EnableDebugger();
 
   void SetOpOverflowBinPath(uint32_t graph_id);
-
-  // check if dump using debugger backend is enabled
-  bool CheckDebuggerDumpEnabled() const;
 
   // check if debugger enabled
   bool CheckDebuggerEnabled() const;

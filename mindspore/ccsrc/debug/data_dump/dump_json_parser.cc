@@ -206,16 +206,6 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
 }
 
 void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
-  auto common_dump_settings = CheckJsonKeyExist(content, kCommonDumpSettings);
-  auto dump_mode = CheckJsonKeyExist(*common_dump_settings, kDumpMode);
-  auto path = CheckJsonKeyExist(*common_dump_settings, kPath);
-  auto net_name = CheckJsonKeyExist(*common_dump_settings, kNetName);
-  auto iteration = CheckJsonKeyExist(*common_dump_settings, kIteration);
-  auto input_output = CheckJsonKeyExist(*common_dump_settings, kInputOutput);
-  auto kernels = CheckJsonKeyExist(*common_dump_settings, kKernels);
-  auto support_device = CheckJsonKeyExist(*common_dump_settings, kSupportDevice);
-  auto op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
-
   // async_dump is enabled by default, if e2e dump is enabled it will override this
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -228,6 +218,20 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
     }
   }
 
+  auto common_dump_settings = CheckJsonKeyExist(content, kCommonDumpSettings);
+  auto dump_mode = CheckJsonKeyExist(*common_dump_settings, kDumpMode);
+  auto path = CheckJsonKeyExist(*common_dump_settings, kPath);
+  auto net_name = CheckJsonKeyExist(*common_dump_settings, kNetName);
+  auto iteration = CheckJsonKeyExist(*common_dump_settings, kIteration);
+  auto input_output = CheckJsonKeyExist(*common_dump_settings, kInputOutput);
+  auto kernels = CheckJsonKeyExist(*common_dump_settings, kKernels);
+  auto support_device = CheckJsonKeyExist(*common_dump_settings, kSupportDevice);
+
+  nlohmann::detail::iter_impl<const nlohmann::json> op_debug_mode;
+  if (async_dump_enabled_) {
+    op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
+  }
+
   ParseDumpMode(*dump_mode);
   ParseDumpPath(*path);
   ParseNetName(*net_name);
@@ -235,7 +239,9 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   ParseInputOutput(*input_output);
   ParseKernels(*kernels);
   ParseSupportDevice(*support_device);
-  ParseOpDebugMode(*op_debug_mode);
+  if (async_dump_enabled_) {
+    ParseOpDebugMode(*op_debug_mode);
+  }
 }
 
 void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {

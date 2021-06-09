@@ -634,6 +634,22 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   result_list->push_back(tensor_data);
 }
 
+void DebugServices::SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *prefix_dump_file_name_input,
+                                     std::string *prefix_dump_file_name_output, std::string *dump_style_kernel_name,
+                                     size_t slot) {
+  if (is_sync_mode) {
+    std::string dump_style_name_part = *dump_style_kernel_name;
+    std::size_t last_scope_marker = dump_style_kernel_name->rfind("--");
+    if (last_scope_marker != std::string::npos) {
+      dump_style_name_part = dump_style_kernel_name->substr(last_scope_marker + 2);
+    }
+    *prefix_dump_file_name_input = dump_style_name_part + ".input." + std::to_string(slot);
+    *prefix_dump_file_name_output = dump_style_name_part + ".output." + std::to_string(slot);
+  } else {
+    *prefix_dump_file_name = *dump_style_kernel_name;
+  }
+}
+
 void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                      std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                      std::vector<unsigned int> root_graph_id,
@@ -665,12 +681,10 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     }
 
     std::string prefix_dump_file_name;
-    if (is_sync_mode) {
-      prefix_dump_file_name = dump_style_kernel_name.substr(dump_style_kernel_name.rfind("--") + 2);
-      prefix_dump_file_name += ".output." + std::to_string(slot[i]);
-    } else {
-      prefix_dump_file_name = dump_style_kernel_name;
-    }
+    std::string prefix_dump_file_name_input;
+    std::string prefix_dump_file_name_output;
+    SetPrefixToCheck(&prefix_dump_file_name, &prefix_dump_file_name_input, &prefix_dump_file_name_output,
+                     &dump_style_kernel_name, slot[i]);
 
     std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
                                     std::to_string(root_graph_id[i]) + "/" + std::to_string(iteration[i]);
@@ -701,7 +715,11 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
             std::string start_string = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
             std::string end_string = file_name.substr(fifth_dot, seventh_dot - fifth_dot);
             std::string stripped_file_name = start_string + end_string;
-            std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
+
+            std::size_t found = stripped_file_name.rfind(prefix_dump_file_name_output, 0);
+            if (found == std::string::npos) {
+              found = stripped_file_name.rfind(prefix_dump_file_name_input, 0);
+            }
 
             if (found != 0) {
               continue;
@@ -810,14 +828,25 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     for (auto node : wp_nodes) {
       std::string orig_name = node;
       std::string dump_style_name = node;
+      std::string dump_style_name_input;
+      std::string dump_style_name_output;
       ReplaceSrcFileName(is_sync_mode, &dump_style_name);
 
       if (is_sync_mode) {
-        dump_style_name = dump_style_name.substr(dump_style_name.rfind("--") + 2);
-        dump_style_name.append(".output.");
-      }
+        std::string dump_style_name_part = dump_style_name;
+        std::size_t last_scope_marker = dump_style_name.rfind("--");
+        if (last_scope_marker != std::string::npos) {
+          dump_style_name_part = dump_style_name.substr(last_scope_marker + 2);
+        }
 
-      proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name));
+        dump_style_name_input = dump_style_name_part + ".input.";
+        proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name_input));
+
+        dump_style_name_output = dump_style_name_part + ".output.";
+        proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name_output));
+      } else {
+        proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name));
+      }
     }
 
     if (!is_sync_mode) {
