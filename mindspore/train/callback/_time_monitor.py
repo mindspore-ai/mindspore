@@ -31,6 +31,7 @@ class TimeMonitor(Callback):
     def __init__(self, data_size=None):
         super(TimeMonitor, self).__init__()
         self.data_size = data_size
+        self.epoch_time = time.time()
 
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()

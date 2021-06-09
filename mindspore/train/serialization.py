@@ -38,6 +38,7 @@ from mindspore.common import dtype as mstype
 from mindspore._checkparam import check_input_data, Validator
 from mindspore.compression.export import quant_export
 from mindspore.parallel._tensor import _load_tensor, _reshape_param_data, _reshape_param_data_with_weight
+from mindspore.parallel._tensor import _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
 from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.communication.management import get_rank, get_group_size
@@ -526,10 +527,7 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
             # while any dim is not equal to -1, means param is split and needs to be merged
             # pipeline parallel need to be supported here later
             if mp_weight:
-                if opt_shard_group:
-                    allgather_net = get_allgather_cell(opt_shard_group, True)
-                else:
-                    allgather_net = get_allgather_cell(opt_shard_group, False)
+                allgather_net = get_allgather_cell(opt_shard_group, bool(opt_shard_group))
             elif opt_shard_group:
                 allgather_net = get_allgather_cell(opt_shard_group, False)
         elif opt_shard_group and context.get_auto_parallel_context("optimizer_weight_shard_aggregated_save"):
@@ -648,12 +646,12 @@ def _export(net, file_name, file_format, *inputs):
 def _save_mindir(net, file_name, *inputs):
     """Save MindIR format file."""
     model = mindir_model()
-    if net._auto_parallel_mode:
+    if net.auto_parallel_mode:
         phase_name = "predict"
     else:
         phase_name = 'export.mindir'
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name,
-                                    do_convert=False, auto_parallel_mode=net._auto_parallel_mode)
+                                    do_convert=False, auto_parallel_mode=net.auto_parallel_mode)
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
 
     net_dict = net.parameters_dict()
@@ -696,7 +694,7 @@ def _save_mindir(net, file_name, *inputs):
             file_prefix = file_prefix[:-7]
         current_path = os.path.abspath(file_name)
         dirname = os.path.dirname(current_path)
-        data_path = dirname + "/" + file_prefix + "_variables"
+        data_path = os.path.join(dirname, file_prefix+"_variables")
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
         os.makedirs(data_path, exist_ok=True)
@@ -718,7 +716,7 @@ def _save_mindir(net, file_name, *inputs):
                     data_size += sys.getsizeof(byte_data) / 1024
                     break
             if data_size > TOTAL_SAVE:
-                data_file_name = data_path + "/" + "data_" + str(index)
+                data_file_name = os.path.join(data_path, "data_"+str(index))
                 with open(data_file_name, "ab") as f:
                     os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
                     f.write(graphproto.SerializeToString())
@@ -727,14 +725,14 @@ def _save_mindir(net, file_name, *inputs):
                 del graphproto.parameter[:]
 
         if graphproto.parameter:
-            data_file_name = data_path + "/" + "data_" + str(index)
+            data_file_name = os.path.join(data_path, "data_"+str(index))
             with open(data_file_name, "ab") as f:
                 os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
                 f.write(graphproto.SerializeToString())
 
         # save graph
         del model.graph.parameter[:]
-        graph_file_name = dirname + "/" + file_prefix + "_graph.mindir"
+        graph_file_name = os.path.join(dirname, file_prefix+"_graph.mindir")
         with open(graph_file_name, 'wb') as f:
             os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
             f.write(model.SerializeToString())
@@ -894,7 +892,6 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
             merged_tensor = _reshape_param_data(all_gather_tensor, dev_mat, tensor_map)
 
     else:
-        from mindspore.parallel._tensor import _get_tensor_strategy, _get_tensor_slice_index
         tensor_strategy = _get_tensor_strategy(dev_mat, tensor_map)
 
         slice_count = 1
