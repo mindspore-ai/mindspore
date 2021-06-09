@@ -319,8 +319,7 @@ class ForwardExecutor {
   py::object DoParamMixPrecisionCast(bool *is_cast, const py::object &obj, const std::string &op_name, size_t index);
   py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple &tuple, const std::string &op_name,
                                           size_t index);
-  py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index,
-                        const std::string &obj_id);
+  py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index);
   void DoSignatrueCast(const PrimitivePyPtr &prim, const std::map<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
 
@@ -328,8 +327,6 @@ class ForwardExecutor {
   GradExecutorWeakPtr grad_executor_;
   PrimAbsCache prim_abs_list_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
-  // Used to cache cast struct
-  std::unordered_map<std::string, OpExecInfoPtr> cast_struct_map_;
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {

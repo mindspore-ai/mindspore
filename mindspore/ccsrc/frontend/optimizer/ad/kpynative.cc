@@ -36,9 +36,9 @@
 
 namespace mindspore {
 namespace ad {
-extern KPrim g_k_prims;
 using CacheKey = std::pair<std::string, size_t>;
 
+static KPrim g_k_prims_pynative;
 static ValuePtr add_ops;
 static ValuePtr ones_like_ops;
 static ValuePtr zeros_like_ops;
@@ -47,9 +47,6 @@ static std::map<CacheKey, FuncGraphPtr> bprop_func_graph_cache;
 static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                           abstract::AbstractBasePtrListEqual>
   zeros_like_funcgraph_cache;
-static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
-                          abstract::AbstractBasePtrListEqual>
-  add_backward_funcgraph_cache;
 static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                           abstract::AbstractBasePtrListEqual>
   ones_like_funcgraph_cache;
@@ -101,11 +98,6 @@ FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
   if (add_ops == nullptr) {
     add_ops = prim::GetPythonOps("hyper_add");
   }
-  auto iter = add_backward_funcgraph_cache.find(args_spec);
-  if (iter != add_backward_funcgraph_cache.end()) {
-    MS_LOG(DEBUG) << "Cache hit for hyper_add: " << mindspore::ToString(args_spec);
-    return BasicClone(iter->second);
-  }
   if (!add_ops->isa<MetaFuncGraph>()) {
     MS_LOG(EXCEPTION) << "add is not a MetaFuncGraph";
   }
@@ -115,8 +107,7 @@ FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   auto specialized_add_fg = pipeline::Renormalize(resource, add_fg, args_spec);
   MS_EXCEPTION_IF_NULL(specialized_add_fg);
-  add_backward_funcgraph_cache[args_spec] = specialized_add_fg;
-  return BasicClone(specialized_add_fg);
+  return specialized_add_fg;
 }
 
 AnfNodePtr BuildZerosLikeNode(const FuncGraphPtr &tape, const AnfNodePtr &node) {
@@ -396,7 +387,7 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
   } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     bprop_fg = BuildMakeSequenceBprop(prim, cnode);
   } else {
-    bprop_fg = g_k_prims.GetPossibleBprop(prim);
+    bprop_fg = g_k_prims_pynative.GetPossibleBprop(prim);
     if (bprop_fg == nullptr) {
       MS_LOG(DEBUG) << "Cannot find defined bprop for cnode prim: " << cnode->DebugString();
       bprop_fg = BuildFakeBProp(prim, cnode->size() - 1);
@@ -665,8 +656,8 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
   if (bprop_app_abstract != nullptr) {
     abstract_tuple = bprop_app_abstract->cast<abstract::AbstractTuplePtr>();
     if (abstract_tuple->size() != (cnode_primal->size() - 1)) {
-      MS_LOG(WARNING) << "AbstractTuple size: " << abstract_tuple->ToString()
-                      << " not match primal cnode input size: " << cnode_primal->DebugString();
+      MS_LOG(EXCEPTION) << "AbstractTuple size: " << abstract_tuple->ToString()
+                        << " not match primal cnode input size: " << cnode_primal->DebugString();
     }
   }
   for (size_t i = 1; i < cnode_primal->size(); i++) {
@@ -1130,9 +1121,9 @@ void ClearKPynativeCellStaticRes() {
   add_ops = nullptr;
   ones_like_ops = nullptr;
   zeros_like_ops = nullptr;
+  g_k_prims_pynative.clear();
   bprop_func_graph_cache.clear();
   zeros_like_funcgraph_cache.clear();
-  add_backward_funcgraph_cache.clear();
   ones_like_funcgraph_cache.clear();
 }
 }  // namespace ad
