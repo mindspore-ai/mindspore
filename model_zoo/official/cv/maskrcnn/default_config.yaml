@@ -173,11 +173,11 @@ device_num: 1
 rank_id: 0
 
 # maskrcnn export
-batch_size_export: 1
+batch_size_export: 2
 file_name: "maskrcnn"
-file_format: "MINDIR"
+file_format: "AIR"
 ckpt_file: '/cache/data/cocodataset/ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'
-ckpt_file_local: './maskrcnn_b3/scripts/train_parallel0/ckpt_0/mask_rcnn-12_7393.ckpt'
+ckpt_file_local: './maskrcnn/scripts/train_parallel0/ckpt_0/mask_rcnn-12_7393.ckpt'
 
 # other
 learning_rate: 0.002
