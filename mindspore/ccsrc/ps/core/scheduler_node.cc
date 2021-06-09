@@ -82,6 +82,7 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_OUT_DONE] = &SchedulerNode::ProcessScaleOutDone;
   handlers_[NodeCommand::SCALE_IN_DONE] = &SchedulerNode::ProcessScaleInDone;
   handlers_[NodeCommand::SEND_EVENT] = &SchedulerNode::ProcessSendEvent;
+  handlers_[NodeCommand::SCALE_IN_FINISH] = &SchedulerNode::ProcessScaleInFinish;
 }
 
 void SchedulerNode::CreateTcpServer() {
@@ -132,6 +133,7 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
                       register_resp_message.ByteSizeLong());
 
   if (node_manager_.IsAllNodesRegistered()) {
+    node_manager_.UpdateNodesInfo();
     is_ready_ = true;
     auto node_infos = node_manager_.nodes_info();
     for (const auto &kvs : node_infos) {
@@ -179,6 +181,23 @@ void SchedulerNode::ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std:
 
   server->SendMessage(conn, meta, Protos::PROTOBUF, fetch_servers_message.SerializeAsString().data(),
                       fetch_servers_message.ByteSizeLong());
+}
+
+void SchedulerNode::ProcessScaleInFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                                         std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(server);
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  auto finish_message = std::make_unique<std::string>(reinterpret_cast<const char *>(data), size);
+  MS_LOG(INFO) << "Process finish message from node id:" << *finish_message;
+  bool res = CommUtil::Retry([&] { return node_manager_.IsAllNodesRegistered(); }, kCheckRegisteredRetryCount,
+                             kCheckRegisteredIntervalInMs);
+  if (res == false) {
+    MS_LOG(ERROR) << "All nodes have not yet fully registered successfully.";
+  }
+  MS_LOG(INFO) << "The scheduler response the scale in finish message.";
+  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
 }
 
 void SchedulerNode::ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,

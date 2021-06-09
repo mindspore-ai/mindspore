@@ -32,8 +32,8 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
   uint32_t rank_id = UINT_MAX;
 
   const std::string &node_id = register_message.node_id();
-  if (nodes_info_.find(node_id) != nodes_info_.end()) {
-    rank_id = nodes_info_[node_id].rank_id_;
+  if (registered_nodes_info_.find(node_id) != registered_nodes_info_.end()) {
+    rank_id = registered_nodes_info_[node_id].rank_id_;
     MS_LOG(INFO) << "The node id: " << node_id << " is already assigned!";
     return rank_id;
   }
@@ -54,7 +54,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
     node_info.rank_id_ = rank_id;
     node_info.ip_ = ip;
     node_info.port_ = port;
-    nodes_info_[node_id] = node_info;
+    registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The server node id:" << node_id << ",node ip: " << node_info.ip_ << ",node port:" << port
                  << " assign rank id:" << rank_id;
   } else if (register_message.role() == NodeRole::WORKER) {
@@ -72,7 +72,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
     node_info.rank_id_ = rank_id;
     node_info.ip_ = ip;
     node_info.port_ = port;
-    nodes_info_[node_id] = node_info;
+    registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The worker node id:" << node_id << " assign rank id:" << rank_id;
   }
   return rank_id;
@@ -112,9 +112,9 @@ void NodeManager::UpdateCluster() {
   timeout_nodes_info_.clear();
   for (auto it = heartbeats_.begin(); it != heartbeats_.end(); ++it) {
     if (it->second.tv_sec + PSContext::instance()->cluster_config().heartbeat_timeout < current_time.tv_sec) {
-      if (nodes_info_.count(it->first)) {
+      if (registered_nodes_info_.count(it->first)) {
         MS_LOG(WARNING) << "The node id:" << it->first << " is timeout!";
-        timeout_nodes_info_[it->first] = nodes_info_[it->first];
+        timeout_nodes_info_[it->first] = registered_nodes_info_[it->first];
       }
     }
   }
@@ -133,12 +133,12 @@ void NodeManager::UpdateCluster() {
 }
 
 void NodeManager::CheckClusterTimeout() {
-  if (total_node_num_ != SizeToInt(nodes_info_.size())) {
+  if (total_node_num_ != SizeToInt(registered_nodes_info_.size())) {
     MS_LOG(WARNING) << "The cluster is not ready after "
                     << PSContext::instance()->cluster_config().cluster_available_timeout
                     << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
-                    << nodes_info_.size();
-    current_node_num_ = nodes_info_.size();
+                    << registered_nodes_info_.size();
+    current_node_num_ = registered_nodes_info_.size();
     UpdateClusterState(ClusterState::NODE_TIMEOUT);
   }
 }
@@ -149,7 +149,7 @@ void NodeManager::AddScaleOutDoneNode(const std::string &node_id) { scale_out_do
 
 void NodeManager::AddScaleInDoneNode(const std::string &node_id) { scale_in_done_nodes_id_.insert(node_id); }
 
-bool NodeManager::IsAllNodesRegistered() { return SizeToInt(nodes_info_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesRegistered() { return SizeToInt(registered_nodes_info_.size()) == total_node_num_; }
 
 bool NodeManager::IsAllNodesFinished() { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
 
@@ -158,6 +158,12 @@ bool NodeManager::IsAllNodesScaleOutDone() { return SizeToInt(scale_out_done_nod
 bool NodeManager::IsAllNodesScaleInDone() { return SizeToInt(scale_in_done_nodes_id_.size()) == total_node_num_; }
 
 std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() { return nodes_info_; }
+
+void NodeManager::UpdateNodesInfo() {
+  MS_LOG(INFO) << "Update nodes info.";
+  nodes_info_.clear();
+  nodes_info_ = registered_nodes_info_;
+}
 
 void NodeManager::UpdateNodeState(const NodeState &state) {
   std::lock_guard<std::mutex> lk(node_mutex_);
@@ -181,7 +187,7 @@ ClusterState NodeManager::GetClusterState() {
 
 void NodeManager::ResetMetadata() {
   MS_LOG(WARNING) << "Reset metadata.";
-  nodes_info_.clear();
+  registered_nodes_info_.clear();
   heartbeats_.clear();
   next_worker_rank_id_ = -1;
   next_server_rank_id_ = -1;
