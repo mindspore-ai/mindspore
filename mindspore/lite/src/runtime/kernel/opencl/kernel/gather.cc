@@ -132,6 +132,7 @@ int GatherOpenCLKernel::Prepare() {
 int GatherOpenCLKernel::ConvertTensorToweight() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto indices_tensor = in_tensors_.at(1);
+  allocator->MapBuffer(indices_tensor->data_c(), CL_MAP_WRITE, nullptr, true);
   auto indices_num = indices_tensor->ElementsNum();
   indices_data_ =
     reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num, lite::opencl::MemType::BUF));
@@ -152,6 +153,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
     return RET_ERROR;
   }
   allocator->UnmapBuffer(indices_data_);
+  allocator->UnmapBuffer(indices_tensor->data_c());
   return RET_OK;
 }
 

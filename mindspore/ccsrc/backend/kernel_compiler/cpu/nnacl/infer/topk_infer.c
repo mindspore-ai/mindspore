@@ -49,6 +49,9 @@ int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, input->shape_, input->shape_size_);
+  if (out_shape_size < 1) {
+    return NNACL_ERR;
+  }
   out_shape[out_shape_size - 1] = param->k_;
 
   SetShapeArray(output0, out_shape, out_shape_size);
