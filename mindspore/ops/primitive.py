@@ -535,6 +535,7 @@ def constexpr(fn=None, get_instance=True, name=None):
     def deco(fn):
         """Decorator for CompileOp."""
         class CompileOp(PrimitiveWithInfer):
+            """Class for CompileOp."""
             def __init__(self):
                 op_name = name if name else fn.__name__
                 PrimitiveWithInfer.__init__(self, op_name)
