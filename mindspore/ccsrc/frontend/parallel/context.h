@@ -100,10 +100,10 @@ class ParallelContext {
   void set_optimizer_weight_shard_integrated_save(bool optimizer_weight_shard_integrated_save);
   bool optimizer_weight_shard_integrated_save() const { return optimizer_weight_shard_integrated_save_; }
 
-  void SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group);
-  const std::vector<uint32_t> GetAllReduceFusionSplitIndices(const std::string &group) const;
-  void SetAllReduceFusionSplitSizes(const std::vector<uint32_t> sizes, const std::string &group);
-  const std::vector<uint32_t> GetAllReduceFusionSplitSizes(const std::string &group) const;
+  void SetAllReduceFusionSplitIndices(const std::vector<uint32_t> &indices, const std::string &group);
+  std::vector<uint32_t> GetAllReduceFusionSplitIndices(const std::string &group) const;
+  void SetAllReduceFusionSplitSizes(const std::vector<uint32_t> &sizes, const std::string &group);
+  std::vector<uint32_t> GetAllReduceFusionSplitSizes(const std::string &group) const;
   void set_enable_all_reduce_fusion(bool enable_all_reduce_fusion) {
     enable_all_reduce_fusion_ = enable_all_reduce_fusion;
   }

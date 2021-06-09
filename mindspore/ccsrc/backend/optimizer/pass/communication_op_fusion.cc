@@ -87,7 +87,7 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
   if (attr_fusion == nullptr) {
     return "";
   }
-  int64_t fusion = GetValue<int64_t>(attr_fusion);
+  auto fusion = GetValue<int64_t>(attr_fusion);
   if (fusion == 0) {
     return "";
   }
@@ -101,7 +101,8 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
   if (attr_op != nullptr) {
     op = GetValue<std::string>(attr_op);
   }
-  return group + op + std::to_string(fusion);
+  auto dtype = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  return group + op + std::to_string(fusion) + TypeIdLabel(dtype);
 }
 
 void CheckInputs(const std::vector<AnfNodePtr> &fusion_inputs) {
@@ -146,7 +147,7 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
   }
 
   size_t segments = 0;
-  if (split_indices.size() != 0) {
+  if (!split_indices.empty()) {
     uint32_t last_index = 0;
     for (size_t i = 0; i < split_indices.size(); ++i) {
       uint32_t index = split_indices[i];

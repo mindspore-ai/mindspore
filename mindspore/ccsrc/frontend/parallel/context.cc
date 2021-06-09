@@ -142,11 +142,19 @@ void ParallelContext::set_optimizer_weight_shard_integrated_save(bool optimizer_
   optimizer_weight_shard_integrated_save_ = optimizer_weight_shard_integrated_save;
 }
 
-void ParallelContext::SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group) {
-  all_reduce_fusion_split_indices_[group] = indices;
+void ParallelContext::SetAllReduceFusionSplitIndices(const std::vector<uint32_t> &indices, const std::string &group) {
+  if (!group.empty() && group.find(TypeIdLabel(kNumberTypeFloat)) == std::string::npos &&
+      group.find(TypeIdLabel(kNumberTypeFloat16)) == std::string::npos &&
+      group.find(TypeIdLabel(kNumberTypeFloat32)) == std::string::npos) {
+    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat)] = indices;
+    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat16)] = indices;
+    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat32)] = indices;
+  } else {
+    all_reduce_fusion_split_indices_[group] = indices;
+  }
 }
 
-const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitIndices(const std::string &group) const {
+std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitIndices(const std::string &group) const {
   auto iter = all_reduce_fusion_split_indices_.find(group);
   if (iter != all_reduce_fusion_split_indices_.end()) {
     return iter->second;
@@ -154,11 +162,19 @@ const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitIndices(cons
   return {};
 }
 
-void ParallelContext::SetAllReduceFusionSplitSizes(const std::vector<uint32_t> sizes, const std::string &group) {
-  all_reduce_fusion_split_sizes_[group] = sizes;
+void ParallelContext::SetAllReduceFusionSplitSizes(const std::vector<uint32_t> &sizes, const std::string &group) {
+  if (!group.empty() && group.find(TypeIdLabel(kNumberTypeFloat)) == std::string::npos &&
+      group.find(TypeIdLabel(kNumberTypeFloat16)) == std::string::npos &&
+      group.find(TypeIdLabel(kNumberTypeFloat32)) == std::string::npos) {
+    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat)] = sizes;
+    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat16)] = sizes;
+    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat32)] = sizes;
+  } else {
+    all_reduce_fusion_split_indices_[group] = sizes;
+  }
 }
 
-const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitSizes(const std::string &group) const {
+std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitSizes(const std::string &group) const {
   auto iter = all_reduce_fusion_split_sizes_.find(group);
   if (iter != all_reduce_fusion_split_sizes_.end()) {
     return iter->second;
