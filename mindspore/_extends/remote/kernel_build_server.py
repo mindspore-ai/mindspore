@@ -16,22 +16,7 @@
 import os
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process
-
-
-class AkgBuilder:
-    """Akg building wrapper"""
-
-    def __init__(self):
-        pass
-
-    def create(self, process_num, waitime, platform=""):
-        self.akg_builder = create_akg_parallel_process(process_num, waitime, platform)
-
-    def accept_json(self, json):
-        return self.akg_builder.accept_json(json)
-
-    def compile(self):
-        return self.akg_builder.compile()
+from mindspore._extends.parallel_compile.akg_compiler.compiler import run_compiler as akg_compile_single
 
 
 class Messager:
@@ -138,6 +123,66 @@ class Messager:
             All subclasses should override this interface.
         """
         raise NotImplementedError
+
+
+class AkgBuilder():
+    """Akg building wrapper"""
+
+    def __init__(self):
+        pass
+
+    def create(self, process_num, waitime, platform=""):
+        """ Create akg processor"""
+
+        self.akg_processor = create_akg_parallel_process(process_num, waitime, platform)
+
+    def accept_json(self, json):
+        """ Accept json"""
+
+        return self.akg_processor.accept_json(json)
+
+    def compile(self):
+        """Compile"""
+
+        return self.akg_processor.compile()
+
+    def handle(self, messager, arg, platform=""):
+        """Handle message about akg"""
+
+        if arg == 'AKG/PID':
+            messager.send_res(os.getpid())
+        elif arg == 'AKG/START':
+            messager.send_ack()
+            process_num_str = messager.get_message()
+            messager.send_ack()
+            wait_time_str = messager.get_message()
+            self.create(int(process_num_str), int(wait_time_str), platform)
+            messager.send_ack()
+        elif arg == 'AKG/DATA':
+            messager.send_ack()
+            while True:
+                req = messager.get_message()
+                if req.startswith('{'):
+                    self.accept_json(req)
+                    messager.send_ack()
+                elif req == 'AKG/WAIT':
+                    res = self.compile()
+                    messager.send_res(res)
+                    break
+                else:
+                    messager.send_ack(False)
+                    break
+        elif arg == 'AKG/COMPILE':
+            messager.send_ack()
+            json = messager.get_message()
+            try:
+                akg_compile_single(json)
+            except ValueError:
+                messager.send_ack(False)
+                messager.exit()
+            finally:
+                pass
+            messager.send_ack()
 
 
 def get_logger():

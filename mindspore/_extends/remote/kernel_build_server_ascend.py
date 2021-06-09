@@ -98,35 +98,6 @@ class AscendMessager(Messager):
             self.send_ack(False)
             self.exit()
 
-    def akg_handle(self, arg):
-        """
-        Handle arg start with AKG
-        """
-        if arg == 'AKG/START':
-            self.send_ack()
-            process_num_str = self.get_message()
-            self.send_ack()
-            wait_time_str = self.get_message()
-            self.akg_builder.create(int(process_num_str), int(wait_time_str), "ASCEND")
-            self.send_ack()
-        elif arg == 'AKG/DATA':
-            self.send_ack()
-            while True:
-                req = self.get_message()
-                if req.startswith('{'):
-                    self.akg_builder.accept_json(req)
-                    self.send_ack()
-                elif req == 'AKG/WAIT':
-                    res = self.akg_builder.compile()
-                    self.send_res(res)
-                    break
-                else:
-                    self.send_ack(False)
-                    break
-        else:
-            self.send_ack(False)
-            self.exit()
-
     def handle(self):
         """
         Communicate with remote client.
@@ -136,7 +107,7 @@ class AscendMessager(Messager):
         if arg.startswith('TBE'):
             self.tbe_handle(arg)
         elif arg.startswith('AKG'):
-            self.akg_handle(arg)
+            self.akg_builder.handle(self, arg, "ASCEND")
         elif arg == 'FORMAT':
             self.send_ack()
             json = self.get_message()

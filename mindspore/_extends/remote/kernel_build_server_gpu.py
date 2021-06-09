@@ -13,11 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """kernel build server for gpu"""
-import os
 import sys
 import warnings
 from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
-from mindspore._extends.parallel_compile.akg_compiler.compiler import run_compiler as akg_compile_single
 
 
 class GpuMessager(Messager):
@@ -37,40 +35,8 @@ class GpuMessager(Messager):
         Reference protocol between them at PR#4063
         """
         arg = self.get_message()
-        if arg == 'AKG/PID':
-            self.send_res(os.getpid())
-        elif arg == 'AKG/START':
-            self.send_ack()
-            process_num_str = self.get_message()
-            self.send_ack()
-            wait_time_str = self.get_message()
-            self.akg_builder.create(int(process_num_str), int(wait_time_str), "GPU")
-            self.send_ack()
-        elif arg == 'AKG/DATA':
-            self.send_ack()
-            while True:
-                req = self.get_message()
-                if req.startswith('{'):
-                    self.akg_builder.accept_json(req)
-                    self.send_ack()
-                elif req == 'AKG/WAIT':
-                    res = self.akg_builder.compile()
-                    self.send_res(res)
-                    break
-                else:
-                    self.send_ack(False)
-                    break
-        elif arg == 'AKG/COMPILE':
-            self.send_ack()
-            json = self.get_message()
-            try:
-                akg_compile_single(json)
-            except ValueError:
-                self.send_ack(False)
-                self.exit()
-            finally:
-                pass
-            self.send_ack()
+        if "AKG" in arg:
+            self.akg_builder.handle(self, arg, "GPU")
         else:
             self.send_ack(False)
             self.exit()
