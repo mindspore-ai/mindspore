@@ -19,7 +19,7 @@ import subprocess
 import sys
 from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
-from .get_file_path import get_akg_path
+from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 
 
 def copy_json(pid_path, ppid_path):
@@ -68,8 +68,7 @@ def _compile_akg_task_ascend(*json_strs):
         try:
             subprocess.run([sys.executable, akg_compiler, json_str], text=True, check=True)
         except BaseException as e:
-            logger.error(e, "Failed, args: {}!".format(json_str))
-
+            logger.error(e, " Failed, args: {}!".format(json_str))
 
 
 def create_akg_parallel_process(process_num, wait_time, platform=""):

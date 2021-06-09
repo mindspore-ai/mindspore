@@ -124,6 +124,7 @@ class Messager:
         """
         raise NotImplementedError
 
+
 class AkgBuilder():
     """Akg building wrapper"""
 
@@ -182,6 +183,7 @@ class AkgBuilder():
             finally:
                 pass
             messager.send_ack()
+
 
 def get_logger():
     return logger
