@@ -34,5 +34,5 @@ if __name__ == "__main__":
                              has_bias=True)
     param_dict = load_checkpoint(config.checkpoint_path + "/" + config.model_name)
     load_param_into_net(network, param_dict)
-    input_data = np.random.uniform(0.0, 1.0, size=[1, 1, 96, 1366]).astype(np.float32)
+    input_data = np.random.uniform(0.0, 1.0, size=[config.batch_size, 1, 96, 1366]).astype(np.float32)
     export(network, Tensor(input_data), file_name=config.file_name, file_format=config.file_format)
