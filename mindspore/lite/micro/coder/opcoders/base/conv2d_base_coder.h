@@ -57,11 +57,11 @@ class Conv2DBaseCoder : public OperatorCoder {
 
   int CheckLayout(lite::Tensor *input_tensor);
 
-  std::string LayoutTransformFp32(schema::Format src_format, schema::Format dst_format);
+  std::string LayoutTransformFp32(mindspore::Format src_format, mindspore::Format dst_format);
 
-  std::string LayoutTransformInt8(schema::Format src_format, schema::Format dst_format);
+  std::string LayoutTransformInt8(mindspore::Format src_format, mindspore::Format dst_format);
 
-  std::string LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format);
+  std::string LayoutTransform(TypeId data_type, mindspore::Format src_format, mindspore::Format dst_format);
 
  private:
   int MallocConvQuantParams(size_t input_arg_num, size_t filter_arg_num, size_t output_arg_num);

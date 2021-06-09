@@ -20,7 +20,6 @@
 #include "mindspore/lite/src/tensor.h"
 #include "nnacl/resize_parameter.h"
 #include "schema/ops_generated.h"
-using mindspore::schema::Format_NHWC;
 
 namespace mindspore {
 
@@ -54,7 +53,7 @@ void TestResizeBilinearFp32::Prepare(const std::vector<int> &input_shape, const 
                                      float *input_data, float *output_data, const bool align_corners,
                                      const int thread_num) {
   in_tensor_.set_data_type(kNumberTypeFloat32);
-  in_tensor_.set_format(Format_NHWC);
+  in_tensor_.set_format(mindspore::NHWC);
   in_tensor_.set_shape(input_shape);
   out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(output_shape);

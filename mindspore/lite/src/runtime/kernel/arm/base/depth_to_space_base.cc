@@ -22,7 +22,7 @@ using mindspore::lite::RET_PARAM_INVALID;
 
 namespace mindspore::kernel {
 int DepthToSpaceBaseCPUKernel::ReSize() {
-  if (in_tensors_.at(0)->format() != schema::Format::Format_NHWC) {
+  if (in_tensors_.at(0)->format() != mindspore::NHWC) {
     MS_LOG(ERROR) << "depth_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
   }

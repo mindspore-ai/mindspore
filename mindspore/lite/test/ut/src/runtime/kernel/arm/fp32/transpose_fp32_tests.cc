@@ -226,7 +226,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   lite::Tensor input_tensor;
   input_tensor.set_data(input.data());
   input_tensor.set_shape(input_shape);
-  input_tensor.set_format(schema::Format_NHWC);
+  input_tensor.set_format(mindspore::NHWC);
   input_tensor.set_data_type(kNumberTypeFloat32);
   lite::Tensor perm_tensor(kNumberTypeInt32, {5});
   perm_tensor.set_data(perm);
@@ -234,7 +234,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   lite::Tensor output_tensor;
   output_tensor.set_data(output.data());
   output_tensor.set_shape(output_shape);
-  output_tensor.set_format(schema::Format_NHWC);
+  output_tensor.set_format(mindspore::NHWC);
   output_tensor.set_data_type(kNumberTypeFloat32);
   std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.emplace_back(&output_tensor);

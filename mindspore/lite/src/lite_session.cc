@@ -25,6 +25,7 @@
 #include "src/common/utils.h"
 #include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
+#include "src/common/tensor_util.h"
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
@@ -163,7 +164,8 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
       tensor_list->set_tensors_data_type(tensor_data_type);
     }
   } else {
-    dst_tensor = new (std::nothrow) Tensor(TypeId(src_tensor.dataType()), shape, src_tensor.format(), src_category);
+    dst_tensor = new (std::nothrow)
+      Tensor(TypeId(src_tensor.dataType()), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
   }
   return dst_tensor;
 }
@@ -596,7 +598,11 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
-  STATUS ret;
+  STATUS ret = CheckGraphInputFormat(inputs_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "model input's format mey be changed, which should be NHWC.";
+    return ret;
+  }
   MS_ASSERT(this->context_);
   if (before == nullptr && after == nullptr) {
     ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());

@@ -25,7 +25,7 @@
 namespace mindspore::kernel {
 struct TensorInfo {
   std::vector<int> shape_;
-  schema::Format format_;
+  mindspore::Format format_;
   TypeId data_type_;
   lite::Tensor::Category tensor_type_;
   bool is_in_;

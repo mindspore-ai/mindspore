@@ -19,6 +19,7 @@
 #define MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
 
 #include "include/ms_tensor.h"
+#include "ir/format.h"
 
 namespace mindspore {
 namespace lite {
@@ -45,6 +46,8 @@ class MTensor : public mindspore::tensor::MSTensor {
   AllocatorPtr allocator() const override { return nullptr; }
   TypeId data_type() const override { return data_type_; }
   void set_data_type(TypeId data_type) override { data_type_ = data_type; }
+  void set_format(mindspore::Format format) override {}
+  mindspore::Format format() const override { return mindspore::NHWC; }
   Vector<int> shape() const override { return shape_; }
   void set_shape(const Vector<int> &shape) override { shape_ = shape; }
   int ElementsNum() const override;

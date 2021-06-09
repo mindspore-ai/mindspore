@@ -21,7 +21,6 @@
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::Format_NHWC;
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
@@ -37,7 +36,7 @@ int ScaleNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const s
   if (scale_parameter_->axis_ < 0) {
     scale_parameter_->axis_ = scale_parameter_->axis_ + inputs[0]->shape().size();
   }
-  if (inputs.size() > 1 && inputs[0]->shape().size() == DIMS_4D && inputs[0]->format() == schema::Format_NHWC) {
+  if (inputs.size() > 1 && inputs[0]->shape().size() == DIMS_4D && inputs[0]->format() == mindspore::NHWC) {
     // scale now only supports on axis 3
     if (scale_parameter_->axis_ != 3) {
       MS_LOG(ERROR) << "Npu scale axis attr only support on channel, now is " << scale_parameter_->axis_;

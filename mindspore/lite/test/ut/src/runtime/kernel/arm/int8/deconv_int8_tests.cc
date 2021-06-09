@@ -30,7 +30,6 @@ using mindspore::lite::DeviceType;
 namespace mindspore {
 using mindspore::lite::QuantArg;
 using mindspore::lite::Tensor;
-using mindspore::schema::Format_NHWC;
 class TestDeconvInt8 : public mindspore::CommonTest {
  public:
   TestDeconvInt8() {}
@@ -274,7 +273,7 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
                         ConvParameter *conv_param, int8_t **correct) {
   /* float data from deconv fp32 testcase : DeConvTestInit2 */
   /*   vq = (vi - zp) * s     vi = vq / s + zp */
-  auto *in_t = new Tensor(kNumberTypeInt8, {1, 4, 2, 3}, Format_NHWC, lite::Tensor::Category::VAR);
+  auto *in_t = new Tensor(kNumberTypeInt8, {1, 4, 2, 3}, mindspore::NHWC, lite::Tensor::Category::VAR);
   in_t->MallocData();
   int8_t in[] = {6, 43, 38, 24, -8, 12, 41, -24, -20, 41, -19, -6, -26, -6, 23, -31, 34, 45, 8, 45, -39, -27, -48, 12};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
@@ -283,7 +282,7 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  auto *weight_t = new Tensor(kNumberTypeInt8, {3, 3, 3, 2}, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new Tensor(kNumberTypeInt8, {3, 3, 3, 2}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
   weight_t->MallocData();
   int8_t weight[] = {66, 89, 98, 74,  95, 86, 125, 95, 105, 83, 116, 94, 90, 80, 86, 59, 72, 92,
                      64, 76, 92, 80,  90, 87, 106, 55, 105, 60, 75,  53, 81, 81, 98, 81, 86, 59,
@@ -294,7 +293,7 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
   weight_t->AddQuantParam(*w_quant_arg);
   inputs_->push_back(weight_t);
 
-  auto *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, Format_NHWC, lite::Tensor::Category::VAR);
+  auto *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, mindspore::NHWC, lite::Tensor::Category::VAR);
   out_t->MallocData();
   auto *out_quant_arg = new QuantArg();
   out_quant_arg->zeroPoint = 31, out_quant_arg->scale = 0.3439215686275;

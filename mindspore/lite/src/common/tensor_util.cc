@@ -54,7 +54,7 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector
       return RET_ERROR;
     }
     tensor_c->data_type_ = kNumberTypeFloat32;
-    tensor_c->format_ = schema::Format::Format_NCHW;
+    tensor_c->format_ = mindspore::NCHW;
     tensor_c->data_ = nullptr;
     tensor_c->shape_size_ = 0;
     tensors_c->push_back(tensor_c);
@@ -99,7 +99,7 @@ void Tensor2TensorC(Tensor *src, TensorC *dst) {
 }
 
 void TensorC2Tensor(TensorC *src, Tensor *dst) {
-  dst->set_format(static_cast<schema::Format>(src->format_));
+  dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_data_type(static_cast<TypeId>(src->data_type_));  // get data during the runtime period
   dst->set_shape(std::vector<int>(src->shape_, src->shape_ + src->shape_size_));
 }
@@ -131,7 +131,7 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
 
 int TensorListC2TensorList(TensorListC *src, TensorList *dst) {
   dst->set_data_type(static_cast<TypeId>(src->data_type_));
-  dst->set_format(static_cast<schema::Format>(src->format_));
+  dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_shape(std::vector<int>(1, src->element_num_));
   dst->set_tensors_data_type(static_cast<TypeId>(src->tensors_data_type_));
 

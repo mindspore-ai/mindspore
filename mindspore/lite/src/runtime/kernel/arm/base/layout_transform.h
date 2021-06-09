@@ -21,20 +21,19 @@
 #include <arm_neon.h>
 #endif
 #include "nnacl/pack.h"
-#include "schema/ops_generated.h"
 #include "src/tensor.h"
 
 namespace mindspore::kernel {
 typedef void (*LayoutConvertor)(const void *src, void *dst, int batch, int plane, int channel);
 #ifdef ENABLE_FP16
-LayoutConvertor LayoutTransformFp16(schema::Format src_format, schema::Format dst_format);
+LayoutConvertor LayoutTransformFp16(mindspore::Format src_format, mindspore::Format dst_format);
 #endif
 
-LayoutConvertor LayoutTransformFp32(schema::Format src_format, schema::Format dst_format);
+LayoutConvertor LayoutTransformFp32(mindspore::Format src_format, mindspore::Format dst_format);
 
-LayoutConvertor LayoutTransformInt8(schema::Format src_format, schema::Format dst_format);
+LayoutConvertor LayoutTransformInt8(mindspore::Format src_format, mindspore::Format dst_format);
 
-LayoutConvertor LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format);
+LayoutConvertor LayoutTransform(TypeId data_type, mindspore::Format src_format, mindspore::Format dst_format);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LAYOUT_TRANSFORM_H_

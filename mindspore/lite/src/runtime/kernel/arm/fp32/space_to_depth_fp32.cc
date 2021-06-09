@@ -45,7 +45,7 @@ int SpaceToDepthCPUKernel::Init() {
 }
 
 int SpaceToDepthCPUKernel::ReSize() {
-  if (in_tensors_.at(0)->format() != schema::Format::Format_NHWC) {
+  if (in_tensors_.at(0)->format() != mindspore::NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return RET_FORMAT_ERR;
   }
@@ -90,7 +90,7 @@ int SpaceToDepthRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 int SpaceToDepthCPUKernel::Run() {
   input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  if (in_tensors_.at(0)->format() == schema::Format::Format_NHWC) {
+  if (in_tensors_.at(0)->format() == mindspore::NHWC) {
     auto ret = static_cast<const lite::InnerContext *>(this->context_)
                  ->thread_pool_->ParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {

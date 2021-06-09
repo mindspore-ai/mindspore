@@ -170,7 +170,7 @@ void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
     return;
   }
 
-  tensor->set_format(schema::Format_NCHW);
+  tensor->set_format(mindspore::NCHW);
   auto nhwc_shape = tensor->shape();
   tensor->set_shape({nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]});
   for (auto out_kernel : cur_kernel->out_kernels()) {

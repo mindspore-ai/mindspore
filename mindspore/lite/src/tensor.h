@@ -24,6 +24,7 @@
 #include <functional>
 #include <atomic>
 #include "include/ms_tensor.h"
+#include "ir/format.h"
 #include "src/runtime/inner_allocator.h"
 
 #include "src/common/log_adapter.h"
@@ -56,7 +57,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   };
   Tensor() = default;
 
-  Tensor(TypeId data_type, std::vector<int> shape, const schema::Format &format = schema::Format::Format_NHWC,
+  Tensor(TypeId data_type, std::vector<int> shape, const mindspore::Format &format = mindspore::NHWC,
          Category category = VAR);
 
   Tensor(const Tensor &tensor) = delete;
@@ -133,9 +134,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_category(Category category) { this->category_ = category; }
 
-  void set_format(schema::Format format) { this->format_ = format; }
+  void set_format(mindspore::Format format) override { this->format_ = format; }
 
-  schema::Format format() const { return this->format_; }
+  mindspore::Format format() const override { return this->format_; }
 
   virtual int ref_count() const { return ref_count_; }
 
@@ -215,7 +216,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   void *data_ = nullptr;
   TypeId data_type_;
   std::vector<int> shape_;
-  schema::Format format_;
+  mindspore::Format format_;
   Category category_;
   std::atomic_int ref_count_ = {0};
   size_t init_ref_count_ = 0;

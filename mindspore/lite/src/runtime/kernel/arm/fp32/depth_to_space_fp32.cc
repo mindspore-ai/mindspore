@@ -41,7 +41,7 @@ int DepthToSpaceCPUKernel::Run() {
   const float *input_data = reinterpret_cast<const float *>(input->data_c());
   float *output_data = reinterpret_cast<float *>(output->data_c());
   auto in_shape = input->shape();
-  if (input->format() == schema::Format::Format_NHWC) {
+  if (input->format() == mindspore::NHWC) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param_);
     return RET_OK;
   } else {

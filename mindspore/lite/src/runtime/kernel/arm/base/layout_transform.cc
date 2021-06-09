@@ -17,35 +17,34 @@
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/common/log_adapter.h"
 
-using mindspore::schema::Format;
 namespace mindspore::kernel {
-LayoutConvertor LayoutTransformFp32(schema::Format src_format, schema::Format dst_format) {
-  if (src_format == schema::Format::Format_NHWC && dst_format == schema::Format::Format_NC4HW4) {
+LayoutConvertor LayoutTransformFp32(mindspore::Format src_format, mindspore::Format dst_format) {
+  if (src_format == mindspore::NHWC && dst_format == mindspore::NC4HW4) {
     return PackNHWCToNC4HW4Fp32;
-  } else if (src_format == schema::Format::Format_NHWC && dst_format == schema::Format::Format_NHWC4) {
+  } else if (src_format == mindspore::NHWC && dst_format == mindspore::NHWC4) {
     return PackNHWCToNHWC4Fp32;
-  } else if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC4) {
+  } else if (src_format == mindspore::NC4HW4 && dst_format == mindspore::NHWC4) {
     return PackNC4HW4ToNHWC4Fp32;
-  } else if (src_format == schema::Format::Format_NCHW && dst_format == schema::Format::Format_NC4HW4) {
+  } else if (src_format == mindspore::NCHW && dst_format == mindspore::NC4HW4) {
     return PackNCHWToNC4HW4Fp32;
-  } else if (src_format == schema::Format::Format_NC4HW4 && dst_format == schema::Format::Format_NHWC) {
+  } else if (src_format == mindspore::NC4HW4 && dst_format == mindspore::NHWC) {
     return PackNC4HW4ToNHWCFp32;
   } else {
-    MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(src_format) << " to "
-                  << EnumNameFormat(dst_format);
+    MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(static_cast<schema::Format>(src_format)) << " to "
+                  << EnumNameFormat(static_cast<schema::Format>(dst_format));
     return nullptr;
   }
 }
 
-LayoutConvertor LayoutTransformInt8(schema::Format src_format, schema::Format dst_format) {
-  if (src_format == schema::Format::Format_NHWC && dst_format == schema::Format::Format_NHWC4) {
+LayoutConvertor LayoutTransformInt8(mindspore::Format src_format, mindspore::Format dst_format) {
+  if (src_format == mindspore::NHWC && dst_format == mindspore::NHWC4) {
     return PackNHWCToNHWC4Int8;
   } else {
     return nullptr;
   }
 }
 
-LayoutConvertor LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format) {
+LayoutConvertor LayoutTransform(TypeId data_type, mindspore::Format src_format, mindspore::Format dst_format) {
   switch (data_type) {
     case kNumberTypeInt8:
       return LayoutTransformInt8(src_format, dst_format);

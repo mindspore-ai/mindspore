@@ -45,7 +45,7 @@ int BatchToSpaceCPUKernel::Processinput() {
 }
 
 int BatchToSpaceCPUKernel::Init() {
-  MS_ASSERT(in_tensors_.at(0)->format() == schema::Format::Format_NHWC);
+  MS_ASSERT(in_tensors_.at(0)->format() == mindspore::NHWC);
   if (!InferShapeDone()) {
     return RET_OK;
   }

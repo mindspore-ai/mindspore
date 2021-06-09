@@ -62,8 +62,8 @@ static inline lite::Tensor *TensorMalloc(lite::Tensor *tensor) {
 }
 
 lite::Tensor *CreateConstTensor(lite::Tensor *tensor, const std::vector<int> &shape, const int index) {
-  auto new_tensor = new (std::nothrow)
-    lite::Tensor(tensor->data_type(), shape, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto new_tensor =
+    new (std::nothrow) lite::Tensor(tensor->data_type(), shape, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
   if (new_tensor == nullptr) {
     MS_LOG(ERROR) << "Create new_tensor failed.";
     return nullptr;
@@ -125,7 +125,7 @@ void GroupConvCreator::FreeGroupConvs() {
 
 int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {
   auto in_tensor =
-    CreateVarTensor({input_shape_, schema::Format_NHWC, data_type_, lite::Tensor::Category::VAR, true}, infered_);
+    CreateVarTensor({input_shape_, mindspore::NHWC, data_type_, lite::Tensor::Category::VAR, true}, infered_);
   if (in_tensor == nullptr) {
     return lite::RET_ERROR;
   }

@@ -113,7 +113,7 @@ int ScaleOpenCLKernel::InitWeights() {
                     << in_tensor->data_type();
       return RET_ERROR;
     }
-  } else if (in_tensor->format() == schema::Format_NHWC && scale_tensor->format() == schema::Format_NHWC) {
+  } else if (in_tensor->format() == mindspore::NHWC && scale_tensor->format() == mindspore::NHWC) {
     if (scale_dtype == kNumberTypeFloat32 || scale_dtype == kNumberTypeFloat16) {
       auto image2d_info = GpuTensorInfo(scale_tensor);
       int pack_weight_size = image2d_info.ElementsC4Num;

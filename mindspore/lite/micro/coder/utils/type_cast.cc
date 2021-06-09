@@ -75,24 +75,24 @@ std::string GetTensorDataType(TypeId type) {
   }
 }
 
-std::string EnumMicroTensorFormat(schema::Format format) {
+std::string EnumMicroTensorFormat(mindspore::Format format) {
   switch (format) {
-    case schema::Format_NHWC:
+    case mindspore::NHWC:
       return "Format_NHWC";
-    case schema::Format_NCHW:
+    case mindspore::NCHW:
       return "Format_NCHW";
-    case schema::Format_HWKC:
+    case mindspore::HWKC:
       return "Format_HWKC";
-    case schema::Format_HWCK:
+    case mindspore::HWCK:
       return "Format_HWCK";
-    case schema::Format_KCHW:
+    case mindspore::KCHW:
       return "Format_KCHW";
-    case schema::Format_CKHW:
+    case mindspore::CKHW:
       return "Format_CKHW";
-    case schema::Format_NC4HW4:
+    case mindspore::NC4HW4:
       return "Format_NC4HW4";
     default:
-      MS_LOG(ERROR) << "unsupported format: " << schema::EnumNameFormat(format);
+      MS_LOG(ERROR) << "unsupported format: " << schema::EnumNameFormat(static_cast<schema::Format>(format));
       return "Format_NUM_OF_FORMAT";
   }
 }

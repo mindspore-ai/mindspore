@@ -25,14 +25,14 @@ ge::Shape ConverterToNPUShape(const std::vector<int> &src_shape) {
   return ge::Shape({shapes});
 }
 
-ge::Format ConverterToNPUFormat(schema::Format format) {
+ge::Format ConverterToNPUFormat(mindspore::Format format) {
   ge::Format ge_format;
   switch (format) {
-    case schema::Format_NCHW:
+    case mindspore::NCHW:
       ge_format = ge::FORMAT_NCHW;
       break;
-    case schema::Format_NHWC:
-    case schema::Format_KHWC:
+    case mindspore::NHWC:
+    case mindspore::KHWC:
       ge_format = ge::FORMAT_NHWC;
       break;
     default:
