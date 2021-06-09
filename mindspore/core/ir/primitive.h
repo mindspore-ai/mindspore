@@ -85,7 +85,7 @@ class Primitive : public Named {
   const std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() const { return evaluate_added_attrs_; }
   void set_evaluate_added_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
     for (auto &attr : attrs) {
-      MS_LOG(INFO) << " set evalu attrl " << name() << attr.first;
+      MS_LOG(DEBUG) << " set evalu attrl " << name() << attr.first;
       attrs_[attr.first] = attr.second;
     }
   }
