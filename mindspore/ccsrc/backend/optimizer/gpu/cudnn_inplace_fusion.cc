@@ -61,6 +61,56 @@ void SetPrimAttr(AnfNodePtr inplace_node, const string &key, const T &value) {
   primitive->AddAttr(key, MakeValue(value));
 }
 
+// Check whether exist a route from src node to dst node.
+bool ExistRoute(const CNodePtr &src, const CNodePtr &dst) {
+  MS_EXCEPTION_IF_NULL(src);
+  MS_EXCEPTION_IF_NULL(dst);
+
+  if (src == dst) {
+    return true;
+  }
+
+  size_t seen = NewSeenGeneration();
+  std::queue<CNodePtr> to_do;
+  to_do.push(dst);
+  while (!to_do.empty()) {
+    const auto &current_node = to_do.front();
+    size_t input_num = AnfAlgo::GetInputTensorNum(current_node);
+    for (size_t input_index = 0; input_index < input_num; ++input_index) {
+      const AnfNodePtr &input_node = AnfAlgo::GetInputNode(current_node, input_index);
+      const auto &cnode = input_node->cast<CNodePtr>();
+      if (cnode == nullptr) {
+        continue;
+      }
+      if (cnode->seen_ == seen) {
+        continue;
+      }
+      // Exist a route from src node to dst.
+      if (cnode == src) {
+        return true;
+      }
+      to_do.push(cnode);
+      cnode->seen_ = seen;
+    }
+    to_do.pop();
+  }
+  return false;
+}
+
+// Check whether exist a route from accumulate node to cover node.
+bool ExistDependencyFromAcc2Cover(const std::vector<AnfNodeIndex> &inplace_node, size_t cover_index) {
+  if (inplace_node.size() != inplace_node_size) {
+    return false;
+  }
+
+  size_t acc_index = cover_index == 1 ? 0 : 1;
+  const CNodePtr &cover_node = inplace_node[cover_index].node->cast<CNodePtr>();
+  const CNodePtr &acc_node = inplace_node[acc_index].node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cover_node);
+  MS_EXCEPTION_IF_NULL(acc_node);
+  return ExistRoute(acc_node, cover_node);
+}
+
 std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_node) {
   if (inplace_node.size() != inplace_node_size) {
     return {0, false};
@@ -81,6 +131,10 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
   MS_EXCEPTION_IF_NULL(second_node_channel);
   size_t second_channel = second_node_channel->cast<Int64ImmPtr>()->value();
   size_t cover_index = (first_channel >= second_channel) ? 0 : 1;
+  bool ret = ExistDependencyFromAcc2Cover(inplace_node, cover_index);
+  if (ret) {
+    return {0, false};
+  }
   return {cover_index, true};
 }
 
@@ -97,29 +151,41 @@ void CopyKernelInfo(AnfNodePtr src, AnfNodePtr dst) {
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, dst.get());
 }
 
-void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, const FuncGraphPtr &graph) {
-  if (inplace_node->size() == inplace_node_size) {
-    auto first_cnode = (*inplace_node)[0].node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(first_cnode);
-    auto first_node_input = first_cnode->input(1);
-    auto second_cnode = (*inplace_node)[1].node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(second_cnode);
-    auto second_node_input = second_cnode->input(1);
-    // if two inplace nodes have same input, will be have loop after insert depend
-    // so copy a new input for one of inplace node
-    if (first_node_input == second_node_input) {
-      auto cnode = first_node_input->cast<CNodePtr>();
-      auto new_input = graph->NewCNode(cnode->inputs());
-      new_input->set_abstract(first_node_input->abstract());
-      CopyKernelInfo(first_node_input, new_input);
-      auto new_inplace_node = graph->NewCNode({first_cnode->input(0), new_input, first_cnode->input(2)});
-      new_inplace_node->set_abstract(first_cnode->abstract());
-      CopyKernelInfo(first_cnode, new_inplace_node);
-      auto manager = graph->manager();
-      MS_EXCEPTION_IF_NULL(manager);
-      manager->Replace(first_cnode, new_inplace_node);
-      (*inplace_node)[0].node = new_inplace_node;
-    }
+void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cover_index, const FuncGraphPtr &graph) {
+  // If two inplace nodes have same input, will be have loop after insert depend:
+  //            A                              A     Cover <----+
+  //          /    \                            \    /          |
+  //         B      \            -->            Depend -------> B
+  //        /        \                            |
+  //      Cover      Acc                         Acc
+  // so copy a new input for one of inplace node like this
+  //        A         A'                          A           A'
+  //        |         |                           |           |
+  //        B         |          -->              B        Depend <-+
+  //        |         |                           |           |     |
+  //      Cover      Acc                          |          Acc    |
+  //                                            Cover---------------+
+  size_t acc_index = cover_index == 1 ? 0 : 1;
+  const CNodePtr &cover_node = inplace_node->at(cover_index).node->cast<CNodePtr>();
+  const CNodePtr &acc_node = inplace_node->at(acc_index).node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cover_node);
+  MS_EXCEPTION_IF_NULL(acc_node);
+  const auto &acc_input = acc_node->input(1)->cast<CNodePtr>();
+  if (acc_input == nullptr) {
+    return;
+  }
+  bool ret = ExistRoute(acc_input, cover_node);
+  if (ret) {
+    auto new_input = graph->NewCNode(acc_input->inputs());
+    new_input->set_abstract(acc_input->abstract());
+    CopyKernelInfo(acc_input, new_input);
+    auto new_inplace_node = graph->NewCNode({acc_node->input(0), new_input, acc_node->input(2)});
+    new_inplace_node->set_abstract(acc_node->abstract());
+    CopyKernelInfo(acc_node, new_inplace_node);
+    auto manager = graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->Replace(acc_node, new_inplace_node);
+    (*inplace_node)[acc_index].node = new_inplace_node;
   }
 }
 
@@ -131,9 +197,8 @@ void SetNodeAttr(AnfNodeIndex aggregate_node, AnfNodePtr skip_node, std::vector<
 
   static uint32_t group = 0;
   auto [cover_index, order_required] = GetCoverIndex(*inplace_node);
-  if (order_required) {
-    CheckInplaceNodeInputs(inplace_node, graph);
-  }
+  CheckInplaceNodeInputs(inplace_node, cover_index, graph);
+
   for (size_t i = 0; i < inplace_node->size(); i++) {
     auto algo = (i == cover_index) ? "cover" : "accumulation";
     auto node = (*inplace_node)[i].node;
