@@ -626,26 +626,27 @@ function Run_arm64() {
 
     # Run compatibility test models:
     while read line; do
-        model_name=${line%;*}
-        length=${#model_name}
-        input_shapes=${line:length+1}
-        if [[ $model_name == \#* ]]; then
+        compat_line_info=${line}
+        if [[ $compat_line_info == \#* ]]; then
           continue
         fi
-        echo ${model_name} >> "${run_arm64_fp32_log_file}"
+        model_info=`echo ${compat_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${compat_line_info}|awk -F ' ' '{print $2}'`
+        model_name=${model_info%%;*}
+        length=${#model_name}
+        input_shapes=${model_info:length+1}
+        echo "---------------------------------------------------------" >> "${run_arm64_fp32_log_file}"
+        echo "compat run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_fp32_log_file}"
+
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes} >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        if [ -z "$accuracy_limit" ]; then
+          echo './benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --inputShapes='${input_shapes} >> "${run_arm64_fp32_log_file}"
+          echo './benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --inputShapes='${input_shapes} >> adb_run_cmd.txt
         else
-            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+          echo './benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
         fi
-        # run benchmark test without clib data
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --inputShapes='${input_shapes} >> "${run_arm64_fp32_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        cat adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_fp32_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
