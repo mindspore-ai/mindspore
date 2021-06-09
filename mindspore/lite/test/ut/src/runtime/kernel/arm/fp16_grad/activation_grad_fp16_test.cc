@@ -58,7 +58,7 @@ TEST_F(TestActGradFp16, ReluGradFp16) {
     input_buf[i] = (float16_t)input_data[i];
   }
 
-  Fp16ReluGrad(yt_buf, input_buf, 50, output_buf);
+  ReluFp16Grad(yt_buf, input_buf, 50, output_buf);
 
   int res = 0;
   float error = 0;
@@ -113,7 +113,7 @@ TEST_F(TestActGradFp16, SigmoidGradFp16) {
     input_buf[i] = (float16_t)input_data[i];
   }
 
-  Fp16SigmoidGrad(yt_buf, input_buf, 50, output_buf);
+  SigmoidFp16Grad(yt_buf, input_buf, 50, output_buf);
 
   int res = 0;
   float error = 0;

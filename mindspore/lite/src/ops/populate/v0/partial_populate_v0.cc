@@ -39,7 +39,7 @@ OpParameter *PopulatePartialParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc partial parameter failed.";
     return nullptr;
   }
-  memset(partial_parameter, 0, sizeof(PartialParameter));
+  memset(reinterpret_cast<void *>(partial_parameter), 0, sizeof(PartialParameter));
   partial_parameter->op_parameter_.type_ = schema::PrimitiveType_PartialFusion;
 
   partial_parameter->sub_graph_index_ = partial_prim->subGraphIndex();

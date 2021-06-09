@@ -52,10 +52,26 @@ int ActivationGradCPUKernelFp16::DoActivation(int task_id) {
   auto error_code = RET_OK;
 
   if (param_act_grad_->type_ == schema::ActivationType_RELU) {
-    error_code = Fp16ReluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+    error_code = ReluFp16Grad(yt_addr + start, input_addr + start, count, output_addr + start);
+  } else if (param_act_grad_->type_ == schema::ActivationType_RELU6) {
+    error_code = Relu6Fp16Grad(yt_addr + start, input_addr + start, count, output_addr + start);
+  } else if (param_act_grad_->type_ == schema::ActivationType_LEAKY_RELU) {
+    error_code = LReluFp16Grad(yt_addr + start, input_addr + start, count, output_addr + start,
+                               (float16_t)param_act_grad_->alpha_);
   } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
     // Sigmoid gets the input tensors in reverse order!
-    error_code = Fp16SigmoidGrad(input_addr + start, yt_addr + start, count, output_addr + start);
+    error_code = SigmoidFp16Grad(input_addr + start, yt_addr + start, count, output_addr + start);
+  } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
+    error_code = TanhFp16Grad(yt_addr + start, input_addr + start, count, output_addr + start);
+  } else if (param_act_grad_->type_ == schema::ActivationType_HSWISH) {
+    error_code = HSwishFp16Grad(yt_addr + start, input_addr + start, count, output_addr + start);
+  } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
+    error_code = HSigmoidFp16Grad(yt_addr + start, input_addr + start, count, output_addr + start);
+  } else if (param_act_grad_->type_ == schema::ActivationType_ELU) {
+    error_code =
+      EluFp16Grad(yt_addr + start, input_addr + start, count, output_addr + start, (float16_t)param_act_grad_->alpha_);
+  } else if (param_act_grad_->type_ == schema::ActivationType_GELU) {
+    error_code = GeluFp16Grad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;
