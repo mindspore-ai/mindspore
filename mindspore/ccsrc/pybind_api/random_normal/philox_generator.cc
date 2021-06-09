@@ -15,9 +15,9 @@
  */
 #include "pybind_api/random_normal/philox_generator.h"
 
+namespace mindspore {
 static constexpr uint64_t kShiftNum = 32;
 static constexpr uint64_t kGenerateNum = 10;
-namespace mindspore {
 void PhiloxGenerator::Jump() {
   if ((++counter_[0] == 0) && (++counter_[1] == 0) && (++counter_[2] == 0)) {
     ++counter_[3];
