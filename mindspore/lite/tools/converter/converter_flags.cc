@@ -205,7 +205,11 @@ int Flags::InitConfigFile() {
       return RET_INPUT_PARAM_INVALID;
     }
   }
-  (void)CheckOfflineParallelConfig(this->configFile, &parallel_split_config_);
+  if (!CheckOfflineParallelConfig(this->configFile, &parallel_split_config_) &&
+      parallel_split_config_.parallel_split_type_ != SplitNo) {
+    std::cerr << "offline kernel parallel split config set error.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 
