@@ -229,15 +229,36 @@ class Optimizer(Cell):
 
     @property
     def target(self):
-        """The method is used to determine whether the parameter is updated on host or device. The input type is str
-           and can only be 'CPU', 'Ascend' or 'GPU'."""
+        """
+        The method is used to determine whether the parameter is updated on host or device. The input type is str
+        and can only be 'CPU', 'Ascend' or 'GPU'."""
         return self._target
 
     @target.setter
     def target(self, value):
-        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-           optimizer operation."""
+        """
+        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+        optimizer operation."""
         raise NotImplementedError
+
+    def _set_base_target(self, value):
+        """
+        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+        optimizer operation."""
+        if not isinstance(value, str):
+            raise TypeError("The value must be str type, but got value type is {}".format(type(value)))
+
+        if value not in ('CPU', 'Ascend', 'GPU'):
+            raise ValueError("The value must be 'CPU', 'Ascend' or 'GPU', but got value {}".format(value))
+
+        if self._target == "CPU" and value in ('Ascend', 'GPU'):
+            raise ValueError("In the CPU environment, target cannot be set to 'GPU' and 'Ascend'.")
+
+        if self._target == "Ascend" and value == 'GPU':
+            raise ValueError("In the Ascend environment, target cannot be set to 'GPU'.")
+
+        self._is_device = (value != 'CPU')
+        self._target = value
 
     def decay_weight(self, gradients):
         """
