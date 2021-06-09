@@ -67,14 +67,14 @@ Status CutMixBatchOp::ComputeLabelsAndImages(const TensorRow &input, const std::
 
   // Calculate random labels
   std::vector<int64_t> rand_indx;
-  for (int64_t i = 0; i < images->size(); i++) rand_indx.push_back(i);
+  for (int64_t idx = 0; idx < static_cast<int64_t>(images->size()); idx++) rand_indx.push_back(idx);
   std::shuffle(rand_indx.begin(), rand_indx.end(), rnd_);
 
   int64_t row_labels = label_shape.size() == kMaxLabelShapeSize ? label_shape[dimension_one] : 1;
   int64_t num_classes =
     label_shape.size() == kMaxLabelShapeSize ? label_shape[dimension_two] : label_shape[dimension_one];
 
-  for (int64_t i = 0; i < image_shape[0]; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(image_shape[0]); i++) {
     // Calculating lambda
     // If x1 is a random variable from Gamma(a1, 1) and x2 is a random variable from Gamma(a2, 1)
     // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)
@@ -131,8 +131,9 @@ Status CutMixBatchOp::ComputeLabelsAndImages(const TensorRow &input, const std::
 
       for (int64_t j = 0; j < row_labels; j++) {
         for (int64_t k = 0; k < num_classes; k++) {
-          std::vector<int64_t> first_index =
-            label_shape.size() == kMaxLabelShapeSize ? std::vector{i, j, k} : std::vector{i, k};
+          std::vector<int64_t> first_index = label_shape.size() == kMaxLabelShapeSize
+                                               ? std::vector{static_cast<int64_t>(i), j, k}
+                                               : std::vector{static_cast<int64_t>(i), k};
           std::vector<int64_t> second_index =
             label_shape.size() == kMaxLabelShapeSize ? std::vector{rand_indx[i], j, k} : std::vector{rand_indx[i], k};
           if (input.at(1)->type().IsSignedInt()) {

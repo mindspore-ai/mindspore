@@ -239,14 +239,14 @@ std::shared_ptr<SamplerObj> PreBuiltSamplerObj::SamplerCopy() {
   if (sp_minddataset_ != nullptr) {
     auto new_sampler = std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
     for (auto child : children_) {
-      new_sampler->AddChildSampler(child);
+      static_cast<void>(new_sampler->AddChildSampler(child));
     }
     return new_sampler;
   }
 #endif
   auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_);
   for (auto a_child : children_) {
-    sampler->AddChildSampler(a_child);
+    static_cast<void>(sampler->AddChildSampler(a_child));
   }
   return sampler;
 }
