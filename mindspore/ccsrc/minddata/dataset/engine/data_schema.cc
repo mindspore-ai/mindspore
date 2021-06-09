@@ -437,7 +437,7 @@ Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *ou
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "unexpected null output column name map.");
   }
 
-  for (int32_t i = 0; i < col_descs_.size(); ++i) {
+  for (size_t i = 0; i < col_descs_.size(); ++i) {
     if (col_descs_[i].name().empty()) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                     "Constructing column name map from schema, but found empty column name.");

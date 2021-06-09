@@ -77,31 +77,31 @@ class CacheAdminArgHandler {
     kArgNumArgs = 15  // Must be the last position to provide a count
   };
 
-  Status StartServer(CommandId command_id);
+  Status StartServer();
 
-  Status StopServer(CommandId command_id);
+  Status StopServer();
 
   Status ShowServerInfo();
 
-  Status AssignArg(std::string option, int32_t *out_arg, std::stringstream *arg_stream,
+  Status AssignArg(const std::string &option, int32_t *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);
 
-  Status AssignArg(std::string option, std::string *out_arg, std::stringstream *arg_stream,
+  Status AssignArg(const std::string &option, std::string *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);
 
-  Status AssignArg(std::string option, float *out_arg, std::stringstream *arg_stream,
+  Status AssignArg(const std::string &option, float *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);
 
   Status Validate();
 
   CommandId command_id_;
-  int32_t port_;
+  session_id_type session_id_;
   int32_t num_workers_;
   int32_t shm_mem_sz_;
   int32_t log_level_;
   float memory_cap_ratio_;
-  session_id_type session_id_;
   std::string hostname_;
+  int32_t port_;
   std::string spill_dir_;
   std::string trailing_args_;
   std::map<std::string, ArgValue> arg_map_;

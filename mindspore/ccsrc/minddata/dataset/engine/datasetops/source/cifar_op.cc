@@ -477,6 +477,8 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
     }
     return Status::OK();
   } else {
+    const uint32_t kCifar100RecordsPerTestFile = 10000;
+    const uint32_t kCifar100RecordsPerTrainFile = 50000;
     int64_t num_cifar100_records = 0;
     for (auto &file : op->cifar_files_) {
       Path file_path(file);
@@ -489,9 +491,9 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
       if (op->usage_ == "test" && file_path.Basename().find("test") == std::string::npos) continue;
 
       if (file_name.find("test") != std::string::npos) {
-        num_cifar100_records += 10000;
+        num_cifar100_records += kCifar100RecordsPerTestFile;
       } else if (file_name.find("train") != std::string::npos) {
-        num_cifar100_records += 50000;
+        num_cifar100_records += kCifar100RecordsPerTrainFile;
       }
       std::ifstream in(file, std::ios::binary);
       CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open cifar100 file: " + file);
