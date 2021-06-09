@@ -97,7 +97,6 @@ void Spliter::RecordGraphInfo(const FuncGraphPtr &func_graph) {
           break;
         }
         conv_nodes.push(pre_input_node);
-        match_num++;
       }
       // visit output
       if (nodes_outputs_[curr_cnode].size() > kDefaultBatch) {
@@ -108,8 +107,8 @@ void Spliter::RecordGraphInfo(const FuncGraphPtr &func_graph) {
           break;
         }
         conv_nodes.push(post_output_node);
-        match_num++;
       }
+      match_num++;
     }
     if (match_num != 0) {
       match_numbers_.insert(match_num);
