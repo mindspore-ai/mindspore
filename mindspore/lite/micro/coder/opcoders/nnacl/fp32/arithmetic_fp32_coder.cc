@@ -128,7 +128,6 @@ int ArithmeticFP32Coder::BroadcastRun(const std::string &input0, const std::stri
       *code << "\t\t" << arithmetic_run_int_ << "(((" << input0 << ") + " << out_thread_stride << "), ((" << input1
             << ") + " << out_thread_stride << "), ((" << output << ") + " << out_thread_stride << "), " << out_count
             << ");\n";
-
     } else {
       *code << "\t\t" << arithmetic_run_ << "(((" << input0 << ") + " << out_thread_stride << "), ((" << input1
             << ") + " << out_thread_stride << "), ((" << output << ") + " << out_thread_stride << "), " << out_count
@@ -368,5 +367,4 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Greater, CPUOp
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_GreaterEqual, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Eltwise, CPUOpCoderCreator<ArithmeticFP32Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

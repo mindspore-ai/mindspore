@@ -28,7 +28,6 @@
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::lite::micro::nnacl {
-
 int MatMulFP32BaseCoder::ReSize() {
   ResizeParameter();
   thread_count_ = MSMIN(thread_num_, UP_DIV(params_->col_align_, col_tile_));
