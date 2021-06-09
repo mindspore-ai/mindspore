@@ -548,6 +548,9 @@ int LiteSession::CompileGraph(Model *model) {
     FreePackOpWeight(kernels_);
   }
   is_running_.store(false);
+  if (delegate_ != nullptr) {
+    delegate_->build_hook_(delegate_);
+  }
   return RET_OK;
 }
 
@@ -607,6 +610,9 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "RunGraph failed : " << ret;
   }
   is_running_.store(false);
+  if (delegate_ != nullptr) {
+    delegate_->run_hook_(delegate_);
+  }
   return ret;
 }
 
@@ -684,6 +690,9 @@ int LiteSession::Init(const Context *context) {
   }
 
   is_running_.store(false);
+  if (delegate_ != nullptr) {
+    delegate_->init_hook_(delegate_);
+  }
   return RET_OK;
 }
 

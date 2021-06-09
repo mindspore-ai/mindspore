@@ -16,9 +16,9 @@
 
 #include "include/delegate.h"
 namespace mindspore {
-const schema::Primitive *DelegateModel::GetPrimitive(kernel::Kernel *kernel) {
+const schema::Primitive *DelegateModel::GetPrimitive(kernel::Kernel *kernel) const {
   if (primitives_.find(kernel) != primitives_.end()) {
-    return primitives_[kernel];
+    return primitives_.at(kernel);
   } else {
     return nullptr;
   }
@@ -29,7 +29,10 @@ KernelIter DelegateModel::BeginKernelIterator() { return kernels_->begin(); }
 KernelIter DelegateModel::EndKernelIterator() { return kernels_->end(); }
 
 KernelIter DelegateModel::Replace(KernelIter from, KernelIter end, kernel::Kernel *graph_kernel) {
-  int insert_index = from - BeginKernelIterator();
+  size_t insert_index = from - BeginKernelIterator();
+  if (insert_index >= kernels_->size()) {
+    return BeginKernelIterator();
+  }
   kernels_->erase(from, end);
   kernels_->insert(BeginKernelIterator() + insert_index, graph_kernel);
   return BeginKernelIterator() + insert_index + 1;

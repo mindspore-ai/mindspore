@@ -19,6 +19,7 @@
 
 #include <map>
 #include <vector>
+#include <memory>
 #include "include/ms_tensor.h"
 #include "include/context.h"
 #include "include/kernel.h"
@@ -28,12 +29,12 @@ using KernelIter = std::vector<kernel::Kernel *>::iterator;
 class DelegateModel {
  public:
   DelegateModel(std::vector<kernel::Kernel *> *kernels,
-                std::map<kernel::Kernel *, const schema::Primitive *> primitives)
+                const std::map<kernel::Kernel *, const schema::Primitive *> primitives)
       : kernels_(kernels), primitives_(primitives) {}
 
   ~DelegateModel() = default;
 
-  const schema::Primitive *GetPrimitive(kernel::Kernel *kernel);
+  const schema::Primitive *GetPrimitive(kernel::Kernel *kernel) const;
 
   KernelIter BeginKernelIterator();
 
@@ -43,9 +44,11 @@ class DelegateModel {
 
  protected:
   std::vector<kernel::Kernel *> *kernels_;
-  std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
+  const std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
 };
 
+typedef void (*DelegateHook)(std::shared_ptr<Delegate> delegate);
+static void HookNullFuc(std::shared_ptr<Delegate> delegate) {}
 class Delegate {
  public:
   Delegate() = default;
@@ -55,6 +58,10 @@ class Delegate {
   virtual int Init() = 0;
 
   virtual int Build(DelegateModel *model) = 0;
+
+  DelegateHook init_hook_ = HookNullFuc;
+  DelegateHook build_hook_ = HookNullFuc;
+  DelegateHook run_hook_ = HookNullFuc;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_DELEGATE_DELEGATE_H_
