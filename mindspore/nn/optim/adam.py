@@ -365,15 +365,16 @@ class Adam(Optimizer):
 
     @Optimizer.target.setter
     def target(self, value):
-        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-           optimizer operation."""
+        """
+        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+        optimizer operation."""
         if not isinstance(value, str):
             raise TypeError("The value must be str type, but got value type is {}".format(type(value)))
 
         if value not in ('CPU', 'Ascend', 'GPU'):
             raise ValueError("The value must be 'CPU', 'Ascend' or 'GPU', but got value {}".format(value))
 
-        if self._target == "CPU" and value in('Ascend', 'GPU'):
+        if self._target == "CPU" and value in ('Ascend', 'GPU'):
             raise ValueError("In the CPU environment, target cannot be set to 'GPU' and 'Ascend'.")
 
         if self._target == "Ascend" and value == 'GPU':

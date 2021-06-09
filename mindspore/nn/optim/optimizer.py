@@ -236,14 +236,16 @@ class Optimizer(Cell):
 
     @property
     def target(self):
-        """The method is used to determine whether the parameter is updated on host or device. The input type is str
-           and can only be 'CPU', 'Ascend' or 'GPU'."""
+        """
+        The method is used to determine whether the parameter is updated on host or device. The input type is str
+        and can only be 'CPU', 'Ascend' or 'GPU'."""
         return self._target
 
     @target.setter
     def target(self, value):
-        """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-           optimizer operation."""
+        """
+        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+        optimizer operation."""
         raise NotImplementedError
 
     def decay_weight(self, gradients):
