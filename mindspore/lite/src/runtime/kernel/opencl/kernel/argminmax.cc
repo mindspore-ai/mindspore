@@ -43,9 +43,12 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
                   << " output data type is " << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() > DIMENSION_4D && in_tensors_[0]->shape().size() == 0) {
-    MS_LOG(ERROR) << "input shape size must be (1-4), actual: " << in_tensors_[0]->shape().size() << ", "
-                  << out_tensors_[0]->shape().size();
+  if (in_tensors_[0]->shape().size() > DIMENSION_4D) {
+    MS_LOG(ERROR) << "input shape size must be (1-4), actual: " << in_tensors_[0]->shape().size();
+    return RET_ERROR;
+  }
+  if (out_tensors_[0]->shape().size() != DIMENSION_1D) {
+    MS_LOG(ERROR) << "output shape size must be 1, actual" << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);

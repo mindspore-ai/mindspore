@@ -216,10 +216,10 @@ void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
 
   std::map<ActType, std::pair<float, float>> relu_clips{
     {ActType_No, {-FLT_MAX, FLT_MAX}}, {ActType_Relu, {0.0, FLT_MAX}}, {ActType_Relu6, {0, 6.0}}};
-  cl_int2 kernel_size = {parameter->kernel_h_, parameter->kernel_w_};
-  cl_int2 stride = {parameter->stride_h_, parameter->stride_w_};
-  cl_int2 padding = {-parameter->pad_u_, -parameter->pad_l_};
-  cl_int2 dilation = {parameter->dilation_h_, parameter->dilation_w_};
+  cl_int2 kernel_size = {parameter->kernel_w_, parameter->kernel_h_};
+  cl_int2 stride = {parameter->stride_w_, parameter->stride_h_};
+  cl_int2 padding = {-parameter->pad_l_, -parameter->pad_u_};
+  cl_int2 dilation = {parameter->dilation_w_, parameter->dilation_h_};
   cl_int4 src_size = {(cl_int)in_info.W, (cl_int)in_info.H, (cl_int)CI4, (cl_int)in_info.N};
   cl_int4 dst_size = {(cl_int)out_info.W, (cl_int)out_info.H, (cl_int)CO4, (cl_int)out_info.N};
 

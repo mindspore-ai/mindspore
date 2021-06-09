@@ -75,8 +75,8 @@ int SplitOpenCLKernel::CheckSpecs() {
     }
   }
 
-  if (param->num_split_ != 2 && (param->num_split_ != 3 && param->split_dim_ == 0)) {
-    MS_LOG(ERROR) << "num_split_ only supported 2 or (3 && split_dim_ = 0) yet";
+  if (!(param->num_split_ == 2 || param->split_dim_ == 0)) {
+    MS_LOG(ERROR) << "num_split_ only supported = 2 or split_dim_ = 0 yet";
     return RET_ERROR;
   }
   if (param->split_dim_ < 0 || param->split_dim_ > 3) {
@@ -85,6 +85,10 @@ int SplitOpenCLKernel::CheckSpecs() {
   }
   if (param->split_sizes_ == nullptr) {
     MS_LOG(ERROR) << "split_sizes_ can not nullptr";
+    return RET_ERROR;
+  }
+  if (param->num_split_ == 1 && param->split_sizes_[0] == 0) {
+    MS_LOG(ERROR) << "param->split_sizes_[0] is zero.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -128,7 +132,7 @@ int SplitOpenCLKernel::Prepare() {
   }
   AlignSplitSizes(param, in_shape);
   std::string kernel_name = "split_out";
-  kernel_name += num_split_ == 1 ? std::to_string(out_tensors().size()) : std::to_string(num_split_);
+  kernel_name += std::to_string(num_split_);
   kernel_name += "_axis" + std::to_string(split_dim_);
   if (!Align_) {
     kernel_name += "_unalign";
