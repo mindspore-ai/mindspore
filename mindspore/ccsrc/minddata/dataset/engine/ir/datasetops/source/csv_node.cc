@@ -91,6 +91,12 @@ Status CSVNode::ValidateParams() {
   return Status::OK();
 }
 
+using CsvOpRecordInt = CsvOp::Record<int>;
+using CsvOpRecordString = CsvOp::Record<std::string>;
+using CsvOpRecordFloat = CsvOp::Record<float>;
+using CsvRecordInt = CsvRecord<int>;
+using CsvRecordString = CsvRecord<std::string>;
+using CsvRecordFloat = CsvRecord<float>;
 // Function to build CSVNode
 Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
@@ -103,13 +109,13 @@ Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   for (auto v : column_defaults_) {
     if (v->type == CsvType::INT) {
       column_default_list.push_back(
-        std::make_shared<CsvOp::Record<int>>(CsvOp::INT, std::dynamic_pointer_cast<CsvRecord<int>>(v)->value));
+        std::make_shared<CsvOpRecordInt>(CsvOp::INT, std::dynamic_pointer_cast<CsvRecordInt>(v)->value));
     } else if (v->type == CsvType::FLOAT) {
       column_default_list.push_back(
-        std::make_shared<CsvOp::Record<float>>(CsvOp::FLOAT, std::dynamic_pointer_cast<CsvRecord<float>>(v)->value));
+        std::make_shared<CsvOpRecordFloat>(CsvOp::FLOAT, std::dynamic_pointer_cast<CsvRecordFloat>(v)->value));
     } else if (v->type == CsvType::STRING) {
-      column_default_list.push_back(std::make_shared<CsvOp::Record<std::string>>(
-        CsvOp::STRING, (std::dynamic_pointer_cast<CsvRecord<std::string>>(v))->value));
+      column_default_list.push_back(
+        std::make_shared<CsvOpRecordString>(CsvOp::STRING, std::dynamic_pointer_cast<CsvRecordString>(v)->value));
     }
   }
 

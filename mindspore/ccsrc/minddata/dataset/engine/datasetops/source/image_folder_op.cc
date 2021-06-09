@@ -80,8 +80,8 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::str
       buf_cnt_(0),
       sampler_ind_(0),
       dirname_offset_(0) {
-  folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
-  image_name_queue_ = std::make_unique<Queue<FolderImagesPair>>(num_wkrs * queue_size);
+  folder_name_queue_ = std::make_unique<StringQueue>(num_wkrs * queue_size);
+  image_name_queue_ = std::make_unique<FolderImagesPairQueue>(num_wkrs * queue_size);
   io_block_queues_.Init(num_workers_, queue_size);
 }
 

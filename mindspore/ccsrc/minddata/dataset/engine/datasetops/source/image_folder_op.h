@@ -49,6 +49,8 @@ class Queue;
 
 using ImageLabelPair = std::shared_ptr<std::pair<std::string, int32_t>>;
 using FolderImagesPair = std::shared_ptr<std::pair<std::string, std::queue<ImageLabelPair>>>;
+using StringQueue = Queue<std::string>;
+using FolderImagesPairQueue = Queue<FolderImagesPair>;
 
 class ImageFolderOp : public ParallelOp, public RandomAccessOp {
  public:
@@ -266,8 +268,8 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   int64_t sampler_ind_;
   uint64_t dirname_offset_;
   std::vector<ImageLabelPair> image_label_pairs_;
-  std::unique_ptr<Queue<std::string>> folder_name_queue_;
-  std::unique_ptr<Queue<FolderImagesPair>> image_name_queue_;
+  std::unique_ptr<StringQueue> folder_name_queue_;
+  std::unique_ptr<FolderImagesPairQueue> image_name_queue_;
 };
 }  // namespace dataset
 }  // namespace mindspore

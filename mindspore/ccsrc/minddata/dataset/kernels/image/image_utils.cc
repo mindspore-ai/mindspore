@@ -965,6 +965,10 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd, uint8_t fill_r,
              uint8_t fill_g, uint8_t fill_b) {
+  constexpr uint32_t channel_red = 0;
+  constexpr uint32_t channel_green = 1;
+  constexpr uint32_t channel_blue = 2;
+
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
@@ -1008,13 +1012,13 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
         for (int x = h_start; x < max_height; x++) {
           if (random_color) {
             // fill each box with a random value
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[0] = static_cast<int32_t>(normal_distribution(*rnd));
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[1] = static_cast<int32_t>(normal_distribution(*rnd));
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[2] = static_cast<int32_t>(normal_distribution(*rnd));
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[channel_red] = static_cast<int32_t>(normal_distribution(*rnd));
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[channel_green] = static_cast<int32_t>(normal_distribution(*rnd));
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[channel_blue] = static_cast<int32_t>(normal_distribution(*rnd));
           } else {
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[0] = fill_r;
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[1] = fill_g;
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[2] = fill_b;
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[channel_red] = fill_r;
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[channel_green] = fill_g;
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[channel_blue] = fill_b;
           }
         }
       }
