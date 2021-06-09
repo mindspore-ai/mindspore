@@ -270,7 +270,7 @@ bool UpdatedByAssign(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node)
 }
 }  // namespace
 
-size_t GPUSession::UpdateGraphInputAbstract(AnfNodePtr input_node, tensor::TensorPtr tensor) {
+size_t GPUSession::UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::TensorPtr tensor) const {
   size_t size = LongToSize(tensor->data().nbytes());
   if (input_node->isa<Parameter>() && input_node->cast<ParameterPtr>()->is_used_by_dynamic_kernel()) {
     auto tensor_shape = tensor->shape();

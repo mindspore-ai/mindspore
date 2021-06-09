@@ -90,7 +90,7 @@ class GPUSession : public SessionBasic {
 
   GraphId CompileGraphImpl(KernelGraphPtr kernel_graph);
 
-  size_t UpdateGraphInputAbstract(AnfNodePtr input_node, tensor::TensorPtr tensor);
+  size_t UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::TensorPtr tensor) const;
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;
 MS_REG_SESSION(kGPUDevice, GPUSession);
