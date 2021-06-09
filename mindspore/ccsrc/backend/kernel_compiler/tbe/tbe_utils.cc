@@ -77,6 +77,7 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
   }
   file_write << info << std::endl;
   file_write.close();
+  file_write.clear();
   if (realpath(path.c_str(), real_path) == nullptr) {
     MS_LOG(WARNING) << "Get realpath failed(" << path << ").";
     return;
@@ -91,6 +92,7 @@ void TbeUtils::LoadCache() {
   static bool has_load = false;
   if (!has_load) {
     auto bin_map = KernelMeta::GetInstance();
+    MS_EXCEPTION_IF_NULL(bin_map);
     if (!bin_map->ReadIndex(kCceKernelMeta)) {
       MS_LOG(INFO) << "Cache initialize failed[" << kCceKernelMeta << "]";
     }
@@ -163,6 +165,7 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
     auto iter = info_table_.find(func_name);
     if (iter != info_table_.end()) {
       auto kernelmeta = iter->second;
+      MS_EXCEPTION_IF_NULL(kernelmeta);
       *block_dim = kernelmeta->block_dim_;
       if (!dynamic_flag) {
         return kernelmeta->func_stub_;
@@ -256,6 +259,7 @@ KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const st
     std::string cce_json = kCceKernelMeta;
     (void)cce_json.append(kernel_name).append(kJsonSuffix);
     ret = std::make_shared<KernelPack>();
+    MS_EXCEPTION_IF_NULL(ret);
     if (!ret->LoadKernelMeta(cce_json)) {
       MS_LOG(INFO) << "Read cache json and bin file failed[" << cce_json << "]";
       return nullptr;

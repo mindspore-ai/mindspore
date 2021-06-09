@@ -43,6 +43,7 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
   if (AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, cnode)) {
     auto shrink_axis_mask = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrShrinkAxisMask));
     AnfNodePtr input = cnode->input(1);
+    MS_EXCEPTION_IF_NULL(input);
     int input_dims = 0;
     if (input->isa<ValueNode>()) {
       ValuePtr input_value = input->cast<ValueNodePtr>()->value();

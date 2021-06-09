@@ -200,6 +200,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
 
 void GenNoneInputDescJson(const std::shared_ptr<OpIOInfo> &input_ptr, size_t input_i,
                           std::vector<nlohmann::json> *const input_list) {
+  MS_EXCEPTION_IF_NULL(input_ptr);
   nlohmann::json input_desc_json;
   auto in_name = input_ptr->name();
   input_desc_json[kJName] = in_name + std::to_string(input_i);
@@ -211,6 +212,8 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
                                                  bool value, const std::shared_ptr<OpIOInfo> &input_ptr,
                                                  const string &op_input_name, size_t input_i,
                                                  std::vector<nlohmann::json> *const input_list) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(input_list);
   auto def_format = kOpFormat_NCHW;
   auto dtype = GetDeviceInputType(anf_node, real_input_index);
   auto format = GetDeviceInputFormat(anf_node, real_input_index);
@@ -401,6 +404,7 @@ bool TbeKernelJsonCreator::GenOutputDescJson(
   size_t real_output_num = AnfAlgo::GetOutputTensorNum(anf_node);
 
   for (const auto &output_ptr : outputs_ptr) {
+    MS_EXCEPTION_IF_NULL(output_ptr);
     size_t output_obj_num = 0;
     if (output_ptr->param_type() == kParamRequred) {
       output_obj_num = 1;
@@ -434,6 +438,8 @@ bool TbeKernelJsonCreator::GenOutputDescJson(
 void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_node, const size_t &output_obj_num,
                                          const std::shared_ptr<OpIOInfo> &output_ptr, size_t *output_idx,
                                          std::vector<nlohmann::json> *output_list) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(output_ptr);
   MS_EXCEPTION_IF_NULL(output_idx);
   MS_EXCEPTION_IF_NULL(output_list);
   auto def_format = kOpFormat_NCHW;
@@ -483,6 +489,7 @@ void TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &attr_ptr : attrs_ptr) {
+    MS_EXCEPTION_IF_NULL(attr_ptr);
     std::string attr_name = attr_ptr->name();
     nlohmann::json attr_obj;
     attr_obj[kJName] = attr_name;
@@ -550,6 +557,8 @@ string TbeKernelJsonCreator::GetSocVersion() {
 }
 
 void ParseListIntAttrValue(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(attr_obj);
   std::vector<int64_t> attr_value;
   auto value_type = value->type();
   MS_EXCEPTION_IF_NULL(value_type);
@@ -731,6 +740,7 @@ std::string TbeKernelJsonCreator::GetDeviceOutputFormat(const AnfNodePtr &anf_no
 
 void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list,
                       const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(input_size_list);
   for (size_t i = 0; i < input_json.size(); i++) {
     for (size_t m = 0; m < input_json[i].size(); m++) {
       size_t size_i = 1;
@@ -744,14 +754,14 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
             MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
           }
           MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j];
-          size_i *= LongToSize(input_max_shape[j]);
+          size_i = SizetMulWithOverflowCheck(size_i, LongToSize(input_max_shape[j]));
           continue;
         }
-        size_i *= static_cast<size_t>(input_json[i][m][kJShape][j]);
+        size_i = SizetMulWithOverflowCheck(size_i, static_cast<size_t>(input_json[i][m][kJShape][j]));
       }
       std::string dtype = input_json[i][m][kJDtype];
       size_t nbyte = tbe::GetDtypeNbyte(dtype);
-      size_i *= nbyte;
+      size_i = SizetMulWithOverflowCheck(size_i, nbyte);
       input_size_list->push_back(size_i);
     }
   }
@@ -774,14 +784,14 @@ void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *o
             MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
           }
           MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j];
-          size_i *= LongToSize(output_max_shape[j]);
+          size_i = SizetMulWithOverflowCheck(size_i, LongToSize(output_max_shape[j]));
           continue;
         }
-        size_i *= static_cast<size_t>(output_json[i][m][kJShape][j]);
+        size_i = SizetMulWithOverflowCheck(size_i, static_cast<size_t>(output_json[i][m][kJShape][j]));
       }
       std::string dtype = output_json[i][m][kJDtype];
       size_t nbyte = tbe::GetDtypeNbyte(dtype);
-      size_i *= nbyte;
+      size_i = SizetMulWithOverflowCheck(size_i, nbyte);
       output_size_list->push_back(size_i);
     }
   }
@@ -859,6 +869,7 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
   // gen others
   auto origin_type = AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(origin_type, cnode);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
   // replace special op type for buffer fusion op
   auto type = GetRealOpType(origin_type);
   (*compute_op_str)[kJtype] = type;
@@ -902,6 +913,8 @@ void TbeKernelBuild::GenSuffixDescJson(nlohmann::json *output_desc) {
 // FusionDataType fusion_data_type: speceial process json desc output shape [kFusionAddN, kFusionReLUGradV2]
 void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t node_out_idx,
                                  size_t desc_output_idx, nlohmann::json *output_desc, FusionDataType fusion_data_type) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(output_desc);
   GenPreDescJson(output_desc);
   auto def_format = kOpFormat_NCHW;
   if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
@@ -980,6 +993,8 @@ void TbeKernelBuild::GenFusionOutputDescJson(const std::shared_ptr<mindspore::An
 
 void TbeKernelBuild::GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t index,
                                          size_t output_index, nlohmann::json *output_desc, const size_t out_size) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(output_desc);
   std::string output_desc_name = anf_node->fullname_with_scope() + "_" + std::to_string(index);
   (*output_desc)[kJName] = output_desc_name;
   (*output_desc)[kJOutputIndex] = output_index;
@@ -1106,6 +1121,9 @@ bool TbeKernelBuild::IsDynamicInput(const mindspore::CNodePtr &cnode) {
     dyn_input_sizes = GetValue<const std::vector<int64_t>>(dynamic_input_attr);
     auto real_input_size = cnode->inputs().size() - 1;
     auto dyn_input_size = dyn_input_sizes.size();
+    if (dyn_input_sizes.empty()) {
+      MS_LOG(EXCEPTION) << "Cnode's dynamic input attr is empty, the cnode is " << cnode->fullname_with_scope();
+    }
     if (dyn_input_size != 1) {
       MS_LOG(INFO) << "Fusion error: fusion build not support dyn_input_sizes > 1";
       return ret;
@@ -1129,9 +1147,10 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
   MS_EXCEPTION_IF_NULL(cnode);
   auto node_name = AnfAlgo::GetCNodeName(cnode);
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(node_name, cnode);
-  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(op_info);
   auto node_inputs_size = cnode->inputs().size();
   for (auto &input : cnode->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
     if (HasAbstractMonad(input)) {
       node_inputs_size--;
     }
@@ -1184,6 +1203,7 @@ bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
                                                std::vector<nlohmann::json> *input_desc_list, size_t *index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_desc_list);
+  MS_EXCEPTION_IF_NULL(layer_iter);
   std::vector<nlohmann::json> input_desc_list_tmp = {};
   // 1. input json
   bool is_dynamic_input = IsDynamicInput(cnode);
@@ -1278,6 +1298,7 @@ bool TbeKernelBuild::GenFusionComputeJson(const mindspore::AnfNodePtr &compute_n
                                           nlohmann::json *compute_op_str, std::string *fusion_kernel_name,
                                           size_t *index) {
   MS_EXCEPTION_IF_NULL(compute_node);
+  MS_EXCEPTION_IF_NULL(compute_op_str);
   auto cnode = compute_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // gen input desc
@@ -1301,11 +1322,11 @@ bool TbeKernelBuild::GenFusionComputeJson(const mindspore::AnfNodePtr &compute_n
 size_t TbeKernelBuild::GetIOSizeImpl(const nlohmann::json &desc) {
   size_t ret = 1;
   for (const auto &shape_item : desc[kJShape]) {
-    ret *= static_cast<size_t>(shape_item);
+    ret = SizetMulWithOverflowCheck(ret, static_cast<size_t>(shape_item));
   }
   std::string data_type = desc[kJDataType];
   size_t nbyte = tbe::GetDtypeNbyte(data_type);
-  ret *= nbyte;
+  ret = SizetMulWithOverflowCheck(ret, nbyte);
   return ret;
 }
 

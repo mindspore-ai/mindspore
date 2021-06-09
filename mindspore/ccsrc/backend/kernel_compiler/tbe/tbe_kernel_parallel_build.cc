@@ -137,6 +137,7 @@ void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::stri
   auto node = task_iter->second;
   auto builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+  MS_EXCEPTION_IF_NULL(builder);
   std::string start_flag = "fusion_pattern_start";
   std::string end_flag = "fusion_pattern_end";
   auto start = pre_build_result.find(start_flag);

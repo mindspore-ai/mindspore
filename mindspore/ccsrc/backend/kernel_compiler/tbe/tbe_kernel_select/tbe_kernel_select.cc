@@ -304,6 +304,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
   size_t io_info_num = ios_info.size();
   for (; io_info_index < io_info_num && real_io_tensor_index < real_io_tensor_num; io_info_index++) {
     std::shared_ptr<OpIOInfo> io_info_item = ios_info[io_info_index];
+    MS_EXCEPTION_IF_NULL(io_info_item);
     const auto &kernel_build_info_dtype = io_info_item->dtypes()[kernel_build_info_index];
     std::string kernel_build_info_format;
     if (!io_info_item->formats().empty()) {
