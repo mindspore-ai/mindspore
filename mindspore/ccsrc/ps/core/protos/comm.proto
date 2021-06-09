@@ -39,6 +39,8 @@ enum NodeCommand {
   SCALE_IN_DONE = 11;
   // This command is used to send user defined event.
   SEND_EVENT = 12;
+  // This command is used to send finish message from the scale in node to the scheduler.
+  SCALE_IN_FINISH = 13;
 }
 
 enum NodeRole {

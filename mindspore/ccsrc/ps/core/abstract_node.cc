@@ -84,23 +84,27 @@ bool AbstractNode::Broadcast(const enum NodeRole &node_role, const DataPtr &mess
 }
 
 void AbstractNode::set_ready_for_scale_out() {
+  MS_LOG(INFO) << "[Scale out]: begin to set ready for scale out.";
   Register(client_to_scheduler_);
   connected_nodes_.clear();
 }
 
 void AbstractNode::set_ready_for_scale_in() {
+  MS_LOG(INFO) << "[Scale in]: begin to set ready for scale in.";
   if (!is_current_node_scale_in_) {
     Register(client_to_scheduler_);
     connected_nodes_.clear();
   } else {
     current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
     node_info_.rank_id_ = UINT32_MAX;
-    MS_LOG(WARNING) << "Trigger cluster scale in done event.";
+    SendScaleInFinishMessage(client_to_scheduler_, kScaleInTimeoutInSenconds);
+    MS_LOG(WARNING) << "[Event]:Trigger cluster scale in done event.";
     OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
 }
 
 void AbstractNode::set_scale_out_done() {
+  MS_LOG(INFO) << "[Scale out]: begin to set scale out done.";
   auto message_meta = std::make_shared<MessageMeta>();
   message_meta->set_cmd(NodeCommand::SCALE_OUT_DONE);
 
@@ -114,10 +118,11 @@ void AbstractNode::set_scale_out_done() {
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is send scale_out_done to scheduler!";
+               << " the node id:" << node_info_.node_id_ << "is send scale_out_done to scheduler successful!";
 }
 
 void AbstractNode::set_scale_in_done() {
+  MS_LOG(INFO) << "[Scale in]: begin to set scale in done.";
   auto message_meta = std::make_shared<MessageMeta>();
   message_meta->set_cmd(NodeCommand::SCALE_IN_DONE);
 
@@ -131,7 +136,7 @@ void AbstractNode::set_scale_in_done() {
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is send scale_in_done to scheduler!";
+               << " the node id:" << node_info_.node_id_ << "is send scale_in_done to scheduler successful!";
 }
 
 void AbstractNode::BroadcastEvent(const uint32_t &event) {
@@ -564,6 +569,20 @@ void AbstractNode::ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared
   OnCustomEventCallback(event);
 }
 
+void AbstractNode::SendScaleInFinishMessage(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout) {
+  auto meta = std::make_shared<MessageMeta>();
+  meta->set_cmd(NodeCommand::SCALE_IN_FINISH);
+
+  std::string finish_message = node_info_.node_id_;
+
+  MS_LOG(INFO) << "The scale in node id:" << node_info_.node_id_ << " send a scale in finish message to scheduler.";
+
+  if (!SendMessageSync(client, meta, Protos::RAW, finish_message.data(), finish_message.length(), timeout)) {
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " send scale in finish Message timeout!";
+  }
+}
+
 void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
                                    const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
@@ -824,6 +843,7 @@ void AbstractNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_OUT_DONE] = nullptr;
   handlers_[NodeCommand::SCALE_IN_DONE] = nullptr;
   handlers_[NodeCommand::SEND_EVENT] = nullptr;
+  handlers_[NodeCommand::SCALE_IN_FINISH] = nullptr;
 }
 
 void AbstractNode::InitServerHandler() {
@@ -855,18 +875,18 @@ void AbstractNode::InitNodeNum() {
 
 void AbstractNode::OnEventCallback(const ClusterEvent &event) {
   if (!event_to_callback_.count(event)) {
-    MS_LOG(ERROR) << "The event callback of " << event << " is not set.";
+    MS_LOG(ERROR) << "[Event]:The event callback of " << event << " is not set.";
   } else {
-    MS_LOG(INFO) << "Trigger the event:" << event;
+    MS_LOG(INFO) << "[Event]:Trigger the event:" << event;
     event_to_callback_[event]();
   }
 }
 
 void AbstractNode::OnCustomEventCallback(const uint32_t &event) {
   if (!custom_event_to_callback_.count(event)) {
-    MS_LOG(WARNING) << "The event callback of " << event << " is not set.";
+    MS_LOG(WARNING) << "[Custom event]:The event callback of " << event << " is not set.";
   } else {
-    MS_LOG(INFO) << "Trigger the event:" << event;
+    MS_LOG(INFO) << "[Custom event]:Trigger the event:" << event;
     custom_event_to_callback_[event]();
   }
 }

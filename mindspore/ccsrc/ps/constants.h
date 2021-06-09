@@ -88,6 +88,13 @@ constexpr int64_t kRetryIntervalInMs = 10;
 
 constexpr int64_t kThreadNum = 32;
 
+// The timeout period for the scale in node to send the finish message to scheduler.
+constexpr uint32_t kScaleInTimeoutInSenconds = 30;
+// The number of retries to determine whether all nodes are successfully registered.
+constexpr uint32_t kCheckRegisteredRetryCount = 30;
+// The timeout interval for judging whether all nodes are successfully registered.
+constexpr uint32_t kCheckRegisteredIntervalInMs = 1000;
+
 // The barrier function which should be called before doing scaling out/in operations.
 // It's easy for us to scale out/in nodes after one iteration is completed and keep consistent.
 using BarrierBeforeScaleOut = std::function<void(void)>;

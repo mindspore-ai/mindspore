@@ -86,6 +86,8 @@ class NodeManager {
   bool IsAllNodesScaleInDone();
 
   std::unordered_map<std::string, NodeInfo> &nodes_info();
+  // After all the nodes are registered successfully, the nodes info can be updated.
+  void UpdateNodesInfo();
 
   void set_total_node_num(const int32_t &node_num);
   const int32_t &total_node_num();
@@ -114,7 +116,10 @@ class NodeManager {
   std::atomic<int> next_worker_rank_id_;
   std::atomic<int> next_server_rank_id_;
 
-  // worker nodes and server nodes
+  // Whenever a node is registered, it will be stored in this map.
+  std::unordered_map<std::string, NodeInfo> registered_nodes_info_;
+  // When all nodes are registered successfully, then all nodes info will be stored in this map. In other words, the
+  // nodes_info_ is a snapshot of the registered_nodes_info_.
   std::unordered_map<std::string, NodeInfo> nodes_info_;
   std::mutex assign_rank_id_mutex_;
   std::mutex heartbeat_mutex_;
