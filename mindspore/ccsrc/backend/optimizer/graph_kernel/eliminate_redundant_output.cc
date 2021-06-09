@@ -70,8 +70,7 @@ bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr 
   bool changed = false;
   for (const auto &user : users) {
     if (!IsPrimitiveCNode(user.first, prim::kPrimTupleGetItem)) {
-      // Sometime, the user of MakeTuple is not a TupleGetItem, but a UpdateState.
-      continue;
+      MS_LOG(EXCEPTION) << "User of MakeTuple should be GetItem, but got: " << user.first->DebugString();
     }
     auto &getitem = user.first;
     auto idx = GetIndex(getitem);

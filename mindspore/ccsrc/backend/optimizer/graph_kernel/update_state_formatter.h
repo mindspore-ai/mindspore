@@ -39,7 +39,7 @@ class SpreadUpdateState : public Pass {
  public:
   SpreadUpdateState() : Pass("spread_update_state") {}
   ~SpreadUpdateState() override = default;
-  AnfNodePtrList ExtendInputsOfUpdate(const AnfNodePtrList &nodes, const FuncGraphPtr &func_graph);
+  AnfNodePtrList ExtendInputsOfUpdateState(const AnfNodePtrList &nodes, const FuncGraphPtr &func_graph);
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 

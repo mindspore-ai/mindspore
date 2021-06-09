@@ -36,6 +36,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_cloner.h"
 #include "vm/segment_runner.h"
+#include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
 namespace mindspore {
 namespace opt {
@@ -710,6 +711,7 @@ bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo>
 
 bool ParallelOpFusion::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  (void)std::make_shared<ShrinkUpdateState>()->Run(graph);
   auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
@@ -724,7 +726,9 @@ bool ParallelOpFusion::Run(const FuncGraphPtr &graph) {
   auto parallel_infos = SearchFusableParallelCNodes(groups);
 
   // Create core-fuse subgraph and change origin graph.
-  return CreateParallelOpSubGraphs(parallel_infos, kernel_graph);
+  bool changed = CreateParallelOpSubGraphs(parallel_infos, kernel_graph);
+  (void)std::make_shared<SpreadUpdateState>()->Run(graph);
+  return changed;
 }
 }  // namespace opt
 }  // namespace mindspore
