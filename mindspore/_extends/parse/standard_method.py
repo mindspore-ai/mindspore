@@ -777,7 +777,7 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     last_dim_end = min_(
         shape[-2], max_(0, shape[-1] - offset)) - last_dim_begin
     if last_dim_end <= 0:
-        return Tensor([])
+        return empty_compile(dtype, (0,))
     size += (last_dim_end,)
     res = F.tensor_slice(res, begin, size)
     return res.astype(dtype)
@@ -1628,6 +1628,7 @@ infer_out_shape = constexpr(validator.infer_out_shape)
 get_log2_size = constexpr(validator.get_log2_size)
 check_axis_type = constexpr(validator.check_axis_type)
 check_and_canonicalize_axes = constexpr(validator.check_and_canonicalize_axes)
+empty_compile = constexpr(validator.empty_compile)
 
 def tensor_bool(x):
     """tensor as condition, if is constant, return immediate bool value"""
