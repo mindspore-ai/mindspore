@@ -46,9 +46,14 @@
 #include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
-static constexpr size_t UINT8_QUANTIZATION = 8;
-static constexpr size_t WEIGHT_INDEX = 1;
-static constexpr double SCALE_THREASHOLD = 1e-38;
+constexpr size_t kUint8Quantization = 8;
+constexpr size_t kMaxBit = 8;
+constexpr size_t kMaxNum1024 = 1024;
+constexpr size_t kPercentBase = 100;
+constexpr size_t kMillisecondsBase = 10;
+constexpr size_t kWightIndex = 1;
+constexpr double kScaleThreashold = 1e-38;
+
 const char kMethodMaxMin[] = "MAX_MIN";
 const char kMethodKL[] = "KL";
 const char kMethodOutlier[] = "RemovalOutlier";
@@ -83,7 +88,7 @@ class QuantStrategy {
 
   bool CanConvOpQuantized(const CNodePtr &node) const;
   bool CanMulOpQuantized(const CNodePtr &node) const;
-  bool CanOpPostQuantized(const AnfNodePtr &node) const;
+  static bool CanOpPostQuantized(const AnfNodePtr &node);
   bool CanTensorQuantized(const AnfNodePtr &inputNode) const;
 
   size_t m_weight_size_;
@@ -102,7 +107,7 @@ constexpr int quant_param_size = 32 * 8;
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange = false,
-                             int numBits = UINT8_QUANTIZATION);
+                             int numBits = kUint8Quantization);
 
 std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<float> max_datas);
 
@@ -117,8 +122,6 @@ void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes,
 
 void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
                        bool *channel_at_first, int *channel_cnt);
-
-bool QuantParamEqual(const schema::QuantParamT &quant_param1, const schema::QuantParamT &quant_param2);
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor);
 

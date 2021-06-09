@@ -198,7 +198,7 @@ AnfNodePtr TfBidirectionGruFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr 
   return pattern;
 }
 
-tensor::TensorPtr TfBidirectionGruFusion::GetDefaultTensorInfo(const AnfNodePtr &parameter_anf) const {
+tensor::TensorPtr TfBidirectionGruFusion::GetDefaultTensorInfo(const AnfNodePtr &parameter_anf) {
   MS_ASSERT(parameter_anf != nullptr);
   if (!utils::isa<ParameterPtr>(parameter_anf)) {
     MS_LOG(DEBUG) << "parameter_anf is not ParameterPtr";
@@ -215,7 +215,7 @@ tensor::TensorPtr TfBidirectionGruFusion::GetDefaultTensorInfo(const AnfNodePtr 
 
 STATUS TfBidirectionGruFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf,
                                                      const AnfNodePtr &bw_cand_kernel_anf, int *input_size,
-                                                     int *hidden_size) const {
+                                                     int *hidden_size) {
   MS_ASSERT(fw_cand_kernel != nullptr);
   MS_ASSERT(bw_cand_kernel != nullptr);
   MS_ASSERT(input_size != nullptr);
@@ -250,7 +250,7 @@ STATUS TfBidirectionGruFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_k
 
 ParameterPtr TfBidirectionGruFusion::AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,
                                                          const std::vector<int> &shape, const TypeId type,
-                                                         void **tensor_data) const {
+                                                         void **tensor_data) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(tensor_data != nullptr);
   auto parameter = func_graph->add_parameter();
@@ -274,12 +274,12 @@ ParameterPtr TfBidirectionGruFusion::AddDefaultParameter(const FuncGraphPtr &fun
   return parameter;
 }
 
-void TfBidirectionGruFusion::CopyFlattenMatData(const float *mat, const int R, const int C, const int r0, const int r1,
-                                                const int c0, const int c1, float *data, bool t) const {
+void TfBidirectionGruFusion::CopyFlattenMatData(const float *mat, const int C, const int r0, const int r1, const int c0,
+                                                const int c1, float *data, bool t) {
   MS_ASSERT(mat != nullptr);
   MS_ASSERT(data != nullptr);
-  MS_ASSERT(0 <= r0 && r0 < r1 && r1 <= R);
-  MS_ASSERT(0 <= c0 && c0 < c1 && c1 <= C);
+  MS_ASSERT(r0 >= 0 && r0 < r1 && r1 <= R);
+  MS_ASSERT(c0 >= 0 && c0 < c1 && c1 <= C);
   const int RT = r1 - r0;
   const int CT = c1 - c0;
   for (int i = r0; i < r1; ++i) {
@@ -295,7 +295,7 @@ void TfBidirectionGruFusion::CopyFlattenMatData(const float *mat, const int R, c
 
 STATUS TfBidirectionGruFusion::ConvertWeightData(const AnfNodePtr &gate_weight, const AnfNodePtr &cand_weight,
                                                  const int input_size, const int hidden_size, float *gate_tensor_data,
-                                                 float *recu_tensor_data) const {
+                                                 float *recu_tensor_data) {
   MS_ASSERT(gate_weight != nullptr);
   MS_ASSERT(cand_weight != nullptr);
   MS_ASSERT(gate_tensor_data != nullptr);
@@ -327,29 +327,29 @@ STATUS TfBidirectionGruFusion::ConvertWeightData(const AnfNodePtr &gate_weight, 
   }
 
   // input_update_weight
-  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, 0, input_size, hidden_size,
-                     hidden_size * 2, gate_tensor_data, true);
+  CopyFlattenMatData(gate_weight_data, hidden_size * 2, 0, input_size, hidden_size, hidden_size * 2, gate_tensor_data,
+                     true);
   // input_reset_weight
-  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, 0, input_size, 0, hidden_size,
+  CopyFlattenMatData(gate_weight_data, hidden_size * 2, 0, input_size, 0, hidden_size,
                      gate_tensor_data + input_size * hidden_size, true);
   // input_hidden_weight
-  CopyFlattenMatData(cand_weight_data, input_size + hidden_size, hidden_size, 0, input_size, 0, hidden_size,
+  CopyFlattenMatData(cand_weight_data, hidden_size, 0, input_size, 0, hidden_size,
                      gate_tensor_data + input_size * hidden_size * 2, true);
 
   // state_update_weight
-  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, input_size, input_size + hidden_size,
-                     hidden_size, hidden_size * 2, recu_tensor_data, true);
+  CopyFlattenMatData(gate_weight_data, hidden_size * 2, input_size, input_size + hidden_size, hidden_size,
+                     hidden_size * 2, recu_tensor_data, true);
   // state_reset_weight
-  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, input_size, input_size + hidden_size,
-                     0, hidden_size, recu_tensor_data + hidden_size * hidden_size, true);
+  CopyFlattenMatData(gate_weight_data, hidden_size * 2, input_size, input_size + hidden_size, 0, hidden_size,
+                     recu_tensor_data + hidden_size * hidden_size, true);
   // state_hidden_weight
-  CopyFlattenMatData(cand_weight_data, input_size + hidden_size, hidden_size, input_size, input_size + hidden_size, 0,
-                     hidden_size, recu_tensor_data + hidden_size * hidden_size * 2, true);
+  CopyFlattenMatData(cand_weight_data, hidden_size, input_size, input_size + hidden_size, 0, hidden_size,
+                     recu_tensor_data + hidden_size * hidden_size * 2, true);
   return RET_OK;
 }
 
 STATUS TfBidirectionGruFusion::ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias,
-                                               const int hidden_size, float *tensor_data) const {
+                                               const int hidden_size, float *tensor_data) {
   MS_ASSERT(bias != nullptr);
   MS_ASSERT(tensor_data != nullptr);
   std::vector<int64_t> gate_shape{hidden_size * 2};
@@ -371,18 +371,17 @@ STATUS TfBidirectionGruFusion::ConvertBiasData(const AnfNodePtr &gate_bias, cons
   }
 
   // update_gate bias
-  CopyFlattenMatData(gate_bias_data, 1, hidden_size * 2, 0, 1, hidden_size, hidden_size * 2, tensor_data, false);
+  CopyFlattenMatData(gate_bias_data, hidden_size * 2, 0, 1, hidden_size, hidden_size * 2, tensor_data, false);
   // reset_gate bias
-  CopyFlattenMatData(gate_bias_data, 1, hidden_size * 2, 0, 1, 0, hidden_size, tensor_data + hidden_size, false);
+  CopyFlattenMatData(gate_bias_data, hidden_size * 2, 0, 1, 0, hidden_size, tensor_data + hidden_size, false);
   // hidden_gate bias
-  CopyFlattenMatData(cand_bias_data, 1, hidden_size, 0, 1, 0, hidden_size, tensor_data + hidden_size * 2, false);
+  CopyFlattenMatData(cand_bias_data, hidden_size, 0, 1, 0, hidden_size, tensor_data + hidden_size * 2, false);
 
   return RET_OK;
 }
 
 CNodePtr TfBidirectionGruFusion::GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &fw_init_state,
-                                                       const AnfNodePtr &bw_init_state,
-                                                       const std::string base_name) const {
+                                                       const AnfNodePtr &bw_init_state, const std::string &base_name) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(fw_init_state != nullptr);
   MS_ASSERT(bw_init_state != nullptr);
@@ -494,7 +493,7 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
 }
 
 CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
-                                                    const std::string base_name) const {
+                                                    const std::string &base_name) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(gru_output != nullptr);
   auto split_prim = std::make_shared<ops::Split>();

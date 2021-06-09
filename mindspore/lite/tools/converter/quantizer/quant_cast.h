@@ -28,7 +28,7 @@ class QuantCast {
   QuantCast() = default;
   virtual ~QuantCast() = default;
   STATUS Run(const FuncGraphPtr &graph);
-  void set_input_data_dtype(TypeId data_type) { this->input_data_dtype_ = data_type; }
+  void SetInputDataDType(TypeId dataType) { this->input_data_dtype_ = dataType; }
 
  private:
   TypeId input_data_dtype_ = kNumberTypeFloat32;

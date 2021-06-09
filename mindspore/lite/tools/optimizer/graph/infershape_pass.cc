@@ -64,7 +64,7 @@ STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *tensor_info, const CNodePtr 
 }  // namespace
 
 abstract::AbstractBasePtr InferShapePass::ConvertLiteTensorToAbstract(lite::Tensor *tensor) {
-  MS_ASSERT(nullptr != tensor);
+  MS_ASSERT(tensor != nullptr);
   auto shape = tensor->shape();
   auto type_id = static_cast<TypeId>(tensor->data_type());
   std::vector<int64_t> shape_vector(shape.begin(), shape.end());
@@ -285,7 +285,7 @@ STATUS InferShapePass::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<
 STATUS InferShapePass::SetCNodeAbstract(const std::vector<lite::Tensor *> &output_tensors,
                                         const std::shared_ptr<CNode> &cnode) {
   MS_ASSERT(cnode != nullptr);
-  if (output_tensors.size() == 0) {
+  if (output_tensors.empty()) {
     MS_LOG(ERROR) << "empty output_tensors";
     return RET_ERROR;
   }

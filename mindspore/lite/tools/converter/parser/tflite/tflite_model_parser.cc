@@ -449,10 +449,10 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
     make_tuple_inputs.emplace_back(make_tuple_prim);
-    for (auto output_idx : tflite_subgraph->outputs) {
-      output_idx = output_idx < 0 ? output_idx + tflite_subgraph->tensors.size() : output_idx;
+    for (auto output_node : tflite_subgraph->outputs) {
+      auto output_idx = output_node < 0 ? output_node + tflite_subgraph->tensors.size() : output_node;
       auto cnode = nodes_.at(output_idx);
-      if (nullptr == cnode) {
+      if (cnode == nullptr) {
         MS_LOG(ERROR) << "Can't find input node.";
         return RET_NOT_FIND_OP;
       }
@@ -479,13 +479,13 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
-    int outputNode = tflite_subgraph->outputs.front() < 0
+    int output_idx = tflite_subgraph->outputs.front() < 0
                        ? static_cast<int>(tflite_subgraph->outputs.front() + tflite_subgraph->tensors.size())
                        : static_cast<int>(tflite_subgraph->outputs.front());
     auto valueNode = NewValueNode(returnPrim);
     std::vector<AnfNodePtr> op_inputs{valueNode};
-    auto cnode = nodes_.at(outputNode);
-    if (nullptr == cnode) {
+    auto cnode = nodes_.at(output_idx);
+    if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }
@@ -576,12 +576,8 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
     std::vector<int64_t> shape_vector;
     (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
                          [](const int32_t &value) { return static_cast<int64_t>(value); });
-    auto abstract_tensor = CreateTensorAbstract(shape_vector, GetTfliteDataType(tensor->type));
-    if (abstract_tensor == nullptr) {
-      MS_LOG(ERROR) << "Create tensor abstarct failed";
-      return RET_ERROR;
-    }
-    dst_cnode->set_abstract(abstract_tensor);
+    auto type_ptr = TypeIdToType(GetTfliteDataType(tensor->type));
+    dst_cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
     nodes_.insert(std::pair(op->outputs.front(), dst_cnode));
   } else {
     AbstractBasePtrList abstract_list;
@@ -619,7 +615,7 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
 }
 
 int TfliteModelParser::Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
-  for (auto func_graph : all_func_graphs) {
+  for (const auto &func_graph : all_func_graphs) {
     auto tflite_inputs_adjust = std::make_shared<TfliteInputsAdjust>();
     if (!tflite_inputs_adjust->Run(func_graph)) {
       MS_LOG(ERROR) << "adjust input failed.";

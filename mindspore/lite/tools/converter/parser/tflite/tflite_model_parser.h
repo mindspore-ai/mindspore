@@ -36,7 +36,7 @@ class TfliteModelParser : public ModelParser {
 
   FuncGraphPtr Parse(const converter::Flags &flag) override;
 
-  int Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
+  static int Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
   std::unordered_map<int, AnfNodePtr> nodes_;

@@ -44,7 +44,7 @@ class OnnxModelParser : public ModelParser {
 
   FuncGraphPtr Parse(const converter::Flags &flag) override;
 
-  int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
+  static int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
   static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor,

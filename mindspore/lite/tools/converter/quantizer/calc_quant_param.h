@@ -31,7 +31,7 @@ class QuantParamCalcer {
   virtual int Calc(schema::MetaGraphT *graph, const schema::CNodeT &node);
 
  protected:
-  STATUS ComputeConstQuantParam(const schema::TensorT &tensor, schema::QuantParamT *quantParam);
+  static STATUS ComputeConstQuantParam(const schema::TensorT &tensor, schema::QuantParamT *quantParam);
 
  protected:
   size_t inputParamDone = 0;

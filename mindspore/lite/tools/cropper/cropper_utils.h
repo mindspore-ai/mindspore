@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace cropper {
 int ValidFileSuffix(const std::string &filename, const std::string &suffix);
-int ValidFile(std::ifstream &in_file, const char *file_path);
+int ValidFile(std::ifstream &in_file, const std::string &file_path);
 }  // namespace cropper
 }  // namespace lite
 }  // namespace mindspore

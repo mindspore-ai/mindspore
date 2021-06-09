@@ -103,7 +103,7 @@ AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primi
 }
 
 STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight, const std::vector<int64_t> &shape,
-                                                     const float *const data_ptr, const int hidden_size) const {
+                                                     const float *const data_ptr, const int hidden_size) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(data_ptr != nullptr);
   if (shape.size() != 3) {
@@ -139,7 +139,7 @@ STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight,
 }
 
 STATUS TfLstmCellFusion::SplitWeights(const AnfNodePtr &weight, const ParameterPtr &weight_i,
-                                      const ParameterPtr &weight_c, int hidden_size) const {
+                                      const ParameterPtr &weight_c, int hidden_size) {
   // split input_size and hidden_size at dim 0
   // transform i,c,f,o to i,o,f,c at dim 1
   MS_ASSERT(weight != nullptr);
@@ -303,7 +303,7 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(hidden_param->abstract());
   auto hidden_shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-  if (hidden_shape.size() == 0) {
+  if (hidden_shape.empty()) {
     MS_LOG(DEBUG) << "can't get hidden shape";
     return nullptr;
   }

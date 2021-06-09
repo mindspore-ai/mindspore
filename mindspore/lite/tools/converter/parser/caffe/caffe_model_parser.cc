@@ -305,14 +305,14 @@ STATUS CaffeModelParser::InitOriginModel(const std::string &model_file, const st
     return RET_INPUT_PARAM_INVALID;
   }
 
-  status = ReadProtoFromText((const char *)model_file.c_str(), &caffe_model_);
+  status = ReadProtoFromText(model_file, &caffe_model_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Read prototxt file failed, model path: " << model_file;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return RET_ERROR;
   }
 
-  status = ReadProtoFromBinaryFile((const char *)weight_file.c_str(), &caffe_weight_);
+  status = ReadProtoFromBinaryFile(weight_file, &caffe_weight_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Read caffemodel file failed, model path: " << weight_file;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -438,7 +438,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
       return RET_NOT_FIND_OP;
     }
     auto cnode = nodes_.find(*caffeInspector.GetGraphOutput().begin())->second;
-    if (nullptr == cnode) {
+    if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }

@@ -207,8 +207,8 @@ STATUS HuffmanEncode::DoHuffmanCompress(const int8_t *input_datas, const size_t 
   out_c = 0;
   for (size_t i = 0; i < code_str.length(); i++) {
     auto tmp_c = code_str[i] == '0' ? 0 : 1;
-    out_c += tmp_c << (7 - (i % 8));
-    if (0 == (i + 1) % 8 || i == code_str.length() - 1) {
+    out_c += tmp_c << ((quant::kMaxBit - 1) - (i % quant::kMaxBit));
+    if ((i + 1) % quant::kMaxBit == 0 || i == code_str.length() - 1) {
       encode_str[2] += out_c;
       out_c = 0;
     }
@@ -223,6 +223,5 @@ HuffmanEncode::~HuffmanEncode() {
   }
   this->huffman_nodes_.resize(0);
 }
-
 }  // namespace lite
 }  // namespace mindspore

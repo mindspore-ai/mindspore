@@ -20,10 +20,10 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <cfloat>
 #include <map>
-#include <utility>
 #include "ops/primitive_c.h"
 #include "schema/inner/model_generated.h"
 #include "src/lite_session.h"
@@ -48,7 +48,7 @@ class PostTrainingQuantizer : public Quantizer {
  public:
   PostTrainingQuantizer(FuncGraphPtr graph, std::string path, int bit_num, TypeId target_type = kNumberTypeInt8,
                         bool per_channel = true);
-  ~PostTrainingQuantizer();
+  ~PostTrainingQuantizer() override;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
 
@@ -92,8 +92,8 @@ class PostTrainingQuantizer : public Quantizer {
 
   STATUS PreProcess();
 
-  STATUS CheckFp32TensorVec(const std::string &node_name,
-                            const std::vector<mindspore::tensor::MSTensor *> &tensor_vec) const;
+  static STATUS CheckFp32TensorVec(const std::string &node_name,
+                                   const std::vector<mindspore::tensor::MSTensor *> &tensor_vec);
 
   STATUS DoInference();
 
@@ -114,7 +114,7 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
                        bool perchannel) const;
 
-  STATUS DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
+  static STATUS DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
   STATUS Int8Inference();
   STATUS BiasCorrection(const FuncGraphPtr &func_graph);
   STATUS BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
@@ -127,12 +127,12 @@ class PostTrainingQuantizer : public Quantizer {
 struct DivergInfo {
   std::vector<float> histogram;
   CNodePtr cnode;
-  int bin_num;
+  int bin_num = 0;
   float interval = 0;
-  float max;
-  float min;
+  float max = 0.0f;
+  float min = 0.0f;
   float best_T = 0.0f;
-  size_t bit_num;
+  size_t bit_num = 0;
   int quant_max = 255;
   int quant_min = 0;
   std::string method_x = kMethodKL;
@@ -143,7 +143,7 @@ struct DivergInfo {
   DivergInfo() = default;
   DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min, const std::string &method_x) {
     this->method_x = method_x;
-    this->cnode = cnode;
+    this->cnode = std::move(cnode);
     this->bin_num = bins;
     this->bit_num = bits;
     histogram.resize(bin_num);

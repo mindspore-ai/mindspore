@@ -30,6 +30,11 @@ class CropperFlags : public virtual mindspore::lite::FlagParser {
   ~CropperFlags() override = default;
   int Init(int argc, const char **argv);
 
+  STATUS CheckPackageFile();
+  STATUS CheckModelFile();
+  STATUS CheckConfigFile();
+  STATUS CheckOutputFile();
+
  public:
   std::string package_file_;
   std::string model_file_;

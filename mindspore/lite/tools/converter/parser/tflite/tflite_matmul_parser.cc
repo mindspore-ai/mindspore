@@ -15,9 +15,7 @@
  */
 
 #include "tools/converter/parser/tflite/tflite_matmul_parser.h"
-#include <vector>
 #include <memory>
-#include <map>
 #include "ops/mat_mul.h"
 
 namespace mindspore {
@@ -37,6 +35,5 @@ ops::PrimitiveC *TfliteMatMulParser::Parse(const std::unique_ptr<tflite::Operato
 
   return prim.release();
 }
-
 }  // namespace lite
 }  // namespace mindspore

@@ -37,12 +37,12 @@ bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded
   return proto->ParseFromCodedStream(coded_stream);
 }
 
-STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message) {
-  if (file == nullptr || message == nullptr) {
+STATUS ReadProtoFromText(const std::string &file, google::protobuf::Message *message) {
+  if (file.empty() || message == nullptr) {
     return RET_ERROR;
   }
 
-  std::string realPath = RealPath(file);
+  std::string realPath = RealPath(file.c_str());
   if (realPath.empty()) {
     MS_LOG(ERROR) << "Proto file path " << file << " is  not valid";
     return RET_ERROR;
@@ -67,12 +67,12 @@ STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message) {
   return RET_OK;
 }
 
-STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *message) {
-  if (file == nullptr || message == nullptr) {
+STATUS ReadProtoFromBinaryFile(const std::string &file, google::protobuf::Message *message) {
+  if (file.empty() || message == nullptr) {
     return RET_ERROR;
   }
 
-  std::string realPath = RealPath(file);
+  std::string realPath = RealPath(file.c_str());
   if (realPath.empty()) {
     MS_LOG(ERROR) << "Binary proto file path " << file << " is not valid";
     return RET_ERROR;

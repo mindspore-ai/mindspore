@@ -292,7 +292,6 @@ STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::
   delete tensor_data;
   return RET_OK;
 }
-
 }  // namespace
 
 STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
@@ -494,7 +493,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::Flags &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return nullptr;
   }
-  status = ReadProtoFromBinaryFile((const char *)modelFile.c_str(), tf_root_graph_.get());
+  status = ReadProtoFromBinaryFile(modelFile, tf_root_graph_.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Open modelFile for TF converter failed!";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -802,8 +801,25 @@ STATUS TFModelParser::ConvertSubgraphOutputs(std::map<std::string, const tensorf
   return RET_OK;
 }
 
+void TFModelParser::UpdateMap(const CNodePtr &cnode, const FuncGraphPtr &sub_func_graph,
+                              const std::string &sub_graph_name) {
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimWhile)) {
+    if (find(while_cond_branch_name_.begin(), while_cond_branch_name_.end(), sub_graph_name) !=
+        while_cond_branch_name_.end()) {
+      while_cond_map_[cnode] = sub_func_graph;
+    } else {
+      while_body_map_[cnode] = sub_func_graph;
+    }
+  } else {
+    if (find(if_then_branch_name_.begin(), if_then_branch_name_.end(), sub_graph_name) != if_then_branch_name_.end()) {
+      if_then_map_[cnode] = sub_func_graph;
+    } else {
+      if_else_map_[cnode] = sub_func_graph;
+    }
+  }
+}
+
 STATUS TFModelParser::ConvertSubgraph() {
-  std::map<CNodePtr, FuncGraphPtr> while_cond_map, while_body_map, if_then_map, if_else_map;
   bool success_flag = true;
   for (int i = 0; i < tf_root_graph_->library().function_size(); i++) {
     auto &tf_sub_fuction = tf_root_graph_->library().function(i);
@@ -860,32 +876,15 @@ STATUS TFModelParser::ConvertSubgraph() {
     }
 
     // add while cond body function to while node input
-    if (opt::CheckPrimitiveType(cnode, prim::kPrimWhile)) {
-      if (find(while_cond_branch_name_.begin(), while_cond_branch_name_.end(), sub_graph_name) !=
-          while_cond_branch_name_.end()) {
-        while_cond_map[cnode] = sub_func_graph;
-      } else {
-        while_body_map[cnode] = sub_func_graph;
-      }
-    } else {
-      if (find(if_then_branch_name_.begin(), if_then_branch_name_.end(), sub_graph_name) !=
-          if_then_branch_name_.end()) {
-        if_then_map[cnode] = sub_func_graph;
-      } else {
-        if_else_map[cnode] = sub_func_graph;
-      }
-    }
+    UpdateMap(cnode, sub_func_graph, sub_graph_name);
   }
   if (!success_flag) {
     MS_LOG(ERROR) << "Convert subgraph is failed.";
     return RET_ERROR;
   }
-  if (ControlFlowNodePostProcess(while_cond_map, while_body_map) != RET_OK) {
-    MS_LOG(ERROR) << "while node post process failed";
-    return RET_ERROR;
-  }
-  if (ControlFlowNodePostProcess(if_then_map, if_else_map) != RET_OK) {
-    MS_LOG(ERROR) << "if node post process failed";
+  if (ControlFlowNodePostProcess(while_cond_map_, while_body_map_) != RET_OK ||
+      (ControlFlowNodePostProcess(if_then_map_, if_else_map_) != RET_OK)) {
+    MS_LOG(ERROR) << "while/if node post process failed";
     return RET_ERROR;
   }
   return RET_OK;
@@ -1226,7 +1225,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
 }
 
 int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
-  for (auto func_graph : all_func_graphs) {
+  for (const auto &func_graph : all_func_graphs) {
     auto functionalize_control_op_pass = std::make_shared<opt::FunctionalizeControlOpPass>();
     if (!functionalize_control_op_pass->Run(func_graph)) {
       MS_LOG(ERROR) << "functionalize control op pass failed.";

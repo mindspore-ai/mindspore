@@ -19,7 +19,6 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
-#include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
 #include "schema/inner/ops_generated.h"
 #include "src/common/utils.h"
@@ -27,8 +26,8 @@
 
 namespace mindspore::lite {
 namespace {
-static constexpr size_t BIAS_SIZE = 3;
-static constexpr size_t BIAS_ADD_SIZE = 2;
+constexpr size_t kBiasSize = 3;
+constexpr size_t kBiasAddSize = 2;
 }  // namespace
 STATUS QuantParamCalcer::ComputeConstQuantParam(const schema::TensorT &tensor, QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
@@ -130,8 +129,8 @@ int ConvCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
     MS_LOG(DEBUG) << "Call CommonCalcer::Calc failed: " << status;
     return status;
   }
-  if (node.inputIndex.size() == BIAS_SIZE) {
-    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(BIAS_SIZE - 1));
+  if (node.inputIndex.size() == kBiasSize) {
+    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(kBiasSize - 1));
     for (auto &quantParam : biasTensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
     }
@@ -145,8 +144,8 @@ int BiasAddCalcer::Calc(MetaGraphT *subGraph, const CNodeT &node) {
     MS_LOG(DEBUG) << "Call CommonCalcer::Calc failed: " << status;
     return status;
   }
-  if (node.inputIndex.size() == BIAS_ADD_SIZE) {
-    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(BIAS_ADD_SIZE - 1));
+  if (node.inputIndex.size() == kBiasAddSize) {
+    auto &biasTensor = subGraph->allTensors.at(node.inputIndex.at(kBiasAddSize - 1));
     for (auto &quantParam : biasTensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
     }
@@ -190,9 +189,9 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
       MS_LOG(DEBUG) << "Can not determine outputTensor quantParam from inputTensor for node %s" << node.name;
       return RET_ERROR;
     }
-    for (size_t i = 0; i < node.outputIndex.size(); i++) {
+    for (unsigned int i : node.outputIndex) {
       MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(i));
-      auto &outTensor = graph->allTensors.at(node.outputIndex.at(i));
+      auto &outTensor = graph->allTensors.at(i);
       MS_ASSERT(outTensor != nullptr);
       auto outQuantParam = GetTensorQuantParam(outTensor);
       if (outQuantParam == nullptr) {
@@ -444,9 +443,9 @@ class CalcToSet : public QuantParamCalcer {
         MS_LOG(DEBUG) << "new QuantParamT failed";
         return RET_ERROR;
       }
-      quantParam->scale = (max - min) / 256;
+      quantParam->scale = (max - min) / (UINT8_MAX + 1);
       MS_ASSERT(quantParam->scale != 0);
-      quantParam->zeroPoint = int32_t(std::round(256 - max / quantParam->scale));
+      quantParam->zeroPoint = int32_t(std::round((UINT8_MAX + 1) - max / quantParam->scale));
       quantParam->min = min;
       quantParam->max = max;
       quantParam->inited = true;

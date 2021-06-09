@@ -42,7 +42,7 @@ class TFModelParser : public ModelParser {
 
   FuncGraphPtr Parse(const converter::Flags &flag) override;
 
-  int TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
+  static int TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
   static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
@@ -69,6 +69,8 @@ class TFModelParser : public ModelParser {
   STATUS ProcessControlFlowOp(const CNodePtr &anf_node, const string &op_type, const tensorflow::NodeDef &node_def);
 
   STATUS ConvertRootGraphOutputs();
+
+  void UpdateMap(const CNodePtr &cnode, const FuncGraphPtr &sub_func_graph, const std::string &sub_graph_name);
 
   STATUS ConvertSubgraph();
 
@@ -112,6 +114,7 @@ class TFModelParser : public ModelParser {
   std::vector<std::string> if_then_branch_name_;
   std::unordered_map<std::string, int> node_output_num_;
   QuantType quant_type_ = schema::QuantType_QUANT_NONE;
+  std::map<CNodePtr, FuncGraphPtr> while_cond_map_, while_body_map_, if_then_map_, if_else_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

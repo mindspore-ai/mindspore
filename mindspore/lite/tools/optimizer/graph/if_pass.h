@@ -31,8 +31,9 @@ class IfPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  void ReplaceInput(const std::vector<AnfNodePtr> &node_list, AnfNodePtr new_input_cnode, std::string para_name);
-  ValueNodePtr GetSwitchAnfPrim();
+  static void ReplaceInput(const std::vector<AnfNodePtr> &node_list, const AnfNodePtr &new_input_cnode,
+                           const std::string &para_name);
+  static ValueNodePtr GetSwitchAnfPrim();
 
   const size_t kIfMinInputSize = 4;
   const size_t kIfThenIndex = 1;

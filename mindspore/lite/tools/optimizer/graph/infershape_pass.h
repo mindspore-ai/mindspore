@@ -35,14 +35,15 @@ class InferShapePass : public Pass {
   void SetFmkType(FmkType fmkType) { this->fmk_type = fmkType; }
 
  private:
-  void FreeTensors(std::vector<lite::Tensor *> *tensors);
-  abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
-  STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *input_tensors);
-  STATUS GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *output_tensors);
-  STATUS SetParameterAbstract(const ParameterPtr &parameter);
-  STATUS SetCNodeAbstract(const std::vector<lite::Tensor *> &output_tensors, const std::shared_ptr<CNode> &cnode);
-  int StrIsContain(const std::vector<std::string> &total, const std::string &aim);
-  int SetSubGraphInputsAbstract(const CNodePtr &cnode, const FuncGraphPtr &func_graph);
+  static void FreeTensors(std::vector<lite::Tensor *> *tensors);
+  static abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
+  static STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *input_tensors);
+  static STATUS GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *output_tensors);
+  static STATUS SetParameterAbstract(const ParameterPtr &parameter);
+  static STATUS SetCNodeAbstract(const std::vector<lite::Tensor *> &output_tensors,
+                                 const std::shared_ptr<CNode> &cnode);
+  static int StrIsContain(const std::vector<std::string> &total, const std::string &aim);
+  static int SetSubGraphInputsAbstract(const CNodePtr &cnode, const FuncGraphPtr &func_graph);
 
  private:
   FmkType fmk_type = lite::converter::FmkType_ONNX;
