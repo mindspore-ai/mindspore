@@ -514,7 +514,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
                  enable_sparse=bool, max_call_depth=int, env_config_path=str, graph_kernel_flags=str,
-                 save_compile_cache=bool, load_compile_cache=bool)
+                 save_compile_cache=bool, load_compile_cache=bool, grad_for_scalar=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -653,11 +653,13 @@ def set_context(**kwargs):
             - ga_tune: Genetic Algorithm tune.
         grad_for_scalar (bool): Whether to get gradient for scalar. If set, the gradient of scalar input parameter
             can be calculated. Now, only part of the scalar operators support this calculation. Default: False.
-        save_compile_cache (bool): Experimental. Whether to cache the graph compiled by frontend. Default: False.
-        load_compile_cache (bool): Experimental. Whether to use the cache of the graph compiled by frontend.
+        save_compile_cache (bool): Whether to cache the graph compiled by frontend. Default: False.
+            This is an experimental prototype that is subject to change and/or deletion.
+        load_compile_cache (bool): Whether to use the cache of the graph compiled by frontend.
             When it is true, the graph compilation will skip the frontend compilation process. It means that
             you should make sure the network has not been changed since the last execution. Currently we have
             not support automatic checking the changes yet. Default: False.
+            This is an experimental prototype that is subject to change and/or deletion.
 
     Raises:
         ValueError: If input key is not an attribute in context.
