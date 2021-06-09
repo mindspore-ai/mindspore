@@ -113,7 +113,7 @@ Status NumaMemoryPool::Allocate(size_t n, void **p) {
   auto mt = GetRandomDevice();
   Status rc;
   void *ptr = nullptr;
-  auto num_segments = memory_segments_.size();
+  size_t num_segments = memory_segments_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(num_segments > 0, "No numa nodes available");
   if (NumaAware()) {
     auto num_numa_nodes = hw_->GetNumaNodeCount();
@@ -124,12 +124,12 @@ Status NumaMemoryPool::Allocate(size_t n, void **p) {
       auto it = numa_map_.find(node_id);
       if (it != numa_map_.end()) {
         auto &slots = it->second;
-        auto num_slots = slots.size();
-        std::uniform_int_distribution<int32_t> distribution(0, num_slots - 1);
-        auto start_slot = distribution(mt);
-        int32_t inx = start_slot;
+        size_t num_slots = slots.size();
+        std::uniform_int_distribution<size_t> distribution(0, num_slots - 1);
+        size_t start_slot = distribution(mt);
+        size_t inx = start_slot;
         do {
-          int32_t k = slots.at(inx);
+          size_t k = slots.at(inx);
           std::unique_lock lock_x(mux_[k]);
           auto &impl = arena_list_.at(k);
           rc = impl->Allocate(n, &ptr);
@@ -152,9 +152,9 @@ Status NumaMemoryPool::Allocate(size_t n, void **p) {
     } while (node_id != start);
   } else {
     // If not numa aware, just randomly pick a slot.
-    std::uniform_int_distribution<int32_t> distribution(0, num_segments - 1);
-    auto start_slot = distribution(mt);
-    int32_t slot = start_slot;
+    std::uniform_int_distribution<size_t> distribution(0, num_segments - 1);
+    size_t start_slot = distribution(mt);
+    size_t slot = start_slot;
     do {
       std::unique_lock lock_x(mux_[slot]);
       auto &impl = arena_list_.at(slot);

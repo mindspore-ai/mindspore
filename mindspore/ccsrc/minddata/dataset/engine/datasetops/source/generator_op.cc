@@ -246,7 +246,7 @@ Status GeneratorOp::Reset() {
 Status GeneratorOp::ComputeColMap() {
   // Setup column names map (base class field)
   if (column_name_id_map_.empty()) {
-    for (int i = 0; i < column_names_.size(); ++i) {
+    for (size_t i = 0; i < column_names_.size(); ++i) {
       column_name_id_map_[column_names_[i]] = i;
     }
   } else {

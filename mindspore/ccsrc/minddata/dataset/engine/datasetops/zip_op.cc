@@ -97,7 +97,7 @@ Status ZipOp::EoeReceived(int32_t) {
 Status ZipOp::ComputeColMap() {
   if (column_name_id_map_.empty()) {
     column_name_id_map_ = {};
-    for (int32_t i = 0; i < child_.size(); ++i) {
+    for (size_t i = 0; i < child_.size(); ++i) {
       // Initializing col_name_id_map from the child.
       const std::unordered_map<std::string, int32_t> col_name_id_map = child_[i]->column_name_id_map();
       int32_t colsCurrent = column_name_id_map_.size();

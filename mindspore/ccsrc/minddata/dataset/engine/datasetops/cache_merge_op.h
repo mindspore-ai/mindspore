@@ -194,8 +194,8 @@ class CacheMergeOp : public ParallelOp {
   QueueMap<row_id_type, TensorRow> cache_miss_;
   std::map<row_id_type, MemGuard<TensorRowCacheRequest, Allocator<TensorRowCacheRequest>>> io_request_;
   std::unique_ptr<Queue<row_id_type>> io_que_;
-  std::shared_ptr<CacheClient> cache_client_;
   int32_t num_cleaners_;
+  std::shared_ptr<CacheClient> cache_client_;
   std::atomic<bool> cache_missing_rows_;
 
   /// \brief Locate the cache request from the io_request_ map

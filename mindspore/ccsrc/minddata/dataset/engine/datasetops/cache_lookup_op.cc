@@ -108,7 +108,7 @@ Status CacheLookupOp::GetNextSample(TensorRow *out) {
     std::shared_ptr<Tensor> sample_ts;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ts, cache_miss.size()));
     auto idPtr = sample_ts->begin<int64_t>();
-    for (auto i = 0; i < cache_miss.size(); ++i) {
+    for (size_t i = 0; i < cache_miss.size(); ++i) {
       *idPtr = cache_miss.at(i);
       ++idPtr;
     }
