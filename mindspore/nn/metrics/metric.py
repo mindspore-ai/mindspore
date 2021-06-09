@@ -52,7 +52,8 @@ class Metric(metaclass=ABCMeta):
             raise TypeError('Input data type must be tensor, list or numpy.ndarray')
         return data
 
-    def _check_onehot_data(self, data):
+    @staticmethod
+    def _check_onehot_data(data):
         """
         Whether input data are one-hot encoding.
 
@@ -227,7 +228,7 @@ class EvaluationBase(Metric):
         """
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
-        if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
+        if self._type == 'classification' and y_pred.ndim == y.ndim and Metric._check_onehot_data(y):
             y = y.argmax(axis=1)
         self._check_shape(y_pred, y)
         self._check_value(y_pred, y)

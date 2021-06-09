@@ -72,7 +72,7 @@ class Fbeta(Metric):
             raise ValueError('Fbeta need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
-        if y_pred.ndim == y.ndim and self._check_onehot_data(y):
+        if y_pred.ndim == y.ndim and Metric._check_onehot_data(y):
             y = y.argmax(axis=1)
 
         if self.__class_num == 0:
