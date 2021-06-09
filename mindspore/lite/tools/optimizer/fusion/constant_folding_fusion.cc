@@ -189,7 +189,7 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
 }
 
 lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_node, const AnfNodePtr &input_node,
-                          std::vector<Tensor *> output_tensors, size_t replace_index) {
+                          std::vector<Tensor *> output_tensors) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
@@ -324,7 +324,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       return nullptr;
     }
     // replace cnode by new param
-    if (ReplaceCNode(func_graph, any_node, input_node, output_tensors, i) != lite::RET_OK) {
+    if (ReplaceCNode(func_graph, any_node, input_node, output_tensors) != lite::RET_OK) {
       FreeTensors(&input_tensors, &output_tensors);
       delete (lite_kernel);
       MS_LOG(ERROR) << "constant_folding replace cnode failed";

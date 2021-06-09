@@ -100,7 +100,7 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   return true;
 }
 
-bool QuantStrategy::CanOpPostQuantized(const AnfNodePtr &node) const {
+bool QuantStrategy::CanOpPostQuantized(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
   if (!node->isa<mindspore::CNode>()) {
     return false;
@@ -248,13 +248,7 @@ QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   }
   return quant_params_holder;
 }
-bool QuantParamEqual(const schema::QuantParamT &quant_param1, const schema::QuantParamT &quant_param2) {
-  return quant_param1.inited == quant_param2.inited && quant_param1.scale == quant_param2.scale &&
-         quant_param1.zeroPoint == quant_param2.zeroPoint && quant_param1.min == quant_param2.min &&
-         quant_param1.max == quant_param2.max && quant_param1.narrowRange == quant_param2.narrowRange &&
-         quant_param1.numBits == quant_param2.numBits && quant_param1.inited == quant_param2.inited &&
-         quant_param1.varCorr == quant_param2.varCorr && quant_param1.meanCorr == quant_param2.meanCorr;
-}
+
 bool TensorQuantParamsInited(const schema::TensorT &tensor) {
   if (tensor.quantParams.empty()) {
     return false;
@@ -389,7 +383,7 @@ static bool SearchUpperBound(const std::vector<float> &data, const size_t &index
 
 static float CalPercentile(const std::vector<float> &data, const int &outlier_percent) {
   const int size = data.size();
-  float val = outlier_percent / 100.0 * size;
+  float val = outlier_percent / kPercentBase * size;
   int index = std::ceil(val);
   float result;
   if (index - val > 0) {
@@ -404,7 +398,7 @@ std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<
   std::sort(max_datas.begin(), max_datas.end());
   std::sort(min_datas.begin(), min_datas.end());
   float min_val = CalPercentile(min_datas, percent);
-  float max_val = CalPercentile(max_datas, 100 - percent);
+  float max_val = CalPercentile(max_datas, kPercentBase - percent);
   std::reverse(max_datas.begin(), max_datas.end());
   MS_ASSERT(min_val < max_val);
   MS_ASSERT(min_datas.size() == max_datas.size());
@@ -581,12 +575,12 @@ void ParseImagePath(PostQuantConfig *post_quant_config, std::string raw_image_pa
   post_quant_config->image_paths.push_back(raw_image_paths);
 }
 
-void ParseBatchCount(PostQuantConfig *post_quant_config, std::string value) {
+void ParseBatchCount(PostQuantConfig *post_quant_config, const std::string &value) {
   MS_ASSERT(post_quant_config != nullptr);
   post_quant_config->batch_count = std::stoul(value);
 }
 
-void ParseThreadNum(PostQuantConfig *post_quant_config, std::string value) {
+void ParseThreadNum(PostQuantConfig *post_quant_config, const std::string &value) {
   MS_ASSERT(post_quant_config != nullptr);
   post_quant_config->thread_num = std::stoul(value);
 }
@@ -608,7 +602,7 @@ void ParseMixed(PostQuantConfig *post_quant_config, std::string value) {
   }
 }
 
-void ParseMeanErrorThreshold(PostQuantConfig *post_quant_config, std::string value) {
+void ParseMeanErrorThreshold(PostQuantConfig *post_quant_config, const std::string &value) {
   MS_ASSERT(post_quant_config != nullptr);
   post_quant_config->mean_error_threshold = std::stof(value);
 }
@@ -635,7 +629,7 @@ STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_conf
     return RET_ERROR;
   }
 #ifdef _WIN32
-  if (_fullpath(resolved_path.get(), config_file.c_str(), 1024) != nullptr) {
+  if (_fullpath(resolved_path.get(), config_file.c_str(), kMaxNum1024) != nullptr) {
     config_file = string(resolved_path.get());
   }
 #else
@@ -723,7 +717,7 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   }
   meta_graph->version = Version();
 
-  flatbuffers::FlatBufferBuilder builder(1024);
+  flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
   auto offset = schema::MetaGraph::Pack(builder, meta_graph);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
@@ -794,10 +788,7 @@ STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t cou
       string file_name(image_dir->d_name);
       if (file_name != "." && file_name != "..") {
         const std::string file_path = image_path + "/" + file_name;
-        if (multi_input || count == 0) {
-          AddImage(file_path, input_i);
-          count++;
-        } else if (count < count_limited) {
+        if (multi_input || count == 0 || count < count_limited) {
           AddImage(file_path, input_i);
           count++;
         } else {
@@ -845,9 +836,8 @@ STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
                   << " input tensor size: " << tensor->Size();
     return RET_ERROR;
   }
-  auto ret = memcpy_s(data, tensor->Size(), bin_buf, size);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error: " << ret;
+  if (memcpy_s(data, tensor->Size(), bin_buf, size) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
     delete[] bin_buf;
     return RET_ERROR;
   }
@@ -934,7 +924,10 @@ STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_data
     MS_LOG(ERROR) << "Data size of tensor info is error.";
     return RET_ERROR;
   }
-  memcpy(weight->data_c(), quant_datas, new_size);
+  if (memcpy_s(weight->data_c(), new_size, quant_datas, new_size) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -1009,5 +1002,4 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
     }
   }
 }
-
 }  // namespace mindspore::lite::quant

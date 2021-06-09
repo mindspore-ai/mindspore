@@ -37,7 +37,7 @@ class BitPack {
     size_t remain_bit_data = bit_data_vec.size();
     if (sizeof(T1) * 8 > remain_bit_data && remain_bit_data > 0) {
       for (size_t i = 0; i < sizeof(T1) * 8 - remain_bit_data; i++) {
-        bit_data_vec.push(0);
+        bit_data_vec.push(false);
       }
       PackFromOriginToUint<T2>(&bit_data_vec, packed_data_vec);
     }

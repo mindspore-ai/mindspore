@@ -17,7 +17,6 @@
 #include <vector>
 #include <memory>
 #include "ops/switch.h"
-#include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
 

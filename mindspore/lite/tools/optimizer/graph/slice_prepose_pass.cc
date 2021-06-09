@@ -1417,20 +1417,13 @@ bool SlicePreposePass::Run(const FuncGraphPtr &graph) {
     bool this_time_changed = false;
     auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {
-      if (node->func_graph() != graph) {
-        continue;
-      }
-      if (!utils::isa<CNodePtr>(node) || !CheckPrimitiveType(node, prim::kPrimSliceFusion)) {
+      if (node->func_graph() != graph || !utils::isa<CNodePtr>(node) ||
+          !CheckPrimitiveType(node, prim::kPrimSliceFusion)) {
         continue;
       }
       auto slice_cnode = node->cast<CNodePtr>();
-      if (!CheckIsAllInputsParam(slice_cnode)) {  // only support begin and size is const tensor.
-        MS_LOG(INFO) << "SlicePrepose not support input is variable now";
-        continue;
-      }
-      auto slice_node = GetSlice(slice_cnode);
-      if (slice_node == nullptr) {
-        MS_LOG(ERROR) << "slice is nullptr";
+      // only support begin and size is const tensor.
+      if (!CheckIsAllInputsParam(slice_cnode) || GetSlice(slice_cnode)) {
         continue;
       }
       auto preceed_node = slice_cnode->input(1);
@@ -1444,11 +1437,9 @@ bool SlicePreposePass::Run(const FuncGraphPtr &graph) {
       }
       auto output_node_list = GetRealNodeUsedList(graph, utils::cast<AnfNodePtr>(preceed_node));
       if (output_node_list->size() > 1) {  // referenced by multi nodes
-        if (SiblingsAreSameSlice(graph, output_node_list)) {
-          if (MergeParallelSlice(graph, output_node_list)) {
-            this_time_changed = true;
-            break;
-          }
+        if (SiblingsAreSameSlice(graph, output_node_list) && MergeParallelSlice(graph, output_node_list)) {
+          this_time_changed = true;
+          break;
         }
         continue;
       } else {

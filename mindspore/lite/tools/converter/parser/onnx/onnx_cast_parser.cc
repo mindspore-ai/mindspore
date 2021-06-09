@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace lite {
-
 ops::PrimitiveC *OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Cast>();
 

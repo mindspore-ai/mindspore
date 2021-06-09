@@ -41,7 +41,7 @@ namespace lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
 }  // namespace
-static const std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
+std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_INT8, mindspore::kNumberTypeInt8},
   {onnx::TensorProto_DataType_UINT8, mindspore::kNumberTypeUInt8},
   {onnx::TensorProto_DataType_INT16, mindspore::kNumberTypeInt16},
@@ -96,7 +96,7 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::Flags &flag) {
 }
 
 STATUS OnnxModelParser::WeightFormatTransform(const std::set<FuncGraphPtr> &all_func_graphs) {
-  for (auto graph : all_func_graphs) {
+  for (const auto &graph : all_func_graphs) {
     MS_ASSERT(graph != nullptr);
     auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {
@@ -236,7 +236,7 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
     return status;
   }
 
-  status = ReadProtoFromBinaryFile((const char *)model_file.c_str(), &onnx_model_);
+  status = ReadProtoFromBinaryFile(model_file, &onnx_model_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Read onnx model file failed, model path: " << model_file;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -512,7 +512,7 @@ STATUS OnnxModelParser::ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, 
         return RET_ERROR;
       }
       auto cnode = anf_nodes_map.at(graph_out.name());
-      if (nullptr == cnode) {
+      if (cnode == nullptr) {
         MS_LOG(ERROR) << "Can't find input node.";
         return RET_NOT_FIND_OP;
       }
@@ -532,7 +532,7 @@ STATUS OnnxModelParser::ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, 
       return RET_ERROR;
     }
     auto cnode = anf_nodes_map.at(graph_out.name());
-    if (nullptr == cnode) {
+    if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }
@@ -564,14 +564,13 @@ STATUS OnnxModelParser::BuildReturnNode(const FuncGraphPtr &anf_graph, const std
   anf_graph->set_return(returnCnode);
   return RET_OK;
 }
+
 STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_graph,
                                    std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
                                    std::vector<AnfNodePtr> *graph_inputs, ops::PrimitiveC *primitive_c,
                                    std::string loop_name) {
-  if (primitive_c == nullptr || anf_graph == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is nullptr.";
-    return RET_NULL_PTR;
-  }
+  MS_ASSERT(primitive_c != nullptr);
+  MS_ASSERT(anf_graph != nullptr);
   std::vector<AnfNodePtr> op_inputs;
   for (const auto &input_name : onnx_node.input()) {
     if (input_name.empty()) {
@@ -1333,7 +1332,7 @@ TypeId OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type
 }
 
 int OnnxModelParser::Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
-  for (auto func_graph : all_func_graphs) {
+  for (const auto &func_graph : all_func_graphs) {
     auto onnx_adjust = std::make_shared<OnnxInputAdjust>();
     if (!onnx_adjust->Run(func_graph)) {
       MS_LOG(ERROR) << "onnx adjust failed.";

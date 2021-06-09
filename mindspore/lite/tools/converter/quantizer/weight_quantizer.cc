@@ -18,20 +18,20 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <utility>
 #include <unordered_map>
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/common/common.h"
 
 using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config) : Quantizer(graph) {
+WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config) : Quantizer(std::move(graph)) {
   quant_strategy_ = std::make_unique<QuantStrategy>(0, 0);
   config_param_ = config;
 }
 
-WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config) : Quantizer(graph) {
+WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config) : Quantizer(std::move(graph)) {
   this->config_file_ = config.configFile;
   auto quant_size = config.quantWeightSize;
   this->bit_num_ = config.bitNum;
@@ -40,9 +40,9 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &con
   quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
   quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
   // parse type_id_
-  if (this->bit_num_ > 0 && this->bit_num_ <= 8) {
+  if (this->bit_num_ > 0 && this->bit_num_ <= kMaxBit) {
     type_id_ = kNumberTypeInt8;
-  } else if (this->bit_num_ <= 16) {
+  } else if (this->bit_num_ <= (kMaxBit * 2)) {
     type_id_ = kNumberTypeInt16;
   } else {
     MS_LOG(ERROR) << "invalid input bits";
@@ -373,7 +373,6 @@ float CompareOutputData(const std::unordered_map<std::string, mindspore::tensor:
 
   float total_mean_error = 0.0f;
   int tensor_cnt = expected_tensor.size();
-
   if (tensor_cnt <= 0) {
     MS_LOG(ERROR) << "unexpected tensor_cnt: " << tensor_cnt;
     return RET_ERROR;
@@ -604,7 +603,8 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
       // copy origin data in case to recover
       auto *raw_data = static_cast<float *>(tensor_info->data_c());
       auto elem_count = tensor_info->DataSize();
-      std::unique_ptr<float[]> origin_data(new (std::nothrow) float[elem_count]);
+      auto val = std::make_unique<float>(elem_count);
+      std::unique_ptr<float[]> origin_data(val.release());
       auto ret = memcpy_s(origin_data.get(), sizeof(float) * elem_count, raw_data, tensor_info->Size());
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy fail: "
@@ -612,7 +612,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
         return RET_ERROR;
       }
       // 1. try quant
-      for (int bit_num_t = 2; bit_num_t <= 8; bit_num_t++) {
+      for (size_t bit_num_t = 2; bit_num_t <= kMaxBit; bit_num_t++) {
         status = TryQuant(bit_num_t, param_node, tensor_info, primitive);
         if (status != RET_OK) {
           MS_LOG(ERROR) << "TryQuant failed.";
@@ -666,7 +666,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
           MS_LOG(DEBUG) << "op: " << op_name << " got mixed bit: " << bit_num_t << " mean_error: " << mean_error;
           opname_bit_[op_name] = bit_num_t;
           break;
-        } else if (bit_num_t != 8) {
+        } else if (bit_num_t != kMaxBit) {
           MS_LOG(DEBUG) << "op: " << op_name << " intermediate bit: " << bit_num_t << " mean_error: " << mean_error
                         << " [recover]";
           // recover
@@ -803,7 +803,7 @@ STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   if (config_param_.mixed) {
-    bit_num_ = 8;
+    bit_num_ = kMaxBit;
     quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
     quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
     type_id_ = kNumberTypeInt8;

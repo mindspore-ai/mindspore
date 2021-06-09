@@ -38,7 +38,7 @@ class WeightQuantizer : public Quantizer {
  public:
   WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config);
   WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config);
-  ~WeightQuantizer();
+  ~WeightQuantizer() override;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
   STATUS DoConvQuantize(const CNodePtr &);
@@ -73,8 +73,8 @@ class WeightQuantizer : public Quantizer {
 
   STATUS DoMixedQuantize(const FuncGraphPtr &func_graph);
   STATUS CheckImageCnt();
-  STATUS GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
-                              ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
+  static STATUS GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
+                                     ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
   STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info,
                   const PrimitivePtr &primitive);
   STATUS DoQuantSearch(const FuncGraphPtr &func_graph);

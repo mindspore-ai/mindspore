@@ -15,18 +15,16 @@
  */
 #include "backend/optimizer/common/pass_manager.h"
 #include <sys/time.h>
-#include <unordered_set>
 #include <deque>
 #include <string>
 #include <algorithm>
 #include "ir/anf.h"
-#include "ir/func_graph.h"
-#include "ir/manager.h"
-#include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
 constexpr size_t kMaxRepassTimes = 12;
+constexpr uint64_t kUSecondInSecond = 1000000;
+
 const std::vector<PassPtr> &PassManager::Passes() const { return passes_; }
 
 void PassManager::AddPass(const PassPtr &pass) {
@@ -65,11 +63,10 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
       }
 #if defined(_WIN32) || defined(_WIN64)
       auto end_time = std::chrono::steady_clock::now();
-      std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+      std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost.count() << " us";
 #else
       (void)gettimeofday(&end_time, nullptr);
-      const uint64_t kUSecondInSecond = 1000000;
       uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
       cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";

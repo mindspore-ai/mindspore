@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,9 +31,9 @@ constexpr size_t kTFBNScaleIndex = 2;
 constexpr size_t kTFBNBiasIndex = 3;
 constexpr size_t kTFBNMeanIndex = 4;
 constexpr size_t kTFBNVarIndex = 5;
-constexpr const float EPS = 1e-8;
-constexpr const float POW_NUM = 0.5;
-constexpr const float DEFAULT_EPS = 1e-5;
+constexpr float kEps = 1e-8;
+constexpr float kPowNum = 0.5;
+constexpr float kDefaultEps = 1e-5;
 bool IsBatchNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
@@ -56,7 +56,7 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
   // 1/sqrt(variance + eps)
   for (int32_t i = 0; i < kernel_num; i++) {
     float tmp = trans_scale[i] + eps;
-    tmp = pow(tmp, POW_NUM);
+    tmp = pow(tmp, kPowNum);
     if (tmp <= 0.0f) {
       MS_LOG(ERROR) << "divisor cannot be 0";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
@@ -132,18 +132,21 @@ const BaseRef ConvBatchNormFusion::DefinePattern() const {
   auto bn_other_var = std::make_shared<SeqVar>();
   return VectorRef({bn_var, conv_var, bn_mean_var, bn_variable_var, bn_other_var});
 }
-// BatchNorm weight Tensor definition:
-// caffe
-//   mean  --0
-//   variance  --1
-//   scale_factor  --2
-// tensorflow
-//   scale    -- 0
-//   bias        --1
-//   estimated_mean  --2
-//   estimated_variance  --3
+
 void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num, float *trans_scale,
                                          float *trans_bias) const {
+  /*
+  BatchNorm weight Tensor definition:
+   caffe
+     mean  --0
+     variance  --1
+     scale_factor  --2
+   tensorflow
+     scale    -- 0
+     bias        --1
+     estimated_mean  --2
+     estimated_variance  --3
+  */
   MS_ASSERT(bn_node != nullptr);
   MS_ASSERT(trans_bias != nullptr);
   MS_ASSERT(trans_scale != nullptr);
@@ -167,7 +170,7 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
     if (primc->GetAttr("epsilon") != nullptr) {
       eps = primc->get_epsilon();
     } else {
-      eps = DEFAULT_EPS;
+      eps = kDefaultEps;
     }
     CalEstimatedData(bn_mean_node, bn_scale_factor_node);
     CalEstimatedData(bn_variance_node, bn_scale_factor_node);
@@ -182,7 +185,7 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
     if (primc->GetAttr("epsilon") != nullptr) {
       eps = primc->get_epsilon();
     } else {
-      eps = DEFAULT_EPS;
+      eps = kDefaultEps;
     }
   } else {
     MS_LOG(ERROR) << "not caffe or tf batchnorm op.";
@@ -192,8 +195,8 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
   if (CheckIfNodeIsParam(bn_mean_node) != lite::RET_OK || CheckIfNodeIsParam(bn_variance_node) != lite::RET_OK) {
     return;
   }
-  if (eps < EPS) {
-    eps = EPS;
+  if (eps < kEps) {
+    eps = kEps;
   }
 
   CalTransale(bn_scale_node, bn_variance_node, trans_scale, eps, kernel_num);

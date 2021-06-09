@@ -17,19 +17,19 @@
 #include <string>
 #include "tools/cropper/cropper.h"
 #include "tools/cropper/cropper_utils.h"
-#define BUF_SIZE 1024
 
 namespace mindspore {
 namespace lite {
 namespace cropper {
-static const char *DELIM_COMMA = ",";
+const char *kDelimComma = ",";
+constexpr int kBufSize = 1024;
 
 int Cropper::ReadPackage() {
   std::ifstream in_file(this->flags_->package_file_);
-  if (ValidFile(in_file, this->flags_->package_file_.c_str()) == RET_OK) {
+  if (ValidFile(in_file, this->flags_->package_file_) == RET_OK) {
     in_file.close();
 
-    char buf[BUF_SIZE];
+    char buf[kBufSize];
     std::string cmd = "ar -t " + this->flags_->package_file_;
     MS_LOG(DEBUG) << cmd;
 
@@ -38,7 +38,7 @@ int Cropper::ReadPackage() {
       MS_LOG(ERROR) << "Error to popen" << this->flags_->package_file_;
       return RET_ERROR;
     }
-    while (fgets(buf, BUF_SIZE, p_file) != nullptr) {
+    while (fgets(buf, kBufSize, p_file) != nullptr) {
       this->all_files_.push_back(std::string(buf).substr(0, std::string(buf).length() - 1));
       this->discard_files_.push_back(std::string(buf).substr(0, std::string(buf).length() - 1));
     }
@@ -126,7 +126,7 @@ int Cropper::GetModelOps() {
 
 int Cropper::GetModelFiles() {
   if (!this->flags_->model_file_.empty()) {
-    auto files = StringSplit(this->flags_->model_file_, std::string(DELIM_COMMA));
+    auto files = StringSplit(this->flags_->model_file_, std::string(kDelimComma));
     for (const auto &file : files) {
       if (ValidFileSuffix(file, "ms") != RET_OK) {
         return RET_INPUT_PARAM_INVALID;
@@ -144,13 +144,13 @@ int Cropper::GetModelFiles() {
     std::string cmd = "find " + this->flags_->model_folder_path_ + " -name '*.ms'";
     MS_LOG(DEBUG) << cmd;
 
-    char buf[BUF_SIZE];
+    char buf[kBufSize];
     FILE *p_file = popen(cmd.c_str(), "r");
     if (p_file == nullptr) {
       MS_LOG(ERROR) << "Error to popen";
       return RET_ERROR;
     }
-    while (fgets(buf, BUF_SIZE, p_file) != nullptr) {
+    while (fgets(buf, kBufSize, p_file) != nullptr) {
       std::string real_path = RealPath(std::string(buf).substr(0, std::string(buf).length() - 1).c_str());
       if (real_path.empty()) {
         pclose(p_file);
@@ -169,54 +169,53 @@ int Cropper::GetModelFiles() {
 
 int Cropper::GetOpMatchFiles() {
   std::ifstream in_file(this->flags_->config_file_);
-  if (ValidFile(in_file, this->flags_->config_file_.c_str()) == RET_OK) {
-    MS_LOG(DEBUG) << this->flags_->config_file_.c_str();
-    char buf[BUF_SIZE];
-    while (!in_file.eof()) {
-      in_file.getline(buf, BUF_SIZE);
-      std::string buf_str = buf;
-      auto mapping = StringSplit(buf_str, DELIM_COMMA);
-      if (!mapping.empty()) {
-        std::string primitive = mapping.at(0);
-        std::string type = mapping.at(1);
-        std::string file = mapping.at(2);
-        if (type == "kNumberTypeFloat32" || type == "kNumberTypeFloat16" || type == "kNumberTypeInt32") {
-          for (auto op : this->fp32_operators_) {
-            if (schema::EnumNamePrimitiveType(op) == primitive) {
-              MS_LOG(DEBUG) << "kNumberTypeFloat32:" << mapping[2];
-              this->archive_files_.insert(mapping[2]);
-              break;
-            }
-          }
-        } else if (type == "kNumberTypeInt8") {
-          for (auto op : this->int8_operators_) {
-            if (schema::EnumNamePrimitiveType(op) == primitive) {
-              MS_LOG(DEBUG) << "int8_operators_:" << mapping[2];
-              this->archive_files_.insert(mapping[2]);
-              break;
-            }
-          }
-        } else if (type == "prototype") {
-          for (auto op : this->all_operators_) {
-            if (schema::EnumNamePrimitiveType(op) == primitive) {
-              MS_LOG(DEBUG) << "prototype:" << mapping[2];
-              this->archive_files_.insert(mapping[2]);
-              break;
-            }
-          }
-        } else if (type == "common") {
-          MS_LOG(DEBUG) << "common:" << mapping[2];
-          this->archive_files_.insert(mapping[2]);
-        } else {
-          MS_LOG(ERROR) << "invalid type symbol:" << type;
-          return RET_ERROR;
-        }
-      }
-    }
-    in_file.close();
-  } else {
+  if (ValidFile(in_file, this->flags_->config_file_) != RET_OK) {
     return RET_ERROR;
   }
+  MS_LOG(DEBUG) << this->flags_->config_file_.c_str();
+  char buf[kBufSize];
+  while (!in_file.eof()) {
+    in_file.getline(buf, kBufSize);
+    std::string buf_str = buf;
+    auto mapping = StringSplit(buf_str, kDelimComma);
+    if (!mapping.empty()) {
+      std::string primitive = mapping.at(0);
+      std::string type = mapping.at(1);
+      std::string file = mapping.at(2);
+      if (type == "kNumberTypeFloat32" || type == "kNumberTypeFloat16" || type == "kNumberTypeInt32") {
+        for (auto op : this->fp32_operators_) {
+          if (schema::EnumNamePrimitiveType(op) == primitive) {
+            MS_LOG(DEBUG) << "kNumberTypeFloat32:" << mapping[2];
+            this->archive_files_.insert(mapping[2]);
+            break;
+          }
+        }
+      } else if (type == "kNumberTypeInt8") {
+        for (auto op : this->int8_operators_) {
+          if (schema::EnumNamePrimitiveType(op) == primitive) {
+            MS_LOG(DEBUG) << "int8_operators_:" << mapping[2];
+            this->archive_files_.insert(mapping[2]);
+            break;
+          }
+        }
+      } else if (type == "prototype") {
+        for (auto op : this->all_operators_) {
+          if (schema::EnumNamePrimitiveType(op) == primitive) {
+            MS_LOG(DEBUG) << "prototype:" << mapping[2];
+            this->archive_files_.insert(mapping[2]);
+            break;
+          }
+        }
+      } else if (type == "common") {
+        MS_LOG(DEBUG) << "common:" << mapping[2];
+        this->archive_files_.insert(mapping[2]);
+      } else {
+        MS_LOG(ERROR) << "invalid type symbol:" << type;
+        return RET_ERROR;
+      }
+    }
+  }
+  in_file.close();
   return RET_OK;
 }
 

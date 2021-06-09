@@ -63,7 +63,8 @@ void FunctionalizeControlOpPass::InitNodeClusters(const FuncGraphPtr &func_graph
   }
   // sort node_clusters_
   std::sort(node_clusters_.begin(), node_clusters_.end(),
-            [](std::pair<std::string, std::vector<AnfNodePtr>> a, std::pair<std::string, std::vector<AnfNodePtr>> b) {
+            [](const std::pair<std::string, std::vector<AnfNodePtr>> &a,
+               const std::pair<std::string, std::vector<AnfNodePtr>> &b) {
               if (a.first.size() != b.first.size()) {
                 return a.first.size() > b.first.size();
               } else {
@@ -158,11 +159,7 @@ CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, con
     AnfNodePtr todo_node = todo.front();
     todo.pop_front();
     if (aim_func(todo_node)) {
-      if (filter_func == nullptr) {
-        aim_node = utils::cast<CNodePtr>(todo_node);
-        todo.clear();
-        break;
-      } else if (filter_func(todo_node)) {
+      if (filter_func == nullptr || filter_func(todo_node)) {
         aim_node = utils::cast<CNodePtr>(todo_node);
         todo.clear();
         break;
