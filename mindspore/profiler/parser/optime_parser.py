@@ -105,8 +105,8 @@ class OPComputeTimeParser:
                 stream_id = op_name_stream_dict[op_name]
                 avg_time = time / op_name_count_dict[op_name]
                 total_time += avg_time
-                result_data += ("%s %s  %s\n" %(op_name, str(avg_time), stream_id))
-        result_data += ("total op  %s 0" %(str(total_time)))
+                result_data += ("%s %s  %s\n" % (op_name, str(avg_time), stream_id))
+        result_data += ("total op  %s 0" % (str(total_time)))
 
         timeline_data = []
         for op_name, time in op_name_time_dict.items():
