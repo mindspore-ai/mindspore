@@ -235,7 +235,7 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
     int C8 = DOWN_ROUND(length, C8NUM);
     for (; i < C8; i += C8NUM) {
       MS_FLOAT32X8 in = MS_LD256_F32(src + i);
-      MS_FLOAT32X8 res = 0.5 * in * (1.0 + MS_TANHX8_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
+      const MS_FLOAT32X8 res = 0.5 * in * (1.0 + MS_TANHX8_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
       MS_ST256_F32(dst + i, res);
     }
 #endif

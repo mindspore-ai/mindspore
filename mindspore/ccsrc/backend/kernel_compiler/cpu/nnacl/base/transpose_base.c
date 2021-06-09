@@ -265,10 +265,22 @@
       TransposeDim6##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                       \
     } else {                                                                                                  \
       int *size = (int *)(malloc(num_axes * sizeof(int)));                                                    \
+      if (size == NULL) {                                                                                     \
+        return NNACL_ERR;                                                                                     \
+      }                                                                                                       \
       int *position = (int *)(malloc(num_axes * sizeof(int)));                                                \
+      if (position == NULL) {                                                                                 \
+        return NNACL_ERR;                                                                                     \
+      }                                                                                                       \
       Transpose##NAME(in_data, out_data, strides, out_strides, perm, output_shape, num_axes, size, position); \
-      free(size);                                                                                             \
-      free(position);                                                                                         \
+      if (size != NULL) {                                                                                     \
+        free(size);                                                                                           \
+        size = NULL;                                                                                          \
+      }                                                                                                       \
+      if (position != NULL) {                                                                                 \
+        free(position);                                                                                       \
+        position = NULL;                                                                                      \
+      }                                                                                                       \
     }                                                                                                         \
     return NNACL_OK;                                                                                          \
   }

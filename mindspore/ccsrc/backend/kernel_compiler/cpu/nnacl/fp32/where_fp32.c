@@ -18,7 +18,7 @@
 #include "nnacl/common_func.h"
 
 void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
-                           WhereParameter *where_param_, int task_id) {
+                           const WhereParameter *where_param_, int task_id) {
   for (int i = task_id; i < where_param_->max_num_; i += where_param_->op_parameter_.thread_num_) {
     if (condition[where_param_->condition_num_ > 1 ? i : 0] == true) {
       output[i] = x[where_param_->x_num_ > 1 ? i : 0];
