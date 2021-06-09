@@ -21,7 +21,7 @@ from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ... import context
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
+from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive
 from ..operations.math_ops import _infer_shape_reduce
 from ...communication.management import GlobalComm
 from .. import signature as sig
@@ -1111,3 +1111,45 @@ class DynamicStitch(PrimitiveWithCheck):
                                                mstype.number_type + (mstype.bool_,), self.name)
             validator.check(f"type of data[{i}]", data_type[i], f"type of data[0]", data_type[0], Rel.EQ, self.name)
         return data_type[0]
+
+
+class DynamicBroadcastGradientArgs(Primitive):
+    """
+    Broadcast the two input shapes, return the dimensions that each need to be broadcast.
+
+    Input shape `s0` and shape `s1` can be broadcast to a common shape if for each dimension pair they are either equal
+    or input is one or the target dimension is -1. In case of -1 in target shape, it will be replaced by the input
+    shape's value in that dimension.
+
+    Inputs:
+        - **s0** (Tensor) - A `1-D` tensor. The data type should be one of the following types: int32, int64,
+          uint32, uint64.
+        - **s1** (Tensor) - A `1-D` tensor with the same type as `s0`.
+
+    Outputs:
+        Tuple(Tensor), tuple of 2 tensors, r0 and r1. The first one is the index tensor and the other one is the mask
+        tensor.
+
+        - **r0** (Tensor) - The output shape is 1-D with the same type as s0.
+        - **r1** (Tensor) - The output shape is 1-D with the same type as s0.
+
+    Raises:
+        ValueError: if the `s0` and `s1` are incompatible, or if a - 1 in the target shape is in an invalid
+                    location.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> shape0 = (4, 2, 1)
+        >>> shape1 = (2, 7)
+        >>> from mindspore.ops.operations import _inner_ops
+        >>> args = _inner_ops.DynamicBroadcastGradientArgs()
+        >>> r0, r1 = args(Tensor(shape0), Tensor(shape1))
+        >>> print(r0, r1)
+        [2], [0]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Init BroadcastGradientArgs"""
