@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
-                           WhereParameter *where_param_, int task_id);
+                           const WhereParameter *where_param_, int task_id);
 #ifdef __cplusplus
 }
 #endif

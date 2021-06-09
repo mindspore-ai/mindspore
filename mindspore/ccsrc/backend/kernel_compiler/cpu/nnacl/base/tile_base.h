@@ -44,8 +44,8 @@ typedef struct TileParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Tile(void *input_data, void *output_data, TileParameter *parameter);
-void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, TileParameter *parameter);
+void Tile(void *input_data, void *output_data, const TileParameter *parameter);
+void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, const TileParameter *parameter);
 #ifdef __cplusplus
 }
 #endif

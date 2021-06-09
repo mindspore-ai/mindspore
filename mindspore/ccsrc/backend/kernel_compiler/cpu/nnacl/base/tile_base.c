@@ -25,7 +25,7 @@ void DoCopyData(const uint8_t *input_data, uint8_t *output_data, size_t size, si
   }
 }
 
-int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, TileParameter *parameter) {
+int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, const TileParameter *parameter) {
   size_t src_dim_size = parameter->in_shape_[dim];
   if (dim == parameter->in_dim_ - 1) {
     DoCopyData(input_data, output_data, src_dim_size, parameter->data_size_, parameter->multiples_[dim]);
@@ -42,11 +42,11 @@ int DoTileOneDimension(uint8_t *input_data, uint8_t *output_data, size_t dim, Ti
   return 0;
 }
 
-void Tile(void *input_data, void *output_data, TileParameter *parameter) {
+void Tile(void *input_data, void *output_data, const TileParameter *parameter) {
   DoTileOneDimension((uint8_t *)input_data, (uint8_t *)output_data, 0, parameter);
 }
 
-void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, TileParameter *parameter) {
+void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, const TileParameter *parameter) {
   uint8_t *out_data = output_data;
   uint8_t *in_data = input_data;
   for (size_t i = begin; i < end; ++i) {
