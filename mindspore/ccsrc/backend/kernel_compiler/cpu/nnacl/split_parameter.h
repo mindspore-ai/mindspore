@@ -49,7 +49,7 @@ typedef struct SplitWithOverlapParameter {
   OpParameter op_parameter_;
   int num_split_;
   int split_dim_;
-  int stride_;
+  int split_stride_;
   int pad_top_;
   int ratio_[SPLIT_MAX_SLICE_NUM];
   int extend_top_[SPLIT_MAX_SLICE_NUM];

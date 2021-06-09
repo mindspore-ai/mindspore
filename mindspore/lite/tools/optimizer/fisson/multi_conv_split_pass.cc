@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+#include "tools/optimizer/fisson/multi_conv_split_pass.h"
 #include <string>
 #include <memory>
-#include "mindspore/ccsrc/utils/utils.h"
-#include "mindspore/lite/tools/optimizer/fisson/multi_conv_split_pass.h"
-#include "tools/optimizer/common/gllo_utils.h"
+#include "utils/utils.h"
 #include "base/base.h"
 #include "ops/fusion/conv2d_fusion.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 
 using mindspore::lite::converter::FmkType;
@@ -30,11 +30,9 @@ namespace opt {
 
 std::string MultiConvSplitPass::IsMultiParallelConvNode(const AnfNodePtr &node) const {
   std::string parallel_name;
-  for (const auto &parallel_prim : kParallelSet) {
-    if (CheckPrimitiveType(node, parallel_prim)) {
-      if (kParallelOpNames.find(parallel_prim) != kParallelOpNames.end()) {
-        return kParallelOpNames.at(parallel_prim);
-      }
+  for (const auto &parallel_prim : kParallelOpNames) {
+    if (CheckPrimitiveType(node, parallel_prim.first.first)) {
+      return parallel_prim.second;
     }
   }
   return parallel_name;
@@ -56,7 +54,6 @@ const BaseRef MultiConvSplitPass::DefinePattern() const {
 
 const AnfNodePtr MultiConvSplitPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                              const EquivPtr &) const {
-  MS_LOG(INFO) << "---Enter pass MultiConvSplit.";
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   auto device_type_attr = cnode->GetAttr(mindspore::ops::kDeviceType);
@@ -68,6 +65,18 @@ const AnfNodePtr MultiConvSplitPass::Process(const FuncGraphPtr &func_graph, con
   if (parallel_name.empty()) {
     return node;
   }
+  // if current node has more than two outputs node, we do not split it.
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto node_users_iter = manager->node_users().find(node);
+  if (node_users_iter == manager->node_users().end()) {
+    return node;
+  }
+  auto output_info_list = node_users_iter->second;
+  if (output_info_list.size() > kDefaultBatch) {
+    return node;
+  }
+
   std::shared_ptr<MultiNodeSplitProxy> multi_node_split_proxy =
     std::make_shared<MultiNodeSplitProxy>(strategys_.at(parallel_name), primitive_type_, fmk_type_, num_);
   return multi_node_split_proxy->DoSplit(func_graph, node);

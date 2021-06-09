@@ -29,7 +29,6 @@
 using mindspore::schema::PrimitiveType;
 namespace mindspore {
 namespace opt {
-constexpr auto kMaxMultiConvNodeNums = 2;
 
 class MultiConvSplitPass : public PatternProcessPass {
  public:
@@ -44,7 +43,7 @@ class MultiConvSplitPass : public PatternProcessPass {
   std::string IsMultiParallelConvNode(const AnfNodePtr &node) const;
 
  private:
-  std::unordered_map<std::string, SplitStrategy> strategys_;
+  std::unordered_map<std::string, SplitStrategy> strategys_{};
   PrimitiveType primitive_type_{schema::PrimitiveType_NONE};
   int32_t fmk_type_{-1};
   int32_t num_{0};

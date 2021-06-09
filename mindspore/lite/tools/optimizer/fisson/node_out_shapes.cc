@@ -38,22 +38,18 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
     if (utils::isa<CNodePtr>(input_node) || utils::isa<ParameterPtr>(input_node)) {
       auto in_shape = input_node->Shape();
       if (in_shape == nullptr) {
-        MS_LOG(ERROR) << "The shape is null.";
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return nullptr;
       }
       if (utils::isa<abstract::ShapePtr>(in_shape)) {
         const auto &shape = in_shape->cast<abstract::ShapePtr>()->shape();
         input_shapes.push_back(shape);
-      } else {
-        MS_LOG(ERROR) << "currently not support tuple";
       }
     }
   }
   // assume multi outputs
   auto out_shape = cnode->Shape();
   if (out_shape == nullptr) {
-    MS_LOG(ERROR) << "The shape is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
@@ -62,7 +58,6 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
     for (size_t i = 0; i < shape->size(); ++i) {
       const auto &shape_ptr = (*shape)[i];
       if (!utils::isa<abstract::ShapePtr>(shape_ptr)) {
-        MS_LOG(ERROR) << "shape_ptr is not ShapePtr.";
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return nullptr;
       }
@@ -75,7 +70,7 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
   std::string node_name = cnode->fullname_with_scope();
   Spliter::GetInstance()->UpdateNodeInputShapes(node_name, input_shapes);
   Spliter::GetInstance()->UpdateNodeOutputShapes(node_name, output_shapes);
-  return nullptr;
+  return node;
 }
 }  // namespace opt
 }  // namespace mindspore

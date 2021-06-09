@@ -37,10 +37,10 @@ class Conv2DInfo : public OperatorInfo {
   int CheckStrategy(const SplitStrategy &strategy) override;
   int InferReplaceOp() override;
   int InferParallelCNodes() override;
-  int ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
-                            const std::vector<AnfNodePtr> &feature_split_outputs,
-                            const std::vector<AnfNodePtr> &kernel_split_outputs,
-                            const std::vector<AnfNodePtr> &bias_split_outputs);
+  virtual int ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+                                    const std::vector<AnfNodePtr> &feature_split_outputs,
+                                    const std::vector<AnfNodePtr> &kernel_split_outputs,
+                                    const std::vector<AnfNodePtr> &bias_split_outputs);
   AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
                                   size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
                                   bool trans_format) override;
@@ -53,20 +53,6 @@ class Conv2DInfo : public OperatorInfo {
   int CheckConv2DPrimitiveType();
   int CheckIfSplit();
 };
-
-class DepthwiseConv2DInfo : public Conv2DInfo {
- public:
-  DepthwiseConv2DInfo(const std::string &name, const SplitStrategy &strategy) : Conv2DInfo(name, strategy) {}
-  ~DepthwiseConv2DInfo() override = default;
-
- protected:
-  int InferReplaceOp() override;
-  int InferParallelCNodes() override;
-  AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
-                                  size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
-                                  bool trans_format) override;
-};
-
 }  // namespace opt
 }  // namespace mindspore
 

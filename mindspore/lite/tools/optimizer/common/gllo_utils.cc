@@ -35,7 +35,10 @@ using float16 = Eigen::half;
 namespace mindspore {
 namespace opt {
 namespace {
+namespace {
 constexpr auto kAnfPrimitiveIndex = 0;
+constexpr auto kDeviceTypeNone = -1;
+}  // namespace
 bool IsRealKernel(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -608,14 +611,12 @@ bool IsParallelSplitConvNode(const BaseRef &n) {
     if (prim == nullptr) {
       return false;
     }
-
-    bool is_depth_wise =
-      prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
-    if (is_depth_wise) {
+    int device_type =
+      prim->GetAttr(ops::kDeviceType) != nullptr ? GetValue<int32_t>(prim->GetAttr(ops::kDeviceType)) : kDeviceTypeNone;
+    if (device_type != kDeviceTypeNone) {
       return false;
     }
-    return CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion) ||
-           (CheckPrimitiveType(anf_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise);
+    return CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion) || CheckPrimitiveType(anf_node, prim::kPrimConv2D);
   }
   return false;
 }

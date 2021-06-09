@@ -35,18 +35,19 @@ namespace opt {
 
 struct SplitInfo {
   int64_t axis;
-  size_t out_num;
+  int64_t out_num;
   std::vector<int64_t> size_splits;
   std::vector<int64_t> extend_top;
   std::vector<int64_t> extend_bottom;
   std::vector<mindspore::lite::DeviceType> dev_types;
   int64_t in_num_conv;
   int64_t fmk_type;
-  std::vector<int64_t> weight_channel;
   PrimitiveType primitive_type;
 };
 
 typedef enum { CUT_N, CUT_H, CUT_W, CUT_C_IN, CUT_C_OUT, CUT_NONE } CuttingStragedy;
+
+std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim);
 
 bool IsConv2D(const AnfNodePtr &node);
 

@@ -58,7 +58,7 @@ class MultiConvSplit : public MultiNodeSplit {
 
  private:
   int GenSplitInfo();
-  int GetMultiConvNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_node);
+  int GetMultiConvNodes(const AnfNodePtr &conv_node);
 };
 
 class MultiConvSplitN final : public MultiConvSplit {

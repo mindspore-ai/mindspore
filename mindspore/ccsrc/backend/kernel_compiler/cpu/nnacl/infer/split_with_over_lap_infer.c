@@ -40,7 +40,7 @@ int SplitWithOverlapInferShape(const TensorC *const *inputs, size_t inputs_size,
   if (outputs_size != number_split) {
     return NNACL_ERR;
   }
-  int stride = param->stride_;
+  int stride = param->split_stride_;
   int pad_top = param->pad_top_;
   int split_dim = param->split_dim_;
 

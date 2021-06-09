@@ -41,9 +41,9 @@ void SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const SplitWithOverla
   for (auto i = 0; i < param->num_split_ - 1; i++) {
     visited_block += param->ratio_[i];
     auto cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
-    if (param->stride_ != 0) {
+    if (param->split_stride_ != 0) {
       // make sure border align with stride
-      cur_border = UP_ROUND(cur_border + param->pad_top_, param->stride_);
+      cur_border = UP_ROUND(cur_border + param->pad_top_, param->split_stride_);
       borders.emplace_back(cur_border - param->pad_top_);
     } else {
       borders.emplace_back(cur_border);
@@ -66,8 +66,8 @@ int SplitWithOverlapBaseCPUKernel::Init() { return RET_OK; }
 int SplitWithOverlapBaseCPUKernel::ReSize() { return RET_OK; }
 
 int SplitWithOverlapBaseCPUKernel::Split(int task_id) {
-  DoSplitWithOverlapParallel(input_ptr_, output_ptr_.data(), task_id, split_dim_size_, element_bytes_, outer_total_dim_,
-                             inner_stride_, start_indices_.data(), end_indices_.data());
+  DoSplitWithOverlap(input_ptr_, output_ptr_.data(), param_->num_split_, split_dim_size_, element_bytes_,
+                     outer_total_dim_, inner_stride_, start_indices_.data(), end_indices_.data());
 
   return RET_OK;
 }
@@ -117,8 +117,8 @@ int SplitWithOverlapBaseCPUKernel::Run() {
     inner_stride_ *= input_shape[i];
   }
 
-  auto ret =
-    static_cast<const lite::InnerContext *>(this->context_)->thread_pool_->ParallelLaunch(SplitWithOverlapRun, this, 1);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(SplitWithOverlapRun, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch for SplitWIthOverlapRun run fail. errorcode:[" << ret << "]";
     return RET_ERROR;

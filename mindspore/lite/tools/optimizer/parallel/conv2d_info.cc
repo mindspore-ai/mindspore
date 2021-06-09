@@ -19,11 +19,10 @@
 #include <vector>
 #include <string>
 #include <numeric>
-#include <algorithm>
-#include "mindspore/core/ops/fusion/conv2d_fusion.h"
-#include "mindspore/core/ops/split_with_overlap.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/split_with_overlap.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/ccsrc/utils/utils.h"
+#include "utils/utils.h"
 #include "tools/converter/converter_flags.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/parallel/operator_info_register.h"
@@ -48,7 +47,7 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
     splits_ = strategys[0][kAxisCIn];
     if (strategys[0][kAxisCIn] != strategys[1][kAxisCIn]) {
       MS_LOG(ERROR) << "Strategy ERROR, split C_in, input and kernel must use same strategy.";
-      return lite::RET_ERROR;
+      return RET_ERROR;
     }
   }
   // if split C_out
@@ -65,21 +64,21 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   }
   if (is_any_not_none(strategys[0][kAxisW])) {
     MS_LOG(ERROR) << "Strategy ERROR, doesn't support split W.";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   if (is_any_not_none(strategys[1][kAxisH])) {
     MS_LOG(ERROR) << "Strategy ERROR, doesn't support split kernel H.";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   if (is_any_not_none(strategys[1][kAxisW])) {
     MS_LOG(ERROR) << "Strategy ERROR, doesn't support split kernel W.";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   if (split_count > 1) {
     MS_LOG(ERROR) << "Strategy ERROR, only support split one dimension.";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
-  return lite::RET_OK;
+  return RET_OK;
 }
 
 int Conv2DInfo::CheckIfSplit() {
@@ -91,19 +90,19 @@ int Conv2DInfo::CheckIfSplit() {
   // for n, h, cin, we should checkout it's input whether bigger than split total ratio
   if (split_mode_ != SplitCOUT) {
     auto input_node_abstract = GetCNodeInputAbstract(cnode_, 1);
-    auto weught_node_abstract = GetCNodeInputAbstract(cnode_, 2);
+    auto weight_node_abstract = GetCNodeInputAbstract(cnode_, 2);
     if (!utils::isa<abstract::AbstractTensorPtr>(input_node_abstract)) {
       MS_LOG(ERROR) << "conv_input_abstract of should be abstract tensor";
       return RET_ERROR;
     }
-    if (!utils::isa<abstract::AbstractTensorPtr>(weught_node_abstract)) {
+    if (!utils::isa<abstract::AbstractTensorPtr>(weight_node_abstract)) {
       MS_LOG(ERROR) << "conv_weight_abstract of should be abstract tensor";
       return RET_ERROR;
     }
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(input_node_abstract);
     MS_ERROR_IF_NULL(abstract_tensor);
     input_shape = abstract_tensor->shape()->shape();
-    abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(weught_node_abstract);
+    abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(weight_node_abstract);
     weight_shape = abstract_tensor->shape()->shape();
     int total_ratio = 0;
     total_ratio = std::accumulate(splits_.begin(), splits_.end(), total_ratio);
@@ -118,8 +117,7 @@ int Conv2DInfo::CheckIfSplit() {
     if (split_mode_ == SplitN && shape_n < total_ratio) {
       return RET_ERROR;
     }
-
-    // too tiny FLOPs no need to be splited
+    // too tiny FLOPs no need to be splited, need to add check for split ratio
     auto current_flops = ApproximateFLOPs(strides, input_shape, weight_shape);
     if (current_flops <= kUserFLOPs) {
       return RET_ERROR;
@@ -131,10 +129,6 @@ int Conv2DInfo::CheckIfSplit() {
 AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
                                             std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
                                             const std::vector<int64_t> &splits, bool trans_format) {
-  if (orig_node == nullptr) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return nullptr;
-  }
   auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
   // prim of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
@@ -148,15 +142,16 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
     bottom_vector[split_num - 1] = 0;
     split_prim->set_extend_bottom(bottom_vector);
-    split_prim->set_stride(conv_prim->get_stride().at(kIndexH));
+    split_prim->set_split_stride(conv_prim->get_stride().at(kIndexH));
     split_prim->set_pad_top(conv_prim->get_pad_list().at(kPadUp));
   } else {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     split_prim->set_extend_bottom(std::vector<int64_t>(split_num, 0));
-    split_prim->set_stride(0);
+    split_prim->set_split_stride(0);
     split_prim->set_pad_top(0);
   }
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
+  // ori_conv_node must only have one input
   split_inputs.push_back(orig_node->input(input_index + 1));
   auto split_cnode = func_graph_->NewCNode(split_inputs);
   if (split_cnode == nullptr) {
@@ -164,17 +159,18 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
-  conv_prim->set_pad_mode(PAD);
   split_cnode->set_fullname_with_scope("Split_" + name_);
-  CreateMultipleOutputsOfAnfNode(split_cnode, split_num, split_outputs);
+  if (CreateMultipleOutputsOfAnfNode(split_cnode, split_num, split_outputs) != RET_OK) {
+    return nullptr;
+  }
   return split_cnode;
 }
 
 int Conv2DInfo::CheckConv2DPrimitiveType() {
-  if (CheckIfFuncGraphIsNull(func_graph_) != lite::RET_OK) {
+  if (CheckIfFuncGraphIsNull(func_graph_) != RET_OK) {
     return lite::RET_ERROR;
   }
-  if (CheckIfAnfNodeIsNull(cnode_) != lite::RET_OK) {
+  if (CheckIfAnfNodeIsNull(cnode_) != RET_OK) {
     return lite::RET_ERROR;
   }
   if (!CheckPrimitiveType(cnode_, prim::kPrimConv2D) && !CheckPrimitiveType(cnode_, prim::kPrimConv2DFusion)) {
@@ -196,67 +192,29 @@ int Conv2DInfo::InferParallelCNodes() {
   std::vector<AnfNodePtr> kernel_split_outputs;
   std::vector<AnfNodePtr> bias_split_outputs;
   std::string orig_name = name_;
-
-  parallel_output_nodes_.clear();
-  auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
   // split feature and kernel
   switch (split_mode_) {
+    case SplitN:
     case SplitH: {
       name_ = orig_name + "_input";
       auto feature_split_cnode =
-        CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisH, dev_num, strategys[0][kAxisH], true);
-      if ((feature_split_cnode == nullptr) || (feature_split_outputs.size() != IntToSize(dev_num))) {
-        MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
-        return lite::RET_ERROR;
+        CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisH, dev_num, splits_, true);
+      if (CheckSplitResult(feature_split_cnode, feature_split_outputs, dev_num) != RET_OK) {
+        return RET_ERROR;
       }
-    } break;
-    case SplitN: {
-      name_ = orig_name + "_input";
-      auto feature_split_cnode =
-        CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisN, dev_num, strategys[0][kAxisN], true);
-      if ((feature_split_cnode == nullptr) || (feature_split_outputs.size() != IntToSize(dev_num))) {
-        MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
-        return lite::RET_ERROR;
-      }
-    } break;
+      break;
+    }
+    case SplitCIN:
     case SplitCOUT: {
-      name_ = orig_name + "_kernel";
-      auto kernel_split_cnode =
-        CreateOutputsOfSplit(cnode_, 1, &kernel_split_outputs, kAxisCOut, dev_num, strategys[1][kAxisCOut], false);
-      if ((kernel_split_cnode == nullptr) || (kernel_split_outputs.size() != IntToSize(dev_num))) {
-        MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
-        return lite::RET_ERROR;
-      }
-      if (cnode_->size() >= 4) {
-        name_ = orig_name + "_bias";
-        auto bias_split_cnode =
-          CreateOutputsOfSplit(cnode_, 2, &bias_split_outputs, 0, dev_num, strategys[1][kAxisCOut], false);
-        if ((bias_split_cnode == nullptr) || (bias_split_outputs.size() != IntToSize(dev_num))) {
-          MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
-          return lite::RET_ERROR;
-        }
-      }
-    } break;
-    case SplitCIN: {
-      name_ = orig_name + "_input";
-      auto feature_split_cnode =
-        CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisCIn, dev_num, strategys[0][kAxisCIn], true);
-      if ((feature_split_cnode == nullptr) || (feature_split_outputs.size() != IntToSize(dev_num))) {
-        MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
-        return lite::RET_ERROR;
-      }
-      name_ = orig_name + "_kernel";
-      auto kernel_split_cnode =
-        CreateOutputsOfSplit(cnode_, 1, &kernel_split_outputs, kAxisCIn, dev_num, strategys[1][kAxisCIn], false);
-      if ((kernel_split_cnode == nullptr) || (kernel_split_outputs.size() != IntToSize(dev_num))) {
-        MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
-        return lite::RET_ERROR;
-      }
-    } break;
+      MS_LOG(ERROR) << "we do not split mode COUT or CIN";
+      break;
+    }
     default:
       MS_LOG(DEBUG) << "No Split mode chosen";
   }
   name_ = orig_name;
+  parallel_output_nodes_.clear();
+  auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
   return ConstructOutputCNodes(conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 
@@ -280,13 +238,13 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     // copy attr
     auto prim = std::make_shared<ops::Conv2DFusion>();
     prim->set_pad(conv_prim->get_pad());
+    prim->set_pad_mode(PAD);
     prim->set_in_channel(conv_prim->get_in_channel());
     prim->set_out_channel(conv_prim->get_out_channel());
     prim->set_dilation(conv_prim->get_dilation());
     prim->set_format(conv_prim->get_format());
     prim->set_group(conv_prim->get_group());
     prim->set_kernel_size(conv_prim->get_kernel_size());
-    prim->set_pad_mode(conv_prim->get_pad_mode());
     prim->set_pad_list(conv_prim->get_pad_list());
     prim->set_stride(conv_prim->get_stride());
     prim->set_activation_type(conv_prim->get_activation_type());
@@ -348,7 +306,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
       return lite::RET_ERROR;
     }
     conv_cnode->set_fullname_with_scope(conv_cnode_name + std::to_string(i));
-    CreateMultipleOutputsOfAnfNode(conv_cnode, 1, &tmp_outputs);
+    (void)CreateMultipleOutputsOfAnfNode(conv_cnode, 1, &tmp_outputs);
     parallel_output_nodes_.push_back(tmp_outputs[0]);
   }
   return lite::RET_OK;
@@ -365,7 +323,7 @@ int Conv2DInfo::InferReplaceOp() {
       concat_dim = kAxisN;
     } else if (split_mode_ == SplitCOUT) {
       // output format is same as feature map
-      concat_dim = kAxisCIn;
+      concat_dim = kAxisCOut;
     } else {
       concat_dim = kAxisH;
     }
@@ -373,108 +331,12 @@ int Conv2DInfo::InferReplaceOp() {
   }
 
   if (replace_op_ == nullptr) {
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
-  return lite::RET_OK;
+  return RET_OK;
 }
 
-AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
-                                                     std::vector<AnfNodePtr> *split_outputs, size_t split_dim,
-                                                     size_t split_num, const std::vector<int64_t> &splits,
-                                                     bool trans_format) {
-  return nullptr;
-}
-
-int DepthwiseConv2DInfo::InferParallelCNodes() {
-  if (CheckIfFuncGraphIsNull(func_graph_) != lite::RET_OK) {
-    return lite::RET_ERROR;
-  }
-  if (CheckIfAnfNodeIsNull(cnode_) != lite::RET_OK) {
-    return lite::RET_ERROR;
-  }
-  Strategys strategys = strategy_.strategys;
-  size_t dev_num = strategy_.dev_num;
-  std::vector<AnfNodePtr> feature_split_outputs;
-  std::string orig_name = name_;
-  switch (split_mode_) {
-    case SplitCIN: {
-      MS_LOG(ERROR) << "DepthwiseConv2DInfo doesn't support split Cin.";
-      return lite::RET_ERROR;
-    } break;
-    case SplitCOUT: {
-      MS_LOG(ERROR) << "DepthwiseConv2DInfo doesn't support split Cout.";
-      return lite::RET_ERROR;
-    } break;
-    case SplitH: {
-      MS_LOG(ERROR) << "DepthwiseConv2DInfo doesn't support split H.";
-      return lite::RET_ERROR;
-    } break;
-    default:
-      break;
-  }
-  parallel_output_nodes_.clear();
-  std::string conv_cnode_name = cnode_->fullname_with_scope();
-  auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
-  if (!IsDwConvNode(conv_prim)) {
-    return lite::RET_ERROR;
-  }
-  // split feature and kernel
-  if (split_mode_ == SplitN) {
-    name_ = orig_name + "_input";
-    auto feature_split_cnode =
-      CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisN, dev_num, strategys[0][kAxisN], true);
-    if ((feature_split_cnode == nullptr) || (feature_split_outputs.size() != IntToSize(dev_num))) {
-      MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
-      return lite::RET_ERROR;
-    }
-  }
-  name_ = orig_name;
-  // construct parallel Conv2D nodes
-  for (size_t i = 0; i < dev_num; ++i) {
-    std::vector<AnfNodePtr> tmp_outputs;
-    // copy attr
-    auto prim = std::make_shared<ops::Conv2DFusion>();
-    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
-    prim->set_pad(conv_prim->get_pad());
-    prim->set_in_channel(conv_prim->get_in_channel());
-    prim->set_out_channel(conv_prim->get_out_channel());
-    prim->set_dilation(conv_prim->get_dilation());
-    prim->set_format(conv_prim->get_format());
-    prim->set_group(conv_prim->get_group());
-    prim->set_kernel_size(conv_prim->get_kernel_size());
-    prim->set_pad_mode(conv_prim->get_pad_mode());
-    prim->set_pad_list(conv_prim->get_pad_list());
-    prim->set_stride(conv_prim->get_stride());
-    prim->set_activation_type(conv_prim->get_activation_type());
-    std::vector<AnfNodePtr> conv_inputs = {NewValueNode(prim)};
-    conv_inputs.push_back(feature_split_outputs[i]);
-    conv_inputs.push_back(cnode_->input(2));
-    if (cnode_->size() >= 4) {
-      conv_inputs.push_back(cnode_->input(3));
-    }
-    auto conv_cnode = func_graph_->NewCNode(conv_inputs);
-    if (conv_cnode == nullptr) {
-      MS_LOG(ERROR) << name_ << " : Failed to create parallel DepthwiseConv2D node " << i;
-      return lite::RET_ERROR;
-    }
-    conv_cnode->set_fullname_with_scope(conv_cnode_name + std::to_string(i));
-    CreateMultipleOutputsOfAnfNode(conv_cnode, 1, &tmp_outputs);
-    parallel_output_nodes_.push_back(tmp_outputs[0]);
-  }
-
-  return lite::RET_OK;
-}
-
-int DepthwiseConv2DInfo::InferReplaceOp() {
-  size_t dev_num = strategy_.dev_num;
-  replace_op_ = CreateConcateNode(cnode_, parallel_output_nodes_, kAxisN, dev_num, true);
-  if (replace_op_ == nullptr) {
-    return lite::RET_ERROR;
-  }
-  return lite::RET_OK;
-}
-
-OPERATOR_INFO_REGISTER(PrimitiveType_Conv2DFusion, kNumberTypeFloat32, OperatorInfoCreator<Conv2DInfo>)
-OPERATOR_INFO_REGISTER(PrimitiveType_Conv2DFusion, kNumberTypeInt8, OperatorInfoCreator<Conv2DInfo>)
+OPERATOR_INFO_REGISTER(PrimitiveType_Conv2DFusion, kNumberTypeFloat32, false, OperatorInfoCreator<Conv2DInfo>)
+OPERATOR_INFO_REGISTER(PrimitiveType_Conv2DFusion, kNumberTypeInt8, false, OperatorInfoCreator<Conv2DInfo>)
 }  // namespace opt
 }  // namespace mindspore

@@ -40,7 +40,16 @@ enum FmkType {
   FmkType_ONNX_LOW_VERSION = 5
 };
 
+enum ParallelSplitType { SplitNo = 0, SplitByUserRatio = 1, SplitByUserAttr = 2 };
 constexpr auto kMaxSplitRatio = 10;
+constexpr auto kComputeRate = "computeRate";
+constexpr auto kSplitDevice0 = "device0";
+constexpr auto kSplitDevice1 = "device1";
+struct ParallelSplitConfig {
+  ParallelSplitType parallel_split_type_ = SplitNo;
+  std::vector<int64_t> parallel_compute_rates_;
+  std::vector<std::string> parallel_devices_;
+};
 
 class Flags : public virtual mindspore::lite::FlagParser {
  public:
@@ -82,9 +91,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int quantWeightSize;
   std::string bitNumIn;
   int bitNum;
-  bool parallelMode = false;
-  std::vector<int64_t> parallel_compute_rates_;
-  std::vector<std::string> parallel_devices_;
+  ParallelSplitConfig parallel_split_config_{};
   std::string configFile;
   std::string quantWeightChannelStr;
   int quantWeightChannel;
@@ -94,8 +101,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool disableFusion = false;
 };
 
-bool CheckOfflineParallelConfig(const std::string &file, std::vector<int64_t> *compute_rates,
-                                std::vector<std::string> *parallel_devices);
+bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
 
 std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
 

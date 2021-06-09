@@ -26,7 +26,7 @@ void SplitWithOverlap::Init(int64_t number_split, const std::vector<int64_t> &ra
   this->set_extend_top(extend_top);
   this->set_extend_bottom(extend_bottom);
   this->set_split_dim(split_dim);
-  this->set_stride(stride);
+  this->set_split_stride(stride);
   this->set_pad_top(pad_top);
   this->set_trans_format(trans_format);
 }
@@ -45,7 +45,7 @@ void SplitWithOverlap::set_number_split(int64_t number_split) { this->AddAttr(kN
 
 void SplitWithOverlap::set_split_dim(int64_t split_dim) { this->AddAttr(kSplitDim, MakeValue(split_dim)); }
 
-void SplitWithOverlap::set_stride(int64_t stride) { this->AddAttr(kSplitStride, MakeValue(stride)); }
+void SplitWithOverlap::set_split_stride(int64_t stride) { this->AddAttr(kSplitStride, MakeValue(stride)); }
 
 void SplitWithOverlap::set_pad_top(int64_t pad_top) { this->AddAttr(kPadTop, MakeValue(pad_top)); }
 
@@ -76,7 +76,7 @@ int64_t SplitWithOverlap::get_split_dim() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-int64_t SplitWithOverlap::get_stride() const {
+int64_t SplitWithOverlap::get_split_stride() const {
   auto value_ptr = GetAttr(kSplitStride);
   return GetValue<int64_t>(value_ptr);
 }

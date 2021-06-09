@@ -40,8 +40,6 @@ class ParallelPass : public opt::NodePass {
  private:
   // to check this node whether support to parallel && split
   bool IsParallelCareNode(const AnfNodePtr &node);
-  // mapping primitive to a parallel_op_name
-  std::string PrimToString(const PrimitivePtr &prim);
 
   // set curr_node a new op_name with parallel symbol
   bool SetParallelOpName(const AnfNodePtr &node, std::string *parallel_name);
@@ -51,9 +49,10 @@ class ParallelPass : public opt::NodePass {
                                          const std::string &parallel_op_name);
 
  private:
+  bool is_depth_wise_{false};
   std::string type_name_;
   std::unordered_map<std::string, SplitStrategy> split_strategys_;
-  int32_t fmk_type_;
+  int32_t fmk_type_{};
 };
 
 }  // namespace opt
