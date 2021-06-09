@@ -28,24 +28,12 @@ namespace mindspore::lite {
 void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor> *context) {
   auto op_uuid = context->sequential_num_;
   input_op_datas_[op_uuid].push_back(inputs);
-
   inputs_data_[inputs->index_] = inputs->data_;
-  /* in-case infershape done in runtime */
-  kernel_->in_tensors()[inputs->index_]->set_shape(inputs->data_->shape());
-  kernel_->in_tensors()[inputs->index_]->set_format(inputs->data_->format());
-
   if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
     return;
   }
 
-  auto ret = CheckInputData();
-  if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
-    context->SetFailed(ret);
-    return;
-  }
-
-  ret = SetInputData();
+  auto ret = SetInputData();
   if (ret != RET_OK) {
     input_op_datas_.erase(op_uuid);
     context->SetFailed(ret);
@@ -87,7 +75,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
     for (QuantArg quant : old_tensor->quant_params()) {
       new_tensor->AddQuantParam(quant);
     }
-    isolate_input_map_.insert(std::make_pair(old_tensor, new_tensor));
+    isolate_input_map_.insert(std::make_pair(new_tensor, old_tensor));
 
     int ref_count = 0;
     /* set op input for calculate */
@@ -126,8 +114,8 @@ int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors
 int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                                   const std::vector<std::vector<int>> &dims) {
   for (auto map : isolate_input_map_) {
-    auto src_tensor = map.first;
-    auto isolate_tensor = map.second;
+    auto isolate_tensor = map.first;
+    auto src_tensor = map.second;
     for (size_t i = 0; i < inputs.size(); i++) {
       if (src_tensor == inputs[i]) {
         isolate_tensor->set_shape(dims[i]);
@@ -225,23 +213,6 @@ int LiteOpActor::CompileArrow() {
   return ret;
 }
 
-int LiteOpActor::CheckInputData() {
-  if (kernel_->in_tensors().size() != inputs_data_.size()) {
-    MS_LOG(ERROR) << "kernel:" << kernel_->name() << " inputs_data_.size(): " << inputs_data_.size()
-                  << " vs kernel_->in_tensors().size(): " << kernel_->in_tensors().size() << " are not equal.";
-    return RET_PARAM_INVALID;
-  }
-
-  for (size_t i = 0; i < inputs_data_.size(); ++i) {
-    if (kernel_->in_tensors()[i]->shape() != inputs_data_[i]->shape()) {
-      MS_LOG(ERROR) << "inputs_data_[" << i << "].shape: " << inputs_data_[i]->shape() << " vs kernel_->in_tensors()["
-                    << i << "].shape: " << kernel_->in_tensors()[i]->shape() << " are not equal.";
-      return RET_PARAM_INVALID;
-    }
-  }
-  return RET_OK;
-}
-
 void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
   MS_ASSERT(src_tensor != dst_tensor);
 
@@ -302,6 +273,11 @@ int LiteOpActor::SetInputData() {
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->in_tensors()[i];
     auto src_tensor = inputs_data_[i];
+
+    /* infershape done in runtime */
+    dst_tensor->set_shape(src_tensor->shape());
+    dst_tensor->set_format(src_tensor->format());
+
     if (src_tensor->data_type() != dst_tensor->data_type()) {
       CopyInputData(dst_tensor, src_tensor);
     } else {
@@ -567,10 +543,7 @@ void LiteSwitchOpActor::AsyncFalseBranchOutput(OpContext<Tensor> *context) {
   }
 }
 
-int MindrtInit(bool enable_parallel) {
-  int thread_count = enable_parallel ? 2 : 1;
-  return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", "", thread_count);
-}
+int MindrtInit() { return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", ""); }
 
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &actor_list) {
   for (const auto &actor : actor_list) {

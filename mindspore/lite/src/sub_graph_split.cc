@@ -559,4 +559,13 @@ void SearchSubGraph::SubGraphSplitByOffLineParallel() {
   MS_LOG(DEBUG) << "end to split offline parallel subgraph";
 }
 
+void SearchSubGraph::SubGraphSplit() {
+  bool offline_parallel_enable = model_->all_nodes_.front()->device_type_ != kDefaultDeviceType;
+  if (offline_parallel_enable) {
+    SubGraphSplitByOffLineParallel();
+  } else {
+    SubGraphSplitByOutput();
+  }
+  return;
+}
 }  // namespace mindspore::lite

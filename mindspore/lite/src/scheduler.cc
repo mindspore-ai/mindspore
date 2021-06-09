@@ -88,13 +88,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   if (context_->enable_parallel_) {
     auto search_sub_graph =
       SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
-
-    bool offline_parallel_enable = src_model_->all_nodes_.front()->device_type_ != kDefaultDeviceType;
-    if (offline_parallel_enable) {
-      search_sub_graph.SubGraphSplitByOffLineParallel();
-    } else {
-      search_sub_graph.SubGraphSplitByOutput();
-    }
+    search_sub_graph.SubGraphSplit();
   }
 
   ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, dst_kernels, nullptr, nullptr);
@@ -111,14 +105,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     }
   }
   FindAllInoutKernels(*dst_kernels);
-  // origin kernel init
-  for (size_t i = 0; i < dst_kernels->size(); i++) {
-    ret = (*dst_kernels)[i]->Init();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Kernel " << (*dst_kernels)[i]->name() << " Init failed.";
-      return ret;
-    }
-  }
+
   ret = RunPass(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule run pass failed.";
@@ -679,13 +666,6 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
     MS_LOG(ERROR) << "Schedule partial failed, name: " << src_node->name_;
     return nullptr;
   }
-  for (auto kernel : sub_kernels) {
-    ret = kernel->Init();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Schedule partial kernel init failed, name: " << kernel->name();
-      return nullptr;
-    }
-  }
 
   FindAllInoutKernels(sub_kernels);
   ret = RunPass(&sub_kernels);
@@ -725,6 +705,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
   MS_ASSERT(dst_kernels->empty());
   auto subgraph = src_model_->sub_graphs_.at(subgraph_index);
   for (auto node_index : subgraph->node_indices_) {
+    auto ret = RET_OK;
     auto node = src_model_->all_nodes_[node_index];
     MS_ASSERT(node != nullptr);
     auto *primitive = node->primitive_;
@@ -735,8 +716,11 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
       kernel = SchedulePartialToKernel(node);
     } else {  // kernel
       kernel = ScheduleNodeToKernel(node, prefer_data_type);
+      if (kernel != nullptr) {
+        ret = kernel->Init();
+      }
     }
-    if (kernel == nullptr) {
+    if (kernel == nullptr || ret != RET_OK) {
       MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << node->name_
                     << ", type: " << PrimitiveTypeName(prim_type);
       return RET_ERROR;
