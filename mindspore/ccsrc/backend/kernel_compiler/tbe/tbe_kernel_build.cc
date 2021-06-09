@@ -1004,6 +1004,7 @@ void TbeKernelBuild::GenFusionOutputDescJson(const std::shared_ptr<mindspore::An
 
 void TbeKernelBuild::GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t index,
                                          size_t output_index, nlohmann::json *output_desc, const size_t out_size) {
+  (*output_desc)[kJAddrType] = 0;
   std::string output_desc_name = anf_node->fullname_with_scope() + "_" + std::to_string(index);
   (*output_desc)[kJName] = output_desc_name;
   (*output_desc)[kJOutputIndex] = output_index;
@@ -1011,6 +1012,7 @@ void TbeKernelBuild::GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNod
   (*output_desc)[kJShape] = shape;
   auto type_id = AnfAlgo::GetOutputDeviceDataType(anf_node, out_size - 1);
   (*output_desc)[kJDataType] = tbe::TypeIdToString(type_id);
+  GenSuffixDescJson(output_desc);
 }
 
 bool TbeKernelBuild::GetSpecInputLayers(const std::string &op_name,
