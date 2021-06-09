@@ -20,8 +20,8 @@ import numpy as np
 import librosa
 from mindspore.mindrecord import FileWriter
 from mindspore import context
-from model_utils.config import config as cfg
-from model_utils.device_adapter import get_device_id
+from .model_utils.config import config as cfg
+from .model_utils.device_adapter import get_device_id
 
 
 def compute_melgram(audio_path, save_path='', filename='', save_npy=True):
