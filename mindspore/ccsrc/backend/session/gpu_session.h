@@ -89,6 +89,8 @@ class GPUSession : public SessionBasic {
   bool DumpDataEnabledIteration() const;
 
   GraphId CompileGraphImpl(KernelGraphPtr kernel_graph);
+
+  size_t UpdateGraphInputAbstract(AnfNodePtr input_node, tensor::TensorPtr tensor);
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;
 MS_REG_SESSION(kGPUDevice, GPUSession);
