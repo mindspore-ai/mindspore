@@ -112,7 +112,7 @@ Status Edge::InitEdgeCost() {
 }
 
 Status Edge::GetRedistributionCost(const TensorLayout &prev_op_output_layout, const TensorLayout &next_op_input_layout,
-                                   size_t type_length, TypePtr type, CostPtr *cost) {
+                                   size_t type_length, const TypePtr &type, CostPtr *cost) {
   MS_EXCEPTION_IF_NULL(prev_op_);
   MS_EXCEPTION_IF_NULL(cost);
   RankList dev_list = prev_op_->stage_device_list();

@@ -16,8 +16,8 @@
 
 #include "frontend/parallel/step_auto_parallel.h"
 
-#include <inttypes.h>
-#include <sys/time.h>
+#include <cinttypes>
+#include <ctime>
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -78,7 +78,9 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
     MS_LOG(INFO) << "Non-idicated strategy searching mode, using DP searching mode as default";
   }
 
-  struct timeval start_time, end_time;
+  struct timeval start_time {
+    0
+  }, end_time{0};
   (void)gettimeofday(&start_time, nullptr);
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
@@ -492,7 +494,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   StrategyMap stra_map;
   if (StrategyCheckpoint::GetInstance().LoadCheckPointOn() &&
       StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
+    MS_LOG(WARNING) << "Load strategy checkpoint failed";
     return FAILED;
   }
   for (auto &node : all_nodes) {
@@ -778,7 +780,6 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
     // Create edges between this TmpIdentityInfo instance and subsequent Operator instances
     for (auto &target : target_set) {
       auto target_cnode = target.first->cast<CNodePtr>();
-      auto prim = GetValueNode<PrimitivePtr>(target_cnode->input(0));
       auto input_index = target.second;
       auto target_op_info = target_cnode->user_data<OperatorInfo>();
 
@@ -830,10 +831,10 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     std::vector<std::shared_ptr<StrategyWithCost>> pre_stra_costs;
     auto operator_info = cnode->user_data<OperatorInfo>();
     if (pre_node->isa<Parameter>()) {
-      auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
-      reshape_info->SetCostForReshapeWithParameter();
-      pre_operator_info = reshape_info;
-      pre_stra_costs = reshape_info->strategy_cost();
+      auto reshape_info1 = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
+      reshape_info1->SetCostForReshapeWithParameter();
+      pre_operator_info = reshape_info1;
+      pre_stra_costs = reshape_info1->strategy_cost();
     } else {
       if (!FindReshapePreNodeStraCosts(pre_node, &pre_operator_info, &out_index, 0)) {
         MS_LOG(EXCEPTION) << "FindReshapePreNodeStraCosts for reshape failed";

@@ -19,6 +19,7 @@
 #include <functional>
 #include "ir/anf.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_node.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -118,7 +119,7 @@ std::pair<std::vector<AnfNodePtr>, double> AllreduceGraph::GetParaByParaSize(dou
   double cur_para_size = 0;
   double from = to;
   for (auto &arnode : arnode_vec_) {
-    if (arnode.depend_feat_size() != max_ && arnode.depend_feat_size() >= to) {
+    if ((arnode.depend_feat_size() - max_ <= EPS) && arnode.depend_feat_size() >= to) {
       continue;
     }
     if (para_size > 0 && cur_para_size >= para_size && arnode.depend_feat_size() < from) {

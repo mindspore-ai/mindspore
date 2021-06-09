@@ -67,7 +67,8 @@ class CostGraph {
   CostPtrList CreateFinalSingleCostList(const OperatorInfoPtr &u);
   CostPtr SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory);
   CostPtr SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory);
-  CostPtrList SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_costlist, double memory);
+  CostPtrList SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_costlist,
+                                                        double memory) const;
   Status SearchStrategyForMultiNodeFinalGraph(const std::vector<OperatorInfoPtr> &);
   Status SearchStrategyForTwoNodeFinalGraph(const std::vector<OperatorInfoPtr> &);
   std::vector<std::shared_ptr<Edge>> GetOriginalEdgeBetweenOperators(OperatorInfoPtr u_node, OperatorInfoPtr v_node) {
