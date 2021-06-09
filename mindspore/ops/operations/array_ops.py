@@ -4185,7 +4185,7 @@ class DepthToSpace(PrimitiveWithInfer):
         - **x** (Tensor) - The target tensor. It must be a 4-D tensor with shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{in} / \text{block_size}, H_{in} * \text{block_size},
+        Tensor of shape :math:`(N, C_{in} / \text{block_size} ^ 2, H_{in} * \text{block_size},
         W_{in} * \text{block_size})`.
 
     Raises:
