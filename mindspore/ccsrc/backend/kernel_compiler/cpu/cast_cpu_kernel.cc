@@ -41,11 +41,19 @@ void CastCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename S, typename T>
 bool CastCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
-  S *input = reinterpret_cast<S *>(inputs[0]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  if (inputs.size() != 1 || outputs.size() != 1) {
+    MS_LOG(ERROR) << "Cast requires 1 input and 1 output, but got " << inputs.size() << " input and " << outputs.size()
+                  << " output.";
+    return false;
+  }
+  if (outputs[0]->size == 0) {
+    MS_LOG(WARNING) << "Cast output memory size should be greater than 0, but got 0.";
+    return true;
+  }
+  const auto input = reinterpret_cast<S *>(inputs[0]->addr);
+  const auto output = reinterpret_cast<T *>(outputs[0]->addr);
   MS_LOG(DEBUG) << "Type source: " << typeid(S).name() << "; target: " << typeid(T).name();
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-  Cast<S, T>(input, output, lens);
+  Cast<S, T>(input, output, outputs[0]->size / sizeof(T));
   return true;
 }
 }  // namespace kernel

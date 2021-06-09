@@ -50,11 +50,11 @@ inline uint32_t sigma3(uint32_t x) { return (x >> 17 | x << 15) ^ (x >> 19 | x <
 std::string LoadFilePath(const std::string &path) {
   char real_path[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
-  if (path.size() > PATH_MAX || _fullpath(real_path, path.c_str(), PATH_MAX) == nullptr) {
+  if (path.size() >= PATH_MAX || _fullpath(real_path, path.c_str(), PATH_MAX) == nullptr) {
     return "";
   }
 #else
-  if (path.size() > PATH_MAX || realpath(path.c_str(), real_path) == nullptr) {
+  if (path.size() >= PATH_MAX || realpath(path.c_str(), real_path) == nullptr) {
     return "";
   }
 #endif

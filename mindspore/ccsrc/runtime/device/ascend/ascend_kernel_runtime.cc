@@ -820,7 +820,7 @@ bool AscendKernelRuntime::HcclInit() {
       return false;
     }
   }
-  if (strlen(config_path_str) > kPathMax) {
+  if (strlen(config_path_str) >= kPathMax) {
     MS_LOG(ERROR) << "File path oversize";
     return false;
   }

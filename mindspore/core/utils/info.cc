@@ -52,13 +52,13 @@ std::string Location::ToString(SourceLineTip tip) {
     return debug_info_ss.str();
   }
 
-  char path[PATH_MAX + 1] = {0x00};
+  char path[PATH_MAX] = {0x00};
 #if defined(_WIN32) || defined(_WIN64)
-  if (file_name_.size() > PATH_MAX || _fullpath(path, file_name_.c_str(), PATH_MAX) == nullptr) {
+  if (file_name_.size() >= PATH_MAX || _fullpath(path, file_name_.c_str(), PATH_MAX) == nullptr) {
     return debug_info_ss.str();
   }
 #else
-  if (file_name_.size() > PATH_MAX || realpath(file_name_.c_str(), path) == nullptr) {
+  if (file_name_.size() >= PATH_MAX || realpath(file_name_.c_str(), path) == nullptr) {
     return debug_info_ss.str();
   }
 #endif

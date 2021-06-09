@@ -57,20 +57,6 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   data_size_ = size_pair->second;
 }
 
-void SliceCPUKernel::ParallelRun(void *input_addr, void *output_addr, int thread_num) {
-  std::vector<common::Task> tasks;
-  int thread_index = 0;
-  while (thread_index < thread_num) {
-    auto block = [&, thread_index]() {
-      DoSlice(input_addr, output_addr, &slice_param_, thread_index, data_size_);
-      return common::SUCCESS;
-    };
-    tasks.emplace_back(block);
-    thread_index++;
-  }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
-}
-
 void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                                     const std::vector<int64_t> &size) {
   for (size_t i = 0; i < DIMENSION_8D; i++) {
@@ -98,7 +84,13 @@ void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, cons
 
 bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
+  if (inputs.size() != 1 || outputs.size() != 1) {
+    MS_LOG(ERROR) << "Slice requires 1 input and 1 output, but got " << inputs.size() << " input and " << outputs.size()
+                  << " output.";
+    return false;
+  }
   if (outputs[0]->size == 0) {
+    MS_LOG(WARNING) << "Slice output memory size should be greater than 0, but got 0.";
     return true;
   }
   auto input_addr = inputs[0]->addr;

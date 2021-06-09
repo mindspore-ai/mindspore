@@ -32,9 +32,6 @@ class SparseToDense(Cell):
     Outputs:
         Tensor, converted from sparse tensor.
 
-    Args:
-        sparse_tensor (SparseTensor): the sparse tensor to convert.
-
     Raises:
         TypeError: If `sparse_tensor.indices` is not a Tensor.
         TypeError: If 'sparse_tensor.values' is not a Tensor.
@@ -117,8 +114,8 @@ class SparseTensorDenseMatmul(Cell):
         >>> out = sparse_dense_matmul(indices, values, sparse_shape, dense)
         >>> print(out)
         [[2 2]
-         [0 6]
-         [6 0]]
+         [6 6]
+         [0 0]]
     """
 
     def __init__(self, adjoint_st=False, adjoint_dt=False):

@@ -278,7 +278,7 @@ void TaskGenerator::DumpTaskInfo(const string &real_filename,
 }
 
 void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
-  if (real_filename.size() > PATH_MAX) {
+  if (real_filename.size() >= PATH_MAX) {
     MS_LOG(ERROR) << "File path " << real_filename << " is too long.";
     return;
   }

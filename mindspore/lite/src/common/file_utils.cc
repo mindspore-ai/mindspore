@@ -107,7 +107,7 @@ int CreateOutputDir(std::string *file_path) {
   if (file_path->empty()) {
     MS_LOG(ERROR) << "input file path is empty.";
     return RET_ERROR;
-  } else if (file_path->size() > PATH_MAX) {
+  } else if (file_path->size() >= PATH_MAX) {
     MS_LOG(ERROR) << "input file path is too long";
     return RET_ERROR;
   }

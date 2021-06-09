@@ -213,7 +213,7 @@ void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstr
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string filename = save_graphs_path + "/" + "somas_tensor_relation_" + std::to_string(graph->graph_id()) + ".ir";
-  if (filename.size() > PATH_MAX) {
+  if (filename.size() >= PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }

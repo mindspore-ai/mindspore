@@ -47,11 +47,23 @@ template <typename I, typename T>
 bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
+  if (inputs.size() != 4 || outputs.size() != 1) {
+    MS_LOG(ERROR) << "SparseTensorDenseMatmul requires 4 inputs and 1 output, but got " << inputs.size()
+                  << " inputs and " << outputs.size() << " output.";
+    return false;
+  }
+  if (outputs[0]->size == 0) {
+    MS_LOG(WARNING) << "SparseTensorDenseMatmul output memory size should be greater than 0, but got 0.";
+    return true;
+  }
   auto a_indices = reinterpret_cast<I *>(inputs[0]->addr);
   auto a_values = reinterpret_cast<T *>(inputs[1]->addr);
   auto b = reinterpret_cast<T *>(inputs[3]->addr);
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t output_length = outputs[0]->size / sizeof(T);
+  const size_t indices_length = inputs[0]->size / sizeof(I);
+  const size_t values_length = inputs[1]->size / sizeof(T);
+  const size_t b_length = inputs[3]->size / sizeof(T);
   if (memset_s(out, output_length, 0, output_length) != EOK) {
     MS_LOG(EXCEPTION) << "Memset Failed!";
   }
@@ -62,6 +74,12 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   const size_t b_dim_1 = b_shape_[1];
   const size_t same_dim = adj_dt_ ? b_dim_1 : b_dim_0;
   for (size_t i = 0; i < values_size_; ++i) {
+    if (i * 2 + 1 >= indices_length) {
+      MS_LOG(EXCEPTION) << "The index of a_indices out of bounds.";
+    }
+    if (i >= values_length) {
+      MS_LOG(EXCEPTION) << "The index of a_values out of bounds.";
+    }
     const int row = adj_st_ ? a_indices[i * 2 + 1] : a_indices[i * 2];
     const int col = adj_st_ ? a_indices[i * 2] : a_indices[i * 2 + 1];
     if (row >= SizeToInt(out_dim_0) || row < 0 || col >= SizeToInt(same_dim) || col < 0) {
@@ -71,9 +89,15 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
 
     for (size_t n = 0; n < out_dim_1; ++n) {
       if (adj_dt_) {
+        if (n * b_dim_1 + col >= b_length) {
+          MS_LOG(EXCEPTION) << "The index of b out of bounds.";
+        }
         const T b_value = b[n * b_dim_1 + col];
         out[row * out_dim_1 + n] += a_values[i] * b_value;
       } else {
+        if (col * b_dim_1 + n >= b_length) {
+          MS_LOG(EXCEPTION) << "The index of b out of bounds.";
+        }
         const T b_value = b[col * b_dim_1 + n];
         out[row * out_dim_1 + n] += a_values[i] * b_value;
       }
