@@ -311,7 +311,7 @@ class MobileNetV2(nn.Cell):
         self.backbone = MobileNetV2Backbone(width_mult=width_mult, \
             inverted_residual_setting=inverted_residual_setting, \
             round_nearest=round_nearest, input_channel=input_channel, last_channel=last_channel).get_features
-        self.head = MobileNetV2Head(input_channel=self.backbone.out_channel, num_classes=num_classes, \
+        self.head = MobileNetV2Head(input_channel=self.backbone.out_channels, num_classes=num_classes, \
             has_dropout=has_dropout).get_head
 
     def construct(self, x):
