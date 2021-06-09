@@ -14,7 +14,6 @@
 # ============================================================================
 """export checkpoint file into models"""
 
-import argparse
 import numpy as np
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -23,36 +22,16 @@ from mindspore import context
 from mindspore.train.serialization import load_checkpoint, export, load_param_into_net
 from  src.fasttext_model import FastText
 
-parser = argparse.ArgumentParser(description='fasttexts')
-parser.add_argument('--device_target', type=str, choices=["Ascend", "GPU", "CPU"],
-                    default='Ascend', help='Device target')
-parser.add_argument('--device_id', type=int, default=0, help='Device id')
-parser.add_argument('--ckpt_file', type=str, required=True, help='Checkpoint file path')
-parser.add_argument('--file_name', type=str, default='fasttexts', help='Output file name')
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR',
-                    help='Output file format')
-parser.add_argument('--data_name', type=str, required=True, default='ag',
-                    help='Dataset name. eg. ag, dbpedia, yelp_p')
-args = parser.parse_args()
+from model_utils.config import config
 
-if args.data_name == "ag":
-    from src.config import config_ag as config
-    from src.config import config_ag_gpu as config_gpu
+if config.data_name == "ag":
     target_label1 = ['0', '1', '2', '3']
-elif args.data_name == 'dbpedia':
-    from src.config import config_db as config
-    from src.config import config_db_gpu as config_gpu
+elif config.data_name == 'dbpedia':
     target_label1 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
-elif args.data_name == 'yelp_p':
-    from  src.config import config_yelpp as config
-    from src.config import config_yelpp_gpu as config_gpu
+elif config.data_name == 'yelp_p':
     target_label1 = ['0', '1']
 
-context.set_context(
-    mode=context.GRAPH_MODE,
-    save_graphs=False,
-    device_target=args.device_target)
-config = config_ascend if args.device_target == 'Ascend' else config_gpu
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=config.device_target)
 
 class FastTextInferExportCell(nn.Cell):
     """
@@ -81,26 +60,26 @@ class FastTextInferExportCell(nn.Cell):
 def run_fasttext_export():
     """export function"""
     fasttext_model = FastText(config.vocab_size, config.embedding_dims, config.num_class)
-    parameter_dict = load_checkpoint(args.ckpt_file)
+    parameter_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(fasttext_model, parameter_dict)
     ft_infer = FastTextInferExportCell(fasttext_model)
     batch_size = config.batch_size
-    if args.device_target == 'GPU':
-        batch_size = config.distribute_batch_size
-    if args.data_name == "ag":
+    if config.device_target == 'GPU':
+        batch_size = config.distribute_batch_size_gpu
+    if config.data_name == "ag":
         src_tokens_shape = [batch_size, 467]
         src_tokens_length_shape = [batch_size, 1]
-    elif args.data_name == 'dbpedia':
+    elif config.data_name == 'dbpedia':
         src_tokens_shape = [batch_size, 1120]
         src_tokens_length_shape = [batch_size, 1]
-    elif args.data_name == 'yelp_p':
+    elif config.data_name == 'yelp_p':
         src_tokens_shape = [batch_size, 2955]
         src_tokens_length_shape = [batch_size, 1]
 
-    file_name = args.file_name + '_' + args.data_name
+    file_name = config.file_name + '_' + config.data_name
     src_tokens = Tensor(np.ones((src_tokens_shape)).astype(np.int32))
     src_tokens_length = Tensor(np.ones((src_tokens_length_shape)).astype(np.int32))
-    export(ft_infer, src_tokens, src_tokens_length, file_name=file_name, file_format=args.file_format)
+    export(ft_infer, src_tokens, src_tokens_length, file_name=file_name, file_format=config.file_format)
 
 if __name__ == '__main__':
     run_fasttext_export()

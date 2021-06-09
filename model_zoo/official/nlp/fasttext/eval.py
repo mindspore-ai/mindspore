@@ -13,7 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """FastText for Evaluation"""
-import argparse
+import time
+import os
 import numpy as np
 
 import mindspore.nn as nn
@@ -26,33 +27,21 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 from mindspore import context
 from src.fasttext_model import FastText
-parser = argparse.ArgumentParser(description='fasttext')
-parser.add_argument('--data_path', type=str, help='infer dataset path..')
-parser.add_argument('--data_name', type=str, required=True, default='ag',
-                    help='dataset name. eg. ag, dbpedia')
-parser.add_argument("--model_ckpt", type=str, required=True,
-                    help="existed checkpoint address.")
-parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
-                    help='device where the code will be implemented (default: Ascend)')
 
-args = parser.parse_args()
-if args.data_name == "ag":
-    from src.config import config_ag as config_ascend
-    from src.config import config_ag_gpu as config_gpu
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
+
+if config.data_name == "ag":
     target_label1 = ['0', '1', '2', '3']
-elif args.data_name == 'dbpedia':
-    from src.config import config_db as config_ascend
-    from src.config import config_db_gpu as config_gpu
+elif config.data_name == 'dbpedia':
     target_label1 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
-elif args.data_name == 'yelp_p':
-    from  src.config import config_yelpp as config_ascend
-    from src.config import config_yelpp_gpu as config_gpu
+elif config.data_name == 'yelp_p':
     target_label1 = ['0', '1']
-context.set_context(
-    mode=context.GRAPH_MODE,
-    save_graphs=False,
-    device_target=args.device_target)
-config = config_ascend if args.device_target == 'Ascend' else config_gpu
+
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=config.device_target)
+
+
 class FastTextInferCell(nn.Cell):
     """
     Encapsulation class of FastText network infer.
@@ -76,6 +65,7 @@ class FastTextInferCell(nn.Cell):
         predicted_idx, _ = self.argmax(predicted_idx)
 
         return predicted_idx
+
 
 def load_infer_dataset(batch_size, datafile, bucket):
     """data loader for infer"""
@@ -103,12 +93,66 @@ def load_infer_dataset(batch_size, datafile, bucket):
 
     return data_set
 
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_fasttext_infer():
     """run infer with FastText"""
-    dataset = load_infer_dataset(batch_size=config.batch_size, datafile=args.data_path, bucket=config.test_buckets)
+    dataset = load_infer_dataset(batch_size=config.batch_size, datafile=config.dataset_path, bucket=config.test_buckets)
     fasttext_model = FastText(config.vocab_size, config.embedding_dims, config.num_class)
 
-    parameter_dict = load_checkpoint(args.model_ckpt)
+    parameter_dict = load_checkpoint(config.model_ckpt)
     load_param_into_net(fasttext_model, parameter_dict=parameter_dict)
 
     ft_infer = FastTextInferCell(fasttext_model)

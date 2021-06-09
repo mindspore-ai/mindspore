@@ -38,6 +38,8 @@ export DEVICE_ID=$DEVICEID
 export RANK_ID=0
 export RANK_SIZE=1
 
+config_path="./${DATANAME}_config.yaml"
+echo "config path is : ${config_path}"
 
 if [ -d "eval" ];
 then
@@ -45,10 +47,12 @@ then
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp -r ../src ./eval
+cp -r ../model_utils ./eval
 cp -r ../scripts/*.sh ./eval
 cd ./eval || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python ../../eval.py  --data_path $DATASET --data_name $DATANAME --model_ckpt $MODEL_CKPT> log_fasttext.log 2>&1 &
+python ../../eval.py --config_path $config_path --dataset_path $DATASET --data_name $DATANAME --model_ckpt $MODEL_CKPT> log_fasttext.log 2>&1 &
 cd ..
