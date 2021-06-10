@@ -15,7 +15,9 @@
  */
 
 #include "nnacl/fp32/matmul_fp32.h"
-
+#ifdef ENABLE_SSE
+#include <x86intrin.h>
+#endif
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; ++r) {
     for (int c = 0; c < col; ++c) {
@@ -112,6 +114,20 @@ void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col)
     }
   }
   return;
+}
+
+void RowMajor2Row32Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  // Not exactly aligned to 32, but aligned to 24 or 16 or 8 If 32 is not met.
+  int row_block_num = UP_DIV(row, C8NUM);
+  int row_block = C4NUM;
+  for (int i = 0; i < row_block_num; i += row_block) {
+    row_block = MSMIN(C4NUM, row_block_num - i);  // max_tile = 4
+    int row_remainder = MSMIN(row_block * C8NUM, row - i * C8NUM);
+    for (int oc = 0; oc < col; ++oc) {
+      memcpy(dst_ptr, src_ptr + oc * row + i * C8NUM, row_remainder * sizeof(float));
+      dst_ptr += row_block * C8NUM;
+    }
+  }
 }
 
 #ifdef ENABLE_ARM64
@@ -237,7 +253,7 @@ void RowMajor2Col12Major_arm32(const float *src_c, float *dst_c, size_t col) {
   return;
 }
 #endif
-void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   const float *src_r = src_ptr;
   float *dst_r = dst_ptr;
   size_t ri = 0;
@@ -508,7 +524,7 @@ void RowMajor2Col8Major_arm32(const float *src_c, float *dst_c, size_t col) {
 }
 #endif
 #endif
-void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   size_t row8 = row / C8NUM * C8NUM;
 #ifdef ENABLE_ARM64
   size_t col_skip = col / C8NUM * C8NUM;
@@ -591,7 +607,7 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t
   return;
 }
 
-void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   size_t row16 = row / C16NUM * C16NUM;
   size_t col_skip = col / C4NUM * C4NUM;
   int skip_size = C4NUM;
@@ -638,7 +654,25 @@ void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, size_t row, size_
   return;
 }
 
-void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  // Not exactly aligned to 32, but aligned to 24 or 16 or 8 If 32 is not met.
+  int col_block_num = UP_DIV(col, C8NUM);
+  int col_block = C4NUM;
+  for (int i = 0; i < col_block_num; i += col_block) {
+    col_block = MSMIN(C4NUM, col_block_num - i);  // max_tile = 4
+    int index = i * row * C8NUM;
+    int col_remainder = MSMIN(C8NUM * col_block, col - i * C8NUM);
+    for (int ir = 0; ir < row; ++ir) {
+      for (int oc = 0; oc < col_remainder; ++oc) {
+        int oc_index = oc * row + ir + index;
+        dst_ptr[oc] = src_ptr[oc_index];
+      }
+      dst_ptr += col_block * C8NUM;
+    }
+  }
+}
+
+void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   size_t totalRow = UP_ROUND(row, C6NUM);
   size_t row6 = row / C6NUM * C6NUM;
   size_t col8 = col / C8NUM * C8NUM;
@@ -737,7 +771,7 @@ void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, size_t row, size_t
   return;
 }
 
-void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   size_t total_row = UP_ROUND(row, C4NUM);
   size_t row4 = row / C4NUM * C4NUM;
   size_t col4 = col / C4NUM * C4NUM;
@@ -845,7 +879,6 @@ void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, 
     if (act_type == ActType_Relu || act_type == ActType_Relu6) value = MSMAX(0.0f, value);
     c[ci] = value;
   }
-  return;
 }
 #endif
 void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
@@ -908,7 +941,6 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
       }
     }
   }
-  return;
 }
 
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
@@ -943,3 +975,456 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #endif
 }
+
+#ifdef ENABLE_AVX
+void MatVecMulAvxFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int cur_col,
+                      int col_align) {
+  // one time process 32 out_channel
+  int col_block = C32NUM;
+  int act_flag = 0;
+  if (act_type == ActType_Relu6) {
+    act_flag += 1;
+  }
+  if (act_type == ActType_Relu || act_type == ActType_Relu6) {
+    act_flag += 2;
+  }
+  MatVecMulKernel kernel[4] = {MatVecMul1x8Kernel, MatVecMul1x16Kernel, MatVecMul1x24Kernel, MatVecMul1x32Kernel};
+  const float *bias_data = bias;
+  for (int col_index = 0; col_index < cur_col; col_index += col_block) {
+    col_block = cur_col - col_index < col_block ? cur_col - col_index : col_block;
+    kernel[(col_block >> 3) - 1](c + col_index, a, b + col_index * depth, bias_data, act_flag, 1, col_block >> 3,
+                                 col_align, depth);
+    if (bias_data != NULL) {
+      bias_data += col_block;
+    }
+  }
+}
+
+void MatVecMul1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                         size_t row_block, size_t col_block, size_t col_algin, size_t deep) {
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    "vmovups 0x60(%2), %%ymm3\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm2, %%ymm2, %%ymm2\n"
+    "vxorps %%ymm3, %%ymm3, %%ymm3\n"
+    "1:\n"  // deep_c8
+    "movq %3, %%rcx\n"
+    "shr $3, %%ecx\n"
+    "je 3f\n"
+    "2:\n"
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 0x40(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 0x60(%1), %%ymm4, %%ymm3\n"
+
+    "vbroadcastss 4(%0), %%ymm4\n"
+    "vfmadd231ps 128(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 160(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 192(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 224(%1), %%ymm4, %%ymm3\n"
+
+    "vbroadcastss 8(%0), %%ymm4\n"
+    "vfmadd231ps 256(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 288(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 320(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 352(%1), %%ymm4, %%ymm3\n"
+
+    "vbroadcastss 12(%0), %%ymm4\n"
+    "vfmadd231ps 384(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 416(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 448(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 480(%1), %%ymm4, %%ymm3\n"
+
+    "vbroadcastss 16(%0), %%ymm4\n"
+    "vfmadd231ps 512(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 544(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 576(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 608(%1), %%ymm4, %%ymm3\n"
+
+    "vbroadcastss 20(%0), %%ymm4\n"
+    "vfmadd231ps 640(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 672(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 704(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 736(%1), %%ymm4, %%ymm3\n"
+
+    "vbroadcastss 24(%0), %%ymm4\n"
+    "vfmadd231ps 768(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 800(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 832(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 864(%1), %%ymm4, %%ymm3\n"
+
+    "vbroadcastss 28(%0), %%ymm4\n"
+    "vfmadd231ps 896(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 928(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 960(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 992(%1), %%ymm4, %%ymm3\n"
+    "addq $1024, %1\n"
+    "addq $32, %0\n"
+    "dec %%ecx\n"
+    "jg 2b\n"
+
+    "3:\n"
+    "and $7, %3\n"  // deep_remainder
+    "je 5f\n"
+    "4:\n"
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 0x40(%1), %%ymm4, %%ymm2\n"
+    "vfmadd231ps 0x60(%1), %%ymm4, %%ymm3\n"
+    "addq $128, %1\n"
+    "addq $4, %0\n"
+    "dec %3\n"
+    "jg 4b\n"
+
+    "5:\n"
+    "and $0x3, %%eax\n"  // act_type
+    "je 6f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm2, %%ymm2\n"
+    "vmaxps %%ymm12, %%ymm3, %%ymm3\n"
+    "and $0x1, %%eax\n"
+    "je 6f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm2, %%ymm2\n"
+    "vminps %%ymm14, %%ymm3, %%ymm3\n"
+    "6:\n"
+    "vmovups %%ymm0, (%5)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%5)\n"
+    "vmovups %%ymm2, 0x40(%5)\n"
+    "vmovups %%ymm3, 0x60(%5)\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
+    : "%rcx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm12", "%ymm4", "%ymm14");
+}
+
+void MatVecMul1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                         size_t row_block, size_t col_block, size_t col_algin, size_t deep) {
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm2, %%ymm2, %%ymm2\n"
+
+    "1:\n"  // deep
+    "movq %3, %%rcx\n"
+    "shr $3, %%ecx\n"
+    "je 3f\n"
+    "2:\n"
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 0x40(%1), %%ymm4, %%ymm2\n"
+
+    "vbroadcastss 4(%0), %%ymm4\n"
+    "vfmadd231ps 96(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 128(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 160(%1), %%ymm4, %%ymm2\n"
+
+    "vbroadcastss 8(%0), %%ymm4\n"
+    "vfmadd231ps 192(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 224(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 256(%1), %%ymm4, %%ymm2\n"
+
+    "vbroadcastss 12(%0), %%ymm4\n"
+    "vfmadd231ps 288(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 320(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 352(%1), %%ymm4, %%ymm2\n"
+
+    "vbroadcastss 16(%0), %%ymm4\n"
+    "vfmadd231ps 384(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 416(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 448(%1), %%ymm4, %%ymm2\n"
+
+    "vbroadcastss 20(%0), %%ymm4\n"
+    "vfmadd231ps 480(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 512(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 544(%1), %%ymm4, %%ymm2\n"
+
+    "vbroadcastss 24(%0), %%ymm4\n"
+    "vfmadd231ps 576(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 608(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 640(%1), %%ymm4, %%ymm2\n"
+
+    "vbroadcastss 28(%0), %%ymm4\n"
+    "vfmadd231ps 672(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 704(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 736(%1), %%ymm4, %%ymm2\n"
+    "addq $768, %1\n"
+    "addq $32, %0\n"
+    "dec %%ecx\n"
+    "jg 2b\n"
+
+    "3:\n"
+    "and $7, %3\n"  // deep_remainder
+    "je 5f\n"
+    "4:\n"
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm4, %%ymm1\n"
+    "vfmadd231ps 0x40(%1), %%ymm4, %%ymm2\n"
+    "addq $96, %1\n"
+    "addq $4, %0\n"
+    "dec %3\n"
+    "jg 4b\n"
+
+    "5:\n"
+    "and $0x3, %%eax\n"  // act_type
+    "je 6f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm2, %%ymm2\n"
+
+    "and $0x1, %%eax\n"
+    "je 6f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm2, %%ymm2\n"
+
+    "6:\n"
+    "vmovups %%ymm0, (%5)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%5)\n"
+    "vmovups %%ymm2, 0x40(%5)\n"
+
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
+    : "%rcx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm2", "%ymm12", "%ymm4", "%ymm14");
+}
+
+void MatVecMul1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                         size_t row_block, size_t col_block, size_t col_algin, size_t deep) {
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "1:\n"
+    "movq %3, %%rcx\n"
+    "shr $3, %%ecx\n"
+    "je 3f\n"
+    "2:\n"  // deep_c8
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm4, %%ymm1\n"
+
+    "vbroadcastss 4(%0), %%ymm4\n"
+    "vfmadd231ps 64(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 96(%1), %%ymm4, %%ymm1\n"
+
+    "vbroadcastss 8(%0), %%ymm4\n"
+    "vfmadd231ps 128(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 160(%1), %%ymm4, %%ymm1\n"
+
+    "vbroadcastss 12(%0), %%ymm4\n"
+    "vfmadd231ps 192(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 224(%1), %%ymm4, %%ymm1\n"
+
+    "vbroadcastss 16(%0), %%ymm4\n"
+    "vfmadd231ps 256(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 288(%1), %%ymm4, %%ymm1\n"
+
+    "vbroadcastss 20(%0), %%ymm4\n"
+    "vfmadd231ps 320(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 352(%1), %%ymm4, %%ymm1\n"
+
+    "vbroadcastss 24(%0), %%ymm4\n"
+    "vfmadd231ps 384(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 416(%1), %%ymm4, %%ymm1\n"
+
+    "vbroadcastss 28(%0), %%ymm4\n"
+    "vfmadd231ps 448(%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 480(%1), %%ymm4, %%ymm1\n"
+    "addq $512, %1\n"
+    "addq $32, %0\n"
+    "dec %%ecx\n"
+    "jg 2b\n"
+
+    "3:\n"
+    "and $7, %3\n"
+    "je 5f\n"
+    "4:\n"
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm4, %%ymm1\n"
+    "addq $64, %1\n"
+    "addq $4, %0\n"
+    "dec %3\n"
+    "jg 4b\n"
+
+    "5:\n"
+    "and $0x3, %%eax\n"  // act_type
+    "je 6f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+
+    "and $0x1, %%eax\n"
+    "je 6f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+
+    "6:\n"
+    "vmovups %%ymm0, (%5)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%5)\n"
+
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
+    : "%ecx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm12", "%ymm4", "%ymm14");
+}
+
+void MatVecMul1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                        size_t row_block, size_t col_block, size_t col_algin, size_t deep) {
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "1:\n"
+    "movq %3, %%rcx\n"
+    "shr $3, %%ecx\n"
+    "je 3f\n"
+    "2:\n"  // deep_c8
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vbroadcastss 4(%0), %%ymm4\n"
+    "vfmadd231ps 32(%1), %%ymm4, %%ymm0\n"
+    "vbroadcastss 8(%0), %%ymm4\n"
+    "vfmadd231ps 64(%1), %%ymm4, %%ymm0\n"
+    "vbroadcastss 12(%0), %%ymm4\n"
+    "vfmadd231ps 96(%1), %%ymm4, %%ymm0\n"
+    "vbroadcastss 16(%0), %%ymm4\n"
+    "vfmadd231ps 128(%1), %%ymm4, %%ymm0\n"
+    "vbroadcastss 20(%0), %%ymm4\n"
+    "vfmadd231ps 160(%1), %%ymm4, %%ymm0\n"
+    "vbroadcastss 24(%0), %%ymm4\n"
+    "vfmadd231ps 192(%1), %%ymm4, %%ymm0\n"
+    "vbroadcastss 28(%0), %%ymm4\n"
+    "vfmadd231ps 224(%1), %%ymm4, %%ymm0\n"
+    "addq $256, %1\n"
+    "addq $32, %0\n"
+    "dec %%ecx\n"
+    "jg 2b\n"
+
+    "3:\n"
+    "and $7, %3\n"
+    "je 5f\n"
+    "4:\n"
+    "vbroadcastss (%0), %%ymm4\n"
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "addq $32, %1\n"
+    "addq $4, %0\n"
+    "dec %3\n"
+    "jg 4b\n"
+
+    "5:\n"
+    "and $0x3, %%eax\n"  // act_type
+    "je 6f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+
+    "and $0x1, %%eax\n"
+    "je 6f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+
+    "6:\n"
+    "vmovups %%ymm0, (%5)\n"  // dst_0
+
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
+    : "%ecx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm12", "%ymm4", "%ymm14");
+}
+
+#ifdef ENABLE_DEBUG
+void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t row_block, size_t col_block, size_t col_algin, size_t deep) {
+  __m256 dst_data[12];
+  const float *src_sw[12];
+  __m256 weight_data[4];
+  for (int i = 0; i < 4; ++i) {
+    weight_data[i] = _mm256_set1_ps(0.0f);
+  }
+  for (int i = 0; i < row_block; ++i) {
+    if (bias != NULL) {
+      for (int j = 0; j < col_block; ++j) {
+        dst_data[i * col_block + j] = _mm256_loadu_ps(bias + j * 8);
+      }
+    } else {
+      for (int j = 0; j < col_block; ++j) {
+        dst_data[i * col_block + j] = _mm256_set1_ps(0.0f);
+      }
+    }
+    src_sw[i] = src + i * deep;
+  }
+  const float *weight_kernel = weight;
+  for (int ic = 0; ic < deep; ++ic) {
+    for (int j = 0; j < col_block; ++j) {
+      weight_data[j] = _mm256_loadu_ps(weight_kernel + j * C8NUM);
+    }
+    for (int i = 0; i < row_block; ++i) {
+      for (int j = 0; j < col_block; ++j) {
+        dst_data[i * col_block + j] =
+          _mm256_fmadd_ps(_mm256_set1_ps(src_sw[i][ic]), weight_data[j], dst_data[i * col_block + j]);
+      }
+    }
+    weight_kernel += C8NUM * col_block;
+  }  // ic loop
+  // add bias and relu
+  for (int i = 0; i < row_block; ++i) {
+    for (int j = 0; j < col_block; ++j) {
+      if (0x1 & act_flag) {  // relu6
+        dst_data[i * col_block + j] = _mm256_min_ps(dst_data[i * col_block + j], _mm256_set1_ps(6.0f));
+      }
+      if (0x2 & act_flag) {  // relu
+        dst_data[i * col_block + j] = _mm256_max_ps(dst_data[i * col_block + j], _mm256_set1_ps(0.0f));
+      }
+      _mm256_storeu_ps(dst + i * col_algin + j * C8NUM, dst_data[i * col_block + j]);
+    }
+  }
+}
+#endif
+#endif

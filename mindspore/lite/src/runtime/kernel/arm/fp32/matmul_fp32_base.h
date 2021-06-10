@@ -27,6 +27,7 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+using MatrixPackFun = void (*)(const float *src_ptr, float *dst_ptr, int row, int col);
 class MatmulFp32BaseCPUKernel : public InnerKernel {
  public:
   MatmulFp32BaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -35,7 +36,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
     vec_matmul_ = false;
   }
-  ~MatmulFp32BaseCPUKernel();
+  ~MatmulFp32BaseCPUKernel() override;
   int Init() override;
   int ReSize() override;
   int Run() override;
@@ -56,7 +57,9 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void ResizeParameter();
   void FreeResizeBufA();
   void FreeResizeBufB();
+  void FreeBuffSrcB();
   int CalBroadCastBiasDataElements();
+  int InitTmpOutBuffer();
 
  protected:
   MatMulParameter *params_ = nullptr;
@@ -66,16 +69,20 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
  private:
   int col_tile_ = 0;
   int row_tile_ = 0;
+  int oc_res_ = 0;
   int thread_stride_ = 0;
   int thread_count_ = 0;
   bool vec_matmul_ = false;
-  float *src_b_ = nullptr;
   float *bias_ptr_ = nullptr;
   float *batch_a_ptr_ = nullptr;
   float *batch_b_ptr_ = nullptr;
   float *batch_c_ptr_ = nullptr;
+  float *output_data_ = nullptr;
   int matrix_a_pack_size_ = -1;
   int matrix_b_pack_size_ = -1;
+  float *src_b_ = nullptr;
+  MatrixPackFun matrix_a_pack_fun_ = nullptr;
+  MatrixPackFun matrix_b_pack_fun_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_

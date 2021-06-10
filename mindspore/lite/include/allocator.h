@@ -79,6 +79,10 @@ class MS_API Allocator {
   ///
   /// \return Pointer of ready memory.
   virtual void *Prepare(void *ptr) { return ptr; }
+
+ protected:
+  // memory aligned bytes
+  size_t aligned_size_ = 32;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_ALLOCATOR_H_

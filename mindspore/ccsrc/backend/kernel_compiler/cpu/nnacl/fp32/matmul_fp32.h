@@ -46,11 +46,13 @@ void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col);
-void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
-void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
-void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
-void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
-void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+void RowMajor2Row32Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col);
 
 #ifdef ENABLE_ARM64
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
@@ -78,6 +80,22 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
 #ifdef ENABLE_AVX
 void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, size_t act_type, size_t depth,
                        size_t row, size_t col, size_t stride, size_t write_mode);
+typedef void (*MatVecMulKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                                size_t row_block, size_t col_block, size_t col_algin, size_t deep);
+void MatVecMulAvxFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int cur_col,
+                      int col_align);
+void MatVecMul1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                         size_t row_block, size_t col_block, size_t col_algin, size_t deep);
+void MatVecMul1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                         size_t row_block, size_t col_block, size_t col_algin, size_t deep);
+void MatVecMul1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                         size_t row_block, size_t col_block, size_t col_algin, size_t deep);
+void MatVecMul1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                        size_t row_block, size_t col_block, size_t col_algin, size_t deep);
+#ifdef ENABLE_DEBUG
+void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
+                            size_t row_block, size_t col_block, size_t col_algin, size_t deep);
+#endif
 #endif
 #endif
 void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
@@ -86,5 +104,4 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
 #ifdef __cplusplus
 }
 #endif
-
 #endif  // MINDSPORE_NNACL_FP32_MATMUL_H_
