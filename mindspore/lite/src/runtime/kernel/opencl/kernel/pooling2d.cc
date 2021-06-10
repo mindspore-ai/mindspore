@@ -16,13 +16,10 @@
 
 #include "src/runtime/kernel/opencl/kernel/pooling2d.h"
 #include <string>
-#include <set>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/pooling2d.cl.inc"
-#endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -73,22 +70,25 @@ int PoolingOpenCLKernel::Prepare() {
       MS_LOG(ERROR) << "Unsupported activation type " << parameter_->act_type_;
       break;
   }
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   kernel_name += "_NHWC4";
   kernel_name += "_IMG";
   std::string source = pooling2d_source;
   std::string program_name = "Pooling2d";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 void PoolingOpenCLKernel::SetGlobalLocal() {
@@ -122,7 +122,7 @@ int PoolingOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_AvgPoolFusion, OpenCLKernelCreator<PoolingOpenCLKernel>)

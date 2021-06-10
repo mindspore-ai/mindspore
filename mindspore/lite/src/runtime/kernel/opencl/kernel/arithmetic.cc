@@ -15,16 +15,12 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/arithmetic.h"
-#include <set>
 #include <vector>
 #include <string>
-#include "nnacl/fp32/common_func_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/arithmetic.cl.inc"
-#endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -138,10 +134,6 @@ void ArithmeticOpenCLKernel::SetConstArgs() {
 }
 
 int ArithmeticOpenCLKernel::Prepare() {
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name_);
-#else
-
   in0_shape_ = GpuTensorInfo(in_tensors_[0]);
   in1_shape_ = GpuTensorInfo(in_tensors_[1]);
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
@@ -189,10 +181,12 @@ int ArithmeticOpenCLKernel::Prepare() {
 
   std::string program_name = "Arithmetic";
   std::string source = arithmetic_source;
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   int error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_, build_options_ext);
-#endif
   if (error_code != RET_OK) {
     return error_code;
   }

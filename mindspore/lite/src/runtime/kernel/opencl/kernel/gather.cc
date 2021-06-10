@@ -108,17 +108,20 @@ int GatherOpenCLKernel::Prepare() {
   if (in_tensors_.at(0)->shape().size() == 1 && axis_ == 0) {
     axis_ = 3;
   }
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string program_name = "gather";
-  ocl_runtime_->LoadSource(program_name, gather_source);
+  if (!ocl_runtime_->LoadSource(program_name, gather_source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   if (in_tensors_.at(1)->IsConst()) {
     intensor1_is_tensor = false;
-    int ret = InitWeights();
+    ret = InitWeights();
     if (ret != RET_OK) {
       return ret;
     }

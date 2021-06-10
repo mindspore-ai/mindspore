@@ -15,10 +15,8 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/to_format.h"
-#include <set>
 #include <map>
 #include <string>
-#include <utility>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/cl/to_format.cl.inc"
@@ -74,8 +72,15 @@ int ToFormatOpenCLKernel::Prepare() {
 
   std::string program_name = "to_format";
   std::string source = to_format_source;
-  ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
 
   auto output = GpuTensorInfo(out_tensor);
   N_ = output.N;

@@ -15,9 +15,6 @@
  */
 #include <cstring>
 #include <string>
-#include <algorithm>
-#include <set>
-#include <utility>
 #include <functional>
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
@@ -43,7 +40,7 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
                   << " output data type is " << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() > DIMENSION_4D) {
+  if (in_tensors_[0]->shape().size() < DIMENSION_1D || in_tensors_[0]->shape().size() > DIMENSION_4D) {
     MS_LOG(ERROR) << "input shape size must be (1-4), actual: " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
@@ -143,18 +140,18 @@ int ArgMinMaxOpenCLKernel::InitWeights() {
 
 int ArgMinMaxOpenCLKernel::Prepare() {
   std::string kernel_name = "argminmax";
-
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
-
   std::string source = argminmax_source;
   std::string program_name = "argminmax";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
-
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);
   param->dims_size_ = in_tensors_[0]->shape().size();
   param->axis_ = (param->axis_ + param->dims_size_) % param->dims_size_;

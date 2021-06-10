@@ -20,10 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/matmul.h"
 #include "src/runtime/kernel/opencl/kernel/strassen.h"
-
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/matmul.cl.inc"
-#endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -86,16 +83,18 @@ int MatMulOpenCLKernel::Prepare() {
   }
   std::map<int, std::string> dims2str = {{2, "_2d"}, {3, "_4d"}, {4, "_4d"}};
   kernel_name += dims2str[dims];
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = matmul_source;
   std::string program_name = "MatMul";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";

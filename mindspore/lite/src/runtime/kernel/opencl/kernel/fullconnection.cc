@@ -21,9 +21,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/fullconnection.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/fullconnection.cl.inc"
-#endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -99,16 +97,19 @@ int FullConnectionOpenCLKernel::Prepare() {
   if (weight_var_) {
     kernel_name = "FullConnectionWeightVar";
   }
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = fullconnection_source;
   std::string program_name = "FullConnection";
-  ocl_runtime_->LoadSource(program_name, GetActDefines() + source);
+  if (!ocl_runtime_->LoadSource(program_name, GetActDefines() + source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
-  auto ret = InitWeights();
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
+  ret = InitWeights();
   if (ret != RET_OK) {
     return ret;
   }

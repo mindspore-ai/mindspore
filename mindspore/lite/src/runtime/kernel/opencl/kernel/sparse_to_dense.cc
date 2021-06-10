@@ -147,14 +147,21 @@ int SparseToDenseOpenCLKernel::Prepare() {
   std::string kernel_name = "SparseToDense" + std::string(weight_scalar_ ? "Scalar" : "Vector");
   std::string source = sparse_to_dense_source;
   std::string program_name = "SparseToDense";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   std::vector<std::string> build_options_ext;
   if (enable_fp16_) {
     build_options_ext = {" -DDTYPE=half "};
   } else {
     build_options_ext = {" -DDTYPE=float "};
   }
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
 
   if (in_tensors_.size() > INPUT_TENSOR_SIZE_3) {
     auto input_tensor3 = in_tensors_[3];

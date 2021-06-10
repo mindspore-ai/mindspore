@@ -41,7 +41,7 @@ class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
   double GetProfilingTimeMs() override;
 
  private:
-  void BuildKernel() override;
+  int BuildKernel() override;
   void InitFilter() override;
   void AllocateMemory();
 

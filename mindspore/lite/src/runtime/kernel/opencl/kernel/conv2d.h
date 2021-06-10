@@ -77,7 +77,7 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
 
  protected:
   void InitAttrs();
-  virtual void BuildKernel();
+  virtual int BuildKernel();
   virtual void InitFilter();
   void InitBias();
   bool use_fp16_{false};

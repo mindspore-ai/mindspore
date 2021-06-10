@@ -15,7 +15,6 @@
  */
 
 #include <string>
-#include <set>
 #include <algorithm>
 #include "src/common/utils.h"
 #include "src/runtime/kernel/opencl/kernel/pad.h"
@@ -72,9 +71,16 @@ int PadOpenCLKernel::CheckSpecs() {
 int PadOpenCLKernel::Prepare() {
   const std::string source = pad_source;
   const std::string program_name = "Pad";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, "Pad", build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, "Pad", build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   return RET_OK;
 }

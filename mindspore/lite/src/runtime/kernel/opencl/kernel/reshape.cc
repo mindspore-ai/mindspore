@@ -73,15 +73,18 @@ void ReshapeOpenCLKernel::SetGlobalLocal() {
 
 int ReshapeOpenCLKernel::Prepare() {
   std::string kernel_name = "reshape_NHWC4";
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = reshape_source;
   std::string program_name = "reshape";
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
 
   SetGlobalLocal();
   SetConstArgs();

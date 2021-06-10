@@ -18,7 +18,6 @@
 #include <cstring>
 #include <string>
 #include <algorithm>
-#include <set>
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/stack.cl.inc"
@@ -164,10 +163,17 @@ int StackOpenCLKernel::Prepare() {
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
   std::string source = stack_source;
   std::string program_name = "stack";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
 
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
 

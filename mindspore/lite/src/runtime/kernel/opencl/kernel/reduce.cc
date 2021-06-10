@@ -15,7 +15,6 @@
  */
 
 #include <set>
-#include <algorithm>
 #include <string>
 #include <map>
 #include "include/errorcode.h"
@@ -179,22 +178,22 @@ int ReduceOpenCLKernel::Prepare() {
     kernel_name += "C";
   }
   kernel_name += GetReduceTypeStr(reduce_param->mode_);
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = reduce_source;
   std::string program_name = "Reduce";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-#endif
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 void ReduceOpenCLKernel::SetConstArgs() {
   int h = inShape.H;
@@ -239,7 +238,7 @@ int ReduceOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ReduceFusion, OpenCLKernelCreator<ReduceOpenCLKernel>)

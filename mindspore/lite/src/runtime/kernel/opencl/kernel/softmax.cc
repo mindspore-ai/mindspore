@@ -16,14 +16,11 @@
 
 #include "src/runtime/kernel/opencl/kernel/softmax.h"
 #include <string>
-#include <set>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "nnacl/softmax_parameter.h"
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/softmax.cl.inc"
-#endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -78,11 +75,11 @@ int SoftmaxOpenCLKernel::Prepare() {
     kernel_name += "Axis" + std::to_string(axis_);
   }
   kernel_name += "_NHWC4";
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
-#else
   std::string program_name = "Softmax";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   std::vector<std::string> build_options_ext;
   if (this->registry_data_type_ == kNumberTypeFloat32) {
     build_options_ext = {
@@ -91,8 +88,11 @@ int SoftmaxOpenCLKernel::Prepare() {
     build_options_ext = {
       " -DOUT_FLT4=convert_half4 -DWRITE_IMAGEOUT=write_imageh -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
   }
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";

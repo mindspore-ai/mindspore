@@ -99,8 +99,14 @@ int Conv2DOpenCLKernel::CheckSpecs() {
 
 int Conv2DOpenCLKernel::Prepare() {
   InitAttrs();
-  BuildKernel();
-  InitWeights();
+  auto ret = BuildKernel();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = InitWeights();
+  if (ret != RET_OK) {
+    return ret;
+  }
   SetGlobalLocal();
   SetConstArgs();
   return RET_OK;
@@ -134,7 +140,7 @@ void Conv2DOpenCLKernel::InitAttrs() {
   TILE_HW_ = UP_DIV(OW_, 4) * UP_DIV(OH_, 4);
 }
 
-void Conv2DOpenCLKernel::BuildKernel() {
+int Conv2DOpenCLKernel::BuildKernel() {
   SetBlockSize();
   std::string program_name = "conv2d";
   std::stringstream kernel_name;
@@ -145,13 +151,21 @@ void Conv2DOpenCLKernel::BuildKernel() {
   if (KW_ == 1 && KH_ == 1) {
     kernel_name << "_1x1";
   }
-  ocl_runtime_->LoadSource(program_name, GetActDefines() + conv2d_source);
+  if (!ocl_runtime_->LoadSource(program_name, GetActDefines() + conv2d_source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
 
   std::string exceed_max_image_width_option =
     (OW_ * CO_SLICES_ <= ocl_runtime_->GetMaxImage2DWidth()) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
   build_options_ext.push_back(exceed_max_image_width_option);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
+  return RET_OK;
 }
 
 void Conv2DOpenCLKernel::SetBlockSize() {
@@ -160,6 +174,7 @@ void Conv2DOpenCLKernel::SetBlockSize() {
     return;
   }
   auto task_size = static_cast<float>(batch_size_ * OH_ * OW_ * CO_SLICES_);
+  MS_ASSERT(ocl_runtime_->DeviceComputeUnits());
   auto task_size_per_cu = task_size / ocl_runtime_->DeviceComputeUnits();
   bool w_kernel_is_1 =
     KW_ == 1 && param_->stride_w_ == 1 && param_->dilation_w_ == 1 && param_->pad_l_ == 0 && param_->pad_r_ == 0;

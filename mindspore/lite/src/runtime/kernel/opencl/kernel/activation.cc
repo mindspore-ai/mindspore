@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include <map>
 #include <string>
 #include <set>
-
 #include "src/runtime/kernel/opencl/kernel/activation.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "nnacl/fp32/common_func_fp32.h"
 #include "src/runtime/kernel/opencl/cl/activation.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -69,14 +66,21 @@ int ActivationOpenCLKernel::Prepare() {
   outShape = GpuTensorInfo(out_tensors_[0]);
   std::string source = activation_source;
   std::string program_name = "Activation";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   std::string kernel_name = GetActTypeString(type_);
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 void ActivationOpenCLKernel::SetConstArgs() {

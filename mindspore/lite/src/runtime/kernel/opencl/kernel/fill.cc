@@ -15,10 +15,6 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/fill.h"
-#include <cstring>
-#include <string>
-#include <algorithm>
-#include <set>
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 

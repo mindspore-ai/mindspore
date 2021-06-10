@@ -17,7 +17,6 @@
 #include <deque>
 #include <string>
 #include <algorithm>
-#include <set>
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/strided_slice.h"
 #include "src/runtime/kernel/opencl/utils.h"
@@ -87,10 +86,16 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
 
 int StridedSliceOpenCLKernel::Prepare() {
   std::string program_name = "strided_slice";
-  ocl_runtime_->LoadSource(program_name, strided_slice_source);
+  if (!ocl_runtime_->LoadSource(program_name, strided_slice_source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-
-  ocl_runtime_->BuildKernel(kernel_, program_name, "strided_slice", build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, "strided_slice", build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   return RET_OK;

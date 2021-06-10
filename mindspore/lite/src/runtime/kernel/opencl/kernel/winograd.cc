@@ -77,15 +77,30 @@ std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, si
 #endif
 }  // namespace
 
-void WinogradOpenCLKernel::BuildKernel() {
+int WinogradOpenCLKernel::BuildKernel() {
   std::string program_name = "winograd";
-  ocl_runtime_->LoadSource(program_name, GetActDefines() + winograd_source);
+  if (!ocl_runtime_->LoadSource(program_name, GetActDefines() + winograd_source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-
-  ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options_ext);
-  ocl_runtime_->BuildKernel(kernel_, program_name,
-                            filter_type_ == MemType::IMG ? "WinogradConv2D_Img" : "WinogradConv2D", build_options_ext);
-  ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4", build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
+  ret = ocl_runtime_->BuildKernel(
+    kernel_, program_name, filter_type_ == MemType::IMG ? "WinogradConv2D_Img" : "WinogradConv2D", build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
+  ret = ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4", build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
+  return RET_OK;
 }
 
 void WinogradOpenCLKernel::InitFilter() {
