@@ -1082,7 +1082,7 @@ class DynamicStitch(PrimitiveWithCheck):
         for i in range(0, indices_num):
             indices_dim = len(indices_shape[i])
             data_dim = len(data_shape[i])
-            validator.check(f"dim of indices[{i}]", indices_dim, f"dim of data[{i}]", data_dim, Rel.LT, self.name)
+            validator.check(f"dim of indices[{i}]", indices_dim, f"dim of data[{i}]", data_dim, Rel.LE, self.name)
             if data_shape[i][:indices_dim] != data_shape[i][:indices_dim]:
                 raise ValueError(f"data[{i}].shape: {data_shape} does not start with indices[{i}].shape: {data_shape}")
 
