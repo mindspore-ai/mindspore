@@ -54,8 +54,7 @@ class SpecializeTransform {
       mng->AddFuncGraph(new_fg);
       std::vector<AnfNodePtr> params = new_fg->parameters();
       std::vector<AnfNodePtr> new_params;
-      size_t n = need_eliminate_args.size();
-      for (size_t i = 0; i < n; i++) {
+      for (size_t i = 0; i < need_eliminate_args.size(); i++) {
         // keep the parameter
         if (need_eliminate_args[i] == nullptr) {
           new_params.push_back(params[i]);
@@ -104,7 +103,7 @@ class SpecializeOnGraphArguments : public AnfVisitor {
     }
 
     auto inp0_fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (inp0_fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || inp0_fg->recursive()) {
+    if (inp0_fg == nullptr || inp0_fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || inp0_fg->recursive()) {
       return nullptr;
     }
     std::vector<ValuePtr> need_eliminated_args;

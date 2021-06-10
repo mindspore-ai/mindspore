@@ -41,7 +41,7 @@ class ReplaceOldParam : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(top_graph);
 
     auto param_node = node->cast<ParameterPtr>();
-    if (!param_node->has_default() || node->func_graph() == top_graph) {
+    if (param_node == nullptr || !param_node->has_default() || node->func_graph() == top_graph) {
       return nullptr;
     }
     auto para_name = param_node->name();

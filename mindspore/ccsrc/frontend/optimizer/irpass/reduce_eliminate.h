@@ -38,6 +38,10 @@ class ReduceOneEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
+    if (node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
     PrimitivePtr prim;
     if (IsPrimitiveCNode(node, prim::kPrimReduceMean) || IsPrimitiveCNode(node, prim::kPrimReduceAll) ||
         IsPrimitiveCNode(node, prim::kPrimReduceSum) || IsPrimitiveCNode(node, prim::kPrimReduceMax) ||

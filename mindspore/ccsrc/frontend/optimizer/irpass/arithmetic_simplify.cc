@@ -20,7 +20,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
-  PatternNode x, y, z, xs;
+  PatternNode x, y, z;
   PConstant one_(node, false, 1);
   PConstant one_scalar_(node, false, 1, true);
   PConstant zero_(node, false, 0);
@@ -173,16 +173,15 @@ AnfNodePtr AdjustAllReduceMulAdd::operator()(const OptimizerPtr &, const AnfNode
 void AdjustAllReduceMulAdd::ProcessDependEdge(const FuncGraphPtr &fg, const AnfNodePtr &addn_maketuple,
                                               const AnfNodePtr &new_node) {
   // If has dynamic loss scale.
+  MS_EXCEPTION_IF_NULL(fg);
   auto &users_map = fg->manager()->node_users();
   auto it = users_map.find(mul_cnode_);
   if (it != users_map.end()) {
     auto users = it->second;
     for (auto &user_pair : users) {
       auto node = user_pair.first;
-      if (node != addn_maketuple) {
-        if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-          fg->manager()->SetEdge(node, user_pair.second, new_node);
-        }
+      if (node != addn_maketuple && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+        fg->manager()->SetEdge(node, user_pair.second, new_node);
       }
     }
   }

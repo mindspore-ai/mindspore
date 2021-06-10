@@ -149,11 +149,11 @@ FuncGraphPtr TransformGraphCondBranchNodes(
     // if the apply input does not belong to graph, insert a switch node
     for (size_t index = 0; index < inputs.size(); index++) {
       auto input_node = inputs[index];
+      MS_EXCEPTION_IF_NULL(input_node);
       if (HasAbstractMonad(input_node)) {
         // Do not guard with switch for monad inputs.
         continue;
       }
-      MS_EXCEPTION_IF_NULL(input_node);
       // for some ops input should not guard it with switch
       if (InConvertWhiteList(node, index)) {
         continue;
@@ -161,9 +161,9 @@ FuncGraphPtr TransformGraphCondBranchNodes(
 
       // If the input for node is not the graph belonged, or it is an ValueNode.
       // Bypass the Primitive node which is inputs[0].
-      if ((index >= 1 && inputs[index]->func_graph() != nullptr && inputs[index]->func_graph() != graph) ||
-          ((index >= 1 && inputs[index]->isa<ValueNode>()))) {
-        input_node = generate_func(graph, cond, inputs[index]);
+      if ((index >= 1 && input_node->func_graph() != nullptr && input_node->func_graph() != graph) ||
+          ((index >= 1 && input_node->isa<ValueNode>()))) {
+        input_node = generate_func(graph, cond, input_node);
         repl_node_inputs[std::pair<AnfNodePtr, size_t>(node, index)] = input_node;
         should_replace = true;
       }

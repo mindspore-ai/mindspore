@@ -329,6 +329,7 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
     if (tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
       auto key = GetValue<int64_t>(vnode->value());
       if (key < 0) {
+        MS_EXCEPTION_IF_NULL(tuple_->abstract());
         auto sequeue_abstract = tuple_->abstract()->cast<abstract::AbstractSequeuePtr>();
         if (sequeue_abstract == nullptr) {
           return;

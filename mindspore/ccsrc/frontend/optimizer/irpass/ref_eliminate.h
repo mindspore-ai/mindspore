@@ -36,7 +36,7 @@ class GetRefValueTransform {
     CNodePtr cnode = node->cast<CNodePtr>();
     auto inputs = cnode->inputs();
     auto fg = GetValueNode(inputs[0])->cast<FuncGraphPtr>();
-    if (fg->recursive()) {
+    if (fg != nullptr && fg->recursive()) {
       MS_LOG(DEBUG) << "Get refvalue by pass recursive:" << fg->ToString();
       return node;
     }

@@ -52,11 +52,11 @@ class GraphCallTupleTransform : public AnfVisitor {
     if (fg == nullptr) {
       return nullptr;
     }
-    if (!CNodeHasTupleInput(node->cast<CNodePtr>())) {
+    if (!CNodeHasTupleInput(cnode)) {
       return nullptr;
     }
     FuncGraphPtr transformed_fg = graph_transform_(fg, optimizer->manager());
-    auto new_node = TransformCallGraph(transformed_fg, node->cast<CNodePtr>());
+    auto new_node = TransformCallGraph(transformed_fg, cnode);
     return new_node;
   }
 

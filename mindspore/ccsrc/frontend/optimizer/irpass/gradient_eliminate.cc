@@ -53,6 +53,7 @@ AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &r
   if (IsValueNode<FuncGraph>(vnode)) {
     ScopeGuard scope_guard(vnode->scope());
     auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
+    MS_EXCEPTION_IF_NULL(func_graph);
     MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " will expandJ now";
     auto newfg = ad::Grad(func_graph, resource);
     return NewValueNode(newfg);
