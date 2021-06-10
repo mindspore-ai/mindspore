@@ -146,7 +146,6 @@ class Dataset:
         self.num_parallel_workers = num_parallel_workers
         self.cache = cache
 
-        # todo check the following:
         self._device_iter = 0
         self._input_indexs = ()
         self.saved_output_types = None
@@ -2666,7 +2665,6 @@ class _ToDevice:
         self._to_device.Init(ir_tree)
         self._runtime_context.AssignConsumer(self._to_device)
 
-        # todo remove next when ContextManager is done
         ITERATORS_LIST.append(weakref.ref(self))
         _unset_iterator_cleanup()
 
@@ -3645,7 +3643,6 @@ class TFRecordDataset(SourceDataset):
                  shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
                          num_shards=num_shards, shard_id=shard_id, cache=cache)
-        # todo push down to c++
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
 

@@ -86,10 +86,8 @@ class Iterator:
                 self._transform_tensor = lambda t: Tensor.from_numpy(t.as_array())
         self.__index = 0
 
-        # todo remove next when ContextManager is done
         ITERATORS_LIST.append(weakref.ref(self))
         _unset_iterator_cleanup()
-        #######
 
     def __iter__(self):
         return self
@@ -184,7 +182,6 @@ class TupleIterator(Iterator):
         if columns is not None:
             if not isinstance(columns, list):
                 columns = [columns]
-            # todo: move next to IR
             dataset = dataset.project(columns)
         super().__init__(dataset, num_epochs, output_numpy, do_copy)
 
