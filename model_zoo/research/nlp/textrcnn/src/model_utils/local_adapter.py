@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 2 ] && [ $# != 1 ]; then
-  echo "Usage: sh run_eval.sh [CKPT_PATH] [DEVICE_ID]"
-  exit 1
-fi
 
-if [ $# == 2 ]; then
-  export DEVICE_ID=$2
-else
-  export DEVICE_ID=0
-fi
+"""Local adapter"""
 
-ulimit -u unlimited
+import os
 
-BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-python ${BASEPATH}/../eval.py --ckpt_path $1 > ./eval.log 2>&1 &
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
+
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

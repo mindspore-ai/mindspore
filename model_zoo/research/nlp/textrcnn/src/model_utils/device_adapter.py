@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 2 ] && [ $# != 1 ]; then
-  echo "Usage: sh run_eval.sh [CKPT_PATH] [DEVICE_ID]"
-  exit 1
-fi
 
-if [ $# == 2 ]; then
-  export DEVICE_ID=$2
-else
-  export DEVICE_ID=0
-fi
+"""Device adapter for ModelArts"""
 
-ulimit -u unlimited
+from src.model_utils.config import config
 
-BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-python ${BASEPATH}/../eval.py --ckpt_path $1 > ./eval.log 2>&1 &
+if config.enable_modelarts:
+    from src.model_utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from src.model_utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

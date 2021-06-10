@@ -14,7 +14,6 @@
 # ============================================================================
 """model evaluation script"""
 import os
-import argparse
 import numpy as np
 
 import mindspore.nn as nn
@@ -23,25 +22,32 @@ from mindspore import Tensor
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.callback import LossMonitor
+# from mindspore.train.callback import LossMonitor
 from mindspore.common import set_seed
 
-from src.config import textrcnn_cfg as cfg
 from src.dataset import create_dataset
 from src.textrcnn import textrcnn
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config as cfg
+from src.model_utils.device_adapter import get_device_id
 
 set_seed(1)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='textrcnn')
-    parser.add_argument('--ckpt_path', type=str)
-    args = parser.parse_args()
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    cfg.ckpt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg.ckpt_path)
+    cfg.preprocess_path = cfg.data_path
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_eval():
+    '''eval function.'''
     context.set_context(
         mode=context.GRAPH_MODE,
         save_graphs=False,
         device_target="Ascend")
 
-    device_id = int(os.getenv('DEVICE_ID'))
+    device_id = get_device_id()
     context.set_context(device_id=device_id)
 
     embedding_table = np.loadtxt(os.path.join(cfg.preprocess_path, "weight.txt")).astype(np.float32)
@@ -49,12 +55,15 @@ if __name__ == '__main__':
                        cell=cfg.cell, batch_size=cfg.batch_size)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
     eval_net = nn.WithEvalCell(network, loss, True)
-    loss_cb = LossMonitor()
+    # loss_cb = LossMonitor()
     print("============== Starting Testing ==============")
     ds_eval = create_dataset(cfg.preprocess_path, cfg.batch_size, False)
-    param_dict = load_checkpoint(args.ckpt_path)
+    param_dict = load_checkpoint(cfg.ckpt_path)
     load_param_into_net(network, param_dict)
     network.set_train(False)
     model = Model(network, loss, metrics={'acc': Accuracy()}, eval_network=eval_net, eval_indexes=[0, 1, 2])
     acc = model.eval(ds_eval, dataset_sink_mode=False)
     print("============== Accuracy:{} ==============".format(acc))
+
+if __name__ == '__main__':
+    run_eval()

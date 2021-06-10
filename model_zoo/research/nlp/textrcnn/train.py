@@ -25,22 +25,31 @@ from mindspore.nn.metrics import Accuracy
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.common import set_seed
 
-from src.config import textrcnn_cfg as cfg
 from src.dataset import create_dataset
 from src.dataset import convert_to_mindrecord
 from src.textrcnn import textrcnn
 from src.utils import get_lr
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config as cfg
+from src.model_utils.device_adapter import get_device_id
 
 set_seed(0)
 
-if __name__ == '__main__':
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    cfg.ckpt_folder_path = os.path.join(cfg.output_path, cfg.ckpt_folder_path)
+    cfg.preprocess_path = cfg.data_path
 
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    '''train function.'''
     context.set_context(
         mode=context.GRAPH_MODE,
         save_graphs=False,
         device_target="Ascend")
 
-    device_id = int(os.getenv('DEVICE_ID'))
+    device_id = get_device_id()
     context.set_context(device_id=device_id)
 
     if cfg.preprocess == 'true':
@@ -48,7 +57,7 @@ if __name__ == '__main__':
         if os.path.exists(cfg.preprocess_path):
             shutil.rmtree(cfg.preprocess_path)
         os.mkdir(cfg.preprocess_path)
-        convert_to_mindrecord(cfg.embed_size, cfg.data_path, cfg.preprocess_path, cfg.emb_path)
+        convert_to_mindrecord(cfg.embed_size, cfg.data_root, cfg.preprocess_path, cfg.emb_path)
 
     if cfg.cell == "vanilla":
         print("============ Precision is lower than expected when using vanilla RNN architecture ===========")
@@ -79,3 +88,6 @@ if __name__ == '__main__':
     ckpoint_cb = ModelCheckpoint(prefix=cfg.cell, directory=cfg.ckpt_folder_path, config=config_ck)
     model.train(num_epochs, ds_train, callbacks=[ckpoint_cb, loss_cb, time_cb])
     print("train success")
+
+if __name__ == '__main__':
+    run_train()

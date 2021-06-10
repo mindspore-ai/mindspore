@@ -14,26 +14,16 @@
 # ============================================================================
 """textrcnn export ckpt file to mindir/air"""
 import os
-import argparse
 import numpy as np
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
 from src.textrcnn import textrcnn
-from src.config import textrcnn_cfg as config
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
 
-parser = argparse.ArgumentParser(description="textrcnn")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="textrcnn ckpt file.")
-parser.add_argument("--file_name", type=str, default="textrcnn", help="textrcnn output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"],
-                    default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
-
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
-
-if __name__ == "__main__":
+def run_export():
+    '''export function.'''
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
     # define net
     embedding_table = np.loadtxt(os.path.join(config.preprocess_path, "weight.txt")).astype(np.float32)
 
@@ -41,9 +31,12 @@ if __name__ == "__main__":
                    cell=config.cell, batch_size=config.batch_size)
 
     # load checkpoint
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
     image = Tensor(np.ones([config.batch_size, 50], np.int32))
-    export(net, image, file_name=args.file_name, file_format=args.file_format)
+    export(net, image, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == "__main__":
+    run_export()
