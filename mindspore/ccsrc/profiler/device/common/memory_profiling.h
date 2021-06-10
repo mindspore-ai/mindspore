@@ -98,7 +98,7 @@ class GraphMemory {
 
 class MemoryProfiling {
  public:
-  MemoryProfiling() = default;
+  MemoryProfiling() : device_mem_size_(0) {}
   ~MemoryProfiling() = default;
 
   static MemoryProfiling &GetInstance() {
