@@ -15,8 +15,6 @@
 """train script"""
 import os
 import time
-import argparse
-import ast
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.communication.management import init
@@ -25,31 +23,25 @@ from mindspore.train import Model
 from mindspore.common import set_seed
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.nn.optim import Adam
-from src.config import config
+
 from src.seq2seq import Seq2Seq
 from src.gru_for_train import GRUWithLossCell, GRUTrainOneStepWithLossScaleCell
 from src.dataset import create_gru_dataset
 from src.lr_schedule import dynamic_lr
+
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_rank_id, get_device_id, get_device_num
+
 set_seed(1)
-
-parser = argparse.ArgumentParser(description="GRU training")
-parser.add_argument("--run_distribute", type=ast.literal_eval, default=False, help="Run distribute, default: false.")
-parser.add_argument("--dataset_path", type=str, default=None, help="Dataset path")
-parser.add_argument("--pre_trained", type=str, default=None, help="Pretrained file path.")
-parser.add_argument("--device_id", type=int, default=0, help="Device id, default: 0.")
-parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default: 1.")
-parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default: 0.")
-parser.add_argument('--ckpt_path', type=str, default='outputs/', help='Checkpoint save location. Default: outputs/')
-parser.add_argument('--outputs_dir', type=str, default='./', help='Checkpoint save location. Default: outputs/')
-args = parser.parse_args()
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id, save_graphs=False)
 
 def get_ms_timestamp():
     t = time.time()
     return int(round(t * 1000))
 time_stamp_init = False
 time_stamp_first = 0
+
+
 class LossCallBack(Callback):
     """
     Monitor the loss in training.
@@ -89,17 +81,72 @@ class LossCallBack(Callback):
                 str(cb_params.net_outputs[2].asnumpy())))
             f.write('\n')
 
-if __name__ == '__main__':
-    if args.run_distribute:
-        rank = args.rank_id
-        device_num = args.device_num
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.outputs_dir = os.path.join(config.output_path, config.outputs_dir)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    """run train."""
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id(), save_graphs=False)
+    rank = get_rank_id()
+    device_num = get_device_num()
+    if config.run_distribute:
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
         init()
-    else:
-        rank = 0
-        device_num = 1
-    mindrecord_file = args.dataset_path
+    mindrecord_file = config.dataset_path
     if not os.path.exists(mindrecord_file):
         print("dataset file {} not exists, please check!".format(mindrecord_file))
         raise ValueError(mindrecord_file)
@@ -120,15 +167,18 @@ if __name__ == '__main__':
     time_cb = TimeMonitor(data_size=dataset_size)
     loss_cb = LossCallBack(rank_id=rank)
     cb = [time_cb, loss_cb]
-    #Save Checkpoint
+    # Save Checkpoint
     if config.save_checkpoint:
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_epoch*dataset_size,
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_epoch * dataset_size,
                                        keep_checkpoint_max=config.keep_checkpoint_max)
-        save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_'+str(args.rank_id)+'/')
+        save_ckpt_path = os.path.join(config.outputs_dir, 'ckpt_' + str(get_rank_id()) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=save_ckpt_path,
-                                  prefix='{}'.format(args.rank_id))
+                                  prefix='{}'.format(get_rank_id()))
         cb += [ckpt_cb]
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
     model.train(config.num_epochs, dataset, callbacks=cb, dataset_sink_mode=True)
+
+if __name__ == '__main__':
+    run_train()
