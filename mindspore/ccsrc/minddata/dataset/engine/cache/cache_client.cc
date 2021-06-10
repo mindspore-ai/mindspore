@@ -366,7 +366,7 @@ void CacheClient::ServerRunningOutOfResources() {
     std::vector<row_id_type> row_ids;
     auto sz = p->row_id()->size();
     row_ids.reserve(sz);
-    for (auto i = 0; i < sz; ++i) {
+    for (uint32_t i = 0; i < sz; ++i) {
       row_ids.push_back(p->row_id()->Get(i));
     }
     cache_miss_keys_ = std::make_unique<CacheMissKeys>(row_ids);

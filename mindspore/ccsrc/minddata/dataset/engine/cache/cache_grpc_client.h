@@ -101,8 +101,8 @@ class CacheClientGreeter : public Service {
   mutable std::mutex mux_;
   std::map<int64_t, std::unique_ptr<CacheClientRequestTag>> req_;
   SharedMemory mem_;
-  int32_t port_;
   std::string hostname_;
+  int32_t port_;
 };
 }  // namespace dataset
 }  // namespace mindspore

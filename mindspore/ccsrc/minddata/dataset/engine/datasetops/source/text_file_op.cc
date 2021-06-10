@@ -109,7 +109,7 @@ void TextFileOp::Print(std::ostream &out, bool show_all) const {
     out << "\nRows per buffer: " << rows_per_buffer_ << "\nRow count: " << total_rows_ << "\nDevice id: " << device_id_
         << "\nNumber of devices: " << num_devices_ << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
         << "\nText files list:\n";
-    for (int i = 0; i < text_files_list_.size(); ++i) {
+    for (size_t i = 0; i < text_files_list_.size(); ++i) {
       out << " " << text_files_list_[i];
     }
     out << "\nData Schema:\n";

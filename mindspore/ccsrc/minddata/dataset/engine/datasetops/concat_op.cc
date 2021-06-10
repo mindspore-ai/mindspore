@@ -188,7 +188,7 @@ Status ConcatOp::ComputeColMap() {
       RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
     }
     // Verify all children have the same column name map
-    for (int32_t i = 0; i < child_.size(); ++i) {
+    for (size_t i = 0; i < child_.size(); ++i) {
       if (child_[i]->column_name_id_map() != column_name_id_map_) {
         RETURN_STATUS_UNEXPECTED("Invalid data, column name or column order is not the same with previous dataset.");
       }

@@ -38,15 +38,15 @@ namespace dataset {
 const char CacheAdminArgHandler::kServerBinary[] = "cache_server";
 
 CacheAdminArgHandler::CacheAdminArgHandler()
-    : port_(kCfgDefaultCachePort),
+    : command_id_(CommandId::kCmdUnknown),
       session_id_(0),
       num_workers_(kDefaultNumWorkers),
       shm_mem_sz_(kDefaultSharedMemorySize),
       log_level_(kDefaultLogLevel),
       memory_cap_ratio_(kDefaultMemoryCapRatio),
       hostname_(kCfgDefaultCacheHost),
-      spill_dir_(""),
-      command_id_(CommandId::kCmdUnknown) {
+      port_(kCfgDefaultCachePort),
+      spill_dir_("") {
   std::string env_cache_host = common::GetEnv("MS_CACHE_HOST");
   std::string env_cache_port = common::GetEnv("MS_CACHE_PORT");
   if (!env_cache_host.empty()) {
@@ -102,7 +102,7 @@ CacheAdminArgHandler::CacheAdminArgHandler()
 
 CacheAdminArgHandler::~CacheAdminArgHandler() = default;
 
-Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std::stringstream *arg_stream,
+Status CacheAdminArgHandler::AssignArg(const std::string &option, int32_t *out_arg, std::stringstream *arg_stream,
                                        CommandId command_id) {
   // Detect if the user tried to provide this argument more than once
   ArgValue selected_arg = arg_map_[option];
@@ -137,7 +137,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std
 
   // Now, attempt to convert the value into it's numeric format for output
   try {
-    *out_arg = std::stoul(value_as_string);
+    *out_arg = static_cast<int32_t>(std::stoul(value_as_string));
   } catch (const std::exception &e) {
     std::string err_msg = "Invalid numeric value: " + value_as_string;
     return Status(StatusCode::kMDSyntaxError, err_msg);
@@ -146,7 +146,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std
   return Status::OK();
 }
 
-Status CacheAdminArgHandler::AssignArg(std::string option, std::string *out_arg, std::stringstream *arg_stream,
+Status CacheAdminArgHandler::AssignArg(const std::string &option, std::string *out_arg, std::stringstream *arg_stream,
                                        CommandId command_id) {
   // Detect if the user tried to provide this argument more than once
   ArgValue selected_arg = arg_map_[option];
@@ -189,7 +189,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, std::string *out_arg,
   return Status::OK();
 }
 
-Status CacheAdminArgHandler::AssignArg(std::string option, float *out_arg, std::stringstream *arg_stream,
+Status CacheAdminArgHandler::AssignArg(const std::string &option, float *out_arg, std::stringstream *arg_stream,
                                        CommandId command_id) {
   // Detect if the user tried to provide this argument more than once
   ArgValue selected_arg = arg_map_[option];
@@ -357,11 +357,11 @@ Status CacheAdminArgHandler::RunCommand() {
       break;
     }
     case CommandId::kCmdStart: {
-      RETURN_IF_NOT_OK(StartServer(command_id_));
+      RETURN_IF_NOT_OK(StartServer());
       break;
     }
     case CommandId::kCmdStop: {
-      RETURN_IF_NOT_OK(StopServer(command_id_));
+      RETURN_IF_NOT_OK(StopServer());
       break;
     }
     case CommandId::kCmdGenerateSession: {
@@ -476,7 +476,7 @@ Status CacheAdminArgHandler::ShowServerInfo() {
   return Status::OK();
 }
 
-Status CacheAdminArgHandler::StopServer(CommandId command_id) {
+Status CacheAdminArgHandler::StopServer() {
   CacheClientGreeter comm(hostname_, port_, 1);
   RETURN_IF_NOT_OK(comm.ServiceStart());
   SharedMessage msg;
@@ -506,7 +506,7 @@ Status CacheAdminArgHandler::StopServer(CommandId command_id) {
   return Status::OK();
 }
 
-Status CacheAdminArgHandler::StartServer(CommandId command_id) {
+Status CacheAdminArgHandler::StartServer() {
   // There currently does not exist any "install path" or method to identify which path the installed binaries will
   // exist in. As a temporary approach, we will assume that the server binary shall exist in the same path as the
   // cache_admin binary (this process).
@@ -521,10 +521,10 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   canonical_path.resize(strlen(canonical_path.data()));
-  int last_seperator = canonical_path.find_last_of('/');
-  CHECK_FAIL_RETURN_UNEXPECTED(last_seperator != std::string::npos, "No / found");
+  uint64_t last_separator = canonical_path.find_last_of('/');
+  CHECK_FAIL_RETURN_UNEXPECTED(last_separator != std::string::npos, "No / found");
   // truncate the binary name so we are left with the absolute path of cache_admin binary
-  canonical_path.resize(last_seperator + 1);
+  canonical_path.resize(last_separator + 1);
   std::string cache_server_binary = canonical_path + std::string(kServerBinary);
 
   // Create a pipe before we fork. If all goes well, the child will run as a daemon in the background
@@ -551,7 +551,7 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
       RETURN_STATUS_UNEXPECTED("waitpid fails. errno = " + std::to_string(errno));
     }
     std::string msg;
-    const int32_t buf_sz = 1024;
+    const uint32_t buf_sz = 1024;
     msg.resize(buf_sz);
     auto n = read(0, msg.data(), buf_sz);
     if (n < 0) {

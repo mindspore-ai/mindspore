@@ -111,7 +111,7 @@ Status CacheLookupOp::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ts, cache_miss.size()));
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagNone);
     auto idPtr = sample_ts->begin<int64_t>();
-    for (auto i = 0; i < cache_miss.size(); ++i) {
+    for (size_t i = 0; i < cache_miss.size(); ++i) {
       *idPtr = cache_miss.at(i);
       ++idPtr;
     }

@@ -438,7 +438,7 @@ Status CacheServer::BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuil
   int64_t data_offset = (num_elements + 1) * sizeof(int64_t);
   auto *offset_array = reinterpret_cast<int64_t *>(out->GetMutablePointer());
   offset_array[0] = data_offset;
-  for (auto i = 0; i < num_elements; ++i) {
+  for (uint32_t i = 0; i < num_elements; ++i) {
     auto data_locator = p->rows()->Get(i);
     auto node_id = data_locator->node_id();
     size_t sz = data_locator->size();
@@ -499,7 +499,7 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
     std::vector<row_id_type> row_id;
     auto sz = p->row_id()->size();
     row_id.reserve(sz);
-    for (auto i = 0; i < sz; ++i) {
+    for (uint32_t i = 0; i < sz; ++i) {
       row_id.push_back(p->row_id()->Get(i));
     }
     std::shared_ptr<flatbuffers::FlatBufferBuilder> fbb = std::make_shared<flatbuffers::FlatBufferBuilder>();

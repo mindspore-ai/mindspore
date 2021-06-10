@@ -130,7 +130,7 @@ void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp
   }
 
   // Descend to children
-  for (int32_t i = 0; i < dataset_op->child_.size(); ++i) {
+  for (size_t i = 0; i < dataset_op->child_.size(); ++i) {
     this->PrintNode(out, dataset_op->child_[i], indent, (i == (dataset_op->child_.size() - 1)), detailed);
   }
 }
