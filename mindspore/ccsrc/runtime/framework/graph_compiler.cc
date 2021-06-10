@@ -262,6 +262,15 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
   // Generate kernel graph.
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs);
   MS_EXCEPTION_IF_NULL(graph);
+
+  // Cache the backend graph output nodes to front nodes with output index.
+  for (auto &output : outputs) {
+    auto backend_node = graph->GetBackendAnfByFrontAnf(output);
+    if (backend_node != nullptr) {
+      graph->CacheGraphOutputToFrontNodeWithIndex(backend_node, output);
+    }
+  }
+
   return CompileGraphImpl(graph, device_context);
 }
 

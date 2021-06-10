@@ -1421,7 +1421,12 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
     MS_EXCEPTION_IF_NULL(graph);
     ++number;
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
-    for (const auto &output_with_index : outputs) {
+    std::set<std::pair<int, std::vector<size_t>>> unique_output_positions;
+    std::set<KernelWithIndex> unique_outputs;
+    for (const auto &output : outputs) {
+      unique_outputs.insert(output);
+    }
+    for (const auto &output_with_index : unique_outputs) {
       MS_EXCEPTION_IF_NULL(output_with_index.first);
       auto origin_output_with_index = FetchFrontNodeWithIndexByGraphOutput(output_with_index, graph);
       const auto &iter = graph_compiler_info.origin_outputs_order_.find(origin_output_with_index);
@@ -1429,54 +1434,62 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         continue;
       }
 
-      to_actor->device_contexts_[iter->second.second] = graph_compiler_info.device_contexts_[number - 1];
-      // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
-      UpdateRefCount(output_with_index.first, output_with_index.second, true);
-
-      // The graph output is from device tensor store.
-      if (IsPersistentDeviceTensor(output_with_index.first)) {
-        to_actor->device_tensor_store_keys_[iter->second.first].emplace_back(iter->second.second,
-                                                                             output_with_index.first);
+      // Skip duplicate position.
+      if (unique_output_positions.count(iter->second) > 0) {
         continue;
       }
+      unique_output_positions.insert(iter->second);
+      for (auto &output_position : iter->second.second) {
+        to_actor->device_contexts_[output_position] = graph_compiler_info.device_contexts_[number - 1];
+        // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
+        UpdateRefCount(output_with_index.first, output_with_index.second, true);
 
-      // The graph output is from kernel actor.
-      if (IsKernelActor(output_with_index.first)) {
-        const auto &from_actor =
-          dynamic_cast<KernelActor *>(FetchActor(output_with_index.first->fullname_with_scope()));
-        MS_EXCEPTION_IF_NULL(from_actor);
-        auto op_arrow = std::make_shared<DataArrow>(output_with_index.second, to_actor->GetAID(), iter->second.second);
-        from_actor->output_result_arrows_.emplace_back(op_arrow);
-        continue;
-      }
-
-      // The graph output is from data source actor.
-      std::string actor_name;
-      DataSourceActor *from_actor = nullptr;
-      size_t from_actor_output_index = 0;
-      if (IsHostQueueDSActor(output_with_index.first, graph, nullptr, graph_compiler_info.origin_parameters_order_)) {
-        actor_name = graph_compiler_info.name_ + "_HostDSActor";
-        const auto &host_queue_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
-        from_actor_output_index = host_queue_ds_actor->FetchDataNodePosition(output_with_index.first);
-        UpdateRefCount(host_queue_ds_actor->data_nodes_[from_actor_output_index], output_with_index.second, true);
-        from_actor = static_cast<DataSourceActor *>(host_queue_ds_actor);
-      } else if (IsDeviceQueueDSActor(output_with_index.first)) {
-        actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
-        from_actor = dynamic_cast<DataSourceActor *>(FetchActor(actor_name));
-        from_actor_output_index = output_with_index.second;
-      }
-
-      // When the input is a parameter node, it should be connected by gather actor.
-      if (from_actor == nullptr) {
-        if (output_with_index.first->isa<CNode>()) {
-          MS_LOG(EXCEPTION) << "Cannot find kernel actor for kernel:" << output_with_index.first->fullname_with_scope();
-        } else {
+        // The graph output is from device tensor store.
+        if (IsPersistentDeviceTensor(output_with_index.first)) {
+          to_actor->device_tensor_store_keys_[iter->second.first].emplace_back(output_position,
+                                                                               output_with_index.first);
           continue;
         }
+
+        // The graph output is from kernel actor.
+        if (IsKernelActor(output_with_index.first)) {
+          const auto &from_actor =
+            dynamic_cast<KernelActor *>(FetchActor(output_with_index.first->fullname_with_scope()));
+          MS_EXCEPTION_IF_NULL(from_actor);
+          auto op_arrow = std::make_shared<DataArrow>(output_with_index.second, to_actor->GetAID(), output_position);
+          from_actor->output_result_arrows_.emplace_back(op_arrow);
+          continue;
+        }
+
+        // The graph output is from data source actor.
+        std::string actor_name;
+        DataSourceActor *from_actor = nullptr;
+        size_t from_actor_output_index = 0;
+        if (IsHostQueueDSActor(output_with_index.first, graph, nullptr, graph_compiler_info.origin_parameters_order_)) {
+          actor_name = graph_compiler_info.name_ + "_HostDSActor";
+          const auto &host_queue_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
+          from_actor_output_index = host_queue_ds_actor->FetchDataNodePosition(output_with_index.first);
+          UpdateRefCount(host_queue_ds_actor->data_nodes_[from_actor_output_index], output_with_index.second, true);
+          from_actor = static_cast<DataSourceActor *>(host_queue_ds_actor);
+        } else if (IsDeviceQueueDSActor(output_with_index.first)) {
+          actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
+          from_actor = dynamic_cast<DataSourceActor *>(FetchActor(actor_name));
+          from_actor_output_index = output_with_index.second;
+        }
+
+        // When the input is a parameter node, it should be connected by gather actor.
+        if (from_actor == nullptr) {
+          if (output_with_index.first->isa<CNode>()) {
+            MS_LOG(EXCEPTION) << "Cannot find kernel actor for kernel:"
+                              << output_with_index.first->fullname_with_scope();
+          } else {
+            continue;
+          }
+        }
+        MS_EXCEPTION_IF_NULL(from_actor);
+        auto op_arrow = std::make_shared<DataArrow>(from_actor_output_index, to_actor->GetAID(), output_position);
+        from_actor->output_result_arrows_.emplace_back(op_arrow);
       }
-      MS_EXCEPTION_IF_NULL(from_actor);
-      auto op_arrow = std::make_shared<DataArrow>(from_actor_output_index, to_actor->GetAID(), iter->second.second);
-      from_actor->output_result_arrows_.emplace_back(op_arrow);
     }
   }
 }
@@ -1852,39 +1865,41 @@ void GraphScheduler::LinkOutputResultArrowForGatherActor(const GraphCompilerInfo
       if (iter == graph_compiler_info.origin_outputs_order_.end()) {
         continue;
       }
-      MS_LOG(INFO) << "Link output node:" << AnfAlgo::GetNodeDebugString(origin_output_with_index.first)
-                   << " branch id:" << iter->second.first << " index:" << iter->second.second
-                   << " for gather actor:" << gather_actor->GetAID();
 
-      auto op_arrow = std::make_shared<DataArrow>(i, to_actor->GetAID(), iter->second.second);
-      gather_actor->output_result_arrows_.emplace_back(op_arrow);
-      const auto &backend_nodes = gather_actor->front_to_backend_parameter_[front_node];
-      if (backend_nodes.empty()) {
-        MS_LOG(EXCEPTION) << "No backend node for data node:" << AnfAlgo::GetNodeDebugString(front_node);
-      }
+      for (auto &output_position : iter->second.second) {
+        MS_LOG(INFO) << "Link output node:" << AnfAlgo::GetNodeDebugString(origin_output_with_index.first)
+                     << " branch id:" << iter->second.first << " index:" << output_position
+                     << " for gather actor:" << gather_actor->GetAID();
 
-      const auto &backend_node = backend_nodes[0].first;
-      if (backend_node->isa<Parameter>()) {
-        std::string actor_name = graph_compiler_info.name_ + "_HostDSActor";
-        auto actor = FetchActor(actor_name);
-        MS_EXCEPTION_IF_NULL(actor);
-        auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
-        MS_EXCEPTION_IF_NULL(host_ds_actor);
-
-        const auto &data_nodes = host_ds_actor->data_nodes_;
-        const auto &node_iter = find(data_nodes.begin(), data_nodes.end(), backend_node);
-        if (node_iter == data_nodes.end()) {
-          MS_LOG(EXCEPTION) << "Cannot find backend node in host data source actor, node:"
-                            << AnfAlgo::GetNodeDebugString(backend_node);
+        auto op_arrow = std::make_shared<DataArrow>(i, to_actor->GetAID(), output_position);
+        gather_actor->output_result_arrows_.emplace_back(op_arrow);
+        const auto &backend_nodes = gather_actor->front_to_backend_parameter_[front_node];
+        if (backend_nodes.empty()) {
+          MS_LOG(EXCEPTION) << "No backend node for data node:" << AnfAlgo::GetNodeDebugString(front_node);
         }
-        to_actor->device_contexts_[iter->second.second] =
-          host_ds_actor->device_contexts_[node_iter - data_nodes.begin()];
-      } else {
-        auto actor_base = FetchActor(backend_node->fullname_with_scope());
-        MS_EXCEPTION_IF_NULL(actor_base);
-        auto kernel_actor = dynamic_cast<KernelActor *>(actor_base);
-        MS_EXCEPTION_IF_NULL(kernel_actor);
-        to_actor->device_contexts_[iter->second.second] = kernel_actor->device_context_;
+
+        const auto &backend_node = backend_nodes[0].first;
+        if (backend_node->isa<Parameter>()) {
+          std::string actor_name = graph_compiler_info.name_ + "_HostDSActor";
+          auto actor = FetchActor(actor_name);
+          MS_EXCEPTION_IF_NULL(actor);
+          auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
+          MS_EXCEPTION_IF_NULL(host_ds_actor);
+
+          const auto &data_nodes = host_ds_actor->data_nodes_;
+          const auto &node_iter = find(data_nodes.begin(), data_nodes.end(), backend_node);
+          if (node_iter == data_nodes.end()) {
+            MS_LOG(EXCEPTION) << "Cannot find backend node in host data source actor, node:"
+                              << AnfAlgo::GetNodeDebugString(backend_node);
+          }
+          to_actor->device_contexts_[output_position] = host_ds_actor->device_contexts_[node_iter - data_nodes.begin()];
+        } else {
+          auto actor_base = FetchActor(backend_node->fullname_with_scope());
+          MS_EXCEPTION_IF_NULL(actor_base);
+          auto kernel_actor = dynamic_cast<KernelActor *>(actor_base);
+          MS_EXCEPTION_IF_NULL(kernel_actor);
+          to_actor->device_contexts_[output_position] = kernel_actor->device_context_;
+        }
       }
     }
   }

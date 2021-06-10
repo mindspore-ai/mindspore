@@ -250,6 +250,7 @@ void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
 
 MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id)
     : Backend(backend_name), device_name_(device_name), device_id_(device_id) {
+  root_graph_ = nullptr;
   auto cut_list = compile::GetMsNonlinearOps();
   graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend_name);
   graph_compiler_ = std::make_shared<GraphCompiler>();
@@ -258,18 +259,18 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
 const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphPtr root_graph = WrapPrimitives(func_graph);
-  MS_EXCEPTION_IF_NULL(root_graph);
+  root_graph_ = WrapPrimitives(func_graph);
+  MS_EXCEPTION_IF_NULL(root_graph_);
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
 
   // Compile root graph.
   graph_id_to_device_context_.clear();
   control_nodes_.clear();
-  CompileGraph(root_graph);
+  CompileGraph(root_graph_);
 
   // Compile sub graphs.
-  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
+  FuncGraphSet sub_graphs = root_graph_->manager()->func_graphs();
   for (auto sub_graph : sub_graphs) {
     if (sub_graph != func_graph && sub_graph != nullptr) {
       CompileGraph(sub_graph);
@@ -277,7 +278,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   }
 
   // Construct the graph compiler info.
-  auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
+  auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph_);
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -494,17 +495,51 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   // Fetch outputs.
   MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
   auto &output_tensors = actor_set->output_actor_->outputs();
-  if (output_tensors.size() > 1) {
-    VectorRef tmp;
-    (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(tmp.elements_),
-                         [](tensor::TensorPtr &tensor) { return std::move(tensor); });
-    outputs->emplace_back(std::move(tmp));
-  } else if (output_tensors.size() == 1) {
-    outputs->emplace_back(std::move(output_tensors.front()));
+  if (output_tensors.size() > 0) {
+    size_t output_position = 0;
+    ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
   }
   MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
 
   graph_compiler_->Summary(graph_compiler_info.graphs_);
+}
+
+void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
+                                     const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,
+                                     VectorRef *outputs) {
+  // The makeTuple node need expand and recurse.
+  if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
+    auto make_tuple = output_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    VectorRef make_tuple_output;
+    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+      ConstructOutputs(make_tuple->input(i), output_tensors, output_position, &make_tuple_output);
+    }
+    outputs->emplace_back(std::move(make_tuple_output));
+    return;
+  }
+
+  // The depend node need get the real node.
+  if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimDepend)) {
+    auto depend_node = output_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(depend_node);
+    ConstructOutputs(depend_node->input(kRealInputIndexInDepend), output_tensors, output_position, outputs);
+    return;
+  }
+
+  // Judge the output whether tuple or not by the outputs number.
+  auto outputs_num = AnfAlgo::GetOutputTensorNum(output_node);
+  if (outputs_num > 1) {
+    VectorRef output_tuple;
+    for (size_t i = 0; i < outputs_num; ++i) {
+      output_tuple.emplace_back(std::move(output_tensors[*output_position]));
+      ++(*output_position);
+    }
+    outputs->emplace_back(std::move(output_tuple));
+  } else {
+    outputs->emplace_back(std::move(output_tensors[*output_position]));
+    ++(*output_position);
+  }
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph) {
@@ -535,7 +570,11 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     auto outputs = AnfAlgo::GetAllOutputWithIndex(branch_output);
     outputs_num = outputs.size();
     for (const auto &output : outputs) {
-      outputs_order[output] = {branch_id, position++};
+      if (outputs_order.count(output) == 0) {
+        outputs_order[output] = {branch_id, {position++}};
+      } else {
+        outputs_order[output].second.emplace_back(position++);
+      }
     }
   }
 
@@ -579,7 +618,11 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
 
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
     for (const auto &output : outputs) {
-      outputs_order[output] = {runtime::kMainBranchID, position++};
+      if (outputs_order.count(output) == 0) {
+        outputs_order[output] = {runtime::kMainBranchID, {position++}};
+      } else {
+        outputs_order[output].second.emplace_back(position++);
+      }
     }
   }
 

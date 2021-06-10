@@ -126,6 +126,10 @@ class MindRTBackend : public Backend {
   // The result of graph compiler is stored in graph_id_to_device_context_ and control_nodes_.
   void CompileGraph(const FuncGraphPtr &func_graph);
 
+  // Restore the outputs tuple by the origin funcGraph output node and output tensors.
+  void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
+                        size_t *output_position, VectorRef *outputs);
+
   // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
   std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
 
@@ -148,6 +152,7 @@ class MindRTBackend : public Backend {
 
   std::unordered_map<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
 
+  FuncGraphPtr root_graph_;
   GraphPartitionPtr graph_partition_;
   std::shared_ptr<GraphCompiler> graph_compiler_;
   std::string device_name_;

@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <set>
 #include <algorithm>
 #include <fstream>
 #include "runtime/framework/actor/data_source_actor.h"
@@ -42,10 +43,10 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::session::KernelGraph;
 using mindspore::session::KernelWithIndex;
-// Position of kernel with index, the value pair<branch_id, pos> means the branch id of the kernel and the pos of
-// the kernel. Generally, there is only one branch, and the branch id is 0 at this time. In control flow, there
-// are multiple branch scenarios, and pos represents the position of the kernel in the branch.
-using KernelMapPosition = std::map<KernelWithIndex, std::pair<int, size_t>, session::KernelWithIndexCmp>;
+// Position of kernel with index, the value pair<branch_id, vector<pos>> means the branch id of the kernel and the pos
+// of the kernel. Generally, there is only one branch, and the branch id is 0 at this time. In control flow, there are
+// multiple branch scenarios, and pos represents the position of the kernel in the branch.
+using KernelMapPosition = std::map<KernelWithIndex, std::pair<int, std::vector<size_t>>, session::KernelWithIndexCmp>;
 using ActorInfo = std::string;
 
 // The second element of pair represents the output index of op actor corresponding to the graph output node.
