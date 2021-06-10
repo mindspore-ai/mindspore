@@ -538,13 +538,13 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   root_graph->SetOptimizerFlag();
   DumpAllGraphs(all_graphs);
   // Save memory profiling data to proto file
-  if (ProfilingManager::GetInstance().IsProfiling()) {
+  auto profiling_instance = MemoryProfiling::GetInstance();
+  if (profiling_instance.IsMemoryProfilingEnable()) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
     MS_EXCEPTION_IF_NULL(runtime_instance);
     uint64_t mem_size = runtime_instance->GetAvailableMemMaxSize();
-    auto instance = MemoryProfiling::GetInstance();
-    instance.SetDeviceMemSize(mem_size);
-    instance.SaveMemoryProfiling();
+    profiling_instance.SetDeviceMemSize(mem_size);
+    profiling_instance.SaveMemoryProfiling();
   }
   // return the root_graph id to backend
   auto graph_id = root_graph->graph_id();

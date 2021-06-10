@@ -108,7 +108,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
     align_size = GetCommonAlignSize(size);
   }
 
-  if (ProfilingManager::GetInstance().IsProfiling() && graph_id != kInvalidGraphId) {
+  if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable() && graph_id != kInvalidGraphId) {
     auto node = MemoryProfiling::GetInstance().GetGraphMemoryNode(graph_id);
     if (node == nullptr) {
       node = MemoryProfiling::GetInstance().AddGraphMemoryNode(graph_id);
@@ -159,7 +159,7 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
 
 void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
   MemoryManager::MallocSomasDynamicMem(graph);
-  if (ProfilingManager::GetInstance().IsProfiling()) {
+  if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable()) {
     somas_reuse_util_ptr_->ConvertToProfilingNode(graph->graph_id());
   }
 }
