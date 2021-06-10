@@ -38,6 +38,7 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
   AbstractBasePtrList abstract_list;
   make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   size_t out_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < out_num; ++output_idx) {
     AnfNodePtr replace_node = nullptr;
@@ -48,6 +49,7 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
     auto imm = std::make_shared<Int64Imm>(output_idx);
     idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
     auto getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx});
+    MS_EXCEPTION_IF_NULL(getitem);
     AnfAlgo::SetOutputInferTypeAndShape({infer_type}, {origin_shape}, getitem.get());
     if (need_insert_cast[output_idx]) {
       const auto dev_fmt = AnfAlgo::GetOutputFormat(cnode, output_idx);

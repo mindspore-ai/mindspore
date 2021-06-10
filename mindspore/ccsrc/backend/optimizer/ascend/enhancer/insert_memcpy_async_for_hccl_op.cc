@@ -120,6 +120,7 @@ void InsertMemcpyAsyncForHcclOp::InsertMemcpyAsync(const FuncGraphPtr &graph, co
 
   if (need_memcpy_async) {
     CNodePtr new_hccl_node = std::make_shared<CNode>(*hccl_node);
+    MS_EXCEPTION_IF_NULL(new_hccl_node);
     new_hccl_node->set_inputs(new_inputs);
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);

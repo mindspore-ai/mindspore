@@ -42,7 +42,7 @@ const AnfNodePtr GetnextMemcpyElimination::Process(const FuncGraphPtr &graph, co
 
   // 1. memcpy has attr kAttrLabelForInsertStreamActive
   if (!AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, memcpy_cnode)) {
-    MS_LOG(DEBUG) << "node has no label_for_insert_stream_active attr";
+    MS_LOG(DEBUG) << "Node has no label_for_insert_stream_active attr";
     return nullptr;
   }
 
@@ -61,6 +61,7 @@ const AnfNodePtr GetnextMemcpyElimination::Process(const FuncGraphPtr &graph, co
   // 3. next_node is not nop node, communication node or graph output and it has only one input which is memcpy's output
   for (auto &item : next_nodes) {
     auto next_node = item.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(next_node);
     if (opt::IsNopNode(next_node)) {
       return nullptr;
     }

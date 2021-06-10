@@ -33,6 +33,7 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
     for (size_t index = 0; index < input_num; ++index) {
       auto prev_input_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);

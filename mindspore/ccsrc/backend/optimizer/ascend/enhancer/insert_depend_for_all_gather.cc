@@ -34,6 +34,7 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName && AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
         AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0) {
       all_gather_node[AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)] = node;
@@ -47,6 +48,7 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
     std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                       AnfAlgo::GetInputNode(next_cnode, 0), current_node};
     auto new_input = graph->NewCNode(inputs);
+    MS_EXCEPTION_IF_NULL(new_input);
     new_input->set_abstract(AnfAlgo::GetInputNode(next_cnode, 0)->abstract());
     AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
     changed = true;

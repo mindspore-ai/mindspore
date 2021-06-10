@@ -151,6 +151,7 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
     return nullptr;
   }
   auto next_cnode = next_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(next_cnode);
   if (AnfAlgo::IsGraphKernel(next_node)) {
     return nullptr;
   }
@@ -185,6 +186,7 @@ bool GetPriorOp(const AnfNodePtr &x_node, CNodePtr *prior_op, bool *single_outpu
   MS_EXCEPTION_IF_NULL(x_node);
   if (x_node->isa<CNode>()) {
     auto x_cnode = x_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(x_cnode);
     *prior_op = x_cnode;
     // when x_node is tuple_getitem
     if (AnfAlgo::GetCNodeName(x_node) == prim::kPrimTupleGetItem->name()) {

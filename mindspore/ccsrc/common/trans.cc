@@ -30,18 +30,22 @@
 namespace mindspore {
 namespace trans {
 enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims, kNcdhw };
+const int bit_1 = 1;
+const int bit_2 = 2;
+const int bit_4 = 4;
+const int bit_8 = 8;
 inline void SetData(size_t size, bool pad_zero, size_t src_idx, size_t dst_idx, const FormatArgs &args, void *result) {
   switch (size) {
-    case 1:
+    case bit_1:
       static_cast<uint8_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint8_t *>(args.data)[src_idx];
       break;
-    case 2:
+    case bit_2:
       static_cast<uint16_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint16_t *>(args.data)[src_idx];
       break;
-    case 4:
+    case bit_4:
       static_cast<uint32_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint32_t *>(args.data)[src_idx];
       break;
-    case 8:
+    case bit_8:
       static_cast<uint64_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint64_t *>(args.data)[src_idx];
       break;
     default:
@@ -341,21 +345,21 @@ std::vector<size_t> NcdhwDeviceShape(const std::vector<size_t> &shape) {
 std::vector<size_t> PaddingShapeTo4dByDefault(const std::vector<size_t> &shape) {
   std::vector<size_t> shape_4d(kNchwDims, 1);
   switch (shape.size()) {
-    case 0:
+    case kN:
       return shape_4d;
-    case 1:
+    case kC:
       shape_4d[kC] = shape[kN];
       break;
-    case 2:
+    case kH:
       shape_4d[kC] = shape[kN];
       shape_4d[kH] = shape[kC];
       break;
-    case 3:
+    case kW:
       shape_4d[kC] = shape[kN];
       shape_4d[kH] = shape[kC];
       shape_4d[kW] = shape[kH];
       break;
-    case 4:
+    case kNchwDims:
       std::copy(shape.begin(), shape.end(), shape_4d.begin());
       break;
     default:
@@ -506,21 +510,21 @@ std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape) {
   }
   std::vector<size_t> shape_5d(kNcdhw, 1);
   switch (shape.size()) {
-    case 0:
+    case N_ncdhw:
       return shape_5d;
-    case 1:
+    case C_ncdhw:
       shape_5d[1] = shape[0];
       break;
-    case 2:
+    case D_ncdhw:
       shape_5d[C_ncdhw] = shape[N_ncdhw];
       shape_5d[D_ncdhw] = shape[C_ncdhw];
       break;
-    case 3:
+    case H_ncdhw:
       shape_5d[C_ncdhw] = shape[N_ncdhw];
       shape_5d[D_ncdhw] = shape[C_ncdhw];
       shape_5d[H_ncdhw] = shape[D_ncdhw];
       break;
-    case 4:
+    case W_ncdhw:
       shape_5d[C_ncdhw] = shape[N_ncdhw];
       shape_5d[D_ncdhw] = shape[C_ncdhw];
       shape_5d[H_ncdhw] = shape[D_ncdhw];

@@ -42,6 +42,7 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {

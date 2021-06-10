@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace opt {
+constexpr size_t kShapeSize = 2;
 const BaseRef InsertTranspose::DefinePattern() const {
   std::shared_ptr<Var> V = std::make_shared<CondVar>(UnVisited);
   std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
@@ -36,6 +37,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   CNodePtr new_node = nullptr;
 
   std::vector<AnfNodePtr> transpose_inputs;
@@ -45,6 +47,9 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
   if (op_name == kBasicLSTMCellInputGradOpName) {
     auto origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 1);
     auto origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
+    if (origin_shape.size() < kShapeSize) {
+      MS_LOG(EXCEPTION) << "Origin shape size less than 2, Got real size: " << origin_shape.size();
+    }
     auto dst_shape = {origin_shape[1], origin_shape[0]};
     transpose_inputs.push_back(AnfAlgo::GetInputNode(cnode, 1));
     CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
