@@ -27,7 +27,7 @@ modelarts_dataset_unzip_name: 'ImageNet_Original'
 need_modelarts_dataset_unzip: True
 ckpt_save_dir: './ckpt/'
 result_path: '' # "result file path"
-label_file": '' # "label file"
+label_file: '' # "label file"
 
 # Training options
 random_seed: 1

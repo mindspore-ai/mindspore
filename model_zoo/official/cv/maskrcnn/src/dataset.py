@@ -26,7 +26,7 @@ import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
 
-from model_utils.config import config
+from .model_utils.config import config
 
 
 config.mask_shape = (28, 28)

@@ -19,7 +19,7 @@ from mindspore.train.serialization import load_checkpoint, save_checkpoint
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
-from model_utils.config import config
+from .model_utils.config import config
 
 
 def load_weights(model_path, use_fp16_weight):
