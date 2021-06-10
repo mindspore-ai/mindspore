@@ -529,8 +529,8 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
       auto tensor_type = type->cast<TensorTypePtr>();
       MS_EXCEPTION_IF_NULL(tensor_type);
       auto element = tensor_type->element();
-      return_type = element->DeepCopy();
       MS_EXCEPTION_IF_NULL(element);
+      return_type = element->DeepCopy();
       types_id.emplace(element->type_id());
     } else {
       types_id.emplace(type->type_id());
@@ -611,6 +611,7 @@ std::vector<int64_t> CheckAndConvertUtils::CheckAttrIntOrTupleInt(const std::str
     std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
     (void)std::transform(
       attr_vec.begin(), attr_vec.end(), std::back_inserter(result), [=](const ValuePtr &e) -> int64_t {
+        MS_EXCEPTION_IF_NULL(e);
         if (!e->isa<Int64Imm>()) {
           MS_EXCEPTION(TypeError) << "For " << prim_name << ", the type of" << arg_name << " must be Int64";
         }

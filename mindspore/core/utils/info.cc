@@ -182,12 +182,18 @@ TraceContextPtr TraceManager::CurrentContextInfo() {
 }
 
 void TraceManager::DebugTrace(const std::string &func_name, const LocationPtr &location) {
+  if (location == nullptr) {
+    MS_LOG(EXCEPTION) << "DebugTrace wrong location is null";
+  }
   TraceContextPtr context = std::make_shared<TraceContext>(location);
   context->set_func_name(func_name);
   TraceManager::trace_context_stack_.push(context);
 }
 
 void TraceManager::DebugTrace(const LocationPtr &location) {
+  if (location == nullptr) {
+    MS_LOG(EXCEPTION) << "DebugTrace wrong location is null";
+  }
   TraceContextPtr context = std::make_shared<TraceContext>(location);
   TraceManager::trace_context_stack_.push(context);
   TraceManager::parse_or_resolve_debug_info_ = std::make_shared<DebugInfo>(location);

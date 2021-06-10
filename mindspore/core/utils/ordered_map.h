@@ -173,14 +173,14 @@ class OrderedMap {
   // Remove the last element from the sequential_data_.
   void pop_back() {
     typename map_type::iterator pos = map_data_.find(sequential_data_.back().first);
-    map_data_.erase(pos);
+    (void)map_data_.erase(pos);
     sequential_data_.pop_back();
   }
 
   // Remove the first element from the sequential_data_.
   void pop_front() {
     typename map_type::iterator pos = map_data_.find(sequential_data_.first().first);
-    map_data_.erase(pos);
+    (void)map_data_.erase(pos);
     sequential_data_.pop_front();
   }
 
