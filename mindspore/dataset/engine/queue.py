@@ -64,6 +64,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
                 + "bytes, "
                 + str(self.num_seg)
                 + " elements."
+                + " This might be caused by insufficient shm, and the recommended shm size is at least 5 GB."
             )
 
     def put(self, data, timeout=None):

@@ -2449,7 +2449,10 @@ class _PythonCallable:
 
                 # This call will send the tensors along with Python callable index to the process pool.
                 # Block, yield GIL. Current thread will reacquire GIL once result is returned.
-                result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, qid, []])
+                if self._pool_is_running() and check_iterator_cleanup() is False:
+                    result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, qid, []])
+                else:
+                    return self.py_callable(*args)
             else:
                 result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, -1, *args])
 
@@ -3525,7 +3528,11 @@ class SamplerFn:
         self.pid = []
         # Event for end of epoch
         if multi_process is True:
-            self.eof = multiprocessing.Event()
+            try:
+                self.eof = multiprocessing.Event()
+            except:
+                raise RuntimeError("Init multiprocessing.Event() failed, This might be caused by insufficient shm,"
+                                   + " and the recommended shm size is at least 5 GB.")
         else:
             self.eof = threading.Event()
         # Create workers
@@ -3537,7 +3544,11 @@ class SamplerFn:
 
         for _ in range(num_worker):
             if multi_process is True:
-                worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size)
+                try:
+                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size)
+                except:
+                    raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm,"
+                                       + " and the recommended shm size is at least 5 GB.")
                 worker.daemon = True
                 # When multi processes fork a subprocess, the lock of the main process is copied to the subprocess,
                 # which may cause deadlock. Therefore, the subprocess startup is performed in che initialization phase.
@@ -3921,7 +3932,7 @@ class GeneratorDataset(MappableDataset):
                     new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
                 new_op.sample_fn = sample_fn
             except RuntimeError as e:
-                raise Exception("Init failed during deepcopy, reason is", e.message)
+                raise Exception(str(e))
         else:
             try:
                 new_op.sampler = None
