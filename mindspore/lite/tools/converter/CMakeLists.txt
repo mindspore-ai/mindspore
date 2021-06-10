@@ -18,6 +18,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graphdef_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/optimizer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/export_model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
@@ -176,7 +177,7 @@ target_link_libraries(converter_lite PRIVATE
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid
-        mslite_converter_plugin_reg
+        mslite_converter_plugin
         tflite_parser_mid
         tf_parser_mid
         caffe_parser_mid
