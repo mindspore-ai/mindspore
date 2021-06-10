@@ -27,7 +27,7 @@ from ..._c_expression import EventWriter_
 from ._summary_adapter import package_init_event
 
 FREE_DISK_SPACE_TIMES = 32
-FILE_MODE = 0o600
+FILE_MODE = 0o400
 
 
 class BaseWriter:
@@ -77,6 +77,10 @@ class BaseWriter:
 
     def close(self):
         """Close the writer."""
+        try:
+            os.chmod(self._filepath, FILE_MODE)
+        except FileNotFoundError:
+            pass
         if self._writer is not None:
             self._writer.Shut()
 
