@@ -13,29 +13,28 @@
 # limitations under the License.
 # ============================================================================
 """
-convert utils for second order optimizer: thor
+Conversion interface for second-order optimizer thor
 """
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import context
 
 
-class ConvertNetUntils():
+class ConvertNetUtils():
     """
     Convert net to thor layer net
     """
     def __init__(self):
-        self._convert_method_map = {nn.Dense: ConvertNetUntils._convert_dense,
-                                    nn.Embedding: ConvertNetUntils._convert_embedding,
-                                    nn.Conv2d: ConvertNetUntils._convert_conv2d}
+        self._convert_method_map = {nn.Dense: ConvertNetUtils._convert_dense,
+                                    nn.Embedding: ConvertNetUtils._convert_embedding,
+                                    nn.Conv2d: ConvertNetUtils._convert_conv2d}
 
 
     @staticmethod
     def _convert_dense(subcell):
         """
-        convert dense cell to second_order cell
+        Convert dense cell to second-order cell
         """
-
         weight = subcell.weight
         act_name = None
         if subcell.activation_flag:
@@ -69,7 +68,7 @@ class ConvertNetUntils():
     @staticmethod
     def _convert_embedding(subcell):
         """
-        convert embedding cell to second_order cell
+        Convert embedding cell to second-order cell
         """
         new_subcell = nn.EmbeddingThor(vocab_size=subcell.vocab_size,
                                        embedding_size=subcell.embedding_size,
@@ -81,7 +80,7 @@ class ConvertNetUntils():
     @staticmethod
     def _convert_conv2d(subcell):
         """
-        convert conv2d cell to second_order cell
+        Convert conv2d cell to second-order cell
         """
         out_channel = subcell.out_channels
         in_channel = subcell.in_channels
@@ -99,7 +98,7 @@ class ConvertNetUntils():
 
     def _convert_to_thor_net(self, net):
         """
-        convert net to thor net
+        Convert net to thor net
         """
         cells = net.name_cells()
         change = False
@@ -131,25 +130,76 @@ class ConvertNetUntils():
 
     def convert_to_thor_net(self, net):
         """
-        api for convert net to thor net
+        This interface is used to convert a network to thor layer network, in order to calculate and store the
+        second-order information matrix.
+
+        Notes:
+        This interface is automatically called by the second-order optimizer thor.
+
+        Args:
+        net (Cell): network to be trained by the second-order optimizer thor.
+
+        Examples:
+        >>> ConvertNetUtils().convert_to_thor_net(net)
         """
+
         net.update_cell_prefix()
         self._convert_to_thor_net(net)
-        net.update_cell_type("second_order")
+        net.update_cell_type("second-order")
 
 
 class ConvertModelUtils():
     """
-    convert model to thor model utils
+    Convert model to thor model.
     """
-
     @staticmethod
     def convert_to_thor_model(model, network, loss_fn=None, optimizer=None, metrics=None, amp_level="O0",
                               loss_scale_manager=None, keep_batchnorm_fp32=False):
+        """
+        This interface is used to convert model to thor model.
 
+        Args:
+            model (Object): High-Level API for Training.
+                            `Model` groups layers into an object with training features.
+            network (Cell): A training network.
+            loss_fn (Cell): Objective function. Default: None.
+            optimizer (Cell): Optimizer used to updating the weights. Default: None.
+            metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
+                                        training. eg: {'accuracy', 'recall'}. Default: None.
+            amp_level (str): Level for mixed precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
+                - O0: Do not change.
+                - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
+                - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
+                - auto: Set level to recommended level in different devices. O2 is recommended on GPU, O3 is
+                  recommended on Ascend. The recommended level is based on the expert experience, cannot
+                  always generalize. User should specify the level for special network.
+            loss_scale_manager (Union[None, LossScaleManager]): If it is None, the loss would not be scaled.
+                Otherwise, scale the loss by LossScaleManager and optimizer can not be None. It is a key argument.
+                e.g. Use `loss_scale_manager=None` to set the value.
+            keep_batchnorm_fp32 (bool): Keep Batchnorm running in `float32`. If True, the level setting before
+                will be overwritten. Default: True.
+
+        Returns:
+             model (Object): High-Level API for Training.
+                            `Model` groups layers into an object with training features.
+
+        Examples:
+            >>> from mindspore.nn.optim import thor
+            >>> from mindspore.train.model import Model
+            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
+            >>>
+            >>> net = Net()
+            >>> loss_manager = FixedLossScaleManager(128, drop_overflow_update=False)
+            >>> opt = thor(net, lr, damping, momentum=0.9, weight_decay=1e-4, loss_scale=128, batch_size=32,
+            ...            frequency=100)
+            >>> model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_manager, metrics={"acc"},
+            ...               amp_level="O2", keep_batchnorm_fp32=False)
+            >>> model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
+            ...                                                   metrics={'acc'}, amp_level="O2",
+            ...                                                   loss_scale_manager=loss_manager,
+            ...                                                   keep_batchnorm_fp32=False)
         """
-        api for convert model to thor model
-        """
+
         optim_name = type(optimizer).__name__
         if optim_name in ("ThorAscend", "ThorGpu"):
             from .model_thor import ModelThor
