@@ -18,8 +18,6 @@
 #include "runtime/device/ascend/executor/rts/memcpy_rts_dynamic_kernel.h"
 #include "runtime/device/ascend/executor/rts/profiling_rts_dynamic_kernel.h"
 #include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
-#include "profiler/device/ascend/rt_callback_manager.h"
-#include "profiler/device/ascend/ascend_profiling.h"
 #include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
 #include "backend/kernel_compiler/host/host_kernel_metadata.h"
 #include "backend/kernel_compiler/host/host_kernel_build.h"
@@ -47,23 +45,6 @@ void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode, const o
                      NotNull<optiling::OpRunInfo *> op_run_info) {}
 }  // namespace ascend
 }  // namespace device
-}  // namespace mindspore
-
-namespace mindspore {
-namespace profiler {
-namespace ascend {
-CallbackManager::CallbackManager(rtStream_t stream) : stream_(stream) {}
-Status CallbackManager::Destroy() { return kSuccess; }
-Status CallbackManager::RegisterCallback(rtCallback_t callback, const void *user_data) { return kSuccess; }
-Status CallbackManager::RegisterCallback(const std::function<void()> &callback) { return kSuccess; }
-
-AscendProfiler::AscendProfiler() : counter_(0) { Reset(); }
-
-void AscendProfiler::Dump(std::ostream &output_stream) {}
-
-void AscendProfiler::Reset() {}
-}  // namespace ascend
-}  // namespace profiler
 }  // namespace mindspore
 
 namespace mindspore {
