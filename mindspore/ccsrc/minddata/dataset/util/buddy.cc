@@ -35,11 +35,14 @@ inline uint64_t BitAnd(uint64_t rhs, uint64_t lhs) { return rhs & lhs; }
 namespace mindspore {
 namespace dataset {
 Status BuddySpace::Init() {
+  const int32_t kBitOffset = 3;
+  const int32_t kLvlMin = 3;
+  const int32_t kLvlMax = 18;
   if (log_min_ < 0) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "log_min must be positive : " + std::to_string(log_min_));
   }
-  if (num_lvl_ < 3 || num_lvl_ > 18) {
+  if (num_lvl_ < kLvlMin || num_lvl_ > kLvlMax) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "num_lvl must be between 3 and 18 : " + std::to_string(num_lvl_));
   }
@@ -47,7 +50,7 @@ Status BuddySpace::Init() {
   max_ = BitLeftShift(1, log_min_ + num_lvl_ - 1);
   size_t offset_1 = sizeof(rel_addr_t) * num_lvl_;
   size_t offset_2 = sizeof(int) * num_lvl_ + offset_1;
-  size_t offset_3 = sizeof(char) * BitLeftShift(1, num_lvl_ - 3) + offset_2;
+  size_t offset_3 = sizeof(char) * BitLeftShift(1, num_lvl_ - kBitOffset) + offset_2;
   try {
     mem_ = std::make_unique<uint8_t[]>(offset_3);
   } catch (const std::bad_alloc &e) {
@@ -59,7 +62,7 @@ Status BuddySpace::Init() {
   count_ = reinterpret_cast<int *>((reinterpret_cast<char *>(ptr) + offset_1));
   map_ = reinterpret_cast<char *>(ptr) + offset_2;
   count_[num_lvl_ - 1] = 1;
-  map_[0] = BitOr(MORE_BIT, num_lvl_ - 3);
+  map_[0] = BitOr(MORE_BIT, num_lvl_ - kBitOffset);
   return Status::OK();
 }
 
@@ -104,6 +107,7 @@ void BuddySpace::Free(const BSpaceDescriptor *desc) {
 }
 
 std::ostream &operator<<(std::ostream &os, const BuddySpace &s) {
+  const int32_t kLvlOffset = 4;
   os << "1 unit = " << s.GetMinSize() << "\n"
      << "Size of buddy space = " << s.GetMaxSize() << "\n"
      << "Number of levels = " << s.num_lvl_ << "\n\n"
@@ -112,7 +116,7 @@ std::ostream &operator<<(std::ostream &os, const BuddySpace &s) {
      << "\n";
   for (int i = 0; i < s.num_lvl_; i++) {
     os << "[" << i << "] = " << s.count_[i] << " ";
-    if (((i + 1) % 4) == 0) {
+    if (((i + 1) % kLvlOffset) == 0) {
       os << "\n";
     }
   }
@@ -134,29 +138,33 @@ std::ostream &operator<<(std::ostream &os, const BuddySpace &s) {
 }
 
 void BuddySpace::GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STATE *st) const {
+  const int32_t kAddrOffset = 4;
+  const int32_t kBitLeftShift = 2;
+  const int32_t kPosOffset = 2;
+  const int32_t kShiftOffset = 2;
   char byte;
   int pos;
   int offset;
   uint64_t val = 0;
   int shift;
-  pos = BitRightShift(rel_addr, 2);
-  offset = rel_addr % 4;
-  shift = offset * 2;
+  pos = BitRightShift(rel_addr, kPosOffset);
+  offset = rel_addr % kAddrOffset;
+  shift = offset * kShiftOffset;
   byte = map_[pos];
   switch (offset) {
     case 0:
       val = byte;
       break;
     case 1:
+    case 2:
+      val = BitLeftShift(BitAnd(byte, 0x0F), shift);
+      break;
     case 3:
       if (offset == 1) {
         val = BitLeftShift(BitAnd(byte, 0x30), shift);
       } else {
         val = BitLeftShift(BitAnd(byte, 0x03), shift);
       }
-      break;
-    case 2:
-      val = BitLeftShift(BitAnd(byte, 0x0F), shift);
       break;
   }
   if (BitAnd(val, ONE_BIT)) {
@@ -165,7 +173,7 @@ void BuddySpace::GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STA
     *rel_sz = 2;
   } else if (BitAnd(val, MORE_BIT)) {
     log_t lg = BitAnd(val, 0x0F);
-    *rel_sz = BitLeftShift(1, lg + 2);
+    *rel_sz = BitLeftShift(1, lg + kBitLeftShift);
   } else {
     *st = STATE::kEmpty;
     return;
@@ -174,6 +182,10 @@ void BuddySpace::GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STA
 }
 
 void BuddySpace::SetBuddySegState(rel_addr_t rel_addr, size_t rel_sz, STATE st) {
+  const int32_t kAddrOffset = 4;
+  const int32_t kBitOffset = 2;
+  const int32_t kPosOffset = 2;
+  const int32_t kShiftOffset = 2;
   int clr;
   int mask;
   int pos;
@@ -181,9 +193,9 @@ void BuddySpace::SetBuddySegState(rel_addr_t rel_addr, size_t rel_sz, STATE st) 
   int val = 0;
   int shift;
   auto log_sz = static_cast<log_t>(Log2(rel_sz));
-  pos = BitRightShift(rel_addr, 2);
-  offset = rel_addr % 4;
-  shift = offset * 2;
+  pos = BitRightShift(rel_addr, kPosOffset);
+  offset = rel_addr % kAddrOffset;
+  shift = offset * kShiftOffset;
   if (rel_sz == 1) {
     val = ONE_BIT;
     mask = 0xC0;
@@ -191,7 +203,7 @@ void BuddySpace::SetBuddySegState(rel_addr_t rel_addr, size_t rel_sz, STATE st) 
     val = TWO_BIT;
     mask = 0xF0;
   } else {
-    val = BitOr(log_sz - 2, MORE_BIT);
+    val = BitOr(log_sz - kBitOffset, MORE_BIT);
     mask = 0xFF;
   }
   if (st == STATE::kAlloc) {
@@ -215,6 +227,7 @@ void BuddySpace::SetBuddySegState(rel_addr_t rel_addr, size_t rel_sz, STATE st) 
 }
 
 void BuddySpace::JoinBuddySeg(rel_addr_t addr, size_t blk_sz) {
+  const int32_t kLogszStep = 2;
   while (blk_sz < BitLeftShift(1, num_lvl_)) {
     rel_addr_t buddy = BitEx(addr, blk_sz);
     size_t sz = 0;
@@ -225,7 +238,7 @@ void BuddySpace::JoinBuddySeg(rel_addr_t addr, size_t blk_sz) {
       rel_addr_t left = (buddy < addr) ? buddy : addr;
       rel_addr_t right = left + blk_sz;
       MS_ASSERT(count_[log_sz] >= 2);
-      count_[log_sz] -= 2;
+      count_[log_sz] -= kLogszStep;
       SetBuddySegState(right, blk_sz, STATE::kEmpty);
       SetBuddySegState(left, BitLeftShift(blk_sz, 1), STATE::kFree);
       for (int i = 0; i < log_sz; i++) {
@@ -344,6 +357,7 @@ void BuddySpace::FreeBuddySeg(rel_addr_t addr, size_t blk_size, size_t req_size)
 }
 
 int BuddySpace::PercentFree() const {
+  const int32_t kFloatToPercent = 100;
   uint64_t total_free_sz = 0;
   uint64_t max_sz_in_unit = BitLeftShift(1, num_lvl_ - 1);
   // Go through the count array without lock
@@ -355,7 +369,7 @@ int BuddySpace::PercentFree() const {
     uint64_t blk_sz = BitLeftShift(1, i);
     total_free_sz += (blk_sz * cnt);
   }
-  return static_cast<int>(static_cast<float>(total_free_sz) / static_cast<float>(max_sz_in_unit) * 100);
+  return static_cast<int>(static_cast<float>(total_free_sz) / static_cast<float>(max_sz_in_unit) * kFloatToPercent);
 }
 
 BuddySpace::BuddySpace(int log_min, int num_lvl)

@@ -104,6 +104,7 @@ void RandomDataOp::Print(std::ostream &out, bool show_all) const {
 
 // Helper function to produce a default/random schema if one didn't exist
 void RandomDataOp::GenerateSchema() {
+  const int32_t kTypeOffset = 2;
   // To randomly create a schema, we need to choose:
   // a) how many columns
   // b) the type of each column
@@ -119,7 +120,7 @@ void RandomDataOp::GenerateSchema() {
     // For each column:
     // - choose a datatype
     // - generate a shape that randomly chooses the number of dimensions and the dimension values.
-    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - 2));
+    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - kTypeOffset));
     int32_t rank = GenRandomInt(1, kMaxRank);
     std::vector<dsize_t> dims;
     for (int32_t d = 0; d < rank; d++) {
@@ -350,7 +351,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
 
     // Generate a random byte of data.  This may cause some funny data for things like doubles,floats, bools
     // however the random data op is not too concerned about the physical data itself.
-    std::uniform_int_distribution<uint8_t> uniDist(0, 255);
+    std::uniform_int_distribution<uint8_t> uniDist(0, UINT8_MAX);
     uint8_t random_byte = uniDist(rand_gen_);
 
     // Now, create a chunk of memory for the entire tensor and copy this byte in repeatedly.
