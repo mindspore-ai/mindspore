@@ -33,6 +33,8 @@
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 #include "minddata/dataset/util/status.h"
 
+#define MAX_PIXEL_VALUE 255
+
 namespace mindspore {
 namespace dataset {
 void JpegErrorExitCustom(j_common_ptr cinfo);

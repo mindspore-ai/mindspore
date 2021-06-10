@@ -75,11 +75,11 @@ class MDToDApi {
 std::vector<std::string> MDToDBuffToVector(MDToDBuff_t StrBuff) {
   std::vector<std::string> strVector;
   if (StrBuff.DataSize > 0) {
-    const char *p = reinterpret_cast<char *>(StrBuff.Buff);
+    const char *p = static_cast<char *>(StrBuff.Buff);
     do {
       strVector.push_back(std::string(p));
       p += strVector.back().size() + 1;
-    } while (p < reinterpret_cast<char *>(StrBuff.Buff) + StrBuff.DataSize);
+    } while (p < static_cast<char *>(StrBuff.Buff) + StrBuff.DataSize);
   }
   return strVector;
 }
@@ -93,11 +93,12 @@ int MDToDApi_pathTest(const char* path) {
   auto dir_it = Path::DirIterator::OpenDirectory(&f);
   MS_LOG(INFO) << dir_it.get();
   int i = 0;
+  const int path_len_limit = 5;
   while (dir_it->hasNext()) {
     Path v = dir_it->next();
     MS_LOG(INFO) << v.toString() << "\n";
     i++;
-    if (i > 5) break;
+    if (i > path_len_limit) break;
   }
   return 0;
 }
@@ -181,7 +182,7 @@ void MDBuffToVector(const MDToDBuff_t &MDBuff, std::vector<T> *vec) {
 template <typename T>
 void GetValue(std::unordered_map<std::string, std::shared_ptr<Tensor>> row, std::string columnName, T *o) {
   auto column = row[columnName];
-  if (NULL != column) {
+  if (column != NULL) {
     MS_LOG(INFO) << "Tensor " << columnName << " shape: " << column->shape() << " type: " << column->type()
                  << " bytes: " << column->SizeInBytes();
     column->GetItemAt<T>(o, {});
@@ -199,7 +200,7 @@ void GetTensorToBuff(std::unordered_map<std::string, std::shared_ptr<Tensor>> ro
   resBuff->TensorSize[0] = resBuff->TensorSize[1] = resBuff->TensorSize[2] = resBuff->TensorSize[3] =
     0;  // Mark all dims do not exist in tensor
   int firstDim = (hasBatch) ? 1 : 0;
-  if (NULL != column) {
+  if (column != NULL) {
     MS_LOG(INFO) << "Tensor " << columnName << " shape: " << column->shape() << " type: " << column->type()
                  << " bytes: " << column->SizeInBytes() << "nof elements: " << column->shape()[firstDim];
     auto tesoreShape = column->shape().AsVector();
@@ -241,7 +242,7 @@ void GetTensorToBuff(std::unordered_map<std::string, std::shared_ptr<Tensor>> ro
       }
       MS_LOG(INFO) << columnName << " " << resBuff->DataSize
                    << " bytesCopyed to buff (MaxBuffSize: " << resBuff->MaxBuffSize << ") ";
-      if (0 == resBuff->DataSize) {
+      if (resBuff->DataSize == 0) {
         MS_LOG(ERROR) << "COPY FAIL!!!! " << columnName << " Too large"
                       << ".";  // memcpy failed
       }
@@ -372,7 +373,7 @@ extern "C" int MDToDApi_UpdateEmbeding(MDToDApi *pMDToDApi, const char *column, 
   MS_LOG(INFO) << "Saved file " << embedding_file_path;
 
   std::string file_path;
-  if (0 != GetJsonFullFileName(pMDToDApi, &file_path)) {
+  if (GetJsonFullFileName(pMDToDApi, &file_path) != 0) {
     MS_LOG(ERROR) << "Failed to update " << columnName;
     return -1;
   }
@@ -389,7 +390,7 @@ extern "C" int MDToDApi_UpdateEmbeding(MDToDApi *pMDToDApi, const char *column, 
 extern "C" int MDToDApi_UpdateStringArray(MDToDApi *pMDToDApi, const char *column, MDToDBuff_t MDbuff) {
   auto columnName = std::string(column);
   std::string file_path;
-  if (0 != GetJsonFullFileName(pMDToDApi, &file_path)) {
+  if (GetJsonFullFileName(pMDToDApi, &file_path) != 0) {
     MS_LOG(ERROR) << "Failed to update " << columnName;
     return -1;
   }
@@ -414,7 +415,7 @@ extern "C" int MDToDApi_UpdateStringArray(MDToDApi *pMDToDApi, const char *colum
 extern "C" int MDToDApi_UpdateFloatArray(MDToDApi *pMDToDApi, const char *column, MDToDBuff_t MDBuff) {
   auto columnName = std::string(column);
   std::string file_path;
-  if (0 != GetJsonFullFileName(pMDToDApi, &file_path)) {
+  if (GetJsonFullFileName(pMDToDApi, &file_path) != 0) {
     MS_LOG(ERROR) << "Failed to updaet " << columnName;
     return -1;
   }

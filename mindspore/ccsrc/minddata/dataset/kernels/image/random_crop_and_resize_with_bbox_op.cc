@@ -31,8 +31,8 @@ Status RandomCropAndResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow 
   RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
   CHECK_FAIL_RETURN_UNEXPECTED(input[0]->shape().Size() >= 2,
                                "RandomCropAndResizeWithBBox: image shape is not <H,W,C> or <H,W>.");
-
-  output->resize(2);
+  const int output_count = 2;
+  output->resize(output_count);
   (*output)[1] = std::move(input[1]);  // move boxes over to output
 
   size_t bboxCount = input[1]->shape()[0];  // number of rows in bbox tensor

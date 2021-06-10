@@ -106,17 +106,21 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
         const int k = scanline_ptr[cmyk_pixel + 3];
         int r, g, b;
         if (cinfo->saw_Adobe_marker) {
-          r = (k * c) / 255;
-          g = (k * m) / 255;
-          b = (k * y) / 255;
+          r = (k * c) / MAX_PIXEL_VALUE;
+          g = (k * m) / MAX_PIXEL_VALUE;
+          b = (k * y) / MAX_PIXEL_VALUE;
         } else {
-          r = (255 - c) * (255 - k) / 255;
-          g = (255 - m) * (255 - k) / 255;
-          b = (255 - y) * (255 - k) / 255;
+          r = (MAX_PIXEL_VALUE - c) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
+          g = (MAX_PIXEL_VALUE - m) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
+          b = (MAX_PIXEL_VALUE - y) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
         }
-        buffer[3 * i + 0] = r;
-        buffer[3 * i + 1] = g;
-        buffer[3 * i + 2] = b;
+        constexpr int buffer_rgb_val_size = 3;
+        constexpr int channel_red = 0;
+        constexpr int channel_green = 1;
+        constexpr int channel_blue = 2;
+        buffer[buffer_rgb_val_size * i + channel_red] = r;
+        buffer[buffer_rgb_val_size * i + channel_green] = g;
+        buffer[buffer_rgb_val_size * i + channel_blue] = b;
       }
     } else if (num_lines_read > 0) {
       auto copy_status = memcpy_s(buffer, buffer_size, scanline_ptr + offset, stride);
@@ -316,14 +320,17 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   if (input->type() != DataType::DE_UINT8 && input->type() != DataType::DE_FLOAT32) {
     RETURN_STATUS_UNEXPECTED("Normalize: image datatype is not uint8 or float32.");
   }
-
+  const dsize_t mean_std_expected_rank = 1;
+  const dsize_t mean_std_expected_shape = 3;
   mean->Squeeze();
-  if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
+  if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != mean_std_expected_rank ||
+      mean->shape()[0] != mean_std_expected_shape) {
     std::string err_msg = "Normalize: mean should be of size 3 and type float.";
     return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   std->Squeeze();
-  if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
+  if (std->type() != DataType::DE_FLOAT32 || std->Rank() != mean_std_expected_rank ||
+      std->shape()[0] != mean_std_expected_shape) {
     std::string err_msg = "Normalize: std should be of size 3 and type float.";
     return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
@@ -331,7 +338,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   std::vector<float> vec_mean;
   std::vector<float> vec_std;
   try {
-    for (uint8_t i = 0; i < 3; i++) {
+    for (uint8_t i = 0; i < mean_std_expected_shape; i++) {
       float mean_c, std_c;
       RETURN_IF_NOT_OK(mean->GetItemAt<float>(&mean_c, {i}));
       RETURN_IF_NOT_OK(std->GetItemAt<float>(&std_c, {i}));
@@ -380,8 +387,9 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     RETURN_STATUS_UNEXPECTED("Resize: image datatype is not uint8.");
   }
   // resize image too large or too small
-  if (output_height == 0 || output_height > input->shape()[0] * 1000 || output_width == 0 ||
-      output_width > input->shape()[1] * 1000) {
+  const int height_width_scale_limit = 1000;
+  if (output_height == 0 || output_height > input->shape()[0] * height_width_scale_limit || output_width == 0 ||
+      output_width > input->shape()[1] * height_width_scale_limit) {
     std::string err_msg =
       "Resize: the resizing width or height 1) is too big, it's up to "
       "1000 times the original image; 2) can not be 0.";
