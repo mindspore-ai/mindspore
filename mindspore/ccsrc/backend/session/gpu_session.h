@@ -88,6 +88,8 @@ class GPUSession : public SessionBasic {
 
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
+  void DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+
   bool DumpDataEnabledIteration() const;
 
   GraphId CompileGraphImpl(KernelGraphPtr kernel_graph);

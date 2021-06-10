@@ -60,7 +60,6 @@ class DumpJsonParser {
   bool OutputNeedDump() const;
   std::string GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const;
   void UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph);
-  bool AsyncDumpEnabled() const { return async_dump_enabled_; }
 
  private:
   DumpJsonParser() = default;

@@ -240,7 +240,17 @@ void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const st
 void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t cur_iter = dump_json_parser.cur_dump_iter();
-  if (dump_json_parser.AsyncDumpEnabled() && dump_json_parser.IsDumpIter(cur_iter)) {
+  uint32_t graph_id = graph->graph_id();
+
+  if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
+    if (starting_graph_id == INT32_MAX) {
+      starting_graph_id = graph_id;
+    } else if (starting_graph_id == graph_id) {
+      dump_json_parser.UpdateDumpIter();
+    }
+  }
+
+  if (dump_json_parser.async_dump_enabled() && dump_json_parser.IsDumpIter(cur_iter)) {
     auto zero_dir_dump_path =
       dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
 
@@ -291,7 +301,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     DumpOutput(graph, dump_path, debugger);
     DumpParametersAndConst(graph, dump_path, debugger);
     success = true;
-  } else if (dump_json_parser.AsyncDumpEnabled()) {
+  } else if (dump_json_parser.async_dump_enabled()) {
     uint32_t current_iter = dump_json_parser.cur_dump_iter();
 
     auto zero_dir_dump_path =
@@ -334,14 +344,6 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     }
 
     success = true;
-  }
-
-  if (starting_graph_id == INT32_MAX) {
-    starting_graph_id = graph_id;
-  } else {
-    if (starting_graph_id == graph_id) {
-      dump_json_parser.UpdateDumpIter();
-    }
   }
 
   return success;
