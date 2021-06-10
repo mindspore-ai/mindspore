@@ -183,9 +183,11 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
   cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
                                           CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
   context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
-
-  if (ret != CL_SUCCESS) {
+  if (context_ == nullptr || ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Create special OpenCL context failed, Create common OpenCL context then.";
+    if (context_ != nullptr) {
+      delete context_;
+    }
     context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
     if (context_ == nullptr) {
       delete device_;
@@ -209,14 +211,14 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
   context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
 #endif
 #endif
-  if (ret != CL_SUCCESS) {
+  if (context_ == nullptr || ret != CL_SUCCESS) {
     delete device_;
     MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
 
   default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, 0, &ret);
-  if (ret != CL_SUCCESS) {
+  if (default_command_queue_ == nullptr || ret != CL_SUCCESS) {
     delete device_;
     delete context_;
     MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(ret);
@@ -224,7 +226,7 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
   }
 
   profiling_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, CL_QUEUE_PROFILING_ENABLE, &ret);
-  if (ret != CL_SUCCESS) {
+  if (profiling_command_queue_ == nullptr || ret != CL_SUCCESS) {
     delete device_;
     delete context_;
     delete default_command_queue_;

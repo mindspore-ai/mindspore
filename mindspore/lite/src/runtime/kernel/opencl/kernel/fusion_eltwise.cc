@@ -44,69 +44,89 @@ static std::set<EltwiseOperator> SupportedOperators = {
   Operator_Act_TANH,
 };
 
-std::pair<bool, FusionEltwiseParameter *> CheckSupportOrCreateParam(
-  LiteKernel *node, bool create_param = false,
-  const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {}) {
+bool CheckSupport(LiteKernel *node) {
   MS_ASSERT(node);
   PrimitiveType node_type = node->type();
   auto operator_ = static_cast<const EltwiseOperator>(node_type);
   auto *op_parameter = reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter();
-  bool support = false;
-  FusionEltwiseParameter *param = nullptr;
 
   if (node_type == PrimitiveType_FusionEltwise) {
-    support = true;
-    if (create_param) {
-      auto *eltwise = reinterpret_cast<FusionEltwiseOpenCLKernel *>(node->kernel());
-      param = reinterpret_cast<FusionEltwiseParameter *>(eltwise->GetParameter());
-      eltwise->ClearParameter();
-    }
-  } else if (IsArithmetic(node_type) || node_type == schema::PrimitiveType_ScaleFusion) {
+    return true;
+  }
+  if (IsArithmetic(node_type) || node_type == schema::PrimitiveType_ScaleFusion) {
     auto *arith_param = reinterpret_cast<ArithmeticParameter *>(op_parameter);
     auto *scale_param = reinterpret_cast<ScaleParameter *>(op_parameter);
     auto act_type = static_cast<ActivationType>(
       node_type == schema::PrimitiveType_ScaleFusion ? scale_param->activation_type_ : arith_param->activation_type_);
     EltwiseOperator act_operator = Activation2Operator(act_type);
-    support = SupportedOperators.count(operator_) && SupportedOperators.count(act_operator);
+    auto support = SupportedOperators.count(operator_) && SupportedOperators.count(act_operator);
     if (node_type == schema::PrimitiveType_ScaleFusion) {
-      support = support && node->in_tensors().size() == INPUT_TENSOR_SIZE_3 && scale_param->axis_ == -1;
+      return support && node->in_tensors().size() == INPUT_TENSOR_SIZE_3 && scale_param->axis_ == -1;
     } else {
-      support = support && (node->in_tensors().size() == INPUT_TENSOR_SIZE_2);
-    }
-    if (create_param) {
-      param = new (std::nothrow) FusionEltwiseParameter(operator_, node->name(), node->in_tensors(), replace_map);
-      MS_ASSERT(param);
-      if (act_operator != Operator_Act_NO_ACTIVATION) {
-        std::string act_name = schema::EnumNameActivationType(act_type);
-        auto *fake_tensor = reinterpret_cast<lite::Tensor *>(param);
-        param =
-          new (std::nothrow) FusionEltwiseParameter(act_operator, act_name, {fake_tensor}, {{fake_tensor, param}});
-        MS_ASSERT(param);
-      }
-    }
-  } else if (IsArithmeticSelf(node_type)) {
-    support = node->in_tensors().size() == INPUT_TENSOR_SIZE_1 && SupportedOperators.count(operator_);
-    if (create_param) {
-      param = new (std::nothrow) FusionEltwiseParameter(operator_, node->name(), node->in_tensors(), replace_map);
-      MS_ASSERT(param);
-    }
-  } else if (node_type == schema::PrimitiveType_Activation) {
-    auto act_type = static_cast<ActivationType>(reinterpret_cast<ActivationParameter *>(op_parameter)->type_);
-    EltwiseOperator act_operator = Activation2Operator(act_type);
-    support = node->in_tensors().size() == 1 && SupportedOperators.count(act_operator);
-    if (create_param) {
-      param = new (std::nothrow) FusionEltwiseParameter(act_operator, node->name(), node->in_tensors(), replace_map);
-      MS_ASSERT(param);
+      return support && (node->in_tensors().size() == INPUT_TENSOR_SIZE_2);
     }
   }
-  return {support, param};
+  if (IsArithmeticSelf(node_type)) {
+    return node->in_tensors().size() == INPUT_TENSOR_SIZE_1 && SupportedOperators.count(operator_);
+  }
+  if (node_type == schema::PrimitiveType_Activation) {
+    auto act_type = static_cast<ActivationType>(reinterpret_cast<ActivationParameter *>(op_parameter)->type_);
+    EltwiseOperator act_operator = Activation2Operator(act_type);
+    return node->in_tensors().size() == 1 && SupportedOperators.count(act_operator);
+  }
+  return false;
 }
 
-bool IsOperatorSupported(LiteKernel *node) { return CheckSupportOrCreateParam(node).first; }
+FusionEltwiseParameter *CreateParam(LiteKernel *node,
+                                    const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {}) {
+  MS_ASSERT(node);
+  PrimitiveType node_type = node->type();
+  auto operator_ = static_cast<const EltwiseOperator>(node_type);
+  auto *op_parameter = reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter();
+  FusionEltwiseParameter *param = nullptr;
+
+  if (node_type == PrimitiveType_FusionEltwise) {
+    auto *eltwise = reinterpret_cast<FusionEltwiseOpenCLKernel *>(node->kernel());
+    param = reinterpret_cast<FusionEltwiseParameter *>(eltwise->GetParameter());
+    eltwise->ClearParameter();
+  }
+  if (IsArithmetic(node_type) || node_type == schema::PrimitiveType_ScaleFusion) {
+    auto *arith_param = reinterpret_cast<ArithmeticParameter *>(op_parameter);
+    auto *scale_param = reinterpret_cast<ScaleParameter *>(op_parameter);
+    auto act_type = static_cast<ActivationType>(
+      node_type == schema::PrimitiveType_ScaleFusion ? scale_param->activation_type_ : arith_param->activation_type_);
+    EltwiseOperator act_operator = Activation2Operator(act_type);
+    param = new (std::nothrow) FusionEltwiseParameter(operator_, node->name(), node->in_tensors(), replace_map);
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "FusionEltwiseParameter is nullptr.";
+      return nullptr;
+    }
+    if (act_operator != Operator_Act_NO_ACTIVATION) {
+      std::string act_name = schema::EnumNameActivationType(act_type);
+      auto *fake_tensor = reinterpret_cast<lite::Tensor *>(param);
+      param = new (std::nothrow) FusionEltwiseParameter(act_operator, act_name, {fake_tensor}, {{fake_tensor, param}});
+    }
+  }
+  if (IsArithmeticSelf(node_type)) {
+    param = new (std::nothrow) FusionEltwiseParameter(operator_, node->name(), node->in_tensors(), replace_map);
+  }
+  if (node_type == schema::PrimitiveType_Activation) {
+    auto act_type = static_cast<ActivationType>(reinterpret_cast<ActivationParameter *>(op_parameter)->type_);
+    EltwiseOperator act_operator = Activation2Operator(act_type);
+    param = new (std::nothrow) FusionEltwiseParameter(act_operator, node->name(), node->in_tensors(), replace_map);
+  }
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "Parameter is nullptr.";
+    return nullptr;
+  }
+  return param;
+}
+
+bool IsOperatorSupported(LiteKernel *node) { return CheckSupport(node); }
 
 FusionEltwiseParameter *CreateFusionEltwiseParameter(
   LiteKernel *node, const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map) {
-  return CheckSupportOrCreateParam(node, true, replace_map).second;
+  return CreateParam(node, replace_map);
 }
 
 bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
