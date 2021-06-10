@@ -24,6 +24,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kOutputNum = 2;
 void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
                                  std::vector<AnfNodePtr> *square_sum_all_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -40,7 +41,7 @@ void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars
   auto shapes = {shape, shape};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sum_all.get());
 
-  CreateMultipleOutputsOfAnfNode(graph, square_sum_all, 2, square_sum_all_outputs);
+  CreateMultipleOutputsOfAnfNode(graph, square_sum_all, kOutputNum, square_sum_all_outputs);
 }
 
 CNodePtr CreateLarsV2Update(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
