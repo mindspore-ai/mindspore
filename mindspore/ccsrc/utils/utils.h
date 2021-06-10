@@ -446,9 +446,11 @@ constexpr auto kCallKernelGraphIndex = 1;
 constexpr auto kSwitchTrueKernelGraphIndex = 2;
 constexpr auto kSwitchFalseKernelGraphIndex = 3;
 constexpr auto kMakeTupleInSwitchLayerIndex = 2;
+constexpr auto kSwitchLayerInputSize = 3;
 // index define of control depend
 constexpr auto kControlDependPriorIndex = 1;
 constexpr auto kControlDependBehindIndex = 2;
+constexpr auto kControlDependInputSize = 3;
 constexpr auto kControlDependMode = "depend_mode";
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
