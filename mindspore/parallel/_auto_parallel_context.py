@@ -479,24 +479,24 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_optimizer_weight_shard_size()
 
-    def set_optimizer_weight_shard_integrated_save(self, optimizer_weight_shard_integrated_save):
+    def set_optimizer_weight_shard_aggregated_save(self, optimizer_weight_shard_aggregated_save):
         """
-        Set optimizer_weight_shard_integrated_save.
+        Set optimizer_weight_shard_aggregated_save.
 
         Args:
-            optimizer_weight_shard_integrated_save (bool): Whether to integrated save weight shard when
+            optimizer_weight_shard_aggregated_save (bool): Whether to integrated save weight shard when
                                                            enable parallel optimizer.
         """
         self.check_context_handle()
-        if not isinstance(optimizer_weight_shard_integrated_save, bool):
-            raise TypeError('optimizer_weight_shard_integrated_save is invalid type')
-        self._context_handle.set_optimizer_weight_shard_integrated_save(optimizer_weight_shard_integrated_save)
+        if not isinstance(optimizer_weight_shard_aggregated_save, bool):
+            raise TypeError('optimizer_weight_shard_aggregated_save is invalid type')
+        self._context_handle.set_optimizer_weight_shard_aggregated_save(optimizer_weight_shard_aggregated_save)
 
 
-    def get_optimizer_weight_shard_integrated_save(self):
+    def get_optimizer_weight_shard_aggregated_save(self):
         """Get optimizer_weight_shard_size."""
         self.check_context_handle()
-        return self._context_handle.get_optimizer_weight_shard_integrated_save()
+        return self._context_handle.get_optimizer_weight_shard_aggregated_save()
 
 
     def reset(self):
@@ -557,7 +557,7 @@ _set_auto_parallel_context_func_map = {
     "all_reduce_fusion_config": auto_parallel_context().set_all_reduce_fusion_split_indices,
     "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().set_optimizer_weight_shard_size,
-    "optimizer_weight_shard_integrated_save": auto_parallel_context().set_optimizer_weight_shard_integrated_save}
+    "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save}
 
 
 _get_auto_parallel_context_func_map = {
@@ -578,7 +578,7 @@ _get_auto_parallel_context_func_map = {
     "all_reduce_fusion_config": auto_parallel_context().get_all_reduce_fusion_split_indices,
     "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().get_optimizer_weight_shard_size,
-    "optimizer_weight_shard_integrated_save": auto_parallel_context().get_optimizer_weight_shard_integrated_save}
+    "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
@@ -587,7 +587,7 @@ _get_auto_parallel_context_func_map = {
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int,
-                 optimizer_weight_shard_integrated_save=bool)
+                 optimizer_weight_shard_aggregated_save=bool)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -647,7 +647,7 @@ def _set_auto_parallel_context(**kwargs):
         optimizer_weight_shard_size (int): Set optimizer shard group size when not fully use parallel optimizer.
                                     It should be larger than one and less than or equal with the data parallel size.
                                     Default: -1, which means fully use parallel optimizer in data parallel dimension.
-        optimizer_weight_shard_integrated_save (bool): Whether to integrated save weight shard when enable parallel
+        optimizer_weight_shard_aggregated_save (bool): Whether to integrated save weight shard when enable parallel
                                                        optimizer. Default: False.
 
     Raises:

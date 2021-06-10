@@ -177,9 +177,9 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set opt shard group size when not fully use parallel optimizer.")
     .def("get_optimizer_weight_shard_size", &ParallelContext::optimizer_weight_shard_size,
          "Get opt shard group size when not fully use parallel optimizer.")
-    .def("set_optimizer_weight_shard_integrated_save", &ParallelContext::set_optimizer_weight_shard_integrated_save,
+    .def("set_optimizer_weight_shard_aggregated_save", &ParallelContext::set_optimizer_weight_shard_aggregated_save,
          "Set whether to integrated save weight shard when enable parallel optimizer.")
-    .def("get_optimizer_weight_shard_integrated_save", &ParallelContext::optimizer_weight_shard_integrated_save,
+    .def("get_optimizer_weight_shard_aggregated_save", &ParallelContext::optimizer_weight_shard_aggregated_save,
          "Get whether to integrated save weight shard when enable parallel optimizer.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 

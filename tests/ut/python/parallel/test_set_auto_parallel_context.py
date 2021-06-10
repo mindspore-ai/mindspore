@@ -59,8 +59,8 @@ def test_set_auto_parallel_context():
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
     assert parameter_broadcast_is_set
 
-    auto_parallel_context().set_optimizer_weight_shard_integrated_save(True)
-    integrated_save = auto_parallel_context().get_optimizer_weight_shard_integrated_save()
+    auto_parallel_context().set_optimizer_weight_shard_aggregated_save(True)
+    integrated_save = auto_parallel_context().get_optimizer_weight_shard_aggregated_save()
     assert integrated_save
 
     with pytest.raises(ValueError):
@@ -109,7 +109,7 @@ def test_reset_auto_parallel_context():
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
     stage = auto_parallel_context().get_pipeline_stages()
     communi_parallel_mode = context.get_auto_parallel_context("communi_parallel_mode")
-    integrated_save = auto_parallel_context().get_optimizer_weight_shard_integrated_save()
+    integrated_save = auto_parallel_context().get_optimizer_weight_shard_aggregated_save()
 
     assert device_num == 1
     assert global_rank == 0
