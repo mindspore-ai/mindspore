@@ -26,7 +26,7 @@ from mindspore import context
 from mindspore.context import ParallelMode
 from mindspore.nn.layer import DenseThor, Conv2dThor, EmbeddingThor
 from mindspore.nn.wrap import DistributedGradReducer
-from mindspore.train.train_thor.convert_utils import ConvertNetUntils
+from mindspore.train.train_thor.convert_utils import ConvertNetUtils
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 # Enumerates types of Layer
@@ -147,7 +147,7 @@ def get_layer_counter(layer_type, layer_counter, params, idx):
 def THOR(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32,
          use_nesterov=False, decay_filter=lambda x: x.name not in [], split_indices=None):
     context.set_context(max_call_depth=10000)
-    ConvertNetUntils().convert_to_thor_net(net)
+    ConvertNetUtils().convert_to_thor_net(net)
 
     return THOR_Ascend(net, learning_rate, damping, momentum, weight_decay, loss_scale, batch_size, decay_filter,
                        split_indices=split_indices)
@@ -486,12 +486,9 @@ class THOR_Ascend(Optimizer):
                     temp_max = self.mul(temp_max, self.batch_size / A_normalizer)
                     g = self.cube_matmul_left(temp_g, g)
                     g = self.cube_matmul_right_mul(g, temp_a, temp_max)
-                fake_A = self.assign(self.matrix_A[thor_layer_count], temp_a)
-                fake_G = self.assign(self.matrix_G[thor_layer_count], temp_g)
-                fake_max = self.assign(self.matrix_max_inv[thor_layer_count], temp_max)
-                g = F.depend(g, fake_A)
-                g = F.depend(g, fake_G)
-                g = F.depend(g, fake_max)
+                self.assign(self.matrix_A[thor_layer_count], temp_a)
+                self.assign(self.matrix_G[thor_layer_count], temp_g)
+                self.assign(self.matrix_max_inv[thor_layer_count], temp_max)
                 if i == 159:
                     new_grads = new_grads + (g, gradients[i + 1])
                 else:
