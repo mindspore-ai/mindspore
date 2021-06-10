@@ -461,6 +461,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   for (const auto &graph : all_graphs) {
+    graph->set_root_graph_id(root_graph->graph_id());
     UnifyMindIR(graph);
   }
   // Update Graph Dynamic Shape Attr

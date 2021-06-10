@@ -294,6 +294,10 @@ message GraphProto {
 
   // Constants used in this graph
   repeated NamedValueProto const_vals = 5;
+
+  // The name of the root_graph.
+  optional string root_name = 6;
+
 }
 
 // Tensors
