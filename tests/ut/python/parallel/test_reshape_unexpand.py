@@ -223,6 +223,7 @@ def test_reshape_unexpand_7():
             self.conv = nn.Conv2d(in_channels=in_channel, out_channels=out_channel,
                                   kernel_size=5, has_bias=True, weight_init='ones',
                                   bias_init='ones', pad_mode='valid')
+            self.conv.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
             self.softmax = nn.Softmax(axis=axis)
             self.relu = nn.ReLU()
             self.reshape = P.Reshape()

@@ -196,6 +196,7 @@ REGISTER(GatherNdInfo);
 REGISTER(TopKInfo);
 REGISTER(ScatterUpdateInfo);
 REGISTER(VirtualOutputInfo);
+REGISTER(Conv2DInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

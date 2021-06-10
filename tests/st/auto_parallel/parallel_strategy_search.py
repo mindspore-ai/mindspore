@@ -195,6 +195,7 @@ class ParallelStrategySearchNet(Cell):
                            kernel_size=5, has_bias=True,
                            weight_init='ones', bias_init='ones',
                            pad_mode='valid')
+        self.conv.conv2d.shard(((8, 1, 1, 1), (1, 1, 1, 1)))
         self.scalar = 0.5
         self.parameter = Parameter(
             initializer(0.5, test_size, dtype=mstype.float32),

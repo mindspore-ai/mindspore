@@ -313,6 +313,7 @@ Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_sh
                                        std::vector<StrategyPtr> *sp_vector);
 
 Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
+std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue);
 }  // namespace parallel
 }  // namespace mindspore
 

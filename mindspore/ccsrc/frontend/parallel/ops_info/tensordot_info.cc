@@ -43,22 +43,6 @@ static std::string AxesToString(const std::vector<int32_t> &shape) {
   return str + "]";
 }
 
-static std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue) {
-  MS_EXCEPTION_IF_NULL(sequeue);
-  std::vector<ValuePtr> ret;
-  if (!sequeue->isa<ValueTuple>() && !sequeue->isa<ValueList>()) {
-    MS_LOG(ERROR) << "The arg is not value tuple or value list";
-    return ret;
-  }
-
-  if (sequeue->isa<ValueTuple>()) {
-    auto val_tuple = sequeue->cast<ValueTuplePtr>();
-    return val_tuple->value();
-  }
-  auto val = sequeue->cast<ValueListPtr>();
-  return val->value();
-}
-
 void TensorDotInfo::ShowAxes() {
   if (axes_tuple_.size()) {
     MS_LOG(INFO) << name_ << ": The axes tuple is " << AxesToString(axes_tuple_);

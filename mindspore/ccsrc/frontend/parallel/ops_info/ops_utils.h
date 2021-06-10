@@ -188,6 +188,16 @@ constexpr char DEVICE[] = "Device";
 constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather";
 constexpr char CELLLIST_KEYWORD_PATTERN[] = "-CellList/(\\d+)-";
 
+constexpr char OUT_CHANNEL[] = "out_channel";
+constexpr char KERNEL_SIZE[] = "kernel_size";
+constexpr char MODE[] = "mode";
+constexpr char PAD_MODE[] = "pad_mode";
+constexpr char PAD_LIST[] = "pad_list";
+constexpr char STRIDE[] = "stride";
+constexpr char DILATION[] = "dilation";
+constexpr char FORMAT[] = "format";
+constexpr char NCHW[] = "NCHW";
+
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
 constexpr char GET_TENSOR_SLICE[] = "_GetTensorSlice";
