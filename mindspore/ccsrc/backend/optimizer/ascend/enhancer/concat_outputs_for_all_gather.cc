@@ -61,6 +61,7 @@ AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &
                                                             const std::vector<AnfNodePtr> &new_tuple_getitems,
                                                             int64_t rank_size) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
   size_t rank_size_t = LongToSize(rank_size);

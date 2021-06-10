@@ -35,10 +35,10 @@ class DealRefTransAndCast : public TransDataSplit {
  private:
   CNodePtr MakeDependency(const CNodePtr &getitem, const CNodePtr &final_node, const CNodePtr &cnode,
                           const FuncGraphPtr &func_graph) const;
-  CNodePtr SplitTransdataIfNotSupported(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
+  CNodePtr SplitTransDataIfNotSupported(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   void DealBroadCastAsRef(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
-  CNodePtr DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                              const std::shared_ptr<kernel::OpInfo> &op_info) const;
+  CNodePtr DealRefSingleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                               const std::shared_ptr<kernel::OpInfo> &op_info) const;
   CNodePtr DealRefForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                     const std::shared_ptr<kernel::OpInfo> &op_info) const;
   CNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t output_index,
