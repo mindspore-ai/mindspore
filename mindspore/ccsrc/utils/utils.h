@@ -552,7 +552,7 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
 
 const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
-const std::set<std::string> kOpCacheAllowList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
+const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
                                                  kGetNextOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {

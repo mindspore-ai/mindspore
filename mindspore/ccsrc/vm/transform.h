@@ -131,9 +131,6 @@ class CompileGraphs {
   BackendPtr backend_;
 };
 
-// Judge whether to use mindRT. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
-bool IsMindRTUsed();
-
 BackendPtr CreateBackend();
 
 }  // namespace compile

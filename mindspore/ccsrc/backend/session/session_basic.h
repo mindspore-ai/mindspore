@@ -181,6 +181,13 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
                                VectorRef *outputs,
                                std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
+  void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count);
+  void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<KernelWithIndex, size_t> *ref_count,
+                      std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map);
+
+  void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
+                       const std::map<KernelWithIndex, size_t> &ref_count,
+                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map, GraphOutputInfo *graph_output_info);
 
  protected:
   friend class Executor;

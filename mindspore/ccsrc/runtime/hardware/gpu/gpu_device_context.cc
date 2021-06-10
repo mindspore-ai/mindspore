@@ -292,7 +292,7 @@ void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const
 
 void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { CreateGPUKernel(nodes); }
 
-void GPUDeviceContext::UpdateKernelDynamicShape(const CNodePtr &kernel) const {
+void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 

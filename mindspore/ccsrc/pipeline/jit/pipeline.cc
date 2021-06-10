@@ -51,6 +51,7 @@
 #include "load_mindir/load_model.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "runtime/framework/actor/actor_common.h"
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
@@ -1090,13 +1091,14 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   auto backend = compile::CreateBackend();
   MS_EXCEPTION_IF_NULL(backend);
   // The data set graph compiling and running of mindRT.
-  if (compile::IsMindRTUsed()) {
+  if (IsMindRTUsed()) {
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
     auto &actor_info = mindrt_backend->CompileGraphs(func_graph);
     VectorRef args;
     if (need_run) {
-      (void)mindrt_backend->RunGraph(actor_info, args);
+      VectorRef outputs;
+      mindrt_backend->RunGraph(actor_info, args, &outputs);
     }
     ConfigManager::GetInstance().set_iter_num(size);
     return true;

@@ -108,8 +108,12 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
     }
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (output_address != nullptr && output_address->DeviceType() == device_context->GetDeviceAddressType()) {
-      AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
-                             value_node.get());
+      bool is_pynative_infer = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+      bool is_graph_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
+      if (is_graph_mode || is_pynative_infer) {
+        AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
+                               value_node.get());
+      }
       continue;
     }
 
@@ -372,50 +376,24 @@ void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const
   *graph_info = session_->GetSingleOpGraphInfo(kernel, input_tensors);
 }
 
-void GraphCompiler::RecoverGraphOutput(
-  const AnfNodePtr &kernel, const VectorRef &op_outputs,
-  const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
-  std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs,
-  std::vector<TensorPtr> *runop_output_tensors) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(op_output_map);
-  MS_EXCEPTION_IF_NULL(outputs);
-  std::vector<TensorPtr> output_tensors = TransformVectorRefToMultiTensor(op_outputs);
-  if (output_tensors.size() > op_outputs.size()) {
-    MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
-  }
-  size_t out_index = 0;
-  for (const auto &output_tensor : output_tensors) {
-    auto kernel_with_index = std::make_pair(kernel, out_index++);
-    (*op_output_map)[kernel_with_index] = output_tensor;
-    const auto &iter = output_indexes.find(kernel_with_index);
-    if (iter == output_indexes.end()) {
-      continue;
-    }
+void GraphCompiler::CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->GetRefCount(graph.get(), ref_count);
+}
 
-    const std::vector<std::vector<size_t>> &multiple_ref_indexes = iter->second;
-    for (const auto &ref_indexes : multiple_ref_indexes) {
-      size_t n = 0;
-      const VectorRef *cur_vector_ref = outputs;
-      for (; n < ref_indexes.size() - 1; n += 1) {
-        size_t index = ref_indexes.at(n);
-        if (index >= cur_vector_ref->size()) {
-          MS_LOG(EXCEPTION) << "Get invalid output ref index: " << index << ", size of vertor ref is "
-                            << cur_vector_ref->size();
-        }
+void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernels_with_index,
+                                   std::map<KernelWithIndex, size_t> *ref_count,
+                                   std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->HandleOpInputs(input_kernels_with_index, ref_count, op_output_map);
+}
 
-        const BaseRef &base_ref = (*cur_vector_ref)[index];
-        if (!utils::isa<VectorRef>(base_ref)) {
-          MS_LOG(EXCEPTION) << "Get none VectorRef by ref index, index: " << index << "cur n: " << n;
-        }
-        cur_vector_ref = &utils::cast<VectorRef>(base_ref);
-      }
-
-      BaseRef &tensor_ref = (*const_cast<VectorRef *>(cur_vector_ref))[ref_indexes.at(n)];
-      tensor_ref = output_tensor;
-      runop_output_tensors->emplace_back(output_tensor);
-    }
-  }
+void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
+                                       const std::map<KernelWithIndex, size_t> &ref_count,
+                                       std::map<KernelWithIndex, TensorPtr> *op_output_map,
+                                       GraphOutputInfo *graph_output_info) const {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->HandleOpOutputs(kernel, op_outputs, ref_count, op_output_map, graph_output_info);
 }
 
 void GraphCompiler::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {

@@ -75,7 +75,7 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
   if (CheckLaunchCondition(context)) {
     // Infer kernel shape and update abstract info for dynamic shape kernel.
     if (is_dynamic_shape_) {
-      device_context_->UpdateKernelDynamicShape(kernel_);
+      device_context_->UpdateDynamicShape(kernel_);
     }
 
     FetchInputDeviceTensor(context);
@@ -92,7 +92,7 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   if (CheckLaunchCondition(context)) {
     // Infer kernel shape and update abstract info for dynamic shape kernel.
     if (is_dynamic_shape_) {
-      device_context_->UpdateKernelDynamicShape(kernel_);
+      device_context_->UpdateDynamicShape(kernel_);
     }
 
     FetchInputDeviceTensor(context);

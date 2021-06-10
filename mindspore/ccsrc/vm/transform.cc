@@ -32,6 +32,7 @@
 #include "utils/ms_context.h"
 #include "debug/trace.h"
 #include "debug/anf_ir_dump.h"
+#include "runtime/framework/actor/actor_common.h"
 
 namespace mindspore {
 namespace compile {
@@ -520,10 +521,6 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
   MS_LOG(DEBUG) << "End";
   return rt;
 }
-
-// Judge whether to use mindRT. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
-// Return false in the transitional stage.
-bool IsMindRTUsed() { return false; }
 
 BackendPtr CreateBackend() {
   auto context_ptr = MsContext::GetInstance();
