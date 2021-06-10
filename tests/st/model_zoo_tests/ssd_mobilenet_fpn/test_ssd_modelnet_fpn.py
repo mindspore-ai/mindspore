@@ -55,4 +55,4 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
         loss = utils.get_loss_data_list(log_file.format(i))
         print("loss is", loss[-1])
         loss_list.append(loss[-1])
-    assert sum(loss_list) / len(loss_list) < 4.9
+    assert sum(loss_list) / len(loss_list) < 5.63
