@@ -750,6 +750,8 @@ def get_activation(name):
 
     Examples:
         >>> sigmoid = nn.get_activation('sigmoid')
+        >>> print(sigmoid)
+        Sigmoid<>
     """
     if name is None:
         return None
