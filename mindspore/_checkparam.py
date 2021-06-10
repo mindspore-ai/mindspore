@@ -25,6 +25,7 @@ from collections.abc import Iterable
 import numpy as np
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
+from mindspore._c_expression import Tensor as Tensor_
 
 class Rel(Enum):
     """Numerical relationship between variables, logical relationship enumeration definition of range."""
@@ -834,6 +835,11 @@ class Validator:
             ax = ax if ax >= 0 else ax + ndim
             new_axes += (ax,)
         return new_axes
+
+    @staticmethod
+    def empty_compile(dtype, shape):
+        """Returns an empty Tensor."""
+        return Tensor_(dtype, shape)
 
 
 def check_input_format(input_param):
