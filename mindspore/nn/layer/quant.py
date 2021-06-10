@@ -635,8 +635,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
         >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
         >>> result = conv2d_bnfold(input_data)
         >>> print(result)
-        [[[[5.9296875, 13.8359375]
-           [11.859375, 17.78125]]]]
+        [[[[5.9296875 13.8359375]
+           [11.859375 17.78125]]]]
     """
 
     def __init__(self,
@@ -875,8 +875,8 @@ class Conv2dBnFoldQuant(Cell):
         >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
         >>> result = conv2d_bnfold(input_data)
         >>> print(result)
-        [[[[5.9296875, 13.8359375]
-           [11.859375, 17.78125]]]]
+        [[[[5.9296875 13.8359375]
+           [11.859375 17.78125]]]]
     """
 
     def __init__(self,

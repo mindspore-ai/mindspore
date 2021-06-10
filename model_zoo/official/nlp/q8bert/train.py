@@ -13,7 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 
-"""task distill script"""
+"""q8bert train"""
 
 import argparse
 import os
@@ -24,44 +24,40 @@ from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import TimeMonitor
 from mindspore.train.model import Model
+import mindspore.common.dtype as mstype
 
-from src.dataset import create_tinybert_dataset
+from src.dataset import create_dataset
 from src.q8bert import BertEvaluationWithLossScaleCell, BertNetworkWithLoss_td, BertEvaluationCell
-from src.config import train_cfg, eval_cfg, model_cfg
+from src.config import train_cfg, eval_cfg, model_cfg, glue_output_modes, task_params
 from src.utils import LossCallBack, ModelSaveCkpt, EvalCallBack, BertLearningRate
 
-_cur_dir = os.getcwd()
-save_ckpt_dir = os.path.join(_cur_dir, 'Q8Bert_save_ckpt')
-if not os.path.exists(save_ckpt_dir):
-    os.makedirs(save_ckpt_dir)
 
 def parse_args():
     """
     parse args
     """
-    parser = argparse.ArgumentParser(description='Q8Bert task distill')
-    parser.add_argument("--device_target", type=str, default="Ascend", choices=['Ascend', 'GPU'],
-                        help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument("--do_eval", type=str, default="true", choices=["true", "false"],
-                        help="Do eval task, default is true.")
+    parser = argparse.ArgumentParser(description="Q8Bert task train")
+    parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
+                        help="device where the code will be implemented. (Default: Ascend)")
+    parser.add_argument("--do_eval", type=str, default="True", choices=["True", "False"],
+                        help="Do eval task, default is True.")
     parser.add_argument("--epoch_num", type=int, default=3, help="default is 3.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--do_shuffle", type=str, default="true", choices=["true", "false"],
-                        help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--enable_data_sink", type=str, default="true", choices=["true", "false"],
-                        help="Enable data sink, default is true.")
+    parser.add_argument("--do_shuffle", type=str, default="True", choices=["True", "False"],
+                        help="Enable shuffle for dataset, default is True.")
+    parser.add_argument("--enable_data_sink", type=str, default="True", choices=["True", "False"],
+                        help="Enable data sink, default is True.")
     parser.add_argument("--save_ckpt_step", type=int, default=100, help="Enable save ckpt.")
-    parser.add_argument("--max_ckpt_num", type=int, default=1, help="Enable data sink, default is true.")
+    parser.add_argument("--max_ckpt_num", type=int, default=1, help="Enable data sink, default is True.")
     parser.add_argument("--data_sink_steps", type=int, default=1, help="Sink steps for each epoch, default is 1.")
     parser.add_argument("--load_ckpt_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--train_data_dir", type=str, default="",
                         help="Train data path, it is better to use absolute path")
     parser.add_argument("--eval_data_dir", type=str, default="",
                         help="Eval data path, it is better to use absolute path")
-    parser.add_argument("--do_quant", type=str, default="false", help="Do quant for model")
+    parser.add_argument("--do_quant", type=str, default="True", help="Do quant for model")
     parser.add_argument("--logging_step", type=int, default=100, help="Do evalate each logging step")
-    parser.add_argument("--task_name", type=str, default="COLA",
-                        choices=["SST-2", "QNLI", "MNLI", "COLA", "QQP", "STS-B", "RTE"],
+    parser.add_argument("--task_name", type=str, default="STS-B", choices=["STS-B", "QNLI", "SST-2"],
                         help="The name of the task to train.")
     parser.add_argument("--dataset_type", type=str, default="tfrecord",
                         help="dataset type tfrecord/mindrecord, default is tfrecord")
@@ -70,26 +66,13 @@ def parse_args():
 
 
 args_opt = parse_args()
+_cur_dir = os.getcwd()
+save_ckpt_dir = os.path.join(_cur_dir, "Q8Bert_" + args_opt.task_name + "_model")
+if not os.path.exists(save_ckpt_dir):
+    os.makedirs(save_ckpt_dir)
 
 DEFAULT_NUM_LABELS = 2
 DEFAULT_SEQ_LENGTH = 128
-task_params = {"SST-2": {"num_labels": 2, "seq_length": 64},
-               "QNLI": {"num_labels": 2, "seq_length": 128},
-               "MNLI": {"num_labels": 3, "seq_length": 128},
-               "STS-B": {"num_labels": 1, "seq_length": 128}}
-
-glue_output_modes = {
-    "cola": "classification",
-    "mnli": "classification",
-    "mnli-mm": "classification",
-    "mrpc": "classification",
-    "sst-2": "classification",
-    "sts-b": "regression",
-    "qqp": "classification",
-    "qnli": "classification",
-    "rte": "classification",
-    "wnli": "classification",
-}
 
 
 class Task:
@@ -110,8 +93,9 @@ class Task:
         if self.task_name in task_params and "seq_length" in task_params[self.task_name]:
             return task_params[self.task_name]["seq_length"]
         return DEFAULT_SEQ_LENGTH
-task = Task(args_opt.task_name)
 
+
+task = Task(args_opt.task_name)
 
 
 def do_train():
@@ -120,12 +104,14 @@ def do_train():
     """
     ckpt_file = args_opt.load_ckpt_path
 
-    if ckpt_file == '':
+    if not ckpt_file:
         raise ValueError("Student ckpt file should not be None")
     cfg = train_cfg
 
     if args_opt.device_target == "Ascend":
         context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
+        model_cfg.compute_type = mstype.float16
+        train_cfg.loss_scale_value = 2 ** 10
     elif args_opt.device_target == "GPU":
         context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     else:
@@ -138,16 +124,16 @@ def do_train():
                                          num_labels=task.num_labels, is_predistill=False)
     rank = 0
     device_num = 1
-    train_dataset = create_tinybert_dataset(cfg.batch_size,
-                                            device_num, rank, args_opt.do_shuffle,
-                                            args_opt.train_data_dir, None, seq_length=task.seq_length,
-                                            task_type='classification',
-                                            drop_remainder=True)
+    train_dataset = create_dataset(cfg.batch_size,
+                                   device_num, rank, args_opt.do_shuffle,
+                                   args_opt.train_data_dir,
+                                   data_type=args_opt.dataset_type,
+                                   seq_length=task.seq_length,
+                                   drop_remainder=True)
 
     dataset_size = train_dataset.get_dataset_size()
-    print('td2 train dataset size: ', dataset_size)
-    print('td2 train dataset repeatcount: ', train_dataset.get_repeat_count())
-    if args_opt.enable_data_sink == 'true':
+    print("train dataset size: ", dataset_size)
+    if args_opt.enable_data_sink == "True":
         repeat_count = args_opt.epoch_num * train_dataset.get_dataset_size() // args_opt.data_sink_steps
         time_monitor_steps = args_opt.data_sink_steps
     else:
@@ -164,24 +150,24 @@ def do_train():
     params = netwithloss.trainable_params()
     decay_params = list(filter(optimizer_cfg.AdamWeightDecay.decay_filter, params))
     other_params = list(filter(lambda x: not optimizer_cfg.AdamWeightDecay.decay_filter(x), params))
-    group_params = [{'params': decay_params, 'weight_decay': optimizer_cfg.AdamWeightDecay.weight_decay},
-                    {'params': other_params, 'weight_decay': 0.0},
-                    {'order_params': params}]
+    group_params = [{"params": decay_params, "weight_decay": optimizer_cfg.AdamWeightDecay.weight_decay},
+                    {"params": other_params, "weight_decay": 0.0},
+                    {"order_params": params}]
 
     optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=optimizer_cfg.AdamWeightDecay.eps)
 
-    eval_dataset = create_tinybert_dataset(eval_cfg.batch_size,
-                                           device_num, rank, args_opt.do_shuffle,
-                                           args_opt.eval_data_dir, None,
-                                           data_type=args_opt.dataset_type,
-                                           seq_length=task.seq_length,
-                                           task_type='classification',
-                                           drop_remainder=False)
-    print('td2 eval dataset size: ', eval_dataset.get_dataset_size())
+    eval_dataset = create_dataset(eval_cfg.batch_size,
+                                  device_num, rank, args_opt.do_shuffle,
+                                  args_opt.eval_data_dir,
+                                  data_type=args_opt.dataset_type,
+                                  seq_length=task.seq_length,
+                                  drop_remainder=False)
+    print("eval dataset size: ", eval_dataset.get_dataset_size())
 
-    if args_opt.do_eval.lower() == "true":
+    if args_opt.do_eval == "True":
         callback = [TimeMonitor(time_monitor_steps), LossCallBack(),
-                    EvalCallBack(netwithloss.bert, eval_dataset, args_opt.task_name, args_opt.logging_step)]
+                    EvalCallBack(netwithloss.bert, eval_dataset, args_opt.task_name, args_opt.logging_step,
+                                 save_ckpt_dir)]
     else:
         callback = [TimeMonitor(time_monitor_steps), LossCallBack(),
                     ModelSaveCkpt(netwithloss.bert,
@@ -192,16 +178,16 @@ def do_train():
         update_cell = DynamicLossScaleUpdateCell(loss_scale_value=cfg.loss_scale_value,
                                                  scale_factor=cfg.scale_factor,
                                                  scale_window=cfg.scale_window)
-
         netwithgrads = BertEvaluationWithLossScaleCell(netwithloss, optimizer=optimizer, scale_update_cell=update_cell)
     else:
         netwithgrads = BertEvaluationCell(netwithloss, optimizer=optimizer)
     model = Model(netwithgrads)
     model.train(repeat_count, train_dataset, callbacks=callback,
-                dataset_sink_mode=(args_opt.enable_data_sink == 'true'),
+                dataset_sink_mode=(args_opt.enable_data_sink == "True"),
                 sink_size=args_opt.data_sink_steps)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     set_seed(1)
     enable_loss_scale = True
     model_cfg.seq_length = task.seq_length

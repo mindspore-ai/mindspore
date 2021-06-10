@@ -13,7 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 
-"""tinybert utils"""
+"""q8bert utils"""
 
 import os
 import logging
@@ -24,7 +24,7 @@ from mindspore.train.callback import Callback
 from mindspore.train.serialization import save_checkpoint
 from mindspore.ops import operations as P
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR
-import mindspore.nn as nn
+from .config import glue_output_modes
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +36,15 @@ except (AttributeError, ImportError) as e:
     logger.warning("To use data.metrics please install scikit-learn. See https://scikit-learn.org/stable/index.html")
     _has_sklearn = False
 
+
 def is_sklearn_available():
     return _has_sklearn
+
 
 if _has_sklearn:
 
     def simple_accuracy(preds, labels):
         return (preds == labels).mean()
-
 
     def acc_and_f1(preds, labels):
         acc = simple_accuracy(preds, labels)
@@ -54,7 +55,6 @@ if _has_sklearn:
             "acc_and_f1": (acc + f1) / 2,
         }
 
-
     def pearson_and_spearman(preds, labels):
         pearson_corr = pearsonr(preds, labels)[0]
         spearman_corr = spearmanr(preds, labels)[0]
@@ -63,7 +63,6 @@ if _has_sklearn:
             "spearmanr": spearman_corr,
             "corr": (pearson_corr + spearman_corr) / 2,
         }
-
 
     def glue_compute_metrics(task_name, preds, labels):
         """different dataset evaluation."""
@@ -92,18 +91,20 @@ if _has_sklearn:
             raise KeyError(task_name)
         return result
 
-glue_output_modes = {
-    "cola": "classification",
-    "mnli": "classification",
-    "mnli-mm": "classification",
-    "mrpc": "classification",
-    "sst-2": "classification",
-    "sts-b": "regression",
-    "qqp": "classification",
-    "qnli": "classification",
-    "rte": "classification",
-    "wnli": "classification",
+
+prior_index = {
+    "cola": "mcc",
+    "mnli": "acc",
+    "mnli-mm": "acc",
+    "mrpc": "acc",
+    "sst-2": "acc",
+    "sts-b": "pearson",
+    "qqp": "acc",
+    "qnli": "acc",
+    "rte": "acc",
+    "wnli": "acc",
 }
+
 
 class ModelSaveCkpt(Callback):
     """
@@ -129,13 +130,14 @@ class ModelSaveCkpt(Callback):
             saved_ckpt_num = cb_params.cur_step_num / self.save_ckpt_step
             if saved_ckpt_num > self.max_ckpt_num:
                 oldest_ckpt_index = saved_ckpt_num - self.max_ckpt_num
-                path = os.path.join(self.output_dir, "tiny_bert_{}_{}.ckpt".format(int(oldest_ckpt_index),
-                                                                                   self.save_ckpt_step))
+                path = os.path.join(self.output_dir, "q8bert_{}_{}.ckpt".format(int(oldest_ckpt_index),
+                                                                                cb_params.cur_step_num))
                 if os.path.exists(path):
                     os.remove(path)
             save_checkpoint(self.network, os.path.join(self.output_dir,
-                                                       "tiny_bert_{}_{}.ckpt".format(int(saved_ckpt_num),
-                                                                                     self.save_ckpt_step)))
+                                                       "q8bert_{}_{}.ckpt".format(int(saved_ckpt_num),
+                                                                                  cb_params.cur_step_num)))
+
 
 def make_directory(path: str):
     """Make directory."""
@@ -161,6 +163,7 @@ def make_directory(path: str):
             raise TypeError("No write permission on the directory.")
     return real_path
 
+
 class LossCallBack(Callback):
     """
     Monitor the loss in training.
@@ -179,19 +182,23 @@ class LossCallBack(Callback):
     def step_end(self, run_context):
         """step end and print loss"""
         cb_params = run_context.original_args()
-        print("epoch: {}, step: {}, loss are {}".format(cb_params.cur_epoch_num,
-                                                        cb_params.cur_step_num,
-                                                        str(cb_params.net_outputs)))
+        loss, _ = cb_params.net_outputs
+        print("epoch: {}, step: {}, loss: {}".format(cb_params.cur_epoch_num,
+                                                     cb_params.cur_step_num,
+                                                     loss))
+
 
 class EvalCallBack(Callback):
     """Evaluation callback"""
-    def __init__(self, network, dataset, task_name, logging_step):
+    def __init__(self, network, dataset, task_name, logging_step, save_ckpt_dir):
         super(EvalCallBack, self).__init__()
         self.network = network
         self.global_acc = 0.0
         self.dataset = dataset
         self.task_name = task_name
         self.logging_step = logging_step
+        self.best_result = 0.0
+        self.save_ckpt_dir = save_ckpt_dir
 
     def step_end(self, run_context):
         """step end and do evaluation"""
@@ -200,6 +207,7 @@ class EvalCallBack(Callback):
         if self.task_name.lower == 'mnli':
             label_nums = 3
         if cb_params.cur_step_num % self.logging_step == 0:
+            self.network.set_train(False)
             columns_list = ["input_ids", "input_mask", "segment_ids", "label_ids"]
             preds = None
             out_label_ids = None
@@ -208,7 +216,6 @@ class EvalCallBack(Callback):
                 for i in columns_list:
                     input_data.append(data[i])
                 input_ids, input_mask, token_type_id, label_ids = input_data
-                self.network.set_train(False)
                 _, _, logits, _ = self.network(input_ids, token_type_id, input_mask)
                 if preds is None:
                     preds = logits.asnumpy()
@@ -222,34 +229,16 @@ class EvalCallBack(Callback):
             elif glue_output_modes[self.task_name.lower()] == "regression":
                 preds = np.reshape(preds, [-1])
             result = glue_compute_metrics(self.task_name.lower(), preds, out_label_ids)
-            print("The current result is {}".format(result))
+            prior_result = result[prior_index[self.task_name.lower()]]
+            if prior_result > self.best_result:
+                self.best_result = prior_result
+                eval_model_ckpt_file = os.path.join(self.save_ckpt_dir, self.task_name.lower() + "_eval_model.ckpt")
+                if os.path.exists(eval_model_ckpt_file):
+                    os.remove(eval_model_ckpt_file)
+                save_checkpoint(self.network, eval_model_ckpt_file)
+            print("The current result is {}, the best result is {}".format(result, self.best_result))
+            self.network.set_train(True)
 
-
-def LoadNewestCkpt(load_finetune_checkpoint_dir, steps_per_epoch, epoch_num, prefix):
-    """
-    Find the ckpt finetune generated and load it into eval network.
-    """
-    files = os.listdir(load_finetune_checkpoint_dir)
-    pre_len = len(prefix)
-    max_num = 0
-    for filename in files:
-        name_ext = os.path.splitext(filename)
-        if name_ext[-1] != ".ckpt":
-            continue
-        if filename.find(prefix) == 0 and not filename[pre_len].isalpha():
-            index = filename[pre_len:].find("-")
-            if index == 0 and max_num == 0:
-                load_finetune_checkpoint_path = os.path.join(load_finetune_checkpoint_dir, filename)
-            elif index not in (0, -1):
-                name_split = name_ext[-2].split('_')
-                if (steps_per_epoch != int(name_split[len(name_split)-1])) \
-                        or (epoch_num != int(filename[pre_len + index + 1:pre_len + index + 2])):
-                    continue
-                num = filename[pre_len + 1:pre_len + index]
-                if int(num) > max_num:
-                    max_num = int(num)
-                    load_finetune_checkpoint_path = os.path.join(load_finetune_checkpoint_dir, filename)
-    return load_finetune_checkpoint_path
 
 class BertLearningRate(LearningRateSchedule):
     """
@@ -277,31 +266,3 @@ class BertLearningRate(LearningRateSchedule):
         else:
             lr = decay_lr
         return lr
-
-class CrossEntropyCalculation(nn.Cell):
-    """
-    Cross Entropy loss
-    """
-    def __init__(self, is_training=True):
-        super(CrossEntropyCalculation, self).__init__()
-        self.onehot = P.OneHot()
-        self.on_value = Tensor(1.0, mstype.float32)
-        self.off_value = Tensor(0.0, mstype.float32)
-        self.reduce_sum = P.ReduceSum()
-        self.reduce_mean = P.ReduceMean()
-        self.reshape = P.Reshape()
-        self.last_idx = (-1,)
-        self.neg = P.Neg()
-        self.cast = P.Cast()
-        self.is_training = is_training
-
-    def construct(self, logits, label_ids, num_labels):
-        if self.is_training:
-            label_ids = self.reshape(label_ids, self.last_idx)
-            one_hot_labels = self.onehot(label_ids, num_labels, self.on_value, self.off_value)
-            per_example_loss = self.neg(self.reduce_sum(one_hot_labels * logits, self.last_idx))
-            loss = self.reduce_mean(per_example_loss, self.last_idx)
-            return_value = self.cast(loss, mstype.float32)
-        else:
-            return_value = logits * 1.0
-        return return_value

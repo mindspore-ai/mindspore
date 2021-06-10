@@ -19,15 +19,13 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 import mindspore.ops.functional as F
-from mindspore._checkparam import Validator
-from mindspore.common.initializer import TruncatedNormal, initializer
-from mindspore.compression.common import QuantDtype
-from mindspore.ops import operations as P, Primitive
+from mindspore.common.initializer import Normal, initializer
+from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore import context
-from mindspore.nn.layer.quant import FakeQuantWithMinMaxObserver as FakeQuantWithMinMax, quant_config_default
+from mindspore.nn.layer.quant import FakeQuantWithMinMaxObserver as FakeQuantWithMinMax
 
 
 class BertConfig:
@@ -52,7 +50,7 @@ class BertConfig:
         max_position_embeddings (int): Maximum length of sequences used in this
                                  model. Default: 512.
         type_vocab_size (int): Size of token type vocab. Default: 16.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
         use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
         dtype (:class:`mindspore.dtype`): Data type of the input. Default: mstype.float32.
         compute_type (:class:`mindspore.dtype`): Compute type in BertTransformer. Default: mstype.float32.
@@ -101,7 +99,7 @@ class EmbeddingLookup(nn.Cell):
         embedding_shape (list): [batch_size, seq_length, embedding_size], the shape of
                          each embedding vector.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
     """
 
     def __init__(self,
@@ -114,11 +112,11 @@ class EmbeddingLookup(nn.Cell):
         self.vocab_size = vocab_size
         self.use_one_hot_embeddings = use_one_hot_embeddings
         self.embedding_table = Parameter(initializer
-                                         (TruncatedNormal(initializer_range),
+                                         (Normal(initializer_range),
                                           [vocab_size, embedding_size]))
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
@@ -151,7 +149,7 @@ class EmbeddingPostprocessor(nn.Cell):
         use_token_type (bool): Specifies whether to use token type embeddings. Default: False.
         token_type_vocab_size (int): Size of token type vocab. Default: 16.
        use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
         max_position_embeddings (int): Maximum length of sequences used in this
                                  model. Default: 512.
         dropout_prob (float): The dropout probability. Default: 0.1.
@@ -173,7 +171,7 @@ class EmbeddingPostprocessor(nn.Cell):
         self.use_one_hot_embeddings = use_one_hot_embeddings
         self.max_position_embeddings = max_position_embeddings
         self.embedding_table = Parameter(initializer
-                                         (TruncatedNormal(initializer_range),
+                                         (Normal(initializer_range),
                                           [token_type_vocab_size,
                                            embedding_size]))
         self.shape_flat = (-1,)
@@ -185,11 +183,11 @@ class EmbeddingPostprocessor(nn.Cell):
         self.shape = tuple(embedding_shape)
         self.layernorm = nn.LayerNorm((embedding_size,))
         self.dropout = nn.Dropout(1 - dropout_prob)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.use_relative_positions = use_relative_positions
         self.slice = P.StridedSlice()
         self.full_position_embeddings = Parameter(initializer
-                                                  (TruncatedNormal(initializer_range),
+                                                  (Normal(initializer_range),
                                                    [max_position_embeddings,
                                                     embedding_size]))
 
@@ -217,94 +215,6 @@ class EmbeddingPostprocessor(nn.Cell):
         return output
 
 
-class QuantDense(nn.Cell):
-    """
-    The fake quant fully connected layer.
-
-    Args:
-        in_channels (int): The number of channels in the input space.
-        out_channels (int): The number of channels in the output space.
-        weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (Function): activate function applied to the output of the fully connected layer, e.g. 'ReLU'.
-            Default: None.
-        quant_config (QuantConfig): default quant config.
-        quant_dtype (QuantDtype): the bits of quantization, Default: 8bit.
-        activation_init (float): init activate quant value. Default: 6.
-    """
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 weight_init='normal',
-                 bias_init='zeros',
-                 has_bias=True,
-                 activation=None,
-                 quant_config=quant_config_default,
-                 quant_dtype=QuantDtype.INT8,
-                 activation_init=2.5):
-        super(QuantDense, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
-        self.has_bias = Validator.check_bool(has_bias)
-
-        if isinstance(weight_init, Tensor):
-            if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
-                    weight_init.shape[1] != in_channels:
-                raise ValueError("weight_init shape error")
-
-        self.weight = Parameter(initializer(
-            weight_init, [out_channels, in_channels]), name="weight")
-
-        if self.has_bias:
-            if isinstance(bias_init, Tensor):
-                if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
-                    raise ValueError("bias_init shape error")
-
-            self.bias = Parameter(initializer(
-                bias_init, [out_channels]), name="bias")
-
-        self.matmul = P.MatMul(transpose_b=True)
-        self.bias_add = P.BiasAdd()
-
-        self.activation = nn.get_activation(activation) if isinstance(activation, str) else activation
-        if activation is not None and not isinstance(self.activation, (nn.Cell, Primitive)):
-            raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
-        self.activation_flag = self.activation is not None
-        self.fake_quant_weight = quant_config.weight(min_init=-6,
-                                                     max_init=6,
-                                                     ema=False,
-                                                     channel_axis=0,
-                                                     num_channels=out_channels,
-                                                     quant_dtype=quant_dtype)
-        self.quant_input = FakeQuantWithMinMax(min_init=-activation_init,
-                                               max_init=activation_init,
-                                               ema=True)
-
-    def construct(self, x):
-        """Use operators to construct the Dense layer."""
-        output = self.fake_quant_weight(self.weight)
-        x = self.quant_input(x)
-        output = self.matmul(x, output)
-        if self.has_bias:
-            output = self.bias_add(output, self.bias)
-        if self.activation_flag:
-            return self.activation(output)
-        return output
-
-    def extend_repr(self):
-        """A pretty print for Dense layer."""
-        s = 'in_channels={}, out_channels={}, weight={}, has_bias={}'.format(
-            self.in_channels, self.out_channels, self.weight, self.has_bias)
-        if self.has_bias:
-            s += ', bias={}'.format(self.bias)
-        if self.activation_flag:
-            s += ', activation={}'.format(self.activation)
-        return s
-
-
 class BertOutput(nn.Cell):
     """
     Apply a linear computation to hidden status and a residual computation to input.
@@ -312,7 +222,7 @@ class BertOutput(nn.Cell):
     Args:
         in_channels (int): Input channels.
         out_channels (int): Output channels.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
         dropout_prob (float): The dropout probability. Default: 0.1.
         compute_type (:class:`mindspore.dtype`): Compute type in BertTransformer. Default: mstype.float32.
     """
@@ -325,11 +235,10 @@ class BertOutput(nn.Cell):
                  compute_type=mstype.float32,
                  activation_init=2.5):
         super(BertOutput, self).__init__()
-        self.dense = QuantDense(in_channels, out_channels,
-                                weight_init=TruncatedNormal(initializer_range),
-                                activation_init=activation_init).to_float(compute_type)
+        self.dense = nn.DenseQuant(in_channels, out_channels,
+                                   weight_init=Normal(initializer_range)).to_float(compute_type)
         self.dropout = nn.Dropout(1 - dropout_prob)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.is_gpu = context.get_context('device_target') == "GPU"
         if self.is_gpu:
             self.layernorm = nn.LayerNorm((out_channels,)).to_float(mstype.float32)
@@ -337,10 +246,18 @@ class BertOutput(nn.Cell):
         else:
             self.layernorm = nn.LayerNorm((out_channels,)).to_float(compute_type)
         self.cast = P.Cast()
+        self.quant_bert_in = FakeQuantWithMinMax(min_init=-activation_init,
+                                                 max_init=activation_init,
+                                                 ema=True)
+        self.quant_bert_out = FakeQuantWithMinMax(min_init=-activation_init,
+                                                  max_init=activation_init,
+                                                  ema=True)
 
     def construct(self, hidden_status, input_tensor):
         """bert output"""
+        hidden_status = self.quant_bert_in(hidden_status)
         output = self.dense(hidden_status)
+        output = self.quant_bert_out(output)
         output = self.dropout(output)
         output = self.add(input_tensor, output)
         output = self.layernorm(output)
@@ -396,7 +313,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         length (int): Length of one dim for the matrix to be generated.
         depth (int): Size of each attention head.
         max_relative_position (int): Maxmum value of relative position.
-        initializer_range (float): Initialization value of TruncatedNormal.
+        initializer_range (float): Initialization value of Normal.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
     """
 
@@ -411,7 +328,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         self.vocab_size = max_relative_position * 2 + 1
         self.use_one_hot_embeddings = use_one_hot_embeddings
         self.embeddings_table = Parameter(
-            initializer(TruncatedNormal(initializer_range),
+            initializer(Normal(initializer_range),
                         [self.vocab_size, self.depth]))
         self.relative_positions_matrix = RelaPosMatrixGenerator(length=length,
                                                                 max_relative_position=max_relative_position)
@@ -420,7 +337,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
         self.shape = P.Shape()
-        self.gather = P.GatherV2()  # index_select
+        self.gather = P.Gather()  # index_select
         self.matmul = P.BatchMatMul()
 
     def construct(self):
@@ -484,12 +401,10 @@ class BertAttention(nn.Cell):
         key_act (str): Activation function for the key transform. Default: None.
         value_act (str): Activation function for the value transform. Default: None.
         has_attention_mask (bool): Specifies whether to use attention mask. Default: False.
-        attention_probs_dropout_prob (float): The dropout probability for
-                                      BertAttention. Default: 0.0.
+        attention_probs_dropout_prob (float): The dropout probability for BertAttention. Default: 0.0.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
-        do_return_2d_tensor (bool): True for return 2d tensor. False for return 3d
-                             tensor. Default: False.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
+        do_return_2d_tensor (bool): True for return 2d tensor. False for return 3d tensor. Default: False.
         use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
         compute_type (:class:`mindspore.dtype`): Compute type in BertAttention. Default: mstype.float32.
     """
@@ -519,44 +434,18 @@ class BertAttention(nn.Cell):
         self.size_per_head = size_per_head
         self.has_attention_mask = has_attention_mask
         self.use_relative_positions = use_relative_positions
-        self.scores_mul = Tensor([1.0 / math.sqrt(float(self.size_per_head))], dtype=compute_type)
+        self.compute_type = compute_type
+        self.scores_mul = Tensor([1.0 / math.sqrt(float(self.size_per_head))], dtype=self.compute_type)
         self.reshape = P.Reshape()
         self.shape_from_2d = (-1, from_tensor_width)
         self.shape_to_2d = (-1, to_tensor_width)
-        weight = TruncatedNormal(initializer_range)
+        weight = Normal(initializer_range)
         units = num_attention_heads * size_per_head
-        self.do_quant = True
-        if self.do_quant:
-            self.quant_from_tensor_2d = FakeQuantWithMinMax(min_init=-activation_init,
-                                                            max_init=activation_init,
-                                                            ema=True)
-            self.quant_to_tensor_2d = FakeQuantWithMinMax(min_init=-activation_init,
-                                                          max_init=activation_init,
-                                                          ema=True)
-            self.quant_query_layer = FakeQuantWithMinMax(min_init=-activation_init,
-                                                         max_init=activation_init,
-                                                         ema=True)
-            self.quant_key_layer = FakeQuantWithMinMax(min_init=-activation_init,
-                                                       max_init=activation_init,
-                                                       ema=True)
-            self.quant_attention_probs = FakeQuantWithMinMax(min_init=-activation_init,
-                                                             max_init=activation_init,
-                                                             ema=True)
-            self.quant_value_layer = FakeQuantWithMinMax(min_init=-activation_init,
-                                                         max_init=activation_init,
-                                                         ema=True)
-        self.query_layer = nn.Dense(from_tensor_width,
-                                    units,
-                                    activation=query_act,
-                                    weight_init=weight).to_float(compute_type)
-        self.key_layer = nn.Dense(to_tensor_width,
-                                  units,
-                                  activation=key_act,
-                                  weight_init=weight).to_float(compute_type)
-        self.value_layer = nn.Dense(to_tensor_width,
-                                    units,
-                                    activation=value_act,
-                                    weight_init=weight).to_float(compute_type)
+        # do quant:
+        self.activation_init = activation_init
+        self.activation = {"query_act": query_act, "key_act": key_act, "value_act": value_act}
+        self._quant_init(from_tensor_width, to_tensor_width, units, weight)
+
         self.shape_from = (-1, from_seq_length, num_attention_heads, size_per_head)
         self.shape_to = (-1, to_seq_length, num_attention_heads, size_per_head)
         self.matmul_trans_b = P.BatchMatMul(transpose_b=True)
@@ -572,7 +461,7 @@ class BertAttention(nn.Cell):
         if self.has_attention_mask:
             self.expand_dims = P.ExpandDims()
             self.sub = P.Sub()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.cast = P.Cast()
             self.get_dtype = P.DType()
         if do_return_2d_tensor:
@@ -582,30 +471,51 @@ class BertAttention(nn.Cell):
         self.cast_compute_type = SaturateCast(dst_type=compute_type)
         if self.use_relative_positions:
             self._generate_relative_positions_embeddings = \
-                RelaPosEmbeddingsGenerator(length=to_seq_length,
-                                           depth=size_per_head,
-                                           max_relative_position=16,
+                RelaPosEmbeddingsGenerator(length=to_seq_length, depth=size_per_head, max_relative_position=16,
                                            initializer_range=initializer_range,
                                            use_one_hot_embeddings=use_one_hot_embeddings)
+
+    def _quant_init(self, from_tensor_width, to_tensor_width, units, weight):
+        """Init quantization operations"""
+        self.quant_from_tensor_2d = FakeQuantWithMinMax(min_init=-self.activation_init,
+                                                        max_init=self.activation_init,
+                                                        ema=True)
+        self.quant_to_tensor_2d = FakeQuantWithMinMax(min_init=-self.activation_init,
+                                                      max_init=self.activation_init,
+                                                      ema=True)
+        self.quant_query_out = FakeQuantWithMinMax(min_init=-self.activation_init,
+                                                   max_init=self.activation_init,
+                                                   ema=True)
+        self.quant_key_out = FakeQuantWithMinMax(min_init=-self.activation_init,
+                                                 max_init=self.activation_init,
+                                                 ema=True)
+        self.quant_value_out = FakeQuantWithMinMax(min_init=-self.activation_init,
+                                                   max_init=self.activation_init,
+                                                   ema=True)
+        self.query_layer = nn.DenseQuant(from_tensor_width, units, activation=self.activation["query_act"],
+                                         weight_init=weight).to_float(self.compute_type)
+        self.key_layer = nn.DenseQuant(to_tensor_width, units, activation=self.activation["key_act"],
+                                       weight_init=weight).to_float(self.compute_type)
+        self.value_layer = nn.DenseQuant(to_tensor_width, units, activation=self.activation["value_act"],
+                                         weight_init=weight).to_float(self.compute_type)
 
     def construct(self, from_tensor, to_tensor, attention_mask):
         """bert attention"""
         # reshape 2d/3d input tensors to 2d
         from_tensor_2d = self.reshape(from_tensor, self.shape_from_2d)
         to_tensor_2d = self.reshape(to_tensor, self.shape_to_2d)
-        if self.do_quant:
-            from_tensor_2d = self.quant_from_tensor_2d(from_tensor_2d)
-            to_tensor_2d = self.quant_to_tensor_2d(to_tensor_2d)
-        query_out = self.query_layer(from_tensor_2d)
+        # do quant:
+        to_tensor_2d = self.quant_to_tensor_2d(to_tensor_2d)
+        query_out = self.query_layer(self.quant_from_tensor_2d(from_tensor_2d))
+        query_out = self.quant_query_out(query_out)
         key_out = self.key_layer(to_tensor_2d)
-        value_out = self.value_layer(to_tensor_2d)
+        key_out = self.quant_key_out(key_out)
+        value_out = self.quant_value_out(self.value_layer(to_tensor_2d))
+
         query_layer = self.reshape(query_out, self.shape_from)
         query_layer = self.transpose(query_layer, self.trans_shape)
         key_layer = self.reshape(key_out, self.shape_to)
         key_layer = self.transpose(key_layer, self.trans_shape)
-        if self.do_quant:
-            query_layer = self.quant_query_layer(query_layer)
-            key_layer = self.quant_key_layer(key_layer)
         attention_scores = self.matmul_trans_b(query_layer, key_layer)
         # use_relative_position, supplementary logic
         if self.use_relative_positions:
@@ -615,22 +525,14 @@ class BertAttention(nn.Cell):
             # query_layer_t is [F, B, N, H]
             query_layer_t = self.transpose(query_layer, self.trans_shape_relative)
             # query_layer_r is [F, B * N, H]
-            query_layer_r = self.reshape(query_layer_t,
-                                         (self.from_seq_length,
-                                          -1,
-                                          self.size_per_head))
+            query_layer_r = self.reshape(query_layer_t, (self.from_seq_length, -1, self.size_per_head))
             # key_position_scores is [F, B * N, F|T]
-            key_position_scores = self.matmul_trans_b(query_layer_r,
-                                                      relations_keys)
+            key_position_scores = self.matmul_trans_b(query_layer_r, relations_keys)
             # key_position_scores_r is [F, B, N, F|T]
-            key_position_scores_r = self.reshape(key_position_scores,
-                                                 (self.from_seq_length,
-                                                  -1,
-                                                  self.num_attention_heads,
-                                                  self.from_seq_length))
+            key_position_scores_r = self.reshape(key_position_scores, (self.from_seq_length, -1,
+                                                                       self.num_attention_heads, self.from_seq_length))
             # key_position_scores_r_t is [B, N, F, F|T]
-            key_position_scores_r_t = self.transpose(key_position_scores_r,
-                                                     self.trans_shape_position)
+            key_position_scores_r_t = self.transpose(key_position_scores_r, self.trans_shape_position)
             attention_scores = attention_scores + key_position_scores_r_t
         attention_scores = self.multiply(self.scores_mul, attention_scores)
         if self.has_attention_mask:
@@ -643,9 +545,6 @@ class BertAttention(nn.Cell):
         attention_probs = self.dropout(attention_probs)
         value_layer = self.reshape(value_out, self.shape_to)
         value_layer = self.transpose(value_layer, self.trans_shape)
-        if self.do_quant:
-            attention_probs = self.quant_attention_probs(attention_probs)
-            value_layer = self.quant_value_layer(value_layer)
         context_layer = self.matmul(attention_probs, value_layer)
         # use_relative_position, supplementary logic
         if self.use_relative_positions:
@@ -655,23 +554,12 @@ class BertAttention(nn.Cell):
             # attention_probs_t is [F, B, N, T]
             attention_probs_t = self.transpose(attention_probs, self.trans_shape_relative)
             # attention_probs_r is [F, B * N, T]
-            attention_probs_r = self.reshape(
-                attention_probs_t,
-                (self.from_seq_length,
-                 -1,
-                 self.to_seq_length))
-            # value_position_scores is [F, B * N, H]
-            value_position_scores = self.matmul(attention_probs_r,
-                                                relations_values)
-            # value_position_scores_r is [F, B, N, H]
-            value_position_scores_r = self.reshape(value_position_scores,
-                                                   (self.from_seq_length,
-                                                    -1,
-                                                    self.num_attention_heads,
-                                                    self.size_per_head))
-            # value_position_scores_r_t is [B, N, F, H]
-            value_position_scores_r_t = self.transpose(value_position_scores_r,
-                                                       self.trans_shape_position)
+            attention_probs_r = self.reshape(attention_probs_t, (self.from_seq_length, -1, self.to_seq_length))
+            value_position_scores = self.matmul(attention_probs_r, relations_values)
+            value_position_scores_r = self.reshape(value_position_scores, (self.from_seq_length, -1,
+                                                                           self.num_attention_heads,
+                                                                           self.size_per_head))
+            value_position_scores_r_t = self.transpose(value_position_scores_r, self.trans_shape_position)
             context_layer = context_layer + value_position_scores_r_t
         context_layer = self.transpose(context_layer, self.trans_shape)
         context_layer = self.reshape(context_layer, self.shape_return)
@@ -689,7 +577,7 @@ class BertSelfAttention(nn.Cell):
         attention_probs_dropout_prob (float): The dropout probability for
                                       BertAttention. Default: 0.1.
         use_one_hot_embeddings (bool): Specifies whether to use one_hot encoding form. Default: False.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
         hidden_dropout_prob (float): The dropout probability for BertOutput. Default: 0.1.
         use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
         compute_type (:class:`mindspore.dtype`): Compute type in BertSelfAttention. Default: mstype.float32.
@@ -756,7 +644,7 @@ class BertEncoderCell(nn.Cell):
         attention_probs_dropout_prob (float): The dropout probability for
                                       BertAttention. Default: 0.02.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
         hidden_dropout_prob (float): The dropout probability for BertOutput. Default: 0.1.
         use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
         hidden_act (str): Activation function. Default: "gelu".
@@ -788,22 +676,31 @@ class BertEncoderCell(nn.Cell):
             use_relative_positions=use_relative_positions,
             compute_type=compute_type,
             activation_init=activation_init)
-        self.intermediate = QuantDense(in_channels=hidden_size, out_channels=intermediate_size,
-                                       activation=hidden_act,
-                                       weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
+        self.intermediate = nn.DenseQuant(in_channels=hidden_size,
+                                          out_channels=intermediate_size,
+                                          activation=hidden_act,
+                                          weight_init=Normal(initializer_range)).to_float(compute_type)
         self.output = BertOutput(in_channels=intermediate_size,
                                  out_channels=hidden_size,
                                  initializer_range=initializer_range,
                                  dropout_prob=hidden_dropout_prob,
                                  compute_type=compute_type,
                                  activation_init=activation_init)
+        self.quant_encoder_in = FakeQuantWithMinMax(min_init=-activation_init,
+                                                    max_init=activation_init,
+                                                    ema=True)
+        self.quant_encoder_out = FakeQuantWithMinMax(min_init=-activation_init,
+                                                     max_init=activation_init,
+                                                     ema=True)
 
     def construct(self, hidden_states, attention_mask):
         """bert encoder cell"""
         # self-attention
         attention_output, attention_scores = self.attention(hidden_states, attention_mask)
         # feed construct
+        attention_output = self.quant_encoder_in(attention_output)
         intermediate_output = self.intermediate(attention_output)
+        intermediate_output = self.quant_encoder_out(intermediate_output)
         # add and normalize
         output = self.output(intermediate_output, attention_output)
         return output, attention_scores
@@ -822,7 +719,7 @@ class BertTransformer(nn.Cell):
         attention_probs_dropout_prob (float): The dropout probability for
                                       BertAttention. Default: 0.1.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        initializer_range (float): Initialization value of Normal. Default: 0.02.
         hidden_dropout_prob (float): The dropout probability for BertOutput. Default: 0.1.
         use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
         hidden_act (str): Activation function used in the encoder cells. Default: "gelu".
@@ -843,8 +740,7 @@ class BertTransformer(nn.Cell):
                  use_relative_positions=False,
                  hidden_act="gelu",
                  compute_type=mstype.float32,
-                 return_all_encoders=False,
-                 activation_init=2.5):
+                 return_all_encoders=False):
         super(BertTransformer, self).__init__()
         self.return_all_encoders = return_all_encoders
         layers = []
@@ -920,7 +816,7 @@ class BertModel(nn.Cell):
     def __init__(self,
                  config,
                  is_training,
-                 use_one_hot_embeddings=False):
+                 use_one_hot_embeddings=False, activation_init=2.5):
         super(BertModel, self).__init__()
         config = copy.deepcopy(config)
         if not is_training:
@@ -969,9 +865,15 @@ class BertModel(nn.Cell):
         self.cast_compute_type = SaturateCast(dst_type=config.compute_type)
         self.slice = P.StridedSlice()
         self.squeeze_1 = P.Squeeze(axis=1)
-        self.dense = nn.Dense(self.hidden_size, self.hidden_size,
-                              activation="tanh",
-                              weight_init=TruncatedNormal(config.initializer_range)).to_float(config.compute_type)
+        self.dense = nn.DenseQuant(self.hidden_size, self.hidden_size,
+                                   activation="tanh",
+                                   weight_init=Normal(config.initializer_range)).to_float(config.compute_type)
+        self.quant_model_in = FakeQuantWithMinMax(min_init=-activation_init,
+                                                  max_init=activation_init,
+                                                  ema=True)
+        self.quant_model_out = FakeQuantWithMinMax(min_init=-activation_init,
+                                                   max_init=activation_init,
+                                                   ema=True)
         self._create_attention_mask_from_input_mask = CreateAttentionMaskFromInputMask(config)
 
     def construct(self, input_ids, token_type_ids, input_mask):
@@ -992,104 +894,9 @@ class BertModel(nn.Cell):
                                     (batch_size, 1, self.hidden_size),
                                     (1, 1, 1))
         first_token = self.squeeze_1(sequence_slice)
+        first_token = self.quant_model_in(first_token)
         pooled_output = self.dense(first_token)
-        pooled_output = self.cast(pooled_output, self.dtype)
-        encoder_outputs = ()
-        for output in encoder_layers:
-            encoder_outputs += (self.cast(output, self.dtype),)
-        attention_outputs = ()
-        for output in layer_atts:
-            attention_outputs += (self.cast(output, self.dtype),)
-        return sequence_output, pooled_output, embedding_tables, encoder_outputs, attention_outputs
-
-
-class TinyBertModel(nn.Cell):
-    """
-    Bidirectional Encoder Representations from Transformers.
-
-    Args:
-        config (Class): Configuration for BertModel.
-        is_training (bool): True for training mode. False for eval mode.
-        use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-    """
-
-    def __init__(self,
-                 config,
-                 is_training,
-                 use_one_hot_embeddings=False):
-        super(TinyBertModel, self).__init__()
-        config = copy.deepcopy(config)
-        if not is_training:
-            config.hidden_dropout_prob = 0.0
-            config.attention_probs_dropout_prob = 0.0
-        self.seq_length = config.seq_length
-        self.hidden_size = config.hidden_size
-        self.num_hidden_layers = config.num_hidden_layers
-        self.embedding_size = config.hidden_size
-        self.token_type_ids = None
-        self.last_idx = self.num_hidden_layers - 1
-        output_embedding_shape = [-1, self.seq_length,
-                                  self.embedding_size]
-        self.tinybert_embedding_lookup = EmbeddingLookup(
-            vocab_size=config.vocab_size,
-            embedding_size=self.embedding_size,
-            embedding_shape=output_embedding_shape,
-            use_one_hot_embeddings=use_one_hot_embeddings,
-            initializer_range=config.initializer_range)
-        self.tinybert_embedding_postprocessor = EmbeddingPostprocessor(
-            use_relative_positions=config.use_relative_positions,
-            embedding_size=self.embedding_size,
-            embedding_shape=output_embedding_shape,
-            use_token_type=True,
-            token_type_vocab_size=config.type_vocab_size,
-            use_one_hot_embeddings=use_one_hot_embeddings,
-            initializer_range=0.02,
-            max_position_embeddings=config.max_position_embeddings,
-            dropout_prob=config.hidden_dropout_prob)
-        self.tinybert_encoder = BertTransformer(
-            hidden_size=self.hidden_size,
-            seq_length=self.seq_length,
-            num_attention_heads=config.num_attention_heads,
-            num_hidden_layers=self.num_hidden_layers,
-            intermediate_size=config.intermediate_size,
-            attention_probs_dropout_prob=config.attention_probs_dropout_prob,
-            use_one_hot_embeddings=use_one_hot_embeddings,
-            initializer_range=config.initializer_range,
-            hidden_dropout_prob=config.hidden_dropout_prob,
-            use_relative_positions=config.use_relative_positions,
-            hidden_act=config.hidden_act,
-            compute_type=config.compute_type,
-            return_all_encoders=True)
-        self.cast = P.Cast()
-        self.dtype = config.dtype
-        self.cast_compute_type = SaturateCast(dst_type=config.compute_type)
-        self.slice = P.StridedSlice()
-        self.squeeze_1 = P.Squeeze(axis=1)
-        self.dense = nn.Dense(self.hidden_size, self.hidden_size,
-                              activation="tanh",
-                              weight_init=TruncatedNormal(config.initializer_range)).to_float(config.compute_type)
-        self._create_attention_mask_from_input_mask = CreateAttentionMaskFromInputMask(config)
-
-    def construct(self, input_ids, token_type_ids, input_mask):
-        """tiny bert model"""
-        # embedding
-        word_embeddings, embedding_tables = self.tinybert_embedding_lookup(input_ids)
-        embedding_output = self.tinybert_embedding_postprocessor(token_type_ids,
-                                                                 word_embeddings)
-        # attention mask [batch_size, seq_length, seq_length]
-        attention_mask = self._create_attention_mask_from_input_mask(input_mask)
-        # bert encoder
-        encoder_output, encoder_layers, layer_atts = self.tinybert_encoder(self.cast_compute_type(embedding_output),
-                                                                           attention_mask)
-        sequence_output = self.cast(encoder_output[self.last_idx], self.dtype)
-        # pooler
-        batch_size = P.Shape()(input_ids)[0]
-        sequence_slice = self.slice(sequence_output,
-                                    (0, 0, 0),
-                                    (batch_size, 1, self.hidden_size),
-                                    (1, 1, 1))
-        first_token = self.squeeze_1(sequence_slice)
-        pooled_output = self.dense(first_token)
+        pooled_output = self.quant_model_out(pooled_output)
         pooled_output = self.cast(pooled_output, self.dtype)
         encoder_outputs = ()
         for output in encoder_layers:
@@ -1110,9 +917,10 @@ class BertModelCLS(nn.Cell):
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0,
                  use_one_hot_embeddings=False, phase_type="student"):
         super(BertModelCLS, self).__init__()
+
         self.bert = BertModel(config, is_training, use_one_hot_embeddings)
         self.cast = P.Cast()
-        self.weight_init = TruncatedNormal(config.initializer_range)
+        self.weight_init = Normal(config.initializer_range)
         self.log_softmax = P.LogSoftmax(axis=-1)
         self.dtype = config.dtype
         self.num_labels = num_labels
@@ -1121,8 +929,8 @@ class BertModelCLS(nn.Cell):
             self.dense = nn.Dense(config.hidden_size, self.num_labels, weight_init=self.weight_init,
                                   has_bias=True).to_float(config.compute_type)
         else:
-            self.dense_1 = nn.Dense(config.hidden_size, self.num_labels, weight_init=self.weight_init,
-                                    has_bias=True).to_float(config.compute_type)
+            self.dense_1 = nn.DenseQuant(config.hidden_size, self.num_labels, weight_init=self.weight_init,
+                                         has_bias=True).to_float(config.compute_type)
         self.dropout = nn.ReLU()
 
     def construct(self, input_ids, token_type_id, input_mask):

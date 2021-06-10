@@ -369,22 +369,21 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
     if quant_new_params is not None and not isinstance(quant_new_params, list):
         raise TypeError("quant_new_params must be list or None.")
     iterable_dict = {
-        'weight': iter(list(filter(lambda item: item[0].endswith('weight'), params_dict.items()))),
-        'bias': iter(list(filter(lambda item: item[0].endswith('bias'), params_dict.items()))),
-        'gamma': iter(list(filter(lambda item: item[0].endswith('gamma'), params_dict.items()))),
-        'beta': iter(list(filter(lambda item: item[0].endswith('beta'), params_dict.items()))),
-        'moving_mean': iter(list(filter(lambda item: item[0].endswith('moving_mean'), params_dict.items()))),
-        'moving_variance': iter(list(filter(lambda item: item[0].endswith('moving_variance'), params_dict.items()))),
         'minq': iter(list(filter(lambda item: item[0].endswith('minq'), params_dict.items()))),
         'maxq': iter(list(filter(lambda item: item[0].endswith('maxq'), params_dict.items()))),
         'quant_max': iter(list(filter(lambda item: item[0].endswith('quant_max'), params_dict.items())))
     }
+    for param in params_dict.items():
+        key_name = param[0].split(".")[-1]
+        if key_name not in iterable_dict:
+            iterable_dict[key_name] = iter(list(filter(lambda item, value=key_name: item[0].endswith(value),
+                                                       params_dict.items())))
 
     for name, param in quant_model.parameters_and_names():
         key_name = name.split(".")[-1]
         if key_name not in iterable_dict.keys():
             if key_name not in quant_new_params:
-                raise ValueError(f"Can't find match parameter in ckpt,param name = {name}")
+                raise ValueError(f"Can't find match parameter in ckpt, param name = {name}")
             continue
         value_param = next(iterable_dict[key_name], None)
         if value_param:
