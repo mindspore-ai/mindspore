@@ -124,7 +124,7 @@ bool CheckSegments(size_t segments, size_t communication_op_node_size, const std
   for (size_t i = 0; i < segments - 1; ++i) {
     if (segment_index->at(i) > segment_index->at(i + 1)) {
       MS_LOG(EXCEPTION) << "illegal split: segment_index[" << i << "]=" << segment_index->at(i) << ", segment_index[ "
-                        << i + 1 << "]=" << segment_index->at(i + 1);
+                        << (i + 1) << "]=" << segment_index->at(i + 1);
     }
   }
   return true;

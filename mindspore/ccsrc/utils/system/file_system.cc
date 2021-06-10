@@ -180,11 +180,11 @@ bool WinWriteFile::Open() {
     return true;
   }
   // check the path
-  if (nullptr == file_name_.c_str()) {
+  if (file_name_.c_str() == nullptr) {
     MS_LOG(EXCEPTION) << "The file path is null.";
   }
   char path[PATH_MAX + 1] = {0x00};
-  if (file_name_.size() > PATH_MAX || nullptr == _fullpath(path, file_name_.c_str(), PATH_MAX)) {
+  if (file_name_.size() > PATH_MAX || _fullpath(path, file_name_.c_str(), PATH_MAX) == nullptr) {
     MS_LOG(EXCEPTION) << "Convert to real path fail, file name is " << file_name_ << ".";
   }
 
