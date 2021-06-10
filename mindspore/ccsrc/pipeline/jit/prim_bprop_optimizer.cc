@@ -75,6 +75,7 @@ void PrimBpropOptGraphLevel2Info::AnalysisArgUsingInfo(const FuncGraphManagerPtr
 void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(const NodeUsersMap &node_users,
                                                         const std::shared_ptr<AnfNode> &param,
                                                         ParamUsingInfo *arg_info) const {
+  MS_EXCEPTION_IF_NULL(arg_info);
   auto iter = node_users.find(param);
 
   if (iter == node_users.end()) {
@@ -108,11 +109,13 @@ void PrimBpropOptGraphLevel2Info::AalysisForTupleGetItem(const NodeUsersMap &nod
                                                          ParamUsingInfo *arg_info, const AnfNodePtr &user_node) const {
   MS_EXCEPTION_IF_NULL(arg_info);
   auto cnode = user_node->cast<CNodePtr>();
-  if (cnode->size() != 3) {
+  const size_t tuple_get_item_size = 3;
+  const size_t index = 2;
+  if (cnode->size() != tuple_get_item_size) {
     MS_LOG(EXCEPTION) << "TupleGetItem Node:" << user_node->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
                       << "input size is:" << cnode->size();
   }
-  auto idx_node = cnode->input(2);
+  auto idx_node = cnode->input(index);
   if (!idx_node->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "tuple :" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
                       << " unexpected used by node:" << user_node->ToString()
@@ -140,6 +143,7 @@ void PrimBpropOptGraphLevel2Info::ArgInfoRefresh(const std::shared_ptr<AnfNode> 
                                                  ParamUsingInfo *arg_info) const {
   MS_EXCEPTION_IF_NULL(arg_info);
   auto abs = param->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractTensor>()) {
     arg_info->tuple_flg_ = false;
     MS_LOG(DEBUG) << "param abstract:" << param->ToString() << " is a AbstractTensor";

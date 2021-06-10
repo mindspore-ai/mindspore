@@ -1655,7 +1655,6 @@ void Parser::RemoveUnnecessaryPhis() {
   if (removable_phis.empty()) {
     return;
   }
-  auto fg_name = func_graph_->ToString();
   auto mng = Manage(func_graph_, false);
   // Replace the nodes
   // Remove from inside to outside
@@ -1680,7 +1679,7 @@ void Parser::RemoveUnnecessaryPhis() {
       });
 
     // Shrink container to new size
-    new_parameters.resize(std::distance(new_parameters.begin(), it));
+    new_parameters.resize(static_cast<size_t>(std::distance(new_parameters.begin(), it)));
     func_graph->set_parameters(new_parameters);
   }
 }

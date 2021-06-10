@@ -57,6 +57,11 @@ class OrderEnforcer {
       return;
     }
     auto update_state = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(update_state);
+    const size_t update_state_inputs_size = 3;
+    if (update_state->inputs().size() < update_state_inputs_size) {
+      MS_LOG(ERROR) << "UpdateState inputs size is less than 3, node is:" << update_state->DebugString();
+    }
     if (!HasAbstractUMonad(update_state->input(1))) {
       // Skip UpdateStates for IO.
       return;

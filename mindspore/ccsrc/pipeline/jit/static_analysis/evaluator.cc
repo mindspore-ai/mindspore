@@ -297,8 +297,10 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
           func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
           func_graph_->joined_shapes_.clear();
           std::transform(joined_args_spec_list_1.begin(), joined_args_spec_list_1.end(),
-                         std::back_inserter(func_graph_->joined_shapes_),
-                         [](const AbstractBasePtr &arg_spec) { return arg_spec->GetShapeTrack(); });
+                         std::back_inserter(func_graph_->joined_shapes_), [](const AbstractBasePtr &arg_spec) {
+                           MS_EXCEPTION_IF_NULL(arg_spec);
+                           return arg_spec->GetShapeTrack();
+                         });
           joined_args_spec_list_1 = NormalizeArgs(joined_args_spec_list_1);
           MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
         }
@@ -316,8 +318,10 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
         func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
         func_graph_->joined_shapes_.clear();
         std::transform(joined_args_spec_list_2.begin(), joined_args_spec_list_2.end(),
-                       std::back_inserter(func_graph_->joined_shapes_),
-                       [](const AbstractBasePtr &arg_spec) { return arg_spec->GetShapeTrack(); });
+                       std::back_inserter(func_graph_->joined_shapes_), [](const AbstractBasePtr &arg_spec) {
+                         MS_EXCEPTION_IF_NULL(arg_spec);
+                         return arg_spec->GetShapeTrack();
+                       });
         joined_args_spec_list_2 = NormalizeArgs(joined_args_spec_list_2);
         MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
       }
@@ -420,6 +424,7 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                        [is_py_eval](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          auto abstract = conf->ObtainEvalResult()->abstract();
+                         MS_EXCEPTION_IF_NULL(abstract);
                          // broaden the ref_key, while infer python prim for cache
                          if (is_py_eval && abstract->isa<AbstractRef>()) {
                            auto abs_ref = abstract->cast<AbstractRefPtr>();
@@ -518,6 +523,7 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(bparams),
                        [&enable_sparse](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg_spec);
                          if (enable_sparse && arg_spec->isa<AbstractTensor>()) {
                            return std::make_shared<AbstractUndetermined>();
                          }

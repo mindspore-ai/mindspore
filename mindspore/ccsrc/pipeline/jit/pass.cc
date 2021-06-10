@@ -109,6 +109,7 @@ bool CleanAfterOptAPass(const ResourcePtr &res) {
 }
 
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res->func_graph());
   opt::OptPassConfig pynative_eliminate = opt::OptPassConfig({
     irpass.pynative_eliminate_,
   });
@@ -146,6 +147,7 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
 }
 
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res->func_graph());
   opt::OptPassConfig special_op_simplify = opt::OptPassConfig({
     irpass.switch_simplify_,
     irpass.reduce_eliminate_,
@@ -175,6 +177,7 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
 
 FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
+  MS_EXCEPTION_IF_NULL(res->func_graph());
   if (!TransformTopGraphPass(res)) {
     MS_LOG(EXCEPTION) << "Run TransformTopGraphPass failed";
   }
@@ -601,6 +604,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
       continue;
     }
     AbstractBasePtr par_abs = param_node->abstract();
+    MS_EXCEPTION_IF_NULL(par_abs);
     if (par_abs->isa<abstract::AbstractUndetermined>() ||
         (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && par_abs->BuildType() != nullptr &&
          par_abs->BuildType()->isa<Number>())) {

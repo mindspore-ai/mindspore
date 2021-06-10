@@ -150,8 +150,7 @@ TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, std::vector<size_t>
 
 // Get the largest type of index in the same SignatureEnumDType of arguments.
 using MaxTypeMap = std::map<SignatureEnumDType, TypeId>;
-MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypePtr> &input_types,
-                       const std::set<size_t> &write_indices) {
+MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypePtr> &input_types) {
   // record index for signature.dtypes of the same type
   // eg. [T, T1, T, T2, T, T1, T3] -> {{T:(0,2,4)}, {T1:(1,5)}, {T2:(3)}, {T3:(6)}}
   std::map<SignatureEnumDType, std::vector<size_t>> type_indices;
@@ -207,7 +206,7 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
     return;
   }
   // Stat the index of the arguments with the largest type in the same SignatureEnumDType.
-  std::map<SignatureEnumDType, TypeId> dst_type = GetMaxDtype(dtypes, input_types, write_indices);
+  std::map<SignatureEnumDType, TypeId> dst_type = GetMaxDtype(dtypes, input_types);
   // Identify which arg requires auto cast
   for (size_t i = 0; i < input_types.size(); ++i) {
     auto it = dst_type.find(dtypes[i]);

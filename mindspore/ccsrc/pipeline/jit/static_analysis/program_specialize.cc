@@ -553,10 +553,11 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
   // First element is func so arg start from 1
   std::vector<AnfNodePtr> args(new_inputs.begin() + 1, new_inputs.end());
   // CNode(CNode(Partial, f, arg1), arg2, ...) --> CNode(f, arg1, arg2, ...)
+  const size_t arg_start_index = 2;
   while (IsPrimitiveCNode(func, prim::kPrimPartial)) {
     std::vector<AnfNodePtr> inputs = func->cast<CNodePtr>()->inputs();
     // First element is partial, second is func so arg is start from 2
-    (void)args.insert(args.begin(), inputs.begin() + 2, inputs.end());
+    (void)args.insert(args.begin(), inputs.begin() + arg_start_index, inputs.end());
     func = inputs[1];
   }
   new_inputs = args;
@@ -738,6 +739,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     } else {
       return nullptr;
     }
+    MS_EXCEPTION_IF_NULL(value);
     if (!value->isa<FuncGraph>() || value->cast<FuncGraphPtr>()->parent() == nullptr ||
         (IsValueNode<FuncGraph>(origin_node) && IsVisible(func_graph_, value->cast<FuncGraphPtr>()->parent()))) {
       return BuildValueNode(value, ival);

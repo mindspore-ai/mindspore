@@ -453,6 +453,7 @@ void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weig
                                std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) {
   std::string weight_name;
   auto x = root_node->input(1);
+  MS_EXCEPTION_IF_NULL(x);
   if (IsPrimitiveCNode(weight_node, prim::kPrimLoad)) {
     weight_name = weight_node->cast<CNodePtr>()->input(1)->cast<ParameterPtr>()->name();
   } else {
@@ -490,7 +491,8 @@ void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weig
   if (cnode == nullptr || IsPrimitiveCNode(cnode, prim::kPrimLoad) || cnode->size() != 4) {
     return;
   }
-  auto fakequant_min_node = cnode->input(2);
+  const size_t fakequant_index = 2;
+  auto fakequant_min_node = cnode->input(fakequant_index);
   if (!fakequant_min_node->isa<Parameter>() && !IsPrimitiveCNode(fakequant_min_node, prim::kPrimLoad)) {
     return;
   }
@@ -525,13 +527,14 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> ExecutorPy:
            IsPrimitiveCNode(node, prim::kPrimFakeLearnedScaleQuantPerLayer) ||
            IsPrimitiveCNode(node, prim::kPrimFakeLearnedScaleQuantPerChannel);
   };
+  const size_t root_node_size = 3;
+  const size_t weight_index = 2;
   for (const auto &node : nodes) {
     auto root_node = node->cast<CNodePtr>();
-    const size_t root_node_size = 3;
     if (root_node == nullptr || root_node->size() != root_node_size) {
       continue;
     }
-    auto weight = root_node->input(2);
+    auto weight = root_node->input(weight_index);
     if (!is_quant_cnode(weight)) {
       auto tuple_node = weight->cast<CNodePtr>();
       if (tuple_node != nullptr) {
@@ -545,7 +548,8 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> ExecutorPy:
     }
     // get parameter weight's name
     auto cnode = weight->cast<CNodePtr>();
-    auto weight_node = cnode->input(2);
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto weight_node = cnode->input(weight_index);
     if (!weight_node->isa<Parameter>() && !IsPrimitiveCNode(weight_node, prim::kPrimLoad)) {
       continue;
     }
@@ -880,6 +884,7 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
     for (std::size_t i = (*arg_list).size(); i < graph_params_size; i++) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
       auto param_ptr = (graph_params[i])->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(param_ptr);
       if (!param_ptr->has_default()) {
         MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
       }
