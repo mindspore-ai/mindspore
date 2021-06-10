@@ -14,12 +14,15 @@
         - [Evaluation](#testing)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-    - [Convert Process](#convert-process)
-        - [Convert](#convert)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
+        - [310 Inference Performance](#310-inference-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 # [YOLOv5 Description](#contents)
@@ -125,9 +128,11 @@ sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 └─yolov5
   ├─README.md
   ├─mindspore_hub_conf.md             # config for mindspore hub
+  ├─ascend310_infer                   # application for 310 inference
   ├─scripts
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in ascend
+    ├─run_infer_310.sh                # launch 310 inference in ascend
     └─run_eval.sh                     # launch evaluating in ascend
   ├─src
     ├─__init__.py                     # python init file
@@ -142,9 +147,9 @@ sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
     ├─util.py                         # util function
     ├─yolo.py                         # yolov5 network
     ├─yolo_dataset.py                 # create dataset for YOLOV5
-
   ├─eval.py                           # evaluate val results
   ├─export.py                         # convert mindspore model to air model
+  ├─postprocess.py                    # postprocess script
   └─train.py                          # train net
 ```
 
@@ -306,14 +311,51 @@ The above python command will run in the background. You can view the results th
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.674
 ```
 
-## [Convert Process](#contents)
+## [Inference process](#contents)
 
-### Convert
+### Export MindIR
 
-If you want to infer the network on Ascend 310, you should convert the model to AIR:
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
+```
 
-```python
-python export.py [BATCH_SIZE] [PRETRAINED_BACKBONE]
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"].Current model only support CPU MODE.
+`BATCH_SIZE` current batch_size can only be set to 1.
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DVPP] [DEVICE_ID]
+```
+
+- `ANN_FILE` annotations file path.
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. Current model only support CPU MODE.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+# acc.log
+=============coco 310 infer reulst=========
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.369
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.571
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.398
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.216
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.421
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.487
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.301
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.502
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.558
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.388
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.617
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.677
 ```
 
 # [Model Description](#contents)
@@ -354,6 +396,20 @@ YOLOv5 on 5K images(The annotation and data format must be the same as coco val2
 | outputs                    | box position and sorces, and probability                    |
 | Accuracy                   | map=36.8~37.2%(shape=640)                                   |
 | Model for inference        | 58M (.ckpt file)                                            |
+
+### 310 Inference Performance
+
+| Parameters          | Ascend                                   |
+| ------------------- | ---------------------------------------- |
+| Model Version       | YOLOv5s                                  |
+| Resource            | Ascend 310; CentOS 3.10                  |
+| Uploaded Date       | 07/06/2021 (month/day/year)              |
+| MindSpore Version   | 1.2.0                                    |
+| Dataset             | Coco2017 5K images                       |
+| batch_size          | 1                                        |
+| outputs             | box position and sorces, and probability |
+| Accuracy            | Accuracy=0.71654                         |
+| Model for inference | 58M(.ckpt file)                          |
 
 # [Description of Random Situation](#contents)
 
