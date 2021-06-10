@@ -7683,7 +7683,7 @@ class AvgPool3D(Primitive):
     3D Average pooling operation.
 
     Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
-    Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, AvgPool3D outputs
+    Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, AvgPool3D outputs
     regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
     :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
@@ -7698,7 +7698,7 @@ class AvgPool3D(Primitive):
             of three int numbers that represent depth, height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
-            represent height and width of movement respectively. Default: 1.
+            represent depth, height and width of movement respectively. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same", "valid", "pad", not case sensitive.
             Default: "valid".
 
@@ -7708,7 +7708,7 @@ class AvgPool3D(Primitive):
               Otherwise, the last extra padding will be done from the tail, bottom and the right side.
               If this mode is set, `pad` must be 0.
 
-            - valid: Adopts the way of discarding. The possible largest height and width of output
+            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
               will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
               must be 0.
 
@@ -7725,7 +7725,7 @@ class AvgPool3D(Primitive):
         data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{out}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
           Currently support float16 and float32 data type.
 
     Outputs:
