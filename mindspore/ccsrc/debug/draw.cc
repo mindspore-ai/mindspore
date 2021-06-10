@@ -148,7 +148,7 @@ void DrawEdges(const std::vector<AnfNodePtr> &nodes, const std::shared_ptr<BaseD
   }
 }
 
-void DrawByOpt(std::string filename, const FuncGraphPtr &func_graph, bool is_user) {
+void DrawByOpt(const std::string &filename, const FuncGraphPtr &func_graph, bool is_user) {
   if (func_graph == nullptr) {
     return;
   }
@@ -157,7 +157,7 @@ void DrawByOpt(std::string filename, const FuncGraphPtr &func_graph, bool is_use
 
   std::shared_ptr<BaseDigraph> digraph;
   OrderedMap<FuncGraphPtr, std::shared_ptr<BaseDigraph>> sub_graphs;
-  ChangeFileMode(filename, S_IRWXU);
+  ChangeFileMode(filename, S_IWUSR);
   if (is_user) {
     digraph = std::make_shared<ModelDigraph>("mindspore", filename);
   } else {
@@ -189,13 +189,24 @@ void DrawByOpt(std::string filename, const FuncGraphPtr &func_graph, bool is_use
 #ifdef ENABLE_DUMP_IR
 void Draw(const std::string &filename, const FuncGraphPtr &func_graph) {
   const std::string dot_suffix = ".dot";
-  std::string filename_with_suffix =
+  const std::string filename_with_suffix =
     (filename.rfind(dot_suffix) != (filename.size() - dot_suffix.size())) ? (filename + dot_suffix) : filename;
-  DrawByOpt(pipeline::GetSaveGraphsPathName(Common::AddId(filename_with_suffix, dot_suffix)), func_graph, false);
+  const std::string filepath = pipeline::GetSaveGraphsPathName(Common::AddId(filename_with_suffix, dot_suffix));
+  auto real_filepath = Common::GetRealPath(filepath);
+  if (!real_filepath.has_value()) {
+    MS_LOG(EXCEPTION) << "The export ir path: " << filepath << " is not illegal.";
+  }
+  DrawByOpt(real_filepath.value(), func_graph, false);
 }
 
 void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {
-  DrawByOpt(pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dot")), func_graph, true);
+  const std::string dot_suffix = ".dot";
+  const std::string filepath = pipeline::GetSaveGraphsPathName(Common::AddId(filename, dot_suffix));
+  auto real_filepath = Common::GetRealPath(filepath);
+  if (!real_filepath.has_value()) {
+    MS_LOG(EXCEPTION) << "The export ir path: " << filepath << " is not illegal.";
+  }
+  DrawByOpt(real_filepath.value(), func_graph, true);
 }
 #else
 void Draw(const std::string &, const FuncGraphPtr &) {

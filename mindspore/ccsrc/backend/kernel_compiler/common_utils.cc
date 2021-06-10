@@ -30,6 +30,7 @@
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
+#include "mindspore/ccsrc/debug/common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -432,34 +433,21 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
 }
 
 void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path) {
-  char real_path[PATH_MAX] = {0};
   std::string path = base_path + json_name + kInfoSuffix;
-  if (path.size() > PATH_MAX) {
-    MS_LOG(DEBUG) << "file path " << path << " is too long.";
+  auto realpath = Common::GetRealPath(path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << path;
     return;
   }
-  std::ofstream filewrite;
-  filewrite.open(path);
+  ChangeFileMode(realpath.value(), S_IWUSR);
+  std::ofstream filewrite(realpath.value());
   if (!filewrite.is_open()) {
+    MS_LOG(ERROR) << "Open file '" << realpath.value() << "' failed!";
     return;
   }
   filewrite << info << std::endl;
   filewrite.close();
-#if defined(_WIN32) || defined(_WIN64)
-  if (nullptr == _fullpath(real_path, path.c_str(), PATH_MAX)) {
-    MS_LOG(DEBUG) << "dir " << path << " does not exit.";
-    return;
-  }
-#else
-  if (nullptr == realpath(path.c_str(), real_path)) {
-    MS_LOG(DEBUG) << "dir " << path << " does not exit.";
-    return;
-  }
-#endif
-  MS_LOG(INFO) << "real path is :" << real_path;
-  if (chmod(real_path, S_IRUSR) == -1) {
-    MS_LOG(DEBUG) << "modify file:" << real_path << " to read only fail.";
-  }
+  ChangeFileMode(realpath.value(), S_IRUSR);
 }
 
 Processor GetProcessor(const string &processor) {

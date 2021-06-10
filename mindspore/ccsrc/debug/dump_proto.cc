@@ -543,31 +543,17 @@ void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) {
     return;
   }
   std::string file_path = pipeline::GetSaveGraphsPathName("ms_output_" + suffix + ".pb");
-  if (file_path.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << file_path << " is too long.";
+  auto realpath = Common::GetRealPath(file_path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file_path;
     return;
   }
-  char real_path[PATH_MAX] = {0};
-  char *real_path_ret = nullptr;
-#if defined(_WIN32) || defined(_WIN64)
-  real_path_ret = _fullpath(real_path, file_path.c_str(), PATH_MAX);
-#else
-  real_path_ret = realpath(file_path.c_str(), real_path);
-#endif
-  if (real_path_ret == nullptr) {
-    MS_LOG(DEBUG) << "dir " << file_path << " does not exit.";
-  } else {
-    std::string path_string = real_path;
-    if (chmod(common::SafeCStr(path_string), S_IRUSR | S_IWUSR) == -1) {
-      MS_LOG(ERROR) << "Modify file:" << real_path << " to rw fail.";
-      return;
-    }
-  }
 
+  ChangeFileMode(realpath.value(), S_IWUSR);
   // write to pb file
-  std::ofstream ofs(real_path);
+  std::ofstream ofs(file_path);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << real_path << "' failed!";
+    MS_LOG(ERROR) << "Open file '" << file_path << "' failed!";
     return;
   }
   ofs << GetFuncGraphProtoString(func_graph);

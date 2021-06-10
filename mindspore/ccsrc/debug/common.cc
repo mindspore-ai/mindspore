@@ -28,58 +28,61 @@
 
 namespace mindspore {
 std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
-  std::string out_path;
-  auto path_split_pos = input_path.find_last_of('/');
-  if (path_split_pos == std::string::npos) {
-    path_split_pos = input_path.find_last_of('\\');
+  if (input_path.length() > PATH_MAX) {
+    MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
   }
+#if defined(SYSTEM_ENV_POSIX)
+  size_t path_split_pos = input_path.find_last_of('/');
+#elif defined(SYSTEM_ENV_WINDOWS)
+  size_t path_split_pos = input_path.find_last_of('\\');
+#else
+  MS_LOG(EXCEPTION) << "Unsupported platform.";
+#endif
   // get real path
-  char real_path[PATH_MAX] = {0};
+  std::string out_path;
+  char real_path[PATH_MAX + 1] = {0};
+  // input_path is dir + file_name
   if (path_split_pos != std::string::npos) {
     std::string prefix_path = input_path.substr(0, path_split_pos);
-    if (prefix_path.length() >= PATH_MAX) {
-      MS_LOG(ERROR) << "Prefix path is too longer!";
-      return std::nullopt;
-    }
-    std::string last_path = input_path.substr(path_split_pos, input_path.length() - path_split_pos);
-    auto ret = CreateNotExistDirs(prefix_path);
-    if (!ret) {
-      MS_LOG(ERROR) << "CreateNotExistDirs Failed!";
+    std::string file_name = input_path.substr(path_split_pos);
+    if (!CreateNotExistDirs(prefix_path)) {
+      MS_LOG(ERROR) << "Create dir " << prefix_path << " Failed!";
       return std::nullopt;
     }
 #if defined(SYSTEM_ENV_POSIX)
-    if (realpath(prefix_path.c_str(), real_path) == nullptr) {
-      MS_LOG(ERROR) << "dir " << prefix_path << " does not exist.";
+    if (file_name.length() > NAME_MAX) {
+      MS_LOG(EXCEPTION) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
+    }
+    if (realpath(common::SafeCStr(prefix_path), real_path) == nullptr) {
+      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
       return std::nullopt;
     }
 #elif defined(SYSTEM_ENV_WINDOWS)
-    if (_fullpath(real_path, prefix_path.c_str(), PATH_MAX) == nullptr) {
-      MS_LOG(ERROR) << "dir " << prefix_path << " does not exist.";
+    if (_fullpath(real_path, common::SafeCStr(prefix_path), PATH_MAX) == nullptr) {
+      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
       return std::nullopt;
     }
-#else
-    MS_LOG(EXCEPTION) << "Unsupported platform.";
 #endif
-    out_path = std::string(real_path) + last_path;
-  }
-
-  if (path_split_pos == std::string::npos) {
-    if (input_path.length() >= PATH_MAX) {
-      MS_LOG(ERROR) << "Prefix path is too longer!";
-      return std::nullopt;
-    }
+    out_path = std::string(real_path) + file_name;
+  } else {
+    // input_path is only file_name
 #if defined(SYSTEM_ENV_POSIX)
-    if (realpath(input_path.c_str(), real_path) == nullptr) {
-      MS_LOG(ERROR) << "File " << input_path << " does not exist, it will be created.";
+    if (input_path.length() > NAME_MAX) {
+      MS_LOG(EXCEPTION) << "The length of file name : " << input_path.length() << " exceeds limit: " << NAME_MAX;
+    }
+    if (realpath(common::SafeCStr(input_path), real_path) == nullptr) {
+      MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
     }
 #elif defined(SYSTEM_ENV_WINDOWS)
-    if (_fullpath(real_path, input_path.c_str(), PATH_MAX) == nullptr) {
-      MS_LOG(ERROR) << "File " << input_path << " does not exist, it will be created.";
+    if (_fullpath(real_path, common::SafeCStr(input_path), PATH_MAX) == nullptr) {
+      MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
     }
-#else
-    MS_LOG(EXCEPTION) << "Unsupported platform.";
 #endif
     out_path = std::string(real_path);
+  }
+
+  if (out_path.length() > PATH_MAX) {
+    MS_LOG(EXCEPTION) << "The file real path: " << out_path << " exceeds limit: " << PATH_MAX;
   }
   return out_path;
 }
