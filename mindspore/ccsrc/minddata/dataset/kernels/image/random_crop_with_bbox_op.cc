@@ -34,8 +34,8 @@ Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) 
 
   int32_t padded_image_h;
   int32_t padded_image_w;
-
-  output->resize(2);
+  const int output_count = 2;
+  output->resize(output_count);
   (*output)[1] = std::move(input[1]);  // since some boxes may be removed
 
   bool crop_further = true;  // Whether further cropping will be required or not, true unless required size matches

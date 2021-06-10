@@ -58,17 +58,17 @@ typedef struct MDToDResult {
   MDToDBuff_t faceEmbeddingsBuff;
 } MDToDResult_t;
 
-typedef int (*MDToDApi_pathTest_t)(const char *path);
-typedef int (*MDToDApi_testAlbum_t)();
-typedef MDToDApi *(*MDToDApi_createPipeLine_t)(MDToDConf_t MDConf);
-typedef int (*MDToDApi_GetNext_t)(MDToDApi *pMDToDApi, MDToDResult_t *results);
-typedef int (*MDToDApi_UpdateEmbeding_t)(MDToDApi *pMDToDApi, const char *column, float *emmbeddings,
-                                         size_t emmbeddingsSize);
-typedef int (*MDToDApi_UpdateStringArray_t)(MDToDApi *pMDToDApi, const char *column, MDToDBuff_t MDbuff);
-typedef int (*MDToDApi_UpdateFloatArray_t)(MDToDApi *pMDToDApi, const char *column, MDToDBuff_t MDbuff);
-typedef int (*MDToDApi_UpdateIsForTrain_t)(MDToDApi *pMDToDApi, uint8_t isForTrain);
-typedef int (*MDToDApi_UpdateNoOfFaces_t)(MDToDApi *pMDToDApi, int32_t noOfFaces);
-typedef int (*MDToDApi_Stop_t)(MDToDApi *pMDToDApi);
-typedef int (*MDToDApi_Destroy_t)(MDToDApi *pMDToDApi);
+using (*MDToDApi_pathTest_t)(const char *path) = int;
+using (*MDToDApi_testAlbum_t)() = int;
+using *(*MDToDApi_createPipeLine_t)(MDToDConf_t MDConf) = MDToDApi;
+using (*MDToDApi_GetNext_t)(MDToDApi *pMDToDApi, MDToDResult_t *results) = int;
+using (*MDToDApi_UpdateEmbeding_t)(MDToDApi *pMDToDApi, const char *column, float *emmbeddings,
+                                   size_t emmbeddingsSize) = int;
+using (*MDToDApi_UpdateStringArray_t)(MDToDApi *pMDToDApi, const char *column, MDToDBuff_t MDbuff) = int;
+using (*MDToDApi_UpdateFloatArray_t)(MDToDApi *pMDToDApi, const char *column, MDToDBuff_t MDbuff) = int;
+using (*MDToDApi_UpdateIsForTrain_t)(MDToDApi *pMDToDApi, uint8_t isForTrain) = int;
+using (*MDToDApi_UpdateNoOfFaces_t)(MDToDApi *pMDToDApi, int32_t noOfFaces) = int;
+using (*MDToDApi_Stop_t)(MDToDApi *pMDToDApi) = int;
+using (*MDToDApi_Destroy_t)(MDToDApi *pMDToDApi) = int;
 
 #endif

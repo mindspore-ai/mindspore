@@ -43,8 +43,8 @@ Status RandomVerticalFlipWithBBoxOp::Compute(const TensorRow &input, TensorRow *
       bbox->SetY(newBoxCorner_y);
       RETURN_IF_NOT_OK(bbox->WriteToTensor(input[1], i));
     }
-
-    output->resize(2);
+    const int output_count = 2;
+    output->resize(output_count);
     (*output)[1] = std::move(input[1]);
 
     return VerticalFlip(input[0], &(*output)[0]);
