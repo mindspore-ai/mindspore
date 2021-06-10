@@ -214,6 +214,14 @@ void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
 
   dst_tensor->FreeData();
   dst_tensor->ResetRefCount();
+
+  if (src_tensor->allocator() == nullptr && !(src_tensor->IsConst()) && !(src_tensor->IsGraphInput())) {
+    // delegate graph kernel output tensor
+    dst_tensor->MallocData();
+    memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
+    return;
+  }
+
   dst_tensor->set_allocator(src_tensor->allocator());
   if (src_tensor->allocator() != nullptr) {
     src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
