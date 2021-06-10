@@ -28,6 +28,8 @@
 #include "ops/equal.h"
 #include "ops/not_equal.h"
 #include "ops/neg.h"
+#include "ops/mul.h"
+#include "ops/sub.h"
 #include "abstract/abstract_function.h"
 #include "abstract/infer_functions.h"
 #include "ops/tile.h"
@@ -179,12 +181,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 
 PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
   static PrimitiveEvalImplMap prim_backend_eval_implement_map = {
-    {prim::kPrimMul, {InferImplMul, nullptr, true}},
+    {prim::kPrimMul, {ops::MulInfer, nullptr, true}},
     {prim::kPrimAdd, {ops::AddInfer, nullptr, false}},
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, nullptr, true}},
-    {prim::kPrimSub, {InferImplSub, nullptr, false}},
+    {prim::kPrimSub, {ops::SubInfer, nullptr, false}},
     {prim::kPrimNeg, {ops::NegInfer, nullptr, false}},
-    {prim::kPrimEqual, {InferImplEqual, nullptr, true}},
     {prim::kPrimTile, {ops::TileInfer, nullptr, true}},
     {prim::kPrimEqual, {ops::EqualInfer, nullptr, true}},
     {prim::kPrimNotEqual, {ops::NotEqualInfer, nullptr, true}},

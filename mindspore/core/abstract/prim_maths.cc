@@ -77,39 +77,6 @@ AbstractBasePtr InferImplSquare(const AnalysisEnginePtr &, const PrimitivePtr &p
   return args_spec_list[0]->Broaden();
 }
 
-AbstractBasePtr InferImplEqual(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
-  constexpr auto kEqualInputNum = 2;
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kEqualInputNum);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector x_shape = x->shape()->shape();
-  ShapeVector x_shape_min = x->shape()->min_shape().empty() ? x_shape : x->shape()->min_shape();
-  ShapeVector x_shape_max = x->shape()->max_shape().empty() ? x_shape : x->shape()->max_shape();
-
-  auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(y);
-  MS_EXCEPTION_IF_NULL(y->shape());
-  ShapeVector y_shape = y->shape()->shape();
-  ShapeVector y_shape_min = y->shape()->min_shape().empty() ? y_shape : y->shape()->min_shape();
-  ShapeVector y_shape_max = y->shape()->max_shape().empty() ? y_shape : y->shape()->max_shape();
-
-  auto out_shape = BroadcastShape(x_shape, y_shape);
-  if (out_shape.empty()) {
-    MS_LOG(EXCEPTION) << "Equal op BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
-                      << args_spec_list[1]->ToString();
-  }
-  auto out_shape_min = BroadcastShape(x_shape_min, y_shape_min);
-  auto out_shape_max = BroadcastShape(x_shape_max, y_shape_max);
-
-  auto output_type = std::make_shared<Bool>();
-  auto ret =
-    std::make_shared<AbstractTensor>(output_type, std::make_shared<Shape>(out_shape, out_shape_min, out_shape_max));
-  return ret;
-}
-
 int64_t InferImplReduceFuncCheckAxis(const int64_t &axis, const size_t dim) {
   int64_t dim_ = static_cast<int64_t>(dim);
   if (axis < -dim_ || axis >= dim_) {
@@ -253,21 +220,6 @@ AbstractBasePtr InferImplBinaryBase(const AnalysisEnginePtr &, const PrimitivePt
 
 AbstractBasePtr InferImplMinimum(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
-  return InferImplBinaryBase(engine_ptr, primitive, args_spec_list);
-}
-
-AbstractBasePtr InferImplMul(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_spec_list) {
-  return InferImplBinaryBase(engine_ptr, primitive, args_spec_list);
-}
-
-AbstractBasePtr InferImplAdd(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_spec_list) {
-  return InferImplBinaryBase(engine_ptr, primitive, args_spec_list);
-}
-
-AbstractBasePtr InferImplSub(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_spec_list) {
   return InferImplBinaryBase(engine_ptr, primitive, args_spec_list);
 }
 
