@@ -51,7 +51,7 @@ void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight,
 void DeconvDwInt8Post(int8_t *dst, int32_t *output_buffer, const int32_t *bias, int block_channel, int pixel_nums,
                       int out_multiplier, int left_shift, int right_shift, int32_t out_zp, int32_t acc_min,
                       int32_t acc_max);
-int16x8_t LoadAndAddOffset(int8_t *data, int index, int offset);
+int16x8_t LoadAndAddOffset(const int8_t *data, int index, int offset);
 int32x4_t ClacScaledInput(int32x4_t input, int32x4_t left_shift_result_vec, int32x4_t input_multiplier_vec,
                           int32x4_t right_shift_vec);
 #endif

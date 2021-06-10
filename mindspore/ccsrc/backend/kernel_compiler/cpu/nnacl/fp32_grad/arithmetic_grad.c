@@ -71,10 +71,10 @@ void MaximumByAxes(const float *input0, const float *input1, const float *dy, co
     int num_axes0 = 0;
     int num_axes1 = 0;
     for (int i = 0; i < num_dims; i++) {
-      if (input0_dims[i] == 1) {
+      if (input0_dims[i] == 1 && num_axes0 < 5) {
         axes0[num_axes0++] = i;
       }
-      if (input1_dims[i] == 1) {
+      if (input1_dims[i] == 1 && num_axes1 < 5) {
         axes1[num_axes1++] = i;
       }
     }
@@ -121,10 +121,10 @@ void MinimumByAxes(const float *input0, const float *input1, const float *dy, co
     int num_axes0 = 0;
     int num_axes1 = 0;
     for (int i = 0; i < num_dims; i++) {
-      if (input0_dims[i] == 1) {
+      if (input0_dims[i] == 1 && num_axes0 < 5) {
         axes0[num_axes0++] = i;
       }
-      if (input1_dims[i] == 1) {
+      if (input1_dims[i] == 1 && num_axes1 < 5) {
         axes1[num_axes1++] = i;
       }
     }

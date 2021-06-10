@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoStridedSliceGrad(const float *inputs, float *output, const int *dx_shape, StridedSliceParameter *param);
+int DoStridedSliceGrad(const float *inputs, float *output, const int *dx_shape, const StridedSliceParameter *param);
 #ifdef __cplusplus
 }
 #endif

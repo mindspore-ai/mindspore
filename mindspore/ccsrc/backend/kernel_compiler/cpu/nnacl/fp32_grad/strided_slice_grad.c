@@ -25,7 +25,7 @@ static size_t CalcIndex(const int *shape, size_t size, int i, size_t pos) {
   return (pos / res % shape[i]);
 }
 
-int DoStridedSliceGrad(const float *inputs, float *output, const int *dx_shape, StridedSliceParameter *param) {
+int DoStridedSliceGrad(const float *inputs, float *output, const int *dx_shape, const StridedSliceParameter *param) {
   if (inputs == NULL || output == NULL || param == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -34,8 +34,8 @@ int DoStridedSliceGrad(const float *inputs, float *output, const int *dx_shape, 
   }
 
   size_t size = 1;
-  int *s = param->strides_;
-  int *b = param->begins_;
+  const int *s = param->strides_;
+  const int *b = param->begins_;
   for (int i = 0; i < DIMENSION_8D; i++) {
     size *= param->in_shape_[i];
   }

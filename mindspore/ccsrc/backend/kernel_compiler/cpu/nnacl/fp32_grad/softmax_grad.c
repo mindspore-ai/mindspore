@@ -19,11 +19,11 @@
 #include "nnacl/fp32_grad/gemm.h"
 
 void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr, float *sum_data, float *sum_mul,
-                 SoftmaxParameter *parameter) {
+                 const SoftmaxParameter *parameter) {
   int32_t axis = parameter->axis_;
   int n_dim = parameter->n_dim_;
   int ele_size = parameter->element_size_;
-  int *input_shape = parameter->input_shape_;
+  const int *input_shape = parameter->input_shape_;
   int dim = 1;
 
   int inner_size = 1, outter_size = 1;

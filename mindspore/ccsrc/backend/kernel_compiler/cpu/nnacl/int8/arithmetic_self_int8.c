@@ -22,7 +22,7 @@
 #endif
 #include "nnacl/int8/fixed_point.h"
 
-int Int8ElementFloor(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementFloor(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -41,7 +41,7 @@ int Int8ElementFloor(int8_t *input, int8_t *output, int element_size, ArithSelfQ
   return NNACL_OK;
 }
 
-int Int8ElementRound(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementRound(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -60,7 +60,7 @@ int Int8ElementRound(int8_t *input, int8_t *output, int element_size, ArithSelfQ
   return NNACL_OK;
 }
 
-int Int8ElementCeil(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementCeil(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -79,7 +79,7 @@ int Int8ElementCeil(int8_t *input, int8_t *output, int element_size, ArithSelfQu
   return NNACL_OK;
 }
 
-int Int8ElementAbs(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementAbs(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -98,7 +98,7 @@ int Int8ElementAbs(int8_t *input, int8_t *output, int element_size, ArithSelfQua
   return NNACL_OK;
 }
 
-int Int8ElementSin(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementSin(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -117,7 +117,7 @@ int Int8ElementSin(int8_t *input, int8_t *output, int element_size, ArithSelfQua
   return NNACL_OK;
 }
 
-int Int8ElementCos(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementCos(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -136,7 +136,7 @@ int Int8ElementCos(int8_t *input, int8_t *output, int element_size, ArithSelfQua
   return NNACL_OK;
 }
 
-int Int8ElementLog(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementLog(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -155,7 +155,7 @@ int Int8ElementLog(int8_t *input, int8_t *output, int element_size, ArithSelfQua
   return NNACL_OK;
 }
 
-int Int8ElementSqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementSqrt(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -178,7 +178,7 @@ int Int8ElementSqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQu
   return NNACL_OK;
 }
 
-int Int8ElementRsqrt(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementRsqrt(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -215,7 +215,8 @@ int16x4_t ClacSumHalfWord(int32x4_t scaled_input, int32x4_t left_shift_out_vec, 
   return vqmovn_s32(raw_sum);
 }
 
-void SquareInt8NEON(int8_t *input_data, int8_t *output_data, int64_t element_size, ArithSelfQuantArg para, int *index) {
+void SquareInt8NEON(const int8_t *input_data, int8_t *output_data, int64_t element_size, ArithSelfQuantArg para,
+                    int *index) {
   int32x4_t output_multiplier_vec = vdupq_n_s32(para.output_multiplier_);
   int32x4_t left_shift_out_vec = vdupq_n_s32(1 << para.shift_left_);
 
@@ -235,7 +236,7 @@ void SquareInt8NEON(int8_t *input_data, int8_t *output_data, int64_t element_siz
 }
 #endif
 
-int Int8ElementSquare(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementSquare(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   int32_t in_zp = para.in_args_.zp_;
   int32_t out_zp = para.out_args_.zp_;
 
@@ -260,7 +261,7 @@ int Int8ElementSquare(int8_t *input, int8_t *output, int element_size, ArithSelf
   return NNACL_OK;
 }
 
-int Int8ElementLogicalNot(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementLogicalNot(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;
@@ -279,7 +280,7 @@ int Int8ElementLogicalNot(int8_t *input, int8_t *output, int element_size, Arith
   return NNACL_OK;
 }
 
-int Int8ElementReciprocal(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
+int Int8ElementReciprocal(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para) {
   float in_scale = para.in_args_.scale_;
   int32_t in_zp = para.in_args_.zp_;
   float out_scale = para.out_args_.scale_;

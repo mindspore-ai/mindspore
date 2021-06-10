@@ -17,8 +17,8 @@
 #include <math.h>
 #include "nnacl/infer/common_infer.h"
 
-void ResizeNearestNeighborGrad(float *in_addr, float *out_addr, int batch_size, int channel, int format,
-                               ResizeGradParameter *param) {
+void ResizeNearestNeighborGrad(const float *in_addr, float *out_addr, int batch_size, int channel, int format,
+                               const ResizeGradParameter *param) {
   bool align_corners = param->align_corners_;
   size_t in_hw_size = param->in_width_ * param->in_height_;
   size_t out_hw_size = param->out_width_ * param->out_height_;
@@ -64,8 +64,8 @@ void ResizeNearestNeighborGrad(float *in_addr, float *out_addr, int batch_size, 
   }
 }
 
-void ResizeBiLinearGrad(float *in_addr, float *out_addr, int batch_size, int channel, int format,
-                        ResizeGradParameter *param) {
+void ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, int channel, int format,
+                        const ResizeGradParameter *param) {
   size_t in_hw_size = param->in_width_ * param->in_height_;
   size_t out_hw_size = param->out_width_ * param->out_height_;
 

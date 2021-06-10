@@ -85,7 +85,7 @@ void SoftMaxP1(const float *input_ptr, float *output_ptr, float *sum_data, int s
   }
 }
 
-void SoftMaxP2(const float *input_ptr, float *output_ptr, float *sum_data, int start, int count, int length,
+void SoftMaxP2(const float *input_ptr, float *output_ptr, const float *sum_data, int start, int count, int length,
                int inner_size) {
   for (int i = start; i < start + count; i++) {
     int outter_offset = i * length * inner_size;
