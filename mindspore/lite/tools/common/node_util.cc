@@ -171,6 +171,10 @@ std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return int8NeedNhwcOpL
 std::vector<schema::PrimitiveType> GetInt8OpList() { return int8OpList; }
 
 const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb) {
+  if (primitive_t == nullptr || fbb == nullptr) {
+    MS_LOG(ERROR) << "primitiveT or fbb is nullptr.";
+    return nullptr;
+  }
   auto prim_offset = schema::CreatePrimitive(*fbb, primitive_t);
   fbb->Finish(prim_offset);
   auto prim_buf = fbb->GetBufferPointer();

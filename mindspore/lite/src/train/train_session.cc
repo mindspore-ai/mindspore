@@ -142,14 +142,7 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
   }
   auto run_kernel = (train_mode_) ? train_kernels_ : inference_kernels_;
 
-  int ret;
-  //  = CheckGraphInputFormat(inputs_);
-  //  if (ret != RET_OK) {
-  //    MS_LOG(ERROR) << "model input's format mey be changed, which should be NHWC.";
-  //    return ret;
-  //  }
-
-  ret = CheckTensorsInvalid(inputs_);
+  auto ret = CheckTensorsInvalid(inputs_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CheckInputs failed";
     return ret;

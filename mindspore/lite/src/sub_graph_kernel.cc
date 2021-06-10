@@ -207,14 +207,6 @@ int CpuSubGraph::Prepare() {
 
 int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != this->Context()->allocator.get());
-  if (nodes_.front()->type() != schema::PrimitiveType_Merge) {
-    auto ret = CheckTensorsInvalid(in_tensors());
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "CheckInputs failed";
-      return ret;
-    }
-  }
-
 #ifdef SUPPORT_GPU
   // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
   if (this->Context()->IsGpuEnabled()) {
