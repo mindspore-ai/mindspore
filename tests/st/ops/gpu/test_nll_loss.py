@@ -47,7 +47,7 @@ def nll_loss_template(nptype_input, nptype_weight, reduction):
     loss_np = loss.asnumpy()
     total_weight_np = total_weight.asnumpy()
 
-    expected_tot_weight = np.array(1.34000003)
+    expected_tot_weight = np.array(0.129999995)
 
     if reduction == 'none':
         expected_loss = np.array([-0.238499984, -0.108800001])

@@ -46,10 +46,9 @@ class NLLLossGpuKernel : public GpuKernel {
 
     T *tmp_loss_device = GetDeviceAddress<T>(workspace, 0);
     S *tmp_target_weight_device = GetDeviceAddress<S>(workspace, 1);
-    S *tmp_weight_device = GetDeviceAddress<S>(workspace, 2);
 
-    NLLLoss(n_, c_, reduction_, input_device, target_device, weight_device, tmp_weight_device, loss_device,
-            total_weight_device, tmp_loss_device, tmp_target_weight_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+    NLLLoss(n_, c_, reduction_, input_device, target_device, weight_device, loss_device, total_weight_device,
+            tmp_loss_device, tmp_target_weight_device, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -74,7 +73,6 @@ class NLLLossGpuKernel : public GpuKernel {
       tmp_loss_size_ = sizeof(T) * n_;
     }
 
-    tmp_weight_size_ = c_ * sizeof(S);
     tmp_target_weight_size_ = n_ * sizeof(S);
 
     InitSizeLists();
@@ -88,7 +86,6 @@ class NLLLossGpuKernel : public GpuKernel {
     reduction_ = 1;  // default value
     tmp_loss_size_ = 0;
     tmp_target_weight_size_ = 0;  // tmp_target_weight (N,) array
-    tmp_weight_size_ = 0;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -108,7 +105,6 @@ class NLLLossGpuKernel : public GpuKernel {
     output_size_list_.push_back(sizeof(S));  // total weight
     workspace_size_list_.push_back(tmp_loss_size_);
     workspace_size_list_.push_back(tmp_target_weight_size_);
-    workspace_size_list_.push_back(tmp_weight_size_);
   }
 
  private:
@@ -116,7 +112,6 @@ class NLLLossGpuKernel : public GpuKernel {
   int reduction_;
   size_t tmp_loss_size_;
   size_t tmp_target_weight_size_;
-  size_t tmp_weight_size_;
   int n_;
   int c_;
   std::vector<size_t> input_size_list_;
