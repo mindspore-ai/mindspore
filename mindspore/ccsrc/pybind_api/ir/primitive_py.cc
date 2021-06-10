@@ -393,21 +393,18 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
     attr_name = kOpAttrNameReplaceMap[attr_name];
   }
   CheckAndConvertUtils::ConvertAttrValueToInt(name_, name, &converted_ret);
+  attrs_[attr_name] = converted_ret;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->AddAttr(attr_name, converted_ret);
-  } else {
-    attrs_[attr_name] = converted_ret;
   }
 }
 
 void PrimitivePyAdapter::DelPyAttr(const py::str &name) {
-  std::string attr_name = name;
+  attrs_.erase(name);
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
-    prim->DelAttr(attr_name);
-  } else {
-    attrs_.erase(attr_name);
+    prim->DelAttr(name);
   }
 }
 
@@ -425,54 +422,48 @@ py::dict PrimitivePyAdapter::GetAttrDict() {
 }
 
 void PrimitivePyAdapter::set_prim_type(const PrimType t) {
+  prim_type_ = t;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->set_prim_type(t);
-  } else {
-    prim_type_ = t;
   }
 }
 void PrimitivePyAdapter::set_const_prim(bool is_const_prim) {
+  is_const_prim_ = is_const_prim;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->set_const_prim(is_const_prim);
-  } else {
-    is_const_prim_ = is_const_prim;
   }
 }
 void PrimitivePyAdapter::set_const_input_indexes(const std::vector<size_t> &const_input_indexes) {
+  const_input_indexes_ = const_input_indexes;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->set_const_input_indexes(const_input_indexes);
-  } else {
-    const_input_indexes_ = const_input_indexes;
   }
 }
 
 void PrimitivePyAdapter::set_signatures(const std::vector<Signature> &signatures) {
+  signatures_ = signatures;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->set_signatures(signatures);
-  } else {
-    signatures_ = signatures;
   }
 }
 
 void PrimitivePyAdapter::set_hook(const py::function &hook) {
+  hook_ = hook;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->set_hook(hook);
-  } else {
-    hook_ = hook;
   }
 }
 
 void PrimitivePyAdapter::set_instance_name(const std::string &s) {
+  instance_name_ = s;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
     prim->set_instance_name(s);
-  } else {
-    instance_name_ = s;
   }
 }
 
