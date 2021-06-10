@@ -371,9 +371,9 @@ def isposinf(x):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> output = np.isposinf(np.array([-np.inf, 0., np.inf], np.float32))
+        >>> output = np.isposinf(np.array([-np.inf, 0., np.inf, np.nan], np.float32))
         >>> print(output)
-        [False False  True]
+        [False False  True False]
     """
     _check_input_tensor(x)
     return _is_sign_inf(x, F.tensor_gt)
@@ -402,9 +402,9 @@ def isneginf(x):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> output = np.isneginf(np.array([-np.inf, 0., np.inf], np.float32))
+        >>> output = np.isneginf(np.array([-np.inf, 0., np.inf, np.nan], np.float32))
         >>> print(output)
-        [ True False False]
+        [ True False False False]
     """
     return _is_sign_inf(x, F.tensor_lt)
 
@@ -750,6 +750,9 @@ def array_equal(a1, a2, equal_nan=False):
         In mindpsore, a bool tensor is returned instead, since in Graph mode, the
         value cannot be traced and computed at compile time.
 
+        Since on Ascend, :class:`nan` is treated differently, currently the argument
+        `equal_nan` is not supported on Ascend.
+
     Args:
         a1/a2 (Union[int, float, bool, list, tuple, Tensor]): Input arrays.
         equal_nan (bool): Whether to compare NaN’s as equal.
@@ -761,7 +764,7 @@ def array_equal(a1, a2, equal_nan=False):
         TypeError: If inputs have types not specified above.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``GPU`` ``CPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.numpy as np

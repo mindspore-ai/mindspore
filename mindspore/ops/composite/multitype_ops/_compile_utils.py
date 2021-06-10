@@ -922,6 +922,14 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
         if initial is None:
             const_utils.raise_value_error('initial value must be provided for where masks')
         ndim_orig = F.rank(a)
+        # broadcasts input tensors
+        shape_out = const_utils.infer_out_shape(F.shape(where), F.shape(a), F.shape(initial))
+        broadcast_to = P.BroadcastTo(shape_out)
+        where = where.astype(mstype.float32)
+        where = broadcast_to(where)
+        where = where.astype(mstype.bool_)
+        a = broadcast_to(a)
+        initial = broadcast_to(initial)
         a = F.select(where, a, initial)
         axes = const_utils.real_axes(ndim_orig, F.rank(a), axes)
 
