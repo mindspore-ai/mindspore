@@ -248,10 +248,12 @@ Status ToJson(const py::handle &padded_sample, nlohmann::json *const padded_samp
 }
 
 Status toPadInfo(py::dict value, std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> *pad_info) {
+  constexpr size_t kExpectedTupleSize = 2;
   for (auto p : value) {
     if (!p.second.is_none()) {
       auto tp = py::reinterpret_borrow<py::tuple>(p.second);
-      CHECK_FAIL_RETURN_UNEXPECTED(tp.size() == 2, "tuple in pad_info must be (list,int) or (list,float)");
+      CHECK_FAIL_RETURN_UNEXPECTED(tp.size() == kExpectedTupleSize,
+                                   "tuple in pad_info must be (list,int) or (list,float)");
       TensorShape shape = tp[0].is_none() ? TensorShape::CreateUnknownRankShape() : TensorShape(tp[0]);
       std::shared_ptr<Tensor> pad_val = nullptr;
       if (py::isinstance<py::str>(tp[1])) {

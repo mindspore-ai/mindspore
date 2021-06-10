@@ -205,9 +205,9 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_
     std::vector<int32_t> data;
 
     // Iterate over the integer list and add those values to the output shape tensor
-    auto items = json_obj.items();
-    using it_type = decltype(items.begin());
-    (void)std::transform(items.begin(), items.end(), std::back_inserter(data), [](it_type j) { return j.value(); });
+    auto items1 = json_obj.items();
+    using it_type = decltype(items1.begin());
+    (void)std::transform(items1.begin(), items1.end(), std::back_inserter(data), [](it_type j) { return j.value(); });
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &label));
   } else {
@@ -234,9 +234,9 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t co
     std::vector<float> data;
 
     // Iterate over the integer list and add those values to the output shape tensor
-    auto items = json_obj.items();
-    using it_type = decltype(items.begin());
-    (void)std::transform(items.begin(), items.end(), std::back_inserter(data), [](it_type j) { return j.value(); });
+    auto items1 = json_obj.items();
+    using it_type = decltype(items1.begin());
+    (void)std::transform(items1.begin(), items1.end(), std::back_inserter(data), [](it_type j) { return j.value(); });
 
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, &float_array));
   } else {
@@ -282,8 +282,8 @@ Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num
     MS_LOG(INFO) << "double found: " << json_obj << ".";
     RETURN_IF_NOT_OK(Tensor::CreateScalar<double>(data, &float_tensor));
   } else if (data_schema_->column(col_num).type() == DataType::DE_FLOAT32) {
-    float data = json_obj;
-    RETURN_IF_NOT_OK(Tensor::CreateScalar<float>(data, &float_tensor));
+    float data1 = json_obj;
+    RETURN_IF_NOT_OK(Tensor::CreateScalar<float>(data1, &float_tensor));
     MS_LOG(INFO) << "float found: " << json_obj << ".";
   }
   row->push_back(std::move(float_tensor));
