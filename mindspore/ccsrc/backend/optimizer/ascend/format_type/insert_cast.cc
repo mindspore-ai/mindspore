@@ -142,7 +142,7 @@ AnfNodePtr ProcessGraphKernelOp(const FuncGraphPtr &func_graph, const AnfNodePtr
       if (!tuple_index_value->isa<Int64Imm>()) {
         MS_LOG(EXCEPTION) << "The index of tuple getitem is not int64";
       }
-      index = tuple_index_value->cast<Int64ImmPtr>()->value();
+      index = LongToSize(tuple_index_value->cast<Int64ImmPtr>()->value());
     }
     graph_rets.emplace_back(std::pair<AnfNodePtr, size_t>(output, index));
   }
