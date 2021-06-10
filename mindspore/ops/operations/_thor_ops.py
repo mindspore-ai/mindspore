@@ -85,7 +85,7 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[256, 256]), mindspore.float32)
         >>> cus_choleskytrsm = ops.CusCholeskyTrsm()
-        >>> output = matmul(input_x)
+        >>> output = cus_choleskytrsm(input_x)
     """
 
     @prim_attr_register

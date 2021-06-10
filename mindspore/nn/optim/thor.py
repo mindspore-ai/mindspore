@@ -27,7 +27,7 @@ from mindspore import context
 from mindspore.context import ParallelMode
 from mindspore.nn.layer import DenseThor, Conv2dThor, EmbeddingThor
 from mindspore.nn.wrap import DistributedGradReducer
-from mindspore.train.train_thor.convert_utils import ConvertNetUntils
+from mindspore.train.train_thor.convert_utils import ConvertNetUtils
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 # Enumerates types of Layer
@@ -99,6 +99,17 @@ def clip_gradient(enable_clip_grad, gradients):
     return gradients
 
 C0 = 16
+
+
+def _check_param(momentum, frequency, lr, cls_name):
+    """Check param."""
+    Validator.check_value_type("momentum", momentum, [float], cls_name)
+    if isinstance(momentum, float) and momentum < 0.0:
+        raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
+    Validator.check_value_type("frequency", frequency, [int], cls_name)
+    if isinstance(frequency, int) and frequency < 2:
+        raise ValueError("frequency should be at least 2, but got frequency {}".format(frequency))
+    Validator.check_value_type("learning rate", lr, [Tensor], cls_name)
 
 
 def caculate_device_shape(matrix_dim, channel, is_a):
@@ -188,13 +199,103 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
          use_nesterov=False, decay_filter=lambda x: x.name not in [], split_indices=None, enable_clip_grad=False,
          frequency=100):
     r"""
-    Updates gradients by the THOR algorithm.
+    Updates gradients by second-order algorithm--THOR.
+
     Trace-based Hardware-driven layer-ORiented Natural Gradient Descent Computation (THOR) algorithm is proposed in:
+
     `THOR: Trace-based Hardware-driven layer-ORiented Natural Gradient Descent Computation
     <https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf>`_
+
+    The updating formulas are as follows,
+
+    .. math::
+    \begin{array}{ll} \\
+        A_i = a_i{a_i}^T \\
+        G_i = D_{s_i}{ D_{s_i}}^T \\
+        m_i = \beta * m_i + ({G_i^{(k)}}+\lambda I)^{-1}) g_i ({\overline A_{i-1}^{(k)}}+\lambda I)^{-1} \\
+        w_i = w_i - \alpha * m_i \\
+    \end{array}
+
+    :math:`D_{s_i}` represents the derivative of the loss function of the output of the i-th layer,
+    :math:`a_{i-1}` represents the input of i-th layer,and which is the activations of previous layer,
+    :math:`\beta` represents momentum, :math:`I` represents the identity matrix,
+    :math:`\overline A` represents the transpose of matrix A,
+    :math:`\lambda` represents 'damping', :math:`g_i` represents gradients of the i-th layer,
+    :math:`\otimes` represents Kronecker product, :math:`\alpha` represents 'learning rate'
+
+    Note:
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
+
+        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
+        but the gradient centralization can only be applied to the parameters of the convolution layer.
+        If the parameters of the non convolution layer are set to True, an error will be reported.
+
+        To improve parameter groups performance, the customized order of parameters can be supported.
+
+    Args:
+        net (Cell): The training network.
+
+        learning_rate (Tensor): A value for the learning rate.
+
+        damping (Tensor): A value for the damping.
+
+        momentum (float): Hyper-parameter of type float, means momentum for the moving average. It must be at least 0.0.
+
+        weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0.0. Default: 0.0.
+
+        loss_scale (float): A value for the loss scale. It must be greater than 0.0. In general, use the
+            default value. Default: 1.0.
+
+        batch_size (int): The size of a batch. Default: 32
+
+        use_nesterov (bool): Enable Nesterov momentum. Default: False.
+
+        decay_filter (function): A function to determine which layers the weight decay applied to. And it
+            only works when the weight_decay > 0. Default: lambda x: x.name not in []
+
+        split_indices (list): Set allreduce fusion strategy by A/G layer indices . Only works when distributed
+        computing. ResNet50 as an example, there are 54 layers of A/G respectively, when split_indices is set
+        to [26, 53], it means A/G is divided into two groups to allreduce,  one is 0~26 layer, and the other
+        is 27~53. Default: None
+
+        enable_clip_grad (bool): Whether to clip the gradients. Default: False
+
+        frequency(int): The update interval of A/G and $A^{-1}/G^{-1}$. When frequency equals N (N is greater than 1),
+        A/G and $A^{-1}/G^{-1}$ will be updated  every N steps, and other steps will use the stale A/G and
+        $A^{-1}/G^{-1}$ to update weights. Default: 100.
+
+    Inputs:
+        - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
+
+    Outputs:
+        tuple[bool], all elements are True.
+
+    Raises:
+        TypeError: If `learning_rate` is not Tensor.
+        TypeError: If `loss_scale`,`momentum` or `frequency` is not a float.
+        TypeError: If `weight_decay` is neither float nor int.
+        TypeError: If `use_nesterov` is not a bool.
+        ValueError: If `loss_scale` is less than or equal to 0.
+        ValueError: If `weight_decay` or `momentum` is less than 0.
+        ValueError: If `frequency` is not int.
+        ValueError: If `frequency` is less than 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> net = Net()
+        >>> optim = thor(net, lr=Tensor(1e-3), damping=Tensor(1e-3), momentum=0.9)
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
+        ... loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O2", keep_batchnorm_fp32=False)
+        >>> model.train(config.epoch_size, dataset, callbacks=cb, sink_size=100, dataset_sink_mode=True)
+
     """
     context.set_context(max_call_depth=10000)
-    ConvertNetUntils().convert_to_thor_net(net)
+    ConvertNetUtils().convert_to_thor_net(net)
     if context.get_context("device_target") == "Ascend":
         return ThorAscend(net, learning_rate, damping, momentum, weight_decay, loss_scale, batch_size, decay_filter,
                           split_indices=split_indices, enable_clip_grad=enable_clip_grad, frequency=frequency)
@@ -212,9 +313,7 @@ class ThorGpu(Optimizer):
                  enable_clip_grad=False, frequency=100):
         params = filter(lambda x: x.requires_grad, net.get_parameters())
         super(ThorGpu, self).__init__(learning_rate, params, weight_decay, loss_scale)
-        Validator.check_value_type("momentum", momentum, [float], self.cls_name)
-        if isinstance(momentum, float) and momentum < 0.0:
-            raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
+        _check_param(momentum, frequency, learning_rate, self.__class__.__name__)
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self.parameters
         self.use_nesterov = Validator.check_bool(use_nesterov)
@@ -448,18 +547,14 @@ class ThorGpu(Optimizer):
                     matrix_a = matrix_a_allreduce[thor_layer_count]
                     matrix_g = matrix_g_allreduce[thor_layer_count]
                     g = self.update_gradient(matrix_g, g, matrix_a)
-                    fake_a = self.assign(self.matrix_a[thor_layer_count], matrix_a)
-                    fake_g = self.assign(self.matrix_g[thor_layer_count], matrix_g)
-                    g = F.depend(g, fake_a)
-                    g = F.depend(g, fake_g)
+                    self.assign(self.matrix_a[thor_layer_count], matrix_a)
+                    self.assign(self.matrix_g[thor_layer_count], matrix_g)
                     g = self._reshape_gradient(conv_layer_count, g, g_shape)
                 elif layer_type == Embedding:
                     matrix_a = matrix_a_allreduce[thor_layer_count]
                     matrix_g = matrix_g_allreduce[thor_layer_count]
-                    fake_a = self.assign(self.matrix_a[thor_layer_count], matrix_a)
-                    fake_g = self.assign(self.matrix_g[thor_layer_count], matrix_g)
-                    g = F.depend(g, fake_a)
-                    g = F.depend(g, fake_g)
+                    self.assign(self.matrix_a[thor_layer_count], matrix_a)
+                    self.assign(self.matrix_g[thor_layer_count], matrix_g)
                     temp_a = self.expand(matrix_a, 1)
                     g = self.mul(temp_a, g)
                     g = self.matmul(g, matrix_g)
@@ -507,8 +602,7 @@ class ThorAscend(Optimizer):
                  decay_filter=lambda x: x.name not in [], split_indices=None, enable_clip_grad=False, frequency=100):
         params = filter(lambda x: x.requires_grad, net.get_parameters())
         super(ThorAscend, self).__init__(learning_rate, params, weight_decay, loss_scale)
-        if isinstance(momentum, float) and momentum < 0.0:
-            raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
+        _check_param(momentum, frequency, learning_rate, self.__class__.__name__)
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self.parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
@@ -845,10 +939,8 @@ class ThorAscend(Optimizer):
         """process thor graph fc layer"""
         temp_a = matrix_a_allreduce[thor_layer_count]
         temp_g = matrix_g_allreduce[thor_layer_count]
-        fake_a = self.assign(self.matrix_a_cov[thor_layer_count], temp_a)
-        fake_g = self.assign(self.matrix_g_cov[thor_layer_count], temp_g)
-        g = F.depend(g, fake_a)
-        g = F.depend(g, fake_g)
+        self.assign(self.matrix_a_cov[thor_layer_count], temp_a)
+        self.assign(self.matrix_g_cov[thor_layer_count], temp_g)
         temp_a = self.cast(temp_a, mstype.float16)
         temp_g = self.cast(temp_g, mstype.float16)
         g = self.cast(g, mstype.float16)
@@ -925,10 +1017,8 @@ class ThorAscend(Optimizer):
         if layer_type == Embedding:
             temp_a_ori = matrix_a_allreduce[thor_layer_count]
             temp_g = matrix_g_allreduce[thor_layer_count]
-            fake_a = self.assign(self.matrix_a_cov[thor_layer_count], temp_a_ori)
-            fake_g = self.assign(self.matrix_g_cov[thor_layer_count], temp_g)
-            g = F.depend(g, fake_a)
-            g = F.depend(g, fake_g)
+            self.assign(self.matrix_a_cov[thor_layer_count], temp_a_ori)
+            self.assign(self.matrix_g_cov[thor_layer_count], temp_g)
             temp_a = self.expand(temp_a_ori, 1)
             g = self.mul(temp_a, g)
             temp_g = self.cast(temp_g, mstype.float16)
@@ -982,12 +1072,9 @@ class ThorAscend(Optimizer):
                     temp_a = self.cast(temp_a, mstype.float16)
                     temp_g = self.cast(temp_g, mstype.float16)
                     g, temp_max = self._get_second_grad_by_matmul(i, temp_a, temp_g, g, temp_max)
-                    fake_a = self.assign(self.matrix_a[thor_layer_count], temp_a)
-                    fake_g = self.assign(self.matrix_g[thor_layer_count], temp_g)
-                    fake_max = self.assign(self.matrix_max_inv[thor_layer_count], temp_max)
-                    g = F.depend(g, fake_a)
-                    g = F.depend(g, fake_g)
-                    g = F.depend(g, fake_max)
+                    self.assign(self.matrix_a[thor_layer_count], temp_a)
+                    self.assign(self.matrix_g[thor_layer_count], temp_g)
+                    self.assign(self.matrix_max_inv[thor_layer_count], temp_max)
                     new_grads = new_grads + (g,)
                 gradients = new_grads
             else:

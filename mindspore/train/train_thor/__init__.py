@@ -14,6 +14,6 @@
 # ============================================================================
 """convert to second order related classes and functions."""
 
-from .convert_utils import ConvertNetUntils, ConvertModelUtils
+from .convert_utils import ConvertNetUtils, ConvertModelUtils
 
-__all__ = ["ConvertNetUntils", "ConvertModelUtils"]
+__all__ = ["ConvertNetUtils", "ConvertModelUtils"]
