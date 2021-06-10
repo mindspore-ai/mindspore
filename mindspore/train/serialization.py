@@ -14,15 +14,16 @@
 # ============================================================================
 """Model and parameters serialization."""
 import os
-
 import sys
 import stat
 import math
 import shutil
 import time
 import copy
+import threading
 from threading import Thread, Lock
 from collections import defaultdict
+
 import numpy as np
 
 import mindspore.nn as nn
@@ -189,7 +190,8 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
         raise e
 
 
-def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=False, enc_key=None, enc_mode="AES-GCM"):
+def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
+                    async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM"):
     """
     Saves checkpoint info to a specified file.
 
@@ -201,6 +203,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False
+        append_dict (dict): Additional information that needs to be saved.  The key of dict must be str,
+            the value of dict must be one of int float and bool. Default: None
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
@@ -221,6 +225,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
         raise TypeError("The parameter save_obj should be nn.Cell or list, but got {}".format(type(save_obj)))
     integrated_save = Validator.check_bool(integrated_save)
     async_save = Validator.check_bool(async_save)
+    append_dict = _check_append_dict(append_dict)
     enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
     enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
 
@@ -244,6 +249,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
             each_param["data"] = param_data
             param_list.append(each_param)
         save_obj = param_list
+
+    if append_dict:
+        append_info_list = []
+        for k_name, value in append_dict.items():
+            append_info_list.append({"name": k_name, "data": Tensor(value)})
+            save_obj.extend(append_info_list)
 
     data_list = {}
     with _ckpt_mutex:
@@ -280,6 +291,17 @@ def _check_param_prefix(filter_prefix, param_name):
                 and (param_name == prefix or param_name[len(prefix)] == "." or (prefix and prefix[-1] == ".")):
             return True
     return False
+
+
+def _check_append_dict(append_dict):
+    if append_dict is None:
+        return append_dict
+    if not isinstance(append_dict, dict):
+        raise TypeError(f"The type of append_dict must dict, but got {str(type(append_dict))}.")
+    if not all(isinstance(ele, str) for ele in append_dict.keys()) or \
+            not all(isinstance(ele, (int, float, bool)) for ele in append_dict.values()):
+        raise TypeError(f"The type of element in append_dict must be key: str, value: int or float.")
+    return append_dict
 
 
 def load(file_name):
@@ -456,8 +478,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     Args:
         net (Cell): Cell network.
         parameter_dict (dict): Parameter dictionary.
-        strict_load (bool): Whether to strict load the parameter into net. If False, it will load parameter
-                           in the param_dict into net with the same suffix. Default: False
+        strict_load (bool): Whether to strict load the parameter into net. False: if some parameters in the net
+            not loaded, it will remove some parameter's prefix name continue to load. Default: False
 
     Raises:
         TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
@@ -1268,6 +1290,18 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         logger.warning("{} parameters in sclice strategy but not in the checkpoint file.".format(param_not_in_ckpt))
 
     load_param_into_net(network, param_dict)
+
+
+def async_ckpt_thread_status():
+    """
+    Get async save checkpoint thread status.
+
+    Returns:
+        True, Asynchronous save checkpoint thread is running.
+        False, Asynchronous save checkpoint thread is not executing.
+    """
+    thr_list = threading.enumerate()
+    return True in [ele.getName() == "asyn_save_ckpt" for ele in thr_list]
 
 
 def _check_predict_strategy(predict_strategy):

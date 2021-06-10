@@ -120,6 +120,30 @@ def test_save_checkpoint_for_list():
     save_checkpoint(parameter_list, ckpt_file_name)
 
 
+def test_save_checkpoint_for_list_append_info():
+    """ test save_checkpoint for list append info"""
+    parameter_list = []
+    one_param = {}
+    param1 = {}
+    param2 = {}
+    one_param['name'] = "param_test"
+    one_param['data'] = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), dtype=mstype.float32)
+    param1['name'] = "param"
+    param1['data'] = Tensor(np.random.randint(0, 255, [12, 1024]), dtype=mstype.float32)
+    param2['name'] = "new_param"
+    param2['data'] = Tensor(np.random.randint(0, 255, [12, 1024, 1]), dtype=mstype.float32)
+    parameter_list.append(one_param)
+    parameter_list.append(param1)
+    parameter_list.append(param2)
+    append_dict = {"lr": 0.01, "epoch": 20, "train": True}
+    if os.path.exists('./parameters.ckpt'):
+        os.chmod('./parameters.ckpt', stat.S_IWRITE)
+        os.remove('./parameters.ckpt')
+
+    ckpt_file_name = os.path.join(_cur_dir, './parameters.ckpt')
+    save_checkpoint(parameter_list, ckpt_file_name, append_dict=append_dict)
+
+
 def test_load_checkpoint_error_filename():
     ckpt_file_name = 1
     with pytest.raises(ValueError):
@@ -130,7 +154,7 @@ def test_load_checkpoint():
     ckpt_file_name = os.path.join(_cur_dir, './parameters.ckpt')
     par_dict = load_checkpoint(ckpt_file_name)
 
-    assert len(par_dict) == 3
+    assert len(par_dict) == 6
     assert par_dict['param_test'].name == 'param_test'
     assert par_dict['param_test'].data.dtype == mstype.float32
     assert par_dict['param_test'].data.shape == (1, 3, 224, 224)

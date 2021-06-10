@@ -32,6 +32,7 @@ from ...common.tensor import Tensor
 
 _cur_dir = os.getcwd()
 _save_dir = _cur_dir
+_info_list = ["epoch_num", "step_num"]
 
 
 def _chg_ckpt_file_name_if_same_exist(directory, prefix):
@@ -82,6 +83,8 @@ class CheckpointConfig:
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: None.
+        append_info (List): The information save to checkpoint file. Support "epoch_num"、"step_num"、and dict.
+            The key of dict must be str, the value of dict must be one of int float and bool. Default: None.
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
@@ -131,6 +134,7 @@ class CheckpointConfig:
                  integrated_save=True,
                  async_save=False,
                  saved_network=None,
+                 append_info=None,
                  enc_key=None,
                  enc_mode='AES-GCM'):
 
@@ -166,6 +170,7 @@ class CheckpointConfig:
         self._integrated_save = Validator.check_bool(integrated_save)
         self._async_save = Validator.check_bool(async_save)
         self._saved_network = saved_network
+        self._append_dict = self._handle_append_info(append_info)
         self._enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
         self._enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
 
@@ -214,6 +219,11 @@ class CheckpointConfig:
         """Get the value of _enc_mode"""
         return self._enc_mode
 
+    @property
+    def append_dict(self):
+        """Get the value of append_dict."""
+        return self._append_dict
+
     def get_checkpoint_policy(self):
         """Get the policy of checkpoint."""
         checkpoint_policy = {'save_checkpoint_steps': self.save_checkpoint_steps,
@@ -223,6 +233,36 @@ class CheckpointConfig:
                              'saved_network': self.saved_network}
 
         return checkpoint_policy
+
+    @staticmethod
+    def _handle_append_info(append_info):
+        """Handle ckpt append info."""
+        if append_info is None or append_info == []:
+            return None
+        if not isinstance(append_info, list):
+            raise TypeError(f"The type of append_info must list, but got {str(type(append_info))}.")
+        handle_append_info = {}
+        if "epoch_num" in append_info:
+            handle_append_info["epoch_num"] = 0
+        if "step_num" in append_info:
+            handle_append_info["step_num"] = 0
+        dict_num = 0
+        for element in append_info:
+            if not isinstance(element, str) and not isinstance(element, dict):
+                raise TypeError(f"The type of append_info element must be str or dict, but got {str(type(element))}.")
+            if isinstance(element, str) and element not in _info_list:
+                raise TypeError(f"The type of append_info element must be in {_info_list}, but got {element}.")
+            if isinstance(element, dict):
+                dict_num += 1
+                if dict_num > 1:
+                    raise TypeError(f"The element of append_info must has only one dict.")
+                for key, value in element.items():
+                    if isinstance(key, str) and isinstance(value, (int, float, bool)):
+                        handle_append_info[key] = value
+                    else:
+                        raise TypeError(f"The type of dict in append_info must be key: str, value: int or float.")
+
+        return handle_append_info
 
 
 class ModelCheckpoint(Callback):
@@ -273,6 +313,9 @@ class ModelCheckpoint(Callback):
         # get existing checkpoint files
         self._manager = CheckpointManager()
         self._prefix = _chg_ckpt_file_name_if_same_exist(self._directory, self._prefix)
+        self._append_dict = self._config.append_dict or {}
+        self._append_epoch_num = self._append_dict["epoch_num"] if "epoch_num" in self._append_dict else 0
+        self._append_step_num = self._append_dict["step_num"] if "step_num" in self._append_dict else 0
         self._graph_saved = False
         self._need_flush_from_cache = True
 
@@ -370,10 +413,13 @@ class ModelCheckpoint(Callback):
             if context.get_context("enable_ge"):
                 set_cur_net(cb_params.train_network)
                 cb_params.train_network.exec_checkpoint_graph()
-
+            if "epoch_num" in self._append_dict:
+                self._append_dict["epoch_num"] = self._append_epoch_num + cb_params.cur_epoch_num
+            if "step_num" in self._append_dict:
+                self._append_dict["step_num"] = self._append_step_num + cb_params.cur_step_num
             network = self._config.saved_network if self._config.saved_network is not None else cb_params.train_network
-            save_checkpoint(network, cur_file, self._config.integrated_save,
-                            self._config.async_save, self._config.enc_key, self._config.enc_mode)
+            save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
+                            self._append_dict, self._config.enc_key, self._config.enc_mode)
 
             self._latest_ckpt_file_name = cur_file
 
@@ -442,19 +488,19 @@ class CheckpointManager:
 
     def keep_one_ckpoint_per_minutes(self, minutes, cur_time):
         """Only keep the latest one ckpt file per minutes, remove other files generated in [last_time, cur_time]."""
-        movs = []
+        del_list = []
         oldest_file = ''
         oldest_time = cur_time
         for ck_file in self._ckpoint_filelist:
             modify_time = os.path.getmtime(ck_file)
             if cur_time - modify_time < 60 * minutes:
-                movs.append(ck_file)
+                del_list.append(ck_file)
 
                 if modify_time < oldest_time:
                     oldest_time = modify_time
                     oldest_file = ck_file
 
-        for mv_file in movs:
+        for mv_file in del_list:
             if mv_file == oldest_file:
                 continue
             self.remove_ckpoint_file(mv_file)
