@@ -48,3 +48,7 @@ endif()
 if(USE_GLOG)
   target_link_libraries(mindspore_core PRIVATE mindspore::glog)
 endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_link_libraries(mindspore_core PRIVATE mindspore::crypto -pthread)
+endif()

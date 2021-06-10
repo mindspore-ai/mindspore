@@ -26,6 +26,7 @@
 #include "load_mindir/load_model.h"
 #include "load_mindir/anf_model_parser.h"
 #include "proto/mind_ir.pb.h"
+#include "utils/crypto.h"
 
 using std::string;
 using std::vector;
@@ -121,7 +122,55 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
 
 int endsWith(string s, string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
 
-std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite) {
+bool ParseModelProto(mind_ir::ModelProto *model, std::string path, const unsigned char *dec_key, const size_t key_len,
+                     const std::string &dec_mode) {
+  if (dec_key != nullptr) {
+    size_t plain_len;
+    auto plain_data = Decrypt(&plain_len, path, dec_key, key_len, dec_mode);
+    if (plain_data == nullptr) {
+      MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
+      return false;
+    }
+    if (!model->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), plain_len)) {
+      MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file, dec_key or dec_mode.";
+      return false;
+    }
+  } else {
+    std::fstream input_graph(path, std::ios::in | std::ios::binary);
+    if (!input_graph || !model->ParseFromIstream(&input_graph)) {
+      MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ParseGraphProto(mind_ir::GraphProto *graph, std::string path, const unsigned char *dec_key, const size_t key_len,
+                     const std::string &dec_mode) {
+  if (dec_key != nullptr) {
+    size_t plain_len;
+    auto plain_data = Decrypt(&plain_len, path, dec_key, key_len, dec_mode);
+    if (plain_data == nullptr) {
+      MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
+      return false;
+    }
+    if (!graph->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), plain_len)) {
+      MS_LOG(ERROR) << "Load variable file failed, please check the correctness of the mindir's variable file, "
+                       "dec_key or dec_mode";
+      return false;
+    }
+  } else {
+    std::fstream input_param(path, std::ios::in | std::ios::binary);
+    if (!input_param || !graph->ParseFromIstream(&input_param)) {
+      MS_LOG(ERROR) << "Load variable file failed, please check the correctness of mindir's variable file.";
+      return false;
+    }
+  }
+  return true;
+}
+
+std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite, const unsigned char *dec_key,
+                                      const size_t key_len, const std::string &dec_mode) {
   const char *file_path = reinterpret_cast<const char *>(file_name.c_str());
   char abs_path_buff[PATH_MAX];
   char abs_path[PATH_MAX];
@@ -136,18 +185,10 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   }
 #endif
   // Read graph
-  std::fstream input_graph(abs_path_buff, std::ios::in | std::ios::binary);
   mind_ir::ModelProto origin_model;
-
-  if (!input_graph) {
-    MS_LOG(ERROR) << "Failed to open file: " << file_name;
+  if (!ParseModelProto(&origin_model, std::string(abs_path_buff), dec_key, key_len, dec_mode)) {
     return nullptr;
   }
-  if (!origin_model.ParseFromIstream(&input_graph)) {
-    MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
-    return nullptr;
-  }
-
   // Load parameter into graph
   if (endsWith(abs_path_buff, "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
     int path_len = strlen(abs_path_buff) - strlen("graph.mindir");
@@ -171,10 +212,8 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     int file_size = files.size();
     mind_ir::GraphProto *mod_graph = origin_model.mutable_graph();
     for (auto file_index = 0; file_index < file_size; file_index++) {
-      std::fstream input_param(files[file_index], std::ios::in | std::ios::binary);
       mind_ir::GraphProto param_graph;
-      if (!input_param || !param_graph.ParseFromIstream(&input_param)) {
-        MS_LOG(ERROR) << "Load variable file failed, please check the correctness of mindir's variable file.";
+      if (!ParseGraphProto(&param_graph, files[file_index], dec_key, key_len, dec_mode)) {
         return nullptr;
       }
 

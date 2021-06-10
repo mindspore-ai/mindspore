@@ -99,6 +99,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool trainModel = false;
   std::vector<std::string> pluginsPath;
   bool disableFusion = false;
+  std::string dec_key = "";
+  std::string dec_mode = "AES-GCM";
 };
 
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
