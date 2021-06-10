@@ -463,10 +463,7 @@ class CheckpointManager:
         for filename in files:
             if os.path.splitext(filename)[-1] == ".ckpt" and filename.startswith(prefix):
                 mid_name = filename[len(prefix):-5]
-                flag = True
-                for char in mid_name:
-                    if char.isalpha():
-                        flag = False
+                flag = not (True in [char.isalpha() for char in mid_name])
                 if flag:
                     self._ckpoint_filelist.append(directory + '/' + filename)
 

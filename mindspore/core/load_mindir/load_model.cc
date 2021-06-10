@@ -184,6 +184,10 @@ std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(std::vector<std::string> fil
 
 std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite, const unsigned char *dec_key,
                                       const size_t key_len, const std::string &dec_mode) {
+  if (file_name.length() > PATH_MAX) {
+    MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
+    return nullptr;
+  }
   const char *file_path = reinterpret_cast<const char *>(file_name.c_str());
   char abs_path_buff[PATH_MAX];
   char abs_path[PATH_MAX];
