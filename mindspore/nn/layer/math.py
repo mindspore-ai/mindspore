@@ -45,6 +45,7 @@ _LANCZOS_COEFFICIENTS = [676.520368121885098567009190444019,
                          9.984369578019570859563e-6,
                          1.50563273514931155834e-7]
 
+
 @constexpr
 def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)

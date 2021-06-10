@@ -1068,10 +1068,10 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         [[[[ 2.73200464e+00,  2.73200464e+00],
            [ 2.73200464e+00,  2.73200464e+00]],
           [[ 2.73200464e+00,  2.73200464e+00],
-           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value= [9.24999952e-0.1,
-        9.24999952e-0.1]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-0.1, 9.24999952e-0.1]),
-        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e-0.1, 2.50000000e-0.1]), Tensor(shape=[2], dtype=Float32,
-        value= [ 1.87500000e-0.1, 1.87500000e-0.1]))
+           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value= [9.24999952e-01,
+        9.24999952e-01]), Tensor(shape=[2], dtype=Float32, value= [ 9.24999952e-01, 9.24999952e-01]),
+        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e-01, 2.50000000e-01]), Tensor(shape=[2], dtype=Float32,
+        value= [ 1.87500000e-01, 1.87500000e-01]))
     """
 
     @prim_attr_register
@@ -3278,6 +3278,10 @@ class ResizeBilinear(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, size, align_corners=False):
         validator.check_value_type("size", size, [tuple, list], self.name)
+        validator.check_equal_int(len(size), 2, "size len", self.name)
+        for item in size:
+            validator.check_positive_int(item, 'size item', self.name)
+            validator.check_value_type("size item", item, int, self.name)
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
 
     def infer_shape(self, input_shape):
@@ -7079,12 +7083,12 @@ class CTCLoss(Primitive):
         >>> ctc_loss = ops.CTCLoss()
         >>> loss, gradient = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
         >>> print(loss)
-        [ 0.75466496  0.6259288 ]
+        [ 0.79628  0.5995158 ]
         >>> print(gradient)
-        [[[ 0.26944962  0.34967452  -0.6191241  ]
-          [ 0.28437287  0.25814265  -0.5425156 ]]
-         [[ 0.46983105  0.29572973  0.04452367 ]
-          [ 0.41254193  0.4185341  0.02441157 ]]]
+        [[[ 0.27029088  0.36485454  -0.6351454  ]
+          [ 0.28140804  0.25462854  -0.5360366 ]]
+         [[ 0.47548494  0.2883962  0.04510255 ]
+          [ 0.4082751   0.4082751  0.02843709 ]]]
     """
 
     @prim_attr_register
@@ -7138,13 +7142,13 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_greedy_decoder = ops.CTCGreedyDecoder()
-        >>> decoded_indices, decoded_values, decoded_shape, log_probability
-        ... = ctc_greedy_decoder(inputs, sequence_length)
+        >>> decoded_indices, decoded_values, decoded_shape, log_probability =
+        ... ctc_greedy_decoder(inputs, sequence_length)
         >>> print(decoded_indices, decoded_values, decoded_shape, log_probability)
-        [[0 0] [0 1] [1 0]]
+        [[0 0] [1 0] [1 1]]
         [0 1 0]
         [2 2]
-        [[-0.7443749] [0.18251707]]
+        [[-1.3671273] [-1.7975442]]
     """
 
     @prim_attr_register
