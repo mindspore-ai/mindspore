@@ -174,6 +174,102 @@ TEST_F(MindDataTestPipeline, TestCenterCrop) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCropSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCropSuccess.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a crop object
+  int height = 20;
+  int width = 25;
+  std::shared_ptr<TensorTransform> crop(new vision::Crop({0, 0}, {height, width}));
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({crop});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    EXPECT_EQ(image.Shape()[1], height);
+    EXPECT_EQ(image.Shape()[2], width);
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 5);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestCropParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCropParamCheck with invalid parameters.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Value of coordinates is negative
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> crop1(new vision::Crop({-1, -1}, {20}));
+  auto ds1 = ds->Map({crop1});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid coordinates for Crop
+  EXPECT_EQ(iter1, nullptr);
+
+  // Case 2: Size of coordinates is not 2
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> crop2(new vision::Crop({5}, {10}));
+  auto ds2 = ds->Map({crop2});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid coordinates for Crop
+  EXPECT_EQ(iter2, nullptr);
+
+  // Case 3: Value of size is negative
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> crop3(new vision::Crop({0, 0}, {-10, -5}));
+  auto ds3 = ds->Map({crop3});
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid size for Crop
+  EXPECT_EQ(iter3, nullptr);
+
+  // Case 4: Size is neither a single number nor a vector of size 2
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> crop4(new vision::Crop({0, 0}, {10, 10, 10}));
+  auto ds4 = ds->Map({crop4});
+  EXPECT_NE(ds4, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
+  // Expect failure: invalid size for Crop
+  EXPECT_EQ(iter4, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchSuccess1.";
   // Testing CutMixBatch on a batch of CHW images

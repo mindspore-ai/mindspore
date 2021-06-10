@@ -38,6 +38,17 @@ def check_crop_size(size):
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
 
 
+def check_crop_coordinates(coordinates):
+    """Wrapper method to check the parameters of crop size."""
+    type_check(coordinates, (list, tuple), "coordinates")
+    if isinstance(coordinates, (tuple, list)) and len(coordinates) == 2:
+        for index, value in enumerate(coordinates):
+            type_check(value, (int,), "coordinates[{}]".format(index))
+            check_value(value, (0, INT32_MAX), "coordinates[{}]".format(index))
+    else:
+        raise TypeError("Coordinates should be a list/tuple (y, x) of length 2.")
+
+
 def check_cut_mix_batch_c(method):
     """Wrapper method to check the parameters of CutMixBatch."""
 
@@ -168,6 +179,33 @@ def check_erasing_value(value):
 
 def check_crop(method):
     """A wrapper that wraps a parameter checker around the original function(crop operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [coordinates, size], _ = parse_user_args(method, *args, **kwargs)
+        check_crop_coordinates(coordinates)
+        check_crop_size(size)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_center_crop(method):
+    """A wrapper that wraps a parameter checker around the original function(center crop operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [size], _ = parse_user_args(method, *args, **kwargs)
+        check_crop_size(size)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_five_crop(method):
+    """A wrapper that wraps a parameter checker around the original function(five crop operation)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

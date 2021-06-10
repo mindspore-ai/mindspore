@@ -34,7 +34,7 @@ Status CropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
   int32_t input_w = static_cast<int>(input->shape()[1]);
   CHECK_FAIL_RETURN_UNEXPECTED(y_ + height_ <= input_h, "Crop: Crop height dimension exceeds image dimensions.");
   CHECK_FAIL_RETURN_UNEXPECTED(x_ + width_ <= input_w, "Crop: Crop width dimension exceeds image dimensions.");
-  return Crop(input, output, x_, y_, height_, width_);
+  return Crop(input, output, x_, y_, width_, height_);
 }
 
 Status CropOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
