@@ -134,7 +134,7 @@ void CompileGraph::PushParameters(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> parameters = graph->parameters();
   for (size_t i = parameters.size(); i != 0; i--) {
     Push(parameters[i - 1]);
-    MS_LOG(DEBUG) << "Push parameter " << i - 1 << ": " << parameters[i - 1]->DebugString(true);
+    MS_LOG(DEBUG) << "Push parameter " << (i - 1) << ": " << parameters[i - 1]->DebugString(true);
   }
 }
 
@@ -282,7 +282,7 @@ void CompileGraph::AddTailCall(const AnfNodePtr &fn, size_t size) {
   args.emplace_back(Ref(fn));
   args.emplace_back(height_);
   args.emplace_back(static_cast<int64_t>(size - 1));
-  MS_LOG(DEBUG) << "Tail call:" << Ref(fn) << ", " << height_ << ", " << size - 1;
+  MS_LOG(DEBUG) << "Tail call:" << Ref(fn) << ", " << height_ << ", " << (size - 1);
   AddInst(Instruction::kTailCall, args);
 }
 
@@ -310,19 +310,19 @@ void CompileGraph::AddMakeTuple(const CNodePtr &node) {
 
 void CompileGraph::AddSwitch(const CNodePtr &node) {
   auto inputs = node->inputs();
-  if (inputs.size() < 4) {
+  if (inputs.size() < kSwitchInputSize) {
     MS_LOG(EXCEPTION) << "Length of inputs of primitive " << prim::kPrimSwitch->name() << " is less than 4";
   }
   VectorRef args;
-  args.emplace_back(Ref(inputs[1]));
-  args.emplace_back(Ref(inputs[2]));
-  args.emplace_back(Ref(inputs[3]));
+  args.emplace_back(Ref(inputs[kCallKernelGraphIndex]));
+  args.emplace_back(Ref(inputs[kSwitchTrueKernelGraphIndex]));
+  args.emplace_back(Ref(inputs[kSwitchFalseKernelGraphIndex]));
   AddInst(Instruction::kSwitch, args);
 }
 
 void CompileGraph::AddSwitchLayer(const CNodePtr &node) {
   auto inputs = node->inputs();
-  if (inputs.size() != 3) {
+  if (inputs.size() != kSwitchLayerInputSize) {
     MS_LOG(EXCEPTION) << "Switch layer must have index and branches.";
   }
   VectorRef args;
@@ -360,7 +360,7 @@ int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
     AddTailCall(fn, size);
     return RET_BREAK;
   }
-  MS_LOG(DEBUG) << "Call:" << Ref(fn) << ", " << height_ << ", " << size - 1;
+  MS_LOG(DEBUG) << "Call:" << Ref(fn) << ", " << height_ << ", " << (size - 1);
   AddInst(Instruction::kCall, Ref(fn));
   Ret(static_cast<int64_t>(size - 1));
   return RET_SUCCESS;

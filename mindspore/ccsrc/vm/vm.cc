@@ -79,7 +79,7 @@ void FinalVM::Push(const BaseRef &v) {
 
 void FinalVM::Pop(int64_t n) {
   if (n > sp_) {
-    MS_LOG(EXCEPTION) << "Invalid value of n " << n << ", it should be not more than " << sp_ - 1;
+    MS_LOG(EXCEPTION) << "Invalid value of n " << n << ", it should be not more than " << (sp_ - 1);
   }
   for (int64_t i = 0; i < n; i++) {
     insts_stack_[IntToSize(sp_ - i - 1)] = BaseRef();
