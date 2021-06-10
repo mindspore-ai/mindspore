@@ -28,7 +28,7 @@
 #define PADDING_SIZE 2
 
 // define constants for kernel indexing use
-#define BATCH 0 * PADDING_SIZE
+#define BATCH 0
 #define CHANNEL 1 * PADDING_SIZE
 #define HEIGHT 2 * PADDING_SIZE
 #define WIDTH 3 * PADDING_SIZE
