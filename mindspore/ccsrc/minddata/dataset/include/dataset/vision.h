@@ -631,7 +631,7 @@ class RandomResizedCropWithBBox final : public TensorTransform {
 class RandomRotation final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] degrees A float vector of size, representing the starting and ending degree.
+  /// \param[in] degrees A float vector of size 2, representing the starting and ending degrees.
   /// \param[in] resample An enum for the mode of interpolation.
   /// \param[in] expand A boolean representing whether the image is expanded after rotation.
   /// \param[in] center A float vector of size 2, representing the x and y center of rotation.

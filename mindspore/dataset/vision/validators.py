@@ -404,6 +404,30 @@ def check_random_rotation(method):
     return new_method
 
 
+def check_rotate(method):
+    """Wrapper method to check the parameters of rotate."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [degrees, resample, expand, center, fill_value], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(degrees, (numbers.Number,), "degrees")
+        check_float32(degrees, "degrees")
+
+        if resample is not None:
+            type_check(resample, (Inter,), "resample")
+        if expand is not None:
+            type_check(expand, (bool,), "expand")
+        if center is not None:
+            check_2tuple(center, "center")
+        if fill_value is not None:
+            check_fill_value(fill_value)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_ten_crop(method):
     """Wrapper method to check the parameters of crop."""
 

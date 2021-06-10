@@ -54,7 +54,7 @@ def test_horizontal_flip_pipeline(plot=False):
         original = data2["image"]
         horizontal_flip_cv = cv2.flip(original, 1)
         mse = diff_mse(horizontal_flip_ms, horizontal_flip_cv)
-        logger.info("gaussian_blur_{}, mse: {}".format(num_iter + 1, mse))
+        logger.info("horizontal_flip_{}, mse: {}".format(num_iter + 1, mse))
         assert mse == 0
         num_iter += 1
         if plot:
@@ -75,5 +75,5 @@ def test_horizontal_flip_eager():
 
 
 if __name__ == "__main__":
-    test_horizontal_flip_pipeline(plot=True)
+    test_horizontal_flip_pipeline(plot=False)
     test_horizontal_flip_eager()

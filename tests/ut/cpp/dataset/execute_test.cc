@@ -246,3 +246,19 @@ TEST_F(MindDataTestExecute, TestBasicTokenizer) {
   ASSERT_EQ(txt_result.size(), 3);
   ASSERT_TRUE(rc.IsOk());
 }
+
+TEST_F(MindDataTestExecute, TestRotate) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRotate.";
+
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto rotate = vision::Rotate(10.5);
+
+  auto transform = Execute({decode, rotate});
+  Status rc = transform(image, &image);
+
+  EXPECT_EQ(rc, Status::OK());
+}

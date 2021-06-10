@@ -54,7 +54,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
-    check_cut_mix_batch_c, check_posterize, check_gaussian_blur
+    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate
 from ..transforms.c_transforms import TensorOperation
 
 
@@ -1129,7 +1129,7 @@ class RandomRotation(ImageTensorOperation):
     Rotate the input image by a random angle.
 
     Args:
-        degrees (Union[int, float, sequence): Range of random rotation degrees.
+        degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If degrees is a number, the range will be converted to (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
@@ -1424,6 +1424,66 @@ class ResizeWithBBox(ImageTensorOperation):
         if isinstance(size, int):
             size = (size,)
         return cde.ResizeWithBBoxOperation(size, DE_C_INTER_MODE[self.interpolation])
+
+
+class Rotate(ImageTensorOperation):
+    """
+    Rotate the input image by specified degrees.
+
+    Args:
+        degrees (Union[int, float]): Rotation degrees.
+
+        resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
+            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
+
+            - Inter.BILINEAR, means resample method is bilinear interpolation.
+
+            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
+
+            - Inter.BICUBIC, means resample method is bicubic interpolation.
+
+        expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
+            image to make it large enough to hold the entire rotated image.
+            If set to False or omitted, make the output image the same size as the input.
+            Note that the expand flag assumes rotation around the center and no translation.
+        center (tuple, optional): Optional center of rotation (a 2-tuple) (default=None).
+            Origin is the top left corner. None sets to the center of the image.
+        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image.
+            If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            If it is an integer, it is used for all RGB channels.
+            The fill_value values must be in range [0, 255] (default=0).
+
+    Examples:
+        >>> from mindspore.dataset.vision import Inter
+        >>> transforms_list = [c_vision.Decode(),
+        ...                    c_vision.Rotate(degrees=30.0,
+        ...                    resample=Inter.NEAREST,
+        ...                    expand=True)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_rotate
+    def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
+        if isinstance(degrees, numbers.Number):
+            degrees = degrees % 360
+
+        self.degrees = degrees
+        self.resample = resample
+        self.expand = expand
+        self.center = center
+        self.fill_value = fill_value
+
+    def parse(self):
+        # pylint false positive
+        # pylint: disable=E1130
+        degrees = self.degrees
+        interpolation = DE_C_INTER_MODE[self.resample]
+        expand = self.expand
+        center = (-1, -1) if self.center is None else self.center
+        fill_value = tuple([self.fill_value] * 3) if isinstance(self.fill_value, int) else self.fill_value
+        return cde.RotateOperation(degrees, interpolation, expand, center, fill_value)
 
 
 class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):

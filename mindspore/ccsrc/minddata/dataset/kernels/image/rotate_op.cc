@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,71 @@
  */
 
 #include "minddata/dataset/kernels/image/rotate_op.h"
-#ifdef ENABLE_ANDROID
+
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/image/image_utils.h"
+#else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
 
 namespace mindspore {
 namespace dataset {
+const float RotateOp::kDefCenterX = -1;
+const float RotateOp::kDefCenterY = -1;
+const InterpolationMode RotateOp::kDefInterpolation = InterpolationMode::kNearestNeighbour;
+const bool RotateOp::kDefExpand = false;
+const uint8_t RotateOp::kDefFillR = 0;
+const uint8_t RotateOp::kDefFillG = 0;
+const uint8_t RotateOp::kDefFillB = 0;
 
 RotateOp::RotateOp(int angle_id) : angle_id_(angle_id) {}
+
+RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, float center_x, float center_y,
+                   uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
+    : degrees_(degrees),
+      center_x_(center_x),
+      center_y_(center_y),
+      interpolation_(resample),
+      expand_(expand),
+      fill_r_(fill_r),
+      fill_g_(fill_g),
+      fill_b_(fill_b) {}
 
 Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(
     input->shape().Size() >= 2,
     "Rotate: image shape " + std::to_string(input->shape().Size()) + " is not <H,W,C> or <H,W>.");
-#ifdef ENABLE_ANDROID
-  Rotate(input, output, angle_id_);
+#ifndef ENABLE_ANDROID
+  return Rotate(input, output, center_x_, center_y_, degrees_, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
+#else
+  return Rotate(input, output, angle_id_);
 #endif
-  return Status::OK();
 }
 
+Status RotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
+#ifndef ENABLE_ANDROID
+  RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
+  outputs.clear();
+  int32_t outputH = -1, outputW = -1;
+  // if expand_, then we cannot know the shape. We need the input image to find the output shape --> set it to
+  // <-1,-1[,3]>
+  if (!expand_) {
+    outputH = inputs[0][0];
+    outputW = inputs[0][1];
+  }
+  TensorShape out = TensorShape{outputH, outputW};
+  if (inputs[0].Rank() == 2) outputs.emplace_back(out);
+  if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
+  if (!outputs.empty()) return Status::OK();
+  return Status(StatusCode::kMDUnexpectedError, "Rotate: invalid input shape.");
+#else
+  if (inputs.size() != NumInput())
+    return Status(StatusCode::kMDUnexpectedError,
+                  "The size of the input argument vector does not match the number of inputs");
+  outputs = inputs;
+  return Status::OK();
+#endif
+}
 }  // namespace dataset
 }  // namespace mindspore

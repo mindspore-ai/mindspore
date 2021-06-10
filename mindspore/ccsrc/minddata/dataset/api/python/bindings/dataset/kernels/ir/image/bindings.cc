@@ -55,6 +55,7 @@
 #include "minddata/dataset/kernels/ir/vision/rescale_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
@@ -511,6 +512,18 @@ PYBIND_REGISTER(ResizeWithBBoxOperation, 1, ([](const py::module *m) {
                         std::make_shared<vision::ResizeWithBBoxOperation>(size, interpolation_mode);
                       THROW_IF_ERROR(resize_with_bbox->ValidateParams());
                       return resize_with_bbox;
+                    }));
+                }));
+
+PYBIND_REGISTER(RotateOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::RotateOperation, TensorOperation, std::shared_ptr<vision::RotateOperation>>(
+                    *m, "RotateOperation")
+                    .def(py::init([](float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
+                                     std::vector<uint8_t> fill_value) {
+                      auto rotate =
+                        std::make_shared<vision::RotateOperation>(degrees, resample, expand, center, fill_value);
+                      THROW_IF_ERROR(rotate->ValidateParams());
+                      return rotate;
                     }));
                 }));
 
