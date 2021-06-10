@@ -50,7 +50,6 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       AnfNodePtr new_transdata_node = nullptr;
       AnfNodePtr new_transpose_node = nullptr;
       AnfNodePtr transdata_node = AnfAlgo::GetInputNode(cnode, index);
-      AnfNodePtr reshape_node = AnfAlgo::GetInputNode(transdata_node->cast<CNodePtr>(), 0);
       auto input_format = AnfAlgo::GetInputFormat(transdata_node, 0);
       auto output_format = AnfAlgo::GetOutputFormat(transdata_node, 0);
       auto padding_axis = AnfAlgo::GetOutputReshapeType(transdata_node, 0);
