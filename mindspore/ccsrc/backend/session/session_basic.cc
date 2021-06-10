@@ -424,6 +424,23 @@ BaseRef CreateNodeOutputPlaceholder(const AnfNodePtr &anf, const KernelGraphPtr 
   return CreateNodeOutputPlaceholder(item_with_index, graph, input_tensors, indexes, output_indexes);
 }
 
+void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size_t input_index) {
+  const auto &tensor_shape = tensor->shape();
+  const auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel, input_index);
+
+  if (tensor_shape.size() != input_shape.size()) {
+    MS_LOG(EXCEPTION) << "The input tensor's shape size: " << tensor_shape.size()
+                      << " is not equal to expected size: " << input_shape.size() << " for input[" << input_index
+                      << "] of kernel: " << AnfAlgo::GetCNodeName(kernel);
+  }
+  for (size_t i = 0; i < tensor_shape.size(); i++) {
+    if (tensor_shape[i] < 0 || static_cast<size_t>(tensor_shape[i]) != input_shape[i]) {
+      MS_LOG(EXCEPTION) << "The input tensor's shape: " << tensor_shape
+                        << " is not equal to expected shape: " << input_shape << " for input[" << input_index
+                        << "] of kernel: " << AnfAlgo::GetCNodeName(kernel);
+    }
+  }
+}
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
@@ -1380,6 +1397,9 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
     } else if (real_input->isa<CNode>()) {
       tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
+      if (AnfAlgo::IsControlOpExecInBackend(real_input)) {
+        CheckInputTensorShape(tensor, cnode, i - 1);
+      }
       input_tensor_info->input_kernel.insert(kernel_with_index);
     } else {
       MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();

@@ -193,6 +193,7 @@ constexpr auto kCallOpName = "call";
 constexpr auto kPartialOpName = "partial";
 constexpr auto kSwitchOpName = "Switch";
 constexpr auto kReturnOpName = "Return";
+constexpr auto kBpropCutOpName = "bprop_cut";
 constexpr auto kLarsV2OpName = "LarsV2";
 constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";

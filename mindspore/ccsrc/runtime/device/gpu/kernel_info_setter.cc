@@ -424,14 +424,14 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
     if (!result) {
       result = kernel::GpuKernelFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
     }
-    if (!result) {
+    if (!result && (!AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
       result = SelectAkgKernel(kernel_node, builder->Build());
       kernel_type = AKG_KERNEL;
     }
   } else if (kernel_type == AKG_KERNEL) {
     result = SelectAkgKernel(kernel_node, builder->Build());
   }
-  if (!result) {
+  if (!result && (!AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
     PrintUnsupportedTypeException(kernel_node, inputs_type, outputs_type);
     return;
   }
