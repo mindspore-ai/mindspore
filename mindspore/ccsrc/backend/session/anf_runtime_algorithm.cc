@@ -2125,6 +2125,8 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
   for (size_t i = 0; i < input_size; ++i) {
     auto input_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
     auto real_input = input_with_index.first;
+    auto cnode_input = node->input(i + 1);
+    MS_EXCEPTION_IF_NULL(cnode_input);
     MS_EXCEPTION_IF_NULL(real_input);
     if (depend_tensors != nullptr) {
       auto iter_tensor = depend_tensors->find(i);
@@ -2133,24 +2135,29 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
         MS_EXCEPTION_IF_NULL(tensor_ptr);
         // sync data from device to host
         tensor_ptr->data_sync();
-        real_input->abstract()->set_value(tensor_ptr);
+        auto real_abs = real_input->abstract();
+        if (real_abs->isa<abstract::AbstractTensor>()) {
+          real_input->abstract()->set_value(tensor_ptr);
+        } else if (real_abs->isa<abstract::AbstractTuple>()) {
+          auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
+          auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
+          MS_EXCEPTION_IF_NULL(abstract_tuple);
+          auto tuple_elements = abstract_tuple->elements()[tuple_get_item_index];
+          tuple_elements->set_value(tensor_ptr);
+        }
       }
     }
-    auto cnode_input = node->input(i + 1);
-    MS_EXCEPTION_IF_NULL(cnode_input);
     if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
       auto base_shape = real_input->Shape();
       if (!base_shape->isa<abstract::TupleShape>()) {
         MS_LOG(EXCEPTION) << "Node:" << node->DebugString()
                           << " input is a tuple_get_item but real input node shape is not a TupleShape";
       }
-      auto tuple_ptr = base_shape->cast<abstract::TupleShapePtr>();
-      MS_EXCEPTION_IF_NULL(tuple_ptr);
-      auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
-      auto real_shape = tuple_ptr->shape().at(tuple_get_item_index);
-      auto abstract_tensor = cnode_input->abstract()->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(abstract_tensor);
-      args_spec_list.emplace_back(std::make_shared<abstract::AbstractTensor>(abstract_tensor->element(), real_shape));
+      auto abs = real_input->abstract()->cast<abstract::AbstractTuplePtr>();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto tuple_get_item_indexk = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
+      auto abs_i = abs->elements()[tuple_get_item_indexk];
+      args_spec_list.emplace_back(abs_i);
     } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
       args_spec_list.emplace_back(cnode_input->abstract());
     } else {
