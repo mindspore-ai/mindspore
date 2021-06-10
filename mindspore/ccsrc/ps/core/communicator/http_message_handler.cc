@@ -324,12 +324,20 @@ RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &ke
     ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
     return result;
   }
+
   int32_t res = request_message_.at(key);
   if (res < 0) {
     std::string message = "The value should not be less than 0.";
     ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
     return result;
   }
+
+  if (res > 0 && key == kWorkerNum) {
+    std::string message = "The Worker does not currently support scale out.";
+    ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
+    return result;
+  }
+
   *value = res;
   return result;
 }
