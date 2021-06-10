@@ -102,7 +102,7 @@ void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     var_outer_dim_size_ *= var_shape[i];
   }
   if (indices_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "indices must be a 1D vector";
+    MS_LOG(EXCEPTION) << "Indices must be a 1D vector!";
   }
   indices_size_ = indices_shape[0];
   if (grad_shape[0] != indices_size_) {

@@ -59,7 +59,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
       auto offset = copy_num * i;
       auto ret = memcpy_s(output_addr, copy_num * sizeof(T), input_j_addr + offset, copy_num * sizeof(T));
       if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "memcpy failed.";
+        MS_LOG(EXCEPTION) << "Memcpy failed.";
       }
       output_addr += copy_num;
     }

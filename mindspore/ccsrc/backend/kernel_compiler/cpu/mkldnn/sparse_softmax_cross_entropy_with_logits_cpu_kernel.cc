@@ -47,7 +47,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &ke
   batch_size_ = shape[0];
   class_num_ = shape[1];
   if (batch_size_ == 0 || class_num_ == 0) {
-    MS_LOG(EXCEPTION) << "invalid batch size or class num input!";
+    MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
   is_grad_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, IS_GRAD);
   dnnl::memory::desc mem_desc(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
@@ -65,11 +65,11 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int 
   float total_loss = 0;
   for (size_t i = 0; i < batch_size_; ++i) {
     if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "label value must >= 0";
+      MS_LOG(EXCEPTION) << "Label value must >= 0!";
     }
     size_t label = IntToSize(labels[i]);
     if (label > class_num_) {
-      MS_LOG(EXCEPTION) << "error label input!";
+      MS_LOG(EXCEPTION) << "Error label input!";
     }
     total_loss -= logf(losses[i * class_num_ + label]);
   }
@@ -81,11 +81,11 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *la
   size_t row_start = 0;
   for (size_t i = 0; i < batch_size_; ++i) {
     if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "label value must >= 0";
+      MS_LOG(EXCEPTION) << "Label value must >= 0!";
     }
     size_t label = IntToSize(labels[i]);
     if (label > class_num_) {
-      MS_LOG(EXCEPTION) << "error label input!";
+      MS_LOG(EXCEPTION) << "Error label input!";
     }
     for (size_t j = 0; j < class_num_; ++j) {
       size_t index = row_start + j;
@@ -103,18 +103,18 @@ bool SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kern
                                                           const std::vector<kernel::AddressPtr> &workspace,
                                                           const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty() || workspace.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "error input output size!";
+    MS_LOG(EXCEPTION) << "Error input output size!";
   }
   size_t batch_float_size = batch_size_ * sizeof(float);
   size_t batch_class_float_size = class_num_ * batch_float_size;
   if (inputs[0]->size != workspace[0]->size || inputs[0]->size != batch_class_float_size ||
       inputs[1]->size != batch_float_size) {
-    MS_LOG(EXCEPTION) << "error input data size!";
+    MS_LOG(EXCEPTION) << "Error input data size!";
   }
   if (is_grad_ && outputs[0]->size != batch_class_float_size) {
-    MS_LOG(EXCEPTION) << "error output data size!";
+    MS_LOG(EXCEPTION) << "Error output data size!";
   } else if (!is_grad_ && outputs[0]->size != sizeof(float)) {
-    MS_LOG(EXCEPTION) << "error output data size!";
+    MS_LOG(EXCEPTION) << "Error output data size!";
   }
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, workspace[0]->addr);

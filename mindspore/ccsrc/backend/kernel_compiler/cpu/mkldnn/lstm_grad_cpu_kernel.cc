@@ -113,10 +113,10 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   }
   const int64_t gate_size = 4 * hidden_size_;
   if (num_layers_ <= 0) {
-    MS_LOG(EXCEPTION) << "layers must be greater than zero!";
+    MS_LOG(EXCEPTION) << "Layers must be greater than zero!";
   }
   if (num_layers_ > kMaxLSTMLayer) {
-    MS_LOG(EXCEPTION) << "layers must be lower than 100!";
+    MS_LOG(EXCEPTION) << "Layers must be lower than 100!";
   }
   for (int64_t i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
@@ -125,10 +125,10 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   weight_size_ = weight_size_ * num_directions_;
   weight_h_size_ = weight_h_size_ * num_directions_;
   if (num_directions_ * num_layers_ != SizeToLong(src_h_shape[0])) {
-    MS_LOG(EXCEPTION) << "error iteration shape!";
+    MS_LOG(EXCEPTION) << "Error iteration shape!";
   }
   if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
-    MS_LOG(EXCEPTION) << "lstm only support 3-D input!";
+    MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
   }
 }
 
@@ -185,7 +185,7 @@ bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   } else {
     if (memset_s(bias_memory.get_data_handle(), prim_backward_desc_.bias_desc().get_size(), 0,
                  prim_backward_desc_.bias_desc().get_size())) {
-      MS_LOG(EXCEPTION) << "bias memset error";
+      MS_LOG(EXCEPTION) << "Bias memset error";
     }
   }
   // construct bw memory
@@ -205,7 +205,7 @@ bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   }
   if (memset_s(diff_bias_memory.get_data_handle(), prim_backward_desc_.diff_bias_desc().get_size(), 0,
                prim_backward_desc_.diff_bias_desc().get_size())) {
-    MS_LOG(EXCEPTION) << "bias grad memset error";
+    MS_LOG(EXCEPTION) << "Bias grad memset error";
   }
   SetArgumentHandleOp(inputs, outputs, weights_memory, weights_h_memory, bias_memory, diff_weights_memory,
                       diff_weights_h_memory, diff_bias_memory);

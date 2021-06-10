@@ -28,7 +28,7 @@ void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
   if (src_shape.size() != 2 || weight_shape.size() != 2 || dst_shape.size() != 2) {
-    MS_LOG(EXCEPTION) << "matmul invalid input size";
+    MS_LOG(EXCEPTION) << "Matmul invalid input size";
   }
   bool trans_a = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
   bool trans_b = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
@@ -49,7 +49,7 @@ void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool MatMulCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                              const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "matmul error input output size!";
+    MS_LOG(EXCEPTION) << "Matmul error input output size!";
   }
   dnnl_dim_t lda = dim_m_;
   if (trans_a_ == TRANSPOSE_NO) {

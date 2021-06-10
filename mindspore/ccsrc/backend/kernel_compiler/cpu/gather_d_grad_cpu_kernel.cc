@@ -109,7 +109,9 @@ bool GatherDGradCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &i
     }
   }
   auto out_size = get_element_num(output_shape_);
-  memset_s(out, out_size * sizeof(T), 0x00, out_size * sizeof(T));
+  if (memset_s(out, out_size * sizeof(T), 0x00, out_size * sizeof(T)) != EOK) {
+    MS_LOG(EXCEPTION) << "Memset Failed!";
+  }
 
   // out_cargo_size
   std::vector<size_t> out_cargo_size = std::vector<size_t>(output_shape_.size(), 1);

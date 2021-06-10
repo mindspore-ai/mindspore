@@ -24,11 +24,11 @@ namespace kernel {
 bool BatchMatMulCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                   const std::vector<AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "batchmatmul error input output size!";
+    MS_LOG(EXCEPTION) << "Batchmatmul error input output size!";
   }
 
   if (batch_ == 0) {
-    MS_LOG(EXCEPTION) << "batchmatmul error batch size!";
+    MS_LOG(EXCEPTION) << "Batchmatmul error batch size!";
   }
 
   LaunchKernel<float>(inputs, outputs);
@@ -62,7 +62,7 @@ void BatchMatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
   if (src_shape.size() < 3 || weight_shape.size() < 3 || dst_shape.size() < 3) {
-    MS_LOG(EXCEPTION) << "batchmatmul invalid input size";
+    MS_LOG(EXCEPTION) << "Batchmatmul invalid input size";
   }
 
   auto dims = dst_shape.size();

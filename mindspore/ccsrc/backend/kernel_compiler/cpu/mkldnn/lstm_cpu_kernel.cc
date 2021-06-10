@@ -118,10 +118,10 @@ void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   }
   const int gate_size = 4 * hidden_size_;
   if (num_layers_ <= 0) {
-    MS_LOG(EXCEPTION) << "layers must be greater than zero!";
+    MS_LOG(EXCEPTION) << "Layers must be greater than zero!";
   }
   if (num_layers_ > kMaxLSTMLayer) {
-    MS_LOG(EXCEPTION) << "layers must be lower than 100!";
+    MS_LOG(EXCEPTION) << "Layers must be lower than 100!";
   }
   for (int i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
@@ -130,10 +130,10 @@ void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   weight_size_ = weight_size_ * num_directions_;
   weight_h_size_ = weight_h_size_ * num_directions_;
   if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) {
-    MS_LOG(EXCEPTION) << "error iteration shape!";
+    MS_LOG(EXCEPTION) << "Error iteration shape!";
   }
   if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
-    MS_LOG(EXCEPTION) << "lstm only support 3-D input!";
+    MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
   }
 }
 
@@ -156,7 +156,7 @@ bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
   } else {
     if (memset_s(bias_memory.get_data_handle(), prim_desc_.bias_desc().get_size(), 0,
                  prim_desc_.bias_desc().get_size())) {
-      MS_LOG(EXCEPTION) << "bias memset error";
+      MS_LOG(EXCEPTION) << "Bias memset error";
     }
   }
   // set handle

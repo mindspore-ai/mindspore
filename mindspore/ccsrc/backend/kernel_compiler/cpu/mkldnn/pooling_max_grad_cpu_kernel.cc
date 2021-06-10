@@ -36,7 +36,7 @@ void MaxPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (kernel_sizes.size() != 4 || strides.size() != 4 || src_shape_.size() != 4 || dst_shape_.size() != 4) {
-    MS_LOG(EXCEPTION) << "pooling grad invalid input size";
+    MS_LOG(EXCEPTION) << "Pooling grad invalid input size!";
   }
   std::vector<int> padding_r;
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
@@ -106,7 +106,7 @@ bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 3 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "pooling grad error input output size!";
+    MS_LOG(EXCEPTION) << "Pooling grad error input output size!";
   }
 
   auto input = reinterpret_cast<float *>(inputs[0]->addr);
@@ -114,7 +114,7 @@ bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   auto ret = memset_s(output, outputs[0]->size, 0, outputs[0]->size);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "pooling grad memset error";
+    MS_LOG(EXCEPTION) << "Pooling grad memset error!";
   }
   size_t src_wh = src_shape_[2] * src_shape_[3];
   size_t dst_wh = dst_shape_[2] * dst_shape_[3];

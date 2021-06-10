@@ -28,7 +28,7 @@ constexpr auto kAllGatherInputNum = 1;
 void AllGatherCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kAllGatherInputNum) {
-    MS_LOG(EXCEPTION) << "allgather input num:" << input_num;
+    MS_LOG(EXCEPTION) << "Allgather input num:" << input_num;
   }
 
   auto ranks_group = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kRanksGroup);

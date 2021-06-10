@@ -52,7 +52,9 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   auto b = reinterpret_cast<T *>(inputs[3]->addr);
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t output_length = outputs[0]->size / sizeof(T);
-  memset(out, 0, output_length);
+  if (memset_s(out, output_length, 0, output_length) != EOK) {
+    MS_LOG(EXCEPTION) << "Memset Failed!";
+  }
 
   const size_t out_dim_0 = output_shape_[0];
   const size_t out_dim_1 = output_shape_[1];

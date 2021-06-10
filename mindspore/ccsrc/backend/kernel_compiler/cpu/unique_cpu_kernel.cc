@@ -74,13 +74,13 @@ void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
     return;
   }
   if (inputs.size() < 1) {
-    MS_LOG(EXCEPTION) << "Input size should be large than 0";
+    MS_LOG(EXCEPTION) << "Input size should be large than 0!";
   }
   if (workspace.size() < 3) {
-    MS_LOG(EXCEPTION) << "workspace size should be large than 2";
+    MS_LOG(EXCEPTION) << "Workspace size should be large than 2!";
   }
   if (outputs.size() < 2) {
-    MS_LOG(EXCEPTION) << "Output size should be large than 1";
+    MS_LOG(EXCEPTION) << "Output size should be large than 1!";
   }
   auto params = std::make_shared<UniqueParam<DataType, IndexType>>();
   params->input_ = reinterpret_cast<DataType *>(inputs[0]->addr);

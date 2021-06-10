@@ -30,13 +30,13 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (src_shape.size() != 4 || weight_shape.size() != 4) {
-    MS_LOG(EXCEPTION) << "conv2d grad filter only support nchw input!";
+    MS_LOG(EXCEPTION) << "Conv2d grad filter only support nchw input!";
   }
   std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
   size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group != 1) {
     if (src_shape[1] % group != 0) {
-      MS_LOG(EXCEPTION) << "conv2d channels should be divided by group!";
+      MS_LOG(EXCEPTION) << "Conv2d channels should be divided by group!";
     }
     weight_shape.insert(weight_shape.begin(), group);
     weight_shape[1] = weight_shape[1] / group;
@@ -80,7 +80,7 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
-    MS_LOG(EXCEPTION) << "conv2d grad get padding failed";
+    MS_LOG(EXCEPTION) << "Conv2d grad get padding failed";
   }
   dnnl::memory::dims padding_l{int_padding_l[0], int_padding_l[1]};
   dnnl::memory::dims padding_r{int_padding_r[0], int_padding_r[1]};
@@ -106,7 +106,7 @@ bool Conv2dGradInputCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "error input output size!";
+    MS_LOG(EXCEPTION) << "Error input output size!";
   }
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->addr);

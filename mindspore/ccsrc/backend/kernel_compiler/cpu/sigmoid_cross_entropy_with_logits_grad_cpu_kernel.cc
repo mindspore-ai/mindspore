@@ -36,7 +36,7 @@ bool SigmoidCrossEntropyWithLogitsGradCPUKernel::Launch(const std::vector<kernel
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "input dtype only support float16, float32, float64";
+    MS_LOG(EXCEPTION) << "Input dtype only support float16, float32, float64!";
   }
   return true;
 }

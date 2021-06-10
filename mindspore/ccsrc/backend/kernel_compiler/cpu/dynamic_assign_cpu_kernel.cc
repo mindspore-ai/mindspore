@@ -57,10 +57,10 @@ void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     batch_size_ *= input_x_shape[i];
   }
 
-  if (input_x_shape.size() != input_y_shape.size()) MS_LOG(EXCEPTION) << "x y must be same shape";
+  if (input_x_shape.size() != input_y_shape.size()) MS_LOG(EXCEPTION) << "X and y must be same shape!";
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
-      MS_LOG(EXCEPTION) << "x y must be same shape";
+      MS_LOG(EXCEPTION) << "X and y must be same shape!";
     }
   }
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
