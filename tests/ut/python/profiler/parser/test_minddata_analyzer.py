@@ -185,12 +185,6 @@ def test_analyze_basic():
         assert md_summary_dict["parent_id"] == [-1, 0, 1, 2, 3]
         assert len(md_summary_dict["avg_cpu_pct"]) == 5
 
-        # 5. Confirm exact list of keys
-        # Note: This is a very strong comparison.
-        # e.g. No bottleneck info is in the result.
-        # e.g. No additional keys are in the returned summary result
-        np.testing.assert_array_equal(summary_returned_keys, EXPECTED_SUMMARY_KEYS)
-
     except Exception as error:
         delete_profiling_files()
         raise error
