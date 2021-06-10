@@ -105,6 +105,7 @@ constexpr char kRgbToBgrOp[] = "RgbToBgrOp";
 constexpr char kRgbToGrayOp[] = "RgbToGrayOp";
 constexpr char kRotateOp[] = "RotateOp";
 constexpr char kSharpnessOp[] = "SharpnessOp";
+constexpr char kSlicePatchesOp[] = "SlicePatchesOp";
 constexpr char kSoftDvppDecodeRandomCropResizeJpegOp[] = "SoftDvppDecodeRandomCropResizeJpegOp";
 constexpr char kSoftDvppDecodeReiszeJpegOp[] = "SoftDvppDecodeReiszeJpegOp";
 constexpr char kSolarizeOp[] = "SolarizeOp";

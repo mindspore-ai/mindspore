@@ -131,5 +131,12 @@ PYBIND_REGISTER(ImageBatchFormat, 0, ([](const py::module *m) {
                     .export_values();
                 }));
 
+PYBIND_REGISTER(SliceMode, 0, ([](const py::module *m) {
+                  (void)py::enum_<SliceMode>(*m, "SliceMode", py::arithmetic())
+                    .value("DE_SLICE_PAD", SliceMode::kPad)
+                    .value("DE_SLICE_DROP", SliceMode::kDrop)
+                    .export_values();
+                }));
+
 }  // namespace dataset
 }  // namespace mindspore

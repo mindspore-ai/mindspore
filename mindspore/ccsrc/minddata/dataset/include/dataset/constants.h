@@ -125,6 +125,12 @@ enum class RelationalOp {
   kGreaterEqual,  ///< equal to `>=`
 };
 
+/// \brief Possible modes for slice patches.
+enum class SliceMode {
+  kPad = 0,   ///< Pad some pixels before slice to patches.
+  kDrop = 1,  ///< Drop remainder pixels before slice to patches.
+};
+
 /// \brief Possible options for SamplingStrategy.
 enum class SamplingStrategy {
   kRandom = 0,     ///< Random sampling with replacement.
