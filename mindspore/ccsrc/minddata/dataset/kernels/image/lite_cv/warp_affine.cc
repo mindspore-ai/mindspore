@@ -44,8 +44,8 @@ static double GetDet3(double *src) {
   return a1 - a2 + a3;
 }
 
-static uint8_t IntToUChar(const int &v) {
-  return static_cast<uint8_t>(static_cast<unsigned>(v) <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0);
+static uint8_t UIntToUChar(const uint32_t &v) {
+  return static_cast<uint8_t>(v <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0);
 }
 
 static int16_t IntCastShort(const int &value) {
@@ -121,7 +121,7 @@ static const void *InitWBlock() {
   return (const void *)iWBlock;
 }
 
-static uint8_t CastToFixed(int v) { return IntToUChar(((v + (1 << (BITS1 - 1))) >> BITS1)); }
+static uint8_t CastToFixed(int v) { return UIntToUChar((static_cast<uint32_t>(v + (1 << (BITS1 - 1))) >> BITS1)); }
 
 static int BorderPolate(int value, int length, PaddBorderType borderType) {
   if (static_cast<unsigned>(value) < static_cast<unsigned>(length)) {

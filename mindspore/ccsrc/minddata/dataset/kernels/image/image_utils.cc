@@ -719,7 +719,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     if (rgb.size() != DEFAULT_IMAGE_CHANNELS) {
       RETURN_STATUS_UNEXPECTED("NormalizePad: input image is not in RGB.");
     }
-    for (int8_t i = 0; i < DEFAULT_IMAGE_CHANNELS; i++) {
+    for (uint32_t i = 0; i < DEFAULT_IMAGE_CHANNELS; i++) {
       float mean_c, std_c;
       RETURN_IF_NOT_OK(mean->GetItemAt<float>(&mean_c, {i}));
       RETURN_IF_NOT_OK(std->GetItemAt<float>(&std_c, {i}));
