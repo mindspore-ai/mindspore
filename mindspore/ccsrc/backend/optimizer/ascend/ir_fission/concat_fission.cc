@@ -46,15 +46,17 @@ AnfNodePtr CreateNewConcat(const FuncGraphPtr &func_graph, const CNodePtr &origi
   AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_concat);
   // infer shape
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, 0);
-  auto axis = AnfAlgo::GetNodeAttr<int64_t>(origin_concat_cnode, kAttrAxis);
-  if (axis < 0) {
-    axis += SizeToLong(input_shape.size());
+  auto axis_from_attr = AnfAlgo::GetNodeAttr<int64_t>(origin_concat_cnode, kAttrAxis);
+  if (axis_from_attr < 0) {
+    axis_from_attr += SizeToLong(input_shape.size());
   }
   auto output_shape = AnfAlgo::GetOutputInferShape(origin_concat_cnode, 0);
-  if (axis < 0 || axis >= SizeToLong(output_shape.size()) || axis >= SizeToLong(input_shape.size())) {
-    MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
+  if (axis_from_attr < 0 || axis_from_attr >= SizeToLong(output_shape.size()) ||
+      axis_from_attr >= SizeToLong(input_shape.size())) {
+    MS_LOG(EXCEPTION) << "The concat_dim value " << axis_from_attr << "is out of range"
                       << " trace: " << trace::DumpSourceLines(origin_concat_cnode);
   }
+  auto axis = LongToSize(axis_from_attr);
   output_shape[axis] = 0;
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
     input_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, i - 1);

@@ -47,7 +47,8 @@ bool CheckOutputsIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
     auto value_node = index_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto index = GetValue<int64_t>(value_node->value());
-    if (index == kBatchNormGradInferOutputNum || index == SizeToLong(kBatchNormGradInferOutputNum + 1)) {
+    auto output_num = SizeToLong(kBatchNormGradInferOutputNum);
+    if (index == output_num || index == output_num + 1) {
       MS_LOG(DEBUG) << "The output " << index << " of node " << node->DebugString() << " is not null, no need change";
       return false;
     }

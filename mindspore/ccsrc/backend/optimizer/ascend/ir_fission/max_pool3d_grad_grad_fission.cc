@@ -58,7 +58,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   auto data_ptr = assist_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
   std::vector<float16> half_data;
-  int64_t dims = 1 * 1 * d * h * w;
+  const int64_t dims = 1 * 1 * d * h * w;
   int64_t counter = dims;
   for (int64_t i = 0; i < dims; i++) {
     half_data.emplace_back(float16(static_cast<float>(counter)));
@@ -110,20 +110,20 @@ const AnfNodePtr MaxPool3DGradGradFission::Process(const FuncGraphPtr &graph, co
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " is not equal to " << kInputNum << " inputs";
     return nullptr;
   }
-  std::vector<AnfNodePtr> new_node_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradOpName))};
-  auto assist_filter_const = CreateValueNode(cnode);
-  new_node_inputs.insert(new_node_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
-  new_node_inputs.push_back(assist_filter_const);
-  CNodePtr new_max_pool3d_grad_grad_node = graph->NewCNode(new_node_inputs);
-  MS_EXCEPTION_IF_NULL(new_max_pool3d_grad_grad_node);
-  new_max_pool3d_grad_grad_node->set_abstract(cnode->abstract());
-  new_max_pool3d_grad_grad_node->set_scope(cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cnode, new_max_pool3d_grad_grad_node);
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradOpName))};
+  auto assist_const = CreateValueNode(cnode);
+  (void)new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_inputs.emplace_back(assist_const);
+  CNodePtr new_cnode = graph->NewCNode(new_inputs);
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  new_cnode->set_abstract(cnode->abstract());
+  new_cnode->set_scope(cnode->scope());
+  AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
   if (kernel_graph != nullptr) {
-    kernel_graph->AddValueNodeToGraph(assist_filter_const);
+    kernel_graph->AddValueNodeToGraph(assist_const);
     MS_LOG(INFO) << "Split MaxPool3DGradGrad op success.";
   }
-  return new_max_pool3d_grad_grad_node;
+  return new_cnode;
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -29,6 +29,7 @@ constexpr size_t kBatchNormRealOutputNum = 3;
 constexpr size_t kBatchNormRealInputNum = 3;
 constexpr size_t kInputIndex2 = 2;
 constexpr size_t kInputIndex3 = 3;
+constexpr size_t kInputIndex4 = 4;
 
 bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vector<AnfNodePtr> *bn_outputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -117,8 +118,9 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
     MS_LOG(EXCEPTION) << "The abstract size of node bn must be " << kBnOutputNum << ", but it is "
                       << bn_abstract_tuple->elements().size() << " trace: " << trace::DumpSourceLines(bn);
   }
-  std::vector<AbstractBasePtr> abstract_list{bn_abstract_tuple->elements()[0], bn_abstract_tuple->elements()[3],
-                                             bn_abstract_tuple->elements()[4]};
+  std::vector<AbstractBasePtr> abstract_list{bn_abstract_tuple->elements()[0],
+                                             bn_abstract_tuple->elements()[kInputIndex3],
+                                             bn_abstract_tuple->elements()[kInputIndex4]};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update_v2->set_abstract(abstract_tuple);
   bn_training_update_v2->set_scope(bn->scope());

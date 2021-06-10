@@ -49,17 +49,11 @@ AnfNodePtr CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
                       << " trace: " << trace::DumpSourceLines(origin_pack_cnode);
   }
-  std::vector<size_t> new_shape;
-  for (size_t i = 0; i < output_shape.size() + 1; ++i) {
-    if (i < LongToSize(axis)) {
-      new_shape.push_back(output_shape[i]);
-    } else if (i == LongToSize(axis)) {
-      new_shape.push_back(offset);
-    } else {
-      new_shape.push_back(output_shape[i - 1]);
-    }
+  std::vector<size_t> new_shape = output_shape;
+  auto axis_l = LongToSize(axis);
+  if (axis_l < new_shape.size()) {
+    new_shape[axis_l] = offset;
   }
-  new_shape.erase(new_shape.begin() + axis + 1);
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_pack_cnode, 0)}, {new_shape},
                                       new_pack.get());
   return new_pack;
