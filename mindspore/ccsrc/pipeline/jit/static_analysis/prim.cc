@@ -480,26 +480,11 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
 
 namespace {
 py::tuple PreparePyInputs(const PrimitivePyPtr &prim_py, const AbstractBasePtrList &args) {
-  const AbstractBasePtrList *args_ptr;
-
-  if (prim_py->is_tuple_input_) {
-    if (args.empty()) {
-      MS_LOG(EXCEPTION) << "Primitive args is empty";
-    }
-    if (args[0] == nullptr || !args[0]->isa<AbstractTuple>()) {
-      MS_LOG(EXCEPTION) << "Custom Primitive inputs should be packed into a Tuple after converting"
-                           "prim convert pass for GE.";
-    }
-    args_ptr = &(args[0]->cast<AbstractTuplePtr>()->elements());
-  } else {
-    args_ptr = &args;
-  }
-
   // The monad parameter is defined at the end of the parameter and needs to be ignored
-  std::size_t size_args = args_ptr->size() - GetAbstractMonadNum(*args_ptr);
+  std::size_t size_args = args.size() - GetAbstractMonadNum(args);
   py::tuple py_args(size_args);
   for (size_t i = 0; i < size_args; i++) {
-    auto arg_i = (*args_ptr)[i];
+    auto arg_i = (args)[i];
     py_args[i] = ConvertAbstractToPython(arg_i);
   }
   return py_args;

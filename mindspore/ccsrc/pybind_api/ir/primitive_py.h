@@ -71,11 +71,9 @@ class PrimitivePy : public Primitive {
   py::dict RunInfer(const py::tuple &args);
   void RunCheck(const py::tuple &args);
   py::object RunInferValue(const py::tuple &args);
-  bool ObjHasAttr(const char *attr_name) { return py::hasattr(python_obj_, attr_name); }
   bool HasPyObj() { return python_obj_.operator bool(); }
   PrimitivePtr Clone() override;
   PrimitivePyAdapterPtr adapter() const { return adapter_; }
-  bool is_tuple_input_ = false;
 
  private:
   py::function GetComputeFunction() const;

@@ -23,8 +23,8 @@
 
 namespace mindspore {
 void CellPy::AddAttr(CellPtr cell, const std::string &name, const py::object &obj) {
-  std::string attr_name = name;
   ValuePtr converted_ret = nullptr;
+  MS_EXCEPTION_IF_NULL(cell);
   if (py::isinstance<py::module>(obj)) {
     MS_LOG(EXCEPTION) << "Cell set_attr failed, attr should not be py::module";
   }
@@ -32,8 +32,8 @@ void CellPy::AddAttr(CellPtr cell, const std::string &name, const py::object &ob
   if (!converted) {
     MS_LOG(DEBUG) << "Attribute convert error with type: " << std::string(py::str(obj));
   } else {
-    MS_LOG(DEBUG) << cell->ToString() << " add attr " << attr_name << converted_ret->ToString();
-    cell->AddAttr(attr_name, converted_ret);
+    MS_LOG(DEBUG) << cell->ToString() << " add attr " << name << converted_ret->ToString();
+    cell->AddAttr(name, converted_ret);
   }
 }
 // Define python 'Cell' class.
