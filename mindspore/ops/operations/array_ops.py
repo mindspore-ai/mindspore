@@ -1068,15 +1068,15 @@ class Split(PrimitiveWithCheck):
         >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
         >>> print(x)
         Tensor(shape=[2, 4], dtype=Int32, value=
-        [[1, 1, 1, 1],
-         [2, 2, 2, 2]])
+        [[1 1 1 1]
+         [2 2 2 2]])
         >>> output = split(x)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1, 1],
-         [2, 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1, 1],
-         [2, 2]]))
+        [[1 1]
+         [2 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
+        [[1 1]
+         [2 2]]))
         >>> split = ops.Split(1, 4)
         >>> output = split(x)
         >>> print(output)
@@ -1139,7 +1139,7 @@ class Rank(PrimitiveWithInfer):
         >>> rank = ops.Rank()
         >>> output = rank(input_tensor)
         >>> print(output)
-        >>> # 2
+        2
         >>> print(type(output))
         <class 'int'>
     """
@@ -1266,7 +1266,7 @@ class Fill(PrimitiveWithInfer):
         >>> print(output)
         [[1. 1.]
          [1. 1.]]
-        >>> output = fill(mindspore.float32, (2, 2), 1)
+        >>> output = fill(mindspore.float32, (3, 3), 0)
         >>> print(output)
         [[0. 0. 0.]
          [0. 0. 0.]
@@ -1979,7 +1979,6 @@ class Tile(PrimitiveWithInfer):
           [3. 4. 3. 4.]
           [1. 2. 1. 2.]
           [3. 4. 3. 4.]]]
-
     """
 
     @prim_attr_register
@@ -2705,6 +2704,7 @@ class Slice(PrimitiveWithInfer):
         >>> slice = ops.Slice()
         >>> output = slice(data, (1, 0, 0), (1, 1, 3))
         >>> print(output)
+        [[[3 3 3]]]
         >>> output = slice(data, (1, 0, 0), (1, 1, 2))
         >>> print(output)
         [[[3 3]]]
@@ -2842,7 +2842,7 @@ class Rint(PrimitiveWithInfer):
         >>> output = op(input_x)
         >>> print(output)
         [[-2. -2. -2. -2. -2.]
-         [-2. -1. -1. -1. -1.]]
+         [-2. -2. -2. -2. -2.]]
     """
 
     @prim_attr_register
@@ -3076,7 +3076,6 @@ class StridedSlice(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
         ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
-        >>> print(input_x)
         >>> #         [[[1. 1. 1.]
         >>> #           [2. 2. 2.]]
         >>> #
@@ -3444,9 +3443,9 @@ class Eye(PrimitiveWithInfer):
         >>> # Note that ReverseV2 only supports "Ascend" at this time
         >>> reverse = ops.ReverseV2([1])
         >>> anti_diagonal_output = reverse(anti_diagonal_input)
-        >>> print(output)
-        [[0 1]
-         [1 0]]
+        >>> print(anti_diagonal_output)
+        [[1. 0.]
+         [0. 1.]]
     """
 
     @prim_attr_register
@@ -3591,12 +3590,6 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         >>> print(output)
         [[[[-0.1  0.3]
            [ 0.4  0.5]]]]
-        >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.int32)
-        >>> resize = ops.ResizeNearestNeighbor((2, 2))
-        >>> output = resize(input_tensor)
-        >>> print(output)
-        [[[[0 0]
-           [0 0]]]]
     """
 
     @prim_attr_register
@@ -3655,12 +3648,6 @@ class GatherNd(PrimitiveWithInfer):
         >>> output = op(input_x, indices)
         >>> print(output)
         [-0.1  0.5]
-        >>> # now shape of input_x is [1, 2, 3]
-        >>> input_x = Tensor(np.array([[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]), mindspore.float32)
-        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> output = op(input_x, indices)
-        [[-1.0000000e-01  3.0000001e-01  3.5999999e+00]  # this row is input_x[0][0].
-         [ 9.1084400e-43  1.2040798e+12  9.1084400e-43]] # the input_x[1][1] is not in input_x, the value is random.
     """
 
     @prim_attr_register
@@ -4508,7 +4495,7 @@ class ScatterNdAdd(_ScatterNdOp):
         >>> output = scatter_nd_add(input_x, indices, updates)
         >>> print(output)
         [ 1. 10.  9.  4. 12.  6.  7. 17.]
-        >>> input_x = Parameter(Tensor(np.zeros(4, 4, 4)), mindspore.int32)
+        >>> input_x = Parameter(Tensor(np.zeros((4, 4, 4)), mindspore.int32))
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
@@ -4585,7 +4572,7 @@ class ScatterNdSub(_ScatterNdOp):
         >>> output = scatter_nd_sub(input_x, indices, updates)
         >>> print(output)
         [ 1. -6. -3.  4. -2.  6.  7. -1.]
-        >>> input_x = Parameter(Tensor(np.zeros(4, 4, 4)), mindspore.int32)
+        >>> input_x = Parameter(Tensor(np.zeros((4, 4, 4)), mindspore.int32))
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
@@ -4752,7 +4739,7 @@ class DepthToSpace(PrimitiveWithInfer):
             The data type is Number.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{in} / (\text{block_size} * 2), H_{in} * \text{block_size},
+        Tensor of shape :math:`(N, C_{in} / \text{block_size} ^ 2, H_{in} * \text{block_size},
         W_{in} * \text{block_size})`.
 
     Raises:
