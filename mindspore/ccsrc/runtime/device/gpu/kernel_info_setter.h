@@ -60,6 +60,7 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimRelu6->name(), {{0}, {0}}},
   {prim::kPrimRelu6Grad->name(), {{0, 1}, {0}}},
   {kSliceOpName, {{0}, {0}}},
+  {kSliceGradOpName, {{0, 1}, {0}}},
   {kTensorAddOpName, {{0, 1}, {0}}},
   {prim::kPrimConcat->name(), {{kAllPositions}, {0}}},
   {prim::kPrimAddN->name(), {{kAllPositions}, {0}}},

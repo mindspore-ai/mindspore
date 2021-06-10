@@ -108,8 +108,8 @@ python preprocess_dataset.py -d /data/save_data_path
 
 ## [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor.
+- Hardware（Ascend/GPU）
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -191,6 +191,23 @@ If you want to run in modelarts, please check the official documentation of [mod
 # (7) Create your job.
 ```
 
+- Run on GPU
+
+  ```python
+  # run training example
+  python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
+  OR
+  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
+
+  # run distributed training example
+  bash scripts/run_distribute_train_gpu.sh [RANKSIZE] [DATASET] [CONFIG_PATH]
+
+  # run evaluation example
+  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/config/ > eval.log  2>&1 &
+  OR
+  bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
+  ```
+
 ## [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)
@@ -207,6 +224,9 @@ If you want to run in modelarts, please check the official documentation of [mod
         │   ├──run_infer_310.sh             // shell script for infer on ascend 310
         │   ├──run_standalone_train.sh      // shell script for standalone on Ascend
         │   ├──run_standalone_eval.sh       // shell script for evaluation on Ascend
+        │   ├──run_standalone_train_gpu.sh      // shell script for training on GPU
+        │   ├──run_standalone_eval_gpu.sh       // shell script forevaluation on GPU
+        │   ├──run_distribute_train_gpu.sh      // shell script for distributed on GPU
         ├── src
         │   ├──config.py                    // parameter configuration
         │   ├──data_loader.py               // creating dataset
@@ -261,6 +281,8 @@ Parameters for both training and evaluation can be set in config.py
   'weight_decay': 0.0005,             # weight decay value
   'loss_scale': 1024.0,               # loss scale
   'FixedLossScaleManager': 1024.0,    # fix loss scale
+  'is_save_on_master': 1,             # save checkpoint on master or all rank
+  'rank': 0,                          # local rank of distributed(default: 0)
   'resume': False,                    # whether training with pretrain model
   'resume_ckpt': './',                # pretrain model path
   'transfer_training': False          # whether do transfer training
@@ -337,22 +359,42 @@ step: 600, loss is 0.22070312, fps is 56.99692546024671
 
 The model checkpoint will be saved in the current directory.
 
-#### Distributed Training
+#### running on GPU
 
 ```shell
-bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET] [CONFIG_PATH]
+python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
+OR
+bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
 ```
 
-The above shell script will run distribute training in the background. You can view the results through the file `logs/device[X]/log.log`. The loss value will be achieved as follows:
+The python command above will run in the background, you can view the results through the file train.log. The model checkpoint will be saved in the current directory.
+
+### Distributed Training
+
+#### running on Ascend
 
 ```shell
-# grep "loss is" logs/device0/log.log
-step: 1, loss is 0.70524895, fps is 0.15914689861221412
-step: 2, loss is 0.6925452, fps is 56.43668656967454
-...
-step: 299, loss is 0.20551169, fps is 58.4039329983891
-step: 300, loss is 0.18949677, fps is 57.63118508760329
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]
 ```
+
+  The above shell script will run distribute training in the background.   You can view the results through the file `logs/device[X]/log.log`.     The loss value will be achieved as follows:
+
+  ```shell
+  # grep "loss is" logs/device0/log.log
+  step: 1, loss is 0.70524895, fps is 0.15914689861221412
+  step: 2, loss is 0.6925452, fps is 56.43668656967454
+  ...
+  step: 299, loss is 0.20551169, fps is 58.4039329983891
+  step: 300, loss is 0.18949677, fps is 57.63118508760329
+  ```
+
+#### running on GPU
+
+  ```shell
+bash scripts/run_distribute_train_gpu.sh [RANKSIZE] [DATASET] [CONFIG_PATH]
+  ```
+
+  The above shell script will run distribute training in the background.   You can view the results through the file `train.log`.
 
 #### Evaluation while training
 
@@ -379,37 +421,56 @@ The above python command will run in the background. You can view the results th
 ============== Cross valid dice coeff is: {'dice_coeff': 0.9111}
 ```
 
+- evaluation on ISBI dataset when running on GPU
+
+Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/unet/ckpt_unet_medical_adam-2_400.ckpt".
+
+```shell
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/config/ > eval.log  2>&1 &
+OR
+bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
+```
+
+The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
+
+```shell
+# grep "Cross valid dice coeff is:" eval.log
+============== Cross valid dice coeff is: {'dice_coeff': 0.9089390969777261}
+```
+
 ## [Model Description](#contents)
 
 ### [Performance](#contents)
 
 #### Evaluation Performance
 
-| Parameters                 | Ascend                                                       |
-| -------------------------- | ------------------------------------------------------------ |
-| Model Version              | Unet                                                         |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                 |
-| uploaded Date              | 09/15/2020 (month/day/year)                                  |
-| MindSpore Version          | 1.2.0                                                        |
-| Dataset                    | ISBI                                                         |
-| Training Parameters        | 1pc: epoch=400, total steps=600, batch_size = 16, lr=0.0001  |
-| Optimizer                  | Adam                                                         |
-| Loss Function              | Softmax Cross Entropy                                        |
-| outputs                    | probability                                                  |
-| Loss                       | 0.22070312                                                   |
-| Speed                      | 1pc: 267 ms/step                                             |
-| Total time                 | 1pc: 2.67 mins                                               |
-| Parameters (M)             | 93M                                                          |
-| Checkpoint for Fine tuning | 355.11M (.ckpt file)                                         |
-| Scripts                    | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
+| Parameters                 | Ascend                                                       | GPU                                                          |
+| -------------------------- | ------------------------------------------------------------ | :----------------------------------------------------------- |
+| Model Version              | Unet                                                         | Unet                                                         |
+| Resource                   | Ascend 910 ;CPU 2.60GHz,192cores; Memory,755G; OS Euler2.8   | NV SMX2 V100-32G                                             |
+| uploaded Date              | 09/15/2020 (month/day/year)                                  | 01/20/2021 (month/day/year)                                  |
+| MindSpore Version          | 1.2.0                                                        | 1.1.0                                                        |
+| Dataset                    | ISBI                                                         | ISBI                                                         |
+| Training Parameters        | 1pc: epoch=400, total steps=600, batch_size = 16, lr=0.0001  | 1pc: epoch=400, total steps=800, batch_size = 12, lr=0.0001  |
+| Optimizer                  | ADAM                                                         | ADAM                                                         |
+| Loss Function              | Softmax Cross Entropy                                        | Softmax Cross Entropy                                        |
+| outputs                    | probability                                                  | probability                                                  |
+| Loss                       | 0.22070312                                                   | 0.21425568                                                   |
+| Speed                      | 1pc: 267 ms/step;                                            | 1pc: 423 ms/step;                                            |
+| Total time                 | 1pc: 2.67 mins;                                              | 1pc: 5.64 mins;                                              |
+| Parameters (M)             | 93M                                                          | 93M                                                          |
+| Checkpoint for Fine tuning | 355.11M (.ckpt file)                                         | 355.11M (.ckpt file)                                         |
+| Scripts                    | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
 
-### [How to use](#contents)
+## [How to use](#contents)
 
-#### Inference
+### Inference
 
-If you need to use the trained model to perform inference on multiple hardware platforms, such as Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html). Following the steps below, this is a simple example:
+If you need to use the trained model to perform inference on multiple hardware platforms, such as Ascend 910 or Ascend 310, you
+can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html). Following
+the steps below, this is a simple example:
 
-##### Running on Ascend 310
+#### Running on Ascend 310
 
 Export MindIR
 

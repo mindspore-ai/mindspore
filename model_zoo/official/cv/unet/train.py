@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 import os
 import logging
 
 import mindspore
 import mindspore.nn as nn
 from mindspore import Model, context
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -33,10 +32,6 @@ from src.eval_callback import EvalCallBack
 
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
-from src.model_utils.device_adapter import get_rank_id, get_device_num
-
-device_id = int(os.getenv("DEVICE_ID"))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
 
 mindspore.set_seed(1)
 
@@ -51,8 +46,8 @@ def train_net(cross_valid_ind=1,
     run_distribute = config.run_distribute
     if run_distribute:
         init()
-        group_size = get_device_num()
-        rank = get_rank_id()
+        group_size = get_group_size()
+        rank = get_rank()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode,
                                           device_num=group_size,
@@ -94,16 +89,21 @@ def train_net(cross_valid_ind=1,
     else:
         repeat = config.repeat
         dataset_sink_mode = False
+        if config.device_target == "GPU":
+            dataset_sink_mode = True
         per_print_times = 1
         train_dataset, valid_dataset = create_dataset(data_dir, repeat, batch_size, True, cross_valid_ind,
                                                       run_distribute, config.crop, config.image_size)
     train_data_size = train_dataset.get_dataset_size()
     print("dataset length is:", train_data_size)
     ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
-    ckpt_config = CheckpointConfig(save_checkpoint_steps=train_data_size,
+    save_ck_steps = train_data_size
+    if config.device_target == "GPU":
+        save_ck_steps = train_data_size * epochs
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=save_ck_steps,
                                    keep_checkpoint_max=config.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix='ckpt_{}_adam'.format(config.model_name),
-                                 directory=ckpt_save_dir+'./ckpt_{}/'.format(device_id),
+                                 directory=ckpt_save_dir+'./ckpt_{}/'.format(rank),
                                  config=ckpt_config)
 
     optimizer = nn.Adam(params=net.trainable_params(), learning_rate=lr, weight_decay=config.weight_decay,
@@ -121,7 +121,7 @@ def train_net(cross_valid_ind=1,
         eval_param_dict = {"model": eval_model, "dataset": valid_dataset, "metrics_name": config.eval_metrics}
         eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=config.eval_interval,
                                eval_start_epoch=config.eval_start_epoch, save_best_ckpt=True,
-                               ckpt_directory=ckpt_save_dir+'./ckpt_{}/'.format(device_id), besk_ckpt_name="best.ckpt",
+                               ckpt_directory=ckpt_save_dir+'./ckpt_{}/'.format(rank), besk_ckpt_name="best.ckpt",
                                metrics_name=config.eval_metrics)
         callbacks.append(eval_cb)
     model.train(int(epochs / repeat), train_dataset, callbacks=callbacks, dataset_sink_mode=dataset_sink_mode)
@@ -130,9 +130,15 @@ def train_net(cross_valid_ind=1,
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
+    if config.device_target == "Ascend":
+        device_id = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=device_id)
     epoch_size = config.epochs if not config.run_distribute else config.distribute_epochs
+    batchsize = config.batch_size
+    if config.device_target == 'GPU' and config.run_distribute:
+        batchsize = config.distribute_batchsize
     train_net(cross_valid_ind=config.cross_valid_ind,
               epochs=epoch_size,
-              batch_size=config.batch_size,
+              batch_size=batchsize,
               lr=config.lr)

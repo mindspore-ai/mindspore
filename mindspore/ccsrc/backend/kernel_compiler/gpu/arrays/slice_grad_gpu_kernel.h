@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <algorithm>
+#include <string>
+#include <utility>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/slice_impl.cuh"
@@ -39,8 +41,9 @@ class SliceGradGpuKernel : public GpuKernel {
     T *dy = GetDeviceAddress<T>(inputs, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
     FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalSliceGrad(output_size_ / sizeof(T), dy, input_shape_, begin_, size_, dx,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalSlice4DGrad(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
+                   input_shape_[1], input_shape_[2], input_shape_[3], dy, dx,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -49,6 +52,7 @@ class SliceGradGpuKernel : public GpuKernel {
       return false;
     }
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     if (kernel_name == "StridedSliceGrad") {
       is_strided_slice_ = true;
       std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
@@ -64,17 +68,15 @@ class SliceGradGpuKernel : public GpuKernel {
       }
       size_ = GetAttr<std::vector<int64_t>>(kernel_node, "end");
     } else {
-      auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
       ShapeNdTo4d(input_shape, &input_shape_);
       size_ = GetAttr<std::vector<int64_t>>(kernel_node, "size");
     }
-
-    auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     ShapeNdTo4d(dy_shape, &dy_shape_);
     begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
-    DealParam();
+    CalcBeginAndSize(data_format);
     input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
-
     output_size_ = sizeof(T);
     for (auto x : dy_shape_) {
       output_size_ = output_size_ * x;
@@ -88,6 +90,30 @@ class SliceGradGpuKernel : public GpuKernel {
     input_size_list_.push_back(output_size_);
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(input_size_);
+  }
+  void CalcBeginAndSize(const std::string data_format) {
+    for (auto i = begin_.size(); i < 4; i++) {
+      (void)begin_.insert(begin_.begin(), 0);
+    }
+    for (auto i = size_.size(); i < 4; i++) {
+      (void)size_.insert(size_.begin(), 1);
+    }
+    if (data_format == "NHWC") {
+      std::swap(begin_[1], begin_[3]);
+      std::swap(begin_[1], begin_[2]);
+      std::swap(size_[1], size_[3]);
+      std::swap(size_[1], size_[2]);
+    }
+    for (size_t i = 0; i < begin_.size(); i++) {
+      if (begin_[i] < 0) {
+        begin_[i] = begin_[i] + input_shape_[i];
+      }
+    }
+    for (size_t i = 0; i < size_.size(); i++) {
+      if (size_[i] < 0) {
+        size_[i] = (size_[i] + input_shape_[i]) > 0 ? (size_[i] + input_shape_[i]) : 0;
+      }
+    }
   }
 
  private:
@@ -108,24 +134,7 @@ class SliceGradGpuKernel : public GpuKernel {
     }
     return true;
   }
-  void DealParam() {
-    for (auto i = begin_.size(); i < 4; i++) {
-      (void)begin_.insert(begin_.begin(), 0);
-    }
-    for (auto i = size_.size(); i < 4; i++) {
-      (void)size_.insert(size_.begin(), 1);
-    }
-    for (size_t i = 0; i < begin_.size(); i++) {
-      if (begin_[i] < 0) {
-        begin_[i] = begin_[i] + input_shape_[i];
-      }
-    }
-    for (size_t i = 0; i < size_.size(); i++) {
-      if (size_[i] < 0) {
-        size_[i] = (size_[i] + input_shape_[i]) > 0 ? (size_[i] + input_shape_[i]) : 0;
-      }
-    }
-  }
+
   std::vector<int64_t> begin_;
   std::vector<int64_t> size_;
   std::vector<int64_t> strides_;

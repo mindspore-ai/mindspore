@@ -26,9 +26,9 @@ void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size
                    const size_t l3, const size_t l4, const size_t d1, const size_t d2, const size_t d3, const size_t d4,
                    const T *input, T *output, cudaStream_t stream);
 template <typename T>
-void CalSliceGrad(const size_t input_size, const T *input, const std::vector<size_t> in_shape,
-                  const std::vector<int64_t> begin, const std::vector<int64_t> size, T *output,
-                  cudaStream_t cuda_stream);
+void CalSlice4DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
+                    const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
+                    const size_t d3, const size_t d4, const T *dy, T *dx, cudaStream_t stream);
 template <typename T>
 void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                   const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape, const T *input,
