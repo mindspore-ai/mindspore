@@ -27,7 +27,8 @@ void IndexGeneratorHelper(int8_t depth, std::vector<dsize_t> *numbers,
   // for loop changes if its an index instead of a slice object
   if (depth > 0) {
     int8_t new_depth = depth - 1;
-    size_t curr_ind = static_cast<size_t>(numbers->size() - depth);
+    // depth is always less than or equal to numbers->size() (based on the caller functions)
+    size_t curr_ind = static_cast<size_t>(numbers->size() - static_cast<size_t>(depth));
 
     if (slice_list[curr_ind].slice_.valid()) {
       dsize_t increment = slice_list[curr_ind].slice_.step_;
