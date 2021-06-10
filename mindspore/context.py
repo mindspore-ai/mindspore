@@ -32,7 +32,7 @@ from .default_config import __device_target__, __package_name__
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
            'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode', 'set_ps_context',
-           'get_ps_context', 'reset_ps_context']
+           'get_ps_context', 'reset_ps_context', 'set_fl_context', 'get_fl_context']
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
@@ -795,9 +795,8 @@ def get_ps_context(attr_key):
     Get parameter server training mode context attribute value according to the key.
 
     Args:
-        attr_key (str): The key of the attribute.
-
-        - "enable_ps": Whether to enable parameter server training mode.
+        attr_key (str): The key of the attribute:
+            - enable_ps (bool): Whether to enable parameter server training mode.
 
     Returns:
         Returns attribute value according to the key.
@@ -862,7 +861,7 @@ def get_fl_context(attr_key):
 
     Args:
         attr_key (str): The key of the attribute.
-                        Please refer to `set_fl_context`'s parameters to decide which key should passed.
+                        Please refer to `set_fl_context`'s parameters to decide what key should be passed.
 
     Returns:
         Returns attribute value according to the key.
