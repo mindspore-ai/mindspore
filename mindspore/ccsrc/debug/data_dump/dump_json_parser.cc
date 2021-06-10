@@ -228,7 +228,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   auto support_device = CheckJsonKeyExist(*common_dump_settings, kSupportDevice);
 
   nlohmann::detail::iter_impl<const nlohmann::json> op_debug_mode;
-  if (async_dump_enabled_) {
+  if (!e2e_dump_enabled_) {
     op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
   }
 
@@ -239,7 +239,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   ParseInputOutput(*input_output);
   ParseKernels(*kernels);
   ParseSupportDevice(*support_device);
-  if (async_dump_enabled_) {
+  if (!e2e_dump_enabled_) {
     ParseOpDebugMode(*op_debug_mode);
   }
 }
