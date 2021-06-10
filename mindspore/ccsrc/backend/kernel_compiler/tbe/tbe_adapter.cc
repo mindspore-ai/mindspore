@@ -38,6 +38,9 @@ constexpr size_t INPUT5 = 5;
 constexpr size_t INPUT6 = 6;
 constexpr size_t INPUT7 = 7;
 constexpr size_t INPUT8 = 8;
+constexpr size_t kInputSize3 = 3;
+constexpr size_t kInputSize2 = 2;
+constexpr size_t kApplyCenteredRMSPropInputSize = 9;
 
 std::unordered_set<std::string> input_order_adjusted_ops = {
   "Conv2DBackpropInput",        "Conv2DBackpropFilter", "LogSoftmaxGrad", "LayerNormGrad",       "LayerNormXBackprop",
@@ -50,6 +53,9 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
+      if (inputs_list.size() < kInputSize3) {
+        MS_LOG(EXCEPTION) << op_name << "'s input size " << inputs_list.size() << " is less than " << kInputSize3;
+      }
       inputs_json->push_back(inputs_list[INPUT2]);
       inputs_json->push_back(inputs_list[INPUT0]);
       inputs_json->push_back(inputs_list[INPUT1]);
@@ -59,6 +65,10 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
     } else if (op_name == "ApplyCenteredRMSProp") {
       // Parameter order of ApplyCenteredRMSProp's TBE implementation is different from python API, so map
       // TBE parameter to correspond python API parameter by latter's index using hardcode
+      if (inputs_list.size() < kApplyCenteredRMSPropInputSize) {
+        MS_LOG(EXCEPTION) << op_name << "'s input size " << inputs_list.size() << " is less than "
+                          << kApplyCenteredRMSPropInputSize;
+      }
       inputs_json->push_back(inputs_list[INPUT0]);
       inputs_json->push_back(inputs_list[INPUT1]);
       inputs_json->push_back(inputs_list[INPUT2]);
@@ -69,6 +79,9 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
       inputs_json->push_back(inputs_list[INPUT8]);
       inputs_json->push_back(inputs_list[INPUT4]);
     } else {
+      if (inputs_list.size() < kInputSize2) {
+        MS_LOG(EXCEPTION) << op_name << "'s input size " << inputs_list.size() << " is less than " << kInputSize2;
+      }
       inputs_json->push_back(inputs_list[1]);
       inputs_json->push_back(inputs_list[0]);
       for (size_t i = 2; i < inputs_list.size(); ++i) {
@@ -85,6 +98,9 @@ void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vec
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
+      if (inputs_list.size() < kInputSize3) {
+        MS_LOG(EXCEPTION) << op_name << "'s input size " << inputs_list.size() << " is less than " << kInputSize3;
+      }
       inputs_json->emplace_back(inputs_list[2]);
       inputs_json->emplace_back(inputs_list[0]);
       inputs_json->emplace_back(inputs_list[1]);
@@ -92,6 +108,9 @@ void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vec
         inputs_json->emplace_back(inputs_list[i]);
       }
     } else {
+      if (inputs_list.size() < kInputSize2) {
+        MS_LOG(EXCEPTION) << op_name << "'s input size " << inputs_list.size() << " is less than " << kInputSize2;
+      }
       inputs_json->emplace_back(inputs_list[1]);
       inputs_json->emplace_back(inputs_list[0]);
       for (size_t i = 2; i < inputs_list.size(); ++i) {
@@ -108,6 +127,9 @@ void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vect
     (void)std::copy(data_layer.begin(), data_layer.end(), std::back_inserter((*reorder_data_layer)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
+      if (data_layer.size() < kInputSize3) {
+        MS_LOG(EXCEPTION) << op_name << "'s input size " << data_layer.size() << " is less than " << kInputSize3;
+      }
       (void)reorder_data_layer->emplace_back(data_layer[INPUT2]);
       (void)reorder_data_layer->emplace_back(data_layer[INPUT0]);
       (void)reorder_data_layer->emplace_back(data_layer[INPUT1]);
@@ -115,6 +137,9 @@ void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vect
         (void)reorder_data_layer->emplace_back(data_layer[i]);
       }
     } else {
+      if (data_layer.size() < kInputSize2) {
+        MS_LOG(EXCEPTION) << op_name << "'s input size " << data_layer.size() << " is less than " << kInputSize2;
+      }
       (void)reorder_data_layer->emplace_back(data_layer[INPUT1]);
       (void)reorder_data_layer->emplace_back(data_layer[INPUT0]);
       for (size_t i = 2; i < data_layer.size(); ++i) {
@@ -226,6 +251,9 @@ void TbeAdapter::GenTopKV2IndicesTensorInfo(const std::shared_ptr<mindspore::Anf
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_list);
   auto input_x_shape = AnfAlgo::GetOutputInferShape(anf_node, 0);
+  if (input_x_shape.empty()) {
+    MS_LOG(EXCEPTION) << AnfAlgo::GetCNodeName(anf_node) << "'s output infer shape is empty.";
+  }
   size_t last_dim = input_x_shape[input_x_shape.size() - 1];
   std::vector<size_t> tensor_shape = {last_dim};
   std::vector<size_t> tensor_origin_shape = {last_dim};
