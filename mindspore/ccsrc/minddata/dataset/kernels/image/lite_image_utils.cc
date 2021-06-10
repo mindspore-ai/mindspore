@@ -104,17 +104,21 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
         const int k = scanline_ptr[cmyk_pixel + 3];
         int r, g, b;
         if (cinfo->saw_Adobe_marker) {
-          r = (k * c) / 255;
-          g = (k * m) / 255;
-          b = (k * y) / 255;
+          r = (k * c) / MAX_PIXEL_VALUE;
+          g = (k * m) / MAX_PIXEL_VALUE;
+          b = (k * y) / MAX_PIXEL_VALUE;
         } else {
-          r = (255 - c) * (255 - k) / 255;
-          g = (255 - m) * (255 - k) / 255;
-          b = (255 - y) * (255 - k) / 255;
+          r = (MAX_PIXEL_VALUE - c) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
+          g = (MAX_PIXEL_VALUE - m) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
+          b = (MAX_PIXEL_VALUE - y) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
         }
-        buffer[3 * i + 0] = r;
-        buffer[3 * i + 1] = g;
-        buffer[3 * i + 2] = b;
+        constexpr int buffer_rgb_val_size = 3;
+        constexpr int channel_red = 0;
+        constexpr int channel_green = 1;
+        constexpr int channel_blue = 2;
+        buffer[buffer_rgb_val_size * i + channel_red] = r;
+        buffer[buffer_rgb_val_size * i + channel_green] = g;
+        buffer[buffer_rgb_val_size * i + channel_blue] = b;
       }
     } else if (num_lines_read > 0) {
       auto copy_status = memcpy_s(buffer, buffer_size, scanline_ptr + offset, stride);
@@ -361,8 +365,9 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     RETURN_STATUS_UNEXPECTED("Resize: image datatype is not uint8.");
   }
   // resize image too large or too small
-  if (output_height == 0 || output_height > input->shape()[0] * 1000 || output_width == 0 ||
-      output_width > input->shape()[1] * 1000) {
+  const int height_width_scale_limit = 1000;
+  if (output_height == 0 || output_height > input->shape()[0] * height_width_scale_limit || output_width == 0 ||
+      output_width > input->shape()[1] * height_width_scale_limit) {
     std::string err_msg =
       "Resize: the resizing width or height 1) is too big, it's up to "
       "1000 times the original image; 2) can not be 0.";

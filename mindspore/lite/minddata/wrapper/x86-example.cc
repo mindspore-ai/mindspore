@@ -28,8 +28,9 @@ int main() {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10Dataset.";
 
   // Create a Cifar10 Dataset
+  const int64_t num_samples = 10;
   std::string folder_path = "./testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, std::string(), RandomSampler(false, num_samples));
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
