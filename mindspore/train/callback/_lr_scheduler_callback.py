@@ -17,10 +17,12 @@
 import math
 import numpy as np
 
+from mindspore import log as logger
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.train.callback._callback import Callback
 from mindspore.ops import functional as F
+
 
 class LearningRateScheduler(Callback):
     """
@@ -66,4 +68,4 @@ class LearningRateScheduler(Callback):
         new_lr = self.learning_rate_function(lr, cb_params.cur_step_num)
         if not math.isclose(lr, new_lr, rel_tol=1e-10):
             F.assign(cb_params.optimizer.learning_rate, Tensor(new_lr, mstype.float32))
-            print(f'At step {cb_params.cur_step_num}, learning_rate change to {new_lr}')
+            logger.info(f'At step {cb_params.cur_step_num}, learning_rate change to {new_lr}')

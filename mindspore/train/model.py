@@ -804,7 +804,10 @@ class Model:
             predict_data (Tensor): One tensor or multiple tensors of predict data.
 
         Returns:
-            Dict, Parameter layout dictionary used for load distributed checkpoint
+            Dict, Parameter layout dictionary used for load distributed checkpoint.
+
+        Raises:
+            RuntimeError: If get_context is not GRAPH_MODE.
 
         Examples:
             >>> # This example should be run with multiple devices. Refer to the tutorial > Distributed Training on

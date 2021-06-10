@@ -308,8 +308,7 @@ def load(file_name):
     """
     Load MindIR.
 
-    The returned object can be executed by a `GraphCell`. However, there are some limitations to the current use
-    of `GraphCell`, see class :class:`mindspore.nn.GraphCell` for more details.
+    The returned object can be executed by a `GraphCell`, see class :class:`mindspore.nn.GraphCell` for more details.
 
     Args:
         file_name (str): MindIR file name.
@@ -318,7 +317,8 @@ def load(file_name):
         Object, a compiled graph that can executed by `GraphCell`.
 
     Raises:
-        ValueError: MindIR file is incorrect.
+        ValueError: MindIR file name is incorrect.
+        RuntimeError: Failed to parse MindIR file.
 
     Examples:
         >>> import numpy as np
@@ -666,7 +666,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
     Args:
         net (Cell): MindSpore network.
-        inputs (Tensor): Inputs of the `net`.
+        inputs (Tensor): Inputs of the `net`, if the network has multiple inputs, incoming tuple(Tensor).
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
 
@@ -847,6 +847,7 @@ def _mindir_save_together(net_dict, model):
             return False
     return True
 
+
 def quant_mode_manage(func):
     """
     Inherit the quant_mode in old version.
@@ -861,6 +862,7 @@ def quant_mode_manage(func):
             kwargs['quant_mode'] = 'QUANT'
         return func(network, *inputs, file_format=file_format, **kwargs)
     return warpper
+
 
 @quant_mode_manage
 def _quant_export(network, *inputs, file_format, **kwargs):
@@ -1056,12 +1058,11 @@ def build_searched_strategy(strategy_filename):
         strategy_filename (str): Name of strategy file.
 
     Returns:
-        Dictionary, whose key is parameter name and value is slice strategy of this parameter.
+        Dict, whose key is parameter name and value is slice strategy of this parameter.
 
     Raises:
         ValueError: Strategy file is incorrect.
         TypeError: Strategy_filename is not str.
-
     """
     if not isinstance(strategy_filename, str):
         raise TypeError(f"The strategy_filename should be str, but got {type(strategy_filename)}.")
@@ -1184,7 +1185,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         predict_strategy (dict): Strategy of predication process, whose key is parameter name, and value is a list or
             a tuple that the first four elements are [dev_matrix, tensor_map, param_split_shape, field]. If None,
             it means that the predication process just uses single device. Default: None.
-        train_strategy_filename (str): Train strategy file. Default: None.
+        train_strategy_filename (str): Train strategy proto file name. Default: None.
         dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
                                       is not required. Default: None.
         dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption

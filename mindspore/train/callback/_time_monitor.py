@@ -16,7 +16,6 @@
 
 import time
 
-from mindspore import log as logger
 from ._callback import Callback
 
 
@@ -25,12 +24,16 @@ class TimeMonitor(Callback):
     Monitor the time in training.
 
     Args:
-        data_size (int): Dataset size. Default: None.
+        data_size (int): How many steps to return time information default is dataset size. Default: None.
+
+    Raises:
+        ValueError: If data_size is not positive int.
     """
 
     def __init__(self, data_size=None):
         super(TimeMonitor, self).__init__()
         self.data_size = data_size
+        self.epoch_time = time.time()
 
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()
@@ -45,8 +48,7 @@ class TimeMonitor(Callback):
                 step_size = cb_params.batch_num
 
         if not isinstance(step_size, int) or step_size < 1:
-            logger.error("data_size must be positive int.")
-            return
+            raise ValueError("data_size must be positive int.")
 
         step_seconds = epoch_seconds / step_size
         print("epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format(epoch_seconds, step_seconds), flush=True)

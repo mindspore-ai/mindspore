@@ -91,7 +91,7 @@ class CheckpointConfig:
                         mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
 
     Raises:
-        ValueError: If the input_param is None or 0.
+        ValueError: If input parameter is not the correct type.
 
     Examples:
         >>> class LeNet5(nn.Cell):

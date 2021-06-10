@@ -27,7 +27,7 @@ class DatasetGraph:
         packages dataset graph into binary data
 
         Args:
-            dataset (MindData): refer to MindDataset
+            dataset (MindDataset): Refer to MindDataset.
 
         Returns:
             DatasetGraph, a object of lineage_pb2.DatasetGraph.
