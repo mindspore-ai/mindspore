@@ -23,7 +23,7 @@ from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
 def cum_sum(nptype):
-    context.set_context(device_target='GPU')
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     x0 = np.random.rand(2, 3, 4, 4).astype(nptype)
     axis0 = 3
 

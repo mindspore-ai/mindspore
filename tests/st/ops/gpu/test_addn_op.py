@@ -22,8 +22,6 @@ from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 
-context.set_context(device_target='GPU')
-
 
 class Net(nn.Cell):
     def __init__(self):
@@ -39,6 +37,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
     y = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
     z = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)

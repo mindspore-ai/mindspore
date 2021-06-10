@@ -27,7 +27,7 @@ from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
-
+context.set_context(mode=context.PYNATIVE_MODE)
 grad_by_list_with_sens = C.GradOperation(get_by_list=True, sens_param=True)
 
 

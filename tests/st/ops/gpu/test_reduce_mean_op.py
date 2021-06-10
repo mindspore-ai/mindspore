@@ -84,8 +84,6 @@ axis14 = ()
 np_axis14 = None
 keep_dims14 = True
 
-context.set_context(device_target='GPU')
-
 
 class ReduceMean(nn.Cell):
     def __init__(self):
@@ -174,6 +172,7 @@ class ReduceMean(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReduceMean():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_mean = ReduceMean()
     output = reduce_mean()
 

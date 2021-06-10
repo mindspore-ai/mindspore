@@ -6,6 +6,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 @pytest.mark.level0
@@ -34,7 +35,6 @@ def test_if_by_if_basic():
     class Net(Cell):
         def __init__(self):
             super().__init__()
-            context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
             self.subnet = SubNet()
             self.relu = P.ReLU()
             self.add = P.Add()

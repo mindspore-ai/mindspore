@@ -103,6 +103,7 @@ def test_in_top_k_float32():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_in_top_k_invalid_input():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     # k must be > 0
     with pytest.raises(ValueError):
         in_top_k_net = InTopKNet(0)

@@ -62,6 +62,7 @@ def test_slice_4d():
     x_np = np.random.randn(32, 24, 224, 224).astype(np.float32)
     output_np = x_np[:, 11:18, :, :]
 
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_ms = Tensor(x_np)
     net = SliceNet()
     output_ms = net(x_ms)

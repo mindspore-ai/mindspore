@@ -157,6 +157,7 @@ def test_zeros_like_dynamic_float64():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_multiple_inputs():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = ZerosLikeDynamicNet()
 
     x = Tensor(np.arange(4).reshape(4).astype(np.float32))

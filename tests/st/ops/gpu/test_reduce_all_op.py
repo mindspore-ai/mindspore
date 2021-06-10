@@ -39,8 +39,6 @@ x3 = np.array([[True, True], [True, False], [False, False]])
 axis3 = 1
 keep_dims3 = False
 
-context.set_context(device_target='GPU')
-
 
 class ReduceAll(nn.Cell):
     def __init__(self):
@@ -75,6 +73,7 @@ class ReduceAll(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReduceAll():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_all = ReduceAll()
     output = reduce_all()
 

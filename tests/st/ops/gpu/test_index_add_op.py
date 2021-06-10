@@ -224,6 +224,7 @@ def test_index_add_int16():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_invalid_inputs():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.uint8)
     y = np.ones((2, 2, 4), dtype=np.uint8)
     with pytest.raises(TypeError):

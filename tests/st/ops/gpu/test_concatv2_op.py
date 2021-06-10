@@ -41,7 +41,7 @@ class ConcatV32(nn.Cell):
 
 
 def axis32(nptype):
-    context.set_context(device_target='GPU')
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
     cat = ConcatV32(nptype)
     output = cat()
@@ -98,7 +98,7 @@ class ConcatV43(nn.Cell):
 
 
 def axis43(nptype):
-    context.set_context(device_target='GPU')
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
     cat = ConcatV43(nptype)
     output = cat()
@@ -159,6 +159,8 @@ class ConcatV21(nn.Cell):
 
 
 def axis21(nptype):
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+
     cat = ConcatV21(nptype)
     output = cat()
     expect = np.array([[0., 1., 0., 1., 2.],
@@ -206,8 +208,9 @@ class Concat3INet(nn.Cell):
 
 
 def concat_3i(nptype):
-    cat = Concat3INet()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
+    cat = Concat3INet()
     x1_np = np.random.randn(32, 4, 224, 224).astype(nptype)
     x2_np = np.random.randn(32, 8, 224, 224).astype(nptype)
     x3_np = np.random.randn(32, 10, 224, 224).astype(nptype)
@@ -250,6 +253,7 @@ def test_concat_3i_uint8():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_3i_bool():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     cat = Concat3INet()
 
     x1_np = np.random.choice([True, False], (32, 4, 224, 224)).astype(np.bool)
@@ -275,8 +279,9 @@ class Concat4INet(nn.Cell):
 
 
 def concat_4i(nptype):
-    cat = Concat4INet()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
+    cat = Concat4INet()
     x1_np = np.random.randn(32, 4, 224, 224).astype(nptype)
     x2_np = np.random.randn(32, 8, 224, 224).astype(nptype)
     x3_np = np.random.randn(32, 10, 224, 224).astype(nptype)
@@ -321,8 +326,9 @@ def test_concat_4i_uint8():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_4i_bool():
-    cat = Concat4INet()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
+    cat = Concat4INet()
     x1_np = np.random.choice([True, False], (32, 4, 224, 224)).astype(np.bool)
     x2_np = np.random.choice([True, False], (32, 8, 224, 224)).astype(np.bool)
     x3_np = np.random.choice([True, False], (32, 10, 224, 224)).astype(np.bool)

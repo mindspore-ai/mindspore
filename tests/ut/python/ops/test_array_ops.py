@@ -34,6 +34,8 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
 
+context.set_context(mode=context.PYNATIVE_MODE)
+
 
 def test_expand_dims():
     input_tensor = Tensor(np.array([[2, 2], [2, 2]]))

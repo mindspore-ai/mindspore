@@ -18,10 +18,13 @@ import pytest
 import numpy as onp
 
 import mindspore.numpy as mnp
+from mindspore import context
 from mindspore.common.dtype import dtype_to_nptype
 
 from .utils import rand_int, rand_bool, run_binop_test, run_unary_test, run_multi_test, \
     run_single_test, match_res, match_array, match_meta, match_all_arrays, to_tensor
+
+context.set_context(mode=context.PYNATIVE_MODE)
 
 class Cases():
     def __init__(self):

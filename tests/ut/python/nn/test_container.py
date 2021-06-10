@@ -18,7 +18,10 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import context, Tensor
+
+context.set_context(mode=context.PYNATIVE_MODE)
+
 
 weight = Tensor(np.ones([2, 2]))
 conv2 = nn.Conv2d(3, 64, (3, 3), stride=2, padding=0)

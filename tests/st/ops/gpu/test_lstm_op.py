@@ -25,7 +25,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
-context.set_context(device_target='GPU')
+context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
 
 class LstmNet(nn.Cell):

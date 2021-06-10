@@ -63,8 +63,6 @@ axis8 = ()
 np_axis8 = None
 keep_dims8 = True
 
-context.set_context(device_target='GPU')
-
 
 class ReduceMax(nn.Cell):
     def __init__(self):
@@ -123,6 +121,7 @@ class ReduceMax(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReduceMax():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_max = ReduceMax()
     output = reduce_max()
 

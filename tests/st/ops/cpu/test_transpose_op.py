@@ -23,7 +23,7 @@ from mindspore.common.parameter import Parameter
 import mindspore.nn as nn
 import mindspore.context as context
 
-context.set_context(device_target='CPU')
+context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
 
 
 class Transpose(nn.Cell):

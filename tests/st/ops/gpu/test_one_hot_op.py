@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 
-context.set_context(device_target='GPU')
+context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
 
 class NetOneHot(nn.Cell):

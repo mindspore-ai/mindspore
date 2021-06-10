@@ -101,6 +101,7 @@ def test_reverse_v2_int64():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_invalid_axis():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.arange(60).reshape(1, 2, 3, 2, 5).astype(np.int32))
 
     with pytest.raises(ValueError) as info:

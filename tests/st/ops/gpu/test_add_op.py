@@ -60,7 +60,7 @@ class AddNet(nn.Cell):
 
 
 def add(nptype):
-    context.set_context(device_target='GPU')
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
     add_net = AddNet(nptype)
     output = add_net()
