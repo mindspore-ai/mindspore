@@ -51,6 +51,9 @@ void KernelActor::Init() {
     memory_free_list_.emplace_back(workspace_address.get());
     launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
   }
+  for (auto &external_reference_tensor : external_reference_tensors_) {
+    memory_free_list_.emplace_back(external_reference_tensor);
+  }
 
   // Init the output data.
   output_data_by_output_index_.resize(output_device_tensors_.size());
@@ -80,7 +83,11 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
 
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
-    SendMemoryAllocReq(context);
+    if (memory_alloc_list_.size() > 0) {
+      SendMemoryAllocReq(context);
+    } else {
+      OnMemoryAllocFinish(context);
+    }
   }
 }
 
@@ -97,7 +104,11 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
 
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
-    SendMemoryAllocReq(context);
+    if (memory_alloc_list_.size() > 0) {
+      SendMemoryAllocReq(context);
+    } else {
+      OnMemoryAllocFinish(context);
+    }
   }
 }
 
@@ -112,7 +123,11 @@ void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<Devi
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
-    SendMemoryAllocReq(context);
+    if (memory_alloc_list_.size() > 0) {
+      SendMemoryAllocReq(context);
+    } else {
+      OnMemoryAllocFinish(context);
+    }
   }
 }
 
@@ -286,7 +301,9 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *context) {
   // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
   // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
   // other is to ensure the execution order and avoid the illegal memory timing problem.
-  SendMemoryFreeReq(context);
+  if (memory_free_list_.size() > 0) {
+    SendMemoryFreeReq(context);
+  }
   SendOutput(context);
 }
 

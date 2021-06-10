@@ -257,80 +257,6 @@ void PrepareDataForControlWeightNode(
   }
 }
 
-void AllocateContinuousMemoryForInput(const AnfNodePtr &kernel, const DeviceContext *device_context,
-                                      bool is_all_nop_node) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(device_context);
-  bool is_need_alloc_memory = false;
-  size_t total_size = 0;
-  std::vector<size_t> size_list;
-  std::vector<DeviceTensorPtr> addr_list;
-
-  const auto &kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  const auto &intput_sizes = kernel_mod->GetInputSizeList();
-  for (size_t i = 0; i < intput_sizes.size(); ++i) {
-    DeviceTensorPtr device_tensor;
-    if (is_all_nop_node) {
-      // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
-      device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
-    } else {
-      device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
-    }
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    //  In the scene of communication op and computing op parallel multi stream, the input address of communication op
-    //  can't be reused, so set the max reference count.
-    UpdateRefCount(device_tensor.get(), true);
-
-    if (device_tensor->GetPtr() == nullptr) {
-      is_need_alloc_memory = true;
-    }
-    total_size += intput_sizes[i];
-    size_list.emplace_back(intput_sizes[i]);
-    addr_list.emplace_back(device_tensor);
-  }
-
-  if (is_need_alloc_memory) {
-    auto ret = device_context->AllocateContinuousMemory(addr_list, total_size, size_list);
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
-    }
-  }
-}
-
-void AllocateContinuousMemoryForOutput(const AnfNodePtr &kernel, const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(device_context);
-  bool is_need_alloc_memory = false;
-  size_t total_size = 0;
-  std::vector<size_t> size_list;
-  std::vector<DeviceTensorPtr> addr_list;
-
-  const auto &kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  const auto &output_sizes = kernel_mod->GetOutputSizeList();
-  for (size_t i = 0; i < output_sizes.size(); ++i) {
-    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    // One time application for continuous memory, so set the max reference count.
-    UpdateRefCount(device_tensor.get(), true);
-
-    if (device_tensor->GetPtr() == nullptr) {
-      is_need_alloc_memory = true;
-    }
-    total_size += output_sizes[i];
-    size_list.emplace_back(output_sizes[i]);
-    addr_list.emplace_back(device_tensor);
-  }
-
-  if (is_need_alloc_memory) {
-    auto ret = device_context->AllocateContinuousMemory(addr_list, total_size, size_list);
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
-    }
-  }
-}
-
 void EraseValueNodeTensor(const std::vector<int64_t> *tensors_mask, const std::vector<TensorPtr> *input_tensors,
                           std::vector<TensorPtr> *input_tensors_without_value_node) {
   MS_EXCEPTION_IF_NULL(input_tensors);
@@ -546,12 +472,26 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
                                           &host_tensors);
       }
     }
+  }
 
-    // 2.Prepare the continuous memory for communication kernel.
-    for (const auto &kernel : graph->execution_order()) {
-      if (AnfAlgo::IsCommunicationOp(kernel)) {
-        AllocateContinuousMemoryForInput(kernel, device_context, graph->is_all_nop_node());
-        AllocateContinuousMemoryForOutput(kernel, device_context);
+  // 2.Prepare the continuous memory for communication kernel.
+  if (actor_set->loop_count_actor_ != nullptr) {
+    auto alloc_list_list = actor_set->loop_count_actor_->continuous_memory_alloc_list_list_;
+    auto size_list_list = actor_set->loop_count_actor_->size_list_list_;
+    auto total_size_list = actor_set->loop_count_actor_->total_size_list_;
+    auto device_contexts = actor_set->loop_count_actor_->device_contexts_;
+    if ((alloc_list_list.size() != size_list_list.size()) || (size_list_list.size() != total_size_list.size()) ||
+        (total_size_list.size() != device_contexts.size())) {
+      MS_LOG(EXCEPTION)
+        << "The size of alloc_list_list, size_list_list, total_size_list and device_contexts are not equal.";
+    }
+    for (size_t i = 0; i < alloc_list_list.size(); ++i) {
+      auto &alloc_list = alloc_list_list[i];
+      auto &size_list = size_list_list[i];
+      auto &total_size = total_size_list[i];
+      auto &device_context = device_contexts[i];
+      if (!device_context->AllocateContinuousMemory(alloc_list, total_size, size_list)) {
+        MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size: " << total_size;
       }
     }
   }
@@ -904,9 +844,35 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
 
   auto loop_count = ConfigManager::GetInstance().iter_num();
   auto actor_name = graph_compiler_info.name_ + "_LoopCountActor";
-  auto loop_count_actor = std::make_shared<LoopCountActor>(actor_name, loop_count, debug_aid_, recorder_aid_);
+  auto loop_count_actor =
+    std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_);
   MS_LOG(INFO) << "Create loop count actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
+
+  // Cache the nodes which need continuous memory.
+  for (size_t index = 0; index < graph_compiler_info.graphs_.size(); ++index) {
+    const auto &graph = graph_compiler_info.graphs_[index];
+    MS_EXCEPTION_IF_NULL(graph);
+    auto &execution_order = graph->execution_order();
+    for (auto &kernel : execution_order) {
+      if (!AnfAlgo::IsCommunicationOp(kernel)) {
+        continue;
+      }
+
+      auto key = std::make_pair(kernel, graph_compiler_info.device_contexts_[index]);
+      auto value = std::make_pair(false, false);
+      if (AnfAlgo::GetInputTensorNum(kernel) > 1) {
+        value.first = true;
+      }
+      if (AnfAlgo::GetOutputTensorNum(kernel) > 1) {
+        value.second = true;
+      }
+      if ((value.first == true) || (value.second == true)) {
+        loop_count_actor->continuous_memory_nodes_[key] = value;
+      }
+    }
+  }
+
   InsertActor(loop_count_actor.get());
   return loop_count_actor;
 }
@@ -1407,6 +1373,15 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       auto output_actor = dynamic_cast<KernelActor *>(FetchActor(output_data_arrow->to_op_id_.Name()));
       to_recv_actor->output_control_arrows_.emplace_back(output_actor->GetAID());
       output_actor->input_controls_num_++;
+    }
+
+    // In the scene of allreduce op and computing op parallel multi stream, the input memory of allreduce can be reused
+    // only when the recv node runs finished, which is expressed by the reference count increased.
+    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(from_allreduce_node); ++i) {
+      auto device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(from_allreduce_node, i, false);
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      UpdateRefCount(device_tensor.get());
+      to_recv_actor->external_reference_tensors_.emplace_back(device_tensor.get());
     }
   }
 }
@@ -2044,7 +2019,7 @@ void GraphScheduler::InsertActor(OpActor<DeviceTensor> *actor) {
   actor_name_to_actor_[actor->GetAID().Name()] = actor;
 }
 
-OpActor<DeviceTensor> *GraphScheduler::FetchActor(const std::string actor_name) const {
+OpActor<DeviceTensor> *GraphScheduler::FetchActor(const std::string &actor_name) const {
   const auto &iter = actor_name_to_actor_.find(actor_name);
   if (iter == actor_name_to_actor_.end()) {
     return nullptr;
@@ -2191,6 +2166,13 @@ void GraphScheduler::DumpLoopCountActor(const LoopCountActor *actor, std::ofstre
     ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
   }
   ofs << "\t\t\tto_actor_name:" << actor->output_aid_.Name() << "\n";
+
+  ofs << "\t\tcontinuous_memory_nodes:" << actor->continuous_memory_nodes_.size() << "\n ";
+  for (const auto &iter : actor->continuous_memory_nodes_) {
+    ofs << "\t\t\tnode_name:" << iter.first.first->fullname_with_scope()
+        << "\tdevice_context:" << iter.first.second->device_context_key().ToString()
+        << "\tis_input_need:" << iter.second.first << "\tis_output_need:" << iter.second.second << "\n";
+  }
 }
 
 void GraphScheduler::DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const {
