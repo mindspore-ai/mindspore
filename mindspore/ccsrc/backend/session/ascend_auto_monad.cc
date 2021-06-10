@@ -80,6 +80,10 @@ void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
   }
   std::string filename = "ascend_execute_order_" + std::to_string(kg->graph_id()) + ".dat";
   auto filepath = pipeline::GetSaveGraphsPathName(filename);
+  if (filepath.size() >= PATH_MAX) {
+    MS_LOG(ERROR) << "File path: " << filepath << " is too long.";
+    return;
+  }
   char real_path[PATH_MAX] = {0};
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(filepath, filename.c_str(), PATH_MAX) == nullptr) {
