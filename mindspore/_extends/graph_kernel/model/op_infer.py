@@ -16,7 +16,6 @@
 
 import copy
 import sys
-from functools import reduce
 from .model import GraphKernelUnsupportedException as GKException
 from .model import PrimLib, DataFormat as DF
 
@@ -102,18 +101,59 @@ class OpInfer:
 class _Elemwise(OpInfer):
     """Common infer for elementwise operators"""
 
-    def _infer_shape(self):
-        """returns the input shape with largest flatten size"""
-        shape = (1,)
-        max_flatten_size = 1
-        for t in self.inputs:
-            if t.data_format != DF.DEFAULT:
-                return t.shape
-            flatten_size = reduce(lambda x, y: x * y, t.shape)
-            if flatten_size > max_flatten_size or (flatten_size == max_flatten_size and len(t.shape) > len(shape)):
-                max_flatten_size = flatten_size
-                shape = t.shape
+    def _broadcast_shape(self, shapes):
+        """deduce broadcast shape using same rules as numpy"""
+        dim_size = max([len(shape) for shape in shapes])
+        align_shapes = [[1] * (dim_size - len(shape)) + shape for shape in shapes]
+        out_shape = [1] * dim_size
+        for i in range(dim_size):
+            for align_shape in align_shapes:
+                if align_shape[i] > 1:
+                    if out_shape[i] == 1:
+                        out_shape[i] = align_shape[i]
+                    if out_shape[i] != align_shape[i]:
+                        raise GKException("shape broadcast failed!")
+        return out_shape
+
+    def _to_nz(self, default_shape):
+        """default format shape to fractal_Nz format shape"""
+        if len(default_shape) not in (1, 2):
+            raise GKException("shape is too long!")
+        # (32) or (1, 32) -> (2, 1, 1, 16)
+        if len(default_shape) == 1 or (len(default_shape) == 2 and default_shape[0] == 1):
+            shape = [default_shape[-1] // 16, 1, 1, 16]
+            if default_shape[-1] % 16 != 0:
+                raise GKException("should be multiplies of 16")
+            return shape
+        #(32, 1) -> (1, 2, 16, 1)
+        if len(default_shape) == 2 and default_shape[1] == 1:
+            shape = [1, default_shape[0] // 16, 16, 1]
+            if default_shape[0] % 16 != 0:
+                raise GKException("should be multiples of 16")
+            return shape
+        #(32, 48) -> (3, 2, 16, 16)
+        shape = [default_shape[1] // 16, default_shape[0] // 16, 16, 16]
+        if default_shape[0] % 16 != 0 or defautl_shape[1] % 16 != 0:
+            raise GKException("should be multiples of 16")
         return shape
+
+    def _infer_shape(self):
+        """returns the output shape with broadcast"""
+
+        # in case all inputs are default format/NHWC/NCHW
+        is_default = [input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW) for input in self.inputs]
+        if all(is_default):
+            return self._broadcast_shape([input.shape for input in self.inputs])
+
+        # in case formats are fractal_nz, default_fromat/NHWC/HCHW(optional)
+        is_default_frac_nz = [input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW, DF.FRAC_NZ) \
+            for input in self.inputs]
+        if all(is_default_frac_nz):
+            nz_shapes = [self._to_nz(input.shape) if input.data_format != DF.FRAC_NZ else input.shape \
+                for input in self.inputs]
+            return self._broadcast_shape(nz_shapes)
+
+        raise GKException("Only support default and fractal_nz")
 
     def _infer_format(self):
         for tensor in self.inputs:
