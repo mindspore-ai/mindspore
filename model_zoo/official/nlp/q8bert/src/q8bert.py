@@ -294,7 +294,7 @@ class BertNetworkWithLoss_td(nn.Cell):
         # load student model
         self.bert = BertModelCLS(student_config, is_training, num_labels, dropout_prob,
                                  use_one_hot_embeddings, "student")
-        if do_quant == "True":
+        if do_quant:
             import src.q8bert_model as quant_bert_model
             self.bert = quant_bert_model.BertModelCLS(student_config, is_training, num_labels, dropout_prob,
                                                       use_one_hot_embeddings, "student")

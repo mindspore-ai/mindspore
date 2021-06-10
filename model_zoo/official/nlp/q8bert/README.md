@@ -131,7 +131,7 @@ options:
 
 ## [Training Process](#contents)
 
-### Running-on-Ascend-and-GPU-platform
+### Running on Ascend and GPU platform
 
 Before running the command below, please check that all required parameters have been set. The parameter of path would better be the absolute path. The options of parameter DEVICE_TARGET contains Ascend and GPU, which means the model will run in Ascend and GPU platform respectively.
 
