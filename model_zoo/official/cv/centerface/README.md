@@ -48,7 +48,7 @@ Four loss is presented, total loss is their weighted mean.
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-Dataset support: [WiderFace] or datasetd with the same format as WiderFace
+Dataset support: [WiderFace] or dataset with the same format as WiderFace
 Annotation support: [WiderFace] or annotation as the same format as WiderFace
 
 - The directory structure is as follows, the name of directory and file is user define:
@@ -105,7 +105,15 @@ step1: prepare pretrained model: train a mobilenet_v2 model by mindspore or use 
 python convert_weight_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
 ```
 
-step2: prepare user rank_table
+step2: prepare dataset  
+
+&emsp;1)download dataset from [WIDER FACE](http://mmlab.ie.cuhk.edu.hk/projects/WIDERFace/).  
+
+&emsp;2)download the ground_truth from [ground_truth](http://mmlab.ie.cuhk.edu.hk/projects/WIDERFace/support/eval_script/eval_tools.zip).  
+
+&emsp;3)download training annotations from [annotations](https://pan.baidu.com/s/1j_2wggZ3bvCuOAfZvjWqTg).  password: **f9hh**
+
+step3: prepare user rank_table
 
 ```python
 # user can use your own rank table file
@@ -114,7 +122,7 @@ step2: prepare user rank_table
 python hccl_tools.py --device_num "[0,8)"
 ```
 
-step3: train
+step4: train
 
 ```python
 cd scripts;
@@ -134,7 +142,7 @@ mkdir ./model
 cp device0/outputs/*/*.ckpt ./model # cp model to [MODEL_PATH]
 ```
 
-step4: test
+step5: test
 
 ```python
 # test CenterFace preparing
@@ -157,7 +165,7 @@ ls ./dataset/centerface/ground_truth/val.mat # annot_path
 sh test_distribute.sh
 ```
 
-step5: eval
+step6: eval
 
 ```python
 # after test, eval CenterFace, get MAP

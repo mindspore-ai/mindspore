@@ -42,10 +42,10 @@ SSD方法基于前向卷积网络，该网络产生固定大小的边界框集�
 
 我们提供了4种不同的基础架构:
 
-- **ssd300**, 参考论文实现. 使用mobilenet-v2作为骨干网络, 并使用相同的bbox预测器.
-- ***ssd-mobilenet-v1-fpn**, 使用mobilenet-v1和FPN作为特征提取器, 并使用权重共享bbox预测器.
-- ***ssd-resnet50-fpn**, 使用resnet50和FPN作为特征提取器, 并使用权重共享bbox预测器.
-- **ssd-vgg16**, 参考论文实现. 使用vgg16作为骨干网络, 并使用相同的bbox预测器.
+- **ssd300**， 参考论文实现。 使用mobilenet-v2作为骨干网络， 并使用和论文相同的bbox预测器。
+- ***ssd-mobilenet-v1-fpn**， 使用mobilenet-v1和FPN作为特征提取器， 并使用权重共享box预测器。
+- ***ssd-resnet50-fpn**， 使用resnet50和FPN作为特征提取器， 并使用权重共享box预测器。
+- **ssd-vgg16**， 参考论文实现。 使用vgg16作为骨干网络， 并使用和论文相同的bbox预测器。
 
 # 数据集
 
