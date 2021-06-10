@@ -44,6 +44,7 @@ class MindrtExecutor : public Executor {
 
  private:
   void TransferGraphOutput();
+  void FreeOutputTensor();
 
  protected:
   void PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);

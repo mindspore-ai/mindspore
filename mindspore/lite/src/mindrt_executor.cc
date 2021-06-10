@@ -104,6 +104,7 @@ void MindrtExecutor::TransferGraphOutput() {
     auto dst_tensor = tensor_map.second;
     auto src_tensor = tensor_map.first;
     dst_tensor->set_shape(src_tensor->shape());
+    /* dst tensor free in FreeOutputTensor */
 
     if (src_tensor->data_type() == kNumberTypeFloat16) {
       dst_tensor->MallocData();
@@ -118,14 +119,18 @@ void MindrtExecutor::TransferGraphOutput() {
   return;
 }
 
+void MindrtExecutor::FreeOutputTensor() {
+  for (auto tensor_map : *output_tensor_map_) {
+    auto dst_tensor = tensor_map.second;
+    dst_tensor->FreeData();
+  }
+  return;
+}
+
 int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                         const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                         const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(allocator != nullptr);
-  // clear ref_count
-  for (auto *tensor : kernels.front()->in_tensors()) {
-    tensor->set_ref_count(0);
-  }
+  FreeOutputTensor();
 
   auto ret = MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);
   if (ret != RET_OK) {
@@ -134,7 +139,6 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
   }
 
   TransferGraphOutput();
-
   return RET_OK;
 }
 }  // namespace mindspore::lite
