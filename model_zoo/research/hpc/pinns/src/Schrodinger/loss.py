@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """Loss function for PINNs (Schrodinger)"""
-from mindspore import nn, ops
 import mindspore.common.dtype as mstype
+from mindspore import nn, ops
 
 
 class PINNs_loss(nn.Cell):
     """
-    Loss of the PINNs network, only works with full-batch training. Training data are organized in
+    Loss of the PINNs network (Schrodinger), only works with full-batch training. Training data are organized in
     the following order: initial condition points ([0:n0]), boundary condition points ([n0:(n0+2*nb)]),
     collocation points ([(n0+2*nb)::])
     """
