@@ -915,7 +915,7 @@ Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption
     SliceOption slice_option = slice_options_[k];
 
     if (slice_option.all_) {
-      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[k]);
+      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[static_cast<dsize_t>(k)]);
       converted_slice_objects.push_back(SliceOption(slice));
       continue;
     }
@@ -927,7 +927,7 @@ Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption
 
   // partial slices, pass in the rest
   if (slice_options_.size() != Rank()) {
-    for (size_t j = slice_options_.size(); j < Rank(); j++) {
+    for (dsize_t j = static_cast<dsize_t>(slice_options_.size()); j < Rank(); j++) {
       mindspore::dataset::Slice slice = mindspore::dataset::Slice(0, shape_[j]);
       converted_slice_objects.emplace_back(SliceOption(slice));
     }
