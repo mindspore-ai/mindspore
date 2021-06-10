@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,46 +15,77 @@
  */
 
 #include "ops/bias_add.h"
+#include <map>
+#include <string>
+#include <vector>
+#include <set>
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-// Add
 #include "abstract/primitive_infer_map.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
-// Add
 namespace {
-abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  // check
-  (void)CheckAndConvertUtils::CheckInteger("arg size", input_args.size(), kEqual, 2, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kGreaterEqual, 2, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("bias rank", b_shape.size(), kEqual, 1, prim_name);
-  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
-  auto x_channel = x_shape[1];
-  if (format != NCHW) {
-    x_channel = x_shape[x_shape.size() - 1];
+  CheckAndConvertUtils::CheckInRange("bias_add_infer", input_args.size(), kIncludeBoth, {2, 5}, prim_name);
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto bias = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(bias);
+  CheckAndConvertUtils::CheckInteger("arg size", input_args.size(), kEqual, 2, prim_name);
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
+  auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  CheckAndConvertUtils::CheckInteger("bias rank", bias_shape.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("x rank", input_shape.size(), kGreaterEqual, 2, prim_name);
+  auto data_format_ptr = primitive->GetAttr("format");
+  int64_t data_format = Format::NCHW;
+  if (data_format_ptr != nullptr) {
+    data_format = CheckAndConvertUtils::GetAndCheckFormat(data_format_ptr);
   }
-  (void)CheckAndConvertUtils::Check("b_shape[0]", b_shape[0], kEqual, "x_shape[1]", x_channel, prim_name);
-
-  std::vector<int64_t> out_shape = x_shape;
-  return std::make_shared<abstract::Shape>(out_shape);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (data_format == Format::NCDHW && (input_shape.size() != 5 || !is_ascend)) {
+    MS_LOG(EXCEPTION) << "NCDHW format only support 5-dims input in Ascend target.";
+  }
+  auto x_channel = data_format == Format::NHWC ? input_shape[input_shape.size() - 1] : input_shape[1];
+  bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
+                               [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
+  if (x_not_dyn && bias_shape[0] != x_channel) {
+    MS_LOG(EXCEPTION) << "BiasAdd shape error, data format is " << data_format
+                      << ", got bias_shape[0]: " << bias_shape[0] << ", x_channel: " << x_channel << ".";
+  }
+  CheckAndConvertUtils::CheckMinMaxShape(input_shape, &min_shape, &max_shape);
+  if (min_shape.size() != 0 && max_shape.size() != 0) {
+    return std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
+  }
+  return std::make_shared<abstract::Shape>(input_shape);
 }
-
-TypePtr BiasAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   CheckAndConvertUtils::CheckInteger("biasadd_infer", input_args.size(), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  for (size_t i = 0; i < input_args.size(); i++) {
+    auto x_type_tmp = input_args[i]->BuildType();
+    MS_EXCEPTION_IF_NULL(x_type_tmp);
+    auto x_type = x_type_tmp->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(x_type);
+    std::set<TypePtr> valid_x_type = {kTensorType};
+    CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_type, valid_x_type, prim_name);
+  }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input_x", input_args[0]->BuildType());
-  (void)types.emplace("bias", input_args[1]->BuildType());
+  types.emplace("input_x", input_args[0]->BuildType());
+  types.emplace("bias", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
 }
 }  // namespace
@@ -69,10 +100,8 @@ Format BiasAdd::get_format() const {
 void BiasAdd::Init(const Format &format) { this->set_format(format); }
 AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(BiasAddInferType(primitive, input_args),
-                                                    BiasAddInferShape(primitive, input_args));
+  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
-// Add
-REGISTER_PRIMITIVE_C(kNameBiasAdd, BiasAdd);
+REGISTER_PRIMITIVE_EVAL_IMPL(BiasAdd, prim::kPrimBiasAdd, BiasAddInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

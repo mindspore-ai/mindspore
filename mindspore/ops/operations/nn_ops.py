@@ -2120,7 +2120,7 @@ class Conv2DTranspose(Conv2DBackpropInput):
                                               pad_list, mode, stride, dilation, group, data_format)
 
 
-class BiasAdd(PrimitiveWithCheck):
+class BiasAdd(Primitive):
     r"""
     Returns sum of input and bias tensor.
 
@@ -2165,19 +2165,6 @@ class BiasAdd(PrimitiveWithCheck):
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
         self.add_prim_attr('data_format', self.format)
-
-    def check_shape(self, x_shape, b_shape):
-        validator.check_int_range(len(x_shape), 2, 5, Rel.INC_BOTH, "x rank", self.name)
-        if self.format == "NCDHW" and (len(x_shape) != 5 or context.get_context("device_target") != "Ascend"):
-            raise ValueError("NCDHW format only support 5-dims input in Ascend target.")
-        validator.check_equal_int(len(b_shape), 1, "bias rank", self.name)
-        x_channel = x_shape[-1] if self.format == "NHWC" else x_shape[1]
-        if np.all(np.array(x_shape) != -1):
-            validator.check("b_shape[0]", b_shape[0], "x_channel", x_channel, Rel.EQ, self.name)
-
-    def check_dtype(self, x_type, b_type):
-        args = {"input_x": x_type, "bias": b_type}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
 
 
 class TopK(PrimitiveWithInfer):
