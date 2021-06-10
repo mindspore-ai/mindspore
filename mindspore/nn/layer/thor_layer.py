@@ -552,7 +552,7 @@ class EmbeddingThor(Cell):
         Tensor of output shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
 
     Examples:
-        >>> net = nn.Embedding(20000, 768,  True)
+        >>> net = nn.EmbeddingThor(20000, 768,  True)
         >>> input_data = Tensor(np.ones([8, 128]), mindspore.int32)
         >>>
         >>> # Maps the input word IDs to word embedding.

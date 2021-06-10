@@ -53,6 +53,7 @@ class DatasetHelper:
                              If sink_size=-1, sink the complete dataset for each epoch.
                              If sink_size>0, sink sink_size data for each epoch. Default: -1.
         epoch_num (int): Control the number of epoch data to send. Default: 1.
+        iter_first_order (int): Control the number of steps first_order graph to execute. Default: 1.
 
     Examples:
         >>> dataset_helper = DatasetHelper(dataset)
