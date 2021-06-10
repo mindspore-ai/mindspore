@@ -145,9 +145,6 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     MS_LOG(EXCEPTION) << "pad_list size must be 6.";
   }
   primitive->set_attr(kPadList, MakeValue(new_pad_list));
-  if (pad_mode == PadMode::SAME) {
-    primitive->set_attr(kCountIncludePad, MakeValue(false));
-  }
 
   std::vector<int64_t> out_shape =
     GetOutputShape(in_shape, kernel_d, kernel_h, kernel_w, stride_d, stride_h, stride_w, new_pad_list, ceil_mode);
