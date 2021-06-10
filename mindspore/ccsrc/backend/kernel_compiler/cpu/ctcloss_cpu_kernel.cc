@@ -103,7 +103,8 @@ void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_b
         }
       }
 
-      (*log_alpha_b)[u][t] = log(static_cast<TT>(y[label_with_blank[u]][t])) + sum_log_alpha_b;
+      (*log_alpha_b)[u][t] =
+        static_cast<TT>(log(static_cast<TT>(y[label_with_blank[IntToSize(u)]][IntToSize(t)]))) + sum_log_alpha_b;
     }
   }
 }
