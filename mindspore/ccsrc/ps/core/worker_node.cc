@@ -45,7 +45,7 @@ void WorkerNode::Initialize() {
   InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
-    MS_LOG(EXCEPTION) << "Worker node init client timeout!";
+    MS_LOG(EXCEPTION) << "Worker node connect to scheduler timeout!";
   }
   MS_LOG(INFO) << "Worker node init client successful!";
 }

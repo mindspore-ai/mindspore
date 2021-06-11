@@ -39,7 +39,7 @@ struct ClusterConfig {
         scheduler_port(port),
         heartbeat_timeout(30),
         cluster_available_timeout(300),
-        connect_interval(100),
+        connect_interval(3000),
         scheduler_timeout(30) {}
 
   // Configure through environment variables:MS_WORKER_NUM
@@ -55,7 +55,7 @@ struct ClusterConfig {
   uint32_t heartbeat_timeout;
   // Timeout period for cluster preparation is 300 seconds.
   uint32_t cluster_available_timeout;
-  // The timeout period for the client to connect to the server is 100ms.
+  // The timeout period for the client to connect to the server is 3000ms.
   uint32_t connect_interval;
   // When the scheduler exits, the worker and server can continue to work for 5 hours
   uint32_t scheduler_timeout;
