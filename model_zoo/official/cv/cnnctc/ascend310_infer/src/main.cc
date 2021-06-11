@@ -75,13 +75,13 @@ int PadImage(const MSTensor &input, MSTensor *output) {
   paddingSize = FLAGS_image_width - NewWidth;
   if (NewWidth > FLAGS_image_width) {
     std::shared_ptr<TensorTransform> resize(new Resize({FLAGS_image_height, FLAGS_image_width},
-                                                       InterpolationMode::kArea));
+                                                       InterpolationMode::kCubicPil));
     Execute composeResize({resize});
     composeResize(input, &imgResize);
     composeNormalize(imgResize, output);
   } else {
     std::shared_ptr<TensorTransform> resize(new Resize({FLAGS_image_height, NewWidth},
-                                                       InterpolationMode::kArea));
+                                                       InterpolationMode::kCubicPil));
     Execute composeResize({resize});
     composeResize(input, &imgResize);
     composeNormalize(imgResize, &imgNormalize);

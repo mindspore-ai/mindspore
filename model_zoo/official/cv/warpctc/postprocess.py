@@ -14,14 +14,10 @@
 # ============================================================================
 """post process for 310 inference"""
 import os
-import argparse
 import numpy as np
+from src.model_utils.config import config as cf
 
 batch_Size = 1
-parser = argparse.ArgumentParser(description="warpctc acc calculation")
-parser.add_argument("--result_path", type=str, required=True, help="result files path.")
-parser.add_argument("--label_path", type=str, required=True, help="label path.")
-args = parser.parse_args()
 
 
 def is_eq(pred_lbl, target):
@@ -76,9 +72,9 @@ def get_result(result_path, label_path):
         resultPath = os.path.join(result_path, file)
         output = np.fromfile(resultPath, dtype=np.float16).reshape((-1, batch_Size, 11))
         preds.append(get_prediction(output))
-    acc = calcul_acc(preds, labels)
+    acc = round(calcul_acc(preds, labels), 3)
     print("Total data: {}, accuracy: {}".format(len(labels), acc))
 
 
 if __name__ == '__main__':
-    get_result(args.result_path, args.label_path)
+    get_result(cf.result_path, cf.label_path)

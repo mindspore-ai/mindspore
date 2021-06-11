@@ -36,6 +36,10 @@ checkpoint_path: None
 file_name: "warpctc"
 ckpt_file: ""
 file_format: "MINDIR"
+#310infer-related
+dataset_path: ""
+result_path: ""
+label_path: ""
 
 ---
 
