@@ -101,9 +101,9 @@ void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vec
       if (inputs_list.size() < kInputSize3) {
         MS_LOG(EXCEPTION) << op_name << "'s input size " << inputs_list.size() << " is less than " << kInputSize3;
       }
-      inputs_json->emplace_back(inputs_list[2]);
-      inputs_json->emplace_back(inputs_list[0]);
-      inputs_json->emplace_back(inputs_list[1]);
+      inputs_json->emplace_back(inputs_list[INPUT2]);
+      inputs_json->emplace_back(inputs_list[INPUT0]);
+      inputs_json->emplace_back(inputs_list[INPUT1]);
       for (size_t i = 3; i < inputs_list.size(); ++i) {
         inputs_json->emplace_back(inputs_list[i]);
       }
@@ -111,8 +111,8 @@ void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vec
       if (inputs_list.size() < kInputSize2) {
         MS_LOG(EXCEPTION) << op_name << "'s input size " << inputs_list.size() << " is less than " << kInputSize2;
       }
-      inputs_json->emplace_back(inputs_list[1]);
-      inputs_json->emplace_back(inputs_list[0]);
+      inputs_json->emplace_back(inputs_list[INPUT1]);
+      inputs_json->emplace_back(inputs_list[INPUT0]);
       for (size_t i = 2; i < inputs_list.size(); ++i) {
         inputs_json->emplace_back(inputs_list[i]);
       }

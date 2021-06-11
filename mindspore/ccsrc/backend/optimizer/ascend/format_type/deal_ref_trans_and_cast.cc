@@ -108,8 +108,7 @@ CNodePtr DealRefTransAndCast::AddAdditionalToRefOutput(const FuncGraphPtr &func_
   }
   AnfNodePtr input_node = AnfAlgo::GetInputNode(cnode, input_index);
   MS_EXCEPTION_IF_NULL(input_node);
-  session::KernelWithIndex origin_pair;
-  origin_pair = FindRefOriginNode(input_node);
+  session::KernelWithIndex origin_pair = FindRefOriginNode(input_node);
   MS_EXCEPTION_IF_NULL(origin_pair.first);
   if (!origin_pair.first->isa<Parameter>()) {
     MS_LOG(WARNING) << "ref op origin node is not parameter";
