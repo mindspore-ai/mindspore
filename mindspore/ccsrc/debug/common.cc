@@ -40,7 +40,7 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
 #endif
   // get real path
   std::string out_path;
-  char real_path[PATH_MAX + 1] = {0};
+  char real_path[PATH_MAX] = {0};
   // input_path is dir + file_name
   if (path_split_pos != std::string::npos) {
     std::string prefix_path = input_path.substr(0, path_split_pos);
