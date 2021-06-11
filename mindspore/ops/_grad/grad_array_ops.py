@@ -451,7 +451,7 @@ def get_bprop_gather_d_grad(self):
         for i in range(dim+1, len(x_shp)):
             dim_after_axis *= x_shp[i]
         element = dim_before_axis * dim_at_axis_index * dim_after_axis
-        id_ = _range_op(0, element, 1, index.dtype)
+        id_ = range_op(0, element, 1, index.dtype)
         i = id_ // (dim_at_axis_index * dim_after_axis)
         k = id_ % dim_after_axis
         j = P.Cast()(index < 0, index.dtype)
