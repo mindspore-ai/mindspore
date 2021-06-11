@@ -155,11 +155,13 @@ void Server::InitIteration() {
 
   // 1.Add rounds to the iteration according to the server mode.
   for (const RoundConfig &config : rounds_config_) {
-    std::shared_ptr<Round> round = std::make_shared<Round>(config.name, config.check_timeout, config.time_window,
-                                                           config.check_count, config.threshold_count);
+    std::shared_ptr<Round> round =
+      std::make_shared<Round>(config.name, config.check_timeout, config.time_window, config.check_count,
+                              config.threshold_count, config.server_num_as_threshold);
     MS_LOG(INFO) << "Add round " << config.name << ", check_timeout: " << config.check_timeout
                  << ", time window: " << config.time_window << ", check_count: " << config.check_count
-                 << ", threshold: " << config.threshold_count;
+                 << ", threshold: " << config.threshold_count
+                 << ", server_num_as_threshold: " << config.server_num_as_threshold;
     iteration_->AddRound(round);
   }
 
@@ -180,6 +182,8 @@ void Server::RegisterCommCallbacks() {
   // Set message callbacks for server-to-server communication.
   DistributedMetadataStore::GetInstance().RegisterMessageCallback(tcp_comm);
   DistributedCountService::GetInstance().RegisterMessageCallback(tcp_comm);
+  iteration_->RegisterMessageCallback(tcp_comm);
+  iteration_->RegisterEventCallback(server_node_);
 
   // Set exception event callbacks for server.
   RegisterExceptionEventCallback(tcp_comm);
@@ -284,6 +288,10 @@ void Server::ProcessBeforeScalingIn() {
 }
 
 void Server::ProcessAfterScalingOut() {
+  if (server_node_ == nullptr) {
+    return;
+  }
+
   if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
     MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
     return;
@@ -296,7 +304,7 @@ void Server::ProcessAfterScalingOut() {
     MS_LOG(ERROR) << "DistributedCountService reinitializing failed.";
     return;
   }
-  if (!iteration_->ReInitForScaling()) {
+  if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
     MS_LOG(ERROR) << "Iteration reinitializing failed.";
     return;
   }
@@ -334,7 +342,7 @@ void Server::ProcessAfterScalingIn() {
     MS_LOG(ERROR) << "DistributedCountService reinitializing failed.";
     return;
   }
-  if (!iteration_->ReInitForScaling()) {
+  if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
     MS_LOG(ERROR) << "Iteration reinitializing failed.";
     return;
   }

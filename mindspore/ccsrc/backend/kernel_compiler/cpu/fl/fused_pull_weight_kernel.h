@@ -30,6 +30,8 @@
 
 namespace mindspore {
 namespace kernel {
+// The duration between two downloading requests when return code is ResponseCode_SucNotReady.
+constexpr int kRetryDurationOfPullWeights = 200;
 template <typename T>
 class FusedPullWeightKernel : public CPUKernel {
  public:
@@ -79,7 +81,7 @@ class FusedPullWeightKernel : public CPUKernel {
       pull_weight_rsp = flatbuffers::GetRoot<schema::ResponsePullWeight>(pull_weight_rsp_msg->data());
       retcode = pull_weight_rsp->retcode();
       if (retcode == schema::ResponseCode_SucNotReady) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPullWeights));
         continue;
       } else if (retcode != schema::ResponseCode_SUCCEED) {
         MS_LOG(EXCEPTION) << "FusedPullWeight failed. Server return code: " << pull_weight_rsp->retcode()
@@ -104,8 +106,7 @@ class FusedPullWeightKernel : public CPUKernel {
         return false;
       }
     }
-
-    MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " succeed.";
+    MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
     return true;
   }
 

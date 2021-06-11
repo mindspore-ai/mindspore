@@ -95,16 +95,6 @@ constexpr uint32_t kCheckRegisteredRetryCount = 30;
 // The timeout interval for judging whether all nodes are successfully registered.
 constexpr uint32_t kCheckRegisteredIntervalInMs = 1000;
 
-// The barrier function which should be called before doing scaling out/in operations.
-// It's easy for us to scale out/in nodes after one iteration is completed and keep consistent.
-using BarrierBeforeScaleOut = std::function<void(void)>;
-using BarrierBeforeScaleIn = std::function<void(void)>;
-
-// These handlers helps worker/server node to reinitialize or recover data after scaling out/in operation of scheduler
-// is done.
-using HandlerAfterScaleOut = std::function<void(void)>;
-using HandlerAfterScaleIn = std::function<void(void)>;
-
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = uint64_t;
@@ -157,6 +147,20 @@ const std::map<std::string, OptimOriginIdx> kOptimToPSSendIdx = {{kApplyMomentum
                                                                  {kSparseAdam, kSparseAdamPSSendIdx},
                                                                  {kSparseLazyAdam, kSparseAdamPSSendIdx},
                                                                  {kSparseFtrl, kSparseFtrlPSSendIdx}};
+
+// The barrier function which should be called before doing scaling out/in operations.
+// It's easy for us to scale out/in nodes after one iteration is completed and keep consistent.
+using BarrierBeforeScaleOut = std::function<void(void)>;
+using BarrierBeforeScaleIn = std::function<void(void)>;
+
+// These handlers helps worker/server node to reinitialize or recover data after scaling out/in operation of scheduler
+// is done.
+using HandlerAfterScaleOut = std::function<void(void)>;
+using HandlerAfterScaleIn = std::function<void(void)>;
+
+constexpr char kClusterSafeMode[] = "The cluster is in safemode.";
+
+enum class CustomEvent { kIterationRunning = 0, kIterationCompleted };
 
 #define EXC_IF_VEC_IDX_OOB(vec, idx)                                                            \
   {                                                                                             \

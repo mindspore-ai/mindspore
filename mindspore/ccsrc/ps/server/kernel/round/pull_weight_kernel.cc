@@ -48,7 +48,8 @@ bool PullWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   const schema::RequestPullWeight *pull_weight_req = flatbuffers::GetRoot<schema::RequestPullWeight>(req_data);
   if (pull_weight_req == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestPullWeight";
-    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, {});
+    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num(),
+                       {});
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
@@ -68,7 +69,7 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
   if (pull_weight_iter != current_iter) {
     std::string reason = "PullWeight iteration " + std::to_string(pull_weight_iter) +
                          " is invalid. Server current iteration: " + std::to_string(current_iter);
-    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, feature_maps);
+    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, current_iter, feature_maps);
     MS_LOG(WARNING) << reason;
     return;
   }
@@ -81,7 +82,7 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
   if (!executor_->IsWeightAggrDone(weight_names)) {
     retry_count_++;
     std::string reason = "The aggregation for the weights is not done yet.";
-    BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, feature_maps);
+    BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
     if (retry_count_ % 10 == 0) {
       MS_LOG(WARNING) << reason << " Retry count is " << retry_count_;
     }
@@ -91,19 +92,20 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
   feature_maps = executor_->HandlePullWeight(weight_names);
   if (feature_maps.empty()) {
     std::string reason = "The feature_map is empty for the given weight names.";
-    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, feature_maps);
+    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, current_iter, feature_maps);
     MS_LOG(WARNING) << reason;
     return;
   }
+  MS_LOG(INFO) << "Pulling weight for iteration " << current_iter << " succeeds.";
 
   BuildPullWeightRsp(fbb, schema::ResponseCode_SUCCEED,
-                     "Pull weights by weight names for iteration " + std::to_string(pull_weight_iter) + " success.",
-                     feature_maps);
+                     "Pulling weight by weight names for iteration " + std::to_string(pull_weight_iter) + " success.",
+                     current_iter, feature_maps);
   return;
 }
 
 void PullWeightKernel::BuildPullWeightRsp(std::shared_ptr<FBBuilder> fbb, const schema::ResponseCode retcode,
-                                          const std::string &reason,
+                                          const std::string &reason, size_t iteration,
                                           const std::map<std::string, AddressPtr> &feature_maps) {
   auto fbs_reason = fbb->CreateString(reason);
   std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;
@@ -119,6 +121,7 @@ void PullWeightKernel::BuildPullWeightRsp(std::shared_ptr<FBBuilder> fbb, const 
   schema::ResponsePullWeightBuilder rsp_pull_weight_builder(*(fbb.get()));
   rsp_pull_weight_builder.add_retcode(retcode);
   rsp_pull_weight_builder.add_reason(fbs_reason);
+  rsp_pull_weight_builder.add_iteration(iteration);
   rsp_pull_weight_builder.add_feature_map(fbs_feature_maps_vector);
   auto rsp_pull_weight = rsp_pull_weight_builder.Finish();
   fbb->Finish(rsp_pull_weight);

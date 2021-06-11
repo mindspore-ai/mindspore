@@ -40,6 +40,13 @@ constexpr uint32_t kTrainEndStepNum = 0;
 // The worker has to sleep for a while before the networking is completed.
 constexpr uint32_t kWorkerSleepTimeForNetworking = 1000;
 
+enum class IterationState {
+  // This iteration is still in process.
+  kRunning,
+  // This iteration is completed and the next iteration is not started yet.
+  kCompleted
+};
+
 namespace worker {
 // This class is used for hybrid training mode for now. In later version, parameter server mode will also use this class
 // as worker.
@@ -53,17 +60,54 @@ class FLWorker {
   bool SendToServer(uint32_t server_rank, void *data, size_t size, core::TcpUserCommand command,
                     std::shared_ptr<std::vector<unsigned char>> *output = nullptr);
 
+  uint32_t server_num() const;
+  uint32_t worker_num() const;
+  uint64_t worker_step_num_per_iteration() const;
+
  private:
-  FLWorker() = default;
+  FLWorker()
+      : server_num_(0),
+        worker_num_(0),
+        scheduler_ip_(""),
+        scheduler_port_(0),
+        worker_node_(nullptr),
+        worker_step_num_per_iteration_(1),
+        iteration_state_(IterationState::kCompleted),
+        safemode_(false) {}
   ~FLWorker() = default;
   FLWorker(const FLWorker &) = delete;
   FLWorker &operator=(const FLWorker &) = delete;
+
+  // Initialize the scaler for worker
+  void InitializeFollowerScaler();
+
+  // The handlers for the iteration state events.
+  void HandleIterationRunningEvent();
+  void HandleIterationCompletedEvent();
+
+  // The barriers before scaling operations.
+  void ProcessBeforeScalingOut();
+  void ProcessBeforeScalingIn();
+
+  // The handlers after scheduler's scaling operations are done.
+  void ProcessAfterScalingOut();
+  void ProcessAfterScalingIn();
 
   uint32_t server_num_;
   uint32_t worker_num_;
   std::string scheduler_ip_;
   uint16_t scheduler_port_;
   std::shared_ptr<core::WorkerNode> worker_node_;
+
+  // The worker standalone training step number before communicating with server. This used in hybrid training mode for
+  // now.
+  uint64_t worker_step_num_per_iteration_;
+
+  // The iteration state is either running or completed.
+  std::atomic<IterationState> iteration_state_;
+
+  // The flag that represents whether worker is in safemode.
+  std::atomic_bool safemode_;
 };
 }  // namespace worker
 }  // namespace ps

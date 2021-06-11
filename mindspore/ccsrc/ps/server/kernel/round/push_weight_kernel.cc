@@ -43,7 +43,7 @@ bool PushWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   const schema::RequestPushWeight *push_weight_req = flatbuffers::GetRoot<schema::RequestPushWeight>(req_data);
   if (push_weight_req == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestPushWeight";
-    BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason);
+    BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num());
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
@@ -72,31 +72,33 @@ void PushWeightKernel::PushWeight(std::shared_ptr<FBBuilder> fbb, const schema::
     return;
   }
   size_t iteration = static_cast<size_t>(push_weight_req->iteration());
-  if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
+  size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
+  if (iteration != current_iter) {
     std::string reason = "PushWeight iteration number is invalid:" + std::to_string(iteration) +
-                         ", current iteration:" + std::to_string(LocalMetaStore::GetInstance().curr_iter_num());
-    BuildPushWeightRsp(fbb, schema::ResponseCode_OutOfTime, reason);
+                         ", current iteration:" + std::to_string(current_iter);
+    BuildPushWeightRsp(fbb, schema::ResponseCode_OutOfTime, reason, current_iter);
     MS_LOG(ERROR) << reason;
     return;
   }
 
   std::map<std::string, Address> upload_feature_map = ParseFeatureMap(push_weight_req);
   if (upload_feature_map.empty()) {
-    std::string reason = "PushWeight overwrite feature_map is empty.";
-    BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason);
+    std::string reason = "PushWeight feature_map is empty.";
+    BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason, current_iter);
     MS_LOG(ERROR) << reason;
     return;
   }
 
   if (!executor_->HandlePushWeight(upload_feature_map)) {
-    std::string reason = "OverwriteWeights failed.";
-    BuildPushWeightRsp(fbb, schema::ResponseCode_SystemError, reason);
+    std::string reason = "Pushing weight failed.";
+    BuildPushWeightRsp(fbb, schema::ResponseCode_SystemError, reason, current_iter);
     MS_LOG(ERROR) << reason;
     return;
   }
+  MS_LOG(INFO) << "Pushing weight for iteration " << current_iter << " succeeds.";
 
   DistributedCountService::GetInstance().Count(name_, std::to_string(local_rank_));
-  BuildPushWeightRsp(fbb, schema::ResponseCode_SUCCEED, "PushWeight succeed.");
+  BuildPushWeightRsp(fbb, schema::ResponseCode_SUCCEED, "PushWeight succeed.", current_iter);
   return;
 }
 
@@ -114,11 +116,12 @@ std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::R
 }
 
 void PushWeightKernel::BuildPushWeightRsp(std::shared_ptr<FBBuilder> fbb, const schema::ResponseCode retcode,
-                                          const std::string &reason) {
+                                          const std::string &reason, size_t iteration) {
   auto fbs_reason = fbb->CreateString(reason);
   schema::ResponsePushWeightBuilder rsp_push_weight_builder(*(fbb.get()));
   rsp_push_weight_builder.add_retcode(retcode);
   rsp_push_weight_builder.add_reason(fbs_reason);
+  rsp_push_weight_builder.add_iteration(iteration);
   auto rsp_push_weight = rsp_push_weight_builder.Finish();
   fbb->Finish(rsp_push_weight);
   return;

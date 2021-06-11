@@ -658,7 +658,7 @@ bool StartServerAction(const ResourcePtr &res) {
     {"updateModel", true, update_model_time_window, true, update_model_threshold},
     {"getModel"},
     {"pullWeight"},
-    {"pushWeight", false, 3000, true, server_num}};
+    {"pushWeight", false, 3000, true, server_num, true}};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

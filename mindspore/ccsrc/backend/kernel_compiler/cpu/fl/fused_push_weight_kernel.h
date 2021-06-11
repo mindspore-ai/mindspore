@@ -63,7 +63,8 @@ class FusedPushWeightKernel : public CPUKernel {
       return false;
     }
 
-    for (uint32_t i = 0; i < ps::PSContext::instance()->server_num(); i++) {
+    // The server number may change after scaling in/out.
+    for (uint32_t i = 0; i < ps::worker::FLWorker::GetInstance().server_num(); i++) {
       std::shared_ptr<std::vector<unsigned char>> push_weight_rsp_msg = nullptr;
       if (!ps::worker::FLWorker::GetInstance().SendToServer(
             i, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPushWeight, &push_weight_rsp_msg)) {
@@ -81,8 +82,7 @@ class FusedPushWeightKernel : public CPUKernel {
         return false;
       }
     }
-
-    MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " succeed.";
+    MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
     return true;
   }
 
