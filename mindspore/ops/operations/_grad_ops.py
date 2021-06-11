@@ -2212,3 +2212,34 @@ class SoftShrinkGrad(Primitive):
         self.init_prim_io_names(inputs=['input_grad', 'input_x'], outputs=['output'])
         validator.check_value_type("lambd", lambd, [float], self.name)
         validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
+
+
+class HShrinkGrad(Primitive):
+    """
+    Computes gradients for HShrinkGrad operation.
+
+    Args:
+        lambd (float): the λ value for the Hardshrink formulation. Default: 0.5
+
+    Inputs:
+        - **gradients** (Tensor) - the gradients of loss to output of HShrink function.
+          Currently gradients data type only support float16 and float32.
+        - **features** (Tensor) - Must be the input `input_x` of the forward operator HSHrink.
+          Currently features data type only support float16 and float32.
+
+    Outputs:
+        backprops - Tensor, with the same shape and data type as `features`.
+
+    Rasise:
+        TypeError: If `lambd` is not a float.
+        TypeError: If shape of `gradients` is not the same as `features`.
+        TypeError: If dtype of `gradients` is not the same as `features`.
+        TypeError: If dtype of `gradients` or `features` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, lambd=0.5):
+        validator.check_value_type("lambd", lambd, [float], self.name)
