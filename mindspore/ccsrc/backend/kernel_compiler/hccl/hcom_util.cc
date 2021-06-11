@@ -55,9 +55,18 @@ bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<si
 bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(data_type_list);
-  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
-  for (size_t i = 0; i < input_num; ++i) {
-    auto type_ptr = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, i);
+  size_t tensor_num = AnfAlgo::GetInputTensorNum(anf_node);
+  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  if (op_name == kReceiveOpName) {
+    tensor_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  }
+  for (size_t i = 0; i < tensor_num; ++i) {
+    TypeId type_ptr;
+    if (op_name == kReceiveOpName) {
+      type_ptr = AnfAlgo::GetOutputDeviceDataType(anf_node, i);
+    } else {
+      type_ptr = AnfAlgo::GetInputDeviceDataType(anf_node, i);
+    }
     auto iter = CONST_OP_HCOM_DATA_TYPE_MAP.find(type_ptr);
     if (iter == CONST_OP_HCOM_DATA_TYPE_MAP.end()) {
       MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << type_ptr;
@@ -206,13 +215,13 @@ bool HcomUtil::GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id) {
   return true;
 }
 
-bool HcomUtil::GetHcomReceiveType(const AnfNodePtr &anf_node, int64_t *receive_type) {
+bool HcomUtil::GetHcomReceiveType(const AnfNodePtr &anf_node, TypeId *receive_type) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(receive_type);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (primitive->GetAttr("dtype") != nullptr) {
-    *receive_type = (int64_t)(GetValue<NumberPtr>(primitive->GetAttr("dtype"))->type_id());
+    *receive_type = GetValue<NumberPtr>(primitive->GetAttr("dtype"))->type_id();
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_SRTAG_INDEX fail, not support!";
     return false;
