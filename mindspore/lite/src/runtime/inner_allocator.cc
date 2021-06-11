@@ -23,7 +23,7 @@ std::shared_ptr<Allocator> Allocator::Create() {
   return std::shared_ptr<Allocator>(new (std::nothrow) DefaultAllocator());
 }
 
-DefaultAllocator::DefaultAllocator() = default;
+DefaultAllocator::DefaultAllocator(size_t aligned_size) { aligned_size_ = aligned_size; }
 
 DefaultAllocator::~DefaultAllocator() { Clear(); }
 
@@ -69,7 +69,7 @@ void *DefaultAllocator::Malloc(size_t size) {
     return membuf->buf;
   }
 
-  std::unique_ptr<MemBuf> membuf(reinterpret_cast<MemBuf *>(malloc(sizeof(MemBuf) + size)));
+  std::unique_ptr<MemBuf> membuf(reinterpret_cast<MemBuf *>(malloc(sizeof(MemBuf) + size + aligned_size_)));
   if (membuf == nullptr) {
     MS_LOG(ERROR) << "malloc membuf return nullptr";
     UnLock();
@@ -78,7 +78,10 @@ void *DefaultAllocator::Malloc(size_t size) {
   this->total_size_ += size;
   membuf->ref_count_ = 0;
   membuf->size = size;
-  membuf->buf = reinterpret_cast<char *>(membuf.get()) + sizeof(MemBuf);
+  auto aligned_bytes =
+    reinterpret_cast<size_t>((reinterpret_cast<char *>(membuf.get()) + sizeof(MemBuf))) % aligned_size_;
+  aligned_bytes = aligned_bytes == 0 ? 0 : aligned_size_ - aligned_bytes;
+  membuf->buf = reinterpret_cast<char *>(membuf.get()) + sizeof(MemBuf) + aligned_bytes;
   auto bufPtr = membuf->buf;
   allocatedList_[bufPtr] = membuf.release();
   UnLock();

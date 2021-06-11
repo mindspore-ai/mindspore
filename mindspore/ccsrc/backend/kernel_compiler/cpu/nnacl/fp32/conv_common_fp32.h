@@ -25,7 +25,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef void (*Row2ColMajorFuncPtr)(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+typedef void (*Row2ColMajorFuncPtr)(const float *src_ptr, float *dst_ptr, int row, int col);
 #ifdef ENABLE_ARM64
 typedef void (*MatmulFloatOptFuncPtr)(const float *a, const float *b, float *c, const float *bias, int act_type,
                                       int depth, int row, int col, size_t stride, size_t write_mode);

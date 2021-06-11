@@ -35,7 +35,7 @@ struct AllocatorContext {
 
 class DefaultAllocator : public Allocator {
  public:
-  DefaultAllocator();
+  explicit DefaultAllocator(size_t aligned_size = 32);
   ~DefaultAllocator() override;
   void SetContext(const AllocatorContext &ctx);
   void *Malloc(size_t size) override;

@@ -27,13 +27,13 @@ namespace mindspore::kernel {
 int FullconnectionCPUKernel::Init() {
   MatmulFp32BaseCPUKernel::InitParameter();
 
-  if (params_->a_const_ == true) {
+  if (params_->a_const_) {
     auto a_shape = in_tensors_.at(0)->shape();
     params_->row_ = a_shape[0];
     params_->deep_ = a_shape[1];
   }
 
-  if (params_->b_const_ == true) {
+  if (params_->b_const_) {
     auto b_shape = in_tensors_.at(1)->shape();
     params_->col_ = b_shape[0];
     params_->deep_ = b_shape[1];

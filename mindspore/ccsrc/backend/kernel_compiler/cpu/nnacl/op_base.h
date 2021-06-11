@@ -31,6 +31,7 @@
 #define C8NUM 8
 #define C12NUM 12
 #define C16NUM 16
+#define C32NUM 32
 #define TILE_NUM 8
 
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
