@@ -29,9 +29,15 @@ namespace profiler {
 uint64_t Profiler::GetHostMonoTimeStamp() const {
   struct timespec ts;
 #if defined(_WIN32) || defined(_WIN64)
-  clock_gettime(CLOCK_MONOTONIC, &ts);
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+    MS_LOG(ERROR) << "Get host timestamp failed";
+    return 0;
+  }
 #else
-  clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+  if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) != 0) {
+    MS_LOG(ERROR) << "Get host timestamp failed";
+    return 0;
+  }
 #endif
   constexpr uint64_t kNSecondInSecond = 1000000000;
   uint64_t cur_time_stamp = ts.tv_sec * kNSecondInSecond + ts.tv_nsec;

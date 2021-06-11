@@ -89,6 +89,10 @@ void GpuDataSaver::AddKernelEvent(const Event &event) {
 void GpuDataSaver::AddKernelEventToDevice(const Event &event, DeviceActivityInfos *device_activity_infos) {
   // Combine kernel activity with same kernel name
   auto event_ptr = std::make_shared<Event>(event);
+  if (event_ptr == nullptr) {
+    MS_LOG(WARNING) << "Create event failed when add event to device.";
+    return;
+  }
   ActivityData activity_data = ActivityData(event_ptr);
   std::string kernel_name = event.kernel_name;
   auto iter = device_activity_infos->find(kernel_name);
@@ -135,6 +139,7 @@ void GpuDataSaver::WriteActivity(const std::string &saver_base_dir) {
     std::string timestamp_file_path = timestamp_file_path_base + std::to_string(device_info.first) + ".txt";
     std::ofstream activity_timestamp_ofs(timestamp_file_path);
     if (!activity_timestamp_ofs.is_open()) {
+      ofs.close();
       MS_LOG(WARNING) << "Open file '" << timestamp_file_path << "' failed!";
       return;
     }
