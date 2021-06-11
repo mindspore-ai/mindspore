@@ -65,6 +65,7 @@ class StrategyCheckpoint {
   bool load_checkpoint_on_;
   bool save_checkpoint_on_;
   bool CheckPointExit(const std::string path) const;
+  bool CheckPath(const std::string path) const;
   int64_t current_stage_;
   std::string group_info_save_file_;
   bool group_info_save_on_;
