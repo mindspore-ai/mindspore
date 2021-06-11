@@ -72,7 +72,7 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node);
 
 // Judge whether the front node is in a gather actor.
 bool IsGatherActor(const AnfNodePtr &front_node,
-                   const std::unordered_map<std::string, OpActor<DeviceTensor> *> &actor_name_to_actor_);
+                   const std::unordered_map<std::string, OpActor<DeviceTensor> *> &actor_name_to_actor);
 }  // namespace runtime
 
 // Judge whether to use mindRT. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
