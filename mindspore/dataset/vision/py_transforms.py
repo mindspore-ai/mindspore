@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """
-The module vision.py_transforms is implemented based on Python PIL.
-This module provides many kinds of image augmentations. It also provides
-transferring methods between PIL image and NumPy array. For users who prefer
-Python PIL in image learning tasks, this module is a good tool to process images.
-Users can also self-define their own augmentations with Python PIL.
+The module vision.py_transforms is mainly implemented based on Python PIL, which
+provides many kinds of image augmentation methods and conversion methods between
+PIL image and numpy.ndarray. For users who prefer using Python PIL in computer vision
+tasks, this module is a good choice to process images. Users can also self-define
+their own augmentation methods with Python PIL.
 """
 import numbers
 import random
@@ -57,22 +57,27 @@ def not_random(function):
 
 class ToTensor:
     """
-    Convert the input NumPy image array or PIL image of shape (H, W, C) to a NumPy ndarray of shape (C, H, W).
+    Convert the input PIL Image or numpy.ndarray of shape (H, W, C) in the range [0, 255] to numpy.ndarray of
+    shape (C, H, W) in the range [0.0, 1.0] with the desired dtype.
 
     Note:
-        The values in the input arrays are rescaled from [0, 255] to [0.0, 1.0].
-        The type is cast to output_type (default NumPy float32).
+        The values in the input image will be rescaled from [0, 255] to [0.0, 1.0].
+        The dtype will be cast to `output_type`.
         The number of channels remains the same.
 
     Args:
-        output_type (NumPy datatype, optional): The datatype of the NumPy output (default=np.float32).
+        output_type (numpy.dtype, optional): The dtype of the numpy.ndarray output (default=np.float32).
+
+    Raises:
+        TypeError: If the input is not PIL Image or numpy.ndarray.
+        TypeError: If the dimension of input is not 2 or 3.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> # create a list of transformations to be applied to the "image" column of each data row
         >>> transforms_list = Compose([py_vision.Decode(),
-        ...                           py_vision.RandomHorizontalFlip(0.5),
-        ...                           py_vision.ToTensor()])
+        ...                            py_vision.RandomHorizontalFlip(0.5),
+        ...                            py_vision.ToTensor()])
         >>> # apply the transform to dataset through map function
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
@@ -87,20 +92,23 @@ class ToTensor:
         Call method.
 
         Args:
-            img (PIL image): PIL image to be converted to numpy.ndarray.
+            img (Union[PIL Image, numpy.ndarray]): PIL Image or numpy.ndarray to be type converted.
 
         Returns:
-            img (numpy.ndarray), Converted image.
+            numpy.ndarray, converted numpy.ndarray with desired type.
         """
         return util.to_tensor(img, self.output_type)
 
 
 class ToType:
     """
-    Convert the input NumPy image array to desired NumPy dtype.
+    Convert the input numpy.ndarray image to the desired dtype.
 
     Args:
-        output_type (NumPy datatype): The datatype of the NumPy output, e.g. numpy.float32.
+        output_type (numpy.dtype): The dtype of the numpy.ndarray output, e.g. numpy.float32.
+
+    Raises:
+        TypeError: If the input is not numpy.ndarray.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -123,17 +131,21 @@ class ToType:
         Call method.
 
         Args:
-            NumPy object : NumPy object to be type swapped.
+            img (numpy.ndarray): numpy.ndarray to be dtype converted.
 
         Returns:
-            img (numpy.ndarray), Converted image.
+            numpy.ndarray, converted numpy.ndarray with desired dtype.
         """
         return util.to_type(img, self.output_type)
 
 
 class HWC2CHW:
     """
-    Transpose a NumPy image array; shape (H, W, C) to shape (C, H, W).
+    Transpose the input numpy.ndarray image of shape (H, W, C) to (C, H, W).
+
+    Raises:
+        TypeError: If the input is not numpy.ndarray.
+        TypeError: If the dimension of input is not 3.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -152,20 +164,26 @@ class HWC2CHW:
         Call method.
 
         Args:
-            img (numpy.ndarray): Image array, of shape (H, W, C), to have channels swapped.
+            img (numpy.ndarray): numpy.ndarray of shape (H, W, C) to be transposed.
 
         Returns:
-            img (numpy.ndarray), Image array, of shape (C, H, W), with channels swapped.
+            numpy.ndarray, transposed numpy.ndarray of shape (C, H, W).
         """
         return util.hwc_to_chw(img)
 
 
 class ToPIL:
     """
-    Convert the input decoded NumPy image array of RGB mode to a PIL image of RGB mode.
+    Convert the input decoded numpy.ndarray image to PIL Image.
+
+    Note:
+        The conversion mode will be determined from type according to `PIL.Image.fromarray`.
+
+    Raises:
+        TypeError: If the input is not numpy.ndarray or PIL Image.
 
     Examples:
-        >>> # data is already decoded, but not in PIL image format
+        >>> # data is already decoded, but not in PIL Image format
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.ToPIL(),
         ...                            py_vision.RandomHorizontalFlip(0.5),
@@ -183,17 +201,21 @@ class ToPIL:
         Call method.
 
         Args:
-            img (numpy.ndarray): Decoded image array, of RGB mode, to be converted to PIL image.
+            img (numpy.ndarray): Decoded numpy.ndarray image to be converted to PIL Image.
 
         Returns:
-            img (PIL image), Image converted to PIL image of RGB mode.
+            PIL Image, converted PIL Image.
         """
         return util.to_pil(img)
 
 
 class Decode:
     """
-    Decode the input image to PIL image format in RGB mode.
+    Decode the input raw image to PIL Image format in RGB mode.
+
+    Raises:
+        ValueError: If the input is not raw data.
+        ValueError: If the input image is already decoded.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -213,25 +235,39 @@ class Decode:
         Call method.
 
         Args:
-            img (Bytes-like Objects):Image to be decoded.
+            img (Bytes-like Object): Raw image data to be decoded.
 
         Returns:
-            img (PIL image), Decoded image in RGB mode.
+            PIL Image, decoded PIL Image in RGB mode.
         """
         return util.decode(img)
 
 
 class Normalize:
-    """
-    Normalize the input NumPy image array of shape (C, H, W) with the given mean and standard deviation.
+    r"""
+    Normalize the input numpy.ndarray image of shape (C, H, W) with the specified mean and standard deviation.
 
-    The values of the array need to be in the range (0.0, 1.0].
+    .. math::
+
+        output_{c} = \frac{input_{c} - mean_{c}}{std_{c}}
+
+    Note:
+        The values of the input image need to be in the range [0.0, 1.0]. If not so, call `ToTensor` first.
 
     Args:
-        mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
-            The mean values must be in the range [0.0, 1.0].
-        std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
-            The standard deviation values must be in the range (0.0, 1.0].
+        mean (Union[float, sequence]): list or tuple of mean values for each channel, arranged in channel order. The
+            values must be in the range [0.0, 1.0].
+            If a single float is provided, it will be filled to the same length as the channel.
+        std (Union[float, sequence]): list or tuple of standard deviation values for each channel, arranged in channel
+            order. The values must be in the range (0.0, 1.0].
+            If a single float is provided, it will be filled to the same length as the channel.
+
+    Raises:
+        TypeError: If the input is not numpy.ndarray.
+        TypeError: If the dimension of input is not 3.
+        NotImplementedError: If the dtype of input is a subdtype of np.integer.
+        ValueError: If the length of the mean and std are not equal.
+        ValueError: If the length of the mean or std is neither equal to the channel length nor 1.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -255,27 +291,44 @@ class Normalize:
         Call method.
 
         Args:
-            img (numpy.ndarray): Image array to be normalized.
+            img (numpy.ndarray): numpy.ndarray to be normalized.
 
         Returns:
-            img (numpy.ndarray), Normalized Image array.
+            numpy.ndarray, normalized numpy.ndarray.
         """
         return util.normalize(img, self.mean, self.std)
 
 
 class NormalizePad:
-    """
-    Normalize the input NumPy image array of shape (C, H, W) with the given mean and standard deviation
-        then pad an extra channel with value zero.
+    r"""
+    Normalize the input numpy.ndarray image of shape (C, H, W) with the specified mean and standard deviation,
+    then pad an extra channel filled with zeros.
 
-    The values of the array need to be in the range (0.0, 1.0].
+    .. math::
+        output_{c} = \begin{cases}
+        \frac{input_{c} - mean_{c}}{std_{c}}, & \text{if} \quad 0 \le c < 3 \text{;}\\
+        0, & \text{if} \quad c = 3 \text{.}
+        \end{cases}
+
+    Note:
+        The values of the input image need to be in the range [0.0, 1.0]. If not so, call `ToTensor` first.
 
     Args:
-        mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
-            The mean values must be in the range (0.0, 1.0].
-        std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
-            The standard deviation values must be in the range (0.0, 1.0].
-        dtype (str): Set the output data type of image (default is "float32").
+        mean (Union[float, sequence]): list or tuple of mean values for each channel, arranged in channel order. The
+            values must be in the range [0.0, 1.0].
+            If a single float is provided, it will be filled to the same length as the channel.
+        std (Union[float, sequence]): list or tuple of standard deviation values for each channel, arranged in channel
+            order. The values must be in the range (0.0, 1.0].
+            If a single float is provided, it will be filled to the same length as the channel.
+        dtype (str): The dtype of the numpy.ndarray output when `pad_channel` is set True. Only "float32" and "float16"
+            are supported (default="float32").
+
+    Raises:
+        TypeError: If the input is not numpy.ndarray.
+        TypeError: If the dimension of input is not 3.
+        NotImplementedError: If the dtype of input is a subdtype of np.integer.
+        ValueError: If the length of the mean and std are not equal.
+        ValueError: If the length of the mean or std is neither equal to the channel length nor 1.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -300,17 +353,17 @@ class NormalizePad:
         Call method.
 
         Args:
-            img (numpy.ndarray): Image array to be normalizepad.
+            img (numpy.ndarray): numpy.ndarray to be normalized and padded.
 
         Returns:
-            img (numpy.ndarray), NormalizePaded Image array.
+            numpy.ndarray, normalized and padded numpy.ndarray.
         """
         return util.normalize(img, self.mean, self.std, pad_channel=True, dtype=self.dtype)
 
 
 class RandomCrop:
     """
-    Crop the input PIL image at a random location.
+    Crop the input PIL Image at a random location with the specified size.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
@@ -371,7 +424,7 @@ class RandomCrop:
             img (PIL image): Image to be randomly cropped.
 
         Returns:
-            PIL image, Cropped image.
+            PIL Image, cropped image.
         """
         return util.random_crop(img, self.size, self.padding, self.pad_if_needed,
                                 self.fill_value, self.padding_mode)
@@ -406,7 +459,7 @@ class RandomHorizontalFlip:
             img (PIL image): Image to be flipped horizontally.
 
         Returns:
-            img (PIL image), Randomly flipped image.
+            PIL Image, randomly horizontal flipped image.
         """
         return util.random_horizontal_flip(img, self.prob)
 
@@ -440,7 +493,7 @@ class RandomVerticalFlip:
             img (PIL image): Image to be flipped vertically.
 
         Returns:
-            img (PIL image), Randomly flipped image.
+            PIL Image, randomly vertical flipped image.
         """
         return util.random_vertical_flip(img, self.prob)
 
@@ -489,7 +542,7 @@ class Resize:
             img (PIL image): Image to be resized.
 
         Returns:
-            img (PIL image), Resize image.
+            PIL Image, resized image.
         """
         return util.resize(img, self.size, self.interpolation)
 
@@ -546,7 +599,7 @@ class RandomResizedCrop:
             img (PIL image): Image to be randomly cropped and resized.
 
         Returns:
-            img (PIL image), Randomly cropped and resized image.
+            PIL Image, randomly cropped and resized image.
         """
         return util.random_resize_crop(img, self.size, self.scale, self.ratio,
                                        self.interpolation, self.max_attempts)
@@ -584,7 +637,7 @@ class CenterCrop:
             img (PIL image): Image to be center cropped.
 
         Returns:
-            img (PIL image), Cropped image.
+            PIL Image, cropped image.
         """
         return util.center_crop(img, self.size)
 
@@ -632,7 +685,7 @@ class RandomColorAdjust:
             img (PIL image): Image to have its color adjusted randomly.
 
         Returns:
-            img (PIL image), Image after random adjustment of its color.
+            PIL Image, Image after random adjustment of its color.
         """
         return util.random_color_adjust(img, self.brightness, self.contrast, self.saturation, self.hue)
 
@@ -697,7 +750,7 @@ class RandomRotation:
             img (PIL image): Image to be rotated.
 
         Returns:
-            img (PIL image), Rotated image.
+            PIL Image, rotated image.
         """
         return util.random_rotation(img, self.degrees, self.resample, self.expand, self.center, self.fill_value)
 
@@ -922,7 +975,7 @@ class Pad:
             img (PIL image): Image to be padded.
 
         Returns:
-            img (PIL image), Padded image.
+            PIL Image, padded image.
         """
         return util.pad(img, self.padding, self.fill_value, self.padding_mode)
 
@@ -967,7 +1020,7 @@ class RandomPerspective:
             img (PIL image): PIL image to apply perspective transformation randomly.
 
         Returns:
-            img (PIL image), Image after being perspectively transformed randomly.
+            PIL Image, image after being randomly perspective transformed.
         """
         if not is_pil(img):
             raise ValueError("Input image should be a Pillow image.")
