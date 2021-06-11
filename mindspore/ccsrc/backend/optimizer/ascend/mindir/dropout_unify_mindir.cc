@@ -86,8 +86,7 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   // keep_prob's datatype is same with input data
   if (type_id == kNumberTypeFloat16) {
     std::vector<float16> half_data = {float16(keep_prob)};
-    auto ret_code =
-      memcpy_s(data_ptr, static_cast<size_t>(keep_prob_tensor->data().nbytes()), half_data.data(), kFloat16Len);
+    auto ret_code = memcpy_s(data_ptr, LongToSize(keep_prob_tensor->data().nbytes()), half_data.data(), kFloat16Len);
     if (ret_code != 0) {
       MS_LOG(EXCEPTION) << "Failed to copy data into Tensor.";
     }
