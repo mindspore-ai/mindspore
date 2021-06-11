@@ -80,16 +80,16 @@ AnfNodePtr ModifyAttrs(const CNodePtr &cnode) {
 
 const AnfNodePtr ModifyOpAttrs::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
   if (node == nullptr || !node->isa<CNode>() || !AnfAlgo::IsGraphKernel(node)) {
     return nullptr;
   }
   MS_LOG(DEBUG) << "====Process op: " << AnfAlgo::GetCNodeName(node);
-  auto fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
-  MS_EXCEPTION_IF_NULL(fg);
-  auto manager = fg->manager();
+  auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   std::vector<AnfNodePtr> todos;
-  kernel::GetValidKernelNodes(fg, &todos);
+  kernel::GetValidKernelNodes(func_graph, &todos);
   for (auto &t : todos) {
     auto new_node = ModifyAttrs(t->cast<CNodePtr>());
     if (new_node != nullptr && new_node != t) {
