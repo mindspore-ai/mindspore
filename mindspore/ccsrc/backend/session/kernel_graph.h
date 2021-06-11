@@ -220,6 +220,8 @@ class KernelGraph : public FuncGraph {
   void CacheInternalParameterToFrontNode(const AnfNodePtr &parameter, const AnfWithOutIndex &front_node_with_index);
   AnfWithOutIndex GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const;
 
+  // Get the funcgraph to which the kernel graph belongs.
+  FuncGraphPtr GetFuncGraph();
   // Cache the backend graph output nodes and corresponding to front nodes with output index into
   // graph_output_to_front_node_map_.
   void CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtr &backend_graph_output, const AnfNodePtr &front_node);

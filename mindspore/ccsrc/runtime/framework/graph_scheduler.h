@@ -189,7 +189,7 @@ class GraphScheduler {
   std::vector<KernelActorPtr> BuildKernelActor(const GraphCompilerInfo &graph_compiler_info);
   LoopCountActorPtr BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
   OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
-  std::vector<KernelActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set);
+  std::vector<KernelActorPtr> BuildNoInputKernelActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<SwitchActorPtr> BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<GatherActorPtr> BuildGatherActor(const GraphCompilerInfo &graph_compiler_info);
 
@@ -244,7 +244,7 @@ class GraphScheduler {
   // connected.
   void LinkDataArrowByCallInput(const GraphCompilerInfo &graph_compiler_info, const AnfNodePtr &call_node,
                                 OpActor<DeviceTensor> *to_actor, const size_t to_index);
-  void LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors, LoopCountActor *to_actor);
+  void LinkControlArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   // In control flow, there are scenarios where there are multi-branch outputs, and the gather actor needs to
   // send the branch id to the loop count actor.
   void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);

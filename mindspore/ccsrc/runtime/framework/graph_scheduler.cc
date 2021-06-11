@@ -688,7 +688,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
 
   // BuildNoInputKernelActor depends on whether kernel actors have input, so must be behind the link of kernel actors.
-  actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set);
+  actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(graph_compiler_info);
 
   // Link the control arrows of loop count actor, which depends on the no input kernel actors.
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set, strategy);
@@ -891,18 +891,36 @@ OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_c
   return output_actor;
 }
 
-std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorSet *actor_set) {
-  MS_EXCEPTION_IF_NULL(actor_set);
+std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<KernelActorPtr> no_input_kernel_actors;
 
-  for (auto &kernel_actor : actor_set->kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(kernel_actor);
-    if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0)) {
-      no_input_kernel_actors.emplace_back(kernel_actor);
-      // The no input kernel actor will be triggered by loop count actor, so need set the input_controls_num_.
-      kernel_actor->input_controls_num_ = 1;
+  // In general, all no input nodes belong to the root funcgraph, and the corresponding gather actor should be empty.
+  // In control flow, the control arrow of the no input node in the sub funcgraph should be sent by the gather actor
+  // and should not be placed in the no input list.
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &kernel_graph = graph_compiler_info.graphs_[i];
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    const auto &func_graph = kernel_graph->GetFuncGraph();
+    if (func_graph != nullptr && FetchActor(func_graph->ToString()) != nullptr) {
+      continue;
+    }
+
+    for (const auto &kernel : kernel_graph->execution_order()) {
+      if (IsKernelActor(kernel) && (!IsSkippedKernelActor(kernel))) {
+        auto actor = FetchActor(kernel->fullname_with_scope());
+        MS_EXCEPTION_IF_NULL(actor);
+        const auto &kernel_actor = dynamic_cast<KernelActor *>(actor);
+        MS_EXCEPTION_IF_NULL(kernel_actor);
+
+        if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0)) {
+          no_input_kernel_actors.emplace_back(kernel_actor);
+          // The no input kernel actor will be triggered by loop count actor, so need set the input_controls_num_.
+          kernel_actor->input_controls_num_ = 1;
+        }
+      }
     }
   }
+
   return no_input_kernel_actors;
 }
 
@@ -1575,7 +1593,7 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
 
   LinkBranchArrowForGatherActor(graph_compiler_info, actor_set);
 
-  LinkControlArrowForGatherActor(&(actor_set->gather_actors_), actor_set->loop_count_actor_.get());
+  LinkControlArrowForGatherActor(graph_compiler_info, actor_set);
 
   LinkOutputResultArrowForGatherActor(graph_compiler_info, actor_set);
 }
@@ -1742,15 +1760,46 @@ void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_
   }
 }
 
-void GraphScheduler::LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors,
-                                                    LoopCountActor *to_actor) {
-  MS_EXCEPTION_IF_NULL(from_actors);
+void GraphScheduler::LinkControlArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info,
+                                                    const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
 
-  for (auto &from_actor : *from_actors) {
+  // Link control arrow to kernel actor.
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &kernel_graph = graph_compiler_info.graphs_[i];
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    const auto &func_graph = kernel_graph->GetFuncGraph();
+    if (func_graph == nullptr) {
+      continue;
+    }
+    const auto &actor = FetchActor(func_graph->ToString());
+    if (actor == nullptr) {
+      continue;
+    }
+    const auto &gather_actor = dynamic_cast<GatherActor *>(actor);
+    MS_EXCEPTION_IF_NULL(gather_actor);
+
+    // When gather actor is not empty, it means the control arrow of no input kernel actor needs to be sent by gather.
+    for (const auto &kernel : kernel_graph->execution_order()) {
+      if (IsKernelActor(kernel) && (!IsSkippedKernelActor(kernel))) {
+        const auto &kernel_actor = dynamic_cast<KernelActor *>(FetchActor(kernel->fullname_with_scope()));
+        MS_EXCEPTION_IF_NULL(kernel_actor);
+
+        if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0)) {
+          gather_actor->output_control_arrows_.emplace_back(kernel_actor->GetAID());
+          kernel_actor->input_controls_num_ = 1;
+        }
+      }
+    }
+  }
+
+  // link control arrow to loop count actor.
+  for (auto &from_actor : actor_set->gather_actors_) {
     MS_EXCEPTION_IF_NULL(from_actor);
 
     // If the gather actor has no output, then adds the output control to loop count actor.
     if (from_actor->output_data_arrows_.size() == 0 && from_actor->output_control_arrows_.size() == 0) {
+      const auto &to_actor = actor_set->loop_count_actor_;
       auto to_aid = to_actor->GetAID();
       from_actor->output_control_arrows_.emplace_back(to_aid);
       to_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
