@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,9 +31,14 @@ CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 export DEVICE_ID=$DEVICE_ID
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../../config_ascend.yaml"
+
 python ../../train.py  \
+    --config_path=$CONFIG_FILE \
     --device_target="Ascend" \
     --aclimdb_path=$ACLIMDB_DIR \
     --glove_path=$GLOVE_DIR \
-    --preprocess=true  \
+    --preprocess=false  \
     --preprocess_path=./preprocess > log.txt 2>&1 &

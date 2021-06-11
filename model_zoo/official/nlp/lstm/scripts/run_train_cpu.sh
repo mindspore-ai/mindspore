@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,25 +16,25 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_train_gpu.sh DEVICE_ID ACLIMDB_DIR GLOVE_DIR CKPT_FILE"
-echo "for example: bash run_train_gpu.sh 0 ./aclimdb ./glove_dir lstm-20_390.ckpt"
+echo "bash run_train_cpu.sh ACLIMDB_DIR GLOVE_DIR"
+echo "for example: bash run_train_gpu.sh ./aclimdb ./glove_dir"
 echo "=============================================================================================================="
 
-DEVICE_ID=$1
-ACLIMDB_DIR=$2
-GLOVE_DIR=$3
-CKPT_FILE=$4
-
-export CUDA_VISIBLE_DEVICES=$DEVICE_ID
+ACLIMDB_DIR=$1
+GLOVE_DIR=$2
 
 mkdir -p ms_log
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
-python eval.py  \
-    --device_target="GPU" \
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+
+python ../train.py  \
+    --config_path=$CONFIG_FILE \
+    --device_target="CPU" \
     --aclimdb_path=$ACLIMDB_DIR \
     --glove_path=$GLOVE_DIR \
     --preprocess=false  \
-    --preprocess_path=./preprocess \
-    --ckpt_path=$CKPT_FILE > log.txt 2>&1 &
+    --preprocess_path=./preprocess > log.txt 2>&1 &

@@ -56,6 +56,9 @@ echo "need preprocess: "$need_preprocess
 echo "device_target: "$device_target
 echo "device id: "$device_id
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+
 export ASCEND_HOME=/usr/local/Ascend/
 if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
     export PATH=$ASCEND_HOME/fwkacllib/bin:$ASCEND_HOME/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/atc/bin:$PATH
@@ -76,7 +79,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --preprocess_path=$dataset_path --result_path=./preprocess_Result/ --device_target=$device_target
+    python3.7 ../preprocess.py --config_path=$CONFIG_FILE --preprocess_path=$dataset_path --result_path=./preprocess_Result/ --device_target=$device_target
 }
 
 function compile_app()
@@ -103,7 +106,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --result_dir=./result_Files --label_dir=./preprocess_Result/label_ids.npy --device_target=$device_target &> acc.log
+    python3.7 ../postprocess.py --config_path=$CONFIG_FILE --result_dir=./result_Files --label_dir=./preprocess_Result/label_ids.npy --device_target=$device_target &> acc.log
 }
 
 if [ $need_preprocess == "y" ]; then

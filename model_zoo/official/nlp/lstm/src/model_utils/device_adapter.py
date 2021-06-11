@@ -12,23 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-#################lstm postprocess########################
-"""
-import os
-import numpy as np
-from mindspore.nn import Accuracy
-from src.model_utils.config import config
 
+"""Device adapter for ModelArts"""
 
-if __name__ == '__main__':
-    metrics = Accuracy()
-    rst_path = config.result_dir
-    labels = np.load(config.label_dir)
+from .config import config
 
-    for i in range(len(os.listdir(rst_path))):
-        file_name = os.path.join(rst_path, "LSTM_data_bs" + str(config.batch_size) + '_' + str(i) + '_0.bin')
-        output = np.fromfile(file_name, np.float32).reshape(config.batch_size, config.num_classes)
-        metrics.update(output, labels[i])
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 
-    print("result of Accuracy is: ", metrics.eval())
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

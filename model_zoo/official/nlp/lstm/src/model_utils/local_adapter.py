@@ -12,23 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-#################lstm postprocess########################
-"""
+
+"""Local adapter"""
+
 import os
-import numpy as np
-from mindspore.nn import Accuracy
-from src.model_utils.config import config
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
 
 
-if __name__ == '__main__':
-    metrics = Accuracy()
-    rst_path = config.result_dir
-    labels = np.load(config.label_dir)
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
 
-    for i in range(len(os.listdir(rst_path))):
-        file_name = os.path.join(rst_path, "LSTM_data_bs" + str(config.batch_size) + '_' + str(i) + '_0.bin')
-        output = np.fromfile(file_name, np.float32).reshape(config.batch_size, config.num_classes)
-        metrics.update(output, labels[i])
 
-    print("result of Accuracy is: ", metrics.eval())
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

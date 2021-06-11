@@ -27,6 +27,8 @@ RANK_SIZE=$2
 ACLIMDB_DIR=$3
 GLOVE_DIR=$4
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../config_ascend_8p.yaml"
 
 for((i=0;i<${RANK_SIZE};i++));
 do
@@ -34,15 +36,18 @@ do
     mkdir ${ROOT_PATH}/device$i
     cd ${ROOT_PATH}/device$i || exit
     cp ../../*.py ./
+    cp ../../*.yaml ./
     cp -r ../../src ./
     export RANK_ID=$i
     export DEVICE_ID=$i
     python train.py  \
+        --config_path=$CONFIG_FILE \
         --device_target="Ascend" \
         --aclimdb_path=$ACLIMDB_DIR \
         --glove_path=$GLOVE_DIR \
         --distribute=true \
         --device_num=$RANK_SIZE \
-        --preprocess=true  \
+        --device_id=$i --rank_id=$i \
+        --preprocess=false  \
         --preprocess_path=./preprocess > log.txt 2>&1 &
 done
