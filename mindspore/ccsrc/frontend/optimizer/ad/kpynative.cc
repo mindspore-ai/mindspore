@@ -449,7 +449,7 @@ void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node)
       anfnode_to_adjoin_.insert(std::make_pair(output_node, v_node_pynative_adjoint));
       return;
     }
-    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
+    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->DebugString();
   }
 }
 
@@ -668,13 +668,13 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
     }
     auto cnode_input = input->cast<CNodePtr>();
     if (cnode_input != nullptr && cnode_input->stop_gradient()) {
-      MS_LOG(DEBUG) << "Bypass accumulate dout to cnode with stop_gradient flag, cnode: " << input->ToString();
+      MS_LOG(DEBUG) << "Bypass accumulate dout to cnode with stop_gradient flag, cnode: " << input->DebugString();
       continue;
     }
     // Backprop sens wrt inputs.
     auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-      MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->ToString();
+      MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->DebugString();
     }
     AnfNodePtr din;
     if (abstract_tuple != nullptr) {
@@ -774,7 +774,7 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &
 bool KPynativeCellImpl::BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &cnode,
                                                                 const PynativeAdjointPtr &adjoint,
                                                                 const FuncGraphPtr &fprop_fg, bool by_value) {
-  MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->ToString();
+  MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->DebugString();
 
   AnfNodePtrList node_list;
   CNodePtr bprop_cnode;
@@ -821,10 +821,10 @@ bool KPynativeCellImpl::BackPropagate(bool by_value) {
     }
     auto cnode = iter->first->cast<CNodePtr>();
     if (cnode->stop_gradient()) {
-      MS_LOG(DEBUG) << "Bypass backpropagate for cnode with stop_gradient flag: " << cnode->ToString();
+      MS_LOG(DEBUG) << "Bypass backpropagate for cnode with stop_gradient flag: " << cnode->DebugString();
       continue;
     }
-    MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->ToString();
+    MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->DebugString();
     auto fg = iter->second->fg();
     auto fg_type = iter->second->fg_type();
 
@@ -867,7 +867,7 @@ void KPynativeCellImpl::PropagateStopGradient() {
           // Cut off the cnode only when it's not referred any more
           if (IsPrimitiveCNode(cnode, prim::kPrimStopGradient) || IsPrimitiveCNode(cnode, prim::kPrimUpdateState) ||
               AllReferencesStopped(cnode)) {
-            MS_LOG(DEBUG) << "Set stop_gradient flag for " << cnode->ToString();
+            MS_LOG(DEBUG) << "Set stop_gradient flag for " << cnode->DebugString();
             cnode->set_stop_gradient(true);
           }
         }
@@ -955,7 +955,7 @@ void KPynativeCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool ha
   MS_LOG(DEBUG) << "Last node info " << last_node_->DebugString();
   auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
   if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
-    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
+    MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->DebugString();
   }
   // Add sens parameter
   if (has_sens_arg) {

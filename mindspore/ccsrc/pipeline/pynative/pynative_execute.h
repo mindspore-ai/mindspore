@@ -107,7 +107,8 @@ class TopCellInfo {
                                   const FuncGraphPtr &grad_graph) {
     ms_function_grad_cache_[graph_phase] = std::make_pair(func_graph, grad_graph);
   }
-  void clear();
+  void ClearDeviceMemory();
+  void Clear();
 
  private:
   bool is_topest_{false};
@@ -190,7 +191,7 @@ class GradExecutor {
                               const OpExecInfoPtr &op_exec_info, ValuePtrList *input_values,
                               CNodePtr *ms_function_cnode);
   void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
-  void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource);
+  void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args);
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
