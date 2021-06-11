@@ -26,12 +26,18 @@
 
 namespace mindspore {
 namespace context {
+constexpr unsigned int OptLevel_0 = 0;  // Disabled
+constexpr unsigned int OptLevel_1 = 1;  // Basic functions
+constexpr unsigned int OptLevel_2 = 2;  // Default functions
+constexpr unsigned int OptLevel_3 = 3;  // Experimental functions
+constexpr unsigned int OptLevel_MAX = 4;
+
 class GraphKernelFlags {
  public:
   static const GraphKernelFlags &GetInstance() {
     static std::unique_ptr<GraphKernelFlags> flags(nullptr);
     auto contexts = GetGraphKernelContext();
-    if (flags == nullptr || contexts.first != flags->flags_cache_ || contexts.second != flags->enable_cache_) {
+    if (flags == nullptr || contexts.first != flags->flags_cache_ || contexts.second != flags->enable_graph_kernel_) {
       flags.reset(new GraphKernelFlags(contexts.first, contexts.second));
       flags->Refresh();
     }
@@ -42,7 +48,7 @@ class GraphKernelFlags {
   std::string DumpAllFlags() const;
 
   // Check whether graph_kernel is enabled
-  bool IsEnableGraphKernel() const { return opt_level > 0; }
+  bool IsEnableGraphKernel() const { return opt_level > OptLevel_0; }
 
   GraphKernelFlags(const GraphKernelFlags &flags) = delete;
   ~GraphKernelFlags() = default;
@@ -56,13 +62,17 @@ class GraphKernelFlags {
 
   /**
    * Enable stitch fusion in graph kernel fusion strategy.
+   *
+   * Experimental feature, enabled by default when opt_level=3
    */
-  bool enable_stitch_fusion{false};
+  bool enable_stitch_fusion;
 
   /**
    * Enable parallel fusion in graph kernel fusion strategy.
+   *
+   * Experimental feature, enabled by default when opt_level=3
    */
-  bool enable_parallel_fusion{false};
+  bool enable_parallel_fusion;
 
   /**
    * Optimization level, value from 0 to 3.
@@ -70,7 +80,7 @@ class GraphKernelFlags {
    * 1: Enable GraphKernel with basic features only.
    * 2: Enable GraphKernel with all stable features.
    * 3: Enable GraphKernel with all experimental features.
-   * The default value is level 2 when the context "enable_graph_kernel" is set,
+   * The default value is OptLevel_2 when the context "enable_graph_kernel" is set,
    * but if it's also changed in "graph_kernel_flags", then the "graph_kernel_flags" will prevail.
    */
   unsigned int opt_level;  // defaults 0 or 2
@@ -141,10 +151,7 @@ class GraphKernelFlags {
 
  private:
   GraphKernelFlags(const std::string &graph_kernel_flags, bool enable_graph_kernel)
-      : flags_cache_(graph_kernel_flags), enable_cache_(enable_graph_kernel) {
-    // Default optimization level is level 2 when enable graphkernel
-    opt_level = enable_graph_kernel ? 2 : 0;
-  }
+      : flags_cache_(graph_kernel_flags), enable_graph_kernel_(enable_graph_kernel) {}
 
   // get the `graph_kernel_flags` and `enable_graph_kernel`
   static std::pair<std::string, bool> GetGraphKernelContext() {
@@ -164,7 +171,7 @@ class GraphKernelFlags {
   // cache the flag string to check whether the flags is changed.
   std::string flags_cache_;
   // cache the enable_graph_kernel value to check whether the context is changed.
-  bool enable_cache_;
+  bool enable_graph_kernel_;
 };
 }  // namespace context
 }  // namespace mindspore

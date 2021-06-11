@@ -26,14 +26,6 @@
 
 namespace mindspore {
 namespace opt {
-enum OptLevel {
-  OptLevel_0 = 0,  // Disabled
-  OptLevel_1,      // Basic functions
-  OptLevel_2,      // Default functions
-  OptLevel_3,      // Experimental functions
-  OptLevel_MAX,
-};
-
 class GraphKernelPassManager : public PassManager {
  public:
   GraphKernelPassManager(size_t stage, const std::string &name)
@@ -41,7 +33,7 @@ class GraphKernelPassManager : public PassManager {
   ~GraphKernelPassManager() = default;
 
   // Add graph pass, the pass object will be freed when pass manager freed.
-  virtual void AddPass(const PassPtr &pass, OptLevel level, bool default_enable = true);
+  virtual void AddPass(const PassPtr &pass, unsigned int pass_level, bool default_enable = true);
 
   // Run passes on the func_graph
   bool Run(const FuncGraphPtr &func_graph) const override;

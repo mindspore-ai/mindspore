@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace opt {
-void GraphKernelPassManager::AddPass(const PassPtr &pass, OptLevel level, bool supported_device) {
+void GraphKernelPassManager::AddPass(const PassPtr &pass, unsigned int pass_level, bool supported_device) {
   MS_EXCEPTION_IF_NULL(pass);
   auto pass_id = passes_.size();
   auto pass_name = pass->name();
@@ -36,7 +36,7 @@ void GraphKernelPassManager::AddPass(const PassPtr &pass, OptLevel level, bool s
                      std::to_string(this->stage_) + "." + std::to_string(pass_id)) != pass_list.end() ||
            std::find(pass_list.begin(), pass_list.end(), this->name_ + "." + pass_name) != pass_list.end();
   };
-  bool enable = supported_device && flags_.opt_level >= static_cast<unsigned int>(level);
+  bool enable = supported_device && flags_.opt_level >= pass_level;
   if (enable) {
     // if it meets the condition to enable, check whether it's in the disabled list.
     enable = !pass_in_list(flags_.disable_pass);

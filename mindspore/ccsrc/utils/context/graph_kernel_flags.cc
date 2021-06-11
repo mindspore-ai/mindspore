@@ -85,7 +85,7 @@ class FlagRegister {
   ~FlagRegister() = default;
 
   template <typename T>
-  void AddFlag(std::string flag_name, T *flag_var) {
+  void AddFlag(std::string flag_name, T *flag_var, T default_value = T()) {
     auto iter = flag_map_.find(flag_name);
     if (iter != flag_map_.end()) {
       T var;
@@ -93,6 +93,7 @@ class FlagRegister {
       if (ret) {
         *flag_var = std::move(var);
       } else {
+        *flag_var = std::move(default_value);
         if (iter->second.empty()) {
           MS_LOG(WARNING) << "Invalid GraphKernel flag: --" << iter->first;
         } else {
@@ -100,6 +101,8 @@ class FlagRegister {
         }
       }
       flag_map_.erase(iter);
+    } else {
+      *flag_var = std::move(default_value);
     }
   }
 
@@ -152,12 +155,12 @@ void GraphKernelFlags::Refresh() {
   for (auto &item : flag_map) {
     MS_LOG(WARNING) << "Unknown GraphKernel flag: " << item.first;
   }
-  if (opt_level > 0) {
+  if (IsEnableGraphKernel()) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     if (context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
       MS_LOG(WARNING) << "GraphKernel only support GRAPH_MODE";
-      opt_level = 0;
+      opt_level = OptLevel_0;
     }
   }
   // Dump flags so that people can check the setting.
@@ -167,13 +170,20 @@ void GraphKernelFlags::Refresh() {
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
   FlagRegister reg(flag_map);
 
+  // Set opt_level first, some flags' default value depends on it.
+  // Default optimization level is level 2 when enable graphkernel
+  reg.AddFlag("opt_level", &opt_level, enable_graph_kernel_ ? OptLevel_2 : OptLevel_0);
+  if (opt_level > OptLevel_3) {
+    MS_LOG(WARNING) << "GraphKernelFlag: opt_level should be in the range [0,3] but got " << opt_level;
+    opt_level = OptLevel_3;
+  }
+
   // Boolean flags
   reg.AddFlag("dump_as_text", &dump_as_text);
-  reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion);
-  reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion);
+  reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, opt_level == OptLevel_3);
+  reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
 
   // Integer flags
-  reg.AddFlag("opt_level", &opt_level);
   reg.AddFlag("auto_tune", &auto_tune);
   reg.AddFlag("cluster_limit", &cluster_limit);
 

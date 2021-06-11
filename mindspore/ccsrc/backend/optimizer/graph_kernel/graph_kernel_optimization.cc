@@ -46,9 +46,13 @@
 
 namespace mindspore {
 namespace opt {
-using OptLevel::OptLevel_1;
-using OptLevel::OptLevel_2;
-using OptLevel::OptLevel_3;
+using context::OptLevel_1;
+using context::OptLevel_2;
+using context::OptLevel_3;
+using context::OptLevel_MAX;
+namespace {
+inline unsigned int GetPassLevelByFlag(bool flag) { return flag ? OptLevel_1 : OptLevel_MAX; }
+}  // namespace
 
 PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
@@ -136,7 +140,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2);
 
   // Enable atomic add for stitch nodes.
-  auto level = context::GraphKernelFlags::GetInstance().enable_stitch_fusion ? OptLevel_1 : OptLevel_3;
+  auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_stitch_fusion);
   pm->AddPass(std::make_shared<StitchAtomicCleanInsertter>(), level, is_gpu);
 
   return pm;
@@ -145,7 +149,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
 PassManagerPtr GraphKernelOptimizer::Combine() const {
   auto pm = std::make_shared<GraphKernelPassManager>(5, "combine");
   // Enable parallel fusion for gpu device
-  auto level = context::GraphKernelFlags::GetInstance().enable_parallel_fusion ? OptLevel_1 : OptLevel_3;
+  auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_parallel_fusion);
   pm->AddPass(std::make_shared<ParallelOpFusion>(kGPUDevice, ParallelConfig(7)), level, is_gpu);
 
   return pm;
