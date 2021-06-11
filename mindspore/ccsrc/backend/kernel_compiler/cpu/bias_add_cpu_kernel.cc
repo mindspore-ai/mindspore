@@ -54,7 +54,7 @@ void BiasAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != kBiasAddInputNum || outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "inputs outputs size not supoort";
+    MS_LOG(EXCEPTION) << "Inputs outputs size not supoort";
   }
 
   auto src_addr = reinterpret_cast<float *>(inputs[0]->addr);

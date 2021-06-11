@@ -39,7 +39,7 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t output_num = num_before_axis * num_after_axis;
   size_t output_size = output_num * sizeof(int);
   if (inputs[0]->size != input_size || outputs[0]->size != output_size) {
-    MS_LOG(EXCEPTION) << "invalid input or output data size!";
+    MS_LOG(EXCEPTION) << "Invalid input or output data size!";
     return false;
   }
   return true;

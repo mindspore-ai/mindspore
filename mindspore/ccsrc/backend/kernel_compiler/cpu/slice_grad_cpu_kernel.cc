@@ -102,7 +102,7 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
-    MS_LOG(ERROR) << "output buff memset fail. ret:" << ret;
+    MS_LOG(ERROR) << "Output buff memset fail. ret:" << ret;
     return false;
   }
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
@@ -183,7 +183,7 @@ void SliceGradCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> 
   auto ret = memcpy_s(output_addr + out_offset, out_buff_size - out_offset * sizeof(T), input_addr + in_offset,
                       copy_num * sizeof(T));
   if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy failed. ret:" << ret;
+    MS_LOG(EXCEPTION) << "Memcpy failed. ret:" << ret;
   }
 }
 
@@ -191,7 +191,7 @@ void SliceGradCPUKernel::FormatArgs(bool stride) {
   if (stride) {
     for (size_t i = 0; i < strides_.size(); ++i) {
       if (strides_[i] == 0) {
-        MS_LOG(EXCEPTION) << "slice stride cannot be zero";
+        MS_LOG(EXCEPTION) << "Slice stride cannot be zero";
       }
       if (end_[i] == 0 && begin_[i] < 0) {
         end_[i] = end_[i] + SizeToInt(output_shape_[i]);

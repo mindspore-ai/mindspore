@@ -22,11 +22,11 @@ void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (output_shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "invalid output shape size: " << output_shape.size();
+    MS_LOG(EXCEPTION) << "Invalid output shape size: " << output_shape.size();
   }
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
-    MS_LOG(EXCEPTION) << "invalid axis: " << axis;
+    MS_LOG(EXCEPTION) << "Invalid axis: " << axis;
   }
   if (axis == -1) {
     axis_ = output_shape.size() - 1;
@@ -43,7 +43,7 @@ void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool OneHotCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                              const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 3 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "input or output invalid!";
+    MS_LOG(EXCEPTION) << "Input or output invalid!";
   }
   auto indices = reinterpret_cast<int *>(inputs[0]->addr);
   auto on_value = reinterpret_cast<float *>(inputs[1]->addr)[0];

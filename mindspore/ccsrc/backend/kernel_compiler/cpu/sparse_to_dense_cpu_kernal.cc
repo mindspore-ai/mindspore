@@ -47,7 +47,9 @@ bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> 
   auto values_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t output_length = outputs[0]->size / sizeof(T);
-  memset(output_addr, 0, output_length);
+  if (memset_s(output_addr, output_length, 0, output_length) != EOK) {
+    MS_LOG(EXCEPTION) << "Memset Failed!";
+  }
 
   size_t rank = output_shape_.size();
   for (size_t i = 0; i < values_size_; ++i) {

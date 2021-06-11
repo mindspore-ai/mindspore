@@ -45,7 +45,9 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
   size_t output_size = outputs[0]->size;
   MS_LOG(DEBUG) << "input addr: " << input_addr << "input size: " << input_size;
   MS_LOG(DEBUG) << "output addr: " << output_addr << "output size: " << output_size;
-  memset_s(output_addr, output_size, 0, output_size);
+  if (memset_s(output_addr, output_size, 0, output_size) != EOK) {
+    MS_LOG(EXCEPTION) << "Memset Failed!";
+  }
   const std::vector<int> &rank_group = {0, 1, 2, 3, 4, 5, 6, 7};
   size_t input_split_lens = input_size / LongToSize(split_num_) / sizeof(float_t);
   size_t output_split_lens = output_size / LongToSize(split_num_) / sizeof(float_t);

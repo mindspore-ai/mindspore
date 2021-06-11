@@ -29,7 +29,7 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto dim = src_shape.size();
   if (dim < 2) {
-    MS_LOG(EXCEPTION) << "set pad only support src dim >= 2!";
+    MS_LOG(EXCEPTION) << "Set pad only support src dim >= 2!";
   }
   std::vector<int> weight_height;
   for (size_t i = 2; i < dim; ++i) {
@@ -125,7 +125,7 @@ dnnl::memory::format_tag MKLCPUKernel::GetDefaultFormatTag(const dnnl::memory::d
   } else if (dim_size == 1) {
     mem_tag = dnnl::memory::format_tag::a;
   } else {
-    MS_LOG(EXCEPTION) << "kernel dims invalid " << dim_size;
+    MS_LOG(EXCEPTION) << "Kernel dims invalid " << dim_size;
   }
   return mem_tag;
 }

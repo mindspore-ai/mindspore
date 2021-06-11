@@ -30,16 +30,16 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (input_x_shape.size() != input_y_shape.size()) MS_LOG(EXCEPTION) << "x y must be same shape";
+  if (input_x_shape.size() != input_y_shape.size()) MS_LOG(EXCEPTION) << "X and y must be same shape!";
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
-      MS_LOG(EXCEPTION) << "x y must be same shape";
+      MS_LOG(EXCEPTION) << "X and y must be same shape!";
     }
     batch_size_ *= input_x_shape[i];
   }
   input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   if (input_x_dtype_size_map.find(input_x_dtype_) == input_x_dtype_size_map.end()) {
-    MS_LOG(EXCEPTION) << "unsupported input_x dtype";
+    MS_LOG(EXCEPTION) << "Unsupported input_x dtype!";
   }
   input_x_dtype_size_ = input_x_dtype_size_map[input_x_dtype_];
 }

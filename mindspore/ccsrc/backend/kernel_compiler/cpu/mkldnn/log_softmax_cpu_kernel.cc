@@ -43,7 +43,7 @@ void LogSoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool LogSoftmaxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "log softmax error input output size!";
+    MS_LOG(EXCEPTION) << "Log softmax error input output size!";
   }
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);

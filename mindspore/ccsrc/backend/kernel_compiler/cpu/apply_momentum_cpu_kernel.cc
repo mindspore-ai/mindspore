@@ -25,10 +25,10 @@ void ApplyMomentumCPUKernel::InitKernel(const CNodePtr &) {}
 bool ApplyMomentumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &) {
   if (inputs.size() < 5) {
-    MS_LOG(EXCEPTION) << "error input output size!";
+    MS_LOG(EXCEPTION) << "Error input output size!";
   }
   if (inputs[0]->size != inputs[1]->size || inputs[0]->size != inputs[3]->size) {
-    MS_LOG(EXCEPTION) << "error input data size!";
+    MS_LOG(EXCEPTION) << "Error input data size!";
   }
   auto weight = reinterpret_cast<float *>(inputs[0]->addr);
   auto accumulate = reinterpret_cast<float *>(inputs[1]->addr);

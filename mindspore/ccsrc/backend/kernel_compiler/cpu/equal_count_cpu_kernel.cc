@@ -23,10 +23,10 @@ void EqualCountCPUKernel::InitKernel(const CNodePtr &) {}
 bool EqualCountCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "input or output empty!";
+    MS_LOG(EXCEPTION) << "Input or output empty!";
   }
   if (inputs[0]->size != inputs[1]->size) {
-    MS_LOG(EXCEPTION) << "input or output size!";
+    MS_LOG(EXCEPTION) << "Input or output size!";
   }
   int count = 0;
   auto left = reinterpret_cast<int *>(inputs[0]->addr);

@@ -69,7 +69,7 @@ void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool EltWiseCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "error input output size!";
+    MS_LOG(EXCEPTION) << "Error input output size!";
   }
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);

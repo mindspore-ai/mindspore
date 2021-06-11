@@ -35,7 +35,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   size_t src_dim = src_shape.size();
   size_t weight_dim = weight_shape.size();
   if (src_dim < kShapeSize4D || src_dim > kShapeSize5D || src_dim != weight_dim) {
-    MS_LOG(EXCEPTION) << "conv only supports 4D/5D input!";
+    MS_LOG(EXCEPTION) << "Conv only supports 4D/5D input!";
   }
   std::vector<size_t> kernel_size;
   for (size_t i = kKernelStartAxis; i < src_dim; ++i) {
@@ -44,7 +44,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group != 1) {
     if (src_shape[1] % group != 0) {
-      MS_LOG(EXCEPTION) << "conv channels should be divided by group!";
+      MS_LOG(EXCEPTION) << "Conv channels should be divided by group!";
     }
     weight_shape.insert(weight_shape.begin(), group);
     weight_shape[1] = weight_shape[1] / group;
@@ -63,16 +63,16 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (stride_ori.size() != src_dim) {
-    MS_LOG(EXCEPTION) << "conv stride size must be " << src_dim << "D!";
+    MS_LOG(EXCEPTION) << "Conv stride size must be " << src_dim << "D!";
   }
   if (stride_ori[0] != 1 || stride_ori[1] != 1) {
-    MS_LOG(EXCEPTION) << "conv2d stride only support 1 in N axis and C axis!";
+    MS_LOG(EXCEPTION) << "Conv2d stride only support 1 in N axis and C axis!";
   }
   if (dilation_ori.size() != src_dim) {
-    MS_LOG(EXCEPTION) << "conv dilation size must be " << src_dim << "D!";
+    MS_LOG(EXCEPTION) << "Conv dilation size must be " << src_dim << "D!";
   }
   if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
-    MS_LOG(EXCEPTION) << "conv2d dilation only support 1 in N axis and C axis!";
+    MS_LOG(EXCEPTION) << "Conv2d dilation only support 1 in N axis and C axis!";
   }
 
   std::vector<int> stride;
@@ -90,7 +90,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);
   if (int_padding_l.size() + kKernelStartAxis != src_dim || int_padding_r.size() + kKernelStartAxis != src_dim) {
-    MS_LOG(EXCEPTION) << "get padding failed";
+    MS_LOG(EXCEPTION) << "Get padding failed!";
   }
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
@@ -113,7 +113,7 @@ bool ConvCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> & /*workspace*/,
                            const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < kConvInputTensorNum || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "error input output size!";
+    MS_LOG(EXCEPTION) << "Error input output size!";
   }
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->addr);

@@ -123,8 +123,12 @@ void MinimumGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, c
 
   size_t x_tensor_len = GetTensorLen(x_shape_);
   size_t y_tensor_len = GetTensorLen(y_shape_);
-  memset_s(dx_addr, x_tensor_len * sizeof(T), 0x00, x_tensor_len * sizeof(T));
-  memset_s(dy_addr, y_tensor_len * sizeof(T), 0x00, y_tensor_len * sizeof(T));
+  if (memset_s(dx_addr, x_tensor_len * sizeof(T), 0x00, x_tensor_len * sizeof(T)) != EOK) {
+    MS_LOG(EXCEPTION) << "Memset Failed!";
+  }
+  if (memset_s(dy_addr, y_tensor_len * sizeof(T), 0x00, y_tensor_len * sizeof(T)) != EOK) {
+    MS_LOG(EXCEPTION) << "Memset Failed!";
+  }
 
   std::vector<size_t> x_shape(dout_shape.size(), 1);
   std::vector<size_t> y_shape(dout_shape.size(), 1);

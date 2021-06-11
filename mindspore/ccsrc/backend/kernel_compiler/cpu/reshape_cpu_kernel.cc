@@ -33,7 +33,7 @@ bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   }
   auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "input or output empty!";
+    MS_LOG(EXCEPTION) << "Input or output empty!";
   }
   if (inputs[0]->size != outputs[0]->size) {
     return false;

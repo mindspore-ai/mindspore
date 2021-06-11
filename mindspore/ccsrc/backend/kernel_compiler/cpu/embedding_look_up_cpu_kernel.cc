@@ -52,7 +52,7 @@ void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "param must be at least 1D";
+    MS_LOG(EXCEPTION) << "Param must be at least 1D";
   }
   first_dim_size_ = input_shape[0];
   outer_dim_size_ = 1;
@@ -80,7 +80,7 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
     }
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
     if (input_shape.empty()) {
-      MS_LOG(EXCEPTION) << "param must be at least 1D";
+      MS_LOG(EXCEPTION) << "Param must be at least 1D";
     }
     first_dim_size_ = input_shape[0];
     outer_dim_size_ = 1;

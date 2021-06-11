@@ -43,7 +43,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
                        [](const int64_t &value) { return static_cast<int>(value); });
   auto dim = origin_kernel_sizes.size();
   if (dim < 4 || dim > 5 || dim != strides.size()) {
-    MS_LOG(EXCEPTION) << "invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
+    MS_LOG(EXCEPTION) << "Invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
   }
   std::vector<int> stride;
   dnnl::memory::dims kernels_dims;
@@ -63,7 +63,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dummy_dilation);
   if (int_padding_l.size() != dim - 2 || int_padding_r.size() != dim - 2) {
-    MS_LOG(EXCEPTION) << "pooling get padding failed";
+    MS_LOG(EXCEPTION) << "Pooling get padding failed!";
   }
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
@@ -91,7 +91,7 @@ bool PoolingCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> &workspace,
                               const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "error input output size!";
+    MS_LOG(EXCEPTION) << "Error input output size!";
   }
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
