@@ -17,7 +17,7 @@ import os
 import argparse
 import numpy as np
 
-from src.config import textrcnn_cfg as cfg
+from src.model_utils.config import config as cfg
 from src.dataset import create_dataset
 
 parser = argparse.ArgumentParser(description='preprocess')

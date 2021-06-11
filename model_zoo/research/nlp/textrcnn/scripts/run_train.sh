@@ -13,6 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+if [ $# != 1 ] && [ $# != 0 ]; then
+  echo "Usage: sh run_train.sh [DEVICE_ID]"
+  exit 1
+fi
+
+if [ $# == 1 ]; then
+  export DEVICE_ID=$1
+else
+  export DEVICE_ID=0
+fi
 
 ulimit -u unlimited
 

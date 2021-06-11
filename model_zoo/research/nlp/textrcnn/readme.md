@@ -65,6 +65,8 @@ Dataset used: [Sentence polarity dataset v1.0](http://www.cs.cornell.edu/people/
 
 - Running on Ascend
 
+  If you are running the scripts for the first time and , you must set the parameter 'preprocess' to 'true' in the `default_config.yaml` and run training to get the folder 'preprocess' containing data。
+
 ```python
 # run training
 DEVICE_ID=7 python train.py
@@ -77,70 +79,120 @@ DEVICE_ID=7 python eval.py --ckpt_path {checkpoint path}
 bash scripts/run_eval.sh
 ```
 
+- Running on ModelArts
+
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+  You have to prepare the folder 'preprocess'.
+
+  You can change the file name of 'requirements.txt' to 'pip-requirements.txt' for installing some third party libraries automatically on ModelArts.
+
+    - Training standalone on ModelArts
+
+      ```python
+      # (1) Upload the code folder to S3 bucket.
+      # (2) Click to "create training task" on the website UI interface.
+      # (3) Set the code directory to "/{path}/textrcnn" on the website UI interface.
+      # (4) Set the startup file to /{path}/textrcnn/train.py" on the website UI interface.
+      # (5) Perform a or b.
+      #     a. setting parameters in /{path}/textrcnn/default_config.yaml.
+      #         1. Set ”enable_modelarts: True“
+      #         2. Set ”cell: 'lstm'“(Default is 'gru'. if you want to use lstm, you can do this step)
+      #     b. adding on the website UI interface.
+      #         1. Set ”enable_modelarts=True“
+      #         2. Set ”cell=lstm“(Default is 'gru'. if you want to use lstm, you can do this step)
+      # (6) Upload the dataset(the folder 'preprocess') to S3 bucket.
+      # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+      # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+      # (9) Under the item "resource pool selection", select the specification of a single cards.
+      # (10) Create your job.
+      ```
+
+    - evaluating with single card on ModelArts
+
+      ```python
+      # (1) Upload the code folder to S3 bucket.
+      # (2)  Click to "create training task" on the website UI interface.
+      # (3) Set the code directory to "/{path}/textrcnn" on the website UI interface.
+      # (4) Set the startup file to /{path}/textrcnn/eval.py" on the website UI interface.
+      # (5) Perform a or b.
+      #     a. setting parameters in /{path}/textrcnn/default_config.yaml.
+      #         1. Set ”enable_modelarts: True“
+      #         2. Set ”cell: 'lstm'“(Default is 'gru'. If you want to use lstm, you can do this step)
+      #         3. Set ”ckpt_path: './{path}/*.ckpt'“(The *.ckpt file must under the folder 'textrcnn')
+      #     b. adding on the website UI interface.
+      #         1. Set ”enable_modelarts=True“
+      #         2. Set ”cell=lstm“(Default is 'gru'. if you want to use lstm, you can do this step)
+      #         3. Set ”ckpt_path=./{path}/*.ckpt“(The *.ckpt file must under the folder 'textrcnn')
+      # (6) Upload the dataset(the folder 'preprocess') to S3 bucket.
+      # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+      # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+      # (9) Under the item "resource pool selection", select the specification of a single cards.
+      # (10) Create your job.
+      ```
+
 ## [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)
 
 ```python
 ├── model_zoo
-    ├── README.md                          // descriptions about all the models
+    ├── README.md                       // descriptions about all the models
     ├── textrcnn
-        ├── README.md                    // descriptions about TextRCNN
-        ├── data_src
-        │   ├──rt-polaritydata            // directory to save the source data
-        │   ├──rt-polaritydata.README.1.0.txt    // readme file of dataset
+        ├── readme.md                   // descriptions about TextRCNN
+        ├── ascend310_infer             // application for 310 inference
         ├── scripts
         │   ├──run_train.sh             // shell script for train on Ascend
-        │   ├──run_eval.sh              // shell script for evaluation on Ascend
-        │   ├──sample.txt              // example shell to run the above the two scripts
+        │   ├──run_infer_310.sh         // shell script for 310 infer
+        │   └──run_eval.sh              // shell script for evaluation on Ascend
         ├── src
-        │   ├──dataset.py             // creating dataset
-        │   ├──textrcnn.py          // textrcnn architecture
-        │   ├──config.py            // parameter configuration
-        ├── train.py               // training script
-        ├── export.py             // export script
-        ├── eval.py               //  evaluation script
-        ├── data_helpers.py               //  dataset split script
-        ├── sample.txt               //  the shell to train and eval the model without scripts
+        │   ├──model_utils
+        │   │  ├──config.py             // parsing parameter configuration file of "*.yaml"
+        │   │  ├──device_adapter.py     // local or ModelArts training
+        │   │  ├──local_adapter.py      // get related environment variables in local training
+        │   │  └──moxing_adapter.py     // get related environment variables in ModelArts training
+        │   ├──dataset.py               // creating dataset
+        │   ├──textrcnn.py              // textrcnn architecture
+        │   └──utils.py                 // function related to learning rate
+        ├── data_helpers.py             // dataset split script
+        ├── default_config.yaml         // parameter configuration
+        ├── eval.py                     // evaluation script
+        ├── export.py                   // export script
+        ├── mindspore_hub_conf.py       // mindspore hub interface
+        ├── postprocess.py              // 310infer postprocess script
+        ├── preprocess.py               // dataset generation script
+        ├── requirements.txt            // some third party libraries that need to be installed
+        ├── sample.txt                  // the shell to train and eval the model without '*.sh'
+        └── train.py                    // training script
 ```
 
 ### [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py
+Parameters for both training and evaluation can be set in `default_config.yaml`
 
 - config for Textrcnn, Sentence polarity dataset v1.0.
 
   ```python
-  'num_epochs': 10, # total training epochs
-  'lstm_num_epochs': 15, # total training epochs when using lstm
-  'batch_size': 64, # training batch size
-  'cell': 'gru', # the RNN architecture, can be 'vanilla', 'gru' and 'lstm'.
-  'ckpt_folder_path': './ckpt', # the path to save the checkpoints
-  'preprocess_path': './preprocess', # the directory to save the processed data
-  'preprocess' : 'false', # whethere to preprocess the data
-  'data_path': './data/', # the path to store the splited data
-  'lr': 1e-3, # the training learning rate
-  'lstm_lr_init': 2e-3, # learning rate initial value when using lstm
-  'lstm_lr_end': 5e-4, # learning rate end value when using lstm
-  'lstm_lr_max': 3e-3, # learning eate max value when using lstm
-  'lstm_lr_warm_up_epochs': 2 # warm up epoch num when using lstm
-  'lstm_lr_adjust_epochs': 9 # lr adjust in lr_adjust_epoch, after that, the lr is lr_end when using lstm
-  'emb_path': './word2vec', # the directory to save the embedding file
-  'embed_size': 300, # the dimension of the word embedding
-  'save_checkpoint_steps': 149, # per step to save the checkpoint
-  'keep_checkpoint_max': 10 # max checkpoints to save
+  num_epochs: 10                  # total training epochs
+  lstm_num_epochs: 15             # total training epochs when using lstm
+  batch_size: 64                  # training batch size
+  cell: 'gru'                     # the RNN architecture, can be 'vanilla', 'gru' and 'lstm'.
+  ckpt_folder_path: './ckpt'      # the path to save the checkpoints
+  preprocess_path: './preprocess' # the directory to save the processed data
+  preprocess: 'false'             # whethere to preprocess the data
+  data_path: './data/'            # the path to store the splited data
+  lr: 0.001  # 1e-3               # the training learning rate
+  lstm_lr_init: 0.002  # 2e-3     # learning rate initial value when using lstm
+  lstm_lr_end: 0.0005  # 5e-4     # learning rate end value when using lstm
+  lstm_lr_max: 0.003  # 3e-3      # learning eate max value when using lstm
+  lstm_lr_warm_up_epochs: 2       # warm up epoch num when using lstm
+  lstm_lr_adjust_epochs: 9        # lr adjust in lr_adjust_epoch, after that, the lr is lr_end when using lstm
+  emb_path: './word2vec'          # the directory to save the embedding file
+  embed_size: 300                 # the dimension of the word embedding
+  save_checkpoint_steps: 149      # per step to save the checkpoint
+  keep_checkpoint_max: 10         # max checkpoints to save
+  ckpt_path: ''                   # relative path of '*.ckpt' to be evaluated relative to the eval.py
   ```
-
-### Performance
-
-| Model                 | MindSpore + Ascend                        | TensorFlow+GPU                       |
-| -------------------------- | ----------------------------- | ------------------------- |
-| Resource                   | Ascend 910; OS Euler2.8                    | NV SMX2 V100-32G          |
-| Version          | 1.0.1                         | 1.4.0                     |
-| Dataset                    | Sentence polarity dataset v1.0                    | Sentence polarity dataset v1.0            |
-| batch_size                 | 64                        | 64                   |
-| Accuracy                   | 0.78                      | 0.78 |
-| Speed                      | 35ms/step                  |  77ms/step                         |
 
 ## Inference Process
 
@@ -172,6 +224,17 @@ Inference result is saved in current path, you can find result like this in acc.
 ```bash
 ============== Accuracy:{} ============== 0.8008
 ```
+
+### Performance
+
+| Model                 | MindSpore + Ascend                        | TensorFlow+GPU                       |
+| -------------------------- | ----------------------------- | ------------------------- |
+| Resource                   | Ascend 910; OS Euler2.8                    | NV SMX2 V100-32G          |
+| Version          | 1.0.1                         | 1.4.0                     |
+| Dataset                    | Sentence polarity dataset v1.0                    | Sentence polarity dataset v1.0            |
+| batch_size                 | 64                        | 64                   |
+| Accuracy                   | 0.78                      | 0.78 |
+| Speed                      | 35ms/step                  |  77ms/step                         |
 
 ## [ModelZoo Homepage](#contents)
 

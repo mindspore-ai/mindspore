@@ -63,6 +63,10 @@ class textrcnn(nn.Cell):
             self.rnnU_fw = nn.Dense(self.embed_size, self.num_hiddens)
             self.rnnW_bw = nn.Dense(self.num_hiddens, self.num_hiddens)
             self.rnnU_bw = nn.Dense(self.embed_size, self.num_hiddens)
+            self.rnnW_fw.to_float(mstype.float16)
+            self.rnnU_fw.to_float(mstype.float16)
+            self.rnnW_bw.to_float(mstype.float16)
+            self.rnnU_bw.to_float(mstype.float16)
 
         if cell == "gru":
             self.rnnWr_fw = nn.Dense(self.num_hiddens + self.embed_size, self.num_hiddens)

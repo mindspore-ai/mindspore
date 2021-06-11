@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 
 from mindspore.nn.metrics import Accuracy
-from src.config import textrcnn_cfg as cfg
+from src.model_utils.config import config as cfg
 
 parser = argparse.ArgumentParser(description='postprocess')
 parser.add_argument('--label_path', type=str, default="./preprocess_Result/label_ids.npy")
