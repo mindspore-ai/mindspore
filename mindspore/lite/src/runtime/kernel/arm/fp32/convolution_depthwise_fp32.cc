@@ -32,7 +32,8 @@ ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
 int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: k, h, w, c; k == group == output_channel, c == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
   int channel = weight_tensor->Batch();
   int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
   if (pack_weight_size >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(float))) {
@@ -55,7 +56,7 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   memset(bias_data_, 0, channel * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_[kBiasIndex];
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->data_c());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }
 
@@ -64,7 +65,7 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
 
 int ConvolutionDepthwiseCPUKernel::Init() {
   auto ret = InitWeightBias();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitWeightBias failed.";
     return RET_ERROR;
   }
@@ -75,8 +76,16 @@ int ConvolutionDepthwiseCPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseCPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() return is:" << ret;
+    return ret;
+  }
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
+  if (conv_param_->thread_num_ <= 0) {
+    MS_LOG(ERROR) << "conv_param_->thread_num_ must be greater than 0!";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -101,10 +110,11 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  input_ptr_ = reinterpret_cast<float *>(input_tensor->MutableData());
-
+  input_ptr_ = reinterpret_cast<float *>(input_tensor->data_c());
+  MS_ASSERT(input_ptr_ != nullptr);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_ptr_ = reinterpret_cast<float *>(output_tensor->MutableData());
+  output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
+  MS_ASSERT(output_ptr_ != nullptr);
 
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
                ->thread_pool_->ParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
@@ -117,13 +127,19 @@ int ConvolutionDepthwiseCPUKernel::Run() {
 
 void ConvolutionDepthwiseCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
+
   PackWeightKHWToHWKFp32(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(),
                          weight_tensor->Batch());
 }
 
 int ConvolutionDepthwiseCPUKernel::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
+  }
   if (is_trainable()) {
     PackWeight();
   }

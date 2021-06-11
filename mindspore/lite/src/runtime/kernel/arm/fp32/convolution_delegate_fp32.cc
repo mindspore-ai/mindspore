@@ -43,6 +43,7 @@ float *ConvolutionDelegateCPUKernel::CopyData(lite::Tensor *tensor) {
     MS_LOG(ERROR) << "Malloc data failed.";
     return nullptr;
   }
+  MS_ASSERT(tensor->data_c() != nullptr);
   memcpy(data, tensor->data_c(), tensor->Size());
   return data;
 }
@@ -64,6 +65,7 @@ int ConvolutionDelegateCPUKernel::GetWeightAndBias() {
 int ConvolutionDelegateCPUKernel::GetWeightData() {
   if (InferShapeDone()) {
     origin_weight_ = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
+    MS_ASSERT(origin_weight_ != nullptr);
     return RET_OK;
   }
   origin_weight_ = CopyData(in_tensors_.at(kWeightIndex));
@@ -79,6 +81,7 @@ int ConvolutionDelegateCPUKernel::GetBiasData() {
   if (in_tensors_.size() == 3) {
     if (InferShapeDone()) {
       origin_bias_ = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->data_c());
+      MS_ASSERT(origin_bias_ != nullptr);
       return RET_OK;
     } else {
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));

@@ -541,6 +541,8 @@ void GemmMatmul(int ta, int tb, int M, int N, int K, float alpha, const float *m
   gcb.ca = 0;
   gcb.cb = 0;
   gcb.bias = NULL;
+  gcb.mat_a = NULL;
+  gcb.mat_b = NULL;
   GemmMatmulPlus(ta, tb, M, N, K, alpha, mat_a, lda, mat_b, ldb, beta, mat_c, ldc, workspace, &gcb);
 }
 

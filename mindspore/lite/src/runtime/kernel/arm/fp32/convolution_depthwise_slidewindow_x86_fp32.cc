@@ -41,7 +41,8 @@ ConvolutionDepthwiseSWCPUKernelX86::~ConvolutionDepthwiseSWCPUKernelX86() {
 int ConvolutionDepthwiseSWCPUKernelX86::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  origin_weight_ = reinterpret_cast<float *>(weight_tensor->MutableData());
+  origin_weight_ = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight_ != nullptr);
   int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
   int pack_weight_size = oc_algin * oc_tile_ * weight_tensor->Height() * weight_tensor->Width();
 
@@ -55,7 +56,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitWeightBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_size = oc_algin * oc_tile_;
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->data_c());
     packed_bias_ = reinterpret_cast<float *>(malloc(bias_size * sizeof(float)));
     if (packed_bias_ == nullptr) {
       MS_LOG(ERROR) << "Malloc bias_data buffer failed.";
@@ -149,7 +150,8 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->MutableData());
+  auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
+  MS_ASSERT(input_ptr != nullptr);
 
   if (input_need_align_) {
     PackNHWCToNHWCXFp32(input_ptr, packed_input_, conv_param_->input_batch_,
@@ -159,7 +161,8 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto output_ptr = reinterpret_cast<float *>(output_tensor->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(output_tensor->data_c());
+  MS_ASSERT(output_ptr != nullptr);
 
   if (!output_need_align_) {
     packed_output_ = output_ptr;
@@ -198,7 +201,11 @@ void ConvolutionDepthwiseSWCPUKernelX86::PackWeight() {
 }
 
 int ConvolutionDepthwiseSWCPUKernelX86::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
+  }
   if (is_trainable()) {
     PackWeight();
   }

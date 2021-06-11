@@ -315,7 +315,7 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
   /* unit data : weight & winograd data */
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
-
+  MS_ASSERT(origin_weight != nullptr);
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param_->compute_units_[i];
     auto ret = PackDeConvWgDataFp16(origin_weight, unit, conv_param_, deconv_param_);
@@ -341,8 +341,16 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
 
 int DeConvWinogradFp16CPUKernel::ReSize() {
   FreeResizeBuf();
-  ConvolutionBaseCPUKernel::Init();
-  InitParameter();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init failed!";
+    return ret;
+  }
+  ret = InitParameter();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitParameter failed!";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -379,6 +387,8 @@ int DeConvWinogradFp16CPUKernel::Init() {
 int DeConvWinogradFp16CPUKernel::Run() {
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(input_ptr != nullptr);
+  MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "Deconvolution Winograd Fp16 get null tensor data!";
     return RET_ERROR;
@@ -389,12 +399,19 @@ int DeConvWinogradFp16CPUKernel::Run() {
     nhwc_output_ = output_ptr + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
 
     ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float16_t));
-    static_cast<const lite::InnerContext *>(this->context_)
-      ->thread_pool_->ParallelLaunch(DeConvWgFp16Run, this, deconv_param_->thread_num_);
-
+    auto ret = static_cast<const lite::InnerContext *>(this->context_)
+                 ->thread_pool_->ParallelLaunch(DeConvWgFp16Run, this, deconv_param_->thread_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DeConvWgFp16Run failed!";
+      return ret;
+    }
     // post bias activate and nhwc
-    static_cast<const lite::InnerContext *>(this->context_)
-      ->thread_pool_->ParallelLaunch(DeConvWgPostFp16Run, this, thread_num_hw_);
+    ret = static_cast<const lite::InnerContext *>(this->context_)
+            ->thread_pool_->ParallelLaunch(DeConvWgPostFp16Run, this, thread_num_hw_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DeConvWgPostFp16Run failed!";
+      return ret;
+    }
   }
 
   return RET_OK;

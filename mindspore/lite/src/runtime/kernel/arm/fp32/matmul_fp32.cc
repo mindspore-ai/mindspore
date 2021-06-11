@@ -77,8 +77,11 @@ int MatmulCPUKernel::ReSize() {
 }
 
 int MatmulCPUKernel::Run() {
-  MatmulFp32BaseCPUKernel::Run();
-  return RET_OK;
+  auto ret = MatmulFp32BaseCPUKernel::Run();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MatmulFp32BaseCPUKernel failed!";
+  }
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MatMul, LiteKernelCreator<MatmulCPUKernel>)

@@ -63,7 +63,6 @@ void MatmulBaseFP16CPUKernel::FreeResizeBufB() {
 void MatmulBaseFP16CPUKernel::InitParameter() {
   params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
   params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
-  return;
 }
 
 int MatmulBaseFP16CPUKernel::InitBias() {
@@ -80,6 +79,7 @@ int MatmulBaseFP16CPUKernel::InitBias() {
       MS_LOG(ERROR) << "Matmul fp16 only support fp16 weight";
       return RET_ERROR;
     } else if (bias_tensor->data_type() == kNumberTypeFloat16) {
+      MS_ASSERT(bias_tensor->data_c() != nullptr);
       memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float16_t));
     } else {
       MS_LOG(ERROR) << "Unsupported bias data type : " << bias_tensor->data_type();
@@ -116,7 +116,6 @@ void MatmulBaseFP16CPUKernel::ResizeParameter() {
     params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
     params_->col_align_ = UP_ROUND(params_->col_, C8NUM);
   }
-  return;
 }
 
 int MatmulBaseFP16CPUKernel::InitBufferA() {

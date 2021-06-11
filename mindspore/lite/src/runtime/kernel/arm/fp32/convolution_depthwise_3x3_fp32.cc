@@ -34,7 +34,7 @@ ConvolutionDepthwise3x3CPUKernel::~ConvolutionDepthwise3x3CPUKernel() {
 int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
   // init weight: k, h, w, c; k == group == output_channel, c == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
   int channel = weight_tensor->Batch();
   int c4 = UP_ROUND(channel, C4NUM);
   int pack_weight_size = c4 * C12NUM;
@@ -58,7 +58,7 @@ int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, c4 * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_[kBiasIndex];
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->data_c());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }
 
@@ -67,7 +67,7 @@ int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
 
 int ConvolutionDepthwise3x3CPUKernel::Init() {
   auto ret = InitWeightBias();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 InitWeightBias failed.";
     return RET_ERROR;
   }
@@ -78,7 +78,11 @@ int ConvolutionDepthwise3x3CPUKernel::Init() {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() return is:" << ret;
+    return ret;
+  }
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
   return RET_OK;
 }
@@ -116,15 +120,19 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
   }
 
   if (IsTrain() && is_trainable()) {
-    InitWeightBias();
+    if (InitWeightBias() != RET_OK) {
+      ctx_->allocator->Free(buffer_);
+      MS_LOG(ERROR) << "Convolution depthwise 3x3 run InitWeightBias failed.";
+      return RET_ERROR;
+    }
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<float *>(input_tensor->data_c());
-
+  MS_ASSERT(input_ptr_ != nullptr);
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
-
+  MS_ASSERT(output_ptr_ != nullptr);
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
                ->thread_pool_->ParallelLaunch(ConvDw3x3Run, this, conv_param_->thread_num_);
   ctx_->allocator->Free(buffer_);
@@ -136,9 +144,16 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
+  }
   if (is_trainable()) {
-    InitWeightBias();
+    if (InitWeightBias() != RET_OK) {
+      MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 Eval:InitWeightBias failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

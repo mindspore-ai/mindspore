@@ -60,8 +60,8 @@ int LReluFp16(const float16_t *src, float16_t *dst, int ele_num, float16_t alpha
   for (; i < ele_c8; i += C8NUM) {
     float16x8_t src_tmp = vld1q_f16(src + i);
     float16x8_t mul_tmp = vmulq_n_f16(src_tmp, alpha);
-    float16x8_t mask = vcgtq_f16(src_tmp, vdupq_n_f16(0.0f));
-    vst1q_f16(dst + i, vbslq_f32(mask, src_tmp, mul_tmp));
+    uint16x8_t mask = vcgtq_f16(src_tmp, vdupq_n_f16(0.0f));
+    vst1q_f16(dst + i, vbslq_f16(mask, src_tmp, mul_tmp));
   }
 #endif
   for (; i < ele_num; ++i) {

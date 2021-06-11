@@ -36,7 +36,8 @@ ConvolutionDepthwiseSWCPUKernel::~ConvolutionDepthwiseSWCPUKernel() {
 int ConvolutionDepthwiseSWCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
 
@@ -62,7 +63,7 @@ int ConvolutionDepthwiseSWCPUKernel::InitWeightBias() {
   memset(bias_data_, 0, malloc_size * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->data_c());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }
 
@@ -111,9 +112,17 @@ int ConvolutionDepthwiseSWCPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseSWCPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() return is:" << ret;
+    return ret;
+  }
   InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
+  if (conv_param_->thread_num_ <= 0) {
+    MS_LOG(ERROR) << "conv_param_->thread_num_ must be greater than 0!";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -146,8 +155,8 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->MutableData());
-
+  auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
+  MS_ASSERT(input_ptr != nullptr);
   if (need_align_) {
     PackNHWCToNHWC4Fp32(input_ptr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
@@ -156,8 +165,8 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto output_ptr = reinterpret_cast<float *>(output_tensor->MutableData());
-
+  auto output_ptr = reinterpret_cast<float *>(output_tensor->data_c());
+  MS_ASSERT(output_ptr != nullptr);
   if (!need_align_) {
     packed_output_ = output_ptr;
   }
@@ -187,13 +196,18 @@ void ConvolutionDepthwiseSWCPUKernel::FreePackedInputOutput() {
 
 void ConvolutionDepthwiseSWCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
   PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
                        weight_tensor->Batch());
 }
 
 int ConvolutionDepthwiseSWCPUKernel::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
+  }
   if (is_trainable()) {
     PackWeight();
   }

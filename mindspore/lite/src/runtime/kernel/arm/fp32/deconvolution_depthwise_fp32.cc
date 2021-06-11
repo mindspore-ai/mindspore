@@ -48,7 +48,8 @@ int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
 int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
 
@@ -67,7 +68,7 @@ int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->data_c());
     memcpy(bias_data_, ori_bias, in_tensors_.at(kBiasIndex)->ElementsNum() * sizeof(float));
   }
 
@@ -117,8 +118,16 @@ int DeconvolutionDepthwiseCPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::ReSize() {
-  InitSlideParam();
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = InitSlideParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSlideParam is failed!";
+    return ret;
+  }
+  ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init failed!";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -152,8 +161,8 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_addr = reinterpret_cast<float *>(input_tensor->MutableData());
-
+  auto input_addr = reinterpret_cast<float *>(input_tensor->data_c());
+  MS_ASSERT(input_addr != nullptr);
   if (need_align_) {
     PackNHWCToNHWC4Fp32(input_addr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
@@ -161,7 +170,8 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     packed_input_ = input_addr;
   }
 
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
+  MS_ASSERT(output_addr != nullptr);
   if (!need_align_) {
     memset(output_addr, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float));
     packed_output_ = output_addr;

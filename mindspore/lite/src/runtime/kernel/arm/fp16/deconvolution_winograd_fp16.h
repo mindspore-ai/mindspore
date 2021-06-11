@@ -47,15 +47,15 @@ class DeConvWinogradFp16CPUKernel : public ConvolutionBaseCPUKernel {
   void FreeResizeBuf();
 
  private:
-  DeConvParam *deconv_param_;
+  DeConvParam *deconv_param_ = nullptr;
   std::mutex lock_;
   float16_t *nhwc_input_ = nullptr;
   float16_t *nhwc_output_ = nullptr;
   float16_t *nc4hw4_output_ = nullptr;
   float16_t *tile_input_ = nullptr;
   float16_t *tile_output_ = nullptr;
-  int thread_num_hw_;
-  int thread_stride_hw_;
+  int thread_num_hw_ = 0;
+  int thread_stride_hw_ = 0;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_DECONVOLUTION_WINOGRAD_H_

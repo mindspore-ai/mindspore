@@ -155,11 +155,16 @@ int ConvolutionWinogradFP16CPUKernel::Init() {
   return RET_OK;
 }
 
-void ConvolutionWinogradFP16CPUKernel::AdjustNumberOfThread() {
+int ConvolutionWinogradFP16CPUKernel::AdjustNumberOfThread() {
   auto out_tensor = out_tensors_.front();
   int cal_plane = UP_DIV(out_tensor->Height(), output_unit_) * UP_DIV(out_tensor->Width(), output_unit_);
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(cal_plane, C8NUM));
+  if (thread_count_ <= 0) {
+    MS_LOG(ERROR) << "thread_count_ must be greater than 0!";
+    return RET_ERROR;
+  }
   conv_param_->thread_num_ = thread_count_;
+  return RET_OK;
 }
 
 int ConvolutionWinogradFP16CPUKernel::ReSize() {
@@ -171,20 +176,26 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
+    return ret;
   }
   ret = ConfigInputOutput();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConfigInputOutput failed.";
-    return RET_ERROR;
+    return ret;
   }
-  AdjustNumberOfThread();
+  ret = AdjustNumberOfThread();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "AdjustNumberOfThread failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
 int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(input_ptr != nullptr);
+  MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "Convolution Winograd Fp16 get null tensor data!";
     return RET_ERROR;

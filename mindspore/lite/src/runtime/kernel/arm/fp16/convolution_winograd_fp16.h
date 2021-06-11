@@ -51,7 +51,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   int InitTmpBuffer();
   int ConfigInputOutput();
   int WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
-  void AdjustNumberOfThread();
+  int AdjustNumberOfThread();
 
  private:
   void FreeTmpBuffer() {
@@ -72,8 +72,8 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
       col_buffer_ = nullptr;
     }
   }
-  int kernel_unit_;
-  int input_unit_;
+  int kernel_unit_ = 0;
+  int input_unit_ = 0;
   int output_unit_;
   void *origin_weight_;  // do not free
   void *origin_bias_;    // do not free
@@ -83,10 +83,10 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   float16_t *trans_weight_ = nullptr;
   float16_t *col_buffer_ = nullptr;
   TmpBufferAddressFp16 tmp_buffer_address_list_[4];
-  InputTransFp16Func in_func_;
-  OutputTransFp16Func out_func_;
-  int col_tile_;
-  int row_tile_;
+  InputTransFp16Func in_func_ = nullptr;
+  OutputTransFp16Func out_func_ = nullptr;
+  int col_tile_ = 0;
+  int row_tile_ = 0;
 };
 }  // namespace mindspore::kernel
 

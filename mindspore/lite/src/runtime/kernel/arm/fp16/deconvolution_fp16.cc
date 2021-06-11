@@ -39,8 +39,11 @@ DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
 }
 
 int DeConvolutionFp16CPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
-
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel Init error!";
+    return ret;
+  }
   int error_code = InitParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv InitParam error!";
@@ -70,7 +73,7 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
     }
     if (in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
         in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
-      memcpy(bias_data_, in_tensors_.at(2)->data_c(), output_channel * sizeof(float16_t));
+      memcpy(bias_data_, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(float16_t));
     } else {
       MS_LOG(ERROR) << "unsupported bias shape for deconv!";
       return RET_ERROR;
@@ -88,8 +91,8 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "deconv fp16 kernel require fp16 weight";
     return RET_ERROR;
   }
-  PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()), pack_weight_, input_channel,
-                           kernel_w * kernel_h, output_channel);
+  PackNHWCFp16ToC8HWN8Fp16(reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->data_c()), pack_weight_,
+                           input_channel, kernel_w * kernel_h, output_channel);
   return RET_OK;
 }
 
@@ -199,6 +202,8 @@ int DeConvolutionFp16CPUKernel::Init() {
 int DeConvolutionFp16CPUKernel::Run() {
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(input_ptr != nullptr);
+  MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "DeConvolution Fp16 get null tensor data!";
     return RET_ERROR;
