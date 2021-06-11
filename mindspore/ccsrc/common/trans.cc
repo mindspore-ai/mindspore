@@ -563,7 +563,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     if (shape.size() < kDims2) {
       MS_LOG(EXCEPTION) << "Format" << format << " is not support shape " << shape.size();
     } else {
-      (void)std::copy(shape.begin(), shape.end() - kDims2, std::back_inserter(device_shape));
+      (void)std::copy(shape.begin(), shape.end() - SizeToLong(kDims2), std::back_inserter(device_shape));
     }
     auto h1 = (shape[shape.size() - kDims2] - 1) / kCubeSize + 1;
     auto w1 = (shape[shape.size() - 1] - 1) / kCubeSize + 1;

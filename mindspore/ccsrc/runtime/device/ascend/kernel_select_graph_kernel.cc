@@ -372,9 +372,9 @@ void CheckFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNod
       }
       auto user_format = AnfAlgo::GetInputFormat(node_user.first, IntToSize(node_user.second - 1));
       if (user_format != (*graph_input_format)[i]) {
-        MS_LOG(WARNING) << "Users of input: [" << i << "][" << input->DebugString(2) << " of ["
+        MS_LOG(WARNING) << "Users of input: [" << i << "][" << input->DebugString() << " of ["
                         << kernel_node->DebugString()
-                        << "] selected different format. we use defult: " << default_format;
+                        << "] selected different format. we use default: " << default_format;
         (*graph_input_format)[i] = default_format;
         (*need_update)[i] = true;
       }
@@ -385,7 +385,7 @@ void CheckFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNod
       }
 
       TypeId default_dtype = AnfAlgo::GetOutputInferDataType(input, 0);
-      MS_LOG(WARNING) << "Users of input: [" << i << "][" << input->DebugString(2) << " of ["
+      MS_LOG(WARNING) << "Users of input: [" << i << "][" << input->DebugString() << " of ["
                       << kernel_node->DebugString()
                       << "] selected different dtype. we use default: " << TypeIdLabel(default_dtype);
       (*graph_input_type)[i] = default_dtype;

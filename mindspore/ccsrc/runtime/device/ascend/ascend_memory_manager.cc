@@ -114,7 +114,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
       MS_LOG(INFO) << "Add graph memory node for static memory profiling, graph id is " << graph_id;
     }
 
-    node->AddStaticMemorySize(align_size);
+    node->AddStaticMemorySize(SizeToUint(align_size));
   }
 
   if (communication_mem) {
