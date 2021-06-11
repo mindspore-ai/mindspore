@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace opt {
+constexpr size_t INPUT2 = 2;
 void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr &cnode, const AnfNodePtr &eltwise_input,
                                                                  const session::KernelGraph &kernel_graph,
                                                                  FusedNodeRecord *candidate_fusion) {
@@ -48,7 +49,7 @@ void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr 
       }
       auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(out_getitem_ptr);
-      auto input2 = out_getitem_ptr->input(2);
+      auto input2 = out_getitem_ptr->input(INPUT2);
       auto output_idx = GetValue<int64_t>(GetValueNode(input2));
       output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
     }

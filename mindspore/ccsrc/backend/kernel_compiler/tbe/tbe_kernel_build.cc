@@ -101,6 +101,7 @@ constexpr auto kSOC_VERSION = "SOC_VERSION";
 constexpr auto kJIsDynamicShape = "is_dynamic_shape";
 constexpr auto kJDynamicIndex = "dynamic_index";
 constexpr auto kJSocInfo = "SocInfo";
+constexpr auto kNCHWShapeSize = 4;
 
 const auto kPyPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe";
 
@@ -144,7 +145,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   op_info_json[kJOutputs] = outputs_json;
   // generate attrs json
   nlohmann::json attrs_json;
-  (void)GenTbeAttrJson(anf_node, op_info_ptr, &attrs_json);
+  GenTbeAttrJson(anf_node, op_info_ptr, &attrs_json);
   op_info_json[kJAttrs] = attrs_json;
   auto soc_version = TbeKernelJsonCreator::GetSocVersion();
   op_info_json[kJSocVersion] = soc_version;
@@ -959,7 +960,7 @@ void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_
   // !! Note: format: only data node's output use it
   auto format = AnfAlgo::GetOutputFormat(anf_node, node_out_idx);
   if (format == kOpFormat_DEFAULT) {
-    format = ori_shape.size() == 4 ? kOpFormat_NCHW : kOpFormat_ND;
+    format = ori_shape.size() == kNCHWShapeSize ? kOpFormat_NCHW : kOpFormat_ND;
   } else if (format == kOpFormat_FRAC_Z) {
     format = kOpFormat_FRACTAL_Z;
   }
@@ -1365,23 +1366,24 @@ bool TbeKernelBuild::CalOutputSize(const nlohmann::json &fusion_op_list,
     size_t real_idx = kernel_idx.second;
     auto full_name = real_node->fullname_with_scope();
     for (const auto &op : fusion_op_list) {
-      if (op[kJName] == full_name) {
-        auto op_output_desces = op[kJOutputDesc];
-        if (output_node != real_node) {
-          // tuple_get item
-          auto output_desc = op_output_desces[real_idx];
+      if (op[kJName] != full_name) {
+        continue;
+      }
+      auto op_output_desces = op[kJOutputDesc];
+      if (output_node != real_node) {
+        // tuple_get item
+        auto output_desc = op_output_desces[real_idx];
+        if (output_desc[kJShape].empty()) {
+          MS_LOG(INFO) << "Fusion error: output_desc's shape is empty. real_index " << real_idx;
+          return false;
+        }
+        output_size_list->push_back(GetIOSizeImpl(output_desc));
+      } else {
+        for (const auto &output_desc : op_output_desces) {
           if (output_desc[kJShape].empty()) {
-            MS_LOG(INFO) << "Fusion error: output_desc's shape is empty. real_index " << real_idx;
-            return false;
+            continue;
           }
           output_size_list->push_back(GetIOSizeImpl(output_desc));
-        } else {
-          for (const auto &output_desc : op_output_desces) {
-            if (output_desc[kJShape].empty()) {
-              continue;
-            }
-            output_size_list->push_back(GetIOSizeImpl(output_desc));
-          }
         }
       }
     }
