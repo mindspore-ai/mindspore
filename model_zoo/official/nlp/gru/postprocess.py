@@ -18,24 +18,17 @@ postprocess script.
 '''
 
 import os
-import argparse
 import numpy as np
-from src.config import config
-
-parser = argparse.ArgumentParser(description="postprocess")
-parser.add_argument("--label_dir", type=str, default="", help="label data dir")
-parser.add_argument("--result_dir", type=str, default="./result_Files", help="infer result Files")
-
-args, _ = parser.parse_known_args()
+from model_utils.config import config
 
 if __name__ == "__main__":
-    file_name = os.listdir(args.label_dir)
+    file_name = os.listdir(config.label_dir)
     predictions = []
     target_sents = []
     for f in file_name:
-        target_ids = np.fromfile(os.path.join(args.label_dir, f), np.int32)
+        target_ids = np.fromfile(os.path.join(config.label_dir, f), np.int32)
         target_sents.append(target_ids.reshape(config.eval_batch_size, config.max_length))
-        predicted_ids = np.fromfile(os.path.join(args.result_dir, f.split('.')[0] + '_0.bin'), np.int32)
+        predicted_ids = np.fromfile(os.path.join(config.result_dir, f.split('.')[0] + '_0.bin'), np.int32)
         predictions.append(predicted_ids.reshape(config.eval_batch_size, config.max_length - 1))
 
     f_output = open(config.output_file, 'w')

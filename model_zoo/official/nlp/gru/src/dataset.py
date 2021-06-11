@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as deC
-from src.config import config
+from model_utils.config import config
 
 de.config.set_seed(1)
 

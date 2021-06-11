@@ -18,7 +18,7 @@ from mindspore import Tensor
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 import mindspore.common.dtype as mstype
-from src.config import config
+from model_utils.config import config
 
 class GRUInferCell(nn.Cell):
     '''

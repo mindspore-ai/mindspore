@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
-from src.config import config
+from model_utils.config import config
 from src.loss import NLLLoss
 
 class GRUWithLossCell(nn.Cell):

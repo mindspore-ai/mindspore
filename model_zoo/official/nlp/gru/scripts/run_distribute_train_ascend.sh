@@ -58,11 +58,13 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
+    cp ../*.yaml ./train_parallel$i
     cp *.sh ./train_parallel$i
     cp -r ../src ./train_parallel$i
+    cp -r ../model_utils ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM  --dataset_path=$DATASET_PATH &> log &
+    python train.py --run_distribute=True --dataset_path=$DATASET_PATH &> log &
     cd ..
 done

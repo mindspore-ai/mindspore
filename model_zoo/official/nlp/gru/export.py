@@ -13,35 +13,39 @@
 # limitations under the License.
 # ============================================================================
 """export script."""
-import argparse
+import os
 import numpy as np
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 from src.seq2seq import Seq2Seq
 from src.gru_for_infer import GRUInferCell
-from src.config import config
 
-parser = argparse.ArgumentParser(description='export')
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    help="device where the code will be implemented, default is Ascend")
-parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend, default is 0')
-parser.add_argument('--file_name', type=str, default="gru", help='output file name.')
-parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format.")
-parser.add_argument('--ckpt_file', type=str, required=True, help='ckpt file path')
-args = parser.parse_args()
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, reserve_class_name_in_scope=False, \
-                    device_id=args.device_id, save_graphs=False)
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """run export."""
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, reserve_class_name_in_scope=False,
+                        device_id=get_device_id(), save_graphs=False)
     network = Seq2Seq(config, is_training=False)
     network = GRUInferCell(network)
     network.set_train(False)
-    if args.ckpt_file != "":
-        parameter_dict = load_checkpoint(args.ckpt_file)
+    if config.ckpt_file != "":
+        parameter_dict = load_checkpoint(config.ckpt_file)
         load_param_into_net(network, parameter_dict)
 
     source_ids = Tensor(np.random.uniform(0.0, 1e5, size=[config.eval_batch_size, config.max_length]).astype(np.int32))
     target_ids = Tensor(np.random.uniform(0.0, 1e5, size=[config.eval_batch_size, config.max_length]).astype(np.int32))
-    export(network, source_ids, target_ids, file_name=args.file_name, file_format=args.file_format)
+    export(network, source_ids, target_ids, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == "__main__":
+    run_export()

@@ -76,19 +76,73 @@ nltk.download()
 
 # [Quick Start](#content)
 
-After dataset preparation, you can start training and evaluation as follows:
+- Running on local with Ascend
 
-```bash
-# run training example
-cd ./scripts
-sh run_standalone_train.sh [TRAIN_DATASET_PATH]
+    After dataset preparation, you can start training and evaluation as follows:
 
-# run distributed training example
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TRAIN_DATASET_PATH]
+    ```bash
+    # run training example
+    cd ./scripts
+    sh run_standalone_train.sh [TRAIN_DATASET_PATH]
 
-# run evaluation example
-sh run_eval.sh [CKPT_FILE] [DATASET_PATH]
-```
+    # run distributed training example
+    sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TRAIN_DATASET_PATH]
+
+    # run evaluation example
+    sh run_eval.sh [CKPT_FILE] [DATASET_PATH]
+    ```
+
+- Running on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    ```python
+    # Train 8p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "run_distribute=True" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data/mindrecord/multi30k_train_mindrecord_32_0'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "run_distribute=True" on the website UI interface.
+    #          Add "dataset_path=/cache/data/mindrecord/multi30k_train_mindrecord_32_0" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (3) Set the code directory to "/path/gru" on the website UI interface.
+    # (4) Set the startup file to "train.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    #
+    # Train 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data/mindrecord/multi30k_train_mindrecord_32_0'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "dataset_path=/cache/data/mindrecord/multi30k_train_mindrecord_32_0" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (3) Set the code directory to "/path/gru" on the website UI interface.
+    # (4) Set the startup file to "train.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    #
+    # Eval 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data/mindrecord/multi30k_train_mindrecord_32_0'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "ckpt_file=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "dataset_path=/cache/data/mindrecord/multi30k_train_mindrecord_32" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (3) Set the code directory to "/path/gru" on the website UI interface.
+    # (4) Set the startup file to "eval.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    ```
 
 # [Script Description](#content)
 
@@ -97,9 +151,14 @@ The GRU network script and code result are as follows:
 ```text
 ├── gru
   ├── README.md                              // Introduction of GRU model.
+  ├── model_utils
+  │   ├──__init__.py                         // module init file
+  │   ├──config.py                           // Parse arguments
+  │   ├──device_adapter.py                   // Device adapter for ModelArts
+  │   ├──local_adapter.py                    // Local adapter
+  │   ├──moxing_adapter.py                   // Moxing adapter for ModelArts
   ├── src
   |   ├──gru.py                              // gru cell architecture.
-  │   ├──config.py                           // Configuration instance definition.
   │   ├──create_data.py                      // Dataset preparation.
   │   ├──dataset.py                          // Dataset loader to feed into model.
   │   ├──gru_for_infer.py                    // GRU eval model architecture.
@@ -118,6 +177,10 @@ The GRU network script and code result are as follows:
   │   ├──run_distributed_train.sh            // shell script for distributed train on ascend.
   │   ├──run_eval.sh                         // shell script for standalone eval on ascend.
   │   ├──run_standalone_train.sh             // shell script for standalone eval on ascend.
+  ├── default_config.yaml                    // Configurations
+  ├── postprocess.py                         // GRU postprocess script.
+  ├── preprocess.py                          // GRU preprocess script.
+  ├── export.py                              // Export API entry.
   ├── eval.py                                // Infer API entry.
   ├── requirements.txt                       // Requirements of third party package.
   ├── train.py                               // Train API entry.
@@ -213,22 +276,49 @@ Parameters for both training and evaluation can be set in config.py. All the dat
     sh parse_output.sh target.txt output.txt /path/vocab.en
     ```
 
+    Extra: We recommend doing this locally, but you can also do it on modelarts by running a python script with the following command "os.system("sh parse_output.sh target.txt output.txt /path/vocab.en")".
+
 - After parse output, we will get target.txt.forbleu and output.txt.forbleu.To calculate BLEU score, you may use this [perl script](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl) and run following command to get the BLEU score.
 
     ```bash
     perl multi-bleu.perl target.txt.forbleu < output.txt.forbleu
     ```
 
+    Extra: We recommend doing this locally, but you can also do it on modelarts by running a python script with the following command "os.system("perl multi-bleu.perl target.txt.forbleu < output.txt.forbleu")".
+
 Note: The `DATASET_PATH` is path to mindrecord. eg. train: /dataset_path/multi30k_train_mindrecord_0  eval: /dataset_path/multi30k_test_mindrecord
 
 ## [Export MindIR](#contents)
 
-```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
-```
+- Export on local
 
-The ckpt_file parameter is required,
-`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+    ```python
+    # The ckpt_file parameter is required, `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+    python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+    ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+    ```python
+    # Eval 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+    #          Set "file_name='./gru'" on default_config.yaml file.
+    #          Set "file_format='MINDIR'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+    #          Add "file_name='./gru'" on the website UI interface.
+    #          Add "file_format='MINDIR'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Set the code directory to "/path/gru" on the website UI interface.
+    # (3) Set the startup file to "export.py" on the website UI interface.
+    # (4) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (5) Create your job.
+    ```
 
 ## [Inference Process](#contents)
 
