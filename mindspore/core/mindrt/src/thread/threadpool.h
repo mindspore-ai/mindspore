@@ -28,10 +28,9 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
+constexpr int kDefaultSpinCount = 300000;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
-
-enum ThreadType { kActorThread = 0, kKernelThread = 1 };
 
 // used in scenarios with unequal division of task
 // the parameters indicate the start and end coefficients
@@ -48,8 +47,7 @@ typedef struct Task {
 
 typedef struct Worker {
   std::thread thread;
-  std::atomic_int type{kActorThread};
-  std::atomic_bool active{false};
+  std::atomic_bool running{false};
   std::mutex mutex;
   std::condition_variable cond_var;
   Task *task{nullptr};
@@ -65,7 +63,7 @@ class ThreadPool {
   static ThreadPool *CreateThreadPool(size_t thread_num);
   virtual ~ThreadPool();
 
-  size_t thread_num() const { return thread_num_; }
+  size_t thread_num() const { return workers_.size(); }
 
   int SetCpuAffinity(const std::vector<int> &core_list);
   int SetCpuAffinity(BindMode bind_mode);
@@ -82,25 +80,25 @@ class ThreadPool {
 
   int InitAffinityInfo();
 
-  virtual void ThreadAsyncRun(Worker *worker);
-  void KernelThreadRun(Worker *worker);
-
+  void AsyncRunTask(Worker *worker);
   void SyncRunTask(Task *task, int task_num) const;
 
   void DistributeTask(Task *task, int task_num);
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
   void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num) const;
 
+  bool RunLocalKernelTask(Worker *worker) const;
+
+  void WaitUntilActivate(Worker *worker);
+
   Worker *CurrentWorker() const;
 
   std::mutex pool_mutex_;
 
   std::vector<Worker *> workers_;
-  std::vector<Worker *> freelist_;
   std::atomic_bool alive_{true};
 
-  size_t inter_thread_num_{0};
-  size_t thread_num_{1};
+  size_t thread_num_{0};
 
   CoreAffinity *affinity_{nullptr};
 };
