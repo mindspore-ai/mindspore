@@ -1,3 +1,18 @@
+# MindSpore 1.2.1
+
+## MindSpore 1.2.1 Release Notes
+
+### Major Features and Improvements
+
+
+#### FrontEnd
+
+- [STABLE] Add MaskedSelect aicpu operation.(Ascend)
+
+#### Auto Parallel
+- [STABLE] Support distributed checkpoint loading.(Ascend/GPU)
+
+
 # MindSpore 1.2.0
 
 ## MindSpore 1.2.0 Release Notes
@@ -23,7 +38,6 @@
 - [STABLE] The optimizer supports gradient centralization.(Ascend)
 - [STABLE] Support support auc metric, rou metric, bleu score metric, confusion matrix metric, cosine similarity metric, dice metric, hausdorff distance metric, occlusion sensitivity metric, perplexity metric, mean surface distance metric, root mean surface distance metric.
 - [STABLE] Support use EmbeddingLookup with cache.(Ascend)
-- [STABLE] Add MaskedSelect aicpu operation.(Ascend)
 
 #### Auto Parallel
 
@@ -31,7 +45,6 @@
 - [STABLE] Support gradient accumulation feature in auto parallel mode.(Ascend/GPU)
 - [STABLE] Support running parallel optimizer with gradient accumulation.(Ascend)
 - [STABLE] Add the configuration of communication operators' fusion.(Ascend)
-- [STABLE] Support distributed checkpoint loading.(Ascend/GPU)
 
 #### Executor
 
