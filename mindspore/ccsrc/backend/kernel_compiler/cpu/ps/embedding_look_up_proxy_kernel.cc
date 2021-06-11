@@ -48,8 +48,6 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
                  [](size_t dim) -> float { return SizeToFloat(dim); });
   MS_LOG(INFO) << "Init embedding lookup proxy kernel, input shape:" << input_shape
                << ", indices_shape:" << indices_shape << ", output_shape:" << output_shape;
-  std::vector<int64_t> lens{SizeToLong(input_shape.size()), SizeToLong(indices_shape.size()),
-                            SizeToLong(output_shape.size())};
   if (mindspore::ps::PSContext::instance()->is_worker()) {
     mindspore::ps::Worker::GetInstance().AddEmbeddingTable(key_, input_shape[axis]);
     mindspore::ps::ParamInitInfoMessage info;

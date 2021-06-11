@@ -85,9 +85,6 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
     grad_offset += IntToSize(lengths[i]);
   }
   float *grad_data = const_cast<float *>(values.data()) + grad_offset;
-#define google mindspore_private
-  CHECK_EQ(size, IntToSize(lengths[grad_index]));
-#undef google
   for (size_t i = 0; i < size; i++) {
     accum_grad_data[i] += grad_data[i];
   }
@@ -136,7 +133,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
-  grads_offset_ += lengths[grad_index];
+  grads_offset_ += IntToSize(lengths[grad_index]);
   gradient()->size += incr_grad_size;
 
   // Append indice data to the end
@@ -181,7 +178,7 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   std::vector<int> new_indices(indices_size);
   mindspore::kernel::SparseGradient<int> unique_sparse_grad({new_grad.data(), new_indices.data(), indices_size});
 
-  if (shapes.size() < 2 || shapes[1].empty()) {
+  if (shapes.size() < kShape2dDims || shapes[1].empty()) {
     MS_LOG(EXCEPTION) << "No input shape found";
   }
   auto input_shapes = shapes[1];
@@ -212,8 +209,8 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
         }
         offset += LongToSize(rank_dims[i]);
       }
-      for (size_t i = 0; i < indices_size; i++) {
-        indices_data[i] -= SizeToInt(offset);
+      for (size_t j = 0; j < indices_size; j++) {
+        indices_data[j] -= SizeToInt(offset);
       }
     }
   }
