@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-DATA_DIR=$1
-export RANK_SIZE=8
-PATH_CHECKPOINT=""
-if [ $# == 2 ]
-then
-    PATH_CHECKPOINT=$2
-fi
+"""Device adapter for ModelArts"""
 
-mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-    python train.py  \
-    --run_distribute=True \
-    --device_target="GPU" \
-    --checkpoint_file_path=$PATH_CHECKPOINT \
-    --data_path=$DATA_DIR \
-    --output_path './output' > log.txt 2>&1 &
+from src.model_utils.config import config
+
+if config.enable_modelarts:
+    from src.model_utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from src.model_utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]
