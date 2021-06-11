@@ -206,10 +206,12 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     return false;
   }
   std::string npy_header = GenerateNpyHeader(shape, type);
-  fd << npy_header;
-  (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
-  fd.close();
-  ChangeFileMode(file_path, S_IRUSR);
+  if (!npy_header.empty()) {
+    fd << npy_header;
+    (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
+    fd.close();
+    ChangeFileMode(file_path, S_IRUSR);
+  }
   return true;
 }
 
