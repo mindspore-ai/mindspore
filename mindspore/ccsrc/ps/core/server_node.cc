@@ -88,7 +88,7 @@ void ServerNode::Initialize() {
   InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
-    MS_LOG(EXCEPTION) << "Server node init client timeout!";
+    MS_LOG(EXCEPTION) << "Server node connect to scheduler timedout!";
   }
   MS_LOG(INFO) << "Server node init client successful!";
 }

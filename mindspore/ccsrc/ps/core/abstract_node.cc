@@ -686,7 +686,11 @@ bool AbstractNode::InitClientToScheduler() {
       client_to_scheduler_->Init();
     }
   });
-  return client_to_scheduler_->WaitConnected();
+  bool wait_res = client_to_scheduler_->WaitConnected();
+  if (!wait_res) {
+    is_ready_ = true;
+  }
+  return wait_res;
 }
 
 const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint32_t &rank_id) {

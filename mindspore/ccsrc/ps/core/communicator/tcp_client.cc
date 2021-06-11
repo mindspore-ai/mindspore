@@ -235,7 +235,7 @@ void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void
     SetTcpNoDelay(fd);
     MS_LOG(INFO) << "Client connected!";
   } else if (events & BEV_EVENT_ERROR) {
-    MS_LOG(WARNING) << "Client connected BEV_EVENT_ERROR!";
+    MS_LOG(WARNING) << "The client will retry to connect to the server!";
     if (tcp_client->disconnected_callback_) {
       tcp_client->disconnected_callback_();
     }
