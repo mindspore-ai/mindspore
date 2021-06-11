@@ -42,7 +42,7 @@ class ImageNetToMR:
 
         image_dir (str): image directory contains n02119789, n02100735, n02110185 and n02096294 directory.
         destination (str): the MindRecord file path to transform into.
-        partition_number (int, optional): partition size (default=1).
+        partition_number (int, optional): partition size. Default: 1.
 
     Raises:
         ValueError: If `map_file`, `image_dir` or `destination` is invalid.

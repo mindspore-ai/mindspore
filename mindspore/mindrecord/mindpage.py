@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-This module is to support reading page from mindrecord.
+This module is to support reading page from MindRecord.
 """
 
 from mindspore import log as logger
@@ -26,12 +26,12 @@ __all__ = ['MindPage']
 
 class MindPage:
     """
-    Class to read MindRecord File series in pagination.
+    Class to read MindRecord files in pagination.
 
     Args:
-        file_name (str): One of MindRecord File or a file list.
-        num_consumer(int, optional): The number of consumer threads which load data to memory (default=4).
-            It should not be smaller than 1 or larger than the number of CPUs.
+        file_name (str): One of MindRecord files or a file list.
+        num_consumer(int, optional): The number of reader workers which load data. Default: 4.
+            It should not be smaller than 1 or larger than the number of processor cores.
 
     Raises:
         ParamValueError: If `file_name`, `num_consumer` or columns is invalid.

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-This module is to read data from mindrecord.
+This module is to read data from MindRecord.
 """
 from .shardreader import ShardReader
 from .shardheader import ShardHeader
@@ -26,17 +26,22 @@ __all__ = ['FileReader']
 
 class FileReader:
     """
-    Class to read MindRecord File series.
+    Class to read MindRecord files.
+
+    Note:
+        If `file_name` is a filename string, it tries to load all MindRecord files generated \
+        in a conversion, and throws an exceptions if a MindRecord file is missing.
+        If `file_name` is a filename list, only the MindRecord files in the list are loaded.
 
     Args:
-       file_name (str, list[str]): One of MindRecord File or a file list.
-       num_consumer(int, optional): Number of consumer threads which load data to memory (default=4).
-           It should not be smaller than 1 or larger than the number of CPUs.
-       columns (list[str], optional): A list of fields where corresponding data would be read (default=None).
-       operator(int, optional): Reserved parameter for operators (default=None).
+       file_name (str, list[str]): One of MindRecord file or a file list.
+       num_consumer(int, optional): Number of reader workers which load data. Default: 4.
+           It should not be smaller than 1 or larger than the number of processor cores.
+       columns (list[str], optional): A list of fields where corresponding data would be read. Default: None.
+       operator(int, optional): Reserved parameter for operators. Default: None.
 
     Raises:
-        ParamValueError: If file_name, num_consumer or columns is invalid.
+        ParamValueError: If `file_name`, `num_consumer` or `columns` is invalid.
     """
 
     @check_parameter
@@ -58,7 +63,7 @@ class FileReader:
         Yield a batch of data according to columns at a time.
 
         Yields:
-            dictionary: keys are the same as columns.
+            Dict: a batch whose keys are the same as columns.
 
         Raises:
             MRMUnsupportedSchemaError: If schema is invalid.

@@ -42,7 +42,7 @@ class MnistToMR:
                       train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
                       and train-labels-idx1-ubyte.gz.
         destination (str): the MindRecord file directory to transform into.
-        partition_number (int, optional): partition size (default=1).
+        partition_number (int, optional): partition size. Default: 1.
 
     Raises:
         ValueError: If `source`, `destination`, `partition_number` is invalid.
