@@ -41,8 +41,8 @@ bool StreamActiveKernel::Init(const AnfNodePtr &anf_node) {
   return true;
 }
 
-bool StreamActiveKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool StreamActiveKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                const std::vector<AddressPtr> &, void *stream_ptr) {
   MS_LOG(INFO) << "Stream active op launch start";
 
   if (active_streams_index_.empty()) {
