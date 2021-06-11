@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "debug/common.h"
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_page.h"
@@ -67,7 +68,13 @@ MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers, bool l
 }
 
 MSRStatus ShardHeader::CheckFileStatus(const std::string &path) {
-  std::ifstream fin(common::SafeCStr(path), std::ios::in | std::ios::binary);
+  auto realpath = Common::GetRealPath(path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << path;
+    return FAILED;
+  }
+
+  std::ifstream fin(realpath.value(), std::ios::in | std::ios::binary);
   if (!fin) {
     MS_LOG(ERROR) << "File does not exist or permission denied. path: " << path;
     return FAILED;
@@ -700,8 +707,14 @@ std::pair<std::shared_ptr<Statistics>, MSRStatus> ShardHeader::GetStatisticByID(
 }
 
 MSRStatus ShardHeader::PagesToFile(const std::string dump_file_name) {
+  auto realpath = Common::GetRealPath(dump_file_name);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << dump_file_name;
+    return FAILED;
+  }
+
   // write header content to file, dump whatever is in the file before
-  std::ofstream page_out_handle(dump_file_name.c_str(), std::ios_base::trunc | std::ios_base::out);
+  std::ofstream page_out_handle(realpath.value(), std::ios_base::trunc | std::ios_base::out);
   if (page_out_handle.fail()) {
     MS_LOG(ERROR) << "Failed in opening page file";
     return FAILED;
@@ -720,8 +733,15 @@ MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
   for (auto &v : pages_) {  // clean pages
     v.clear();
   }
+
+  auto realpath = Common::GetRealPath(dump_file_name);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << dump_file_name;
+    return FAILED;
+  }
+
   // attempt to open the file contains the page in json
-  std::ifstream page_in_handle(dump_file_name.c_str());
+  std::ifstream page_in_handle(realpath.value());
 
   if (!page_in_handle.good()) {
     MS_LOG(INFO) << "No page file exists.";

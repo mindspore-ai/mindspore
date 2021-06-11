@@ -36,7 +36,8 @@ def preprocess_imagenet_validation_dataset(train_dataset_path, validation_datase
         if not os.path.exists(validate_sub_dir):
             os.makedirs(validate_sub_dir)
 
-    mappings = [mapping.strip() for mapping in open(image_label_mapping_file).readlines()]
+    real_file_path = os.path.realpath(image_label_mapping_file)
+    mappings = [mapping.strip() for mapping in open(real_file_path).readlines()]
     for mapping in mappings:
         image_dir = mapping.split(':')
         old_image_path = os.path.join(validation_dataset_path, image_dir[0])

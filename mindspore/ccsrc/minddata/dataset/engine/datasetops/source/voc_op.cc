@@ -19,6 +19,7 @@
 #include <fstream>
 #include <iomanip>
 
+#include "debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -166,8 +167,15 @@ Status VOCOp::ParseImageIds() {
   } else if (task_type_ == TaskType::Detection) {
     image_sets_file = folder_path_ + std::string(kImageSetsMain) + usage_ + std::string(kImageSetsExtension);
   }
+
+  auto realpath = Common::GetRealPath(image_sets_file);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << image_sets_file;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + image_sets_file);
+  }
+
   std::ifstream in_file;
-  in_file.open(image_sets_file);
+  in_file.open(realpath.value());
   if (in_file.fail()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + image_sets_file);
   }

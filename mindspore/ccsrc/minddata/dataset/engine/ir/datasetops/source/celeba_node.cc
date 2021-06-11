@@ -23,6 +23,7 @@
 #include <vector>
 #include <algorithm>
 
+#include "debug/common.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
@@ -92,7 +93,14 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   std::ifstream partition_file;
   std::string line;
   Path folder_path(dataset_dir_);
-  std::ifstream attr_file((folder_path / "list_attr_celeba.txt").toString());
+
+  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").toString());
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").toString();
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").toString());
+  }
+
+  std::ifstream attr_file(realpath.value());
   if (!attr_file.is_open()) {
     std::string attr_file_name = (folder_path / "list_attr_celeba.txt").toString();
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Celeba attr file: " + attr_file_name);
@@ -125,7 +133,13 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
       }
     }
     if (!partition_file.is_open()) {
-      partition_file.open((folder_path / "list_eval_partition.txt").toString());
+      auto realpath_eval = Common::GetRealPath((folder_path / "list_eval_partition.txt").toString());
+      if (!realpath_eval.has_value()) {
+        MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_eval_partition.txt").toString();
+        RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_eval_partition.txt").toString());
+      }
+
+      partition_file.open(realpath_eval.value());
     }
     if (partition_file.is_open()) {
       while (getline(partition_file, line)) {

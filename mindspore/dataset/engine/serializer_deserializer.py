@@ -89,7 +89,8 @@ def deserialize(input_dict=None, json_filepath=None):
 
     if json_filepath:
         dict_pipeline = dict()
-        with open(json_filepath, 'r') as json_file:
+        real_file_path = os.path.realpath(json_filepath)
+        with open(real_file_path, 'r') as json_file:
             dict_pipeline = json.load(json_file)
             data = construct_pipeline(dict_pipeline)
 

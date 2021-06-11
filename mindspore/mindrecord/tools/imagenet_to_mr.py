@@ -74,11 +74,12 @@ class ImageNetToMR:
         Yields:
             data (dict of list): imagenet data list which contains dict.
         """
-        if not os.path.exists(self.map_file):
+        real_file_path = os.path.realpath(self.map_file)
+        if not os.path.exists(real_file_path):
             raise IOError("map file {} not exists".format(self.map_file))
 
         label_dict = {}
-        with open(self.map_file) as fp:
+        with open(real_file_path) as fp:
             line = fp.readline()
             while line:
                 labels = line.split(" ")
@@ -109,7 +110,8 @@ class ImageNetToMR:
                 data["label"] = int(label)
 
                 # get the image data
-                image_file = open(file_name, "rb")
+                real_file_path = os.path.realpath(file_name)
+                image_file = open(real_file_path, "rb")
                 image_bytes = image_file.read()
                 image_file.close()
                 if not image_bytes:

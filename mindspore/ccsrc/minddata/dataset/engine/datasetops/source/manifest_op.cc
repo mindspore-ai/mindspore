@@ -21,6 +21,7 @@
 #include <set>
 #include <nlohmann/json.hpp>
 
+#include "debug/common.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
@@ -168,7 +169,13 @@ Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids)
 // {"source": "/path/to/image1.jpg", "usage":"train", annotation": ...}
 // {"source": "/path/to/image2.jpg", "usage":"eval", "annotation": ...}
 Status ManifestOp::ParseManifestFile() {
-  std::ifstream file_handle(file_);
+  auto realpath = Common::GetRealPath(file_);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file_;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_);
+  }
+
+  std::ifstream file_handle(realpath.value());
   if (!file_handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Manifest file: " + file_);
   }
@@ -235,10 +242,16 @@ Status ManifestOp::ParseManifestFile() {
 
 // Only support JPEG/PNG/GIF/BMP
 Status ManifestOp::CheckImageType(const std::string &file_name, bool *valid) {
+  auto realpath = Common::GetRealPath(file_name);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
+  }
+
   std::ifstream file_handle;
   constexpr int read_num = 3;
   *valid = false;
-  file_handle.open(file_name, std::ios::binary | std::ios::in);
+  file_handle.open(realpath.value(), std::ios::binary | std::ios::in);
   if (!file_handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open image file: " + file_name);
   }

@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <stdexcept>
 
+#include "debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
@@ -487,8 +488,15 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
   RETURN_IF_NOT_OK(csv_parser.InitCsvParser());
   csv_parser.SetStartOffset(start_offset);
   csv_parser.SetEndOffset(end_offset);
+
+  auto realpath = Common::GetRealPath(file);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
+  }
+
   std::ifstream ifs;
-  ifs.open(file, std::ifstream::in);
+  ifs.open(realpath.value(), std::ifstream::in);
   if (!ifs.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
@@ -618,8 +626,15 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
     MS_LOG(ERROR) << "Failed to initialize CSV Parser. Error:" << rc;
     return 0;
   }
+
+  auto realpath = Common::GetRealPath(file);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    return 0;
+  }
+
   std::ifstream ifs;
-  ifs.open(file, std::ifstream::in);
+  ifs.open(realpath.value(), std::ifstream::in);
   if (!ifs.is_open()) {
     return 0;
   }
@@ -703,8 +718,14 @@ Status CsvOp::ColMapAnalyse(const std::string &csv_file_name) {
   if (column_name_list_.empty()) {
     // Actually we only deal with the first file, because the column name set in other files must remain the same
     if (!check_flag_) {
+      auto realpath = Common::GetRealPath(csv_file_name);
+      if (!realpath.has_value()) {
+        MS_LOG(ERROR) << "Get real path failed, path=" << csv_file_name;
+        RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + csv_file_name);
+      }
+
       std::string line;
-      std::ifstream handle(csv_file_name);
+      std::ifstream handle(realpath.value());
 
       getline(handle, line);
       std::vector<std::string> col_names = split(line, field_delim_);
@@ -757,8 +778,14 @@ bool CsvOp::ColumnNameValidate() {
   std::string match_file;
 
   for (auto &csv_file : csv_files_list_) {
+    auto realpath = Common::GetRealPath(csv_file);
+    if (!realpath.has_value()) {
+      MS_LOG(ERROR) << "Get real path failed, path=" << csv_file;
+      return false;
+    }
+
     std::string line;
-    std::ifstream handle(csv_file);
+    std::ifstream handle(realpath.value());
 
     // Parse the csv_file into column name set
     getline(handle, line);

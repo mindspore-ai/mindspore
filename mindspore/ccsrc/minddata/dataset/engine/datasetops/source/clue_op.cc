@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <utility>
 
+#include "debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
@@ -83,7 +84,13 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
 }
 
 Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  std::ifstream handle(file);
+  auto realpath = Common::GetRealPath(file);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
+  }
+
+  std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
@@ -223,7 +230,13 @@ Status ClueOp::CalculateNumRowsPerShard() {
 }
 
 int64_t CountTotalRowsPerFile(const std::string &file) {
-  std::ifstream handle(file);
+  auto realpath = Common::GetRealPath(file);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    return 0;
+  }
+
+  std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
     return 0;

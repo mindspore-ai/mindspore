@@ -20,7 +20,9 @@
 #include <sentencepiece_processor.h>
 #include <fstream>
 
+#include "debug/common.h"
 #include "utils/ms_utils.h"
+#include "utils/utils.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {
@@ -104,9 +106,17 @@ Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *
 #endif
 
   std::string abs_real_path = (Path(real_path) / Path(filename)).toString();
-  std::ofstream os_file(abs_real_path, std::ios::out);
+  auto realpath = Common::GetRealPath(abs_real_path);
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + abs_real_path);
+  }
+
+  std::ofstream os_file(realpath.value(), std::ios::out);
   (void)os_file.write(vocab->get()->model_proto().data(), vocab->get()->model_proto().size());
   os_file.close();
+
+  ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
+
   return Status::OK();
 }
 
