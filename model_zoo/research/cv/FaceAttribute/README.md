@@ -229,6 +229,42 @@ cd ./scripts
 sh run_export.sh [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 ```
 
+### Inference Process
+
+#### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`file_format` should be in ["AIR", "MINDIR"]
+`ckpt_path` ckpt file path
+
+#### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_Size for imagenet2012 dataset can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
+```
+
+- `MINDIR_PATH` specifies path of used "MINDIR" OR "AIR" model.
+- `DATASET_PATH` specifies path of cifar10 datasets
+- `DEVICE_ID` is optional, default value is 0.
+
+#### Result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+'age accuracy': 0.4937
+'gen accuracy': 0.9093
+'mask accuracy': 0.9903
+```
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
