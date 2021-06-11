@@ -195,12 +195,12 @@ def test_transformer():
     epoch_mseconds = np.array(time_monitor_callback.epoch_mseconds_list)[2]
     expect_epoch_mseconds = 2400
     print("epoch mseconds: {}".format(epoch_mseconds))
-    assert epoch_mseconds <= expect_epoch_mseconds + 20
+    assert epoch_mseconds <= expect_epoch_mseconds + 100
 
     per_step_mseconds = np.array(time_monitor_callback.per_step_mseconds_list)[2]
     expect_per_step_mseconds = 240
     print("per step mseconds: {}".format(per_step_mseconds))
-    assert per_step_mseconds <= expect_per_step_mseconds + 2
+    assert per_step_mseconds <= expect_per_step_mseconds + 10
 
 
 @pytest.mark.level1
