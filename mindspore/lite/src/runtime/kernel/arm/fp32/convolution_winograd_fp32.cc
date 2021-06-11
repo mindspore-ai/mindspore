@@ -191,7 +191,9 @@ int ConvolutionWinogradCPUKernel::ReSize() {
 int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->data_c());
+  MS_ASSERT(ori_input_data != nullptr);
   auto output_data = reinterpret_cast<float *>(out_tensors_.front()->data_c());
+  MS_ASSERT(output_data != nullptr);
   ConvWinogardFp32(ori_input_data, trans_weight_, reinterpret_cast<const float *>(bias_data_), output_data,
                    tmp_buffer_address_list_, task_id, conv_param_, in_func_, out_func_);
   return RET_OK;
@@ -215,7 +217,11 @@ int ConvolutionWinogradCPUKernel::Run() {
     return RET_ERROR;
   }
   if (IsTrain() && is_trainable()) {
-    InitWeightBias();
+    ret = InitWeightBias();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init weight bias failed.";
+      return RET_ERROR;
+    }
   }
 
   ret = static_cast<const lite::InnerContext *>(this->context_)
@@ -229,9 +235,17 @@ int ConvolutionWinogradCPUKernel::Run() {
 }
 
 int ConvolutionWinogradCPUKernel::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
+  }
   if (is_trainable()) {
-    InitWeightBias();
+    ret = InitWeightBias();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init weight bias failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

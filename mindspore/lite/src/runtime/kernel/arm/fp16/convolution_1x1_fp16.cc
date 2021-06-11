@@ -56,10 +56,18 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
   if ((matmul_param_->row_ > (row_tile_ * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
     multi_thread_by_hw_ = true;
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, row_tile_));
+    if (thread_count_ <= 0) {
+      MS_LOG(ERROR) << "thread_count_ must be greater than 0!";
+      return RET_ERROR;
+    }
     thread_stride_ = UP_DIV(UP_DIV(matmul_param_->row_, row_tile_), thread_count_) * row_tile_;
   } else {
     multi_thread_by_hw_ = false;
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, col_tile_));
+    if (thread_count_ <= 0) {
+      MS_LOG(ERROR) << "thread_count_ must be greater than 0!";
+      return RET_ERROR;
+    }
     thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, col_tile_), thread_count_) * col_tile_;
   }
 
@@ -212,6 +220,8 @@ static int Convolution1x1Fp16RunHw(void *cdata, int task_id, float lhs_scale, fl
 int Convolution1x1FP16CPUKernel::Run() {
   auto input_data = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_data = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(input_data != nullptr);
+  MS_ASSERT(output_data != nullptr);
   if (input_data == nullptr || output_data == nullptr) {
     MS_LOG(ERROR) << "Convolution1x1 Fp16 get null tensor data!";
     return RET_ERROR;

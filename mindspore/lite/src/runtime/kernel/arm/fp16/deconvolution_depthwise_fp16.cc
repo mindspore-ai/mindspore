@@ -73,6 +73,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
   auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
@@ -118,8 +119,12 @@ int DeconvolutionDepthwiseFp16CPUKernel::Init() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::ReSize() {
-  InitSlideParam();
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = InitSlideParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSlideParam failed!";
+    return ret;
+  }
+  ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
@@ -156,6 +161,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
 
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(input_ptr != nullptr);
+  MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "Deconvolution depthwise Fp16 get null tensor data!";
     return RET_ERROR;

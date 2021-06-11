@@ -265,7 +265,8 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
 
 int DeConvolutionWinogradCPUKernel::InitDataParam() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  float *nhwc_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  auto nhwc_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(nhwc_weight != nullptr);
 
   /* unit data : weight & winograd data */
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
@@ -286,6 +287,7 @@ int DeConvolutionWinogradCPUKernel::InitDataParam() {
   if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
       in_tensors_.at(kBiasIndex)->DimensionSize(0) == conv_param_->output_channel_) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
+    MS_ASSERT(bias_tensor->data_c() != nullptr);
     memcpy(bias_data_, bias_tensor->data_c(), conv_param_->output_channel_ * sizeof(float));
   }
   return RET_OK;
@@ -402,18 +404,29 @@ int DeConvolutionWinogradCPUKernel::Run() {
 
   float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
   float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
-
+  MS_ASSERT(src_in != nullptr);
+  MS_ASSERT(src_out != nullptr);
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     nhwc_input_ = src_in + batch_index * deconv_param_->input_plane_ * conv_param_->input_channel_;
     nhwc_output_ = src_out + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
 
     ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float));
-    static_cast<const lite::InnerContext *>(this->context_)
-      ->thread_pool_->ParallelLaunch(DeConvWgFp32Run, this, deconv_param_->thread_num_);
+    ret = static_cast<const lite::InnerContext *>(this->context_)
+            ->thread_pool_->ParallelLaunch(DeConvWgFp32Run, this, deconv_param_->thread_num_);
+    if (ret != RET_OK) {
+      FreeRunBuf();
+      MS_LOG(ERROR) << "DeConvWgFp32Run failed!";
+      return ret;
+    }
 
     /* post bias activate and nhwc */
-    static_cast<const lite::InnerContext *>(this->context_)
-      ->thread_pool_->ParallelLaunch(DeConvWgPostFp32Run, this, thread_num_hw_);
+    ret = static_cast<const lite::InnerContext *>(this->context_)
+            ->thread_pool_->ParallelLaunch(DeConvWgPostFp32Run, this, thread_num_hw_);
+    if (ret != RET_OK) {
+      FreeRunBuf();
+      MS_LOG(ERROR) << "DeConvWgPostFp32Run failed!";
+      return ret;
+    }
   }
 
   FreeRunBuf();

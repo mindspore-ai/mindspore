@@ -390,7 +390,11 @@ int MatmulFp32BaseCPUKernel::Run() {
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
-    InitMatrixA(a_ptr);
+    auto ret = InitMatrixA(a_ptr);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "InitMatrixA failed!";
+      return ret;
+    }
   }
   if (!params_->b_const_) {
     auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
@@ -398,7 +402,11 @@ int MatmulFp32BaseCPUKernel::Run() {
       FreeResizeBufA();
       return RET_ERROR;
     }
-    InitMatrixB(b_ptr);
+    auto ret = InitMatrixB(b_ptr);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "InitMatrixB failed!";
+      return ret;
+    }
   }
 
   auto ret = InitTmpOutBuffer();

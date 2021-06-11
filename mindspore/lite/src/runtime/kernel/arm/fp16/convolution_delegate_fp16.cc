@@ -56,6 +56,7 @@ void *ConvolutionDelegateFP16CPUKernel::CopyData(lite::Tensor *tensor) {
     MS_LOG(ERROR) << "Malloc copied_data failed.";
     return nullptr;
   }
+  MS_ASSERT(tensor->data_c() != nullptr);
   memcpy(copied_data, tensor->data_c(), tensor->Size());
   return copied_data;
 }
@@ -71,8 +72,10 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
     return RET_OK;
   }
   origin_weight_ = in_tensors_.at(kWeightIndex)->data_c();
+  MS_ASSERT(origin_weight_ != nullptr);
   if (in_tensors_.size() == 3) {
     origin_bias_ = in_tensors_.at(kBiasIndex)->data_c();
+    MS_ASSERT(origin_bias_ != nullptr);
   }
   return ReSize();
 }

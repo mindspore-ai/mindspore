@@ -116,6 +116,8 @@ int ConvolutionFP16CPUKernel::ReSize() {
 int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(input_ptr != nullptr);
+  MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "Convolution Fp16 get null tensor data!";
     return RET_ERROR;

@@ -40,7 +40,8 @@ ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() 
 int ConvolutionDepthwiseIndirectCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   int div_flag = C8NUM;
 #else
@@ -70,7 +71,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::InitWeightBias() {
 
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_[kBiasIndex];
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(bias_tensor->data_c());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   } else {
     memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
@@ -117,13 +118,21 @@ int ConvolutionDepthwiseIndirectCPUKernel::ReSize() {
     free(indirect_buffer_);
     indirect_buffer_ = nullptr;
   }
-  ConvolutionBaseCPUKernel::Init();
-  auto ret = MallocIndirectBuffer();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() return is:" << ret;
+    return ret;
+  }
+  ret = MallocIndirectBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionDepthwiseIndirect MallocIndirectBuffer failed";
     return RET_ERROR;
   }
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
+  if (conv_param_->thread_num_ <= 0) {
+    MS_LOG(ERROR) << "conv_param_->thread_num_ must be greater than 0!";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -162,6 +171,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocPackedInput() {
 int ConvolutionDepthwiseIndirectCPUKernel::Run() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
+  MS_ASSERT(input_ptr != nullptr);
 #ifdef ENABLE_AVX
   int div_flag = C8NUM;
 #else
@@ -190,7 +200,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
-
+  MS_ASSERT(output_ptr_ != nullptr);
   ConvDwInitIndirection(indirect_buffer_, packed_input_, zero_ptr_, conv_param_, step_h, step_w);
 
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
@@ -207,7 +217,8 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
 
 void ConvolutionDepthwiseIndirectCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_[kWeightIndex];
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   PackDepthwiseIndirectWeightC8Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
                                     weight_tensor->Batch());
@@ -218,7 +229,11 @@ void ConvolutionDepthwiseIndirectCPUKernel::PackWeight() {
 }
 
 int ConvolutionDepthwiseIndirectCPUKernel::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
+  }
   if (is_trainable()) {
     PackWeight();
   }

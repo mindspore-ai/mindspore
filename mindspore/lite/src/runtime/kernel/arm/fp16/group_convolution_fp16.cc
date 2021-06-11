@@ -27,6 +27,7 @@ int GroupConvolutionFP16CPUKernel::SeparateInput(int group_id) {
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
   auto sub_in_data = static_cast<lite::Tensor *>(group_convs_.at(group_id)->in_tensors().front())->data_c();
+  MS_ASSERT(sub_in_data != nullptr);
   auto in_data_type = in_tensors_.front()->data_type();
   auto sub_in_data_type = group_convs_.at(group_id)->in_tensors().front()->data_type();
   if (in_data_type != sub_in_data_type) {

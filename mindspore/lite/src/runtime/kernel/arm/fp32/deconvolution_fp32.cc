@@ -38,7 +38,11 @@ DeConvolutionCPUKernel::~DeConvolutionCPUKernel() {
 }
 
 int DeConvolutionCPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init error!";
+    return ret;
+  }
 
   int error_code = InitParam();
   if (error_code != RET_OK) {
@@ -64,7 +68,8 @@ int DeConvolutionCPUKernel::InitWeightBias() {
   if (in_tensors_.size() == 3) {
     if (in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
         in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
-      memcpy(bias_data_, in_tensors_.at(2)->MutableData(), output_channel * sizeof(float));
+      MS_ASSERT(in_tensors_.at(kBiasIndex)->data_c() != nullptr);
+      memcpy(bias_data_, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(float));
     } else {
       MS_LOG(ERROR) << "unsupported bias shape for deconv!";
       return RET_ERROR;
@@ -78,7 +83,8 @@ int DeConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, weight_pack_size);
-  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_.at(1)->MutableData()), weight_ptr_, input_channel,
+  MS_ASSERT(in_tensors_.at(kWeightIndex)->data_c() != nullptr);
+  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c()), weight_ptr_, input_channel,
                        kernel_w_ * kernel_h_, output_channel);
   return RET_OK;
 }
@@ -206,9 +212,10 @@ int DeConvolutionCPUKernel::InitRunBuf() {
 }
 
 int DeConvolutionCPUKernel::Run() {
-  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-
+  float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+  float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+  MS_ASSERT(src_in != nullptr);
+  MS_ASSERT(src_out != nullptr);
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv fp32 InitRunBuf error! error_code[" << error_code << "]";

@@ -106,10 +106,18 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
   if ((matmul_param_->row_ > (row_tile_ * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
     multi_thread_by_hw_ = true;
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->row_, row_tile_));
+    if (thread_count_ <= 0) {
+      MS_LOG(ERROR) << "thread_count_ must be greater than 0!";
+      return RET_ERROR;
+    }
     thread_stride_ = UP_DIV(UP_DIV(matmul_param_->row_, row_tile_), thread_count_) * row_tile_;
   } else {
     multi_thread_by_hw_ = false;
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(matmul_param_->col_, col_tile_));
+    if (thread_count_ <= 0) {
+      MS_LOG(ERROR) << "thread_count_ must be greater than 0!";
+      return RET_ERROR;
+    }
     thread_stride_ = UP_DIV(UP_DIV(matmul_param_->col_, col_tile_), thread_count_) * col_tile_;
   }
 
@@ -223,8 +231,10 @@ int Convolution1x1RunHw(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int Convolution1x1CPUKernel::Run() {
-  auto src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  auto src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+  auto src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+  MS_ASSERT(src_in != nullptr);
+  MS_ASSERT(src_out != nullptr);
   int pack_input_size = multi_thread_by_hw_ ? (thread_count_ * row_tile_ * matmul_param_->deep_)
                                             : (matmul_param_->row_align_ * matmul_param_->deep_);
   pack_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(pack_input_size * sizeof(float)));
@@ -270,20 +280,22 @@ void Convolution1x1CPUKernel::PackWeight() {
   int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
   int down_size = input_channel * DOWN_DIV(output_channel, col_tile_) * col_tile_ * sizeof(float);
   memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
+  MS_ASSERT(filter_tensor->data_c() != nullptr);
 #ifdef ENABLE_AVX
-  RowMajor2Col16Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
-                      input_channel);
+  RowMajor2Col16Major(reinterpret_cast<float *>(filter_tensor->data_c()), weight_ptr_, output_channel, input_channel);
 #elif defined(ENABLE_ARM32)
-  RowMajor2Col4Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
-                     input_channel);
+  RowMajor2Col4Major(reinterpret_cast<float *>(filter_tensor->data_c()), weight_ptr_, output_channel, input_channel);
 #else
-  RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
-                     input_channel);
+  RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->data_c()), weight_ptr_, output_channel, input_channel);
 #endif
 }
 
 int Convolution1x1CPUKernel::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "eval failed!";
+    return ret;
+  }
   if (is_trainable()) {
     PackWeight();
   }

@@ -36,6 +36,7 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
   auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight != nullptr);
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
@@ -84,6 +85,8 @@ int ConvolutionDepthwiseFp16CPUKernel::ReSize() {
 int ConvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(input_ptr != nullptr);
+  MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "Convolution depthwise Fp16 get null tensor data!";
     return RET_ERROR;
