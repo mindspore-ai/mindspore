@@ -56,6 +56,7 @@ constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kLog = "Log";
 
 constexpr auto kAdd = "Add";
+constexpr auto kBiasAdd = "BiasAdd";
 constexpr auto kTile = "Tile";
 constexpr auto kBiasAddGrad = "BiasAddGrad";
 
@@ -285,8 +286,8 @@ inline const PrimitivePtr kPrimDepthwiseConv2dNativeBackpropFilter =
 inline const PrimitivePtr kPrimDepthwiseConv2dNativeBackpropInput =
   std::make_shared<Primitive>("DepthwiseConv2dNativeBackpropInput");
 inline const PrimitivePtr kPrimDetectionPostProcess = std::make_shared<Primitive>("DetectionPostProcess");
-inline const PrimitivePtr kPrimBiasAdd = std::make_shared<Primitive>("BiasAdd");
 inline const PrimitivePtr kPrimBiasAddGrad = std::make_shared<Primitive>(kBiasAddGrad);
+inline const PrimitivePtr kPrimBiasAdd = std::make_shared<Primitive>(kBiasAdd);
 inline const PrimitivePtr kPrimBiasSubGrad = std::make_shared<Primitive>("BiasSubGrad");
 inline const PrimitivePtr kPrimBinaryCrossEntropy = std::make_shared<Primitive>("BinaryCrossEntropy");
 inline const PrimitivePtr kPrimBinaryCrossEntropyGrad = std::make_shared<Primitive>("BinaryCrossEntropyGrad");
