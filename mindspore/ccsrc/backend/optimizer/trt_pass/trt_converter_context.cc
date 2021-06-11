@@ -67,12 +67,12 @@ bool TrtConverterContext::Parser() {
     ConvertFunc convert_func = converter_factory.GetConvertFunc(op_name);
     auto result = convert_func(node, this->shared_from_this());
     if (!result.first) {
-      MS_LOG(ERROR) << op_name << " converter failed.";
+      MS_LOG(WARNING) << op_name << " converter failed.";
       return false;
     }
     auto ret = StoreLayerOutput(node, result.second);
     if (!ret) {
-      MS_LOG(ERROR) << op_name << " converter failed.";
+      MS_LOG(WARNING) << op_name << " converter failed.";
       return false;
     }
   }
@@ -198,13 +198,13 @@ bool TrtConverterContext::LoadLayerInput(const AnfNodePtr &node, std::vector<Lay
         inputs->push_back(*input);
         continue;
       }
-      MS_LOG(ERROR) << "node: " << node->DebugString() << " not found.";
+      MS_LOG(WARNING) << "node: " << node->DebugString() << " not found.";
       return false;
     }
 
     auto out_iter = node_iter->second.find(item.second);
     if (out_iter == node_iter->second.end()) {
-      MS_LOG(ERROR) << "node: " << node->DebugString() << "output index: " << item.second << " not found.";
+      MS_LOG(WARNING) << "node: " << node->DebugString() << "output index: " << item.second << " not found.";
       return false;
     }
 

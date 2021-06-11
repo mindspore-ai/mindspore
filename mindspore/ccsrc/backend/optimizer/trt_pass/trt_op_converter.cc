@@ -30,7 +30,7 @@ nvinfer1::ITensor *ToShape(LayerInput *input, const std::vector<size_t> &shape,
   MS_EXCEPTION_IF_NULL(context);
 
   if (!input->IsTensor()) {
-    MS_LOG(ERROR) << "Expect Tensor but got weight";
+    MS_LOG(WARNING) << "Expect Tensor but got weight";
     return nullptr;
   }
 
@@ -65,7 +65,7 @@ ConvertResult AddReshapeLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -83,7 +83,7 @@ ConvertResult AddElementLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
@@ -129,13 +129,13 @@ ConvertResult AddPoolingLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
   const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
   if (format != "NCHW") {
-    MS_LOG(ERROR) << "The format: " << format << " not supported.";
+    MS_LOG(WARNING) << "The format: " << format << " not supported.";
     return {false, {}};
   }
 
@@ -161,7 +161,7 @@ ConvertResult AddActivationLayer(AnfNodePtr node, std::shared_ptr<TrtConverterCo
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -176,7 +176,7 @@ ConvertResult AddUnaryLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
@@ -191,7 +191,7 @@ ConvertResult AddReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContex
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
@@ -256,13 +256,13 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2D) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2 || !inputs[0].IsTensor() || !inputs[1].IsWeight()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
   const auto &data_format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
   if (data_format != "NCHW") {
-    MS_LOG(ERROR) << "The format: " << data_format << " not supported.";
+    MS_LOG(WARNING) << "The format: " << data_format << " not supported.";
     return {false, {}};
   }
 
@@ -350,7 +350,7 @@ MS_TRT_CONVERTER_FUNC_REG(ReLU6) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -385,7 +385,7 @@ MS_TRT_CONVERTER_FUNC_REG(GeLU) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -436,7 +436,7 @@ MS_TRT_CONVERTER_FUNC_REG(HSigmoid) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -477,7 +477,7 @@ MS_TRT_CONVERTER_FUNC_REG(HSwish) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -520,7 +520,7 @@ MS_TRT_CONVERTER_FUNC_REG(MatMul) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
@@ -566,7 +566,7 @@ MS_TRT_CONVERTER_FUNC_REG(BatchMatMul) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
@@ -589,7 +589,7 @@ MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -598,7 +598,7 @@ MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
   const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
   const string::size_type &pos = format.find("C");
   if (pos == std::string::npos || pos >= x_shape.size()) {
-    MS_LOG(ERROR) << "The format " << format << "' invalid";
+    MS_LOG(WARNING) << "The format " << format << "' invalid";
     return {false, {}};
   }
 
@@ -625,7 +625,7 @@ MS_TRT_CONVERTER_FUNC_REG(BatchNorm) {
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 5 || !inputs[0].IsTensor() || !inputs[1].IsWeight() || !inputs[2].IsWeight() ||
       !inputs[3].IsWeight() || !inputs[4].IsWeight()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -633,13 +633,13 @@ MS_TRT_CONVERTER_FUNC_REG(BatchNorm) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto is_training = AnfAlgo::GetNodeAttr<bool>(node, "is_training");
   if (is_training != false) {
-    MS_LOG(ERROR) << "Operation not support, is_training: " << is_training;
+    MS_LOG(WARNING) << "Operation not support, is_training: " << is_training;
     return {false, {}};
   }
 
   const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
   if (format != "NCHW") {
-    MS_LOG(ERROR) << "The format " << format << "' invalid";
+    MS_LOG(WARNING) << "The format " << format << "' invalid";
     return {false, {}};
   }
 
@@ -679,14 +679,14 @@ MS_TRT_CONVERTER_FUNC_REG(Concat) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() == 0) {
-    MS_LOG(ERROR) << "Get inputs failed. Input num: " << inputs.size();
+    MS_LOG(WARNING) << "Get inputs failed. Input num: " << inputs.size();
     return {false, {}};
   }
 
   std::vector<nvinfer1::ITensor *> tensors;
   for (const auto &input : inputs) {
     if (input.IsWeight()) {
-      MS_LOG(ERROR) << "Concat input do not support weight.";
+      MS_LOG(WARNING) << "Concat input do not support weight.";
       return {false, {}};
     }
     tensors.push_back(input.tensor());
@@ -709,13 +709,13 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2DBackpropInput) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2 || !inputs[0].IsTensor() || !inputs[1].IsWeight()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
   const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
   if (format != "NCHW") {
-    MS_LOG(ERROR) << "The format: " << format << " not supported.";
+    MS_LOG(WARNING) << "The format: " << format << " not supported.";
     return {false, {}};
   }
 
@@ -750,7 +750,7 @@ MS_TRT_CONVERTER_FUNC_REG(Slice) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -774,7 +774,7 @@ MS_TRT_CONVERTER_FUNC_REG(Transpose) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -795,7 +795,7 @@ MS_TRT_CONVERTER_FUNC_REG(Softmax) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -805,7 +805,7 @@ MS_TRT_CONVERTER_FUNC_REG(Softmax) {
   if (value->isa<ValueTuple>() || value->isa<ValueList>()) {
     const auto &axis = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "axis");
     if (axis.size() != 1) {
-      MS_LOG(ERROR) << "Only one axis can be set. Axis size" << axis.size();
+      MS_LOG(WARNING) << "Only one axis can be set. Axis size" << axis.size();
       return {false, {}};
     }
     int offset = axis[0] >= 0 ? LongToInt(axis[0]) : LongToInt(axis[0] + input_shape.size());
@@ -826,7 +826,7 @@ MS_TRT_CONVERTER_FUNC_REG(LogSoftmax) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 1 expected.";
     return {false, {}};
   }
 
@@ -849,7 +849,7 @@ MS_TRT_CONVERTER_FUNC_REG(Gather) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 2) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
+    MS_LOG(WARNING) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
@@ -871,7 +871,7 @@ MS_TRT_CONVERTER_FUNC_REG(Cast) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 1) {
-    MS_LOG(ERROR) << "Get inputs failed. Input num: " << inputs.size();
+    MS_LOG(WARNING) << "Get inputs failed. Input num: " << inputs.size();
     return {false, {}};
   }
 
@@ -896,7 +896,7 @@ MS_TRT_CONVERTER_FUNC_REG(LayerNorm) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
   if (!ret || inputs.size() != 3 || !inputs[0].IsTensor()) {
-    MS_LOG(ERROR) << "Get inputs failed. Input num: " << inputs.size();
+    MS_LOG(WARNING) << "Get inputs failed. Input num: " << inputs.size();
     return {false, {}};
   }
 
