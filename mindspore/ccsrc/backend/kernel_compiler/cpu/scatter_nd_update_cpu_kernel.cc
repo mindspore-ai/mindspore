@@ -31,7 +31,7 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
   std::vector<int> *out_strides = params->out_strides_;
   MS_EXCEPTION_IF_NULL(out_strides);
 
-  for (size_t i = start; i < end; ++i) {
+  for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
     int offset = 0;
     for (int j = 0; j < params->indices_unit_rank_; ++j) {
       auto index = indices[i * params->indices_unit_rank_ + j];
