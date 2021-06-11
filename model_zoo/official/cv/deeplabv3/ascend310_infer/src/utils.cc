@@ -43,6 +43,25 @@ std::vector<std::string> GetAllFiles(std::string_view dirName) {
   return res;
 }
 
+std::vector<std::string> GetImagesById(const std::string &idFile, const std::string &dirName) {
+    std::ifstream readFile(idFile);
+    std::string line;
+    std::vector<std::string> result;
+
+    if (!readFile.is_open()) {
+        std::cout << "can not open image id txt file" << std::endl;
+        return result;
+    }
+
+    while (getline(readFile, line)) {
+        std::size_t pos = line.find(" ");
+        std::string id = line.substr(0, pos);
+        result.emplace_back(dirName + "/" + id);
+    }
+
+    return result;
+}
+
 int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
   std::string homePath = "./result_Files";
   for (size_t i = 0; i < outputs.size(); ++i) {

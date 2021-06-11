@@ -51,6 +51,7 @@ using mindspore::dataset::vision::Decode;
 
 
 DEFINE_string(mindir_path, "", "mindir path");
+DEFINE_string(image_list, "", "image list");
 DEFINE_string(dataset_path, ".", "dataset path");
 DEFINE_string(fusion_switch_path, ".", "fusion switch path");
 DEFINE_int32(device_id, 0, "device id");
@@ -149,7 +150,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  auto all_files = GetAllFiles(FLAGS_dataset_path);
+  auto all_files = GetImagesById(FLAGS_image_list, FLAGS_dataset_path);
   if (all_files.empty()) {
   std::cout << "ERROR: no input data." << std::endl;
   return 1;
