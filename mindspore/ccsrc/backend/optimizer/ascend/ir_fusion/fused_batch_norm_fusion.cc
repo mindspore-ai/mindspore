@@ -228,7 +228,11 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
     MS_EXCEPTION_IF_NULL(index_node);
     auto value_node = index_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    auto index = GetValue<int64_t>(value_node->value());
+    auto value_index = GetValue<int64_t>(value_node->value());
+    if (value_index < 0) {
+      MS_LOG(EXCEPTION) << "Error value index: " << value_index;
+    }
+    auto index = LongToSize(value_index);
     if (index == kReplaceOutputIndex0 || index == kReplaceOutputIndex1) {
       (void)manager->Replace(output, bn_training_update_outputs[index]);
     }

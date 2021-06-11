@@ -77,9 +77,11 @@ ValueNodePtr CreateValueNode(const AnfNodePtr &node) {
   tensor::TensorPtr filter_tensor = CreateTensor(node);
   MS_EXCEPTION_IF_NULL(filter_tensor);
   auto assist_const = std::make_shared<ValueNode>(filter_tensor);
+  MS_EXCEPTION_IF_NULL(assist_const);
   auto assist_abstract = filter_tensor->ToAbstract();
   assist_const->set_abstract(assist_abstract);
   auto assist_kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(assist_kernel_info);
   assist_const->set_kernel_info(assist_kernel_info);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder op_builder;
   op_builder.SetOutputsFormat({kOpFormat_NC1HWC0});
@@ -114,16 +116,16 @@ const AnfNodePtr SpaceToDepthSplit::Process(const FuncGraphPtr &graph, const Anf
   }
 
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kSpaceToDepthOpName))};
-  auto assist_const = CreateValueNode(cnode);
-  new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
-  new_inputs.push_back(assist_const);
+  auto last_input_value = CreateValueNode(cnode);
+  (void)new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_inputs.emplace_back(last_input_value);
   CNodePtr new_cnode = graph->NewCNode(new_inputs);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
   AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
   if (kernel_graph != nullptr) {
-    kernel_graph->AddValueNodeToGraph(assist_const);
+    kernel_graph->AddValueNodeToGraph(last_input_value);
     MS_LOG(INFO) << "Split SpaceToDepth op success.";
   }
   return new_cnode;
