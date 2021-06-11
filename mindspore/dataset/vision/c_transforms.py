@@ -103,12 +103,13 @@ def parse_padding(padding):
 
 class AutoContrast(ImageTensorOperation):
     """
-    Apply automatic contrast on input image.
+    Apply automatic contrast on input image. This operator calculates histogram of image, reassign cutoff percent
+    of lightest pixels from histogram to 255, and reassign cutoff percent of darkest pixels from histogram to 0.
 
     Args:
-        cutoff (float, optional): Percent of pixels to cut off from the histogram,
-            the value must be in the range [0.0, 50.0) (default=0.0).
-        ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
+        cutoff (float, optional): Percent of lightest and darkest pixels to cut off from
+            the histogram of input image. the value must be in the range [0.0, 50.0) (default=0.0).
+        ignore (Union[int, sequence], optional): The background pixel values to ignore (default=None).
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
@@ -134,7 +135,7 @@ class BoundingBoxAugment(ImageTensorOperation):
     Apply a given image transform on a random selection of bounding box regions of a given image.
 
     Args:
-        transform: C++ transformation function to be applied on random selection
+        transform: C++ transformation operator to be applied on random selection
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
             Range: [0, 1] (default=0.3).
@@ -164,7 +165,8 @@ class BoundingBoxAugment(ImageTensorOperation):
 
 class CenterCrop(ImageTensorOperation):
     """
-    Crop the input image at the center to the given size.
+    Crop the input image at the center to the given size. If input image size is smaller than output size,
+    input image will be padded with 0 before cropping.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
@@ -225,7 +227,7 @@ class Crop(ImageTensorOperation):
 class CutMixBatch(ImageTensorOperation):
     """
     Apply CutMix transformation on input batch of images and labels.
-    Note that you need to make labels into one-hot format and batch before calling this function.
+    Note that you need to make labels into one-hot format and batched before calling this operator.
 
     Args:
         image_batch_format (Image Batch Format): The method of padding. Can be any of
@@ -256,7 +258,7 @@ class CutMixBatch(ImageTensorOperation):
 
 class CutOut(ImageTensorOperation):
     """
-    Randomly cut (mask) out a given number of square patches from the input NumPy image array.
+    Randomly cut (mask) out a given number of square patches from the input image array.
 
     Args:
         length (int): The side length of each square patch.
@@ -279,7 +281,7 @@ class CutOut(ImageTensorOperation):
 
 class Decode(ImageTensorOperation):
     """
-    Decode the input image in RGB mode.
+    Decode the input image in RGB mode(default) or BGR mode(deprecated).
 
     Args:
         rgb (bool, optional): Mode of decoding input image (default=True).
@@ -377,7 +379,7 @@ class HorizontalFlip(ImageTensorOperation):
 
 class HWC2CHW(ImageTensorOperation):
     """
-    Transpose the input image; shape (H, W, C) to shape (C, H, W).
+    Transpose the input image from shape (H, W, C) to shape (C, H, W). The input image should be 3 channels image.
 
     Examples:
         >>> transforms_list = [c_vision.Decode(),
@@ -394,7 +396,7 @@ class HWC2CHW(ImageTensorOperation):
 
 class Invert(ImageTensorOperation):
     """
-    Apply invert on input image in RGB mode.
+    Apply invert on input image in RGB mode. This operator will reassign every pixel to (255 - pixel).
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.Invert()]
@@ -411,7 +413,7 @@ class MixUpBatch(ImageTensorOperation):
     Apply MixUp transformation on input batch of images and labels. Each image is
     multiplied by a random weight (lambda) and then added to a randomly selected image from the batch
     multiplied by (1 - lambda). The same formula is also applied to the one-hot labels.
-    Note that you need to make labels into one-hot format and batch before calling this function.
+    Note that you need to make labels into one-hot format and batched before calling this operator.
 
     Args:
         alpha (float, optional): Hyperparameter of beta distribution (default = 1.0).
@@ -436,7 +438,8 @@ class MixUpBatch(ImageTensorOperation):
 
 class Normalize(ImageTensorOperation):
     """
-    Normalize the input image with respect to mean and standard deviation.
+    Normalize the input image with respect to mean and standard deviation. This operator will normalize
+    the input image with: output = (input - mean) / std.
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
@@ -727,8 +730,8 @@ class RandomColorAdjust(ImageTensorOperation):
 
 class RandomCrop(ImageTensorOperation):
     """
-    Crop the input image at a random location.
-
+    Crop the input image at a random location. If input image size is smaller than output size,
+    input image will be padded before cropping.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
@@ -793,17 +796,18 @@ class RandomCrop(ImageTensorOperation):
 
 class RandomCropDecodeResize(ImageTensorOperation):
     """
-    A combination of `Crop`, `Decode` and `Resize`. It will get better performance for JPEG images.
+    A combination of `Crop`, `Decode` and `Resize`. It will get better performance for JPEG images. This operator
+    will crop the input image at a random location, decode the cropped image in RGB mode, and resize the decoded image.
 
     Args:
-        size (Union[int, sequence]): The size of the output image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (list, tuple, optional): Range [min, max) of respective size of the
             original size to be cropped (default=(0.08, 1.0)).
         ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
             cropped (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
+        interpolation (Inter mode, optional): Image interpolation mode for resize operator(default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
@@ -939,7 +943,7 @@ class RandomHorizontalFlip(ImageTensorOperation):
 
 class RandomHorizontalFlipWithBBox(ImageTensorOperation):
     """
-    Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
+    Flip the input image horizontally randomly with a given probability and adjust bounding boxes accordingly.
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
@@ -960,7 +964,7 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
 
 class RandomPosterize(ImageTensorOperation):
     """
-    Reduce the number of bits for each color channel.
+    Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
     Args:
         bits (sequence or int, optional): Range of random posterize to compress image.
@@ -988,17 +992,18 @@ class RandomPosterize(ImageTensorOperation):
 
 class RandomResizedCrop(ImageTensorOperation):
     """
-    Crop the input image to a random size and aspect ratio.
+    Crop the input image to a random size and aspect ratio. This operator will crop the input image randomly, and
+    resize the cropped image using a selected interpolation mode.
 
     Args:
-        size (Union[int, sequence]): The size of the output image.
+        size (Union[int, sequence]): The output size of the resized image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         scale (list, tuple, optional): Range [min, max) of respective size of the original
             size to be cropped (default=(0.08, 1.0)).
         ratio (list, tuple, optional): Range [min, max) of aspect ratio to be cropped
             (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
+        interpolation (Inter mode, optional): Image interpolation mode for resize operator (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
@@ -1091,7 +1096,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
 class RandomResize(ImageTensorOperation):
     """
-    Tensor operation to resize the input image using a randomly selected interpolation mode.
+    Resize the input image using a randomly selected interpolation mode.
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
@@ -1354,7 +1359,8 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
 
 class Rescale(ImageTensorOperation):
     """
-    Tensor operation to rescale the input image.
+    Rescale the input image with the given rescale and shift. This operator will rescale the input image
+    with: output = (image + rescale) / shift.
 
     Args:
         rescale (float): Rescale factor.
@@ -1377,7 +1383,7 @@ class Rescale(ImageTensorOperation):
 
 class Resize(ImageTensorOperation):
     """
-    Resize the input image to the given size.
+    Resize the input image to the given size with a given interpolation mode.
 
     Args:
         size (Union[int, sequence]): The output size of the resized image.
@@ -1518,8 +1524,7 @@ class Rotate(ImageTensorOperation):
 
 class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     """
-    Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
-    Ascend series chip DVPP module.
+    A combination of `Crop`, `Decode` and `Resize` using the simulation algorithm of Ascend series chip DVPP module.
 
     The usage scenario is consistent with SoftDvppDecodeResizeJpeg.
     The input image size should be in range [32*32, 8192*8192].
@@ -1563,8 +1568,7 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
 
 class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
     """
-    Tensor operation to decode and resize JPEG image using the simulation algorithm of
-    Ascend series chip DVPP module.
+    Decode and resize JPEG image using the simulation algorithm of Ascend series chip DVPP module.
 
     It is recommended to use this algorithm in the following scenarios:
     When training, the DVPP of the Ascend chip is not used,
@@ -1603,7 +1607,7 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
 
 class UniformAugment(ImageTensorOperation):
     """
-    Tensor operation to perform randomly selected augmentation.
+    Perform randomly selected augmentation on input image.
 
     Args:
         transforms: List of C++ operations (Python operations are not accepted).
