@@ -63,12 +63,12 @@ if __name__ == "__main__":
     parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
                         help='device_target')
     parser.add_argument('--file_name', type=str, default='FaceRecognitionForTracking', help='output file name')
-    parser.add_argument('--file_format', type=str, choices=['AIR', 'ONNX', 'MINDIR'], default='AIR', help='file format')
+    parser.add_argument('--file_format', type=str, choices=['AIR', 'MINDIR'], default='AIR', help='file format')
 
     arg = parser.parse_args()
 
     if arg.device_target == 'Ascend':
-        devid = int(os.getenv('DEVICE_ID'))
+        devid = int(os.getenv('DEVICE_ID', '0'))
         context.set_context(device_id=devid)
 
     context.set_context(mode=context.GRAPH_MODE, device_target=arg.device_target)

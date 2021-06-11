@@ -73,6 +73,7 @@ The entire code structure is as following:
 .
 └─ Face Recognition For Tracking
   ├─ README.md
+  ├─ ascend310_infer                        # application for 310 inference
   ├─ scripts
     ├─ run_standalone_train.sh              # launch standalone training(1p) in ascend
     ├─ run_distribute_train.sh              # launch distributed training(8p) in ascend
@@ -84,6 +85,7 @@ The entire code structure is as following:
     ├─ run_export_gpu.sh                    # launch exporting mindir model in gpu
     ├─ run_train_cpu.sh                     # launch standalone training in cpu
     ├─ run_eval_cpu.sh                      # launch evaluating in cpu
+    ├─ run_infer_310.sh                     # launch inference on Ascend310
     └─ run_export_cpu.sh                    # launch exporting mindir model in cpu
   ├─ src
     ├─ config.py                            # parameter configuration
@@ -95,6 +97,8 @@ The entire code structure is as following:
     └─ me_init.py                           # network initialization
   ├─ train.py                               # training scripts
   ├─ eval.py                                # evaluation scripts
+  ├─ postprocess.py                         # postprocess script
+  ├─ preprocess.py                          # preprocess script
   └─ export.py                              # export air/mindir model
 ```
 
@@ -251,9 +255,11 @@ You will get the result as following in "./scripts/device0/eval.log" or txt file
 1e-05: 0.035770748447963394@0.5053771466191392
 ```
 
-### Convert model
+### Inference process
 
-If you want to infer the network on Ascend 310, you should convert the model to AIR:
+#### Convert model
+
+If you want to infer the network on Ascend 310, you should convert the model to MINDIR or AIR:
 
 ```bash
 Ascend:
@@ -276,6 +282,42 @@ CPU:
 
 cd ./scripts
 sh run_export_cpu.sh [PRETRAINED_BACKBONE] [BATCH_SIZE] [FILE_NAME](optional)
+```
+
+Export MINDIR:
+
+```shell
+# Ascend310 inference
+python export.py --pretrained [PRETRAIN] --batch_size [BATCH_SIZE] --file_format [EXPORT_FORMAT]
+```
+
+The pretrained parameter is required.
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+Current batch_size can only be set to 1.
+
+#### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+- `DEVICE_ID` is optional, default value is 0.
+
+#### result
+
+Inference result is saved in current path, you can find result like this in recall.log file.
+
+```bash
+0.5: 0.9096926774720119@0.012683006512816064
+0.3: 0.8121103841852932@0.06735802651382983
+0.1: 0.5893883112042262@0.147308789767686
+0.01: 0.25512525545944137@0.2586851498649049754
+0.001: 0.10664387347206335@0.341498649049754
+0.0001: 0.054125268312746624@0.41116268460973515
+1e-05: 0.03846994254572563@0.47234829963417724
 ```
 
 # [Model Description](#contents)
@@ -312,6 +354,20 @@ sh run_export_cpu.sh [PRETRAINED_BACKBONE] [BATCH_SIZE] [FILE_NAME](optional)
 | outputs             | recall                      | recall                      |recall                      |
 | Recall       | 0.62(FAR=0.1)               | 0.62(FAR=0.1)               | 0.62(FAR=0.1)               |
 | Model for inference | 17M (.ckpt file)            | 17M (.ckpt file)            | 17M (.ckpt file)            |
+
+### Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | FaceRecognitionForTracking  |
+| Resource            | Ascend 310; Euler2.8        |
+| Uploaded Date       | 11/06/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | 2K images                   |
+| batch_size          | 1                           |
+| outputs             | recall                      |
+| Recall              | 0.589(FAR=0.1)               |
+| Model for inference | 17M(.ckpt file)             |
 
 # [ModelZoo Homepage](#contents)
 
