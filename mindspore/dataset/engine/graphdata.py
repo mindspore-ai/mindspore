@@ -202,62 +202,111 @@ class GraphData:
     def get_all_neighbors(self, node_list, neighbor_type, output_format=OutputFormat.NORMAL):
         """
         Get `neighbor_type` neighbors of the nodes in `node_list`.
+        We try to use the following example to illustrate the definition of these formats. 1 represents connected
+            between two nodes, and 0 represents not connected.
+        .. list-table:: Adjacent Matrix
+        :widths: 20 20 20 20 20
+        :header-rows: 1
+
+        * -
+          - 0
+          - 1
+          - 2
+          - 3
+        * - 0
+          - 0
+          - 1
+          - 0
+          - 0
+        * - 1
+          - 0
+          - 0
+          - 1
+          - 0
+        * - 2
+          - 1
+          - 0
+          - 0
+          - 1
+        * - 3
+          - 1
+          - 0
+          - 0
+          - 0
+
+        .. list-table:: Normal Format
+        :widths: 20 20 20 20 20
+        :header-rows: 1
+
+        * - src
+          - 0
+          - 1
+          - 2
+          - 3
+        * - dst_0
+          - 1
+          - 2
+          - 0
+          - 1
+        * - dst_1
+          - -1
+          - -1
+          - 3
+          - -1
+
+        .. list-table:: COO Format
+        :widths: 20 20 20 20 20 20
+        :header-rows: 1
+
+        * - src
+          - 0
+          - 1
+          - 2
+          - 2
+          - 3
+        * - dst
+          - 1
+          - 2
+          - 0
+          - 3
+          - 1
+
+        .. list-table:: CSR Format
+        :widths: 40 20 20 20 20 20
+        :header-rows: 1
+
+        * - offsetTable
+          - 0
+          - 1
+          - 2
+          - 4
+          -
+        * - dstTable
+          - 1
+          - 2
+          - 0
+          - 3
+          - 1
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (int): Specify the type of neighbor.
             output_format (OutputFormat, optional): Output storage format (default=OutputFormat.NORMAL)
-                It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
+            It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
 
         Returns:
             For NORMAL format or COO format
-            numpy.ndarray, array of neighbors.
-            If CSR format is specified, two numpy.ndarrays will return.
-            The first is offset table, the second is neighbors
+            numpy.ndarray which represents the array of neighbors will return.
+            As if CSR format is specified, two numpy.ndarrays will return.
+            The first one is offset table, the second one is neighbors
 
         Examples:
-            We try to use the following example to illustrate the definition of these formats. 1 represents connected
-            between two nodes, and 0 represents not connected.
-            Raw Data:
-                0   1   2   3
-            0   0   1   0   0
-            1   0   0   1   0
-            2   1   0   0   1
-            3   1   0   0   0
-
-            Normal format
             >>> nodes = graph_dataset.get_all_nodes(node_type=1)
             >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2)
-            NORMAL:
-                dst_0   dst_1
-            0     1       -1
-            1     2       -1
-            2     0       3
-            3     1       -1
-
-            COO format
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
             >>> neighbors_coo = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
                                                                 output_format=OutputFormat.COO)
-            COO:
-            src     dst
-            0       1
-            1       2
-            2       0
-            2       3
-            3       1
-
-            CSR format
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
             >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
                                                                               output_format=OutputFormat.CSR)
-            CSR:
-            offset table:           dst table:
-            0                       1
-            1                       2
-            2                       0
-            4                       3
-                                    1
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.

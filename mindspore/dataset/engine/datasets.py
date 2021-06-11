@@ -222,7 +222,7 @@ class Dataset:
 
     def create_ir_tree(self):
         """
-        Internal method to create an IR tree.
+        Internal method to build an IR tree.
 
         Returns:
             DatasetNode, the root node of the IR tree.
@@ -240,7 +240,8 @@ class Dataset:
 
     def close_pool(self):
         """
-        Close multiprocessing pool in dataset.
+        Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
+        as a deconstructor for a processingPool object.
         """
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
@@ -346,10 +347,10 @@ class Dataset:
         they are full.
 
         A length function is called on each row in the dataset. The row is then
-        bucketed based on its length and bucket_boundaries. When a bucket reaches its
+        bucketed based on its length and bucket boundaries. When a bucket reaches its
         corresponding size specified in bucket_batch_sizes, the entire bucket will be
-        padded according to batch_info, and then batched. Each batch will be full,
-        except for maybe the last batch for each bucket.
+        padded according to batch_info, and then form a batch.
+        Each batch will be full, except one special case: the last batch for each bucket may not be full.
 
         Args:
             column_names (list[str]): Columns passed to element_length_function.
@@ -357,14 +358,14 @@ class Dataset:
                 of the buckets. Must be strictly increasing. If there are n boundaries,
                 n+1 buckets are created: One bucket for [0, bucket_boundaries[0]), one
                 bucket for [bucket_boundaries[i], bucket_boundaries[i+1]) for each
-                0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
+                0<i<n-1, and last bucket for [bucket_boundaries[n-1], inf).
             bucket_batch_sizes (list[int]): A list consisting of the batch sizes for
                 each bucket. Must contain len(bucket_boundaries)+1 elements.
             element_length_function (Callable, optional): A function that takes in
-                len(column_names) arguments and returns an int. If no value is
-                provided, then len(column_names) must be 1, and the size of the first
+                M arguments where M = len(column_names) and returns an integer. If no value
+                provided, parameter M the len(column_names) must be 1, and the size of the first
                 dimension of that column will be taken as the length (default=None).
-            pad_info (dict, optional): Represents how to batch each column. The key
+            pad_info (dict, optional): The information about how to batch each column. The key
                 corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
                 element corresponds to the value to pad with. If a column is not
@@ -421,16 +422,17 @@ class Dataset:
 
         Note:
             The order of using repeat and batch reflects the number of batches and per_batch_map.
-            It is recommended that the repeat operation be used after the batch operation.
+            It is recommended that the repeat operation applied after the batch operation finished.
 
         Args:
             batch_size (int or function): The number of rows each batch is created with. An
-                int or callable which takes exactly 1 parameter, BatchInfo.
-            drop_remainder (bool, optional): Determines whether or not to drop the last
-                possibly incomplete batch (default=False). If True, and if there are less
+                int or callable object which takes exactly 1 parameter, BatchInfo.
+            drop_remainder (bool, optional): Determines whether or not to drop the last block
+                whose data row number is less than batch size (default=False). If True, and if there are less
                 than batch_size rows available to make the last batch, then those rows will
                 be dropped and not propagated to the child node.
-            num_parallel_workers (int, optional): Number of workers to process the dataset in parallel (default=None).
+            num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
+                (default=None).
             per_batch_map (callable, optional): Per batch map callable. A callable which takes
                 (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch
                 of Tensors on a given column. The number of lists should match with number of entries in input_columns.
@@ -445,7 +447,7 @@ class Dataset:
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
             column_order (Union[str, list[str]], optional): List of all the desired columns to propagate to
-                the child node. This list must be a subset of all the columns in the dataset after
+                the child node. This list must be a permutation of all the columns in the dataset after
                 all operations are applied. The order of the columns in each row propagated to the
                 child node follow the order they appear in this list. The parameter is mandatory
                 if the len(input_columns) != len(output_columns). (default=None, all columns
@@ -453,8 +455,8 @@ class Dataset:
                 same).
             pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
                 would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
-            python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with multiple worker
-             processes. This option could be beneficial if the function is computational heavy (default=False).
+            python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with multi-processing.
+                This option could be beneficial if the function is computational heavy (default=False).
 
         Returns:
             BatchDataset, dataset batched.
@@ -482,7 +484,7 @@ class Dataset:
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
         """
-        Add a blocking condition to the input Dataset.
+        Add a blocking condition to the input Dataset. A synchronize action will be applied.
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
@@ -530,7 +532,7 @@ class Dataset:
     @check_shuffle
     def shuffle(self, buffer_size):
         """
-        Randomly shuffles the rows of this dataset using the following algorithm:
+        Randomly shuffles the rows of this dataset using the following policy:
 
         1. Make a shuffle buffer that contains the first buffer_size rows.
         2. Randomly select an element from the shuffle buffer to be the next row
@@ -538,7 +540,7 @@ class Dataset:
         3. Get the next row (if any) from the parent node and put it in the shuffle buffer.
         4. Repeat steps 2 and 3 until there are no more rows left in the shuffle buffer.
 
-        A seed can be provided to be used on the first epoch. In every subsequent
+        A random seed can be provided to be used on the first epoch. In every subsequent
         epoch, the seed is changed to a new one, randomly generated value.
 
         Args:
@@ -753,10 +755,10 @@ class Dataset:
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=None):
         """
-        Filter dataset by predicate.
+        Filter dataset by prediction.
 
         Note:
-             If input_columns not provided or empty, all columns will be used.
+             If input_columns not provided or provided with empty, all columns will be used.
 
         Args:
             predicate (callable): Python callable which returns a boolean value. If False then filter the element.
@@ -778,7 +780,7 @@ class Dataset:
     @check_repeat
     def repeat(self, count=None):
         """
-        Repeat this dataset count times. Repeat indefinitely if the count is None or -1.
+        Repeat this dataset N times where N = count. Repeat stochastically if the count is None or -1.
 
         Note:
             The order of using repeat and batch reflects the number of batches. It is recommended that
@@ -788,7 +790,7 @@ class Dataset:
             errors could occur since the amount of data is not the amount training requires.
 
         Args:
-            count (int): Number of times the dataset is repeated (default=None).
+            count (int): Number of times the dataset is going to be repeated (default=None).
 
         Returns:
             RepeatDataset, dataset repeated.
@@ -919,18 +921,19 @@ class Dataset:
         Args:
             sizes (Union[list[int], list[float]]): If a list of integers [s1, s2, …, sn] is
                 provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
-                respectively. If the sum of all sizes does not equal the original dataset size, an
-                error will occur.
+                respectively. If the sum of all input sizes does not equal the original dataset size, an
+                error will throw.
                 If a list of floats [f1, f2, …, fn] is provided, all floats must be between 0 and 1
-                and must sum to 1, otherwise an error will occur. The dataset will be split into n
+                and must sum to 1, otherwise an error will throw. The dataset will be split into n
                 Datasets of size round(f1*K), round(f2*K), …, round(fn*K) where K is the size of the
                 original dataset.
                 If after rounding:
 
                 - Any size equals 0, an error will occur.
-                - The sum of split sizes < K, the difference will be added to the first split.
-                - The sum of split sizes > K, the difference will be removed from the first large
-                  enough split such that it will have at least 1 row after removing the difference.
+                - The sum of split sizes < K, the difference of K - sigma(round(fi * k)) will be added to the first
+                split.
+                - The sum of split sizes > K, the difference of sigma(round(fi * K)) - K will be removed from the first
+                large enough split such that it will have at least 1 row after removing the difference.
 
             randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
                 If True, the data will be randomly split. Otherwise, each split will be created with
@@ -990,7 +993,8 @@ class Dataset:
     @check_zip_dataset
     def zip(self, datasets):
         """
-        Zip the datasets in the input tuple of datasets. Columns in the input datasets must not have the same name.
+        Zip the datasets in the sense of input tuple of datasets. Columns in the input datasets must have different
+        name.
 
         Args:
             datasets (Union[tuple, class Dataset]): A tuple of datasets or a single class Dataset
@@ -1014,7 +1018,8 @@ class Dataset:
     @check_concat
     def concat(self, datasets):
         """
-        Concatenate the datasets in the input list of datasets. The "+" operator is also supported to concatenate.
+        Concatenate the datasets in the input list of datasets.
+        The "+" operator is overloaded to supported to concatenate.
 
         Note:
             The column name, and rank and type of the column data must be the same in the input datasets.
@@ -1070,8 +1075,8 @@ class Dataset:
         """
         Project certain columns in input dataset.
 
-        The specified columns will be selected from the dataset and passed down
-        the pipeline in the order specified. The other columns are discarded.
+        The specified columns will be selected from the dataset and passed into
+        the pipeline with the order specified. The other columns are discarded.
 
         Args:
             columns(Union[str, list[str]]): List of names of the columns to project.
@@ -1101,7 +1106,8 @@ class Dataset:
 
             columns(Union[str, list[str]]): Column names to get words from.
             freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-                range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+                range will be stored.
+                Naturally 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
                 an be set to default, which corresponds to 0/total_words separately
             top_k(int): Number of words to be built into vocab. top_k most frequent words are
                 taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
@@ -1169,10 +1175,11 @@ class Dataset:
             vocab_size(int): Vocabulary size.
             character_coverage(int): Percentage of characters covered by the model, must be between
                         0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
-                        Japanese or Chinese character sets, and 1.0 for other languages with small character sets.
+                        Japanese or Chinese character sets, and 1.0 for other languages with small character sets
+                        like English or Latin.
             model_type(SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
                                         The input sentence must be pretokenized when using word type.
-            params(dict): contains more optional parameters of sentencepiece library
+            params(dict): Any extra optional parameters of sentencepiece library according to your raw data
 
         Returns:
             SentencePieceVocab, vocab built from the dataset.
@@ -1272,16 +1279,16 @@ class Dataset:
     @check_device_send
     def to_device(self, send_epoch_end=True, create_data_info_queue=False):
         """
-        Transfer data through CPU, GPU or Ascend devices.
+        Transfer data from CPU to GPU or Ascend or other devices.
 
         Args:
-            send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
+            send_epoch_end (bool, optional): Whether to send the end of sequence to device or not (default=True).
             create_data_info_queue (bool, optional): Whether to create queue which stores
                 types and shapes of data or not(default=False).
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
-            of data transmission per time is 256M.
+            of data transmission per second is 256M.
 
         Returns:
             TransferDataset, dataset for transferring.
@@ -1297,7 +1304,7 @@ class Dataset:
         Save the dynamic data processed by the dataset pipeline in common dataset format.
         Supported dataset formats: 'mindrecord' only
 
-        Implicit type casting exists when saving data as 'mindrecord'. The table below shows how to do type casting.
+        Implicit type casting exists when saving data as 'mindrecord'. The transform table shows how to do type casting.
 
         .. list-table:: Implicit Type Casting when Saving as 'mindrecord'
            :widths: 25 25 50
@@ -1376,10 +1383,10 @@ class Dataset:
     @check_tuple_iterator
     def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False, do_copy=True):
         """
-        Create an iterator over the dataset. The data retrieved will be a list of ndarrays of data.
+        Create an iterator over the dataset. The datatype retrieved back will be a list of ndarrays.
 
         To specify which columns to list and the order needed, use columns_list. If columns_list
-        is not provided, the order of the columns will not be changed.
+        is not provided, the order of the columns will remain unchange.
 
         Args:
             columns (list[str], optional): List of columns to be used to specify the order of columns
@@ -1413,7 +1420,7 @@ class Dataset:
     @check_dict_iterator
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
         """
-        Create an iterator over the dataset. The data retrieved will be a dictionary.
+        Create an iterator over the dataset. The data retrieved will be a dictionary datatype.
 
         The order of the columns in the dictionary may not be the same as the original order.
 
@@ -1510,7 +1517,7 @@ class Dataset:
 
     def get_col_names(self):
         """
-        Get names of the columns in the dataset
+        Renturn the names of the columns in dataset
 
         Returns:
             list, list of column names in the dataset.
@@ -1551,7 +1558,7 @@ class Dataset:
 
     def get_dataset_size(self):
         """
-        Get the number of batches in an epoch.
+        Return the number of batches in an epoch.
 
         Returns:
             int, number of batches.
@@ -1703,7 +1710,7 @@ class Dataset:
 
     def get_batch_size(self):
         """
-        Get the size of a batch.
+        Return the size of batch.
 
         Returns:
             int, the number of data in a batch.
@@ -1717,7 +1724,7 @@ class Dataset:
 
     def get_repeat_count(self):
         """
-        Get the replication times in RepeatDataset else 1.
+        Get the replication times in RepeatDataset (default is 1).
 
         Returns:
             int, the count of repeat.
@@ -1731,7 +1738,7 @@ class Dataset:
 
     def get_class_indexing(self):
         """
-        Get the class index.
+        Return the class index.
 
         Returns:
             dict, a str-to-int mapping from label name to index.
@@ -1870,7 +1877,7 @@ class MappableDataset(SourceDataset):
 
     def use_sampler(self, new_sampler):
         """
-        Will make the current dataset use the new_sampler provided.
+        Make the current dataset use the new_sampler provided by other API.
 
         Args:
             new_sampler (Sampler): The sampler to use for the current dataset.
