@@ -1187,8 +1187,8 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   for (size_t i = 1; i < data.size(); ++i) {
     auto indicesi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices[i]->BuildShape())[kShape];
     auto datai_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data[i]->BuildShape())[kShape];
-    if (indicesi_shape.size() >= datai_shape.size()) {
-      MS_LOG(EXCEPTION) << "The rank of indices[i] must be < rank of data[i]!";
+    if (indicesi_shape.size() > datai_shape.size()) {
+      MS_LOG(EXCEPTION) << "The rank of indices[i] must be <= rank of data[i]!";
     }
     indices_total_size += indicesi_shape.size();
   }

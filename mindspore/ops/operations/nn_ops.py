@@ -6893,8 +6893,6 @@ class Dropout(PrimitiveWithCheck):
         >>> output, mask = dropout(x)
         >>> print(output)
         [0. 32. 0. 0.]
-        >>> print(mask)
-        [0. 1. 0. 0.]
     """
 
     @prim_attr_register

@@ -24,6 +24,9 @@ class StandardNormal(PrimitiveWithInfer):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
+    Returns the tensor with the given shape, the random numbers in it drawn from normal distributions
+    whose mean is 0 and standard deviation is 1.
+
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
         seed2 (int): Random seed2, must be non-negative. Default: 0.
@@ -43,12 +46,13 @@ class StandardNormal(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> shape = (4, 16)
+        >>> shape = (3, 4)
         >>> stdnormal = ops.StandardNormal(seed=2)
         >>> output = stdnormal(shape)
-        >>> result = output.shape
-        >>> print(result)
-        (4, 16)
+        >>> print(output)
+        [[-1.3031056   0.64198005 -0.65207404 -1.767485  ]
+         [-0.91792876  0.6508565  -0.9098478  -0.14092612]
+         [ 0.7806437   1.1585592   1.9676613  -0.00440959]]
     """
 
     @prim_attr_register
