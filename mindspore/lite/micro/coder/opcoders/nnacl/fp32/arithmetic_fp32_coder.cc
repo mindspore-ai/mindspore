@@ -517,5 +517,4 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Greater, CPUOp
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_GreaterEqual, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Eltwise, CPUOpCoderCreator<ArithmeticFP32Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

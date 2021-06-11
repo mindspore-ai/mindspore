@@ -152,7 +152,8 @@ int Conv2D1x1Int8Coder::InitWeightBias(CoderContext *const context) {
   int32_t input_channel = filter_tensor_->Channel();
   int32_t output_channel = filter_tensor_->Batch();
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
-
+  MS_CHECK_TRUE(input_channel > 0, "input_channel should be positive");
+  MS_CHECK_TRUE(output_channel > 0, "output_channel should be positive");
   nnacl::NNaclInt8Serializer code;
 
   packed_weight_ = static_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, kOnlineSize, kOnlinePackWeight));
