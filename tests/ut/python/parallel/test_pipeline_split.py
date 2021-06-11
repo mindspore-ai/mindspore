@@ -21,6 +21,7 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.train.model import Model
+from mindspore.nn.wrap.cell_wrapper import PipelineCell
 
 
 class DatasetLenet():
@@ -90,6 +91,7 @@ class PipelineSplit(nn.Cell):
     def __init__(self, strategy1, strategy2):
         super().__init__()
         self.cell = Net(strategy1, strategy2)
+        self.cell.block[0].matmul.add_prim_attr("parameter_start", 0)
 
     def construct(self, x, label):
         x = self.cell(x)
@@ -101,6 +103,7 @@ class PipelineSplit2(nn.Cell):
         super().__init__()
         self.param = Parameter(initializer("zeros", [64, 64]), name="param")
         self.cell = Net(strategy1, strategy2, self.param)
+        self.cell.block[0].matmul.add_prim_attr("parameter_start", 0)
 
     def construct(self, x, label):
         x = self.cell(x)
@@ -114,8 +117,8 @@ def test_pipeline_split_stage0():
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     strategy1 = ((4, 1), (1, 1))
     strategy2 = ((2, 1), (1, 1))
-    net = PipelineSplit(strategy1, strategy2)
-    params = net.cell.block[0].trainable_params()
+    net = PipelineCell(PipelineSplit(strategy1, strategy2), 4)
+    params = net.network.cell.block[0].trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
@@ -131,8 +134,8 @@ def test_pipeline_split_stage1():
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     strategy1 = ((4, 1), (1, 1))
     strategy2 = ((2, 1), (1, 1))
-    net = PipelineSplit(strategy1, strategy2)
-    params = net.cell.block[1].trainable_params()
+    net = PipelineCell(PipelineSplit(strategy1, strategy2), 4)
+    params = net.network.cell.block[1].trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
@@ -149,8 +152,8 @@ def test_pipeline_split_shared_parameter_stage0():
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     strategy1 = ((4, 1), (1, 1))
     strategy2 = ((2, 1), (1, 1))
-    net = PipelineSplit2(strategy1, strategy2)
-    params = net.cell.block[0].trainable_params()
+    net = PipelineCell(PipelineSplit2(strategy1, strategy2), 4)
+    params = net.network.cell.block[0].trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
@@ -164,8 +167,8 @@ def test_pipeline_split_shared_parameter_stage1():
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
     strategy1 = ((4, 1), (1, 1))
     strategy2 = ((2, 1), (1, 1))
-    net = PipelineSplit2(strategy1, strategy2)
-    params = net.cell.block[1].trainable_params()
+    net = PipelineCell(PipelineSplit2(strategy1, strategy2), 4)
+    params = net.network.cell.block[1].trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)

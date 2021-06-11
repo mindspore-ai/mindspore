@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Generate bprop for comm ops"""
+from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.communication import get_rank, get_group_size
@@ -22,7 +23,8 @@ from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
                                    _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
-                                   ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, AllSwap)
+                                   ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, AllSwap,
+                                   _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator)
 from .grad_base import bprop_getters
 from ..operations._inner_ops import Send, Receive
 
@@ -84,11 +86,11 @@ def get_bprop_send(self):
     """Generate bprop for Send."""
     shape = self.get_attr_dict()["shape"]
     dtype = self.get_attr_dict()["dtype"]
-    send_grad = Receive(self.sr_tag, self.rank, shape, dtype, self.group)
-    send_grad.add_prim_attr("backward", True)
+    send_grad = Receive(self.sr_tag, self.rank, shape, dtype, self.group_back)
+    virtual_input = Tensor(0.0, dtype)
 
     def bprop(x, out, dout):
-        dx = send_grad()
+        dx = send_grad(virtual_input)
         return (dx,)
     return bprop
 
@@ -96,14 +98,14 @@ def get_bprop_send(self):
 @bprop_getters.register(Receive)
 def get_bprop_receive(self):
     """Generate bprop for Receive."""
-    receive_grad = Send(self.tag, self.rank, self.group)
-    receive_grad.add_prim_attr("backward", True)
+    receive_grad = Send(self.tag, self.rank, self.group_back)
     depend = P.Depend()
     cast = P.Cast()
+    out_tensor = Tensor(0.0, mstype.float16)
 
     def bprop(x, out, dout):
         send_out = receive_grad(dout)
-        dx = depend(cast(zeros_like(x), F.dtype(x)), send_out)
+        dx = depend(cast(out_tensor, F.dtype(x)), send_out)
         return (dx,)
     return bprop
 
@@ -113,6 +115,80 @@ def get_bprop_virtual_add(self):
     """Generate bprop for _VirtualAdd"""
     def bprop(x, grad_accu, out, dout):
         return (dout + grad_accu, zeros_like(grad_accu))
+    return bprop
+
+
+@bprop_getters.register(_VirtualAssignAdd)
+def get_bprop_virtual_assign_add(self):
+    """Generate bprop for VirtualAssignAdd."""
+    assign_add = P.AssignAdd()
+    cast = P.Cast()
+    dtype = P.DType()
+    out_tensor = Tensor(0.0, mstype.float16)
+
+    def bprop(x, y, out, dout):
+        temp = assign_add(y, dout)
+        return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(y))), temp)
+
+    return bprop
+
+
+@bprop_getters.register(_VirtualAccuGrad)
+def get_bprop_virtual_accu_grad(self):
+    """Generate bprop for VirtualAccuGrad."""
+    cast = P.Cast()
+    dtype = P.DType()
+    out_tensor = Tensor(0.0, mstype.float16)
+
+    def bprop(x, y, out, dout):
+        return (F.depend(y, dout), cast(out_tensor, dtype(y)))
+
+    return bprop
+
+
+@bprop_getters.register(_MirrorMicroStepOperator)
+def get_bprop_mirror_micro_step_operator(self):
+    """
+    Backpropagator for _MirrorMicroStepOperator, do allreduce or allgather for the devices in the group,
+    allgather for sparse feature.
+    """
+    group = self.group
+    dev_num = self.dev_num
+    mean_flag = self.mean_flag
+    scale = 1 / dev_num
+
+    all_reduce = AllReduce(group=group)
+
+    fusion = self.get_attr_dict()["fusion"]
+    all_reduce.add_prim_attr("fusion", fusion)
+    if hasattr(self, 'parameter'):
+        parameter = self.parameter
+        all_reduce.add_prim_attr("parameter", parameter)
+
+    if self.instance_name:
+        instance_name = "grad_mirror" + self.instance_name
+        all_reduce.set_prim_instance_name(instance_name)
+    cast = P.Cast()
+    dtype = P.DType()
+    assign = P.Assign()
+    if "parameter_micro" in self.get_attr_dict():
+        assign.add_prim_attr("parameter_micro", 0)
+    out_tensor = Tensor(1.0, mstype.float16)
+
+    def bprop(x, z, out, dout):
+        real_grad = z
+        if mean_flag:
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                z = F.depend(z, dout)
+                real_grad = all_reduce(z)
+                real_grad = F.tensor_mul(real_grad, scale)
+                assign(z, real_grad)
+        else:
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                z = F.depend(z, dout)
+                real_grad = all_reduce(z)
+                assign(z, real_grad)
+        return (cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z)))
     return bprop
 
 

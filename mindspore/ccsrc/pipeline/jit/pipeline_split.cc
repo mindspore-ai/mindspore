@@ -90,17 +90,19 @@ bool PipelineSplit(const ResourcePtr &res) {
   auto transformer =
     std::make_shared<parallel::PipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
   // step1: Do color graph
-  transformer->LabelRequiredGradCNode();
   transformer->Coloring();
+  transformer->MainGraph();
+  transformer->LabelMicroBatch();
   // step2: Do color broadcast
   transformer->BroadCastColoring();
   // step3: Handle shared parameters
   transformer->ParameterColoring();
-  transformer->HandleSharedParameter();
   // step4: Cut Graph
   transformer->CutGraph();
   // step5: Handle Sens
-  transformer->CoverSensShape();
+  if (root->has_flag(parallel::TRAINING)) {
+    transformer->CoverSensShape();
+  }
   // step6: Elim Graph stages and no used parameter
   transformer->ElimGraphStage();
   transformer->ElimParameter();

@@ -134,8 +134,6 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes);
 
 StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const PrimitivePtr prim);
 
-bool IsLastStage();
-
 // Add node for whole graph
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager);
@@ -177,6 +175,10 @@ void FindLastNodesUniqueId(const FuncGraphPtr &root, std::vector<std::string> *u
                            std::vector<size_t> *indexes);
 
 void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
+
+std::string MirrorOpName();
+
+void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, int64_t pipeline_stages);
 }  // namespace parallel
 }  // namespace mindspore
 

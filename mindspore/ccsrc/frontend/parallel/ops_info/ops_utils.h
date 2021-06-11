@@ -168,7 +168,7 @@ constexpr char CLONED_INDEX[] = "cloned_index";
 constexpr char BE_CLONED_INDEX[] = "be_cloned_index";
 constexpr char GROUP_RANKS[] = "group_ranks";
 constexpr char IS_IN_FORWARD[] = "is_in_forward";
-constexpr char DTYPE[] = "DType";
+constexpr char DTYPE[] = "dtype";
 constexpr char DEV_NUM[] = "dev_num";
 constexpr char MEAN_FLAG[] = "mean_flag";
 constexpr char GRAD_ACCUMULATION_STEP[] = "grad_accumulation_step";
@@ -357,6 +357,23 @@ constexpr char KStridedSlice[] = "StridedSlice";
 constexpr char UNIQUE[] = "Unique";
 constexpr char GATHERND[] = "GatherNd";
 constexpr char SCATTER_UPDATE[] = "ScatterUpdate";
+
+// pipeline
+constexpr char MICRO[] = "micro";
+constexpr char DEST_RANK[] = "dest_rank";
+constexpr char SRC_RANK[] = "src_rank";
+constexpr char PIPELINE_PARAM[] = "pipeline_param";
+constexpr char PIPELINE_END[] = "pipeline_end";
+constexpr char PIPELINE_BEGIN[] = "pipeline_begin";
+constexpr char MAIN_GRAPH[] = "main_graph";
+constexpr char SR_TAG[] = "sr_tag";
+constexpr char GROUP_BACK[] = "group_back";
+constexpr char MIRROR_MICRO_STEP_OPERATOR[] = "_MirrorMicroStepOperator";
+constexpr char PARAMETER_MICRO[] = "parameter_micro";
+constexpr char VIRTUAL_ASSIGN_ADD[] = "_VirtualAssignAdd";
+constexpr char VIRTUAL_ACCU_GRAD[] = "_VirtualAccuGrad";
+constexpr char ACCU_GRAD[] = "accu_grad";
+constexpr char PARAMETER_START[] = "parameter_start";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";

@@ -417,7 +417,7 @@ class Send(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP):
+    def __init__(self, sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP, group_back=GlobalComm.WORLD_COMM_GROUP):
         self.rank = dest_rank
         self.sr_tag = sr_tag
         self.group = group
@@ -427,7 +427,6 @@ class Send(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        self.add_prim_attr("dtype", x_dtype)
         return x_dtype
 
 
@@ -474,7 +473,8 @@ class Receive(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP):
+    def __init__(self, sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP,
+                 group_back=GlobalComm.WORLD_COMM_GROUP):
         self.rank = src_rank
         self.tag = sr_tag
         self.shape = shape

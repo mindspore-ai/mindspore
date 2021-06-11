@@ -19,6 +19,7 @@ from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
                                        _get_parallel_mode)
 from mindspore.context import ParallelMode, get_auto_parallel_context
 from mindspore._checkparam import Validator as validator
+from mindspore import ops, nn
 from ...common import dtype as mstype
 from ...common.parameter import Parameter, ParameterTuple
 from ...common.tensor import Tensor
@@ -501,6 +502,95 @@ class _VirtualDatasetCell(Cell):
     def construct(self, *inputs):
         output = self._virtual_dataset(*inputs)
         return self._backbone(*output)
+
+
+class _MicroBatch(Cell):
+    """
+    transform mini-batch to micro-batch in pipeline parallel.
+
+    Args:
+       params (micro_size): The number of micro-batch.
+    """
+    def __init__(self, micro_size):
+        super(_MicroBatch, self).__init__()
+        self.shape = P.Shape()
+        self.micro_size = micro_size
+
+    def construct(self, i, *inputs):
+        micro_inputs = ()
+        for each_input in inputs:
+            input_shape = self.shape(each_input)
+            micro_batch_begin = i * input_shape[0] // self.micro_size
+            micro_batch_end = (i + 1) * input_shape[0] // self.micro_size
+            micro_input = each_input[micro_batch_begin:micro_batch_end, :]
+            micro_inputs += (micro_input,)
+        return micro_inputs
+
+
+class PipelineCell(Cell):
+    """
+    Wrap the network with Micro Batch.
+
+    Note:
+        micro_size must be greater or equal to pipeline stages.
+
+    Args:
+        network (Cell): The target network to wrap.
+        micro_size (Int): MicroBatch size.
+
+    Examples:
+        >>> net = Net()
+        >>> net = PipelineCell(net, 4)
+    """
+    def __init__(self, network, micro_size):
+        super(PipelineCell, self).__init__()
+        self.network = network
+        self.micro_inputs = nn.CellList()
+        self.micro_size = micro_size
+        self.add_list = []
+        for i in range(micro_size):
+            micro_input = _MicroBatch(micro_size)
+            self.micro_inputs.append(micro_input)
+            self.add = P.Add().add_prim_attr("pipeline_end", i)
+            self.add_list.append(self.add)
+
+    def construct(self, *inputs):
+        ret = None
+        for i in range(self.micro_size):
+            micro_input = self.micro_inputs[i](i, *inputs)
+            output = self.network(*micro_input)
+            if ret is not None:
+                ret = self.add_list[i](ret, output)
+            else:
+                ret = output
+        return ret
+
+
+def _pipeline_clear_grad(accu_grad, grad):
+    accu_grad = F.depend(accu_grad, grad)
+    zeros = F.tensor_mul(accu_grad, 0.0)
+    return F.assign(accu_grad, zeros)
+
+
+class _TrainPipelineAccuStepCell(TrainOneStepCell):
+    """
+    Wraps the network with an optimizer in pipeline mode.
+    """
+    def __init__(self, network, optimizer, sens=1.0):
+        super(_TrainPipelineAccuStepCell, self).__init__(network, optimizer, sens)
+        self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
+        self.hyper_map = ops.HyperMap()
+
+    def construct(self, *inputs):
+        weights = self.weights
+        loss = self.network(*inputs)
+        sens = ops.Fill()(ops.DType()(loss), ops.Shape()(loss), self.sens)
+        grads = self.grad(self.network, weights)(*inputs, sens)
+        accu_grads = ops.depend(self.accu_grads, grads)
+        succ = self.optimizer(accu_grads)
+        clear = self.hyper_map(_pipeline_clear_grad, accu_grads, grads)
+        loss = ops.depend(loss, succ, clear)
+        return loss
 
 
 class VirtualDatasetCellTriple(Cell):

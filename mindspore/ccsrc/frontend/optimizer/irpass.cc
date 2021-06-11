@@ -206,8 +206,14 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   virtual_output_eliminate_ =
     MakeSubstitution(std::make_shared<VirtualOutputEliminater>(), "virtual_output_eliminate", prim::kPrimVirtualOutput);
 
-  // Receive
+  // PipelineSplit
   receive_eliminate_ = MakeSubstitution(std::make_shared<ReceiveEliminater>(), "receive_eliminate", prim::kPrimReceive);
+  virtual_accu_grad_ =
+    MakeSubstitution(std::make_shared<VirtualAccuGradEliminater>(), "virtual_accu_grad", prim::kPrimVirtualAccuGrad);
+  virtual_assign_add_ =
+    MakeSubstitution(std::make_shared<VirtualAssignAddEliminater>(), "virtual_assign_add", prim::kPrimVirtualAssignAdd);
+  mirror_micro_step_ =
+    MakeSubstitution(std::make_shared<MirrorMicroStepEliminater>(), "mirror_micro_step", prim::kPrimMirrorMicroStep);
 
   // Convert
   print_tuple_wrapper_ =

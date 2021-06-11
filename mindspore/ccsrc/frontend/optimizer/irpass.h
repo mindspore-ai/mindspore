@@ -120,8 +120,12 @@ class OptimizeIRPassLib {
 
   // virtual output
   SubstitutionPtr virtual_output_eliminate_;
-  // Receive
+
+  // PipelineSplit
   SubstitutionPtr receive_eliminate_;
+  SubstitutionPtr virtual_accu_grad_;
+  SubstitutionPtr virtual_assign_add_;
+  SubstitutionPtr mirror_micro_step_;
 
   // Convert
   SubstitutionPtr print_tuple_wrapper_;
