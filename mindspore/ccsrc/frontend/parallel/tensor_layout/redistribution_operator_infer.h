@@ -53,10 +53,10 @@ class RedistributionOperatorInfer {
   Status InferSplitByAxis();
   Status InferPermuteByAxis();
   Status InferConcatByAxis();
-  Status TransferSplitByAxis(Args args);
-  Status TransferPermuteByAxis(Args args);
-  Status TransferConcatByAxis(Args args);
-  Status InsertOperator(OperatorName name, Args args);
+  Status TransferSplitByAxis(const Args &args);
+  Status TransferPermuteByAxis(const Args &args);
+  Status TransferConcatByAxis(const Args &args);
+  Status InsertOperator(const OperatorName &name, const Args &args);
 
   OperatorList operator_list_;
   OperatorVector operator_vector_;
