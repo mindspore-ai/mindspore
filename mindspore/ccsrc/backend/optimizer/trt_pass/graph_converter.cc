@@ -72,7 +72,8 @@ CNodePtr BuildMakeTupleNode(const FuncGraphPtr root, const std::map<size_t, size
     // Get TrtNode output index
     auto iter = anf_trt_index_map.find(out_idx);
     if (iter == anf_trt_index_map.end()) {
-      MS_LOG(EXCEPTION) << "Output node found: " << out_idx;
+      MS_LOG(WARNING) << "Output node found: " << out_idx;
+      return nullptr;
     }
     size_t trt_index = iter->second;
 
@@ -113,7 +114,8 @@ AnfNodePtrList GraphConverter::GetUsefulArguments(const AnfNodePtrList &argument
   for (size_t j = 0; j < useful_parameters.size(); j++) {
     auto iter = args_map.find(useful_parameters[j]);
     if (iter == args_map.end() || iter->second == nullptr) {
-      MS_LOG(EXCEPTION) << "Argument not found. Arg: " << useful_parameters[j]->DebugString();
+      MS_LOG(WARNING) << "Argument not found. Arg: " << useful_parameters[j]->DebugString();
+      return {};
     }
     useful_arguments.push_back(iter->second);
   }
@@ -129,18 +131,21 @@ std::tuple<std::map<size_t, size_t>, CNodePtr> GraphConverter::BuildTrtNode(cons
   auto converter = std::make_shared<TrtConverterContext>(sub_graph);
   bool ret = converter->Init();
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Graph convert init failed.";
+    MS_LOG(WARNING) << "Graph convert init failed.";
+    return std::make_tuple(std::map<size_t, size_t>(), nullptr);
   }
 
   ret = converter->Parser();
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Graph converter parse failed.";
+    MS_LOG(WARNING) << "Graph converter parse failed.";
+    return std::make_tuple(std::map<size_t, size_t>(), nullptr);
   }
 
   std::string model_data;
   ret = converter->Serialize(&model_data);
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Graph converte serialize failed.";
+    MS_LOG(WARNING) << "Graph converte serialize failed.";
+    return std::make_tuple(std::map<size_t, size_t>(), nullptr);
   }
 
   // Get actual arguments by useful formal parameters
