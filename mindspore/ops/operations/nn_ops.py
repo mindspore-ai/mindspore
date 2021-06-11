@@ -5844,9 +5844,9 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 5.96388459e-01,  3.92964751e-01],
-         [ 9.78178233e-02,  4.952815793e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 6.90000057e-01,  9.900000010e-01],
-         [ 2.10000008e-01,  1.240000001e+00]]))
+         [ 9.78178233e-02,  4.92815793e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 6.90000057e-01,  9.90000010e-01],
+         [ 2.10000008e-01,  1.24000001e+00]]))
     """
 
     __mindspore_signature__ = (
