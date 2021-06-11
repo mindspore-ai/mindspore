@@ -39,7 +39,7 @@ AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto smooth_prim = primitive->cast<PrimSmoothL1LossPtr>();
   MS_EXCEPTION_IF_NULL(smooth_prim);
   auto prim_name = smooth_prim->name();
-  CheckAndConvertUtils::CheckInteger("smooth_l1_loss_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("smooth_l1_loss_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
 
   // Infer shape
   auto prediction = CheckAndConvertUtils::ConvertShapePtrToShape("prediction", input_args[0]->BuildShape(), prim_name);
