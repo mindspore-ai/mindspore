@@ -38,7 +38,7 @@ void AscendBucket::AllocateAllReduceAddr() {
                       << " is not equal to bucket size:" << bucket_size_;
   }
 
-  auto total_size = 0;
+  size_t total_size = 0;
   std::vector<size_t> origin_size_list;
   for (auto &tensor : grad_tensor_list_) {
     MS_EXCEPTION_IF_NULL(tensor);

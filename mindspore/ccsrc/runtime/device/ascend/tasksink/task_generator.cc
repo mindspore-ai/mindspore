@@ -296,7 +296,7 @@ void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
   OrderedMap<AnfNodePtr, int32_t> para_map;
   std::string path_string = real_path;
   ChangeFileMode(path_string, S_IRWXU);
-  SaveTaskDebugInfoToFile(real_path, task_debug_info_list_);
+  SaveTaskDebugInfoToFile(path_string, task_debug_info_list_);
   // set file mode to read only by user
   ChangeFileMode(path_string, S_IRUSR);
 }
