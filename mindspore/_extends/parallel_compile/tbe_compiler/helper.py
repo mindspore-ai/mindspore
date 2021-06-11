@@ -64,6 +64,8 @@ def _op_select_format(kernel_info):
 
     except Exception as e:
         raise TBEException(str(e))
+    finally:
+        pass
 
     return ret
 
@@ -119,5 +121,7 @@ def _check_supported(kernel_info):
 
     except Exception as e:
         raise TBEException(str(e))
+    finally:
+        pass
 
     return ret

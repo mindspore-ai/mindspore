@@ -146,6 +146,8 @@ def build_op(build_type, json_str, tune_mode=None):
 
     except Exception as e:
         raise RuntimeError(e)
+    finally:
+        pass
 
 
 def compile_fusion_op(json_str):
