@@ -37,8 +37,6 @@ class PoolingInt8CPUKernel : public PoolingBaseCPUKernel {
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
-
- private:
 };
 }  // namespace mindspore::kernel
 

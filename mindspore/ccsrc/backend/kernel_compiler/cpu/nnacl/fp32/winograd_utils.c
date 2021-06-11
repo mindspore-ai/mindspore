@@ -124,8 +124,12 @@ void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const fl
   MS_FLOAT32X4 vec_a[MAX_LEN];
   MS_FLOAT32X4 vec_at[MAX_LEN];
   int tmp_len = in_unit * out_unit;
-  if (tmp_len > MAX_LEN) return;
-  if (out_unit * out_unit > MAX_LEN) return;
+  if (tmp_len > MAX_LEN) {
+    return;
+  }
+  if (out_unit * out_unit > MAX_LEN) {
+    return;
+  }
 
   for (int i = 0; i < tmp_len; i++) {
     vec_a[i] = MS_MOVQ_F32(matrix_a[i]);

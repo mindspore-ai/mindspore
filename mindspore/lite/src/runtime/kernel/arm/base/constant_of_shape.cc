@@ -70,6 +70,10 @@ int ConstantOfShapeCPUKernel::Run() {
   param_->element_size_ = output->ElementsNum();
   output_ptr_ = output->data_c();
   int thread_count = MSMIN(op_parameter_->thread_num_, param_->element_size_);
+  if (thread_count == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   thread_stride_ = UP_DIV(param_->element_size_, thread_count);
 
   auto ret = static_cast<const lite::InnerContext *>(this->context_)

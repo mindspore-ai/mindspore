@@ -39,9 +39,9 @@ class ArithmeticInt8CPUKernel : public InnerKernel {
   int DoArithmetic(int thread_id);
 
  private:
-  int8_t *tile_data0_;
-  int8_t *tile_data1_;
-  ArithmeticRunInt8 arithmetic_run_;
+  int8_t *tile_data0_{nullptr};
+  int8_t *tile_data1_{nullptr};
+  ArithmeticRunInt8 arithmetic_run_{nullptr};
   ArithmeticQuantArg quant_args_;
 };
 }  // namespace mindspore::kernel

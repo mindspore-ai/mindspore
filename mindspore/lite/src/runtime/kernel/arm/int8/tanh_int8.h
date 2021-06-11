@@ -41,11 +41,11 @@ class TanhInt8CPUKernel : public InnerKernel {
   int DoActivation(int task_id);
 
  private:
-  int8_t *in_ptr_;
-  int8_t *out_ptr_;
-  int element_size_;
-  int thread_count_;
-  int thread_stride_;
+  int8_t *in_ptr_{nullptr};
+  int8_t *out_ptr_{nullptr};
+  int element_size_{0};
+  int thread_count_{0};
+  int thread_stride_{0};
   TanhQuantParameter tanh_quant_;
 };
 }  // namespace mindspore::kernel

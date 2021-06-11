@@ -35,15 +35,15 @@ class GatherNdInt8CPUKernel : public InnerKernel {
   int DoGatherNd(int task_id);
 
  private:
-  void InitOffset();
-  int thread_count_;
-  int thread_sz_count_;
-  int thread_sz_stride_;
-  int count_;
-  int area_;
+  int InitOffset();
+  int thread_count_ = 0;
+  int thread_sz_count_ = 0;
+  int thread_sz_stride_ = 0;
+  int count_ = 0;
+  int area_ = 0;
   int *in_offset_ = nullptr;
-  int8_t *in_ptr_;
-  int8_t *out_ptr_;
+  int8_t *in_ptr_ = nullptr;
+  int8_t *out_ptr_ = nullptr;
   GatherQuantArg param_;
 };
 }  // namespace mindspore::kernel

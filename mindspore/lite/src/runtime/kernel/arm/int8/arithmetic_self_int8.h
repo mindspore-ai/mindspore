@@ -95,14 +95,14 @@ class ArithmeticSelfInt8CPUKernel : public InnerKernel {
   int DoArithmeticSelf(int task_id);
 
  private:
-  int thread_sz_count_;
-  int thread_sz_stride_;
-  size_t data_size_;
-  ArithmeticSelfParameter *para_;
-  ArithmeticSelfInt8Run arithmeticSelf_run_;
-  int thread_count_;
-  int8_t *in_ptr_;
-  int8_t *out_ptr_;
+  int thread_sz_count_{0};
+  int thread_sz_stride_{0};
+  size_t data_size_{0};
+  ArithmeticSelfParameter *para_{nullptr};
+  ArithmeticSelfInt8Run arithmeticSelf_run_{nullptr};
+  int thread_count_{0};
+  int8_t *in_ptr_{nullptr};
+  int8_t *out_ptr_{nullptr};
 };
 }  // namespace mindspore::kernel
 

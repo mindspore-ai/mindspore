@@ -352,8 +352,16 @@ int Convolution1x1Int8CPUKernel::InitParam() {
   int hw_thread_count = UP_DIV(matmul_param_->row_, row_pack_count);
   int oc_thread_count = UP_DIV(matmul_param_->col_, col_pack_count);
   thread_count_hw_ = MSMIN(op_parameter_->thread_num_, hw_thread_count);
+  if (thread_count_hw_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   thread_stride_hw_ = UP_DIV(hw_thread_count, thread_count_hw_);
   thread_count_oc_ = MSMIN(op_parameter_->thread_num_, oc_thread_count);
+  if (thread_count_oc_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   thread_stride_oc_ = UP_DIV(oc_thread_count, thread_count_oc_);
   parallel_by_oc_ = oc_thread_count > op_parameter_->thread_num_;
 

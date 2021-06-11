@@ -35,6 +35,10 @@ int ReshapeBaseCPUKernel::Init() { return ReSize(); }
 int ReshapeBaseCPUKernel::ReSize() {
   int in_data_size = in_tensors_.front()->Size();
   int thread_num = op_parameter_->thread_num_;
+  if (thread_num == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   cal_max_num_per_thread_ = UP_DIV(in_data_size, thread_num);
   return RET_OK;
 }

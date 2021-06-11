@@ -33,7 +33,7 @@ int TensorListReserveCPUKernel::Run() {
   auto input1 = in_tensors_.at(1);
   int num_elements = reinterpret_cast<int *>(input1->data_c())[0];
   auto output = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
-  if (output->tensors().size() < (uint32_t)num_elements) {
+  if (output->tensors().size() < static_cast<uint32_t>(num_elements)) {
     auto ele_shape_ptr = reinterpret_cast<int *>(input0->data_c());
     std::vector<std::vector<int> > tmp_shape(num_elements, std::vector<int>());
     output->set_element_shape(std::vector<int>(ele_shape_ptr, ele_shape_ptr + input0->ElementsNum()));

@@ -76,6 +76,10 @@ int TensorListFromTensorCPUKernel::Run() {
     MS_LOG(ERROR) << "output0_->ElementsNum():" << output0->ElementsNum() << " must be equal to dim0:" << dim0;
     return RET_ERROR;
   }
+  if (dim0 == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   int devision_dim0 = input0_->ElementsNum() / dim0;
   auto data_offset = devision_dim0 * lite::DataTypeSize(dtype_);
   auto in_data = reinterpret_cast<char *>(input0_->data_c());

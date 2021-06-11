@@ -47,6 +47,10 @@ int Unsqueezeint8CPUKernel::Init() {
 int Unsqueezeint8CPUKernel::ReSize() {
   data_size_ = in_tensors_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(thread_count_, data_size_);
+  if (thread_sz_count_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   return RET_OK;
 }

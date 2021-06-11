@@ -38,7 +38,7 @@ class SplitInt8CPUKernel : public SplitBaseCPUKernel {
   int Split(int task_id);
 
  private:
-  int8_t *input_ptr_;
+  int8_t *input_ptr_{nullptr};
   std::vector<int8_t *> output_ptr_;
 };
 }  // namespace mindspore::kernel

@@ -73,10 +73,11 @@ void ReduceSumByAxes(const float *input, const int *input_dims, float *output, c
   int input_iter[8] = {0};
   int axes[5] = {0};
   int num_axes = 0;
-  for (int i = 0; i < num_dims; i++)
+  for (int i = 0; i < num_dims; i++) {
     if (output_dims[i] == 1 && num_axes < 5) {
       axes[num_axes++] = i;
     }
+  }
 
   // Iterate through input_data.
   do {

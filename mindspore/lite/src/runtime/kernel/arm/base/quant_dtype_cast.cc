@@ -60,6 +60,10 @@ int QuantDTypeCastCPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
+  if (thread_n_num_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }

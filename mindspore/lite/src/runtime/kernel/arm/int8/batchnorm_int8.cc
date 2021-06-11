@@ -141,6 +141,10 @@ int BatchnormInt8CPUKernel::Init() {
   }
   batchnorm_param_->op_parameter_.thread_num_ =
     MSMIN(batchnorm_param_->op_parameter_.thread_num_, batchnorm_param_->channel_);
+  if (batchnorm_param_->op_parameter_.thread_num_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   batchnorm_param_->unit_ = UP_DIV(batchnorm_param_->units_, batchnorm_param_->op_parameter_.thread_num_);
   if (batchnorm_param_->fused_) {
     auto ret = InitFusedConstTensor();
