@@ -573,10 +573,12 @@ def set_context(**kwargs):
              Default: False.
         graph_kernel_flags (str): Optimization options of graph kernel fusion. Experienced user only.
              For example, `context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")`.
+
              Some general options:
               - opt_level: optimization level between 0 and 3. Default: 2. Graph kernel fusion can be enabled
                            equivalently by setting opt_level greater than 0.
               - dump_as_text: dump detail info as text files. Default: false.
+
              More options can be referred from the implementation code.
              These options can also be set by environment variable `MS_GRAPH_KERNEL_FLAGS`, without modifying
              network source code. For example, `export MS_GRAPH_KERNEL_FLAGS="--opt_level=2 --dump_as_text"`.
