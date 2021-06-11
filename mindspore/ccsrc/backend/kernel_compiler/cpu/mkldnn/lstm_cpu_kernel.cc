@@ -49,7 +49,6 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   using dim = dnnl::memory::dims;
   CheckParam(kernel_node);
   auto eng = MKLKernelEngine::Get().engine();
-  dnnl::stream s(eng);
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
   if (bidirectional_) {
     direction = dnnl::rnn_direction::bidirectional_concat;

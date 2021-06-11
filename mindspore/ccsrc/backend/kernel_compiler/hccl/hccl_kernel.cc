@@ -64,7 +64,7 @@ HcclKernelFactory &HcclKernelFactory::Get() {
   return _this;
 }
 
-HcclKernel::HcclKernel() : hccl_count_(0), op_type_(HCCL_REDUCE_SUM), root_id_(0), receive_type_(0) {}
+HcclKernel::HcclKernel() : hccl_count_(0), op_type_(HCCL_REDUCE_SUM), root_id_(0) {}
 
 HcclKernel::~HcclKernel() {
   hccl_kernel_input_shape_list_.clear();
@@ -81,12 +81,6 @@ HcclKernel::~HcclKernel() {
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   op_name_ = AnfAlgo::GetCNodeName(anf_node);
-  if (op_name_ == kReceive) {
-    if (!HcomUtil::GetHcomReceiveType(anf_node, &receive_type_)) {
-      MS_LOG(ERROR) << "GetHcomReceiveType fail!";
-      return false;
-    }
-  }
   if (!HcomUtil::GetKernelInputShape(anf_node, &hccl_kernel_input_shape_list_)) {
     MS_LOG(ERROR) << "GetKernelInputShape fail!";
     return false;
@@ -95,14 +89,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
     MS_LOG(ERROR) << "GetKernelOutputShape fail!";
     return false;
   }
-  if (op_name_ == kReceive) {
-    auto iter = CONST_OP_HCOM_DATA_TYPE_MAP.find(receive_type_);
-    if (iter == CONST_OP_HCOM_DATA_TYPE_MAP.end()) {
-      MS_LOG(ERROR) << "HcomDataType cannot support Current Ascend Data Type : " << receive_type_;
-      return false;
-    }
-    hccl_data_type_list_.emplace_back(iter->second);
-  } else if (!HcomUtil::GetHcomDataType(anf_node, &hccl_data_type_list_)) {
+  if (!HcomUtil::GetHcomDataType(anf_node, &hccl_data_type_list_)) {
     MS_LOG(ERROR) << "GetHcomDataType fail!";
     return false;
   }

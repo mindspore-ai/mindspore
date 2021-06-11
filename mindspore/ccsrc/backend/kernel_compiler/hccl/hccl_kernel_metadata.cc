@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/hccl/hccl_kernel_metadata.h"
 #include <memory>
+#include <algorithm>
 #include <set>
 #include "utils/utils.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
@@ -60,6 +61,16 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;
   }
+  TypeId recv_type;
+  if (op_name == kReceive) {
+    if (!HcomUtil::GetHcomReceiveType(kernel_node, &recv_type)) {
+      MS_LOG(EXCEPTION) << "GetHcomReceiveType fail!";
+    }
+    auto res = find(kHcclSupportTypes.begin(), kHcclSupportTypes.end(), recv_type);
+    if (res == kHcclSupportTypes.end()) {
+      MS_LOG(EXCEPTION) << "HcclReceive cannot support data type: " << TypeIdToType(recv_type);
+    }
+  }
   for (const auto &type : kHcclSupportTypes) {
     std::vector<std::string> inputs_format{};
     std::vector<TypeId> inputs_type{};
@@ -77,7 +88,11 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
       } else {
         outputs_format.emplace_back(GetKernelFormat(kernel_node, output_index));
       }
-      outputs_type.push_back(type);
+      if (op_name == kReceive) {
+        outputs_type.push_back(recv_type);
+      } else {
+        outputs_type.push_back(type);
+      }
     }
     auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
     builder.SetInputsFormat(inputs_format);
