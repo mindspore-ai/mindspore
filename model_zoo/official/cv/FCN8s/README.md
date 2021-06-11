@@ -66,6 +66,27 @@ Dataset used:
   python eval.py --device_id device_id
   ```
 
+- running on GPU with gpu default parameters
+
+  ```python
+  # GPU单卡训练示例
+  python train.py  \
+  --config_path=gpu_default_config.yaml  \
+  --device_target=GPU
+
+  # GPU多卡训练示例
+  export RANK_SIZE=8
+  mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout  \
+  python train.py  \
+  --config_path=gpu_default_config.yaml \
+  --device_target=GPU
+
+  # GPU评估示例
+  python eval.py  \
+  --config_path=gpu_default_config.yaml  \
+  --device_target=GPU
+  ```
+
 # [脚本介绍](#contents)
 
 ## [脚本以及简单代码](#contents)
@@ -79,6 +100,8 @@ Dataset used:
         ├── scripts
             ├── run_train.sh
             ├── run_standalone_train.sh
+            ├── run_standalone_train_gpu.sh             // train in gpu with single device
+            ├── run_distribute_train_gpu.sh             // train in gpu with multi device
             ├── run_eval.sh
             ├── run_infer_310.sh         // Ascend推理shell脚本
             ├── build_data.sh
@@ -97,7 +120,8 @@ Dataset used:
         │       ├──device_adapter.py            // getting device info
         │       ├──local_adapter.py            // getting device info
         │       ├──moxing_adapter.py          // Decorator
-        ├── default_config.yaml               // Parameters config
+        ├── default_config.yaml               // Ascend parameters config
+        ├── gpu_default_config.yaml           // GPU parameters config
         ├── train.py                 // training script
         ├── postprogress.py          // 310推理后处理脚本
         ├── export.py                // 将checkpoint文件导出到air/mindir
@@ -138,7 +162,7 @@ Dataset used:
     'ckpt_dir': './ckpt',
   ```
 
-如需获取更多信息，请查看`default_config.yaml`.
+如需获取更多信息，Ascend请查看`default_config.yaml`, GPU请查看`gpu_default_config.yaml`.
 
 ## [生成数据步骤](#contents)
 
@@ -173,6 +197,31 @@ Dataset used:
 
   #Ascend八卡并行训练
   sh scripts/run_train.sh [DEVICE_NUM] rank_table.json
+  ```
+
+- running on GPU with gpu default parameters
+
+  ```python
+  # GPU单卡训练示例
+  python train.py  \
+  --config_path=gpu_default_config.yaml  \
+  --device_target=GPU
+  or
+  sh scripts/run_standalone_train_gpu.sh DEVICE_ID
+
+  # GPU八卡训练示例
+  export RANK_SIZE=8
+  mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout  \
+  python train.py  \
+  --config_path=gpu_default_config.yaml \
+  --device_target=GPU
+  or
+  sh run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
+
+  # GPU评估示例
+  python eval.py  \
+  --config_path=gpu_default_config.yaml \
+  --device_target=GPU
   ```
 
   训练时，训练过程中的epch和step以及此时的loss和精确度会呈现log.txt中:
@@ -261,9 +310,11 @@ Dataset used:
 
 ### 评估
 
-- 在Ascend上使用PASCAL VOC 2012 验证集进行评估
+- 在Ascend或GPU上使用PASCAL VOC 2012 验证集进行评估
 
   在使用命令运行前，请检查用于评估的checkpoint的路径。请设置路径为到checkpoint的绝对路径，如 "/data/workspace/mindspore_dataset/FCN/FCN/model_new/FCN8s-500_82.ckpt"。
+
+- eval on Ascend
 
   ```python
   python eval.py
@@ -273,7 +324,7 @@ Dataset used:
   sh scripts/run_eval.sh DATA_ROOT DATA_LST CKPT_PATH
   ```
 
-  以上的python命令会在终端上运行，你可以在终端上查看此次评估的结果。测试集的精确度会以如下方式呈现：
+  以上的python命令会在终端上运行，你可以在终端上查看此次评估的结果。测试集的精确度会以类似如下方式呈现：
 
   ```python
   mean IoU  0.6467
@@ -306,6 +357,20 @@ python export.py
   mean IoU  0.0.64519877
   ```
 
+- eval on GPU
+
+  ```python
+  python eval.py  \
+  --config_path=gpu_default_config.yaml  \
+  --device_target=GPU
+  ```
+
+  以上的python命令会在终端上运行，你可以在终端上查看此次评估的结果。测试集的精确度会以类似如下方式呈现：
+
+  ```python
+  mean IoU  0.6472
+  ```
+
 # [模型介绍](#contents)
 
 ## [性能](#contents)
@@ -314,35 +379,35 @@ python export.py
 
 #### FCN8s on PASCAL VOC 2012
 
-| Parameters                 | Ascend
-| -------------------------- | -----------------------------------------------------------
-| Model Version              | FCN-8s
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8
-| uploaded Date              | 12/30/2020 (month/day/year)
-| MindSpore Version          | 1.1.0-alpha
-| Dataset                    | PASCAL VOC 2012 and SBD
-| Training Parameters        | epoch=500, steps=330, batch_size = 32, lr=0.015
-| Optimizer                  | Momentum
-| Loss Function              | Softmax Cross Entropy
-| outputs                    | probability
-| Loss                       | 0.038
-| Speed                      | 1pc: 564.652 ms/step;
+| Parameters                 | Ascend                                                      | GPU                                              |
+| -------------------------- | ------------------------------------------------------------| -------------------------------------------------|
+| Model Version              | FCN-8s                                                      | FCN-8s                                           |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 | NV SMX2 V100-32G                                 |
+| uploaded Date              | 12/30/2020 (month/day/year)                                 | 06/11/2021 (month/day/year)                      |
+| MindSpore Version          | 1.1.0-alpha                                                 | 1.2.0                                            |
+| Dataset                    | PASCAL VOC 2012 and SBD                                     | PASCAL VOC 2012 and SBD                          |
+| Training Parameters        | epoch=500, steps=330, batch_size = 32, lr=0.015             | epoch=500, steps=330, batch_size = 8, lr=0.005   |
+| Optimizer                  | Momentum                                                    | Momentum                                         |
+| Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy                            |
+| outputs                    | probability                                                 | probability                                      |
+| Loss                       | 0.038                                                       | 0.036                                            |
+| Speed                      | 1pc: 564.652 ms/step;                                       | 1pc: 455.460 ms/step;                            |
 | Scripts                    | [FCN script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/FCN8s)
 
 ### Inference Performance
 
 #### FCN8s on PASCAL VOC
 
-| Parameters          | Ascend
-| ------------------- | ---------------------------
-| Model Version       | FCN-8s
-| Resource            | Ascend 910; OS Euler2.8
-| Uploaded Date       | 10/29/2020 (month/day/year)
-| MindSpore Version   | 1.1.0-alpha
-| Dataset             | PASCAL VOC 2012
-| batch_size          | 16
-| outputs             | probability
-| mean IoU            | 64.67
+| Parameters          | Ascend                      | GPU
+| ------------------- | --------------------------- | ---------------------------
+| Model Version       | FCN-8s                      | FCN-8s
+| Resource            | Ascend 910; OS Euler2.8     | NV SMX2 V100-32G
+| Uploaded Date       | 10/29/2020 (month/day/year) | 06/11/2021 (month/day/year)
+| MindSpore Version   | 1.1.0-alpha                 | 1.2.0
+| Dataset             | PASCAL VOC 2012             | PASCAL VOC 2012
+| batch_size          | 16                          | 16
+| outputs             | probability                 | probability
+| mean IoU            | 64.67                       | 64.72
 
 ## [如何使用](#contents)
 

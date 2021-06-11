@@ -21,7 +21,7 @@ from mindspore.context import ParallelMode
 import mindspore.nn as nn
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common import set_seed
@@ -31,7 +31,7 @@ from src.utils.lr_scheduler import CosineAnnealingLR
 from src.nets.FCN8s import FCN8s
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
-from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from src.model_utils.device_adapter import get_device_id, get_device_num
 
 
 set_seed(1)
@@ -45,7 +45,7 @@ def modelarts_pre_process():
 def train():
     device_num = get_device_num()
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
-                        device_target='Ascend', device_id=get_device_id())
+                        device_target=config.device_target, device_id=get_device_id())
     # init multicards training
     config.rank = 0
     config.group_size = 1
@@ -53,8 +53,8 @@ def train():
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=device_num)
         init()
-        config.rank = get_rank_id()
-        config.group_size = get_device_num()
+        config.rank = get_rank()
+        config.group_size = get_group_size()
 
     # dataset
     dataset = data_generator.SegDataset(image_mean=config.image_mean,
@@ -112,10 +112,15 @@ def train():
 
     # loss scale
     manager_loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-
-    optimizer = nn.Momentum(params=net.trainable_params(), learning_rate=lr, momentum=0.9, weight_decay=0.0001,
-                            loss_scale=config.loss_scale)
-    model = Model(net, loss_fn=loss_, loss_scale_manager=manager_loss_scale, optimizer=optimizer, amp_level="O3")
+    if config.device_target == "Ascend":
+        optimizer = nn.Momentum(params=net.trainable_params(), learning_rate=lr, momentum=0.9, weight_decay=0.0001,
+                                loss_scale=config.loss_scale)
+        model = Model(net, loss_fn=loss_, loss_scale_manager=manager_loss_scale, optimizer=optimizer, amp_level="O3")
+    elif config.device_target == "GPU":
+        optimizer = nn.Momentum(params=net.trainable_params(), learning_rate=lr, momentum=0.9, weight_decay=0.0001)
+        model = Model(net, loss_fn=loss_, optimizer=optimizer)
+    else:
+        raise ValueError("Unsupported platform.")
 
     # callback for saving ckpts
     time_cb = TimeMonitor(data_size=iters_per_epoch)
