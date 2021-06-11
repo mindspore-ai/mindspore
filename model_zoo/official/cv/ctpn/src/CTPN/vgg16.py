@@ -23,6 +23,17 @@ def _weight_variable(shape, factor=0.01):
     init_value = np.random.randn(*shape).astype(np.float32) * factor
     return Tensor(init_value)
 
+def _BatchNorm2dInit(out_chls, momentum=0.1, affine=True, use_batch_statistics=False):
+    """Batchnorm2D wrapper."""
+    gamma_init = Tensor(np.array(np.ones(out_chls)).astype(np.float32))
+    beta_init = Tensor(np.array(np.ones(out_chls) * 0).astype(np.float32))
+    moving_mean_init = Tensor(np.array(np.ones(out_chls) * 0).astype(np.float32))
+    moving_var_init = Tensor(np.array(np.ones(out_chls)).astype(np.float32))
+
+    return nn.BatchNorm2d(out_chls, momentum=momentum, affine=affine, gamma_init=gamma_init,
+                          beta_init=beta_init, moving_mean_init=moving_mean_init,
+                          moving_var_init=moving_var_init, use_batch_statistics=use_batch_statistics)
+
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad', weights_update=True):
     """Conv2D wrapper."""
     layers = []
@@ -32,7 +43,7 @@ def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mod
     if not weights_update:
         conv.weight.requires_grad = False
     layers += [conv]
-    layers += [nn.BatchNorm2d(out_channels)]
+    layers += [_BatchNorm2dInit(out_channels)]
     return nn.SequentialCell(layers)
 
 
