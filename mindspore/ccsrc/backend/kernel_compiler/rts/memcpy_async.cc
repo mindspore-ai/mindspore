@@ -27,7 +27,6 @@
 
 using ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;
-using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
 using mindspore::device::ascend::MemcpyRtsDynamicKernel;
 using MemcpyRtsDynamicKernelPtr = std::shared_ptr<MemcpyRtsDynamicKernel>;
 

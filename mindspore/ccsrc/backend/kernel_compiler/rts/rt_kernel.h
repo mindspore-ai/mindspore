@@ -51,7 +51,7 @@ class RtKernelFactory {
 
  public:
   static RtKernelFactory &Get();
-  void Registe(const std::string &name, RtKernelCreater &&fun);
+  void Register(const std::string &name, RtKernelCreater &&fun);
   static std::shared_ptr<RtKernel> Create(const std::string &name);
 
  private:
@@ -61,7 +61,7 @@ class RtKernelFactory {
 class _RtKernelRegister {
  public:
   _RtKernelRegister(const std::string &name, RtKernelCreater &&fun) {
-    RtKernelFactory::Get().Registe(name, std::move(fun));
+    RtKernelFactory::Get().Register(name, std::move(fun));
   }
   ~_RtKernelRegister() = default;
 };
