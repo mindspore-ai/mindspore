@@ -22,9 +22,7 @@
 #include "src/kernel_registry.h"
 #include "nnacl/fp32/common_func_fp32.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/scale.cl.inc"
-#endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -172,10 +170,6 @@ int ScaleOpenCLKernel::Prepare() {
     weight_vector_flag_ = true;
     kernel_name = "Scale";
   }
-  lite::STATUS error_code;
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   if (out_mem_type_ == MemType::IMG) {
     kernel_name += "_IMG";
   } else {
@@ -183,14 +177,16 @@ int ScaleOpenCLKernel::Prepare() {
   }
   std::string program_name = "Scale";
   std::string source = GetActDefines() + scale_source;
-  ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
-  if (error_code != RET_OK) {
-    return error_code;
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
   }
-
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   Image2dGetWorkGroupSize();
   InitWeights();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";

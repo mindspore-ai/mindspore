@@ -223,9 +223,16 @@ int ConcatOpenCLKernel::Prepare() {
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
   std::string source = concat_source;
   std::string program_name = "Concat";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
   SetGlobalLocal();

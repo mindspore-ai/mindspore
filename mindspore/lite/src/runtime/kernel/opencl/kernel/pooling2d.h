@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_POOLING_H_
 
 #include <vector>
-
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/fp32/pooling_fp32.h"
 

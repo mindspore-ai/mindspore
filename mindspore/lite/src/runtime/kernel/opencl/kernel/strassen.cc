@@ -30,16 +30,23 @@ int StrassenOpenCLKernel::Prepare() {
   std::string kernel_name = "MatMul_Strassen_NHWC4_2d";
   std::string source = strassen_source;
   std::string program_name = "MatMul";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
 
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   ocl_runtime_->BuildKernel(kernel_IMG_add_sub_2, program_name, "MatMul_IMG_Add_Sub_2", build_options_ext);
   ocl_runtime_->BuildKernel(kernel_BUF_add_sub_2, program_name, "MatMul_BUF_Add_Sub_2", build_options_ext);
   ocl_runtime_->BuildKernel(kernel_back_result, program_name, "Strassen_Back_Result", build_options_ext);
   ocl_runtime_->BuildKernel(MatMul_StrassenBUFFilled, program_name, "MatMul_BUF_Filled", build_options_ext);
   ocl_runtime_->BuildKernel(MatMul_StrassenIMGFilled, program_name, "MatMul_IMG_Filled", build_options_ext);
-  auto ret = InitWeights();
+  ret = InitWeights();
   if (ret != RET_OK) {
     return ret;
   }

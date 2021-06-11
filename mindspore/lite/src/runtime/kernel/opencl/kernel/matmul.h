@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_MATMUL_H_
 
 #include <vector>
-
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/common/utils.h"
 #include "nnacl/matmul_parameter.h"

@@ -15,8 +15,6 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/resize.h"
-#include <map>
-#include <set>
 #include <string>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
@@ -65,15 +63,18 @@ int ResizeOpenCLKernel::Prepare() {
     kernel_name += "_nearest_neighbor";
   }
   kernel_name += "_NHWC4";
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = resize_source;
   std::string program_name = "Resize";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";

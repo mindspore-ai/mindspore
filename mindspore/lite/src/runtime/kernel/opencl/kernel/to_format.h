@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_TO_FORMAT_H_
 
 #include <vector>
-
 #include "src/inner_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 

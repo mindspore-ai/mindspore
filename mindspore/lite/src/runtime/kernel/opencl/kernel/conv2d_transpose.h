@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONV2D_TRANSPOSE_H_
 
 #include <vector>
-
 #include "src/inner_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"

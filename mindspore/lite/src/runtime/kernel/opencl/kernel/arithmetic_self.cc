@@ -87,9 +87,16 @@ int ArithmeticSelfOpenCLKernel::Prepare() {
   }
   MS_LOG(DEBUG) << "execute kernel name : " << kernel_name;
   std::string program_name = "ArithmeticSelf";
-  ocl_runtime_->LoadSource(program_name, arithmeticself_source);
+  if (!ocl_runtime_->LoadSource(program_name, arithmeticself_source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetGlobalLocal();
   SetConstArgs();
   return RET_OK;

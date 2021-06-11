@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <string>
-
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
 

@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-#include <set>
 #include <string>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/transpose.h"
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/transpose.cl.inc"
-#endif
 #include "src/runtime/kernel/opencl/utils.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -103,20 +100,23 @@ int TransposeOpenCLKernel::Prepare() {
   }
   kernel_name += "_NHWC4";
 
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = transpose_source;
   std::string program_name = "transpose";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
 
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 void TransposeOpenCLKernel::SetConstArgs() {
@@ -164,7 +164,7 @@ int TransposeOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Transpose, OpenCLKernelCreator<TransposeOpenCLKernel>)

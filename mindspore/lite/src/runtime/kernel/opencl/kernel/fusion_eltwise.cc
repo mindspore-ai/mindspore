@@ -166,14 +166,21 @@ int FusionEltwiseOpenCLKernel::Prepare() {
   std::string source = Codegen();
   std::string program_name = "FusionEltwise\n" + source;
   std::string kernel_name = "FusionEltwise";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   std::vector<std::string> build_options_ext;
   if (ocl_runtime_->GetFp16Enable()) {
     build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh "};
   } else {
     build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef "};
   }
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   InitWeights();
   SetGlobalLocal();
   SetConstArgs();

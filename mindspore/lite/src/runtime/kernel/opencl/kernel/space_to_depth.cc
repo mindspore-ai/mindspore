@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <set>
 #include <string>
-#include <map>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/space_to_depth.h"
@@ -52,20 +50,23 @@ int SpaceToDepthOpenCLKernel::Prepare() {
   if (in_shape_.C % C4NUM == 0 && out_shape_.C % C4NUM == 0) {
     kernel_name += "Align";
   }
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = space_to_depth_source;
   std::string program_name = "SpaceToDepth";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
 
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 void SpaceToDepthOpenCLKernel::SetConstArgs() {
   cl_int4 cl_in_shape = {static_cast<cl_int>(in_shape_.N), static_cast<cl_int>(in_shape_.H),
@@ -97,7 +98,7 @@ int SpaceToDepthOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToDepth, OpenCLKernelCreator<SpaceToDepthOpenCLKernel>)

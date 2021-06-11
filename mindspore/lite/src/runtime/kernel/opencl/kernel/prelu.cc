@@ -128,15 +128,22 @@ int PReluOpenCLKernel::Prepare() {
   std::string source = prelu_source;
   std::string program_name = "PRelu";
   std::string kernel_name = "PRelu_" + std::string(weight_is_scalar ? "scalar" : "vector");
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   InitWeights();
   MS_LOG(DEBUG) << program_name << " init Done!";
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name << " init Done!";
   SetConstArgs();
   SetGlobalLocal();
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 int PReluOpenCLKernel::Run() {
@@ -154,7 +161,7 @@ int PReluOpenCLKernel::Run() {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
     return mindspore::lite::RET_ERROR;
   }
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_PReLUFusion, OpenCLKernelCreator<PReluOpenCLKernel>)

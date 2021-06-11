@@ -19,9 +19,7 @@
 #include <set>
 #include "nnacl/fp32/common_func_fp32.h"
 #include "src/kernel_registry.h"
-#ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/conv2d_transpose.cl.inc"
-#endif
 #include "src/runtime/kernel/opencl/utils.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -59,23 +57,26 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
 int Conv2dTransposeOpenCLKernel::Prepare() {
   std::string kernel_name = "conv2d_transpose";
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string source = GetActDefines() + conv2d_transpose_source;
   std::string program_name = "conv2d_transpose";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
-  auto ret = InitWeights();
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
+  ret = InitWeights();
   if (ret != RET_OK) {
     return ret;
   }
   SetGlobalLocal();
   SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 void Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
@@ -235,7 +236,7 @@ int Conv2dTransposeOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 int Conv2dTransposeOpenCLKernel::InferShape() {

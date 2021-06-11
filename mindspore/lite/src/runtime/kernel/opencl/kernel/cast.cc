@@ -14,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cstring>
 #include <algorithm>
-#include <set>
 #include <map>
 #include <string>
 #include "src/kernel_registry.h"
@@ -73,8 +71,15 @@ int CastOpenCLKernel::Prepare() {
   std::string program_name = "Cast";
   std::string kernel_name =
     "Cast_" + dtype_names[in_tensors_.front()->data_type()] + "_to_" + dtype_names[out_tensors_.front()->data_type()];
-  ocl_runtime_->LoadSource(program_name, cast_source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  if (!ocl_runtime_->LoadSource(program_name, cast_source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   return RET_OK;

@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <set>
 #include <string>
-#include <map>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/one_hot.h"
@@ -49,26 +47,28 @@ int OneHotOpenCLKernel::Prepare() {
   } else {
     kernel_name += "Axis" + std::to_string(axis_);
   }
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
-
   std::string source = one_hot_source;
   std::string program_name = "OneHot";
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   std::vector<std::string> build_options_ext;
   if (ocl_runtime_->GetFp16Enable()) {
     build_options_ext = {" -DWRITE_IMAGE=write_imageh -DREAD_IMAGE=write_imagei "};
   } else {
     build_options_ext = {" -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagei "};
   }
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
   InitWeights();
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 int OneHotOpenCLKernel::InitWeights() {
@@ -111,7 +111,7 @@ int OneHotOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeInt32, PrimitiveType_OneHot, OpenCLKernelCreator<OneHotOpenCLKernel>)

@@ -25,12 +25,7 @@
 #include "nnacl/fp32/common_func_fp32.h"
 #include "nnacl/op_base.h"
 #include "include/errorcode.h"
-
-#ifndef PROGRAM_WITH_IL
-
 #include "src/runtime/kernel/opencl/cl/depthwise_conv2d.cl.inc"
-
-#endif
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -78,16 +73,19 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   } else {
     block_size_.C = block_size_.H = block_size_.W = 1;
   }
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string program_name = "DepthwiseConv2d";
   std::string source = depthwise_conv2d_source;
-  ocl_runtime_->LoadSource(program_name, source);
+  if (!ocl_runtime_->LoadSource(program_name, source)) {
+    MS_LOG(ERROR) << "Load source failed.";
+    return RET_ERROR;
+  }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
-#endif
-  auto ret = InitWeights();
+  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build kernel failed.";
+    return ret;
+  }
+  ret = InitWeights();
   if (ret != RET_OK) {
     return ret;
   }
@@ -98,7 +96,7 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   SetGlobalLocal();
   SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::InitWeights() {
@@ -162,7 +160,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     return RET_ERROR;
   }
   FreeStoredData(stored_weight_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::InitBias() {
@@ -204,7 +202,7 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     return RET_ERROR;
   }
   FreeStoredData(stored_bias_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
@@ -291,6 +289,6 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 }  // namespace mindspore::kernel
