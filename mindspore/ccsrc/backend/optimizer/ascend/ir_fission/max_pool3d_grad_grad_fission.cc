@@ -66,7 +66,8 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   }
 
   auto elem_num = LongToSize(dims) * kFloat16Len;
-  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()), half_data.data(), elem_num);
+  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()),
+                           reinterpret_cast<void *>(half_data.data()), elem_num);
   if (ret_code != 0) {
     MS_LOG(ERROR) << "Failed to copy data into Tensor while creating assist input for MaxPool3dGradGrad op.";
     return nullptr;
@@ -109,20 +110,20 @@ const AnfNodePtr MaxPool3DGradGradFission::Process(const FuncGraphPtr &graph, co
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " is not equal to " << kInputNum << " inputs";
     return nullptr;
   }
-  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradOpName))};
-  auto assist_const = CreateValueNode(cnode);
-  new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
-  new_inputs.push_back(assist_const);
-  CNodePtr new_cnode = graph->NewCNode(new_inputs);
-  MS_EXCEPTION_IF_NULL(new_cnode);
-  new_cnode->set_abstract(cnode->abstract());
-  new_cnode->set_scope(cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+  std::vector<AnfNodePtr> new_node_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradOpName))};
+  auto assist_filter_const = CreateValueNode(cnode);
+  new_node_inputs.insert(new_node_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  new_node_inputs.push_back(assist_filter_const);
+  CNodePtr new_max_pool3d_grad_grad_node = graph->NewCNode(new_node_inputs);
+  MS_EXCEPTION_IF_NULL(new_max_pool3d_grad_grad_node);
+  new_max_pool3d_grad_grad_node->set_abstract(cnode->abstract());
+  new_max_pool3d_grad_grad_node->set_scope(cnode->scope());
+  AnfAlgo::CopyNodeAttrs(cnode, new_max_pool3d_grad_grad_node);
   if (kernel_graph != nullptr) {
-    kernel_graph->AddValueNodeToGraph(assist_const);
+    kernel_graph->AddValueNodeToGraph(assist_filter_const);
     MS_LOG(INFO) << "Split MaxPool3DGradGrad op success.";
   }
-  return new_cnode;
+  return new_max_pool3d_grad_grad_node;
 }
 }  // namespace opt
 }  // namespace mindspore
