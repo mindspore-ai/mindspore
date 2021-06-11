@@ -25,7 +25,6 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
 #include "pipeline/jit/resource.h"
-#include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/ad/adjoint.h"
 #include "frontend/operator/ops.h"
 #include "utils/symbolic.h"
@@ -37,7 +36,6 @@ namespace mindspore {
 namespace ad {
 std::unordered_map<FuncGraphPtr, DFunctorPtr> DFunctor::func_graph_to_functor_;
 std::unordered_map<AnfNodePtr, AdjointPtr> DFunctor::anfnode_to_adjoin_definition_;
-FuncGraphSet DFunctor::scope_;
 
 DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources)
     : primal_graph_(primal_graph), resources_(resources), need_cut_(false), is_top_(false) {
@@ -62,9 +60,6 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
 void DFunctor::Init(bool is_top) {
   func_graph_to_functor_[primal_graph_] = shared_from_this();
   is_top_ = is_top;
-  if (is_top) {
-    scope_ = primal_graph_->scope();
-  }
 }
 
 void DFunctor::Finish() {
@@ -75,7 +70,6 @@ void DFunctor::Finish() {
 void DFunctor::Clear() {
   func_graph_to_functor_.clear();
   anfnode_to_adjoin_definition_.clear();
-  scope_.clear();
 }
 
 void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
@@ -133,7 +127,8 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
 
 void DFunctor::BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNodePtr &env) {
   // Take switch_layer as a set of candidate functions.
-  auto input = cnode_morph->input(2);
+  constexpr size_t input_tuple_index = 2;
+  auto input = cnode_morph->input(input_tuple_index);
   if (!IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
     MS_LOG(EXCEPTION) << "The 2th input of switch_layer expect a tuple of graphs, but got " << input->ToString() << ".";
   }
@@ -626,11 +621,6 @@ AnfNodePtr DFunctor::MapParameterToK(const AnfNodePtr &primal) {
   TraceGuard trace_guard(std::make_shared<TraceGradFprop>(primal->debug_info()));
   auto ret = k_graph_->add_parameter();
   return ret;
-}
-
-bool DFunctor::IsInScope(const AnfNodePtr &node) const {
-  return std::any_of(scope_.begin(), scope_.end(),
-                     [&](const FuncGraphPtr &graph) { return node->func_graph() == graph; });
 }
 
 void DFunctor::MapFvObject() {
