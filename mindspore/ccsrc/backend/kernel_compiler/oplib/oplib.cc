@@ -188,6 +188,7 @@ bool OpLib::RegOpFromLocalInfo() {
       (void)OpLib::RegOp(line, "");
     }
   }
+  file.close();
   MS_LOG(INFO) << "End";
   return true;
 }
