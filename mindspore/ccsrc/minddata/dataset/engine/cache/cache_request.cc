@@ -241,7 +241,7 @@ Status CreateCacheRequest::PostReply() {
   cpu_set_t cpu_set;
   CPU_ZERO(&cpu_set);
 #endif
-  for (auto i = 0; i < sz; ++i) {
+  for (uint32_t i = 0; i < sz; ++i) {
     auto cpu_id = p->cpu_id()->Get(i);
     cc_->cpu_list_.push_back(cpu_id);
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
@@ -318,7 +318,7 @@ Status GetCacheStateRequest::PostReply() {
 Status ListSessionsRequest::PostReply() {
   auto *msg = flatbuffers::GetRoot<ListSessionsMsg>(reply_.result().data());
   auto session_vector = msg->sessions();
-  for (auto i = 0; i < session_vector->size(); ++i) {
+  for (uint32_t i = 0; i < session_vector->size(); ++i) {
     SessionCacheInfo current_info{};
     CacheServiceStat stats{};
     auto current_session_info = session_vector->Get(i);

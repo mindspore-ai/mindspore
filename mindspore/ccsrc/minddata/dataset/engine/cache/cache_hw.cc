@@ -87,7 +87,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
   }
   auto isdigit_string = [](const char *str) -> bool {
     bool r = true;
-    for (auto i = 0; i < strlen(str); ++i) {
+    for (size_t i = 0; i < strlen(str); ++i) {
       if (!std::isdigit(str[i])) {
         r = false;
         break;
@@ -218,7 +218,7 @@ void CacheServerHW::InterleaveMemory(void *ptr, size_t sz) {
 #endif
 }
 
-void CacheServerHW::AssignToNode(numa_id_t numa_id, void *ptr, size_t sz) {
+void CacheServerHW::AssignToNode(numa_id_t numa_id, void *ptr, size_t sz) const {
 #ifdef NUMA_ENABLED
   if (numa_enabled()) {
     numa_tonode_memory(ptr, sz, numa_id);

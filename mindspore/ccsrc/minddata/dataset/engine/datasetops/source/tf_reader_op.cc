@@ -96,13 +96,13 @@ void TFReaderOp::Print(std::ostream &out, bool show_all) const {
     out << "\nTotal rows: " << total_rows_ << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
         << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
         << "\nDataset files list: Size: " << dataset_files_list_.size() << "\n";
-    for (int i = 0; i < dataset_files_list_.size(); ++i) {
+    for (size_t i = 0; i < dataset_files_list_.size(); ++i) {
       out << " " << dataset_files_list_[i];
     }
     if (!columns_to_load_.empty()) {
       out << "\nColumns to load:\n";
-      for (int i = 0; i < columns_to_load_.size(); ++i) {
-        out << " " << columns_to_load_[i];
+      for (size_t j = 0; j < columns_to_load_.size(); ++j) {
+        out << " " << columns_to_load_[j];
       }
     }
     out << "\nData Schema:\n";
