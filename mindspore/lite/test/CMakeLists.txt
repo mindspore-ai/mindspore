@@ -169,6 +169,7 @@ if(MSLITE_ENABLE_CONVERTER)
     add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)
     file(GLOB_RECURSE TEST_CASE_TFLITE_PARSERS_SRC
+            ${TEST_DIR}/ut/tools/converter/registry/*.cc
             ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
             )
     set(TEST_LITE_SRC
@@ -182,6 +183,8 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/graphdef_transform.cc
             ${LITE_DIR}/tools/converter/converter_flags.cc
             ${LITE_DIR}/tools/converter/converter.cc
+            ${LITE_DIR}/tools/converter/export_model.cc
+            ${LITE_DIR}/tools/converter/dump_graph.cc
             ${LITE_DIR}/tools/converter/parser/parser_utils.cc
             ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc
             ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
@@ -388,7 +391,7 @@ if(MSLITE_ENABLE_CONVERTER)
     add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
             anf_exporter_mid
-            mslite_converter_plugin_reg
+            mslite_converter_plugin
             tflite_parser_mid
             caffe_parser_mid
             onnx_parser_mid

@@ -57,6 +57,8 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter="TestFullConnectionOpenCL*"
 ./lite-test --gtest_filter="TestResizeOpenCL*"
 ./lite-test --gtest_filter="TestSwishOpenCLCI.Fp32CI"
+./lite-test --gtest_filter="ModelParserRegistryTest.TestRegistry"
+./lite-test --gtest_filter="PassRegistryTest.TestRegistry"
 
 # test cases specific for train
 if [[ $1 == train ]]; then
