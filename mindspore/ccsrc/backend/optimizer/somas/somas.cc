@@ -133,7 +133,7 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model hash id is " << hash_id_;
   std::string filename =
     save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
-  Common::SaveStringToFile(filename, model_str);
+  (void)Common::SaveStringToFile(filename, model_str);
   return true;
 }
 
@@ -166,7 +166,7 @@ bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
 
   std::string filename =
     save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
-  Common::SaveStringToFile(filename, somas_json.dump());
+  (void)Common::SaveStringToFile(filename, somas_json.dump());
   return true;
 }
 
@@ -1523,7 +1523,7 @@ void Somas::DumpParameters(std::ostringstream &oss) const {
   }
 }
 
-void Somas::DumpSomasInfoIR(const string filename) const { Common::SaveStringToFile(filename, SomasInfo()); }
+void Somas::DumpSomasInfoIR(const string filename) const { (void)Common::SaveStringToFile(filename, SomasInfo()); }
 
 std::string Somas::Offline() const {
   std::ostringstream oss;
@@ -1572,7 +1572,7 @@ std::string Somas::Offline() const {
 
 void Somas::DumpOfflineIR(const string filename) const {
   MS_LOG(INFO) << "Printing somas-log-from-graph log: " << filename;
-  Common::SaveStringToFile(filename, Offline());
+  (void)Common::SaveStringToFile(filename, Offline());
 }
 
 std::string Somas::SomasMemory() const {
@@ -1645,7 +1645,7 @@ std::string Somas::SomasMemory() const {
   return oss.str();
 }
 
-void Somas::DumpSomasMemoryIR(const string filename) const { Common::SaveStringToFile(filename, SomasMemory()); }
+void Somas::DumpSomasMemoryIR(const string filename) const { (void)Common::SaveStringToFile(filename, SomasMemory()); }
 
 size_t Somas::CalcLowerBound() const {
   size_t max_node_id = std::accumulate(tensors_list_.begin(), tensors_list_.end(), 0, [](size_t max_id, auto tensor) {
