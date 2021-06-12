@@ -1925,7 +1925,6 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
   auto FindEqu = [graph, outputs, this](const AnfNodePtr &out) -> AnfNodePtr {
     auto backend_anf = graph->GetBackendAnfByFrontAnf(out);
     if (backend_anf != nullptr) {
-      graph->CacheGraphOutputToFrontNodeWithIndex(backend_anf, out);
       auto context_ptr = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context_ptr);
       if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
