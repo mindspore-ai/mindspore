@@ -233,7 +233,6 @@ def calc_auc(x: _Array) -> _Array:
     # take mean for multiple patches if the model is fully convolutional model
     if len(x.shape) == 4:
         x = np.mean(np.mean(x, axis=2), axis=3)
-
     auc = (x.sum() - x[0] - x[-1]) / len(x)
     return auc
 
