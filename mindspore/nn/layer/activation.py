@@ -685,14 +685,14 @@ class HSigmoid(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hsigmoid = nn.HSigmoid()
         >>> result = hsigmoid(x)
         >>> print(result)
-        [0.3333  0.1666  0.5  0.833  0.6665]
+        [0.3333 0.1666 0.5    0.8335 0.6665]
     """
 
     def __init__(self):
@@ -700,8 +700,8 @@ class HSigmoid(Cell):
         super(HSigmoid, self).__init__()
         self.hsigmoid = P.HSigmoid()
 
-    def construct(self, x):
-        return self.hsigmoid(x)
+    def construct(self, input_x):
+        return self.hsigmoid(input_x)
 
 
 class LogSigmoid(Cell):

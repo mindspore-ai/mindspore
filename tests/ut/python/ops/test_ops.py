@@ -2159,6 +2159,11 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), mstype.float16),
                         Tensor(np.array([[-4, -3, -2], [1, 2, 4]]), mstype.float16)],
         'skip': ['backward']}),
+    ('HSigmoid', {
+        'block': P.HSigmoid(),
+        'desc_inputs': [Tensor(np.array([[-4, 4, 1]]), mstype.float32)],
+        'desc_bprop': [Tensor(np.array([[0, 1, 0.6666]]), mstype.float32)],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [

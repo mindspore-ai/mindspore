@@ -13,31 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_OPS_HSIGMOID_GRAD_H_
-#define MINDSPORE_CORE_OPS_HSIGMOID_GRAD_H_
-#include <map>
-#include <memory>
-#include <string>
 #include <vector>
+#include <memory>
 
 #include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameHSigmoidGrad = "HSigmoidGrad";
-class HSigmoidGrad : public PrimitiveC {
+constexpr auto kNameHSigmoid = "HSigmoid";
+class HSigmoid : public PrimitiveC {
  public:
-  HSigmoidGrad() : PrimitiveC(kNameHSigmoidGrad) { InitIOName({"grads", "input_x"}, {"output"}); }
-  ~HSigmoidGrad() = default;
-  MS_DECLARE_PARENT(HSigmoidGrad, PrimitiveC);
+  HSigmoid() : PrimitiveC(kNameHSigmoid) { InitIOName({"input_x"}, {"output"}); }
+  ~HSigmoid() = default;
+  MS_DECLARE_PARENT(HSigmoid, PrimitiveC);  // come from ops/primitive_c.h
 };
-AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
-using PrimHSigmoidGradPtr = std::shared_ptr<HSigmoidGrad>;
+
+AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const std::vector<AbstractBasePtr> &input_args);
+
+using PrimHSigmoidPtr = std::shared_ptr<HSigmoid>;
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_HSIGMOID_GRAD_H_

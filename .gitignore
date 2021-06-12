@@ -104,6 +104,9 @@ mindspore/.commit_id
 
 # lite test file
 mindspore/lite/test/do_test/
+HSigmoid_Test/
+.vs
+
 
 # lite opencl compile file
 *.cl.inc
