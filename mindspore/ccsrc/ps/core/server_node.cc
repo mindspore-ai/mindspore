@@ -21,19 +21,22 @@ namespace mindspore {
 namespace ps {
 namespace core {
 bool ServerNode::Start(const uint32_t &timeout) {
-  MS_LOG(INFO) << "Start server node!";
+  MS_LOG(INFO) << "[Server start]: 1. Begin to start server node!";
   Initialize();
   Register(client_to_scheduler_);
+  MS_LOG(INFO) << "[Server start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
+
   StartHeartbeatTimer(client_to_scheduler_);
+  MS_LOG(INFO) << "[Server start]: 5. Server start heartbeat timer!";
 
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start server node timeout!";
     return false;
   }
-  MS_LOG(INFO) << "The cluster is ready to use!";
 
   MsException::Instance().CheckException();
-  MS_LOG(INFO) << "Start the node is successful!";
+  MS_LOG(INFO) << "[Server start]: 6. Successfully start server node!";
   return true;
 }
 
@@ -85,12 +88,15 @@ void ServerNode::Initialize() {
   CreateTcpServer();
   is_already_stopped_ = false;
   InitNodeInfo(NodeRole::SERVER);
+
+  MS_LOG(INFO) << "[Server start]: 2. Server node create tcp server successful!";
+
   InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Server node connect to scheduler timedout!";
   }
-  MS_LOG(INFO) << "Server node init client successful!";
+  MS_LOG(INFO) << "[Server start]: 3. Server node crete tcp client to scheduler successful!";
 }
 
 void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
@@ -176,7 +182,15 @@ bool ServerNode::Finish(const uint32_t &timeout) {
     return true;
   }
   is_already_finished_ = true;
-  return Disconnect(client_to_scheduler_, timeout);
+
+  MS_LOG(INFO) << "[Server finish]: 1. Begin to finish server node!";
+  bool res = Disconnect(client_to_scheduler_, timeout);
+  if (res) {
+    MS_LOG(INFO) << "[Server finish]: 2. Successfully finish server node!";
+  } else {
+    MS_LOG(WARNING) << "[Server finish]: 2. finish server node timeout!";
+  }
+  return res;
 }
 }  // namespace core
 }  // namespace ps

@@ -93,7 +93,7 @@ bool NodeManager::CheckNodesScaleInState() { return SizeToInt(heartbeats_scale_i
 
 std::vector<ServersMeta> NodeManager::FetchServersMeta() {
   std::vector<ServersMeta> servers_meta_list;
-  for (auto it = nodes_info_.begin(); it != nodes_info_.end(); ++it) {
+  for (auto it = registered_nodes_info_.begin(); it != registered_nodes_info_.end(); ++it) {
     if (it->second.node_role_ == NodeRole::SERVER) {
       ServersMeta servers_meta;
       servers_meta.set_rank_id(it->second.rank_id_);
@@ -159,6 +159,8 @@ bool NodeManager::IsAllNodesScaleInDone() { return SizeToInt(scale_in_done_nodes
 
 std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() { return nodes_info_; }
 
+std::unordered_map<std::string, NodeInfo> &NodeManager::registered_nodes_info() { return registered_nodes_info_; }
+
 void NodeManager::UpdateNodesInfo() {
   MS_LOG(INFO) << "Update nodes info.";
   nodes_info_.clear();
@@ -172,6 +174,8 @@ void NodeManager::UpdateNodeState(const NodeState &state) {
 
 void NodeManager::UpdateClusterState(const ClusterState &state) {
   std::lock_guard<std::mutex> lk(cluster_mutex_);
+  MS_LOG(INFO) << "[state]: Scheduler change state from:" << CommUtil::ClusterStateToString(cluster_state_) << " to "
+               << state;
   cluster_state_ = state;
 }
 

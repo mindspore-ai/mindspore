@@ -21,19 +21,22 @@ namespace mindspore {
 namespace ps {
 namespace core {
 bool WorkerNode::Start(const uint32_t &timeout) {
-  MS_LOG(INFO) << "Starting worker node!";
+  MS_LOG(INFO) << "[Worker start]: 1. Begin to start worker node!";
   Initialize();
   Register(client_to_scheduler_);
+  MS_LOG(INFO) << "[Worker start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
+
   StartHeartbeatTimer(client_to_scheduler_);
+  MS_LOG(INFO) << "[Worker start]: 5. Worker start heartbeat timer!";
 
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start Worker node timeout!";
     return false;
   }
-  MS_LOG(INFO) << "The node is ready to fetch servers!";
 
   MsException::Instance().CheckException();
-  MS_LOG(INFO) << "The Worker node has successfully started.";
+  MS_LOG(INFO) << "[Worker start]: 6. Successfully start worker node!";
   return true;
 }
 
@@ -42,12 +45,15 @@ void WorkerNode::Initialize() {
   InitServerHandler();
   CreateTcpServer();
   InitNodeInfo(NodeRole::WORKER);
+
+  MS_LOG(INFO) << "[Worker start]: 2. Worker node create tcp server successful!";
+
   InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Worker node connect to scheduler timeout!";
   }
-  MS_LOG(INFO) << "Worker node init client successful!";
+  MS_LOG(INFO) << "[Worker start]: 3. Worker node crete tcp client to scheduler successful!";
 }
 
 void WorkerNode::CreateTcpServer() {
@@ -93,9 +99,16 @@ bool WorkerNode::Finish(const uint32_t &timeout) {
     MS_LOG(INFO) << "Worker node already finish!";
     return true;
   }
-  MS_LOG(INFO) << "Finish worker node!";
+  MS_LOG(INFO) << "[Worker finish]: 1. Begin to finish worker node!";
   is_already_finished_ = true;
-  return Disconnect(client_to_scheduler_, timeout);
+  bool res = Disconnect(client_to_scheduler_, timeout);
+  if (res) {
+    MS_LOG(INFO) << "[Worker finish]: 2. Successfully finish worker node!";
+  } else {
+    MS_LOG(WARNING) << "[Worker finish]: 2. finish worker node timeout!";
+  }
+
+  return res;
 }
 }  // namespace core
 }  // namespace ps

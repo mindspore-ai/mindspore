@@ -25,7 +25,7 @@ SchedulerNode::~SchedulerNode() {
 }
 
 bool SchedulerNode::Start(const uint32_t &timeout) {
-  MS_LOG(INFO) << "Start scheduler node!";
+  MS_LOG(INFO) << "[Scheudler start]: 1. Begin to start scheduler node!";
   if (PSContext::instance()->scheduler_manage_port() != 0) {
     MS_LOG(WARNING) << "Start the scheduler http service, the ip:" << PSContext::instance()->scheduler_ip()
                     << ", the port:" << PSContext::instance()->scheduler_manage_port();
@@ -38,7 +38,7 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
     return false;
   }
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
-  MS_LOG(INFO) << "Start the scheduler node is successful!";
+  MS_LOG(INFO) << "[Scheduler start]: 4. Successfully start scheduler!";
 
   return true;
 }
@@ -70,8 +70,8 @@ void SchedulerNode::Initialize() {
   node_info_.node_id_ = CommUtil::GenerateUUID();
   node_info_.node_role_ = NodeRole::SCHEDULER;
   leader_scaler_ = std::make_unique<LeaderScaler>(this);
-  MS_LOG(INFO) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << ", the node id is:" << node_info_.node_id_;
+  MS_LOG(INFO) << "[Scheduler start]: 2. The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << ", the node id is:" << node_info_.node_id_ << " create a tcp server.";
 }
 
 void SchedulerNode::InitCommandHandler() {
@@ -82,7 +82,6 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_OUT_DONE] = &SchedulerNode::ProcessScaleOutDone;
   handlers_[NodeCommand::SCALE_IN_DONE] = &SchedulerNode::ProcessScaleInDone;
   handlers_[NodeCommand::SEND_EVENT] = &SchedulerNode::ProcessSendEvent;
-  handlers_[NodeCommand::SCALE_IN_FINISH] = &SchedulerNode::ProcessScaleInFinish;
 }
 
 void SchedulerNode::CreateTcpServer() {
@@ -133,15 +132,18 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
                       register_resp_message.ByteSizeLong());
 
   if (node_manager_.IsAllNodesRegistered()) {
-    node_manager_.UpdateNodesInfo();
     is_ready_ = true;
+    MS_LOG(INFO) << "Scheduler send meta data to worker/server.";
     auto node_infos = node_manager_.nodes_info();
+    if (node_manager_.GetClusterState() == ClusterState::ClUSTER_STARTING) {
+      node_infos.clear();
+      node_infos = node_manager_.registered_nodes_info();
+    }
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
       SendMetadata(client, kvs.second.rank_id_);
-      MS_LOG(INFO) << "Send meta data to node id:" << kvs.first
-                   << ", The rank id of the node that received this message is:" << kvs.second.rank_id_;
     }
+    node_manager_.UpdateNodesInfo();
     wait_start_cond_.notify_all();
   }
 }
@@ -181,23 +183,6 @@ void SchedulerNode::ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std:
 
   server->SendMessage(conn, meta, Protos::PROTOBUF, fetch_servers_message.SerializeAsString().data(),
                       fetch_servers_message.ByteSizeLong());
-}
-
-void SchedulerNode::ProcessScaleInFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                         std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
-  MS_EXCEPTION_IF_NULL(server);
-  MS_EXCEPTION_IF_NULL(conn);
-  MS_EXCEPTION_IF_NULL(meta);
-  MS_EXCEPTION_IF_NULL(data);
-  auto finish_message = std::make_unique<std::string>(reinterpret_cast<const char *>(data), size);
-  MS_LOG(INFO) << "Process finish message from node id:" << *finish_message;
-  bool res = CommUtil::Retry([&] { return node_manager_.IsAllNodesRegistered(); }, kCheckRegisteredRetryCount,
-                             kCheckRegisteredIntervalInMs);
-  if (res == false) {
-    MS_LOG(ERROR) << "All nodes have not yet fully registered successfully.";
-  }
-  MS_LOG(INFO) << "The scheduler response the scale in finish message.";
-  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
 }
 
 void SchedulerNode::ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
@@ -365,7 +350,7 @@ void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const ui
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {
-  MS_LOG(WARNING) << "The scheduler start a heartbeat timer!";
+  MS_LOG(INFO) << "[Scheduler start]: 3. The scheduler start a heartbeat timer!";
   update_state_thread_ = std::make_unique<std::thread>([&]() {
     auto start_time = std::chrono::steady_clock::now();
     while (!is_finish_.load()) {
@@ -433,11 +418,11 @@ bool SchedulerNode::Stop() {
 }
 
 bool SchedulerNode::Finish(const uint32_t &timeout) {
-  MS_LOG(INFO) << "Finish scheduler node!";
+  MS_LOG(INFO) << "[Scheduler finish]: 1. Begin to finish scheduler node!";
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
   wait_finish_cond_.wait(lock, [&] {
     if (is_finish_.load()) {
-      MS_LOG(INFO) << "The scheduler finish success!";
+      MS_LOG(INFO) << "[Scheduler finish]: 2. Successfully finish scheduler!";
     }
     return is_finish_.load();
   });
