@@ -35,41 +35,6 @@ using mindspore::lite::opencl::MemType;
 
 OpenCLSubGraph::~OpenCLSubGraph() { UnInit(); }
 
-void OpenCLSubGraph::ReplaceOutTensorAndKernelToNull(const std::vector<lite::Tensor *> &in_tensors,
-                                                     const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
-                                                     MemType mem_type) {
-  for (size_t i = 0; i < in_tensors.size(); ++i) {
-    for (auto &jv : in_kernels.at(i)) {
-      MS_ASSERT(jv);
-      auto tensors = (mem_type == MemType::IMG) ? jv->in_tensors() : jv->out_tensors();
-      auto ft = std::find_if(tensors.begin(), tensors.end(),
-                             [&in_tensors, &i](lite::Tensor *kv) { return kv == in_tensors.at(i); });
-      if (ft != tensors.end()) {
-        *ft = nullptr;
-      }
-      auto kernels = (mem_type == MemType::IMG) ? jv->in_kernels() : jv->out_kernels();
-      std::replace_if(
-        kernels.begin(), kernels.end(),
-        [this, &in_tensors, &i](kernel::LiteKernel *kv) {
-          MS_ASSERT(kv);
-          if (kv == nullptr) return false;
-          return std::find_if(kv->in_tensors().begin(), kv->in_tensors().end(),
-                              [&in_tensors, &i](lite::Tensor *xv) { return xv == in_tensors.at(i); }) !=
-                   kv->in_tensors().end() &&
-                 this->nodes_set_.count(kv) == 0;
-        },
-        nullptr);
-      if (mem_type == MemType::IMG) {
-        jv->set_in_tensors(tensors);
-        jv->set_in_kernels(kernels);
-      } else {
-        jv->set_out_tensors(tensors);
-        jv->set_out_kernels(kernels);
-      }
-    }
-  }
-}
-
 void OpenCLSubGraph::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
                                                         const std::vector<kernel::LiteKernel *> &in_kernels,
                                                         lite::Tensor *new_tensor, kernel::LiteKernel *in_convert_op,
@@ -196,6 +161,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
   }
   return RET_OK;
 }
+
 int OpenCLSubGraph::InsertOpsPass() {
   GetInOutNodes();
 
@@ -219,6 +185,7 @@ int OpenCLSubGraph::InsertOpsPass() {
   GetInOutNodes();
   return RET_OK;
 }
+
 int OpenCLSubGraph::Init() {
   allocator_ = ocl_runtime_->GetAllocator();
   MS_LOG(DEBUG) << "input num=" << in_tensors().size() << ", output num=" << out_tensors().size();
@@ -364,10 +331,12 @@ int OpenCLSubGraph::Prepare() {
   if (all_kernels_infer_done_) {
     auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
     // If tuning_mode is DEFAULT, just malloc memory for reuse.
-    auto ret = opencl_exec->RunOrTune(in_tensors(), out_tensors(), nodes_, allocator_.get(), nullptr, nullptr, true);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
-      return ret;
+    if (ocl_runtime_->GetTuningMode() != lite::opencl::DEFAULT) {
+      auto ret = opencl_exec->RunOrTune(in_tensors(), out_tensors(), nodes_, allocator_.get(), nullptr, nullptr, true);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Run opencl Tuning failed: " << ret;
+        return ret;
+      }
     }
   }
   return RET_OK;
