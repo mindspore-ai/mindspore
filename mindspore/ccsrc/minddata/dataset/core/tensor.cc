@@ -934,23 +934,28 @@ Status Tensor::GetSliceOption(const SliceOption &slice_option, const int32_t &sl
 Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption> slice_options_) {
   std::vector<SliceOption> converted_slice_objects;
 
-  for (int k = 0; k < slice_options_.size(); k++) {
+  CHECK_FAIL_RETURN_UNEXPECTED(slice_options_.size() <= static_cast<size_t>(std::numeric_limits<dsize_t>::max()),
+                               "The size of slice_options_ must not be more than \"INT64_MAX\".");
+  for (size_t k = 0; k < slice_options_.size(); k++) {
     SliceOption slice_option = slice_options_[k];
 
     if (slice_option.all_) {
-      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[k]);
+      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[static_cast<dsize_t>(k)]);
       converted_slice_objects.push_back(SliceOption(slice));
       continue;
     }
 
+    CHECK_FAIL_RETURN_UNEXPECTED(k <= static_cast<size_t>(std::numeric_limits<int32_t>::max()),
+                                 "GetSliceOption() can't function properly if there are "
+                                 "more than \"INT32_MAX\" slice options");
     SliceOption slice_option_item(false);
-    RETURN_IF_NOT_OK(GetSliceOption(slice_option, k, &slice_option_item));
+    RETURN_IF_NOT_OK(GetSliceOption(slice_option, static_cast<int32_t>(k), &slice_option_item));
     converted_slice_objects.emplace_back(slice_option_item);
   }
 
   // partial slices, pass in the rest
   if (slice_options_.size() != Rank()) {
-    for (int j = slice_options_.size(); j < Rank(); j++) {
+    for (dsize_t j = static_cast<dsize_t>(slice_options_.size()); j < Rank(); j++) {
       mindspore::dataset::Slice slice = mindspore::dataset::Slice(0, shape_[j]);
       converted_slice_objects.emplace_back(SliceOption(slice));
     }

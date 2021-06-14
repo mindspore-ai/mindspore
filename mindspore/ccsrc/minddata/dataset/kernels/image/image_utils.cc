@@ -442,8 +442,8 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
       return Status::OK();
     }
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
-    if (input_cv->shape().Size() < 2 || input_cv->shape().Size() > 3 ||
-        (input_cv->shape().Size() == 3 && num_channels != DEFAULT_IMAGE_CHANNELS &&
+    if (input_cv->shape().Size() < MIN_IMAGE_DIMENSION || input_cv->shape().Size() > DEFAULT_IMAGE_CHANNELS ||
+        (input_cv->shape().Size() == DEFAULT_IMAGE_CHANNELS && num_channels != DEFAULT_IMAGE_CHANNELS &&
          num_channels != MIN_IMAGE_CHANNELS)) {
       RETURN_STATUS_UNEXPECTED("HWC2CHW: image shape is not <H,W,C>.");
     }
@@ -507,12 +507,12 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
       }
     }
   } else if (image_format == ImageFormat::HW) {
-    if ((*input)->Rank() != 2) {
+    if ((*input)->Rank() != MIN_IMAGE_DIMENSION) {
       RETURN_STATUS_UNEXPECTED(
         "CutMixBatch: MaskWithTensor failed: "
         "input shape doesn't match <H,W> format.");
     }
-    if (sub_mat->Rank() != 2) {
+    if (sub_mat->Rank() != MIN_IMAGE_DIMENSION) {
       RETURN_STATUS_UNEXPECTED(
         "CutMixBatch: MaskWithTensor failed: "
         "sub_mat shape doesn't match <H,W> format.");

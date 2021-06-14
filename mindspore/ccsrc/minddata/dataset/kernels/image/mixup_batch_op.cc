@@ -39,7 +39,9 @@ MixUpBatchOp::MixUpBatchOp(float alpha) : alpha_(alpha) { rnd_.seed(GetSeed()); 
 Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tensor> *out_labels,
                                    std::vector<int64_t> *rand_indx, const std::vector<int64_t> &label_shape,
                                    const float lam, const size_t images_size) {
-  for (int64_t i = 0; i < images_size; i++) rand_indx->push_back(i);
+  CHECK_FAIL_RETURN_UNEXPECTED(images_size <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
+                               "The \"images_size\" must not be more than \"INT64_MAX\".");
+  for (int64_t i = 0; i < static_cast<int64_t>(images_size); i++) rand_indx->push_back(i);
   std::shuffle(rand_indx->begin(), rand_indx->end(), rnd_);
 
   RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), out_labels, DataType(DataType::DE_FLOAT32)));
@@ -53,8 +55,8 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
         std::vector<int64_t> first_index =
           label_shape.size() == kMaxLabelShapeSize ? std::vector{i, j, k} : std::vector{i, k};
         std::vector<int64_t> second_index = label_shape.size() == kMaxLabelShapeSize
-                                              ? std::vector{(*rand_indx)[i], j, k}
-                                              : std::vector{(*rand_indx)[i], k};
+                                              ? std::vector{(*rand_indx)[static_cast<size_t>(i)], j, k}
+                                              : std::vector{(*rand_indx)[static_cast<size_t>(i)], k};
         if (input.at(1)->type().IsSignedInt()) {
           int64_t first_value, second_value;
           RETURN_IF_NOT_OK(input.at(1)->GetItemAt(&first_value, first_index));
