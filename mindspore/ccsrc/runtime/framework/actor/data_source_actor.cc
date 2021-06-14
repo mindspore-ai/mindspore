@@ -167,7 +167,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *context) {
-  Async(*debug_aid_, &DebugActor::Debug, data_kernel_, device_context_, context, &GetAID());
+  Async(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_context_, context, &GetAID());
 }
 
 void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *context) {

@@ -36,7 +36,9 @@
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
 #endif
-
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
 namespace mindspore {
 namespace compile {
 bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
@@ -577,10 +579,24 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);
+
+// PreExecuteGraph
+#ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  if (debugger) {
+    debugger->Debugger::PreExecuteGraphDebugger(graph_compiler_info.graphs_);
+  }
+#endif
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
 
+// PostExecuteGraph
+#ifdef ENABLE_DEBUGGER
+  if (debugger) {
+    debugger->Debugger::PostExecuteGraphDebugger(graph_compiler_info.graphs_);
+  }
+#endif
   // Sync device stream.
   const auto &first_device_context = graph_compiler_info.device_contexts_[0];
   MS_EXCEPTION_IF_NULL(first_device_context);
@@ -643,6 +659,15 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
     ++(*output_position);
   }
 }
+
+#ifdef ENABLE_DEBUGGER
+void MindRTBackend::SetDebugger() {
+  auto debugger_ = Debugger::GetInstance();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  debugger_->Init(device_id_, ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET));
+}
+#endif
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph) {
   MS_EXCEPTION_IF_NULL(root_graph);

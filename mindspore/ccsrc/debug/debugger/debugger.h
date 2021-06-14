@@ -73,6 +73,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // reset debugger
   void Reset();
 
+  void PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs);
   // enable debugger
   // send graph and wait for command
   // do nothing if graph is set already
@@ -81,6 +82,16 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // analyze tensors and wait for command
   // don't need a graph_ptr because it is saved during pre_execute
   void PostExecute();
+
+  bool DumpDataEnabledIteration() const;
+
+  void Dump(const KernelGraphPtr &kernel_graph) const;
+
+  void DumpSetup(const KernelGraphPtr &kernel_graph) const;
+
+  void DumpInGraphCompiler(const KernelGraphPtr &kernel_graph);
+
+  void PostExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs);
 
   bool ReadNodeDataRequired(const CNodePtr &kernel) const;
 
@@ -131,6 +142,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void LoadParametersAndConst();
 
   void UpdateStepNum(const session::KernelGraph *graph);
+
+  void UpdateStepNumGPU();
 
   void ClearCurrentData();
 
@@ -194,7 +207,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void ProcessKSetCMD(const EventReply &reply);
   // Process the KViewCMD
   void ProcessKViewCMD(const EventReply &reply);
-
   // set what nodes and conditions to watch
   void SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id,
                      const ProtoVector<WatchCondition_Parameter> &parameters);
@@ -228,6 +240,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index);
 
   // class members
+
   std::unique_ptr<GrpcClient> grpc_client_;
   std::unique_ptr<DebugServices> debug_services_;
   KernelGraphPtr graph_ptr_;
@@ -249,6 +262,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::map<uint32_t, std::string> overflow_bin_path_;
   // flag to keep track of the very first suspension of debugger
   bool initial_suspend_;
+
   std::list<GraphProto> graph_proto_list_;
   std::list<KernelGraphPtr> graph_ptr_list_;
 
@@ -261,9 +275,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 };
 
 using DebuggerPtr = std::shared_ptr<Debugger>;
-
 // get debugger ModelProto
 std::string GetDebuggerFuncGraphProtoString(const FuncGraphPtr &func_graph);
+
 ModelProto GetDebuggerFuncGraphProto(const FuncGraphPtr &func_graph);
 
 // for getting proto DataType from Type of Tensor
@@ -282,7 +296,6 @@ int32_t GetWatchpointID(const EventReply &reply);
 bool GetWatchpointDelete(const EventReply &reply);
 ProtoVector<TensorProto> GetTensors(const EventReply &reply);
 bool GetMiVersionMatched(const EventReply &reply);
-
 // get the full name of a tensor, which is the name used in TensorLoader
 std::string GetTensorFullName(const TensorProto &tensor);
 

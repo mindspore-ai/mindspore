@@ -37,6 +37,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "debug/rdr/running_data_recorder.h"
 #include "utils/comm_manager.h"
+#include "debug/debugger/debugger.h"
 
 namespace mindspore {
 namespace device {
@@ -91,6 +92,12 @@ bool GPUDeviceContext::Initialize() {
     (*init_nccl_comm_funcptr)();
   }
 
+  auto rank_id = GetRankID();
+  auto &json_parser = DumpJsonParser::GetInstance();
+  // Dump json config file if dump is enabled
+  json_parser.CopyJsonToDir(rank_id);
+  json_parser.CopyMSCfgJsonToDir(rank_id);
+
   initialized_ = true;
   return ret;
 }
@@ -125,6 +132,12 @@ bool GPUDeviceContext::InitDevice() {
 
 void GPUDeviceContext::Destroy() {
   // Release GPU buffer manager resource
+  auto debugger = Debugger::GetInstance();
+  if (debugger && debugger->debugger_enabled()) {
+    debugger->SetTrainingDone(true);
+    debugger->SendMetadata(false);
+  }
+
   if (GpuBufferMgr::GetInstance().IsInit()) {
     if (!GpuBufferMgr::GetInstance().IsClosed() && !GpuBufferMgr::GetInstance().CloseNotify()) {
       MS_LOG(EXCEPTION) << "Could not close gpu data queue.";
