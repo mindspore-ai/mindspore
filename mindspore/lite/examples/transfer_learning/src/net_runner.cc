@@ -72,6 +72,7 @@ NetRunner::~NetRunner() {
 void NetRunner::InitAndFigureInputs() {
   mindspore::lite::Context context;
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::NO_BIND;
+  context.device_list_[0].device_info_.cpu_device_info_.enable_float16_ = enable_fp16_;
   context.thread_num_ = 1;
 
   session_ = mindspore::session::LiteSession::CreateTransferSession(ms_backbone_file_, ms_head_file_, &context);
@@ -235,12 +236,13 @@ void NetRunner::Usage() {
   std::cout << "Usage: net_runner -f <.ms head model file> -b <.ms backbone model file> -d <data_dir> "
             << "[-c <num of training cycles>] [-v (verbose mode)] "
             << "[-s <save checkpoint every X iterations>]"
-            << "[-i <save inference file>]" << std::endl;
+            << "[-i <save inference file>]"
+            << "[-o <enable fp16 mode>]" << std::endl;
 }
 
 bool NetRunner::ReadArgs(int argc, char *argv[]) {
   int opt;
-  while ((opt = getopt(argc, argv, "b:f:e:d:s:i:hc:v")) != -1) {
+  while ((opt = getopt(argc, argv, "b:f:e:d:s:i:hc:vo")) != -1) {
     switch (opt) {
       case 'b':
         ms_backbone_file_ = std::string(optarg);
@@ -262,6 +264,9 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
         break;
       case 'i':
         save_inference_ = std::string(optarg);
+        break;
+      case 'o':
+        enable_fp16_ = true;
         break;
       case 'h':
       default:

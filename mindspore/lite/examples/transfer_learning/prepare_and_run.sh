@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-o]\n"
 }
 
 checkopts()
@@ -10,7 +10,8 @@ checkopts()
   TARGET="arm64"
   DOCKER=""
   PLACES_DATA_PATH=""
-  while getopts 'D:d:r:t:' opt
+  ENABLEFP16=""
+  while getopts 'D:d:r:t:o' opt
   do
     case "${opt}" in
       D)
@@ -31,6 +32,9 @@ checkopts()
       r)
         TARBALL=$OPTARG
         ;;
+      o)
+        ENABLEFP16="-o"
+        ;;  
       *)
         echo "Unknown option ${opt}!"
         display_usage
@@ -79,11 +83,11 @@ cp scripts/*.sh ${PACKAGE}/
 
 # Copy the shared MindSpore ToD library
 tar -xzf ${TARBALL}
-mv mindspore-*/train/lib ${PACKAGE}/
-mv mindspore-*/train/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
+mv mindspore-*/inference/lib ${PACKAGE}/
+mv mindspore-*/inference/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
 if [ "${TARGET}" == "arm64" ]; then
   tar -xzf ${TARBALL} --wildcards --no-anchored hiai_ddk
-  mv mindspore-*/train/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
+  mv mindspore-*/inference/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
 fi
 
 rm -rf msl
@@ -107,14 +111,13 @@ if [ "${TARGET}" == "arm64" ]; then
   adb push ${PACKAGE} /data/local/tmp/
 
   echo "==Evaluating Untrained Model==="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval_untrained.sh"
+  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval_untrained.sh $ENABLEFP16"
 
   echo "========Training on Device====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh"
+  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh $ENABLEFP16"
 
   echo "===Evaluating trained Model====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh"
-  echo
+  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh $ENABLEFP16"
 else
   cd ${PACKAGE} || exit 1
   echo "==Evaluating Untrained Model==="

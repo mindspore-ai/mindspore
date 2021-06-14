@@ -53,6 +53,7 @@ class NetRunner {
   size_t batch_size_ = 0;
   unsigned int cycles_ = 100;
   bool verbose_ = false;
+  bool enable_fp16_ = false;
   int data_index_ = 0;
   int label_index_ = -1;
   int num_of_classes_ = 0;
