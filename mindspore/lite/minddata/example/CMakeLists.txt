@@ -4,7 +4,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -fPIC -std=c++17")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
-set(MS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.2.0-inference-linux-x64/inference")
+set(MS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.2.0-linux-x64/runtime")
 
 include_directories(${MS_DIR})
 

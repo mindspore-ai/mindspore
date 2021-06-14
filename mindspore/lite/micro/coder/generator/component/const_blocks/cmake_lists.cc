@@ -27,7 +27,7 @@ endif()
 
 get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(HEADER_PATH ${PKG_PATH}/inference)
+set(HEADER_PATH ${PKG_PATH}/runtime)
 
 option(PLATFORM_ARM64 "build android arm64" OFF)
 option(PLATFORM_ARM32 "build android arm32" OFF)
@@ -89,10 +89,10 @@ endif()
 
 get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(OP_LIB ${PKG_PATH}/inference/lib/libmindspore-lite.a)
+set(OP_LIB ${PKG_PATH}/runtime/lib/libmindspore-lite.a)
 set(WRAPPER_LIB ${PKG_PATH}/tools/codegen/lib/libwrapper.a)
 set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/include)
-set(HEADER_PATH ${PKG_PATH}/inference)
+set(HEADER_PATH ${PKG_PATH}/runtime)
 
 message(STATUS "operator lib path: ${OP_LIB}")
 message(STATUS "operator header path: ${OP_HEADER_PATH}")

@@ -10,7 +10,7 @@ get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BI
 
 set(OP_LIB ${PKG_PATH}/tools/codegen/operator_library/lib/libops.a)
 set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/operator_library/include)
-set(HEADER_PATH ${PKG_PATH}/inference)
+set(HEADER_PATH ${PKG_PATH}/runtime)
 
 message("operator lib path: ${OP_LIB}")
 message("operator header path: ${OP_HEADER_PATH}")

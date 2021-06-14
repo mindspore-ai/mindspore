@@ -492,25 +492,25 @@ write_commit_file() {
 build_lite_x86_64_jni_and_jar()
 {
     # copy x86 so
-    local inference_or_train=inference
-    local is_train=off
+    local is_train=on
     cd ${BASEPATH}/output/tmp
-    if [ -f "mindspore-lite-${VERSION_STR}-train-linux-x64.tar.gz" ]; then
-        inference_or_train=train
-        is_train=on
-    fi
-    local pkg_name=mindspore-lite-${VERSION_STR}-${inference_or_train}-linux-x64
+    local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
 
     cd ${BASEPATH}/output/tmp/
     rm -rf ${pkg_name}
     tar -zxf ${BASEPATH}/output/tmp/${pkg_name}.tar.gz
     rm -rf ${LITE_JAVA_PATH}/java/linux_x86/libs/   && mkdir -pv ${LITE_JAVA_PATH}/java/linux_x86/libs/
     rm -rf ${LITE_JAVA_PATH}/native/libs/linux_x86/ && mkdir -pv ${LITE_JAVA_PATH}/native/libs/linux_x86/
-    cp ./${pkg_name}/inference/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
-    cp ./${pkg_name}/inference/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
-    if [ -f "mindspore-lite-${VERSION_STR}-train-linux-x64.tar.gz" ]; then
-        cp ./${pkg_name}/inference/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
-        cp ./${pkg_name}/inference/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
+    local train_so=$pkg_name/runtime/lib/libmindspore-lite-train.so
+    if [ ! -f "$train_so" ]; then
+      echo "not exist"
+      is_train=off
+    fi
+    if [[ "X$is_train" = "Xon" ]]; then
+        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
+        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
     fi
     # build jni so
     cd ${BASEPATH}/mindspore/lite/build
@@ -525,11 +525,11 @@ build_lite_x86_64_jni_and_jar()
     fi
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
-    cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/inference/lib/
+    cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     if [[ "X$is_train" = "Xon" ]]; then
         cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
         cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
-        cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/inference/lib/
+        cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     fi
 
     # build java common
@@ -542,7 +542,7 @@ build_lite_x86_64_jni_and_jar()
     cd ${LITE_JAVA_PATH}/java/linux_x86/
     gradle clean
     gradle releaseJar
-    cp ./build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/inference/lib/
+    cp ./build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
 
     # package
     cd ${BASEPATH}/output/tmp
@@ -666,24 +666,24 @@ build_lite_arm64_and_jni() {
     # build arm64
     build_lite "arm64"
     # copy arm64 so
-    local inference_or_train=inference
-    local is_train=off
-    if [ -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-train-android-aarch64.tar.gz" ]; then
-        inference_or_train=train
-        is_train=on
-    fi
-    local pkg_name=mindspore-lite-${VERSION_STR}-${inference_or_train}-android-aarch64
+    local is_train=on
+    local pkg_name=mindspore-lite-${VERSION_STR}-android-aarch64
     cd "${BASEPATH}/mindspore/lite/build"
 
     rm -rf ${pkg_name}
     tar -zxf ${BASEPATH}/output/${pkg_name}.tar.gz
     rm -rf ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/ && mkdir -p ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
     rm -rf ${LITE_JAVA_PATH}/native/libs/arm64-v8a/   && mkdir -p ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
-    cp ./${pkg_name}/${inference_or_train}/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
-    cp ./${pkg_name}/${inference_or_train}/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
-    if [ -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-train-android-aarch64.tar.gz" ]; then
-      cp ./${pkg_name}/train/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
-      cp ./${pkg_name}/train/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+    local train_so=$pkg_name/runtime/lib/libmindspore-lite-train.so
+    if [ ! -f "$train_so" ]; then
+      echo "not exist"
+      is_train=off
+    fi
+    if [[ "X$is_train" = "Xon" ]]; then
+      cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
+      cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
     fi
     # build jni so
     [ -n "${BASEPATH}" ] && rm -rf java/jni && mkdir -pv java/jni
@@ -710,24 +710,24 @@ build_lite_arm32_and_jni() {
     # build arm32
     build_lite "arm32"
     # copy arm32 so
-    local inference_or_train=inference
-    local is_train=off
-    if [ -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-train-android-aarch32.tar.gz" ]; then
-        inference_or_train=train
-        is_train=on
-    fi
-    local pkg_name=mindspore-lite-${VERSION_STR}-${inference_or_train}-android-aarch32
+    local is_train=on
+    local pkg_name=mindspore-lite-${VERSION_STR}-android-aarch32
     cd "${BASEPATH}/mindspore/lite/build"
 
     rm -rf ${pkg_name}
     tar -zxf ${BASEPATH}/output/${pkg_name}.tar.gz
     rm -rf ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/ && mkdir -pv ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
     rm -rf ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/   && mkdir -pv ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
-    cp ./${pkg_name}/${inference_or_train}/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
-    cp ./${pkg_name}/${inference_or_train}/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
-    if [ -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-train-android-aarch32.tar.gz" ]; then
-      cp ./${pkg_name}/train/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
-      cp ./${pkg_name}/train/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+    local train_so=$pkg_name/runtime/lib/libmindspore-lite-train.so
+    if [ ! -f "$train_so" ]; then
+      echo "not exist"
+      is_train=off
+    fi
+    if [[ "X$is_train" = "Xon" ]]; then
+      cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
+      cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
     fi
 
     # build jni so
