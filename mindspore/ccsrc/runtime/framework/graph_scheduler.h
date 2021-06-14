@@ -36,7 +36,7 @@
 #include "runtime/framework/actor/copy_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/kernel_graph.h"
-#include "thread/inter_threadpool.h"
+#include "thread/actor_threadpool.h"
 
 namespace mindspore {
 namespace runtime {
@@ -305,7 +305,7 @@ class GraphScheduler {
   const AID *recorder_aid_{nullptr};
   const AID *debug_aid_{nullptr};
 
-  InterThreadPool *thread_pool_{nullptr};
+  ActorThreadPool *thread_pool_{nullptr};
 
   bool init_{false};
 };

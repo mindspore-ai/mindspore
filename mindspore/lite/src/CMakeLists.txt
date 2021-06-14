@@ -152,7 +152,7 @@ elseif(TARGET_HIMIX200)
     set(LITE_SRC
         ${LITE_SRC}
         ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
-        ${CORE_DIR}/mindrt/src/thread/inter_threadpool.cc
+        ${CORE_DIR}/mindrt/src/thread/actor_threadpool.cc
         ${CORE_DIR}/mindrt/src/thread/threadpool.cc
         )
 endif()

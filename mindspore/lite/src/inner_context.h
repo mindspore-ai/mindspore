@@ -20,7 +20,7 @@
 #include <string>
 #include "include/context.h"
 #include "src/runtime/inner_allocator.h"
-#include "thread/inter_threadpool.h"
+#include "thread/actor_threadpool.h"
 #ifdef ENABLE_ARM
 #include "src/cpu_info.h"
 #endif
@@ -31,7 +31,7 @@
 namespace mindspore::lite {
 struct InnerContext : public Context {
  public:
-  InterThreadPool *thread_pool_{nullptr};
+  ActorThreadPool *thread_pool_{nullptr};
 
  public:
   InnerContext() = default;

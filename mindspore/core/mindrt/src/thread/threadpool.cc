@@ -41,58 +41,62 @@ void ThreadPool::DestructThreads() {
 
 int ThreadPool::CreateThreads(size_t thread_num) {
   size_t core_num = std::thread::hardware_concurrency();
-  thread_num_ = std::min(thread_num, core_num);
-  if (thread_num_ <= 0) {
+  thread_num = std::min(thread_num, core_num);
+  THREAD_INFO("ThreadInfo, ThreadNum: [%zu], CoreNum: [%zu]", thread_num, core_num);
+  if (thread_num <= 0) {
     THREAD_ERROR("thread num is invalid");
     return THREAD_ERROR;
   }
   std::lock_guard<std::mutex> _l(pool_mutex_);
-  for (size_t i = 0; i < thread_num_; ++i) {
+  for (size_t i = 0; i < thread_num; ++i) {
     auto worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
     worker->thread = std::thread(&ThreadPool::AsyncRunTask, this, worker);
     workers_.push_back(worker);
-    THREAD_INFO("create thread[%zu]", i);
+    THREAD_INFO("create kernel thread[%zu]", i);
   }
   return THREAD_OK;
 }
 
-void ThreadPool::AsyncRunTask(Worker *worker) {
+void ThreadPool::AsyncRunTask(Worker *worker) const {
   THREAD_RETURN_IF_NULL(worker);
   while (alive_) {
     if (RunLocalKernelTask(worker)) {
       worker->spin = 0;
     } else {
-      if (worker->spin == 0) {
-        worker->running = false;
-      }
-      worker->spin++;
-      std::this_thread::yield();
+      YieldAndDeactive(worker);
     }
     if (worker->spin >= kDefaultSpinCount) {
-      WaitUntilActivate(worker);
+      // wait until distribute KernelTask
+      std::unique_lock<std::mutex> _l(worker->mutex);
+      worker->spin = 0;
+      worker->cond_var.wait(_l, [&] { return worker->running || !alive_; });
     }
   }
 }
 
-void ThreadPool::WaitUntilActivate(Worker *worker) {
-  std::unique_lock<std::mutex> _l(worker->mutex);
-  worker->spin = 0;
-  worker->cond_var.wait(_l, [&] { return worker->running || !alive_; });
+void ThreadPool::YieldAndDeactive(Worker *worker) const {
+  // deactivate this worker only on the first entry
+  if (worker->spin == 0) {
+    worker->running = false;
+  }
+  worker->spin++;
+  std::this_thread::yield();
 }
 
 bool ThreadPool::RunLocalKernelTask(Worker *worker) const {
   if (!worker->running || worker->task == nullptr) {
     return false;
   }
-  Task *task = worker->task;
-  task->status |= task->func(task->content, worker->task_id, worker->lhs_scale, worker->rhs_scale);
-  worker->task = nullptr;
+  Task *task = worker->task.load(std::memory_order_consume);
+  int task_id = worker->task_id.load(std::memory_order_consume);
+  task->status |= task->func(task->content, task_id, worker->lhs_scale, worker->rhs_scale);
+  worker->task.store(nullptr, std::memory_order_relaxed);
   ++task->finished;
   return true;
 }
 
-int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) {
+int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
   // distribute task to the KernelThread and the free ActorThread,
   // if the task num is greater than the KernelThread num
   THREAD_INFO("launch: %d", task_num);
@@ -116,6 +120,8 @@ int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) 
 }
 
 void ThreadPool::SyncRunTask(Task *task, int task_num) const {
+  // run task sequentially
+  // if the current thread is not the actor thread
   float per_scale = kMaxScale / task_num;
   for (int i = 0; i < task_num; ++i) {
     float lhs_scale = i * per_scale;
@@ -126,7 +132,7 @@ void ThreadPool::SyncRunTask(Task *task, int task_num) const {
   }
 }
 
-void ThreadPool::DistributeTask(Task *task, int task_num) {
+void ThreadPool::DistributeTask(Task *task, int task_num) const {
   Worker *curr = CurrentWorker();
   THREAD_RETURN_IF_NULL(curr);
 
@@ -169,11 +175,9 @@ void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task,
   for (int i = 0; i < task_num; ++i) {
     Worker *worker = workers[i];
     THREAD_RETURN_IF_NULL(worker);
-    {
-      worker->task = task;
-      worker->task_id = i;
-      worker->cond_var.notify_one();
-    }
+    worker->task_id.store(i, std::memory_order_relaxed);
+    worker->task.store(task, std::memory_order_relaxed);
+    worker->cond_var.notify_one();
     if (worker == curr) {
       RunLocalKernelTask(worker);
     }

@@ -31,7 +31,7 @@ namespace mindspore {
 class ActorBase;
 class ActorMgr;
 class ActorPolicy;
-class InterThreadPool;
+class ActorThreadPool;
 
 using ActorReference = std::shared_ptr<ActorBase>;
 
@@ -79,7 +79,7 @@ class ActorBase {
   // delete the send/receive message package size
   void DelRuleUdp(const std::string &peer, bool outputLog);
 
-  void set_thread_pool(InterThreadPool *pool) { pool_ = pool; }
+  void set_thread_pool(ActorThreadPool *pool) { pool_ = pool; }
 
  protected:
   using ActorFunction = std::function<void(const std::unique_ptr<MessageBase> &msg)>;
@@ -149,7 +149,7 @@ class ActorBase {
 
  private:
   friend class ActorMgr;
-  friend class InterThreadPool;
+  friend class ActorThreadPool;
 
   // KMSG Msg Handler
   virtual void HandlekMsg(const std::unique_ptr<MessageBase> &msg);
@@ -197,7 +197,7 @@ class ActorBase {
   void SetRunningStatus(bool start);
 
   std::unique_ptr<ActorPolicy> actorPolicy;
-  InterThreadPool *pool_{nullptr};
+  ActorThreadPool *pool_{nullptr};
 
   AID id;
   std::map<std::string, ActorFunction> actionFunctions;

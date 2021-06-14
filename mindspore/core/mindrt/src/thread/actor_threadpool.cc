@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "thread/inter_threadpool.h"
+#include "thread/actor_threadpool.h"
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-InterThreadPool::~InterThreadPool() {
+ActorThreadPool::~ActorThreadPool() {
   // wait until actor queue is empty
   bool terminate = false;
   do {
@@ -33,26 +33,20 @@ InterThreadPool::~InterThreadPool() {
   DestructThreads();
 }
 
-void InterThreadPool::AsyncRunMultiTask(Worker *worker) {
+void ActorThreadPool::AsyncRunMultiTask(Worker *worker) {
   THREAD_RETURN_IF_NULL(worker);
   while (alive_) {
-    if (RunLocalKernelTask(worker) || RunPoolQueueActorTask(worker)) {
-      worker->spin = 0;
+    if (RunLocalKernelTask(worker) || RunPoolQueueActorTask()) {
     } else {
-      // deactivate this worker only on the first entry
-      if (worker->spin == 0) {
-        worker->running = false;
-      }
-      worker->spin++;
-      std::this_thread::yield();
-    }
-    if (worker->spin >= kDefaultSpinCount) {
-      WaitUntilActivate(worker);
+      // wait until Actor enqueue or distribute KernelTask
+      std::unique_lock<std::mutex> _l(worker->mutex);
+      worker->running = false;
+      worker->cond_var.wait(_l, [&] { return worker->running || !alive_; });
     }
   }
 }
 
-bool InterThreadPool::RunPoolQueueActorTask(Worker *worker) {
+bool ActorThreadPool::RunPoolQueueActorTask() {
   ActorBase *actor = nullptr;
   if (!PopActorFromQueue(&actor)) {
     return false;
@@ -63,7 +57,7 @@ bool InterThreadPool::RunPoolQueueActorTask(Worker *worker) {
   return true;
 }
 
-bool InterThreadPool::PopActorFromQueue(ActorBase **actor) {
+bool ActorThreadPool::PopActorFromQueue(ActorBase **actor) {
   std::lock_guard<std::mutex> _l(actor_mutex_);
   if (actor_queue_.empty()) {
     return false;
@@ -73,7 +67,7 @@ bool InterThreadPool::PopActorFromQueue(ActorBase **actor) {
   return true;
 }
 
-void InterThreadPool::EnqueReadyActor(const ActorReference &actor) {
+void ActorThreadPool::EnqueReadyActor(const ActorReference &actor) {
   {
     std::lock_guard<std::mutex> _l(actor_mutex_);
     actor_queue_.push(actor);
@@ -89,12 +83,11 @@ void InterThreadPool::EnqueReadyActor(const ActorReference &actor) {
   }
 }
 
-int InterThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num) {
+int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num) {
   size_t core_num = std::thread::hardware_concurrency();
-  THREAD_INFO("actor_thread_num: %zu, actor_thread_num: [%zu], core_num: [%zu]", actor_thread_num, all_thread_num,
-              core_num);
+  THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;
-  if (actor_thread_num_ <= 0) {
+  if (actor_thread_num_ <= 0 || actor_thread_num > all_thread_num) {
     THREAD_ERROR("thread num is invalid");
     return THREAD_ERROR;
   }
@@ -102,7 +95,7 @@ int InterThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
     std::lock_guard<std::mutex> _l(pool_mutex_);
     auto worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
-    worker->thread = std::thread(&InterThreadPool::AsyncRunMultiTask, this, worker);
+    worker->thread = std::thread(&ActorThreadPool::AsyncRunMultiTask, this, worker);
     workers_.push_back(worker);
     THREAD_INFO("create actor thread[%zu]", i);
   }
@@ -113,8 +106,8 @@ int InterThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   return THREAD_OK;
 }
 
-InterThreadPool *InterThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num) {
-  InterThreadPool *pool = new (std::nothrow) InterThreadPool();
+ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num) {
+  ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }
@@ -133,8 +126,8 @@ InterThreadPool *InterThreadPool::CreateThreadPool(size_t actor_thread_num, size
   return pool;
 }
 
-InterThreadPool *InterThreadPool::CreateThreadPool(size_t thread_num) {
-  InterThreadPool *pool = new (std::nothrow) InterThreadPool();
+ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t thread_num) {
+  ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }

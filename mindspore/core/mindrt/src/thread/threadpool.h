@@ -50,8 +50,8 @@ typedef struct Worker {
   std::atomic_bool running{false};
   std::mutex mutex;
   std::condition_variable cond_var;
-  Task *task{nullptr};
-  int task_id{0};
+  std::atomic<Task *> task{nullptr};
+  std::atomic_int task_id{0};
   float lhs_scale{0.};
   float rhs_scale{kMaxScale};
   int frequency{kDefaultFrequency};
@@ -67,10 +67,9 @@ class ThreadPool {
 
   int SetCpuAffinity(const std::vector<int> &core_list);
   int SetCpuAffinity(BindMode bind_mode);
-
   int SetProcessAffinity(BindMode bind_mode) const;
 
-  int ParallelLaunch(const Func &func, Content content, int task_num);
+  int ParallelLaunch(const Func &func, Content content, int task_num) const;
 
  protected:
   ThreadPool() = default;
@@ -80,25 +79,22 @@ class ThreadPool {
 
   int InitAffinityInfo();
 
-  void AsyncRunTask(Worker *worker);
+  void AsyncRunTask(Worker *worker) const;
   void SyncRunTask(Task *task, int task_num) const;
 
-  void DistributeTask(Task *task, int task_num);
+  void DistributeTask(Task *task, int task_num) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
   void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num) const;
 
+  void YieldAndDeactive(Worker *worker) const;
   bool RunLocalKernelTask(Worker *worker) const;
-
-  void WaitUntilActivate(Worker *worker);
 
   Worker *CurrentWorker() const;
 
   std::mutex pool_mutex_;
-
-  std::vector<Worker *> workers_;
   std::atomic_bool alive_{true};
 
-  size_t thread_num_{0};
+  std::vector<Worker *> workers_;
 
   CoreAffinity *affinity_{nullptr};
 };

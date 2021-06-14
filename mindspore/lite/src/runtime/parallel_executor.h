@@ -24,7 +24,7 @@
 #include "src/lite_kernel.h"
 #include "include/lite_session.h"
 #include "src/executor.h"
-#include "mindrt/src/thread/inter_threadpool.h"
+#include "thread/actor_threadpool.h"
 
 namespace mindspore::lite {
 class ParallelExecutor : public Executor {
@@ -45,7 +45,7 @@ class ParallelExecutor : public Executor {
   std::unordered_map<kernel::LiteKernel *, size_t> refCount;
   std::vector<kernel::LiteKernel *> readyKernels;
   std::vector<int> results;
-  InterThreadPool *thread_pool_ = nullptr;
+  ActorThreadPool *thread_pool_ = nullptr;
   int max_thread_num_ = std::thread::hardware_concurrency();
 };
 
