@@ -37,19 +37,22 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
   auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
   MS_ASSERT(origin_weight != nullptr);
-
-  packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+    packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   PackNCHWToNHWCFp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
                      weight_tensor->Batch(), 0, 0);
 
-  bias_data_ = reinterpret_cast<float16_t *>(malloc(channel * sizeof(float16_t)));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+    bias_data_ = reinterpret_cast<float16_t *>(malloc(channel * sizeof(float16_t)));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, channel * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
@@ -106,11 +109,26 @@ static int ConvDwFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sc
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Run() {
+  if (is_trainable() && (IsTrain() || is_repack())) {
+    auto ret = InitWeightBias();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Convolution depthwise fp16 repack weight failure";
+      return RET_ERROR;
+    }
+    is_repack_ = false;
+  }
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
                ->thread_pool_->ParallelLaunch(ConvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwFp16Run error: error_code[" << ret << "]";
   }
   return ret;
+}
+
+int ConvolutionDepthwiseFp16CPUKernel::Eval() {
+  if (is_trainable()) {
+    is_repack_ = true;
+  }
+  return InnerKernel::Eval();
 }
 }  // namespace mindspore::kernel

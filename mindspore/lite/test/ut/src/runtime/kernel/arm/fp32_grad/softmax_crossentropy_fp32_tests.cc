@@ -76,12 +76,11 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(sce_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  mindspore::kernel::InnerKernel::AllocWorkspace(kernel_obj->workspace_size());
   auto ret = kernel_obj->Init();
   EXPECT_EQ(0, ret);
+  kernel_obj->AllocWorkspace();
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
-
   printf("==================total loss=================\n");
   std::cout << loss[0] << " ," << std::endl;
 
@@ -114,7 +113,6 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   y_tensor.set_data(nullptr);
   loss_tensor.set_data(nullptr);
   grad_tensor.set_data(nullptr);
-  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel_obj;
   MS_LOG(INFO) << "SoftmaxCrossEntropyFp32 passed";
 }

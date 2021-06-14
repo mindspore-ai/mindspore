@@ -19,6 +19,7 @@
 #include "nnacl/pack.h"
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"
+#include "nnacl/fp32_grad/convolution_grad_input.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;
@@ -56,6 +57,20 @@ int ConvolutionGradInputCPUKernel::ReSize() {
   int thread_num = op_parameter_->thread_num_;
   mat_alloc_ = MatSizeTotal(chunk_, n, k, 0);
   set_workspace_size((ws_size_ + mat_alloc_) * sizeof(float) * thread_num);
+
+  do_img2col_ = (conv_param->kernel_h_ == 1) && (conv_param->kernel_w_ == 1) && (conv_param->pad_d_ == 0) &&
+                    (conv_param->pad_u_ == 0) && (conv_param->pad_l_ == 0) && (conv_param->pad_r_ == 0) &&
+                    (conv_param->dilation_h_ == 1) && (conv_param->dilation_w_ == 1) && (conv_param->stride_h_ == 1) &&
+                    (conv_param->stride_w_ == 1) && (conv_param->group_ == 1)
+                  ? false
+                  : true;
+
+  do_dw_ = (conv_param->output_channel_ == conv_param->group_) &&
+               (conv_param->input_channel_ == conv_param->output_channel_) && (conv_param->dilation_h_ == 1) &&
+               (conv_param->dilation_w_ == 1)
+             ? true
+             : false;
+
   return RET_OK;
 }
 
@@ -95,6 +110,18 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
   int start = stride * task_id;
   int end = start + count;
 
+  if (do_dw_) {
+    stride = UP_DIV(groups, thread_num);
+    count = MSMIN(stride, groups - stride * task_id);
+    count = (count < 0) ? 0 : count;
+    start = stride * task_id;
+    for (i = 0; i < batch; ++i) {
+      ConvDwInputGrad(dy_addr + (i * groups) * m * k, w_addr, dx_addr + (i * groups) * in_h * in_w, start, count,
+                      conv_param);
+    }
+    return RET_OK;
+  }
+
   for (i = start; i < end; ++i) {
     for (j = 0; j < groups; ++j) {
       GemmCb gcb;
@@ -112,10 +139,16 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
         }
         int real_chunk = MSMIN(m - ci, chunk_);
         float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
-        float *mat_c = workspace_temp;
-        GemmMatmulPlus(0, 0, real_chunk, n, k, 1, mat_a, out_ch, mat_b, n, 0, mat_c, n, mat_workspace, &gcb);
-        rolling_col2im_hwc(mat_c, dx_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups),
-                           conv_param, real_chunk, ci);
+        if (do_img2col_) {
+          float *mat_c = workspace_temp;
+          GemmMatmulPlus(0, 0, real_chunk, n, k, 1, mat_a, out_ch, mat_b, n, 0, mat_c, n, mat_workspace, &gcb);
+          rolling_col2im_hwc(mat_c, dx_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups),
+                             conv_param, real_chunk, ci);
+        } else {
+          float *mat_c =
+            dx_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups) + ci * (in_ch / groups);
+          GemmMatmulPlus(0, 0, real_chunk, n, k, 1, mat_a, out_ch, mat_b, n, 0, mat_c, n, mat_workspace, &gcb);
+        }
       }
     }
   }

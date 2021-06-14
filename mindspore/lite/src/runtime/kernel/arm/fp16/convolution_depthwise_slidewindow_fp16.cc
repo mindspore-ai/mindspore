@@ -64,18 +64,22 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
   auto origin_weight = reinterpret_cast<float16_t *>(weight_tensor->data_c());
   MS_ASSERT(origin_weight != nullptr);
 
-  packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+    packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   PackNCHWFp16ToNC8HW8Fp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
                            weight_tensor->Batch());
 
-  bias_data_ = reinterpret_cast<float16_t *>(malloc(C8NUM * OC8 * sizeof(float16_t)));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+    bias_data_ = reinterpret_cast<float16_t *>(malloc(C8NUM * OC8 * sizeof(float16_t)));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, C8NUM * OC8 * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
@@ -86,7 +90,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
 
   conv_param_->thread_num_ = MSMIN(thread_count_, OC8);
   return RET_OK;
-}
+}  // namespace mindspore::kernel
 
 int ConvolutionDepthwiseSWFp16CPUKernel::Init() {
   sliding_ = new (std::nothrow) SlidingWindowParam;
@@ -157,6 +161,14 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     packed_output_ = output_ptr;
   }
 
+  if (is_trainable() && (IsTrain() || is_repack())) {
+    ret = InitWeightBias();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Convolution depthwise fp16 repack weight failure";
+      return RET_ERROR;
+    }
+    is_repack_ = false;
+  }
   ret = static_cast<const lite::InnerContext *>(this->context_)
           ->thread_pool_->ParallelLaunch(ConvDwSWFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
@@ -178,5 +190,12 @@ void ConvolutionDepthwiseSWFp16CPUKernel::FreePackedInputOutput() {
     packed_input_ = nullptr;
     packed_output_ = nullptr;
   }
+}
+
+int ConvolutionDepthwiseSWFp16CPUKernel::Eval() {
+  if (is_trainable()) {
+    is_repack_ = true;
+  }
+  return InnerKernel::Eval();
 }
 }  // namespace mindspore::kernel

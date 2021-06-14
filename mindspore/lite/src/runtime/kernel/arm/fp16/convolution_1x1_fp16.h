@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1x1_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1x1_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1X1_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1X1_FP16_H_
 
 #include <arm_neon.h>
 #include <vector>
@@ -39,6 +39,7 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
 
  public:
   int RunOc(int task_id);
@@ -67,4 +68,4 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1x1_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_1X1_FP16_H_

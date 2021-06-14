@@ -41,10 +41,12 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   // init weight
   // set data
   auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * col_tile_ * sizeof(float16_t);
-  trans_weight_ = reinterpret_cast<float16_t *>(malloc(trans_matrix_data_size));
   if (trans_weight_ == nullptr) {
-    MS_LOG(ERROR) << "malloc trans_weight_ failed.";
-    return RET_ERROR;
+    trans_weight_ = reinterpret_cast<float16_t *>(malloc(trans_matrix_data_size));
+    if (trans_weight_ == nullptr) {
+      MS_LOG(ERROR) << "malloc trans_weight_ failed.";
+      return RET_ERROR;
+    }
   }
   memset(trans_weight_, 0, trans_matrix_data_size);
 
@@ -64,21 +66,26 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
     return ret;
   }
-  ret = WinogradFilterTransformFp16(reinterpret_cast<float16_t *>(origin_weight_), matrix_g, matrix_gt, col_tile_);
+  void *weight_origin_tmp = is_trainable() ? weight_tensor->data_c() : origin_weight_;
+  ret = WinogradFilterTransformFp16(reinterpret_cast<float16_t *>(weight_origin_tmp), matrix_g, matrix_gt, col_tile_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "winograd filter transform failed.";
     return ret;
   }
 
   // init bias
-  bias_data_ = malloc(oc_block_num * col_tile_ * sizeof(float16_t));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc bias_data_ failed.";
-    return RET_ERROR;
+    bias_data_ = malloc(oc_block_num * col_tile_ * sizeof(float16_t));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc bias_data_ failed.";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, oc_block_num * col_tile_ * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
-    memcpy(bias_data_, origin_bias_, out_channel * sizeof(float16_t));
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    void *bias_origin_tmp = is_trainable() ? bias_tensor->data_c() : origin_bias_;
+    memcpy(bias_data_, bias_origin_tmp, out_channel * sizeof(float16_t));
   }
   return RET_OK;
 }
@@ -222,14 +229,27 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-
+  if (is_trainable() && (IsTrain() || is_repack())) {
+    ret = InitWeightBias();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "ConvolutionWinogradFP16 repack weight failure";
+      return RET_ERROR;
+    }
+    is_repack_ = false;
+  }
   ret = static_cast<const lite::InnerContext *>(this->context_)
           ->thread_pool_->ParallelLaunch(ConvolutionWinogradFp16Impl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << ret << "]";
   }
-
   FreeTmpBuffer();
   return ret;
+}
+
+int ConvolutionWinogradFP16CPUKernel::Eval() {
+  if (is_trainable()) {
+    is_repack_ = true;
+  }
+  return InnerKernel::Eval();
 }
 }  // namespace mindspore::kernel

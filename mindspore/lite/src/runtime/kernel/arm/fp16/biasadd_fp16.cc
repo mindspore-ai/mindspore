@@ -52,6 +52,12 @@ int BiasAddCPUFp16Kernel::Run() {
       return ret;
     }
   }
+  if (op_parameter_->is_train_session_) {
+    if ((is_trainable() && (IsTrain() || is_repack())) || (bias_data_type_ == kNumberTypeFloat16)) {
+      PackWeight();
+      is_repack_ = false;
+    }
+  }
   auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
   size_t data_size = in_tensors_.at(0)->ElementsNum();
@@ -80,10 +86,12 @@ BiasAddCPUFp16Kernel::~BiasAddCPUFp16Kernel() {
 int BiasAddCPUFp16Kernel::GetBiasData() {
   bias_data_type_ = bias_tensor_->data_type();
   if (bias_data_type_ == kNumberTypeFloat || bias_data_type_ == kNumberTypeFloat32) {
-    bias_data_ = reinterpret_cast<float16_t *>(malloc(bias_tensor_->ElementsNum() * sizeof(float16_t)));
     if (bias_data_ == nullptr) {
-      MS_LOG(ERROR) << "bias_data_ is nullptr";
-      return RET_NULL_PTR;
+      bias_data_ = reinterpret_cast<float16_t *>(malloc(bias_tensor_->ElementsNum() * sizeof(float16_t)));
+      if (bias_data_ == nullptr) {
+        MS_LOG(ERROR) << "bias_data_ is nullptr";
+        return RET_NULL_PTR;
+      }
     }
     auto bias = reinterpret_cast<float *>(bias_tensor_->MutableData());
     if (bias == nullptr) {
@@ -91,7 +99,7 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
       return RET_NULL_PTR;
     }
     for (int i = 0; i < bias_tensor_->ElementsNum(); ++i) {
-      bias_data_[i] = (float16_t)(bias[i]);
+      bias_data_[i] = static_cast<float16_t>(bias[i]);
     }
   } else {
     bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->MutableData());
@@ -106,17 +114,29 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
 int BiasAddCPUFp16Kernel::Init() {
   bias_tensor_ = in_tensors_.at(1);
   MS_ASSERT(bias_tensor_ != nullptr);
-  if (bias_tensor_->IsConst()) {
-    auto ret = GetBiasData();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "GetBiasData is error in Init()!";
-      return ret;
-    }
-  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
+}
+
+void BiasAddCPUFp16Kernel::PackWeight() {
+  if (bias_data_type_ == kNumberTypeFloat || bias_data_type_ == kNumberTypeFloat32) {
+    auto bias = reinterpret_cast<float *>(bias_tensor_->data_c());
+    for (int i = 0; i < bias_tensor_->ElementsNum(); ++i) {
+      bias_data_[i] = static_cast<float16_t>(bias[i]);
+    }
+  } else {
+    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->data_c());
+  }
+}
+
+int BiasAddCPUFp16Kernel::Eval() {
+  InnerKernel::Eval();
+  if (is_trainable()) {
+    is_repack_ = true;
+  }
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BiasAdd, LiteKernelCreator<BiasAddCPUFp16Kernel>)

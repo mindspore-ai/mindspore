@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BIASADD_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BIASADD_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BIASADD_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BIASADD_FP16_H_
 #include <vector>
 #include "src/inner_kernel.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
@@ -33,14 +33,18 @@ class BiasAddCPUFp16Kernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
 
  private:
   int GetBiasData();
+  void PackWeight();
+  bool is_repack() { return is_repack_; }
   ArithmeticParameter *bias_param_ = nullptr;
   float16_t *bias_data_ = nullptr;
   lite::Tensor *bias_tensor_ = nullptr;
   TypeId bias_data_type_;
+  bool is_repack_ = false;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BIASADD_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BIASADD_FP16_H_

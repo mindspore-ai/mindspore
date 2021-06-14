@@ -55,3 +55,33 @@ void FusedBatchNormFp16(const void *input, const void *scale, const void *offset
     cur_offset += param->channel_;
   }
 }
+
+void FusedBatchNormFp16MeanVar(const float16_t *input, float16_t *run_mean, float16_t *run_var,
+                               const BatchNormParameter *param, float16_t *save_mean, float16_t *save_var) {
+  const float N = (float)param->unit_;
+  const float VN = N;
+  const float VNUB = (N > 1.0f) ? (N - 1.0f) : 1.0f;
+  const float momentum = (1.0f - param->momentum_);
+
+  for (int i = 0; i < param->unit_; i++) {
+    for (int c = 0; c < param->channel_; c++) {
+      int idx = i * param->channel_ + c;
+      run_mean[c] += input[idx];
+    }
+  }
+  for (int c = 0; c < param->channel_; c++) {
+    run_mean[c] /= (float16_t)N;
+  }
+  for (int i = 0; i < param->unit_; i++) {
+    for (int c = 0; c < param->channel_; c++) {
+      int idx = i * param->channel_ + c;
+      run_var[c] += (float16_t)((float)(input[idx] - run_mean[c]) * (float)(input[idx] - run_mean[c]));
+    }
+  }
+  for (int c = 0; c < param->channel_; c++) {
+    float unbiased_var = ((float)run_var[c] / VNUB);
+    run_var[c] = (float16_t)((float)run_var[c] / VN);
+    save_mean[c] = (float16_t)(momentum * (float)save_mean[c] + (1.0f - momentum) * (float)run_mean[c]);
+    save_var[c] = (float16_t)(momentum * (float)save_var[c] + (1.0f - momentum) * unbiased_var);
+  }
+}

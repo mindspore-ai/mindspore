@@ -41,6 +41,7 @@
 #elif GPU_VULKAN
 #include "src/runtime/gpu/vulkan/vulkan_runtime.h"
 #endif
+#include "src/scheduler_cb.h"
 
 namespace mindspore {
 namespace lite {
@@ -151,6 +152,7 @@ class LiteSession : public session::LiteSession {
 #elif GPU_VULKAN
   gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime> *vk_runtime_wrap_{nullptr};
 #endif
+  std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
 };
 }  // namespace lite

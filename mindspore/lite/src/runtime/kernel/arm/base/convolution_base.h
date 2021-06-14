@@ -58,12 +58,14 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   void FreeQuantParam();
 
  protected:
+  bool is_repack() { return is_repack_; }
   void *bias_data_ = nullptr;
   const InnerContext *ctx_ = nullptr;
   ConvParameter *conv_param_ = nullptr;
   ConvQuantArg *conv_quant_arg_ = nullptr;
   int tile_num_ = 0;
   int thread_count_ = 1;
+  bool is_repack_ = false;
 };
 }  // namespace mindspore::kernel
 

@@ -16,6 +16,7 @@
 
 #include "nnacl/fp16_grad/convolution_grad_filter.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
+#include "nnacl/errorcode.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
@@ -356,5 +357,5 @@ int ConvDwFilterFp16Grad(const float16_t *x, const float16_t *dy, float16_t *dw,
       dw[i_c * k_spatial + k_idx] = sum;
     }
   }
-  return 0;
+  return NNACL_OK;
 }

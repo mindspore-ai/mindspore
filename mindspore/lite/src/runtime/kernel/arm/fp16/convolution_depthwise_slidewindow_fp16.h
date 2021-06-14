@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SW_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SW_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_FP16_H_
 
 #include <vector>
 #include "src/inner_kernel.h"
@@ -43,6 +43,7 @@ class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
 
   int InitPackedInputOutput();
   int InitWeightBias();
@@ -58,4 +59,4 @@ class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SW_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_FP16_H_

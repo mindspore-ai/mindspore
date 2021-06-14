@@ -51,7 +51,7 @@ constexpr int kNCHWDims = 4;
 constexpr int kNCHWCDim = 2;
 constexpr int kPrintTimes = 100;
 constexpr int kSaveSteps = 1000;
-constexpr float kLearningRate = 0.7f;
+constexpr float kGammaFactor = 0.7f;
 class Rescaler : public mindspore::session::TrainLoopCallBack {
  public:
   explicit Rescaler(float scale) : scale_(scale) {
@@ -68,6 +68,36 @@ class Rescaler : public mindspore::session::TrainLoopCallBack {
 
  private:
   float scale_ = 1.0;
+};
+
+class Measurement : public mindspore::session::TrainLoopCallBack {
+ public:
+  explicit Measurement(unsigned int epochs)
+      : epochs_(epochs), time_avg_(std::chrono::duration<double, std::milli>(0)) {}
+  ~Measurement() override = default;
+  void EpochBegin(const mindspore::session::TrainLoopCallBackData &cb_data) override {
+    start_time_ = std::chrono::high_resolution_clock::now();
+  }
+  int EpochEnd(const mindspore::session::TrainLoopCallBackData &cb_data) override {
+    end_time_ = std::chrono::high_resolution_clock::now();
+    auto time = std::chrono::duration<double, std::milli>(end_time_ - start_time_);
+    time_avg_ += time;
+    return mindspore::session::RET_CONTINUE;
+  }
+  void End(const mindspore::session::TrainLoopCallBackData &cb_data) override {
+    if (epochs_ > 0) {
+      std::cout << "AvgRunTime: " << time_avg_.count() / epochs_ << " ms" << std::endl;
+    }
+
+    struct mallinfo info = mallinfo();
+    std::cout << "Total allocation: " << info.arena + info.hblkhd << std::endl;
+  }
+
+ private:
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
+  std::chrono::time_point<std::chrono::high_resolution_clock> end_time_;
+  std::chrono::duration<double, std::milli> time_avg_;
+  unsigned int epochs_;
 };
 
 // Definition of verbose callback function after forwarding operator.
@@ -106,12 +136,14 @@ NetRunner::~NetRunner() {
 void NetRunner::InitAndFigureInputs() {
   mindspore::lite::Context context;
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::NO_BIND;
-  context.device_list_[0].device_info_.cpu_device_info_.enable_float16_ = false;
+  context.device_list_[0].device_info_.cpu_device_info_.enable_float16_ = enable_fp16_;
   context.device_list_[0].device_type_ = mindspore::lite::DT_CPU;
   context.thread_num_ = 2;
 
   session_ = mindspore::session::LiteSession::CreateTrainSession(ms_file_, &context, true);
   MS_ASSERT(session_ != nullptr);
+
+  session_->SetupVirtualBatch(virtual_batch_);
   loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_);
 
   if (verbose_) {
@@ -143,7 +175,7 @@ float NetRunner::CalculateAccuracy(int max_tests) {
   Rescaler rescale(kScalePoint);
 
   loop_->Eval(test_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale});
-  std::cout << "Eval Accuracy is " << acc_metrics_->Eval() << std::endl;
+  std::cout << "Accuracy is " << acc_metrics_->Eval() << std::endl;
 
   return 0.0;
 }
@@ -171,15 +203,22 @@ int NetRunner::InitDB() {
 }
 
 int NetRunner::TrainLoop() {
-  struct mindspore::lite::StepLRLambda step_lr_lambda(1, kLearningRate);
-  mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 1);
-
   mindspore::lite::LossMonitor lm(kPrintTimes);
   mindspore::lite::ClassificationTrainAccuracyMonitor am(1);
+
   mindspore::lite::CkptSaver cs(kSaveSteps, std::string("lenet"));
   Rescaler rescale(kScalePoint);
+  Measurement measure(epochs_);
 
-  loop_->Train(epochs_, train_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &step_lr_sched});
+  if (virtual_batch_ > 0) {
+    loop_->Train(epochs_, train_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &measure});
+  } else {
+    struct mindspore::lite::StepLRLambda step_lr_lambda(1, kGammaFactor);
+    mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 1);
+    loop_->Train(epochs_, train_ds_.get(),
+                 std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &step_lr_sched, &measure});
+  }
+
   return 0;
 }
 
@@ -206,7 +245,7 @@ void NetRunner::Usage() {
 
 bool NetRunner::ReadArgs(int argc, char *argv[]) {
   int opt;
-  while ((opt = getopt(argc, argv, "f:e:d:s:ihc:v")) != -1) {
+  while ((opt = getopt(argc, argv, "f:e:d:s:ihc:vob:")) != -1) {
     switch (opt) {
       case 'f':
         ms_file_ = std::string(optarg);
@@ -222,6 +261,13 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
         break;
       case 's':
         save_checkpoint_ = atoi(optarg);
+        break;
+      case 'o':
+        enable_fp16_ = true;
+        break;
+      case 'b':
+        virtual_batch_ = atoi(optarg);
+        std::cout << "virtual_batch_: " << virtual_batch_ << std::endl;
         break;
       case 'h':
       default:

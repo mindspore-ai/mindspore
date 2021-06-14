@@ -46,6 +46,7 @@ class InnerKernel : public Kernel {
     if (op_parameter_ != nullptr) {
       free(op_parameter_);
       op_parameter_ = nullptr;
+      FreeWorkspace();
     }
   }
 
@@ -77,7 +78,7 @@ class InnerKernel : public Kernel {
 
     ret = PostProcess();
     if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
+      MS_LOG(ERROR) << "run kernel PostProcess failed, name: " << this->name();
       return ret;
     }
     return lite::RET_OK;
@@ -192,9 +193,15 @@ class InnerKernel : public Kernel {
 
   void set_workspace_size(size_t value) { workspace_size_ = value; }
   size_t workspace_size() { return workspace_size_; }
-  static void AllocWorkspace(size_t size);
-  static void FreeWorkspace();
+  void AllocWorkspace();
+  void FreeWorkspace();
   void *workspace() { return workspace_; }
+  void set_workspace(void *ws) {
+    if (ws_allocated_ == false) {
+      workspace_ = ws;
+    }
+  }
+  bool ws_allocated_ = false;
 
  protected:
   OpParameter *op_parameter_ = nullptr;
@@ -205,7 +212,7 @@ class InnerKernel : public Kernel {
   bool trainable_ = false;  // parameters of this Kernel are trained in Train Session
   TypeId registry_data_type_ = kTypeUnknown;
   size_t workspace_size_ = 0;
-  static void *workspace_;
+  void *workspace_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

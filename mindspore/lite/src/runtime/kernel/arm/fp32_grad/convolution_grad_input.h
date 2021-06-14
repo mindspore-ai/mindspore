@@ -36,6 +36,8 @@ class ConvolutionGradInputCPUKernel : public InnerKernel {
  private:
   size_t ws_size_ = 0;
   size_t mat_alloc_ = 0;
+  bool do_img2col_ = true;
+  bool do_dw_ = false;
 #ifdef ENABLE_ARM32
   const int chunk_ = C4NUM;
 #else

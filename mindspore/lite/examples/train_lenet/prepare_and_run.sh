@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-b virtual_batch]\n"
 }
 
 checkopts()
@@ -11,7 +11,9 @@ checkopts()
   DOCKER=""
   MNIST_DATA_PATH=""
   QUANTIZE=""
-  while getopts 'D:d:r:t:q' opt
+  ENABLEFP16=false
+  VIRTUAL_BATCH=-1
+  while getopts 'D:d:r:t:qob:' opt
   do
     case "${opt}" in
       D)
@@ -35,6 +37,12 @@ checkopts()
       q)
         QUANTIZE="QUANTIZE"
         ;;
+      o)
+        ENABLEFP16=true
+        ;; 
+      b)
+        VIRTUAL_BATCH=$OPTARG
+        ;;    
       *)
         echo "Unknown option ${opt}!"
         display_usage
@@ -65,10 +73,18 @@ if [ "$TARBALL" == "" ]; then
   fi
 fi
 
+
 # Prepare the model
+if [[ "${VIRTUAL_BATCH}" == "-1" ]]; then
+  BATCH=32
+else
+  BATCH=1
+fi
+
+
 cd model/ || exit 1
 rm -f *.ms
-QUANTIZE=${QUANTIZE} ./prepare_model.sh $DOCKER || exit 1
+QUANTIZE=${QUANTIZE} ./prepare_model.sh $BATCH $DOCKER || exit 1
 cd ../
 
 # Copy the .ms model to the package folder
@@ -84,11 +100,11 @@ cp scripts/*.sh ${PACKAGE}/
 
 # Copy the shared MindSpore ToD library
 tar -xzf ${TARBALL}
-mv mindspore-*/train/lib ${PACKAGE}/
-mv mindspore-*/train/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
+mv mindspore-*/inference/lib ${PACKAGE}/
+mv mindspore-*/inference/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
 if [ "${TARGET}" == "arm64" ]; then
   tar -xzf ${TARBALL} --wildcards --no-anchored hiai_ddk
-  mv mindspore-*/train/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
+  mv mindspore-*/inference/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
 fi
 
 rm -rf msl
@@ -111,11 +127,21 @@ if [ "${TARGET}" == "arm64" ]; then
   adb push ${PACKAGE} /data/local/tmp/
 
   echo "========Training on Device====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh"
+  if "$ENABLEFP16"; then
+    echo "Training fp16.."
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh -o -b ${VIRTUAL_BATCH}"
+  else
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh -b ${VIRTUAL_BATCH}"
+  fi   
 
   echo
   echo "===Evaluating trained Model====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh"
+  if "$ENABLEFP16"; then
+    echo "Evaluating fp16 Model.."
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh -o"
+  else
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh"
+  fi
   echo
 else
   cd ${PACKAGE} || exit 1
@@ -124,6 +150,7 @@ else
 
   echo "===Evaluating trained Model====="
   ./eval.sh
+  
   cd ..
 fi
 

@@ -113,7 +113,7 @@ class MS_API NetTrain {
  private:
   // call GenerateInputData or ReadInputFile to init inputTensors
   int LoadInput(Vector<tensor::MSTensor *> *ms_inputs);
-
+  void CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_type, int id, std::string in_out);
   // call GenerateRandomData to fill inputTensors
   int GenerateInputData(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
 
@@ -192,11 +192,10 @@ class MS_API NetTrain {
     return meanError;
   }
 
-  int MarkPerformance(session::LiteSession *session);
-
-  int MarkAccuracy(session::LiteSession *lite_session, bool enforce_accuracy = true);
+  int MarkPerformance(const std::unique_ptr<session::LiteSession> &session);
+  int MarkAccuracy(const std::unique_ptr<session::LiteSession> &session, bool enforce_accuracy = true);
   int CompareOutput(const session::LiteSession &lite_session);
-  int SaveModels(session::LiteSession *session);
+  int SaveModels(const std::unique_ptr<session::LiteSession> &session);
   int CheckExecutionOfSavedModels();
   NetTrainFlags *flags_;
 

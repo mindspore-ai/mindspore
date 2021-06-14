@@ -27,7 +27,6 @@ void backwardAllFp16(const float16_t *restrict in, const float16_t *restrict yt,
                      const float16_t *restrict invar, const float16_t *restrict scale, int size, int ch,
                      float *restrict dxhat_sum, float *restrict dxhathat_sum, float16_t *restrict dbias,
                      float16_t *restrict dscale, float16_t *restrict dx) {
-  float16_t N = (float16_t)size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
       int ix = i * ch + c;
@@ -41,13 +40,14 @@ void backwardAllFp16(const float16_t *restrict in, const float16_t *restrict yt,
       dxhathat_sum[c] += (float)(dx_hat * x_hat);
     }
   }
+  float N = (float)size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
       // dx_2
       int ix = i * ch + c;
       float16_t x_hat = (in[ix] - mean[c]) * invar[c];
       float16_t dx_hat = yt[ix] * scale[c];
-      dx[ix] = 1.0f / N * (float)((invar[c]) * (N * dx_hat - dxhat_sum[c] - x_hat * dxhathat_sum[c]));
+      dx[ix] = (float16_t)((float)((invar[c]) * (N * dx_hat - dxhat_sum[c] - x_hat * dxhathat_sum[c])) / N);
     }
   }
 }
@@ -80,7 +80,7 @@ void backwardP2Fp16(const float16_t *restrict in, const float16_t *restrict yt, 
       int ix = i * ch + c;
       float x_hat = (float)((in[ix] - mean[c]) * invar[c]);
       float dx_hat = (float)(yt[ix] * scale[c]);
-      dx[ix] = (float16_t)(1.0f / N * (float)(invar[c]) * (N * dx_hat - dxhat_sum[c] - x_hat * dxhathat_sum[c]));
+      dx[ix] = (float16_t)(((float)(invar[c]) * (N * dx_hat - dxhat_sum[c] - x_hat * dxhathat_sum[c])) / N);
     }
   }
 }

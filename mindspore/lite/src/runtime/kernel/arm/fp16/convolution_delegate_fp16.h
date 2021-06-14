@@ -47,6 +47,18 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
     fp16_conv_kernel_->set_name(name_);
     return fp16_conv_kernel_->Run();
   }
+  int Eval() override {
+    InnerKernel::Eval();
+    return fp16_conv_kernel_->Eval();
+  }
+  int Train() override {
+    InnerKernel::Train();
+    return fp16_conv_kernel_->Train();
+  }
+  void set_trainable(bool trainable) override {
+    InnerKernel::set_trainable(trainable);
+    return fp16_conv_kernel_->set_trainable(trainable);
+  }
 
   void set_in_tensor(lite::Tensor *in_tensor, int index) override {
     MS_ASSERT(index < in_tensors_.size());
