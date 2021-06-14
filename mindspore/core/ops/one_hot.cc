@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 void OneHot::Init(const int64_t axis) { this->set_axis(axis); }
-void OneHot::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void OneHot::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t OneHot::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
@@ -39,7 +39,7 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), op_name);
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
   auto depth_val = GetValue<int64_t>(input_args[1]->BuildValue());
-  CheckAndConvertUtils::CheckInteger("depth", depth_val, kGreaterEqual, 0, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("depth", depth_val, kGreaterEqual, 0, op_name);
   if (axis >= 0) {
     in_shape.insert(in_shape.begin() + axis, depth_val);
   } else {

@@ -27,7 +27,7 @@ int64_t Concat::get_axis() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void Concat::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void Concat::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
@@ -35,14 +35,15 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto prim = primitive->cast<PrimConcatPtr>();
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   auto input_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(input_tuple);
   auto elements = input_tuple->elements();
-  CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
+                                           prim_name);
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
   auto element0_shape =
@@ -60,8 +61,8 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
     std::string elementi = "element" + std::to_string(i);
     auto elementi_shape =
       CheckAndConvertUtils::ConvertShapePtrToShape(elementi + " shape", elements[i]->BuildShape(), prim_name);
-    CheckAndConvertUtils::CheckInteger(elementi + " shape rank", SizeToLong(elementi_shape.size()), kEqual,
-                                       element0_shape.size(), prim_name);
+    (void)CheckAndConvertUtils::CheckInteger(elementi + " shape rank", SizeToLong(elementi_shape.size()), kEqual,
+                                             SizeToLong(element0_shape.size()), prim_name);
     for (size_t j = 0; j < element0_rank; ++j) {
       if (j != axis && elementi_shape[j] != element0_shape[j]) {
         MS_LOG(EXCEPTION) << "element " << i << " shape in input can not concat with first element.";

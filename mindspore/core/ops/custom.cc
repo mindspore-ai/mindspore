@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 void Custom::Init(const std::vector<int64_t> &custom) { this->set_custom(custom); }
 
-void Custom::set_custom(const std::vector<int64_t> &custom) { this->AddAttr(kCustom, MakeValue(custom)); }
+void Custom::set_custom(const std::vector<int64_t> &custom) { (void)this->AddAttr(kCustom, MakeValue(custom)); }
 
 std::vector<int64_t> Custom::get_custom() const {
   auto value_ptr = this->GetAttr(kCustom);

@@ -31,8 +31,10 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     CheckAndConvertUtils::ConvertShapePtrToShape("first_input_shape", input_args[0]->BuildShape(), prim_name);
   auto second_input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("second_input_shape", input_args[1]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("first input rank", SizeToLong(first_input_shape.size()), kEqual, 3, prim_name);
-  CheckAndConvertUtils::CheckInteger("second input rank", SizeToLong(second_input_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("first input rank", SizeToLong(first_input_shape.size()), kEqual, 3,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("second input rank", SizeToLong(second_input_shape.size()), kEqual, 1,
+                                           prim_name);
   std::vector<int64_t> out_shape = {first_input_shape[0], first_input_shape[1], mfcc_prim->get_dct_coeff_num()};
   return std::make_shared<abstract::Shape>(out_shape);
 }

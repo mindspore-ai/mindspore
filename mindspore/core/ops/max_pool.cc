@@ -100,7 +100,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   if (format == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
-  CheckAndConvertUtils::CheckInteger("x_rank", in_shape.size(), kEqual, 4, op_name);
+  CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, 4, op_name);
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   auto pad_mode_value = (primitive->GetAttr(kPadMode));
   auto pad_mode = PadMode(GetValue<int64_t>(pad_mode_value));

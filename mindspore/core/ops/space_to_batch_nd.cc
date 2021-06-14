@@ -32,14 +32,14 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(space_prim);
   auto prim_name = space_prim->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("input_x rank", x_shape.size(), kEqual, 4, prim_name);
+  CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
-  const int64_t offset = 2;
+  const size_t offset = 2;
   auto block_shape = space_prim->get_block_shape();
   auto padding = space_prim->get_paddings();
-  int64_t size = block_shape.size();
-  for (int64_t i = 0; i < size; i++) {
+  size_t size = block_shape.size();
+  for (size_t i = 0; i < size; i++) {
     int64_t padded = out_shape[i + offset] + padding[i][0] + padding[i][1];
     if (padded % block_shape[i] != 0) {
       MS_EXCEPTION(ValueError) << prim_name << " padded[" << i << "]" << padded << "should be divisible by block_shape["
@@ -64,13 +64,13 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 void SpaceToBatchND::set_paddings(std::vector<std::vector<int64_t>> paddings) {
   CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings.size()), kEqual, 2, this->name());
-  int64_t h = paddings.size();
-  int64_t w = paddings[0].size();
-  std::vector<int64_t> temp_w = {2, 2};
+  size_t h = paddings.size();
+  size_t w = paddings[0].size();
+  std::vector<size_t> temp_w = {2, 2};
   CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
-  for (int64_t i = 0; i < h; i++) {
-    for (int64_t j = 0; j < w; j++) {
-      CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings[i][j]), kGreaterEqual, 0, this->name());
+  for (size_t i = 0; i < h; i++) {
+    for (size_t j = 0; j < w; j++) {
+      (void)CheckAndConvertUtils::CheckInteger(kPaddings, paddings[i][j], kGreaterEqual, 0, this->name());
     }
   }
   this->AddAttr(kPaddings, MakeValue(paddings));
@@ -82,8 +82,8 @@ std::vector<std::vector<int64_t>> SpaceToBatchND::get_paddings() const {
 }
 void SpaceToBatchND::set_block_shape(std::vector<int64_t> block_shape) {
   CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, 2, this->name());
-  for (int64_t i = 0; i < (int64_t)block_shape.size(); i++) {
-    CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape[i]), kGreaterEqual, 1, this->name());
+  for (size_t i = 0; i < block_shape.size(); i++) {
+    CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1, this->name());
   }
   this->AddAttr(kBlockShape, MakeValue(block_shape));
 }

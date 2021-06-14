@@ -32,7 +32,7 @@ AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   auto tan_prim = primitive->cast<PrimTanPtr>();
   MS_EXCEPTION_IF_NULL(tan_prim);
   auto prim_name = tan_prim->name();
-  CheckAndConvertUtils::CheckInteger("tan_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("tan_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
 
   // Infer Shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);

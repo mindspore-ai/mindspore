@@ -32,7 +32,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   std::vector<int64_t> out_shape;
   for (size_t i = 0; i < x_shape.size(); ++i) {
     if (SizeToLong(i) != axis) {
-      out_shape.emplace_back(x_shape[i]);
+      (void)out_shape.emplace_back(x_shape[i]);
     }
   }
   return std::make_shared<abstract::Shape>(out_shape);
@@ -53,8 +53,8 @@ void ArgMax::Init(const int64_t axis, const TypeId output_type) {
   set_output_type(output_type);
 }
 
-void ArgMax::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
-void ArgMax::set_output_type(const TypeId output_type) { this->AddAttr(kOutputType, TypeIdToType(output_type)); }
+void ArgMax::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void ArgMax::set_output_type(const TypeId output_type) { (void)this->AddAttr(kOutputType, TypeIdToType(output_type)); }
 
 int64_t ArgMax::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 TypeId ArgMax::get_output_type() const {

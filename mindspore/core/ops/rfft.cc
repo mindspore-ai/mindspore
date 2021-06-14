@@ -46,7 +46,7 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 
 void Rfft::Init(const int64_t fft_length) { this->set_fft_length(fft_length); }
 
-void Rfft::set_fft_length(const int64_t fft_length) { this->AddAttr(kFftLength, MakeValue(fft_length)); }
+void Rfft::set_fft_length(const int64_t fft_length) { (void)this->AddAttr(kFftLength, MakeValue(fft_length)); }
 
 int64_t Rfft::get_fft_length() const {
   auto value_ptr = this->GetAttr(kFftLength);

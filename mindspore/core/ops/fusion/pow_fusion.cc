@@ -28,8 +28,8 @@ void PowFusion::Init(const float &scale, const float &shift) {
   this->set_shift(shift);
 }
 
-void PowFusion::set_scale(const float &scale) { this->AddAttr(kScale, MakeValue(scale)); }
-void PowFusion::set_shift(const float &shift) { this->AddAttr(kShift, MakeValue(shift)); }
+void PowFusion::set_scale(const float &scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
+void PowFusion::set_shift(const float &shift) { (void)this->AddAttr(kShift, MakeValue(shift)); }
 
 float PowFusion::get_scale() const { return GetValue<float>(GetAttr(kScale)); }
 float PowFusion::get_shift() const { return GetValue<float>(GetAttr(kShift)); }

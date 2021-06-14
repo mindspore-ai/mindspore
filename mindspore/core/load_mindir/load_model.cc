@@ -176,9 +176,9 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
       return nullptr;
     }
 
-    int file_size = files.size();
+    size_t file_size = files.size();
     mind_ir::GraphProto *mod_graph = origin_model.mutable_graph();
-    for (auto file_index = 0; file_index < file_size; file_index++) {
+    for (size_t file_index = 0; file_index < file_size; file_index++) {
       std::fstream input_param(files[file_index], std::ios::in | std::ios::binary);
       mind_ir::GraphProto param_graph;
       if (!input_param || !param_graph.ParseFromIstream(&input_param)) {

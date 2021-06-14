@@ -33,8 +33,8 @@ AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisE
   auto sigmoid_prim = primitive->cast<PrimSigmoidCrossEntropyWithLogitsGradPtr>();
   MS_EXCEPTION_IF_NULL(sigmoid_prim);
   auto prim_name = sigmoid_prim->name();
-  CheckAndConvertUtils::CheckInteger("sigmoid_cross_entropy_with_logits_grad_infer", SizeToLong(input_args.size()),
-                                     kEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_entropy_with_logits_grad_infer",
+                                           SizeToLong(input_args.size()), kEqual, 3, prim_name);
 
   // Infer Shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);

@@ -34,16 +34,16 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = spacetobatch_prim->name();
   auto input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
   std::vector<int64_t> output_shape(input_shape.size());
   auto block_shape_vector = spacetobatch_prim->get_block_size();
   auto paddings = spacetobatch_prim->get_paddings();
   for (size_t i = 0; i < 2; i++) {
-    auto padded = LongToSize(output_shape[i + 2] + paddings[i][0] + paddings[i][1]);
+    auto padded = output_shape[i + 2] + paddings[i][0] + paddings[i][1];
     CheckAndConvertUtils::CheckInteger("padded shape", padded % block_shape_vector.size(), kEqual, 0, prim_name);
     output_shape[i + 2] = padded / block_shape_vector.size();
   }
-  output_shape[0] *= block_shape_vector.size() * block_shape_vector.size();
+  output_shape[0] *= SizeToLong(block_shape_vector.size() * block_shape_vector.size());
   return std::make_shared<abstract::Shape>(output_shape);
 }
 }  // namespace
@@ -55,7 +55,7 @@ void SpaceToBatch::set_paddings(const std::vector<std::vector<int64_t>> &padding
   CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
   for (size_t i = 0; i < LongToSize(h); i++) {
     for (size_t j = 0; j < LongToSize(w); j++) {
-      CheckAndConvertUtils::CheckInteger(kPadding, paddings[i][j], kGreaterEqual, 0, this->name());
+      (void)CheckAndConvertUtils::CheckInteger(kPadding, paddings[i][j], kGreaterEqual, 0, this->name());
     }
   }
 }

@@ -43,14 +43,14 @@ PoolMode PoolingGrad::get_pool_mode() const {
   return PoolMode(GetValue<int64_t>(value_ptr));
 }
 
-void PoolingGrad::set_window(const std::vector<int64_t> &window) { this->AddAttr(kWindow, MakeValue(window)); }
+void PoolingGrad::set_window(const std::vector<int64_t> &window) { (void)this->AddAttr(kWindow, MakeValue(window)); }
 
 std::vector<int64_t> PoolingGrad::get_window() const {
   auto value_ptr = GetAttr(kWindow);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void PoolingGrad::set_stride(const std::vector<int64_t> &stride) { this->AddAttr(kStride, MakeValue(stride)); }
+void PoolingGrad::set_stride(const std::vector<int64_t> &stride) { (void)this->AddAttr(kStride, MakeValue(stride)); }
 
 std::vector<int64_t> PoolingGrad::get_stride() const {
   auto value_ptr = GetAttr(kStride);
@@ -94,7 +94,7 @@ Format PoolingGrad::get_format() const {
   return Format(GetValue<int64_t>(value_ptr));
 }
 
-void PoolingGrad::set_global(const bool global) { this->AddAttr(kGlobal, MakeValue(global)); }
+void PoolingGrad::set_global(const bool global) { (void)this->AddAttr(kGlobal, MakeValue(global)); }
 
 bool PoolingGrad::get_global() const {
   auto value_ptr = GetAttr(kGlobal);

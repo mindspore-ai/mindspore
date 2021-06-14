@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 void TileFusion::Init(const std::vector<int64_t> &dims) { this->set_dims(dims); }
 
-void TileFusion::set_dims(const std::vector<int64_t> &dims) { this->AddAttr(kDims, MakeValue(dims)); }
+void TileFusion::set_dims(const std::vector<int64_t> &dims) { (void)this->AddAttr(kDims, MakeValue(dims)); }
 
 std::vector<int64_t> TileFusion::get_dims() const {
   auto value_ptr = GetAttr(kDims);

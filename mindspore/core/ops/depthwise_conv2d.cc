@@ -179,13 +179,13 @@ abstract::ShapePtr DepthWiseConv2DInferShape(const PrimitivePtr &primitive,
 
     auto pad_needed_h =
       std::max(static_cast<int64_t>(0), (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2]);
-    pad_list.emplace_back(floor(pad_needed_h / 2));
-    pad_list.emplace_back(pad_needed_h / 2);
+    (void)pad_list.emplace_back(floor(pad_needed_h / 2));
+    (void)pad_list.emplace_back(pad_needed_h / 2);
     auto pad_needed_w =
       std::max(static_cast<int64_t>(0), (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3]);
     auto pad_left = floor(pad_needed_w / 2);
-    pad_list.emplace_back(pad_left);
-    pad_list.emplace_back(pad_needed_h - pad_left);
+    (void)pad_list.emplace_back(pad_left);
+    (void)pad_list.emplace_back(pad_needed_h - pad_left);
   } else if (pad_mode == PAD) {
     std::copy(conv_prim->get_pad().begin(), conv_prim->get_pad().end(), std::back_inserter(pad_list));
     auto pad_top = conv_prim->get_pad()[0];
