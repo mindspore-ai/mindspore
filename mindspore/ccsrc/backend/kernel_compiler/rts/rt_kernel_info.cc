@@ -40,7 +40,7 @@ std::shared_ptr<RtKerDesc> RtKerDescFactory::Create(const std::string &name) {
 }
 
 RtKerDescFactory &RtKerDescFactory::Get() {
-  static RtKerDescFactory _this;
+  static RtKerDescFactory _this{};
   return _this;
 }
 

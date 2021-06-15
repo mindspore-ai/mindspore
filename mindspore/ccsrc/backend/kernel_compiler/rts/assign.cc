@@ -47,9 +47,8 @@ bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   return true;
 }
 
-std::vector<TaskInfoPtr> AssignKernel::GenTask(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
-                                               const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+std::vector<TaskInfoPtr> AssignKernel::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                               const std::vector<AddressPtr> &, uint32_t stream_id) {
   if (inputs.size() != 2) {
     MS_LOG(EXCEPTION) << "inputs size is not two";
   }
