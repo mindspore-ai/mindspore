@@ -369,3 +369,45 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_setupV
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_updateFeatures(JNIEnv *env, jclass,
+                                                                                         jlong session_ptr,
+                                                                                         jlongArray features) {
+  jsize size = static_cast<int>(env->GetArrayLength(features));
+  jlong *input_data = env->GetLongArrayElements(features, nullptr);
+  std::vector<mindspore::tensor::MSTensor *> newFeatures;
+  for (int i = 0; i < size; ++i) {
+    auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
+    if (tensor_pointer == nullptr) {
+      MS_LOGE("Tensor pointer from java is nullptr");
+      return false;
+    }
+    auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(tensor_pointer);
+    newFeatures.emplace_back(ms_tensor_ptr);
+  }
+  auto session = reinterpret_cast<mindspore::session::LiteSession *>(session_ptr);
+  auto ret = session->UpdateFeatureMaps(newFeatures);
+  return (jboolean)(ret == mindspore::lite::RET_OK);
+}
+
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getFeaturesMap(JNIEnv *env, jobject thiz,
+                                                                                        jlong session_ptr) {
+  jclass array_list = env->FindClass("java/util/ArrayList");
+  jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
+  jobject ret = env->NewObject(array_list, array_list_construct);
+  jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
+
+  jclass long_object = env->FindClass("java/lang/Long");
+  jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
+  auto *pointer = reinterpret_cast<void *>(session_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return ret;
+  }
+  auto *train_session_ptr = static_cast<mindspore::session::LiteSession *>(pointer);
+  auto inputs = train_session_ptr->GetFeatureMaps();
+  for (auto input : inputs) {
+    jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(input));
+    env->CallBooleanMethod(ret, array_list_add, tensor_addr);
+  }
+  return ret;
+}

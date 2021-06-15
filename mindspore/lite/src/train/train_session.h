@@ -91,6 +91,10 @@ class TrainSession : virtual public lite::LiteSession {
   }
   int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType) override;
 
+  std::vector<tensor::MSTensor *> GetFeatureMaps() const override;
+
+  int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features_map) override;
+
  protected:
   int AllocWorkSpace();
   bool IsLossKernel(const kernel::LiteKernel *kernel) const;
