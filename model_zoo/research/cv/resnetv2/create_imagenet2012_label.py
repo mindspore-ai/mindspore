@@ -23,6 +23,7 @@ args = parser.parse_args()
 
 
 def create_label(file_path):
+    '''create imagenet2012 label'''
     print("[WARNING] Create imagenet label. Currently only use for Imagenet2012!")
     dirs = os.listdir(file_path)
     file_list = []
