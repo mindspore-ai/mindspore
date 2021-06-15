@@ -19,6 +19,10 @@
 
 int WhileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
+  int ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   if (inputs_size != outputs_size) {
     return NNACL_ERR;
   }

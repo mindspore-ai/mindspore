@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
 
-int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, vvector *tensor_shape) {
+int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape) {
   // This function will create a new tensors_
   // Your must to set shape(param2: tensor_shape) and data_type_(tensors_data_type_ = param1: dtype) of each tensor in
   // tensors_. After that, you need to call function:MallocData to malloc data buf of each tensor in tensors_.
@@ -71,7 +71,7 @@ bool TensorListIsFullyDefined(const int *shape, size_t shape_size) {
 }
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                     OpParameter *parameter) {
+                     const OpParameter *parameter) {
   for (size_t i = 0; i < inputs_size; i++) {
     if (inputs[i] == NULL) {
       return NNACL_NULL_PTR;
@@ -89,7 +89,7 @@ int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC *
 }
 
 int CheckAugmentNullSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                         OpParameter *parameter, size_t inputs_size_obj, size_t outputs_size_obj) {
+                         const OpParameter *parameter, size_t inputs_size_obj, size_t outputs_size_obj) {
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret == NNACL_NULL_PTR) {
     return NNACL_NULL_PTR;
@@ -101,7 +101,7 @@ int CheckAugmentNullSize(const TensorC *const *inputs, size_t inputs_size, Tenso
 }
 
 int CheckAugmentNullSizeInputTwo(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
-                                 size_t outputs_size, OpParameter *parameter, size_t inputs_size_obj_0,
+                                 size_t outputs_size, const OpParameter *parameter, size_t inputs_size_obj_0,
                                  size_t inputs_size_obj_1, size_t outputs_size_obj) {
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret == NNACL_NULL_PTR) {
@@ -114,7 +114,7 @@ int CheckAugmentNullSizeInputTwo(const TensorC *const *inputs, size_t inputs_siz
 }
 
 int CheckAugmentNullInputSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                              OpParameter *parameter, size_t inputs_size_obj) {
+                              const OpParameter *parameter, size_t inputs_size_obj) {
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret == NNACL_NULL_PTR) {
     return NNACL_NULL_PTR;
@@ -126,12 +126,24 @@ int CheckAugmentNullInputSize(const TensorC *const *inputs, size_t inputs_size, 
 }
 
 int CheckAugmentNullOutputSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                               OpParameter *parameter, size_t outputs_size_obj) {
+                               const OpParameter *parameter, size_t outputs_size_obj) {
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret == NNACL_NULL_PTR) {
     return NNACL_NULL_PTR;
   }
   if (outputs_size != outputs_size_obj) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
+  return NNACL_OK;
+}
+
+int CheckAugmentWithMinSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                            const OpParameter *parameter, size_t inputs_size_obj, size_t outputs_size_obj) {
+  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (check_ret == NNACL_NULL_PTR) {
+    return NNACL_NULL_PTR;
+  }
+  if (inputs_size < inputs_size_obj || outputs_size < outputs_size_obj) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
   return NNACL_OK;
@@ -351,7 +363,11 @@ int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 }
 
 int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                  OpParameter *parameter) {
+                  const OpParameter *parameter) {
+  int ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   output->data_type_ = kNumberTypeFloat32;
@@ -359,9 +375,15 @@ int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
+  if (input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, input->shape_, input->shape_size_);
+  if (input_shape_size == 0) {
+    return NNACL_ERR;
+  }
   input_shape_size--;
   SetShapeArray(output, input_shape, input_shape_size);
   return NNACL_OK;
@@ -437,7 +459,7 @@ void VectorCErase(VectorC *vc, int index) {
   vc->size_--;
 }
 
-bool VectorCEqual(VectorC *vc1, VectorC *vc2) {
+bool VectorCEqual(const VectorC *vc1, const VectorC *vc2) {
   if (vc1->size_ != vc2->size_) {
     return false;
   }

@@ -60,7 +60,6 @@ void MergeDataTypeInfer(TensorC **inputs, size_t inputs_size, TensorC **outputs,
 
 int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
-#ifdef Debug
   for (size_t i = 0; i < inputs_size; i++) {
     if (inputs[i] == NULL) {
       return NNACL_NULL_PTR;
@@ -69,7 +68,6 @@ int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   if (inputs_size != 2 * outputs_size) {
     return NNACL_ERR;
   }
-#endif
 
   const TensorC *const *left_part_inputs = inputs;
   size_t left_part_inputs_size = inputs_size / 2;

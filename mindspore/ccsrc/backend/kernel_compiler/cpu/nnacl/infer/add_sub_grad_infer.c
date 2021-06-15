@@ -20,12 +20,10 @@
 
 int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 2);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *dy = inputs[0];
   const TensorC *x1 = inputs[1];
@@ -48,8 +46,8 @@ int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   int j0 = 0;
   int j1 = 0;
   for (unsigned int i = 0; i < dy->shape_size_; i++) {
-    param->in_shape0_[i] = (i < fillDimNum0) ? 1 : x1->shape_[j0++];
-    param->in_shape1_[i] = (i < fillDimNum1) ? 1 : x2->shape_[j1++];
+    param->in_shape0_[i] = ((int)i < fillDimNum0) ? 1 : x1->shape_[j0++];
+    param->in_shape1_[i] = ((int)i < fillDimNum1) ? 1 : x2->shape_[j1++];
     param->out_shape_[i] = dy->shape_[i];
   }
 

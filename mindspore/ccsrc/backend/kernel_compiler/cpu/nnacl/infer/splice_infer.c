@@ -19,12 +19,10 @@
 
 int SpliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret == NNACL_NULL_PTR) {
     return NNACL_NULL_PTR;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -42,6 +40,9 @@ int SpliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
       max_dims = inputs[i]->shape_size_;
       max_dims_idx = i;
     }
+  }
+  if (inputs[max_dims_idx]->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
   }
   SpliceParameter *param = (SpliceParameter *)parameter;
   if (param == NULL) {

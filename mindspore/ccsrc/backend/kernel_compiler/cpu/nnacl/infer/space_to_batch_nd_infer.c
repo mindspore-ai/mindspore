@@ -36,11 +36,14 @@ int SpaceSetOutputShapeFromParam(const TensorC *const *inputs, size_t inputs_siz
     padding_right = padding[3];
     block_w = block_shape[1];
   }
-  if (block_shape[0] * block_w > INT_MAX / input->shape_[kNHWC_N]) {
+  if (input->shape_[kNHWC_N] == 0 || block_shape[0] * block_w > INT_MAX / input->shape_[kNHWC_N]) {
     return NNACL_ERR;
   }
   outputs[0]->shape_[kNHWC_N] = input->shape_[kNHWC_N] * block_shape[0] * block_w;
   if (padding[0] + padding[1] > INT_MAX - input->shape_[kNHWC_H]) {
+    return NNACL_ERR;
+  }
+  if (block_shape[0] == 0 || block_w == 0) {
     return NNACL_ERR;
   }
   outputs[0]->shape_[kNHWC_H] = (input->shape_[kNHWC_H] + padding[0] + padding[1]) / block_shape[0];
@@ -76,11 +79,14 @@ int SpaceSetOutputShapeFromInput(const TensorC *const *inputs, size_t inputs_siz
   }
   int32_t output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = input->shape_size_;
-  if (block_shape[0] * block_w > INT_MAX / input->shape_[kNHWC_N]) {
+  if (input->shape_[kNHWC_N] == 0 || block_shape[0] * block_w > INT_MAX / input->shape_[kNHWC_N]) {
     return NNACL_ERR;
   }
   output_shape[kNHWC_N] = input->shape_[kNHWC_N] * block_shape[0] * block_w;
   if (padding[0] + padding[1] > INT_MAX - input->shape_[kNHWC_H]) {
+    return NNACL_ERR;
+  }
+  if (block_shape[0] == 0 || block_w == 0) {
     return NNACL_ERR;
   }
   output_shape[kNHWC_H] = (input->shape_[kNHWC_H] + padding[0] + padding[1]) / block_shape[0];
@@ -97,12 +103,10 @@ int SpaceSetOutputShapeFromInput(const TensorC *const *inputs, size_t inputs_siz
 
 int SpaceToBatchNdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   if (input->format_ != Format_NHWC) {

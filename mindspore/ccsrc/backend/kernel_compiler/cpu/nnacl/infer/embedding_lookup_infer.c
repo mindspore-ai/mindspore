@@ -19,7 +19,6 @@
 
 int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
@@ -27,7 +26,6 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (inputs_size < 2 || outputs_size != 1) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
-#endif
 
   const TensorC *params_ = inputs[0];
   const TensorC *ids = inputs[inputs_size - 1];
@@ -37,6 +35,9 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return NNACL_INFER_INVALID;
   }
 
+  if (params_->shape_size_ > MAX_SHAPE_SIZE || ids->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
   int embedding_shape[MAX_SHAPE_SIZE] = {0};
   size_t embedding_shape_size = 0;
   ShapeSet(embedding_shape, &embedding_shape_size, params_->shape_, params_->shape_size_);
@@ -48,6 +49,9 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
     ShapePush(output_shape, &output_shape_size, embedding_shape[i]);
   }
   for (size_t i = 1; i < inputs_size - 1; ++i) {
+    if (inputs[i]->shape_size_ > MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     int embedding_shape_t[MAX_SHAPE_SIZE] = {0};
     size_t embedding_shape_t_size = 0;
     ShapeSet(embedding_shape_t, &embedding_shape_t_size, inputs[i]->shape_, inputs[i]->shape_size_);

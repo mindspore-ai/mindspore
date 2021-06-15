@@ -19,12 +19,10 @@
 
 int GruInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 5, 6, 2);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   const TensorC *weight_gate = inputs[1];
@@ -60,6 +58,9 @@ int GruInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
 
   int hidden_size = w_gate_shape[1] / 3;
   // set output
+  if (input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, in_shape, input->shape_size_);

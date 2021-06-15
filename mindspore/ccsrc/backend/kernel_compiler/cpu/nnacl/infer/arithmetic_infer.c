@@ -93,12 +93,12 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  if (input_shape0_size >= MAX_SHAPE_SIZE || input_shape1_size >= MAX_SHAPE_SIZE) {
+  if (input_shape0_size > MAX_SHAPE_SIZE || input_shape1_size > MAX_SHAPE_SIZE) {
     return NNACL_ERR;
   }
-  int in_shape0[10] = {0};
-  int in_shape1[10] = {0};
-  int out_shape[10] = {0};
+  int in_shape0[MAX_SHAPE_SIZE] = {0};
+  int in_shape1[MAX_SHAPE_SIZE] = {0};
+  int out_shape[MAX_SHAPE_SIZE] = {0};
   int ndim = input_shape0_size;
   UpdateInputShape(input_shape0_size, input_shape1_size, &ndim, input_shape0, input_shape1, in_shape0, in_shape1);
 

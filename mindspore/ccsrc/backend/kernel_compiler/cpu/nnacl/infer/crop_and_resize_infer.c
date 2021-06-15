@@ -19,12 +19,13 @@
 
 int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 4);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
+  if (outputs_size < 1) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -39,6 +40,9 @@ int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   size_t output_shape_size = 0;
   if (inputs[1]->data_ != NULL) {
     const TensorC *boxes_tensor = inputs[1];
+    if (boxes_tensor->shape_size_ < 1) {
+      return NNACL_INPUT_TENSOR_ERROR;
+    }
     ShapePush(output_shape, &output_shape_size, boxes_tensor->shape_[0]);
   } else {
     ShapePush(output_shape, &output_shape_size, GetBatch(input));
@@ -48,6 +52,9 @@ int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   int32_t *data = (int32_t *)(shape_tensor->data_);
   if (data == NULL) {
     return NNACL_INFER_INVALID;
+  }
+  if (GetElementNum(shape_tensor) < 2) {
+    return NNACL_INPUT_TENSOR_ERROR;
   }
   ShapePush(output_shape, &output_shape_size, data[0]);
   ShapePush(output_shape, &output_shape_size, data[1]);

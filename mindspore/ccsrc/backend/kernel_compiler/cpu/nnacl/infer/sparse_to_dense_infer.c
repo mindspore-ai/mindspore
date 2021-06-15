@@ -19,12 +19,10 @@
 
 int SparseToDenseInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   TensorC *output = outputs[0];
   if (inputs_size < 3) {
@@ -37,9 +35,13 @@ int SparseToDenseInferShape(const TensorC *const *inputs, size_t inputs_size, Te
     return NNACL_INFER_INVALID;
   }
   int *input1_data = (int *)(input1->data_);
+  int data_num = GetElementNum(input1);
+  if (input1_data == 0 || data_num > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
-  for (int i = 0; i < GetElementNum(input1); i++) {
+  for (int i = 0; i < data_num; i++) {
     ShapePush(output_shape, &output_shape_size, input1_data[i]);
   }
   SetShapeArray(output, output_shape, output_shape_size);

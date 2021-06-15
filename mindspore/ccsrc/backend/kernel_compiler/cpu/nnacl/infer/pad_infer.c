@@ -19,12 +19,10 @@
 
 int PadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -34,6 +32,9 @@ int PadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
     return NNACL_INFER_INVALID;
   }
 
+  if (input->shape_size_ > 4) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   const TensorC *paddings = inputs[1];
   int size = GetElementNum(paddings);
   if (size > MAX_PAD_SIZE) {
@@ -49,9 +50,6 @@ int PadInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
 
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
-  if (input->shape_size_ > 4) {
-    return NNACL_INPUT_TENSOR_ERROR;
-  }
   for (size_t i = 0; i < input->shape_size_; i++) {
     int shape = input->shape_[i] + param->paddings_[2 * i] + param->paddings_[2 * i + 1];
     ShapePush(output_shape, &output_shape_size, shape);

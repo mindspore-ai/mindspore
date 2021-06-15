@@ -19,12 +19,10 @@
 
 int UnstackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   UnstackParameter *param = (UnstackParameter *)parameter;
@@ -43,6 +41,9 @@ int UnstackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   size_t output_shape_size = 0;
   for (size_t i = 0; i < input->shape_size_; ++i) {
     if (i != axis) {
+      if (output_shape_size >= MAX_SHAPE_SIZE) {
+        return NNACL_ERR;
+      }
       ShapePush(output_shape, &output_shape_size, input->shape_[i]);
     }
   }

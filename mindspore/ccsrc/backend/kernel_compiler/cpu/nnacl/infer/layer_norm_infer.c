@@ -19,7 +19,6 @@
 
 int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
-#ifdef Debug
   if ((inputs_size != 1 && inputs_size != 3) || (outputs_size != 1 && outputs_size != 3)) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
@@ -27,7 +26,6 @@ int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -36,6 +34,9 @@ int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   LayerNormParameter *param = (LayerNormParameter *)parameter;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
+  }
+  if (input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
   }
   param->begin_norm_axis_ =
     param->begin_norm_axis_ < 0 ? param->begin_norm_axis_ + input->shape_size_ : param->begin_norm_axis_;

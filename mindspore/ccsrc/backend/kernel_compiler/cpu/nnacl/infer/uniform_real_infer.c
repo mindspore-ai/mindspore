@@ -19,6 +19,10 @@
 
 int UniformRealInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
+  int ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   outputs[0]->data_type_ = kNumberTypeFloat32;
   outputs[0]->format_ = inputs[0]->format_;
   if (!InferFlag(inputs, inputs_size)) {
@@ -29,6 +33,9 @@ int UniformRealInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     return NNACL_INFER_INVALID;
   }
   int input_num = GetElementNum(inputs[0]);
+  if (input_num > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = input_num;
   for (int i = 0; i < input_num; i++) {

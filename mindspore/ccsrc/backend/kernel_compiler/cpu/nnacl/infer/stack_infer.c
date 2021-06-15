@@ -19,6 +19,10 @@
 
 int StackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
+  int ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   if (outputs_size != 1) {
     return NNACL_PARAM_INVALID;
   }
@@ -30,6 +34,9 @@ int StackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   StackParameter *param = (StackParameter *)parameter;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
+  }
+  if (input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
   }
   int32_t output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;

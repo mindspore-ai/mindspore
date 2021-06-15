@@ -19,12 +19,10 @@
 
 int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input0 = inputs[0];
   const TensorC *input1 = inputs[1];
@@ -56,6 +54,9 @@ int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, T
       return NNACL_INPUT_TENSOR_ERROR;
     }
   }
+  if (inputs[0]->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, inputs[0]->shape_, inputs[0]->shape_size_);
@@ -68,6 +69,9 @@ int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, T
       total *= input0->shape_[i];
     }
     out_shape_size = 2;
+    if (new_k == 0) {
+      return NNACL_ERR;
+    }
     int batch_size = total / new_k;
     out_shape[0] = batch_size;
     out_shape[1] = input1->shape_[0];

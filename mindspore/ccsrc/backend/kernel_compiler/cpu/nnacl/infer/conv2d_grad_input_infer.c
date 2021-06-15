@@ -19,6 +19,10 @@
 
 int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
+  int ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   if (inputs_size < 3 || outputs_size != 1) {
     return NNACL_ERR;
   }
@@ -30,6 +34,9 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
   }
   SetDataTypeFormat(out, in0);
 
+  if (inputs[2]->shape_size_ < 1 || inputs[2]->data_ == NULL) {
+    return NNACL_ERR;
+  }
   size_t shape_size = inputs[2]->shape_[0];
   if (shape_size != 4) {
     return NNACL_ERR;

@@ -19,21 +19,26 @@
 
 int UnsortedSegmentSumInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                  size_t outputs_size, OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   TensorC *out = outputs[0];
   const TensorC *x = inputs[0];
   const TensorC *segment_id = inputs[1];
+  if (inputs[2]->data_ == NULL ||
+      (inputs[2]->data_type_ != kNumberTypeInt && inputs[2]->data_type_ != kNumberTypeInt32)) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int num_segments = *(int *)(inputs[2]->data_);
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapePush(output_shape, &output_shape_size, num_segments);
   for (int index = segment_id->shape_size_; index < (int)(x->shape_size_); index++) {
+    if (output_shape_size >= MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     ShapePush(output_shape, &output_shape_size, x->shape_[index]);
   }
   SetShapeArray(out, output_shape, output_shape_size);
