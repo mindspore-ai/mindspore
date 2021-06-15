@@ -698,18 +698,10 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
         while ((dir = readdir(d)) != NULL) {
           if (dir->d_type == DT_REG) {
             std::string file_name = dir->d_name;
-
-            // strip off the task_id, stream_id, and timestamp, then compare
-            size_t first_dot = file_name.find(".");
-            size_t second_dot = file_name.find(".", first_dot + 1);
-            size_t seventh_dot = file_name.rfind(".", file_name.rfind(".") - 1);
-            size_t fifth_dot = file_name.rfind(".", file_name.rfind(".", seventh_dot - 1) - 1);
-            if (fifth_dot == std::string::npos) {
+            std::string stripped_file_name = GetStrippedFilename(file_name);
+            if (stripped_file_name.empty()) {
               continue;
             }
-            std::string start_string = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
-            std::string end_string = file_name.substr(fifth_dot, seventh_dot - fifth_dot);
-            std::string stripped_file_name = start_string + end_string;
             std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
 
             if (found != 0) {
@@ -755,6 +747,29 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       }
     }
   }
+}
+
+std::string DebugServices::GetStrippedFilename(const std::string &file_name) {
+  // strip off the task_id, stream_id, and timestamp, then compare
+  size_t first_dot = file_name.find(".");
+  size_t seventh_dot = file_name.rfind(".", file_name.rfind(".") - 1);
+  size_t fifth_dot = file_name.rfind(".", file_name.rfind(".", seventh_dot - 1) - 1);
+
+  if (fifth_dot == std::string::npos) {
+    return std::string();
+  }
+
+  // Look for the second dot's position from the back to avoid issue due to dots in the node name.
+  size_t second_dot = fifth_dot;
+  const int8_t kSeconeDotPosition = 2;
+  for (int8_t pos = 5; pos > kSeconeDotPosition; pos--) {
+    second_dot = file_name.rfind(".", second_dot - 1);
+  }
+
+  std::string start_string = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
+  std::string end_string = file_name.substr(fifth_dot, seventh_dot - fifth_dot);
+  std::string stripped_file_name = start_string + end_string;
+  return stripped_file_name;
 }
 
 void ReplaceSrcFileName(const bool is_sync_mode, std::string *dump_style_name) {
@@ -855,18 +870,10 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
             for (auto &node : proto_to_dump) {
               std::string dump_name = std::get<1>(node);
 
-              // strip off the task_id, stream_id, and timestamp, then compare
-              size_t first_dot = file_name.find(".");
-              size_t second_dot = file_name.find(".", first_dot + 1);
-              size_t seventh_dot = file_name.rfind(".", file_name.rfind(".") - 1);
-              size_t fifth_dot = file_name.rfind(".", file_name.rfind(".", seventh_dot - 1) - 1);
-              if (fifth_dot == std::string::npos) {
+              std::string stripped_file_name = GetStrippedFilename(file_name);
+              if (stripped_file_name.empty()) {
                 continue;
               }
-
-              std::string start_string = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
-              std::string end_string = file_name.substr(fifth_dot, seventh_dot - fifth_dot);
-              std::string stripped_file_name = start_string + end_string;
               std::size_t found = stripped_file_name.rfind(dump_name, 0);
 
               if (found == 0) {
