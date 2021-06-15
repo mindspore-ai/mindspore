@@ -122,6 +122,8 @@ class Simulation(nn.Cell):
         self.init_Tensor()
         self.op_define()
         self.update = False
+        self.file = None
+        self.datfile = None
 
     def init_Tensor(self):
         '''init tensor'''
@@ -406,97 +408,46 @@ class Simulation(nn.Cell):
     def construct(self, step, print_step):
         '''construct'''
         self.last_crd = self.crd
-        if step == 0:
-            res = self.neighbor_list_update_init(self.atom_numbers_in_grid_bucket, self.bucket, self.crd,
-                                                 self.box_length, self.grid_N, self.grid_length_inverse,
-                                                 self.atom_in_grid_serial, self.old_crd, self.crd_to_uint_crd_cof,
-                                                 self.uint_crd, self.pointer, self.nl_atom_numbers, self.nl_atom_serial,
-                                                 self.uint_dr_to_dr_cof, self.excluded_list_start, self.excluded_list,
-                                                 self.excluded_numbers, self.need_refresh_flag, self.refresh_count)
-            self.nl_atom_numbers = F.depend(self.nl_atom_numbers, res)
-            self.nl_atom_serial = F.depend(self.nl_atom_serial, res)
-            self.uint_dr_to_dr_cof = F.depend(self.uint_dr_to_dr_cof, res)
-            self.old_crd = F.depend(self.old_crd, res)
-            self.atom_numbers_in_grid_bucket = F.depend(self.atom_numbers_in_grid_bucket, res)
-            self.bucket = F.depend(self.bucket, res)
-            self.atom_in_grid_serial = F.depend(self.atom_in_grid_serial, res)
-            self.pointer = F.depend(self.pointer, res)
-            uint_crd = F.depend(self.uint_crd, res)
-
-            force = self.Simulation_Caculate_Force(uint_crd, self.uint_dr_to_dr_cof, self.nl_atom_numbers,
-                                                   self.nl_atom_serial)
+        res = self.neighbor_list_update(self.atom_numbers_in_grid_bucket,
+                                        self.bucket,
+                                        self.crd,
+                                        self.box_length,
+                                        self.grid_N,
+                                        self.grid_length_inverse,
+                                        self.atom_in_grid_serial,
+                                        self.old_crd,
+                                        self.crd_to_uint_crd_cof,
+                                        self.uint_crd,
+                                        self.pointer,
+                                        self.nl_atom_numbers,
+                                        self.nl_atom_serial,
+                                        self.uint_dr_to_dr_cof,
+                                        self.excluded_list_start,
+                                        self.excluded_list,
+                                        self.excluded_numbers,
+                                        self.need_refresh_flag,
+                                        self.refresh_count)
+        uint_crd = self.Simulation_Beforce_Caculate_Force()
+        force = self.Simulation_Caculate_Force(uint_crd, self.uint_dr_to_dr_cof, self.nl_atom_numbers,
+                                               self.nl_atom_serial)
+        if print_step == 0:
             bond_energy_sum, angle_energy_sum, dihedral_energy_sum, nb14_lj_energy_sum, nb14_cf_energy_sum, \
             lj_energy_sum, ee_ene, total_energy = self.Simulation_Caculate_Energy(uint_crd, self.uint_dr_to_dr_cof)
-            temperature = self.Simulation_Temperature()
-            self.rand_state = self.setup_random_state()
-            self.velocity, self.crd, _ = self.Simulation_MDIterationLeapFrog_Liujian(self.mass_inverse,
-                                                                                     self.sqrt_mass, self.crd, force,
-                                                                                     self.rand_state,
-                                                                                     self.random_force)
-
-            res = self.neighbor_list_update(self.atom_numbers_in_grid_bucket,
-                                            self.bucket,
-                                            self.crd,
-                                            self.box_length,
-                                            self.grid_N,
-                                            self.grid_length_inverse,
-                                            self.atom_in_grid_serial,
-                                            self.old_crd,
-                                            self.crd_to_uint_crd_cof,
-                                            self.uint_crd,
-                                            self.pointer,
-                                            self.nl_atom_numbers,
-                                            self.nl_atom_serial,
-                                            self.uint_dr_to_dr_cof,
-                                            self.excluded_list_start,
-                                            self.excluded_list,
-                                            self.excluded_numbers,
-                                            self.need_refresh_flag,
-                                            self.refresh_count)
-            self.nl_atom_numbers = F.depend(self.nl_atom_numbers, res)
-            self.nl_atom_serial = F.depend(self.nl_atom_serial, res)
         else:
-            uint_crd = self.Simulation_Beforce_Caculate_Force()
-            force = self.Simulation_Caculate_Force(uint_crd, self.uint_dr_to_dr_cof, self.nl_atom_numbers,
-                                                   self.nl_atom_serial)
-            if print_step == 0:
-                bond_energy_sum, angle_energy_sum, dihedral_energy_sum, nb14_lj_energy_sum, nb14_cf_energy_sum, \
-                lj_energy_sum, ee_ene, total_energy = self.Simulation_Caculate_Energy(
-                    uint_crd, self.uint_dr_to_dr_cof)
-            else:
-                bond_energy_sum = self.zero_fp_tensor
-                angle_energy_sum = self.zero_fp_tensor
-                dihedral_energy_sum = self.zero_fp_tensor
-                nb14_lj_energy_sum = self.zero_fp_tensor
-                nb14_cf_energy_sum = self.zero_fp_tensor
-                lj_energy_sum = self.zero_fp_tensor
-                ee_ene = self.zero_fp_tensor
-                total_energy = self.zero_fp_tensor
-            temperature = self.Simulation_Temperature()
-            self.velocity, self.crd, _ = self.Simulation_MDIterationLeapFrog_Liujian(self.mass_inverse,
-                                                                                     self.sqrt_mass, self.crd, force,
-                                                                                     self.rand_state,
-                                                                                     self.random_force)
-            res = self.neighbor_list_update(self.atom_numbers_in_grid_bucket,
-                                            self.bucket,
-                                            self.crd,
-                                            self.box_length,
-                                            self.grid_N,
-                                            self.grid_length_inverse,
-                                            self.atom_in_grid_serial,
-                                            self.old_crd,
-                                            self.crd_to_uint_crd_cof,
-                                            self.uint_crd,
-                                            self.pointer,
-                                            self.nl_atom_numbers,
-                                            self.nl_atom_serial,
-                                            self.uint_dr_to_dr_cof,
-                                            self.excluded_list_start,
-                                            self.excluded_list,
-                                            self.excluded_numbers,
-                                            self.need_refresh_flag,
-                                            self.refresh_count)
-            self.nl_atom_numbers = F.depend(self.nl_atom_numbers, res)
-            self.nl_atom_serial = F.depend(self.nl_atom_serial, res)
+            bond_energy_sum = self.zero_fp_tensor
+            angle_energy_sum = self.zero_fp_tensor
+            dihedral_energy_sum = self.zero_fp_tensor
+            nb14_lj_energy_sum = self.zero_fp_tensor
+            nb14_cf_energy_sum = self.zero_fp_tensor
+            lj_energy_sum = self.zero_fp_tensor
+            ee_ene = self.zero_fp_tensor
+            total_energy = self.zero_fp_tensor
+        temperature = self.Simulation_Temperature()
+        if step == 0:
+            self.rand_state = self.setup_random_state()
+        self.velocity, self.crd, _ = self.Simulation_MDIterationLeapFrog_Liujian(self.mass_inverse,
+                                                                                 self.sqrt_mass, self.crd, force,
+                                                                                 self.rand_state,
+                                                                                 self.random_force)
         return temperature, total_energy, bond_energy_sum, angle_energy_sum, dihedral_energy_sum, nb14_lj_energy_sum, \
                nb14_cf_energy_sum, lj_energy_sum, ee_ene, res
