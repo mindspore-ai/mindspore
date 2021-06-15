@@ -145,7 +145,7 @@ class FuncWrapper:
     """
     def __init__(self, transform):
         if not callable(transform):
-            raise ValueError("FuncWrapper only support warping callable python function.")
+            raise ValueError("Input operations should be callable python function, but got: " + str(transform))
         self.transform = transform
         try:
             if hasattr(self.transform, "random") and not self.transform.random:
