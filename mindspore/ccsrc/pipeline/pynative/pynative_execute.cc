@@ -2535,10 +2535,11 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   grad_is_running_ = false;
   MS_LOG(DEBUG) << "Eval run end " << value.ToString();
   *ret = BaseRefToPyData(value);
-
-  if (GetHighOrderStackSize() == 1) {
+  // Clear device memory resource of top cell when it has been ran.
+  if (top_cell()->is_topest()) {
     top_cell()->ClearDeviceMemory();
   }
+  // High order
   if (top_cell()->vm_compiled()) {
     MakeNestedCnode(cell, cell_id, forward_args, resource, *ret);
   } else if (GetHighOrderStackSize() >= 2) {
