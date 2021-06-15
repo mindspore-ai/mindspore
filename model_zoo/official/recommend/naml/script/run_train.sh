@@ -22,14 +22,19 @@ echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
 PLATFORM=$1
-DEVICE_ID=$2
+export RANK_ID=$2
+export DEVICE_ID=$2
 DATASET=$3
 DATASET_PATH=$4
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CHECKPOINT_PATH="./checkpoint"
+
+config_path="${PROJECT_DIR}/../MIND${DATASET}_config.yaml"
+echo "config path is : ${config_path}"
+
 python ${PROJECT_DIR}/../train.py \
+    --config_path=${config_path} \
     --platform=${PLATFORM} \
-    --device_id=${DEVICE_ID} \
     --dataset=${DATASET} \
     --dataset_path=${DATASET_PATH} \
     --save_checkpoint_path=${CHECKPOINT_PATH} \
@@ -37,8 +42,8 @@ python ${PROJECT_DIR}/../train.py \
     --sink_mode=True
 
 python ${PROJECT_DIR}/../eval.py \
+    --config_path=${config_path} \
     --platform=${PLATFORM} \
-    --device_id=${DEVICE_ID} \
     --dataset=${DATASET} \
     --dataset_path=${DATASET_PATH} \
     --checkpoint_path=${CHECKPOINT_PATH}/naml_last.ckpt

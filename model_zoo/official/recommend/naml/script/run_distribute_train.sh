@@ -28,20 +28,25 @@ DATASET_PATH=$4
 export RANK_TABLE_FILE=$5
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CHECKPOINT_PATH=${PROJECT_DIR}/checkpoint
+
+config_path="./MIND${DATASET}_config.yaml"
+echo "config path is : ${config_path}"
+
 cd ${PROJECT_DIR}/.. || exit
 for((i=0;i<RANK_SIZE;i++))
 do
     rm -rf LOG$i
     mkdir ./LOG$i
     cp ./*.py ./LOG$i
+    cp ./*.yaml ./LOG$i
     cp -r ./src ./LOG$i
+    cp -r ./model_utils ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
     python train.py \
+        --config_path=${config_path} \
         --platform=${PLATFORM} \
-        --device_num=${RANK_SIZE} \
-        --device_id=${DEVICE_ID} \
         --dataset=${DATASET} \
         --dataset_path=${DATASET_PATH} \
         --save_checkpoint_path=${CHECKPOINT_PATH} \
