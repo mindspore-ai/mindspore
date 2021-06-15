@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_MINDRT_RUNTIME_INTER_THREADPOOL_H_
-#define MINDSPORE_CORE_MINDRT_RUNTIME_INTER_THREADPOOL_H_
+#ifndef MINDSPORE_CORE_MINDRT_RUNTIME_ACTOR_THREADPOOL_H_
+#define MINDSPORE_CORE_MINDRT_RUNTIME_ACTOR_THREADPOOL_H_
 
 #include <queue>
 #include <mutex>
@@ -25,13 +25,13 @@
 #include "actor/actor.h"
 
 namespace mindspore {
-class InterThreadPool : public ThreadPool {
+class ActorThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains actor thread and kernel thread
-  static InterThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num);
+  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num);
   // create ThreadPool that contains only actor thread
-  static InterThreadPool *CreateThreadPool(size_t thread_num);
-  ~InterThreadPool() override;
+  static ActorThreadPool *CreateThreadPool(size_t thread_num);
+  ~ActorThreadPool() override;
 
   void EnqueReadyActor(const ActorReference &actor);
 
@@ -39,10 +39,8 @@ class InterThreadPool : public ThreadPool {
   int CreateThreads(size_t actor_thread_num, size_t all_thread_num);
 
   void AsyncRunMultiTask(Worker *worker);
-
-  bool RunPoolQueueActorTask(Worker *worker);
-
   bool PopActorFromQueue(ActorBase **actor);
+  bool RunPoolQueueActorTask();
 
   size_t actor_thread_num_{0};
 
@@ -50,4 +48,4 @@ class InterThreadPool : public ThreadPool {
   std::queue<ActorReference> actor_queue_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_MINDRT_RUNTIME_INTER_THREADPOOL_H_
+#endif  // MINDSPORE_CORE_MINDRT_RUNTIME_ACTOR_THREADPOOL_H_

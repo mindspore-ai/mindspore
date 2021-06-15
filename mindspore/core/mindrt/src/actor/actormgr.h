@@ -26,7 +26,7 @@
 #include <shared_mutex>
 #endif
 #include "actor/actor.h"
-#include "thread/inter_threadpool.h"
+#include "thread/actor_threadpool.h"
 
 namespace mindspore {
 

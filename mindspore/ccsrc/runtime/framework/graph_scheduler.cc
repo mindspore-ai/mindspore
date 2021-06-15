@@ -340,7 +340,7 @@ void GraphScheduler::Initialize() {
   // Create the thread pool of actor runtime.
   auto max_thread_num = GetMaxThreadNum();
   MS_LOG(INFO) << "Max available thread number: " << max_thread_num;
-  thread_pool_ = InterThreadPool::CreateThreadPool(max_thread_num);
+  thread_pool_ = ActorThreadPool::CreateThreadPool(max_thread_num);
   MS_EXCEPTION_IF_NULL(thread_pool_);
 
   // Create and schedule memory manager actor.

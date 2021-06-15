@@ -680,7 +680,7 @@ int LiteSession::Init(const Context *context) {
     return ret;
   }
   CpuBindMode cpu_bind_mode = this->context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
-  InterThreadPool *thread_pool = this->context_->thread_pool_;
+  ActorThreadPool *thread_pool = this->context_->thread_pool_;
   if (thread_pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     is_running_.store(false);
