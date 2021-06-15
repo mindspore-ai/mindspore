@@ -42,7 +42,7 @@ OperatorVector ConstructOperator::SkipRedisReshapeOP(const Shape &shape) {
   return opvector;
 }
 
-Status ConstructOperator::ReshapeOP(Shape shape) {
+Status ConstructOperator::ReshapeOP(const Shape &shape) {
   int64_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
   int64_t prod_expect = std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int64_t>());
   if (prod != prod_expect) {
@@ -82,7 +82,7 @@ Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &en
   return std::make_pair(STRIDED_SLICE, op_args);
 }
 
-Status ConstructOperator::StridedSliceOP(Args args) {
+Status ConstructOperator::StridedSliceOP(const Args &args) {
   if (args.size() < STRIDED_SLICE_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
@@ -162,7 +162,7 @@ Status ConstructOperator::AllGatherOP(int64_t dev_dim) {
 }
 
 Status ConstructOperator::ConcatOP(int64_t concat_dim) {
-  if (LongToSize(concat_dim) >= tensor_shape_.size()) {
+  if (LongToSize(concat_dim) >= tensor_shape_.size() || concat_dim < 0) {
     MS_LOG(ERROR) << "Invalid tensor dimension " << concat_dim << " when construct Concat operator!";
     return Status::INVALID_ARGUMENT;
   }
@@ -176,6 +176,7 @@ Status ConstructOperator::ConcatOP(int64_t concat_dim) {
 }
 
 Status ConstructOperator::SplitOP(int64_t split_count) {
+  // tensor_shape_ can not be validated here
   if (split_count <= 0) {
     MS_LOG(ERROR) << "Invalid split count when construct Split operator!";
     return Status::FAILED;
@@ -192,7 +193,7 @@ Status ConstructOperator::SplitOP(int64_t split_count) {
   return Status::SUCCESS;
 }
 
-Status ConstructOperator::AlltoAllOP(Args args) {
+Status ConstructOperator::AlltoAllOP(const Args &args) {
   if (args.size() < TRANSFER_PERMUTE_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 5!";
     return Status::FAILED;
@@ -210,7 +211,7 @@ Status ConstructOperator::AlltoAllOP(Args args) {
                   << "when construct AlltoAll operator!";
     return Status::INVALID_ARGUMENT;
   }
-  if (LongToSize(concat_dim) >= tensor_shape_.size()) {
+  if (LongToSize(concat_dim) >= tensor_shape_.size() || concat_dim < 0) {
     MS_LOG(ERROR) << "Invalid split count " << split_count << " when construct AlltoAll operator!";
     return Status::INVALID_ARGUMENT;
   }

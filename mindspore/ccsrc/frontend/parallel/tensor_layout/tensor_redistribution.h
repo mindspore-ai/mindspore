@@ -64,8 +64,8 @@ class TensorRedistribution {
   Status InferRedistribution(const TensorLayout &from_layout, const TensorLayout &to_layout,
                              OperatorVector *const operator_vector, OutPutInfoVector *const output_info_vector,
                              bool is_cost_model);
-  Status ComputeConcatCost(double input_size, Shape attrs);
-  Status ComputePermuteCost(double input_size, Shape attrs);
+  Status ComputeConcatCost(double input_size, const Shape &attrs);
+  Status ComputePermuteCost(double input_size, const Shape &attrs);
   RedistributionOpListPtr InferTensorRedistributionOperatorListUnExpand(bool is_cost_model = false);
   TensorLayout from_origin_;
   TensorLayout to_origin_;

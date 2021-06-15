@@ -175,6 +175,8 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
 Status TensorRedistribution::InferRedistribution(const TensorLayout &from_layout, const TensorLayout &to_layout,
                                                  OperatorVector *const operator_vector,
                                                  OutPutInfoVector *const output_info_vector, bool is_cost_model) {
+  MS_EXCEPTION_IF_NULL(operator_vector);
+  MS_EXCEPTION_IF_NULL(output_info_vector);
   RedistributionOperatorInfer operator_infer(construct_op_flag_);
   if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_, is_cost_model) == Status::FAILED) {
     MS_LOG(ERROR) << "Init operatorInfer failed";
@@ -237,7 +239,7 @@ Status TensorRedistribution::ComputeCost() {
   return Status::SUCCESS;
 }
 
-Status TensorRedistribution::ComputePermuteCost(double input_size, Shape attrs) {
+Status TensorRedistribution::ComputePermuteCost(double input_size, const Shape &attrs) {
   // Since AlltoAll is a virtual operator, the expanded operators are used here to compute cost.
   // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
   if (attrs.size() < TRANSFER_PERMUTE_ARGS_SIZE) {
@@ -261,7 +263,7 @@ Status TensorRedistribution::ComputePermuteCost(double input_size, Shape attrs) 
   return Status::SUCCESS;
 }
 
-Status TensorRedistribution::ComputeConcatCost(double input_size, Shape attrs) {
+Status TensorRedistribution::ComputeConcatCost(double input_size, const Shape &attrs) {
   // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
   // computation cost = before_slice_shape
   if (attrs.size() < TRANSFER_CONCAT_ARGS_SIZE) {

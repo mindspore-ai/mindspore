@@ -187,7 +187,7 @@ Status RedistributionOperatorInfer::InferConcatByAxis() {
 }
 
 // Transfer communicative operators into primitives and insert them into vector
-Status RedistributionOperatorInfer::InsertOperator(OperatorName name, Args args) {
+Status RedistributionOperatorInfer::InsertOperator(const OperatorName &name, const Args &args) {
   OperatorR op = std::make_pair(name, args);
   OperatorC op_cost = std::make_pair(op, cur_tensor_layout_.slice_shape().array());
   operator_list_.push_back(op_cost);
@@ -210,7 +210,7 @@ Status RedistributionOperatorInfer::InsertOperator(OperatorName name, Args args)
   return Status::SUCCESS;
 }
 
-Status RedistributionOperatorInfer::TransferSplitByAxis(Args args) {
+Status RedistributionOperatorInfer::TransferSplitByAxis(const Args &args) {
   if (args.size() < TRANSFER_SPLIT_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
@@ -228,7 +228,7 @@ Status RedistributionOperatorInfer::TransferSplitByAxis(Args args) {
   return Status::SUCCESS;
 }
 
-Status RedistributionOperatorInfer::TransferPermuteByAxis(Args args) {
+Status RedistributionOperatorInfer::TransferPermuteByAxis(const Args &args) {
   if (args.size() < TRANSFER_PERMUTE_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 5!";
     return Status::FAILED;
@@ -252,7 +252,7 @@ Status RedistributionOperatorInfer::TransferPermuteByAxis(Args args) {
   return Status::SUCCESS;
 }
 
-Status RedistributionOperatorInfer::TransferConcatByAxis(Args args) {
+Status RedistributionOperatorInfer::TransferConcatByAxis(const Args &args) {
   if (args.size() < TRANSFER_CONCAT_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
