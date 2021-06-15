@@ -375,7 +375,9 @@ def check_generatordataset(method):
             try:
                 iter(source)
             except TypeError:
-                raise TypeError("source should be callable, iterable or random accessible.")
+                raise TypeError("Input `source` function of GeneratorDataset should be callable, iterable or random"
+                                " accessible, commonly it should implement one of the method like yield, __getitem__ or"
+                                " __next__(__iter__).")
 
         column_names = param_dict.get('column_names')
         if column_names is not None:
