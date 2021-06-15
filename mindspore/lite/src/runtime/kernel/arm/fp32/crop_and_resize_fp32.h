@@ -42,9 +42,9 @@ class CropAndResizeCPUKernel : public InnerKernel {
   void FreeTmpBuffer();
 
   CropAndResizeParameter *param_;
-  int batch_;
-  int new_height_;
-  int new_width_;
+  int batch_ = 0;
+  int new_height_ = 0;
+  int new_width_ = 0;
   int *y_tops_ = nullptr;
   int *y_bottoms_ = nullptr;
   int *x_lefts_ = nullptr;

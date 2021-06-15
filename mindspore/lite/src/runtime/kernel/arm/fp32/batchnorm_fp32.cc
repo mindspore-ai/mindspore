@@ -111,7 +111,11 @@ float BatchnormCPUKernel::get_momentum() {
 }
 
 int BatchnormCPUKernel::RestoreDefaultMomentum() {
-  set_momentum(default_momentum_);
+  auto ret = set_momentum(default_momentum_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Restore Momentum Error";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

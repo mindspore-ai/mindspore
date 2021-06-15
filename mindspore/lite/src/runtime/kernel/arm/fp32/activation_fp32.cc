@@ -51,6 +51,8 @@ int ActivationCPUKernel::ReSize() { return RET_OK; }
 int ActivationCPUKernel::DoActivation(int task_id) {
   auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(input_addr != nullptr);
+  MS_ASSERT(output_addr != nullptr);
   auto length = in_tensors_.at(0)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
@@ -95,6 +97,7 @@ int ActivationCPUKernel::DoActivation(int task_id) {
 
 int ActivationRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto activation_kernel = reinterpret_cast<ActivationCPUKernel *>(cdata);
+  MS_ASSERT(activation_kernel != nullptr);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ActivationRun error task_id[" << task_id << "] error_code[" << error_code << "]";

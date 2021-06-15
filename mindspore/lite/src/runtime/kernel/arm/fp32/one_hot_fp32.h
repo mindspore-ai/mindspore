@@ -37,10 +37,10 @@ class OneHotCPUKernel : public InnerKernel {
   int GetParams();
 
  private:
-  int thread_num_;
-  int axis_;
-  int outer_size_;
-  int inner_size_;
+  int thread_num_ = 1;
+  int axis_ = 0;
+  int outer_size_ = 0;
+  int inner_size_ = 0;
 };
 }  // namespace mindspore::kernel
 

@@ -36,12 +36,12 @@ class ScatterNDCPUKernel : public InnerKernel {
   int ScatterND(int task_id);
 
  private:
-  int thread_n_num_;
-  int thread_n_stride_;
-  int num_unit_;
-  int unit_size_;
-  float *output_ptr_;
-  float *update_ptr_;
+  int thread_n_num_ = 1;
+  int thread_n_stride_ = 1;
+  int num_unit_ = 1;
+  int unit_size_ = 1;
+  float *output_ptr_ = nullptr;
+  float *update_ptr_ = nullptr;
   std::vector<int> out_strides_;
   std::vector<int> output_unit_offsets_;
 };

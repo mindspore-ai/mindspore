@@ -41,6 +41,10 @@ int ReverseCPUKernel::ReSize() {
 
   data_size_ = in_tensors_.at(0)->ElementsNum();
   thread_sz_count_ = MSMIN(op_parameter_->thread_num_, data_size_);
+  if (thread_sz_count_ == 0) {
+    MS_LOG(ERROR) << "thread_sz_count_ can not be 0";
+    return RET_ERROR;
+  }
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
 
   auto *param = reinterpret_cast<ReverseParameter *>(op_parameter_);

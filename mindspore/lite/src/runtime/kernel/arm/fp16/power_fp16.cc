@@ -114,7 +114,12 @@ int PowerFp16CPUKernel::RunImpl(int task_id) {
   } else {
     cur_exp = exp_data_ + stride * task_id;
   }
-  PowerFp16(x_addr + stride * task_id, cur_exp, output_addr + stride * task_id, len, scale_, shift_, broadcast);
+  auto error_code =
+    PowerFp16(x_addr + stride * task_id, cur_exp, output_addr + stride * task_id, len, scale_, shift_, broadcast);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Power Run error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

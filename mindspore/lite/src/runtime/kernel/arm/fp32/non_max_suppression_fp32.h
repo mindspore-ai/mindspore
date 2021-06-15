@@ -42,10 +42,10 @@ class NonMaxSuppressionCPUKernel : public InnerKernel {
   int Run_Selecte(bool simple_out, int box_num, int batch_num, int class_num, float *scores_data, float *box_data);
 
  private:
-  int center_point_box_;
-  float iou_threshold_;
-  float score_threshold_;
-  int32_t max_output_per_class_;
+  int center_point_box_ = 0;
+  float iou_threshold_ = 0;
+  float score_threshold_ = 0;
+  int32_t max_output_per_class_ = 0;
   NMSParameter *param_ = nullptr;
 };
 

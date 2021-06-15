@@ -73,7 +73,12 @@ int PowerCPUKernel::RunImpl(int task_id) {
   } else {
     cur_exp = exp_addr + stride * task_id;
   }
-  Power(x_addr + stride * task_id, cur_exp, output_addr + stride * task_id, len, scale_, shift_, broadcast);
+  auto error_code =
+    Power(x_addr + stride * task_id, cur_exp, output_addr + stride * task_id, len, scale_, shift_, broadcast);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "PowerCPUKernel RunImpl error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

@@ -52,7 +52,11 @@ int ScaleFp16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  ReSize();
+  auto ret = ReSize();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Scale fp16 Resize failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

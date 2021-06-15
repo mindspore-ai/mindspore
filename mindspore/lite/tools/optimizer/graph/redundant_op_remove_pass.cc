@@ -19,6 +19,7 @@
 #include <vector>
 #include <utility>
 #include "include/errorcode.h"
+#include "tools/anf_exporter/fetch_content.h"
 #include "tools/converter/ops/ops_def.h"
 #include "ops/depend.h"
 #include "ops/fusion/pad_fusion.h"
@@ -229,26 +230,55 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
-  auto primitive = mindspore::GetValueNode<mindspore::PrimitivePtr>(cnode->input(0));
+  auto primitive = GetValueNode<mindspore::PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr:" << cnode->fullname_with_scope();
     return lite::RET_NO_CHANGE;
   }
-  auto pad_prim = utils::cast<std::shared_ptr<mindspore::ops::PadFusion>>(primitive);
-  if (pad_prim->GetAttr(ops::kPadding) == nullptr) {
-    return lite::RET_NO_CHANGE;
-  }
-  auto paddings = pad_prim->get_paddings();
   auto is_invalid = true;
-  for (size_t i = 0; i < paddings.size(); i++) {
-    for (size_t j = 0; j < paddings[0].size(); j++) {
-      if (paddings[i][j] != 0) {
-        is_invalid = false;
-        break;
+  if (cnode->size() > kInputDoubleNum) {
+    auto padding_node = cnode->input(2);
+    lite::DataInfo data_info;
+    if (utils::isa<Parameter>(padding_node)) {
+      auto status = lite::FetchDataFromParameterNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+      if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+        MS_LOG(ERROR) << "fetch data from parameter node failed.";
+        return lite::RET_ERROR;
+      }
+    } else if (utils::isa<ValueNode>(padding_node)) {
+      auto status = lite::FetchDataFromValueNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+      if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+        MS_LOG(ERROR) << "fetch data from value node failed.";
+        return lite::RET_ERROR;
       }
     }
-    if (is_invalid == false) {
-      break;
+    if (!data_info.data_.empty()) {
+      auto pad_data = reinterpret_cast<int *>(data_info.data_.data());
+      size_t num = data_info.data_.size() / sizeof(int);
+      for (size_t i = 0; i < num; ++i) {
+        if (pad_data[i] != 0) {
+          is_invalid = false;
+          break;
+        }
+      }
+    } else {
+      is_invalid = false;
+    }
+  } else {
+    auto pad_prim = utils::cast<std::shared_ptr<mindspore::ops::PadFusion>>(primitive);
+    if (pad_prim->GetAttr(ops::kPadding) != nullptr) {
+      auto pad_data = pad_prim->get_paddings();
+      for (size_t i = 0; i < pad_data.size(); i++) {
+        for (size_t j = 0; j < pad_data[i].size(); j++) {
+          if (pad_data[i][j] != 0) {
+            is_invalid = false;
+            break;
+          }
+        }
+        if (is_invalid == false) {
+          break;
+        }
+      }
     }
   }
   if (is_invalid) {

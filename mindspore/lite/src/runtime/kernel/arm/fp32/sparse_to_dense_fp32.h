@@ -51,14 +51,14 @@ class SparseToDenseCPUKernel : public InnerKernel {
  private:
   int **sparse_indices_vect = nullptr;
   float *sparse_values = nullptr;
-  float default_value;
+  float default_value = 0;
   bool isScalar = false;
-  int index_num;
-  int index_dim;
+  int index_num = 0;
+  int index_dim = 0;
   float *output_data = nullptr;
-  int output_shape[4];
-  int output_num;
-  int64_t count_unit_;
+  int output_shape[4] = {0};
+  int output_num = 0;
+  int64_t count_unit_ = 0;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSETODENSE_H_

@@ -389,10 +389,14 @@ int PadCPUKernel::Run() {
     }
     pad_param_->constant_value_ = *(reinterpret_cast<float *>(pad_value->data_c()));
   }
-  int error_code;
+  int error_code = 0;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     if (in_tensors_.size() == kPadMaxInputSize) {
-      CopyPaddingFromInput();
+      error_code = CopyPaddingFromInput();
+      if (error_code != RET_OK) {
+        MS_LOG(ERROR) << "Pad run error, error_code[" << error_code << "]";
+        return RET_ERROR;
+      }
     }
     auto output = out_tensors_.at(0);
     int output_size = output->ElementsNum();

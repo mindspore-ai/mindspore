@@ -39,8 +39,8 @@ class CastCPUKernel : public InnerKernel {
 
  private:
   int CastToFp32(lite::Tensor *input, lite::Tensor *output, int offset, int data_num);
-  int stride_;
-  int data_num_;
+  int stride_ = 0;
+  int data_num_ = 0;
 };
 }  // namespace mindspore::kernel
 
