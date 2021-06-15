@@ -196,8 +196,7 @@ void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
   }
 }
 
-void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
-  DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
+void DuplexPipe::SignalHandler::SigChildHandler(int) {
   int status;
   if (child_pid_ != nullptr) {
     (void)waitpid(*child_pid_, &status, WNOHANG | WUNTRACED);
