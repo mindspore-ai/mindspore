@@ -790,10 +790,10 @@ class Unique(Primitive):
         (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
         >>> y = output[0]
         >>> print(y)
-        [1, 2, 5]
+        [1 2 5]
         >>> idx = output[1]
         >>> print(idx)
-        [0, 1, 2, 1]
+        [0 1 2 1]
         >>> # As can be seen from the above, y and idx shape
         >>> # note that for GPU, this operator must be wrapped inside a model, and executed in graph mode.
         >>> class UniqueNet(nn.Cell):
