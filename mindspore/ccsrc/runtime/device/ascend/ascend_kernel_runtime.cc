@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define PATH_MAX 4096
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include <string>
 #include <vector>
@@ -72,6 +71,7 @@ constexpr uint32_t kTupleStreamId = 1;
 constexpr uint32_t kTupleArgs = 2;
 constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
 constexpr auto kModuleName = "MindSpore";
+constexpr size_t kPathMax = 4096;
 
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
@@ -527,16 +527,16 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
 void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   MS_EXCEPTION_IF_NULL(task_fail_info);
   static std::mutex exception_mutex;
+  constexpr uint32_t kOverflowThreshold = 5;
   std::lock_guard<std::mutex> lock(exception_mutex);
   if (task_fail_info->retcode == ACL_ERROR_RT_AICORE_OVER_FLOW) {
     auto node = AscendKernelRuntime::GetErrorNodeName(task_fail_info->streamid, task_fail_info->taskid);
-
     if (!node) {
       MS_LOG(WARNING) << "Node run task overflow, node name is unknown.";
     } else {
       auto key = std::to_string(task_fail_info->streamid) + std::to_string(task_fail_info->taskid) +
                  std::to_string(current_graph_->graph_id());
-      if (overflow_tasks_.find(key) == overflow_tasks_.end() || overflow_tasks_[key] == 5) {
+      if (overflow_tasks_.find(key) == overflow_tasks_.end() || overflow_tasks_[key] == kOverflowThreshold) {
         // print overflow info
         MS_LOG(WARNING) << "Node run task overflow, node name: " << node->fullname_with_scope()
                         << "Task overflow infos task_id: " << task_fail_info->taskid
@@ -838,7 +838,7 @@ bool AscendKernelRuntime::HcclInit() {
       return false;
     }
   }
-  if (strlen(config_path_str) > PATH_MAX) {
+  if (strlen(config_path_str) > kPathMax) {
     MS_LOG(ERROR) << "File path oversize";
     return false;
   }
@@ -976,7 +976,7 @@ int AscendKernelRuntime::DeleteDumpFile(std::string path) {
 }
 
 std::string AscendKernelRuntime::GetRealPath(std::string path) {
-  char real_path_mem[PATH_MAX] = {0};
+  char real_path_mem[kPathMax] = {0};
   char *real_path_ret = realpath(path.c_str(), real_path_mem);
   if (real_path_ret == nullptr) {
     return "";

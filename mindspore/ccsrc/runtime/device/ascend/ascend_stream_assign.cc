@@ -471,7 +471,7 @@ bool AscendStreamAssign::FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) {
   vector<CNodePtr> ori_cnodes(cnodes->begin(), cnodes->end());
   cnodes->clear();
   vector<CNodePtr> atomic_addr_clean;
-  for (auto iter = ori_cnodes.begin(); iter < ori_cnodes.end(); iter++) {
+  for (auto iter = ori_cnodes.begin(); iter < ori_cnodes.end(); ++iter) {
     if (AnfAlgo::GetCNodeName(*iter) == kAtomicAddrCleanOpName) {
       atomic_addr_clean.emplace_back(*iter);
       continue;
@@ -539,7 +539,7 @@ void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelG
   auto pos = last_grad_pos + moved_forward_cnodes.size() + moved_backward_cnodes.size() + 1;
   while (pos < cnode_ptr_list.end() && AnfAlgo::GetGraphId((*pos).get()) != subgraph_id) {
     cnodes.emplace_back(*pos);
-    pos++;
+    ++pos;
   }
 
   vector<CNodePtr> subgraph_cnodes;
@@ -553,7 +553,7 @@ void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelG
       subgraph_cnodes.insert(subgraph_cnodes.end(), moved_backward_cnodes.begin(), moved_backward_cnodes.end());
       subgraph_cnodes.emplace_back(*pos);
     }
-    pos++;
+    ++pos;
   }
 
   if (!FinetuneSubgraphExecOrder(&subgraph_cnodes) || subgraph_cnodes.empty()) {
@@ -2397,7 +2397,7 @@ void AscendStreamAssign::FindEventRelations(const NotNull<KernelGraphPtr> &graph
     if (!flag) {
       begin = event_map_.erase(begin);
     } else {
-      begin++;
+      ++begin;
     }
   }
 

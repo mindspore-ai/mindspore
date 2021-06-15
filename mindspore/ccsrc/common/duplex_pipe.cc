@@ -172,7 +172,7 @@ void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) const {
   alarm(interval_secs);
 }
 
-void DuplexPipe::SignalHandler::CancelAlarm() const { alarm(0); }
+void DuplexPipe::SignalHandler::CancelAlarm() const { (void)alarm(0); }
 
 void DuplexPipe::SignalHandler::SigAlarmHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
