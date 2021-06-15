@@ -195,11 +195,12 @@ class Primitive(Primitive_):
             ...             return (False, None)
             ...         if isinstance(inputs[0], Tensor):
             ...             return (True, inputs[0])
+            ...
             >>> addn = AddN()
             >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
             >>> output = addn.check_elim((input_x,))
             >>> print(output)
-            (True, Tensor(shape = [3], dtype = Float32, value = [1，0000000e+00,2，0000000e+00，3，0000000e+00]))
+            (True, Tensor(shape = [3], dtype = Float32, value = [1.0000000e+00,2.0000000e+00，3.0000000e+00]))
     """
         return (False, None)
 
@@ -506,12 +507,12 @@ def prim_attr_register(fn):
 
     Examples:
         >>> class MatMul(PrimitiveWithCheck):
-        >>>     @prim_attr_register
-        >>>     def __init__(self, transpose_a=False, transpose_b=False):
-        >>>         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
-        >>>         cls_name = self.name
-        >>>         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
-        >>>         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
+        ...     @prim_attr_register
+        ...     def __init__(self, transpose_a=False, transpose_b=False):
+        ...         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
+        ...
+        >>> # init a Primitive obj
+        >>> matmul = MatMul()
     """
 
     def deco(self, *args, **kwargs):
