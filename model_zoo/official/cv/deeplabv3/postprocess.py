@@ -16,104 +16,57 @@
 import os
 import argparse
 import numpy as np
+from PIL import Image
 import cv2
 
-from eval import cal_hist, pre_process
+parser = argparse.ArgumentParser(description="deeplabv3 accuracy calculation")
+parser.add_argument('--data_root', type=str, default='', help='root path of val data')
+parser.add_argument('--data_lst', type=str, default='', help='list of val data')
+parser.add_argument('--crop_size', type=int, default=513, help='crop size')
+parser.add_argument('--num_classes', type=int, default=21, help='number of classes')
+parser.add_argument('--result_path', type=str, default='./result_Files', help='result Files path')
+args, _ = parser.parse_known_args()
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="deeplabv3 accuracy calculation")
-    parser.add_argument('--data_root', type=str, default='', help='root path of val data')
-    parser.add_argument('--data_lst', type=str, default='', help='list of val data')
-    parser.add_argument('--batch_size', type=int, default=1, help='batch size')
-    parser.add_argument('--crop_size', type=int, default=513, help='crop size')
-    parser.add_argument('--scales', type=float, action='append', help='scales of evaluation')
-    parser.add_argument('--flip', action='store_true', help='perform left-right flip')
-    parser.add_argument('--ignore_label', type=int, default=255, help='ignore label')
-    parser.add_argument('--num_classes', type=int, default=21, help='number of classes')
-    parser.add_argument('--result_path', type=str, default='./result_Files', help='result Files path')
-    args, _ = parser.parse_known_args()
-    return args
+def get_img_size(file_name):
+    img = Image.open(file_name)
+    return img.size
 
-def eval_batch(args, result_file, img_lst, crop_size=513, flip=True):
-    result_lst = []
-    batch_size = len(img_lst)
-    batch_img = np.zeros((args.batch_size, 3, crop_size, crop_size), dtype=np.float32)
-    resize_hw = []
-    for l in range(batch_size):
-        img_ = img_lst[l]
-        img_, resize_h, resize_w = pre_process(args, img_, crop_size)
-        batch_img[l] = img_
-        resize_hw.append([resize_h, resize_w])
+def get_resized_size(org_h, org_w, long_size=513):
+    if org_h > org_w:
+        new_h = long_size
+        new_w = int(1.0 * long_size * org_w / org_h)
+    else:
+        new_w = long_size
+        new_h = int(1.0 * long_size * org_h / org_w)
 
-    batch_img = np.ascontiguousarray(batch_img)
-    net_out = np.fromfile(result_file, np.float32).reshape(args.batch_size, args.num_classes, crop_size, crop_size)
+    return new_h, new_w
 
-    for bs in range(batch_size):
-        probs_ = net_out[bs][:, :resize_hw[bs][0], :resize_hw[bs][1]].transpose((1, 2, 0))
-        ori_h, ori_w = img_lst[bs].shape[0], img_lst[bs].shape[1]
-        probs_ = cv2.resize(probs_, (ori_w, ori_h))
-        result_lst.append(probs_)
-
-    return result_lst
-
-
-def eval_batch_scales(args, eval_net, img_lst, scales,
-                      base_crop_size=513, flip=True):
-    sizes_ = [int((base_crop_size - 1) * sc) + 1 for sc in scales]
-    probs_lst = eval_batch(args, eval_net, img_lst, crop_size=sizes_[0], flip=flip)
-    print(sizes_)
-    for crop_size_ in sizes_[1:]:
-        probs_lst_tmp = eval_batch(args, eval_net, img_lst, crop_size=crop_size_, flip=flip)
-        for pl, _ in enumerate(probs_lst):
-            probs_lst[pl] += probs_lst_tmp[pl]
-
-    result_msk = []
-    for i in probs_lst:
-        result_msk.append(i.argmax(axis=2))
-    return result_msk
-
+def cal_hist(a, b, n):
+    k = (a >= 0) & (a < n)
+    return np.bincount(n * a[k].astype(np.int32) + b[k], minlength=n ** 2).reshape(n, n)
 
 def acc_cal():
-    args = parse_args()
-    args.image_mean = [103.53, 116.28, 123.675]
-    args.image_std = [57.375, 57.120, 58.395]
-    # data list
+    hist = np.zeros((args.num_classes, args.num_classes))
     with open(args.data_lst) as f:
         img_lst = f.readlines()
-    # evaluate
-    hist = np.zeros((args.num_classes, args.num_classes))
-    batch_img_lst = []
-    batch_msk_lst = []
-    bi = 0
-    image_num = 0
-    for i, line in enumerate(img_lst):
-        img_path, msk_path = line.strip().split(' ')
+
+    for line in enumerate(img_lst):
+        img_path, msk_path = line[1].strip().split(' ')
+        img_file_path = os.path.join(args.data_root, img_path)
+        org_width, org_height = get_img_size(img_file_path)
+        resize_h, resize_w = get_resized_size(org_height, org_width)
+
         result_file = os.path.join(args.result_path, os.path.basename(img_path).split('.jpg')[0] + '_0.bin')
-        img_path = os.path.join(args.data_root, img_path)
+        net_out = np.fromfile(result_file, np.float32).reshape(args.num_classes, args.crop_size, args.crop_size)
+        probs_ = net_out[:, :resize_h, :resize_w].transpose((1, 2, 0))
+        probs_ = cv2.resize(probs_, (org_width, org_height))
+
+        result_msk = probs_.argmax(axis=2)
+
         msk_path = os.path.join(args.data_root, msk_path)
-        img_ = cv2.imread(img_path)
-        msk_ = cv2.imread(msk_path, cv2.IMREAD_GRAYSCALE)
-        batch_img_lst.append(img_)
-        batch_msk_lst.append(msk_)
-        bi += 1
-        if bi == args.batch_size:
-            batch_res = eval_batch_scales(args, result_file, batch_img_lst, scales=args.scales,
-                                          base_crop_size=args.crop_size, flip=args.flip)
-            for mi in range(args.batch_size):
-                hist += cal_hist(batch_msk_lst[mi].flatten(), batch_res[mi].flatten(), args.num_classes)
+        mask = cv2.imread(msk_path, cv2.IMREAD_GRAYSCALE)
 
-            bi = 0
-            batch_img_lst = []
-            batch_msk_lst = []
-            print('processed {} images'.format(i+1))
-        image_num = i
-
-    if bi > 0:
-        batch_res = eval_batch_scales(args, result_file, batch_img_lst, scales=args.scales,
-                                      base_crop_size=args.crop_size, flip=args.flip)
-        for mi in range(bi):
-            hist += cal_hist(batch_msk_lst[mi].flatten(), batch_res[mi].flatten(), args.num_classes)
-        print('processed {} images'.format(image_num + 1))
+        hist += cal_hist(mask.flatten(), result_msk.flatten(), args.num_classes)
 
     print(hist)
     iu = np.diag(hist) / (hist.sum(1) + hist.sum(0) - np.diag(hist))

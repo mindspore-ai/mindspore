@@ -25,6 +25,7 @@
 #include "include/api/types.h"
 
 std::vector<std::string> GetAllFiles(std::string_view dirName);
+std::vector<std::string> GetImagesById(const std::string &idFile, const std::string &dirName);
 DIR *OpenDir(std::string_view dirName);
 std::string RealPath(std::string_view path);
 mindspore::MSTensor ReadFileToTensor(const std::string &file);

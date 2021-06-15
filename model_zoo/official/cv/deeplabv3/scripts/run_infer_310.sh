@@ -75,7 +75,7 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_path --device_id=$device_id --fusion_switch_path=../ascend310_infer/fusion_switch.cfg &> infer.log
+    ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_root --image_list=$data_list_path --device_id=$device_id --fusion_switch_path=../ascend310_infer/fusion_switch.cfg &> infer.log
 }
 
 function cal_acc()
