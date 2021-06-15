@@ -27,9 +27,8 @@ import mindspore.nn as nn
 from mindspore.train.callback import TimeMonitor, Callback
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 import mindspore.common.dtype as mstype
-from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.parallel import set_algo_parameters
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from src.dataset import create_dataset
 from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
 from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, VirtualDatasetOneInputCell
@@ -95,9 +94,8 @@ def run_train(args_opt):
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
             gradients_mean=False,
             device_num=device_num,
-            full_batch=False,
-            enable_parallel_optimizer=True)
-        auto_parallel_context().set_loss_repeated_mean(True)
+            full_batch=bool(args_opt.full_batch),
+            enable_parallel_optimizer=bool(args_opt.optimizer_shard))
         set_algo_parameters(elementwise_op_strategy_follow=True)
         _set_multi_subgraphs()
 
@@ -108,7 +106,7 @@ def run_train(args_opt):
     # Set model property
     model_parallel_num = args_opt.tensor_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
-    batch_size = args_opt.per_batch_size * device_num
+    batch_size = args_opt.per_batch_size * data_parallel_num
     config = PANGUALPHAConfig(
         data_parallel_num=data_parallel_num,
         model_parallel_num=model_parallel_num,
@@ -121,8 +119,6 @@ def run_train(args_opt):
         expand_ratio=4,
         dropout_rate=0.1,
         compute_dtype=mstype.float16,
-        use_past=False,
-        self_layernorm=True,
         stage_num=args_opt.stage_num,
         micro_size=args_opt.micro_size,
         eod_reset=bool(args_opt.eod_reset),
@@ -142,8 +138,7 @@ def run_train(args_opt):
     lr = LearningRate(learning_rate=args_opt.start_lr,
                       end_learning_rate=args_opt.end_lr,
                       warmup_steps=args_opt.warmup_step,
-                      decay_steps=200000,
-                      lr_scale=1)
+                      decay_steps=200000)
 
     # Set weight decay coefficient, zero for bias and layernorm, 1e-1 for rest
     decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
@@ -168,7 +163,7 @@ def run_train(args_opt):
     epoch_num = args_opt.epoch_size
     # Dataset loading mindrecord files
     ds = create_dataset(config.batch_size, data_path=args_opt.data_url,
-                        data_start_index=0, eod_reset=config.eod_reset,
+                        data_start_index=0, eod_reset=config.eod_reset, full_batch=bool(args_opt.full_batch),
                         eod_id=args_opt.eod_id, device_num=device_num, rank=rank, epoch=epoch_num)
     step_per_epoch = ds.get_dataset_size()
     callback_size = args_opt.sink_size

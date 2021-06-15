@@ -154,8 +154,7 @@ class LearningRate(LearningRateSchedule):
                  warmup_steps,
                  decay_steps,
                  power=1.0,
-                 use_cosine=True,
-                 lr_scale=0.125):
+                 use_cosine=True):
         super(LearningRate, self).__init__()
         self.warmup_flag = False
         if warmup_steps > 0:
@@ -171,7 +170,6 @@ class LearningRate(LearningRateSchedule):
         self.one = Tensor(np.array([1.0]).astype(np.float32))
         self.cast = P.Cast()
         self.use_cosine = use_cosine
-        self.lr_scale = lr_scale
 
     def construct(self, global_step):
         """dynamic learning rate"""
@@ -186,7 +184,7 @@ class LearningRate(LearningRateSchedule):
             lr = (self.one - is_warmup) * decay_lr + is_warmup * warmup_lr
         else:
             lr = decay_lr
-        return lr * self.lr_scale
+        return lr
 
 def add_inference_params(opt):
     """Add inference params"""
@@ -270,6 +268,18 @@ def add_training_params(opt):
                      type=int,
                      default=2,
                      help="The sink size of the training")
+    opt.add_argument("--full_batch",
+                     default=0,
+                     help="Import the full size of a batch for each card, default is 0")
+    opt.add_argument("--optimizer_shard",
+                     type=int,
+                     default=1,
+                     help="Enable optimizer parallel, default is 1")
+    opt.add_argument("--per_batch_size",
+                     type=int,
+                     default=6,
+                     help="The batch size for each data parallel way. default 32")
+
 
 def get_args(inference=False):
     """train function for PanguAlpha"""
