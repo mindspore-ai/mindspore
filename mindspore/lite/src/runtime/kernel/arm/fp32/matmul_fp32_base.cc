@@ -426,8 +426,7 @@ int MatmulFp32BaseCPUKernel::Run() {
       // need not aligned
       batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_;
     }
-    ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(MatmulBaseFloatRun, this, thread_count_);
+    ret = ParallelLaunch(this->context_, MatmulBaseFloatRun, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
     }

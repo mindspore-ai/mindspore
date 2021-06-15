@@ -140,8 +140,7 @@ int CastCPUKernel::Run() {
   if (data_num_ == 0) {
     return RET_OK;
   }
-  return static_cast<const lite::InnerContext *>(this->context_)
-    ->thread_pool_->ParallelLaunch(CastRun, this, op_parameter_->thread_num_);
+  return ParallelLaunch(this->context_, CastRun, this, op_parameter_->thread_num_);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)

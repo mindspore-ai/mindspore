@@ -96,8 +96,7 @@ int LogSoftmaxLastAxisRun(void *cdata, int task_id, float lhs_scale, float rhs_s
 int LogSoftmaxCPUKernel::Run() {
   int ret = RET_OK;
   if (in_plane_size_ == 1) {
-    ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(LogSoftmaxLastAxisRun, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(this->context_, LogSoftmaxLastAxisRun, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "LogSoftmaxCPUKernel ParallelLaunch failed, ret: " << ret;
     }

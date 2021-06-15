@@ -179,8 +179,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     memset(output_ptr, 0, out_tensors_.at(kOutputIndex)->ElementsNum() * sizeof(float16_t));
     packed_output_ = output_ptr;
   }
-  ret = static_cast<const lite::InnerContext *>(this->context_)
-          ->thread_pool_->ParallelLaunch(DeconvDwFp16Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->context_, DeconvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwFp16Run error: error_code[" << ret << "]";
   }

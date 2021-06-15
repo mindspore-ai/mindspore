@@ -92,8 +92,7 @@ int LayerNormCPUKernel::Run() {
     mean_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float)));
     var_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float)));
   }
-  ret = static_cast<const lite::InnerContext *>(this->context_)
-          ->thread_pool_->ParallelLaunch(LayerNormRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_, LayerNormRun, this, op_parameter_->thread_num_);
   if (out_tensors_.size() != 3) {
     context_->allocator->Free(mean_data_);
     context_->allocator->Free(var_data_);

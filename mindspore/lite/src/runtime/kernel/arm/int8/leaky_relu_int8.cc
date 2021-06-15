@@ -107,8 +107,7 @@ int LeakyReluInt8CPUKernel::ReSize() {
 }
 
 int LeakyReluInt8CPUKernel::Run() {
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(LeakyReluInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, LeakyReluInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunPreluParam failed. errorcode: ";
   }

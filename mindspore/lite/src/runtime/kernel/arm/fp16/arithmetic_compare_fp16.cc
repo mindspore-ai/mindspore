@@ -168,8 +168,7 @@ int ArithmeticCompareFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ArithmeticsRunFp16, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, ArithmeticsRunFp16, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRunFp16 run error error_code[" << ret << "]";
   }

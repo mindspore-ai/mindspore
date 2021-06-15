@@ -31,9 +31,6 @@
 namespace mindspore::lite {
 struct InnerContext : public Context {
  public:
-  ActorThreadPool *thread_pool_{nullptr};
-
- public:
   InnerContext() = default;
 
   explicit InnerContext(const Context *context);
@@ -64,6 +61,8 @@ struct InnerContext : public Context {
 
   int IsValid() const;
 
+  ActorThreadPool *thread_pool() const;
+
   virtual ~InnerContext();
 
  private:
@@ -83,6 +82,8 @@ struct InnerContext : public Context {
 
   bool fp16_flag_ = false;
 
+  ActorThreadPool *thread_pool_{nullptr};
+
 #ifdef ENABLE_ARM
 #ifndef MS_COMPILE_IOS
   CpuInfo *cpu_info_ = nullptr;
@@ -95,6 +96,9 @@ struct InnerContext : public Context {
 #endif
 #endif
 };
+
+int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num);
+
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_INNER_CONTEXT_H

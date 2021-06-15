@@ -323,7 +323,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
                                                         const lite::InnerContext *ctx) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   std::unordered_map<size_t, AID> partial_map{};
-  auto thread_pool = ctx->thread_pool_;
+  auto thread_pool = ctx->thread_pool();
   if (thread_pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     return actors;

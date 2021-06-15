@@ -132,8 +132,7 @@ int SoftmaxInt8CPUKernel::Run() {
     context_->allocator->Free(sum_data_);
     return RET_ERROR;
   }
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(SoftmaxRun, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_, SoftmaxRun, this, thread_count_);
   context_->allocator->Free(exp_data_);
   context_->allocator->Free(sum_data_);
   if (ret != RET_OK) {

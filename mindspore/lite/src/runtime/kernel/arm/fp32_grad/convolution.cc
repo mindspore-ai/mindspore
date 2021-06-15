@@ -167,8 +167,7 @@ int ConvolutionTrainRun(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int ConvolutionTrainCPUKernel::Run() {
-  int error_code =
-    static_cast<const lite::InnerContext *>(this->context_)->thread_pool_->ParallelLaunch(ConvolutionTrainRun, this, 1);
+  int error_code = ParallelLaunch(this->context_, ConvolutionTrainRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv train function error error_code[" << error_code << "]";
     return RET_ERROR;

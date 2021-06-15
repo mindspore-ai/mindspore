@@ -136,8 +136,7 @@ int CumSumCPUKernel::DoCumsumInt(int task_id) {
 }
 
 int CumSumCPUKernel::Run() {
-  int ret = static_cast<const lite::InnerContext *>(this->context_)
-              ->thread_pool_->ParallelLaunch(CumsumLaunch, this, op_parameter_->thread_num_);
+  int ret = ParallelLaunch(this->context_, CumsumLaunch, this, op_parameter_->thread_num_);
 
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;

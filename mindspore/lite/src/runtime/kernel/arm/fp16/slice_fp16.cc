@@ -63,8 +63,7 @@ int SliceFp16CPUKernel::Run() {
     DoSliceNoParallel(input_data, out_tensors_.at(0)->data_c(), param_, lite::DataTypeSize(kNumberTypeFloat16));
     return RET_OK;
   }
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(SliceFp16Launch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, SliceFp16Launch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "fp16 slice launch fail!ret: " << ret;
     return RET_ERROR;

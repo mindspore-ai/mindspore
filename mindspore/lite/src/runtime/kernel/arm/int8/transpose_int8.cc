@@ -113,8 +113,7 @@ int TransposeInt8CPUKernel::Run() {
   memcpy(out_shape_, out_dims.data(), out_dims.size() * sizeof(int));
 
   if (out_tensor->shape().size() > DIMENSION_6D) {
-    return static_cast<const lite::InnerContext *>(this->context_)
-      ->thread_pool_->ParallelLaunch(TransposeInt8Run, this, op_parameter_->thread_num_);
+    return ParallelLaunch(this->context_, TransposeInt8Run, this, op_parameter_->thread_num_);
   } else {
     return DoTransposeInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_);
   }

@@ -115,8 +115,7 @@ int ConcatInt8CPUKernel::Run() {
   }
   output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ConcatInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, ConcatInt8Run, this, op_parameter_->thread_num_);
 
   return ret;
 }

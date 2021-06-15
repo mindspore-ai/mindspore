@@ -100,8 +100,7 @@ int StackBaseCPUKernel::Run() {
   }
   // run stack
   num_threads_ = MSMIN(UP_DIV(outer_size_, 64), op_parameter_->thread_num_);
-  auto ret =
-    static_cast<const lite::InnerContext *>(this->context_)->thread_pool_->ParallelLaunch(StackRun, this, num_threads_);
+  auto ret = ParallelLaunch(this->context_, StackRun, this, num_threads_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
     return RET_ERROR;

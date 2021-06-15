@@ -149,8 +149,7 @@ int ArithmeticInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
   if (param->broadcasting_) {
     context_->allocator->Free(tile_data0_);
     context_->allocator->Free(tile_data1_);

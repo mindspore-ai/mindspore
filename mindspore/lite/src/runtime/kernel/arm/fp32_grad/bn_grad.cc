@@ -140,8 +140,7 @@ int BNGradCPUKernel::Run() {
   thread_num_ = op_parameter_->thread_num_;
   int error_code;
   if (thread_num_ == 1) {
-    error_code = static_cast<const lite::InnerContext *>(this->context_)
-                   ->thread_pool_->ParallelLaunch(BNGradRun, this, thread_num_);
+    error_code = ParallelLaunch(this->context_, BNGradRun, this, thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
       return RET_ERROR;
@@ -150,8 +149,7 @@ int BNGradCPUKernel::Run() {
     const std::vector<int> threads = {thread_num_, 1, thread_num_};
     for (size_t stage = 0; stage < threads.size(); stage++) {
       stage_ = static_cast<int>(stage);
-      error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(BNGradRun, this, threads.at(stage));
+      error_code = ParallelLaunch(this->context_, BNGradRun, this, threads.at(stage));
       if (error_code != RET_OK) {
         MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
         return RET_ERROR;

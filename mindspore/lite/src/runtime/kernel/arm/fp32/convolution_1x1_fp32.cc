@@ -256,12 +256,10 @@ int Convolution1x1CPUKernel::Run() {
     }
 
     if (multi_thread_by_hw_) {
-      static_cast<const lite::InnerContext *>(this->context_)
-        ->thread_pool_->ParallelLaunch(Convolution1x1RunHw, this, thread_count_);
+      ParallelLaunch(this->context_, Convolution1x1RunHw, this, thread_count_);
     } else {
       PackMatmulInput(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-      static_cast<const lite::InnerContext *>(this->context_)
-        ->thread_pool_->ParallelLaunch(Convolution1x1Run, this, thread_count_);
+      ParallelLaunch(this->context_, Convolution1x1Run, this, thread_count_);
     }
   }
 
