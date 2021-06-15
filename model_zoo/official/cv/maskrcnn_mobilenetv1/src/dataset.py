@@ -17,6 +17,7 @@
 from __future__ import division
 
 import os
+import re
 import mmcv
 import cv2
 import numpy as np
@@ -25,8 +26,19 @@ from numpy import random
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
-from src.config import config
 
+from src.model_utils.config import config
+
+def config_(cfg):
+    train_cls = [i for i in re.findall(r'[a-zA-Z\s]+', cfg.coco_classes) if i != ' ']
+    cfg.coco_classes = np.array(train_cls)
+    lss = [int(re.findall(r'[0-9]+', i)[0]) for i in cfg.feature_shapes]
+    cfg.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
+    cfg.roi_layer = dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
+    cfg.warmup_ratio = 1/3.0
+    cfg.mask_shape = (28, 28)
+    return cfg
+config = config_(config)
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.

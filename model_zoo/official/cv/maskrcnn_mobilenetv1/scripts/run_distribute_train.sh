@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ] && [ $# != 1 ]
+if [ $# != 2 ] && [ $# != 3 ]
 then 
-    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH](optional)"
+    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_PATH](optional)"
     exit 1
 fi
 
@@ -29,12 +29,14 @@ get_real_path(){
 }
 PATH1=$(get_real_path $1)
 PATH2=$2
+PATH3=$3
 
 echo $PATH1
+echo $PATH2
 
-if [ $# == 2 ]
+if [ $# == 3 ]
 then
-    echo $PATH2
+    echo $PATH3
 fi
 
 if [ ! -f $PATH1 ]
@@ -66,20 +68,22 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
+    cp ../*.yaml ./train_parallel$i
     cp *.sh ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    if [ $# == 2 ]
+    if [ $# == 3 ]
     then
-        taskset -c $cmdopt python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM \
-                        --pre_trained=$PATH2 &> log &
+        taskset -c $cmdopt python train.py --coco_root=$PATH2 --do_train=True  --device_id=$i \
+        --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH3 &> log.txt &
     fi
 
-    if [ $# == 1 ]
+    if [ $# == 2 ]
     then
-        taskset -c $cmdopt python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM &> log &
+        taskset -c $cmdopt python train.py --coco_root=$PATH2 --do_train=True  --device_id=$i \
+        --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM &> log.txt &
     fi
 
     cd ..
