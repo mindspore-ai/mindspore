@@ -109,7 +109,8 @@ std::string GenerateNpyHeader(const ShapeVector &shape, TypeId type_id, bool for
   };
   auto type_desc = type_desc_map.find(type_id);
   if (type_desc == type_desc_map.end()) {
-    MS_LOG(EXCEPTION) << "Not support dump the " << TypeIdToType(type_id)->ToString() << " data to npy file.";
+    MS_LOG(WARNING) << "Not support dump the " << TypeIdToType(type_id)->ToString() << " data to npy file.";
+    return std::string();
   }
 
   NpyHeader npy_header{type_desc->second, fortran_order, shape};
