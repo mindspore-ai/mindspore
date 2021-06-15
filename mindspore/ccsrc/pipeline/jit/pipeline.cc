@@ -166,7 +166,7 @@ void SetGpuLoopSink(const ResourcePtr &resource) {
     auto manager = func_graph->manager();
     size_t graph_nums = manager->func_graphs().size();
     int64_t sinksize = ConfigManager::GetInstance().iter_num();
-    if (graph_nums == 1) {
+    if (graph_nums == 1 || IsMindRTUsed()) {
       resource->set_gpu_loopsink(true, sinksize);
     } else {
       resource->set_gpu_loopsink(false, sinksize);

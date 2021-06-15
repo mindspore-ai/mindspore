@@ -842,7 +842,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
     return nullptr;
   }
 
-  auto loop_count = ConfigManager::GetInstance().gpu_loopsink_size();
+  auto loop_count = ConfigManager::GetInstance().iter_num();
   auto actor_name = graph_compiler_info.name_ + "_LoopCountActor";
   auto loop_count_actor =
     std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_);
@@ -879,7 +879,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
 
 OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_compiler_info,
                                                 GraphExecutionStrategy strategy) {
-  auto loop_count = ConfigManager::GetInstance().gpu_loopsink_size();
+  auto loop_count = ConfigManager::GetInstance().iter_num();
   auto actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
   bool need_loop_count = (strategy == GraphExecutionStrategy::kPipeline) ? true : false;
 
