@@ -104,7 +104,7 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
 }
 
 ThreadPool &ThreadPool::GetInstance() {
-  static ThreadPool instance;
+  static ThreadPool instance{};
   return instance;
 }
 
@@ -123,6 +123,11 @@ void ThreadPool::ClearThreadPool() {
   sync_run_threads_.clear();
 }
 
-ThreadPool::~ThreadPool() { ClearThreadPool(); }
+ThreadPool::~ThreadPool() {
+  try {
+    ClearThreadPool();
+  } catch (...) {
+  }
+}
 }  // namespace common
 }  // namespace mindspore
