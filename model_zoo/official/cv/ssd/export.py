@@ -37,6 +37,14 @@ if __name__ == '__main__':
         net = ssd_resnet50_fpn(config=config)
     else:
         raise ValueError(f'config.model: {config.model_name} is not supported')
+
+    if hasattr(config, 'num_ssd_boxes') and config.num_ssd_boxes == -1:
+        num = 0
+        h, w = config.img_shape
+        for i in range(len(config.steps)):
+            num += (h // config.steps[i]) * (w // config.steps[i]) * config.num_default[i]
+        config.num_ssd_boxes = num
+
     net = SsdInferWithDecoder(net, Tensor(default_boxes), config)
 
     param_dict = load_checkpoint(config.checkpoint_file_path)

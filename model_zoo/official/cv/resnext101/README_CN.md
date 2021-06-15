@@ -63,6 +63,38 @@ ResNeXt是ResNet网络的改进版本，比ResNet的网络多了块多了cardina
 
 以下各节列出了开始训练ResNext101-64x4d模型的要求。
 
+如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
+开始进行模型的训练和推理，具体操作如下：
+
+```python
+# 在modelarts上使用分布式训练的示例：
+# (1) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          在yaml文件上设置网络所需的参数。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置网络所需的参数。
+# (2) 在modelarts的界面上设置代码的路径 "/path/resnext101"。
+# (3) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (4) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (5) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a.  设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件.
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+# (3) 在modelarts的界面上设置代码的路径 "/path/resnext101"。
+# (4) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的推理。
+```
+
 ## 快速入门指南
 
 目录说明，代码参考了Modelzoo上的[ResNext50](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnext50)
@@ -97,9 +129,15 @@ ResNeXt是ResNet网络的改进版本，比ResNet的网络多了块多了cardina
     ├─linear_warmup.py                # 线性热身学习率
     ├─warmup_cosine_annealing.py      # 每次迭代的学习率
     ├─warmup_step_lr.py               # 热身迭代学习率
-  ├─eval.py                           # 评估网络
-  ├──train.py                         # 训练网络
-  ├──mindspore_hub_conf.py            #  MindSpore Hub接口
+    ├─model_utils
+      │   ├──config.py              # 参数配置
+      │   ├──device_adapter.py      # 设备配置
+      │   ├──local_adapter.py       # 本地设备配置
+      │   ├──moxing_adapter.py      # modelarts设备配置
+  ├──default_config.yaml             # 参数配置
+  ├──eval.py                         # 评估网络
+  ├──train.py                        # 训练网络
+  ├──mindspore_hub_conf.py           # MindSpore Hub接口
 ```
 
 ### 1. 仓库克隆
@@ -120,7 +158,7 @@ cd resnext101-64x4d-mindspore/
 可以通过python脚本开始训练：
 
 ```shell
-python train.py --data_dir ~/imagenet/train/ --platform Ascend --is_distributed
+python train.py --data_path ~/imagenet/train/ --device_target Ascend --run_distribute=True
 ```
 
 或通过shell脚本开始训练：
@@ -143,20 +181,20 @@ GPU:
 您可以通过python脚本开始验证：
 
 ```shell
-python eval.py --data_dir ~/imagenet/val/ --platform Ascend --pretrained resnext.ckpt
+python eval.py --data_path ~/imagenet/val/ --platform Ascend --checkpoint_file_path resnext.ckpt
 ```
 
 或通过shell脚本开始训练：
 
 ```shell
 # 评估
-bash scripts/run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
+bash scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH DEVICE_TARGET
 ```
 
 ## 模型导出
 
 ```shell
-python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
+python export.py --device_target [PLATFORM] --checkpoint_file_path [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
 `EXPORT_FORMAT` 可选 ["AIR", "ONNX", "MINDIR"].
@@ -165,7 +203,7 @@ python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_forma
 
 ### 超参设置
 
-通过`src/config.py`文件进行设置，下面是ImageNet单卡实验的设置
+通过`src/default_config.yaml`文件进行设置，下面是ImageNet单卡实验的设置
 
 ```python
 "image_size": '224,224',
@@ -198,7 +236,6 @@ python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_forma
 
 ### 训练过程
 
-训练的所有结果将存储在用--ckpt_path参数指定的目录中。
 训练脚本将会存储：
 
 - checkpoints.

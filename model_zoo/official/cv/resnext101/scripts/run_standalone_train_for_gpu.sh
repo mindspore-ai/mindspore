@@ -23,7 +23,8 @@ then
 fi
 
 python train.py  \
-    --pretrained=$PATH_CHECKPOINT \
-    --platform="GPU" \
-    --data_dir=$DATA_DIR > log.txt 2>&1 &
+    --checkpoint_file_path=$PATH_CHECKPOINT \
+    --device_target="GPU" \
+    --data_path=$DATA_DIR \
+    --output_path './output' > log.txt 2>&1 &
 

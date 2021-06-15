@@ -24,6 +24,6 @@ then
 fi
 
 python eval.py  \
-    --pretrained=$PATH_CHECKPOINT \
-    --platform=$PLATFORM \
-    --data_dir=$DATA_DIR > log.txt 2>&1 &
+    --checkpoint_file_path=$PATH_CHECKPOINT \
+    --device_target=$PLATFORM \
+    --data_path=$DATA_DIR > log.txt 2>&1 &
