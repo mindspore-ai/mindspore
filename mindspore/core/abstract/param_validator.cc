@@ -53,10 +53,13 @@ TypePtr CheckTensorDType(const AbstractTensorPtr &tensor, const TypePtrList &acc
                          const std::string &error_message_prefix) {
   MS_EXCEPTION_IF_NULL(tensor);
   TypePtr type = tensor->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<TensorType>()) {
     MS_LOG(EXCEPTION) << error_message_prefix << "requires Tensor but got " << type->ToString();
   }
-  TypePtr ele_type = tensor->element()->BuildType();
+  auto elem = tensor->element();
+  MS_EXCEPTION_IF_NULL(elem);
+  TypePtr ele_type = elem->BuildType();
   if (ele_type == nullptr) {
     MS_LOG(EXCEPTION) << "Abstract tensor element type nullptr";
   }
@@ -71,16 +74,22 @@ TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const Ty
 
   auto sample_tensor = tensor_list[0];
   MS_EXCEPTION_IF_NULL(sample_tensor);
-  TypePtr sample_type = sample_tensor->element()->BuildType();
+  auto sample_elem = sample_tensor->element();
+  MS_EXCEPTION_IF_NULL(sample_elem);
+  TypePtr sample_type = sample_elem->BuildType();
+  MS_EXCEPTION_IF_NULL(sample_type);
   std::ostringstream loginfoBuffer;
   loginfoBuffer << "same type, got";
   // Check if other elements have the same type with the first element.
   for (size_t index = 1; index < tensor_list.size(); ++index) {
     MS_EXCEPTION_IF_NULL(tensor_list[index]);
-    auto aType = tensor_list[index]->element()->BuildType();
-    loginfoBuffer << " " << aType->ToString();
-    if (sample_type->type_id() != aType->type_id()) {
-      MS_LOG(EXCEPTION) << "Expected type " << sample_type->ToString() << ", but got " << aType->ToString()
+    auto elem = tensor_list[index]->element();
+    MS_EXCEPTION_IF_NULL(elem);
+    auto a_type = elem->BuildType();
+    MS_EXCEPTION_IF_NULL(a_type);
+    loginfoBuffer << " " << a_type->ToString();
+    if (sample_type->type_id() != a_type->type_id()) {
+      MS_LOG(EXCEPTION) << "Expected type " << sample_type->ToString() << ", but got " << a_type->ToString()
                         << ", index " << index;
     }
   }
@@ -102,18 +111,30 @@ TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &acce
 }
 
 ShapePtr CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor_base);
   ShapePtr shape_base = tensor_base->shape();
+  MS_EXCEPTION_IF_NULL(shape_base);
+  MS_EXCEPTION_IF_NULL(tensor);
   ShapePtr shape = tensor->shape();
+  MS_EXCEPTION_IF_NULL(shape);
   if (*shape != *shape_base) {
-    MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << tensor->shape()->ToString()
-                      << " are not consistent with second arg shape " << tensor_base->shape()->ToString();
+    MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape->ToString()
+                      << " are not consistent with second arg shape " << shape_base->ToString();
   }
   return shape_base;
 }
 
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor) {
-  TypePtr type_base = tensor_base->element()->BuildType();
-  TypePtr type = tensor->element()->BuildType();
+  MS_EXCEPTION_IF_NULL(tensor_base);
+  auto base_elem = tensor_base->element();
+  MS_EXCEPTION_IF_NULL(base_elem);
+  TypePtr type_base = base_elem->BuildType();
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto tensor_elem = tensor->element();
+  MS_EXCEPTION_IF_NULL(tensor_elem);
+  TypePtr type = tensor_elem->BuildType();
+  MS_EXCEPTION_IF_NULL(type_base);
+  MS_EXCEPTION_IF_NULL(type);
   if (*type != *type_base) {
     MS_LOG(EXCEPTION) << op << " evaluator first arg dtype " << type_base->ToString()
                       << " are not consistent with second arg dtype " << type->ToString();
@@ -164,7 +185,10 @@ void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
 }
 
 int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
-  int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+  MS_EXCEPTION_IF_NULL(attr);
+  auto int64_value = attr->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(int64_value);
+  int64_t attr_val = int64_value->value();
   if (attr_val <= 0) {
     MS_LOG(EXCEPTION) << op << " invalid " << attr_name << " value: " << attr_val << ", should be greater then 0";
   }
@@ -176,12 +200,20 @@ std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &
   std::vector<int64_t> result;
   MS_EXCEPTION_IF_NULL(attr);
   if (attr->isa<ValueTuple>()) {
-    std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+    auto tuple_attr = attr->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_attr);
+    std::vector<ValuePtr> attr_vec = tuple_attr->value();
+    if (start_idx > attr_vec.size() || start_idx + num_element > attr_vec.size()) {
+      MS_EXCEPTION(IndexError) << op << " attr index is out of range, attr size is " << attr_vec.size()
+                               << "but start idx got" << start_idx << " num element " << num_element;
+    }
     auto it_start = attr_vec.begin() + start_idx;
     (void)std::transform(it_start, it_start + num_element, std::back_inserter(result),
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
-    int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+    auto int64_imm = attr->cast<Int64ImmPtr>();
+    MS_EXCEPTION_IF_NULL(int64_imm);
+    int64_t attr_val = int64_imm->value();
     (void)result.insert(result.begin(), num_element, attr_val);
   }
   return result;
@@ -190,7 +222,9 @@ std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &
 std::string CheckAttrStringSet(const std::string &op, const ValuePtr &attr, const std::string &attr_name,
                                const std::set<std::string> &val_set) {
   MS_EXCEPTION_IF_NULL(attr);
-  std::string attr_val = attr->cast<StringImmPtr>()->value();
+  auto string_attr = attr->cast<StringImmPtr>();
+  MS_EXCEPTION_IF_NULL(string_attr);
+  std::string attr_val = string_attr->value();
   if (val_set.find(attr_val) == val_set.end()) {
     std::ostringstream buffer;
     bool f_begin = true;

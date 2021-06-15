@@ -25,6 +25,7 @@ namespace mindspore {
 namespace abstract {
 AnalysisContextPtr AnalysisContext::NewContext(AnalysisContextPtr parent_context, FuncGraphPtr fg,
                                                const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(parent_context);
   auto children_context_map_iter = parent_context->children_cache_.find(fg);
   if (children_context_map_iter != parent_context->children_cache_.end()) {
     auto children_context_map = children_context_map_iter->second;
@@ -43,6 +44,7 @@ AnalysisContextPtr AnalysisContext::NewContext(AnalysisContextPtr parent_context
 
 AnalysisContextPtr AnalysisContext::NewFuncGraphContext(const FuncGraphPtr &func_graph,
                                                         const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphPtr parent_graph = func_graph->parent();
   AnalysisContextPtr parent_context = nullptr;
   auto iter = parent_cache_.find(parent_graph);
@@ -160,10 +162,13 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
   AbstractBasePtrList args_broad_shp;
   (void)std::transform(args_spec_list_.begin(), args_spec_list_.end(), std::back_inserter(args_broad_shp),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg);
                          if (arg->isa<AbstractScalar>()) {
                            auto val = arg->GetValueTrack();
+                           MS_EXCEPTION_IF_NULL(val);
                            if (val->isa<SymbolicKeyInstance>()) {
                              auto scalar_spec = dyn_cast<AbstractScalar>(arg);
+                             MS_EXCEPTION_IF_NULL(scalar_spec);
                              auto ret_spec = scalar_spec->Broaden();
                              return ret_spec;
                            }

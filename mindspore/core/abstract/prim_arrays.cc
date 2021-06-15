@@ -42,6 +42,7 @@ AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const Primitiv
   CheckArgsSize(op_name, args_spec_list, 1);
   auto arg = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto a_shp = arg->shape();
+  MS_EXCEPTION_IF_NULL(a_shp);
   if (!a_shp->shape().empty()) {
     MS_LOG(EXCEPTION) << "array_to_scalar requires zero size shape.";
   }
@@ -56,15 +57,17 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   CheckArgsSize(op_name, args_spec_list, args_size);
   auto xs = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   auto ys = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
-
-  auto value_tuple_x = xs->BuildValue()->cast<ValueTuplePtr>();
+  auto x_value = xs->BuildValue();
+  MS_EXCEPTION_IF_NULL(x_value);
+  auto value_tuple_x = x_value->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple_x);
   auto shp_tuple_x = value_tuple_x->value();
   ShapeVector shp_x;
   (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(shp_x),
                        [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
-
-  auto value_tuple_y = ys->BuildValue()->cast<ValueTuplePtr>();
+  auto tupe_value_y = ys->BuildValue();
+  MS_EXCEPTION_IF_NULL(tupe_value_y);
+  auto value_tuple_y = tupe_value_y->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple_y);
   auto shp_tuple_y = value_tuple_y->value();
   ShapeVector shp_y;
@@ -97,7 +100,9 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   size_t tuple_len = arg->elements().size();
   AbstractTensorPtr tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
-  int64_t rank_base = SizeToLong(tensor_base->shape()->shape().size());
+  auto shape = tensor_base->shape();
+  MS_EXCEPTION_IF_NULL(shape);
+  int64_t rank_base = SizeToLong(shape->shape().size());
 
   ValuePtr axis = primitive->GetAttr("axis");
   // Axis value should be in [-(rank_base + 1), rank_base).
@@ -116,9 +121,11 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   AbstractTensorPtr ret = dyn_cast<AbstractTensor>(tensor_base->Broaden());
   MS_EXCEPTION_IF_NULL(ret);
-  auto shape = ret->shape()->shape();
-  (void)shape.insert(shape.begin() + axis_value, tuple_len);
-  ret->set_shape(std::make_shared<Shape>(shape));
+  auto ret_shape_ptr = ret->shape();
+  MS_EXCEPTION_IF_NULL(ret_shape_ptr);
+  auto ret_shape = ret->shape()->shape();
+  (void)ret_shape.insert(ret_shape.begin() + axis_value, tuple_len);
+  ret->set_shape(std::make_shared<Shape>(ret_shape));
   return ret;
 }
 

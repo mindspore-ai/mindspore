@@ -31,6 +31,7 @@ AbstractFunctionPtr AbstractFunction::MakeAbstractFunction(const AbstractFuncAto
 }
 
 AbstractFunctionPtr AbstractFuncAtom::Join(const AbstractFunctionPtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
   auto this_func = shared_from_base<AbstractFuncAtom>();
   if (other->isa<AbstractFuncAtom>()) {
     if (*this_func == *other) {
@@ -39,6 +40,7 @@ AbstractFunctionPtr AbstractFuncAtom::Join(const AbstractFunctionPtr &other) {
     return std::make_shared<AbstractFuncUnion>(this_func, other);
   }
   auto other_union = dyn_cast<AbstractFuncUnion>(other);
+  MS_EXCEPTION_IF_NULL(other_union);
   if (other_union->IsSuperSet(this_func)) {
     return other;
   }
@@ -56,7 +58,8 @@ AbstractFuncUnion::AbstractFuncUnion(const AbstractFuncAtomPtrList &func_list) {
 AbstractFuncUnion::AbstractFuncUnion(const AbstractFunctionPtr &first, const AbstractFunctionPtr &second) {
   AbstractFuncAtomPtrList new_func_list;
   auto build_func_list = [&new_func_list](const AbstractFuncAtomPtr &func) { new_func_list.push_back(func); };
-
+  MS_EXCEPTION_IF_NULL(first);
+  MS_EXCEPTION_IF_NULL(second);
   first->Visit(build_func_list);
   second->Visit(build_func_list);
   func_list_ = new_func_list;
@@ -91,6 +94,7 @@ bool AbstractFuncUnion::IsSuperSet(const AbstractFunctionPtr &other) {
 
 AbstractFunctionPtr AbstractFuncUnion::Join(const AbstractFunctionPtr &other) {
   auto this_func = shared_from_base<AbstractFunction>();
+  MS_EXCEPTION_IF_NULL(other);
   if (other->isa<AbstractFuncAtom>()) {
     if (IsSuperSet(other)) {
       return this_func;
@@ -98,6 +102,7 @@ AbstractFunctionPtr AbstractFuncUnion::Join(const AbstractFunctionPtr &other) {
     return std::make_shared<AbstractFuncUnion>(this_func, other);
   }
   auto other_union = dyn_cast<AbstractFuncUnion>(other);
+  MS_EXCEPTION_IF_NULL(other);
   if (other_union->IsSuperSet(this_func)) {
     return other;
   }
@@ -127,6 +132,7 @@ bool AbstractFuncUnion::operator==(const AbstractFunction &other) const {
 std::size_t AbstractFuncUnion::hash() const {
   std::size_t hash_sum = 0;
   for (auto f : func_list_) {
+    MS_EXCEPTION_IF_NULL(f);
     hash_sum = hash_combine(hash_sum, f->hash());
   }
   return hash_sum;
@@ -137,6 +143,7 @@ bool PrimitiveAbstractClosure::operator==(const AbstractFunction &other) const {
     return false;
   }
   auto other_prim = static_cast<const PrimitiveAbstractClosure *>(&other);
+  MS_EXCEPTION_IF_NULL(prim_);
   if (prim_ == other_prim->prim_ && tracking_id() == other_prim->tracking_id()) {
     return true;
   }
@@ -173,8 +180,11 @@ std::size_t FuncGraphAbstractClosure::hash() const {
   }
   return hash_value;
 }
+
 std::string FuncGraphAbstractClosure::ToString() const {
   std::stringstream ss;
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  MS_EXCEPTION_IF_NULL(context_);
   ss << "FuncGraphAbstractClosure: "
      << "FuncGraph: " << func_graph_->ToString() << "; Context: " << context_->ToString();
   return ss.str();
@@ -192,6 +202,7 @@ bool MetaFuncGraphAbstractClosure::operator==(const AbstractFunction &other) con
 }
 
 std::size_t MetaFuncGraphAbstractClosure::hash() const {
+  MS_EXCEPTION_IF_NULL(meta_func_graph_);
   auto hash_value = hash_combine(tid(), meta_func_graph_->hash());
   if (tracking_id() != nullptr) {
     hash_value = hash_combine(hash_value, tracking_id()->hash());
@@ -200,6 +211,7 @@ std::size_t MetaFuncGraphAbstractClosure::hash() const {
 }
 
 std::string MetaFuncGraphAbstractClosure::ToString() const {
+  MS_EXCEPTION_IF_NULL(meta_func_graph_);
   return "MetaFuncGraphAbstractClosure: " + meta_func_graph_->name();
 }
 
@@ -221,6 +233,7 @@ bool PartialAbstractClosure::operator==(const AbstractFunction &other) const {
 }
 
 std::size_t PartialAbstractClosure::hash() const {
+  MS_EXCEPTION_IF_NULL(fn_);
   auto hash_value = hash_combine(tid(), fn_->hash());
   hash_value = hash_combine(hash_value, AbstractBasePtrListHash(args_spec_list_));
   return hash_value;
@@ -229,7 +242,8 @@ std::size_t PartialAbstractClosure::hash() const {
 std::string PartialAbstractClosure::ToString() const {
   std::ostringstream buffer;
   buffer << "PartialAbstractClosure(" << fn_->ToString() << "(";
-  for (auto arg : args_spec_list_) {
+  for (const auto &arg : args_spec_list_) {
+    MS_EXCEPTION_IF_NULL(arg);
     buffer << arg->ToString() << ", ";
   }
   buffer << "))";
@@ -248,6 +262,7 @@ bool JTransformedAbstractClosure::operator==(const AbstractFunction &other) cons
 }
 
 std::size_t JTransformedAbstractClosure::hash() const {
+  MS_EXCEPTION_IF_NULL(fn_);
   auto hash_value = hash_combine(tid(), fn_->hash());
   return hash_value;
 }
@@ -270,6 +285,7 @@ bool VirtualAbstractClosure::operator==(const AbstractFunction &other) const {
 }
 
 std::size_t VirtualAbstractClosure::hash() const {
+  MS_EXCEPTION_IF_NULL(output_);
   auto hash_value = hash_combine(tid(), output_->hash());
   hash_value = hash_combine(hash_value, AbstractBasePtrListHash(args_spec_list_));
   return hash_value;
@@ -284,6 +300,7 @@ std::string VirtualAbstractClosure::ToString() const {
     buffer << "[" << i << "]: " << arg->ToString() << ", ";
     i++;
   }
+  MS_EXCEPTION_IF_NULL(output_);
   buffer << "}, output: " << output_->ToString() << ")";
   return buffer.str();
 }
@@ -323,6 +340,7 @@ std::string TypedPrimitiveAbstractClosure::ToString() const {
     buffer << "[" << i << "]: " << arg->ToString() << ", ";
     i++;
   }
+  MS_EXCEPTION_IF_NULL(output_);
   buffer << "}, output: " << output_->ToString() << ")";
   return buffer.str();
 }

@@ -110,7 +110,7 @@ void Shape::Broaden() {
 std::string SequeueShape::ToString() const {
   std::ostringstream buffer;
   bool f_begin = true;
-  for (auto p_shp : p_shapes_) {
+  for (const auto &p_shp : p_shapes_) {
     if (!f_begin) {
       buffer << ", ";
     } else {
@@ -141,6 +141,8 @@ bool SequeueShape::SequeueEqual(const BaseShape &other) const {
     return false;
   }
   for (uint64_t i = 0; i < p_shapes_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(p_shapes_[i]);
+    MS_EXCEPTION_IF_NULL(other_shapes[i]);
     if (!(*p_shapes_[i] == *other_shapes[i])) {
       return false;
     }

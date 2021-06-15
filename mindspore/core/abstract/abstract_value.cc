@@ -30,8 +30,11 @@ bool AbstractBase::operator==(const AbstractBase &other) const {
   if (tid() != other.tid()) {
     return false;
   }
-  if (BuildType()->type_id() == kObjectTypeUndeterminedType &&
-      other.BuildType()->type_id() == kObjectTypeUndeterminedType) {
+  auto type = BuildType();
+  auto other_type = BuildType();
+  MS_EXCEPTION_IF_NULL(other_type);
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->type_id() == kObjectTypeUndeterminedType && other_type->type_id() == kObjectTypeUndeterminedType) {
     return true;
   }
   if (value_ == nullptr || other.value_ == nullptr) {
@@ -46,12 +49,16 @@ bool AbstractBase::operator==(const AbstractBase &other) const {
     value_equal = true;
   }
   bool type_equal = false;
+  MS_EXCEPTION_IF_NULL(type_);
+  MS_EXCEPTION_IF_NULL(other.type_);
   if (type_ == other.type_) {
     type_equal = true;
   } else if (*type_ == *other.type_) {
     type_equal = true;
   }
   bool shape_equal = false;
+  MS_EXCEPTION_IF_NULL(shape_);
+  MS_EXCEPTION_IF_NULL(other.shape_);
   if (shape_ == other.shape_) {
     shape_equal = true;
   } else if (*shape_ == *other.shape_) {
@@ -69,6 +76,7 @@ ValuePtr AbstractBase::BuildValue() const {
 
 AbstractBasePtr AbstractBase::Broaden(uint8_t config) const {
   AbstractBasePtr clone = Clone();
+  MS_EXCEPTION_IF_NULL(clone);
   auto not_broaden = config & (kBroadenTensorOnly | kBroadenParameterOnly);
   if (not_broaden == 0) {
     clone->set_value(kAnyValue);
@@ -90,7 +98,9 @@ std::string AbstractBase::ToString() const {
 }
 
 AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const {
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) || config == kBroadenScalarParameterOnly) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) || config == kBroadenScalarParameterOnly) {
     return AbstractBase::Broaden(config);
   } else {
     return Clone();
@@ -105,12 +115,13 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   auto value_self = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_self);
   TypePtr res_type = TypeJoin(GetTypeTrack(), other->GetTypeTrack());
+  auto value_other = other->GetTypeTrack();
+  MS_EXCEPTION_IF_NULL(value_other);
   if (res_type == kAnyType) {
-    MS_LOG(ERROR) << "Type join failed, type1 = " << GetTypeTrack()->ToString()
-                  << ", type2 = " << other->GetTypeTrack()->ToString();
+    MS_LOG(ERROR) << "Type join failed, type1 = " << value_self->ToString() << ", type2 = " << value_other->ToString();
     return nullptr;
   }
-  ValuePtr res_value = ValueJoin(value_self, other->GetValueTrack());
+  ValuePtr res_value = ValueJoin(value_self, value_other);
   if (res_value == value_self) {
     return shared_from_base<AbstractBase>();
   }
@@ -158,7 +169,6 @@ std::string AbstractType::ToString() const {
     return buffer.str();
   }
   TypePtr type_self = value_self->cast<TypePtr>();
-  MS_EXCEPTION_IF_NULL(type_self);
   buffer << type_name() << "("
          << "Value: " << type_self->ToString() << ")";
   return buffer.str();
@@ -253,7 +263,9 @@ template <typename T>
 ValuePtr AbstractSequeue::ElementsBuildValue() const {
   std::vector<ValuePtr> element_value_list;
   for (const auto &ele : elements_) {
+    MS_EXCEPTION_IF_NULL(ele);
     ValuePtr element_value = ele->BuildValue();
+    MS_EXCEPTION_IF_NULL(element_value);
     if (element_value->isa<AnyValue>()) {
       return kAnyValue;
     }
@@ -266,12 +278,18 @@ template ValuePtr AbstractSequeue::ElementsBuildValue<ValueList>() const;
 
 template <typename T>
 AbstractBasePtr AbstractSequeue::ElementsJoin(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
   auto other_sequeue = dyn_cast<T>(other);
   if (other_sequeue == nullptr) {
     MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
   }
   auto joined_list = AbstractJoin(elements_, other_sequeue->elements_);
   bool changes = false;
+  if (elements_.size() > joined_list.size()) {
+    MS_EXCEPTION(IndexError) << "Abstract " << ToString() << "'s size is " << elements_.size()
+                             << " but element joined  abstract " << other->ToString() << "with the the size "
+                             << joined_list.size();
+  }
   for (std::size_t i = 0; i < elements_.size(); i++) {
     if (elements_[i] != joined_list[i]) {
       changes = true;
@@ -306,6 +324,8 @@ bool AbstractSequeue::operator==(const AbstractSequeue &other) const {
     return false;
   }
   for (size_t i = 0; i < elements_.size(); i++) {
+    MS_EXCEPTION_IF_NULL(elements_[i]);
+    MS_EXCEPTION_IF_NULL(other.elements_[i]);
     if (!(*(elements_[i]) == *(other.elements_[i]))) {
       return false;
     }
@@ -447,8 +467,13 @@ BaseShapePtr AbstractTensor::BuildShape() const {
 }
 
 AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
-  if (other->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+  MS_EXCEPTION_IF_NULL(other);
+  auto type = other->BuildType();
+  MS_EXCEPTION_IF_NULL(element_);
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->type_id() == kObjectTypeUndeterminedType) {
     auto other_undetermined_tensor = dyn_cast<AbstractUndetermined>(other);
+    MS_EXCEPTION_IF_NULL(other_undetermined_tensor);
     auto element = element_->Join(other_undetermined_tensor->element());
     if (element == nullptr) {
       return nullptr;
@@ -516,6 +541,7 @@ AbstractBasePtr AbstractTensor::Broaden(uint8_t config) const {
   MS_EXCEPTION_IF_NULL(element_);
   auto broaden = std::make_shared<AbstractTensor>(element_->Broaden());
   auto shp = shape();
+  MS_EXCEPTION_IF_NULL(shp);
   broaden->set_shape(shp->Clone());
   auto not_broaden = config & kBroadenParameterOnly;
   if (not_broaden == 0) {
@@ -528,6 +554,7 @@ AbstractBasePtr AbstractTensor::BroadenWithShape() const {
   MS_EXCEPTION_IF_NULL(element_);
   auto broaden = std::make_shared<AbstractTensor>(element_->Broaden());
   auto shp = shape()->Clone();
+  MS_EXCEPTION_IF_NULL(shp);
   shp->Broaden();
   broaden->set_shape(shp);
   broaden->set_value(kAnyValue);
@@ -566,6 +593,8 @@ bool AbstractDictionary::operator==(const AbstractDictionary &other) const {
     if (key_values_[index].first != other.key_values_[index].first) {
       return false;
     }
+    MS_EXCEPTION_IF_NULL(key_values_[index].second);
+    MS_EXCEPTION_IF_NULL(other.key_values_[index].second);
     if (!(*key_values_[index].second == *other.key_values_[index].second)) {
       return false;
     }
@@ -642,7 +671,7 @@ ValuePtr AbstractDictionary::RealBuildValue() const {
 
 TypePtr AbstractClass::BuildType() const {
   ClassAttrVector attributes_type;
-  for (auto attr : attributes_) {
+  for (const auto &attr : attributes_) {
     MS_EXCEPTION_IF_NULL(attr.second);
     TypePtr type = attr.second->BuildType();
     std::pair<std::string, TypePtr> elem(attr.first, type);
@@ -711,7 +740,7 @@ ValuePtr AbstractClass::GetMethod(const std::string &name) {
 
 AbstractBasePtr AbstractClass::Clone() const {
   std::vector<AbstractAttribute> attributes_clone;
-  for (auto attr : attributes_) {
+  for (const auto &attr : attributes_) {
     MS_EXCEPTION_IF_NULL(attr.second);
     AbstractBasePtr clone = attr.second->Clone();
     AbstractAttribute elem(attr.first, clone);
@@ -722,7 +751,7 @@ AbstractBasePtr AbstractClass::Clone() const {
 
 AbstractBasePtr AbstractClass::Broaden(uint8_t config) const {
   std::vector<AbstractAttribute> attributes_clone;
-  for (auto attr : attributes_) {
+  for (const auto &attr : attributes_) {
     MS_EXCEPTION_IF_NULL(attr.second);
     AbstractBasePtr clone = attr.second->Broaden(config);
     AbstractAttribute elem(attr.first, clone);
@@ -770,15 +799,18 @@ std::size_t AbstractClass::hash() const {
 }
 
 ValuePtr AbstractClass::RealBuildValue() const {
-  auto cls = BuildType()->cast<ClassPtr>();
+  auto type = BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  auto cls = type->cast<ClassPtr>();
   std::unordered_map<std::string, ValuePtr> attributes_value_map;
   for (const auto &attr : attributes_) {
     MS_EXCEPTION_IF_NULL(attr.second);
-    ValuePtr _value = attr.second->BuildValue();
-    if (_value->isa<AnyValue>()) {
+    ValuePtr value = attr.second->BuildValue();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<AnyValue>()) {
       return kAnyValue;
     }
-    attributes_value_map[attr.first] = _value;
+    attributes_value_map[attr.first] = value;
   }
   cls->set_value(attributes_value_map);
   return cls;
@@ -791,6 +823,7 @@ TypePtr AbstractJTagged::BuildType() const {
 }
 
 AbstractBasePtr AbstractJTagged::Join(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
   auto other_jtagged = dyn_cast<AbstractJTagged>(other);
   if (other_jtagged == nullptr) {
     MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
@@ -830,7 +863,9 @@ AbstractRef::AbstractRef(const AbstractBasePtr &ref_key, const AbstractTensorPtr
 }
 
 TypePtr AbstractRef::BuildType() const {
-  auto subtype = AbstractTensor::BuildType()->cast<TensorTypePtr>();
+  auto type = AbstractTensor::BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  auto subtype = type->cast<TensorTypePtr>();
   return std::make_shared<RefType>(subtype);
 }
 
@@ -865,25 +900,35 @@ AbstractBasePtr AbstractRefKey::Join(const AbstractBasePtr &other) {
 }
 
 AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
   auto other_ref = other->cast<AbstractRefPtr>();
   if (other_ref == nullptr) {
-    return AbstractTensor::Join(other)->cast<AbstractTensorPtr>();
+    auto join_abs = AbstractTensor::Join(other);
+    MS_EXCEPTION_IF_NULL(join_abs);
+    return join_abs->cast<AbstractTensorPtr>();
   }
+  MS_EXCEPTION_IF_NULL(ref_key_);
+  MS_EXCEPTION_IF_NULL(other_ref->ref_key_);
   if ((*this == *other) && (*ref_key_ == *other_ref->ref_key_)) {
     return shared_from_base<AbstractBase>();
   }
   auto ref_key = ref_key_->Join(other_ref->ref_key_);
-  auto ref = AbstractTensor::Join(other_ref->ref())->cast<AbstractTensorPtr>();
+  auto joined_abs_tensor = other_ref->ref();
+  MS_EXCEPTION_IF_NULL(joined_abs_tensor);
+  auto ref = AbstractTensor::Join(joined_abs_tensor);
   MS_EXCEPTION_IF_NULL(ref);
-  return std::make_shared<AbstractRef>(ref_key, ref);
+  auto ref_tensor = ref->cast<AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(ref_tensor);
+  return std::make_shared<AbstractRef>(ref_key, ref_tensor);
 }
 
 std::string AbstractRef::ToString() const {
   std::ostringstream buffer;
+  MS_EXCEPTION_IF_NULL(ref_key_);
   buffer << type_name() << "("
          << "key: " << ref_key_->ToString() << " ref_value: " << AbstractTensor::ToString();
   auto value = GetValueTrack();
-  if (value) {
+  if (value != nullptr) {
     buffer << ", value: " << value->ToString();
   }
   buffer << ")";
@@ -949,7 +994,7 @@ std::string AbstractRefKey::ToString() const {
   std::ostringstream buffer;
   buffer << type_name();
   auto value = GetValueTrack();
-  if (value) {
+  if (value != nullptr) {
     buffer << "(value: " << value->ToString() << ")";
   }
   return buffer.str();
@@ -1106,11 +1151,21 @@ AbstractBasePtr AbstractRowTensor::Clone() const {
   MS_EXCEPTION_IF_NULL(element());
   auto clone = std::make_shared<AbstractRowTensor>(element()->Clone());
   ShapePtr shp = shape();
+  MS_EXCEPTION_IF_NULL(shp);
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
-  clone->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
-  clone->set_values(values_->Clone()->cast<AbstractTensorPtr>());
-  clone->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
+  auto indices_clone = indices_->Clone();
+  auto value_clone = values_->Clone();
+  auto dense_clone = dense_shape_->Clone();
+  MS_EXCEPTION_IF_NULL(indices_clone);
+  MS_EXCEPTION_IF_NULL(value_clone);
+  MS_EXCEPTION_IF_NULL(dense_clone);
+  clone->set_indices(indices_clone->cast<AbstractTensorPtr>());
+  clone->set_values(value_clone->cast<AbstractTensorPtr>());
+  clone->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
   return clone;
 }
 
@@ -1118,11 +1173,21 @@ AbstractBasePtr AbstractRowTensor::Broaden(uint8_t config) const {
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape();
+  MS_EXCEPTION_IF_NULL(shp);
   broaden->set_shape(shp->Clone());
   broaden->set_value(kAnyValue);
-  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
+  auto indices_clone = indices_->Clone();
+  auto value_clone = values_->Clone();
+  auto dense_clone = dense_shape_->Clone();
+  MS_EXCEPTION_IF_NULL(indices_clone);
+  MS_EXCEPTION_IF_NULL(value_clone);
+  MS_EXCEPTION_IF_NULL(dense_clone);
+  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
+  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
   return broaden;
 }
 
@@ -1130,12 +1195,22 @@ AbstractBasePtr AbstractRowTensor::BroadenWithShape() const {
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape()->Clone();
+  MS_EXCEPTION_IF_NULL(shp);
   shp->Broaden();
   broaden->set_shape(shp);
   broaden->set_value(kAnyValue);
-  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
+  auto indices_clone = indices_->Clone();
+  auto value_clone = values_->Clone();
+  auto dense_clone = dense_shape_->Clone();
+  MS_EXCEPTION_IF_NULL(indices_clone);
+  MS_EXCEPTION_IF_NULL(value_clone);
+  MS_EXCEPTION_IF_NULL(dense_clone);
+  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
+  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
   return broaden;
 }
 
@@ -1146,6 +1221,9 @@ std::string AbstractRowTensor::ToString() const {
   MS_EXCEPTION_IF_NULL(element());
   auto value_track = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
   buffer << type_name() << "("
          << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
          << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
@@ -1165,11 +1243,21 @@ AbstractBasePtr AbstractSparseTensor::Clone() const {
   MS_EXCEPTION_IF_NULL(element());
   auto clone = std::make_shared<AbstractSparseTensor>(element()->Clone());
   ShapePtr shp = shape();
+  MS_EXCEPTION_IF_NULL(shp);
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
-  clone->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
-  clone->set_values(values_->Clone()->cast<AbstractTensorPtr>());
-  clone->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
+  auto indices_clone = indices_->Clone();
+  auto value_clone = values_->Clone();
+  auto dense_clone = dense_shape_->Clone();
+  MS_EXCEPTION_IF_NULL(indices_clone);
+  MS_EXCEPTION_IF_NULL(value_clone);
+  MS_EXCEPTION_IF_NULL(dense_clone);
+  clone->set_indices(indices_clone->cast<AbstractTensorPtr>());
+  clone->set_values(value_clone->cast<AbstractTensorPtr>());
+  clone->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
   return clone;
 }
 
@@ -1177,24 +1265,46 @@ AbstractBasePtr AbstractSparseTensor::Broaden(uint8_t config) const {
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
   auto shp = shape();
+  MS_EXCEPTION_IF_NULL(shp);
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
+  auto indices_clone = indices_->Clone();
+  auto value_clone = values_->Clone();
+  auto dense_clone = dense_shape_->Clone();
+  MS_EXCEPTION_IF_NULL(indices_clone);
+  MS_EXCEPTION_IF_NULL(value_clone);
+  MS_EXCEPTION_IF_NULL(dense_clone);
   broaden->set_shape(shp->Clone());
   broaden->set_value(kAnyValue);
-  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
+  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
   return broaden;
 }
 
 AbstractBasePtr AbstractSparseTensor::BroadenWithShape() const {
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
-  auto shp = shape()->Clone();
+  auto this_shape = shape();
+  MS_EXCEPTION_IF_NULL(this_shape);
+  auto shp = this_shape->Clone();
+  MS_EXCEPTION_IF_NULL(shp);
   shp->Broaden();
   broaden->set_shape(shp);
   broaden->set_value(kAnyValue);
-  broaden->set_indices(indices_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_values(values_->Clone()->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_shape_->Clone()->cast<AbstractTuplePtr>());
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
+  auto indices_clone = indices_->Clone();
+  auto value_clone = values_->Clone();
+  auto dense_clone = dense_shape_->Clone();
+  MS_EXCEPTION_IF_NULL(indices_clone);
+  MS_EXCEPTION_IF_NULL(value_clone);
+  MS_EXCEPTION_IF_NULL(dense_clone);
+  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
+  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
+  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
   return broaden;
 }
 
@@ -1205,6 +1315,9 @@ std::string AbstractSparseTensor::ToString() const {
   MS_EXCEPTION_IF_NULL(element());
   auto value_track = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(dense_shape_);
   buffer << type_name() << "("
          << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
          << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
@@ -1218,8 +1331,12 @@ AbstractBasePtr AbstractUMonad::Join(const AbstractBasePtr &other) {
   if (other->isa<AbstractUMonad>()) {
     return shared_from_base<AbstractBase>();
   }
-  MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << GetTypeTrack()->ToString()
-                          << ", type2 = " << other->GetTypeTrack()->ToString();
+  auto this_type = GetTypeTrack();
+  auto other_type = other->GetTypeTrack();
+  MS_EXCEPTION_IF_NULL(this_type);
+  MS_EXCEPTION_IF_NULL(other);
+  MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << this_type->ToString()
+                          << ", type2 = " << other_type->ToString();
 }
 
 bool AbstractUMonad::operator==(const AbstractUMonad &) const { return true; }
@@ -1236,8 +1353,12 @@ AbstractBasePtr AbstractIOMonad::Join(const AbstractBasePtr &other) {
   if (other->isa<AbstractIOMonad>()) {
     return shared_from_base<AbstractBase>();
   }
-  MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << GetTypeTrack()->ToString()
-                          << ", type2 = " << other->GetTypeTrack()->ToString();
+  auto this_type = GetTypeTrack();
+  auto other_type = other->GetTypeTrack();
+  MS_EXCEPTION_IF_NULL(this_type);
+  MS_EXCEPTION_IF_NULL(other);
+  MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << this_type->ToString()
+                          << ", type2 = " << other_type->ToString();
 }
 
 bool AbstractIOMonad::operator==(const AbstractIOMonad &) const { return true; }

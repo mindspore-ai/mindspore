@@ -103,9 +103,12 @@ std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &ar
 template <typename T>
 void CheckArgsSpec(const AbstractBasePtrList &args_list) {
   for (const auto &arg : args_list) {
+    MS_EXCEPTION_IF_NULL(arg);
     if (!arg->isa<T>()) {
-      MS_EXCEPTION(TypeError) << "Expected type " << ReportNameTraits<T>::name << ", but got "
-                              << arg->BuildType()->ToString() << ".";
+      auto type = arg->BuildType();
+      MS_EXCEPTION_IF_NULL(type);
+      MS_EXCEPTION(TypeError) << "Expected type " << ReportNameTraits<T>::name << ", but got " << type->ToString()
+                              << ".";
     }
   }
   (void)AbstractJoin(args_list);
