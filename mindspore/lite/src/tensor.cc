@@ -211,7 +211,12 @@ int Tensor::ElementsNum() const {
   if (this->category_ == CONST_SCALAR) {
     return 1;
   }
-  return std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int>());
+  auto num = std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int64_t>());
+  if (num > (int64_t)INT32_MAX) {
+    MS_LOG(ERROR) << "Element number of tensor shouder be smaller than int32_max: " << num << " return INT32_MAX";
+    return INT32_MAX;
+  }
+  return (int32_t)num;
 }
 
 int32_t Tensor::ElementsC4Num() const {
@@ -294,6 +299,7 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
     allocator_ = allocator;
   }
   auto data_size = this->Size();
+
   if (data_size > kMaxMallocSize) {
     MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
     return RET_ERROR;

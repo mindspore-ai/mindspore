@@ -87,6 +87,11 @@ kernel::InnerKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tenso
                                                    OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                    int group) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  if (conv_param->group_ > conv_param->input_channel_ || conv_param->input_channel_ % conv_param->group_ != 0) {
+    MS_LOG(ERROR) << "group num " << conv_param->group_ << " is invalid for input channel "
+                  << conv_param->input_channel_;
+    return nullptr;
+  }
   GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, true, kNumberTypeInt8);
   group_conv_creator.SetShapeOfTensors();
   for (int i = 0; i < conv_param->group_; ++i) {

@@ -233,6 +233,9 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
         return RET_ERROR;
       }
     }
+  } else if (ret != RET_INFER_INVALID) {
+    free(parameter);
+    op_parameters_[node->output_indices_.at(0)] = nullptr;
   }
   return ret;
 }

@@ -28,7 +28,7 @@ int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vect
 int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
 void FreeTensorListC(TensorListC *tensorListC);
-void Tensor2TensorC(Tensor *src, TensorC *dst);
+int Tensor2TensorC(Tensor *src, TensorC *dst);
 void TensorC2Tensor(TensorC *src, Tensor *dst);
 int TensorList2TensorListC(TensorList *src, TensorListC *dst);
 int TensorListC2TensorList(TensorListC *src, TensorList *dst);
