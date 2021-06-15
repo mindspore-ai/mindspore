@@ -37,11 +37,13 @@ void ActorThreadPool::AsyncRunMultiTask(Worker *worker) {
   THREAD_RETURN_IF_NULL(worker);
   while (alive_) {
     if (RunLocalKernelTask(worker) || RunPoolQueueActorTask()) {
+      // only run either local KernelTask or PoolQueue ActorTask
     } else {
       // wait until Actor enqueue or distribute KernelTask
-      std::unique_lock<std::mutex> _l(worker->mutex);
       worker->running = false;
-      worker->cond_var.wait(_l, [&] { return worker->running || !alive_; });
+      std::unique_lock<std::mutex> _l(worker->mutex);
+      worker->cond_var.wait(
+        _l, [&] { return worker->task != nullptr || (worker->running && !actor_queue_.empty()) || !alive_; });
     }
   }
 }
