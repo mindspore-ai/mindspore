@@ -31,6 +31,9 @@ class ClassSensitivity(LabelAgnosticMetric):
     computing the correlation between saliency maps of highest-confidence and lowest-confidence labels. Explainer with
     better class sensitivity will receive lower correlation score. To make the evaluation results intuitive, the
     returned score will take negative on correlation and normalize.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def evaluate(self, explainer, inputs):
@@ -43,6 +46,9 @@ class ClassSensitivity(LabelAgnosticMetric):
 
         Returns:
             numpy.ndarray, 1D array of shape :math:`(N,)`, result of class sensitivity evaluated on `explainer`.
+
+        Raises:
+            TypeError: Be raised for any argument type problem.
 
         Examples:
             >>> import numpy as np

@@ -35,6 +35,12 @@ class Robustness(LabelSensitiveMetric):
             single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification
             tasks, `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long
             as when combining this function with network, the final output is the probability of the input.
+
+    Raises:
+        TypeError: Be raised for any argument type problem.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def __init__(self, num_labels, activation_fn):

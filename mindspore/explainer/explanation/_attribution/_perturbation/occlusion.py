@@ -65,7 +65,14 @@ class Occlusion(PerturbationAttribution):
           If it is a 1D tensor, its length should be the same as `inputs`.
 
     Outputs:
-        Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
+        Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`, saliency maps.
+
+    Raises:
+        TypeError: Be raised for any argument or input type problem.
+        ValueError: Be raised for any input value problem.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Example:
         >>> import numpy as np

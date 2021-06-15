@@ -112,6 +112,8 @@ class NaiveFaithfulness(_FaithfulnessHelper):
             'Constant': base_value (int)
             'GaussianBlur': sigma (float): 0.7
 
+    Raises:
+        ValueError: Be raised for any argument value problem.
     """
 
     def __init__(self,
@@ -203,6 +205,8 @@ class DeletionAUC(_FaithfulnessHelper):
             'Constant': base_value (int)
             'GaussianBlur': sigma (float): 0.7
 
+    Raises:
+        ValueError: Be raised for any argument value problem.
     """
 
     def __init__(self,
@@ -282,6 +286,8 @@ class InsertionAUC(_FaithfulnessHelper):
             'Constant': base_value (int)
             'GaussianBlur': sigma (float): 0.7
 
+    Raises:
+        ValueError: Be raised for any argument value problem.
     """
 
     def __init__(self,
@@ -315,7 +321,6 @@ class InsertionAUC(_FaithfulnessHelper):
 
         Return:
             - faithfulness (float): faithfulness score
-
         """
         reference = self._get_reference(inputs)
         masks = self._ablation.generate_mask(saliency, inputs.shape[1])
@@ -365,6 +370,12 @@ class Faithfulness(LabelSensitiveMetric):
         metric (str, optional): The specifi metric to quantify faithfulness.
             Options: "DeletionAUC", "InsertionAUC", "NaiveFaithfulness".
             Default: 'NaiveFaithfulness'.
+
+    Raises:
+        TypeError: Be raised for any argument type problem.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
     _methods = [NaiveFaithfulness, DeletionAUC, InsertionAUC]
 

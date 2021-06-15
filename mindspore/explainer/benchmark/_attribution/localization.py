@@ -57,6 +57,12 @@ class Localization(LabelSensitiveMetric):
         num_labels (int): Number of classes in the dataset.
         metric (str, optional): Specific metric to calculate localization capability.
             Options: "PointingGame", "IoSR". Default: "PointingGame".
+
+    Raises:
+        TypeError: Be raised for any argument type problem.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def __init__(self,
@@ -102,6 +108,9 @@ class Localization(LabelSensitiveMetric):
 
         Returns:
             numpy.ndarray, 1D array of shape :math:`(N,)`, result of localization evaluated on `explainer`.
+
+        Raises:
+            ValueError: Be raised for any argument value problem.
 
         Examples:
             >>> import numpy as np
