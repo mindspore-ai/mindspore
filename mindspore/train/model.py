@@ -69,7 +69,7 @@ class Model:
         metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
                         training and testing. eg: {'accuracy', 'recall'}. Default: None.
         eval_network (Cell): Network for evaluation. If not defined, `network` and `loss_fn` would be wrapped as
-                             `eval_network`. Default: None.
+                             `eval_network` . Default: None.
         eval_indexes (list): When defining the `eval_network`, if `eval_indexes` is None, all outputs of the
                              `eval_network` would be passed to metrics, otherwise `eval_indexes` must contain three
                              elements, including the positions of loss value, predicted value and label. The loss
@@ -77,18 +77,18 @@ class Model:
                              to other metric. Default: None.
 
         Args:
-        amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
+        amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network` , level for mixed
             precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
 
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
-            - O3: Cast network to float16, with additional property `keep_batchnorm_fp32=False`.
+            - O3: Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
             - auto: Set to level to recommended level in different devices. Set level to O2 on GPU, Set
               level to O3 Ascend. The recommended level is choose by the export experience, cannot
               always general. User should specify the level for special network.
 
             O2 is recommended on GPU, O3 is recommended on Ascend.The more detailed explanation of `amp_level` setting
-            can be found at `mindspore.amp.build_train_network`.
+            can be found at `mindspore.amp.build_train_network` .
     Examples:
         >>> from mindspore import Model, nn
         >>>
