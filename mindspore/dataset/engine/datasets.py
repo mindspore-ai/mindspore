@@ -930,9 +930,9 @@ class Dataset:
 
                 - Any size equals 0, an error will occur.
                 - The sum of split sizes < K, the difference of K - sigma(round(fi * k)) will be added to the first
-                split.
+                  split.
                 - The sum of split sizes > K, the difference of sigma(round(fi * K)) - K will be removed from the first
-                large enough split such that it will have at least 1 row after removing the difference.
+                  large enough split such that it will have at least 1 row after removing the difference.
 
             randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
                 If True, the data will be randomly split. Otherwise, each split will be created with

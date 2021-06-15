@@ -208,85 +208,85 @@ class GraphData:
         :widths: 20 20 20 20 20
         :header-rows: 1
 
-        * -
-          - 0
-          - 1
-          - 2
-          - 3
-        * - 0
-          - 0
-          - 1
-          - 0
-          - 0
-        * - 1
-          - 0
-          - 0
-          - 1
-          - 0
-        * - 2
-          - 1
-          - 0
-          - 0
-          - 1
-        * - 3
-          - 1
-          - 0
-          - 0
-          - 0
+           * -
+             - 0
+             - 1
+             - 2
+             - 3
+           * - 0
+             - 0
+             - 1
+             - 0
+             - 0
+           * - 1
+             - 0
+             - 0
+             - 1
+             - 0
+           * - 2
+             - 1
+             - 0
+             - 0
+             - 1
+           * - 3
+             - 1
+             - 0
+             - 0
+             - 0
 
         .. list-table:: Normal Format
-        :widths: 20 20 20 20 20
-        :header-rows: 1
+           :widths: 20 20 20 20 20
+           :header-rows: 1
 
-        * - src
-          - 0
-          - 1
-          - 2
-          - 3
-        * - dst_0
-          - 1
-          - 2
-          - 0
-          - 1
-        * - dst_1
-          - -1
-          - -1
-          - 3
-          - -1
+           * - src
+             - 0
+             - 1
+             - 2
+             - 3
+           * - dst_0
+             - 1
+             - 2
+             - 0
+             - 1
+           * - dst_1
+             - -1
+             - -1
+             - 3
+             - -1
 
         .. list-table:: COO Format
-        :widths: 20 20 20 20 20 20
-        :header-rows: 1
+           :widths: 20 20 20 20 20 20
+           :header-rows: 1
 
-        * - src
-          - 0
-          - 1
-          - 2
-          - 2
-          - 3
-        * - dst
-          - 1
-          - 2
-          - 0
-          - 3
-          - 1
+           * - src
+             - 0
+             - 1
+             - 2
+             - 2
+             - 3
+           * - dst
+             - 1
+             - 2
+             - 0
+             - 3
+             - 1
 
         .. list-table:: CSR Format
-        :widths: 40 20 20 20 20 20
-        :header-rows: 1
+           :widths: 40 20 20 20 20 20
+           :header-rows: 1
 
-        * - offsetTable
-          - 0
-          - 1
-          - 2
-          - 4
-          -
-        * - dstTable
-          - 1
-          - 2
-          - 0
-          - 3
-          - 1
+           * - offsetTable
+             - 0
+             - 1
+             - 2
+             - 4
+             -
+           * - dstTable
+             - 1
+             - 2
+             - 0
+             - 3
+             - 1
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
