@@ -35,6 +35,7 @@
 #include "debug/common.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "utils/log_adapter.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 // namespace to support debug trace information
@@ -605,5 +606,20 @@ struct TraceProviderRegister {
   }
   ~TraceProviderRegister() = default;
 } trace_provider_regsiter;
+
+// Register trace cnode provider to AbstractBase.
+struct TraceNodeProviderRegister {
+  TraceNodeProviderRegister() {
+    abstract::AbstractBase::set_trace_node_provider([](AnfNodePtr *node) {
+      auto stack = GetCNodeDebugStack();
+      if (!stack.empty()) {
+        auto conf = stack.back();
+        MS_EXCEPTION_IF_NULL(conf);
+        *node = conf->node();
+      }
+    });
+  }
+  ~TraceNodeProviderRegister() = default;
+} trace_node_provider_regsiter;
 }  // namespace trace
 }  // namespace mindspore

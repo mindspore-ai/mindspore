@@ -18,14 +18,73 @@
 
 #include "abstract/abstract_value.h"
 
+#include <regex>
 #include <algorithm>
 
 #include "utils/symbolic.h"
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace abstract {
+AnfNodePtr GetTraceNode(const AbstractBasePtr &abs) {
+  AnfNodePtr node = nullptr;
+  if (abs->trace_node_provider_ != nullptr) {
+    abs->trace_node_provider_(&node);
+  }
+  return node;
+}
+
+inline void AbstractTypeJoinLogging(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
+  std::ostringstream oss;
+  oss << "Type Join Failed: abstract type " << abstract1->type_name() << " cannot not join with "
+      << abstract2->type_name() << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
+      << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
+  auto node = GetTraceNode(abstract1);
+  if (node != nullptr) {
+    oss << ". Please check the node " << node->DebugString() << ". trace: " << trace::DumpSourceLines(node);
+  }
+  MS_EXCEPTION(TypeError) << oss.str();
+}
+
+inline void TypeJoinLogging(const TypePtr &type1, const TypePtr &type2, const AbstractBasePtr &abstract1,
+                            const AbstractBasePtr &abstract2) {
+  std::ostringstream oss;
+  oss << "Type Join Failed: dtype1 = " << type1->ToString() << ", dtype2 = " << type2->ToString()
+      << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
+      << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
+  auto node = GetTraceNode(abstract1);
+  if (node != nullptr) {
+    oss << ". Please check the node " << node->DebugString() << ". trace: " << trace::DumpSourceLines(node);
+  }
+  MS_EXCEPTION(TypeError) << oss.str();
+}
+
+inline void ShapeJoinLogging(const BaseShapePtr &shape1, const BaseShapePtr &shape2, const AbstractBasePtr &abstract1,
+                             const AbstractBasePtr &abstract2) {
+  std::ostringstream oss;
+  oss << "Shape Join Failed: shape1 = " << shape1->ToString() << ", shape2 = " << shape2->ToString()
+      << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
+      << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
+  auto node = GetTraceNode(abstract1);
+  if (node != nullptr) {
+    oss << ". Please check the node " << node->DebugString() << ". trace: " << trace::DumpSourceLines(node);
+  }
+  MS_EXCEPTION(ValueError) << oss.str();
+}
+
+std::string ExtractLoggingInfo(const std::string &info) {
+  // Extract log information based on the keyword "Type Join Failed" or "Shape Join Failed"
+  std::regex e("(Type Join Failed|Shape Join Failed).*?\\.");
+  std::smatch result;
+  bool found = std::regex_search(info, result, e);
+  if (found) {
+    return result.str();
+  }
+  return "";
+}
+
 bool AbstractBase::operator==(const AbstractBase &other) const {
   if (tid() != other.tid()) {
     return false;
@@ -112,15 +171,14 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   if (*this == *other) {
     return shared_from_base<AbstractBase>();
   }
-  auto value_self = GetValueTrack();
-  MS_EXCEPTION_IF_NULL(value_self);
-  TypePtr res_type = TypeJoin(GetTypeTrack(), other->GetTypeTrack());
-  auto value_other = other->GetTypeTrack();
-  MS_EXCEPTION_IF_NULL(value_other);
+  auto type_self = GetTypeTrack();
+  auto type_other = other->GetTypeTrack();
+  TypePtr res_type = TypeJoin(type_self, type_other);
   if (res_type == kAnyType) {
-    MS_LOG(ERROR) << "Type join failed, type1 = " << value_self->ToString() << ", type2 = " << value_other->ToString();
-    return nullptr;
+    TypeJoinLogging(type_self, type_other, shared_from_base<AbstractBase>(), other);
   }
+  auto value_self = GetValueTrack();
+  auto value_other = other->GetValueTrack();
   ValuePtr res_value = ValueJoin(value_self, value_other);
   if (res_value == value_self) {
     return shared_from_base<AbstractBase>();
@@ -187,7 +245,7 @@ AbstractBasePtr AbstractFunction::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   auto other_func = dyn_cast<AbstractFunction>(other);
   if (other_func == nullptr) {
-    MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
+    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
   return Join(other_func);
 }
@@ -281,15 +339,10 @@ AbstractBasePtr AbstractSequeue::ElementsJoin(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   auto other_sequeue = dyn_cast<T>(other);
   if (other_sequeue == nullptr) {
-    MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
+    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
   auto joined_list = AbstractJoin(elements_, other_sequeue->elements_);
   bool changes = false;
-  if (elements_.size() > joined_list.size()) {
-    MS_EXCEPTION(IndexError) << "Abstract " << ToString() << "'s size is " << elements_.size()
-                             << " but element joined  abstract " << other->ToString() << "with the the size "
-                             << joined_list.size();
-  }
   for (std::size_t i = 0; i < elements_.size(); i++) {
     if (elements_[i] != joined_list[i]) {
       changes = true;
@@ -469,29 +522,41 @@ BaseShapePtr AbstractTensor::BuildShape() const {
 AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   auto type = other->BuildType();
-  MS_EXCEPTION_IF_NULL(element_);
   MS_EXCEPTION_IF_NULL(type);
+  MS_EXCEPTION_IF_NULL(element_);
+
+  // AbstractTensor join with AbstractUndetermined
   if (type->type_id() == kObjectTypeUndeterminedType) {
     auto other_undetermined_tensor = dyn_cast<AbstractUndetermined>(other);
     MS_EXCEPTION_IF_NULL(other_undetermined_tensor);
-    auto element = element_->Join(other_undetermined_tensor->element());
-    if (element == nullptr) {
-      return nullptr;
+    // check shape
+    auto res_shape = ShapeJoin(shape(), other_undetermined_tensor->shape());
+    if (res_shape == nullptr) {
+      ShapeJoinLogging(shape(), other_undetermined_tensor->shape(), shared_from_base<AbstractBase>(), other);
     }
-    return std::make_shared<AbstractUndetermined>(element, ShapeJoin(shape(), other_undetermined_tensor->shape()));
+    // check element
+    auto element = element_->Join(other_undetermined_tensor->element());
+    MS_EXCEPTION_IF_NULL(element);
+    return std::make_shared<AbstractUndetermined>(element, res_shape);
   }
+
+  // AbstractTensor join with AbstractTensor
   auto other_tensor = dyn_cast<AbstractTensor>(other);
   if (other_tensor == nullptr) {
-    MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
+    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
   if (*this == *other) {
     return shared_from_base<AbstractBase>();
   }
-  auto element = element_->Join(other_tensor->element_);
-  if (element == nullptr) {
-    return nullptr;
+  // check shape
+  auto res_shape = ShapeJoin(this->shape(), other_tensor->shape());
+  if (res_shape == nullptr) {
+    ShapeJoinLogging(shape(), other_tensor->shape(), shared_from_base<AbstractBase>(), other);
   }
-  return std::make_shared<AbstractTensor>(element, ShapeJoin(this->shape(), other_tensor->shape()));
+  // check element
+  auto element = element_->Join(other_tensor->element_);
+  MS_EXCEPTION_IF_NULL(element);
+  return std::make_shared<AbstractTensor>(element, res_shape);
 }
 
 bool AbstractTensor::equal_to(const AbstractTensor &other) const {
@@ -826,7 +891,7 @@ AbstractBasePtr AbstractJTagged::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   auto other_jtagged = dyn_cast<AbstractJTagged>(other);
   if (other_jtagged == nullptr) {
-    MS_LOG(EXCEPTION) << "Join failed as type mismatch, this: " << ToString() << ", other: " << other->ToString();
+    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
   auto joined_elem = element_->Join(other_jtagged->element_);
   return std::make_shared<AbstractJTagged>(joined_elem);
@@ -1328,15 +1393,14 @@ std::string AbstractSparseTensor::ToString() const {
 
 AbstractBasePtr AbstractUMonad::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
-  if (other->isa<AbstractUMonad>()) {
-    return shared_from_base<AbstractBase>();
+  if (!other->isa<AbstractUMonad>()) {
+    auto this_type = GetTypeTrack();
+    auto other_type = other->GetTypeTrack();
+    MS_EXCEPTION_IF_NULL(this_type);
+    MS_EXCEPTION_IF_NULL(other);
+    TypeJoinLogging(this_type, other_type, shared_from_base<AbstractBase>(), other);
   }
-  auto this_type = GetTypeTrack();
-  auto other_type = other->GetTypeTrack();
-  MS_EXCEPTION_IF_NULL(this_type);
-  MS_EXCEPTION_IF_NULL(other);
-  MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << this_type->ToString()
-                          << ", type2 = " << other_type->ToString();
+  return shared_from_base<AbstractBase>();
 }
 
 bool AbstractUMonad::operator==(const AbstractUMonad &) const { return true; }
@@ -1350,15 +1414,14 @@ bool AbstractUMonad::operator==(const AbstractBase &other) const {
 
 AbstractBasePtr AbstractIOMonad::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
-  if (other->isa<AbstractIOMonad>()) {
-    return shared_from_base<AbstractBase>();
+  if (!other->isa<AbstractIOMonad>()) {
+    auto this_type = GetTypeTrack();
+    auto other_type = other->GetTypeTrack();
+    MS_EXCEPTION_IF_NULL(this_type);
+    MS_EXCEPTION_IF_NULL(other);
+    TypeJoinLogging(this_type, other_type, shared_from_base<AbstractBase>(), other);
   }
-  auto this_type = GetTypeTrack();
-  auto other_type = other->GetTypeTrack();
-  MS_EXCEPTION_IF_NULL(this_type);
-  MS_EXCEPTION_IF_NULL(other);
-  MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << this_type->ToString()
-                          << ", type2 = " << other_type->ToString();
+  return shared_from_base<AbstractBase>();
 }
 
 bool AbstractIOMonad::operator==(const AbstractIOMonad &) const { return true; }

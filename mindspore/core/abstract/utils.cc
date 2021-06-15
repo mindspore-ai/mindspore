@@ -115,8 +115,7 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
     if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().size() == 0) {
       return shape2;
     }
-    MS_EXCEPTION(ValueError) << "Unsupported shape join. shape1 = " << shape1->ToString()
-                             << ", shape2 = " << shape2->ToString();
+    return nullptr;
   }
   ShapeVector dims;
   bool has_dynamic_shape = false;
