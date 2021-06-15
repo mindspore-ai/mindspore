@@ -35,16 +35,16 @@ class QuantDTypeCastCPUKernel : public InnerKernel {
 
  private:
   int thread_num_;
-  int thread_n_num_;
-  int thread_n_stride_;
-  int num_unit_;
+  int thread_n_num_{0};
+  int thread_n_stride_{0};
+  int num_unit_{0};
   int8_t *int8_ptr_ = nullptr;
   int8_t *int8_out_ptr_ = nullptr;
   uint8_t *uint8_ptr_ = nullptr;
   float *float32_ptr_ = nullptr;
 
-  int32_t src_dtype;
-  int32_t dst_dtype;
+  int32_t src_dtype{0};
+  int32_t dst_dtype{0};
 };
 }  // namespace mindspore::kernel
 

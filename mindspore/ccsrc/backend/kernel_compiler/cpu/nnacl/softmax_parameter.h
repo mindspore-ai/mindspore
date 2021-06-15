@@ -25,7 +25,7 @@ typedef struct SoftmaxParameter {
   int32_t axis_;
 
   // shape correlative
-  int input_shape_[5];
+  int input_shape_[DIMENSION_5D];
 
   // other parameter
   int element_size_;

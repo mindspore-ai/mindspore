@@ -60,8 +60,8 @@ class ConcatInt8CPUKernel : public InnerKernel {
   int DoExecute(int task_id);
 
  private:
-  int64_t before_axis_size;
-  int64_t count_unit_;
+  int64_t before_axis_size = 0;
+  int64_t count_unit_ = 0;
   int8_t **input_data_ = nullptr;
   int8_t *output_data_ = nullptr;
   ConcatParameter *concat_param_ = nullptr;

@@ -40,7 +40,7 @@ class ReluXInt8CPUKernel : public InnerKernel {
   ReluXQuantArg quant_arg_;
 
  private:
-  int type_;
+  int type_{0};
 };
 
 class ReluInt8CPUKernel : public ReluXInt8CPUKernel {

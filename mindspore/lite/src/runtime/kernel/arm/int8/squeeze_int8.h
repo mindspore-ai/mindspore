@@ -39,7 +39,7 @@ class SqueezeInt8CPUKernel : public InnerKernel {
   int DoExecute(int tId);
 
  private:
-  SqueezeQuantArg *quant_squeeze_param_;
+  SqueezeQuantArg *quant_squeeze_param_{nullptr};
 };
 
 int SqueezeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);

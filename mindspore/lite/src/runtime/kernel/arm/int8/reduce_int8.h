@@ -83,7 +83,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   ReduceParameter *param_ = nullptr;
   ReduceQuantArg quant_arg_;
   int8_t *nchw_in_data_ = nullptr;
-  int32_t bias_;
+  int32_t bias_ = 0;
 
  private:
   const lite::InnerContext *ctx_;

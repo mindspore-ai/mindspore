@@ -37,7 +37,7 @@ class GatherInt8CPUKernel : public InnerKernel {
 
  private:
   int thread_count_;
-  int axis_;
+  int axis_{0};
   GatherQuantArg param_;
 };
 }  // namespace mindspore::kernel

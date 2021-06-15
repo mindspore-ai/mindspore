@@ -40,8 +40,8 @@ class ReshapeInt8CPUKernel : public InnerKernel {
   int DoExecute(int task_id);
 
  private:
-  int64_t elements_num_;
-  int64_t count_unit_;
+  int64_t elements_num_ = 0;
+  int64_t count_unit_ = 0;
   int8_t *input_data_ = nullptr;
   int8_t *output_data_ = nullptr;
   ReshapeParameter *reshape_param_ = nullptr;

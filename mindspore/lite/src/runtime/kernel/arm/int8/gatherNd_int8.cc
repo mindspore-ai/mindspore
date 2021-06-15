@@ -73,17 +73,25 @@ int GatherNdInt8CPUKernel::ReSize() {
   }
   (void)memset(in_offset_, 0, count_ * sizeof(int));
   thread_sz_count_ = MSMIN(thread_count_, count_);
+  if (thread_sz_count_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   thread_sz_stride_ = UP_DIV(count_, thread_sz_count_);
   return RET_OK;
 }
 
-void GatherNdInt8CPUKernel::InitOffset() {
+int GatherNdInt8CPUKernel::InitOffset() {
   auto ind_quant_args = in_tensors_.at(1)->quant_params();
   auto indices_tensor = in_tensors_.at(1);
   auto indices_shape = indices_tensor->shape();
   int indices_rank = indices_shape.size();
   auto in_shape = in_tensors_.front()->shape();
   int in_rank = in_shape.size();
+  if (indices_rank < 1) {
+    MS_LOG(ERROR) << "inex out of bounds";
+    return RET_ERROR;
+  }
   int idx_lastshape = indices_shape.at(indices_rank - 1);
   auto indices_ptr = reinterpret_cast<int8_t *>(indices_tensor->MutableData());
   area_ = 1;
@@ -104,6 +112,7 @@ void GatherNdInt8CPUKernel::InitOffset() {
       in_offset_[j] += tmp * in_stride[k];
     }
   }
+  return RET_OK;
 }
 
 int GatherNdInt8CPUKernel::DoGatherNd(int task_id) {
@@ -133,9 +142,12 @@ int GatherNdInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 int GatherNdInt8CPUKernel::Run() {
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.front()->MutableData());
-  InitOffset();
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(GatherNdInt8Run, this, thread_sz_count_);
+  auto ret = InitOffset();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(GatherNdInt8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";
     return ret;

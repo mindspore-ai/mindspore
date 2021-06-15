@@ -39,7 +39,7 @@ class QuantizedAddCPUKernel : public InnerKernel {
   int DoExecute(int tId);
 
  private:
-  void BroadcastRun(int task_id);
+  int BroadcastRun(int task_id);
 
  private:
   AddQuantParameter *para_ = nullptr;

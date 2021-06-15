@@ -149,11 +149,15 @@ int AddInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return RET_OK;
 }
 
-void QuantizedAddCPUKernel::BroadcastRun(int task_id) {
+int QuantizedAddCPUKernel::BroadcastRun(int task_id) {
+  if (thread_count_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   int stride = UP_DIV(out_size_, thread_count_);
   int real_out_count = MSMIN(stride, out_size_ - stride * task_id);
   if (real_out_count <= 0) {
-    return;
+    return RET_OK;
   }
   int8_t *cur_in0 = nullptr;
   int8_t *cur_in1 = nullptr;
@@ -174,17 +178,20 @@ void QuantizedAddCPUKernel::BroadcastRun(int task_id) {
     AddInt8(cur_in0, cur_in1, cur_out, in_size_, para_);
 #endif
   }
-  return;
+  return RET_OK;
 }
 
 int QuantizedAddCPUKernel::DoExecute(int task_id) {
   /* need broadcast */
   if (arith_para_->broadcasting_) {
-    BroadcastRun(task_id);
-    return RET_OK;
+    return BroadcastRun(task_id);
   }
 
   /* no need broadcast */
+  if (thread_count_ == 0) {
+    MS_LOG(ERROR) << "div zero";
+    return RET_ERROR;
+  }
   int stride = UP_DIV(elements_num_, thread_count_);
   int rest_count = elements_num_ - task_id * stride;
   int real_count = MSMIN(stride, rest_count);

@@ -41,13 +41,13 @@ class Unsqueezeint8CPUKernel : public InnerKernel {
   int DoUnsqueeze(int task_id);
 
  private:
-  UnSqueezeParameter *param_;
-  int thread_sz_count_;
-  int thread_sz_stride_;
-  int data_size_;
-  float *in_ptr_;
-  float *out_ptr_;
-  int thread_count_;
+  UnSqueezeParameter *param_{nullptr};
+  int thread_sz_count_{0};
+  int thread_sz_stride_{0};
+  int data_size_{0};
+  float *in_ptr_{nullptr};
+  float *out_ptr_{nullptr};
+  int thread_count_{0};
 };
 }  // namespace mindspore::kernel
 

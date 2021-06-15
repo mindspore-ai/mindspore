@@ -38,10 +38,10 @@ class ReduceBaseCPUKernel : public InnerKernel {
   int CheckParameters();
 
  protected:
-  int axes_[MAX_SHAPE_SIZE];
-  int num_axes_;
-  int mode_;
-  bool reduce_to_end_;
+  int axes_[MAX_SHAPE_SIZE] = {0};
+  int num_axes_{0};
+  int mode_{0};
+  bool reduce_to_end_{false};
 
  protected:
   void CalculateTmpBufferSize();
@@ -50,9 +50,9 @@ class ReduceBaseCPUKernel : public InnerKernel {
   std::vector<int> outer_sizes_;
   std::vector<int> inner_sizes_;
   std::vector<int> axis_sizes_;
-  int outer_size_;
-  int inner_size_;
-  int axis_size_;
+  int outer_size_{0};
+  int inner_size_{0};
+  int axis_size_{0};
 };
 }  // namespace mindspore::kernel
 

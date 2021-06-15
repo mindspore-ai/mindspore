@@ -49,9 +49,9 @@ class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
   int RunImpl(int task_id);
 
  private:
-  QuantArg *quant_in_;
-  QuantArg *quant_out_;
-  QuantMulArg *multiplier_;
+  QuantArg *quant_in_{nullptr};
+  QuantArg *quant_out_{nullptr};
+  QuantMulArg *multiplier_{nullptr};
   ResizeQuantArg resize_quant_arg_;
   ResizeFloatScaleQuantArg resize_float_quant_arg_;
 };
