@@ -31,12 +31,12 @@ void ConvSingleInFusionPass::MatchConvSingleInEltwise(const CNodePtr &cnode, con
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::unordered_set<AnfNodePtr> record{cnode};
-  auto eltwise_input = cnode->input(1);
+  auto eltwise_input = cnode->input(kIndex1);
   while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
-    eltwise_input = input_cnode->input(1);
+    eltwise_input = input_cnode->input(kIndex1);
     if (record.size() == MAX_ELTWISE_NUM) {
       break;
     }

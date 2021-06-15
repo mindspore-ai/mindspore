@@ -40,8 +40,8 @@ constexpr auto kAttrChannelMultiplier = "channel_multiplier";
 constexpr auto kAttrPerm = "perm";
 constexpr auto kAttrInputSizes = "input_sizes";
 constexpr auto kAttrInputSize = "input_size";
-constexpr auto kInput2 = 2;
-constexpr auto kInput3 = 3;
+constexpr auto kIndex2 = 2;
+constexpr auto kIndex3 = 3;
 
 bool NeedUpdate(const CNodePtr &conv2d, std::vector<size_t> in_shape, std::vector<size_t> out_shape) {
   MS_EXCEPTION_IF_NULL(conv2d);
@@ -63,8 +63,8 @@ bool NeedUpdate(const CNodePtr &conv2d, std::vector<size_t> in_shape, std::vecto
     MS_LOG(EXCEPTION) << "Conv2D's input and output should have 4 axis, but got input axis num: " << in_shape.size()
                       << "output axis num: " << out_shape.size();
   }
-  auto in_channel = in_shape[1];
-  auto out_channel = out_shape[1];
+  auto in_channel = in_shape[kDim1];
+  auto out_channel = out_shape[kDim1];
   if (group != in_channel || group != out_channel) {
     return false;
   }
@@ -117,7 +117,7 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
       MS_LOG(EXCEPTION) << "Conv2D's output axis number should be " << kConv2DAxisNum << ", but got "
                         << out_shape.size();
     }
-    std::swap(out_shape[0], out_shape[1]);
+    std::swap(out_shape[kDim0], out_shape[kDim1]);
     auto shapes = {out_shape};
     AnfAlgo::SetOutputInferTypeAndShape(types, shapes, transpose.get());
   } else {
@@ -139,7 +139,7 @@ CNodePtr CreateDepthwiseConv2D(const FuncGraphPtr &graph, const CNodePtr &conv2d
   MS_EXCEPTION_IF_NULL(conv2d);
   CheckCNodeInputSize(conv2d, kConvInputTensorNum);
   std::vector<AnfNodePtr> depth_conv_inputs = {NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeOpName)),
-                                               conv2d->input(1), transpose};
+                                               conv2d->input(kIndex1), transpose};
   auto depth_conv = graph->NewCNode(depth_conv_inputs);
   MS_EXCEPTION_IF_NULL(depth_conv);
   depth_conv->set_abstract(conv2d->abstract());
@@ -155,15 +155,15 @@ CNodePtr CreateDepthwiseConv2DBackpropInput(const FuncGraphPtr &graph, const CNo
   CNodePtr depth_conv_backin = nullptr;
   if (conv2d_backin->inputs().size() == kConv2DBackpropInputNum) {
     std::vector<AnfNodePtr> depth_conv_backin_inputs = {
-      NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeBackpropInputOpName)), conv2d_backin->input(3),
-      transpose, conv2d_backin->input(1)};
+      NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeBackpropInputOpName)),
+      conv2d_backin->input(kIndex3), transpose, conv2d_backin->input(kIndex1)};
     depth_conv_backin = graph->NewCNode(depth_conv_backin_inputs);
   } else {
     // In nn.Conv2DTranspose, Conv2DBackpropInput is a forward op and the input_sizes input will be convert to attr
     // in pynative mode.
     std::vector<AnfNodePtr> depth_conv_backin_inputs = {
       NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeBackpropInputOpName)), transpose,
-      conv2d_backin->input(1)};
+      conv2d_backin->input(kIndex1)};
     depth_conv_backin = graph->NewCNode(depth_conv_backin_inputs);
     AnfAlgo::CopyNodeAttr(kAttrInputSizes, kAttrInputSize, conv2d_backin, depth_conv_backin);
   }
@@ -180,7 +180,7 @@ CNodePtr CreateDepthwiseConv2DBackpropFilter(const FuncGraphPtr &graph, const CN
     MS_LOG(EXCEPTION) << "Conv2DBackpropFilter's input number should be " << (kConv2DBackpropInputNum - 1)
                       << ", but got " << (conv2d_backfil->inputs().size() - 1);
   }
-  auto filter_size_node = conv2d_backfil->input(kInput3);
+  auto filter_size_node = conv2d_backfil->input(kIndex3);
   MS_EXCEPTION_IF_NULL(filter_size_node);
   auto filter_size_vnode = filter_size_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(filter_size_vnode);
@@ -189,11 +189,11 @@ CNodePtr CreateDepthwiseConv2DBackpropFilter(const FuncGraphPtr &graph, const CN
   // when the filter_size value is same.
   if (filter_size[0] != 1) {
     std::swap(filter_size[0], filter_size[1]);
-    conv2d_backfil->input(kInput3)->cast<ValueNodePtr>()->set_value(MakeValue(filter_size));
+    conv2d_backfil->input(kIndex3)->cast<ValueNodePtr>()->set_value(MakeValue(filter_size));
   }
   std::vector<AnfNodePtr> depth_conv_backfil_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeBackpropFilterOpName)), conv2d_backfil->input(2),
-    conv2d_backfil->input(kInput3), conv2d_backfil->input(1)};
+    NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeBackpropFilterOpName)),
+    conv2d_backfil->input(kIndex2), conv2d_backfil->input(kIndex3), conv2d_backfil->input(kIndex1)};
   auto depth_conv_backfil = graph->NewCNode(depth_conv_backfil_inputs);
   MS_EXCEPTION_IF_NULL(depth_conv_backfil);
   depth_conv_backfil->set_scope(conv2d_backfil->scope());
@@ -276,7 +276,7 @@ const AnfNodePtr Conv2DUnifyMindIR::Process(const FuncGraphPtr &graph, const Anf
     return nullptr;
   }
   CheckCNodeInputSize(conv2d, kConvInputTensorNum);
-  auto transpose = CreateTranspose(graph, conv2d, conv2d->input(kInput2), true);
+  auto transpose = CreateTranspose(graph, conv2d, conv2d->input(kIndex2), true);
   auto depth_conv = CreateDepthwiseConv2D(graph, conv2d, transpose);
   SetConv2DAttrs(conv2d, depth_conv);
   return depth_conv;
@@ -307,7 +307,7 @@ const AnfNodePtr Conv2DBackpropInputUnifyMindIR::Process(const FuncGraphPtr &gra
     MS_LOG(EXCEPTION) << "Conv2DBackpropInput's input number should be " << (kConv2DBackpropInputNum - 1) << " or "
                       << (kConv2DBackpropInputNum - 2) << ", but got " << (input_size - 1);
   }
-  auto transpose = CreateTranspose(graph, conv2d_backin, conv2d_backin->input(kInput2), true);
+  auto transpose = CreateTranspose(graph, conv2d_backin, conv2d_backin->input(kIndex2), true);
   auto depth_conv_backin = CreateDepthwiseConv2DBackpropInput(graph, conv2d_backin, transpose);
   SetConv2DBackpropInputAttrs(conv2d_backin, depth_conv_backin);
   return depth_conv_backin;

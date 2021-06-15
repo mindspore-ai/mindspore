@@ -35,10 +35,6 @@ constexpr size_t kAvgPoolGradInputNum = 3;
 constexpr size_t kShapeDimNum = 4;
 constexpr float kKernelMatrixInitNum = 1.0;
 constexpr size_t kFloat32Len = 4;  // size of float32
-constexpr size_t DIM0 = 0;
-constexpr size_t DIM1 = 1;
-constexpr size_t DIM2 = 2;
-constexpr size_t DIM3 = 3;
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<int64_t> shapes;
@@ -49,6 +45,8 @@ std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
 
 int64_t windowed_output_size(int64_t input_size, int64_t ksize, int64_t stride, PadMode pad_mode, int64_t *pad_before,
                              int64_t *pad_after) {
+  MS_EXCEPTION_IF_NULL(pad_before);
+  MS_EXCEPTION_IF_NULL(pad_after);
   int64_t output = 0;
   *pad_before = 0;
   *pad_after = 0;
@@ -77,17 +75,20 @@ std::vector<std::vector<float>> GetAssistInputMatrix(const std::vector<int64_t> 
   // w*w_stride : w*w_stride + w_ksize]` of `assist_input_matrix`, so the sum of slide window is the
   // number of input that associate with output element.
   std::vector<std::vector<float>> assist_input_matrix;
-  std::vector<int64_t> in_shape_after_padding_2d = {x_shape[DIM2] + pad_top + pad_bottom,
-                                                    x_shape[DIM3] + pad_left + pad_right};
-  std::vector<float> tmp_zero_vector(in_shape_after_padding_2d[1], 0.0);
-  std::vector<float> tmp_one_vector(in_shape_after_padding_2d[1], 1.0);
-  for (int64_t i = 0; i < in_shape_after_padding_2d[1]; ++i) {
-    if (i < pad_left || i >= (in_shape_after_padding_2d[1] - pad_right)) {
+  if (x_shape.size() < kShapeDimNum) {
+    MS_LOG(EXCEPTION) << "The dim of x_shape should not be less than 4.";
+  }
+  std::vector<int64_t> in_shape_after_padding_2d = {x_shape[kDim2] + pad_top + pad_bottom,
+                                                    x_shape[kDim3] + pad_left + pad_right};
+  std::vector<float> tmp_zero_vector(in_shape_after_padding_2d[kDim1], 0.0);
+  std::vector<float> tmp_one_vector(in_shape_after_padding_2d[kDim1], 1.0);
+  for (int64_t i = 0; i < in_shape_after_padding_2d[kDim1]; ++i) {
+    if (i < pad_left || i >= (in_shape_after_padding_2d[kDim1] - pad_right)) {
       tmp_one_vector[LongToSize(i)] = 0.0;
     }
   }
-  for (int64_t i = 0; i < in_shape_after_padding_2d[0]; ++i) {
-    if (i < pad_top || i >= (in_shape_after_padding_2d[0] - pad_bottom)) {
+  for (int64_t i = 0; i < in_shape_after_padding_2d[kDim0]; ++i) {
+    if (i < pad_top || i >= (in_shape_after_padding_2d[kDim0] - pad_bottom)) {
       assist_input_matrix.emplace_back(tmp_zero_vector);
     } else {
       assist_input_matrix.emplace_back(tmp_one_vector);
@@ -106,8 +107,10 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
     MS_LOG(EXCEPTION) << "The dim of x_shape or kernel_size or strides of AvgPoolGrad should be 4.";
   }
   int64_t pad_top, pad_bottom, pad_left, pad_right;
-  int64_t h_output = windowed_output_size(x_shape[DIM2], k_size[DIM2], stride[DIM2], pad_mode, &pad_top, &pad_bottom);
-  int64_t w_output = windowed_output_size(x_shape[DIM3], k_size[DIM3], stride[DIM3], pad_mode, &pad_left, &pad_right);
+  int64_t h_output =
+    windowed_output_size(x_shape[kDim2], k_size[kDim2], stride[kDim2], pad_mode, &pad_top, &pad_bottom);
+  int64_t w_output =
+    windowed_output_size(x_shape[kDim3], k_size[kDim3], stride[kDim3], pad_mode, &pad_left, &pad_right);
   auto assist_input_matrix = GetAssistInputMatrix(x_shape, pad_top, pad_bottom, pad_left, pad_right);
 
   // calculate output
@@ -115,8 +118,8 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
   for (int64_t h = 0; h < h_output; ++h) {
     for (int64_t w = 0; w < w_output; ++w) {
       float curr_sum = 0;
-      for (int64_t i = h * stride[DIM2]; i < h * stride[DIM2] + k_size[DIM2]; ++i) {
-        for (int64_t j = w * stride[DIM3]; j < w * stride[DIM3] + k_size[DIM3]; ++j) {
+      for (int64_t i = h * stride[kDim2]; i < h * stride[kDim2] + k_size[kDim2]; ++i) {
+        for (int64_t j = w * stride[kDim3]; j < w * stride[kDim3] + k_size[kDim3]; ++j) {
           curr_sum += assist_input_matrix[LongToSize(i)][LongToSize(j)];
         }
       }
@@ -127,12 +130,12 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
   }
 
   // make output tensor
-  std::vector<int64_t> output_shape = {x_shape[0], x_shape[1], h_output, w_output};
+  std::vector<int64_t> output_shape = {x_shape[kDim0], x_shape[kDim1], h_output, w_output};
   auto output_size = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
   std::vector<float> output(output_size, 0.0);
-  for (int64_t i = 0; i < output_shape[0] * output_shape[1]; ++i) {
+  for (int64_t i = 0; i < output_shape[kDim0] * output_shape[kDim1]; ++i) {
     size_t src_size = hw_output.size() * kFloat32Len;
-    auto dst_size = LongToSize(output_shape[DIM2]) * LongToSize(output_shape[DIM3]) * kFloat32Len;
+    auto dst_size = LongToSize(output_shape[kDim2]) * LongToSize(output_shape[kDim3]) * kFloat32Len;
     auto ret = memcpy_s(&output[LongToSize(i) * hw_output.size()], dst_size, &hw_output[0], src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
@@ -157,7 +160,7 @@ ValueNodePtr CreateKernelMatrixValueNode(const FuncGraphPtr &func_graph, const s
   if (x_shape.size() != kShapeDimNum || k_size.size() != kShapeDimNum) {
     MS_LOG(EXCEPTION) << "The dim of x_shape or kernel_size of AvgPoolGrad should be 4.";
   }
-  std::vector<int64_t> kernel_shape = {1, x_shape[DIM1], k_size[DIM2], k_size[DIM3]};
+  std::vector<int64_t> kernel_shape = {1, x_shape[kDim1], k_size[kDim2], k_size[kDim3]};
   auto data_size = std::accumulate(kernel_shape.begin(), kernel_shape.end(), int64_t(1), std::multiplies<int64_t>());
   std::vector<float> data(data_size, kKernelMatrixInitNum);
   auto kernel_matrix_tensor = std::make_shared<tensor::Tensor>(x_dtype, kernel_shape, &data[0], kNumberTypeFloat32);

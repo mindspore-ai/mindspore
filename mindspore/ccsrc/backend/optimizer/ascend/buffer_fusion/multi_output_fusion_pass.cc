@@ -33,7 +33,7 @@ void MultiOutputFusionPass::MatchMultiOutputEltwise(const CNodePtr &cnode, const
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
   std::unordered_set<AnfNodePtr> record{cnode};
-  auto eltwise_input = cnode->input(1);
+  auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
   if (CheckMultiOutputEltWiseNode(kernel_graph, eltwise_input)) {
     std::vector<int64_t> output_used_num{SizeToInt(manager->node_users()[eltwise_input].size())};
@@ -41,7 +41,7 @@ void MultiOutputFusionPass::MatchMultiOutputEltwise(const CNodePtr &cnode, const
     (void)record.insert(eltwise_input);
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
-    eltwise_input = input_cnode->input(1);
+    eltwise_input = input_cnode->input(kIndex1);
   } else {
     return;
   }
@@ -52,7 +52,7 @@ void MultiOutputFusionPass::MatchMultiOutputEltwise(const CNodePtr &cnode, const
     }
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
-    eltwise_input = input_cnode->input(1);
+    eltwise_input = input_cnode->input(kIndex1);
   }
   if (record.size() != MULTI_ELTWISE_SIZE) {
     return;

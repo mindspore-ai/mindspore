@@ -38,7 +38,7 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   new_simoid_inputs.insert(new_simoid_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
   CNodePtr new_cnode = func_graph->NewCNode(new_simoid_inputs);
   MS_EXCEPTION_IF_NULL(new_cnode);
-  auto predict_input = cnode->inputs()[1];
+  auto predict_input = cnode->inputs()[kIndex1];
   auto new_node_dtype = {AnfAlgo::GetOutputInferDataType(predict_input, 0)};
   auto new_node_shape = {AnfAlgo::GetOutputInferShape(predict_input, 0)};
   AnfAlgo::SetOutputInferTypeAndShape(new_node_dtype, new_node_shape, new_cnode.get());

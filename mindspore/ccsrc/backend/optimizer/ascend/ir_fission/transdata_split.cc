@@ -62,7 +62,7 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto input_node = node->cast<CNodePtr>()->input(1);
+  auto input_node = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(input_node);
 
   auto input_format = AnfAlgo::GetInputFormat(node, 0);

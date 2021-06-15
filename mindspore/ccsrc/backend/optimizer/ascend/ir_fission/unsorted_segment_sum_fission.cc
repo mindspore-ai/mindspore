@@ -27,7 +27,7 @@ CNodePtr CreatePadding(const FuncGraphPtr &graph, const CNodePtr &origin_node, c
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(origin_node);
   std::vector<AnfNodePtr> padding_inputs = {NewValueNode(std::make_shared<Primitive>(kPaddingOpName)),
-                                            origin_node->input(1)};
+                                            origin_node->input(kIndex1)};
   auto padding = graph->NewCNode(padding_inputs);
   MS_EXCEPTION_IF_NULL(padding);
   padding->set_scope(origin_node->scope());
@@ -45,7 +45,8 @@ CNodePtr CreateUnsortedSegmentSum(const FuncGraphPtr &graph, const CNodePtr &ori
   MS_EXCEPTION_IF_NULL(origin_node);
   MS_EXCEPTION_IF_NULL(padding);
   std::vector<AnfNodePtr> unsorted_segment_sum8_inputs = {
-    NewValueNode(std::make_shared<Primitive>(prim::kPrimUnsortedSegmentSum->name())), padding, origin_node->input(2)};
+    NewValueNode(std::make_shared<Primitive>(prim::kPrimUnsortedSegmentSum->name())), padding,
+    origin_node->input(kIndex2)};
   auto unsorted_segment_sum = graph->NewCNode(unsorted_segment_sum8_inputs);
   MS_EXCEPTION_IF_NULL(unsorted_segment_sum);
   unsorted_segment_sum->set_scope(origin_node->scope());

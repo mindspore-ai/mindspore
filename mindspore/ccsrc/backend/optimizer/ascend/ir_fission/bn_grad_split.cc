@@ -29,12 +29,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kIndex0 = 0;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
-constexpr size_t kIndex4 = 4;
-constexpr size_t kIndex5 = 5;
 void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
                                std::vector<AnfNodePtr> *bn_update_grad_outputs) {
   MS_EXCEPTION_IF_NULL(graph);

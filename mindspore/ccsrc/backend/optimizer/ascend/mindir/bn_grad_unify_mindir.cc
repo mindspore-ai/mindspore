@@ -35,17 +35,12 @@ AnfNodePtr CreateNewBatchNormGrad(const FuncGraphPtr &graph, const CNodePtr &bn_
   size_t kBNGradInputNum = 6;
   const auto &bn_grad_node_inputs = bn_grad_node->inputs();
   CheckCNodeInputSize(bn_grad_node, kBNGradInputNum);
-  constexpr size_t DIM1 = 1;
-  constexpr size_t DIM2 = 2;
-  constexpr size_t DIM3 = 3;
-  constexpr size_t DIM4 = 4;
-  constexpr size_t DIM5 = 5;
   std::vector<AnfNodePtr> bn_grad_inputs = {NewValueNode(std::make_shared<Primitive>(kBatchNormGradOpName)),
-                                            bn_grad_node_inputs[DIM1],
-                                            bn_grad_node_inputs[DIM2],
-                                            bn_grad_node_inputs[DIM3],
-                                            bn_grad_node_inputs[DIM4],
-                                            bn_grad_node_inputs[DIM5]};
+                                            bn_grad_node_inputs[kDim1],
+                                            bn_grad_node_inputs[kDim2],
+                                            bn_grad_node_inputs[kDim3],
+                                            bn_grad_node_inputs[kDim4],
+                                            bn_grad_node_inputs[kDim5]};
   auto new_bn_grad = graph->NewCNode(bn_grad_inputs);
   MS_EXCEPTION_IF_NULL(new_bn_grad);
   new_bn_grad->set_scope(bn_grad_node->scope());

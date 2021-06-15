@@ -32,7 +32,7 @@ void Conv2DBackpropEltwiseFusionPass::MatchConv2DBackpropInputEltwise(const CNod
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::unordered_set<AnfNodePtr> record{cnode};
-  auto eltwise_input = cnode->input(1);
+  auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
   if (!eltwise_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(eltwise_input) ||
       fusion_id_allocator->HasFusionIdAttr(eltwise_input)) {

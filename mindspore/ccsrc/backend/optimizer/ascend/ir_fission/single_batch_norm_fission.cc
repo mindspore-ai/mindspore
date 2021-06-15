@@ -40,8 +40,7 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
 
   // set abstract
-  constexpr size_t DIM2 = 2;
-  auto bn_input1 = bn_cnode->input(DIM2);
+  auto bn_input1 = bn_cnode->input(kDim2);
   MS_EXCEPTION_IF_NULL(bn_input1);
   AbstractBasePtrList abstract_list{bn_input1->abstract(), bn_input1->abstract()};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
@@ -67,11 +66,11 @@ AnfNodePtr CreateBNTrainingUpdateV3(const FuncGraphPtr &func_graph, const AnfNod
   }
   std::vector<AnfNodePtr> bn_training_update_v3_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateV3OpName)),
-    bn_cnode->input(1),
-    bn_training_reduce_outputs[0],
-    bn_training_reduce_outputs[1],
-    bn_cnode->input(2),
-    bn_cnode->input(3)};
+    bn_cnode->input(kIndex1),
+    bn_training_reduce_outputs[kIndex0],
+    bn_training_reduce_outputs[kIndex1],
+    bn_cnode->input(kIndex2),
+    bn_cnode->input(kIndex3)};
   auto bn_training_update_v3 = func_graph->NewCNode(bn_training_update_v3_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_update_v3);
 

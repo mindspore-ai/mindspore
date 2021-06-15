@@ -37,7 +37,7 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
   MS_EXCEPTION_IF_NULL(manager);
   if (is_order) {
     // DepthwiseConvolution--->Elemwise
-    auto depthwise_conv = cnode->input(1);
+    auto depthwise_conv = cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(depthwise_conv);
     if (cnode->isa<CNode>() && IsPrimitiveCNode(depthwise_conv, prim::kPrimDepthwiseConv2dNative)) {
       std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[depthwise_conv].size())};
@@ -48,7 +48,7 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
     }
   } else {
     // Elemwise-->DepthwiseConvolution
-    auto relu = cnode->input(1);
+    auto relu = cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(relu);
     if (cnode->isa<CNode>() && (IsPrimitiveCNode(relu, prim::kPrimRelu) || IsPrimitiveCNode(relu, prim::kPrimReluV2))) {
       std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[relu].size())};
@@ -73,7 +73,7 @@ void DepthwiseConvEltwiseFusionPass::MatchSingleFusionPattern(const session::Ker
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE) {
-      auto eltwise_input = cnode->input(1);
+      auto eltwise_input = cnode->input(kIndex1);
       if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNative)) {
         MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, true);
       }

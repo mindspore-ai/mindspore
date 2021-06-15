@@ -53,6 +53,7 @@ CNodePtr CreatePad(const FuncGraphPtr &graph, const CNodePtr &origin_node, const
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
   auto type_id = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
+  MS_EXCEPTION_IF_NULL(abstract);
   if (param_dyn_shape->max_shape().size() == param_dyn_shape->shape().size() &&
       param_dyn_shape->min_shape().size() == param_dyn_shape->shape().size()) {
     ShapeVector max_shape(param_dyn_shape->max_shape());
@@ -134,8 +135,7 @@ bool CheckInputs(const CNodePtr &origin_node) {
   auto param_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
   auto indice_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
   // this optimizer only support embedding_table has dynamic shape
-  constexpr size_t DIM2 = 2;
-  if (param_shape.empty() || indice_shape.empty() || AnfAlgo::IsDynamicShape(origin_node->input(DIM2))) {
+  if (param_shape.empty() || indice_shape.empty() || AnfAlgo::IsDynamicShape(origin_node->input(kDim2))) {
     return false;
   }
   if (param_shape[param_shape.size() - 1] != 1) {

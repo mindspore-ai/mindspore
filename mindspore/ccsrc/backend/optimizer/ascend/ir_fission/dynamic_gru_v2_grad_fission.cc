@@ -31,22 +31,6 @@ constexpr size_t kGRUV2HiddenGradOutputNum = 3;
 constexpr size_t kConcatNum = 2;
 constexpr size_t kGateNum = 3;
 constexpr size_t k3Dims = 3;
-constexpr size_t kIndex0 = 0;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
-constexpr size_t kIndex4 = 4;
-constexpr size_t kIndex5 = 5;
-constexpr size_t kIndex6 = 6;
-constexpr size_t kIndex7 = 7;
-constexpr size_t kIndex8 = 8;
-constexpr size_t kIndex9 = 9;
-constexpr size_t kIndex10 = 10;
-constexpr size_t kIndex11 = 11;
-constexpr size_t kIndex12 = 12;
-constexpr size_t DIM0 = 0;
-constexpr size_t DIM1 = 1;
-constexpr size_t DIM2 = 2;
 
 AnfNodePtr CreateGRUV2HiddenGradNode(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -74,9 +58,9 @@ AnfNodePtr CreateGRUV2HiddenGradNode(const FuncGraphPtr &graph, const AnfNodePtr
   auto types = {h_dtype, h_dtype, h_dtype};
   std::vector<size_t> dh_preh_shape = AnfAlgo::GetOutputInferShape(ori_outputs[kIndex5], 0);
   std::vector<size_t> dgate_h_shape = {
-    AnfAlgo::GetOutputInferShape(dynamic_gru_v2_grad_inputs[kIndex6], 0)[DIM0],
-    AnfAlgo::GetOutputInferShape(dynamic_gru_v2_grad_inputs[kIndex6], 0)[DIM1],
-    kGateNum * AnfAlgo::GetOutputInferShape(dynamic_gru_v2_grad_inputs[kIndex6], 0)[DIM2]};
+    AnfAlgo::GetOutputInferShape(dynamic_gru_v2_grad_inputs[kIndex6], 0)[kDim0],
+    AnfAlgo::GetOutputInferShape(dynamic_gru_v2_grad_inputs[kIndex6], 0)[kDim1],
+    kGateNum * AnfAlgo::GetOutputInferShape(dynamic_gru_v2_grad_inputs[kIndex6], 0)[kDim2]};
   std::vector<size_t> dnx_t_shape = AnfAlgo::GetOutputInferShape(dynamic_gru_v2_grad_inputs[kIndex6], 0);
   auto shapes = {dh_preh_shape, dgate_h_shape, dnx_t_shape};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, gru_v2_hidden_grad_op.get());
@@ -93,14 +77,14 @@ AnfNodePtr CreateHSplitVDNode(const FuncGraphPtr &graph, const AnfNodePtr &node)
   auto split_vd = graph->NewCNode(splitvd_input);
   MS_EXCEPTION_IF_NULL(split_vd);
   auto dtypes = {AnfAlgo::GetOutputInferDataType(node, 0), AnfAlgo::GetOutputInferDataType(node, 0)};
-  size_t t_size = AnfAlgo::GetOutputInferShape(node, 0)[DIM0];
-  size_t batch = AnfAlgo::GetOutputInferShape(node, 0)[DIM1];
-  size_t hidden_size = AnfAlgo::GetOutputInferShape(node, 0)[DIM2];
+  size_t t_size = AnfAlgo::GetOutputInferShape(node, 0)[kDim0];
+  size_t batch = AnfAlgo::GetOutputInferShape(node, 0)[kDim1];
+  size_t hidden_size = AnfAlgo::GetOutputInferShape(node, 0)[kDim2];
   std::vector<size_t> shape = {t_size - IntToSize(1), batch, hidden_size};
   std::vector<size_t> shape2 = {IntToSize(1), batch, hidden_size};
   std::vector<std::vector<size_t>> shapes = {shape, shape2};
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_vd.get());
-  AnfAlgo::SetNodeAttr("split_dim", MakeValue(SizeToLong(DIM0)), split_vd);
+  AnfAlgo::SetNodeAttr("split_dim", MakeValue(SizeToLong(kDim0)), split_vd);
   AnfAlgo::SetNodeAttr("num_split", MakeValue(SizeToLong(kSplitVOutputNum)), split_vd);
   std::vector<int64_t> size_splits = {SizeToLong(t_size - 1), SizeToLong(1)};
   AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split_vd);
@@ -116,7 +100,7 @@ AnfNodePtr CreateHReshape(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   if (ori_shape.size() == k3Dims) {
     shape_tmp = {ori_shape};
   } else {
-    shape_tmp = {{IntToSize(1), ori_shape[DIM0], ori_shape[DIM1]}};
+    shape_tmp = {{IntToSize(1), ori_shape[kDim0], ori_shape[kDim1]}};
   }
   auto ori_dtype = {AnfAlgo::GetOutputInferDataType(node, 0)};
   // reshape
@@ -140,14 +124,14 @@ AnfNodePtr CreateHConcatDNode(const FuncGraphPtr &graph, const AnfNodePtr &node1
   auto concat_op = graph->NewCNode(concat_inputs);
   MS_EXCEPTION_IF_NULL(concat_op);
 
-  std::vector<size_t> shape = {AnfAlgo::GetOutputInferShape(node2, 0)[DIM0] + 1,
-                               AnfAlgo::GetOutputInferShape(node2, 0)[DIM1],
-                               AnfAlgo::GetOutputInferShape(node2, 0)[DIM2]};
+  std::vector<size_t> shape = {AnfAlgo::GetOutputInferShape(node2, 0)[kDim0] + 1,
+                               AnfAlgo::GetOutputInferShape(node2, 0)[kDim1],
+                               AnfAlgo::GetOutputInferShape(node2, 0)[kDim2]};
   auto types = {AnfAlgo::GetOutputInferDataType(node2, 0)};
   AnfAlgo::SetOutputInferTypeAndShape(types, {shape}, concat_op.get());
   AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kConcatNum)), concat_op);
   AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{2}), concat_op);
-  AnfAlgo::SetNodeAttr("axis", MakeValue(SizeToLong(0)), concat_op);
+  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), concat_op);
   AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat_op);
   return concat_op;
 }
@@ -160,14 +144,14 @@ AnfNodePtr CreateDgateHSplitVDNode(const FuncGraphPtr &graph, const AnfNodePtr &
   auto split_vd = graph->NewCNode(splitvd_input);
   MS_EXCEPTION_IF_NULL(split_vd);
   auto dtypes = {AnfAlgo::GetOutputInferDataType(node, 0), AnfAlgo::GetOutputInferDataType(node, 0)};
-  size_t t_size = AnfAlgo::GetOutputInferShape(node, 0)[DIM0];
-  size_t batch = AnfAlgo::GetOutputInferShape(node, 0)[DIM1];
-  size_t hidden_size = AnfAlgo::GetOutputInferShape(node, 0)[DIM2] / kGateNum;
+  size_t t_size = AnfAlgo::GetOutputInferShape(node, 0)[kDim0];
+  size_t batch = AnfAlgo::GetOutputInferShape(node, 0)[kDim1];
+  size_t hidden_size = AnfAlgo::GetOutputInferShape(node, 0)[kDim2] / kGateNum;
   std::vector<size_t> shape = {t_size, batch, hidden_size << 1};
   std::vector<size_t> shape2 = {t_size, batch, hidden_size};
   std::vector<std::vector<size_t>> shapes = {shape, shape2};
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_vd.get());
-  AnfAlgo::SetNodeAttr("split_dim", MakeValue(SizeToLong(DIM2)), split_vd);
+  AnfAlgo::SetNodeAttr("split_dim", MakeValue(SizeToLong(kDim2)), split_vd);
   AnfAlgo::SetNodeAttr("num_split", MakeValue(SizeToLong(kSplitVOutputNum)), split_vd);
   std::vector<int64_t> size_splits = {SizeToLong(hidden_size + hidden_size), SizeToLong(hidden_size)};
   AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split_vd);
@@ -190,13 +174,13 @@ AnfNodePtr CreateDgateXConcatDNode(const FuncGraphPtr &graph, const AnfNodePtr &
   auto concat_op = graph->NewCNode(concat_inputs);
   MS_EXCEPTION_IF_NULL(concat_op);
   std::vector<size_t> shape = {
-    AnfAlgo::GetOutputInferShape(node2, 0)[DIM0], AnfAlgo::GetOutputInferShape(node2, 0)[DIM1],
-    AnfAlgo::GetOutputInferShape(node1, 0)[DIM2] + AnfAlgo::GetOutputInferShape(node2, 0)[DIM2]};
+    AnfAlgo::GetOutputInferShape(node2, 0)[kDim0], AnfAlgo::GetOutputInferShape(node2, 0)[kDim1],
+    AnfAlgo::GetOutputInferShape(node1, 0)[kDim2] + AnfAlgo::GetOutputInferShape(node2, 0)[kDim2]};
   auto types = {AnfAlgo::GetOutputInferDataType(node2, 0)};
   AnfAlgo::SetOutputInferTypeAndShape(types, {shape}, concat_op.get());
   AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(kConcatNum)), concat_op);
   AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{2}), concat_op);
-  AnfAlgo::SetNodeAttr("axis", MakeValue(SizeToLong(DIM2)), concat_op);
+  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(kDim2)), concat_op);
   AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), concat_op);
   return concat_op;
 }
@@ -211,15 +195,15 @@ AnfNodePtr CreateWBroadcastToDNode(const FuncGraphPtr &graph, const AnfNodePtr &
   std::vector<AnfNodePtr> braodcast_to_input = {NewValueNode(std::make_shared<Primitive>(kBroadcastToOpName)), node1};
   auto broadcast_to_d = graph->NewCNode(braodcast_to_input);
   MS_EXCEPTION_IF_NULL(broadcast_to_d);
-  size_t t_size = AnfAlgo::GetOutputInferShape(node2, 0)[DIM0];
-  size_t batch = AnfAlgo::GetOutputInferShape(node1, 0)[DIM0];
-  size_t gate_size = AnfAlgo::GetOutputInferShape(node1, 0)[DIM1];
+  size_t t_size = AnfAlgo::GetOutputInferShape(node2, 0)[kDim0];
+  size_t batch = AnfAlgo::GetOutputInferShape(node1, 0)[kDim0];
+  size_t gate_size = AnfAlgo::GetOutputInferShape(node1, 0)[kDim1];
   std::vector<size_t> shape = {t_size, batch, gate_size};
   auto type = {AnfAlgo::GetOutputInferDataType(node1, 0)};
   AnfAlgo::SetOutputInferTypeAndShape(type, {shape}, broadcast_to_d.get());
 
   std::vector<int64_t> attr_shape = {SizeToLong(t_size), SizeToLong(batch), SizeToLong(gate_size)};
-  AnfAlgo::SetNodeAttr("shape", MakeValue(attr_shape), broadcast_to_d);
+  AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(attr_shape), broadcast_to_d);
   AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), broadcast_to_d);
   return broadcast_to_d;
 }
@@ -233,9 +217,9 @@ AnfNodePtr CreateDhxBatchMatMul(const FuncGraphPtr &graph, const AnfNodePtr &nod
                                            node1, node2};
   auto batch_matmul = graph->NewCNode(matmul_inputs);
   MS_EXCEPTION_IF_NULL(batch_matmul);
-  std::vector<size_t> shape = {AnfAlgo::GetOutputInferShape(node1, 0)[DIM0],
-                               AnfAlgo::GetOutputInferShape(node1, 0)[DIM2],
-                               AnfAlgo::GetOutputInferShape(node2, 0)[DIM2]};
+  std::vector<size_t> shape = {AnfAlgo::GetOutputInferShape(node1, 0)[kDim0],
+                               AnfAlgo::GetOutputInferShape(node1, 0)[kDim2],
+                               AnfAlgo::GetOutputInferShape(node2, 0)[kDim2]};
   AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {shape}, batch_matmul.get());
   AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(true), batch_matmul);
   AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(false), batch_matmul);
@@ -252,9 +236,9 @@ AnfNodePtr CreateDwhBatchMatMul(const FuncGraphPtr &graph, const AnfNodePtr &nod
                                            node1, node2};
   auto batch_matmul = graph->NewCNode(matmul_inputs);
   MS_EXCEPTION_IF_NULL(batch_matmul);
-  std::vector<size_t> shape = {AnfAlgo::GetOutputInferShape(node1, 0)[DIM0],
-                               AnfAlgo::GetOutputInferShape(node1, 0)[DIM1],
-                               AnfAlgo::GetOutputInferShape(node2, 0)[DIM1]};
+  std::vector<size_t> shape = {AnfAlgo::GetOutputInferShape(node1, 0)[kDim0],
+                               AnfAlgo::GetOutputInferShape(node1, 0)[kDim1],
+                               AnfAlgo::GetOutputInferShape(node2, 0)[kDim1]};
   AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {shape}, batch_matmul.get());
   AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(false), batch_matmul);
   AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(true), batch_matmul);
@@ -290,7 +274,7 @@ AnfNodePtr CreateDbReduceSumDNode(const FuncGraphPtr &graph, const AnfNodePtr &n
   MS_EXCEPTION_IF_NULL(reduce_sumd);
 
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
-  std::vector<size_t> shape = {kGateNum * AnfAlgo::GetOutputInferShape(node2, 0)[DIM1]};
+  std::vector<size_t> shape = {kGateNum * AnfAlgo::GetOutputInferShape(node2, 0)[kDim1]};
   AnfAlgo::SetOutputInferTypeAndShape(types, {shape}, reduce_sumd.get());
   AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{0, 1}), reduce_sumd);
   AnfAlgo::SetNodeAttr("keep_dims", MakeValue(false), reduce_sumd);
@@ -322,7 +306,7 @@ const AnfNodePtr DynamicGRUV2GradFission::Process(const FuncGraphPtr &func_graph
   auto gru_v2_gru_hidden = CreateGRUV2HiddenGradNode(func_graph, dynamic_gru_v2_grad_cnode);
   std::vector<AnfNodePtr> gru_hidden_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, gru_v2_gru_hidden, kGRUV2HiddenGradOutputNum, &gru_hidden_outputs);
-  size_t step_num = AnfAlgo::GetOutputInferShape(ori_inputs[kIndex1], 0)[DIM0];
+  size_t step_num = AnfAlgo::GetOutputInferShape(ori_inputs[kIndex1], 0)[kDim0];
   AnfNodePtr dwh_batch_matmul = nullptr;
   if (step_num != 1) {
     // split h

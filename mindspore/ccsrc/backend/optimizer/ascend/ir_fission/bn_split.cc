@@ -32,12 +32,6 @@ namespace opt {
 namespace {
 constexpr auto kReduceOpSum = "sum";
 constexpr auto kDeviceNum = "device_num";
-constexpr size_t kIndex0 = 0;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
-constexpr size_t kIndex4 = 4;
-constexpr size_t kIndex5 = 5;
 constexpr size_t kPositionOffset = 3;
 constexpr int64_t kFusionNumThreshold = 2;
 
@@ -51,7 +45,7 @@ bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName))};
-  bn_training_reduce_inputs.push_back(bn_cnode->input(1));
+  bn_training_reduce_inputs.push_back(bn_cnode->input(kIndex1));
   auto bn_training_reduce = graph->NewCNode(bn_training_reduce_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
   auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -62,7 +56,7 @@ bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &
     MS_LOG(INFO) << "The BatchNorm's first input's shape dims less than " << kShape2dDims;
     return false;
   }
-  std::vector<size_t> bn_training_reduce_shape = {bn_shape_i0[1]};
+  std::vector<size_t> bn_training_reduce_shape = {bn_shape_i0[kDim1]};
   auto types = {kNumberTypeFloat32, kNumberTypeFloat32};
   auto shapes = {bn_training_reduce_shape, bn_training_reduce_shape};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, bn_training_reduce.get());
@@ -191,6 +185,8 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
 }
 
 AnfNodePtr InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &input, const TypeId dst_type) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input);
   if (AnfAlgo::GetOutputInferDataType(input, 0) != dst_type) {
     AnfNodePtr cast = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kCastOpName)), input});
     AnfAlgo::SetOutputInferTypeAndShape({dst_type}, {AnfAlgo::GetOutputInferShape(input, 0)}, cast.get());

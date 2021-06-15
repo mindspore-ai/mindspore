@@ -26,12 +26,10 @@ namespace opt {
 constexpr size_t kInputNum = 3;
 constexpr size_t kFloat16Len = 2;  // size of float16;
 constexpr size_t kKernelSizeNum = 5;
-constexpr size_t DIM2 = 2;
-constexpr size_t DIM3 = 3;
-constexpr size_t DIM4 = 4;
 namespace {
 tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   // 1 get attr ksize
+  MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, "kernel_size");
@@ -42,9 +40,9 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   if (ksize.size() != kKernelSizeNum) {
     MS_LOG(EXCEPTION) << "kernel_size of MaxPool3DGradGrad must be five, but got :" << ksize;
   }
-  int64_t d = ksize[DIM2];
-  int64_t h = ksize[DIM3];
-  int64_t w = ksize[DIM4];
+  int64_t d = ksize[kDim2];
+  int64_t h = ksize[kDim3];
+  int64_t w = ksize[kDim4];
 
   // 1 create tensor
   std::vector<int64_t> assist_shape = {1, 1, d, h, w};  // shape:NCDHW
