@@ -255,6 +255,8 @@ class DebugServices {
                               uint32_t device_id, uint32_t root_graph_id,
                               const std::vector<std::string> &async_file_pool,
                               std::vector<std::shared_ptr<TensorData>> *tensor_list);
+
+  std::string GetStrippedFilename(const std::string &file_name);
 #endif
   void ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
