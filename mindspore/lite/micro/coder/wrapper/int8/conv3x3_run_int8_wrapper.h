@@ -33,6 +33,6 @@ typedef struct {
   ConvParameter *conv_param;
 } Conv3x3Int8Args;
 
-int Conv3x3Int8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int Conv3x3Int8Run(void *cdata, int task_id);
 
 #endif  // MINDSPORE_LITE_MICRO_INT8_CONV3x3_WRAPPER_INT8_WRAPPER_H_

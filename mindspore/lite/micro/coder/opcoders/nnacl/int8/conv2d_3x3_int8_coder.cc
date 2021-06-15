@@ -146,6 +146,20 @@ int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
               "conv3x3_run_int8_wrapper.c",
             });
   }
+  if (target_ == kARM32A) {
+    Collect(context, {}, {},
+            {
+              "IndirectGemmInt16to32_8x4.S",
+              "MatmulInt8Opt.S",
+            });
+  } else if (target_ == kARM64) {
+    Collect(context, {}, {},
+            {
+              "PreSum4x16Int8Peroc.S",
+              "PreSum4x16Int8Pert.S",
+              "MatmulInt8Opt.S",
+            });
+  }
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);
   // call the op function
@@ -166,8 +180,7 @@ int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
     code.CodeFunction(kParallelLaunch, "Conv3x3Int8Run", kRunArgsAddr, gThreadNum);
   } else {
     code.CodeFunction("Conv3x3Int8", c8_input_, transformed_filter_addr_, new_bias_addr_, output_tensor_, tile_buffer_,
-                      block_unit_buffer_, tmp_dst_buffer_, tmp_out_, kDefaultTaskId, "&conv_param_", kLhsScale,
-                      kRhsScale);
+                      block_unit_buffer_, tmp_dst_buffer_, tmp_out_, kDefaultTaskId, "&conv_param_");
   }
   code.CodeFunction("PackNC4HW4ToNHWCInt8", tmp_out_, output_tensor_, conv_param_->output_batch_,
                     conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
