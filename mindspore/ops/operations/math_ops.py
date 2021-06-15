@@ -3340,7 +3340,7 @@ class IsNan(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> is_nan = ops.IsNan()

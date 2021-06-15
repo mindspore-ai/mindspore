@@ -34,6 +34,8 @@ using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractKeywordArg;
+using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
@@ -63,6 +65,13 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
       for (size_t i = 0; i < arg_tuple->size(); ++i) {
         elems.push_back(
           ret_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), para_tuple, NewValueNode(SizeToLong(i))}));
+      }
+    } else if (args_spec_list[index]->isa<AbstractList>()) {
+      auto arg_list = args_spec_list[index]->cast<AbstractListPtr>();
+      AnfNodePtr para_list = ret_graph->add_parameter();
+      for (size_t i = 0; i < arg_list->size(); ++i) {
+        elems.push_back(
+          ret_graph->NewCNode({NewValueNode(prim::kPrimListGetItem), para_list, NewValueNode(SizeToLong(i))}));
       }
     } else if (args_spec_list[index]->isa<AbstractDictionary>()) {
       AbstractDictionaryPtr arg_dict = args_spec_list[index]->cast<AbstractDictionaryPtr>();
