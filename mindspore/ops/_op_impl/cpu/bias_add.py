@@ -20,7 +20,7 @@ bias_add_op_info = CpuRegOp("BiasAdd") \
     .input(0, "x", "required") \
     .input(1, "bias", "required") \
     .output(0, "y", "required") \
-    .dtype_format(DataType.F32_ChannelLast, DataType.F32_Default, DataType.F32_ChannelLast) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
 
 
