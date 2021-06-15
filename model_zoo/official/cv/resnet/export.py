@@ -24,6 +24,7 @@ from mindspore import Tensor, load_checkpoint, load_param_into_net, export, cont
 parser = argparse.ArgumentParser(description='resnet export')
 parser.add_argument('--network_dataset', type=str, default='resnet50_cifar10', choices=['resnet18_cifar10',
                                                                                         'resnet18_imagenet2012',
+                                                                                        'resnet34_imagenet2012',
                                                                                         'resnet50_cifar10',
                                                                                         'resnet50_imagenet2012',
                                                                                         'resnet101_imagenet2012',
@@ -52,6 +53,9 @@ if __name__ == '__main__':
     elif args.network_dataset == 'resnet18_imagenet2012':
         from src.config import config2 as config
         from src.resnet import resnet18 as resnet
+    elif args.network_dataset == 'resnet34_imagenet2012':
+        from src.config import config2 as config
+        from src.resnet import resnet34 as resnet
     elif args.network_dataset == 'resnet50_cifar10':
         from src.config import config1 as config
         from src.resnet import resnet50 as resnet

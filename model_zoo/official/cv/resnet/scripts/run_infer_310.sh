@@ -16,7 +16,7 @@
 
 if [[ $# -lt 4 || $# -gt 5 ]]; then
     echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [DEVICE_ID]
-    NET_TYPE can choose from [resnet18, se-resnet50, resnet50, resnet101]
+    NET_TYPE can choose from [resnet18, resnet34, se-resnet50, resnet50, resnet101]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
@@ -29,7 +29,7 @@ get_real_path(){
     fi
 }
 model=$(get_real_path $1)
-if [ $2 == 'resnet18' ] || [ $2 == 'se-resnet50' ] || [ $2 == 'resnet50' ] || [ $2 == 'resnet101' ]; then
+if [ $2 == 'resnet18' ] || [ $2 == 'resnet34' ] || [ $2 == 'se-resnet50' ] || [ $2 == 'resnet50' ] || [ $2 == 'resnet101' ]; then
   network=$2
 else
   echo "NET_TYPE can choose from [resnet18, se-resnet50]"

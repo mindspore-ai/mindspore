@@ -16,11 +16,11 @@
 
 if [ $# != 4 ]
 then 
-    echo "Usage: bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]"
 exit 1
 fi
 
-if [ $1 != "resnet18" ] && [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
+if [ $1 != "resnet18" ] && [ $1 != "resnet34" ] && [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
 then 
     echo "error: the selected net is neither resnet50 nor resnet101 nor se-resnet50"
 exit 1

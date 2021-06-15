@@ -104,14 +104,14 @@ ResNet的总体网络架构如下：
 
 ```text
 # 分布式训练
-用法：bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
+用法：bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
 [PRETRAINED_CKPT_PATH]（可选）
 
 # 运行评估示例
-用法：bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 - GPU处理器环境运行
@@ -204,6 +204,29 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 "lr_end":0.0,                    # 最小学习率
 ```
 
+- 配置ResNet34和ImageNet2012数据集。
+
+```text
+"class_num":1001,                # 数据集类数
+"batch_size":256,                # 输入张量的批次大小
+"loss_scale":1024,               # 损失等级
+"momentum":0.9,                  # 动量优化器
+"weight_decay":1e-4,             # 权重衰减
+"epoch_size":90,                 # 此值仅适用于训练；应用于推理时固定为1
+"pretrain_epoch_size":0,         # 加载预训练检查点之前已经训练好的模型的周期大小；实际训练周期大小等于epoch_size减去pretrain_epoch_size
+"save_checkpoint":True,          # 是否保存检查点
+"save_checkpoint_epochs":5,      # 两个检查点之间的周期间隔；默认情况下，最后一个检查点将在最后一个周期完成后保存
+"keep_checkpoint_max":1,         # 只保存最后一个keep_checkpoint_max检查点
+"save_checkpoint_path":"./",     # 检查点相对于执行路径的保存路径
+"warmup_epochs":0,               # 热身周期数
+"optimizer":"Momentum",          # 优化器
+"use_label_smooth":True,         # 标签平滑
+"label_smooth_factor":0.1,       # 标签平滑因子
+"lr_init":0,                     # 初始学习率
+"lr_max":1.0,                    # 最大学习率
+"lr_end":0.0,                    # 最小学习率
+```
+
 - 配置ResNet101和ImageNet2012数据集。
 
 ```text
@@ -257,14 +280,14 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 
 ```text
 # 分布式训练
-用法：bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
+用法：bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
 [PRETRAINED_CKPT_PATH]（可选）
 
 # 运行评估示例
-用法：bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ```
 
@@ -307,10 +330,10 @@ bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet201
 
 ```bash
 # Ascend 分布式训练时推理示例:
-bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # Ascend 单机训练时推理示例:
-bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # GPU 分布式训练时推理示例:
 bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
@@ -348,6 +371,17 @@ epoch: 2 step: 625, loss is 4.0891967
 epoch: 3 step: 625, loss is 3.9131956
 epoch: 4 step: 625, loss is 3.5302577
 epoch: 5 step: 625, loss is 3.597817
+...
+```
+
+- 使用ImageNet2012数据集训练ResNet34
+
+```text
+# 分布式训练结果（8P）
+epoch: 2 step: 625, loss is 4.181185
+epoch: 3 step: 625, loss is 3.8856044
+epoch: 4 step: 625, loss is 3.423355
+epoch: 5 step: 625, loss is 3.506971
 ...
 ```
 
@@ -412,7 +446,7 @@ epoch:5 step:5004, loss is 3.3501816
 
 ```bash
 # 评估
-Usage: bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ```bash
@@ -456,6 +490,12 @@ result:{'acc':0.91446314102564111} ckpt=~/resnet50_cifar10/train_parallel0/resne
 result:{'acc':0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
 ```
 
+- 使用ImageNet2012数据集评估ResNet34
+
+```text
+result: {'top_1_accuracy': 0.736758814102564} ckpt=train_parallel0/resnet-90_625 .ckpt
+```
+
 - 使用ImageNet2012数据集评估ResNet101
 
 ```text
@@ -490,7 +530,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [DEVICE_ID]
 ```
 
-- `NET_TYPE` 选择范围：[resnet18, se-resnet50, resnet50, resnet101]。
+- `NET_TYPE` 选择范围：[resnet18, resnet34, se-resnet50, resnet50, resnet101]。
 - `DATASET` 选择范围：[cifar10, imagenet]。
 - `DEVICE_ID` 可选，默认值为0。
 
@@ -519,7 +559,13 @@ Total data: 10000, top1 accuracy: 0.9310, top5 accuracy: 0.9980.
 - 使用ImageNet2012数据集评估ResNet50
 
 ```text
-Total data: 50000, top1 accuracy: 0.0.7696, top5 accuracy: 0.93432.
+Total data: 50000, top1 accuracy: 0.7696, top5 accuracy: 0.93432.
+```
+
+- 使用ImageNet2012数据集评估ResNet34
+
+```text
+Total data: 50000, top1 accuracy: 0.7367.
 ```
 
 - 使用ImageNet2012数据集评估ResNet101
@@ -619,6 +665,26 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | 参数(M)             | 25.5                                                         | 25.5 |
 | 微调检查点| 197M（.ckpt文件）                                         | 197M（.ckpt文件）     |
 | 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+
+#### ImageNet2012上的ResNet34
+
+| 参数                 | Ascend 910                                                   |
+| -------------------------- | -------------------------------------- |
+| 模型版本              | ResNet34                                               |
+| 资源                   |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |
+| 上传日期              | 2021-05-08  ;                        |
+| MindSpore版本          | 1.1.1-alpha                                                       |
+| 数据集                    | ImageNet2012                                                    |
+| 训练参数        | epoch=90, steps per epoch=625, batch_size = 256             |
+| 优化器                  | Momentum                                                         |
+| 损失函数              | Softmax交叉熵                                       |
+| 输出                    | 概率                                                 |
+| 损失                       | 1.9575993                                                       |
+| 速度                      | 111毫秒/步（8卡）                     |
+| 总时长                 | 112分钟                          |
+| 参数(M)             | 20.79                                                         |
+| 微调检查点| 166M（.ckpt文件）                                         |
+| 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
 #### ImageNet2012上的ResNet101
 
