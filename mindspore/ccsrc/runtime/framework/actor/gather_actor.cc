@@ -94,8 +94,8 @@ void GatherActor::FetchBackendInputNode(const FuncGraphPtr &func_graph,
       if (parameters[i]->isa<Parameter>()) {
         // Input node is a parameter from host data source actor.
         std::vector<AnfNodePtr> invalid_inputs;
-        std::vector<AnfNodePtr> front_inputs = ControlNodeParser::FetchInputNodeByParameter(
-          parameters[i], origin_parameters_order, &invalid_inputs, func_graph_to_parameters);
+        std::vector<AnfNodePtr> front_inputs =
+          FetchInputNodeByParameter(parameters[i], origin_parameters_order, &invalid_inputs, func_graph_to_parameters);
 
         for (const auto &front_input : front_inputs) {
           const auto node_with_index = AnfAlgo::VisitKernelWithReturnType(front_input, 0);

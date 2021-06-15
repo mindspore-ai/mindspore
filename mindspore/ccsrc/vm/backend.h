@@ -41,9 +41,7 @@ using ActorInfo = runtime::ActorInfo;
 using GraphCompiler = runtime::GraphCompiler;
 using GraphCompilerInfo = runtime::GraphCompilerInfo;
 using ControlNodeParser = runtime::ControlNodeParser;
-using FrontToBackendNodeWithContext = runtime::FrontToBackendNodeWithContext;
-using FuncGraphToParameter = runtime::FuncGraphToParameter;
-using HostParameterToWeight = runtime::HostParameterToWeight;
+using ControlNodeParserPtr = runtime::ControlNodeParserPtr;
 
 enum SwitchCondStatus {
   kCondOk = 0,

@@ -34,6 +34,8 @@
 namespace mindspore {
 namespace runtime {
 
+constexpr size_t kReturnInputPos = 1;
+
 // Gather actor is the entrance of sub funcgraph. Graph input is sent to it and sent to other actors by gather actor.
 class GatherActor : public OpActor<DeviceTensor> {
  public:
