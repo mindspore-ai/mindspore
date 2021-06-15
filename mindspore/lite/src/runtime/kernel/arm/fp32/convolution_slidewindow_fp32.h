@@ -34,8 +34,10 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
 
   ~ConvolutionSWCPUKernel() override {
     if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-      packed_weight_ = nullptr;
+      FreeAlignedData(reinterpret_cast<void **>(&packed_weight_));
+    }
+    if (packed_bias_ != nullptr) {
+      FreeAlignedData(reinterpret_cast<void **>(&packed_bias_));
     }
     if (slidingWindow_param_ != nullptr) {
       delete slidingWindow_param_;
@@ -68,8 +70,10 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   float *ori_weight_data_ = nullptr;
   float *ori_bias_data_ = nullptr;
   float *packed_weight_ = nullptr;
+  float *packed_bias_ = nullptr;
   float *output_data_ = nullptr;
   float *input_data_ = nullptr;
+  int alignment = C32NUM;
   SlidingWindowParam *slidingWindow_param_ = nullptr;
 };
 }  // namespace mindspore::kernel

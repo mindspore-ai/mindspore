@@ -34,9 +34,11 @@ void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const fl
   int pad_l = conv_param->pad_l_;
   int pad_r = conv_param->pad_r_;
   int pad_u = conv_param->pad_u_;
-  int oc_algin = sw_param->block_channel_;
-  int ic_algin = sw_param->ic_align_;
+  int oc_align = sw_param->block_channel_;
+  int oc_align_float = oc_align * sizeof(float);
+  int ic_align = sw_param->ic_align_;
   int in_sw_step = sw_param->in_sw_step_;
+  int in_sw_step_float = sw_param->in_sw_step_ * sizeof(float);
   int kernel_step = sw_param->kernel_step_;
   int oc_num = sw_param->c_block_;
   int in_step = sw_param->in_step_;
@@ -53,9 +55,9 @@ void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const fl
   for (int b = 0; b < conv_param->output_batch_; b++) {
     int ic_block = 128;
     int dst_flag = 0;
-    for (int ic = 0; ic < ic_algin; ic += ic_block) {
-      if (ic_algin - ic <= ic_block) {
-        ic_block = ic_algin - ic;
+    for (int ic = 0; ic < ic_align; ic += ic_block) {
+      if (ic_align - ic <= ic_block) {
+        ic_block = ic_align - ic;
         dst_flag = 3 - (ic == 0);
       } else {
         dst_flag = 1 - (ic == 0);
@@ -76,9 +78,10 @@ void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const fl
             if (hw_block > ohw_end - hw) {  // ow is not enough and process one ow
               hw_block = 1;
             }
-            float *dst_w = dst_oc + hw * oc_algin;
-            kernel[oc_block - 1][hw_block / ow_block_num[oc_block - 1]](
-              dst_w, src_w, weight, bias, act_type, hw_block, oc_block, oc_algin, ic_block, in_sw_step, dst_flag);
+            float *dst_w = dst_oc + hw * oc_align;
+            kernel[oc_block - 1][hw_block / ow_block_num[oc_block - 1]](dst_w, src_w, weight, bias, act_type, hw_block,
+                                                                        oc_block, oc_align_float, ic_block >> 3,
+                                                                        in_sw_step_float, dst_flag);
             src_w += hw_block * in_sw_step;
           }
         }
@@ -90,11 +93,8 @@ void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const fl
 }
 
 void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag) {
-  in_sw_step *= sizeof(float);
-  oc_algin *= sizeof(float);
-  ic_algin /= 8;
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -115,18 +115,18 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
-    "vmovups 0x20(%2), %%ymm1\n"
-    "vmovups 0x40(%2), %%ymm2\n"
-    "vmovups 0x60(%2), %%ymm3\n"
-    "vmovups (%2), %%ymm4\n"
-    "vmovups 0x20(%2), %%ymm5\n"
-    "vmovups 0x40(%2), %%ymm6\n"
-    "vmovups 0x60(%2), %%ymm7\n"
-    "vmovups (%2), %%ymm8\n"
-    "vmovups 0x20(%2), %%ymm9\n"
-    "vmovups 0x40(%2), %%ymm10\n"
-    "vmovups 0x60(%2), %%ymm11\n"
+    "vmovaps (%2), %%ymm0\n"
+    "vmovaps 0x20(%2), %%ymm1\n"
+    "vmovaps 0x40(%2), %%ymm2\n"
+    "vmovaps 0x60(%2), %%ymm3\n"
+    "vmovaps (%2), %%ymm4\n"
+    "vmovaps 0x20(%2), %%ymm5\n"
+    "vmovaps 0x40(%2), %%ymm6\n"
+    "vmovaps 0x60(%2), %%ymm7\n"
+    "vmovaps (%2), %%ymm8\n"
+    "vmovaps 0x20(%2), %%ymm9\n"
+    "vmovaps 0x40(%2), %%ymm10\n"
+    "vmovaps 0x60(%2), %%ymm11\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -146,19 +146,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss (%0), %%ymm13\n"
     "vbroadcastss (%0, %4), %%ymm14\n"
     "vbroadcastss (%0, %4, 2), %%ymm15\n"
-    "vmovups (%1), %%ymm12\n"
+    "vmovaps (%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 0x20(%1), %%ymm12\n"
+    "vmovaps 0x20(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 0x40(%1), %%ymm12\n"
+    "vmovaps 0x40(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 0x60(%1), %%ymm12\n"
+    "vmovaps 0x60(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -166,19 +166,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss 4(%0), %%ymm13\n"
     "vbroadcastss 4(%0, %4), %%ymm14\n"
     "vbroadcastss 4(%0, %4, 2), %%ymm15\n"
-    "vmovups 128(%1), %%ymm12\n"
+    "vmovaps 128(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 160(%1), %%ymm12\n"
+    "vmovaps 160(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 192(%1), %%ymm12\n"
+    "vmovaps 192(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 224(%1), %%ymm12\n"
+    "vmovaps 224(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -186,19 +186,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss 8(%0), %%ymm13\n"
     "vbroadcastss 8(%0, %4), %%ymm14\n"
     "vbroadcastss 8(%0, %4, 2), %%ymm15\n"
-    "vmovups 256(%1), %%ymm12\n"
+    "vmovaps 256(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 288(%1), %%ymm12\n"
+    "vmovaps 288(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 320(%1), %%ymm12\n"
+    "vmovaps 320(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 352(%1), %%ymm12\n"
+    "vmovaps 352(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -206,19 +206,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss 12(%0), %%ymm13\n"
     "vbroadcastss 12(%0, %4), %%ymm14\n"
     "vbroadcastss 12(%0, %4, 2), %%ymm15\n"
-    "vmovups 384(%1), %%ymm12\n"
+    "vmovaps 384(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 416(%1), %%ymm12\n"
+    "vmovaps 416(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 448(%1), %%ymm12\n"
+    "vmovaps 448(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 480(%1), %%ymm12\n"
+    "vmovaps 480(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -226,19 +226,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss 16(%0), %%ymm13\n"
     "vbroadcastss 16(%0, %4), %%ymm14\n"
     "vbroadcastss 16(%0, %4, 2), %%ymm15\n"
-    "vmovups 512(%1), %%ymm12\n"
+    "vmovaps 512(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 544(%1), %%ymm12\n"
+    "vmovaps 544(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 576(%1), %%ymm12\n"
+    "vmovaps 576(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 608(%1), %%ymm12\n"
+    "vmovaps 608(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -246,19 +246,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss 20(%0), %%ymm13\n"
     "vbroadcastss 20(%0, %4), %%ymm14\n"
     "vbroadcastss 20(%0, %4, 2), %%ymm15\n"
-    "vmovups 640(%1), %%ymm12\n"
+    "vmovaps 640(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 672(%1), %%ymm12\n"
+    "vmovaps 672(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 704(%1), %%ymm12\n"
+    "vmovaps 704(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 736(%1), %%ymm12\n"
+    "vmovaps 736(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -266,19 +266,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss 24(%0), %%ymm13\n"
     "vbroadcastss 24(%0, %4), %%ymm14\n"
     "vbroadcastss 24(%0, %4, 2), %%ymm15\n"
-    "vmovups 768(%1), %%ymm12\n"
+    "vmovaps 768(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 800(%1), %%ymm12\n"
+    "vmovaps 800(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 832(%1), %%ymm12\n"
+    "vmovaps 832(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 864(%1), %%ymm12\n"
+    "vmovaps 864(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -286,19 +286,19 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vbroadcastss 28(%0), %%ymm13\n"
     "vbroadcastss 28(%0, %4), %%ymm14\n"
     "vbroadcastss 28(%0, %4, 2), %%ymm15\n"
-    "vmovups 896(%1), %%ymm12\n"
+    "vmovaps 896(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "vmovups 928(%1), %%ymm12\n"
+    "vmovaps 928(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
-    "vmovups 960(%1), %%ymm12\n"
+    "vmovaps 960(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
-    "vmovups 992(%1), %%ymm12\n"
+    "vmovaps 992(%1), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -362,18 +362,15 @@ void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm10, 0x40(%7, %6, 2)\n"
     "vmovups %%ymm11, 0x60(%7, %6, 2)\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(act_flag), "r"(oc_algin), "r"(dst),
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(act_flag), "r"(oc_align), "r"(dst),
       "r"(dst_flag)  // 8
     : "%rax", "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9",
       "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 }
 
 void Conv1x1SW1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag) {
-  in_sw_step *= sizeof(float);
-  oc_algin *= sizeof(float);
-  ic_algin /= 8;
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -386,10 +383,10 @@ void Conv1x1SW1x32Kernel(float *dst, const float *src, const float *weight, cons
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
-    "vmovups 0x20(%2), %%ymm1\n"
-    "vmovups 0x40(%2), %%ymm2\n"
-    "vmovups 0x60(%2), %%ymm3\n"
+    "vmovaps (%2), %%ymm0\n"
+    "vmovaps 0x20(%2), %%ymm1\n"
+    "vmovaps 0x40(%2), %%ymm2\n"
+    "vmovaps 0x60(%2), %%ymm3\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -399,80 +396,80 @@ void Conv1x1SW1x32Kernel(float *dst, const float *src, const float *weight, cons
 
     "2:\n"  // LoopIC
     "vbroadcastss (%0), %%ymm13\n"
-    "vmovups (%1), %%ymm4\n"
-    "vmovups 0x20(%1), %%ymm5\n"
-    "vmovups 0x40(%1), %%ymm6\n"
-    "vmovups 0x60(%1), %%ymm7\n"
+    "vmovaps (%1), %%ymm4\n"
+    "vmovaps 0x20(%1), %%ymm5\n"
+    "vmovaps 0x40(%1), %%ymm6\n"
+    "vmovaps 0x60(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm7, %%ymm13, %%ymm3\n"
 
     "vbroadcastss 4(%0), %%ymm13\n"
-    "vmovups 128(%1), %%ymm4\n"
-    "vmovups 160(%1), %%ymm5\n"
-    "vmovups 192(%1), %%ymm6\n"
-    "vmovups 224(%1), %%ymm7\n"
+    "vmovaps 128(%1), %%ymm4\n"
+    "vmovaps 160(%1), %%ymm5\n"
+    "vmovaps 192(%1), %%ymm6\n"
+    "vmovaps 224(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm7, %%ymm13, %%ymm3\n"
 
     "vbroadcastss 8(%0), %%ymm13\n"
-    "vmovups 256(%1), %%ymm4\n"
-    "vmovups 288(%1), %%ymm5\n"
-    "vmovups 320(%1), %%ymm6\n"
-    "vmovups 352(%1), %%ymm7\n"
+    "vmovaps 256(%1), %%ymm4\n"
+    "vmovaps 288(%1), %%ymm5\n"
+    "vmovaps 320(%1), %%ymm6\n"
+    "vmovaps 352(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm7, %%ymm13, %%ymm3\n"
 
     "vbroadcastss 12(%0), %%ymm13\n"
-    "vmovups 384(%1), %%ymm4\n"
-    "vmovups 416(%1), %%ymm5\n"
-    "vmovups 448(%1), %%ymm6\n"
-    "vmovups 480(%1), %%ymm7\n"
+    "vmovaps 384(%1), %%ymm4\n"
+    "vmovaps 416(%1), %%ymm5\n"
+    "vmovaps 448(%1), %%ymm6\n"
+    "vmovaps 480(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm7, %%ymm13, %%ymm3\n"
 
     "vbroadcastss 16(%0), %%ymm13\n"
-    "vmovups 512(%1), %%ymm4\n"
-    "vmovups 544(%1), %%ymm5\n"
-    "vmovups 576(%1), %%ymm6\n"
-    "vmovups 608(%1), %%ymm7\n"
+    "vmovaps 512(%1), %%ymm4\n"
+    "vmovaps 544(%1), %%ymm5\n"
+    "vmovaps 576(%1), %%ymm6\n"
+    "vmovaps 608(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm7, %%ymm13, %%ymm3\n"
 
     "vbroadcastss 20(%0), %%ymm13\n"
-    "vmovups 640(%1), %%ymm4\n"
-    "vmovups 672(%1), %%ymm5\n"
-    "vmovups 704(%1), %%ymm6\n"
-    "vmovups 736(%1), %%ymm7\n"
+    "vmovaps 640(%1), %%ymm4\n"
+    "vmovaps 672(%1), %%ymm5\n"
+    "vmovaps 704(%1), %%ymm6\n"
+    "vmovaps 736(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm7, %%ymm13, %%ymm3\n"
 
     "vbroadcastss 24(%0), %%ymm13\n"
-    "vmovups 768(%1), %%ymm4\n"
-    "vmovups 800(%1), %%ymm5\n"
-    "vmovups 832(%1), %%ymm6\n"
-    "vmovups 864(%1), %%ymm7\n"
+    "vmovaps 768(%1), %%ymm4\n"
+    "vmovaps 800(%1), %%ymm5\n"
+    "vmovaps 832(%1), %%ymm6\n"
+    "vmovaps 864(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm7, %%ymm13, %%ymm3\n"
 
     "vbroadcastss 28(%0), %%ymm13\n"
-    "vmovups 896(%1), %%ymm4\n"
-    "vmovups 928(%1), %%ymm5\n"
-    "vmovups 960(%1), %%ymm6\n"
-    "vmovups 992(%1), %%ymm7\n"
+    "vmovaps 896(%1), %%ymm4\n"
+    "vmovaps 928(%1), %%ymm5\n"
+    "vmovaps 960(%1), %%ymm6\n"
+    "vmovaps 992(%1), %%ymm7\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
@@ -512,20 +509,17 @@ void Conv1x1SW1x32Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm2, 0x40(%7)\n"
     "vmovups %%ymm3, 0x60(%7)\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(act_flag), "r"(oc_algin), "r"(dst),
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(act_flag), "r"(oc_align), "r"(dst),
       "r"(dst_flag)  // 8
     : "%rax", "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm12", "%ymm13",
       "%ymm14");
 }
 
 void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag) {
-  in_sw_step *= sizeof(float);
-  ic_algin /= 8;
   size_t src_3_step = 3 * in_sw_step;
-  float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= sizeof(float);
+  float *dst_3 = dst + 3 * oc_align / sizeof(float);
   asm volatile(
     "movq %10, %%rax\n"  // dst_flag
     "and $0x1, %%eax\n"
@@ -546,18 +540,18 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
-    "vmovups 0x20(%2), %%ymm1\n"
-    "vmovups 0x40(%2), %%ymm2\n"
-    "vmovups (%2), %%ymm3\n"
-    "vmovups 0x20(%2), %%ymm4\n"
-    "vmovups 0x40(%2), %%ymm5\n"
-    "vmovups (%2), %%ymm6\n"
-    "vmovups 0x20(%2), %%ymm7\n"
-    "vmovups 0x40(%2), %%ymm8\n"
-    "vmovups (%2), %%ymm9\n"
-    "vmovups 0x20(%2), %%ymm10\n"
-    "vmovups 0x40(%2), %%ymm11\n"
+    "vmovaps (%2), %%ymm0\n"
+    "vmovaps 0x20(%2), %%ymm1\n"
+    "vmovaps 0x40(%2), %%ymm2\n"
+    "vmovaps (%2), %%ymm3\n"
+    "vmovaps 0x20(%2), %%ymm4\n"
+    "vmovaps 0x40(%2), %%ymm5\n"
+    "vmovaps (%2), %%ymm6\n"
+    "vmovaps 0x20(%2), %%ymm7\n"
+    "vmovaps 0x40(%2), %%ymm8\n"
+    "vmovaps (%2), %%ymm9\n"
+    "vmovaps 0x20(%2), %%ymm10\n"
+    "vmovaps 0x40(%2), %%ymm11\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -574,9 +568,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vxorps %%ymm11, %%ymm11, %%ymm11\n"
 
     "2:\n"  // LoopIC
-    "vmovups (%1), %%ymm13\n"
-    "vmovups 0x20(%1), %%ymm14\n"
-    "vmovups 0x40(%1), %%ymm15\n"
+    "vmovaps (%1), %%ymm13\n"
+    "vmovaps 0x20(%1), %%ymm14\n"
+    "vmovaps 0x40(%1), %%ymm15\n"
     "vbroadcastss (%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -594,9 +588,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
-    "vmovups 96(%1), %%ymm13\n"
-    "vmovups 128(%1), %%ymm14\n"
-    "vmovups 160(%1), %%ymm15\n"
+    "vmovaps 96(%1), %%ymm13\n"
+    "vmovaps 128(%1), %%ymm14\n"
+    "vmovaps 160(%1), %%ymm15\n"
     "vbroadcastss 4(%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -614,9 +608,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
-    "vmovups 192(%1), %%ymm13\n"
-    "vmovups 224(%1), %%ymm14\n"
-    "vmovups 256(%1), %%ymm15\n"
+    "vmovaps 192(%1), %%ymm13\n"
+    "vmovaps 224(%1), %%ymm14\n"
+    "vmovaps 256(%1), %%ymm15\n"
     "vbroadcastss 8(%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -634,9 +628,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
-    "vmovups 288(%1), %%ymm13\n"
-    "vmovups 320(%1), %%ymm14\n"
-    "vmovups 352(%1), %%ymm15\n"
+    "vmovaps 288(%1), %%ymm13\n"
+    "vmovaps 320(%1), %%ymm14\n"
+    "vmovaps 352(%1), %%ymm15\n"
     "vbroadcastss 12(%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -654,9 +648,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
-    "vmovups 384(%1), %%ymm13\n"
-    "vmovups 416(%1), %%ymm14\n"
-    "vmovups 448(%1), %%ymm15\n"
+    "vmovaps 384(%1), %%ymm13\n"
+    "vmovaps 416(%1), %%ymm14\n"
+    "vmovaps 448(%1), %%ymm15\n"
     "vbroadcastss 16(%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -674,9 +668,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
-    "vmovups 480(%1), %%ymm13\n"
-    "vmovups 512(%1), %%ymm14\n"
-    "vmovups 544(%1), %%ymm15\n"
+    "vmovaps 480(%1), %%ymm13\n"
+    "vmovaps 512(%1), %%ymm14\n"
+    "vmovaps 544(%1), %%ymm15\n"
     "vbroadcastss 20(%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -694,9 +688,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
-    "vmovups 576(%1), %%ymm13\n"
-    "vmovups 608(%1), %%ymm14\n"
-    "vmovups 640(%1), %%ymm15\n"
+    "vmovaps 576(%1), %%ymm13\n"
+    "vmovaps 608(%1), %%ymm14\n"
+    "vmovaps 640(%1), %%ymm15\n"
     "vbroadcastss 24(%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -714,9 +708,9 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
-    "vmovups 672(%1), %%ymm13\n"
-    "vmovups 704(%1), %%ymm14\n"
-    "vmovups 736(%1), %%ymm15\n"
+    "vmovaps 672(%1), %%ymm13\n"
+    "vmovaps 704(%1), %%ymm14\n"
+    "vmovaps 736(%1), %%ymm15\n"
     "vbroadcastss 28(%0), %%ymm12\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
@@ -793,18 +787,15 @@ void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm10, 0x20(%9)\n"
     "vmovups %%ymm11, 0x40(%9)\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(src_3_step), "r"(act_flag),  // 6
-      "r"(oc_algin), "r"(dst), "r"(dst_3), "r"(dst_flag)                                                 // 10
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(src_3_step), "r"(act_flag),  // 6
+      "r"(oc_align), "r"(dst), "r"(dst_3), "r"(dst_flag)                                                 // 10
     : "%rax", "%rcx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9",
       "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 }
 
 void Conv1x1SW1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag) {
-  in_sw_step *= sizeof(float);
-  ic_algin /= 8;
-  oc_algin *= sizeof(float);
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -816,9 +807,9 @@ void Conv1x1SW1x24Kernel(float *dst, const float *src, const float *weight, cons
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
-    "vmovups 0x20(%2), %%ymm1\n"
-    "vmovups 0x40(%2), %%ymm2\n"
+    "vmovaps (%2), %%ymm0\n"
+    "vmovaps 0x20(%2), %%ymm1\n"
+    "vmovaps 0x40(%2), %%ymm2\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -827,65 +818,65 @@ void Conv1x1SW1x24Kernel(float *dst, const float *src, const float *weight, cons
 
     "2:\n"  // LoopIC
     "vbroadcastss (%0), %%ymm13\n"
-    "vmovups (%1), %%ymm4\n"
-    "vmovups 0x20(%1), %%ymm5\n"
-    "vmovups 0x40(%1), %%ymm6\n"
+    "vmovaps (%1), %%ymm4\n"
+    "vmovaps 0x20(%1), %%ymm5\n"
+    "vmovaps 0x40(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
 
     "vbroadcastss 4(%0), %%ymm13\n"
-    "vmovups 96(%1), %%ymm4\n"
-    "vmovups 128(%1), %%ymm5\n"
-    "vmovups 160(%1), %%ymm6\n"
+    "vmovaps 96(%1), %%ymm4\n"
+    "vmovaps 128(%1), %%ymm5\n"
+    "vmovaps 160(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
 
     "vbroadcastss 8(%0), %%ymm13\n"
-    "vmovups 192(%1), %%ymm4\n"
-    "vmovups 224(%1), %%ymm5\n"
-    "vmovups 256(%1), %%ymm6\n"
+    "vmovaps 192(%1), %%ymm4\n"
+    "vmovaps 224(%1), %%ymm5\n"
+    "vmovaps 256(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
 
     "vbroadcastss 12(%0), %%ymm13\n"
-    "vmovups 288(%1), %%ymm4\n"
-    "vmovups 320(%1), %%ymm5\n"
-    "vmovups 352(%1), %%ymm6\n"
+    "vmovaps 288(%1), %%ymm4\n"
+    "vmovaps 320(%1), %%ymm5\n"
+    "vmovaps 352(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
 
     "vbroadcastss 16(%0), %%ymm13\n"
-    "vmovups 384(%1), %%ymm4\n"
-    "vmovups 416(%1), %%ymm5\n"
-    "vmovups 448(%1), %%ymm6\n"
+    "vmovaps 384(%1), %%ymm4\n"
+    "vmovaps 416(%1), %%ymm5\n"
+    "vmovaps 448(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
 
     "vbroadcastss 20(%0), %%ymm13\n"
-    "vmovups 480(%1), %%ymm4\n"
-    "vmovups 512(%1), %%ymm5\n"
-    "vmovups 544(%1), %%ymm6\n"
+    "vmovaps 480(%1), %%ymm4\n"
+    "vmovaps 512(%1), %%ymm5\n"
+    "vmovaps 544(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
 
     "vbroadcastss 24(%0), %%ymm13\n"
-    "vmovups 576(%1), %%ymm4\n"
-    "vmovups 608(%1), %%ymm5\n"
-    "vmovups 640(%1), %%ymm6\n"
+    "vmovaps 576(%1), %%ymm4\n"
+    "vmovaps 608(%1), %%ymm5\n"
+    "vmovaps 640(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
 
     "vbroadcastss 28(%0), %%ymm13\n"
-    "vmovups 672(%1), %%ymm4\n"
-    "vmovups 704(%1), %%ymm5\n"
-    "vmovups 736(%1), %%ymm6\n"
+    "vmovaps 672(%1), %%ymm4\n"
+    "vmovaps 704(%1), %%ymm5\n"
+    "vmovaps 736(%1), %%ymm6\n"
     "vfmadd231ps %%ymm4, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm5, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm6, %%ymm13, %%ymm2\n"
@@ -922,19 +913,16 @@ void Conv1x1SW1x24Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm1, 0x20(%7)\n"
     "vmovups %%ymm2, 0x40(%7)\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(act_flag), "r"(oc_algin), "r"(dst),
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(act_flag), "r"(oc_align), "r"(dst),
       "r"(dst_flag)  // 8
     : "%rax", "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm4", "%ymm5", "%ymm6", "%ymm12", "%ymm13", "%ymm14");
 }
 
 void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag) {
-  in_sw_step *= sizeof(float);
   size_t src_3_step = 3 * in_sw_step;
-  float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= sizeof(float);
-  ic_algin /= 8;
+  float *dst_3 = dst + 3 * oc_align / sizeof(float);
   asm volatile(
     "movq %10, %%rax\n"  // dst_flag
     "and $0x1, %%eax\n"
@@ -955,19 +943,19 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
-    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovaps (%2), %%ymm0\n"
+    "vmovaps 0x20(%2), %%ymm1\n"
     // We need to copy ymm0 to ymm3 to reduce IO time, but unfortunately I didn't find the corresponding instruction.
-    "vmovups (%2), %%ymm2\n"
-    "vmovups 0x20(%2), %%ymm3\n"
-    "vmovups (%2), %%ymm4\n"
-    "vmovups 0x20(%2), %%ymm5\n"
-    "vmovups (%2), %%ymm6\n"
-    "vmovups 0x20(%2), %%ymm7\n"
-    "vmovups (%2), %%ymm8\n"
-    "vmovups 0x20(%2), %%ymm9\n"
-    "vmovups (%2), %%ymm10\n"
-    "vmovups 0x20(%2), %%ymm11\n"
+    "vmovaps (%2), %%ymm2\n"
+    "vmovaps 0x20(%2), %%ymm3\n"
+    "vmovaps (%2), %%ymm4\n"
+    "vmovaps 0x20(%2), %%ymm5\n"
+    "vmovaps (%2), %%ymm6\n"
+    "vmovaps 0x20(%2), %%ymm7\n"
+    "vmovaps (%2), %%ymm8\n"
+    "vmovaps 0x20(%2), %%ymm9\n"
+    "vmovaps (%2), %%ymm10\n"
+    "vmovaps 0x20(%2), %%ymm11\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -987,8 +975,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "movq %0, %%rax\n"
     "addq %5, %%rax\n"
 
-    "vmovups (%1), %%ymm12\n"
-    "vmovups 0x20(%1), %%ymm13\n"
+    "vmovaps (%1), %%ymm12\n"
+    "vmovaps 0x20(%1), %%ymm13\n"
     "vbroadcastss (%0), %%ymm14\n"
     "vbroadcastss (%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1008,8 +996,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
     "vfmadd231ps %%ymm13, %%ymm15, %%ymm11\n"
 
-    "vmovups 64(%1), %%ymm12\n"
-    "vmovups 96(%1), %%ymm13\n"
+    "vmovaps 64(%1), %%ymm12\n"
+    "vmovaps 96(%1), %%ymm13\n"
     "vbroadcastss 4(%0), %%ymm14\n"
     "vbroadcastss 4(%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1029,8 +1017,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
     "vfmadd231ps %%ymm13, %%ymm15, %%ymm11\n"
 
-    "vmovups 128(%1), %%ymm12\n"
-    "vmovups 160(%1), %%ymm13\n"
+    "vmovaps 128(%1), %%ymm12\n"
+    "vmovaps 160(%1), %%ymm13\n"
     "vbroadcastss 8(%0), %%ymm14\n"
     "vbroadcastss 8(%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1050,8 +1038,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
     "vfmadd231ps %%ymm13, %%ymm15, %%ymm11\n"
 
-    "vmovups 192(%1), %%ymm12\n"
-    "vmovups 224(%1), %%ymm13\n"
+    "vmovaps 192(%1), %%ymm12\n"
+    "vmovaps 224(%1), %%ymm13\n"
     "vbroadcastss 12(%0), %%ymm14\n"
     "vbroadcastss 12(%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1071,8 +1059,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
     "vfmadd231ps %%ymm13, %%ymm15, %%ymm11\n"
 
-    "vmovups 256(%1), %%ymm12\n"
-    "vmovups 288(%1), %%ymm13\n"
+    "vmovaps 256(%1), %%ymm12\n"
+    "vmovaps 288(%1), %%ymm13\n"
     "vbroadcastss 16(%0), %%ymm14\n"
     "vbroadcastss 16(%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1092,8 +1080,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
     "vfmadd231ps %%ymm13, %%ymm15, %%ymm11\n"
 
-    "vmovups 320(%1), %%ymm12\n"
-    "vmovups 352(%1), %%ymm13\n"
+    "vmovaps 320(%1), %%ymm12\n"
+    "vmovaps 352(%1), %%ymm13\n"
     "vbroadcastss 20(%0), %%ymm14\n"
     "vbroadcastss 20(%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1113,8 +1101,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
     "vfmadd231ps %%ymm13, %%ymm15, %%ymm11\n"
 
-    "vmovups 384(%1), %%ymm12\n"
-    "vmovups 416(%1), %%ymm13\n"
+    "vmovaps 384(%1), %%ymm12\n"
+    "vmovaps 416(%1), %%ymm13\n"
     "vbroadcastss 24(%0), %%ymm14\n"
     "vbroadcastss 24(%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1134,8 +1122,8 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
     "vfmadd231ps %%ymm13, %%ymm15, %%ymm11\n"
 
-    "vmovups 448(%1), %%ymm12\n"
-    "vmovups 480(%1), %%ymm13\n"
+    "vmovaps 448(%1), %%ymm12\n"
+    "vmovaps 480(%1), %%ymm13\n"
     "vbroadcastss 28(%0), %%ymm14\n"
     "vbroadcastss 28(%0, %4), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm0\n"
@@ -1214,18 +1202,15 @@ void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm10, (%9, %7, 2)\n"
     "vmovups %%ymm11, 0x20(%9, %7, 2)\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(src_3_step), "r"(act_flag),  // 6
-      "r"(oc_algin), "r"(dst), "r"(dst_3), "r"(dst_flag)                                                 // 10
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(src_3_step), "r"(act_flag),  // 6
+      "r"(oc_align), "r"(dst), "r"(dst_3), "r"(dst_flag)                                                 // 10
     : "%rax", "%rcx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9",
       "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 }
 
 void Conv1x1SW1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag) {
-  in_sw_step *= sizeof(float);
-  oc_algin *= sizeof(float);
-  ic_algin /= 8;
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -1236,8 +1221,8 @@ void Conv1x1SW1x16Kernel(float *dst, const float *src, const float *weight, cons
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
-    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovaps (%2), %%ymm0\n"
+    "vmovaps 0x20(%2), %%ymm1\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1245,50 +1230,50 @@ void Conv1x1SW1x16Kernel(float *dst, const float *src, const float *weight, cons
 
     "2:\n"  // LoopIC
     "vbroadcastss (%0), %%ymm12\n"
-    "vmovups (%1), %%ymm13\n"
-    "vmovups 0x20(%1), %%ymm14\n"
+    "vmovaps (%1), %%ymm13\n"
+    "vmovaps 0x20(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
     "vbroadcastss 4(%0), %%ymm12\n"
-    "vmovups 64(%1), %%ymm13\n"
-    "vmovups 96(%1), %%ymm14\n"
+    "vmovaps 64(%1), %%ymm13\n"
+    "vmovaps 96(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
     "vbroadcastss 8(%0), %%ymm12\n"
-    "vmovups 128(%1), %%ymm13\n"
-    "vmovups 160(%1), %%ymm14\n"
+    "vmovaps 128(%1), %%ymm13\n"
+    "vmovaps 160(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
     "vbroadcastss 12(%0), %%ymm12\n"
-    "vmovups 192(%1), %%ymm13\n"
-    "vmovups 224(%1), %%ymm14\n"
+    "vmovaps 192(%1), %%ymm13\n"
+    "vmovaps 224(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
     "vbroadcastss 16(%0), %%ymm12\n"
-    "vmovups 256(%1), %%ymm13\n"
-    "vmovups 288(%1), %%ymm14\n"
+    "vmovaps 256(%1), %%ymm13\n"
+    "vmovaps 288(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
     "vbroadcastss 20(%0), %%ymm12\n"
-    "vmovups 320(%1), %%ymm13\n"
-    "vmovups 352(%1), %%ymm14\n"
+    "vmovaps 320(%1), %%ymm13\n"
+    "vmovaps 352(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
     "vbroadcastss 24(%0), %%ymm12\n"
-    "vmovups 384(%1), %%ymm13\n"
-    "vmovups 416(%1), %%ymm14\n"
+    "vmovaps 384(%1), %%ymm13\n"
+    "vmovaps 416(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
     "vbroadcastss 28(%0), %%ymm12\n"
-    "vmovups 448(%1), %%ymm13\n"
-    "vmovups 480(%1), %%ymm14\n"
+    "vmovaps 448(%1), %%ymm13\n"
+    "vmovaps 480(%1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
 
@@ -1321,20 +1306,19 @@ void Conv1x1SW1x16Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm0, (%7)\n"  // dst_0
     "vmovups %%ymm1, 0x20(%7)\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(act_flag), "r"(oc_algin), "r"(dst),
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(act_flag), "r"(oc_align), "r"(dst),
       "r"(dst_flag)  // 8
     : "%rax", "%ecx", "%ymm0", "%ymm1", "%ymm12", "%ymm13", "%ymm14");
 }
 
 void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag) {
-  in_sw_step *= sizeof(float);
+  ic_align <<= 3;
   size_t src_3_step = 3 * in_sw_step;
-  float *dst_3 = dst + 3 * oc_algin;
-  float *dst_5 = dst + 5 * oc_algin;
-  float *dst_9 = dst + 9 * oc_algin;
-  oc_algin *= sizeof(float);
+  float *dst_3 = dst + 3 * oc_align / sizeof(float);
+  float *dst_5 = dst + 5 * oc_align / sizeof(float);
+  float *dst_9 = dst + 9 * oc_align / sizeof(float);
   asm volatile(
     "movq %12, %%rax\n"
     "and $0x1, %%eax\n"
@@ -1355,18 +1339,18 @@ void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, cons
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
-    "vmovups (%2), %%ymm1\n"
-    "vmovups (%2), %%ymm2\n"
-    "vmovups (%2), %%ymm3\n"
-    "vmovups (%2), %%ymm4\n"
-    "vmovups (%2), %%ymm5\n"
-    "vmovups (%2), %%ymm6\n"
-    "vmovups (%2), %%ymm7\n"
-    "vmovups (%2), %%ymm8\n"
-    "vmovups (%2), %%ymm9\n"
-    "vmovups (%2), %%ymm10\n"
-    "vmovups (%2), %%ymm11\n"
+    "vmovaps (%2), %%ymm0\n"
+    "vmovaps (%2), %%ymm1\n"
+    "vmovaps (%2), %%ymm2\n"
+    "vmovaps (%2), %%ymm3\n"
+    "vmovaps (%2), %%ymm4\n"
+    "vmovaps (%2), %%ymm5\n"
+    "vmovaps (%2), %%ymm6\n"
+    "vmovaps (%2), %%ymm7\n"
+    "vmovaps (%2), %%ymm8\n"
+    "vmovaps (%2), %%ymm9\n"
+    "vmovaps (%2), %%ymm10\n"
+    "vmovaps (%2), %%ymm11\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1383,7 +1367,7 @@ void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, cons
     "vxorps %%ymm11, %%ymm11, %%ymm11\n"
 
     "2:\n"  // LoopIC
-    "vmovups (%1), %%ymm12\n"
+    "vmovaps (%1), %%ymm12\n"
     "movq %0, %%rax\n"
     "vbroadcastss (%%rax), %%ymm13\n"
     "vbroadcastss (%%rax, %4), %%ymm14\n"
@@ -1417,8 +1401,8 @@ void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, cons
     "dec %3\n"
     "jg 2b\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(src_3_step), "r"(act_flag),  // 6
-      "r"(oc_algin), "r"(dst), "r"(dst_3), "r"(dst_5), "r"(dst_9), "r"(dst_flag)                         // 12
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(src_3_step), "r"(act_flag),  // 6
+      "r"(oc_align), "r"(dst), "r"(dst_3), "r"(dst_5), "r"(dst_9), "r"(dst_flag)                         // 12
     : "%rax", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
       "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 
@@ -1476,17 +1460,14 @@ void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm10, (%5, %1, 1)\n"
     "vmovups %%ymm11, (%5, %1, 2)\n"
     :
-    : "r"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3), "r"(dst_5), "r"(dst_9), "a"(dst_flag)  // 6
+    : "r"(act_flag), "r"(oc_align), "r"(dst), "r"(dst_3), "r"(dst_5), "r"(dst_9), "a"(dst_flag)  // 6
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
       "%ymm11", "%ymm12", "%ymm14");
 }
 
 void Conv1x1SW1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                        size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                        size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                         size_t dst_flag) {
-  in_sw_step *= sizeof(float);
-  oc_algin *= sizeof(float);
-  ic_algin /= 8;
   asm volatile(
     "movq %8, %%rax\n"
     "and $0x1, %%eax\n"
@@ -1496,42 +1477,42 @@ void Conv1x1SW1x8Kernel(float *dst, const float *src, const float *weight, const
     "0:\n"
     "cmpq $0, %2\n"
     "je 1f\n"
-    "vmovups (%2), %%ymm0\n"
+    "vmovaps (%2), %%ymm0\n"
     "jmp 2f\n"
     "1:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
 
     "2:\n"  // LoopIC
     "vbroadcastss (%0), %%ymm12\n"
-    "vmovups (%1), %%ymm13\n"
+    "vmovaps (%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
 
     "vbroadcastss 4(%0), %%ymm12\n"
-    "vmovups 32(%1), %%ymm13\n"
+    "vmovaps 32(%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
 
     "vbroadcastss 8(%0), %%ymm12\n"
-    "vmovups 64(%1), %%ymm13\n"
+    "vmovaps 64(%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
 
     "vbroadcastss 12(%0), %%ymm12\n"
-    "vmovups 96(%1), %%ymm13\n"
+    "vmovaps 96(%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
 
     "vbroadcastss 16(%0), %%ymm12\n"
-    "vmovups 128(%1), %%ymm13\n"
+    "vmovaps 128(%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
 
     "vbroadcastss 20(%0), %%ymm12\n"
-    "vmovups 160(%1), %%ymm13\n"
+    "vmovaps 160(%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
 
     "vbroadcastss 24(%0), %%ymm12\n"
-    "vmovups 192(%1), %%ymm13\n"
+    "vmovaps 192(%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
 
     "vbroadcastss 28(%0), %%ymm12\n"
-    "vmovups 224(%1), %%ymm13\n"
+    "vmovaps 224(%1), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "addq $256, %1\n"
     "addq $32, %0\n"
@@ -1559,15 +1540,18 @@ void Conv1x1SW1x8Kernel(float *dst, const float *src, const float *weight, const
     "3:\n"
     "vmovups %%ymm0, (%7)\n"  // dst_0
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(ic_algin), "r"(in_sw_step), "r"(act_flag), "r"(oc_algin), "r"(dst),
+    : "r"(src), "r"(weight), "r"(bias), "r"(ic_align), "r"(in_sw_step), "r"(act_flag), "r"(oc_align), "r"(dst),
       "r"(dst_flag)  // 8
     : "%rax", "%ecx", "%ymm0", "%ymm12", "%ymm13");
 }
 
 #ifdef ENABLE_DEBUG
 void Conv1x1SWOWxOCKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                          size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                          size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                           size_t dst_flag) {
+  oc_align /= sizeof(float);
+  in_sw_step /= sizeof(float);
+  ic_align <<= 3;
   __m256 dst_data[12];
   const float *src_sw[12];
   __m256 weight_data[4];
@@ -1577,7 +1561,7 @@ void Conv1x1SWOWxOCKernel(float *dst, const float *src, const float *weight, con
   for (int i = 0; i < ow_block; ++i) {
     if (dst_flag & 0x01) {
       for (int j = 0; j < oc_block; ++j) {
-        dst_data[i * oc_block + j] = _mm256_loadu_ps(dst + i * oc_algin + j * C8NUM);
+        dst_data[i * oc_block + j] = _mm256_loadu_ps(dst + i * oc_align + j * C8NUM);
       }
     } else {
       if (bias != NULL) {
@@ -1593,7 +1577,7 @@ void Conv1x1SWOWxOCKernel(float *dst, const float *src, const float *weight, con
     src_sw[i] = src + i * in_sw_step;
   }
   const float *weight_kernel = weight;
-  for (int ic = 0; ic < ic_algin; ++ic) {
+  for (int ic = 0; ic < ic_align; ++ic) {
     for (int j = 0; j < oc_block; ++j) {
       weight_data[j] = _mm256_loadu_ps(weight_kernel + j * C8NUM);
     }
@@ -1615,7 +1599,7 @@ void Conv1x1SWOWxOCKernel(float *dst, const float *src, const float *weight, con
           dst_data[i * oc_block + j] = _mm256_max_ps(dst_data[i * oc_block + j], _mm256_set1_ps(0.0f));
         }
       }
-      _mm256_storeu_ps(dst + i * oc_algin + j * C8NUM, dst_data[i * oc_block + j]);
+      _mm256_storeu_ps(dst + i * oc_align + j * C8NUM, dst_data[i * oc_block + j]);
     }
   }
 }

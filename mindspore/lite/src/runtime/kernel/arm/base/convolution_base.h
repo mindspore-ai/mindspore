@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CONVOLUTION_BASE_H_
 
 #include <vector>
+#include <map>
 #include <string>
 #include <limits>
 #ifdef ENABLE_ARM
@@ -56,8 +57,11 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   void SetRoundingAndMultipilerMode();
   int CheckResizeValid();
   void FreeQuantParam();
+  void *MallocAlignedData(size_t alignment, size_t size);
+  void FreeAlignedData(void **ptr);
 
  protected:
+  std::map<uintptr_t, void *> addr_map;
   bool is_repack() { return is_repack_; }
   void *bias_data_ = nullptr;
   const InnerContext *ctx_ = nullptr;

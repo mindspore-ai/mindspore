@@ -78,10 +78,8 @@ void *DefaultAllocator::Malloc(size_t size) {
   this->total_size_ += size;
   membuf->ref_count_ = 0;
   membuf->size = size;
-  auto aligned_bytes =
-    reinterpret_cast<size_t>((reinterpret_cast<char *>(membuf.get()) + sizeof(MemBuf))) % aligned_size_;
-  aligned_bytes = aligned_bytes == 0 ? 0 : aligned_size_ - aligned_bytes;
-  membuf->buf = reinterpret_cast<char *>(membuf.get()) + sizeof(MemBuf) + aligned_bytes;
+  membuf->buf = reinterpret_cast<char *>(
+    (reinterpret_cast<uintptr_t>(membuf.get()) + sizeof(MemBuf) + aligned_size_ - 1) & (~(aligned_size_ - 1)));
   auto bufPtr = membuf->buf;
   allocatedList_[bufPtr] = membuf.release();
   UnLock();
