@@ -43,7 +43,11 @@ int BatchnormFp16CPUKernel::InitConstTensor() {
     Float32ToFloat16(reinterpret_cast<float *>(variance_fp32->MutableData()), reinterpret_cast<float16_t *>(variance_),
                      variance_fp32->ElementsNum());
   } else {
-    BatchnormCPUKernel::InitConstTensor();
+    auto ret = BatchnormCPUKernel::InitConstTensor();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "InitConstTensor failed";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

@@ -49,10 +49,10 @@ class WhereCPUKernel : public InnerKernel {
   WhereParameter *where_param_;
 
  private:
-  bool *condition_;
-  float *x_;
-  float *y_;
-  float *output_data_;
+  bool *condition_ = nullptr;
+  float *x_ = nullptr;
+  float *y_ = nullptr;
+  float *output_data_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_WHERE_H_

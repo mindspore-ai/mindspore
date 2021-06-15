@@ -130,7 +130,11 @@ int ScaleCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  ReSize();
+  ret = ReSize();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Scale fp32 Resize failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

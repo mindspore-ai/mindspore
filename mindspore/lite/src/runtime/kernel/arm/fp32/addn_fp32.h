@@ -35,10 +35,10 @@ class AddNCPUKernel : public InnerKernel {
   int AddNParallelRun(int thread_id, float lhs_scale, float rhs_scale);
 
  private:
-  float *in1_addr_;
-  float *in2_addr_;
-  float *out_addr_;
-  int elements_num_;
+  float *in1_addr_ = nullptr;
+  float *in2_addr_ = nullptr;
+  float *out_addr_ = nullptr;
+  int elements_num_ = 0;
 };
 }  // namespace mindspore::kernel
 

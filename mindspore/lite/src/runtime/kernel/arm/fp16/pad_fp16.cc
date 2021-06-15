@@ -88,7 +88,11 @@ int PadFp16CPUKernel::Run() {
   int ret = 0;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     if (in_tensors_.size() == kPadMaxInputSize) {
-      CopyPaddingFromInput();
+      ret = CopyPaddingFromInput();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "PadFp16CPUKernel CopyPaddingFromInput failed";
+        return RET_ERROR;
+      }
     }
     if (pad_param_->constant_value_ - 0.0f < 1e-5) {
       memset(output_, 0, output_tensor->ElementsNum() * sizeof(float16_t));

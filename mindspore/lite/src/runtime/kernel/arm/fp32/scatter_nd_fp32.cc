@@ -46,11 +46,14 @@ int ScatterNDCPUKernel::ReSize() {
   auto update = in_tensors_.at(kScatterUpdateIndex);
 
   update_ptr_ = reinterpret_cast<float *>(update->MutableData());
+  MS_ASSERT(update_ptr_ != nullptr);
   output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output_ptr_ != nullptr);
 
   // check indices shape
   auto shape_rank = shape->ElementsNum();
   auto shape_data = reinterpret_cast<int *>(shape->MutableData());
+  MS_ASSERT(shape_data != nullptr);
   auto indice_unit_rank = indices->shape().back();
   if (indice_unit_rank > shape_rank) {
     MS_LOG(ERROR) << "Value of last dimension of indices is greater than shape rank.";
@@ -106,6 +109,7 @@ int ScatterNDCPUKernel::ReSize() {
   }
 
   int *indices_ptr = reinterpret_cast<int *>(indices->MutableData());
+  MS_ASSERT(indices_ptr != nullptr);
   output_unit_offsets_.clear();
   for (int i = 0; i < num_unit_; i++) {
     int tmp_stride = 0;
@@ -116,6 +120,9 @@ int ScatterNDCPUKernel::ReSize() {
   }
 
   thread_n_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
+  if (thread_n_num_ == 0) {
+    return RET_ERROR;
+  }
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }
@@ -138,6 +145,7 @@ int ScatterNDCPUKernel::ScatterND(int task_id) {
 
 int ScatterNDRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<ScatterNDCPUKernel *>(cdata);
+  MS_ASSERT(g_kernel != nullptr);
   auto ret = g_kernel->ScatterND(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ScatterNDRun error task_id[" << task_id << "] error_code[" << ret << "]";

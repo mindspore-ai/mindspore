@@ -85,6 +85,7 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
 
 int ActivationFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto activation_kernel = reinterpret_cast<ActivationFp16CPUKernel *>(cdata);
+  MS_ASSERT(activation_kernel != nullptr);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ActivationRun error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -96,6 +97,8 @@ int ActivationFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale
 int ActivationFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
+  MS_ASSERT(input_tensor != nullptr);
+  MS_ASSERT(output_tensor != nullptr);
 
   fp16_input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   fp16_output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());

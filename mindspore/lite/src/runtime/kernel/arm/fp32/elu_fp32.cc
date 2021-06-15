@@ -39,7 +39,11 @@ int EluCPUKernel::ReSize() {
 int EluCPUKernel::DoExcute(int task_id) {
   auto input_addr = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
-  Elu(input_addr, output_addr, elu_parameter_, task_id);
+  auto error_code = Elu(input_addr, output_addr, elu_parameter_, task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "EluCPUKernel DoExcute error error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

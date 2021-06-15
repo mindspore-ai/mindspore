@@ -39,12 +39,12 @@ class FillCPUKernel : public InnerKernel {
  private:
   int thread_sz_count_ = 0;
   int thread_sz_stride_ = 0;
-  int data_size_;
-  float src_data_;
-  float *out_ptr_;
-  int int32_src_data_;
-  int *int32_out_ptr_;
-  int thread_count_;
+  int data_size_ = 0;
+  float src_data_ = 0.0f;
+  float *out_ptr_ = nullptr;
+  int int32_src_data_ = 0;
+  int *int32_out_ptr_ = nullptr;
+  int thread_count_ = 1;
 };
 }  // namespace mindspore::kernel
 

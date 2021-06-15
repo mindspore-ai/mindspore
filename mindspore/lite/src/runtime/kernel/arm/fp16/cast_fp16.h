@@ -37,8 +37,8 @@ class CastFp16CPUKernel : public InnerKernel {
   int DoCast(int thread_id);
 
  private:
-  int stride_;
-  int data_num_;
+  int stride_ = 0;
+  int data_num_ = 0;
 };
 }  // namespace mindspore::kernel
 
