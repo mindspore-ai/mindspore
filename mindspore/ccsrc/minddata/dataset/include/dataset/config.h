@@ -28,55 +28,56 @@ namespace dataset {
 // Config operations for setting and getting the configuration.
 namespace config {
 
-/// \brief Function to set the seed to be used in any random generator. This is used to produce deterministic results.
-/// \param[in] seed the default seed to use.
+/// \brief A function to set the seed to be used in any random generator. This is used to produce deterministic results.
+/// \param[in] seed The default seed to be used.
 bool set_seed(int32_t seed);
 
-/// \brief Function to get the seed.
-/// \return the seed set in the configuration.
+/// \brief A function to get the seed.
+/// \return The seed set in the configuration.
 uint32_t get_seed();
 
-/// \brief Function to set the number of rows to be prefetched.
-/// \param[in] prefetch_size total number of rows to be prefetched.
+/// \brief A function to set the number of rows to be prefetched.
+/// \param[in] prefetch_size Total number of rows to be prefetched.
 bool set_prefetch_size(int32_t prefetch_size);
 
-/// \brief Function to get the prefetch size in number of rows.
-/// \return total number of rows to be prefetched.
+/// \brief A function to get the prefetch size in number of rows.
+/// \return Total number of rows to be prefetched.
 int32_t get_prefetch_size();
 
-/// \brief Function to set the default number of parallel workers.
-/// \param[in] num_parallel_workers number of parallel workers to be used as a default for each operation.
+/// \brief A function to set the default number of parallel workers.
+/// \param[in] num_parallel_workers Number of parallel workers to be used as the default for each operation.
 bool set_num_parallel_workers(int32_t num_parallel_workers);
 
-/// \brief Function to get the default number of parallel workers.
-/// \return number of parallel workers to be used as a default for each operation.
+/// \brief A function to get the default number of parallel workers.
+/// \return Number of parallel workers to be used as the default for each operation.
 int32_t get_num_parallel_workers();
 
-/// \brief Function to set the default interval (in milliseconds) for monitor sampling.
-/// \param[in] interval interval (in milliseconds) to be used for performance monitor sampling.
+/// \brief A function to set the default interval (in milliseconds) for monitor sampling.
+/// \param[in] interval Interval (in milliseconds) to be used for performance monitor sampling.
 bool set_monitor_sampling_interval(int32_t interval);
 
-/// \brief Function to get the default interval of performance monitor sampling.
-/// \return interval (in milliseconds) for performance monitor sampling.
+/// \brief A function to get the default interval of performance monitor sampling.
+/// \return Interval (in milliseconds) for performance monitor sampling.
 int32_t get_monitor_sampling_interval();
 
-/// \brief Function to set the default timeout (in seconds) for DSWaitedCallback. In case of a deadlock, the wait
+/// \brief A function to set the default timeout (in seconds) for DSWaitedCallback. In case of a deadlock, the wait
 ///    function will exit after the timeout period.
-/// \param[in] timeout timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
+/// \param[in] timeout Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
 bool set_callback_timeout(int32_t timeout);
 
-/// \brief Function to get the default timeout for DSWaitedCallback. In case of a deadback, the wait function will exit
-///    after the timeout period.
-/// \return the duration in seconds.
+/// \brief A function to get the default timeout for DSWaitedCallback. In case of a deadback, the wait function
+///    will exit after the timeout period.
+/// \return The duration in seconds.
 int32_t get_callback_timeout();
 
-/// \brief Function to load configuration from a file.
-/// \param[in] file path of the configuration file to be loaded.
-/// \note This API exists because std::string will constrained by ABI compile option while char don't.
+/// \brief A function to load the configuration from a file.
+/// \param[in] file Path of the configuration file to be loaded.
+/// \note The reason for using this API is that std::string will be constrained by the
+///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
 bool load(const std::vector<char> &file);
 
-/// \brief Function to load configuration from a file.
-/// \param[in] file path of the configuration file to be loaded.
+/// \brief A function to load the configuration from a file.
+/// \param[in] file Path of the configuration file to be loaded.
 inline bool load(std::string file) { return load(StringToChar(file)); }
 
 }  // namespace config

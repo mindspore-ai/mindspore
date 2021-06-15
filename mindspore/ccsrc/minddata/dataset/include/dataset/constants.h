@@ -51,10 +51,10 @@ enum class ShuffleMode {
 
 /// \brief The method of padding.
 enum class BorderType {
-  kConstant = 0,  ///< Fills the border with constant values.
-  kEdge = 1,      ///< Fills the border with the last value on the edge.
-  kReflect = 2,   ///< Reflects the values on the edge omitting the last value of edge.
-  kSymmetric = 3  ///< Reflects the values on the edge repeating the last value of edge.
+  kConstant = 0,  ///< Fill the border with constant values.
+  kEdge = 1,      ///< Fill the border with the last value on the edge.
+  kReflect = 2,   ///< Reflect the values on the edge omitting the last value of edge.
+  kSymmetric = 3  ///< Reflect the values on the edge repeating the last value of edge.
 };
 
 /// \brief Possible options for Image format types in a batch.
@@ -108,7 +108,7 @@ enum class SentencePieceModel {
 
 /// \brief Possible options to specify a specific normalize mode.
 enum class NormalizeForm {
-  kNone = 0,  ///< Do nothing for input string tensor.
+  kNone = 0,  ///< Keep the input string tensor unchanged.
   kNfc,       ///< Normalize with Normalization Form C.
   kNfkc,      ///< Normalize with Normalization Form KC.
   kNfd,       ///< Normalize with Normalization Form D.

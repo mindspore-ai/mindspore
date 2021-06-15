@@ -103,7 +103,7 @@ class Slice {
   dsize_t step_;
 };
 
-/// \brief SliceOption used in Slice Op.
+/// \brief SliceOption used in Slice TensorTransform.
 class SliceOption {
  public:
   /// \param[in] all Slice the whole dimension
@@ -127,8 +127,7 @@ class SliceOption {
 // Transform operations for performing data transformation.
 namespace transforms {
 
-/// \brief Compose Op.
-/// \note Compose a list of transforms into a single transform.
+/// \brief Compose a list of transforms into a single transform.
 class Compose final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -145,7 +144,7 @@ class Compose final : public TensorTransform {
   ~Compose() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -154,21 +153,20 @@ class Compose final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Concatenate Op.
-/// \note Tensor operation that concatenates all columns into a single tensor.
+/// \brief Concatenate all tensors into a single tensor.
 class Concatenate final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] axis Concatenate the tensors along given axis, only support 0 or -1 so far (default=0).
-  /// \param[in] prepend MSTensor to be prepended to the already concatenated tensors (default={}).
-  /// \param[in] append MSTensor to be appended to the already concatenated tensors (default={}).
+  /// \param[in] prepend MSTensor to be prepended to the concatenated tensors (default={}).
+  /// \param[in] append MSTensor to be appended to the concatenated tensors (default={}).
   explicit Concatenate(int8_t axis = 0, MSTensor prepend = {}, MSTensor append = {});
 
   /// \brief Destructor
   ~Concatenate() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -177,8 +175,7 @@ class Concatenate final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Duplicate Op.
-/// \note Duplicate the input tensor to a new output tensor.
+/// \brief Duplicate the input tensor to a new output tensor.
 ///     The input tensor is carried over to the output list.
 class Duplicate final : public TensorTransform {
  public:
@@ -189,19 +186,18 @@ class Duplicate final : public TensorTransform {
   ~Duplicate() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief Fill Op.
-/// \note Tensor operation to fill all elements in the tensor with the specified value.
+/// \brief Fill all elements in the tensor with the specified value.
 ///    The output tensor will have the same shape and type as the input tensor.
 class Fill final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] fill_value Scalar value to fill the tensor with.
-  ///               Can only be MSTensor of the following types from mindspore::DataType:
+  ///               It can only be MSTensor of the following types from mindspore::DataType:
   ///               String, Bool, Int8/16/32/64, UInt8/16/32/64, Float16/32/64.
   explicit Fill(MSTensor fill_value);
 
@@ -209,7 +205,7 @@ class Fill final : public TensorTransform {
   ~Fill() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -218,16 +214,15 @@ class Fill final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Mask Op.
-/// \note Mask content of the input tensor with the given predicate.
+/// \brief Mask content of the input tensor with the given predicate.
 ///     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
 class Mask final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] op One of the relational operators EQ, NE LT, GT, LE or GE.
-  /// \param[in] constant Constant to be compared to.
-  ///               Can only be MSTensor of str, int, float, bool.
-  /// \param[in] de_type Type of the generated mask. Can only be numeric or boolean datatype.
+  /// \param[in] op One of the relational operators: EQ, NE LT, GT, LE or GE.
+  /// \param[in] constant Constant to be compared to. It can only be MSTensor of the following types
+  ///                from mindspore::DataType: String, Int, Float, Bool.
+  /// \param[in] de_type Type of the generated mask. It can only be numeric or boolean datatype.
   ///               (default=mindspore::DataType::kNumberTypeBool)
   explicit Mask(RelationalOp op, MSTensor constant,
                 mindspore::DataType ms_type = mindspore::DataType(mindspore::DataType::kNumberTypeBool));
@@ -236,7 +231,7 @@ class Mask final : public TensorTransform {
   ~Mask() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -245,8 +240,7 @@ class Mask final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief OneHot Op.
-/// \note Convert the labels into OneHot format.
+/// \brief Convert the labels into OneHot format.
 class OneHot final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -257,7 +251,7 @@ class OneHot final : public TensorTransform {
   ~OneHot() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -266,13 +260,12 @@ class OneHot final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief PadEnd Op.
-/// \note Pad input tensor according to pad_shape, need to have same rank.
+/// \brief Pad input tensor according to pad_shape
 class PadEnd final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] pad_shape List of integers representing the shape needed.
-  ///               Dimensions that set to `None` will not be padded (i.e., original dim will be used).
+  /// \param[in] pad_shape List of integers representing the shape needed, need to have same rank with input tensor.
+  ///               Dimensions that set to `-1` will not be padded (i.e., original dim will be used).
   ///               Shorter dimensions will truncate the values.
   /// \param[in] pad_value Value used to pad (default={}).
   explicit PadEnd(const std::vector<dsize_t> &pad_shape, MSTensor pad_value = {});
@@ -281,7 +274,7 @@ class PadEnd final : public TensorTransform {
   ~PadEnd() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -290,8 +283,7 @@ class PadEnd final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomApply Op.
-/// \note Randomly perform a series of transforms with a given probability.
+/// \brief Randomly perform a series of transforms with a given probability.
 class RandomApply final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -311,7 +303,7 @@ class RandomApply final : public TensorTransform {
   ~RandomApply() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -320,8 +312,7 @@ class RandomApply final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomChoice Op.
-/// \note Randomly selects one transform from a list of transforms to perform operation.
+/// \brief Randomly select one transform from a list of transforms to perform on the input tensor.
 class RandomChoice final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -338,7 +329,7 @@ class RandomChoice final : public TensorTransform {
   ~RandomChoice() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -347,9 +338,8 @@ class RandomChoice final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Slice Op.
-/// \note Slice operation to extract a tensor out using the given n slices.
-///     The functionality of Slice is similar to NumPy's indexing feature.
+/// \brief Extract a tensor out using the given n slices.
+///     The functionality of Slice is similar to the feature of indexing of NumPy.
 ///     (Currently only rank-1 tensors are supported).
 class Slice final : public TensorTransform {
  public:
@@ -361,7 +351,7 @@ class Slice final : public TensorTransform {
   ~Slice() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -370,8 +360,7 @@ class Slice final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief TypeCast Op.
-/// \note Tensor operation to cast to a given MindSpore data type.
+/// \brief Cast the MindSpore data type of a tensor to another.
 class TypeCast final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -382,7 +371,7 @@ class TypeCast final : public TensorTransform {
   ~TypeCast() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -391,9 +380,8 @@ class TypeCast final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Unique Op.
-/// \note Return an output tensor containing all the unique elements of the input tensor in
-///     the same order that they occur in the input tensor.
+/// \brief Return an output tensor that contains all the unique elements of the input tensor in
+///     the same order as they appear in the input tensor.
 class Unique final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -403,7 +391,7 @@ class Unique final : public TensorTransform {
   ~Unique() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };

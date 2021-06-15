@@ -34,17 +34,19 @@ namespace vision {
 
 /* ##################################### API class ###########################################*/
 
+/// \brief Decode and resize JPEG image using the hardware algorithm of
+///     Ascend series chip DVPP module.
 class DvppDecodeResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] resize A vector of int value for each dimension, w.r.t H,W order.
+  /// \param[in] resize A vector of int value for each dimension, with respect to H,W order.
   explicit DvppDecodeResizeJpeg(std::vector<uint32_t> resize);
 
   /// \brief Destructor.
   ~DvppDecodeResizeJpeg() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -55,18 +57,20 @@ class DvppDecodeResizeJpeg final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Decode, resize and crop JPEG image using the hardware algorithm of
+///     Ascend series chip DVPP module.
 class DvppDecodeResizeCropJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] crop A vector of int value for each dimension after final crop, w.r.t H,W order.
-  /// \param[in] resize A vector of int value for each dimension after resize, w.r.t H,W order.
+  /// \param[in] crop A vector of int value for each dimension after final cropping, with respect to H,W order.
+  /// \param[in] resize A vector of int value for each dimension after resizing, with respect to H,W order.
   explicit DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize);
 
   /// \brief Destructor.
   ~DvppDecodeResizeCropJpeg() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -77,6 +81,8 @@ class DvppDecodeResizeCropJpeg final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Decode PNG image using the hardware algorithm of
+///     Ascend series chip DVPP module.
 class DvppDecodePng final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -86,7 +92,7 @@ class DvppDecodePng final : public TensorTransform {
   ~DvppDecodePng() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 

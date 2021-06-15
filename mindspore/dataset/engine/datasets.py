@@ -1573,12 +1573,25 @@ class Dataset:
         return self.dataset_size
 
     def set_dynamic_columns(self, columns=None):
+        """
+        Set dynamic shape information of source data, it should be set after the pipeline is defined.
+
+        Args:
+            columns (dict): A dict contains shape information of each column in dataset.
+                The value of shape[i] is :py:obj:`None` indicates that the data length of shape[i] is dynamic.
+        """
         if not isinstance(columns, dict):
             raise TypeError("Pass a dict to set dynamic shape, example: {\"data1\": [16, None, 256]}")
         self.dynamic_setting[0] = True
         self.dynamic_setting[1] = columns
 
     def dynamic_min_max_shapes(self):
+        """
+        Get minimum and maximum data length of dynamic source data, for graph compilation of ME.
+
+        Returns:
+            lists, min_shapes, max_shapes of source data.
+        """
         if self.saved_min_shapes is None or self.saved_max_shapes is None:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_min_shapes, self.saved_max_shapes
@@ -1591,7 +1604,7 @@ class Dataset:
             lists, dynamic_shapes, min_shapes, max_shapes of source data.
         """
         if not self.dynamic_setting[1]:
-            raise RuntimeError("dynamic_columns is not set, call set_dynamic_columns() first.")
+            raise RuntimeError("dynamic_columns is not set, call set_dynamic_columns() by final Dataset Op.")
 
         if self.saved_output_shapes is not None and self.saved_min_shapes is not None and \
                 self.saved_max_shapes is not None:
@@ -1648,12 +1661,16 @@ class Dataset:
                 dynamic_shapes.append(dynamic_shape.tolist())
             else:
                 # Also append fix shape to keep order of column shape
-                if col in dynamic_columns:
-                    logger.warning("column [" + col + "] has no dynamic shape but set by set_dynamic_columns()")
                 fix_shape = list(list(shape_set)[0])
                 max_shapes.append(fix_shape)
                 min_shapes.append(fix_shape)
                 dynamic_shapes.append(fix_shape)
+                if col in dynamic_columns:
+                    logger.warning("column [" + col + "] has no dynamic shape but set by set_dynamic_columns()")
+                    # Set min shape to 1 due to unknown shuffle
+                    min_shapes[-1] = np.where(np.equal(dynamic_columns[col], None), 1, fix_shape).tolist()
+                    # Set dynamic dim to -1 for ME
+                    dynamic_shapes[-1] = np.where(np.equal(dynamic_columns[col], None), -1, fix_shape).tolist()
         return dynamic_shapes, min_shapes, max_shapes
 
     def num_classes(self):
@@ -3109,7 +3126,7 @@ class ImageFolderDataset(MappableDataset):
         decode (bool, optional): Decode the images after reading (default=False).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -3229,7 +3246,7 @@ class MnistDataset(MappableDataset):
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -3347,7 +3364,7 @@ class MindDataset(MappableDataset):
             - Shuffle.INFILE: Keep the file sequence the same but shuffle the data within each file.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+            When this argument is specified, 'num_samples' reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -3786,8 +3803,8 @@ class GeneratorDataset(MappableDataset):
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
             input is required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            Random accessible input is required. When this argument is specified, `num_samples`s reflects the max sample
-            number of per shard.
+            Random accessible input is required. When this argument is specified, `num_samples` reflects the maximum
+            sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
@@ -4007,12 +4024,13 @@ class TFRecordDataset(SourceDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards(default=False). If shard_equal_rows
-            is false, number of rows of each shard may be not equal. This
-            argument should only be specified when num_shards is also specified.
+            is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
+            When the number of samples of per TFRecord file are not equal, it is suggested to set to true.
+            This argument should only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
@@ -4200,7 +4218,7 @@ class Cifar10Dataset(MappableDataset):
             dataset (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -4324,7 +4342,7 @@ class Cifar100Dataset(MappableDataset):
             dataset (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, 'num_samples' reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -4437,7 +4455,7 @@ class RandomDataset(SourceDataset):
             (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, 'num_samples' reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
     """
@@ -4600,7 +4618,7 @@ class VOCDataset(MappableDataset):
             (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -4771,7 +4789,7 @@ class CocoDataset(MappableDataset):
         :py:obj:`[category_id, dtype=uint32]`, :py:obj:`[iscrowd, dtype=uint32]`.
     - task = :py:obj:`Stuff`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[segmentation,dtype=float32]`, \
         :py:obj:`[iscrowd,dtype=uint32]`.
-    - task = :py:obj:`Keypoint, output columns: :py:obj:`[image, dtype=uint8]`, \
+    - task = :py:obj:`Keypoint`, output columns: :py:obj:`[image, dtype=uint8]`, \
         :py:obj:`[keypoints, dtype=float32]`, :py:obj:`[num_keypoints, dtype=uint32]`.
     - task = :py:obj:`Panoptic`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
         :py:obj:`[category_id, dtype=uint32]`, :py:obj:`[iscrowd, dtype=uint32]`, :py:obj:`[area, dtype=uint32]`.
@@ -4792,7 +4810,7 @@ class CocoDataset(MappableDataset):
             (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -4973,7 +4991,7 @@ class CelebADataset(MappableDataset):
             (default=None, will include all images).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -5183,7 +5201,7 @@ class CLUEDataset(SourceDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -5268,7 +5286,7 @@ class CSVDataset(SourceDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -5323,7 +5341,7 @@ class TextFileDataset(SourceDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.

@@ -36,12 +36,11 @@ class TensorOperation;
 
 // Transform operations for performing computer vision.
 namespace vision {
-/// \brief AutoContrast TensorTransform.
-/// \note Apply automatic contrast on input image.
+/// \brief Apply automatic contrast on the input image.
 class AutoContrast final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 100.
+  /// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 50.
   /// \param[in] ignore Pixel values to ignore.
   explicit AutoContrast(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
 
@@ -49,7 +48,7 @@ class AutoContrast final : public TensorTransform {
   ~AutoContrast() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -58,30 +57,29 @@ class AutoContrast final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief BoundingBoxAugment TensorTransform.
-/// \note  Apply a given image transform on a random selection of bounding box regions of a given image.
+/// \brief Apply a given image transform on a random selection of bounding box regions of a given image.
 class BoundingBoxAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] transform Raw pointer to a TensorTransform operation.
+  /// \param[in] transform Raw pointer to the TensorTransform operation.
   /// \param[in] ratio Ratio of bounding boxes to apply augmentation on. Range: [0, 1] (default=0.3).
   explicit BoundingBoxAugment(TensorTransform *transform, float ratio = 0.3);
 
   /// \brief Constructor.
-  /// \param[in] transform Smart pointer to a TensorTransform operation.
-  /// \param[in] ratio Ratio of bounding boxes to apply augmentation on. Range: [0, 1] (default=0.3).
+  /// \param[in] transform Smart pointer to the TensorTransform operation.
+  /// \param[in] ratio Ratio of bounding boxes where augmentation is applied to. Range: [0, 1] (default=0.3).
   explicit BoundingBoxAugment(const std::shared_ptr<TensorTransform> &transform, float ratio = 0.3);
 
   /// \brief Constructor.
-  /// \param[in] transform Object pointer to a TensorTransform operation.
-  /// \param[in] ratio Ratio of bounding boxes to apply augmentation on. Range: [0, 1] (default=0.3).
+  /// \param[in] transform Object pointer to the TensorTransform operation.
+  /// \param[in] ratio Ratio of bounding boxes where augmentation is applied to. Range: [0, 1] (default=0.3).
   explicit BoundingBoxAugment(const std::reference_wrapper<TensorTransform> transform, float ratio = 0.3);
 
   /// \brief Destructor.
   ~BoundingBoxAugment() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -90,8 +88,7 @@ class BoundingBoxAugment final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Constructor to apply CutMix on a batch of images.
-/// \note Masks a random section of each image with the corresponding part of another randomly
+/// \brief Mask a random section of each image with the corresponding part of another randomly
 ///     selected image in that batch.
 class CutMixBatch final : public TensorTransform {
  public:
@@ -105,7 +102,7 @@ class CutMixBatch final : public TensorTransform {
   ~CutMixBatch() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -114,8 +111,7 @@ class CutMixBatch final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief CutOut TensorOp.
-/// \note Randomly cut (mask) out a given number of square patches from the input image.
+/// \brief Randomly cut (mask) out a given number of square patches from the input image.
 class CutOut final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -127,7 +123,7 @@ class CutOut final : public TensorTransform {
   ~CutOut() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -136,8 +132,7 @@ class CutOut final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Equalize TensorTransform.
-/// \note Apply histogram equalization on input image.
+/// \brief Apply histogram equalization on the input image.
 class Equalize final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -147,13 +142,12 @@ class Equalize final : public TensorTransform {
   ~Equalize() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief HorizontalFlip TensorTransform.
-/// \note Flip the input image horizontally.
+/// \brief Flip the input image horizontally.
 class HorizontalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -163,13 +157,12 @@ class HorizontalFlip final : public TensorTransform {
   ~HorizontalFlip() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief HwcToChw TensorTransform.
-/// \note Transpose the input image; shape (H, W, C) to shape (C, H, W).
+/// \brief Transpose the input image; shape (H, W, C) to shape (C, H, W).
 class HWC2CHW final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -179,13 +172,12 @@ class HWC2CHW final : public TensorTransform {
   ~HWC2CHW() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief Invert TensorTransform.
-/// \note Apply invert on input image in RGB mode.
+/// \brief Apply invert on the input image in RGB mode.
 class Invert final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -195,13 +187,12 @@ class Invert final : public TensorTransform {
   ~Invert() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief MixUpBatch TensorTransform.
-/// \note Apply MixUp transformation on an input batch of images and labels. The labels must be in
+/// \brief Apply MixUp transformation on an input batch of images and labels. The labels must be in
 ///     one-hot format and Batch must be called before calling this function.
 class MixUpBatch final : public TensorTransform {
  public:
@@ -213,7 +204,7 @@ class MixUpBatch final : public TensorTransform {
   ~MixUpBatch() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -222,15 +213,14 @@ class MixUpBatch final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief NormalizePad TensorTransform.
-/// \note Normalize the input image with respect to mean and standard deviation and pad an extra
+/// \brief Normalize the input image with respect to mean and standard deviation and pads an extra
 ///     channel with value zero.
 class NormalizePad final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
+  /// \param[in] mean A vector of mean values for each channel, with respect to channel order.
   ///     The mean values must be in range [0.0, 255.0].
-  /// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
+  /// \param[in] std A vector of standard deviations for each channel, with respect to channel order.
   ///     The standard deviation values must be in range (0.0, 255.0].
   /// \param[in] dtype The output datatype of Tensor.
   ///     The standard deviation values must be "float32" or "float16"（default = "float32"）.
@@ -244,7 +234,7 @@ class NormalizePad final : public TensorTransform {
   ~NormalizePad() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -253,16 +243,15 @@ class NormalizePad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Pad TensorOp.
-/// \note Pads the image according to padding parameters.
+/// \brief Pad the image according to padding parameters.
 class Pad final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] padding A vector representing the number of pixels to pad the image
-  ///    If vector has one value, it pads all sides of the image with that value.
-  ///    If vector has two values, it pads left and top with the first and
+  /// \param[in] padding A vector representing the number of pixels to pad the image.
+  ///    If the vector has one value, it pads all sides of the image with that value.
+  ///    If the vector has two values, it pads left and top with the first and
   ///    right and bottom with the second value.
-  ///    If vector has four values, it pads left, top, right, and bottom with
+  ///    If the vector has four values, it pads left, top, right, and bottom with
   ///    those values respectively.
   /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
   ///    BorderType.kConstant. If 1 value is provided, it is used for all RGB channels. If 3 values are provided,
@@ -281,7 +270,7 @@ class Pad final : public TensorTransform {
   ~Pad() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -290,21 +279,21 @@ class Pad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Blends an image with its grayscale version with random weights
+/// \brief Blend an image with its grayscale version with random weights
 ///        t and 1 - t generated from a given range. If the range is trivial
-///        then the weights are determinate and t equals the bound of the interval.
+///        then the weights are determinate and t equals to the bound of the interval.
 class RandomColor final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] t_lb Lower bound on the range of random weights.
-  /// \param[in] t_lb Upper bound on the range of random weights.
+  /// \param[in] t_lb Lower bound random weights.
+  /// \param[in] t_lb Upper bound random weights.
   explicit RandomColor(float t_lb, float t_ub);
 
   /// \brief Destructor.
   ~RandomColor() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -313,19 +302,18 @@ class RandomColor final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomColorAdjust TensorTransform.
 /// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 class RandomColorAdjust final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] brightness Brightness adjustment factor. Must be a vector of one or two values
-  ///     if it's a vector of two values it needs to be in the form of [min, max] (Default={1, 1}).
+  ///     if it is a vector of two values it needs to be in the form of [min, max] (Default={1, 1}).
   /// \param[in] contrast Contrast adjustment factor. Must be a vector of one or two values
-  ///     if it's a vector of two values it needs to be in the form of [min, max] (Default={1, 1}).
+  ///     if it is a vector of two values, it needs to be in the form of [min, max] (Default={1, 1}).
   /// \param[in] saturation Saturation adjustment factor. Must be a vector of one or two values
-  ///     if it's a vector of two values it needs to be in the form of [min, max] (Default={1, 1}).
+  ///     if it is a vector of two values, it needs to be in the form of [min, max] (Default={1, 1}).
   /// \param[in] hue Brightness adjustment factor. Must be a vector of one or two values
-  ///     if it's a vector of two values it must be in the form of [min, max] where -0.5 <= min <= max <= 0.5
+  ///     if it is a vector of two values, it must be in the form of [min, max] where -0.5 <= min <= max <= 0.5
   ///     (Default={0, 0}).
   explicit RandomColorAdjust(std::vector<float> brightness = {1.0, 1.0}, std::vector<float> contrast = {1.0, 1.0},
                              std::vector<float> saturation = {1.0, 1.0}, std::vector<float> hue = {0.0, 0.0});
@@ -334,7 +322,7 @@ class RandomColorAdjust final : public TensorTransform {
   ~RandomColorAdjust() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -343,22 +331,21 @@ class RandomColorAdjust final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomCrop TensorTransform.
-/// \note Crop the input image at a random location.
+/// \brief Crop the input image at a random location.
 class RandomCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
-  ///     If size is a single value, a square crop of size (size, size) is returned.
-  ///     If size has 2 values, it should be (height, width).
-  /// \param[in] padding A vector representing the number of pixels to pad the image
-  ///    If vector has one value, it pads all sides of the image with that value.
-  ///    If vector has two values, it pads left and top with the first and
+  ///     If the size is a single value, a squared crop of size (size, size) is returned.
+  ///     If the size has 2 values, it should be (height, width).
+  /// \param[in] padding A vector representing the number of pixels to pad the image.
+  ///    If the vector has one value, it pads all sides of the image with that value.
+  ///    If the vector has two values, it pads left and top with the first and
   ///    right and bottom with the second value.
-  ///    If vector has four values, it pads left, top, right, and bottom with
+  ///    If the vector has four values, it pads left, top, right, and bottom with
   ///    those values respectively.
-  /// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
-  ///     the given output size.
+  /// \param[in] pad_if_needed A boolean indicating that whether to pad the image
+  ///    if either side is smaller than the given output size.
   /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
   ///     BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
   ///     If 3 values are provided, it is used to fill R, G, B channels respectively.
@@ -370,7 +357,7 @@ class RandomCrop final : public TensorTransform {
   ~RandomCrop() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -379,14 +366,13 @@ class RandomCrop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomCropDecodeResize TensorTransform.
-/// \note Equivalent to RandomResizedCrop, but crops before decodes.
+/// \brief Equivalent to RandomResizedCrop TensorTransform, but crop the image before decoding.
 class RandomCropDecodeResize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
-  ///               If size is a single value, a square crop of size (size, size) is returned.
-  ///               If size has 2 values, it should be (height, width).
+  ///               If the size is a single value, a squared crop of size (size, size) is returned.
+  ///               If the size has 2 values, it should be (height, width).
   /// \param[in] scale Range [min, max) of respective size of the
   ///               original size to be cropped (default=(0.08, 1.0)).
   /// \param[in] ratio Range [min, max) of aspect ratio to be
@@ -403,7 +389,7 @@ class RandomCropDecodeResize final : public TensorTransform {
   ~RandomCropDecodeResize() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -412,23 +398,22 @@ class RandomCropDecodeResize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomCropWithBBox TensorTransform.
-/// \note Crop the input image at a random location and adjust bounding boxes accordingly.
-///        If cropped area is out of bbox, the return bbox will be empty.
+/// \brief Crop the input image at a random location and adjust bounding boxes accordingly.
+///        If the cropped area is out of bbox, the returned bbox will be empty.
 class RandomCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
-  ///     If size is a single value, a square crop of size (size, size) is returned.
-  ///     If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, a squared crop of size (size, size) is returned.
+  ///     If the size has 2 values, it should be (height, width).
   /// \param[in] padding A vector representing the number of pixels to pad the image
-  ///    If vector has one value, it pads all sides of the image with that value.
-  ///    If vector has two values, it pads left and top with the first and
+  ///    If the vector has one value, it pads all sides of the image with that value.
+  ///    If the vector has two values, it pads left and top with the first and
   ///    right and bottom with the second value.
-  ///    If vector has four values, it pads left, top, right, and bottom with
+  ///    If the vector has four values, it pads left, top, right, and bottom with
   ///    those values respectively.
-  /// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
-  ///     the given output size.
+  /// \param[in] pad_if_needed A boolean indicating that whether to pad the image
+  ///    if either side is smaller than the given output size.
   /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
   ///     BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
   ///     If 3 values are provided, it is used to fill R, G, B channels respectively.
@@ -442,7 +427,7 @@ class RandomCropWithBBox final : public TensorTransform {
   ~RandomCropWithBBox() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -451,8 +436,7 @@ class RandomCropWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomHorizontalFlip TensorTransform.
-/// \note Tensor operation to perform random horizontal flip.
+/// \brief Randomly flip the input image horizontally with a given probability.
 class RandomHorizontalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -463,7 +447,7 @@ class RandomHorizontalFlip final : public TensorTransform {
   ~RandomHorizontalFlip() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -472,8 +456,7 @@ class RandomHorizontalFlip final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomHorizontalFlipWithBBox TensorTransform.
-/// \note Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
+/// \brief Randomly flip the input image horizontally with a given probability and adjust bounding boxes accordingly.
 class RandomHorizontalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -484,7 +467,7 @@ class RandomHorizontalFlipWithBBox final : public TensorTransform {
   ~RandomHorizontalFlipWithBBox() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -493,8 +476,7 @@ class RandomHorizontalFlipWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomPosterize TensorTransform.
-/// \note Tensor operation to perform random posterize.
+/// \brief Reduce the number of bits for each color channel randomly.
 class RandomPosterize final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -505,7 +487,7 @@ class RandomPosterize final : public TensorTransform {
   ~RandomPosterize() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -514,21 +496,20 @@ class RandomPosterize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomResize TensorTransform.
-/// \note Resize the input image using a randomly selected interpolation mode.
-//      the same image aspect ratio. If size has 2 values, it should be (height, width).
+/// \brief Resize the input image using a randomly selected interpolation mode.
 class RandomResize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
-  ///     If size is a single value, the smaller edge of the image will be resized to this value with.
+  ///     If the size is a single value, the smaller edge of the image will be resized to this value with
+  //      the same image aspect ratio. If the size has 2 values, it should be (height, width).
   explicit RandomResize(std::vector<int32_t> size);
 
   /// \brief Destructor.
   ~RandomResize() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -537,22 +518,21 @@ class RandomResize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomResizeWithBBox TensorTransform.
-/// \note Resize the input image using a randomly selected interpolation mode and adjust
+/// \brief Resize the input image using a randomly selected interpolation mode and adjust
 ///     bounding boxes accordingly.
 class RandomResizeWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
-  ///     If size is a single value, the smaller edge of the image will be resized to this value with
-  //      the same image aspect ratio. If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, the smaller edge of the image will be resized to this value with
+  //      the same image aspect ratio. If the size has 2 values, it should be (height, width).
   explicit RandomResizeWithBBox(std::vector<int32_t> size);
 
   /// \brief Destructor.
   ~RandomResizeWithBBox() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -561,14 +541,13 @@ class RandomResizeWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomResizedCrop TensorTransform.
-/// \note Crop the input image to a random size and aspect ratio.
+/// \brief Crop the input image to a random size and aspect ratio.
 class RandomResizedCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
-  ///     If size is a single value, a square crop of size (size, size) is returned.
-  ///     If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, a squared crop of size (size, size) is returned.
+  ///     If the size has 2 values, it should be (height, width).
   /// \param[in] scale Range [min, max) of respective size of the original
   ///     size to be cropped (default=(0.08, 1.0)).
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
@@ -584,7 +563,7 @@ class RandomResizedCrop final : public TensorTransform {
   ~RandomResizedCrop() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -593,15 +572,14 @@ class RandomResizedCrop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomResizedCropWithBBox TensorTransform.
-/// \note Crop the input image to a random size and aspect ratio.
+/// \brief Crop the input image to a random size and aspect ratio.
 ///        If cropped area is out of bbox, the return bbox will be empty.
 class RandomResizedCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
-  ///     If size is a single value, a square crop of size (size, size) is returned.
-  ///     If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, a squared crop of size (size, size) is returned.
+  ///     If the size has 2 values, it should be (height, width).
   /// \param[in] scale Range [min, max) of respective size of the original
   ///     size to be cropped (default=(0.08, 1.0)).
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
@@ -617,7 +595,7 @@ class RandomResizedCropWithBBox final : public TensorTransform {
   ~RandomResizedCropWithBBox() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -626,8 +604,7 @@ class RandomResizedCropWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomRotation TensorOp.
-/// \note Rotates the image according to parameters.
+/// \brief Rotate the image according to parameters.
 class RandomRotation final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -635,7 +612,7 @@ class RandomRotation final : public TensorTransform {
   /// \param[in] resample An enum for the mode of interpolation.
   /// \param[in] expand A boolean representing whether the image is expanded after rotation.
   /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform.
+  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
   RandomRotation(std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour,
@@ -646,7 +623,7 @@ class RandomRotation final : public TensorTransform {
   ~RandomRotation() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -655,11 +632,10 @@ class RandomRotation final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomSelectSubpolicy TensorTransform.
-/// \note Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
-///     (op, prob), where op is a TensorTransform operation and prob is the probability that this op will be applied.
-///     Once a sub-policy is selected, each op within the sub-policy with be applied in sequence according to its
-///     probability.
+/// \brief Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
+///     (operation, prob), where operation is a TensorTransform operation and prob is the probability that this
+///     operation will be applied. Once a sub-policy is selected, each operation within the sub-policy with be
+///     applied in sequence according to its probability.
 class RandomSelectSubpolicy final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -680,7 +656,7 @@ class RandomSelectSubpolicy final : public TensorTransform {
   ~RandomSelectSubpolicy() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -689,20 +665,20 @@ class RandomSelectSubpolicy final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomSharpness TensorTransform.
-/// \note Tensor operation to perform random sharpness.
+/// \brief Adjust the sharpness of the input image by a fixed or random degree.
 class RandomSharpness final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] degrees A float vector of size 2, representing the starting and ending degree to uniformly.
-  ///     sample from, to select a degree to adjust sharpness.
+  /// \param[in] degrees A float vector of size 2, representing the range of random sharpness
+  ///     adjustment degrees. It should be in (min, max) format. If min=max, then it is a
+  ///     single fixed magnitude operation (default = (0.1, 1.9)).
   explicit RandomSharpness(std::vector<float> degrees = {0.1, 1.9});
 
   /// \brief Destructor.
   ~RandomSharpness() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -711,20 +687,20 @@ class RandomSharpness final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomSolarize TensorTransform.
-/// \note Invert pixels randomly within specified range. If min=max, it is a single fixed magnitude operation
-///     to inverts all pixel above that threshold.
+/// \brief Invert pixels randomly within a specified range.
 class RandomSolarize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] threshold A vector with two elements specifying the pixel range to invert.
+  ///     Threshold values should always be in (min, max) format.
+  ///     If min=max, it will to invert all pixels above min(max).
   explicit RandomSolarize(std::vector<uint8_t> threshold = {0, 255});
 
   /// \brief Destructor.
   ~RandomSolarize() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -733,8 +709,7 @@ class RandomSolarize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomVerticalFlip TensorTransform.
-/// \note Tensor operation to perform random vertical flip.
+/// \brief Randomly flip the input image vertically with a given probability.
 class RandomVerticalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -745,7 +720,7 @@ class RandomVerticalFlip final : public TensorTransform {
   ~RandomVerticalFlip() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -754,8 +729,7 @@ class RandomVerticalFlip final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomVerticalFlipWithBBox TensorTransform.
-/// \note Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
+/// \brief Randomly flip the input image vertically with a given probability and adjust bounding boxes accordingly.
 class RandomVerticalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -766,7 +740,7 @@ class RandomVerticalFlipWithBBox final : public TensorTransform {
   ~RandomVerticalFlipWithBBox() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -775,8 +749,7 @@ class RandomVerticalFlipWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RescaleOperation TensorTransform.
-/// \note Tensor operation to rescale the input image.
+/// \brief Rescale the pixel value of input image.
 class Rescale final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -788,7 +761,7 @@ class Rescale final : public TensorTransform {
   ~Rescale() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -797,14 +770,13 @@ class Rescale final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief ResizeWithBBox TensorTransform.
-/// \note Resize the input image to the given size and adjust bounding boxes accordingly.
+/// \brief Resize the input image to the given size and adjust bounding boxes accordingly.
 class ResizeWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size The output size of the resized image.
-  ///     If size is an integer, smaller edge of the image will be resized to this value with the same image aspect
-  ///     ratio. If size is a sequence of length 2, it should be (height, width).
+  ///     If the size is an integer, smaller edge of the image will be resized to this value with the same image aspect
+  ///     ratio. If the size is a sequence of length 2, it should be (height, width).
   /// \param[in] interpolation An enum for the mode of interpolation (default=InterpolationMode::kLinear).
   explicit ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
 
@@ -812,7 +784,7 @@ class ResizeWithBBox final : public TensorTransform {
   ~ResizeWithBBox() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -821,8 +793,7 @@ class ResizeWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RgbaToBgr TensorTransform.
-/// \note Changes the input 4 channel RGBA tensor to 3 channel BGR.
+/// \brief Change the format of input tensor from 4-channel RGBA to 3-channel BGR.
 class RGBA2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -832,13 +803,12 @@ class RGBA2BGR final : public TensorTransform {
   ~RGBA2BGR() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief RgbaToRgb TensorTransform.
-/// \note Changes the input 4 channel RGBA tensor to 3 channel RGB.
+/// \brief Change the input 4 channel RGBA tensor to 3 channel RGB.
 class RGBA2RGB final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -848,23 +818,22 @@ class RGBA2RGB final : public TensorTransform {
   ~RGBA2RGB() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief SoftDvppDecodeRandomCropResizeJpeg TensorTransform.
-/// \note Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
-///     Ascend series chip DVPP module. The usage scenario is consistent with SoftDvppDecodeResizeJpeg.
+/// \brief Decode, randomly crop and resize a JPEG image using the simulation algorithm of
+///     Ascend series chip DVPP module. The application scenario is consistent with SoftDvppDecodeResizeJpeg.
 ///     The input image size should be in range [32*32, 8192*8192].
-///     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
+///     The zoom-out and zoom-in multiples of the image length and width should be in the range [1/32, 16].
 ///     Only images with an even resolution can be output. The output of odd resolution is not supported.
 class SoftDvppDecodeRandomCropResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
-  ///     If size is a single value, smaller edge of the image will be resized to this value with
-  ///     the same image aspect ratio. If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, smaller edge of the image will be resized to this value with
+  ///     the same image aspect ratio. If the size has 2 values, it should be (height, width).
   /// \param[in] scale Range [min, max) of respective size of the original
   ///     size to be cropped (default=(0.08, 1.0)).
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
@@ -878,7 +847,7 @@ class SoftDvppDecodeRandomCropResizeJpeg final : public TensorTransform {
   ~SoftDvppDecodeRandomCropResizeJpeg() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -887,28 +856,27 @@ class SoftDvppDecodeRandomCropResizeJpeg final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief SoftDvppDecodeResizeJpeg TensorTransform.
-/// \note Tensor operation to decode and resize JPEG image using the simulation algorithm of Ascend series
+/// \brief Decode and resize a JPEG image using the simulation algorithm of Ascend series
 ///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
 ///     When training, the DVPP of the Ascend chip is not used,
 ///     and the DVPP of the Ascend chip is used during inference,
 ///     and the accuracy of inference is lower than the accuracy of training;
 ///     and the input image size should be in range [32*32, 8192*8192].
-///     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
+///     The zoom-out and zoom-in multiples of the image length and width should be in the range [1/32, 16].
 ///     Only images with an even resolution can be output. The output of odd resolution is not supported.
 class SoftDvppDecodeResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
-  ///     If size is a single value, smaller edge of the image will be resized to this value with
-  ///     the same image aspect ratio. If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, smaller edge of the image will be resized to this value with
+  ///     the same image aspect ratio. If the size has 2 values, it should be (height, width).
   explicit SoftDvppDecodeResizeJpeg(std::vector<int32_t> size);
 
   /// \brief Destructor.
   ~SoftDvppDecodeResizeJpeg() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -917,8 +885,7 @@ class SoftDvppDecodeResizeJpeg final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief SwapRedBlue TensorOp.
-/// \note Swaps the red and blue channels in image.
+/// \brief Swap the red and blue channels of the input image.
 class SwapRedBlue final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -928,35 +895,34 @@ class SwapRedBlue final : public TensorTransform {
   ~SwapRedBlue() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief UniformAugment TensorTransform.
-/// \note Tensor operation to perform randomly selected augmentation.
+/// \brief Randomly perform transformations, as selected from input transform list, on the input tensor.
 class UniformAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms Raw pointer to vector of TensorTransform operations.
-  /// \param[in] num_ops An integer representing the number of OPs to be selected and applied.
+  /// \param[in] num_ops An integer representing the number of operations to be selected and applied.
   explicit UniformAugment(const std::vector<TensorTransform *> &transforms, int32_t num_ops = 2);
 
   /// \brief Constructor.
   /// \param[in] transforms Smart pointer to vector of TensorTransform operations.
-  /// \param[in] num_ops An integer representing the number of OPs to be selected and applied.
+  /// \param[in] num_ops An integer representing the number of operations to be selected and applied.
   explicit UniformAugment(const std::vector<std::shared_ptr<TensorTransform>> &transforms, int32_t num_ops = 2);
 
   /// \brief Constructor.
   /// \param[in] transforms Object pointer to vector of TensorTransform operations.
-  /// \param[in] num_ops An integer representing the number of OPs to be selected and applied.
+  /// \param[in] num_ops An integer representing the number of operations to be selected and applied.
   explicit UniformAugment(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, int32_t num_ops = 2);
 
   /// \brief Destructor.
   ~UniformAugment() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -965,8 +931,7 @@ class UniformAugment final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief VerticalFlip TensorTransform.
-/// \note Flip the input image Vertically.
+/// \brief Flip the input image vertically.
 class VerticalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -976,7 +941,7 @@ class VerticalFlip final : public TensorTransform {
   ~VerticalFlip() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };

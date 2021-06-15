@@ -95,55 +95,55 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Destructor
   ~Dataset() = default;
 
-  /// \brief Gets the dataset size
+  /// \brief Get the dataset size
   /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
   ///     dataset size at the expense of accuracy.
   /// \return Dataset size. If failed, return -1.
   int64_t GetDatasetSize(bool estimate = false);
 
-  /// \brief Gets the output type
+  /// \brief Get the output type
   /// \return A vector contains output DataType of dataset. If failed, return an empty vector.
   std::vector<mindspore::DataType> GetOutputTypes();
 
-  /// \brief Gets the output shape
+  /// \brief Get the output shape
   /// \return A vector contains output TensorShape of dataset. If failed, return an empty vector.
   std::vector<std::vector<int64_t>> GetOutputShapes();
 
-  /// \brief Gets the batch size
+  /// \brief Get the batch size
   /// \return Batch size configuration of dataset.
   int64_t GetBatchSize();
 
-  /// \brief Gets the repeat count
+  /// \brief Get the repeat count
   /// \return Repeat count configuration of dataset.
   int64_t GetRepeatCount();
 
-  /// \brief Gets the number of classes
+  /// \brief Get the number of classes
   /// \return Number of classes of dataset. If failed, return -1.
   int64_t GetNumClasses();
 
-  /// \brief Gets the column names
+  /// \brief Get the column names
   /// \return A vector contains all column names of dataset. If failed, return an empty vector.
   std::vector<std::string> GetColumnNames() { return VectorCharToString(GetColumnNamesCharIF()); }
 
-  /// \brief Gets the class indexing
+  /// \brief Get the class indexing
   /// \return A map of ClassIndexing of dataset. If failed, return an empty map.
   std::vector<std::pair<std::string, std::vector<int32_t>>> GetClassIndexing() {
     return ClassIndexCharToString(GetClassIndexingCharIF());
   }
 
-  /// \brief Setter function for runtime number of workers.
+  /// \brief Function to set runtime number of workers.
   /// \param[in] num_workers The number of threads in this operator.
   /// \return Shared pointer to the original object.
   std::shared_ptr<Dataset> SetNumWorkers(int32_t num_workers);
 
-  /// \brief Function to create an PullBasedIterator over the Dataset.
+  /// \brief A Function to create an PullBasedIterator over the Dataset.
   /// \param[in] columns List of columns to be used to specify the order of columns.
   /// \return Shared pointer to the Iterator.
   std::shared_ptr<PullIterator> CreatePullBasedIterator(std::vector<std::vector<char>> columns = {});
 
   /// \brief Function to create an Iterator over the Dataset pipeline.
   /// \param[in] columns List of columns to be used to specify the order of columns.
-  /// \param[in] num_epochs Number of epochs to run through the pipeline, default -1 which means infinite epochs.
+  /// \param[in] num_epochs Number of epochs to run through the pipeline (default=-1, which means infinite epochs).
   ///     An empty row is returned at the end of each epoch.
   /// \return Shared pointer to the Iterator.
   std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {}, int32_t num_epochs = -1) {
@@ -674,7 +674,8 @@ class ZipDataset : public Dataset {
 
 /// \brief Function to create a SchemaObj.
 /// \param[in] schema_file Path of schema file.
-/// \note This API exists because std::string will constrained by ABI compile option while char don't.
+/// \note The reason for using this API is that std::string will be constrained by the
+///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
 /// \return Shared pointer to the current schema.
 std::shared_ptr<SchemaObj> SchemaCharIF(const std::vector<char> &schema_file);
 
@@ -1012,7 +1013,7 @@ inline std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const s
 /// \param[in] annotation_file Path to the annotation json.
 /// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'.
 /// \param[in] decode Decode the images after reading.
-/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset..
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false)
 /// \return Shared pointer to the CocoDataset.
@@ -1111,7 +1112,7 @@ class ImageFolderDataset : public Dataset {
 /// \brief Function to create an ImageFolderDataset.
 /// \note A source dataset that reads images from a tree of directories.
 ///     All images within one folder have the same label.
-///     The generated dataset has two columns ["image", "label"]
+///     The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] decode A flag to decode in ImageFolder.
 /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
@@ -1365,7 +1366,6 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file
 ///    ShuffleMode::kFiles - Shuffle files only.
 ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
 ///    ShuffleMode::kInfile - Shuffle samples in file.
-/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the MindDataDataset.
 inline std::shared_ptr<MindDataDataset> MindData(

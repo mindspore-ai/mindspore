@@ -437,15 +437,16 @@ class ShuffleDataset : public Dataset {
   ~ShuffleDataset() = default;
 };
 
-/// \brief Function to create a SchemaObj
-/// \param[in] schema_file Path of schema file
-/// \note This api exists because std::string will constrained by ABI compile macro but char don't.
-/// \return Shared pointer to the current schema
+/// \brief Function to create a SchemaObj.
+/// \param[in] schema_file Path of schema file.
+/// \note The reason for using this API is that std::string will be constrained by the
+///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
+/// \return Shared pointer to the current schema.
 std::shared_ptr<SchemaObj> SchemaCharIF(const std::vector<char> &schema_file);
 
-/// \brief Function to create a SchemaObj
-/// \param[in] schema_file Path of schema file
-/// \return Shared pointer to the current schema
+/// \brief Function to create a SchemaObj.
+/// \param[in] schema_file Path of schema file.
+/// \return Shared pointer to the current schema.
 inline std::shared_ptr<SchemaObj> Schema(const std::string &schema_file = "") {
   return SchemaCharIF(StringToChar(schema_file));
 }
