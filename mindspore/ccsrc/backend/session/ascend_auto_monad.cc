@@ -1727,13 +1727,9 @@ class ExecuteOrderGenerator {
         (void)refed_parameters.insert(validate_ref_parameter(std::get<1>(iter->second)));
       }
     }
-    // Search all refnodes for parameter write assigns.
+    // Search all nodes for parameter write assigns.
     for (auto &item : search_list) {
       auto &node = item.first;
-      if (ref_multimap.find(node) == ref_multimap.end()) {
-        // if node is not refnode which cannot write param, skip it.
-        continue;
-      }
       for (auto &in : node->inputs()) {
         auto visit_node = AnfAlgo::VisitKernelWithReturnType(in, 0).first;
         visit_node = validate_ref_parameter(visit_node);
