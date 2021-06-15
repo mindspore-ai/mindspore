@@ -17,7 +17,7 @@ import os
 import argparse
 import numpy as np
 
-parser = argparse.ArgumentParser(description='fasterrcnn_export')
+parser = argparse.ArgumentParser(description='postprocess for googlenet')
 parser.add_argument("--dataset", type=str, default="imagenet", help="result file path")
 parser.add_argument("--result_path", type=str, required=True, help="result file path")
 parser.add_argument("--label_file", type=str, required=True, help="label file")

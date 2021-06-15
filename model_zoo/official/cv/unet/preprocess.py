@@ -24,7 +24,7 @@ from src.model_utils.config import config
 def preprocess_dataset(data_dir, result_path, cross_valid_ind=1):
 
     _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False, do_crop=config.crop,
-                                      img_size=config.img_size)
+                                      img_size=config.image_size)
 
     labels_list = []
     for i, data in enumerate(valid_dataset):
