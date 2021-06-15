@@ -23,7 +23,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.CrossEntropySmooth import CrossEntropySmooth
 
 parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet18, '
+parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet18,resnet34'
                                                           'resnet50 or resnet101')
 parser.add_argument('--dataset', type=str, default=None, help='Dataset, either cifar10 or imagenet2012')
 
@@ -46,7 +46,10 @@ if args_opt.net in ("resnet18", "resnet50"):
     else:
         from src.config import config2 as config
         from src.dataset import create_dataset2 as create_dataset
-
+elif args_opt.net == "resnet34":
+    from src.resnet import resnet34 as resnet
+    from src.config import config_resnet34 as config
+    from src.dataset import create_dataset_resnet34 as create_dataset
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config

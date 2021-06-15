@@ -32,14 +32,14 @@ from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 import mindspore.log as logger
-from src.lr_generator import get_lr, warmup_cosine_annealing_lr
+from src.lr_generator import get_lr, warmup_cosine_annealing_lr, get_resnet34_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.config import cfg
 from src.eval_callback import EvalCallBack
 from src.metric import DistAccuracy, ClassifyCorrectCell
 
 parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--net', type=str, default=None, help='Resnet Model, resnet18, resnet50 or resnet101')
+parser.add_argument('--net', type=str, default=None, help='Resnet Model, resnet18, resnet34, resnet50 or resnet101')
 parser.add_argument('--dataset', type=str, default=None, help='Dataset, either cifar10 or imagenet2012')
 parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
@@ -83,7 +83,10 @@ if args_opt.net in ("resnet18", "resnet50"):
             from src.dataset import create_dataset2 as create_dataset
         else:
             from src.dataset import create_dataset_pynative as create_dataset
-
+elif args_opt.net == "resnet34":
+    from src.resnet import resnet34 as resnet
+    from src.config import config_resnet34 as config
+    from src.dataset import create_dataset_resnet34 as create_dataset
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config
@@ -189,13 +192,20 @@ if __name__ == '__main__':
         from src.lr_generator import get_thor_lr
         lr = get_thor_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
     else:
-        if args_opt.net in ("resnet18", "resnet50", "se-resnet50"):
+        if args_opt.net in ("resnet18", "resnet34", "resnet50", "se-resnet50"):
             lr = get_lr(lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
                         warmup_epochs=config.warmup_epochs, total_epochs=config.epoch_size, steps_per_epoch=step_size,
                         lr_decay_mode=config.lr_decay_mode)
         else:
             lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size,
                                             config.pretrain_epoch_size * step_size)
+    if args_opt.net == "resnet34":
+        lr = get_resnet34_lr(lr_init=config.lr_init,
+                             lr_end=config.lr_end,
+                             lr_max=config.lr_max,
+                             warmup_epochs=config.warmup_epochs,
+                             total_epochs=config.epoch_size,
+                             steps_per_epoch=step_size)
     lr = Tensor(lr)
 
     # define opt

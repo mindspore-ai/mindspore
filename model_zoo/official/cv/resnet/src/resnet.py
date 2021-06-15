@@ -508,6 +508,26 @@ def resnet18(class_num=10):
                   class_num,
                   res_base=True)
 
+def resnet34(class_num=10):
+    """
+    Get ResNet34 neural network.
+
+    Args:
+        class_num (int): Class number.
+
+    Returns:
+        Cell, cell instance of ResNet34 neural network.
+
+    Examples:
+        >>> net = resnet18(10)
+    """
+    return ResNet(ResidualBlockBase,
+                  [3, 4, 6, 3],
+                  [64, 64, 128, 256],
+                  [64, 128, 256, 512],
+                  [1, 2, 2, 2],
+                  class_num,
+                  res_base=True)
 
 def resnet50(class_num=10):
     """

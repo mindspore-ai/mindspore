@@ -101,14 +101,14 @@ After installing MindSpore via the official website, you can start training and 
 
 ```bash
 # distributed training
-Usage: bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+Usage: bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training
-Usage: bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
+Usage: bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
 [PRETRAINED_CKPT_PATH](optional)
 
 # run evaluation example
-Usage: bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 - Running on GPU
@@ -220,6 +220,29 @@ Parameters for both training and evaluation can be set in config.py.
 "lr_end": 0.0,                    # minimum learning rate
 ```
 
+- Config for ResNet34, ImageNet2012 dataset
+
+```bash
+"class_num": 1001,                # dataset class number
+"batch_size": 256,                 # batch size of input tensor
+"loss_scale": 1024,               # loss scale
+"momentum": 0.9,                  # momentum optimizer
+"weight_decay": 1e-4,             # weight decay
+"epoch_size": 90,                 # only valid for taining, which is always 1 for inference
+"pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
+"save_checkpoint": True,          # whether save checkpoint or not
+"save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
+"keep_checkpoint_max": 1,        # only keep the last keep_checkpoint_max checkpoint
+"save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
+"warmup_epochs": 0,               # number of warmup epoch
+"optimizer": 'Momentum',          # optimizer
+"use_label_smooth": True,         # label smooth
+"label_smooth_factor": 0.1,       # label smooth factor
+"lr_init": 0,                     # initial learning rate
+"lr_max": 1.0,                    # maximum learning rate
+"lr_end": 0.0,                    # minimum learning rate
+```
+
 - Config for ResNet101, ImageNet2012 dataset
 
 ```bash
@@ -273,14 +296,14 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```bash
 # distributed training
-Usage: bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+Usage: bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training
-Usage: bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
+Usage: bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
 [PRETRAINED_CKPT_PATH](optional)
 
 # run evaluation example
-Usage: bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ```
 
@@ -333,10 +356,10 @@ bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet201
 
 ```bash
 # evaluation with distributed training Ascend example:
-bash run_distribute_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # evaluation with standalone training Ascend example:
-bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # evaluation with distributed training GPU example:
 bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
@@ -375,6 +398,17 @@ epoch: 2 step: 625, loss is 4.0891967
 epoch: 3 step: 625, loss is 3.9131956
 epoch: 4 step: 625, loss is 3.5302577
 epoch: 5 step: 625, loss is 3.597817
+...
+```
+
+- Training ResNet34 with ImageNet2012 dataset
+
+```text
+# 分布式训练结果（8P）
+epoch: 2 step: 625, loss is 4.181185
+epoch: 3 step: 625, loss is 3.8856044
+epoch: 4 step: 625, loss is 3.423355
+epoch: 5 step: 625, loss is 3.506971
 ...
 ```
 
@@ -446,7 +480,7 @@ epoch: [0/1] step: [100/5004], loss is 6.814013Epoch time: 3437.154 ms, fps: 148
 
 ```bash
 # evaluation
-Usage: bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ```bash
@@ -490,6 +524,12 @@ result: {'acc': 0.91446314102564111} ckpt=~/resnet50_cifar10/train_parallel0/res
 result: {'acc': 0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
 ```
 
+- Evaluating ResNet34 with ImageNet2012 dataset
+
+```bash
+result: {'top_1_accuracy': 0.736758814102564} ckpt=train_parallel0/resnet-90_625.ckpt
+```
+
 - Evaluating ResNet101 with ImageNet2012 dataset
 
 ```bash
@@ -524,7 +564,7 @@ Current batch_Size can only be set to 1. The precision calculation process needs
 bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET]  [DATA_PATH] [DEVICE_ID]
 ```
 
-- `NET_TYPE` can choose from [resnet18, se-resnet50, resnet50, resnet101].
+- `NET_TYPE` can choose from [resnet18, se-resnet50, resnet34, resnet50, resnet101].
 - `DATASET` can choose from [cifar10, imagenet].
 - `DEVICE_ID` is optional, default value is 0.
 
@@ -542,6 +582,12 @@ Total data: 10000, top1 accuracy: 0.94.26, top5 accuracy: 0.9987.
 
 ```bash
 Total data: 50000, top1 accuracy: 0.70668, top5 accuracy: 0.89698.
+```
+
+- Evaluating ResNet34 with ImageNet2012 dataset
+
+```bash
+Total data: 50000, top1 accuracy: 0.7342.
 ```
 
 - Evaluating ResNet50 with CIFAR-10 dataset
@@ -654,6 +700,26 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Checkpoint for Fine tuning | 197M (.ckpt file)                                         |197M (.ckpt file)     |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
+#### ResNet34 on ImageNet2012
+
+| Parameters                 | Ascend 910                                                   |
+| -------------------------- | -------------------------------------- |---------------------------------- |
+| Model Version              | ResNet50-v1.5                                                |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
+| uploaded Date              | 04/01/2020 (month/day/year)  ；                        |
+| MindSpore Version          | 0.1.0-alpha                                                       |
+| Dataset                    | ImageNet2012                                                    |
+| Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |
+| Optimizer                  | Momentum                                                         |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 1.9575993                                                    |
+| Speed                      | 111ms/step（8pcs）                     |
+| Total time                 | 112 mins                          |
+| Parameters (M)             | 20.79                                                         |
+| Checkpoint for Fine tuning | 166M (.ckpt file)                                         |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+
 #### ResNet101 on ImageNet2012
 
 | Parameters                 | Ascend 910                                                   |   GPU |
@@ -723,6 +789,20 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | outputs             | probability                 |
 | Accuracy            | 70.53%                      |
 | Model for inference | 45M (.air file)             |
+
+#### ResNet34 on ImageNet2012
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | ResNet18               |
+| Resource            | Ascend 910; OS Euler2.8                   |
+| Uploaded Date       | 02/25/2021 (month/day/year) |
+| MindSpore Version   | 1.1.1-alpha                |
+| Dataset             | ImageNet2012                |
+| batch_size          | 256                         |
+| outputs             | probability                 |
+| Accuracy            | 73.67%                      |
+| Model for inference | 70M (.air file)             |
 
 #### ResNet50 on CIFAR-10
 

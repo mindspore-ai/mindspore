@@ -19,12 +19,12 @@ CURPATH="$(dirname "$0")"
 
 if [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
 then 
-    echo "Usage: bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
-    echo "       bash run_standalone_train.sh [resnet18|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
+    echo "Usage: bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "       bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
 exit 1
 fi
 
-if [ $1 != "resnet18" ] && [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
+if [ $1 != "resnet18" ] && [ $1 != "resnet34" ] && [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
 then 
     echo "error: the selected net is neither resnet50 nor resnet101 and se-resnet50"
 exit 1
