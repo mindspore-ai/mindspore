@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
-void RtKernelFactory::Registe(const std::string &name, RtKernelCreater &&fun) {
+void RtKernelFactory::Register(const std::string &name, RtKernelCreater &&fun) {
   (void)fmap_.emplace(name, std::move(fun));
 }
 
@@ -32,7 +32,7 @@ std::shared_ptr<RtKernel> RtKernelFactory::Create(const std::string &name) {
 }
 
 RtKernelFactory &RtKernelFactory::Get() {
-  static RtKernelFactory _this;
+  static RtKernelFactory _this{};
   return _this;
 }
 
