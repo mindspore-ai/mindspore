@@ -13,6 +13,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-export DEVICE_ID=$1
+echo "$1 $2 $3"
 
-python eval.py > eval_log$1.txt 2>&1 &
+if [ $# != 1 ] && [ $# != 2 ] && [ $# != 3 ]
+then
+    echo "Usage: bash train_standalone.sh [TEST_MODEL_FILE] [COCO_BBOX_FILE] [DEVICE_ID]"
+exit 1
+fi
+
+DEVICE_ID=0
+
+if [ $# -ge 3 ]
+then
+    expr $3 + 6 &>/dev/null
+    if [ $? != 0 ]
+    then
+        echo "error:DEVICE_ID=$3 is not a integer"
+    exit 1
+    fi
+    DEVICE_ID=$3
+fi
+
+export DEVICE_ID=$DEVICE_ID
+
+rm -rf ./eval
+mkdir ./eval
+echo "start evaluating for device $DEVICE_ID"
+cd ./eval || exit
+env >env.log
+cd ../
+python eval.py \
+    --eval_model_file=$1 --coco_bbox_file=$2\
+    > ./eval/eval_log.txt 2>&1 &
+echo "python eval.py --eval_model_file=$1 --coco_bbox_file=$2 > ./eval/eval_log.txt 2>&1 &"

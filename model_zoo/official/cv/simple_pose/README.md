@@ -63,8 +63,7 @@ To run the python scripts in the repository, you need to prepare the environment
     - Prepare hardware environment with Ascend.
 - Python and dependencies
     - python 3.7
-    - mindspore 1.0.1
-    - easydict 1.9
+    - mindspore 1.2.0
     - opencv-python 4.3.0.36
     - pycocotools 2.0
 - For more information, please check the resources below：
@@ -97,23 +96,77 @@ Before you start your training process, you need to obtain mindspore imagenet pr
 
 ## [Running](#contents)
 
-To train the model, run the shell script `scripts/train_standalone.sh` with the format below:
+- running on local
 
-```shell
-sh scripts/train_standalone.sh [device_id] [ckpt_path_to_save]
-```
+    To train the model, run the shell script `scripts/train_standalone.sh` with the format below:
 
-To validate the model, change the settings in `src/config.py` to the path of the model you want to validate. For example:
+    ```shell
+    sh scripts/train_standalone.sh [CKPT_SAVE_DIR] [DEVICE_ID] [BATCH_SIZE]
+    ```
 
-```python
-config.TEST.MODEL_FILE='results/xxxx.ckpt'
-```
+    To validate the model, change the settings in `default_config.yaml` to the path of the model you want to validate or setting that on the terminal. For example:
 
-Then, run the shell script `scripts/eval.sh` with the format below:
+    ```python
+    TEST:
+        ...
+        MODEL_FILE : './{path}/xxxx.ckpt'
+    ```
 
-```shell
-sh scripts/eval.sh [device_id]
-```
+    Then, run the shell script `scripts/eval.sh` with the format below:
+
+    ```shell
+    sh scripts/eval.sh [TEST_MODEL_FILE] [COCO_BBOX_FILE] [DEVICE_ID]
+    ```
+
+- running on ModelArts
+
+    If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+    - Training with 8 cards on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/simple_pose" on the website UI interface.
+    # (4) Set the startup file to /{path}/simple_pose/train.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/simple_pose/default_config.yaml.
+    #         1. Set ”run_distributed: True“
+    #         2. Set ”enable_modelarts: True“
+    #         3. Set “batch_size: 64”(It's not necessary)
+    #     b. adding on the website UI interface.
+    #         1. Add ”run_distributed=True“
+    #         2. Add ”enable_modelarts=True“
+    #         3. Add “batch_size=64”(It's not necessary)
+    # (6) Upload the dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of 8 cards.
+    # (10) Create your job.
+    ```
+
+    - evaluating with single card on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/simple_pose" on the website UI interface.
+    # (4) Set the startup file to /{path}/simple_pose/eval.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/simple_pose/default_config.yaml.
+    #         1. Set ”enable_modelarts: True“
+    #         2. Set “eval_model_file: ./{path}/*.ckpt”('eval_model_file' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+    #         3. Set ”coco_bbox_file: ./{path}/COCO_val2017_detections_AP_H_56_person.json"(The same as 'eval_model_file')
+    #     b. adding on the website UI interface.
+    #         1. Add ”enable_modelarts=True“
+    #         2. Add “eval_model_file=./{path}/*.ckpt”('eval_model_file' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+    #         3. Add ”coco_bbox_file=./{path}/COCO_val2017_detections_AP_H_56_person.json"(The same as 'eval_model_file')
+    # (6) Upload the dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of a single card.
+    # (10) Create your job.
+    ```
 
 # [Script Description](#contents)
 
@@ -122,80 +175,95 @@ sh scripts/eval.sh [device_id]
 The structure of the files in this repository is shown below.
 
 ```text
-└─ mindspore-simpleposenet
- ├─ scripts
- │ ├─ eval.sh                 // launch ascend standalone evaluation
- │ ├─ train_distributed.sh    // launch ascend distributed training
- │ └─ train_standalone.sh     // launch ascend standalone training
- ├─ src
- │ ├─utils
- │ │ ├─ transform.py          // utils about image transformation
- │ │ └─ nms.py                // utils about nms
- │ ├─evaluate
- │ │ └─ coco_eval.py          // evaluate result by coco
- │ ├─ config.py               // network and running config
- │ ├─ dataset.py              // dataset processor and provider
- │ ├─ model.py                // SimplePoseNet implementation
- │ ├─ network_define.py       // define loss
- │ └─ predict.py              // predict keypoints from heatmaps
- ├─ eval.py                   // evaluation script
- ├─ param_convert.py          // model parameters conversion script
- ├─ train.py                  // training script
- └─ README.md                 // descriptions about this repository
+└─ simple_pose
+    ├─ scripts
+    │  ├─ eval.sh                 // launch ascend standalone evaluation
+    │  ├─ train_distributed.sh    // launch ascend distributed training
+    │  └─ train_standalone.sh     // launch ascend standalone training
+    ├─ src
+    │  ├─ utils
+    │  │  ├─ transform.py         // utils about image transformation
+    │  │  └─ nms.py               // utils about nms
+    │  ├─ evaluate
+    │  │  └─ coco_eval.py         // evaluate result by coco
+    │  ├─ model_utils
+    │  │  ├── config.py           // parsing parameter configuration file of "*.yaml"
+    │  │  ├── devcie_adapter.py   // local or ModelArts training
+    │  │  ├── local_adapter.py    // get related environment variables in local training
+    │  │  └── moxing_adapter.py   // get related environment variables in ModelArts training
+    │  ├─ dataset.py              // dataset processor and provider
+    │  ├─ model.py                // SimplePoseNet implementation
+    │  ├─ network_define.py       // define loss
+    │  └─ predict.py              // predict keypoints from heatmaps
+    ├─ default_config.yaml        // parameter configuration
+    ├─ eval.py                    // evaluation script
+    ├─ train.py                   // training script
+    └─ README.md                  // descriptions about this repository
 ```
 
 ## [Script Parameters](#contents)
 
-Configurations for both training and evaluation are set in `src/config.py`. All the settings are shown following.
+Configurations for both training and evaluation are set in `default_config.yaml`. All the settings are shown following.
 
 - config for SimplePoseNet on COCO2017 dataset:
 
 ```python
-# pose_resnet related params
-POSE_RESNET.HEATMAP_SIZE = [48, 64]                # heatmap size
-POSE_RESNET.SIGMA = 2                              # Gaussian hyperparameter in heatmap generation
-POSE_RESNET.FINAL_CONV_KERNEL = 1                  # final convolution kernel size
-POSE_RESNET.DECONV_WITH_BIAS = False               # deconvolution bias
-POSE_RESNET.NUM_DECONV_LAYERS = 3                  # the number of deconvolution layers
-POSE_RESNET.NUM_DECONV_FILTERS = [256, 256, 256]   # the filter size of deconvolution layers
-POSE_RESNET.NUM_DECONV_KERNELS = [4, 4, 4]         # kernel size of deconvolution layers
-POSE_RESNET.NUM_LAYERS = 50                        # number of layers(for resnet)
-# common params for NETWORK
-config.MODEL.NAME = 'pose_resnet'                  # model name
-config.MODEL.INIT_WEIGHTS = True                   # init model weights by resnet
-config.MODEL.PRETRAINED = './models/resnet50.ckpt' # pretrained model
-config.MODEL.NUM_JOINTS = 17                       # the number of keypoints
-config.MODEL.IMAGE_SIZE = [192, 256]               # image size
-# dataset
-config.DATASET.ROOT = '/data/coco2017/'            # coco2017 dataset root
-config.DATASET.TEST_SET = 'val2017'                # folder name of test set
-config.DATASET.TRAIN_SET = 'train2017'             # folder name of train set
-# data augmentation
-config.DATASET.FLIP = True                         # random flip
-config.DATASET.ROT_FACTOR = 40                     # random rotation
-config.DATASET.SCALE_FACTOR = 0.3                  # random scale
-# for train
-config.TRAIN.BATCH_SIZE = 64                       # batch size
-config.TRAIN.BEGIN_EPOCH = 0                       # begin epoch
-config.TRAIN.END_EPOCH = 140                       # end epoch
-config.TRAIN.LR = 0.001                            # initial learning rate
-config.TRAIN.LR_FACTOR = 0.1                       # learning rate reduce factor
-config.TRAIN.LR_STEP = [90,120]                    # step to reduce lr
-# test
-config.TEST.BATCH_SIZE = 32                        # batch size
-config.TEST.FLIP_TEST = True                       # flip test
-config.TEST.POST_PROCESS = True                    # post process
-config.TEST.SHIFT_HEATMAP = True                   # shift heatmap
-config.TEST.USE_GT_BBOX = False                    # use groundtruth bbox
-config.TEST.MODEL_FILE = ''                        # model file to test
-# detect bbox file
-config.TEST.COCO_BBOX_FILE = 'experiments/COCO_val2017_detections_AP_H_56_person.json'
-# nms
-config.TEST.OKS_THRE = 0.9                         # oks threshold
-config.TEST.IN_VIS_THRE = 0.2                      # visible threshold
-config.TEST.BBOX_THRE = 1.0                        # bbox threshold
-config.TEST.IMAGE_THRE = 0.0                       # image threshold
-config.TEST.NMS_THRE = 1.0                         # nms threshold
+# These parameters can be modified at the terminal
+ckpt_save_dir: 'checkpoints'                # the folder to save the '*.ckpt' file
+batch_size: 128                             # TRAIN.BATCH_SIZE
+run_distribute: False                       # training by several devices: "true"(training by more than 1 device) | "false", default is "false"
+eval_model_file: ''                         # TEST.MODEL_FILE
+coco_bbox_file: ''                          # TEST.COCO_BBOX_FILE
+#pose_resnet-related
+POSE_RESNET:
+    NUM_LAYERS: 50                          # number of layers(for resnet)
+    DECONV_WITH_BIAS: False                 # deconvolution bias
+    NUM_DECONV_LAYERS: 3                    # the number of deconvolution layers
+    NUM_DECONV_FILTERS: [256, 256, 256]     # the filter size of deconvolution layers
+    NUM_DECONV_KERNELS: [4, 4, 4]           # kernel size of deconvolution layers
+    FINAL_CONV_KERNEL: 1                    # final convolution kernel size
+    TARGET_TYPE: 'gaussian'
+    HEATMAP_SIZE: [48, 64]                  # heatmap size
+    SIGMA: 2                                # Gaussian hyperparameter in heatmap generation
+#network-related
+MODEL:
+    NAME: 'pose_resnet'                     # model name
+    INIT_WEIGHTS: True                      # init model weights by resnet
+    PRETRAINED: './resnet50.ckpt'           # pretrained model
+    NUM_JOINTS: 17                          # the number of keypoints
+    IMAGE_SIZE: [192, 256]                  # image size
+#dataset-related
+DATASET:
+    ROOT: '/data/coco2017/'                 # coco2017 dataset root
+    TEST_SET: 'val2017'                     # folder name of test set
+    TRAIN_SET: 'train2017'                  # folder name of train set
+    FLIP: True                              # random flip
+    ROT_FACTOR: 40                          # random rotation
+    SCALE_FACTOR: 0.3                       # random scale
+#train-related
+TRAIN:
+    BATCH_SIZE: 64                          # batch size
+    BEGIN_EPOCH: 0                          # begin epoch
+    END_EPOCH: 140                          # end epoch
+    LR: 0.001                               # initial learning rate
+    LR_FACTOR: 0.1                          # learning rate reduce factor
+    LR_STEP: [90, 120]                      # step to reduce lr
+#eval-related
+TEST:
+    BATCH_SIZE: 32                          # batch size
+    FLIP_TEST: True                         # flip test
+    POST_PROCESS: True                      # post process
+    SHIFT_HEATMAP: True                     # shift heatmap
+    USE_GT_BBOX: False                      # use groundtruth bbox
+    MODEL_FILE: ''                          # model file to test
+    DATALOADER_WORKERS: 8
+    COCO_BBOX_FILE: 'experiments/COCO_val2017_detections_AP_H_56_person.json'
+#nms-related
+    OKS_THRE: 0.9                           # oks threshold
+    IN_VIS_THRE: 0.2                        # visible threshold
+    BBOX_THRE: 1.0                          # bbox threshold
+    IMAGE_THRE: 0.0                         # image threshold
+    NMS_THRE: 1.0                           # nms threshold
 ```
 
 ## [Training Process](#contents)
@@ -207,13 +275,13 @@ config.TEST.NMS_THRE = 1.0                         # nms threshold
 Run `scripts/train_standalone.sh` to train the model standalone. The usage of the script is:
 
 ```shell
-sh scripts/train_standalone.sh [device_id] [ckpt_path_to_save]
+sh scripts/train_standalone.sh [CKPT_SAVE_DIR] [DEVICE_ID] [BATCH_SIZE]
 ```
 
 For example, you can run the shell command below to launch the training procedure.
 
 ```shell
-sh scripts/train_standalone.sh 0 results/standalone/
+sh scripts/train_standalone.sh results/standalone/ 0 128
 ```
 
 The script will run training in the background, you can view the results through the file `train_log[X].txt` as follows:
@@ -232,7 +300,7 @@ Epoch time: 456265.617, per step time: 389.971
 ...
 ```
 
-The model checkpoint will be saved into `[ckpt_path_to_save]`.
+The model checkpoint will be saved into `[CKPT_SAVE_DIR]`.
 
 ### [Distributed Training](#contents)
 
@@ -241,7 +309,7 @@ The model checkpoint will be saved into `[ckpt_path_to_save]`.
 Run `scripts/train_distributed.sh` to train the model distributed. The usage of the script is:
 
 ```shell
-sh scripts/train_distributed.sh [rank_table] [ckpt_path_to_save] [device_number]
+sh scripts/train_distributed.sh [MINDSPORE_HCCL_CONFIG_PATH] [CKPT_SAVE_DIR] [RANK_SIZE]
 ```
 
 For example, you can run the shell command below to launch the distributed training procedure.
@@ -266,28 +334,22 @@ Epoch time: 164792.001, per step time: 281.696
 ...
 ```
 
-The model checkpoint will be saved into `[ckpt_path_to_save]`.
+The model checkpoint will be saved into `[CKPT_SAVE_DIR]`.
 
 ## [Evaluation Process](#contents)
 
 ### Running on Ascend
 
-Change the settings in `src/config.py` to the path of the model you want to validate. For example:
-
-```python
-config.TEST.MODEL_FILE='results/xxxx.ckpt'
-```
-
-Then, run `scripts/eval.sh` to evaluate the model with one Ascend processor. The usage of the script is:
+run `scripts/eval.sh` to evaluate the model with one Ascend processor. The usage of the script is:
 
 ```shell
-sh scripts/eval.sh [device_id]
+sh scripts/eval.sh [TEST_MODEL_FILE] [COCO_BBOX_FILE] [DEVICE_ID]
 ```
 
 For example, you can run the shell command below to launch the validation procedure.
 
 ```shell
-sh scripts/eval.sh 0
+sh scripts/eval.sh results/distributed/sim-140_1170.ckpt
 ```
 
 The above shell command will run validation procedure in the background. You can view the results through the file `eval_log[X].txt`. The result will be achieved as follows:

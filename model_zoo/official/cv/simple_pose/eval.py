@@ -12,77 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import argparse
 import os
 import time
 import numpy as np
-
 
 from mindspore import Tensor, float32, context
 from mindspore.common import set_seed
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.config import config
 from src.dataset import flip_pairs, keypoint_dataset
 from src.evaluate.coco_eval import evaluate
 from src.model import get_pose_net
 from src.utils.transform import flip_back
 from src.predict import get_final_preds
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Train keypoints network')
-    parser.add_argument("--train_url", type=str, default="", help="")
-    parser.add_argument("--data_url", type=str, default="", help="data")
-    # output
-    parser.add_argument('--output-url',
-                        help='output dir',
-                        type=str)
-    # training
-    parser.add_argument('--workers',
-                        help='num of dataloader workers',
-                        default=8,
-                        type=int)
-    parser.add_argument('--model-file',
-                        help='model state file',
-                        type=str)
-    parser.add_argument('--use-detect-bbox',
-                        help='use detect bbox',
-                        action='store_true')
-    parser.add_argument('--flip-test',
-                        help='use flip test',
-                        default=True,
-                        action='store_true')
-    parser.add_argument('--post-process',
-                        help='use post process',
-                        action='store_true')
-    parser.add_argument('--shift-heatmap',
-                        help='shift heatmap',
-                        action='store_true')
-    parser.add_argument('--coco-bbox-file',
-                        help='coco detection bbox file',
-                        type=str)
-
-    args = parser.parse_args()
-
-    return args
-
-
-def reset_config(cfg, args):
-    if args.use_detect_bbox:
-        cfg.TEST.USE_GT_BBOX = not args.use_detect_bbox
-    if args.flip_test:
-        cfg.TEST.FLIP_TEST = args.flip_test
-        print('use flip test:', cfg.TEST.FLIP_TEST)
-    if args.post_process:
-        cfg.TEST.POST_PROCESS = args.post_process
-    if args.shift_heatmap:
-        cfg.TEST.SHIFT_HEATMAP = args.shift_heatmap
-    if args.model_file:
-        cfg.TEST.MODEL_FILE = args.model_file
-    if args.coco_bbox_file:
-        cfg.TEST.COCO_BBOX_FILE = args.coco_bbox_file
-
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
 
 def validate(cfg, val_dataset, model, output_dir):
     # switch to evaluate mode
@@ -141,38 +86,43 @@ def validate(cfg, val_dataset, model, output_dir):
     print("AP:", perf_indicator)
     return perf_indicator
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.TEST.MODEL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), config.TEST.MODEL_FILE)
+    config.DATASET.ROOT = config.data_path
 
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def main():
     # init seed
     set_seed(1)
 
     # set context
-    device_id = int(os.getenv('DEVICE_ID'))
+    device_id = get_device_id()
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend", save_graphs=False, device_id=device_id)
-
-    args = parse_args()
-    # update config
-    reset_config(config, args)
 
     # init model
     model = get_pose_net(config, is_train=False)
 
     # load parameters
-    ckpt_name = config.TEST.MODEL_FILE
-    print('loading model ckpt from {}'.format(ckpt_name))
-    load_param_into_net(model, load_checkpoint(ckpt_name))
+    ckpt_file = config.TEST.MODEL_FILE
+    print('loading model ckpt from {}'.format(ckpt_file))
+    load_param_into_net(model, load_checkpoint(ckpt_file))
 
     # Data loading code
     valid_dataset, _ = keypoint_dataset(
         config,
         bbox_file=config.TEST.COCO_BBOX_FILE,
         train_mode=False,
-        num_parallel_workers=args.workers,
+        num_parallel_workers=config.TEST.DATALOADER_WORKERS,
     )
 
     # evaluate on validation set
-    validate(config, valid_dataset, model, ckpt_name.split('.')[0])
+    output_dir = ckpt_file.split('.')[0]
+    if config.enable_modelarts:
+        output_dir = config.output_path
+    validate(config, valid_dataset, model, output_dir)
 
 
 if __name__ == '__main__':
