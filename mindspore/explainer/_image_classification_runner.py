@@ -247,6 +247,12 @@ class ImageClassificationRunner(_Verifier):
             tasks, `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long
             as when combining this function with network, the final output is the probability of the input.
 
+    Raises:
+        TypeError: Be raised for any argument type problem.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> from mindspore.explainer import ImageClassificationRunner
         >>> from mindspore.explainer.explanation import GuidedBackprop, Gradient
@@ -337,7 +343,7 @@ class ImageClassificationRunner(_Verifier):
         """
         Register saliency explanation instances.
 
-        Note:
+        .. warning::
             This function can not be invoked more than once on each runner.
 
         Args:
@@ -381,9 +387,12 @@ class ImageClassificationRunner(_Verifier):
         """
         Register hierarchical occlusion instances.
 
-        Notes:
+        .. warning::
+            This function can not be invoked more than once on each runner.
+
+        Note:
             Input images are required to be in 3 channels formats and the length of side short must be equals to or
-            greater than 56 pixels. This function can not be invoked more than once on each runner.
+            greater than 56 pixels.
 
         Raises:
             ValueError: Be raised for any data or settings' value problem.
@@ -404,12 +413,14 @@ class ImageClassificationRunner(_Verifier):
         """
         Register uncertainty instance to compute the epistemic uncertainty base on the Bayes' theorem.
 
+        .. warning::
+            This function can not be invoked more than once on each runner.
+
         Note:
             Please refer to the documentation of mindspore.nn.probability.toolbox.uncertainty_evaluation for the
             details. The actual output is standard deviation of the classification predictions and the corresponding
             95% confidence intervals. Users have to invoke register_saliency() as well for the uncertainty results are
-            going to be shown on the saliency map page in MindInsight. This function can not be invoked more then once
-            on each runner.
+            going to be shown on the saliency map page in MindInsight.
 
         Raises:
             RuntimeError: Be raised if the function was called already.
