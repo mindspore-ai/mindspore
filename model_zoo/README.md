@@ -51,6 +51,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
         - [LSTM](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/lstm/README.md)
         - [MASS](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/mass/README.md)
         - [Transformer](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/transformer/README.md)
+        - [CPM](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/cpm/README.md)
     - [Recommender Systems](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend)
         - [DeepFM](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/deepfm/README.md)
         - [NAML](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/naml/README.md)
