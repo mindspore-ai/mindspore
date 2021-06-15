@@ -59,6 +59,15 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(conv_param_->input_channel_ == conv_param_->output_channel_,
                 "Only support input channel equals output channel.");
   // generate code .h .c
+  if (target_ != kX86) {
+    Collect(context, {}, {},
+            {
+              "ConvDwFp32Center.S",
+              "ConvDwFp32Border.S",
+              "DeconvDwFp32Center.S",
+              "ConvDwFp32Row.S",
+            });
+  }
   Collect(context,
           {
             "nnacl/fp32/conv_depthwise_fp32.h",
@@ -66,9 +75,7 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
           {
             "conv_depthwise_fp32.c",
           },
-          {
-            "ConvDwFp32Row.S",
-          });
+          {});
   nnacl::NNaclFp32Serializer code;
   // call the op function
   code.CodeStruct("conv_parameter", *conv_param_);
