@@ -49,6 +49,7 @@ class DumpJsonParser {
   bool e2e_dump_enabled() const { return e2e_dump_enabled_; }
   uint32_t dump_mode() const { return dump_mode_; }
   std::string path() const { return path_; }
+  std::string iteration_string() const { return iteration_; }
   std::string net_name() const { return net_name_; }
   uint32_t input_output() const { return input_output_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
