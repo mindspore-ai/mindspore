@@ -271,7 +271,7 @@ void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const Ten
     }
     oss << std::endl;
   }
-  Common::SaveStringToFile(filename, oss.str());
+  (void)Common::SaveStringToFile(filename, oss.str());
   MS_LOG(INFO) << "SomasSolver input Log done";
 }
 
@@ -282,24 +282,7 @@ void SomasSolverPre::SolverOutputLog(const session::KernelGraph *graph, const Te
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string out_filename =
     save_graphs_path + "/" + "somas_solver_output_" + std::to_string(graph->graph_id()) + ".ir";
-  if (out_filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << out_filename << " is too long.";
-    return;
-  }
-  auto out_real_path = Common::GetRealPath(out_filename);
-  if (!out_real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << out_filename;
-    return;
-  }
-
-  ChangeFileMode(out_real_path.value(), S_IRWXU);
-  std::ofstream ofs_out(out_real_path.value());
-
-  if (!ofs_out.is_open()) {
-    MS_LOG(ERROR) << "Open log file '" << out_real_path.value() << "' failed!";
-    return;
-  }
-
+  std::ostringstream oss;
   constexpr size_t contiguous_left = 1;
   constexpr size_t contiguous_mid = 2;
   constexpr size_t contiguous_right = 3;
@@ -316,13 +299,11 @@ void SomasSolverPre::SolverOutputLog(const session::KernelGraph *graph, const Te
     bool size_aligned = tensor->size_ % alignment == 0;
     bool offset_aligned = tensor->offset_ % alignment == 0;
 
-    ofs_out << std::endl
-            << "tensor_id=" << tensor->index_ << "\tsize=" << tensor->size_ << "\toffset=" << tensor->offset_
-            << "\tcontinuous=" << continuous << "\tsize_aligned=" << size_aligned
-            << "\toffset_aligned=" << offset_aligned;
+    oss << std::endl
+        << "tensor_id=" << tensor->index_ << "\tsize=" << tensor->size_ << "\toffset=" << tensor->offset_
+        << "\tcontinuous=" << continuous << "\tsize_aligned=" << size_aligned << "\toffset_aligned=" << offset_aligned;
   }
-  ofs_out.close();
-
+  (void)Common::SaveStringToFile(out_filename, oss.str());
   MS_LOG(INFO) << "SomasSolver output Log done";
 }
 }  // namespace somas
