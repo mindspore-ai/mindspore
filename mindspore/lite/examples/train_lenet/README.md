@@ -69,7 +69,7 @@ where:
 
 # Script Detailed Description
 
-The provided `prepare_and_run.sh` script is performing the followings:
+The provided `prepare_and_run.sh` script is performing the following:
 
 - Prepare the trainable lenet model in a `.ms` format
 - Prepare the folder that should be pushed into the device
@@ -102,17 +102,15 @@ train_lenet/
 │   ├── prepare_model.sh  # script that export model (using docker) then converts it
 │   └── train_utils.py    # utility function used during the export
 ├── prepare_and_run.sh    # main script that creates model, compiles it and send to device for running
-├── README.md             # this manual
+├── README.md             # English manual
+├── README_CN.md          # Chinese manual
 ├── scripts
 │   ├── eval.sh           # on-device script that load the train model and evaluates its accuracy
-│   ├── run_eval.sh       # adb script that launches eval.sh
-│   ├── run_train.sh      # adb script that launches train.sh
 │   └── train.sh          # on-device script that load the initial model and train it
 ├── src
-│   ├── dataset.cc        # dataset handler
-│   ├── dataset.h         # dataset class header
 │   ├── net_runner.cc     # program that runs training/evaluation of models
-│   └── net_runner.h      # net_runner header
+│   ├── net_runner.h      # net_runner header
+│   └── utils.h           # general utilities
 ```
 
 When the `prepare_and_run.sh` script is run, the following folder is prepared. It is pushed to the device and then training runs
@@ -130,7 +128,17 @@ When the `prepare_and_run.sh` script is run, the following folder is prepared. I
 │   │       └── train-labels-idx1-ubyte  # train labels
 │   ├── eval.sh                          # on-device script that load the train model and evaluates its accuracy
 │   ├── lib
-│   │   └── libmindspore-lite.so         # MindSpore Lite library
+│   │   ├── libjpeg.so.62
+│   │   ├── libminddata-lite.a
+│   │   ├── libminddata-lite.so
+│   │   ├── libmindspore-lite.a
+│   │   ├── libmindspore-lite-jni.so
+│   │   ├── libmindspore-lite.so
+│   │   ├── libmindspore-lite-train.a
+│   │   ├── libmindspore-lite-train-jni.so
+│   │   ├── libmindspore-lite-train.so
+│   │   ├── libturbojpeg.so.0
+│   │   └── mindspore-lite-java.jar
 │   ├── model
 │   │   └── lenet_tod.ms                 # model to train
 │   └── train.sh                         # on-device script that load the initial model and train it

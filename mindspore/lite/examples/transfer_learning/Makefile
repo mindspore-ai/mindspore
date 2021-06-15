@@ -14,8 +14,8 @@ OBJ:=$(SRC:.cc=.o)
 
 CFLAGS := -Ofast -std=c++17  \
 	-I . \
-        -I ./msl/train \
-        -I ./msl/train/minddata \
+        -I ./msl/inference \
+        -I ./msl/inference/minddata \
         -I ./msl/tools/third_party/flatbuffers/include
 
 
