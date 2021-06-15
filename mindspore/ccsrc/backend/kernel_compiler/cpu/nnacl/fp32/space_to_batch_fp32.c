@@ -17,6 +17,9 @@
 
 void DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
                     const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id) {
+  if (thread == 0) {
+    return;
+  }
   const int depth = in_shape[3];
   const int input_width = in_shape[2];
   const int input_height = in_shape[1];

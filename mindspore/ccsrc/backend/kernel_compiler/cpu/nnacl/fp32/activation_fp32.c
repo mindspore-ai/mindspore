@@ -22,14 +22,14 @@ int Fp32Relu(const float *src, int length, float *dst) {
   int i = 0;
 #if defined(ENABLE_AVX)
   MS_FLOAT32X8 zero_8 = MS_MOV256_F32(0.0f);
-  for (; i < length - 8; i += 8) {
+  for (; i <= length - 8; i += 8) {
     MS_ST256_F32(dst + i, MS_MAX256_F32(MS_LD256_F32(src + i), zero_8));
   }
 #endif
 
 #if defined(ENABLE_SSE) || defined(ENABLE_ARM)
   MS_FLOAT32X4 zero = MS_MOVQ_F32(0.0f);
-  for (; i < length - 4; i += 4) {
+  for (; i <= length - 4; i += 4) {
     MS_STQ_F32(dst + i, MS_MAXQ_F32(MS_LDQ_F32(src + i), zero));
   }
 #endif
@@ -45,7 +45,7 @@ int Fp32Relu6(const float *src, int length, float *dst) {
 #if defined(ENABLE_AVX)
   MS_FLOAT32X8 zero_8 = MS_MOV256_F32(0.0f);
   MS_FLOAT32X8 six_8 = MS_MOV256_F32(6.0f);
-  for (; i < length - 8; i += 8) {
+  for (; i <= length - 8; i += 8) {
     MS_FLOAT32X8 dst_tmp = MS_MAX256_F32(MS_LD256_F32(src + i), zero_8);
     dst_tmp = MS_MIN256_F32(dst_tmp, six_8);
     MS_ST256_F32(dst + i, dst_tmp);
@@ -55,7 +55,7 @@ int Fp32Relu6(const float *src, int length, float *dst) {
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   MS_FLOAT32X4 zero = MS_MOVQ_F32(0.0f);
   MS_FLOAT32X4 six = MS_MOVQ_F32(6.0f);
-  for (; i < length - 4; i += 4) {
+  for (; i <= length - 4; i += 4) {
     MS_FLOAT32X4 dst_tmp = MS_MAXQ_F32(MS_LDQ_F32(src + i), zero);
     dst_tmp = MS_MINQ_F32(dst_tmp, six);
     MS_STQ_F32(dst + i, dst_tmp);
@@ -74,7 +74,7 @@ int Fp32Relu6(const float *src, int length, float *dst) {
 int LRelu(const float *src, int length, float *dst, float alpha) {
   int i = 0;
 #if defined(ENABLE_AVX)
-  for (; i < length - 8; i += 8) {
+  for (; i <= length - 8; i += 8) {
     MS_FLOAT32X8 src_tmp = MS_LD256_F32(src + i);
     MS_FLOAT32X8 mul_tmp = MS_MUL256_N_F32(src_tmp, alpha);
     MS_FLOAT32X8 mask = MS_CMP256_F32(src_tmp, MS_MOV256_F32(0.0f), 30);
@@ -83,7 +83,7 @@ int LRelu(const float *src, int length, float *dst, float alpha) {
 #endif
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  for (; i < length - 4; i += 4) {
+  for (; i <= length - 4; i += 4) {
     MS_FLOAT32X4 src_tmp = MS_LDQ_F32(src + i);
     MS_FLOAT32X4 mul_tmp = MS_MULQ_N_F32(src_tmp, alpha);
 #ifdef ENABLE_ARM
@@ -103,7 +103,7 @@ int LRelu(const float *src, int length, float *dst, float alpha) {
 int Sigmoid(const float *src, int length, float *dst) {
   int i = 0;
 #if defined(ENABLE_AVX)
-  for (; i < length - 8; i += 8) {
+  for (; i <= length - 8; i += 8) {
     simd_exp_avx(-(MS_LD256_F32(src + i)), dst + i);
     MS_ST256_F32(dst + i,
                  MS_DIV256_F32(MS_MOV256_F32(1.0f), MS_ADD256_F32(MS_MOV256_F32(1.0f), MS_LD256_F32(dst + i))));
@@ -111,7 +111,7 @@ int Sigmoid(const float *src, int length, float *dst) {
 #endif
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  for (; i < length - 4; i += 4) {
+  for (; i <= length - 4; i += 4) {
     simd_exp(MS_SUBQ_F32(MS_MOVQ_F32(0.0f), MS_LDQ_F32(src + i)), dst + i);
     MS_STQ_F32(dst + i, MS_DIVQ_F32(MS_MOVQ_F32(1.0f), MS_ADDQ_F32(MS_MOVQ_F32(1.0f), MS_LDQ_F32(dst + i))));
   }
@@ -139,14 +139,14 @@ float TanhOpt(float src) {
 int Tanh(const float *src, int length, float *dst) {
   int i = 0;
 #if defined(ENABLE_AVX)
-  for (; i < length - 8; i += 8) {
+  for (; i <= length - 8; i += 8) {
     MS_FLOAT32X8 input = MS_LD256_F32(src + i);
     MS_ST256_F32(dst + i, MS_TANHX8_F32(input));
   }
 #endif
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  for (; i < length - 4; i += 4) {
+  for (; i <= length - 4; i += 4) {
     MS_FLOAT32X4 input = MS_LDQ_F32(src + i);
     MS_STQ_F32(dst + i, MS_TANHX4_F32(input));
   }
@@ -180,7 +180,7 @@ int Swish(const float *src, int length, float *dst) {
     MS_STQ_F32(dst + index, result);
   }
 #endif
-  for (; index < length; index++) {
+  for (; index < length; ++index) {
     dst[index] = src[index] * dst[index];
   }
   return NNACL_OK;

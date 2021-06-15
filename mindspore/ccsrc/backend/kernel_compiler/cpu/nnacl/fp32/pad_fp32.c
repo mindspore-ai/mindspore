@@ -19,6 +19,9 @@
 
 void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
          const int *paddings, int tid, int thread_num) {
+  if (thread_num == 0) {
+    return;
+  }
   int in[4], out[4];
   for (in[0] = 0; in[0] < input_shape[0]; in[0]++) {
     out[0] = in[0] + paddings[0];

@@ -23,7 +23,7 @@ int ElementOptSub(const float *in0, const float *in1, float *out, int size, cons
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin1 = vld1q_f32(in1 + index);
       float32x4_t vout = vsubq_f32(vin0_opt, vin1);
       vst1q_f32(out + index, vout);
@@ -34,7 +34,7 @@ int ElementOptSub(const float *in0, const float *in1, float *out, int size, cons
     }
   } else {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin0 = vld1q_f32(in0 + index);
       float32x4_t vout = vsubq_f32(vin0, vin1_opt);
       vst1q_f32(out + index, vout);
@@ -55,7 +55,7 @@ int ElementOptSubInt(const int *in0, const int *in1, int *out, int size, const A
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       int32x4_t vin1 = vld1q_s32(in1 + index);
       int32x4_t vout = vsubq_s32(vin0_opt, vin1);
       vst1q_s32(out + index, vout);
@@ -66,7 +66,7 @@ int ElementOptSubInt(const int *in0, const int *in1, int *out, int size, const A
     }
   } else {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       int32x4_t vin0 = vld1q_s32(in0 + index);
       int32x4_t vout = vsubq_s32(vin0, vin1_opt);
       vst1q_s32(out + index, vout);
@@ -88,7 +88,7 @@ int ElementOptSubRelu(const float *in0, const float *in1, float *out, int size, 
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin1 = vld1q_f32(in1 + index);
       float32x4_t vout = vmaxq_f32(vsubq_f32(vin0_opt, vin1), zeros);
       vst1q_f32(out + index, vout);
@@ -99,7 +99,7 @@ int ElementOptSubRelu(const float *in0, const float *in1, float *out, int size, 
     }
   } else {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin0 = vld1q_f32(in0 + index);
       float32x4_t vout = vmaxq_f32(vsubq_f32(vin0, vin1_opt), zeros);
       vst1q_f32(out + index, vout);
@@ -122,7 +122,7 @@ int ElementOptSubRelu6(const float *in0, const float *in1, float *out, int size,
   int index = 0;
   if (param->in_elements_num0_ == 1) {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin1 = vld1q_f32(in1 + index);
       float32x4_t vout = vminq_f32(vmaxq_f32(vsubq_f32(vin0_opt, vin1), zeros), bounds);
       vst1q_f32(out + index, vout);
@@ -133,7 +133,7 @@ int ElementOptSubRelu6(const float *in0, const float *in1, float *out, int size,
     }
   } else {
 #ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
+    for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin0 = vld1q_f32(in0 + index);
       float32x4_t vout = vminq_f32(vmaxq_f32(vsubq_f32(vin0, vin1_opt), zeros), bounds);
       vst1q_f32(out + index, vout);
@@ -149,7 +149,7 @@ int ElementOptSubRelu6(const float *in0, const float *in1, float *out, int size,
 int ElementSub(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  for (; index <= size - 4; index += C4NUM) {
+  for (; index <= size - C4NUM; index += C4NUM) {
     float32x4_t vin0 = vld1q_f32(in0 + index);
     float32x4_t vin1 = vld1q_f32(in1 + index);
     float32x4_t vout = vsubq_f32(vin0, vin1);
@@ -165,7 +165,7 @@ int ElementSub(const float *in0, const float *in1, float *out, int size) {
 int ElementSubInt(const int *in0, const int *in1, int *out, int size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  for (; index <= size - 4; index += C4NUM) {
+  for (; index <= size - C4NUM; index += C4NUM) {
     int32x4_t vin0 = vld1q_s32(in0 + index);
     int32x4_t vin1 = vld1q_s32(in1 + index);
     int32x4_t vout = vsubq_s32(vin0, vin1);
@@ -182,7 +182,7 @@ int ElementSubRelu(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float32x4_t zeros = vdupq_n_f32(0.0f);
-  for (; index <= size - 4; index += C4NUM) {
+  for (; index <= size - C4NUM; index += C4NUM) {
     float32x4_t vin0 = vld1q_f32(in0 + index);
     float32x4_t vin1 = vld1q_f32(in1 + index);
     float32x4_t vout = vsubq_f32(vin0, vin1);
@@ -202,7 +202,7 @@ int ElementSubRelu6(const float *in0, const float *in1, float *out, int size) {
 #ifdef ENABLE_NEON
   float32x4_t zeros = vdupq_n_f32(0.0f);
   float32x4_t bounds = vdupq_n_f32(6.0f);
-  for (; index <= size - 4; index += C4NUM) {
+  for (; index <= size - C4NUM; index += C4NUM) {
     float32x4_t vin0 = vld1q_f32(in0 + index);
     float32x4_t vin1 = vld1q_f32(in1 + index);
     float32x4_t vout = vminq_f32(vmaxq_f32(vsubq_f32(vin0, vin1), zeros), bounds);

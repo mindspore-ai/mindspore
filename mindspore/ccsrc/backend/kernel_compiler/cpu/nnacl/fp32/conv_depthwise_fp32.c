@@ -32,6 +32,9 @@ void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weigh
 
 void ConvDw(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
             const ConvParameter *conv_param, int task_id) {
+  if (conv_param->thread_num_ == 0 || conv_param->dilation_h_ == 0) {
+    return;
+  }
   int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
   int h_start = h_step * task_id;
   int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
@@ -85,6 +88,9 @@ void ConvDw(float *output_data, const float *input_data, const float *weight_dat
 }
 
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
+  if (block == 0) {
+    return;
+  }
   int left = 0;
   int right = conv_param->output_w_;
   int top = 0;
@@ -183,6 +189,9 @@ void ConvDwBorderPixel(float *dst, const float *src, const float *weight, const 
 
 void ConvDwBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
                   int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+  if (conv_param->dilation_h_ == 0 || conv_param->dilation_w_ == 0) {
+    return;
+  }
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
   float *dst_h = dst + top * sliding->out_h_step_;
@@ -203,6 +212,9 @@ void ConvDwBorder(float *dst, const float *src, const float *weight, const float
       const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C4NUM;
 #ifdef ENABLE_AVX
       ConvDwFp32BorderParam *param = (ConvDwFp32BorderParam *)malloc(sizeof(ConvDwFp32BorderParam));
+      if (param == NULL) {
+        return;
+      }
       param->dst = dst_kernel;
       param->src = src_kernel;
       param->weight = weight_kernel;
@@ -278,6 +290,9 @@ void ConvDwSWFp32(float *output_data, const float *input_data, const float *weig
                   const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id) {
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
+  if (conv_param->thread_num_ == 0) {
+    return;
+  }
   const float *src = input_data;
   float *dst = output_data;
   for (int b = 0; b < conv_param->output_batch_; b++) {
@@ -818,6 +833,9 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
 
 void ConvDwIndirection(float *output_data, float **indirect_buffer, const float *weight_data, const float *bias_data,
                        float *zero_ptr, const ConvParameter *conv_param, int task_id) {
+  if (conv_param->thread_num_ == 0) {
+    return;
+  }
   int step_w = conv_param->dilation_w_ == 1 ? conv_param->stride_w_ : conv_param->kernel_w_;
   int step_h =
     (conv_param->kernel_h_ * conv_param->kernel_w_) + (conv_param->output_w_ - 1) * step_w * conv_param->kernel_h_;
@@ -878,6 +896,9 @@ void DeconvDwBorderPixel(float *dst, const float *src, const float *weight, int 
 
 void DeconvDwBorder(float *dst, const float *src, const float *weight, int top, int bottom, int left, int right,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+  if (conv_param->dilation_h_ == 0 || conv_param->dilation_w_ == 0) {
+    return;
+  }
   const float *src_h = src + top * sliding->out_h_step_;
   for (int ih = top; ih < bottom; ih++) {
     int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
@@ -961,6 +982,9 @@ void DeconvDwSWFp32(float *output_data, const float *input_data, const float *we
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id) {
   const float *src = input_data;
   float *dst = output_data;
+  if (conv_param->thread_num_ == 0) {
+    return;
+  }
   for (int b = 0; b < conv_param->output_batch_; b++) {
     for (int oc = task_id; oc < sliding->c_block_; oc += conv_param->thread_num_) {
       const float *src_data = src + oc * C4NUM;

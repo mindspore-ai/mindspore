@@ -23,6 +23,9 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (param->op_parameter_.thread_num_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int channel_step = UP_DIV(param->channel_, param->op_parameter_.thread_num_);
   int channel_begin = task_id * channel_step;
   int channel_end = MSMIN(channel_begin + channel_step, param->channel_);

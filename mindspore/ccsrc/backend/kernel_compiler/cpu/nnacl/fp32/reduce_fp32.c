@@ -28,6 +28,9 @@ int ReduceMean(int outer_size, int inner_size, int axis_size, const float *src_d
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
     const float *outer_src = src_data + j * axis_size * inner_size;
@@ -49,6 +52,9 @@ int IntReduceMean(int outer_size, int inner_size, int axis_size, const int *src_
                   int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
+  }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
   }
   int i, j;
 #ifdef ENABLE_NEON
@@ -92,6 +98,9 @@ int ReduceSum(int outer_size, int inner_size, int axis_size, const float *src_da
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int i, j;
 #ifdef ENABLE_NEON
   int block_mod = inner_size % C4NUM;
@@ -129,6 +138,9 @@ int IntReduceSum(int outer_size, int inner_size, int axis_size, const int *src_d
                  int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
+  }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
   }
   int i, j;
 #ifdef ENABLE_NEON
@@ -168,6 +180,9 @@ int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_da
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
     const float *outer_src = src_data + j * axis_size * inner_size;
@@ -189,6 +204,9 @@ int IntReduceMax(int outer_size, int inner_size, int axis_size, const int *src_d
                  int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
+  }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
   }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
@@ -212,6 +230,9 @@ int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_da
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
     const float *outer_src = src_data + j * axis_size * inner_size;
@@ -233,6 +254,9 @@ int IntReduceMin(int outer_size, int inner_size, int axis_size, const int *src_d
                  int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
+  }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
   }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
@@ -256,6 +280,9 @@ int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_dat
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
     const bool *outer_src = src_data + j * axis_size * inner_size;
@@ -278,6 +305,9 @@ int ReduceProd(int outer_size, int inner_size, int axis_size, const float *src_d
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
     const float *outer_src = src_data + j * axis_size * inner_size;
@@ -299,6 +329,9 @@ int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_
                   int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
+  }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
   }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
@@ -324,6 +357,9 @@ int ReduceSumSquare(int outer_size, int inner_size, int axis_size, const float *
                     int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
+  }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
   }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {

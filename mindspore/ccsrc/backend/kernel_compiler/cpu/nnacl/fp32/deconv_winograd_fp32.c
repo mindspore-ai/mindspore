@@ -50,8 +50,8 @@ static void TransposeWeight(float *dst, size_t number) {
 
 int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
                          const DeConvParam *deconv_param) {
-  int tmp_kernel_plane = unit->w_size_ * unit->h_size_;
-  int size = conv_param->input_channel_ * conv_param->output_channel_ * tmp_kernel_plane;
+  unsigned int tmp_kernel_plane = unit->w_size_ * unit->h_size_;
+  unsigned int size = conv_param->input_channel_ * conv_param->output_channel_ * tmp_kernel_plane;
   float *current_unit_weight = (float *)malloc(size * sizeof(float));
   if (current_unit_weight == NULL) {
     return NNACL_NULL_PTR;
@@ -554,6 +554,9 @@ void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int sta
                                                       deconv_param->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM;
 
       /* winograd a buffer */
+      if (unit->winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
+        return;
+      }
       DeConvWgABuffer *wg_buf = &deconv_param->a_buffer_[unit->winograd_.kh_];
       float *wg_mid_a_buf = (float *)wg_buf->middle_buffer_ + task_id * unit->winograd_.kw_ * unit->winograd_.kh_ *
                                                                 DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;

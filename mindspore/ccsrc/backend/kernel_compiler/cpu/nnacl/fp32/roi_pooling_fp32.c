@@ -23,6 +23,9 @@
 
 int ROIPooling(const float *in_ptr, float *out_ptr, const float *roi, float *max_c, int tid,
                const ROIPoolingParameter *param) {
+  if (param->thread_num_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int num_rois = param->output_n_;
   int units = UP_DIV(num_rois, param->thread_num_);
   int roi_st = tid * units;

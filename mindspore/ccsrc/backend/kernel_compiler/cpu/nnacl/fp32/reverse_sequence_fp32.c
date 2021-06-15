@@ -16,19 +16,19 @@
 
 #include "nnacl/fp32/reverse_sequence_fp32.h"
 
-void ReverseSequence(float *input0, const void *input1, float *output, ReverseSequenceParameter *para) {
+void ReverseSequence(const float *input0, const void *input1, float *output, ReverseSequenceParameter *para) {
   (void)memcpy(output, input0, para->total_data_size_);
   ComputeStrides(para->input_shape0_, para->input_stride_, para->ndim_);
   ComputeStrides(para->output_shape_, para->output_stride_, para->ndim_);
   for (int i = 0; i < para->outer_count_; ++i) {
-    float *in = input0 + i * para->outer_stride_;
+    const float *in = input0 + i * para->outer_stride_;
     float *out = output + i * para->outer_stride_;
     for (int batch = 0; batch < para->input_shape0_[para->batch_axis_]; batch++) {
-      float *in_batch = in + batch * para->input_stride_[para->batch_axis_];
+      const float *in_batch = in + batch * para->input_stride_[para->batch_axis_];
       float *out_batch = out + batch * para->output_stride_[para->batch_axis_];
       int32_t seq_length = para->is_seq_length_int32_ ? *((int32_t *)input1 + batch) : *((int64_t *)input1 + batch);
       for (int n = 0; n < seq_length; ++n) {
-        float *in_seq = in_batch + (seq_length - 1 - n) * para->input_stride_[para->seq_axis_];
+        const float *in_seq = in_batch + (seq_length - 1 - n) * para->input_stride_[para->seq_axis_];
         float *out_seq = out_batch + n * para->output_stride_[para->seq_axis_];
         for (int j = 0; j < para->inner_count_; ++j) {
           (void)memcpy(out_seq + j * para->inner_stride_, in_seq + j * para->inner_stride_, para->copy_byte_size_);

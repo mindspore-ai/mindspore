@@ -36,6 +36,9 @@ void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param
   int kernel_plane = kernel_h * kernel_w;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
+  if (dilation_h == 0 || dilation_w == 0) {
+    return;
+  }
   int in_channel = conv_param->input_channel_;
   int in_w = conv_param->input_w_;
   int out_w = conv_param->output_w_;
@@ -93,6 +96,9 @@ void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int 
       int tmp_c = c4_minus * C4NUM;
       int tmp_c_offset = tmp_c * plane;
       int res_c = channel - tmp_c;
+      if (res_c > channel) {
+        return;
+      }
       for (int l = 0; l < res_c; ++l) {
         int src_ic_offset = src_kernel_offset + tmp_c + l;
         int dst_ic_offset = dst_kernel_offset + tmp_c_offset + l;

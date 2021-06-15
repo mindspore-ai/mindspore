@@ -111,6 +111,9 @@ int NmsMultiClassesFastCore(const int num_boxes, const int num_classes_with_bg, 
   if (input_scores == NULL || param == NULL || PartialArgSort == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   const int first_class_index = num_classes_with_bg - (int)(param->num_classes_);
   const int64_t max_classes_per_anchor =
     param->max_classes_per_detection_ < param->num_classes_ ? param->max_classes_per_detection_ : param->num_classes_;
