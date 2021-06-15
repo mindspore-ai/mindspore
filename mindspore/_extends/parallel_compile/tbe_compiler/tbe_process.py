@@ -65,6 +65,8 @@ def op_select_format(op_json: str):
 
     except TBEException as e:
         return "TBEException: " + str(e)
+    finally:
+        pass
 
     return ret
 
@@ -88,6 +90,8 @@ def check_supported(op_json: str):
 
     except TBEException as e:
         return "TBEException: " + str(e)
+    finally:
+        pass
 
     return ret
 
@@ -112,6 +116,8 @@ def run_compiler(op_json):
         return "TBEException", "ERROR: " + tb + "\ninput_args: " + op_json
     except subprocess.CalledProcessError as e:
         return "TBEException", "ERROR:\n" + e.stdout + "\n" + e.stderr + "\ninput_args: " + op_json
+    finally:
+        pass
 
 
 class TbeProcess:
@@ -198,6 +204,8 @@ class TbeProcess:
                   "export PYTHONPATH=${fwk_path}/python/site-packages/auto_tune.egg/auto_tune:$PYTHONPATH" \
                   "export PYTHONPATH=${fwk_path}/python/site-packages/schedule_search.egg:$PYTHONPATH"
             return res
+        finally:
+            pass
 
         from .tuner import TbeTuner
         if self.compile_process_num > 2:

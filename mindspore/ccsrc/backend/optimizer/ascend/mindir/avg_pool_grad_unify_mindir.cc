@@ -132,8 +132,8 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
   std::vector<float> output(output_size, 0.0);
   for (int64_t i = 0; i < output_shape[0] * output_shape[1]; ++i) {
     size_t src_size = hw_output.size() * kFloat32Len;
-    auto dst_size = LongToSize(output_shape[DIM2] * output_shape[DIM3] * kFloat32Len);
-    auto ret = memcpy_s(&output[LongToSize(i * hw_output.size())], dst_size, &hw_output[0], src_size);
+    auto dst_size = LongToSize(output_shape[DIM2]) * LongToSize(output_shape[DIM3]) * kFloat32Len;
+    auto ret = memcpy_s(&output[LongToSize(i) * hw_output.size()], dst_size, &hw_output[0], src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       return nullptr;

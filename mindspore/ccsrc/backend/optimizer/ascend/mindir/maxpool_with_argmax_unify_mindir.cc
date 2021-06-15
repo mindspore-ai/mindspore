@@ -61,7 +61,7 @@ const BaseRef MaxPoolWithArgmaxUnifyMindIR::DefinePattern() const {
 }
 
 const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                       const EquivPtr &equiv) const {
+                                                       const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto maxpool_with_argmax = node->cast<CNodePtr>();
@@ -74,7 +74,7 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape) {
     MS_LOG(DEBUG) << "argmax's infer shape size not equal 4";
   }
-  argmax_shape[kIndex2] = ksize[kIndex1] * ksize[kIndex2];
+  argmax_shape[kIndex2] = LongToSize(ksize[kIndex1] * ksize[kIndex2]);
   argmax_shape[kIndex3] = (output_shape[kIndex2] * output_shape[kIndex3] + kAlignBytes - 1) / kAlignBytes + 1;
   auto types = {AnfAlgo::GetOutputInferDataType(maxpool_with_argmax, 0), argmax_dtype};
   auto shapes = {output_shape, argmax_shape};
@@ -94,7 +94,7 @@ const BaseRef MaxPoolGradWithArgmaxUnifyMindIR::DefinePattern() const {
 }
 
 const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                           const EquivPtr &equiv) const {
+                                                           const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto maxpool_grad_with_argmax = node->cast<CNodePtr>();
@@ -109,7 +109,7 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
     MS_LOG(DEBUG) << "argmax's infer shape size not equal 4";
   }
   argmax_shape[kIndex3] = (argmax_shape[kIndex2] * argmax_shape[kIndex3] + kAlignBytes - 1) / kAlignBytes + 1;
-  argmax_shape[kIndex2] = ksize[kIndex1] * ksize[kIndex2];
+  argmax_shape[kIndex2] = LongToSize(ksize[kIndex1] * ksize[kIndex2]);
   AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
 
   return maxpool_grad_with_argmax;
