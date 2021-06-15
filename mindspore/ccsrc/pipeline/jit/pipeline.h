@@ -143,7 +143,7 @@ void ClearResAtexit();
 void ReleaseGeTsd();
 
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase);
-FuncGraphPtr LoadMindIR(const std::string &file_name);
+FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode);
 
 // init and exec dataset sub graph
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
@@ -156,6 +156,10 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<int64_t> &input_indexes, bool need_run);
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list);
+
+py::bytes PyEncrypt(char *plain_data, const size_t plain_len, char *key, const size_t key_len, std::string enc_mode);
+py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const size_t key_len, std::string dec_mode);
+bool PyIsCipherFile(const std::string &file_path);
 
 }  // namespace pipeline
 }  // namespace mindspore

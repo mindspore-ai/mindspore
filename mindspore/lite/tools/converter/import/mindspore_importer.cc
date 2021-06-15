@@ -17,6 +17,7 @@
 #include "tools/converter/import/mindspore_importer.h"
 #include <memory>
 #include <vector>
+#include <regex>
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/primitive_adjust.h"
 #include "tools/converter/import/mindir_adjust.h"
@@ -137,9 +138,53 @@ STATUS MindsporeImporter::HardCodeMindir(const CNodePtr &conv_node, const FuncGr
   return lite::RET_OK;
 }
 
+size_t MindsporeImporter::Hex2ByteArray(std::string hex_str, unsigned char *byte_array, size_t max_len) {
+  std::regex r("[0-9a-fA-F]+");
+  if (!std::regex_match(hex_str, r)) {
+    MS_LOG(ERROR) << "Some characters of dec_key not in [0-9a-fA-F]";
+    return 0;
+  }
+  if (hex_str.size() % 2 == 1) {
+    hex_str.push_back('0');
+  }
+  size_t byte_len = hex_str.size() / 2;
+  if (byte_len > max_len) {
+    MS_LOG(ERROR) << "the hexadecimal dec_key length exceeds the maximum limit: 64";
+    return 0;
+  }
+  for (size_t i = 0; i < byte_len; ++i) {
+    size_t p = i * 2;
+    if (hex_str[p] >= 'a' && hex_str[p] <= 'f') {
+      byte_array[i] = hex_str[p] - 'a' + 10;
+    } else if (hex_str[p] >= 'A' && hex_str[p] <= 'F') {
+      byte_array[i] = hex_str[p] - 'A' + 10;
+    } else {
+      byte_array[i] = hex_str[p] - '0';
+    }
+    if (hex_str[p + 1] >= 'a' && hex_str[p + 1] <= 'f') {
+      byte_array[i] = (byte_array[i] << 4) | (hex_str[p + 1] - 'a' + 10);
+    } else if (hex_str[p] >= 'A' && hex_str[p] <= 'F') {
+      byte_array[i] = (byte_array[i] << 4) | (hex_str[p + 1] - 'A' + 10);
+    } else {
+      byte_array[i] = (byte_array[i] << 4) | (hex_str[p + 1] - '0');
+    }
+  }
+  return byte_len;
+}
+
 FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   quant_type_ = flag.quantType;
-  auto func_graph = LoadMindIR(flag.modelFile);
+  FuncGraphPtr func_graph;
+  if (flag.dec_key.size() != 0) {
+    unsigned char key[32];
+    const size_t key_len = Hex2ByteArray(flag.dec_key, key, 32);
+    if (key_len == 0) {
+      return nullptr;
+    }
+    func_graph = LoadMindIR(flag.modelFile, false, key, key_len, flag.dec_mode);
+  } else {
+    func_graph = LoadMindIR(flag.modelFile);
+  }
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
     return nullptr;

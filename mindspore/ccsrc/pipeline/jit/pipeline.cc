@@ -18,6 +18,7 @@
 
 #include "pipeline/jit/pipeline.h"
 
+#include <memory>
 #include <sstream>
 #include <map>
 #include <unordered_map>
@@ -52,6 +53,7 @@
 #include "pipeline/jit/prim_bprop_optimizer.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/framework/actor/actor_common.h"
+#include "utils/crypto.h"
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
@@ -189,7 +191,7 @@ void GetCachedFuncGraph(const ResourcePtr &resource) {
     return;
   }
   MS_LOG(INFO) << "Use the compilation cache \"" << realpath.value() << "\" and execute the backend actions only.";
-  FuncGraphPtr fg = LoadMindIR(realpath.value());
+  FuncGraphPtr fg = mindspore::LoadMindIR(realpath.value());
   if (fg == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to load the compilation cache file: " << realpath.value();
   }
@@ -1190,7 +1192,10 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
 #endif
 }
 
-FuncGraphPtr LoadMindIR(const std::string &file_name) { return mindspore::LoadMindIR(file_name); }
+FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len,
+                        const std::string &dec_mode) {
+  return mindspore::LoadMindIR(file_name, false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode);
+}
 
 void ReleaseGeTsd() {
   auto context_ptr = MsContext::GetInstance();
@@ -1287,5 +1292,24 @@ void ClearResAtexit() {
   parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
 }
+
+py::bytes PyEncrypt(char *plain_data, const size_t plain_len, char *key, const size_t key_len, std::string enc_mode) {
+  size_t encrypt_len;
+  auto encrypt_data = mindspore::Encrypt(&encrypt_len, reinterpret_cast<Byte *>(plain_data), plain_len,
+                                         reinterpret_cast<Byte *>(key), key_len, enc_mode);
+  auto py_encrypt_data = py::bytes(reinterpret_cast<char *>(encrypt_data.get()), encrypt_len);
+  return py_encrypt_data;
+}
+
+py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const size_t key_len, std::string dec_mode) {
+  size_t decrypt_len;
+
+  auto decrypt_data =
+    mindspore::Decrypt(&decrypt_len, encrypt_data_path, reinterpret_cast<Byte *>(key), key_len, dec_mode);
+  auto py_decrypt_data = py::bytes(reinterpret_cast<char *>(decrypt_data.get()), decrypt_len);
+  return py_decrypt_data;
+}
+
+bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFile(file_path); }
 }  // namespace pipeline
 }  // namespace mindspore

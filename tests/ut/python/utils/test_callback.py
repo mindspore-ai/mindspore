@@ -16,6 +16,7 @@
 import os
 import platform
 import stat
+import secrets
 from unittest import mock
 
 import numpy as np
@@ -254,7 +255,7 @@ def test_checkpoint_save_ckpt_with_encryption():
         save_checkpoint_seconds=0,
         keep_checkpoint_max=5,
         keep_checkpoint_per_n_minutes=0,
-        enc_key=os.urandom(16),
+        enc_key=secrets.token_bytes(16),
         enc_mode="AES-GCM")
     ckpt_cb = ModelCheckpoint(config=train_config)
     cb_params = _InternalCallbackParam()

@@ -28,7 +28,6 @@
 #include "utils/mpi/mpi_config.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/costmodel_context.h"
-#include "crypto/crypto_pybind.h"
 #ifdef ENABLE_GPU_COLLECTIVE
 #include "runtime/device/gpu/distribution/collective_init.h"
 #else
@@ -112,7 +111,9 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("init_pipeline", &mindspore::pipeline::InitPipeline, "Init Pipeline.");
 
   (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
-  (py::object) m.def("load_mindir", &mindspore::pipeline::LoadMindIR, py::arg("file_name"), "Load model as Graph.");
+  (py::object)
+    m.def("load_mindir", &mindspore::pipeline::LoadMindIR, py::arg("file_name"), py::arg("dec_key") = nullptr,
+          py::arg("key_len") = py::int_(0), py::arg("dec_mode") = py::str("AES-GCM"), "Load model as Graph.");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")
@@ -367,7 +368,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def(py::init())
     .def("get_all_ops_info", &OpInfoLoaderPy::GetAllOpsInfo, "get all ops info.");
 
-  (void)m.def("_encrypt", &mindspore::crypto::PyEncrypt, "Encrypt the data.");
-  (void)m.def("_decrypt", &mindspore::crypto::PyDecrypt, "Decrypt the data.");
-  (void)m.def("_is_cipher_file", &mindspore::crypto::PyIsCipherFile, "Determine whether the file is encrypted");
+  (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
+  (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
+  (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");
 }

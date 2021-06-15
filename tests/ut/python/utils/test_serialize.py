@@ -17,6 +17,7 @@ import os
 import platform
 import stat
 import time
+import secrets
 
 import numpy as np
 import pytest
@@ -32,7 +33,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.train.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
-     export, _save_graph
+     export, _save_graph, load
 from ..ut_filter import non_graph_engine
 
 context.set_context(mode=context.GRAPH_MODE, print_file_path="print/print.pb")
@@ -332,7 +333,7 @@ def test_save_and_load_checkpoint_for_network_with_encryption():
 
     loss_net = WithLossCell(net, loss)
     train_network = TrainOneStepCell(loss_net, opt)
-    key = os.urandom(16)
+    key = secrets.token_bytes(16)
     mode = "AES-GCM"
     ckpt_path = "./encrypt_ckpt.ckpt"
     if platform.system().lower() == "windows":
@@ -381,6 +382,16 @@ def test_mindir_export():
     net = MYNET()
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))
     export(net, input_data, file_name="./me_binary_export", file_format="MINDIR")
+
+
+@non_graph_engine
+def test_mindir_export_and_load_with_encryption():
+    net = MYNET()
+    input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))
+    key = secrets.token_bytes(16)
+    export(net, input_data, file_name="./me_cipher_binary_export.mindir", file_format="MINDIR", enc_key=key)
+    load("./me_cipher_binary_export.mindir", dec_key=key)
+
 
 
 class PrintNet(nn.Cell):

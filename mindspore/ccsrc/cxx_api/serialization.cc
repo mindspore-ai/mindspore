@@ -18,6 +18,7 @@
 #include "cxx_api/graph/graph_data.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/load_mindir/load_model.h"
+#include "utils/crypto.h"
 
 namespace mindspore {
 static Buffer ReadFile(const std::string &file) {
@@ -78,7 +79,47 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
     try {
       anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(model_data), data_size);
     } catch (const std::exception &) {
-      MS_LOG(ERROR) << "Load model failed.";
+      if (IsCipherFile(reinterpret_cast<const unsigned char *>(model_data))) {
+        MS_LOG(ERROR) << "Load model failed. The model_data may be encrypted, please pass in correct key.";
+      } else {
+        MS_LOG(ERROR) << "Load model failed.";
+      }
+      return kMEInvalidInput;
+    }
+
+    *graph = Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
+    return kSuccess;
+  } else if (model_type == kOM) {
+    *graph = Graph(std::make_shared<Graph::GraphData>(Buffer(model_data, data_size), kOM));
+    return kSuccess;
+  }
+
+  MS_LOG(ERROR) << "Unsupported ModelType " << model_type;
+  return kMEInvalidInput;
+}
+
+Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
+                           const Key &dec_key, const std::vector<char> &dec_mode) {
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Output args graph is nullptr.";
+    return kMEInvalidInput;
+  }
+
+  if (model_type == kMindIR) {
+    FuncGraphPtr anf_graph = nullptr;
+    try {
+      if (dec_key.len > dec_key.max_key_len) {
+        MS_LOG(ERROR) << "The key length exceeds maximum length: 32.";
+        return kMEInvalidInput;
+      } else {
+        size_t plain_data_size;
+        std::string dec_mode_str(dec_mode.begin(), dec_mode.end());
+        auto plain_data = mindspore::Decrypt(&plain_data_size, reinterpret_cast<const unsigned char *>(model_data),
+                                             data_size, dec_key.key, dec_key.len, dec_mode_str);
+        anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(plain_data.get()), plain_data_size);
+      }
+    } catch (const std::exception &) {
+      MS_LOG(ERROR) << "Load model failed. Please check the valid of dec_key and dec_mode.";
       return kMEInvalidInput;
     }
 
@@ -103,7 +144,48 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
   if (model_type == kMindIR) {
     FuncGraphPtr anf_graph = LoadMindIR(file_path);
     if (anf_graph == nullptr) {
-      MS_LOG(ERROR) << "Load model failed.";
+      if (IsCipherFile(file_path)) {
+        MS_LOG(ERROR) << "Load model failed. The file may be encrypted, please pass in correct key.";
+      } else {
+        MS_LOG(ERROR) << "Load model failed.";
+      }
+      return kMEInvalidInput;
+    }
+    *graph = Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
+    return kSuccess;
+  } else if (model_type == kOM) {
+    Buffer data = ReadFile(file_path);
+    if (data.Data() == nullptr) {
+      MS_LOG(ERROR) << "Read file " << file_path << " failed.";
+      return kMEInvalidInput;
+    }
+    *graph = Graph(std::make_shared<Graph::GraphData>(data, kOM));
+    return kSuccess;
+  }
+
+  MS_LOG(ERROR) << "Unsupported ModelType " << model_type;
+  return kMEInvalidInput;
+}
+
+Status Serialization::Load(const std::vector<char> &file, ModelType model_type, Graph *graph, const Key &dec_key,
+                           const std::vector<char> &dec_mode) {
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Output args graph is nullptr.";
+    return kMEInvalidInput;
+  }
+
+  std::string file_path = CharToString(file);
+  if (model_type == kMindIR) {
+    FuncGraphPtr anf_graph;
+    if (dec_key.len > dec_key.max_key_len) {
+      MS_LOG(ERROR) << "The key length exceeds maximum length: 32.";
+      return kMEInvalidInput;
+    } else {
+      std::string dec_mode_str(dec_mode.begin(), dec_mode.end());
+      anf_graph = LoadMindIR(file_path, false, dec_key.key, dec_key.len, dec_mode_str);
+    }
+    if (anf_graph == nullptr) {
+      MS_LOG(ERROR) << "Load model failed. Please check the valid of dec_key and dec_mode";
       return kMEInvalidInput;
     }
     *graph = Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));

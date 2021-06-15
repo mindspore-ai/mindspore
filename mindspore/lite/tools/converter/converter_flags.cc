@@ -53,6 +53,13 @@ Flags::Flags() {
           "whether the model is going to be trained on device. "
           "true | false",
           "false");
+  AddFlag(&Flags::dec_key, "decryptKey",
+          "The key used to decrypt the file, expressed in hexadecimal characters. Only valid when fmkIn is 'MINDIR'",
+          "");
+  AddFlag(&Flags::dec_mode, "decryptMode",
+          "Decryption method for the MindIR file. Only valid when dec_key is set."
+          "AES-GCM | AES-CBC",
+          "AES-GCM");
 }
 
 int Flags::InitInputOutputDataType() {

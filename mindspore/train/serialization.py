@@ -304,7 +304,7 @@ def _check_append_dict(append_dict):
     return append_dict
 
 
-def load(file_name):
+def load(file_name, **kwargs):
     """
     Load MindIR.
 
@@ -313,6 +313,11 @@ def load(file_name):
     Args:
         file_name (str): MindIR file name.
 
+        kwargs (dict): Configuration options dictionary.
+
+            - dec_key: Byte type key used for decryption. Tha valid length is 16, 24, or 32.
+            - dec_mode: Specifies the decryption mode, take effect when dec_key is set. Option: 'AES-GCM' | 'AES-CBC'.
+              Default: 'AES-GCM'.
     Returns:
         Object, a compiled graph that can executed by `GraphCell`.
 
@@ -341,8 +346,19 @@ def load(file_name):
         raise ValueError("The MindIR should end with mindir, please input the correct file name.")
 
     logger.info("Execute the process of loading mindir.")
-    graph = load_mindir(file_name)
+    if 'dec_key' in kwargs.keys():
+        dec_key = Validator.check_isinstance('dec_key', kwargs['dec_key'], bytes)
+        dec_mode = 'AES-GCM'
+        if 'dec_mode' in kwargs.keys():
+            dec_mode = Validator.check_isinstance('dec_mode', kwargs['dec_mode'], str)
+        graph = load_mindir(file_name, dec_key=dec_key, key_len=len(dec_key), dec_mode=dec_mode)
+    else:
+        graph = load_mindir(file_name)
+
     if graph is None:
+        if _is_cipher_file(file_name):
+            raise RuntimeError("Load MindIR failed. The file may be encrypted, please pass in the "
+                               "correct dec_key and dec_mode.")
         raise RuntimeError("Load MindIR failed.")
     return graph
 
@@ -392,7 +408,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
             logger.error("Failed to read the checkpoint file `%s`. The file may be encrypted, please pass in the "
-                         "dec_key.", ckpt_file_name)
+                         "correct dec_key.", ckpt_file_name)
         else:
             logger.error("Failed to read the checkpoint file `%s`, please check the correct of the file.", \
                          ckpt_file_name)
@@ -686,6 +702,9 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Default: 127.5.
             - std_dev: The variance of input data after preprocessing, used for quantizing the first layer of network.
               Default: 127.5.
+            - enc_key: Byte type key used for encryption. Tha valid length is 16, 24, or 32.
+            - enc_mode: Specifies the encryption mode, take effect when enc_key is set. Option: 'AES-GCM' | 'AES-CBC'.
+              Default: 'AES-GCM'.
 
     Examples:
         >>> import numpy as np
@@ -702,10 +721,20 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
     Validator.check_file_name_by_regular(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
-    _export(net, file_name, file_format, *inputs)
+    if 'enc_key' in kwargs.keys():
+        if file_format != 'MINDIR':
+            raise ValueError(f"enc_key can be passed in only when file_format=='MINDIR', but got {file_format}")
+
+        enc_key = Validator.check_isinstance('enc_key', kwargs['enc_key'], bytes)
+        enc_mode = 'AES-GCM'
+        if 'enc_mode' in kwargs.keys():
+            enc_mode = Validator.check_isinstance('enc_mode', kwargs['enc_mode'], str)
+        _export(net, file_name, file_format, *inputs, enc_key=enc_key, enc_mode=enc_mode)
+    else:
+        _export(net, file_name, file_format, *inputs)
 
 
-def _export(net, file_name, file_format, *inputs):
+def _export(net, file_name, file_format, *inputs, **kwargs):
     """
     It is an internal conversion function. Export the MindSpore prediction model to a file in the specified format.
     """
@@ -744,13 +773,13 @@ def _export(net, file_name, file_format, *inputs):
             os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
             f.write(onnx_stream)
     elif file_format == 'MINDIR':
-        _save_mindir(net, file_name, *inputs)
+        _save_mindir(net, file_name, *inputs, **kwargs)
 
     if is_dump_onnx_in_training:
         net.set_train(mode=True)
 
 
-def _save_mindir(net, file_name, *inputs):
+def _save_mindir(net, file_name, *inputs, **kwargs):
     """Save MindIR format file."""
     model = mindir_model()
 
@@ -764,7 +793,7 @@ def _save_mindir(net, file_name, *inputs):
     model.ParseFromString(mindir_stream)
 
     save_together = _mindir_save_together(net_dict, model)
-
+    is_encrypt = lambda: 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys()
     if save_together:
         for param_proto in model.graph.parameter:
             param_name = param_proto.name[param_proto.name.find(":")+1:]
@@ -781,7 +810,11 @@ def _save_mindir(net, file_name, *inputs):
         os.makedirs(dirname, exist_ok=True)
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
-            f.write(model.SerializeToString())
+            model_string = model.SerializeToString()
+            if is_encrypt():
+                model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'], len(kwargs['enc_key']),
+                                        kwargs['enc_mode'])
+            f.write(model_string)
     else:
         logger.warning("Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.")
         # save parameter
@@ -815,7 +848,11 @@ def _save_mindir(net, file_name, *inputs):
                 data_file_name = data_path + "/" + "data_" + str(index)
                 with open(data_file_name, "ab") as f:
                     os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
-                    f.write(graphproto.SerializeToString())
+                    graph_string = graphproto.SerializeToString()
+                    if is_encrypt():
+                        graph_string = _encrypt(graph_string, len(graph_string), kwargs['enc_key'],
+                                                len(kwargs['enc_key']), kwargs['enc_mode'])
+                    f.write(graph_string)
                 index += 1
                 data_size = 0
                 del graphproto.parameter[:]
@@ -824,14 +861,22 @@ def _save_mindir(net, file_name, *inputs):
             data_file_name = data_path + "/" + "data_" + str(index)
             with open(data_file_name, "ab") as f:
                 os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
-                f.write(graphproto.SerializeToString())
+                graph_string = graphproto.SerializeToString()
+                if is_encrypt():
+                    graph_string = _encrypt(graph_string, len(graph_string), kwargs['enc_key'], len(kwargs['enc_key']),
+                                            kwargs['enc_mode'])
+                f.write(graph_string)
 
         # save graph
         del model.graph.parameter[:]
         graph_file_name = dirname + "/" + file_prefix + "_graph.mindir"
         with open(graph_file_name, 'wb') as f:
             os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
-            f.write(model.SerializeToString())
+            model_string = model.SerializeToString()
+            if is_encrypt():
+                model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'], len(kwargs['enc_key']),
+                                        kwargs['enc_mode'])
+            f.write(model_string)
 
 
 def _mindir_save_together(net_dict, model):

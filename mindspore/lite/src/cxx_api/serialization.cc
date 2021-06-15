@@ -46,7 +46,19 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
   return kSuccess;
 }
 
+Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
+                           const Key &dec_key, const std::vector<char> &dec_mode) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kLiteError;
+}
+
 Status Serialization::Load(const std::vector<char> &file, ModelType model_type, Graph *graph) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kLiteError;
+}
+
+Status Serialization::Load(const std::vector<char> &file, ModelType model_type, Graph *graph, const Key &dec_key,
+                           const std::vector<char> &dec_mode) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kLiteError;
 }

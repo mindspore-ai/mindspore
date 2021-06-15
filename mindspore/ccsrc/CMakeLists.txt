@@ -218,7 +218,6 @@ set(SUB_COMP
         pipeline/jit
         pipeline/pynative
         common debug pybind_api utils vm profiler ps
-        crypto
 )
 
 foreach(_comp ${SUB_COMP})
