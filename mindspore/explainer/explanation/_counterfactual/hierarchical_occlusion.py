@@ -393,6 +393,14 @@ class Searcher:
         strides (Union(list[int], optional): Stride of layers, None means by auto calcuation.
         threshold (float): Threshold network output value of the target class.
         by_masking (bool): Whether it is masking mode.
+
+    Raises:
+        ValueError: Be raised for any data or settings' value problem.
+        TypeError: Be raised for any data or settings' type problem.
+        RuntimeError: Be raised if this function was invoked before.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def __init__(self,

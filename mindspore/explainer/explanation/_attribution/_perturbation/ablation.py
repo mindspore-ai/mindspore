@@ -30,7 +30,29 @@ from ...._utils import rank_pixels
 
 
 class Ablation:
-    """Base class to ablate image based on given replacement."""
+    """
+    Base class to ablate image based on given replacement.
+
+    Args:
+        perturb_mode (str): Perturbation mode.
+
+    Inputs:
+        inputs (np.ndarray): Input array to perturb. The first dim of inputs is assumed to be the batch size, i.e.,
+            number of samples.
+        reference (np.ndarray or float): Array of values to replace the elements in the original inputs. The shape
+            of reference must match the inputs. If scalar is provided, the perturbed elements will be assigned the
+            given value..
+        masks (np.ndarray): Several boolean array to mark the perturbed positions. True marks the pixels to be
+            perturbed, otherwise the pixels will be kept. The shape of masks is assumed to be
+            [batch_size, num_perturbations, inputs_shape[1:]].
+
+    Returns:
+        np.ndarray, perturbations.
+
+    Raises:
+        TypeError: Be raised for any input type problem.
+        ValueError: Be raised for any input value problem.
+    """
 
     def __init__(self, perturb_mode: str):
         self._perturb_mode = perturb_mode
@@ -41,22 +63,7 @@ class Ablation:
                  masks: np.array
                  ) -> np.array:
 
-        """
-        Generate perturbations of given array.
-
-        Args:
-            inputs (np.ndarray): Input array to perturb. The first dim of inputs is assumed to be the batch size, i.e.,
-                number of samples.
-            reference (np.ndarray or float): Array of values to replace the elements in the original inputs. The shape
-                of reference must match the inputs. If scalar is provided, the perturbed elements will be assigned the
-                given value..
-            masks (np.ndarray): Several boolean array to mark the perturbed positions. True marks the pixels to be
-                perturbed, otherwise the pixels will be kept. The shape of masks is assumed to be
-                [batch_size, num_perturbations, inputs_shape[1:]].
-
-        Return:
-            perturbations (np.ndarray)
-        """
+        """Generate perturbations of given array."""
         if isinstance(reference, float):
             reference = Constant(base_value=reference)(inputs)
 
