@@ -24,7 +24,11 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kOutputNum = 2;
+constexpr size_t kSquareSumOutputNum = 2;
+constexpr size_t kLarsV2WIndex = 1;
+constexpr size_t kLarsV2GIndex = 2;
+constexpr size_t kLarsV2WeightDecayIndex = 3;
+constexpr size_t kLarsV2LearningRatIndex = 4;
 void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
                                  std::vector<AnfNodePtr> *square_sum_all_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -40,26 +44,25 @@ void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars
   std::vector<size_t> shape;
   auto shapes = {shape, shape};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sum_all.get());
-
-  CreateMultipleOutputsOfAnfNode(graph, square_sum_all, kOutputNum, square_sum_all_outputs);
+  CreateMultipleOutputsOfAnfNode(graph, square_sum_all, kSquareSumOutputNum, square_sum_all_outputs);
 }
 
 CNodePtr CreateLarsV2Update(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
                             const std::vector<AnfNodePtr> &square_sum_all_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lars_v2);
-  if (square_sum_all_outputs.size() != 2) {
+  if (square_sum_all_outputs.size() != kSquareSumOutputNum) {
     MS_LOG(EXCEPTION) << "square_sum_all_outputs' size not equal 2"
                       << " trace: " << trace::DumpSourceLines(lars_v2);
   }
   CheckCNodeInputSize(lars_v2, kLarsV2InputTensorNum);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kLarsV2UpdateOpName)),
-                                    lars_v2->input(1),
-                                    lars_v2->input(2),
+                                    lars_v2->input(kLarsV2WIndex),
+                                    lars_v2->input(kLarsV2GIndex),
                                     square_sum_all_outputs[0],
                                     square_sum_all_outputs[1],
-                                    lars_v2->input(3),
-                                    lars_v2->input(4)};
+                                    lars_v2->input(kLarsV2WeightDecayIndex),
+                                    lars_v2->input(kLarsV2LearningRatIndex)};
   auto lars_v2_update = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(lars_v2_update);
   lars_v2_update->set_scope(lars_v2->scope());

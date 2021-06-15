@@ -53,6 +53,9 @@ size_t GetSmallSplitSize(const AnfNodePtr &split_node, int64_t split_dim, int64_
   if (LongToSize(split_dim) >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "The split_dim value should be less than the shape size of input 0";
   }
+  if (num_split == 0) {
+    MS_LOG(EXCEPTION) << "Divisor 'num_split' should not be 0.";
+  }
   return input_shape[LongToSize(split_dim)] / LongToSize(num_split);
 }
 
@@ -104,17 +107,23 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
   if (split_dim < 0) {
     split_dim += SizeToLong(output_shape.size());
   }
-  for (size_t i = 0; i < LongToSize(num_split); ++i) {
-    output_shape[LongToSize(split_dim)] = size_splits_base[i];
+  if (split_dim < 0) {
+    MS_LOG(EXCEPTION) << "Error split dim: " << split_dim;
+  }
+  auto split_dim_l = LongToSize(split_dim);
+  auto num_split_l = LongToSize(num_split);
+  for (size_t i = 0; i < num_split_l; ++i) {
+    output_shape[split_dim_l] = LongToSize(size_splits_base[i]);
     base_output_shapes_base.emplace_back(output_shape);
     AnfAlgo::SetOutputInferTypeAndShape({type_id}, {output_shape}, base_splitv_outputs[i].get());
   }
   AnfAlgo::SetOutputInferTypeAndShape(base_type_ids, base_output_shapes_base, base_splitv.get());
 }
+}  // namespace
 
-AnfNodePtr DoFission(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int64_t num_split, int64_t divisor) {
+AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int64_t num_split,
+                                   int64_t divisor, int64_t split_dim) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto split_dim = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrAxis);
   CNodePtr base_splitv = CreateBaseSplitVNode(func_graph, cnode);
 
   // Create new size_splits for "size_splits" attr of each new Splitv node which has full inputs.
@@ -173,7 +182,6 @@ AnfNodePtr DoFission(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int6
   AnfNodePtr make_tuple = func_graph->NewCNode(make_tuple_inputs);
   return make_tuple;
 }
-}  // namespace
 
 const BaseRef SplitFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
@@ -196,7 +204,7 @@ const AnfNodePtr SplitFission::Process(const FuncGraphPtr &func_graph, const Anf
   if (num_split <= outputs_divisor_) {
     return nullptr;
   }
-  return DoFission(func_graph, cnode, num_split, outputs_divisor_);
+  return DoFission(func_graph, cnode, num_split, outputs_divisor_, AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrAxis));
 }
 }  // namespace opt
 }  // namespace mindspore

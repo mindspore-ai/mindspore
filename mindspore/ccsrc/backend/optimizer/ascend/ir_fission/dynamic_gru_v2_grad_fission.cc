@@ -163,7 +163,7 @@ AnfNodePtr CreateDgateHSplitVDNode(const FuncGraphPtr &graph, const AnfNodePtr &
   size_t t_size = AnfAlgo::GetOutputInferShape(node, 0)[DIM0];
   size_t batch = AnfAlgo::GetOutputInferShape(node, 0)[DIM1];
   size_t hidden_size = AnfAlgo::GetOutputInferShape(node, 0)[DIM2] / kGateNum;
-  std::vector<size_t> shape = {t_size, batch, hidden_size + hidden_size};
+  std::vector<size_t> shape = {t_size, batch, hidden_size << 1};
   std::vector<size_t> shape2 = {t_size, batch, hidden_size};
   std::vector<std::vector<size_t>> shapes = {shape, shape2};
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_vd.get());
