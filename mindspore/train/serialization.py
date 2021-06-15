@@ -1315,7 +1315,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             param_unique_strategy = _remove_repeated_slices(train_strategy[param.name])
             _param_unique_strategy = _convert_to_layout(param.name, param_unique_strategy)
             split_param = _merge_and_split(sliced_params, _param_unique_strategy, predict_strategy)
-        opt_shard_group = predict_strategy[param.name][5]
+        opt_shard_group = predict_strategy[param.name][5] if predict_strategy else None
         if opt_shard_group:
             data = split_param.data.asnumpy()
             rank = get_rank(opt_shard_group)
