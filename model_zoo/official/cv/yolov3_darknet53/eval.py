@@ -258,6 +258,7 @@ def modelarts_pre_process():
 
         print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
 
+    config.log_path = os.path.join(config.output_path, config.log_path)
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_test():

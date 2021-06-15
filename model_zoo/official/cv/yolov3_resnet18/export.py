@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import argparse
+import os
 import numpy as np
 
 import mindspore as ms
@@ -22,33 +22,36 @@ from mindspore.train.serialization import export, load_checkpoint, load_param_in
 from src.yolov3 import yolov3_resnet18, YoloWithEval
 from src.config import ConfigYOLOV3ResNet18
 
-parser = argparse.ArgumentParser(description='yolov3_resnet18 export')
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="yolov3_resnet18", help="output file name.")
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
+from model_utils.config import config as default_config
+from model_utils.moxing_adapter import moxing_wrapper
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
 
-if __name__ == "__main__":
-    config = ConfigYOLOV3ResNet18()
-    net = yolov3_resnet18(config)
-    eval_net = YoloWithEval(net, config)
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    default_config.file_name = os.path.join(default_config.output_path, default_config.file_name)
 
-    param_dict = load_checkpoint(args.ckpt_file)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    context.set_context(mode=context.GRAPH_MODE, device_target=default_config.device_target)
+    if default_config.device_target == "Ascend":
+        context.set_context(device_id=default_config.device_id)
+    cfg = ConfigYOLOV3ResNet18()
+    net = yolov3_resnet18(cfg)
+    eval_net = YoloWithEval(net, cfg)
+
+    param_dict = load_checkpoint(default_config.ckpt_file)
     load_param_into_net(eval_net, param_dict)
 
     eval_net.set_train(False)
 
-    shape = [args.batch_size, 3] + config.img_shape
+    shape = [default_config.export_batch_size, 3] + cfg.img_shape
     input_data = Tensor(np.zeros(shape), ms.float32)
     input_shape = Tensor(np.zeros([1, 2]), ms.float32)
     inputs = (input_data, input_shape)
 
-    export(eval_net, *inputs, file_name=args.file_name, file_format=args.file_format)
+    export(eval_net, *inputs, file_name=default_config.file_name, file_format=default_config.file_format)
+
+
+if __name__ == "__main__":
+    run_export()

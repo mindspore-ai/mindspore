@@ -33,6 +33,13 @@ anno_path: ""
 eval_mindrecord_dir: "./Mindrecord_eval"
 ckpt_path: ""
 
+# export options
+device_id: 0
+export_batch_size: 1
+ckpt_file: ""
+file_name: "yolov3_resnet18"
+file_format: "AIR"
+
 ---
 
 # Help description for each configuration
@@ -54,3 +61,10 @@ anno_path: "Annotation path."
 # Eval options
 eval_mindrecord_dir: "Mindrecord directory for eval."
 ckpt_path: "Checkpoint path."
+
+# export options
+device_id: "Device id"
+export_batch_size: "export batch size"
+ckpt_file: "Checkpoint file path."
+file_name: "output file name."
+file_format: "file format. choices in ['AIR', 'ONNX', 'MINDIR']"
