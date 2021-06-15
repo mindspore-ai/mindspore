@@ -64,7 +64,7 @@ void MinimumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dout_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
   dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dy_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   CheckShape(&x_shape_);
   CheckShape(&y_shape_);
   CheckShape(&dout_shape);
