@@ -32,7 +32,7 @@ python ${PROJECT_DIR}/../run_squad.py  \
     --do_train="true" \
     --do_eval="false" \
     --device_id=0 \
-    --epoch_num=3 \
+    --epoch_num=1 \
     --num_class=2 \
     --train_data_shuffle="true" \
     --eval_data_shuffle="false" \
@@ -40,7 +40,7 @@ python ${PROJECT_DIR}/../run_squad.py  \
     --eval_batch_size=1 \
     --vocab_file_path="/home/marcel/Mindspore/bert_uncased_L-12_H-768_A-12/vocab.txt" \
     --save_finetune_checkpoint_path="./checkpoint" \
-    --load_pretrain_checkpoint_path="/home/marcel/Mindspore/bertbase_ascend_v111_zhwiki_offical_nlp_bs256_loss3.7.ckpt" \
+    --load_pretrain_checkpoint_path="/home/marcel/Mindspore/bert_base.ckpt" \
     --train_data_file_path="/data/squad1/train.tf_record" \
     --eval_json_path="/data/squad1/dev-v1.1.json" \
     --schema_file_path="/home/marcel/Mindspore/squad_schema.json" > squad_log.txt 2>&1
