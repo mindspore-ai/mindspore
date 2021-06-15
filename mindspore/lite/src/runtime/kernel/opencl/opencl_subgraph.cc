@@ -331,12 +331,10 @@ int OpenCLSubGraph::Prepare() {
   if (all_kernels_infer_done_) {
     auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
     // If tuning_mode is DEFAULT, just malloc memory for reuse.
-    if (ocl_runtime_->GetTuningMode() != lite::opencl::DEFAULT) {
-      auto ret = opencl_exec->RunOrTune(in_tensors(), out_tensors(), nodes_, allocator_.get(), nullptr, nullptr, true);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Run opencl Tuning failed: " << ret;
-        return ret;
-      }
+    auto ret = opencl_exec->RunOrTune(in_tensors(), out_tensors(), nodes_, allocator_.get(), nullptr, nullptr, true);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Run opencl Tuning failed: " << ret;
+      return ret;
     }
   }
   return RET_OK;
