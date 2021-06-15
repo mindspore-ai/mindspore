@@ -45,7 +45,7 @@ include_directories(${protobuf_INC})
 add_library(mindspore::protobuf ALIAS protobuf::protobuf)
 set(CMAKE_CXX_FLAGS  ${_ms_tmp_CMAKE_CXX_FLAGS})
 
-function(ms_protobuf_generate c_var h_var)
+function(common_protobuf_generate path c_var h_var)
     if(NOT ARGN)
         message(SEND_ERROR "Error: ms_protobuf_generate() called without any proto files")
         return()
@@ -60,20 +60,24 @@ function(ms_protobuf_generate c_var h_var)
         get_filename_component(file_dir ${abs_file} PATH)
         file(RELATIVE_PATH rel_path ${CMAKE_CURRENT_SOURCE_DIR} ${file_dir})
 
-        list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc")
-        list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h")
-
+        list(APPEND ${c_var} "${path}/${file_name}.pb.cc")
+        list(APPEND ${h_var} "${path}/${file_name}.pb.h")
         add_custom_command(
-                OUTPUT "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc"
-                "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h"
+                OUTPUT "${path}/${file_name}.pb.cc" "${path}/${file_name}.pb.h"
                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/proto"
-                COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${path}"
+                COMMAND protobuf::protoc -I${file_dir} --cpp_out=${path} ${abs_file}
                 DEPENDS protobuf::protoc ${abs_file}
                 COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
     endforeach()
 
     set_source_files_properties(${${c_var}} ${${h_var}} PROPERTIES GENERATED TRUE)
+    set(${c_var} ${${c_var}} PARENT_SCOPE)
+    set(${h_var} ${${h_var}} PARENT_SCOPE)
+endfunction()
+
+function(ms_protobuf_generate c_var h_var)
+    common_protobuf_generate(${CMAKE_BINARY_DIR}/proto ${c_var} ${h_var} ${ARGN})
     set(${c_var} ${${c_var}} PARENT_SCOPE)
     set(${h_var} ${${h_var}} PARENT_SCOPE)
 endfunction()

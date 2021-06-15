@@ -122,19 +122,6 @@ if(ENABLE_CPU)
     )
 endif()
 
-# ENABLE_D remnants
-if(DEFINED ENV{ASCEND_CUSTOM_PATH})
-    set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
-else()
-    set(ASCEND_PATH /usr/local/Ascend)
-endif()
-set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
-install(
-        FILES ${CMAKE_SOURCE_DIR}/build/graphengine/c_sec/lib/libc_sec.so
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-)
-
 if(MS_BUILD_GRPC)
     install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.27.3
             DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.so.1 COMPONENT mindspore)
