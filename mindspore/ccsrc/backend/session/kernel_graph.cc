@@ -1124,6 +1124,14 @@ AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &p
   return AnfWithOutIndex();
 }
 
+FuncGraphPtr KernelGraph::GetFuncGraph() {
+  if (front_backend_anf_map_.empty()) {
+    return nullptr;
+  }
+  const auto &front_node = front_backend_anf_map_.begin()->first;
+  return front_node->func_graph();
+}
+
 void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtr &backend_graph_output,
                                                        const AnfNodePtr &front_node) {
   if ((backend_graph_output == nullptr) || (front_node == nullptr)) {
