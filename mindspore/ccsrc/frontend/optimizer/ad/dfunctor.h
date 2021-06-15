@@ -59,7 +59,6 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   // Register functor objects to form a global view.
   void Init(bool is_top = false);
   void Finish();
-  bool IsInScope(const AnfNodePtr &node) const;
 
   // Clear resources.
   static void Clear();
@@ -120,7 +119,6 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   bool is_top_;
   static std::unordered_map<FuncGraphPtr, std::shared_ptr<DFunctor>> func_graph_to_functor_;
   static std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_definition_;
-  static FuncGraphSet scope_;
 };
 
 // D Functor's rules to map primitive object.
