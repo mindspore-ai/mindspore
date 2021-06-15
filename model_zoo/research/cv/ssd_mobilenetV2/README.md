@@ -300,20 +300,20 @@ mAP: 0.2527925497483538
 | Loss Function       | Sigmoid Cross Entropy,SmoothL1Loss   |
 | Speed               | 8pcs: 80ms/step  |
 | Total time          | 8pcs: 4.67hours      |
-| Scripts             | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/SSD_mobielnetV2> |
+| Scripts             | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ssd_mobilenetV2> |
 
 #### Inference Performance
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Model Version       | SSD mobilenetV2                      |
+| Model Version       | SSD mobilenetV2             |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 03/12/2021 (month/day/year) |
 | MindSpore Version   | 1.1.1                       |
 | Dataset             | COCO2017                    |
 | batch_size          | 1                           |
 | outputs             | mAP                         |
-| Accuracy            | IoU=0.50: 25.28%             |
+| Accuracy            | IoU=0.50: 25.28%            |
 
 ## [Description of Random Situation](#contents)
 

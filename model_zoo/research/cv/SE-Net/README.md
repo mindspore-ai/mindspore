@@ -219,7 +219,7 @@ result: {'top_5_accuracy': 0.9385269007731959, 'top_1_accuracy': 0.7774645618556
 | Total time                 | # mins                                                  |
 | Parameters (M)             | 285M                                                     |
 | Checkpoint for Fine tuning | # M (.ckpt file)                                         |
-| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/lemon/model_zoo/research/cv/SE-Net) |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/SE-Net> |
 
 ### Inference Performance
 
