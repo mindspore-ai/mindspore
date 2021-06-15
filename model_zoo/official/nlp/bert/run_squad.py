@@ -30,10 +30,15 @@ from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay, Lamb, Momentum
 from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
-from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
+from mindspore.train.callback import (CheckpointConfig, ModelCheckpoint, TimeMonitor,
+                                      SummaryCollector, LossMonitor)
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 _cur_dir = os.getcwd()
+
+# seed
+from mindspore.common import set_seed
+set_seed(1)
 
 def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
     """ do train """
@@ -79,6 +84,11 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     netwithgrads = BertSquadCell(network, optimizer=optimizer, scale_update_cell=update_cell)
     model = Model(netwithgrads)
     callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack(dataset.get_dataset_size()), ckpoint_cb]
+
+    # add SummaryCollector
+    callbacks.append(SummaryCollector("./summary"))
+    callbacks.append(LossMonitor())
+
     model.train(epoch_num, dataset, callbacks=callbacks)
 
 
