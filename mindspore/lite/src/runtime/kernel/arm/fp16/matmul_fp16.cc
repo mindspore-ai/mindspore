@@ -86,11 +86,23 @@ int MatmulFP16CPUKernel::ReSize() {
 }
 
 int MatmulFP16CPUKernel::Run() {
+  if (is_trainable() && (IsTrain())) {
+    is_repack_ = true;
+  }
   auto ret = MatmulBaseFP16CPUKernel::Run();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MatmulFP16CPUKernel run failed";
   }
+  is_repack_ = false;
   return ret;
+}
+
+int MatmulFP16CPUKernel::Eval() {
+  InnerKernel::Eval();
+  if (is_trainable()) {
+    is_repack_ = true;
+  }
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_MatMul, LiteKernelCreator<MatmulFP16CPUKernel>)

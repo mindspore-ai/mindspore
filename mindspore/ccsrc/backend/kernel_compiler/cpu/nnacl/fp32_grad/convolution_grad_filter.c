@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32_grad/convolution_grad_filter.h"
+#include "nnacl/errorcode.h"
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
@@ -375,5 +376,5 @@ int ConvDwFilterGrad(const float *x, const float *dy, float *dw, int start, int 
       dw[i_c * k_spatial + k_idx] = sum;
     }
   }
-  return 0;
+  return NNACL_OK;
 }

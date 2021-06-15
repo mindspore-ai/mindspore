@@ -197,6 +197,27 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_own_data(bool own_data) { this->own_data_ = own_data; }
 
+  template <typename T>
+  int Scale(float scale) {
+    T cast_scale = static_cast<T>(scale);
+    auto data = reinterpret_cast<T *>(data_c());
+    if (data == nullptr) {
+      return RET_ERROR;
+    }
+    int length = ElementsNum();
+    for (int i = 0; i < length; i++) {
+      data[i] *= cast_scale;
+    }
+    scale_ *= scale;
+    return RET_OK;
+  }
+
+  float get_scale() const { return this->scale_; }
+
+  void set_scale(float scale) { this->scale_ = scale; }
+
+  bool IsScale() const { return (std::abs(this->scale_ - 1.0f) > 1.0e-05); }
+
  private:
   template <typename T>
   std::string DataToString(void *data, size_t data_number) const {
@@ -225,6 +246,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   AllocatorPtr allocator_ = nullptr;
   Tensor *root_tensor_ = nullptr;
   bool own_data_{false};
+  float scale_ = 1.0f;
 };
 
 inline size_t DataTypeSize(const TypeId type) {

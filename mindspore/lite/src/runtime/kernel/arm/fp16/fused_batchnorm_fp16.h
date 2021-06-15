@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,11 @@ class FusedBatchnormFp16CPUKernel : public FusedBatchnormCPUKernel {
       : FusedBatchnormCPUKernel(parameter, inputs, outputs, ctx) {}
   virtual ~FusedBatchnormFp16CPUKernel() {}
 
-  virtual int DoExecute(int task_id);
+  int DoExecute(int task_id) override;
+  int Eval() override;
+
+ protected:
+  void CalcMeanVar(float16_t *in, float16_t *scale, float16_t *offset, float16_t *save_mean, float16_t *save_variance);
 };
 }  // namespace mindspore::kernel
 

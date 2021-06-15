@@ -22,6 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <map>
 #include "include/errorcode.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
@@ -38,12 +39,16 @@
 #include "src/common/tensor_util.h"
 #include "src/train/train_utils.h"
 #include "src/train/train_export.h"
+#include "src/common/prim_util.h"
 
 namespace mindspore {
 namespace lite {
+const char *kGradName = "Gradients";
+const char *kOptimizerName = "optimizer";
 
 TrainSession::TrainSession() {
   is_train_session_ = true;
+  InitCallBack();
 #ifdef ENABLE_V0
   if (VersionManager::GetInstance()->CheckV0Schema()) {
     kernel::PopulateTrainV0Parameters();
@@ -56,7 +61,7 @@ TrainSession::TrainSession() {
 
 int TrainSession::Init(const Context *context, const TrainCfg *train_cfg) {
   if (train_cfg != nullptr) {
-    train_cfg_ = *train_cfg;
+    cfg_ = *train_cfg;
   }
   return lite::LiteSession::Init(context);
 }
@@ -82,22 +87,88 @@ void TrainSession::RestoreOps(const std::vector<CreatorOp> &restore) {
   }
 }
 
-void TrainSession::AllocWorkSpace() {
+int TrainSession::AllocWorkSpace() {
   size_t workspace_size = 0;
+
   for (auto kernel : this->train_kernels_) {
     if (workspace_size < static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size()) {
       workspace_size = static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size();
     }
   }
-  mindspore::kernel::InnerKernel::AllocWorkspace(workspace_size);
+  workspace_ = malloc(workspace_size);
+  if (workspace_ == nullptr) {
+    MS_LOG(ERROR) << "cannot allocate " << workspace_size << " for workspace";
+    return RET_ERROR;
+  }
+  for (auto kernel : this->train_kernels_) {
+    static_cast<kernel::InnerKernel *>(kernel->kernel())->set_workspace(workspace_);
+  }
+  return RET_OK;
+}
+
+void TrainSession::FreeWorkSpace() {
+  free(workspace_);
+  for (auto kernel : this->train_kernels_) {
+    static_cast<kernel::InnerKernel *>(kernel->kernel())->FreeWorkspace();
+  }
+}
+
+int TrainSession::InitCallBack() {
+  sched_mix_precision_callback_ = [&](const Model::Node *node) {
+    auto node_type = GetPrimitiveType(node->primitive_);
+    if (node_type == schema::PrimitiveType_Cast) {
+      return false;
+    }
+    TensorPtrVector inputs;
+    auto in_size = node->input_indices_.size();
+    inputs.reserve(in_size);
+    for (size_t k = 0; k < in_size; ++k) {
+      inputs.emplace_back(model_->all_tensors_.at(node->input_indices_[k]));
+    }
+    bool force_fp16 = (inputs.size() > 0 && std::any_of(inputs.begin(), inputs.end(),
+                                                        [&](schema::Tensor *tensor) {
+                                                          return ((tensor->dataType() == kNumberTypeFloat16) &&
+                                                                  (tensor->nodeType() == NodeType_ValueNode));
+                                                        }))
+                        ? true
+                        : false;
+    inputs.clear();
+    auto node_name = node->name_;
+
+    bool is_fp16 = true;
+    if (!force_fp16) {
+      // optimizer runs in fp32
+      if (node_name.find(kOptimizerName) != std::string::npos) {
+        is_fp16 = false;
+      }
+      // loss function runs in fp32
+      if ((node_name.find(get_loss_name()) != std::string::npos)) {
+        is_fp16 = false;
+      }
+      // run bn according to user configuration
+      if ((cfg_.mix_precision_cfg_.keep_batchnorm_fp32_) &&
+          (node_type == schema::PrimitiveType_FusedBatchNorm || node_type == schema::PrimitiveType_BatchNorm ||
+           node_type == schema::PrimitiveType_BatchNormGrad)) {
+        is_fp16 = false;
+      }
+    }
+    MS_LOG(DEBUG) << "Debug: " << node_name << ((is_fp16) ? " fp16" : " fp32");
+    return is_fp16;
+  };
+  return RET_OK;
 }
 
 int TrainSession::CompileGraph(lite::Model *model) { return lite::RET_ERROR; }
 
 int TrainSession::CompileTrainGraph(mindspore::lite::Model *model) {
   model_ = model;
-
   auto restore = ReplaceOps();
+  sched_cb_ = std::make_unique<SchedulerCb>(sched_mix_precision_callback_);
+  if (sched_cb_ == nullptr) {
+    MS_LOG(ERROR) << "Failed to create SchedulerCb node";
+    return RET_ERROR;
+  }
+
   auto ret = lite::LiteSession::CompileGraph(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "failed to compile train model";
@@ -113,26 +184,190 @@ int TrainSession::CompileTrainGraph(mindspore::lite::Model *model) {
   CompileTrainOutputs();      // prepare outputs in train mode
   CompileEvalOutputs();       // prepare outputs in eval mode
   CompileInferenceKernels();  // Prepare a list of eval kernels
-  AllocWorkSpace();
-
+  ret = AllocWorkSpace();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "failed to allocate space";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 TrainSession::~TrainSession() {
-  mindspore::kernel::InnerKernel::FreeWorkspace();
+  FreeWorkSpace();
   if (model_ != nullptr) {
     delete model_;
     model_ = nullptr;
   }
 }
 
+int TrainSession::ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
+                              const std::vector<kernel::LiteKernel *> &run_kernels) {
+  for (auto *kernel : run_kernels) {
+    MS_ASSERT(nullptr != kernel);
+    auto ret = kernel->Execute(before, after);
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "Execute kernel failed, name: " << kernel->name();
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+void TrainSession::RestoreTensorData() {
+  for (auto &restored_origin_tensor : restored_origin_tensors_) {
+    auto *origin_tensor = restored_origin_tensor.first;
+    auto *restored_tensor = restored_origin_tensor.second;
+    MS_ASSERT(origin_tensor != nullptr);
+    MS_ASSERT(restored_tensor != nullptr);
+
+    bool own_data = restored_tensor->own_data();
+    if (origin_tensor->data_c() == nullptr) {
+      restored_tensor->FreeData();
+    } else {
+      origin_tensor->FreeData();
+    }
+    origin_tensor->set_data_type(restored_tensor->data_type());
+    origin_tensor->set_data(restored_tensor->data_c());
+    origin_tensor->set_own_data(own_data);
+  }
+}
+
+void TrainSession::FreeRestoreTensors() {
+  for (auto &restored_origin_tensor : restored_origin_tensors_) {
+    auto *restored_tensor = restored_origin_tensor.second;
+    restored_tensor->set_data(nullptr);
+    delete (restored_tensor);
+  }
+  restored_origin_tensors_.clear();
+}
+
+bool TrainSession::IsLossTensor(Tensor *tensor) {
+  MS_ASSERT(tensor != nullptr);
+  auto t_n = tensor->tensor_name();
+  return (t_n.find(get_loss_name()) != std::string::npos);
+}
+
+bool TrainSession::AllInputsNeedScale(kernel::LiteKernel *kernel) {
+  auto type = kernel->type();
+  auto is_scale = false;
+
+  for (auto &tensor : kernel->in_tensors()) {
+    is_scale |= tensor->IsScale();
+  }
+
+  switch (type) {
+    case schema::PrimitiveType_AbsGrad:
+    case schema::PrimitiveType_AddFusion:
+    case schema::PrimitiveType_SubFusion:
+    case schema::PrimitiveType_AddN:
+      return (true && is_scale);
+    default:
+      return false;
+  }
+  return false;
+}
+
+int TrainSession::MixPrecisionPreProcess(kernel::LiteKernel *kernel, float scale) {
+  auto kernel_type = kernel->desc().data_type;
+  auto all_scale = AllInputsNeedScale(kernel);
+
+  for (auto &tensor : kernel->in_tensors()) {
+    if ((tensor->IsScale() == false) && ((!IsLossKernel(kernel) && IsLossTensor(tensor)) || (all_scale == true))) {
+      ScaleTensor(tensor, scale);
+    }
+    // adjust tensor data type
+    if (tensor->data_type() != kernel_type) {
+      auto restore_tensor = CastTensor(tensor, kernel_type);
+      if (restore_tensor != nullptr) {
+        restored_origin_tensors_[tensor] = restore_tensor;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int TrainSession::MixPrecisionPostProcess(kernel::LiteKernel *kernel) {
+  RestoreTensorData();
+  FreeRestoreTensors();
+
+  float scale = 1.0f;
+  auto all_scale = AllInputsNeedScale(kernel);
+  for (auto &tensor : kernel->in_tensors()) {
+    if (tensor->IsScale()) {
+      scale *= tensor->get_scale();
+      if (all_scale) {
+        break;
+      }
+    }
+  }
+  for (auto &tensor : kernel->out_tensors()) {
+    tensor->set_scale(scale);
+  }
+
+  for (auto &tensor : kernel->in_tensors()) {
+    if ((tensor->IsScale() == true) && ((!IsLossKernel(kernel) && IsLossTensor(tensor)) || (all_scale == true))) {
+      ScaleTensor(tensor, 1.0f / scale);
+    }
+  }
+  return RET_OK;
+}
+
+int TrainSession::MixPrecisionExecKernels(const KernelCallBack &before, const KernelCallBack &after,
+                                          const std::vector<kernel::LiteKernel *> &run_kernels) {
+  float scale = cfg_.mix_precision_cfg_.loss_scale_;
+  for (auto *kernel : run_kernels) {
+    MS_ASSERT(nullptr != kernel);
+    MixPrecisionPreProcess(kernel, scale);
+    auto ret = kernel->Execute(before, after);
+    if (RET_OK != ret) {
+      MixPrecisionPostProcess(kernel);
+      // decrease loss scale in case of nan or inf
+      if (ret == RET_OUT_OF_TENSOR_RANGE) {
+        bool is_dynamic_scale = cfg_.mix_precision_cfg_.dynamic_loss_scale_;
+        cfg_.mix_precision_cfg_.loss_scale_ = std::max(((is_dynamic_scale) ? (scale / 2.f) : scale), 1.0f);
+        num_of_not_nan_iter_ = 0;
+        return RET_OK;
+      }
+      MS_LOG(ERROR) << "Execute kernel failed, name: " << kernel->name();
+      return ret;
+    }
+    MixPrecisionPostProcess(kernel);
+  }
+  // increase dynamic loss scale if pass pass threshold
+  if (cfg_.mix_precision_cfg_.dynamic_loss_scale_) {
+    num_of_not_nan_iter_++;
+    if (num_of_not_nan_iter_ >= cfg_.mix_precision_cfg_.num_of_not_nan_iter_th_) {
+      cfg_.mix_precision_cfg_.loss_scale_ = std::min((cfg_.mix_precision_cfg_.loss_scale_ * 2.0f), 65536.0f);
+      num_of_not_nan_iter_ = 0;
+    }
+  }
+
+  // cast output to FP32
+  if (train_mode_ == false) {
+    for (auto t : this->outputs_) {
+      if (t->data_type() == kNumberTypeFloat16) {
+        auto restore = CastTensor(t, kNumberTypeFloat32);
+        delete restore;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
-  this->outputs_.clear();
+  // check inputs
+  auto ret = CheckTensorsInvalid(inputs_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CheckInputs failed";
+    return ret;
+  }
 
   // build out tensor
-  for (auto ms_tensors : output_node_map_) {
-    for (auto ms_tensor : ms_tensors.second) {
-      this->outputs_.push_back((static_cast<lite::Tensor *>(ms_tensor)));
+  this->outputs_.clear();
+  for (auto &ms_tensors : output_node_map_) {
+    for (auto &ms_tensor : ms_tensors.second) {
+      auto lite_tensor = static_cast<lite::Tensor *>(ms_tensor);
+      this->outputs_.push_back(lite_tensor);
     }
   }
 
@@ -140,21 +375,15 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
     MS_LOG(ERROR) << "context is null";
     return lite::RET_NULL_PTR;
   }
-  auto run_kernel = (train_mode_) ? train_kernels_ : inference_kernels_;
-
-  auto ret = CheckTensorsInvalid(inputs_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CheckInputs failed";
-    return ret;
+  auto &run_kernels = (train_mode_) ? train_kernels_ : inference_kernels_;
+  if (context_->IsCpuFloat16Enabled()) {
+    ret = MixPrecisionExecKernels(before, after, run_kernels);
+  } else {
+    ret = ExecKernels(before, after, run_kernels);
   }
-
-  for (auto *kernel : run_kernel) {
-    MS_ASSERT(nullptr != kernel);
-    ret = kernel->Execute(before, after);
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
-      return ret;
-    }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "failed to run model kernels";
+    return ret;
   }
 
   if (train_mode_ && virtual_batch_multiplier_) {
@@ -175,7 +404,7 @@ int TrainSession::Train() {
   // shift kernels to train mode
   train_mode_ = true;
   virtual_batch_idx_ = 0;
-  for (auto kernel : this->train_kernels_) {
+  for (auto &kernel : this->train_kernels_) {
     MS_ASSERT(nullptr != kernel);
     auto ret = kernel->Train();
     if (ret != RET_OK) {
@@ -194,7 +423,7 @@ int TrainSession::Eval() {
   // shift kernels to eval mode
   train_mode_ = false;
   virtual_batch_idx_ = 0;
-  for (auto kernel : this->train_kernels_) {
+  for (auto &kernel : this->train_kernels_) {
     MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Eval();
     if (ret != RET_OK) {
@@ -427,11 +656,11 @@ bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
           kernel->type() == schema::PrimitiveType_SmoothL1LossGrad ||
           kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogits ||
           kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad) ||
-         kernel->name().find(train_cfg_.loss_name_) != std::string::npos;
+         kernel->name().find(cfg_.loss_name_) != std::string::npos;
 }
 
 bool TrainSession::IsGradKernel(const kernel::LiteKernel *kernel) const {
-  return kernel->name().find("Gradients") != std::string::npos;
+  return kernel->name().find(kGradName) != std::string::npos;
 }
 
 bool TrainSession::IsOptimizer(kernel::LiteKernel *kernel) const {
@@ -478,12 +707,18 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
   if (orig_train_state) Train();
   return status;
 }
-
 }  // namespace lite
 
 session::LiteSession *session::LiteSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
                                                                bool train_mode, const lite::TrainCfg *cfg) {
-  auto session = new (std::nothrow) lite::TrainSession();
+  if (cfg != nullptr) {
+    // test legal configuration
+    if (cfg->mix_precision_cfg_.loss_scale_ <= 0) {
+      MS_LOG(ERROR) << "illegal loss scale configuration";
+      return nullptr;
+    }
+  }
+  auto session = std::make_unique<lite::TrainSession>();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
@@ -492,7 +727,6 @@ session::LiteSession *session::LiteSession::CreateTrainSession(const std::string
   auto ret = session->Init(context, cfg);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
-    delete session;
     return nullptr;
   }
 
@@ -504,14 +738,12 @@ session::LiteSession *session::LiteSession::CreateTrainSession(const std::string
   auto *model = mindspore::lite::Model::Import(filename.c_str());
   if (model == nullptr) {
     MS_LOG(ERROR) << "create model for train session failed " << filename;
-    delete session;
     return nullptr;
   }
 
   ret = session->CompileTrainGraph(model);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Compiling Train Graph session failed";
-    delete session;
     return nullptr;
   }
 
@@ -522,10 +754,10 @@ session::LiteSession *session::LiteSession::CreateTrainSession(const std::string
   }
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Could not switch to Train Modei " << train_mode;
-    delete session;
     return nullptr;
   }
 
-  return session;
+  return session.release();
 }
+
 }  // namespace mindspore

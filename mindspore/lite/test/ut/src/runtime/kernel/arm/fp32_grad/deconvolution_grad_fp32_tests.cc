@@ -100,7 +100,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   ASSERT_NE(kernel, nullptr);
   auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
-  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
+  kernel->AllocWorkspace();
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -133,7 +133,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::InnerKernel::FreeWorkspace();
+
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -208,9 +208,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   ASSERT_NE(kernel, nullptr);
   auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
-  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
-  for (int i = 0; i < 3; i++) {
-  }
+  kernel->AllocWorkspace();
 
   // runtime part
   printf("Calculating runtime cost...\n");
@@ -238,7 +236,6 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::InnerKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -316,7 +313,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   ASSERT_NE(kernel, nullptr);
   auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
-  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
+  kernel->AllocWorkspace();
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -346,7 +343,6 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::InnerKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -421,7 +417,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   ASSERT_NE(kernel, nullptr);
   auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
-  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
+  kernel->AllocWorkspace();
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -454,7 +450,6 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::InnerKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -529,7 +524,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   ASSERT_NE(kernel, nullptr);
   auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
-  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
+  kernel->AllocWorkspace();
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -562,7 +557,6 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::InnerKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -640,7 +634,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   ASSERT_NE(kernel, nullptr);
   auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
-  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
+  kernel->AllocWorkspace();
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -670,7 +664,6 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::InnerKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestDeConvolutionGradFp32 Filter Grad passed";
 }
 

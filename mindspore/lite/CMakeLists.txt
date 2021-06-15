@@ -105,9 +105,10 @@ message(STATUS "\tMSLITE_ENABLE_TOOLS     = \t${MSLITE_ENABLE_TOOLS}")
 message(STATUS "\tMSLITE_ENABLE_TESTCASES = \t${MSLITE_ENABLE_TESTCASES}")
 
 if(ENABLE_ASAN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer")
+    add_definitions(-fsanitize=address -fno-omit-frame-pointer -mllvm -asan-use-private-alias=1)
+    add_link_options(-fsanitize=address)
 endif()
+
 
 set(PKG_NAME_PREFIX mindspore-lite-${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")

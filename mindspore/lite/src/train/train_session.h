@@ -92,7 +92,7 @@ class TrainSession : virtual public lite::LiteSession {
   int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType) override;
 
  protected:
-  void AllocWorkSpace();
+  int AllocWorkSpace();
   bool IsLossKernel(const kernel::LiteKernel *kernel) const;
   bool IsGradKernel(const kernel::LiteKernel *kernel) const;
   bool IsOptimizer(kernel::LiteKernel *kernel) const;
@@ -106,9 +106,9 @@ class TrainSession : virtual public lite::LiteSession {
   virtual void CompileOptimizedKernels();
   virtual void CompileTrainOutputs();
   virtual void CompileEvalOutputs();
-
+  virtual int InitCallBack();
   Model *model_ = nullptr;
-  TrainCfg train_cfg_;
+  // TrainCfg train_cfg_;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
   std::vector<std::string> orig_output_tensor_names_;
@@ -123,21 +123,31 @@ class TrainSession : virtual public lite::LiteSession {
 
   std::vector<kernel::LiteKernel *> inference_kernels_;
   std::vector<kernel::LiteKernel *> train_kernels_;
+  TrainCfg cfg_;
 
  private:
+  std::string get_loss_name() const { return cfg_.loss_name_; }
   void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
   int AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum);
   int OptimizerStep();
   int ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
-                  std::vector<kernel::LiteKernel *> run_kernel);
+                  const std::vector<kernel::LiteKernel *> &run_kernel);
   int MixPrecisionExecKernels(const KernelCallBack &before, const KernelCallBack &after,
-                              std::vector<kernel::LiteKernel *> run_kernel);
-  int CopyTensor(Tensor *tensor, TypeId dst_data_type);
+                              const std::vector<kernel::LiteKernel *> &run_kernel);
+  int MixPrecisionPreProcess(kernel::LiteKernel *kernel, float scale);
+  int MixPrecisionPostProcess(kernel::LiteKernel *kernel);
+  bool IsLossTensor(Tensor *tensor);
   void RestoreTensorData();
   void FreeRestoreTensors();
+  bool AllInputsNeedScale(kernel::LiteKernel *kernel);
+  void FreeWorkSpace();
+
   std::map<Tensor *, Tensor *> restored_origin_tensors_;
   int virtual_batch_idx_ = 0;
   int virtual_batch_multiplier_ = 0;
+  uint32_t num_of_not_nan_iter_ = 0;
+  void *workspace_ = nullptr;
+  SchedCallBack sched_mix_precision_callback_;
   bool train_mode_ = false;
 };
 

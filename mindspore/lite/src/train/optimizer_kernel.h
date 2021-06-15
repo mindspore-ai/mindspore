@@ -16,10 +16,18 @@
 #ifndef MINDSPORE_LITE_SRC_TRAIN_OPTIMIZER_KERNEL_H_
 #define MINDSPORE_LITE_SRC_TRAIN_OPTIMIZER_KERNEL_H_
 #include <vector>
+#include <cmath>
+#include <cfloat>
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_OUT_OF_TENSOR_RANGE;
+
+static __attribute__((always_inline)) inline bool MS_ISNAN(float var) {
+  volatile float d = var;
+  return d != d;
+}
 
 namespace mindspore::kernel {
 
@@ -101,6 +109,37 @@ class OptimizerKernel : public InnerKernel {
   int Eval() override {
     OptimizerStep();
     return InnerKernel::Eval();
+  }
+
+  int PreProcess() override {
+    auto ret = InnerKernel::PreProcess();
+    if (ret != RET_OK) {
+      return ret;
+    }
+
+    auto ctx = static_cast<const lite::InnerContext *>(this->context_);
+    if (ctx->IsCpuFloat16Enabled()) {
+      auto t = in_tensors_.at(grad_idx_);
+      auto gradient = reinterpret_cast<float *>(t->data_c());
+      int length = in_tensors_.at(grad_idx_)->ElementsNum();
+
+      for (int i = 0; i < length; ++i) {
+        if (MS_ISNAN(gradient[i]) || std::isinf(gradient[i])) {
+          MS_LOG(INFO) << "optimizer grad is nan or inf";
+          return RET_OUT_OF_TENSOR_RANGE;
+        }
+      }
+
+      auto is_scale = t->IsScale();
+      auto scale = t->get_scale();
+      if (is_scale) {
+        t->set_scale(1.0f / scale);
+        for (int i = 0; i < length; ++i) {
+          gradient[i] *= (1.0f / scale);
+        }
+      }
+    }
+    return RET_OK;
   }
 
  protected:

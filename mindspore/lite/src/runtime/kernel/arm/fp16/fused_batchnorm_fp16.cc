@@ -25,6 +25,29 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
+
+void FusedBatchnormFp16CPUKernel::CalcMeanVar(float16_t *in, float16_t *scale, float16_t *offset, float16_t *save_mean,
+                                              float16_t *save_variance) {
+  auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  float16_t *current_mean = static_cast<float16_t *>(mean_);
+  float16_t *current_var = static_cast<float16_t *>(variance_);
+
+  std::fill(current_mean, current_mean + in_tensors_.at(3)->ElementsNum(), 0.f);
+  std::fill(current_var, current_var + in_tensors_.at(4)->ElementsNum(), 0.f);
+  FusedBatchNormFp16MeanVar(in, current_mean, current_var, param, save_mean, save_variance);
+
+  memcpy(out_tensors_.at(1)->data_c(), scale, out_tensors_.at(1)->Size());
+  memcpy(out_tensors_.at(2)->data_c(), offset, out_tensors_.at(2)->Size());
+  memcpy(out_tensors_.at(3)->data_c(), current_mean, out_tensors_.at(3)->Size());
+  memcpy(out_tensors_.at(4)->data_c(), current_var, out_tensors_.at(4)->Size());
+
+  // Copy to local variables
+  memcpy(scale_, scale, in_tensors_[1]->Size());
+  memcpy(offset_, offset, in_tensors_[2]->Size());
+
+  trained_ = true;  // trained at least once
+}
+
 int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   MS_ASSERT(param);
@@ -54,18 +77,25 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
       context_->allocator->Free(output_fp16);
       return RET_ERROR;
     }
-    Float32ToFloat16(reinterpret_cast<float *>(input->MutableData()), reinterpret_cast<float16_t *>(input_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(input->data_c()), reinterpret_cast<float16_t *>(input_fp16),
                      input->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(scale->MutableData()), reinterpret_cast<float16_t *>(scale_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(scale->data_c()), reinterpret_cast<float16_t *>(scale_fp16),
                      scale->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(offset->MutableData()), reinterpret_cast<float16_t *>(offset_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(offset->data_c()), reinterpret_cast<float16_t *>(offset_fp16),
                      offset->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(mean->MutableData()), reinterpret_cast<float16_t *>(mean_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(mean->data_c()), reinterpret_cast<float16_t *>(mean_fp16),
                      mean->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(variance->MutableData()), reinterpret_cast<float16_t *>(variance_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(variance->data_c()), reinterpret_cast<float16_t *>(variance_fp16),
                      variance->ElementsNum());
 
-    FusedBatchNormFp16(input_fp16, scale_fp16, offset_fp16, mean_fp16, variance_fp16, param, task_id, output_fp16);
+    if (IsTrain() && is_trainable() && in_tensors_.size() >= 5) {
+      CalcMeanVar(reinterpret_cast<float16_t *>(input_fp16), reinterpret_cast<float16_t *>(scale_fp16),
+                  reinterpret_cast<float16_t *>(offset_fp16), reinterpret_cast<float16_t *>(mean_fp16),
+                  reinterpret_cast<float16_t *>(variance_fp16));
+    }
+    FusedBatchNormFp16(reinterpret_cast<float16_t *>(input_fp16), reinterpret_cast<float16_t *>(scale_fp16),
+                       reinterpret_cast<float16_t *>(offset_fp16), reinterpret_cast<float16_t *>(mean_fp16),
+                       reinterpret_cast<float16_t *>(variance_fp16), param, task_id, output_fp16);
 
     Float16ToFloat32(reinterpret_cast<float16_t *>(output_fp16), reinterpret_cast<float *>(output),
                      output->ElementsNum());
@@ -77,8 +107,32 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     context_->allocator->Free(output_fp16);
     return RET_OK;
   }
-  FusedBatchNormFp16(in_tensors_.at(0)->MutableData(), scale_, offset_, mean_, variance_, param, task_id,
-                     out_tensors_.at(0)->MutableData());
+
+  if (IsTrain() && is_trainable() && in_tensors_.size() >= 5) {
+    CalcMeanVar(
+      static_cast<float16_t *>(in_tensors_.at(0)->data_c()), static_cast<float16_t *>(in_tensors_.at(1)->data_c()),
+      static_cast<float16_t *>(in_tensors_.at(2)->data_c()), static_cast<float16_t *>(in_tensors_.at(3)->data_c()),
+      static_cast<float16_t *>(in_tensors_.at(4)->data_c()));
+  }
+  FusedBatchNormFp16(in_tensors_.at(0)->data_c(), scale_, offset_, mean_, variance_, param, task_id,
+                     out_tensors_.at(0)->data_c());
+  return RET_OK;
+}
+
+int FusedBatchnormFp16CPUKernel::Eval() {
+  InnerKernel::Eval();
+  if (trained_) {
+    float16_t *save_mean = static_cast<float16_t *>(in_tensors_.at(3)->data_c());
+    float16_t *save_var = static_cast<float16_t *>(in_tensors_.at(4)->data_c());
+    float16_t *scale = static_cast<float16_t *>(in_tensors_.at(1)->data_c());
+    float16_t *bias = static_cast<float16_t *>(in_tensors_.at(2)->data_c());
+
+    // Copy to local variables
+    memcpy(scale_, scale, in_tensors_.at(1)->Size());
+    memcpy(offset_, bias, in_tensors_.at(2)->Size());
+    memcpy(mean_, save_mean, in_tensors_.at(3)->Size());
+    memcpy(variance_, save_var, in_tensors_.at(4)->Size());
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

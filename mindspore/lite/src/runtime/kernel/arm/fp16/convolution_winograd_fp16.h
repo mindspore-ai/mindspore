@@ -46,6 +46,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
   int RunImpl(int task_id);
   int InitWeightBias();
   int InitTmpBuffer();

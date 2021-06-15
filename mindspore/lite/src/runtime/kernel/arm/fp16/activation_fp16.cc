@@ -37,7 +37,8 @@ int ActivationFp16CPUKernel::Init() {
   if (type_ != schema::ActivationType_RELU && type_ != schema::ActivationType_RELU6 &&
       type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
       type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&
-      type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HARD_TANH) {
+      type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HARD_TANH &&
+      type_ != schema::ActivationType_GELU) {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type_;
     return RET_ERROR;
   }

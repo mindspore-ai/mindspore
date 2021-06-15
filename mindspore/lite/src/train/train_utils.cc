@@ -20,6 +20,9 @@
 #include "include/ms_tensor.h"
 #include "src/common/utils.h"
 #include "src/lite_kernel.h"
+#ifdef ENABLE_FP16
+#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -50,7 +53,7 @@ kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where,
 
 float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
   if ((input->shape().size() != 1) || (input->data_type() != kNumberTypeInt32) || (output->shape().size() != 2)) {
-    MS_LOG(WARNING) << "SparceClassification got a " << input->shape() << "-D input tensor, " << output->shape()
+    MS_LOG(WARNING) << "SparseClassification got a " << input->shape() << "-D input tensor, " << output->shape()
                     << "-D output tensor";
     return 0.0;
   }
@@ -104,6 +107,73 @@ float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *o
     if (label == max_idx) accuracy += 1.0;
   }
   return accuracy / (static_cast<float>(batch_size));
+}
+
+Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type) {
+#ifdef ENABLE_FP16
+  MS_ASSERT(tensor != nullptr);
+  std::vector<TypeId> valid_type = {kNumberTypeFloat32, kNumberTypeFloat16, kNumberTypeFloat};
+  std::vector<TypeId> fp32_type = {kNumberTypeFloat32, kNumberTypeFloat};
+  if (!IsContain(valid_type, tensor->data_type())) {
+    MS_LOG(ERROR) << "source data type must be fp32 or fp16";
+    return nullptr;
+  }
+
+  if (!IsContain(valid_type, dst_data_type)) {
+    MS_LOG(ERROR) << "destination data type must be fp32 or fp16";
+    return nullptr;
+  }
+
+  auto origin_data = tensor->data_c();
+  MS_ASSERT(origin_data != nullptr);
+  auto restore_tensor = Tensor::CopyTensor(*tensor, false);
+  restore_tensor->set_data(origin_data);
+  restore_tensor->set_own_data(tensor->own_data());
+  restore_tensor->set_allocator(tensor->allocator());
+  restore_tensor->set_scale(tensor->get_scale());
+  if (IsContain(fp32_type, tensor->data_type()) && dst_data_type == kNumberTypeFloat16) {
+    tensor->set_data(nullptr);
+    tensor->set_data_type(kNumberTypeFloat16);
+    auto ret = tensor->MallocData();
+    auto new_tensor_data = tensor->data_c();
+    MS_ASSERT(new_tensor_data != nullptr);
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "malloc data failed";
+      delete restore_tensor;
+      return nullptr;
+    }
+    MS_LOG(DEBUG) << "Convert tensor to fp16 " << tensor->tensor_name();
+    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
+  } else {
+    tensor->set_data(nullptr);
+    tensor->set_data_type(kNumberTypeFloat32);
+    auto ret = tensor->MallocData();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "malloc data failed";
+      delete restore_tensor;
+      return nullptr;
+    }
+    auto new_tensor_data = tensor->data_c();
+    MS_ASSERT(new_tensor_data != nullptr);
+    MS_LOG(DEBUG) << "Convert tensor to fp32 " << tensor->tensor_name();
+    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
+  }
+  return restore_tensor;
+#else
+  return nullptr;
+#endif
+}
+
+int ScaleTensor(Tensor *tensor, float scale) {
+  MS_ASSERT(tensor != nullptr);
+  std::vector<TypeId> valid_type = {kNumberTypeFloat32, kNumberTypeFloat};
+  if (!IsContain(valid_type, tensor->data_type())) {
+    MS_LOG(DEBUG) << "Tensor: " << tensor->tensor_name() << " type is " << tensor->data_type();
+    return RET_OK;
+  }
+
+  MS_LOG(DEBUG) << "Scale tensor: " << tensor->tensor_name() << " " << scale;
+  return tensor->Scale<float>(scale);
 }
 
 }  // namespace lite

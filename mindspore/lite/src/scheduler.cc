@@ -428,12 +428,12 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   }
   std::map<Tensor *, Tensor *> restored_origin_tensors;
 
+  ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "CastConstTensorsData failed: " << ret;
+    return RET_NOT_SUPPORT;
+  }
   if (!is_train_session_) {
-    ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type);
-    if (ret != RET_OK) {
-      MS_LOG(DEBUG) << "CastConstTensorsData failed: " << ret;
-      return RET_NOT_SUPPORT;
-    }
     // we don't need to restore tensor for copy data
     ret = CopyConstTensorData(in_tensors, op_type);
     if (ret != RET_OK) {
@@ -444,7 +444,11 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, cpu_desc, op_parameter, kernel);
   if (ret == RET_OK) {
     MS_LOG(DEBUG) << "Get TypeId(" << kernel_data_type << ") op success: " << PrimitiveCurVersionTypeName(op_type);
-    FreeRestoreTensors(&restored_origin_tensors);
+    if (is_train_session_) {
+      RestoreTensorData(&restored_origin_tensors);
+    } else {
+      FreeRestoreTensors(&restored_origin_tensors);
+    }
   } else {
     RestoreTensorData(&restored_origin_tensors);
   }
@@ -612,7 +616,8 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   }
 #endif
-  if (prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kTypeUnknown) {
+  if ((prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kTypeUnknown) &&
+      ((is_train_session_ == false) || (sched_cb_ && sched_cb_->SchedFp16Kernel(node)))) {
     status = FindCpuKernel(in_tensors, out_tensors, op_parameter, desc, kNumberTypeFloat16, &kernel);
     if (status == RET_OK) {
       return kernel;

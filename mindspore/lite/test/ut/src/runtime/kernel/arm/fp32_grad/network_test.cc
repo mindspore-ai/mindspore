@@ -148,9 +148,10 @@ TEST_F(NetworkTest, noname) {
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
 
-  auto session = mindspore::session::LiteSession::CreateTrainSession(net, &context);
+  lite::TrainCfg cfg;
+  cfg.loss_name_ = "nhwc";
+  auto session = mindspore::session::LiteSession::CreateTrainSession(net, &context, true, &cfg);
   ASSERT_NE(session, nullptr);
-
   auto tensors_map = session->GetOutputs();
   auto tensor_names = session->GetOutputTensorNames();
   EXPECT_EQ(tensors_map.size(), 1);

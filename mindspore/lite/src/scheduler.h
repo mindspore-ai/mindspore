@@ -24,6 +24,8 @@
 #include "src/sub_graph_kernel.h"
 #include "src/inner_context.h"
 #include "include/model.h"
+#include "src/scheduler_cb.h"
+
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #endif
@@ -54,6 +56,7 @@ class Scheduler {
   ~Scheduler() = default;
 
   int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
+  void SetupSchedulerCb(std::unique_ptr<SchedulerCb> cb) { sched_cb_ = std::move(cb); }
 
  private:
   void FindNodeInoutTensors(const lite::Model::Node &node, std::vector<Tensor *> *inputs,
@@ -132,6 +135,7 @@ class Scheduler {
   std::vector<size_t> graph_output_node_indexes_;
   std::map<int, OpParameter *> op_parameters_;
   bool is_train_session_ = false;
+  std::unique_ptr<SchedulerCb> sched_cb_;
   std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
 };

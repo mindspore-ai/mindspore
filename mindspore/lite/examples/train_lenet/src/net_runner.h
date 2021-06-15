@@ -57,6 +57,8 @@ class NetRunner {
   std::string data_dir_ = "";
   unsigned int epochs_ = 10;
   bool verbose_ = false;
+  bool enable_fp16_ = false;
+  int virtual_batch_ = -1;
   int save_checkpoint_ = 0;
   int batch_size_ = 32;
   int h_ = 32;

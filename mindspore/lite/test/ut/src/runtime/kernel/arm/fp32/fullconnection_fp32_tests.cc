@@ -86,8 +86,12 @@ TEST_F(TestFcFp32, FcTest1) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
   fc->Init();
+#ifdef SUPPORT_TRAIN
+  fc->AllocWorkspace();
+#endif
   fc->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
+  delete fc;
   delete ctx;
 }
 
@@ -146,8 +150,12 @@ TEST_F(TestFcFp32, FcTest2) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
   fc->Init();
+#ifdef SUPPORT_TRAIN
+  fc->AllocWorkspace();
+#endif
   fc->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
+  delete fc;
   delete ctx;
 }
 
@@ -196,11 +204,15 @@ TEST_F(TestFcFp32, FcTest3) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
   fc->Init();
+#ifdef SUPPORT_TRAIN
+  fc->AllocWorkspace();
+#endif
   struct timeval start, end;
   gettimeofday(&start, nullptr);
   for (int i = 0; i < 100000; ++i) fc->Run();
   gettimeofday(&end, nullptr);
   // printf("## elapsed: %llu\n", 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - end.tv_usec);
+  delete fc;
   delete ctx;
 }
 

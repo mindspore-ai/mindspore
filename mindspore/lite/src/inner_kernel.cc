@@ -25,21 +25,21 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-void *InnerKernel::workspace_ = nullptr;
-
-void InnerKernel::AllocWorkspace(size_t size) {
-  if (size == 0) {
+void InnerKernel::AllocWorkspace() {
+  workspace_ = malloc(workspace_size());
+  if (workspace_ == nullptr) {
+    MS_LOG(ERROR) << "fail to alloc " << workspace_size() << "in kernel" << name();
     return;
   }
-  workspace_ = malloc(size);
-  if (workspace_ == nullptr) {
-    MS_LOG(ERROR) << "fail to alloc " << size;
-  }
+  ws_allocated_ = true;
 }
 
 void InnerKernel::FreeWorkspace() {
-  free(workspace_);
+  if (ws_allocated_) {
+    free(workspace_);
+  }
   workspace_ = nullptr;
+  ws_allocated_ = false;
 }
 
 int InnerKernel::PreProcess() {

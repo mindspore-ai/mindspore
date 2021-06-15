@@ -496,6 +496,7 @@ int LiteSession::CompileGraph(Model *model) {
 #else
   Scheduler scheduler(context_, model, &tensors_, is_train_session_, delegate_);
 #endif
+  scheduler.SetupSchedulerCb(std::move(sched_cb_));
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule kernels failed: " << ret;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_FP16_H_
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp16/matmul_base_fp16.h"
@@ -30,6 +30,7 @@ class MatmulFP16CPUKernel : public MatmulBaseFP16CPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Eval() override;
 
  private:
   void InitAShape();
@@ -37,4 +38,4 @@ class MatmulFP16CPUKernel : public MatmulBaseFP16CPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_FP16_H_

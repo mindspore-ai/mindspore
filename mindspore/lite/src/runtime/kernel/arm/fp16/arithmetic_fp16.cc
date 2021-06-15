@@ -39,6 +39,7 @@ using mindspore::schema::PrimitiveType_Maximum;
 using mindspore::schema::PrimitiveType_Minimum;
 using mindspore::schema::PrimitiveType_MulFusion;
 using mindspore::schema::PrimitiveType_NotEqual;
+using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
 using mindspore::schema::PrimitiveType_SubFusion;
 
@@ -105,6 +106,9 @@ void ArithmeticFP16CPUKernel::InitRunFunction(int primitive_type) {
     {PrimitiveType_DivFusion, schema::ActivationType_RELU, ElementDivReluFp16, ElementOptDivReluFp16},
     {PrimitiveType_DivFusion, schema::ActivationType_RELU6, ElementDivRelu6Fp16, ElementOptDivRelu6Fp16},
     {PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION, ElementDivFp16, ElementOptDivFp16},
+    {PrimitiveType_RealDiv, schema::ActivationType_RELU, ElementDivReluFp16, ElementOptDivReluFp16},
+    {PrimitiveType_RealDiv, schema::ActivationType_RELU6, ElementDivRelu6Fp16, ElementOptDivRelu6Fp16},
+    {PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION, ElementDivFp16, ElementOptDivFp16},
     {PrimitiveType_FloorMod, schema::ActivationType_NO_ACTIVATION, ElementFloorModFp16, ElementOptFloorModFp16},
     {PrimitiveType_FloorDiv, schema::ActivationType_NO_ACTIVATION, ElementFloorDivFp16, ElementOptFloorDivFp16},
     {PrimitiveType_LogicalAnd, schema::ActivationType_NO_ACTIVATION, ElementLogicalAndFp16, ElementOptLogicalAndFp16},
@@ -214,5 +218,6 @@ REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LogicalOr, LiteKernelCreator<
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Maximum, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Minimum, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Eltwise, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_RealDiv, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SquaredDifference, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 }  // namespace mindspore::kernel

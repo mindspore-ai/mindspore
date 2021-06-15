@@ -53,6 +53,13 @@ function Run_Converter() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
+        if [[ "${line_array[1]}" == "fp16" ]]; then
+            ms_file=$ms_models_path'/'$model_name'.ms'
+            if [ -f "$ms_file" ]; then
+                echo $model_name'.ms already exist, continue without convert'    
+                continue
+            fi    
+        fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             WEIGHT_QUANT="--quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0"
             model_name=${line_array[0]}'_train_quant'
@@ -88,6 +95,8 @@ function Run_x86() {
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" == "fp16" ]]; then
+            continue
         fi
         export_file="${ms_models_path}/${model_name}_tod"
         inference_file="${ms_models_path}/${model_name}_infer"
@@ -171,6 +180,8 @@ function Run_arm() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
+        enable_fp16="false"
+        suffix_print=""
         if [[ $model_name == \#* ]]; then
             continue
         fi
@@ -185,6 +196,17 @@ function Run_arm() {
             run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
             continue
         fi
+
+        if [[ "${line_array[1]}" == "fp16" ]]; then
+            if [[ "$1" == arm64 ]]; then
+            enable_fp16="true"
+            suffix_print="_fp16"
+            accuracy_limit=${line_array[2]}
+            else
+                continue
+            fi
+        fi
+
         # run benchmark_train test without clib data
         echo ${model_name} >> "${run_arm_log_file}"
         adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
@@ -207,6 +229,7 @@ function Run_arm() {
         --expectedDataFile=${tmp_dir}/${model_prefix}_output \
         --numThreads=${threads} \
         --accuracyThreshold=${accuracy_limit} \
+        --enableFp16=${enable_fp16} \
         --inferenceFile=${inference_file} \
         --exportFile=${export_file}
 ENDM
@@ -216,9 +239,9 @@ ENDM
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
         # TODO: change to arm_type
         if [ $? = 0 ]; then
-            run_result=$1': '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result=$1': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result=$1': '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            run_result=$1': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
             fail=1
         fi
         

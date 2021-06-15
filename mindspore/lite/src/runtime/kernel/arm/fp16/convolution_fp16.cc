@@ -38,23 +38,30 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   int pack_weight_size = oc8 * in_channel * kernel_plane;
 
   // init weight
-  packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
   if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed_weight_ failed.";
-    return RET_ERROR;
+    packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "malloc packed_weight_ failed.";
+      return RET_ERROR;
+    }
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float16_t));
-  RowMajor2Col8MajorFp16(origin_weight_, packed_weight_, out_channel, in_channel * kernel_plane, false);
+  void *weight_origin_tmp = is_trainable() ? filter_tensor->data_c() : origin_weight_;
+  RowMajor2Col8MajorFp16(weight_origin_tmp, packed_weight_, out_channel, in_channel * kernel_plane, false);
 
   // init bias
-  bias_data_ = malloc(oc8 * sizeof(float16_t));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc bias_data_ failed.";
-    return RET_ERROR;
+    bias_data_ = malloc(oc8 * sizeof(float16_t));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc bias_data_ failed.";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, oc8 * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
-    memcpy(bias_data_, origin_bias_, out_channel * sizeof(float16_t));
+    auto bias_tensor = in_tensors_.at(kBiasIndex);
+    void *bias_origin_tmp = is_trainable() ? bias_tensor->data_c() : origin_bias_;
+    memcpy(bias_data_, bias_origin_tmp, out_channel * sizeof(float16_t));
   }
   return RET_OK;
 }
@@ -145,6 +152,14 @@ int ConvolutionFP16CPUKernel::Run() {
     return RET_ERROR;
   }
 
+  if (is_trainable() && (IsTrain() || is_repack())) {
+    ret = InitWeightBias();
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Convolution 1x1 fp16 repack weight failure";
+      return RET_ERROR;
+    }
+    is_repack_ = false;
+  }
   ret = static_cast<const lite::InnerContext *>(this->context_)
           ->thread_pool_->ParallelLaunch(ConvolutionFp16Impl, this, thread_count_);
   if (ret != RET_OK) {
@@ -153,5 +168,12 @@ int ConvolutionFP16CPUKernel::Run() {
 
   FreeTmpBuffer();
   return ret;
+}
+
+int ConvolutionFP16CPUKernel::Eval() {
+  if (is_trainable()) {
+    is_repack_ = true;
+  }
+  return InnerKernel::Eval();
 }
 }  // namespace mindspore::kernel
