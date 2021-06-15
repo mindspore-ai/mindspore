@@ -36,7 +36,6 @@ class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
   int InitBias();
   void SetConstArgs() override;
   void SetGlobalLocal() override;
-  int InferShape() override;
   int StoreConstData() override;
 
  private:

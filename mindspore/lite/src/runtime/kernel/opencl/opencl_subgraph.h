@@ -50,14 +50,10 @@ class OpenCLSubGraph : public SubGraphKernel {
   int ReSize(bool interrupt);
   int Execute() override;
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
-  int InsertOpsPass();
 
  private:
   void UnInit();
   int UpdateTensorDataTypePass();
-  void ReplaceOutTensorAndKernelToNull(const std::vector<lite::Tensor *> &in_tensors,
-                                       const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
-                                       lite::opencl::MemType mem_type);
   void ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
                                           const std::vector<kernel::LiteKernel *> &in_kernels, lite::Tensor *new_tensor,
                                           kernel::LiteKernel *in_convert_op, lite::opencl::MemType mem_type);
@@ -70,6 +66,8 @@ class OpenCLSubGraph : public SubGraphKernel {
                              const std::vector<kernel::LiteKernel *> &in_kernels,
                              std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from);
   int FusionPass();
+
+  int InsertOpsPass();
 
  public:
   using PassFunc = int (OpenCLSubGraph::*)(void);

@@ -79,6 +79,8 @@ struct InnerContext : public Context {
 
   bool IsSupportFloat16() const;
 
+  void SetContextDevice(const Context *context);
+
   bool fp16_flag_ = false;
 
 #ifdef ENABLE_ARM

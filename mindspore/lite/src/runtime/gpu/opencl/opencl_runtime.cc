@@ -26,9 +26,6 @@
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/gpu/opencl/opencl_allocator.h"
 #include "src/common/file_utils.h"
-#ifdef PROGRAM_WITH_IL
-#include "src/backend/opencl/cl/program.inc"
-#endif
 
 using mindspore::kernel::CLErrorCode;
 
@@ -297,10 +294,6 @@ int OpenCLRuntime::Init() {
     MS_LOG(ERROR) << "Command OpenCL allocator failed!";
     return RET_ERROR;
   }
-#ifdef PROGRAM_WITH_IL
-  std::string flag = "";
-  binary_program_ = CreateProgramFromIL(g_program_binary, flag);
-#endif
   LoadCache();
   init_state_ = InitSuccess;
   MS_LOG(INFO) << "OpenCLRuntime init done!";

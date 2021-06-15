@@ -31,10 +31,7 @@ InnerContext::InnerContext(const Context *context) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
   this->enable_parallel_ = context->enable_parallel_;
-  this->device_list_.clear();
-  for (auto &device_ctx : context->device_list_) {
-    this->device_list_.push_back(device_ctx);
-  }
+  SetContextDevice(context);
 #ifdef ENABLE_ARM
 #ifndef MS_COMPILE_IOS
   cpu_info_ = new CpuInfo;
@@ -48,21 +45,7 @@ InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
   this->enable_parallel_ = context->enable_parallel_;
-  bool isUserSetNPU = context->device_list_.end() !=
-                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
-                                   [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
-  this->device_list_.clear();
-  for (auto &device_ctx : context->device_list_) {
-    // npu server would use one core so we don't bind core to avoid competition.
-    // If user does not set npu device, we still bind core.
-    if (device_ctx.device_type_ == DT_CPU && isUserSetNPU) {
-      auto cpu_ctx = device_ctx;
-      cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
-      this->device_list_.push_back(cpu_ctx);
-    } else {
-      this->device_list_.push_back(device_ctx);
-    }
-  }
+  SetContextDevice(context);
   this->npu_manager_ = npu_manager;
 #ifdef ENABLE_ARM
 #ifndef MS_COMPILE_IOS
@@ -72,6 +55,27 @@ InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
 #endif
 }
 #endif
+
+void InnerContext::SetContextDevice(const Context *context) {
+  bool isUserSetNPU = context->device_list_.end() !=
+                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
+                                   [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
+  bool isUserSetGPU = context->device_list_.end() !=
+                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
+                                   [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
+  this->device_list_.clear();
+  for (auto &device_ctx : context->device_list_) {
+    // npu/gpu server would use one core so we don't bind core to avoid competition.
+    // If user does not set npu/gpu device, we still bind core.
+    if (device_ctx.device_type_ == DT_CPU && (isUserSetNPU || isUserSetGPU)) {
+      auto cpu_ctx = device_ctx;
+      cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
+      this->device_list_.push_back(cpu_ctx);
+    } else {
+      this->device_list_.push_back(device_ctx);
+    }
+  }
+}
 
 int InnerContext::Init() {
   if (RET_OK != this->IsValid()) {

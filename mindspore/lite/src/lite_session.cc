@@ -679,16 +679,7 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
-  CpuBindMode cpu_bind_mode = this->context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
-  ActorThreadPool *thread_pool = this->context_->thread_pool_;
-  if (thread_pool == nullptr) {
-    MS_LOG(ERROR) << "thread pool is nullptr";
-    is_running_.store(false);
-    return RET_NULL_PTR;
-  }
-  thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
   ret = InitGPURuntime();
-  thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
     is_running_.store(false);
@@ -890,6 +881,14 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
+  ActorThreadPool *thread_pool = this->context_->thread_pool_;
+  if (thread_pool == nullptr) {
+    MS_LOG(ERROR) << "thread pool is nullptr";
+    is_running_.store(false);
+    return RET_NULL_PTR;
+  }
+  // Setting the binding core will affect the opencl drive scheduling.
+  thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
 #if GPU_OPENCL
   if (this->context_->IsGpuEnabled()) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();

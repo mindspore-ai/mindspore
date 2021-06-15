@@ -182,14 +182,6 @@ int OpenCLKernel::PreProcess() {
     }
     output->set_allocator(allocator);
   }
-  for (auto *output : out_tensors_) {
-    MS_ASSERT(output != nullptr);
-    ret = output->MallocData();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "group conv out tensor malloc data failed.";
-      return ret;
-    }
-  }
   return RET_OK;
 }
 

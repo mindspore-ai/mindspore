@@ -239,14 +239,6 @@ int Conv2dTransposeOpenCLKernel::Run() {
   return RET_OK;
 }
 
-int Conv2dTransposeOpenCLKernel::InferShape() {
-  auto ret = OpenCLKernel::InferShape();
-  if (ret != RET_OK) {
-    return ret;
-  }
-  return RET_OK;
-}
-
 int Conv2dTransposeOpenCLKernel::StoreConstData() {
   if (!InferShapeDone()) {
     stored_weight_ = StoreTensorData(in_tensors_.at(kWeightIndex));

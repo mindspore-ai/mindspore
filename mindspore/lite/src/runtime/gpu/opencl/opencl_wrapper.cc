@@ -155,9 +155,6 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueSVMMap);
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueSVMUnmap);
   LOAD_OPENCL_FUNCTION_PTR(clSetKernelArgSVMPointer);
-#ifdef PROGRAM_WITH_IL
-  LOAD_OPENCL_FUNCTION_PTR(clCreateProgramWithIL);
-#endif
 #endif
 
   return true;
