@@ -89,10 +89,11 @@ ActorThreadPool::~ActorThreadPool() {
   // wait until actor queue is empty
   bool terminate = false;
   do {
-    std::lock_guard<std::mutex> _l(actor_mutex_);
-    if (actor_queue_.empty()) {
-      terminate = true;
-    } else {
+    {
+      std::lock_guard<std::mutex> _l(actor_mutex_);
+      terminate = actor_queue_.empty();
+    }
+    if (!terminate) {
       std::this_thread::yield();
     }
   } while (!terminate);

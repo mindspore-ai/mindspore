@@ -23,6 +23,7 @@
 #include <condition_variable>
 #include "thread/threadpool.h"
 #include "actor/actor.h"
+#include "thread/hqueue.h"
 
 namespace mindspore {
 enum ThreadPolicy {
@@ -57,6 +58,7 @@ class ActorThreadPool : public ThreadPool {
   ActorReference PopActorFromQueue();
 
  private:
+  ActorThreadPool() {}
   int CreateThreads(size_t actor_thread_num, size_t all_thread_num, ThreadPolicy policy);
 
   size_t actor_thread_num_{0};

@@ -298,12 +298,12 @@ class Future : public FutureBase {
     return OnAbandoned(std::forward<F>(f), FutureBase());
   }
 
- private:
   template <typename F, typename R = typename internal::Unwrap<typename std::result_of<F(const T &)>::type>::type>
   Future<R> Then(internal::DeferredHelper<F> &&f, FutureBase) const {
     return Then<R>(std::move(f).operator std::function<Future<R>(const T &)>());
   }
 
+ private:
   template <typename F, typename R = typename internal::Unwrap<typename std::result_of<typename std::enable_if<
                           !std::is_bind_expression<typename std::decay<F>::type>::value, F>::type()>::type>::type>
   Future<R> Then(internal::DeferredHelper<F> &&f, LessFuture) const {
