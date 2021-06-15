@@ -43,7 +43,7 @@ int64_t DetectionPostProcess::get_input_size() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void DetectionPostProcess::set_scale(const std::vector<float> &scale) { this->AddAttr(kScale, MakeValue(scale)); }
+void DetectionPostProcess::set_scale(const std::vector<float> &scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
 std::vector<float> DetectionPostProcess::get_scale() const {
   auto value_ptr = this->GetAttr(kScale);
   return GetValue<std::vector<float>>(value_ptr);
@@ -125,8 +125,8 @@ AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, c
   auto detection_prim = primitive->cast<PrimDetectionPostProcessPtr>();
   MS_EXCEPTION_IF_NULL(detection_prim);
   auto prim_name = detection_prim->name();
-  CheckAndConvertUtils::CheckInteger("detection_post_process_infer", SizeToLong(input_args.size()), kEqual, 3,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("detection_post_process_infer", SizeToLong(input_args.size()), kEqual, 3,
+                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
   MS_EXCEPTION_IF_NULL(input_args[2]);

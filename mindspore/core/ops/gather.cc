@@ -38,8 +38,8 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   // Infer shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShape("dim_shape", input_args[2]->BuildShape(), prim_name);
-  CheckAndConvertUtils::Check("x_rank", SizeToLong(x_shape.size()), kEqual, "index_rank", index_shape.size(),
-                              prim_name);
+  CheckAndConvertUtils::Check("x_rank", SizeToLong(x_shape.size()), kEqual, "index_rank",
+                              SizeToLong(index_shape.size()), prim_name);
 
   return std::make_shared<abstract::AbstractTensor>(x_type, index_shape);
 }

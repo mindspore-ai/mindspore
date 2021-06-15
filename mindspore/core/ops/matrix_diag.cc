@@ -39,14 +39,14 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   CheckAndConvertUtils::CheckInteger("assist rank", (int64_t)assist_shape.size(), kGreaterEqual, 2, prim_name);
   CheckAndConvertUtils::Check("x_shape rank", (int64_t)x_shape.size() + 1, kLessEqual, "assist rank",
                               (int64_t)assist_shape.size(), prim_name);
-  CheckAndConvertUtils::Check("assist's penultimate dimension", assist_shape[(int64_t)assist_shape.size() - 2], kEqual,
-                              "assist's last dimension", assist_shape[(int64_t)assist_shape.size() - 1], prim_name);
+  CheckAndConvertUtils::Check("assist's penultimate dimension", assist_shape[assist_shape.size() - 2], kEqual,
+                              "assist's last dimension", assist_shape[assist_shape.size() - 1], prim_name);
 
-  int64_t x_end_dim = x_shape.size() - 1;
-  int64_t assist_end_dim = assist_shape.size() - 1;
+  int64_t x_end_dim = SizeToLong(x_shape.size()) - 1;
+  size_t assist_end_dim = assist_shape.size() - 1;
   while (x_end_dim >= 0) {
-    if (x_shape[x_end_dim] != 1) {
-      CheckAndConvertUtils::Check("reverse x dim", x_shape[x_end_dim], kEqual, "reverse assist dim",
+    if (x_shape[LongToSize(x_end_dim)] != 1L) {
+      CheckAndConvertUtils::Check("reverse x dim", x_shape[LongToSize(x_end_dim)], kEqual, "reverse assist dim",
                                   assist_shape[assist_end_dim - 1], prim_name);
     }
     x_end_dim--;

@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 void TopK::Init(const bool sorted) { this->set_sorted(sorted); }
-void TopK::set_sorted(const bool sorted) { this->AddAttr(kSorted, MakeValue(sorted)); }
+void TopK::set_sorted(const bool sorted) { (void)this->AddAttr(kSorted, MakeValue(sorted)); }
 
 bool TopK::get_sorted() const {
   auto value_ptr = this->GetAttr(kSorted);
@@ -34,7 +34,7 @@ AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto top_prim = primitive->cast<PrimTopKPtr>();
   MS_EXCEPTION_IF_NULL(top_prim);
   auto prim_name = top_prim->name();
-  CheckAndConvertUtils::CheckInteger("top_k_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("top_k_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
 
   // Infer dtype
   auto output0_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();

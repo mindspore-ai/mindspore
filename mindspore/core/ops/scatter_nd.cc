@@ -27,14 +27,14 @@ abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto shape_value = input_args[2]->BuildValue();
   auto shape_value_element = GetValue<std::vector<int64_t>>(shape_value);
   for (const auto &shape : shape_value_element) {
-    CheckAndConvertUtils::CheckInteger("shape value", shape, kGreaterThan, 0, "ScatterNd");
+    (void)CheckAndConvertUtils::CheckInteger("shape value", shape, kGreaterThan, 0, "ScatterNd");
   }
   auto indices_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("indices_shape", input_args[0]->BuildShape(), "ScatterNd");
   auto update_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("update_shape", input_args[1]->BuildShape(), "ScatterNd");
-  CheckAndConvertUtils::CheckInteger("indices_shape[0] and update_shape[0]", indices_shape[0], kEqual, update_shape[0],
-                                     "ScatterNd");
+  (void)CheckAndConvertUtils::CheckInteger("indices_shape[0] and update_shape[0]", indices_shape[0], kEqual,
+                                           update_shape[0], "ScatterNd");
   return std::make_shared<abstract::Shape>(shape_value_element);
 }
 

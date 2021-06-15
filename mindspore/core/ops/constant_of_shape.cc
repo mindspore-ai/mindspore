@@ -44,14 +44,14 @@ void ConstantOfShape::Init(int64_t data_type, const std::vector<float> &value) {
   this->set_value(value);
 }
 
-void ConstantOfShape::set_data_type(int64_t data_type) { this->AddAttr(kDataType, MakeValue(data_type)); }
+void ConstantOfShape::set_data_type(int64_t data_type) { (void)this->AddAttr(kDataType, MakeValue(data_type)); }
 
 int64_t ConstantOfShape::get_data_type() const {
   auto value_ptr = this->GetAttr(kDataType);
   return GetValue<int64_t>(value_ptr);
 }
 
-void ConstantOfShape::set_value(const std::vector<float> &value) { this->AddAttr(kValue, MakeValue(value)); }
+void ConstantOfShape::set_value(const std::vector<float> &value) { (void)this->AddAttr(kValue, MakeValue(value)); }
 
 std::vector<float> ConstantOfShape::get_value() const {
   auto value_ptr = this->GetAttr(kValue);

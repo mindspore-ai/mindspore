@@ -43,20 +43,21 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
 
   // Infer shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kGreaterThan, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kGreaterThan, 0, prim_name);
   auto shp = x_shape;
   auto segment_ids_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[1]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kGreaterThan, 0,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kGreaterThan, 0,
+                                           prim_name);
   CheckAndConvertUtils::Check("input_x", int64_t(x_shape.size()), kGreaterEqual, "segment_ids_shape",
                               int64_t(segment_ids_shape.size()), prim_name);
 
   if ((x_shape.end() != find(x_shape.begin(), x_shape.end(), -1)) &&
       (segment_ids_shape.end() != find(segment_ids_shape.begin(), segment_ids_shape.end(), -1))) {
-    int64_t size = segment_ids_shape.size();
-    for (int64_t i = 0; i < size; ++i) {
-      CheckAndConvertUtils::Check("segment_ids_shp", segment_ids_shape[i], kEqual, "x_shape", x_shape[i], prim_name);
+    size_t size = segment_ids_shape.size();
+    for (size_t i = 0; i < size; ++i) {
+      CheckAndConvertUtils::Check("segment_ids_shp", SizeToLong(segment_ids_shape[i]), kEqual, "x_shape",
+                                  SizeToLong(x_shape[i]), prim_name);
     }
   }
 
@@ -64,19 +65,19 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   for (const auto &valid_segments_type : valid_segments_types) {
     if (IsIdentidityOrSubclass(num_segments_type, valid_segments_type)) {
       const std::set<TypeId> valid_num_segments_types = {kNumberTypeInt32, kNumberTypeInt64};
-      CheckAndConvertUtils::CheckTensorTypeValid("num_segments", input_args[2]->BuildType(), valid_num_segments_types,
-                                                 prim_name);
+      (void)CheckAndConvertUtils::CheckTensorTypeValid("num_segments", input_args[2]->BuildType(),
+                                                       valid_num_segments_types, prim_name);
       shp = {-1};
     } else {
-      CheckAndConvertUtils::CheckInteger("num_segments", num_segments_v, kGreaterThan, 0, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("num_segments", num_segments_v, kGreaterThan, 0, prim_name);
       shp = {num_segments_v};
     }
   }
 
-  int64_t size_segment_ids_shp = segment_ids_shape.size();
-  int64_t size_x_shpe = x_shape.size();
-  for (int64_t i = size_segment_ids_shp; i < size_x_shpe; ++i) {
-    shp.emplace_back(x_shape[i]);
+  size_t size_segment_ids_shp = segment_ids_shape.size();
+  size_t size_x_shpe = x_shape.size();
+  for (size_t i = size_segment_ids_shp; i < size_x_shpe; ++i) {
+    (void)shp.emplace_back(x_shape[i]);
   }
 
   return std::make_shared<abstract::AbstractTensor>(x_type, shp);

@@ -44,7 +44,7 @@ AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto bias_prim = primitive->cast<PrimBiasAddGradPtr>();
   MS_EXCEPTION_IF_NULL(bias_prim);
   auto prim_name = bias_prim->name();
-  CheckAndConvertUtils::CheckInteger("bias_grad_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("bias_grad_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
 
   // Infer shape

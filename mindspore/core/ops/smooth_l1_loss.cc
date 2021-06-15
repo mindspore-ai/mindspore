@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 void SmoothL1Loss::Init(const float beta) { this->set_beta(beta); }
-void SmoothL1Loss::set_beta(const float beta) { this->AddAttr(kBeta, MakeValue(beta)); }
+void SmoothL1Loss::set_beta(const float beta) { (void)this->AddAttr(kBeta, MakeValue(beta)); }
 
 float SmoothL1Loss::get_beta() const {
   auto value_ptr = this->GetAttr(kBeta);
@@ -39,7 +39,7 @@ AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto smooth_prim = primitive->cast<PrimSmoothL1LossPtr>();
   MS_EXCEPTION_IF_NULL(smooth_prim);
   auto prim_name = smooth_prim->name();
-  CheckAndConvertUtils::CheckInteger("smooth_l1_loss_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("smooth_l1_loss_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
 
   // Infer shape
   auto prediction = CheckAndConvertUtils::ConvertShapePtrToShape("prediction", input_args[0]->BuildShape(), prim_name);

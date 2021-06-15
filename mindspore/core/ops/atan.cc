@@ -26,7 +26,7 @@ AbstractBasePtr AtanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto atan_prim = primitive->cast<PrimAtanPtr>();
   MS_EXCEPTION_IF_NULL(atan_prim);
   auto op_name = atan_prim->name();
-  CheckAndConvertUtils::CheckInteger("Atan_infer", SizeToLong(input_args.size()), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("Atan_infer", SizeToLong(input_args.size()), kEqual, 1, op_name);
 
   // Infer Shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), op_name);

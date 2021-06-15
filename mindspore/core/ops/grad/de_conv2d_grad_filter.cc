@@ -99,7 +99,7 @@ std::vector<int64_t> DeConv2DGradFilter::get_dilation() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void DeConv2DGradFilter::set_group(const int64_t group) { this->AddAttr(kGroup, MakeValue(group)); }
+void DeConv2DGradFilter::set_group(const int64_t group) { (void)this->AddAttr(kGroup, MakeValue(group)); }
 
 int64_t DeConv2DGradFilter::get_group() const {
   auto value_ptr = GetAttr(kGroup);
@@ -126,7 +126,7 @@ ActivationType DeConv2DGradFilter::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-void DeConv2DGradFilter::set_has_bias(const bool has_bias) { this->AddAttr(kHasBias, MakeValue(has_bias)); }
+void DeConv2DGradFilter::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, MakeValue(has_bias)); }
 
 bool DeConv2DGradFilter::get_has_bias() const {
   auto value_ptr = GetAttr(kHasBias);

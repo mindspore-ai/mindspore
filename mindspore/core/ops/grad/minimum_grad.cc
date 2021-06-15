@@ -24,9 +24,9 @@ void MinimumGrad::Init(const bool grad_x, const bool grad_y) {
   set_grad_y(grad_y);
 }
 
-void MinimumGrad::set_grad_x(const bool grad_x) { this->AddAttr(kGradX, MakeValue(grad_x)); }
+void MinimumGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, MakeValue(grad_x)); }
 
-void MinimumGrad::set_grad_y(const bool grad_y) { this->AddAttr(kGradY, MakeValue(grad_y)); }
+void MinimumGrad::set_grad_y(const bool grad_y) { (void)this->AddAttr(kGradY, MakeValue(grad_y)); }
 
 bool MinimumGrad::get_grad_x() const {
   auto value_ptr = GetAttr(kGradX);

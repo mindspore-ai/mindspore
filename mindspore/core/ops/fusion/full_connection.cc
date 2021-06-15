@@ -20,19 +20,19 @@
 
 namespace mindspore {
 namespace ops {
-void FullConnection::set_has_bias(const bool has_bias) { this->AddAttr(kHasBias, MakeValue(has_bias)); }
+void FullConnection::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, MakeValue(has_bias)); }
 bool FullConnection::get_has_bias() const {
   auto value_ptr = GetAttr(kHasBias);
   return GetValue<bool>(value_ptr);
 }
 
-void FullConnection::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void FullConnection::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 int64_t FullConnection::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
   return GetValue<int64_t>(value_ptr);
 }
 
-void FullConnection::set_use_axis(const bool use_axis) { this->AddAttr(kUseAxis, MakeValue(use_axis)); }
+void FullConnection::set_use_axis(const bool use_axis) { (void)this->AddAttr(kUseAxis, MakeValue(use_axis)); }
 bool FullConnection::get_use_axis() const {
   auto value_ptr = GetAttr(kUseAxis);
   return GetValue<bool>(value_ptr);
@@ -67,16 +67,16 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input1->BuildShape(), prim_name);
   auto prim_axis = full_prim->get_axis();
   if (full_prim->get_has_bias()) {
-    CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, 3, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, 3, prim_name);
   } else {
-    CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   }
   if (full_prim->get_use_axis() && (prim_axis < 1 || prim_axis > SizeToLong(input0_shape.size()))) {
     MS_EXCEPTION(ValueError) << "Full Connection axis invalid";
   }
   int64_t new_k = 1;
   if (full_prim->get_use_axis()) {
-    for (size_t t = prim_axis; t < input0_shape.size(); t++) {
+    for (size_t t = LongToSize(prim_axis); t < input0_shape.size(); t++) {
       new_k *= input0_shape[t];
     }
     if (new_k != input1_shape[1]) {
@@ -94,8 +94,8 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   }
   std::vector<int64_t> out_shape = {(int64_t)input0_shape.size()};
   if (full_prim->get_use_axis()) {
-    out_shape.resize(prim_axis + 1);
-    out_shape[prim_axis] = input1_shape[0];
+    out_shape.resize(LongToSize(prim_axis) + 1);
+    out_shape[LongToSize(prim_axis)] = input1_shape[0];
   } else {
     int64_t total = 1;
     for (size_t i = 0; i < input0_shape.size(); i++) {

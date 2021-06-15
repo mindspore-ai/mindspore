@@ -32,7 +32,7 @@ void PReLUFusion::set_channel_shared(const bool channel_shared) {
   this->AddAttr(kChannelShared, MakeValue(channel_shared));
 }
 
-void PReLUFusion::set_slope(const std::vector<float> &slope) { this->AddAttr(kSlope, MakeValue(slope)); }
+void PReLUFusion::set_slope(const std::vector<float> &slope) { (void)this->AddAttr(kSlope, MakeValue(slope)); }
 
 bool PReLUFusion::get_channel_shared() const {
   auto value_ptr = GetAttr(kChannelShared);

@@ -44,7 +44,7 @@ AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto input2_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input2_shape", input_args[2]->BuildShape(), op_name);
   auto num2 = input_args[2]->BuildValue()->cast<tensor::TensorPtr>()->ElementsNum();
-  size_t nummax = num > num1 ? num : (num1 > num2 ? num1 : num2);
+  auto nummax = num > num1 ? num : (num1 > num2 ? num1 : num2);
   size_t axisout = 0;
   size_t temp = 0;
   for (size_t j = 0; j < input0_shape.size(); j++) {
@@ -65,7 +65,7 @@ AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
       return std::make_shared<abstract::AbstractTensor>(input0_type, input0_shape);
     }
   }
-  input0_shape[axisout] = nummax;
+  input0_shape[axisout] = (int64_t)nummax;
   return std::make_shared<abstract::AbstractTensor>(input0_type, input0_shape);
 }
 REGISTER_PRIMITIVE_C(kNameWhere, Where);

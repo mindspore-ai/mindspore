@@ -27,14 +27,14 @@ void Crop::Init(const int64_t axis, const std::vector<int64_t> &offsets) {
   this->set_offsets(offsets);
 }
 
-void Crop::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void Crop::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t Crop::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
   return GetValue<int64_t>(value_ptr);
 }
 
-void Crop::set_offsets(const std::vector<int64_t> &offsets) { this->AddAttr(kOffsets, MakeValue(offsets)); }
+void Crop::set_offsets(const std::vector<int64_t> &offsets) { (void)this->AddAttr(kOffsets, MakeValue(offsets)); }
 
 std::vector<int64_t> Crop::get_offsets() const {
   auto value_ptr = this->GetAttr(kOffsets);
@@ -46,7 +46,7 @@ AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto crop_prim = primitive->cast<PrimCrop>();
   MS_EXCEPTION_IF_NULL(crop_prim);
   auto prim_name = crop_prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

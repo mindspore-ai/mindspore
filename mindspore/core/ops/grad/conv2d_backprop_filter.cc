@@ -101,7 +101,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_pad_list() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Conv2DBackpropFilter::set_mode(const int64_t mode) { this->AddAttr(kMode, MakeValue(mode)); }
+void Conv2DBackpropFilter::set_mode(const int64_t mode) { (void)this->AddAttr(kMode, MakeValue(mode)); }
 
 int64_t Conv2DBackpropFilter::get_mode() const {
   auto value_ptr = GetAttr(kMode);
@@ -124,7 +124,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_dilation() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Conv2DBackpropFilter::set_group(const int64_t group) { this->AddAttr(kGroup, MakeValue(group)); }
+void Conv2DBackpropFilter::set_group(const int64_t group) { (void)this->AddAttr(kGroup, MakeValue(group)); }
 
 int64_t Conv2DBackpropFilter::get_group() const {
   auto value_ptr = GetAttr(kGroup);

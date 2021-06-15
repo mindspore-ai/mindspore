@@ -27,9 +27,9 @@ void UniformReal::Init(int64_t seed, int64_t seed2) {
   this->set_seed2(seed2);
 }
 
-void UniformReal::set_seed(int64_t seed) { this->AddAttr(kSeed, MakeValue(seed)); }
+void UniformReal::set_seed(int64_t seed) { (void)this->AddAttr(kSeed, MakeValue(seed)); }
 
-void UniformReal::set_seed2(int64_t seed2) { this->AddAttr(kSeed2, MakeValue(seed2)); }
+void UniformReal::set_seed2(int64_t seed2) { (void)this->AddAttr(kSeed2, MakeValue(seed2)); }
 
 int64_t UniformReal::get_seed() const {
   auto value_ptr = GetAttr(kSeed);

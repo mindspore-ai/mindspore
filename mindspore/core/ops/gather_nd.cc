@@ -30,7 +30,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto gather_prim = primitive->cast<PrimGatherNd>();
   MS_EXCEPTION_IF_NULL(gather_prim);
   auto prim_name = gather_prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -39,13 +39,13 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     CheckAndConvertUtils::ConvertShapePtrToShape("indices_shape", input_args[1]->BuildShape(), prim_name);
   auto input_rank = input_shape.size();
   auto indices_rank = indices_shape.size();
-  CheckAndConvertUtils::CheckInteger("Input of indices data", input_rank, kGreaterEqual,
-                                     indices_shape[indices_rank - 1], prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("Input of indices data", SizeToLong(input_rank), kGreaterEqual,
+                                           indices_shape[indices_rank - 1], prim_name);
   std::vector<int64_t> output_shape;
   for (size_t i = 0; i < indices_rank - 1; i++) {
     output_shape.push_back(indices_shape[i]);
   }
-  for (size_t i = indices_shape[indices_rank - 1]; i < input_rank; ++i) {
+  for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
     output_shape.push_back(input_shape[i]);
   }
   return std::make_shared<abstract::Shape>(output_shape);
