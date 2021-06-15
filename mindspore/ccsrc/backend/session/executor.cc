@@ -158,6 +158,8 @@ Executor::~Executor() {
     WorkerJoin();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Executor call destructor failed: " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "KernelGraph call destructor failed";
   }
 }
 
