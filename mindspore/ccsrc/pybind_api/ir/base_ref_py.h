@@ -26,9 +26,6 @@
 namespace py = pybind11;
 
 namespace mindspore {
-class PyObjectRef;
-inline std::shared_ptr<PyObjectRef> MakeNode(const py::object &a) { return std::make_shared<PyObjectRef>(a); }
-inline std::shared_ptr<PyObjectRef> MakeNode(const py::tuple &a) { return std::make_shared<PyObjectRef>(a); }
 
 class PyObjectRef : public BaseRef {
  public:
