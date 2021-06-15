@@ -24,16 +24,16 @@ function Print_Cropper_Result() {
 
 function Run_cropper() {
     cd ${arm64_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
-    cd mindspore-lite-${version}-inference-android-aarch64 || exit 1
-    cp -a ./inference/third_party/hiai_ddk/lib/libhiai.so "${cropper_test_path}"/libhiai.so || exit 1
-    cp -a ./inference/third_party/hiai_ddk/lib/libhiai_ir.so "${cropper_test_path}"/libhiai_ir.so || exit 1
-    cp -a ./inference/third_party/hiai_ddk/lib/libhiai_ir_build.so "${cropper_test_path}"/libhiai_ir_build.so || exit 1
+    tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
+    cd mindspore-lite-${version}-android-aarch64 || exit 1
+    cp -a ./runtime/third_party/hiai_ddk/lib/libhiai.so "${cropper_test_path}"/libhiai.so || exit 1
+    cp -a ./runtime/third_party/hiai_ddk/lib/libhiai_ir.so "${cropper_test_path}"/libhiai_ir.so || exit 1
+    cp -a ./runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so "${cropper_test_path}"/libhiai_ir_build.so || exit 1
 
-    cp -a ./inference/lib/libmindspore-lite.a "${cropper_test_path}"/libmindspore-lite.a || exit 1
+    cp -a ./runtime/lib/libmindspore-lite.a "${cropper_test_path}"/libmindspore-lite.a || exit 1
     cp -a ./tools/benchmark/benchmark "${cropper_test_path}"/benchmark || exit 1
 
-    cp -r "${x86_path}"/mindspore-lite-${version}-inference-linux-x64/tools/cropper/ "${cropper_test_path}" || exit 1
+    cp -r "${x86_path}"/mindspore-lite-${version}-linux-x64/tools/cropper/ "${cropper_test_path}" || exit 1
 
     cd "${cropper_test_path}" || exit 1
     echo "${cropper_test_path}"
@@ -137,7 +137,7 @@ echo ' ' > "${run_converter_log_file}"
 run_converter_result_file="${basepath}"/run_converter_result.txt
 echo ' ' > "${run_converter_result_file}"
 
-file_name=$(ls "${x86_path}"/*inference-linux-x64.tar.gz)
+file_name=$(ls "${x86_path}"/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 ms_models_path=${basepath}/ms_models

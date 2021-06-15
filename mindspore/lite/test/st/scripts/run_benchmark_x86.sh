@@ -1,11 +1,42 @@
 #!/bin/bash
 
+# Run Export on x86 platform and create output test files:
+docker_image=mindspore_build:210301
+function Run_Export(){
+    cd $models_path || exit 1
+    if [[ -z "${CLOUD_MODEL_ZOO}" ]]; then
+        echo "CLOUD_MODEL_ZOO is not defined - exiting export models"
+        exit 1
+    fi
+    # Export mindspore train models:
+    while read line; do
+        LFS=" " read -r -a line_array <<< ${line}
+        model_name=${line_array[0]}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}'_train_export.py' >> "${export_log_file}"
+        echo 'exporting' ${model_name}
+        if [ -n "$docker_image" ]; then
+          echo 'docker run --user '"$(id -u):$(id -g)"' --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true '${docker_image}' python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
+          docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true "${docker_image}" python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
+        else
+          echo 'CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
+          CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
+        fi
+        if [ $? = 0 ]; then
+            export_result='export mindspore '${model_name}'_train_export pass';echo ${export_result} >> ${export_result_file}
+        else
+            export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}
+        fi
+    done < ${models_ms_train_config}
+}
 # Run converter on x86 platform:
 function Run_Converter() {
     # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64/ || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
 
     cp tools/converter/converter/converter_lite ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
@@ -95,7 +126,7 @@ function Run_Converter() {
         fi
     done < ${models_mindspore_config}
 
-    # Convert mindspore train models:
+    # Convert mindspore quant train models:
     while read line; do
         model_name=${line}
         if [[ $model_name == \#* ]]; then
@@ -110,6 +141,32 @@ function Run_Converter() {
             converter_result='converter mindspore '${model_name}'_train failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
     done < ${models_mindspore_train_config}
+
+    rm -rf ${ms_train_models_path}
+    mkdir -p ${ms_train_models_path}
+    # Convert mindspore train models:
+    while read line; do
+        LFS=" " read -r -a line_array <<< ${line}
+        WEIGHT_QUANT=""
+        model_prefix=${line_array[0]}'_train'
+        model_name=${line_array[0]}'_train'
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            WEIGHT_QUANT="--quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0"
+            model_name=${line_array[0]}'_train_quant'
+        fi
+
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=MINDIR --modelFile='${train_models_path}'/'${model_prefix}'.mindir --outputFile='${ms_train_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+        ./converter_lite --fmk=MINDIR --modelFile=${train_models_path}/${model_prefix}.mindir --outputFile=${ms_train_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
+        if [ $? = 0 ]; then
+            converter_result='converter mindspore_train '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter mindspore_train '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_ms_train_config}
 
     # Convert TFLite PostTraining models:
     while read line; do
@@ -344,9 +401,9 @@ function Run_Converter() {
 
 # Run on x86 platform:
 function Run_x86() {
-    echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "${run_x86_log_file}"
-    cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib
+    echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_log_file}"
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64 || return 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/libjpeg-turbo/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
     # Run tf converted models:
@@ -666,14 +723,48 @@ function Run_x86() {
             run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_for_process_only_config}
+
+    # Run mindspore converted train models:
+    fail=0
+    while read line; do
+        LFS=" " read -r -a line_array <<< ${line}
+        model_prefix=${line_array[0]}
+        model_name=${line_array[0]}'_train'
+        accuracy_limit=0.5
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            model_name=${line_array[0]}'_train_quant'
+            accuracy_limit=${line_array[2]}
+        fi
+        export_file="${ms_train_models_path}/${model_name}_tod"
+        inference_file="${ms_train_models_path}/${model_name}_infer"
+        rm -f ${inference_file}"*"
+        rm -f ${export_file}"*"
+        echo ${model_name} >> "${run_x86_log_file}"
+        ${run_valgrind}./tools/benchmark_train/benchmark_train \
+        --modelFile=${ms_train_models_path}/${model_name}.ms \
+        --inDataFile=${train_io_path}/${model_prefix}_input \
+        --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
+        --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
+        --exportFile=${export_file} >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_train: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+        else
+            run_result='x86_train: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            fail=1
+        fi
+    done < ${models_ms_train_config}
+    return ${fail}
 }
 
 # Run on x86 sse platform:
 function Run_x86_sse() {
     cd ${x86_path}/sse || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/sse/mindspore-lite-${version}-inference-linux-x64 || return 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/sse/mindspore-lite-${version}-linux-x64 || return 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
     # Run tflite converted models:
@@ -943,9 +1034,9 @@ function Run_x86_sse() {
 # Run on x86 avx platform:
 function Run_x86_avx() {
     cd ${x86_path}/avx || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/avx/mindspore-lite-${version}-inference-linux-x64 || return 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./inference/lib
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/avx/mindspore-lite-${version}-linux-x64 || return 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
     # Run tflite converted models:
@@ -1215,11 +1306,11 @@ function Run_x86_avx() {
 # Run on x86 java platform:
 function Run_x86_java() {
     cd ${x86_java_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64/inference/lib
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib
     # compile benchmark
-    echo "javac -cp ${x86_java_path}/mindspore-lite-${version}-inference-linux-x64/inference/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
-    javac -cp ${x86_java_path}/mindspore-lite-${version}-inference-linux-x64/inference/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
+    echo "javac -cp ${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
+    javac -cp ${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
 
     count=0
     # Run tflite converted models:
@@ -1234,8 +1325,8 @@ function Run_x86_java() {
           continue
         fi
         echo ${model_name} >> "${run_x86_java_log_file}"
-        echo "java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64/inference/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
-        java -classpath .:${x86_java_path}/mindspore-lite-${version}-inference-linux-x64/inference/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1
+        echo "java -classpath .:${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        java -classpath .:${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1
         if [ $? = 0 ]; then
             run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1246,7 +1337,7 @@ function Run_x86_java() {
 
 # Run on x86 codegen benchmark
 function Run_x86_codegen() {
-    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64/tools/codegen
+    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
 
     rm -rf ${build_path}
     mkdir -p ${build_path}
@@ -1260,7 +1351,7 @@ function Run_x86_codegen() {
         ${CODEGEN_PATH}/codegen --codePath=${build_path} --modelPath=${ms_models_path}/${model_name}.ms >> ${run_x86_codegen_log_file}
         # 1. build benchmark
         mkdir -p ${build_path}/${model_name}/build && cd ${build_path}/${model_name}/build || exit 1
-        cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64 ${build_path}/${model_name} >> ${run_x86_codegen_log_file}
+        cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${build_path}/${model_name} >> ${run_x86_codegen_log_file}
         make >> ${run_x86_codegen_log_file}
         # 2. run benchmark
         echo "net file: ${build_path}/${model_name}/src/net.bin" >> ${run_x86_codegen_log_file}
@@ -1278,7 +1369,7 @@ function Run_x86_codegen() {
 
 # Run on x86 codegen benchmark parallel
 function Run_x86_codegen_parallel() {
-    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64/tools/codegen
+    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
 
     rm -rf ${build_parallal_path}
     mkdir -p ${build_parallal_path}
@@ -1292,7 +1383,7 @@ function Run_x86_codegen_parallel() {
         ${CODEGEN_PATH}/codegen --codePath=${build_parallal_path} --modelPath=${ms_models_path}/${model_name}.ms --supportParallel=true >> ${run_x86_codegen_parallel_log_file}
         # 1. build benchmark
         mkdir -p ${build_parallal_path}/${model_name}/build && cd ${build_parallal_path}/${model_name}/build || exit 1
-        cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64 ${build_parallal_path}/${model_name} >> ${run_x86_codegen_parallel_log_file}
+        cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${build_parallal_path}/${model_name} >> ${run_x86_codegen_parallel_log_file}
         make >> ${run_x86_codegen_parallel_log_file}
         # 2. run benchmark
         echo "net file: ${build_parallal_path}/${model_name}/src/net.bin" >> ${run_x86_codegen_parallel_log_file}
@@ -1339,12 +1430,46 @@ function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
+function Print_Benchmark_Train_Result() {
+    MS_PRINT_TESTCASE_START_MSG
+    while read line; do
+        arr=("${line}")
+        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+    done < ${run_benchmark_train_result_file}
+    MS_PRINT_TESTCASE_END_MSG
+}
+
 basepath=$(pwd)
 echo ${basepath}
 #set -e
+logs_path=${basepath}/logs_train
+rm -rf ${logs_path}
+mkdir -p ${logs_path}
+# Export model if enabled
+if [[ $enable_export == 1 ]]; then
+    echo "Start Exporting models ..."
+    # Write export result to temp file
+    export_log_file=${logs_path}/export_log.txt
+    echo ' ' > ${export_log_file}
 
+    export_result_file=${logs_path}/export_result.txt
+    echo ' ' > ${export_result_file}
+    # Run export
+    Run_Export
+    Print_Result ${export_result_file}
+
+fi
+
+# Write benchmark_train result to temp file
+run_benchmark_train_result_file=${logs_path}/run_benchmark_train_result.txt
+echo ' ' > ${run_benchmark_train_result_file}
+
+epoch_num=1
+threads=2
+train_models_path=""
+train_io_path=""
 # Example:sh run_benchmark_x86.sh -r /home/temp_test -m /home/temp_test/models -e arm_cpu
-while getopts "r:m:e:" opt; do
+while getopts "r:m:M:e:i:v:p:t:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -1354,9 +1479,30 @@ while getopts "r:m:e:" opt; do
             models_path=${OPTARG}
             echo "models_path is ${OPTARG}"
             ;;
+        M)
+            train_models_path=${OPTARG}
+            echo "train_models_path is ${models_path}"
+            ;;
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        i)
+            train_io_path=${OPTARG}
+            echo "train_io_path is ${OPTARG}"
+            ;;
+        v)
+            run_valgrind="valgrind --log-file=valgrind.log "
+            echo "Run x86 with valgrind"
+            ;;
+        t)
+            epoch_num=${OPTARG}
+            echo "train epoch num is ${epoch_num}"
+            ;;
+        p)
+            enable_export=1
+            docker_image=${OPTARG}
+            echo "enable_export = 1, docker_image = ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -1367,7 +1513,7 @@ done
 # mkdir train
 
 x86_path=${release_path}/ubuntu_x86
-file_name=$(ls ${x86_path}/*inference-linux-x64.tar.gz)
+file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
@@ -1390,10 +1536,26 @@ models_for_process_only_config=${basepath}/../config/models_for_process_only.cfg
 models_tf_weightquant_config=${basepath}/../config/models_tf_weightquant.cfg
 models_codegen_config=${basepath}/../codegen/models_codegen.cfg
 models_codegen_parallel_config=${basepath}/../codegen/models_codegen_parallel.cfg
+models_ms_train_config=${basepath}/../config/models_ms_train.cfg
 
 ms_models_path=${basepath}/ms_models
+ms_train_models_path=${basepath}/ms_train_models
+rm -rf ${ms_train_models_path}
+mkdir -p ${ms_train_models_path}
 build_path=${basepath}/codegen_build
 build_parallal_path=${basepath}/codegen_parallel_build
+if [[ $train_models_path == "" ]]
+then
+  echo "train_io path is empty"
+  train_models_path="${models_path}/../../models_train"
+fi
+echo $train_models_path
+if [[ $train_io_path == "" ]]
+then
+  echo "train_io path is empty"
+  train_io_path=${train_models_path}/input_output
+fi
+echo $train_io_path
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
@@ -1561,6 +1723,11 @@ fi
 
 echo "Run_x86 and Run_x86_sse and Run_x86_avx and is ended"
 Print_Benchmark_Result
+if [[ $isFailed == 1 ]]; then
+    exit 1
+fi
+echo "Run x86 train end"
+Print_Benchmark_Train_Result
 if [[ $isFailed == 1 ]]; then
     exit 1
 fi

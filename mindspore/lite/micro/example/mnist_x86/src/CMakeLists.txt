@@ -8,10 +8,10 @@ endif()
 
 get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(OP_LIB ${PKG_PATH}/inference/lib/libmindspore-lite.a)
+set(OP_LIB ${PKG_PATH}/runtime/lib/libmindspore-lite.a)
 set(WRAPPER_LIB ${PKG_PATH}/tools/codegen/lib/libwrapper.a)
 set(OP_HEADER_PATH ${PKG_PATH}/tools/codegen/include)
-set(HEADER_PATH ${PKG_PATH}/inference)
+set(HEADER_PATH ${PKG_PATH}/runtime)
 
 message("operator lib path: ${OP_LIB}")
 message("operator header path: ${OP_HEADER_PATH}")

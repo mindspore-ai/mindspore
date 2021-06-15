@@ -4,8 +4,8 @@
 function Run_Converter() {
     # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64/ || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
 
     cp tools/converter/converter/converter_lite ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
@@ -95,7 +95,7 @@ function Run_Converter() {
         fi
     done < ${models_mindspore_config}
 
-    # Convert mindspore train models:
+    # Convert mindspore quant train models:
     while read line; do
         model_name=${line}
         if [[ $model_name == \#* ]]; then
@@ -110,6 +110,32 @@ function Run_Converter() {
             converter_result='converter mindspore '${model_name}'_train failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
     done < ${models_mindspore_train_config}
+
+    rm -rf ${ms_train_models_path}
+    mkdir -p ${ms_train_models_path}
+    # Convert mindspore train models:
+    while read line; do
+        LFS=" " read -r -a line_array <<< ${line}
+        WEIGHT_QUANT=""
+        model_prefix=${line_array[0]}'_train'
+        model_name=${line_array[0]}'_train'
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            WEIGHT_QUANT="--quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0"
+            model_name=${line_array[0]}'_train_quant'
+        fi
+
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=MINDIR --modelFile='${train_models_path}'/'${model_prefix}'.mindir --outputFile='${ms_train_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+        ./converter_lite --fmk=MINDIR --modelFile=${train_models_path}/${model_prefix}.mindir --outputFile=${ms_train_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
+        if [ $? = 0 ]; then
+            converter_result='converter mindspore_train '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter mindspore_train '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_ms_train_config}
 
     # Convert TFLite PostTraining models:
     while read line; do
@@ -424,9 +450,9 @@ function Run_Converter() {
 function Run_arm64_codegen() {
     echo "ANDROID_NDK: ${ANDROID_NDK}" >> ${run_arm64_fp32_codegen_log_file}
     cd ${arm64_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
-    local PKG_PATH=${arm64_path}/mindspore-lite-${version}-inference-android-aarch64
-    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64/tools/codegen
+    tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
+    local PKG_PATH=${arm64_path}/mindspore-lite-${version}-android-aarch64
+    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
 
     rm -rf ${build_path}
     mkdir -p ${build_path}
@@ -512,9 +538,9 @@ function Run_arm64_codegen() {
 function Run_arm32_codegen() {
     echo "ANDROID_NDK: ${ANDROID_NDK}" >> ${run_arm32_fp32_codegen_log_file}
     cd ${arm32_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch32.tar.gz || exit 1
-    local PKG_PATH=${arm32_path}/mindspore-lite-${version}-inference-android-aarch32
-    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64/tools/codegen
+    tar -zxf mindspore-lite-${version}-android-aarch32.tar.gz || exit 1
+    local PKG_PATH=${arm32_path}/mindspore-lite-${version}-android-aarch32
+    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
 
     rm -rf ${build_path}
     mkdir -p ${build_path}
@@ -600,27 +626,36 @@ function Run_arm32_codegen() {
 # Run on arm64 platform:
 function Run_arm64() {
     cd ${arm64_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+        cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/libjpeg-turbo/lib/libjpeg.so* ${benchmark_test_path}/ || exit 1
+        cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/libjpeg-turbo/lib/libturbojpeg.so* ${benchmark_test_path}/ || exit 1
     fi
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libmindspore-lite-train.so ${benchmark_test_path}/libmindspore-lite-train.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/tools/benchmark_train/benchmark_train ${benchmark_train_test_path}/benchmark_train || exit 1
 
     # adb push all needed files to the phone
-    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
+    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt 
+    cp -a ${benchmark_test_path}/lib*so* ${benchmark_train_test_path}/
+    adb -s ${device_id} push ${benchmark_train_test_path} /data/local/tmp/ > adb_push_log.txt 
 
     # run adb ,run session ,check the result:
     echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
     echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
     echo 'chmod 777 benchmark' >> adb_cmd.txt
+    echo 'cd /data/local/tmp/benchmark_train_test' >> adb_cmd.txt
+    echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
+    echo 'chmod 777 benchmark_train' >> adb_cmd.txt
 
     adb -s ${device_id} shell < adb_cmd.txt
 
@@ -1017,31 +1052,91 @@ function Run_arm64() {
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_for_process_only_config}
+    fail=0
+    # Run mindir converted train models:
+    tmp_dir=/data/local/tmp/benchmark_train_test
+    while read line; do
+        LFS=" " read -r -a line_array <<< ${line}
+        model_prefix=${line_array[0]}
+        model_name=${line_array[0]}'_train'
+        accuracy_limit=0.5
+        if [[ $model_name == \#* ]]; then
+            continue
+        fi
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            model_name=${line_array[0]}'_train_quant'
+            accuracy_limit=${line_array[2]}
+        fi
+        export_file="${tmp_dir}/${model_name}_tod"
+        inference_file="${tmp_dir}/${model_name}_infer"
+        # run benchmark_train test with clib data
+        echo ${model_name} >> "${run_arm64_fp32_log_file}"
+        adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin /data/local/tmp/benchmark_train_test >> adb_push_log.txt
+        echo 'cd /data/local/tmp/benchmark_train_test' > adb_run_cmd.txt
+        echo 'chmod 777 benchmark_train' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm64_fp32_log_file}
+        echo "rm -f ${export_file}* ${inference_file}*" >> ${run_arm64_fp32_log_file}
+        echo "rm -f ${export_file}* ${inference_file}*" >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm64_fp32_log_file}
+        adb_cmd=$(cat <<-ENDM
+        export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
+        --epochs=${epoch_num} \
+        --modelFile=${model_name}.ms \
+        --inDataFile=${tmp_dir}/${model_prefix}_input \
+        --expectedDataFile=${tmp_dir}/${model_prefix}_output \
+        --numThreads=${threads} \
+        --accuracyThreshold=${accuracy_limit} \
+        --inferenceFile=${inference_file} \
+        --exportFile=${export_file}
+ENDM
+        )
+        echo "${adb_cmd}" >> ${run_arm64_fp32_log_file}
+        echo "${adb_cmd}" >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm64_fp32_log_file}
+        # TODO: change to arm_type
+        if [ $? = 0 ]; then
+            run_result='arm64_train: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+        else
+            run_result='arm64_train: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            fail=1
+        fi
+    done < ${models_ms_train_config}
+    return ${fail}
 }
 
 # Run on arm32 platform:
 function Run_arm32() {
     cd ${arm32_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch32.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-android-aarch32.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libminddata-lite.so ]; then
-        cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/lib/libminddata-lite.so ]; then
+        cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+        cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/libjpeg-turbo/lib/libturbojpeg.so* ${benchmark_test_path}/ || exit 1
+        cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/libjpeg-turbo/lib/libjpeg.so* ${benchmark_test_path}/ || exit 1
     fi
-    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
-    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
-    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
-    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/runtime/lib/libmindspore-lite-train.so ${benchmark_test_path}/libmindspore-lite-train.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-android-aarch32/tools/benchmark_train/benchmark_train ${benchmark_train_test_path}/benchmark_train || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
+    # train ms file may be same,need push diff folder
+    cp -a ${benchmark_test_path}/lib*so* ${benchmark_train_test_path}/
+    adb -s ${device_id} push ${benchmark_train_test_path} /data/local/tmp/ > adb_push_log.txt
 
     # run adb ,run session ,check the result:
     echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
     echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> adb_cmd.txt
     echo 'chmod 777 benchmark' >> adb_cmd.txt
+    echo 'cd /data/local/tmp/benchmark_train_test' >> adb_cmd.txt
+    echo 'cp /data/local/tmp/arm32/libc++_shared.so ./' >> adb_cmd.txt
+    echo 'chmod 777 benchmark_train' >> adb_cmd.txt
 
     adb -s ${device_id} shell < adb_cmd.txt
 
@@ -1073,24 +1168,75 @@ function Run_arm32() {
             run_result='arm32: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_arm32_config}
+
+    fail=0
+    # Run mindir converted train models:
+    tmp_dir=/data/local/tmp/benchmark_train_test
+    while read line; do
+        LFS=" " read -r -a line_array <<< ${line}
+        model_prefix=${line_array[0]}
+        model_name=${line_array[0]}'_train'
+        accuracy_limit=0.5
+        if [[ $model_name == \#* ]]; then
+            continue
+        fi
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            model_name=${line_array[0]}'_train_quant'
+            accuracy_limit=${line_array[2]}
+        fi
+        export_file="${tmp_dir}/${model_name}_tod"
+        inference_file="${tmp_dir}/${model_name}_infer"
+        # run benchmark_train test without clib data
+        echo ${model_name} >> "${run_arm32_log_file}"
+        adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin  /data/local/tmp/benchmark_train_test >> adb_push_log.txt
+        echo 'cd /data/local/tmp/benchmark_train_test' > adb_run_cmd.txt
+        echo 'chmod 777 benchmark_train' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm32_log_file}
+        echo "rm -f ${export_file}* ${inference_file}*" >> ${run_arm32_log_file}
+        echo "rm -f ${export_file}* ${inference_file}*" >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm32_log_file}
+        adb_cmd=$(cat <<-ENDM
+        export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
+        --epochs=${epoch_num} \
+        --modelFile=${model_name}.ms \
+        --inDataFile=${tmp_dir}/${model_prefix}_input \
+        --expectedDataFile=${tmp_dir}/${model_prefix}_output \
+        --numThreads=${threads} \
+        --accuracyThreshold=${accuracy_limit} \
+        --inferenceFile=${inference_file} \
+        --exportFile=${export_file}
+ENDM
+        )
+        echo "${adb_cmd}" >> ${run_arm32_log_file}
+        echo "${adb_cmd}" >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm32_log_file}
+        # TODO: change to arm_type
+        if [ $? = 0 ]; then
+            run_result='arm32_train: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+        else
+            run_result='arm32_train: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            fail=1
+        fi
+    done < ${models_ms_train_config}
+    return ${fail}
 }
 
 # Run on arm64-fp16 platform:
 function Run_arm64_fp16() {
     cd ${arm64_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
@@ -1250,18 +1396,18 @@ function Run_arm64_fp16() {
 # Run on armv8.2-a32-fp16 platform:
 function Run_armv82_a32_fp16() {
     cd ${armv82_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch32.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-android-aarch32.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${armv82_path}/mindspore-lite-${version}-android-aarch32/runtime/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${armv82_path}/mindspore-lite-${version}-android-aarch32/runtime/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
-    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
-    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
-    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
-    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-android-aarch32/runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-android-aarch32/runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
@@ -1454,12 +1600,24 @@ function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
+function Print_Benchmark_Train_Result() {
+    MS_PRINT_TESTCASE_START_MSG
+    while read line; do
+        arr=("${line}")
+        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+    done < ${run_benchmark_train_result_file}
+    MS_PRINT_TESTCASE_END_MSG
+}
+
 basepath=$(pwd)
 echo ${basepath}
 #set -e
-
+epoch_num=1
+train_models_path=""
+train_io_path=""
+threads=2
 # Example:sh run_benchmark_arm.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:M:q:i:t:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -1469,6 +1627,14 @@ while getopts "r:m:d:e:" opt; do
             models_path=${OPTARG}
             echo "models_path is ${OPTARG}"
             ;;
+        i)
+            train_io_path=${OPTARG}
+            echo "train_io_path is ${OPTARG}"
+            ;;
+        M)
+            train_models_path=${OPTARG}
+            echo "train_models_path is ${models_path}"
+            ;;
         d)
             device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
@@ -1477,6 +1643,14 @@ while getopts "r:m:d:e:" opt; do
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
             ;;
+        t)
+            epoch_num=${OPTARG}
+            echo "train epoch num is ${epoch_num}"
+            ;;
+        q)
+           threads=${OPTARG}
+           echo "threads=${threads}"
+           ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -1486,7 +1660,7 @@ done
 # mkdir train
 
 x86_path=${release_path}/ubuntu_x86
-file_name=$(ls ${x86_path}/*inference-linux-x64.tar.gz)
+file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
@@ -1515,9 +1689,31 @@ models_with_multiple_inputs_config=${basepath}/../config/models_with_multiple_in
 models_for_process_only_config=${basepath}/../config/models_for_process_only.cfg
 models_tf_weightquant_config=${basepath}/../config/models_tf_weightquant.cfg
 models_codegen_config=${basepath}/../codegen/models_codegen.cfg
+models_ms_train_config=${basepath}/../config/models_ms_train.cfg
 
 ms_models_path=${basepath}/ms_models
+ms_train_models_path=${basepath}/ms_train_models
+rm -rf ${ms_train_models_path}
+mkdir -p ${ms_train_models_path}
 build_path=${basepath}/codegen_build
+logs_path=${basepath}/logs_train
+rm -rf ${logs_path}
+mkdir -p ${logs_path}
+run_benchmark_train_result_file=${logs_path}/run_benchmark_train_result.txt
+echo ' ' > ${run_benchmark_train_result_file}
+
+if [[ $train_models_path == "" ]]
+then
+  echo "train_io path is empty"
+  train_models_path="${models_path}/../../models_train"
+fi
+echo $train_models_path
+if [[ $train_io_path == "" ]]
+then
+  echo "train_io path is empty"
+  train_io_path=${train_models_path}/input_output
+fi
+echo $train_io_path
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
@@ -1556,6 +1752,9 @@ echo 'run arm64_fp32 logs: ' > ${run_arm64_fp32_log_file}
 run_arm64_fp32_codegen_log_file=${basepath}/run_arm64_fp32_codegen_log.txt
 echo 'run arm64_codegen logs: ' > ${run_arm64_fp32_codegen_log_file}
 
+run_arm64_train_fp32_log_file=${basepath}/run_arm64_train_fp32_log.txt
+echo 'run arm64_train_fp32 logs: ' > ${run_arm64_train_fp32_log_file}
+
 run_arm32_fp32_codegen_log_file=${basepath}/run_arm32_fp32_codegen_log.txt
 echo 'run arm32_codegen logs: ' > ${run_arm32_fp32_codegen_log_file}
 
@@ -1573,9 +1772,13 @@ echo "Push files to the arm and run benchmark"
 benchmark_test_path=${basepath}/benchmark_test
 rm -rf ${benchmark_test_path}
 mkdir -p ${benchmark_test_path}
+benchmark_train_test_path=${basepath}/benchmark_train_test
+rm -rf ${benchmark_train_test_path}
+mkdir -p ${benchmark_train_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
 # Copy models converted using old release of mslite converter for compatibility test
 cp -a ${models_path}/compatibility_test/*.ms ${benchmark_test_path} || exit 1
+cp -a ${ms_train_models_path}/*.ms ${benchmark_train_test_path} || exit 1
 
 backend=${backend:-"all"}
 isFailed=0
@@ -1583,7 +1786,7 @@ isFailed=0
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_codegen" ]]; then
     # Run on arm64
     arm64_path=${release_path}/android_aarch64
-    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    file_name=$(ls ${arm64_path}/*android-aarch64.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
     version=${file_name_array[2]}
 
@@ -1596,7 +1799,7 @@ fi
 if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_codegen" ]]; then
     # Run on arm32
     arm32_path=${release_path}/android_aarch32
-    file_name=$(ls ${arm32_path}/*inference-android-aarch32.tar.gz)
+    file_name=$(ls ${arm32_path}/*android-aarch32.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
     version=${file_name_array[2]}
 
@@ -1609,7 +1812,7 @@ fi
 if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp16" ]]; then
     # Run on armv82-a32-fp16
     armv82_path=${release_path}/android_aarch32
-    file_name=$(ls ${armv82_path}/*inference-android-aarch32.tar.gz)
+    file_name=$(ls ${armv82_path}/*android-aarch32.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
     version=${file_name_array[2]}
 
@@ -1623,7 +1826,7 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" ]
     # Run on arm32
     arm32_path=${release_path}/android_aarch32
     # mv ${arm32_path}/*train-android-aarch32* ./train
-    file_name=$(ls ${arm32_path}/*inference-android-aarch32.tar.gz)
+    file_name=$(ls ${arm32_path}/*android-aarch32.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
     version=${file_name_array[2]}
 
@@ -1637,7 +1840,7 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" ]
     # Run on arm64
     arm64_path=${release_path}/android_aarch64
     # mv ${arm64_path}/*train-android-aarch64* ./train
-    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    file_name=$(ls ${arm64_path}/*android-aarch64.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
     version=${file_name_array[2]}
 
@@ -1651,7 +1854,7 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" ]
     # Run on arm64-fp16
     arm64_path=${release_path}/android_aarch64
     # mv ${arm64_path}/*train-android-aarch64* ./train
-    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    file_name=$(ls ${arm64_path}/*android-aarch64.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
     version=${file_name_array[2]}
 
@@ -1707,6 +1910,11 @@ fi
 
 echo "Run_arm64_fp32 and Run_arm64_fp16 and Run_arm32_fp32 and Run_armv82_a32_fp16 is ended"
 Print_Benchmark_Result
+if [[ $isFailed == 1 ]]; then
+    exit 1
+fi
+echo "Run Arm Train is ended"
+Print_Benchmark_Train_Result
 if [[ $isFailed == 1 ]]; then
     exit 1
 fi

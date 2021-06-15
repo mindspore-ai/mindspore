@@ -4,8 +4,8 @@
 function Run_Converter() {
     # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64/ || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
 
     cp tools/converter/converter/converter_lite ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
@@ -59,19 +59,19 @@ function Run_Converter() {
 # Run on npu platform:
 function Run_npu() {
     cd ${arm64_path} || exit 1
-    tar -zxf mindspore-lite-${version}-inference-android-aarch64.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
@@ -178,7 +178,7 @@ done
 # mkdir train
 
 x86_path=${release_path}/ubuntu_x86
-file_name=$(ls ${x86_path}/*inference-linux-x64.tar.gz)
+file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
@@ -235,7 +235,7 @@ if [[ $backend == "all" || $backend == "npu" ]]; then
     # Run on npu
     arm64_path=${release_path}/android_aarch64
     # mv ${arm64_path}/*train-android-aarch64* ./train
-    file_name=$(ls ${arm64_path}/*inference-android-aarch64.tar.gz)
+    file_name=$(ls ${arm64_path}/*android-aarch64.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
     version=${file_name_array[2]}
 

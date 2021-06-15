@@ -8,7 +8,7 @@ endif()
 
 get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(HEADER_PATH ${PKG_PATH}/inference)
+set(HEADER_PATH ${PKG_PATH}/runtime)
 
 option(MICRO_BUILD_ARM64 "build android arm64" OFF)
 option(MICRO_BUILD_ARM32A "build android arm32" OFF)

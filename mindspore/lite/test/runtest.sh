@@ -61,14 +61,10 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter="PassRegistryTest.TestRegistry"
 
 # test cases specific for train
-if [[ $1 == train ]]; then
-    echo 'run train ut tests'
-    ## ./lite-test --gtest_filter=NetworkTest.efficient_net
-    ## ./lite-test --gtest_filter="NetworkTest.tuning_layer"
-    ## ./lite-test --gtest_filter="NetworkTest.lenetnet"
-fi
 
-if [[ $1 == inference ]]; then
-    echo 'run inference ut tests'
-    ./lite-test --gtest_filter="ControlFlowTest.TestMergeWhileModel"
-fi
+echo 'run train ut tests'
+## ./lite-test --gtest_filter=NetworkTest.efficient_net
+## ./lite-test --gtest_filter="NetworkTest.tuning_layer"
+## ./lite-test --gtest_filter="NetworkTest.lenetnet"
+echo 'run inference ut tests'
+./lite-test --gtest_filter="ControlFlowTest.TestMergeWhileModel"
