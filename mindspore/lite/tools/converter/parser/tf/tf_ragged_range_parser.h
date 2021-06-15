@@ -15,10 +15,9 @@
  */
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_RAGFED_RANGE_PARSER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_RAGGED_RANGE_PARSER_H_
-#include <string>
-#include <memory>
 #include <map>
 #include <vector>
+#include <string>
 #include "tools/converter/parser/tf/tf_node_parser.h"
 
 namespace mindspore {
