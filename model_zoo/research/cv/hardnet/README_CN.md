@@ -18,6 +18,10 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出MindIR)
+        - [在Ascend310执行推理](#在Ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -237,6 +241,40 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
   # grep "accuracy:" dist.eval.log
   accuracy:{'acc':0.777}
   ```
+
+## 推理过程
+
+### 导出MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`file_format` 必须在 ["AIR", "MINDIR"]中选择。
+`file_name` 填写以.mindir为后缀的导出MindIR模型名
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+目前imagenet2012数据集仅支持batch_Size为1的推理。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
+```
+
+- `MINDIR_PATH` mindir文件路径
+- `DATASET_PATH` 推理数据集路径
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+'acc': 0.77452
+```
 
 # 模型描述
 
