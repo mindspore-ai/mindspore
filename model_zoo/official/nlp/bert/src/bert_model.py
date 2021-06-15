@@ -55,7 +55,7 @@ class BertConfig:
         compute_type (:class:`mindspore.dtype`): Compute type in BertTransformer. Default: mstype.float32.
     """
     def __init__(self,
-                 seq_length=128,
+                 seq_length=384,
                  vocab_size=32000,
                  hidden_size=768,
                  num_hidden_layers=12,

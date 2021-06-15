@@ -46,7 +46,7 @@ optimizer_cfg = edict({
 
 bert_net_cfg = BertConfig(
     seq_length=384,
-    vocab_size=21128,
+    vocab_size=30522,
     hidden_size=768,
     num_hidden_layers=12,
     num_attention_heads=12,
