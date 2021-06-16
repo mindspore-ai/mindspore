@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
+#include "runtime/framework/control_node_parser.h"
 #include "mindrt/include/actor/switch_actor.h"
 #include "runtime/hardware/device_context.h"
 
@@ -56,7 +57,8 @@ constexpr size_t kMakeTupleInputStartPos = 1;
 // 5. Free Memory
 class SwitchActor : public SwitchActorBase<DeviceTensor> {
  public:
-  SwitchActor(const std::string &name, const CNodePtr &node) : SwitchActorBase(name), node_(node) {}
+  SwitchActor(const std::string &name, DeviceContext *device_context, const CNodePtr &node)
+      : SwitchActorBase(name), device_context_(device_context), node_(node) {}
   ~SwitchActor() override = default;
 
   void Init() override;
@@ -91,19 +93,35 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   void EraseInput(OpContext<DeviceTensor> *context);
   void SendMemoryFreeReq(OpContext<DeviceTensor> *context);
 
+  // Collect all the backend inputs of switch actor.
+  void FetchInputNode(const std::vector<AnfNodePtr> &origin_parameters_order,
+                      const FrontToBackendNodeWithContext &front_to_backend_parameters,
+                      const std::unordered_map<AnfNodePtr, AnfNodePtr> &front_to_backend_kernel);
   // All inputs of the switch actor, excluding weight and tensor.
   // Used to receive input data, the first input is the condition of switch.
   std::vector<AnfNodePtr> input_nodes_;
   // The position of the branch output in the input_nodes_.
   std::vector<std::vector<size_t>> branch_inputs_pos_;
 
+  // Control arrows of different branches.
+  std::vector<std::vector<AID>> output_branch_control_arrows_;
+  // Result arrows of different branches.
+  std::vector<std::vector<DataArrowPtr>> output_branch_result_arrows_;
+
+  // When the output is a value node from switch actor, the actor needs to send the anfnode to the output actor,
+  // so all the nodes that may send the device tensor to switch actor are recorded.
+  std::vector<std::vector<KernelWithIndex>> front_to_backend_parameter_;
+
   std::vector<std::vector<AnfNodePtr>> branch_total_inputs_;
   std::vector<FuncGraphPtr> branch_func_graph_;
+
+  // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
+  std::vector<std::pair<size_t, AnfNode *>> device_tensor_store_keys_;
 
   std::vector<DeviceTensor *> input_device_tensors_;
 
   // Save the DeviceContext of input_nodes_, which is used to release the DeviceTensor.
-  DeviceContext *device_context_;
+  const DeviceContext *device_context_;
 
   // The id of memory manager actor. Send message to it for alloc and free memory.
   const AID memory_manager_aid_;

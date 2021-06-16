@@ -454,8 +454,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   std::vector<tensor::TensorPtr> input_tensor;
 
   // Get inputs of control node which come from the host actor.
-  std::vector<AnfNodePtr> control_node_parameters =
-    ControlNodeParser::FetchControlNodeParameter(graph_compiler_info.control_nodes_);
+  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->GetControlNodeParameter();
   for (const auto &parameter : control_node_parameters) {
     PushTensor(args, origin_parameters, parameter, &input_tensor);
   }
@@ -555,10 +554,13 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     name.append("_").append(std::to_string(graph_id_to_context.first));
   }
 
+  auto parser = std::make_shared<ControlNodeParser>();
+  parser->Parse(control_nodes_, graphs, device_contexts, root_graph);
+
   // Get all the outputs. In control flow, there may be multiple branch output.
   runtime::KernelMapPosition outputs_order;
   size_t outputs_num = 0;
-  const auto &all_branch_output = ControlNodeParser::FetchAllBranchOutputs(root_graph);
+  const auto &all_branch_output = parser->FetchAllBranchOutputs(root_graph);
   for (int j = 0; j < SizeToInt(all_branch_output.size()); ++j) {
     // In general, there is only one output branch, and the branch id is 0 at this time. In the control flow,
     // there are multi-branch output scenarios. Different branches may have different weight nodes. When output
@@ -578,28 +580,10 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     }
   }
 
-  // Fetch all the relationships between front parameters and backend parameters which will be used to
-  // build and link actors.
-  FrontToBackendNodeWithContext front_to_backend_parameter;
-  ControlNodeParser::FetchFrontToBackendParameterMap(graphs, device_contexts, control_nodes_,
-                                                     &front_to_backend_parameter);
-
-  // The funcgraph to parameters map records the input parameters of funcgraph and is used to initialize
-  // the input node of gather,
-  FuncGraphToParameter func_graph_to_parameters;
-  ControlNodeParser::FetchFuncGraphToParameterMap(control_nodes_, &func_graph_to_parameters);
-
-  // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
-  // When initializing the weights, all related weights need to be recorded as the same device tensor.
-  HostParameterToWeight host_parameter_to_weights;
-  ControlNodeParser::FetchHostParameterToWeightMap(control_nodes_, &host_parameter_to_weights);
-
   std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
-                                             root_graph->parameters(), outputs_order, front_to_backend_parameter,
-                                             func_graph_to_parameters, host_parameter_to_weights, all_branch_output,
-                                             outputs_num, name);
+                                             root_graph->parameters(), parser, outputs_order, outputs_num, name);
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
@@ -629,10 +613,10 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   std::vector<std::vector<int64_t> *> tensors_mask_list(1, const_cast<std::vector<int64_t> *>(tensors_mask));
   std::vector<std::vector<TensorPtr> *> input_tensors_list(1,
                                                            const_cast<std::vector<tensor::TensorPtr> *>(input_tensors));
-  return std::make_unique<GraphCompilerInfo>(
-    graphs, device_contexts, tensors_mask_list, input_tensors_list, std::vector<AnfNodePtr>(),
-    std::vector<AnfNodePtr>(), outputs_order, FrontToBackendNodeWithContext(), FuncGraphToParameter(),
-    HostParameterToWeight(), std::vector<AnfNodePtr>(), outputs_order.size(), actor_info);
+  auto parser = std::make_shared<ControlNodeParser>();
+  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
+                                             std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), parser,
+                                             outputs_order, outputs_order.size(), actor_info);
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,

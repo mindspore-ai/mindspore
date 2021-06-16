@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/actor/switch_actor.h"
+#include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "mindrt/include/async/async.h"
 #include "abstract/utils.h"
@@ -57,7 +58,6 @@ void SwitchActor::Initialize() {
   } else {
     InitSwitchLayer();
   }
-  input_datas_num_ = input_nodes_.size();
 }
 
 void SwitchActor::InitPartial(const AnfNodePtr &node, const size_t branch_id) {
@@ -68,8 +68,18 @@ void SwitchActor::InitPartial(const AnfNodePtr &node, const size_t branch_id) {
     // [0] ValueNode<Primitive> kPartial.
     // [1] ValueNode<FuncGraphPtr>.
     // [2..] Inputs.
-    auto node_inputs = cnode->inputs();
-    branch_func_graph_[branch_id] = GetValueNode<FuncGraphPtr>(node_inputs[kPartialFuncGraphPos]);
+    const auto &node_inputs = cnode->inputs();
+    if (node_inputs.size() <= kPartialFuncGraphPos) {
+      MS_LOG(EXCEPTION) << "Invalid Partial node:" << AnfAlgo::GetNodeDebugString(cnode);
+    }
+
+    const auto &func_graph = GetValueNode<FuncGraphPtr>(node_inputs[kPartialFuncGraphPos]);
+    if (func_graph->output()->isa<ValueNode>()) {
+      AddInput(func_graph->output(), branch_id);
+      return;
+    }
+
+    branch_func_graph_[branch_id] = func_graph;
     for (size_t j = kPartialInputStartPos; j < node_inputs.size(); ++j) {
       AddInput(node_inputs[j], branch_id);
     }
@@ -93,8 +103,11 @@ void SwitchActor::InitSwitch() {
   branch_inputs_pos_.resize(kSwitchPartialNum);
   branch_func_graph_.resize(kSwitchPartialNum);
   output_branch_arrows_.resize(kSwitchPartialNum);
-  input_nodes_.push_back(inputs[kSwitchCondPos]);
+  output_branch_result_arrows_.resize(kSwitchPartialNum);
+  output_branch_control_arrows_.resize(kSwitchPartialNum);
 
+  input_nodes_.push_back(inputs[kSwitchCondPos]);
+  input_datas_num_++;
   // Init the two branches of switch node.
   InitPartial(inputs[kSwitchFalseBranchPos], static_cast<size_t>(false));
   InitPartial(inputs[kSwitchTrueBranchPos], static_cast<size_t>(true));
@@ -118,6 +131,8 @@ void SwitchActor::InitSwitchLayer() {
   branch_inputs_pos_.resize(branch_nodes.size() - 1);
   branch_func_graph_.resize(branch_nodes.size() - 1);
   output_branch_arrows_.resize(branch_nodes.size() - 1);
+  output_branch_result_arrows_.resize(branch_nodes.size() - 1);
+  output_branch_control_arrows_.resize(branch_nodes.size() - 1);
 
   // Parse all branches.
   for (size_t i = 1; i < branch_nodes.size(); ++i) {
@@ -147,14 +162,23 @@ size_t SwitchActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
 void SwitchActor::AddInput(const AnfNodePtr &node, const size_t branch) {
   branch_total_inputs_[branch].push_back(node);
 
+  if (node->isa<ValueNode>() && (!HasAbstractMonad(node))) {
+    device_tensor_store_keys_.push_back({input_nodes_.size(), node.get()});
+    branch_inputs_pos_[branch].push_back(input_nodes_.size());
+    input_nodes_.push_back(node);
+    return;
+  }
+
   // Switch actor only receives parameter, updatestate node output is U, need to be skipped.
   if (IsPersistentDeviceTensor(node) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
     return;
   }
+
   auto iter = find(input_nodes_.begin(), input_nodes_.end(), node);
   if (iter == input_nodes_.end()) {
     branch_inputs_pos_[branch].push_back(input_nodes_.size());
     input_nodes_.push_back(node);
+    ++input_datas_num_;
   } else {
     branch_inputs_pos_[branch].push_back(iter - input_nodes_.begin());
   }
@@ -208,8 +232,7 @@ bool SwitchActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
 
 void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-
-  input_device_tensors_.resize(input_datas_num_);
+  input_device_tensors_.resize(input_nodes_.size());
   auto data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
@@ -218,6 +241,18 @@ void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
     }
   }
   data_iter->second.clear();
+
+  for (const auto &device_tensor_store_key : device_tensor_store_keys_) {
+    auto device_tensor =
+      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
+    if (device_tensor == nullptr) {
+      std::string error_info =
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+        ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    input_device_tensors_[device_tensor_store_key.first] = device_tensor;
+  }
 }
 
 void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
@@ -236,6 +271,28 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     MS_EXCEPTION_IF_NULL(data);
     data->data_ = input_device_tensors_[data_arrow->from_output_index_];
     Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
+  }
+
+  // Send result.
+  auto &output_branch_result_arrow = output_branch_result_arrows_[index];
+  for (size_t i = 0; i < output_branch_result_arrow.size(); ++i) {
+    auto &result_arrow = output_branch_result_arrow[i];
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    size_t from_index = result_arrow->from_output_index_;
+    for (const auto &backend_node : front_to_backend_parameter_[from_index]) {
+      if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second).get() ==
+          input_device_tensors_[from_index]) {
+        Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, backend_node.second,
+              result_arrow->to_input_index_, context);
+        break;
+      }
+    }
+  }
+
+  // Send output control.
+  auto source_aid = const_cast<AID *>(&GetAID());
+  for (auto &output_control : output_branch_control_arrows_[index]) {
+    Async(output_control, &OpActor::RunOpControl, source_aid, context);
   }
 }
 
@@ -260,6 +317,38 @@ void SwitchActor::EraseInput(OpContext<DeviceTensor> *context) {
 
 void SwitchActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensors_, device_context_, context);
+}
+
+void SwitchActor::FetchInputNode(const std::vector<AnfNodePtr> &origin_parameters_order,
+                                 const FrontToBackendNodeWithContext &front_to_backend_parameters,
+                                 const std::unordered_map<AnfNodePtr, AnfNodePtr> &front_to_backend_kernel) {
+  front_to_backend_parameter_.resize(input_nodes_.size());
+
+  for (size_t i = 0; i < input_nodes_.size(); ++i) {
+    const auto &input_node = input_nodes_[i];
+    if (input_node->isa<ValueNode>()) {
+      front_to_backend_parameter_[i].push_back({input_node, 0});
+    } else if (input_node->isa<Parameter>()) {
+      if (front_to_backend_parameters.find(input_node) != front_to_backend_parameters.end()) {
+        const auto backend_node = front_to_backend_parameters.at(input_node).first;
+        front_to_backend_parameter_[i].push_back({backend_node, 0});
+      }
+    } else if (input_node->isa<CNode>()) {
+      if (IsCallNode(input_node)) {
+        const auto func_graphs = FetchFuncGraphbyCallNode(input_node->cast<CNodePtr>());
+        for (const auto func_graph : func_graphs) {
+          if (func_graph->output()->isa<ValueNode>()) {
+            front_to_backend_parameter_[i].push_back({func_graph->output(), 0});
+          }
+        }
+      } else {
+        const auto &kernel_with_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0);
+        if (front_to_backend_kernel.find(input_node) != front_to_backend_kernel.end()) {
+          front_to_backend_parameter_[i].emplace_back(kernel_with_index);
+        }
+      }
+    }
+  }
 }
 
 }  // namespace runtime
