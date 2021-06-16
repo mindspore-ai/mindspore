@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 3 ]
 then 
-    echo "Usage: sh run_eval.sh [ANN_FILE] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval.sh [ANN_FILE] [CHECKPOINT_PATH] [DATA_PATH]"
 exit 1
 fi
 
@@ -29,8 +29,10 @@ get_real_path(){
 }
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
+PATH3=$3
 echo $PATH1
 echo $PATH2
+echo $PATH3
 
 if [ ! -f $PATH1 ]
 then 
@@ -56,10 +58,11 @@ then
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start eval for device $DEVICE_ID"
-python eval.py --device_id=$DEVICE_ID --ann_file=$PATH1 --checkpoint_path=$PATH2 &> log &
+python eval.py --device_id=$DEVICE_ID --ann_file=$PATH1 --checkpoint_path=$PATH2 --coco_root=$PATH3 &> log.txt &
 cd ..

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ] && [ $# != 0 ]
+if [ $# != 1 ] && [ $# != 2 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [PRETRAINED_PATH](optional)"
+    echo "Usage: sh run_standalone_train.sh [DATA_PATH] [PRETRAINED_PATH](optional)"
     exit 1
 fi
 
@@ -28,10 +28,13 @@ get_real_path(){
     fi
 }
 
-if [ $# == 1 ]
+PATH1=$(get_real_path $1)
+PATH2=$2
+echo $PATH1
+
+if [ $# == 2 ]
 then
-    PATH1=$(get_real_path $1)
-    echo $PATH1
+    echo $PATH2
 fi
 
 ulimit -u unlimited
@@ -46,19 +49,20 @@ then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-if [ $# == 1 ]
+if [ $# == 2 ]
 then
-    python train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 &> log &
+    python train.py --coco_root=$PATH1 --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH2 &> log &
 fi
 
-if [ $# == 0 ]
+if [ $# == 1 ]
 then
-    python train.py --do_train=True --device_id=$DEVICE_ID &> log &
+    python train.py --coco_root=$PATH1 --do_train=True --device_id=$DEVICE_ID &> log &
 fi
 
 cd ..
