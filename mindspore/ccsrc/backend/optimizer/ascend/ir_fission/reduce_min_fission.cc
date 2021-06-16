@@ -35,15 +35,15 @@ CNodePtr CreateReduceMin(const FuncGraphPtr &graph, const AnfNodePtr &input, con
 
 bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const std::vector<int64_t> &axis) {
   if (dtype != kNumberTypeFloat32) {
-    MS_LOG(INFO) << "ReduceMin's input Dtype is not float32, no need optimize!";
+    MS_LOG(INFO) << "ReduceMin's input Dtype is not float32, no need to optimize!";
     return false;
   }
   if (shape.size() == 0 || shape.size() == 1) {
-    MS_LOG(INFO) << "ReduceMin's input shape size is " << shape.size() << ", no need optimize!";
+    MS_LOG(INFO) << "ReduceMin's input shape size is " << shape.size() << ", no need to optimize!";
     return false;
   }
   if (axis.size() == 1) {
-    MS_LOG(INFO) << "ReduceMin axis size is 1, no need optimize!";
+    MS_LOG(INFO) << "ReduceMin axis size is 1, no need to optimize!";
     return false;
   }
   int64_t last_dim = SizeToLong(shape.size() - 1);
@@ -117,7 +117,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   auto prim = AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(prim);
   if (!prim->HasAttr(kAttrAxis) || !prim->HasAttr(kAttrKeepDims)) {
-    MS_LOG(INFO) << "ReduceMin has no axis or keep_dims, no need optimize!";
+    MS_LOG(INFO) << "ReduceMin has no axis or keep_dims, no need to optimize!";
     return nullptr;
   }
   auto axis_value = prim->GetAttr(kAttrAxis);
@@ -129,7 +129,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   auto keep_dims = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
 
   if (!NeedOptimize(dtype, shape, axis)) {
-    MS_LOG(INFO) << "No need optimize for this ReduceMin. " << cnode->DebugString();
+    MS_LOG(INFO) << "No need to optimize for this ReduceMin. " << cnode->DebugString();
     return nullptr;
   }
 

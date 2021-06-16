@@ -63,7 +63,7 @@ bool CheckBatchNorm(const FuncGraphPtr &graph, const CNodePtr &batchnorm) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(batchnorm);
   if (AnfAlgo::GetInputTensorNum(batchnorm) < kBnInputTensorNum) {
-    MS_LOG(DEBUG) << "BatchNorm's input less than " << kBnInputTensorNum;
+    MS_LOG(DEBUG) << "BatchNorm's input number less than " << kBnInputTensorNum;
     return false;
   }
   if (!AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnorm)) {
@@ -71,7 +71,7 @@ bool CheckBatchNorm(const FuncGraphPtr &graph, const CNodePtr &batchnorm) {
   }
   auto is_training = AnfAlgo::GetNodeAttr<bool>(batchnorm, kAttrIsTraining);
   if (is_training) {
-    MS_LOG(DEBUG) << "is_training is true, no need do fusion";
+    MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
     return false;
   }
 

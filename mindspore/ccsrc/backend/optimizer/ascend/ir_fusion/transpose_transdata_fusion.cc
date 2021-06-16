@@ -43,6 +43,7 @@ const AnfNodePtr TransposeTransDataFusion::Process(const FuncGraphPtr &func_grap
   MS_EXCEPTION_IF_NULL(transdata_kernel_build_info);
 
   auto new_transdata_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(new_transdata_builder);
   auto transpose_input_formats = transpose_kernel_build_info->GetAllInputFormats();
   new_transdata_builder->SetInputsFormat(transpose_input_formats);
   new_transdata_builder->SetOutputsFormat(transdata_kernel_build_info->GetAllOutputFormats());

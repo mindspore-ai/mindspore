@@ -85,8 +85,8 @@ const AnfNodePtr ClipByValueFusion::Process(const FuncGraphPtr &graph, const Anf
 
   auto prim = std::make_shared<Primitive>(kClipByValueOpName);
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), minimum->input(1),
-                                    is_first_input ? maximum_input1 : maximum_input0, minimum->input(2)};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), minimum->input(kIndex1),
+                                    is_first_input ? maximum_input1 : maximum_input0, minimum->input(kIndex2)};
   auto clip_by_value = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(clip_by_value);
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};

@@ -222,6 +222,7 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
                                       expand_dims_node.get());
   return expand_dims_node;
 }
+
 CNodePtr CreateExpandDimsPynative(const FuncGraphPtr &graph, const CNodePtr &real_div_node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(real_div_node);
@@ -355,6 +356,9 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
   ShapeVector tensor_shape;
   tensor_shape.emplace_back(softmax_output_shape[0]);
   tensor_shape.emplace_back(1);
+  if (softmax_output_shape[0] == 0) {
+    MS_LOG(EXCEPTION) << "output_shape[0] of softmax should not be 0";
+  }
   std::vector<float> tensor_value(softmax_output_shape[0], 1.0 / softmax_output_shape[0]);
   auto buf_size = sizeof(float) * tensor_value.size();
   auto tensor_y = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, tensor_shape, tensor_value.data(), buf_size);

@@ -88,7 +88,7 @@ InputToOutputRegistry::InputToOutputRegistry() {
 }
 
 InputToOutputRegistry &InputToOutputRegistry::Instance() {
-  static InputToOutputRegistry instance;
+  static InputToOutputRegistry instance{};
   return instance;
 }
 

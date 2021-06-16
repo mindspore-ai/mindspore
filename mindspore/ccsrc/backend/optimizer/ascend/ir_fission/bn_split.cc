@@ -164,6 +164,9 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
     MS_LOG(EXCEPTION) << "op[" << sync_bn_cnode->DebugString() << "] does not have attr device_num.";
   }
   auto device_num = AnfAlgo::GetNodeAttr<int64_t>(sync_bn_cnode, kDeviceNum);
+  if (device_num == 0) {
+    MS_LOG(EXCEPTION) << "device num should not be 0";
+  }
   MS_LOG(INFO) << "device_num value: " << device_num;
   const float device_num_reciprocal = 1.0 / device_num;
 

@@ -19,189 +19,188 @@
 #include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
-constexpr size_t INPUT0 = 0;
-constexpr size_t INPUT1 = 1;
-constexpr size_t INPUT2 = 2;
-constexpr size_t INPUT3 = 3;
-constexpr size_t INPUT4 = 4;
-
 const BaseRef AdamApplyOneFusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef sqrt0 = VectorRef({prim_sqrt, VectorRef({add1_var_, mul2, mul3})});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
-  return VectorRef({prim::kPrimSub, input_vars_[INPUT3], VectorRef({prim::kPrimMul, input_vars_[INPUT4], true_div0})});
+  return VectorRef(
+    {prim::kPrimSub, input_vars_[kIndex3], VectorRef({prim::kPrimMul, input_vars_[kIndex4], true_div0})});
 }
 
 const BaseRef AdamApplyOneCond1Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef sqrt0 = VectorRef({prim_sqrt, VectorRef({add1_var_, mul2, mul3})});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
-  return VectorRef({prim::kPrimSub, input_vars_[INPUT3], VectorRef({prim::kPrimMul, input_vars_[INPUT4], true_div0})});
+  return VectorRef(
+    {prim::kPrimSub, input_vars_[kIndex3], VectorRef({prim::kPrimMul, input_vars_[kIndex4], true_div0})});
 }
 
 const BaseRef AdamApplyOneCond2Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, VectorRef({prim::kPrimSquare, input_vars_[INPUT0]}), mul_x_input_vars_[INPUT3]});
+    VectorRef({prim::kPrimMul, VectorRef({prim::kPrimSquare, input_vars_[kIndex0]}), mul_x_input_vars_[kIndex3]});
   VectorRef sqrt0 = VectorRef({prim_sqrt, VectorRef({add1_var_, mul2, mul3})});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
-  return VectorRef({prim::kPrimSub, input_vars_[INPUT3], VectorRef({prim::kPrimMul, true_div0, input_vars_[INPUT4]})});
+  return VectorRef(
+    {prim::kPrimSub, input_vars_[kIndex3], VectorRef({prim::kPrimMul, true_div0, input_vars_[kIndex4]})});
 }
 
 const BaseRef AdamApplyOneCond3Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef sqrt0 = VectorRef({prim_sqrt, VectorRef({add1_var_, mul2, mul3})});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
-  return VectorRef({prim::kPrimSub, input_vars_[INPUT3], VectorRef({prim::kPrimMul, true_div0, input_vars_[INPUT4]})});
+  return VectorRef(
+    {prim::kPrimSub, input_vars_[kIndex3], VectorRef({prim::kPrimMul, true_div0, input_vars_[kIndex4]})});
 }
 
 const BaseRef AdamApplyOneCond4Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef sqrt0 = VectorRef({prim_sqrt, VectorRef({add1_var_, mul2, mul3})});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
-  return VectorRef({prim::kPrimSub, input_vars_[INPUT3], VectorRef({prim::kPrimMul, true_div0, input_vars_[INPUT4]})});
+  return VectorRef(
+    {prim::kPrimSub, input_vars_[kIndex3], VectorRef({prim::kPrimMul, true_div0, input_vars_[kIndex4]})});
 }
 
 const BaseRef AdamApplyOneAssignFusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
   VectorRef sqrt0 = VectorRef({prim_sqrt, add1});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   VectorRef sub0 =
-    VectorRef({sub0_var_, input_vars_[INPUT3], VectorRef({prim::kPrimMul, input_vars_[INPUT4], true_div0})});
-  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[INPUT3], sub0});
+    VectorRef({sub0_var_, input_vars_[kIndex3], VectorRef({prim::kPrimMul, input_vars_[kIndex4], true_div0})});
+  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[kIndex3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
-  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[INPUT2], add0});
+  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[kIndex2], add0});
   VectorRef depend1 = VectorRef({prim::kPrimDepend, depend0, assign1});
-  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[INPUT1], add1});
+  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[kIndex1], add1});
   return VectorRef({prim::kPrimDepend, depend1, assign2});
 }
 
 const BaseRef AdamApplyOneAssignCond1Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
   VectorRef sqrt0 = VectorRef({prim_sqrt, add1});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
   VectorRef sub0 =
-    VectorRef({sub0_var_, input_vars_[INPUT3], VectorRef({prim::kPrimMul, input_vars_[INPUT4], true_div0})});
-  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[INPUT3], sub0});
+    VectorRef({sub0_var_, input_vars_[kIndex3], VectorRef({prim::kPrimMul, input_vars_[kIndex4], true_div0})});
+  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[kIndex3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
-  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[INPUT2], add0});
+  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[kIndex2], add0});
   VectorRef depend1 = VectorRef({prim::kPrimDepend, depend0, assign1});
-  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[INPUT1], add1});
+  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[kIndex1], add1});
   return VectorRef({prim::kPrimDepend, depend1, assign2});
 }
 
 const BaseRef AdamApplyOneAssignCond2Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, VectorRef({prim::kPrimSquare, input_vars_[INPUT0]}), mul_x_input_vars_[INPUT3]});
+    VectorRef({prim::kPrimMul, VectorRef({prim::kPrimSquare, input_vars_[kIndex0]}), mul_x_input_vars_[kIndex3]});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
   VectorRef sqrt0 = VectorRef({prim_sqrt, add1});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   VectorRef sub0 =
-    VectorRef({sub0_var_, input_vars_[INPUT3], VectorRef({prim::kPrimMul, true_div0, input_vars_[INPUT4]})});
-  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[INPUT3], sub0});
+    VectorRef({sub0_var_, input_vars_[kIndex3], VectorRef({prim::kPrimMul, true_div0, input_vars_[kIndex4]})});
+  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[kIndex3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
-  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[INPUT2], add0});
+  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[kIndex2], add0});
   VectorRef depend1 = VectorRef({prim::kPrimDepend, depend0, assign1});
-  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[INPUT1], add1});
+  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[kIndex1], add1});
   return VectorRef({prim::kPrimDepend, depend1, assign2});
 }
 
 const BaseRef AdamApplyOneAssignCond3Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
   VectorRef sqrt0 = VectorRef({prim_sqrt, add1});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   VectorRef sub0 =
-    VectorRef({sub0_var_, input_vars_[INPUT3], VectorRef({prim::kPrimMul, true_div0, input_vars_[INPUT4]})});
-  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[INPUT3], sub0});
+    VectorRef({sub0_var_, input_vars_[kIndex3], VectorRef({prim::kPrimMul, true_div0, input_vars_[kIndex4]})});
+  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[kIndex3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
-  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[INPUT2], add0});
+  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[kIndex2], add0});
   VectorRef depend1 = VectorRef({prim::kPrimDepend, depend0, assign1});
-  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[INPUT1], add1});
+  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[kIndex1], add1});
   return VectorRef({prim::kPrimDepend, depend1, assign2});
 }
 
 const BaseRef AdamApplyOneAssignCond4Fusion::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT2], input_vars_[INPUT1]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex2], input_vars_[kIndex1]});
   VectorRef mul3 =
-    VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT3], VectorRef({prim::kPrimSquare, input_vars_[INPUT0]})});
+    VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex3], VectorRef({prim::kPrimSquare, input_vars_[kIndex0]})});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
   VectorRef sqrt0 = VectorRef({prim_sqrt, add1});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT1], input_vars_[INPUT0]});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[INPUT0], input_vars_[INPUT2]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex1], input_vars_[kIndex0]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[kIndex0], input_vars_[kIndex2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
   VectorRef sub0 =
-    VectorRef({sub0_var_, input_vars_[INPUT3], VectorRef({prim::kPrimMul, true_div0, input_vars_[INPUT4]})});
-  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[INPUT3], sub0});
+    VectorRef({sub0_var_, input_vars_[kIndex3], VectorRef({prim::kPrimMul, true_div0, input_vars_[kIndex4]})});
+  VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[kIndex3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
-  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[INPUT2], add0});
+  VectorRef assign1 = VectorRef({prim::kPrimAssign, input_vars_[kIndex2], add0});
   VectorRef depend1 = VectorRef({prim::kPrimDepend, depend0, assign1});
-  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[INPUT1], add1});
+  VectorRef assign2 = VectorRef({prim::kPrimAssign, input_vars_[kIndex1], add1});
   return VectorRef({prim::kPrimDepend, depend1, assign2});
 }
 
@@ -282,9 +281,9 @@ const AnfNodePtr AdamApplyOneFusion::Process(const FuncGraphPtr &func_graph, con
   }
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  (void)manager->Replace(add1, new_node_outputs[INPUT0]);
-  (void)manager->Replace(add0, new_node_outputs[INPUT1]);
-  return new_node_outputs[INPUT2];
+  (void)manager->Replace(add1, new_node_outputs[kIndex0]);
+  (void)manager->Replace(add0, new_node_outputs[kIndex1]);
+  return new_node_outputs[kIndex2];
 }
 }  // namespace opt
 }  // namespace mindspore

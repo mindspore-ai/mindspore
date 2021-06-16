@@ -19,16 +19,6 @@
 #include "frontend/optimizer/opt.h"
 #include "utils/trace_base.h"
 namespace mindspore {
-namespace {
-constexpr size_t kZeroIndex = 0;
-constexpr size_t kFirstIndex = 1;
-constexpr size_t kSecondIndex = 2;
-constexpr size_t kThirdIndex = 3;
-constexpr size_t kFourthIndex = 4;
-constexpr size_t kFifthIndex = 5;
-constexpr size_t kSixthIndex = 6;
-}  // namespace
-
 namespace opt {
 AnfNodePtr LambNextMVWithDecayRule::GetLambNextMVWithDecayOutput(const FuncGraphPtr &func_graph,
                                                                  const AnfNodePtr &new_node, const AnfNodePtr &add3,
@@ -38,10 +28,6 @@ AnfNodePtr LambNextMVWithDecayRule::GetLambNextMVWithDecayOutput(const FuncGraph
   MS_EXCEPTION_IF_NULL(add3);
   MS_EXCEPTION_IF_NULL(add5);
   MS_EXCEPTION_IF_NULL(equiv);
-  constexpr size_t kOutputIndex0 = 0;
-  constexpr size_t kOutputIndex1 = 1;
-  constexpr size_t kOutputIndex2 = 2;
-  constexpr size_t kOutputIndex3 = 3;
   auto add0 = GetAnfNodeByVar(equiv, add0_var_);
   MS_EXCEPTION_IF_NULL(add0);
   auto add1 = GetAnfNodeByVar(equiv, add1_var_);
@@ -61,10 +47,10 @@ AnfNodePtr LambNextMVWithDecayRule::GetLambNextMVWithDecayOutput(const FuncGraph
   CreateMultipleOutputsOfAnfNode(func_graph, new_node, kLambNextMVWithDecayOutputNum, &new_node_outputs);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  (void)manager->Replace(add3, new_node_outputs[kOutputIndex0]);
-  (void)manager->Replace(add0, new_node_outputs[kOutputIndex1]);
-  (void)manager->Replace(add1, new_node_outputs[kOutputIndex2]);
-  return new_node_outputs[kOutputIndex3];
+  (void)manager->Replace(add3, new_node_outputs[kIndex0]);
+  (void)manager->Replace(add0, new_node_outputs[kIndex1]);
+  (void)manager->Replace(add1, new_node_outputs[kIndex2]);
+  return new_node_outputs[kIndex3];
 }
 
 AnfNodePtr LambNextMVWithDecayRule::CreateLambNextMVWithDecayNode(const FuncGraphPtr &func_graph,
@@ -111,7 +97,7 @@ const AnfNodePtr LambNextMVWithDecayRule::Process(const FuncGraphPtr &func_graph
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(mul4) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input"
+    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input."
                       << " trace: " << trace::DumpSourceLines(node);
   }
   AnfNodeIndexSet mul4_outputs = manager->node_users()[mul4];
@@ -150,18 +136,18 @@ const BaseRef LambNextMVWithDecayRuleCond1::DefinePattern() const {
   MS_EXCEPTION_IF_NULL(prim_sqrt);
   const auto prim_deal_div = std::make_shared<Primitive>(kRealDivOpName);
   MS_EXCEPTION_IF_NULL(prim_deal_div);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, input_vars_[kFirstIndex], constant_mul_input_vars_[kSecondIndex]});
-  VectorRef mul3 = VectorRef({prim::kPrimMul, input_vars_[kZeroIndex], constant_mul_input_vars_[kThirdIndex]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, input_vars_[kIndex1], constant_mul_input_vars_[kIndex2]});
+  VectorRef mul3 = VectorRef({prim::kPrimMul, input_vars_[kIndex0], constant_mul_input_vars_[kIndex3]});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
-  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kSecondIndex]});
+  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kIndex2]});
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
   VectorRef add4 = VectorRef({prim::kPrimAdd, sqrt1, constant_add2_y_});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, input_vars_[kFourthIndex], constant_mul_input_vars_[kZeroIndex]});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, input_vars_[kThirdIndex], constant_mul_input_vars_[kFirstIndex]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, input_vars_[kIndex4], constant_mul_input_vars_[kIndex0]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, input_vars_[kIndex3], constant_mul_input_vars_[kIndex1]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kFifthIndex]});
+  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kIndex5]});
   VectorRef real_div4 = VectorRef({prim_deal_div, real_div0, add4});
-  VectorRef mul4 = VectorRef({mul4_var_, constant_mul_input_vars_[kFourthIndex], input_vars_[kSixthIndex]});
+  VectorRef mul4 = VectorRef({mul4_var_, constant_mul_input_vars_[kIndex4], input_vars_[kIndex6]});
   VectorRef add5 = VectorRef({prim::kPrimAdd, mul4, real_div4});
   return add5;
 }
@@ -191,18 +177,18 @@ const BaseRef LambNextMVWithDecayRuleCond2::DefinePattern() const {
   MS_EXCEPTION_IF_NULL(prim_sqrt);
   const auto prim_deal_div = std::make_shared<Primitive>(kRealDivOpName);
   MS_EXCEPTION_IF_NULL(prim_deal_div);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kSecondIndex], input_vars_[kFirstIndex]});
-  VectorRef mul3 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kThirdIndex], input_vars_[kZeroIndex]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex2], input_vars_[kIndex1]});
+  VectorRef mul3 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex3], input_vars_[kIndex0]});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
-  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kSecondIndex]});
+  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kIndex2]});
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
   VectorRef add4 = VectorRef({prim::kPrimAdd, constant_add2_y_, sqrt1});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kZeroIndex], input_vars_[kFourthIndex]});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kFirstIndex], input_vars_[kThirdIndex]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex0], input_vars_[kIndex4]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex1], input_vars_[kIndex3]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kFifthIndex]});
+  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kIndex5]});
   VectorRef real_div4 = VectorRef({prim_deal_div, real_div0, add4});
-  VectorRef mul4 = VectorRef({mul4_var_, constant_mul_input_vars_[kFourthIndex], input_vars_[kSixthIndex]});
+  VectorRef mul4 = VectorRef({mul4_var_, constant_mul_input_vars_[kIndex4], input_vars_[kIndex6]});
   VectorRef add5 = VectorRef({prim::kPrimAdd, mul4, real_div4});
   return add5;
 }
@@ -232,18 +218,18 @@ const BaseRef LambNextMVWithDecayRuleCond3::DefinePattern() const {
   MS_EXCEPTION_IF_NULL(prim_sqrt);
   const auto prim_deal_div = std::make_shared<Primitive>(kRealDivOpName);
   MS_EXCEPTION_IF_NULL(prim_deal_div);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, input_vars_[kFirstIndex], constant_mul_input_vars_[kSecondIndex]});
-  VectorRef mul3 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kThirdIndex], input_vars_[kZeroIndex]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, input_vars_[kIndex1], constant_mul_input_vars_[kIndex2]});
+  VectorRef mul3 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex3], input_vars_[kIndex0]});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
-  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kSecondIndex]});
+  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kIndex2]});
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
   VectorRef add4 = VectorRef({prim::kPrimAdd, sqrt1, constant_add2_y_});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, input_vars_[kFourthIndex], constant_mul_input_vars_[kZeroIndex]});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, input_vars_[kThirdIndex], constant_mul_input_vars_[kFirstIndex]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, input_vars_[kIndex4], constant_mul_input_vars_[kIndex0]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, input_vars_[kIndex3], constant_mul_input_vars_[kIndex1]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kFifthIndex]});
+  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kIndex5]});
   VectorRef real_div4 = VectorRef({prim_deal_div, real_div0, add4});
-  VectorRef mul4 = VectorRef({mul4_var_, input_vars_[kSixthIndex], constant_mul_input_vars_[kFourthIndex]});
+  VectorRef mul4 = VectorRef({mul4_var_, input_vars_[kIndex6], constant_mul_input_vars_[kIndex4]});
   VectorRef add5 = VectorRef({prim::kPrimAdd, mul4, real_div4});
   return add5;
 }
@@ -274,18 +260,18 @@ const BaseRef LambNextMVWithDecayRuleCond4::DefinePattern() const {
   MS_EXCEPTION_IF_NULL(prim_sqrt);
   const auto prim_deal_div = std::make_shared<Primitive>(kRealDivOpName);
   MS_EXCEPTION_IF_NULL(prim_deal_div);
-  VectorRef mul2 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kSecondIndex], input_vars_[kFirstIndex]});
-  VectorRef mul3 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kThirdIndex], input_vars_[kZeroIndex]});
+  VectorRef mul2 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex2], input_vars_[kIndex1]});
+  VectorRef mul3 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex3], input_vars_[kIndex0]});
   VectorRef add1 = VectorRef({add1_var_, mul2, mul3});
-  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kSecondIndex]});
+  VectorRef real_div1 = VectorRef({real_div1_var_, add1, input_vars_[kIndex2]});
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
   VectorRef add4 = VectorRef({prim::kPrimAdd, sqrt1, constant_add2_y_});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kZeroIndex], input_vars_[kFourthIndex]});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kFirstIndex], input_vars_[kThirdIndex]});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex0], input_vars_[kIndex4]});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, constant_mul_input_vars_[kIndex1], input_vars_[kIndex3]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kFifthIndex]});
+  VectorRef real_div0 = VectorRef({real_div0_var_, add0, input_vars_[kIndex5]});
   VectorRef real_div4 = VectorRef({prim_deal_div, real_div0, add4});
-  VectorRef mul4 = VectorRef({mul4_var_, constant_mul_input_vars_[kFourthIndex], input_vars_[kSixthIndex]});
+  VectorRef mul4 = VectorRef({mul4_var_, constant_mul_input_vars_[kIndex4], input_vars_[kIndex6]});
   VectorRef add5 = VectorRef({prim::kPrimAdd, real_div4, mul4});
   return add5;
 }
