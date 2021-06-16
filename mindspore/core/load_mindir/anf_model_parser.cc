@@ -35,6 +35,7 @@
 using std::string;
 
 namespace mindspore {
+std::map<std::string, tensor::TensorPtr> load_tensor_map;
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kCNodeShapeAttr[] = "shape";
 static constexpr char kCNodeShape1Attr[] = "shape1";
@@ -256,6 +257,19 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
 
   tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(parameter_proto);
   MS_EXCEPTION_IF_NULL(tensor_info);
+  MS_LOG(DEBUG) << "Load parameter name: " << debug_info_name;
+  if (load_tensor_map.find(debug_info_name) == load_tensor_map.end()) {
+    load_tensor_map[debug_info_name] = tensor_info;
+  } else {
+    MS_LOG(DEBUG) << "Parameter: " << debug_info_name << " has been already loaded, use it again.";
+    tensor::TensorPtr load_tensor_info = load_tensor_map[debug_info_name];
+    auto tensor_abstract = load_tensor_info->ToAbstract();
+    MS_EXCEPTION_IF_NULL(tensor_abstract);
+    node->set_abstract(tensor_abstract);
+    node->set_default_param(load_tensor_info);
+    anfnode_build_map_[parameter_proto.name()] = node;
+    return true;
+  }
   ParamInfoPtr param_info = std::make_shared<ParamInfo>();
   param_info->set_name(debug_info_name);
   tensor_info->set_param_info(param_info);
