@@ -21,7 +21,7 @@ from ._utils import Expander, ExpanderInfoValidator as VLD
 M_ALIGN = 16
 N_ALIGN = 16
 K_ALIGN = 8
-K_LIMIT = 4096
+K_LIMIT = 800
 MNK_LIMIT = 3 * (10 ** 10)
 N0_CHANNEL_ALIGN = 16
 N1_CHANNEL_ALIGN = 16

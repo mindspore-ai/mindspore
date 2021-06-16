@@ -58,6 +58,7 @@ def train_alexnet():
     context.set_context(save_graphs=False)
     if device_target == "GPU":
         context.set_context(enable_graph_kernel=True)
+        context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
 
     device_num = get_device_num()
     if config.dataset_name == "cifar10":
@@ -124,7 +125,8 @@ def train_alexnet():
         model = Model(network, loss_fn=loss, optimizer=opt, metrics=metrics, amp_level="O2", keep_batchnorm_fp32=False,
                       loss_scale_manager=loss_scale_manager)
     elif device_target == "GPU":
-        model = Model(network, loss_fn=loss, optimizer=opt, metrics=metrics, loss_scale_manager=loss_scale_manager)
+        model = Model(network, loss_fn=loss, optimizer=opt, metrics=metrics, amp_level="O2",
+                      loss_scale_manager=loss_scale_manager)
     else:
         raise ValueError("Unsupported platform.")
 
