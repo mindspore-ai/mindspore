@@ -244,7 +244,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
     if (op_info_ptr == nullptr) {
-      MS_LOG(ERROR) << "Not find op[" << op_name << "] in cpu";
+      MS_LOG(EXCEPTION) << "Not find op[" << op_name << "] in cpu";
     }
     kernel_attrs.clear();
     kernel::CPUKernelFactory::GetInstance().SetKernelAttrs(op_info_ptr, &kernel_attrs);
@@ -260,8 +260,8 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
       KernelNotSupportException(kernel_node, input_types, output_types);
     }
     matched = std::make_pair(false, false);
-    SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes, output_types,
-                 &matched, false);
+    (void)SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
+                       output_types, &matched, false);
     if (!matched.first) {
       KernelNotSupportException(kernel_node, input_types, output_types);
     }
