@@ -19,7 +19,6 @@ audio_path: "/cache/data"
 npy_path: "/cache/data"
 info_path: "/cache/data"
 info_name: 'annotations_final.csv'
-device_target: 'Ascend'
 device_id: 0
 mr_path: "/cache/data"
 mr_name: ['train', 'val']
@@ -41,7 +40,7 @@ prefix: 'MusicTagger'
 model_name: 'MusicTagger-10_543.ckpt'
 
 # export
-file_name: "/cache/data/musicTagger/fcn-4.air" 
+file_name: "fcn-4"
 file_format: "MINDIR"
 
 # 310 infer

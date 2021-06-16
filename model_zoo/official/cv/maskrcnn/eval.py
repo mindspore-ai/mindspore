@@ -162,16 +162,16 @@ def modelarts_process():
         print("#" * 200, os.listdir(save_dir_1))
         print("#" * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
 
-    config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
-    config.coco_root = config.dataset_path
-    config.checkpoint_path = os.path.join(config.dataset_path, config.ckpt_path)
-    config.ann_file = os.path.join(config.dataset_path, config.ann_file)
-    config.mindrecord_dir = os.path.join(config.dataset_path, config.mindrecord_dir)
+        config.coco_root = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+    config.checkpoint_path = os.path.join(config.output_path, config.ckpt_path)
+    config.ann_file = os.path.join(config.coco_root, config.ann_file)
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
 
 @moxing_wrapper(pre_process=modelarts_process)
 def eval_():
+    config.mindrecord_dir = os.path.join(config.coco_root, config.mindrecord_dir)
+    print('\neval.py config:\n', config)
     prefix = "MaskRcnn_eval.mindrecord"
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix)

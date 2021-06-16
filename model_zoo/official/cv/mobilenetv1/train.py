@@ -97,8 +97,8 @@ def modelarts_pre_process():
         print("#" * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
 
         config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
-    config.ckpt_path = config.output_path
-    config.pre_trained = os.path.join(config.dataset_path, config.pre_trained)
+    config.save_checkpoint_path = config.output_path
+    # config.pre_trained = os.path.join(config.dataset_path, config.pre_trained)
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)

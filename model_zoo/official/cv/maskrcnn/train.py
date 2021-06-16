@@ -98,16 +98,17 @@ def modelarts_pre_process():
         print("#" * 200, os.listdir(save_dir_1))
         print("#" * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
 
-    config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
-    config.pre_trained = os.path.join(config.dataset_path, config.ckpt_path)
+        config.coco_root = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+    config.pre_trained = os.path.join(config.coco_root, config.pre_trained)
     config.save_checkpoint_path = config.output_path
-    config.mindrecord_dir = os.path.join(config.dataset_path, config.mindrecord_dir)
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_maskrcnn():
+    config.mindrecord_dir = os.path.join(config.coco_root, config.mindrecord_dir)
+    print('\ntrain.py config:\n', config)
     print("Start train for maskrcnn!")
     if not config.do_eval and config.run_distribute:
         init()
@@ -130,12 +131,12 @@ def train_maskrcnn():
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
         if config.dataset == "coco":
-            if os.path.isdir(config.data_path):
+            if os.path.isdir(config.coco_root):
                 print("Create Mindrecord.")
                 data_to_mindrecord_byte_image("coco", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
-                raise Exception("data_path not exits.")
+                raise Exception("coco_root not exits.")
         else:
             if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
                 print("Create Mindrecord.")

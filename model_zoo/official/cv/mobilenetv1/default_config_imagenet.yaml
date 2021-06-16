@@ -36,11 +36,10 @@ lr_end: 0.0
 
 # Image classification - train
 dataset: 'imagenet2012'
-run_distribute: True
+run_distribute: False
 device_num: 1
 dataset_path: "/cache/data"
-device_target: 'Ascend'
-pre_trained: ""
+pre_trained: ''
 parameter_server: False
 
 # Image classification - eval
