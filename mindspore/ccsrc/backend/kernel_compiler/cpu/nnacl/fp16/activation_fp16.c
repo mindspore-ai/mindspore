@@ -138,7 +138,19 @@ int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
 }
 
 int HSwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
-  for (int i = 0; i < ele_num; ++i) {
+  int i = 0;
+#ifdef ENABLE_NEON
+  const MS_FLOAT16X8 zero_data = vdupq_n_f16(0);
+  const MS_FLOAT16X8 three_data = vdupq_n_f16(3);
+  const MS_FLOAT16X8 six_data = vdupq_n_f16(6);
+  for (; i <= ele_num - C8NUM; i += C8NUM) {
+    MS_FLOAT16X8 in_data = MS_LDQ_F16(src + i);
+    MS_FLOAT16X8 tmp = MS_MAXQ_F16(in_data + three_data, zero_data);
+    tmp = MS_MINQ_F16(tmp, six_data);
+    MS_STQ_F16(dst + i, vmulq_f16(in_data, MS_DIVQ_F16(tmp, six_data)));
+  }
+#endif
+  for (; i < ele_num; ++i) {
     float16_t in = src[i];
     float16_t relu6 = MSMIN(MSMAX(in + 3.0f, 0.0f), 6.0f);
     dst[i] = in * relu6 / (float16_t)6.0f;
@@ -155,6 +167,28 @@ int SwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
   for (; index < ele_num; index++) {
     dst[index] = src[index] * dst[index];
   }
+  return NNACL_OK;
+}
+
+int HSigmoidFp16(const float16_t *src, float16_t *dst, int ele_num) {
+  int offset = 0;
+#ifdef ENABLE_NEON
+  const MS_FLOAT16X8 zero_data = vdupq_n_f16(0);
+  const MS_FLOAT16X8 three_data = vdupq_n_f16(3);
+  const MS_FLOAT16X8 six_data = vdupq_n_f16(6);
+  for (; offset <= ele_num - C8NUM; offset += C8NUM) {
+    MS_FLOAT16X8 relu6_data = MS_LDQ_F16(src + offset) + three_data;
+    relu6_data = MS_MAXQ_F16(relu6_data, zero_data);
+    relu6_data = MS_MINQ_F16(relu6_data, six_data);
+    MS_STQ_F16(dst + offset, MS_DIVQ_F16(relu6_data, six_data));
+  }
+#endif
+
+  for (; offset < ele_num; offset++) {
+    float16_t tmp = (src[offset] + 3.0 < 0.0) ? 0.0 : src[offset] + 3.0;
+    dst[offset] = ((tmp < 6.0) ? tmp : 6.0) / 6.0;
+  }
+
   return NNACL_OK;
 }
 

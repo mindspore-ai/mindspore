@@ -267,7 +267,6 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
         break;
       case 'b':
         virtual_batch_ = atoi(optarg);
-        std::cout << "virtual_batch_: " << virtual_batch_ << std::endl;
         break;
       case 'h':
       default:

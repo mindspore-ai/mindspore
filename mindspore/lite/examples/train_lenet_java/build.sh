@@ -63,7 +63,7 @@ fi
 
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/${MINDSPORE_FILE_NAME} --strip-components=1
 
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/lib/* ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/* ${BASEPATH}/lib
 cd ${BASEPATH}/ || exit
 
 mvn package
