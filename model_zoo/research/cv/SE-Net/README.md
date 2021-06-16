@@ -12,10 +12,15 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
+    - [Inference Process](#inference-process)
+            - [Export MindIR](#export-mindir)
+            - [Infer on Ascend310](#infer-on-ascend310)
+            - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
+        - [310Inference Performance](#310inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -91,19 +96,22 @@ python eval.py --net=se-resnet50 --dataset=imagenet2012 --checkpoint_path=[CHECK
 .
 └──SE-Net
   ├── README.md
+  ├── ascend310_infer                      # application for 310 inference
   ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
     ├── run_eval.sh                        # launch ascend evaluation
     ├── run_standalone_train.sh            # launch ascend standalone training(1 pcs)
+    └─ run_infer_310.sh                    # shell script for 310inference on ascend
   ├── src
     ├── config.py                          # parameter configuration
     ├── CrossEntropySmooth.py              # loss definition for ImageNet2012 dataset
     ├── dataset.py                         # data preprocessing
     ├── lr_generator.py                    # generate learning rate for each step
     ├── resnet.py                          # resnet50 backbone
-    └── se.py                               # se-block definition
+    └── se.py                              # se-block definition
   ├── export.py                            # export model for inference
   ├── eval.py                              # eval net
+  ├── postprocess.py                       # postprocess scripts
   └── train.py                             # train net
 ```
 
@@ -195,6 +203,39 @@ bash run_eval.sh /imagenet/val/  /path/to/resnet-90_625.ckpt
 result: {'top_5_accuracy': 0.9385269007731959, 'top_1_accuracy': 0.7774645618556701}
 ```
 
+## [Inference Process](#contents)
+
+### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --batch_size [BATCH_SIZE] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`FILE_FORMAT` should be in ["AIR", "MINDIR"]
+`BATCH_SIZE` current batch_size can only be set to 1.
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_FILE] [DVPP] [DEVICE_ID]
+```
+
+- `LABEL_FILE` label.txt path. Write a py script to sort the category under the dataset, map the file names under the categories and category sort values,Such as[file name : sort value], and write the mapping results to the labe.txt file.
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. SE-net only support CPU mode.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+result: {'top_5_accuracy': 93.86%, 'top_1_accuracy': 77.80%}
+```
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
@@ -235,6 +276,22 @@ result: {'top_5_accuracy': 0.9385269007731959, 'top_1_accuracy': 0.7774645618556
 | batch_size          | 256                          |
 | Accuracy            | 77.74%                      |
 | Model for inference | # (.air file)            |
+
+### 310Inference Performance
+
+#### SE-ResNet50 on ImageNet2012
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | SE-ResNet50                 |
+| Resource            | Ascend 310; OS Euler2.8     |
+| Uploaded Date       | 06/16/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | ImageNet2012                |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | 77.80%                      |
+| Model for inference | 285M(.ckpt file)            |
 
 # [Description of Random Situation](#contents)
 
