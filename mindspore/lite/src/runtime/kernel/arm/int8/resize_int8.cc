@@ -363,8 +363,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
 }
 
 int ResizeInt8CPUKernel::Run() {
-  int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(ResizeInt8Impl, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->context_, ResizeInt8Impl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

@@ -881,7 +881,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
-  ActorThreadPool *thread_pool = this->context_->thread_pool_;
+  ActorThreadPool *thread_pool = this->context_->thread_pool();
   if (thread_pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     is_running_.store(false);

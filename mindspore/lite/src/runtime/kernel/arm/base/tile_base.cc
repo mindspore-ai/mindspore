@@ -128,8 +128,7 @@ int TileCPUKernel::SimpleTileImpl(int task_id) {
 }
 
 int TileCPUKernel::RunSimpleTile() {
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(SimpleTile, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, SimpleTile, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSimpleTile error code[" << ret << "]";
     return ret;

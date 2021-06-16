@@ -96,8 +96,7 @@ int SplitInt8CPUKernel::Run() {
     output_ptr_[i] = reinterpret_cast<int8_t *>(out_tensors_.at(i)->data_c());
   }
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(SplitInt8Run, this, thread_n_num_);
+  auto ret = ParallelLaunch(this->context_, SplitInt8Run, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

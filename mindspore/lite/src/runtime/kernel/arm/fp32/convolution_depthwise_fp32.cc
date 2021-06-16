@@ -116,8 +116,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
   MS_ASSERT(output_ptr_ != nullptr);
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ConvDwRun, this, conv_param_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, ConvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

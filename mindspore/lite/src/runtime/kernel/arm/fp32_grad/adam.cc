@@ -100,8 +100,7 @@ int AdamRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int AdamCPUKernel::Run() {
-  int error_code =
-    static_cast<const lite::InnerContext *>(this->context_)->thread_pool_->ParallelLaunch(AdamRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_, AdamRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Adam function error error_code[" << error_code << "]";
     return RET_ERROR;

@@ -69,8 +69,7 @@ int ConcatRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ConcatCPUKernel::Run() {
-  int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(ConcatRun, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->context_, ConcatRun, this, op_parameter_->thread_num_);
   return error_code;
 }
 

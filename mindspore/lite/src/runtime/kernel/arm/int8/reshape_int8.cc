@@ -57,8 +57,7 @@ int ReshapeInt8CPUKernel::Run() {
   elements_num_ = in_tensors_.at(kInputIndex)->ElementsNum();
   count_unit_ = op_parameter_->thread_num_ > 1 ? UP_DIV(elements_num_, op_parameter_->thread_num_) : elements_num_;
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ReshapeInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, ReshapeInt8Run, this, op_parameter_->thread_num_);
   return ret;
 }
 

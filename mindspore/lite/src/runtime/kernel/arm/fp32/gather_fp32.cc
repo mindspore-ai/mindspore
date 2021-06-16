@@ -91,8 +91,7 @@ int GatherCPUKernel::Run() {
     return ret;
   }
 
-  ret = static_cast<const lite::InnerContext *>(this->context_)
-          ->thread_pool_->ParallelLaunch(GatherRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->context_, GatherRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << ret << "]";
   }

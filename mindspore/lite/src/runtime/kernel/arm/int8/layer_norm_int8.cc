@@ -131,8 +131,7 @@ int LayerNormInt8CPUKernel::Run() {
   src_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
   dst_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(LayerNormInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, LayerNormInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LayerNormInt8Run error error_code[" << ret << "]";
     return ret;

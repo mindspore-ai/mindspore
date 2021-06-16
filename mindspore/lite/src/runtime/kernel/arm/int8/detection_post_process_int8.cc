@@ -64,8 +64,7 @@ int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **
   quant_size_ = tensor->ElementsNum();
   thread_n_stride_ = UP_DIV(quant_size_, op_parameter_->thread_num_);
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(DequantizeInt8ToFp32Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, DequantizeInt8ToFp32Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "QuantDTypeCastRun error error_code[" << ret << "]";
     context_->allocator->Free(*data);

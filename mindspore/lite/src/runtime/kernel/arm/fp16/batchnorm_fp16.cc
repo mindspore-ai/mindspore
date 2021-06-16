@@ -63,8 +63,7 @@ int BatchnormFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(BatchNormRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }

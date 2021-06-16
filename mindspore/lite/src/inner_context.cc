@@ -305,4 +305,15 @@ NpuDeviceInfo InnerContext::GetNpuInfo() const {
 
 // Support CPU backend to judge whether it supports Float16.
 bool InnerContext::IsSupportFloat16() const { return fp16_flag_; }
+
+ActorThreadPool *InnerContext::thread_pool() const { return thread_pool_; }
+
+int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
+  ActorThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
+  if (pool == nullptr) {
+    MS_LOG(ERROR) << "thread pool is nullptr";
+    return RET_NULL_PTR;
+  }
+  return pool->ParallelLaunch(func, content, task_num);
+}
 }  // namespace mindspore::lite

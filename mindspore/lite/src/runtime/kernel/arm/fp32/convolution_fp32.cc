@@ -151,8 +151,7 @@ int ConvolutionCPUKernel::Run() {
     PackWeight();
   }
 
-  ret = static_cast<const lite::InnerContext *>(this->context_)
-          ->thread_pool_->ParallelLaunch(ConvolutionImpl, this, thread_count_);
+  ret = ParallelLaunch(this->context_, ConvolutionImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << ret << "]";
   }

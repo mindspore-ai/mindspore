@@ -95,8 +95,7 @@ int PoolingInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 }
 
 int PoolingInt8CPUKernel::Run() {
-  int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(PoolingInt8Impl, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_, PoolingInt8Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "poolingInt8 error error_code[" << error_code << "]";
     return RET_ERROR;

@@ -155,8 +155,7 @@ int MulInt8CPUKernel::Run() {
   if (fast_hw_broadcast_) {
     elements_num_ = out_tensors_.front()->Batch() * out_tensors_.front()->Height() * out_tensors_.front()->Width();
     count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
-    return static_cast<const lite::InnerContext *>(this->context_)
-      ->thread_pool_->ParallelLaunch(FastHWBroadcatMulInt8Run, this, thread_count_);
+    return ParallelLaunch(this->context_, FastHWBroadcatMulInt8Run, this, thread_count_);
   }
 
   elements_num_ = out_tensors_.at(0)->ElementsNum();
@@ -176,15 +175,13 @@ int MulInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->MutableData()),
                        static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), input0_data_, input1_data_, tile_para);
-    ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(MulInt8Run, this, thread_count_);
+    ret = ParallelLaunch(this->context_, MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  ret = static_cast<const lite::InnerContext *>(this->context_)
-          ->thread_pool_->ParallelLaunch(MulInt8Run, this, thread_count_);
+  ret = ParallelLaunch(this->context_, MulInt8Run, this, thread_count_);
   return ret;
 }
 

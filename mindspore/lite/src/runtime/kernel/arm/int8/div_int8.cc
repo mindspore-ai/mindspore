@@ -128,8 +128,7 @@ int DivInt8CPUKernel::Run() {
                        static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), reinterpret_cast<int8_t *>(tile0_data_),
                        reinterpret_cast<int8_t *>(tile1_data_), &tile_para);
   }
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(DivInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, DivInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
     context_->allocator->Free(tile0_data_);
     context_->allocator->Free(tile1_data_);

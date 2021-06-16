@@ -411,8 +411,7 @@ int DeConvolutionWinogradCPUKernel::Run() {
     nhwc_output_ = src_out + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
 
     ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float));
-    ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(DeConvWgFp32Run, this, deconv_param_->thread_num_);
+    ret = ParallelLaunch(this->context_, DeConvWgFp32Run, this, deconv_param_->thread_num_);
     if (ret != RET_OK) {
       FreeRunBuf();
       MS_LOG(ERROR) << "DeConvWgFp32Run failed!";
@@ -420,8 +419,7 @@ int DeConvolutionWinogradCPUKernel::Run() {
     }
 
     /* post bias activate and nhwc */
-    ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(DeConvWgPostFp32Run, this, thread_num_hw_);
+    ret = ParallelLaunch(this->context_, DeConvWgPostFp32Run, this, thread_num_hw_);
     if (ret != RET_OK) {
       FreeRunBuf();
       MS_LOG(ERROR) << "DeConvWgPostFp32Run failed!";

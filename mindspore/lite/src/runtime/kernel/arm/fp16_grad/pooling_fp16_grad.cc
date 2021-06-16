@@ -99,8 +99,7 @@ int PoolingFp16GradImpl(void *cdata, int task_id, float lhs_scale, float rhs_sca
 
 int PoolingGradCPUKernelFp16::Run() {
   thread_num_ = context_->thread_num_;
-  int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(PoolingFp16GradImpl, this, thread_num_);
+  int error_code = ParallelLaunch(this->context_, PoolingFp16GradImpl, this, thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;
