@@ -26,6 +26,9 @@
 
 namespace mindspore {
 namespace opt {
+constexpr size_t kLayerNormGradOutputGammaIndex = 1;
+constexpr size_t kLayerNormGradOutputBetaIndex = 2;
+constexpr size_t kLayerNormGradInputGammaIndex = 4;
 void LayerNormGradSplit::CreateOutputsOfLayerNormXBackprop(
   const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
   std::vector<AnfNodePtr> *layer_norm_x_backprop_outputs) const {
@@ -64,13 +67,15 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackprop(
   layer_norm_beta_gamma_backprop->set_kernel_info(kernel_info);
   layer_norm_beta_gamma_backprop->set_scope(layer_norm_grad->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, 1),
-                AnfAlgo::GetOutputInferDataType(layer_norm_grad, 2)};
-  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 1), AnfAlgo::GetOutputDetailShape(layer_norm_grad, 2)};
+  auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputGammaIndex),
+                AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputBetaIndex)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, kLayerNormGradOutputGammaIndex),
+                 AnfAlgo::GetOutputDetailShape(layer_norm_grad, kLayerNormGradOutputBetaIndex)};
   AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_beta_gamma_backprop.get());
 
   // get device shape of LayerNormGrad's 5th Input, and convert it to attr
-  std::vector<size_t> shape_gamma = AnfAlgo::GetPrevNodeOutputInferShape(layer_norm_grad, 4);
+  std::vector<size_t> shape_gamma =
+    AnfAlgo::GetPrevNodeOutputInferShape(layer_norm_grad, kLayerNormGradInputGammaIndex);
   AnfAlgo::SetNodeAttr(kAttrShapeGamma, MakeValue(opt::Convert2Long(shape_gamma)), layer_norm_beta_gamma_backprop);
 
   CreateMultipleOutputsOfAnfNode(graph, layer_norm_beta_gamma_backprop, kLayerNormBetaGammaBackpropOutputNum,

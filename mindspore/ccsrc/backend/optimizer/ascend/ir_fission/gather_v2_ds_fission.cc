@@ -24,6 +24,10 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kOriginPaddingSize = 2;
+constexpr size_t kGatherInputNum = 4;
+constexpr size_t kGatherInputIndicesIndex = 2;
+constexpr size_t kGatherInputAxisIndex = 3;
 // only pad operator can run in dynamic shape.
 CNodePtr CreatePad(const FuncGraphPtr &graph, const CNodePtr &origin_node, const size_t &pad_dim_size) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -62,7 +66,7 @@ CNodePtr CreatePad(const FuncGraphPtr &graph, const CNodePtr &origin_node, const
 
   std::vector<ValuePtr> elements;
   for (size_t i = 0; i < shape.size() - 1; ++i) {
-    ShapeVector padding_vector(2);
+    ShapeVector padding_vector(kOriginPaddingSize);
     auto padding_value = MakeValue(padding_vector);
     elements.push_back(padding_value);
   }
@@ -82,11 +86,12 @@ CNodePtr CreateGatherV2Ds(const FuncGraphPtr &graph, const CNodePtr &origin_node
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(origin_node);
   MS_EXCEPTION_IF_NULL(pad);
-  if (origin_node->size() != 4) {
+  if (origin_node->size() != kGatherInputNum) {
     MS_LOG(EXCEPTION) << "In dynamic shape scene, gatherv2 should have 3 inputs";
   }
   std::vector<AnfNodePtr> gatherv2_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimGather->name())), pad,
-                                             origin_node->input(2), origin_node->input(3)};
+                                             origin_node->input(kGatherInputIndicesIndex),
+                                             origin_node->input(kGatherInputAxisIndex)};
   auto gather_v2 = graph->NewCNode(gatherv2_inputs);
   MS_EXCEPTION_IF_NULL(gather_v2);
   gather_v2->set_scope(origin_node->scope());

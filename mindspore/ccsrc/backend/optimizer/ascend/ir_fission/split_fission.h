@@ -16,20 +16,24 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_SPLIT_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_SPLIT_FISSION_H_
 
+#include <string>
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-constexpr int kSplitOutputsDivisor = 63;
+constexpr int64_t kSplitOutputsDivisor = 63;
 class SplitFission : public PatternProcessPass {
  public:
-  explicit SplitFission(bool multigraph = true)
-      : PatternProcessPass("split_fission", multigraph), outputs_divisor_(kSplitOutputsDivisor) {}
+  explicit SplitFission(const std::string name = "split_fission", bool multigraph = true,
+                        int64_t divisor = kSplitOutputsDivisor)
+      : PatternProcessPass(name, multigraph), outputs_divisor_(divisor) {}
   ~SplitFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
- private:
+ protected:
+  AnfNodePtr DoFission(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int64_t num_split, int64_t divisor,
+                       int64_t split_dim) const;
   int64_t outputs_divisor_;
 };
 }  // namespace opt
