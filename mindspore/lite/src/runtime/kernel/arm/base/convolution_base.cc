@@ -39,8 +39,9 @@ void *ConvolutionBaseCPUKernel::MallocAlignedData(size_t alignment, size_t size)
 }
 
 void ConvolutionBaseCPUKernel::FreeAlignedData(void **ptr) {
-  if (*ptr != nullptr) {
+  if (*ptr != nullptr && addr_map[reinterpret_cast<uintptr_t>(*ptr)] != nullptr) {
     free(addr_map[reinterpret_cast<uintptr_t>(*ptr)]);
+    addr_map[reinterpret_cast<uintptr_t>(*ptr)] = nullptr;
     *ptr = nullptr;
   }
 }

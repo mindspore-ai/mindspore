@@ -1112,7 +1112,7 @@ void MatVecMul1x32Kernel(float *dst, const float *src, const float *weight, cons
     "vmovups %%ymm3, 0x60(%5)\n"
     :
     : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
-    : "%rcx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm12", "%ymm4", "%ymm14");
+    : "%rcx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm12", "%ymm4", "%ymm14");
 }
 
 void MatVecMul1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
@@ -1217,7 +1217,7 @@ void MatVecMul1x24Kernel(float *dst, const float *src, const float *weight, cons
 
     :
     : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
-    : "%rcx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm2", "%ymm12", "%ymm4", "%ymm14");
+    : "%rcx", "%ymm0", "%ymm1", "%ymm2", "%ymm12", "%ymm4", "%ymm14");
 }
 
 void MatVecMul1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
@@ -1307,7 +1307,7 @@ void MatVecMul1x16Kernel(float *dst, const float *src, const float *weight, cons
 
     :
     : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
-    : "%ecx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm12", "%ymm4", "%ymm14");
+    : "%rcx", "%ymm0", "%ymm1", "%ymm12", "%ymm4", "%ymm14");
 }
 
 void MatVecMul1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
@@ -1376,7 +1376,7 @@ void MatVecMul1x8Kernel(float *dst, const float *src, const float *weight, const
 
     :
     : "r"(src), "r"(weight), "r"(bias), "r"(deep), "a"(act_flag), "r"(dst)  // 5
-    : "%ecx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm12", "%ymm4", "%ymm14");
+    : "%rcx", "%ymm0", "%ymm1", "%ymm12", "%ymm4", "%ymm14");
 }
 
 #ifdef ENABLE_DEBUG
