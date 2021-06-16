@@ -111,7 +111,16 @@ def run_predict(args_opt):
 
     # Compile network and obtain tensor layout for loading ckpt
     inputs_np = Tensor(np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32)
-    predict_layout = model_predict.infer_predict_layout(inputs_np)
+    current_index = Tensor(np.array([0]), mstype.int32)
+
+    if config.use_past:
+        batch_valid_length = Tensor(np.array([0]), mstype.int32)
+        init_true = Tensor([True], mstype.bool_)
+        inputs_np_1 = Tensor(np.ones(shape=(config.batch_size, 1)), mstype.int32)
+        predict_layout = model_predict.infer_predict_layout(inputs_np, current_index, init_true, batch_valid_length)
+        _ = model_predict.infer_predict_layout(inputs_np_1, current_index, init_true, batch_valid_length)
+    else:
+        predict_layout = model_predict.infer_predict_layout(inputs_np, current_index)
     print("======start load_distributed checkpoint", flush=True)
     # For 2.6B and 13B models, the number of ckpt files is 512.
     ckpt_name = 'filerted'
@@ -123,7 +132,7 @@ def run_predict(args_opt):
     print("================load param ok=================", flush=True)
 
     from src.tokenization_jieba import JIEBATokenizer
-    from src.generate import generate
+    from src.generate import generate, generate_increment
     # Define tokenizer
     tokenizer = JIEBATokenizer(os.path.join(args_opt.tokenizer_path, 'vocab10.vocab'),
                                os.path.join(args_opt.tokenizer_path, 'vocab10.model'))
@@ -134,7 +143,8 @@ def run_predict(args_opt):
     start_sentence = tokenizer.convert_tokens_to_ids(tokenized_token)
     input_ids = np.array(start_sentence).reshape(1, -1)
     # Call inference
-    output_ids = generate(model_predict, input_ids, opt)
+    generate_func = generate_increment if config.use_past else generate
+    output_ids = generate_func(model_predict, input_ids, opt)
     # Decode output ids to sentence
     output_samples = tokenizer.convert_ids_to_tokens(output_ids.tolist())
     print('Output is:', output_samples, flush=True)
