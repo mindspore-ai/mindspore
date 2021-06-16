@@ -19,17 +19,17 @@
 #include <unordered_map>
 #include <utility>
 #include <sstream>
-#include <cmath>
 
-#include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/core/ir/dtype.h"
+#include "mindspore/core/utils/log_adapter.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace {
 // npy file header start information
 const char kMagicPrefix[] = "\x93NUMPY";
 // magical length include kMagicPrefix length and version length
-const size_t kMagicLen = 8;
+const size_t kMagicLen = 6;
 const size_t kArrayAlign = 64;
 
 // first: header_length_type, second: encoding_type
@@ -90,23 +90,27 @@ std::string NpyHeader::shape_to_str() const {
   buffer << ")";
   return buffer.str();
 }
+
+// dtype description corresponding to tensor type
+const std::unordered_map<TypeId, DtypeDescr> type_desc_map = {
+  {kNumberTypeBool, DtypeDescr{'|', 'b', 1}},    {kNumberTypeInt8, DtypeDescr{'|', 'i', 1}},
+  {kNumberTypeInt16, DtypeDescr{'<', 'i', 2}},   {kNumberTypeInt32, DtypeDescr{'<', 'i', 4}},
+  {kNumberTypeInt64, DtypeDescr{'<', 'i', 8}},   {kNumberTypeUInt8, DtypeDescr{'|', 'u', 1}},
+  {kNumberTypeUInt16, DtypeDescr{'<', 'u', 2}},  {kNumberTypeUInt32, DtypeDescr{'<', 'u', 4}},
+  {kNumberTypeUInt64, DtypeDescr{'<', 'u', 8}},  {kNumberTypeFloat16, DtypeDescr{'<', 'f', 2}},
+  {kNumberTypeFloat32, DtypeDescr{'<', 'f', 4}}, {kNumberTypeFloat64, DtypeDescr{'<', 'f', 8}},
+};
 }  // namespace
 
 void int_to_byte(size_t number, char *byte, size_t length) {
+  const size_t byte_len = 8;
+  const size_t mask = 0xff;
   for (size_t i = 0; i < length; i++) {
-    byte[i] = (number >> (i * 8)) & 0xff;
+    byte[i] = (number >> (i * byte_len)) & mask;
   }
 }
 
 std::string GenerateNpyHeader(const ShapeVector &shape, TypeId type_id, bool fortran_order) {
-  static std::unordered_map<TypeId, DtypeDescr> type_desc_map = {
-    {kNumberTypeBool, DtypeDescr{'|', 'b', 1}},    {kNumberTypeInt8, DtypeDescr{'|', 'i', 1}},
-    {kNumberTypeInt16, DtypeDescr{'<', 'i', 2}},   {kNumberTypeInt32, DtypeDescr{'<', 'i', 4}},
-    {kNumberTypeInt64, DtypeDescr{'<', 'i', 8}},   {kNumberTypeUInt8, DtypeDescr{'|', 'u', 1}},
-    {kNumberTypeUInt16, DtypeDescr{'<', 'u', 2}},  {kNumberTypeUInt32, DtypeDescr{'<', 'u', 4}},
-    {kNumberTypeUInt64, DtypeDescr{'<', 'u', 8}},  {kNumberTypeFloat16, DtypeDescr{'<', 'f', 2}},
-    {kNumberTypeFloat32, DtypeDescr{'<', 'f', 4}}, {kNumberTypeFloat64, DtypeDescr{'<', 'f', 8}},
-  };
   auto type_desc = type_desc_map.find(type_id);
   if (type_desc == type_desc_map.end()) {
     MS_LOG(WARNING) << "Not support dump the " << TypeIdToType(type_id)->ToString() << " data to npy file.";
@@ -115,32 +119,32 @@ std::string GenerateNpyHeader(const ShapeVector &shape, TypeId type_id, bool for
 
   NpyHeader npy_header{type_desc->second, fortran_order, shape};
   std::string header_str = npy_header.str();
-  size_t header_len = header_str.length();
   version_type version{1, 0};
-  size_t total_len = kMagicLen + 2 + header_len + 1;
-  if (total_len > std::pow(2, 16)) {
+  const size_t header_len = header_str.length();
+  const size_t version_len = 2;
+  const size_t max_len = 65535;
+  size_t length_len = 2;
+  size_t total_len = kMagicLen + version_len + length_len + header_len + 1;
+  if (total_len > max_len) {
     version = {2, 0};
-    total_len = kMagicLen + 4 + header_len + 1;
+    length_len = 4;
+    total_len = kMagicLen + version_len + length_len + header_len + 1;
   }
+
+  const size_t pad_len = kArrayAlign - total_len % kArrayAlign;
+  const size_t padding_header_len = header_len + pad_len + 1;
+  const std::string padding(pad_len, ' ');
+  const std::string end_line = "\n";
+  char *length_byte = new char[length_len];
+  int_to_byte(padding_header_len, length_byte, length_len);
+
   std::ostringstream out;
-  out << kMagicPrefix;
-  out.put(version.first);
-  out.put(version.second);
-
-  size_t pad_len = kArrayAlign - total_len % kArrayAlign;
-  size_t padding_header_len = header_len + pad_len + 1;
-  if (version == version_type{1, 0}) {
-    char length_byte[2];
-    int_to_byte(padding_header_len, length_byte, 2);
-    out.write(length_byte, 2);
-  } else {
-    char length_byte[4];
-    int_to_byte(padding_header_len, length_byte, 4);
-    out.write(length_byte, 4);
-  }
-
-  std::string padding(pad_len, ' ');
-  out << header_str << padding << "\n";
+  (void)out.write(kMagicPrefix, SizeToLong(kMagicLen));
+  (void)out.put(version.first);
+  (void)out.put(version.second);
+  (void)out.write(length_byte, SizeToLong(length_len));
+  out << header_str << padding << end_line;
+  delete[] length_byte;
   return out.str();
 }
 }  // namespace mindspore

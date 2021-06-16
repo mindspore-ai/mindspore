@@ -60,7 +60,7 @@ void TbeUtils::GenSocInfo(nlohmann::json *soc_info_json) {
 void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &info) {
   char real_path[PATH_MAX] = {0};
   std::string path = kCceKernelMeta + json_name + kInfoSuffix;
-  if (path.size() > PATH_MAX) {
+  if (path.size() >= PATH_MAX) {
     MS_LOG(ERROR) << "File path: " << path << "is too long.";
     return;
   }

@@ -226,14 +226,22 @@ bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
             {"GeLUGrad", &EltWiseGradCPUKernel<T>::GeluGrad},       {"AsinGrad", &EltWiseGradCPUKernel<T>::AsinGrad},
             {"ACosGrad", &EltWiseGradCPUKernel<T>::ACosGrad},       {"AtanGrad", &EltWiseGradCPUKernel<T>::AtanGrad},
             {"AsinhGrad", &EltWiseGradCPUKernel<T>::AsinhGrad},     {"AcoshGrad", &EltWiseGradCPUKernel<T>::AcoshGrad}};
-  const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  if (inputs.size() < 2 || outputs.size() != 1) {
+    MS_LOG(ERROR) << kernel_name_ << " requires at least 2 inputs and 1 output, but got " << inputs.size()
+                  << " inputs and " << outputs.size() << " output.";
+    return false;
+  }
+  if (outputs[0]->size == 0) {
+    MS_LOG(WARNING) << kernel_name_ << " output memory size should be greater than 0, but got 0.";
+    return true;
+  }
+  const auto input0 = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto input1 = reinterpret_cast<T *>(inputs[1]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->addr);
 
-  size_t count = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
   CPUKernelUtils::ParallelFor(
-    std::bind(elt_map.at(kernel_name_), this, input1, input2, output, std::placeholders::_1, std::placeholders::_2),
-    count);
+    std::bind(elt_map.at(kernel_name_), this, input0, input1, output, std::placeholders::_1, std::placeholders::_2),
+    outputs[0]->size / sizeof(T));
   return true;
 }
 }  // namespace kernel

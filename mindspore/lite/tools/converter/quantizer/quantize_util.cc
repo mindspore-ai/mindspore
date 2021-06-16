@@ -618,7 +618,7 @@ void ParseBiasCorrection(PostQuantConfig *post_quant_config, std::string value) 
 STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config) {
   MS_ASSERT(post_quant_config != nullptr);
 
-  if (config_file.empty() || config_file.length() > PATH_MAX) {
+  if (config_file.empty() || config_file.length() >= PATH_MAX) {
     MS_LOG(ERROR) << "invalid config path!";
     return RET_PARAM_INVALID;
   }

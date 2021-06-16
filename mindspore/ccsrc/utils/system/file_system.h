@@ -145,8 +145,8 @@ class PosixWriteFile : public WriteFile {
     if (nullptr == file_name_.c_str()) {
       MS_LOG(EXCEPTION) << "The file path is null.";
     }
-    char path[PATH_MAX + 1] = {0x00};
-    if (file_name_.size() > PATH_MAX || nullptr == realpath(file_name_.c_str(), path)) {
+    char path[PATH_MAX] = {0x00};
+    if (file_name_.size() >= PATH_MAX || nullptr == realpath(file_name_.c_str(), path)) {
       MS_LOG(EXCEPTION) << "Convert to real path fail, file name is " << file_name_ << ".";
     }
 

@@ -19,6 +19,7 @@
 #include <vector>
 #include <set>
 #include <cstring>
+#include <climits>
 #include <unordered_map>
 #include <mutex>
 #include "CommonDataType.h"
@@ -26,8 +27,6 @@
 #include <sys/stat.h>
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.h"
-
-#define PATH_MAX 4096
 
 enum ModelLoadMethod {
   LOAD_FROM_FILE = 0,       // Loading from file, memory of model and weights are managed by ACL

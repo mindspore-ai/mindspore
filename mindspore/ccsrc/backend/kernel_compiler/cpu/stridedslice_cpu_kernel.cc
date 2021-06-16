@@ -209,7 +209,13 @@ void StridedSliceCPUKernel::ParallelRun(uint8_t *input_addr, uint8_t *output_add
 bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
                                    const std::vector<kernel::AddressPtr> &outputs) {
+  if (inputs.size() != 1 || outputs.size() != 1) {
+    MS_LOG(ERROR) << "StridedSlice requires 1 input and 1 output, but got " << inputs.size() << " input and "
+                  << outputs.size() << " output.";
+    return false;
+  }
   if (outputs[0]->size == 0) {
+    MS_LOG(WARNING) << "StridedSlice output memory size should be greater than 0, but got 0.";
     return true;
   }
   auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);

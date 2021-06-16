@@ -28,7 +28,7 @@
 
 namespace mindspore {
 std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
-  if (input_path.length() > PATH_MAX) {
+  if (input_path.length() >= PATH_MAX) {
     MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
   }
 #if defined(SYSTEM_ENV_POSIX)
@@ -39,7 +39,6 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
   MS_LOG(EXCEPTION) << "Unsupported platform.";
 #endif
   // get real path
-  std::string out_path;
   char real_path[PATH_MAX] = {0};
   // input_path is dir + file_name
   if (path_split_pos != std::string::npos) {
@@ -63,36 +62,30 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
       return std::nullopt;
     }
 #endif
-    out_path = std::string(real_path) + file_name;
-  } else {
-    // input_path is only file_name
+    return std::string(real_path) + file_name;
+  }
+  // input_path is only file_name
 #if defined(SYSTEM_ENV_POSIX)
-    if (input_path.length() > NAME_MAX) {
-      MS_LOG(EXCEPTION) << "The length of file name : " << input_path.length() << " exceeds limit: " << NAME_MAX;
-    }
-    if (realpath(common::SafeCStr(input_path), real_path) == nullptr) {
-      MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
-    }
+  if (input_path.length() > NAME_MAX) {
+    MS_LOG(EXCEPTION) << "The length of file name : " << input_path.length() << " exceeds limit: " << NAME_MAX;
+  }
+  if (realpath(common::SafeCStr(input_path), real_path) == nullptr) {
+    MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
+  }
 #elif defined(SYSTEM_ENV_WINDOWS)
-    if (_fullpath(real_path, common::SafeCStr(input_path), PATH_MAX) == nullptr) {
-      MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
-    }
+  if (_fullpath(real_path, common::SafeCStr(input_path), PATH_MAX) == nullptr) {
+    MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
+  }
 #endif
-    out_path = std::string(real_path);
-  }
-
-  if (out_path.length() > PATH_MAX) {
-    MS_LOG(EXCEPTION) << "The file real path: " << out_path << " exceeds limit: " << PATH_MAX;
-  }
-  return out_path;
+  return std::string(real_path);
 }
 
 bool Common::CreateNotExistDirs(const std::string &path) {
   std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
   char temp_path[PATH_MAX] = {0};
-  if (path.length() > PATH_MAX) {
-    MS_LOG(ERROR) << "Path lens is max than " << PATH_MAX;
+  if (path.length() >= PATH_MAX) {
+    MS_LOG(ERROR) << "Path length is equal to or max than " << PATH_MAX;
     return false;
   }
   for (uint32_t i = 0; i < path.length(); i++) {
@@ -294,7 +287,7 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
 }
 
 bool Common::SaveStringToFile(const std::string filename, const std::string string_info) {
-  if (filename.size() > PATH_MAX) {
+  if (filename.size() >= PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return false;
   }

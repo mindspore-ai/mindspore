@@ -223,10 +223,10 @@ Status Path::OpenFile(int *file_descriptor, bool create) {
     RETURN_STATUS_UNEXPECTED(oss.str());
   }
   // Convert to canonical form.
-  if (strlen(common::SafeCStr(path_)) > PATH_MAX) {
+  if (strlen(common::SafeCStr(path_)) >= PATH_MAX) {
     RETURN_STATUS_UNEXPECTED(strerror(errno));
   }
-  char canonical_path[PATH_MAX + 1] = {0x00};
+  char canonical_path[PATH_MAX] = {0x00};
 #if defined(_WIN32) || defined(_WIN64)
   auto err = _fullpath(canonical_path, common::SafeCStr(path_), PATH_MAX);
 #else
@@ -246,7 +246,7 @@ Status Path::OpenFile(int *file_descriptor, bool create) {
         RETURN_STATUS_UNEXPECTED(strerror(errno));
       }
       auto cur_inx = strlen(canonical_path);
-      if ((cur_inx + file_part.length() + 1) > PATH_MAX) {
+      if (cur_inx + file_part.length() >= PATH_MAX) {
         RETURN_STATUS_UNEXPECTED(strerror(errno));
       }
       canonical_path[cur_inx++] = separator_;

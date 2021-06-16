@@ -39,9 +39,7 @@ class SliceCPUKernel : public CPUKernel {
  private:
   void InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                       const std::vector<int64_t> &size);
-  void ParallelRun(void *input_addr, void *output_addr, int thread_num);
 
-  bool parallel_{true};
   int data_size_{4};
   SliceParameter slice_param_;
 };
