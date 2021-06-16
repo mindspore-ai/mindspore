@@ -73,16 +73,15 @@ int32_t DbgServices::AddWatchpoint(
     MS_LOG(INFO) << "cpp DbgServices AddWatchpoint name " << node.first;
     auto attr_map = node.second;
 
-    bool is_parameter = std::get<bool>(attr_map["is_parameter"]);
-    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint is_parameter " << is_parameter;
+    bool is_output = std::get<bool>(attr_map["is_output"]);
+    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint is_output " << is_output;
 
-    // std::vector<uint32_t> device_id = std::get<std::vector<uint32_t>>(attr_map["device_id"]);
-    std::vector<std::string> device_id_str = std::get<std::vector<std::string>>(attr_map["device_id"]);
-    std::vector<std::uint32_t> device_id;
-    std::transform(device_id_str.begin(), device_id_str.end(), std::back_inserter(device_id),
+    std::vector<std::string> rank_id_str = std::get<std::vector<std::string>>(attr_map["rank_id"]);
+    std::vector<std::uint32_t> rank_id;
+    std::transform(rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
                    [](std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
-    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint device_id ";
-    for (auto const &i : device_id) {
+    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint rank_id ";
+    for (auto const &i : rank_id) {
       MS_LOG(INFO) << i << " ";
     }
 
@@ -114,18 +113,18 @@ int32_t DbgServices::AddWatchpoint(
   std::transform(check_nodes.begin(), check_nodes.end(), std::back_inserter(check_node_list),
                  [](auto &node) -> std::tuple<std::string, bool> {
                    auto attr_map = node.second;
-                   return std::make_tuple(node.first, std::get<bool>(attr_map["is_parameter"]));
+                   return std::make_tuple(node.first, std::get<bool>(attr_map["is_output"]));
                  });
 
   std::transform(check_nodes.begin(), check_nodes.end(), std::back_inserter(check_node_device_list),
                  [](auto &node) -> std::tuple<std::string, std::vector<uint32_t>> {
                    auto attr_map = node.second;
-                   std::vector<std::string> device_id_str = std::get<std::vector<std::string>>(attr_map["device_id"]);
-                   std::vector<std::uint32_t> device_id;
+                   std::vector<std::string> rank_id_str = std::get<std::vector<std::string>>(attr_map["rank_id"]);
+                   std::vector<std::uint32_t> rank_id;
                    std::transform(
-                     device_id_str.begin(), device_id_str.end(), std::back_inserter(device_id),
+                     rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
                      [](std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
-                   return std::make_tuple(node.first, device_id);
+                   return std::make_tuple(node.first, rank_id);
                  });
 
   std::transform(
@@ -168,7 +167,7 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   std::vector<std::string> overflow_ops;
   std::vector<std::vector<DebugServices::parameter_t>> parameters;
   std::vector<int32_t> error_codes;
-  std::vector<unsigned int> device_id;
+  std::vector<unsigned int> rank_id;
   std::vector<unsigned int> root_graph_id;
   // #ifdef ENABLE_D
   //  overflow_ops = CheckOpOverflow();
@@ -180,7 +179,7 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   tensor_list = debug_services->ReadNeededDumpedTensors(iteration, &file_paths);
 
   debug_services->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                   file_paths, &tensor_list, false, true, true, &device_id, &root_graph_id);
+                                   file_paths, &tensor_list, false, true, true, &rank_id, &root_graph_id);
 
   std::vector<watchpoint_hit_t> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
@@ -191,13 +190,13 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
       api_parameter_vector.push_back(api_parameter);
     }
     watchpoint_hit_t hit(name[i], std::stoi(slot[i]), condition[i], watchpoint_id[i], api_parameter_vector,
-                         error_codes[i], device_id[i], root_graph_id[i]);
+                         error_codes[i], rank_id[i], root_graph_id[i]);
 
     MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t name " << hit.name;
     MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t slot " << hit.slot;
     MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t watchpoint_id " << hit.watchpoint_id;
     MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t error_code " << hit.error_code;
-    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t device_id " << hit.device_id;
+    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t rank_id " << hit.rank_id;
     MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t root_graph_id " << hit.root_graph_id;
 
     for (auto const &parameter_i : api_parameter_vector) {
@@ -213,20 +212,9 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   return hits;
 }
 
-std::string GetTensorFullName(tensor_info_t info) {
-  std::string node_name = info.node_name;
-  if (info.is_parameter) {
-    // scopes in node name are separated by '/'
-    // use the name without scope if truncate is true
-    auto found = node_name.find_last_of("/");
-    if (found != std::string::npos) {
-      node_name = node_name.substr(found + 1);
-    }
-  }
-  return node_name + ":" + std::to_string(info.slot);
-}
+std::string GetTensorFullName(tensor_info_t info) { return info.node_name + ":" + std::to_string(info.slot); }
 
-unsigned int GetTensorDeviceId(tensor_info_t info) { return info.device_id; }
+unsigned int GetTensorRankId(tensor_info_t info) { return info.rank_id; }
 
 unsigned int GetTensorRootGraphId(tensor_info_t info) { return info.root_graph_id; }
 
@@ -234,30 +222,39 @@ unsigned int GetTensorIteration(tensor_info_t info) { return info.iteration; }
 
 unsigned int GetTensorSlot(tensor_info_t info) { return info.slot; }
 
+bool GetTensorIsOutput(tensor_info_t info) { return info.is_output; }
+
 std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> info) {
   for (auto i : info) {
     MS_LOG(INFO) << "cpp DbgServices ReadTensor info name " << i.node_name << ", slot " << i.slot << ", iteration "
-                 << i.iteration << ", device_id " << i.device_id << ", root_graph_id " << i.root_graph_id;
+                 << i.iteration << ", rank_id " << i.rank_id << ", root_graph_id " << i.root_graph_id << ", is_output "
+                 << i.is_output;
   }
   std::vector<std::string> backend_name;
-  std::vector<unsigned int> device_id;
+  std::vector<unsigned int> rank_id;
   std::vector<unsigned int> root_graph_id;
   std::vector<unsigned int> iteration;
   std::vector<size_t> slot;
   std::vector<std::shared_ptr<TensorData>> result_list;
   std::vector<tensor_data_t> tensors_read;
+  std::vector<bool> is_output;
 
   std::transform(info.begin(), info.end(), std::back_inserter(backend_name), GetTensorFullName);
   std::transform(info.begin(), info.end(), std::back_inserter(slot), GetTensorSlot);
-  std::transform(info.begin(), info.end(), std::back_inserter(device_id), GetTensorDeviceId);
+  std::transform(info.begin(), info.end(), std::back_inserter(rank_id), GetTensorRankId);
   std::transform(info.begin(), info.end(), std::back_inserter(root_graph_id), GetTensorRootGraphId);
   std::transform(info.begin(), info.end(), std::back_inserter(iteration), GetTensorIteration);
+  std::transform(info.begin(), info.end(), std::back_inserter(is_output), GetTensorIsOutput);
 
   MS_LOG(INFO) << "cpp before";
   std::vector<std::string> file_paths;
   auto t1 = std::chrono::high_resolution_clock::now();
-  debug_services->ConvertReadTensors(backend_name, slot, device_id, iteration, root_graph_id, &file_paths);
-  debug_services->ReadDumpedTensor(backend_name, slot, device_id, iteration, root_graph_id, file_paths, &result_list);
+  // Convert the dumped data to npy format if it's async mode.
+  if (!debug_services->GetSyncMode()) {
+    debug_services->ConvertReadTensors(backend_name, slot, rank_id, iteration, root_graph_id, &file_paths);
+  }
+  debug_services->ReadDumpedTensor(backend_name, slot, rank_id, iteration, root_graph_id, is_output, file_paths,
+                                   &result_list);
   auto t2 = std::chrono::high_resolution_clock::now();
   /* Getting number of milliseconds as a double. */
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;

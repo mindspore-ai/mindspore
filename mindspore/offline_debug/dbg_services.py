@@ -113,8 +113,8 @@ class DbgServices():
             watchpoint_id (int): Watchpoint id
             watch_condition (int): A representation of the condition to be checked.
             check_node_list (dict): Dictionary of node names (str or '*' to check all nodes) as key,
-                                    mapping to device_id (list of ints or '*' to check all devices),
-                                    root_graph_id (list of ints or '*' to check all graphs) and is_parameter (bool).
+                                    mapping to rank_id (list of ints or '*' to check all devices),
+                                    root_graph_id (list of ints or '*' to check all graphs) and is_output (bool).
             parameter_list (list): List of parameters in watchpoint. Parameters should be instances of Parameter class.
                                    Each parameter describes the value to be checked in watchpoint.
 
@@ -128,8 +128,8 @@ class DbgServices():
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(watchpoint_id=1,
         >>>                              watch_condition=6,
-        >>>                              check_node_list={"conv2.bias" : {"device_id": [0],
-                                                                          root_graph_id: [0], "is_parameter": True}},
+        >>>                              check_node_list={"conv2.bias" : {"rank_id": [0],
+                                                                          root_graph_id: [0], "is_output": True}},
         >>>                              parameter_list=[dbg_services.Parameter(name="param",
         >>>                                                                     disabled=False,
         >>>                                                                     value=0.0,
@@ -140,7 +140,7 @@ class DbgServices():
         log("in Python AddWatchpoint")
         for node_name, node_info in check_node_list.items():
             for info_name, info_param in node_info.items():
-                if info_name in ["device_id", "root_graph_id"]:
+                if info_name in ["rank_id", "root_graph_id"]:
                     if info_param in ["*"]:
                         check_node_list[node_name][info_name] = ["*"]
                     else:
@@ -169,8 +169,8 @@ class DbgServices():
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(watchpoint_id=1,
         >>>                              watch_condition=6,
-        >>>                              check_node_list={"conv2.bias" : {"device_id": [5],
-                                                                          root_graph_id: [0], "is_parameter": True}},
+        >>>                              check_node_list={"conv2.bias" : {"rank_id": [5],
+                                                                          root_graph_id: [0], "is_output": True}},
         >>>                              parameter_list=[dbg_services.Parameter(name="param",
         >>>                                                                     disabled=False,
         >>>                                                                     value=0.0,
@@ -201,8 +201,8 @@ class DbgServices():
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(id=1,
         >>>                              watch_condition=6,
-        >>>                              check_node_list={"conv2.bias" : {"device_id": [5],
-                                                                          root_graph_id: [0], "is_parameter": True}},
+        >>>                              check_node_list={"conv2.bias" : {"rank_id": [5],
+                                                                          root_graph_id: [0], "is_output": True}},
         >>>                              parameter_list=[dbg_services.Parameter(name="param",
         >>>                                                                     disabled=False,
         >>>                                                                     value=0.0,
@@ -221,7 +221,7 @@ class DbgServices():
             watchpoint_id = watchpoint.get_watchpoint_id()
             parameters = watchpoint.get_parameters()
             error_code = watchpoint.get_error_code()
-            device_id = watchpoint.get_device_id()
+            rank_id = watchpoint.get_rank_id()
             root_graph_id = watchpoint.get_root_graph_id()
             param_list = []
             for param in parameters:
@@ -232,7 +232,7 @@ class DbgServices():
                 actual_value = param.get_actual_value()
                 param_list.append(Parameter(p_name, disabled, value, hit, actual_value))
             watchpoint_hit_list.append(WatchpointHit(name, slot, condition, watchpoint_id,
-                                                     param_list, error_code, device_id, root_graph_id))
+                                                     param_list, error_code, rank_id, root_graph_id))
         return watchpoint_hit_list
 
     @check_initialize_done
@@ -255,9 +255,9 @@ class DbgServices():
         >>> tensor_data_list = d_init.read_tensors([dbg_services.TensorInfo(node_name="conv2.bias",
         >>>                                                                 slot=0,
         >>>                                                                 iteration=8,
-        >>>                                                                 device_id=5,
+        >>>                                                                 rank_id=5,
         >>>                                                                 root_graph_id=0,
-        >>>                                                                 is_parameter=True)])
+        >>>                                                                 is_output=True)])
         """
 
         log("in Python ReadTensors info ", info)
@@ -283,22 +283,22 @@ class TensorInfo():
         node_name (str): Fully qualified name of the desired node.
         slot (int): The particular output for the requested node.
         iteration (int): The desired itraretion to gather tensor information.
-        device_id (int): The desired device id to gather tensor information.
-        is_parameter (bool): Whether node is a parameter (input, constant, bias, parameter).
+        rank_id (int): The desired rank id to gather tensor information.
+        is_output (bool): Whether node is an output or input.
 
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
         >>>                                       slot=0,
         >>>                                       iteration=8,
-        >>>                                       device_id=5,
+        >>>                                       rank_id=5,
         >>>                                       root_graph_id=0,
-        >>>                                       is_parameter=True)
+        >>>                                       is_output=True)
     """
 
     @check_tensor_info_init
-    def __init__(self, node_name, slot, iteration, device_id, root_graph_id, is_parameter):
-        self.instance = cds.tensor_info(node_name, slot, iteration, device_id, root_graph_id, is_parameter)
+    def __init__(self, node_name, slot, iteration, rank_id, root_graph_id, is_output=True):
+        self.instance = cds.tensor_info(node_name, slot, iteration, rank_id, root_graph_id, is_output)
 
     @property
     def node_name(self):
@@ -313,9 +313,9 @@ class TensorInfo():
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
             >>>                                       slot=0,
             >>>                                       iteration=8,
-            >>>                                       device_id=5,
+            >>>                                       rank_id=5,
             >>>                                       root_graph_id=0,
-            >>>                                       is_parameter=True)
+            >>>                                       is_output=True)
             >>> name = tensor_info.node_name
         """
 
@@ -334,9 +334,9 @@ class TensorInfo():
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
             >>>                                       slot=0,
             >>>                                       iteration=8,
-            >>>                                       device_id=5,
+            >>>                                       rank_id=5,
             >>>                                       root_graph_id=0,
-            >>>                                       is_parameter=True)
+            >>>                                       is_output=True)
             >>> slot = tensor_info.slot
         """
 
@@ -355,32 +355,34 @@ class TensorInfo():
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
             >>>                                       slot=0,
             >>>                                       iteration=8,
-            >>>                                       device_id=5,
+            >>>                                       rank_id=5,
             >>>                                       root_graph_id=0,
-            >>>                                       is_parameter=True)
+            >>>                                       is_output=True)
             >>> iteration = tensor_info.iteration
         """
 
         return self.instance.get_iteration()
 
     @property
-    def device_id(self):
+    def rank_id(self):
         """
-        Function to receive TensorInfo device_id.
+        Function to receive TensorInfo rank_id.
 
         Returns:
-            device_id of TensorInfo instance (int).
+            rank_id of TensorInfo instance (int).
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
             >>>                                       slot=0,
             >>>                                       iteration=8,
-            >>>                                       device_id=5,
+            >>>                                       rank_id=5,
             >>>                                       root_graph_id=0,
-            >>>                                       is_parameter=True)
-            >>> device_id = tensor_info.device_id
+            >>>                                       is_output=True)
+            >>> rank_id = tensor_info.rank_id
         """
+
+        return self.instance.get_rank_id()
 
     @property
     def root_graph_id(self):
@@ -395,34 +397,34 @@ class TensorInfo():
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
             >>>                                       slot=0,
             >>>                                       iteration=8,
-            >>>                                       device_id=5,
+            >>>                                       rank_id=5,
             >>>                                       root_graph_id=0,
-            >>>                                       is_parameter=True)
-            >>> device_id = tensor_info.root_graph_id
+            >>>                                       is_output=True)
+            >>> rank_id = tensor_info.root_graph_id
         """
 
         return self.instance.get_root_graph_id()
 
     @property
-    def is_parameter(self):
+    def is_output(self):
         """
-        Function to receive TensorInfo is_parameter.
+        Function to receive TensorInfo is_output.
 
         Returns:
-            is_parameter of TensorInfo instance (bool).
+            is_output of TensorInfo instance (bool).
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
             >>>                                       slot=0,
             >>>                                       iteration=8,
-            >>>                                       device_id=5,
+            >>>                                       rank_id=5,
             >>>                                       root_graph_id=0,
-            >>>                                       is_parameter=True)
-            >>> is_parameter = tensor_info.is_parameter
+            >>>                                       is_output=True)
+            >>> is_output = tensor_info.is_output
         """
 
-        return self.instance.get_is_parameter()
+        return self.instance.get_is_output()
 
 class TensorData():
     """
@@ -534,7 +536,7 @@ class WatchpointHit():
         parameters (list): A list of all parameters for WatchpointHit instance.
                            Parameters have to be instances of Parameter class.
         error_code (int): An explanation of certain scenarios where watchpoint could not be checked.
-        device_id (int): Device id where the watchpoint is hit.
+        rank_id (int): Rank id where the watchpoint is hit.
         root_graph_id (int): Root graph id where the watchpoint is hit.
 
     Examples:
@@ -545,17 +547,17 @@ class WatchpointHit():
         >>>                                             watchpoint_id=3,
         >>>                                             parameters=[param1, param2],
         >>>                                             error_code=0,
-        >>>                                             device_id=1,
+        >>>                                             rank_id=1,
         >>>                                             root_graph_id=1)
     """
 
     @check_watchpoint_hit_init
-    def __init__(self, name, slot, condition, watchpoint_id, parameters, error_code, device_id, root_graph_id):
+    def __init__(self, name, slot, condition, watchpoint_id, parameters, error_code, rank_id, root_graph_id):
         parameter_list_inst = []
         for elem in parameters:
             parameter_list_inst.append(elem.instance)
         self.instance = cds.watchpoint_hit(name, slot, condition, watchpoint_id,
-                                           parameter_list_inst, error_code, device_id, root_graph_id)
+                                           parameter_list_inst, error_code, rank_id, root_graph_id)
 
     @property
     def name(self):
@@ -573,7 +575,7 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
             >>> name = watchpoint_hit.name
         """
@@ -596,7 +598,7 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
             >>> slot = watchpoint_hit.slot
         """
@@ -619,7 +621,7 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
             >>> condition = watchpoint_hit.condition
         """
@@ -642,7 +644,7 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
             >>> watchpoint_id = watchpoint_hit.watchpoint_id
         """
@@ -665,7 +667,7 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
             >>> parameters = watchpoint_hit.parameters
         """
@@ -697,7 +699,7 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
             >>> error_code = watchpoint_hit.error_code
         """
@@ -705,12 +707,12 @@ class WatchpointHit():
         return self.instance.get_error_code()
 
     @property
-    def device_id(self):
+    def rank_id(self):
         """
-        Function to receive WatchpointHit device_id.
+        Function to receive WatchpointHit rank_id.
 
         Returns:
-            device_id of WatchpointHit instance (int).
+            rank_id of WatchpointHit instance (int).
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
@@ -720,12 +722,12 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
-            >>> device_id = watchpoint_hit.device_id
+            >>> rank_id = watchpoint_hit.rank_id
         """
 
-        return self.instance.get_device_id()
+        return self.instance.get_rank_id()
 
     @property
     def root_graph_id(self):
@@ -743,7 +745,7 @@ class WatchpointHit():
             >>>                                             watchpoint_id=3,
             >>>                                             parameters=[param1, param2],
             >>>                                             error_code=0,
-            >>>                                             device_id=1,
+            >>>                                             rank_id=1,
             >>>                                             root_graph_id=1)
             >>> root_graph_id = watchpoint_hit.root_graph_id
         """

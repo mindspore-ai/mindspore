@@ -47,7 +47,7 @@ struct parameter_t {
 
 struct watchpoint_hit_t {
   watchpoint_hit_t(const std::string &name, uint32_t slot, int condition, uint32_t watchpoint_id,
-                   const std::vector<parameter_t> &parameters, int32_t error_code, uint32_t device_id,
+                   const std::vector<parameter_t> &parameters, int32_t error_code, uint32_t rank_id,
                    uint32_t root_graph_id)
       : name(name),
         slot(slot),
@@ -55,7 +55,7 @@ struct watchpoint_hit_t {
         watchpoint_id(watchpoint_id),
         parameters(parameters),
         error_code(error_code),
-        device_id(device_id),
+        rank_id(rank_id),
         root_graph_id(root_graph_id) {}
   const std::string get_name() const { return name; }
   const uint32_t get_slot() const { return slot; }
@@ -63,7 +63,7 @@ struct watchpoint_hit_t {
   const uint32_t get_watchpoint_id() const { return watchpoint_id; }
   const std::vector<parameter_t> get_parameters() const { return parameters; }
   const int32_t get_error_code() const { return error_code; }
-  const uint32_t get_device_id() const { return device_id; }
+  const uint32_t get_rank_id() const { return rank_id; }
   const uint32_t get_root_graph_id() const { return root_graph_id; }
   std::string name;
   uint32_t slot;
@@ -71,31 +71,31 @@ struct watchpoint_hit_t {
   uint32_t watchpoint_id;
   std::vector<parameter_t> parameters;
   int32_t error_code;
-  uint32_t device_id;
+  uint32_t rank_id;
   uint32_t root_graph_id;
 };
 
 struct tensor_info_t {
-  tensor_info_t(const std::string &node_name, uint32_t slot, uint32_t iteration, uint32_t device_id,
-                uint32_t root_graph_id, bool is_parameter)
+  tensor_info_t(const std::string &node_name, uint32_t slot, uint32_t iteration, uint32_t rank_id,
+                uint32_t root_graph_id, bool is_output)
       : node_name(node_name),
         slot(slot),
         iteration(iteration),
-        device_id(device_id),
+        rank_id(rank_id),
         root_graph_id(root_graph_id),
-        is_parameter(is_parameter) {}
+        is_output(is_output) {}
   const std::string get_node_name() const { return node_name; }
   const uint32_t get_slot() const { return slot; }
   const uint32_t get_iteration() const { return iteration; }
-  const uint32_t get_device_id() const { return device_id; }
+  const uint32_t get_rank_id() const { return rank_id; }
   const uint32_t get_root_graph_id() const { return root_graph_id; }
-  const bool get_is_parameter() const { return is_parameter; }
+  const bool get_is_output() const { return is_output; }
   std::string node_name;
   uint32_t slot;
   uint32_t iteration;
-  uint32_t device_id;
+  uint32_t rank_id;
   uint32_t root_graph_id;
-  bool is_parameter;
+  bool is_output;
 };
 
 struct tensor_data_t {
