@@ -36,6 +36,7 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "debug/rdr/running_data_recorder.h"
+#include "utils/comm_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -57,10 +58,17 @@ bool GPUDeviceContext::Initialize() {
   const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
   bool collective_inited = CollectiveInitializer::instance().collective_inited();
   if (collective_inited && collective_handle_ != nullptr) {
+    DeviceContextKey old_key = device_context_key_;
     auto get_local_rank_funcptr =
       reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
     MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
     device_context_key_.device_id_ = IntToUint((*get_local_rank_funcptr)());
+
+    DeviceContextManager::GetInstance().UpdataDeviceContextKey(old_key, device_context_key_);
+
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_context_key_.device_id_);
   }
 
   // Set device id and initialize device resource.
@@ -396,6 +404,18 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
   mindspore::RDR::ClearGPUMemAddressInfo();
 #endif
   return result;
+}
+
+uint32_t GPUDeviceContext::GetRankID() const {
+  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
+  bool collective_inited = CollectiveInitializer::instance().collective_inited();
+  uint32_t rank_id = 0;
+  if (collective_inited && collective_handle_ != nullptr) {
+    if (!CommManager::GetInstance().GetRankID(kNcclWorldGroup, &rank_id)) {
+      MS_LOG(EXCEPTION) << "Failed to get rank id.";
+    }
+  }
+  return rank_id;
 }
 
 std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
