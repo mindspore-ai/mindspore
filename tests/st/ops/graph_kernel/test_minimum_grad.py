@@ -30,24 +30,37 @@ class MinmumGradNet(Cell):
         return self.minimum_grad(x, y, dy)
 
 
-def test_minimum_grad():
+def gen_data():
     np.random.seed(0)
-    input_x = np.random.normal(0, 1, [2, 3]).astype(np.float32)
-    input_y = np.random.normal(0, 1, [2, 3]).astype(np.float32)
-    input_dout = np.minimum(input_x, input_y).astype(np.float32)
+    input_x_np = np.random.normal(0, 1, [2, 3]).astype(np.float32)
+    input_y_np = np.random.normal(0, 1, [1]).astype(np.float32)
+    input_dout_np = np.minimum(input_x_np, input_y_np).astype(np.float32)
+    input_x = Tensor(input_x_np)
+    input_y = Tensor(input_y_np)
+    input_dout = Tensor(input_dout_np)
+    return input_x, input_y, input_dout
+
+
+def get_minimum_grad_output(input_x, input_y, input_dout, enable_graph_kernel=False):
+    context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = MinmumGradNet()
-    result = net(Tensor(input_x), Tensor(input_y), Tensor(input_dout))
-    dx = input_dout * (input_x <= input_y)
-    dy = input_dout - dx
-    assert np.allclose(result[0].asnumpy(), dx, rtol=1.e-4, atol=1.e-8, equal_nan=True)
-    assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+    result = net(input_x, input_y, input_dout)
+    return result[0].asnumpy(), result[1].asnumpy()
+
+
+def test_minimum_grad():
+    input_x, input_y, input_dout = gen_data()
+    result_off = get_minimum_grad_output(input_x, input_y, input_dout, False)
+    result_on = get_minimum_grad_output(input_x, input_y, input_dout, True)
+    assert np.allclose(result_on[0], result_off[0], rtol=1.e-4, atol=1.e-8, equal_nan=True)
+    assert np.allclose(result_on[1], result_off[1], rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_basic_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+def test_minimum_grad_gpu():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_minimum_grad()
 
 
@@ -55,6 +68,6 @@ def test_basic_gpu():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_basic_ascend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+def test_minimum_grad_ascend():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_minimum_grad()

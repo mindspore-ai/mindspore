@@ -16,6 +16,7 @@
 
 import copy
 import sys
+from functools import reduce
 from .model import GraphKernelUnsupportedException as GKException
 from .model import PrimLib, DataFormat as DF
 
@@ -125,15 +126,15 @@ class _Elemwise(OpInfer):
             if default_shape[-1] % 16 != 0:
                 raise GKException("should be multiplies of 16")
             return shape
-        #(32, 1) -> (1, 2, 16, 1)
+        # (32, 1) -> (1, 2, 16, 1)
         if len(default_shape) == 2 and default_shape[1] == 1:
             shape = [1, default_shape[0] // 16, 16, 1]
             if default_shape[0] % 16 != 0:
                 raise GKException("should be multiples of 16")
             return shape
-        #(32, 48) -> (3, 2, 16, 16)
+        # (32, 48) -> (3, 2, 16, 16)
         shape = [default_shape[1] // 16, default_shape[0] // 16, 16, 16]
-        if default_shape[0] % 16 != 0 or defautl_shape[1] % 16 != 0:
+        if default_shape[0] % 16 != 0 or default_shape[1] % 16 != 0:
             raise GKException("should be multiples of 16")
         return shape
 
@@ -146,11 +147,11 @@ class _Elemwise(OpInfer):
             return self._broadcast_shape([input.shape for input in self.inputs])
 
         # in case formats are fractal_nz, default_fromat/NHWC/HCHW(optional)
-        is_default_frac_nz = [input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW, DF.FRAC_NZ) \
-            for input in self.inputs]
+        is_default_frac_nz = [input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW, DF.FRAC_NZ)
+                              for input in self.inputs]
         if all(is_default_frac_nz):
-            nz_shapes = [self._to_nz(input.shape) if input.data_format != DF.FRAC_NZ else input.shape \
-                for input in self.inputs]
+            nz_shapes = [self._to_nz(input.shape) if input.data_format != DF.FRAC_NZ else input.shape
+                         for input in self.inputs]
             return self._broadcast_shape(nz_shapes)
 
         raise GKException("Only support default and fractal_nz")
@@ -213,6 +214,12 @@ class _Reshape(OpInfer):
 
 
 class Reshape(_Reshape):
+    def _check_shape(self):
+        size_before_reshape = reduce(lambda x, y: x * y, self.inputs[0].shape)
+        size_after_reshape = reduce(lambda x, y: x * y, self.attrs["shape"])
+        if size_before_reshape != size_after_reshape:
+            raise GKException("The shape product before and after reshaping should be equal")
+
     def _infer_shape(self):
         return self.attrs["shape"]
 
@@ -305,6 +312,7 @@ def conv_had_pad(pad_list, pad_mode):
 
 class Conv2D(OpInfer):
     """Conv2D infer"""
+
     def _infer_type(self):
         if isinstance(self.attrs, dict) and "dst_type" in self.attrs:
             return self.attrs["dst_type"]
@@ -343,6 +351,7 @@ class Conv2D(OpInfer):
 
 class MatMul(OpInfer):
     """MatMul infer"""
+
     def _infer_type(self):
         if isinstance(self.attrs, dict) and "dst_type" in self.attrs:
             return self.attrs["dst_type"]
@@ -365,6 +374,7 @@ class MatMul(OpInfer):
 
 class PadAkg(OpInfer):
     """PadAkg infer"""
+
     def _infer_shape(self):
         shape = list(self.inputs[0].shape)
         n = len(shape)
@@ -379,6 +389,7 @@ class PadAkg(OpInfer):
 
 class UnPadAkg(OpInfer):
     """UnPadAkg infer"""
+
     def _infer_shape(self):
         shape = list(self.inputs[0].shape)
         n = len(shape)
