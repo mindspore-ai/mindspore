@@ -26,6 +26,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "utils/config_manager.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -241,6 +242,7 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t cur_iter = dump_json_parser.cur_dump_iter();
   uint32_t graph_id = graph->graph_id();
+  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
 
   if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
     if (starting_graph_id == INT32_MAX) {
@@ -250,7 +252,9 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
     }
   }
 
-  if (dump_json_parser.async_dump_enabled() && dump_json_parser.IsDumpIter(cur_iter)) {
+  MS_LOG(INFO) << "sink_mode = " << sink_mode;
+
+  if (dump_json_parser.async_dump_enabled() && dump_json_parser.IsDumpIter(cur_iter) && !sink_mode) {
     auto zero_dir_dump_path =
       dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
 
@@ -291,6 +295,9 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t graph_id = graph->graph_id();
+  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
+
+  MS_LOG(INFO) << "sink_mode = " << sink_mode;
 
   if (dump_json_parser.GetIterDumpFlag()) {
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
@@ -301,7 +308,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     DumpOutput(graph, dump_path, debugger);
     DumpParametersAndConst(graph, dump_path, debugger);
     success = true;
-  } else if (dump_json_parser.async_dump_enabled()) {
+  } else if (dump_json_parser.async_dump_enabled() && !sink_mode) {
     uint32_t current_iter = dump_json_parser.cur_dump_iter();
 
     auto zero_dir_dump_path =
@@ -347,5 +354,17 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   }
 
   return success;
+}
+
+bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
+  // check if there is GetNext or InitDataSetQueue node
+  const auto &nodes = graph->execution_order();
+  for (const auto &node : nodes) {
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace mindspore

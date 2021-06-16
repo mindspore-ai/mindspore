@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <algorithm>
+#include <limits>
 #include "utility"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/mem.h"
@@ -135,6 +136,12 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   auto dump_path = DumpJsonParser::GetInstance().path();
+  const auto &input_ctrl_tensors = kernel_graph_->input_ctrl_tensors();
+  constexpr size_t kLoopSinkCtrlTensorNum = 3;  // cur step, cur epoch, steps per epoch
+  bool data_sink_mode = input_ctrl_tensors != nullptr && input_ctrl_tensors->size() >= kLoopSinkCtrlTensorNum;
+  std::string net_name = (data_sink_mode ? DumpJsonParser::GetInstance().net_name() : "_");
+  std::string iteration = (data_sink_mode ? DumpJsonParser::GetInstance().iteration_string() : "0");
+
   if (dump_path.empty()) {
     MS_LOG(EXCEPTION) << "Dump path invalid";
   }
@@ -149,15 +156,22 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
     }
   }
   dump_info->set_dump_path("/" + dump_path + "/rank_" + std::to_string(rank_id) + "/");
-  MS_LOG(INFO) << "[DataDump] dump_path:" << dump_path;
-  dump_info->set_model_name("_");
-  dump_info->set_dump_step("0");
+  MS_LOG(INFO) << "[DataDump] dump_path: " << dump_path;
+
+  dump_info->set_model_name(net_name);
+  MS_LOG(INFO) << "[DataDump] model_name: " << net_name;
+
+  MS_LOG(INFO) << "[DataDump] iteration_pre: " << iteration;
+  if (iteration == "all") {
+    iteration = "0-" + std::to_string(ULONG_MAX);
+  }
+  MS_LOG(INFO) << "[DataDump] iteration_post: " << iteration;
+  dump_info->set_dump_step(iteration);
+
   dump_info->set_model_id(graph_id);
   dump_info->set_flag(kAicpuLoadFlag);
 
-  const auto &input_ctrl_tensors = kernel_graph_->input_ctrl_tensors();
-  constexpr size_t kLoopSinkCtrlTensorNum = 3;  // cur step, cur epoch, steps per epoch
-  if (input_ctrl_tensors == nullptr || input_ctrl_tensors->size() < kLoopSinkCtrlTensorNum) {
+  if (!data_sink_mode) {
     MS_LOG(INFO) << "[DataDump] Not data sink mode, input_ctrl_tensor";
     return;
   }
