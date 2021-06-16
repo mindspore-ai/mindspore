@@ -27,6 +27,24 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType;
 
 namespace mindspore::kernel {
+void *ConvolutionBaseCPUKernel::MallocAlignedData(size_t alignment, size_t size) {
+  auto ptr = malloc(size + alignment);
+  if (ptr == nullptr) {
+    MS_LOG(ERROR) << "MallocAlignedData failed!";
+    return nullptr;
+  }
+  auto aligned_ptr = (reinterpret_cast<uintptr_t>(ptr) + alignment - 1) & (~(alignment - 1));
+  addr_map[aligned_ptr] = ptr;
+  return reinterpret_cast<void *>(aligned_ptr);
+}
+
+void ConvolutionBaseCPUKernel::FreeAlignedData(void **ptr) {
+  if (*ptr != nullptr) {
+    free(addr_map[reinterpret_cast<uintptr_t>(*ptr)]);
+    *ptr = nullptr;
+  }
+}
+
 ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
   if (bias_data_ != nullptr) {
     free(bias_data_);

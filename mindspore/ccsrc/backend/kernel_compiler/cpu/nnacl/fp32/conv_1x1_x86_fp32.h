@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 typedef void (*Conv1x1SWKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                                size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                                size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                                 size_t dst_flag);
 
 void Conv1X1SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom,
@@ -36,48 +36,48 @@ void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const fl
 
 #ifdef ENABLE_DEBUG
 void Conv1x1SWOWxOCKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                          size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                          size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                           size_t dst_flag);
 #endif
 
 void Conv1x1SW3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag);
 
 void Conv1x1SW1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag);
 
 void Conv1x1SW4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag);
 
 void Conv1x1SW1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag);
 
 void Conv1x1SW6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag);
 
 void Conv1x1SW1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag);
 
 void Conv1x1SW12x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                         size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                          size_t dst_flag);
 
 void Conv1x1SW8x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                        size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                        size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                         size_t dst_flag);
 
 void Conv1x1SW4x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                        size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                        size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                         size_t dst_flag);
 
 void Conv1x1SW1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                        size_t ow_block, size_t oc_block, size_t oc_algin, size_t ic_algin, size_t in_sw_step,
+                        size_t ow_block, size_t oc_block, size_t oc_align, size_t ic_align, size_t in_sw_step,
                         size_t dst_flag);
 #endif
 #ifdef __cplusplus
