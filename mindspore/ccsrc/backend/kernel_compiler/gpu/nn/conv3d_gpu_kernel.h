@@ -320,9 +320,6 @@ class Conv3dGpuKernel : public GpuKernel {
                                              output_desc_, requested_algo_count, &returned_algo_count, &perf_results),
       "cudnnGetConvolutionForwardAlgorithm_v7 failed");
     conv_algorithm_ = perf_results.algo;
-    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-      conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
-    }
   }
 
   void SetStrideAndDilation(const CNodePtr &kernel_node) {

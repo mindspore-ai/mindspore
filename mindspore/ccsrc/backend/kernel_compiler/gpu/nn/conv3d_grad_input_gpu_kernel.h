@@ -297,9 +297,6 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
                                                   requested_algo_count, &returned_algo_count, &perf_results),
       "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
     algo_ = perf_results.algo;
-    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-      algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
-    }
   }
 
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
