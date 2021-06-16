@@ -109,8 +109,7 @@ def test_lack_partition_and_db():
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader('dummy.mindrecord')
         reader.close()
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_lack_db(fixture_cv_file):
@@ -120,8 +119,7 @@ def test_lack_db(fixture_cv_file):
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader(CV_FILE_NAME)
         reader.close()
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_lack_some_partition_and_db(fixture_cv_file):
@@ -134,8 +132,7 @@ def test_lack_some_partition_and_db(fixture_cv_file):
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_lack_some_partition_first(fixture_cv_file):
@@ -147,8 +144,7 @@ def test_lack_some_partition_first(fixture_cv_file):
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_lack_some_partition_middle(fixture_cv_file):
@@ -160,8 +156,7 @@ def test_lack_some_partition_middle(fixture_cv_file):
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_lack_some_partition_last(fixture_cv_file):
@@ -173,8 +168,7 @@ def test_lack_some_partition_last(fixture_cv_file):
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_mindpage_lack_some_partition(fixture_cv_file):
@@ -185,8 +179,7 @@ def test_mindpage_lack_some_partition(fixture_cv_file):
     os.remove("{}".format(paths[0]))
     with pytest.raises(MRMOpenError) as err:
         MindPage(CV_FILE_NAME + "0")
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_lack_some_db(fixture_cv_file):
@@ -198,8 +191,7 @@ def test_lack_some_db(fixture_cv_file):
     with pytest.raises(MRMOpenError) as err:
         reader = FileReader(CV_FILE_NAME + "0")
         reader.close()
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 
@@ -210,8 +202,7 @@ def test_invalid_mindrecord():
         f.write(dummy)
     with pytest.raises(MRMOpenError) as err:
         FileReader(CV_FILE_NAME)
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
     os.remove(CV_FILE_NAME)
 
@@ -223,8 +214,7 @@ def test_invalid_db(fixture_cv_file):
         f.write('just for test')
     with pytest.raises(MRMOpenError) as err:
         FileReader('imagenet.mindrecord')
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_overwrite_invalid_mindrecord(fixture_cv_file):
@@ -233,8 +223,7 @@ def test_overwrite_invalid_mindrecord(fixture_cv_file):
         f.write('just for test')
     with pytest.raises(MRMOpenError) as err:
         create_cv_mindrecord(1)
-    assert '[MRMOpenError]: error_code: 1347690596, ' \
-           'error_msg: MindRecord File could not open successfully.' \
+    assert '[MRMOpenError]: MindRecord File could not open successfully.' \
            in str(err.value)
 
 def test_overwrite_invalid_db(fixture_cv_file):
@@ -243,8 +232,7 @@ def test_overwrite_invalid_db(fixture_cv_file):
         f.write('just for test')
     with pytest.raises(MRMGenerateIndexError) as err:
         create_cv_mindrecord(1)
-    assert '[MRMGenerateIndexError]: error_code: 1347690612, ' \
-           'error_msg: Failed to generate index.' in str(err.value)
+    assert '[MRMGenerateIndexError]: Failed to generate index.' in str(err.value)
 
 def test_read_after_close(fixture_cv_file):
     """test file reader when close read."""

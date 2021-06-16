@@ -347,7 +347,8 @@ Status SaveToDisk::CheckTensorRowShapes(const std::unordered_map<std::string, in
     return Status::OK();
   }
   auto res = map_compare(*PreTensorRowShapes_ptr, CurrTensorRowShapes);
-  CHECK_FAIL_RETURN_UNEXPECTED(res, "Error: current tensor shape is different from the previous's.");
+  CHECK_FAIL_RETURN_UNEXPECTED(res,
+                               "Error: besides dimension 0, other dimension shape is different from the previous's.");
   return Status::OK();
 }
 

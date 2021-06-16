@@ -63,7 +63,9 @@ def restricted_loads(s):
         return RestrictedUnpickler(f, encoding='bytes').load()
     except pickle.UnpicklingError:
         raise RuntimeError("Not a valid Cifar100 Dataset.")
-    else:
+    except UnicodeDecodeError:
+        raise RuntimeError("Not a valid Cifar100 Dataset.")
+    except:
         raise RuntimeError("Unexpected error while Unpickling Cifar100 Dataset.")
 
 
