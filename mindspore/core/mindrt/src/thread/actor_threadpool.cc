@@ -36,14 +36,13 @@ ActorThreadPool::~ActorThreadPool() {
 void ActorThreadPool::AsyncRunMultiTask(Worker *worker) {
   THREAD_RETURN_IF_NULL(worker);
   while (alive_) {
-    if (RunLocalKernelTask(worker) || RunPoolQueueActorTask()) {
-      // only run either local KernelTask or PoolQueue ActorTask
-    } else {
+    // only run either local KernelTask or PoolQueue ActorTask
+    bool busy = RunLocalKernelTask(worker) || RunPoolQueueActorTask();
+    if (!busy) {
       // wait until Actor enqueue or distribute KernelTask
-      worker->running = false;
       std::unique_lock<std::mutex> _l(worker->mutex);
-      worker->cond_var.wait(
-        _l, [&] { return worker->task != nullptr || (worker->running && !actor_queue_.empty()) || !alive_; });
+      worker->status = kThreadIdle;
+      worker->cond_var.wait(_l, [&] { return worker->status == kThreadBusy || !alive_; });
     }
   }
 }
@@ -75,10 +74,11 @@ void ActorThreadPool::EnqueReadyActor(const ActorReference &actor) {
     actor_queue_.push(actor);
   }
   THREAD_INFO("actor[%s] enqueue success", actor->GetAID().Name().c_str());
-  // active one free actor thread
+  // active one idle actor thread if exist
   for (size_t i = 0; i < actor_thread_num_; ++i) {
-    bool expected = false;
-    if (workers_[i]->running.compare_exchange_strong(expected, true)) {
+    std::lock_guard<std::mutex> _l(workers_[i]->mutex);
+    if (workers_[i]->status == kThreadIdle) {
+      workers_[i]->status = kThreadBusy;
       workers_[i]->cond_var.notify_one();
       break;
     }
