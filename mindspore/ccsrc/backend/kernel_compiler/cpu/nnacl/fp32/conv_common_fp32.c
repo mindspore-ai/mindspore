@@ -147,17 +147,10 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   int in_kw_step = sw_param->in_kw_step_;
   int in_kh_step = sw_param->in_kh_step_;
   const int ow_block_num[4] = {12, 6, 4, 3};
-#ifdef ENABLE_DEBUG
-  const SWConvKernel kernel[4][2] = {{SWConvWxKKernel, SWConvWxKKernel},
-                                     {SWConvWxKKernel, SWConvWxKKernel},
-                                     {SWConvWxKKernel, SWConvWxKKernel},
-                                     {SWConvWxKKernel, SWConvWxKKernel}};
-#else
   const SWConvKernel kernel[4][2] = {{SWConv1x8Kernel, SWConv12x8Kernel},
                                      {SWConv1x16Kernel, SWConv6x16Kernel},
                                      {SWConv1x24Kernel, SWConv4x24Kernel},
                                      {SWConv1x32Kernel, SWConv3x32Kernel}};
-#endif
   for (int b = 0; b < conv_param->output_batch_; b++) {
     for (int oh = task_id; oh < conv_param->output_h_; oh += conv_param->thread_num_) {
       float *dst_oh = output_data + oh * sw_param->out_h_step_;
@@ -206,7 +199,6 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   }  // batch loop
 }
 
-#ifndef ENABLE_DEBUG
 void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
@@ -438,21 +430,21 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
   float *dst_3 = dst + 3 * oc_algin;
   oc_algin *= sizeof(float);
   asm volatile(
-    "cmpq $0, %2\n"
+    "cmpq $0, %0\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
-    "vmovaps 0x40(%2), %%ymm2\n"
+    "vmovaps (%0), %%ymm0\n"
+    "vmovaps 0x20(%0), %%ymm1\n"
+    "vmovaps 0x40(%0), %%ymm2\n"
     // We need to copy ymm0 to ymm3 to reduce IO time, but unfortunately I didn't find the corresponding instruction.
-    "vmovaps (%2), %%ymm3\n"
-    "vmovaps 0x20(%2), %%ymm4\n"
-    "vmovaps 0x40(%2), %%ymm5\n"
-    "vmovaps (%2), %%ymm6\n"
-    "vmovaps 0x20(%2), %%ymm7\n"
-    "vmovaps 0x40(%2), %%ymm8\n"
-    "vmovaps (%2), %%ymm9\n"
-    "vmovaps 0x20(%2), %%ymm10\n"
-    "vmovaps 0x40(%2), %%ymm11\n"
+    "vmovaps (%0), %%ymm3\n"
+    "vmovaps 0x20(%0), %%ymm4\n"
+    "vmovaps 0x40(%0), %%ymm5\n"
+    "vmovaps (%0), %%ymm6\n"
+    "vmovaps 0x20(%0), %%ymm7\n"
+    "vmovaps 0x40(%0), %%ymm8\n"
+    "vmovaps (%0), %%ymm9\n"
+    "vmovaps 0x20(%0), %%ymm10\n"
+    "vmovaps 0x40(%0), %%ymm11\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -467,6 +459,13 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
     "vxorps %%ymm9, %%ymm9, %%ymm9\n"
     "vxorps %%ymm10, %%ymm10, %%ymm10\n"
     "vxorps %%ymm11, %%ymm11, %%ymm11\n"
+    "1:\n"
+    :
+    : "r"(bias)
+    : "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10", "%ymm11",
+      "%ymm12", "%ymm13", "%ymm14", "%ymm15");
+
+  asm volatile(
     "1:\n"              // LoopH
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
@@ -493,13 +492,13 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
     "vfmadd231ps %%ymm15, %%ymm13, %%ymm7\n"
     "vfmadd231ps %%ymm15, %%ymm14, %%ymm8\n"
 
-    "addq %10, %%rdx\n"  // src_3
+    "addq %2, %%rdx\n"  // src_3
     "vbroadcastss (%%rdx), %%ymm15\n"
     "vfmadd231ps %%ymm15, %%ymm12, %%ymm9\n"
     "vfmadd231ps %%ymm15, %%ymm13, %%ymm10\n"
     "vfmadd231ps %%ymm15, %%ymm14, %%ymm11\n"
 
-    "subq %10, %%rdx\n"
+    "subq %2, %%rdx\n"
     "addq $96, %1\n"
     "addq $4, %%rdx\n"
     "dec %%r12\n"
@@ -514,8 +513,8 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
     "dec %3\n"
     "jg 1b\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(ic_algin), "r"(in_kw_step),  // 6
-      "r"(in_kh_step), "r"(in_sw_step), "r"(kw_remainder), "r"(src_3_step)                             // 10
+    : "r"(src), "r"(weight), "r"(src_3_step), "r"(kernel_h), "r"(kernel_w), "r"(ic_algin), "r"(in_kw_step),  // 6
+      "r"(in_kh_step), "r"(in_sw_step), "r"(kw_remainder)
     : "%rcx", "%rdx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8",
       "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 
@@ -662,21 +661,21 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
   float *dst_3 = dst + 3 * oc_algin;
   oc_algin *= sizeof(float);
   asm volatile(
-    "cmpq $0, %2\n"
+    "cmpq $0, %0\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
+    "vmovaps (%0), %%ymm0\n"
+    "vmovaps 0x20(%0), %%ymm1\n"
     // We need to copy ymm0 to ymm3 to reduce IO time, but unfortunately I didn't find the corresponding instruction.
-    "vmovaps (%2), %%ymm2\n"
-    "vmovaps 0x20(%2), %%ymm3\n"
-    "vmovaps (%2), %%ymm4\n"
-    "vmovaps 0x20(%2), %%ymm5\n"
-    "vmovaps (%2), %%ymm6\n"
-    "vmovaps 0x20(%2), %%ymm7\n"
-    "vmovaps (%2), %%ymm8\n"
-    "vmovaps 0x20(%2), %%ymm9\n"
-    "vmovaps (%2), %%ymm10\n"
-    "vmovaps 0x20(%2), %%ymm11\n"
+    "vmovaps (%0), %%ymm2\n"
+    "vmovaps 0x20(%0), %%ymm3\n"
+    "vmovaps (%0), %%ymm4\n"
+    "vmovaps 0x20(%0), %%ymm5\n"
+    "vmovaps (%0), %%ymm6\n"
+    "vmovaps 0x20(%0), %%ymm7\n"
+    "vmovaps (%0), %%ymm8\n"
+    "vmovaps 0x20(%0), %%ymm9\n"
+    "vmovaps (%0), %%ymm10\n"
+    "vmovaps 0x20(%0), %%ymm11\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -691,6 +690,13 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
     "vxorps %%ymm9, %%ymm9, %%ymm9\n"
     "vxorps %%ymm10, %%ymm10, %%ymm10\n"
     "vxorps %%ymm11, %%ymm11, %%ymm11\n"
+    "1:\n"
+    :
+    : "r"(bias)
+    : "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10", "%ymm11",
+      "%ymm12", "%ymm13", "%ymm14", "%ymm15");
+
+  asm volatile(
     "1:\n"              // LoopH
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
@@ -713,7 +719,7 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
     "vfmadd231ps %%ymm15, %%ymm12, %%ymm4\n"
     "vfmadd231ps %%ymm15, %%ymm13, %%ymm5\n"
 
-    "addq %10, %%rdx\n"  // src_3
+    "addq %2, %%rdx\n"  // src_3
     "vbroadcastss (%%rdx), %%ymm15\n"
     "vfmadd231ps %%ymm15, %%ymm12, %%ymm6\n"
     "vfmadd231ps %%ymm15, %%ymm13, %%ymm7\n"
@@ -726,7 +732,7 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
     "vfmadd231ps %%ymm15, %%ymm12, %%ymm10\n"
     "vfmadd231ps %%ymm15, %%ymm13, %%ymm11\n"
 
-    "subq %10, %%rdx\n"
+    "subq %2, %%rdx\n"
     "addq $64, %1\n"
     "addq $4, %%rdx\n"
     "dec %%r12\n"
@@ -741,8 +747,8 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
     "dec %3\n"
     "jg 1b\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(ic_algin), "r"(in_kw_step),  // 6
-      "r"(in_kh_step), "r"(in_sw_step), "r"(kw_remainder), "r"(src_3_step)                             // 10
+    : "r"(src), "r"(weight), "r"(src_3_step), "r"(kernel_h), "r"(kernel_w), "r"(ic_algin), "r"(in_kw_step),  // 6
+      "r"(in_kh_step), "r"(in_sw_step), "r"(kw_remainder)                                                    // 9
     : "%rcx", "%rdx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8",
       "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 
@@ -927,36 +933,38 @@ void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const f
     "movq %4, %%r12\n"  // ic_algin
     "LoopIC:\n"
     "vmovaps (%1), %%ymm12\n"
-    "movq %%rdx, %%rax\n"
     "addq $32, %1\n"
-    "vbroadcastss (%%rax), %%ymm13\n"
-    "vbroadcastss (%%rax, %7), %%ymm14\n"
-    "vbroadcastss (%%rax, %7, 2), %%ymm15\n"
+    "vbroadcastss (%%rdx), %%ymm13\n"
+    "vbroadcastss (%%rdx, %7), %%ymm14\n"
+    "vbroadcastss (%%rdx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm2\n"
-    "addq %8, %%rax\n"
-    "vbroadcastss (%%rax), %%ymm13\n"
-    "vbroadcastss (%%rax, %7), %%ymm14\n"
-    "vbroadcastss (%%rax, %7, 2), %%ymm15\n"
+    "addq %8, %%rdx\n"
+    "vbroadcastss (%%rdx), %%ymm13\n"
+    "vbroadcastss (%%rdx, %7), %%ymm14\n"
+    "vbroadcastss (%%rdx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm5\n"
-    "addq %8, %%rax\n"
-    "vbroadcastss (%%rax), %%ymm13\n"
-    "vbroadcastss (%%rax, %7), %%ymm14\n"
-    "vbroadcastss (%%rax, %7, 2), %%ymm15\n"
+    "addq %8, %%rdx\n"
+    "vbroadcastss (%%rdx), %%ymm13\n"
+    "vbroadcastss (%%rdx, %7), %%ymm14\n"
+    "vbroadcastss (%%rdx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
-    "addq %8, %%rax\n"
-    "vbroadcastss (%%rax), %%ymm13\n"
-    "vbroadcastss (%%rax, %7), %%ymm14\n"
-    "vbroadcastss (%%rax, %7, 2), %%ymm15\n"
+    "addq %8, %%rdx\n"
+    "vbroadcastss (%%rdx), %%ymm13\n"
+    "vbroadcastss (%%rdx, %7), %%ymm14\n"
+    "vbroadcastss (%%rdx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm9\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm10\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
 
+    "subq %8, %%rdx\n"
+    "subq %8, %%rdx\n"
+    "subq %8, %%rdx\n"
     "addq $4, %%rdx\n"
     "dec %%r12\n"
     "jg LoopIC\n"
@@ -972,8 +980,8 @@ void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const f
     :
     : "r"(src), "r"(weight), "r"(kernel_h), "r"(kernel_w), "r"(ic_algin), "r"(in_kw_step), "r"(in_kh_step),  // 6
       "r"(in_sw_step), "r"(src_3_step), "r"(kw_remainder)                                                    // 9
-    : "%rcx", "%rdx", "%rsi", "%r12", "%rax", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7",
-      "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
+    : "%rcx", "%rdx", "%r12", "%rsi", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8",
+      "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 
   asm volatile(
     "and $0x3, %%eax\n"
@@ -1041,18 +1049,24 @@ void SWConv4x8Kernel(float *dst, const float *src, const float *weight, const fl
   float *dst_3 = dst + 3 * oc_algin;
   oc_algin *= sizeof(float);
   asm volatile(
-    "cmpq $0, %2\n"
+    "cmpq $0, %0\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps (%2), %%ymm1\n"
-    "vmovaps (%2), %%ymm2\n"
-    "vmovaps (%2), %%ymm3\n"
+    "vmovaps (%0), %%ymm0\n"
+    "vmovaps (%0), %%ymm1\n"
+    "vmovaps (%0), %%ymm2\n"
+    "vmovaps (%0), %%ymm3\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
     "vxorps %%ymm1, %%ymm1, %%ymm1\n"
     "vxorps %%ymm2, %%ymm2, %%ymm2\n"
     "vxorps %%ymm3, %%ymm3, %%ymm3\n"
+    "1:\n"
+    :
+    : "r"(bias)
+    : "%ymm0", "%ymm1", "%ymm2", "%ymm3");
+
+  asm volatile(
     "1:\n"              // LoopH
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
@@ -1081,13 +1095,13 @@ void SWConv4x8Kernel(float *dst, const float *src, const float *weight, const fl
     "dec %%rsi\n"
     "jg 2b\n"
 
-    "addq %7, %0\n"   // in_kh_step
-    "addq %10, %1\n"  // border in sw need to add remainder data
+    "addq %7, %0\n"  // in_kh_step
+    "addq %2, %1\n"  // border in sw need to add remainder data
     "dec %3\n"
     "jg 1b\n"
     :
-    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(ic_algin), "r"(in_kw_step),  // 6
-      "r"(in_kh_step), "r"(in_sw_step), "r"(src_step), "r"(kw_remainder)                               // 10
+    : "r"(src), "r"(weight), "r"(kw_remainder), "r"(kernel_h), "r"(kernel_w), "r"(ic_algin), "r"(in_kw_step),  // 6
+      "r"(in_kh_step), "r"(in_sw_step), "r"(src_step)                                                          // 9
     : "%rcx", "%rdx", "%rsi", "%r12", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
 
   asm volatile(
@@ -1184,7 +1198,6 @@ void SWConv1x8Kernel(float *dst, const float *src, const float *weight, const fl
     : "a"(act_flag), "r"(oc_algin), "r"(dst)
     : "%ecx", "%ymm0", "%ymm12", "%ymm14");
 }
-#endif
 
 #ifdef ENABLE_DEBUG
 void SWConvWxKKernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,

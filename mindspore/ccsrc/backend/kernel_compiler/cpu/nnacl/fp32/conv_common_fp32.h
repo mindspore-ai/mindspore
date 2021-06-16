@@ -50,9 +50,11 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
 void SWCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width, int kernel_h,
               int kernel_w, bool is_relu, bool is_relu6, SlidingWindowParam *sw_param);
 
+#ifdef ENABLE_DEBUG
 void SWConvWxKKernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder);
+#endif
 
 void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
