@@ -625,6 +625,10 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   std::vector<AnfNodePtr> receive_ops;
   std::vector<AnfNodePtr> send_ops;
   auto all_nodes = graph->nodes();
+  auto stage_num = g_device_manager->stage_num();
+  if (stage_num > micro_size_) {
+    MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
+  }
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>() || node->stage() == -1) {
       continue;

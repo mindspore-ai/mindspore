@@ -99,6 +99,12 @@ class _AutoParallelContext:
 
     def set_pipeline_stages(self, stages):
         """Set the stages of the pipeline"""
+        if isinstance(stages, bool):
+            raise TypeError("The type of pipeline_stage_num must be int, but got bool.")
+        if not isinstance(stages, int):
+            raise TypeError("The type of pipeline_stage_num must be int.")
+        if stages < 1:
+            raise ValueError("pipeline_stage_num can't be less than 1.")
         self.check_context_handle()
         self._context_handle.set_pipeline_stage_split_num(stages)
 

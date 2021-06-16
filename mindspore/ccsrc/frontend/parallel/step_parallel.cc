@@ -42,6 +42,7 @@
 #include "frontend/parallel/ops_info/matmul_info.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
+#include "utils/trace_base.h"
 #include "utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
@@ -2158,7 +2159,8 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
 
     MS_EXCEPTION_IF_NULL(strategyPtr);
     if (operator_->Init(strategyPtr) == FAILED) {
-      MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed";
+      MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed"
+                        << " trace: " << trace::DumpSourceLines(cnode);
     }
     cnode->set_user_data<OperatorInfo>(operator_);
   }
