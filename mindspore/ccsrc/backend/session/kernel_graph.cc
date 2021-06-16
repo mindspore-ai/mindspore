@@ -890,7 +890,7 @@ void KernelGraph::ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNo
   }
 }
 
-void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodePtr> new_anf_node) {
+void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, const AnfNodePtr &new_anf_node) {
   MS_EXCEPTION_IF_NULL(inputs_);
   {
     std::queue<AnfNodePtr> seed_nodes;
@@ -909,7 +909,7 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
         continue;
       }
       for (size_t i = 1; i < output_node_inputs.size(); i++) {
-        if (output_node_inputs[i] == old_anf_node.get()) {
+        if (output_node_inputs[i] == old_anf_node) {
           output_cnode->set_input(i, new_anf_node);
         }
       }
@@ -1348,6 +1348,8 @@ KernelGraph::~KernelGraph() {
                                                                 execution_order_);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "KernelGraph call destructor failed: " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "KernelGraph call destructor failed";
   }
 }
 }  // namespace session

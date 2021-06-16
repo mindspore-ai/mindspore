@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace session {
 SessionFactory &SessionFactory::Get() {
-  static SessionFactory instance;
+  static SessionFactory instance{};
   return instance;
 }
 

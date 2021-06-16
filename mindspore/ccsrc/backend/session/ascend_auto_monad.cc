@@ -36,7 +36,6 @@
 namespace mindspore {
 namespace session {
 namespace {
-
 // Pair of graph and its actual arguments.
 using GraphArgPair = std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>;
 
@@ -598,7 +597,7 @@ class CallInfoFinder {
     MS_EXCEPTION_IF_NULL(input_graph);
     auto kg = GetValueNode<KernelGraphPtr>(input_graph);
     MS_EXCEPTION_IF_NULL(kg);
-    constexpr size_t call_arg_index = 2;
+    constexpr int64_t call_arg_index = 2;
     auto &inputs = cnode->inputs();
     std::vector<AnfNodePtr> args{inputs.begin() + call_arg_index, inputs.end()};
     return {.graph = kg, .args = std::move(args)};
@@ -623,7 +622,7 @@ class CallInfoFinder {
       MS_LOG(EXCEPTION) << "Invalid switch node: " << cnode->DebugString();
     }
     auto graph = GetValueNode<KernelGraphPtr>(inputs.at(1));
-    constexpr size_t arg_index = 2;
+    constexpr int64_t arg_index = 2;
     std::vector<AnfNodePtr> args{inputs.begin() + arg_index, inputs.end()};
     return {.graph = graph, .args = std::move(args)};
   }
@@ -1014,7 +1013,7 @@ class AscendAutoMonadConverter {
   // Replace a node with new node in current kernel graph.
   // We also replace the arguments used for sub-graph calls.
   void ReplaceNode(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
-    kernel_graph_->ReplaceNode(NOT_NULL(old_node), NOT_NULL(new_node));
+    kernel_graph_->ReplaceNode(old_node, new_node);
     for (auto &call_site : call_info_.call_sites) {
       for (auto &callee : call_site.callees) {
         std::replace(callee.args.begin(), callee.args.end(), old_node, new_node);
@@ -1095,24 +1094,20 @@ class AscendAutoMonadConverter {
     monad_ = UpdateState(GetMonad(), assign_output);
   }
 
-  //
   // Link actual arguments to graph's formal arguments.
-  // for multi-args:
+  // 1. for multi-args:
   //   r = Call(fg, arg1, arg2, u)
   // linked arguments:
   //   r1 = Assign(para1, arg1, c)
   //   r2 = Assign(para2, arg2, c)
   //   tuple = MakeTuple(r1, r2, u)
-  //
-  // for single-arg:
+  // 2. for single-arg:
   //   r = Call(fg, arg)
   // linked arguments:
   //   r = Assign(para1, arg1, c)
-  //
-  // for empty-arg:
+  // 3. for empty-arg:
   //   r = Call(fg)
   // linked arguments return null.
-  //
   AnfNodePtr LinkArguments(const std::vector<AnfNodePtr> &args, const KernelGraphPtr &graph) {
     auto &paras = graph->inputs();
     if (args.size() != paras.size()) {
@@ -1230,7 +1225,6 @@ class AscendAutoMonadConverter {
     return update_state_cnode;
   }
 
-  //
   // Make entry label for current graph.
   // from:
   //   def sub_graph(x, y):
@@ -1239,7 +1233,6 @@ class AscendAutoMonadConverter {
   //   def sub_graph(x, y, c):
   //     c = LabelSet(c) : entry_label
   //     return add(x, y)
-  //
   void SetupEntryLabel() {
     auto entry_label = GetGraphLabel(kernel_graph_);
     if (entry_label != kNoLabel) {
@@ -1657,7 +1650,7 @@ class ExecuteOrderGenerator {
           // replace target with source and erase the Assign node.
           auto kg = target->func_graph()->cast<KernelGraphPtr>();
           MS_EXCEPTION_IF_NULL(kg);
-          kg->ReplaceNode(NOT_NULL(target), NOT_NULL(source));
+          kg->ReplaceNode(target, source);
 
           // replace parameter in graph input
           for (auto &g : all_graphs) {
