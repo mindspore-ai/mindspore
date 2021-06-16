@@ -136,7 +136,34 @@ class IncorporateGetitem : public AnfVisitor {
 
     auto new_fg = getitem_transform_(fg_, idx_);
     (void)args_.insert(args_.begin(), NewValueNode(new_fg));
-    return node->func_graph()->NewCNode(args_);
+    auto new_node = node->func_graph()->NewCNode(args_);
+    // Check if the another only usage of {G, Xs} is UpdateState{s, {G, Xs}}, if yes, replace
+    // UpdateState{s, {G, Xs}} with UpdateState{s, new_node};
+    const auto &manager = fg_->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto &node_users_map = manager->node_users();
+    auto it = node_users_map.find(fg_cnode_);
+    if (it != node_users_map.end()) {
+      AnfNodePtr update_state_node = nullptr;
+      auto &node_users = it->second;
+      if (node_users.size() == 2) {
+        for (auto &node_user : node_users) {
+          if (IsPrimitiveCNode(node_user.first, prim::kPrimUpdateState)) {
+            update_state_node = node_user.first;
+          }
+        }
+      }
+      if (update_state_node != nullptr) {
+        auto update_state_cnode = update_state_node->cast<CNodePtr>();
+        // double check;
+        if (update_state_cnode->input(2) == fg_cnode_) {
+          MS_LOG(DEBUG) << "Replace UpdateState node: " << update_state_cnode->DebugString(2)
+                        << ", input 2 with: " << new_node->DebugString();
+          manager->SetEdge(update_state_cnode, 2, new_node);
+        }
+      }
+    }
+    return new_node;
   }
 
   void Visit(const CNodePtr &cnode) override {
@@ -144,9 +171,95 @@ class IncorporateGetitem : public AnfVisitor {
       return;
     }
 
+    fg_cnode_ = cnode;
     auto &inputs = cnode->inputs();
     fg_ = GetValueNode<FuncGraphPtr>(inputs[0]);
     (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args_));
+  }
+
+  void Visit(const ValueNodePtr &vnode) override { idx_ = GetValue<int64_t>(vnode->value()); }
+
+  void Reset() {
+    idx_ = -1;
+    fg_ = nullptr;
+    fg_cnode_ = nullptr;
+    args_.clear();
+  }
+
+ private:
+  int64_t idx_{-1};
+  FuncGraphPtr fg_{nullptr};
+  AnfNodePtr fg_cnode_{nullptr};
+  std::vector<AnfNodePtr> args_{};
+  internal::GetitemTransform getitem_transform_;
+};
+
+// A special case, cannot wait for TupleListGetitemDependReorder pass.
+// {prim::kPrimTupleGetItem, {prim::kPrimDepend, {G, Xs}, {prim::kPrimUpdateState, Y, {G, Xs}}}, C} ->
+// {prim::kPrimDepend, {tp_idx_G, Xs}, {prim::kPrimUpdateState, Y, {tp_idx_G, Xs}}} ->
+class IncorporateGetitemDepend : public AnfVisitor {
+ public:
+  IncorporateGetitemDepend() : getitem_transform_() {}
+  ~IncorporateGetitemDepend() override = default;
+
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
+    AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int64Imm>})(node);
+    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr || fg_->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
+      return nullptr;
+    }
+
+    auto new_fg = getitem_transform_(fg_, idx_);
+    (void)args_.insert(args_.begin(), NewValueNode(new_fg));
+    auto new_fg_cnode = node->func_graph()->NewCNode(args_);
+    AnfNodePtr new_depend_cnode;
+    if (used_in_update_) {
+      auto update_cnode = depend_2nd_input_->cast<CNodePtr>();
+      AnfNodePtrList new_update_inputs;
+      (void)std::copy(update_cnode->inputs().begin(), update_cnode->inputs().end() - 1,
+                      std::back_inserter(new_update_inputs));
+      new_update_inputs.push_back(new_fg_cnode);
+      auto new_update_cnode = node->func_graph()->NewCNode(new_update_inputs);
+      new_depend_cnode =
+        node->func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), new_fg_cnode, new_update_cnode});
+    } else {
+      new_depend_cnode =
+        node->func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), new_fg_cnode, depend_2nd_input_});
+    }
+    return new_depend_cnode;
+  }
+
+  void Visit(const CNodePtr &cnode) override {
+    // cnode : {kPrimDepend, {G, Xs}, {kPrimUpdatestate, Y, {G, Xs}}}
+    if (!IsPrimitiveCNode(cnode, prim::kPrimDepend)) {
+      return;
+    }
+    if (cnode->size() != 3 || !IsCNode(cnode->input(1))) {
+      return;
+    }
+    depend_2nd_input_ = cnode->input(2);
+
+    auto fg_cnode = cnode->input(1)->cast<CNodePtr>();
+    // fg_cnode : {G, Xs}
+    if (!IsValueNode<FuncGraph>(fg_cnode->input(0))) {
+      return;
+    }
+
+    auto &inputs = fg_cnode->inputs();
+    fg_ = GetValueNode<FuncGraphPtr>(inputs[0]);
+    (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args_));
+
+    if (!IsPrimitiveCNode(depend_2nd_input_, prim::kPrimUpdateState)) {
+      return;
+    }
+    auto update_cnode = depend_2nd_input_->cast<CNodePtr>();
+    if (update_cnode->size() != 3) {
+      return;
+    }
+    // match {kPrimUpdateState, Y, {G, Xs}}
+    if (update_cnode->input(2) == fg_cnode) {
+      used_in_update_ = true;
+    }
   }
 
   void Visit(const ValueNodePtr &vnode) override { idx_ = GetValue<int64_t>(vnode->value()); }
@@ -158,8 +271,10 @@ class IncorporateGetitem : public AnfVisitor {
   }
 
  private:
+  bool used_in_update_{false};
   int64_t idx_{-1};
   FuncGraphPtr fg_{nullptr};
+  AnfNodePtr depend_2nd_input_{nullptr};
   std::vector<AnfNodePtr> args_{};
   internal::GetitemTransform getitem_transform_;
 };
@@ -484,10 +599,12 @@ class IncorporateGetitemSet : public OptimizerCaller {
  public:
   IncorporateGetitemSet()
       : incorporate_getitem_(std::make_shared<IncorporateGetitem>()),
+        incorporate_getitem_depend_(std::make_shared<IncorporateGetitemDepend>()),
         incorporate_getitem_switch_(std::make_shared<IncorporateGetitemSwitch>()),
         incorporate_getitem_switch_layer_a_(std::make_shared<IncorporateGetitemSwitchLayerA>()),
         incorporate_getitem_switch_layer_b_(std::make_shared<IncorporateGetitemSwitchLayerB>()) {
     eliminaters_.emplace_back(incorporate_getitem_);
+    eliminaters_.emplace_back(incorporate_getitem_depend_);
     eliminaters_.emplace_back(incorporate_getitem_switch_);
     eliminaters_.emplace_back(incorporate_getitem_switch_layer_a_);
     eliminaters_.emplace_back(incorporate_getitem_switch_layer_b_);
@@ -506,8 +623,8 @@ class IncorporateGetitemSet : public OptimizerCaller {
   }
 
  private:
-  OptimizerCallerPtr incorporate_getitem_, incorporate_getitem_switch_, incorporate_getitem_switch_layer_a_,
-    incorporate_getitem_switch_layer_b_;
+  OptimizerCallerPtr incorporate_getitem_, incorporate_getitem_depend_, incorporate_getitem_switch_,
+    incorporate_getitem_switch_layer_a_, incorporate_getitem_switch_layer_b_;
   std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 }  // namespace irpass
