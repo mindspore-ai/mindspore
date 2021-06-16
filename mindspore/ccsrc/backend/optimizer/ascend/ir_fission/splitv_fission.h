@@ -21,11 +21,10 @@
 
 namespace mindspore {
 namespace opt {
+constexpr int64_t kSplitVOutputsDivisor = 63;
 class SplitVFission : public SplitFission {
-  const int64_t kSplitOutputsDivisor = 63;
-
  public:
-  explicit SplitVFission(bool multigraph = true) : SplitFission("splitv_fission", multigraph, kSplitOutputsDivisor) {}
+  explicit SplitVFission(bool multigraph = true) : SplitFission("splitv_fission", multigraph, kSplitVOutputsDivisor) {}
   ~SplitVFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
