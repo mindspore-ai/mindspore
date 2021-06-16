@@ -1412,7 +1412,7 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> x = Tensor(np.eye(3))
+            >>> x = Tensor(np.eye(3, dtype=np.float32))
             >>> print(x.trace())
             3.0
         """
@@ -1649,7 +1649,7 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> input_x = Tensor(np.array([1., 2., 3., 4.]))
+            >>> input_x = Tensor(np.array([1., 2., 3., 4.], np.float32))
             >>> output = input_x.var()
             >>> print(output)
             1.25
