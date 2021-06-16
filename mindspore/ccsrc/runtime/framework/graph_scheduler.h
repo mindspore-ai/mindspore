@@ -178,7 +178,7 @@ class GraphScheduler {
   std::vector<KernelActorPtr> BuildKernelActor(const GraphCompilerInfo &graph_compiler_info);
   LoopCountActorPtr BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
   OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
-  std::vector<KernelActorPtr> BuildNoInputKernelActor(const GraphCompilerInfo &graph_compiler_info);
+  std::vector<KernelActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set);
   std::vector<SwitchActorPtr> BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<GatherActorPtr> BuildGatherActor(const GraphCompilerInfo &graph_compiler_info);
 
