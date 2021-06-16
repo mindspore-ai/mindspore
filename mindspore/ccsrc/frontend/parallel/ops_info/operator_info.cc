@@ -1714,6 +1714,77 @@ Status OperatorInfo::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
+int64_t OperatorInfo::GetIntAttr(const std::string &attr_name) {
+  auto attr_iter = attrs_.find(attr_name);
+  if (attr_iter == attrs_.end()) {
+    MS_LOG(EXCEPTION) << name_ << ": Can not find the attribution of " << attr_name;
+  }
+
+  MS_EXCEPTION_IF_NULL(attr_iter->second);
+  if (!attr_iter->second->isa<Int64Imm>()) {
+    MS_LOG(EXCEPTION) << name_ << ": The value of " << attr_name << " is not int";
+  }
+
+  return attr_iter->second->cast<Int64ImmPtr>()->value();
+}
+
+bool OperatorInfo::GetBoolAttr(const std::string &attr_name) {
+  auto attr_iter = attrs_.find(attr_name);
+  if (attr_iter == attrs_.end()) {
+    MS_LOG(EXCEPTION) << name_ << ": Can not find the attribution of " << attr_name;
+  }
+
+  MS_EXCEPTION_IF_NULL(attr_iter->second);
+  if (!attr_iter->second->isa<BoolImm>()) {
+    MS_LOG(EXCEPTION) << name_ << ": The value of " << attr_name << " is not int";
+  }
+
+  return attr_iter->second->cast<BoolImmPtr>()->value();
+}
+
+std::string OperatorInfo::GetStringAttr(const std::string &attr_name) {
+  std::string string_attr;
+  auto attr_iter = attrs_.find(attr_name);
+  if (attr_iter == attrs_.end()) {
+    MS_LOG(EXCEPTION) << name_ << ": Can not find the attribution of " << attr_name;
+  }
+
+  MS_EXCEPTION_IF_NULL(attr_iter->second);
+  if (!attr_iter->second->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << name_ << ": The value of " << attr_name << " is not string";
+  }
+
+  string_attr = attr_iter->second->cast<StringImmPtr>()->value();
+  return string_attr;
+}
+
+std::vector<int64_t> OperatorInfo::GetTupleIntAttr(const std::string &attr_name) {
+  std::vector<int64_t> tuple_attr;
+  auto tuple_attr_iter = attrs_.find(attr_name);
+  if (tuple_attr_iter == attrs_.end()) {
+    MS_LOG(EXCEPTION) << name_ << ": Can not find the attribution of " << attr_name;
+  }
+
+  MS_EXCEPTION_IF_NULL(tuple_attr_iter->second);
+  tuple_attr = GetValue<std::vector<int64_t>>(tuple_attr_iter->second);
+
+  return tuple_attr;
+}
+
+float OperatorInfo::GetFloatAttr(const std::string &attr_name) {
+  auto attr_iter = attrs_.find(attr_name);
+  if (attr_iter == attrs_.end()) {
+    MS_LOG(EXCEPTION) << name_ << ": Can not find the attribution of " << attr_name;
+  }
+
+  MS_EXCEPTION_IF_NULL(attr_iter->second);
+  if (!attr_iter->second->isa<FP32Imm>()) {
+    MS_LOG(EXCEPTION) << name_ << ": The value of " << attr_name << " is not float";
+  }
+
+  return attr_iter->second->cast<FP32ImmPtr>()->value();
+}
+
 std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue) {
   MS_EXCEPTION_IF_NULL(sequeue);
   std::vector<ValuePtr> ret;

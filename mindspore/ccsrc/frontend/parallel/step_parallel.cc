@@ -787,9 +787,11 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
     MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
   }
   std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
+
   if (replace_op.first == EMBEDDING_LOOKUP) {
     replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
   }
+
   if (!params.empty()) {
     Param param_first = *(params.begin());
     int64_t first_position = param_first.second;
@@ -803,6 +805,10 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
       }
       int64_t position = param.second;
       (void)replace_input.insert(replace_input.begin() + position, val);
+    }
+  } else if (replace_op.first == SYNC_BATCH_NORM) {
+    for (size_t i = 2; i < node->inputs().size(); ++i) {
+      replace_input.push_back(node->input(i));
     }
   }
 

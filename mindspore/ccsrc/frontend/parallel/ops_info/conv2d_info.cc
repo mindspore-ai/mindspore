@@ -28,54 +28,6 @@
 
 namespace mindspore {
 namespace parallel {
-int64_t Conv2DInfo::GetIntAttr(const std::string &attr_name) {
-  auto attr_iter = attrs_.find(attr_name);
-  if (attr_iter == attrs_.end()) {
-    MS_LOG(ERROR) << name_ << ": Can not find the attribution of " << attr_name;
-    return -1;
-  }
-
-  MS_EXCEPTION_IF_NULL(attr_iter->second);
-  if (!attr_iter->second->isa<Int64Imm>()) {
-    MS_LOG(ERROR) << name_ << ": The value of " << attr_name << " is not int";
-    return -1;
-  }
-
-  return attr_iter->second->cast<Int64ImmPtr>()->value();
-}
-
-std::string Conv2DInfo::GetStringAttr(const std::string &attr_name) {
-  std::string string_attr;
-  auto attr_iter = attrs_.find(attr_name);
-  if (attr_iter == attrs_.end()) {
-    MS_LOG(ERROR) << name_ << ": Can not find the attribution of " << attr_name;
-    return string_attr;
-  }
-
-  MS_EXCEPTION_IF_NULL(attr_iter->second);
-  if (!attr_iter->second->isa<StringImm>()) {
-    MS_LOG(ERROR) << name_ << ": The value of " << attr_name << " is not string";
-    return string_attr;
-  }
-
-  string_attr = attr_iter->second->cast<StringImmPtr>()->value();
-  return string_attr;
-}
-
-std::vector<int64_t> Conv2DInfo::GetTupleAttr(const std::string &attr_name) {
-  std::vector<int64_t> tuple_attr;
-  auto tuple_attr_iter = attrs_.find(attr_name);
-  if (tuple_attr_iter == attrs_.end()) {
-    MS_LOG(ERROR) << name_ << ": Can not find the attribution of " << attr_name;
-    return tuple_attr;
-  }
-
-  MS_EXCEPTION_IF_NULL(tuple_attr_iter->second);
-  tuple_attr = GetValue<std::vector<int64_t>>(tuple_attr_iter->second);
-
-  return tuple_attr;
-}
-
 Status Conv2DInfo::GetAttrs() {
   // out_channel
   out_channel_ = GetIntAttr(OUT_CHANNEL);
@@ -121,14 +73,14 @@ Status Conv2DInfo::GetAttrs() {
   }
 
   // pad_list
-  pad_list_ = GetTupleAttr(PAD_LIST);
+  pad_list_ = GetTupleIntAttr(PAD_LIST);
   if (pad_list_.size() != 4) {
     MS_LOG(ERROR) << name_ << ": The size of pad_list must be 4, but got " << pad_list_.size();
     return FAILED;
   }
 
   // stride
-  stride_ = GetTupleAttr(STRIDE);
+  stride_ = GetTupleIntAttr(STRIDE);
   if (stride_.size() != 4) {
     MS_LOG(ERROR) << name_ << ": The size of stride must be 4, but got " << stride_.size();
     return FAILED;
@@ -141,7 +93,7 @@ Status Conv2DInfo::GetAttrs() {
   }
 
   // dilation
-  dilation_ = GetTupleAttr(DILATION);
+  dilation_ = GetTupleIntAttr(DILATION);
   if (dilation_.size() != 4) {
     MS_LOG(ERROR) << name_ << ": The size of dilation must be 4, but got " << dilation_.size();
     return FAILED;
@@ -279,7 +231,7 @@ Status Conv2DInfo::InferDevMatrixShape() {
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();
   if (stra.size() != 2) {
-    MS_LOG(ERROR) << name_ << "The size of strategy must be 2, but got " << stra.size();
+    MS_LOG(ERROR) << name_ << ": The size of strategy must be 2, but got " << stra.size();
     return FAILED;
   }
 

@@ -197,6 +197,10 @@ constexpr char STRIDE[] = "stride";
 constexpr char DILATION[] = "dilation";
 constexpr char FORMAT[] = "format";
 constexpr char NCHW[] = "NCHW";
+constexpr char IS_TRAINING[] = "is_training";
+constexpr char EPSILON[] = "epsilon";
+constexpr char MOMENTUM[] = "momentum";
+constexpr char DEVICE_NUM[] = "device_num";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
@@ -267,6 +271,7 @@ constexpr char CONV2D[] = "Conv2D";
 constexpr char FUSE_BATCH_NORM[] = "FusedBatchNorm";
 constexpr char FUSE_BATCH_NORM_EX[] = "FusedBatchNormEx";
 constexpr char BATCH_NORM[] = "BatchNorm";
+constexpr char SYNC_BATCH_NORM[] = "SyncBatchNorm";
 constexpr char LAYER_NORM[] = "LayerNorm";
 constexpr char POOLING[] = "Pooling";
 constexpr char CAST[] = "Cast";
