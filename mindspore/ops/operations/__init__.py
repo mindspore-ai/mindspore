@@ -130,6 +130,7 @@ __all__ = [
     'MatMul',
     'BatchMatMul',
     'Mul',
+    'MaskedSelect',
     'Meshgrid',
     'Pow',
     'Exp',
