@@ -16,58 +16,52 @@
 ##############export checkpoint file into mindir model#################
 python export.py
 """
-import argparse
 import os
-
 import numpy as np
 
 from mindspore import Tensor, context
 from mindspore import export, load_checkpoint, load_param_into_net
-from src.config import lstm_cfg, lstm_cfg_ascend
+
 from src.lstm import SentimentNet
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='MindSpore LSTM Exporter')
-    parser.add_argument('--preprocess_path', type=str, default='./preprocess',
-                        help='path where the pre-process data is stored.')
-    parser.add_argument('--ckpt_file', type=str, required=True, help='lstm ckpt file.')
-    parser.add_argument("--device_id", type=int, default=0, help="Device id")
-    parser.add_argument("--file_name", type=str, default="lstm", help="output file name.")
-    parser.add_argument('--file_format', type=str, choices=["AIR", "MINDIR"], default='AIR', help='file format')
-    parser.add_argument('--device_target', type=str, default="Ascend", choices=['GPU', 'CPU', 'Ascend'],
-                        help='the target device to run, support "GPU", "CPU". Default: "Ascend".')
-    args = parser.parse_args()
+def modelarts_process():
+    config.ckpt_file = os.path.join(config.output_path, config.ckpt_file)
 
+@moxing_wrapper(pre_process=modelarts_process)
+def export_lstm():
+    """ export lstm """
+    config.preprocess_path = os.path.join(config.glove_path, config.preprocess_path)
     context.set_context(
         mode=context.GRAPH_MODE,
         save_graphs=False,
-        device_target=args.device_target,
-        device_id=args.device_id)
+        device_target=config.device_target,
+        device_id=get_device_id())
 
-    if args.device_target == 'Ascend':
-        cfg = lstm_cfg_ascend
-    else:
-        cfg = lstm_cfg
+    embedding_table = np.loadtxt(os.path.join(config.preprocess_path, "weight.txt")).astype(np.float32)
 
-    embedding_table = np.loadtxt(os.path.join(args.preprocess_path, "weight.txt")).astype(np.float32)
-
-    if args.device_target == 'Ascend':
-        pad_num = int(np.ceil(cfg.embed_size / 16) * 16 - cfg.embed_size)
+    if config.device_target == 'Ascend':
+        pad_num = int(np.ceil(config.embed_size / 16) * 16 - config.embed_size)
         if pad_num > 0:
             embedding_table = np.pad(embedding_table, [(0, 0), (0, pad_num)], 'constant')
-        cfg.embed_size = int(np.ceil(cfg.embed_size / 16) * 16)
+        config.embed_size = int(np.ceil(config.embed_size / 16) * 16)
 
     network = SentimentNet(vocab_size=embedding_table.shape[0],
-                           embed_size=cfg.embed_size,
-                           num_hiddens=cfg.num_hiddens,
-                           num_layers=cfg.num_layers,
-                           bidirectional=cfg.bidirectional,
-                           num_classes=cfg.num_classes,
+                           embed_size=config.embed_size,
+                           num_hiddens=config.num_hiddens,
+                           num_layers=config.num_layers,
+                           bidirectional=config.bidirectional,
+                           num_classes=config.num_classes,
                            weight=Tensor(embedding_table),
-                           batch_size=cfg.batch_size)
+                           batch_size=config.batch_size)
 
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(network, param_dict)
 
-    input_arr = Tensor(np.random.uniform(0.0, 1e5, size=[cfg.batch_size, 500]).astype(np.int32))
-    export(network, input_arr, file_name=args.file_name, file_format=args.file_format)
+    input_arr = Tensor(np.random.uniform(0.0, 1e5, size=[config.batch_size, 500]).astype(np.int32))
+    export(network, input_arr, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_lstm()

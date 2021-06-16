@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,23 +16,29 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_train_gpu.sh DEVICE_ID ACLIMDB_DIR GLOVE_DIR"
-echo "for example: bash run_train_gpu.sh 0 ./aclimdb ./glove_dir"
+echo "bash run_eval_ascend.sh DEVICE_ID PREPROCESS_DIR CKPT_FILE"
+echo "for example: bash run_eval_ascend.sh 0 ./preprocess lstm-20_390.ckpt"
 echo "=============================================================================================================="
 
 DEVICE_ID=$1
-ACLIMDB_DIR=$2
-GLOVE_DIR=$3
+PREPROCESS_DIR=$2
+CKPT_FILE=$3
 
-export CUDA_VISIBLE_DEVICES=$DEVICE_ID
-
+rm -rf eval
+mkdir -p eval
+cd eval || exit
 mkdir -p ms_log
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
-python train.py  \
-    --device_target="GPU" \
-    --aclimdb_path=$ACLIMDB_DIR \
-    --glove_path=$GLOVE_DIR \
-    --preprocess=true  \
-    --preprocess_path=./preprocess > log.txt 2>&1 &
+export DEVICE_ID=$DEVICE_ID
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../../config_ascend.yaml"
+
+python ../../eval.py  \
+    --config_path=$CONFIG_FILE \
+    --device_target="Ascend" \
+    --preprocess=false  \
+    --glove_path=$PREPROCESS_DIR \
+    --ckpt_file=$CKPT_FILE > log.txt 2>&1 &

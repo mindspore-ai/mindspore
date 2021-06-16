@@ -94,13 +94,21 @@ Note that you can run the scripts based on the dataset mentioned in original pap
     │   ├── run_eval_cpu.sh     # shell script for evaluation on CPU
     │   ├── run_train_gpu.sh    # shell script for training on GPU
     │   ├── run_train_ascend.sh # shell script for training on Ascend
-    │   └── run_train_cpu.sh    # shell script for training on CPU
+    │   ├── run_train_cpu.sh    # shell script for training on CPU
+    │   └── run_infer_310.sh    # shell script for infer310
     ├── src
-    │   ├── config.py           # parameter configuration
+    │   ├── lstm.py             # Sentiment model
     │   ├── dataset.py          # dataset preprocess
     │   ├── imdb.py             # imdb dataset read script
     │   ├── lr_schedule.py      # dynamic_lr script
-    │   └── lstm.py             # Sentiment model
+    │   └─model_utils
+    │     ├── config.py               # Processing configuration parameters
+    │     ├── device_adapter.py       # Get cloud ID
+    │     ├── local_adapter.py        # Get local ID
+    │     └── moxing_adapter.py       # Parameter processing
+    ├── default_config.yaml           # Training parameter profile(cpu/gpu)
+    ├── config_ascend.yaml            # Training parameter profile(ascend)
+    ├── config_ascend_8p.yaml         # Training parameter profile(ascend_8p)
     ├── eval.py                 # evaluation script on GPU, CPU and Ascend
     └── train.py                # training script on GPU, CPU and Ascend
 ```

@@ -16,7 +16,6 @@
 Data operations, will be used in train.py and eval.py
 """
 import os
-
 import numpy as np
 
 import mindspore.dataset as ds

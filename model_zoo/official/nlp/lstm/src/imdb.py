@@ -17,7 +17,6 @@ imdb dataset parser.
 """
 import os
 from itertools import chain
-
 import numpy as np
 import gensim
 

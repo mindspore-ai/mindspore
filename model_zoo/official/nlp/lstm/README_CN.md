@@ -101,13 +101,21 @@ LSTM模型包含嵌入层、编码器和解码器这几个模块，编码器模�
     │   ├── run_eval_cpu.sh     # CPU评估shell脚本
     │   ├── run_train_ascend.sh # Ascend训练的shell脚本
     │   ├── run_train_gpu.sh    # GPU训练的shell脚本
-    │   └── run_train_cpu.sh    # CPU训练的shell脚本
+    │   ├── run_train_cpu.sh    # CPU训练的shell脚本
+    │   └── run_infer_310.sh    # infer310的shell脚本
     ├── src
-    │   ├── config.py           # 参数配置
+    │   ├── lstm.py             # 情感模型
     │   ├── dataset.py          # 数据集预处理
     │   ├── imdb.py             # IMDB数据集读脚本
     │   ├── lr_schedule.py      # 动态学习率脚步
-    │   └── lstm.py             # 情感模型
+    │   └── model_utils
+    │     ├── config.py                     # 获取.yaml配置参数
+    │     ├── device_adapter.py             # 获取云上id
+    │     ├── local_adapter.py              # 获取本地id
+    │     └── moxing_adapter.py             # 云上数据准备
+    ├── default_config.yaml                 # 训练配置参数(cpu/gpu)
+    ├── config_ascend.yaml                  # 训练配置参数(ascend)
+    ├── config_ascend_8p.yaml               # 训练配置参数(ascend_8p)
     ├── eval.py                 # GPU、CPU和Ascend的评估脚本
     └── train.py                # GPU、CPU和Ascend的训练脚本
 ```
