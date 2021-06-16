@@ -108,5 +108,7 @@ if __name__ == "__main__":
     _enable_graph_kernel = wide_deep_config.device_target == "GPU"
     context.set_context(mode=context.GRAPH_MODE,
                         enable_graph_kernel=_enable_graph_kernel, device_target=wide_deep_config.device_target)
+    if _enable_graph_kernel:
+        context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
     context.set_context(enable_sparse=wide_deep_config.sparse)
     test_train_eval(wide_deep_config)

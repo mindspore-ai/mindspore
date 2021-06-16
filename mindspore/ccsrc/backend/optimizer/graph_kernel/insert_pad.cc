@@ -26,19 +26,11 @@ namespace opt {
 namespace {
 using vec = std::vector<size_t>;
 
-// A[K,M] && B[K,N]  M,N pad 32, K pad 4
-auto GetPadShape1 = [](size_t K, size_t M, size_t N) {
-  size_t pad_K = ((K - 1) / 4 + 1) * 4;
+// M,N pad 32, K pad 16
+auto GetPadShape = [](size_t K, size_t M, size_t N) {
+  size_t pad_K = ((K - 1) / 16 + 1) * 16;
   size_t pad_M = ((M - 1) / 32 + 1) * 32;
   size_t pad_N = ((N - 1) / 32 + 1) * 32;
-  return std::tuple(pad_K, pad_M, pad_N);
-};
-
-// M,N pad 16, K pad 8
-auto GetPadShape2 = [](size_t K, size_t M, size_t N) {
-  size_t pad_K = ((K - 1) / 8 + 1) * 8;
-  size_t pad_M = ((M - 1) / 16 + 1) * 16;
-  size_t pad_N = ((N - 1) / 16 + 1) * 16;
   return std::tuple(pad_K, pad_M, pad_N);
 };
 
@@ -49,7 +41,7 @@ auto TransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape
   K = shape_a[size - 2];
   M = shape_a[size - 1];
   N = shape_b[size - 1];
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape1(K, M, N);
+  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_K);
   pad_shape_a->push_back(pad_M);
   pad_shape_b->push_back(pad_K);
@@ -64,7 +56,7 @@ auto TransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a,
   K = shape_a[size - 2];
   M = shape_a[size - 1];
   N = shape_b[size - 2];
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape2(K, M, N);
+  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_K);
   pad_shape_a->push_back(pad_M);
   pad_shape_b->push_back(pad_N);
@@ -79,7 +71,7 @@ auto NotTransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape
   K = shape_a[size - 1];
   M = shape_a[size - 2];
   N = shape_b[size - 2];
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape2(K, M, N);
+  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_M);
   pad_shape_a->push_back(pad_K);
   pad_shape_b->push_back(pad_N);
@@ -94,7 +86,7 @@ auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_sh
   K = shape_a[size - 1];
   M = shape_a[size - 2];
   N = shape_b[size - 1];
-  std::tie(pad_K, pad_M, pad_N) = GetPadShape2(K, M, N);
+  std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_M);
   pad_shape_a->push_back(pad_K);
   pad_shape_b->push_back(pad_K);

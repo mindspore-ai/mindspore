@@ -91,4 +91,6 @@ if __name__ == "__main__":
     _enable_graph_kernel = config.device_target == "GPU"
     context.set_context(mode=context.GRAPH_MODE,
                         enable_graph_kernel=_enable_graph_kernel, device_target=config.device_target)
+    if _enable_graph_kernel:
+        context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
     test_train(config)
