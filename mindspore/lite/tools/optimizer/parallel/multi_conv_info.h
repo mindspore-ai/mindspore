@@ -30,9 +30,12 @@ class MultiConvSplit : public MultiNodeSplit {
 
   AnfNodePtr DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 
+  bool CheckSplitValid();
+
   virtual AnfNodePtr SplitMultiConv(const AnfNodePtr &node) = 0;
 
-  virtual void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, int output_conv_index) = 0;
+  virtual void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+                              int output_conv_index) = 0;
 
   virtual AnfNodePtr MultiConvNHSplit(const AnfNodePtr &node);
 
@@ -59,6 +62,9 @@ class MultiConvSplit : public MultiNodeSplit {
  private:
   int GenSplitInfo();
   int GetMultiConvNodes(const AnfNodePtr &conv_node);
+
+ private:
+  std::vector<int64_t> ori_split_ratios_{};
 };
 
 class MultiConvSplitN final : public MultiConvSplit {
@@ -68,7 +74,8 @@ class MultiConvSplitN final : public MultiConvSplit {
 
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, int output_conv_index) override {}
+  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+                      int output_conv_index) override {}
 };
 
 class MultiConvSplitCIN final : public MultiConvSplit {
@@ -78,7 +85,8 @@ class MultiConvSplitCIN final : public MultiConvSplit {
 
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, int output_conv_index) override {}
+  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+                      int output_conv_index) override {}
 };
 
 class MultiConvSplitCOUT final : public MultiConvSplit {
@@ -89,7 +97,8 @@ class MultiConvSplitCOUT final : public MultiConvSplit {
 
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, int output_conv_index) override {}
+  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+                      int output_conv_index) override {}
 };
 
 class MultiConvSplitH final : public MultiConvSplit {
@@ -99,7 +108,8 @@ class MultiConvSplitH final : public MultiConvSplit {
 
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, int output_conv_index) override;
+  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+                      int output_conv_index) override;
 };
 
 }  // namespace opt

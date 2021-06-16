@@ -44,6 +44,41 @@ function Run_Converter() {
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
 
+    # Convert TFLite parallel_split models:
+    while read line; do
+        parallel_split_line_info=${line}
+        if [[ $parallel_split_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${parallel_split_line_info}|awk -F ' ' '{print $1}'`
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo 'convert mode name: '${model_name}' begin.'
+        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_1_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_1_parallel_split.config' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_1_parallel_split --configFile=${models_path}/offline_parallel_split/1_1_parallel_split.config
+        if [ $? = 0 ]; then
+            converter_result='converter 1_1_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter 1_1_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+
+        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_2_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_2_parallel_split.config' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_2_parallel_split --configFile=${models_path}/offline_parallel_split/1_2_parallel_split.config
+        if [ $? = 0 ]; then
+            converter_result='converter 1_2_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter 1_2_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+
+        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_3_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_3_parallel_split.config' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_3_parallel_split --configFile=${models_path}/offline_parallel_split/1_3_parallel_split.config
+        if [ $? = 0 ]; then
+            converter_result='converter 1_3_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter 1_3_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+
+    done < ${models_tflite_parallel_split_config}
+
     # Convert tf models:
     while read line; do
         model_name=${line%;*}
@@ -405,6 +440,40 @@ function Run_x86() {
     cd ${x86_path}/mindspore-lite-${version}-linux-x64 || return 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/libjpeg-turbo/lib
     cp tools/benchmark/benchmark ./ || exit 1
+
+    # Run tf converted models:
+    while read line; do
+        model_name=${line%;*}
+        length=${#model_name}
+        input_shapes=${line:length+1}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_1_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_1_1_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}_1_1_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}_1_1_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_2_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_1_2_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}_1_2_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}_1_2_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_3_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_1_3_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}_1_3_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}_1_3_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tflite_parallel_split_config}
 
     # Run tf converted models:
     while read line; do
@@ -1518,6 +1587,7 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 # Set models config filepath
+models_tflite_parallel_split_config=${basepath}/../config/models_parallel_split.cfg
 models_tflite_config=${basepath}/../config/models_tflite.cfg
 models_tf_config=${basepath}/../config/models_tf.cfg
 models_caffe_config=${basepath}/../config/models_caffe.cfg

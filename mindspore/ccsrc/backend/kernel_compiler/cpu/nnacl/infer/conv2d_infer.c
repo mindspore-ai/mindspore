@@ -41,11 +41,16 @@ void ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, Conv
       param->pad_l_ = pad_w_all / 2;
       param->pad_r_ = pad_w_all - param->pad_l_;
     }
-  } else {
+  } else if (param->pad_mode_ == Pad_valid) {
     *output_w = ceil(((float)(input_w) + param->pad_l_ + param->pad_r_ - ((float)(kernel_w)-1) * (float)(dilate_w)) /
                      (float)(stride_w));
     *output_h = ceil(((float)(input_h) + param->pad_u_ + param->pad_d_ - ((float)(kernel_h)-1) * (float)(dilate_h)) /
                      (float)(stride_h));
+  } else {
+    int kernel_width = (kernel_w - 1) * dilate_w + 1;
+    int kernel_height = (kernel_h - 1) * dilate_h + 1;
+    *output_w = ((input_w) + param->pad_l_ + param->pad_r_ - kernel_width) / stride_w + 1;
+    *output_h = ((input_h) + param->pad_u_ + param->pad_d_ - kernel_height) / stride_h + 1;
   }
 }
 

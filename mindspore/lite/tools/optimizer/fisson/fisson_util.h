@@ -40,6 +40,7 @@ struct SplitInfo {
   std::vector<int64_t> extend_top;
   std::vector<int64_t> extend_bottom;
   std::vector<mindspore::lite::DeviceType> dev_types;
+  int64_t ori_split_axis_value;
   int64_t in_num_conv;
   int64_t fmk_type;
   PrimitiveType primitive_type;
@@ -47,7 +48,8 @@ struct SplitInfo {
 
 typedef enum { CUT_N, CUT_H, CUT_W, CUT_C_IN, CUT_C_OUT, CUT_NONE } CuttingStragedy;
 
-std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim);
+std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
+                                     int64_t input_w);
 
 bool IsConv2D(const AnfNodePtr &node);
 

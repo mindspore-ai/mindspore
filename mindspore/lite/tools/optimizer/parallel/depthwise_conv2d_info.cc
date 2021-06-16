@@ -29,6 +29,7 @@
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "ops/split_with_overlap.h"
 #include "src/tensor.h"
+#include "tools/optimizer/parallel/spliter.h"
 
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
@@ -293,11 +294,21 @@ int DepthwiseConv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2D
   return RET_OK;
 }
 
-AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
+AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, size_t input_index,
                                                      std::vector<AnfNodePtr> *split_outputs, size_t split_num,
                                                      const std::vector<int64_t> &splits) {
   auto depth_wise_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
-  auto pad_list = GetSplitPadList(depth_wise_conv_prim);
+  auto ori_node_name = ori_node->fullname_with_scope();
+  auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
+  auto input_shape_iter = graph_node_input_shapes.find(ori_node_name);
+  if (input_shape_iter == graph_node_input_shapes.end()) {
+    return nullptr;
+  }
+  auto input_shapes = input_shape_iter->second;
+  auto input_shape = input_shapes.front();
+  int64_t input_h = input_shape.at(kAxisH);
+  int64_t input_w = input_shape.at(kAxisW);
+  auto pad_list = GetSplitPadList(depth_wise_conv_prim, input_h, input_w);
   depth_wise_conv_prim->set_pad_list(pad_list);
   depth_wise_conv_prim->set_pad_mode(PAD);
   // prim of split
@@ -323,7 +334,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, 
   }
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
   // ori_conv_node must only have one feature input
-  split_inputs.push_back(orig_node->input(input_index + 1));
+  split_inputs.push_back(ori_node->input(input_index + 1));
   auto split_cnode = func_graph_->NewCNode(split_inputs);
   if (split_cnode == nullptr) {
     MS_LOG(ERROR) << name_ << " : Failed to create split node.";
