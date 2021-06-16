@@ -13,24 +13,25 @@
 # limitations under the License.
 # ============================================================================
 import os
-import argparse
+import time
 import numpy as np
 
 from mindspore import context, Tensor
 from mindspore.context import ParallelMode
-from mindspore.communication.management import init, get_group_size, get_rank
+from mindspore.communication.management import init
 from mindspore.train import Model
 from mindspore.train.callback import TimeMonitor, LossMonitor, ModelCheckpoint, CheckpointConfig
 from mindspore.nn.optim import Adam
 from mindspore.common import set_seed
 
-from src.config import config
 from src.model import get_pose_net
 from src.network_define import JointsMSELoss, WithLossCell
 from src.dataset import keypoint_dataset
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 set_seed(1)
-device_id = int(os.getenv('DEVICE_ID'))
 
 
 def get_lr(begin_epoch,
@@ -65,39 +66,76 @@ def get_lr(begin_epoch,
     learning_rate = lr_each_step[current_step:]
     return learning_rate
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Simpleposenet training")
-    parser.add_argument("--run-distribute",
-                        help="Run distribute, default is false.",
-                        action='store_true')
-    parser.add_argument('--ckpt-path', type=str, help='ckpt path to save')
-    parser.add_argument('--batch-size', type=int, help='training batch size')
-    args = parser.parse_args()
-    return args
+    if config.modelarts_dataset_unzip_name:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
 
+        sync_lock = "/tmp/unzip_sync.lock"
 
-def main():
-    # load parse and config
-    print("loading parse...")
-    args = parse_args()
-    if args.batch_size:
-        config.TRAIN.BATCH_SIZE = args.batch_size
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+    config.ckpt_save_dir = os.path.join(config.output_path, config.ckpt_save_dir)
+    config.DATASET.ROOT = config.data_path
+    config.MODEL.PRETRAINED = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.MODEL.PRETRAINED)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
     print('batch size :{}'.format(config.TRAIN.BATCH_SIZE))
-
     # distribution and context
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         save_graphs=False,
-                        device_id=device_id)
+                        device_id=get_device_id())
 
-    if args.run_distribute:
-        init()
-        rank = get_rank()
-        device_num = get_group_size()
+    if config.run_distribute:
+        rank = get_rank_id()
+        device_num = get_device_num()
         context.set_auto_parallel_context(device_num=device_num,
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
+        init()
     else:
         rank = 0
         device_num = 1
@@ -133,9 +171,11 @@ def main():
     time_cb = TimeMonitor(data_size=dataset_size)
     loss_cb = LossMonitor()
     cb = [time_cb, loss_cb]
-    if args.ckpt_path and rank_save_flag:
-        config_ck = CheckpointConfig(save_checkpoint_steps=dataset_size, keep_checkpoint_max=20)
-        ckpoint_cb = ModelCheckpoint(prefix="simplepose", directory=args.ckpt_path, config=config_ck)
+    if config.run_distribute:
+        config.ckpt_save_dir = os.path.join(config.ckpt_save_dir, str(get_rank_id()))
+    if config.ckpt_save_dir and rank_save_flag:
+        config_ck = CheckpointConfig(save_checkpoint_steps=dataset_size, keep_checkpoint_max=5)
+        ckpoint_cb = ModelCheckpoint(prefix="simplepose", directory=config.ckpt_save_dir, config=config_ck)
         cb.append(ckpoint_cb)
         # train model
     model = Model(net_with_loss, loss_fn=None, optimizer=opt, amp_level="O2")
@@ -145,4 +185,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run_train()

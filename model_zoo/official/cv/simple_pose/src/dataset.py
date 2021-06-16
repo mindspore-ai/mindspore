@@ -38,9 +38,9 @@ class KeypointDatasetGenerator:
         self.image_width = cfg.MODEL.IMAGE_SIZE[0]
         self.image_height = cfg.MODEL.IMAGE_SIZE[1]
         self.aspect_ratio = self.image_width * 1.0 / self.image_height
-        self.heatmap_size = np.array(cfg.MODEL.EXTRA.HEATMAP_SIZE, dtype=np.int32)
-        self.sigma = cfg.MODEL.EXTRA.SIGMA
-        self.target_type = cfg.MODEL.EXTRA.TARGET_TYPE
+        self.heatmap_size = np.array(cfg.POSE_RESNET.HEATMAP_SIZE, dtype=np.int32)
+        self.sigma = cfg.POSE_RESNET.SIGMA
+        self.target_type = cfg.POSE_RESNET.TARGET_TYPE
 
         # data argumentation
         self.scale_factor = cfg.DATASET.SCALE_FACTOR

@@ -13,12 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-# Usage: sh train_distributed.sh  [MINDSPORE_HCCL_CONFIG_PATH] [SAVE_CKPT_PATH] [RANK_SIZE] 
+# Usage: sh train_distributed.sh  [MINDSPORE_HCCL_CONFIG_PATH] [CKPT_SAVE_DIR] [RANK_SIZE]
+echo "$1 $2 $3"
 
+if [ $# != 3 ]; then
+  echo "Usage: sh train_distributed.sh  [MINDSPORE_HCCL_CONFIG_PATH] [CKPT_SAVE_DIR] [RANK_SIZE]"
+  exit 1
+fi
+if [ ! -f $1 ]; then
+  echo "error: MINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
+  exit 1
+fi
 export RANK_TABLE_FILE=$1
 echo "RANK_TABLE_FILE=$RANK_TABLE_FILE"
 export RANK_SIZE=$3
-SAVE_PATH=$2
+CKPT_SAVE_DIR=$2
 
 for((i=0;i<RANK_SIZE;i++))
 do
@@ -33,11 +42,9 @@ do
     env > env.log
     cd ../
     python train.py  \
-    --run-distribute \
-    --ckpt-path=$SAVE_PATH  > train_parallel$i/log.txt 2>&1 &
-    
+    --ckpt_save_dir=$CKPT_SAVE_DIR \
+    --run_distribute=True > ./train_parallel$i/log.txt 2>&1 &
     echo "python train.py  \
-    --run-distribute \
-    --ckpt-path=$SAVE_PATH  > train_parallel$i/log.txt 2>&1 &"
-
+    --ckpt_save_dir=$CKPT_SAVE_DIR \
+    --run_distribute=True > ./train_parallel$i/log.txt 2>&1 &"
 done

@@ -81,7 +81,7 @@ class PoseResNet(nn.Cell):
 
     def __init__(self, block, layers, cfg, pytorch_mode=True):
         self.inplanes = 64
-        extra = cfg.MODEL.EXTRA
+        extra = cfg.POSE_RESNET
         self.deconv_with_bias = extra.DECONV_WITH_BIAS
 
         super(PoseResNet, self).__init__()
@@ -214,7 +214,7 @@ resnet_spec = {50: (Bottleneck, [3, 4, 6, 3]),
 
 
 def get_pose_net(cfg, is_train, ckpt_path=None, pytorch_mode=False):
-    num_layers = cfg.MODEL.EXTRA.NUM_LAYERS
+    num_layers = cfg.POSE_RESNET.NUM_LAYERS
 
     block_class, layers = resnet_spec[num_layers]
     model = PoseResNet(block_class, layers, cfg, pytorch_mode=pytorch_mode)
