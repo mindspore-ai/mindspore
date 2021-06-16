@@ -493,6 +493,10 @@ std::unique_ptr<schema::PrimitiveT> QuantDTypeCastPrimitiveCreator(const AnfNode
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::QuantDTypeCast>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
+std::unique_ptr<schema::PrimitiveT> RaggedRangePrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::RaggedRange>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
 std::unique_ptr<schema::PrimitiveT> RangePrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Range>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
@@ -908,6 +912,7 @@ RegistryMSOps g_powFusionPrimitiveCreatorRegistry("PowFusion", PowFusionPrimitiv
 RegistryMSOps g_pReLUFusionPrimitiveCreatorRegistry("PReLUFusion", PReLUFusionPrimitiveCreator);
 RegistryMSOps g_RandomStandardNormalPrimitiveCreatorRegistry("RandomStandardNormal",
                                                              RandomStandardNormalPrimitiveCreator);
+RegistryMSOps g_raggedRangePrimitiveCreatorRegistry("RaggedRange", RaggedRangePrimitiveCreator);
 RegistryMSOps g_rangePrimitiveCreatorRegistry("Range", RangePrimitiveCreator);
 RegistryMSOps g_rankPrimitiveCreatorRegistry("Rank", RankPrimitiveCreator);
 RegistryMSOps g_reciprocalPrimitiveCreatorRegistry("Reciprocal", ReciprocalPrimitiveCreator);

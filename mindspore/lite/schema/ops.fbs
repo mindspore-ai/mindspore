@@ -212,6 +212,7 @@ union PrimitiveType {
     CumSum,
     SplitWithOverlap,
     GenOP,
+    RaggedRange,
 }
 
 table Abs {
@@ -1162,4 +1163,7 @@ table GenOP {
     reduce_mode: ReduceMode;
     reduce_to_end: bool;
     coeff: float;
+}
+
+table RaggedRange {
 }

@@ -113,6 +113,7 @@
 #include "ops/prior_box.h"
 #include "ops/proposal.h"
 #include "ops/quant_dtype_cast.h"
+#include "ops/ragged_range.h"
 #include "ops/range.h"
 #include "ops/rank.h"
 #include "ops/real_div.h"
@@ -363,6 +364,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(PowerGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(PReLUFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(PriorBox)
 FUNC_MSOP2SCHEMAOP_DECLARE(Proposal)
+FUNC_MSOP2SCHEMAOP_DECLARE(RaggedRange)
 FUNC_MSOP2SCHEMAOP_DECLARE(Rank)
 FUNC_MSOP2SCHEMAOP_DECLARE(Range)
 FUNC_MSOP2SCHEMAOP_DECLARE(Rank)
