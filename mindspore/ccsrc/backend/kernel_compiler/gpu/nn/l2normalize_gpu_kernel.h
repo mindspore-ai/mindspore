@@ -112,7 +112,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
     }
     CheckTensorSize({inputA_shape, output_shape});
     if (inputA_shape.size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
     }
 
     std::vector<size_t> outputC_shape = output_shape;

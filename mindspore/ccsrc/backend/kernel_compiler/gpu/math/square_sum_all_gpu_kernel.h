@@ -54,7 +54,8 @@ class SquareSumAllGpuFwdKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "SquareSumAllGpuFwdKernel input is null";
+      MS_LOG(ERROR) << "SquareSumAllGpuFwdKernel input is null";
+      return false;
     }
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];

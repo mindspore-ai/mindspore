@@ -26,6 +26,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM = 6;
+constexpr size_t NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM = 5;
 template <typename T>
 class BatchNormGpuKernel : public GpuKernel {
  public:
@@ -103,12 +105,14 @@ class BatchNormGpuKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      if (input_num != 6) {
-        MS_LOG(EXCEPTION) << "input tensor size is " << input_num << ", " << kernel_name << " should be 6";
+      if (input_num != CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM) {
+        MS_LOG(EXCEPTION) << "input tensor size is " << input_num << ", " << kernel_name << " should be "
+                          << CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM;
       }
     } else {
-      if (input_num != 5) {
-        MS_LOG(EXCEPTION) << "input tensor size is " << input_num << ", " << kernel_name << "  should be 5";
+      if (input_num != NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM) {
+        MS_LOG(EXCEPTION) << "input tensor size is " << input_num << ", " << kernel_name << " should be "
+                          << NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM;
       }
     }
 

@@ -71,8 +71,8 @@ class BroadcastOpGpuKernel : public GpuKernel {
     auto shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto shape3 = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
-    if (need_broadcast_ && shape1.size() > 7) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
+    if (need_broadcast_ && shape1.size() > MAX_DIMS) {
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
     }
 
     lhs_shape_.resize(MAX_DIMS, 1);

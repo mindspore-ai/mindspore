@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 2;
 template <typename T, typename S>
 class SigmoidCrossEntropyWithLogitsGpuKernel : public GpuKernel {
  public:
@@ -48,8 +49,9 @@ class SigmoidCrossEntropyWithLogitsGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SigmoidCrossEntropyWithLogits needs 2 inputs.";
+    if (input_num != INPUT_NUM) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but SigmoidCrossEntropyWithLogits needs " << INPUT_NUM
+                    << " inputs.";
       return false;
     }
     logits_size_ = sizeof(T);

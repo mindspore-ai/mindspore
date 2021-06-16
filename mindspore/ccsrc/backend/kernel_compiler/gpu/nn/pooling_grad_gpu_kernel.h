@@ -27,6 +27,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 3;
+#define NBDIMS 4
 template <typename T>
 class PoolingGradGpuKernel : public GpuKernel {
  public:
@@ -116,14 +118,14 @@ class PoolingGradGpuKernel : public GpuKernel {
       return false;
     }
     const int nbDims = 4;
-    int dimA[4];
-    int strideAin[4];
-    int dimAy[4];
-    int strideAiny[4];
-    int dimAdy[4];
-    int strideAdy[4];
-    int dimAout[4];
-    int strideAout[4];
+    int dimA[NBDIMS];
+    int strideAin[NBDIMS];
+    int dimAy[NBDIMS];
+    int strideAiny[NBDIMS];
+    int dimAdy[NBDIMS];
+    int strideAdy[NBDIMS];
+    int dimAout[NBDIMS];
+    int strideAout[NBDIMS];
     if (!InitShape(kernel_node, dimA, strideAin, dimAy, strideAiny, dimAdy, strideAdy, dimAout, strideAout, nbDims)) {
       return true;
     }
@@ -198,8 +200,9 @@ class PoolingGradGpuKernel : public GpuKernel {
  private:
   bool CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but PoolingGradGpuKernel needs 3 inputs.";
+    if (input_num != INPUT_NUM) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but PoolingGradGpuKernel needs " << INPUT_NUM
+                    << " inputs.";
       return false;
     }
     return true;

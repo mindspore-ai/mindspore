@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t SHAPE_SIZE = 4;
 template <typename T>
 class BroadcastToGpuKernel : public GpuKernel {
  public:
@@ -47,8 +48,8 @@ class BroadcastToGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (input_shapes.size() > 4 || output_shapes.size() > 4) {
-      MS_LOG(EXCEPTION) << "BroadcastTo operation not support dim greater than 4";
+    if (input_shapes.size() > SHAPE_SIZE || output_shapes.size() > SHAPE_SIZE) {
+      MS_LOG(EXCEPTION) << "BroadcastTo operation not support dim greater than " << SHAPE_SIZE;
     }
 
     size_t offset = output_shapes.size() - input_shapes.size();

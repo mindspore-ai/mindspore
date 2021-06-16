@@ -29,6 +29,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 7;
 template <typename T>
 class SparseApplyProximalAdagradKernel : public GpuKernel {
  public:
@@ -59,8 +60,9 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 7) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but SparseApplyProximalAdagrad needs 7 inputs.";
+    if (input_num != INPUT_NUM) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but SparseApplyProximalAdagrad needs " << INPUT_NUM
+                    << " inputs.";
       return false;
     }
 

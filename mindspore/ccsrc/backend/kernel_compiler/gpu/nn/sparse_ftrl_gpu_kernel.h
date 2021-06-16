@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/sparse_ftrl_impl.cuh"
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 5;
 template <typename T, typename S>
 class SparseFtrlGpuKernel : public GpuKernel {
  public:
@@ -63,8 +64,8 @@ class SparseFtrlGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 5) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but sparse ftrl needs 5 inputs.";
+    if (input_num != INPUT_NUM) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but sparse ftrl needs " << INPUT_NUM << " inputs.";
       return false;
     }
 

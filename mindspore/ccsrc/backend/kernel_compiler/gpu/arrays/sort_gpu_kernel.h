@@ -131,6 +131,7 @@ class SortGpuKernel : public GpuKernel {
     input_rank_ = input_shape_.size();
     if (input_rank_ > TRANSPOSE_MAX_DIMENSION) {
       MS_LOG(ERROR) << "Sort cannot support input that has more than " << TRANSPOSE_MAX_DIMENSION << " dimensions.";
+      return false;
     }
 
     input_size_ = 1;

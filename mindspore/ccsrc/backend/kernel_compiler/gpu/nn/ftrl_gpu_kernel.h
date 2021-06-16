@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/ftrl_impl.cuh"
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 8;
 template <typename T>
 class FtrlGpuKernel : public GpuKernel {
  public:
@@ -59,8 +60,8 @@ class FtrlGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 8) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ftrl needs 8 inputs.";
+    if (input_num != INPUT_NUM) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but ftrl needs " << INPUT_NUM << " inputs.";
       return false;
     }
 
