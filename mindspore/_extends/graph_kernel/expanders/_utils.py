@@ -113,20 +113,23 @@ class ExpanderInfoValidator:
     @staticmethod
     def check_all_formats_same(kls):
         """Check that all formats are the same"""
-        def _check_format(obj):
-            inp_formats = [inp['format'] for inp in obj.inputs]
-            if all([fmt == inp_formats[0] for fmt in inp_formats[1:]]):
-                return
-            raise GKException("[check_all_formats_same] unmatched formats ({}) for op {}".format(
-                ','.join(inp_formats), obj.name))
+        # Ensure no args case can return a class
+        def _check(*args):
+            def _check_format(obj):
+                inp_formats = [inp['format'] for inp in obj.inputs]
+                if all([fmt == inp_formats[0] for fmt in inp_formats[1:]]):
+                    return
+                raise GKException("[check_all_formats_same] unmatched formats ({}) for op {}".format(
+                    ','.join(inp_formats), obj.name))
 
-        def wrapper(*args, **kargs):
-            if not issubclass(kls, Expander):
-                raise Exception("{} should be subclass of Expander.".format(kls.__name__))
-            ExpanderInfoValidator._add_check_function(kls, _check_format)
-            return kls(*args, **kargs)
+            def wrapper(cls):
+                if not issubclass(cls, Expander):
+                    raise Exception("{} should be subclass of Expander.".format(cls.__name__))
+                ExpanderInfoValidator._add_check_function(cls, _check_format)
+                return cls
 
-        return wrapper
+            return wrapper
+        return _check()(kls)
 
     @staticmethod
     def check_attrs(*args):
@@ -143,6 +146,7 @@ class ExpanderInfoValidator:
             return cls
 
         return wrapper
+
 
 def to_frac_z_axis(ori_shape, ori_axis):
     """
@@ -166,10 +170,10 @@ def to_frac_z_axis(ori_shape, ori_axis):
     for i in range(axis_count):
         axis_index = (frac_z_axis[i] + shape_len) % shape_len
         if axis_index == axis_negative_1:
-            if frac_z_axis[i] > shape_len - 2: # akg:[2,3] [1,4] tbe:[2,4] [1,3]
+            if frac_z_axis[i] > shape_len - 2:  # akg:[2,3] [1,4] tbe:[2,4] [1,3]
                 frac_z_axis[i] = axis_index - 1
                 frac_z_axis.append(axis_index + 2)
-            else: # no case cover this branch now
+            else:  # no case cover this branch now
                 frac_z_axis[i] = axis_index - 1
                 frac_z_axis.append(axis_index + 2)
         elif axis_index == axis_negative_2:
@@ -178,6 +182,7 @@ def to_frac_z_axis(ori_shape, ori_axis):
         else:
             frac_z_axis[i] = axis_index
     return frac_z_axis
+
 
 def infer_shape_from_fractalNz(fractal):
     "get original shape from fractalNz shape"
@@ -191,6 +196,7 @@ def infer_shape_from_fractalNz(fractal):
     shape.append(m)
     shape.append(n)
     return shape
+
 
 def get_reduced_ori_shape(shape, axis):
     "get shape after reduced which is based on original shape"
