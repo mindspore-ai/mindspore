@@ -2129,5 +2129,15 @@ bool AnfRuntimeAlgorithm::IsOneOfPrimitiveCNode(const AnfNodePtr &node, const Pr
   }
   return IsOneOfPrimitive(cnode->inputs().at(kAnfPrimitiveIndex), prim_set);
 }
+
+bool AnfRuntimeAlgorithm::IsControlOpExecInBackend(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  // Operators in set control_ops_exec_in_backend will be compiled into kernel graph, rather than be cut into single op
+  // and executed in VM.
+  static std::set<std::string> control_ops_exec_in_backend = {kBpropCutOpName};
+  return control_ops_exec_in_backend.find(AnfAlgo::GetCNodeName(node)) != control_ops_exec_in_backend.end();
+}
 }  // namespace session
 }  // namespace mindspore

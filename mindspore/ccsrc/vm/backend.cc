@@ -21,7 +21,9 @@
 
 #include "vm/transform.h"
 #include "backend/session/session_factory.h"
+#include "backend/optimizer/common/helper.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "pipeline/jit/parse/data_converter.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "utils/callbacks.h"
@@ -251,7 +253,10 @@ void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
 MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id)
     : Backend(backend_name), device_name_(device_name), device_id_(device_id) {
   root_graph_ = nullptr;
-  auto cut_list = compile::GetMsNonlinearOps();
+  auto ms_context = MsContext::GetInstance();
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  auto &cut_list = pynative_mode ? compile::control_ops : GetMsNonlinearOps();
+
   graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend_name);
   graph_compiler_ = std::make_shared<GraphCompiler>();
 }
@@ -372,6 +377,93 @@ const ActorInfo &MindRTBackend::CompileGraph(const OpRunInfo &op_run_info, const
   return ret.first->first;
 }
 
+namespace {
+void PlantTensorTupleToVector(const py::tuple &tuple_inputs, std::vector<tensor::TensorPtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(tensors);
+  for (const auto &input_object : tuple_inputs) {
+    if (!py::isinstance<tensor::Tensor>(input_object)) {
+      MS_LOG(EXCEPTION) << "The input object is not a tensor!";
+    }
+    auto tensor = py::cast<tensor::TensorPtr>(input_object);
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensors->emplace_back(tensor);
+  }
+}
+
+void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(tensors);
+  ValuePtr input_value = parse::data_converter::PyDataToValue(input_object);
+  MS_EXCEPTION_IF_NULL(input_value);
+  if (!input_value->isa<ValueTuple>()) {
+    MS_LOG(EXCEPTION) << "The input object is not a value tuple!";
+  }
+
+  auto value_tuple = input_value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  tensor::TensorPtr tensor_ptr = opt::CreateTupleTensor(value_tuple);
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  tensors->emplace_back(tensor_ptr);
+}
+
+void ConvertMultiPyObjectToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(tensors);
+  if (!py::isinstance<py::tuple>(input_object)) {
+    MS_LOG(EXCEPTION) << "The input should be a tuple!";
+  }
+
+  auto tuple_inputs = py::cast<py::tuple>(input_object);
+  if (tuple_inputs.empty()) {
+    MS_LOG(EXCEPTION) << "The size of input list or tuple is 0!";
+  }
+
+  auto inputs = py::cast<py::tuple>(input_object);
+  if (py::isinstance<tensor::Tensor>(inputs[0])) {
+    PlantTensorTupleToVector(inputs, tensors);
+  } else {
+    ConvertValueTupleToTensor(input_object, tensors);
+  }
+}
+
+void RunControlOperator(const KernelGraphPtr &graph, const AnfNodePtr &kernel, std::vector<TensorPtr> *input_tensors,
+                        VectorRef *op_outputs) {
+  AnfNodePtr front_node = graph->GetFrontAnfByBackendAnf(kernel);
+  MS_EXCEPTION_IF_NULL(front_node);
+  if (!front_node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "The front node of bprop_cut is not CNode";
+  }
+
+  CNodePtr cnode = front_node->cast<CNodePtr>();
+  const std::vector<AnfNodePtr> &node_inputs = cnode->inputs();
+  if (node_inputs.empty()) {
+    MS_LOG(EXCEPTION) << "The inputs of node[" << cnode->fullname_with_scope() << "] is empty";
+  }
+
+  const AnfNodePtr &fn = node_inputs.at(0);
+  if (!IsValueNode<Primitive>(fn)) {
+    MS_LOG(EXCEPTION) << "The input[0] of kernel[" << kernel->fullname_with_scope()
+                      << "] is not a ValueNode of Primitive";
+  }
+
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(fn);
+  if (prim->name() == kBpropCutOpName) {
+    VectorRef args;
+    (void)std::transform(input_tensors->begin(), input_tensors->end(), std::back_inserter(args.elements_),
+                         [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+
+    BaseRef out = prim->RunHookFunction(args);
+
+    if (utils::isa<PyObjectRef>(out)) {
+      PyObjectRef py_ref = utils::cast<PyObjectRef>(out);
+      auto out_py_tuple = py_ref.object_;
+      std::vector<tensor::TensorPtr> output_tensors;
+      ConvertMultiPyObjectToTensor(out_py_tuple, &output_tensors);
+      (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(op_outputs->elements_),
+                           [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+    }
+  }
+}
+}  // namespace
+
 void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
                                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -402,11 +494,15 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info.input_tensors, &op_run_info,
                                                       &graph_info);
 
-      const ActorInfo &actor_info =
-        CompileGraph(op_run_info, graph_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors);
       VectorRef op_outputs;
-      RunGraph(actor_info, &op_run_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors,
-               &op_outputs);
+      if (!AnfAlgo::IsControlOpExecInBackend(kernel)) {
+        const ActorInfo &actor_info = CompileGraph(op_run_info, graph_info, &input_tensor_info.input_tensors_mask,
+                                                   &input_tensor_info.input_tensors);
+        RunGraph(actor_info, &op_run_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors,
+                 &op_outputs);
+      } else {
+        RunControlOperator(graph, kernel, &input_tensor_info.input_tensors, &op_outputs);
+      }
 
       graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
 
@@ -414,7 +510,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
 
       // Save grad node to Bucket
-      if (graph->is_bprop()) {
+      if (graph->is_bprop() && (!AnfAlgo::IsControlOpExecInBackend(kernel))) {
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }

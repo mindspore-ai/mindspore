@@ -298,6 +298,11 @@ class AnfRuntimeAlgorithm {
     return result;
   }
   static bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set);
+
+  // Judge a control operator need be compiled into kernel graph rather than be cut into single op and
+  // executed in vm. For example, the operator "bprop_cut" will be compiled into kernel graph and be launch
+  // in backend in PyNative mode.
+  static bool IsControlOpExecInBackend(const AnfNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

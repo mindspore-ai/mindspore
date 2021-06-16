@@ -1673,7 +1673,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
 
-  if (kSession == nullptr) {
+  if (kSession == nullptr && !IsMindRTUsed()) {
     std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     kSession = session::SessionFactory::Get().Create(device_target);
     MS_EXCEPTION_IF_NULL(kSession);

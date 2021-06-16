@@ -44,6 +44,10 @@ using TypedPrimitiveAbstractClosurePtr = std::shared_ptr<abstract::TypedPrimitiv
 
 std::vector<PrimitivePtr> nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
                                            prim::kPrimMakeTuple, prim::kPrimBpropCut};
+
+std::vector<PrimitivePtr> control_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch, prim::kPrimMakeTuple,
+                                         prim::kPrimSwitchLayer};
+
 const std::vector<PrimitivePtr> &GetMsNonlinearOps() {
   static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn,   prim::kPrimPartial,
                                                              prim::kPrimSwitch,   prim::kPrimMakeTuple,

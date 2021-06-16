@@ -54,7 +54,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         }
       }
       akg_nodes.push_back(kernel);
-    } else {
+    } else if (!AnfAlgo::IsControlOpExecInBackend(kernel)) {
       auto gpu_kernel_ptr = kernel::GpuKernelFactory::GetInstance().Create(kernel_name, kernel);
       if (!gpu_kernel_ptr) {
         MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
