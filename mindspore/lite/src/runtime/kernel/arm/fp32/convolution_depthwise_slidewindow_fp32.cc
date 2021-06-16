@@ -150,7 +150,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  if (IsTrain() && is_trainable()) {
+  if (IsTrain() && IsTrainable()) {
     PackWeight();
   }
 
@@ -207,7 +207,7 @@ int ConvolutionDepthwiseSWCPUKernel::Eval() {
     MS_LOG(ERROR) << "eval failed!";
     return ret;
   }
-  if (is_trainable()) {
+  if (IsTrainable()) {
     PackWeight();
   }
   return RET_OK;

@@ -86,7 +86,7 @@ int MatmulFP16CPUKernel::ReSize() {
 }
 
 int MatmulFP16CPUKernel::Run() {
-  if (is_trainable() && (IsTrain())) {
+  if (IsTrainable() && (IsTrain())) {
     is_repack_ = true;
   }
   auto ret = MatmulBaseFP16CPUKernel::Run();
@@ -99,7 +99,7 @@ int MatmulFP16CPUKernel::Run() {
 
 int MatmulFP16CPUKernel::Eval() {
   InnerKernel::Eval();
-  if (is_trainable()) {
+  if (IsTrainable()) {
     is_repack_ = true;
   }
   return RET_OK;

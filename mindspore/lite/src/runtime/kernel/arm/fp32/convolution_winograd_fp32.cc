@@ -216,7 +216,7 @@ int ConvolutionWinogradCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (IsTrain() && is_trainable()) {
+  if (IsTrain() && IsTrainable()) {
     ret = InitWeightBias();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init weight bias failed.";
@@ -239,7 +239,7 @@ int ConvolutionWinogradCPUKernel::Eval() {
     MS_LOG(ERROR) << "eval failed!";
     return ret;
   }
-  if (is_trainable()) {
+  if (IsTrainable()) {
     ret = InitWeightBias();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init weight bias failed.";

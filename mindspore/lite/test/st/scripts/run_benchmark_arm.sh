@@ -1060,11 +1060,16 @@ function Run_arm64() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
+        enable_fp16="false"
         if [[ $model_name == \#* ]]; then
             continue
         fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
+            accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" == "fp16" ]]; then
+            enable_fp16="true"
+            suffix_print="_fp16"
             accuracy_limit=${line_array[2]}
         fi
         export_file="${tmp_dir}/${model_name}_tod"
@@ -1086,6 +1091,7 @@ function Run_arm64() {
         --expectedDataFile=${tmp_dir}/${model_prefix}_output \
         --numThreads=${threads} \
         --accuracyThreshold=${accuracy_limit} \
+        --enableFp16=${enable_fp16} \
         --inferenceFile=${inference_file} \
         --exportFile=${export_file}
 ENDM
@@ -1095,9 +1101,9 @@ ENDM
         adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm64_fp32_log_file}
         # TODO: change to arm_type
         if [ $? = 0 ]; then
-            run_result='arm64_train: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='arm64_train: '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='arm64_train: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            run_result='arm64_train: '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
             fail=1
         fi
     done < ${models_ms_train_config}
@@ -1183,6 +1189,8 @@ function Run_arm32() {
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" != "" ]]; then
+            continue
         fi
         export_file="${tmp_dir}/${model_name}_tod"
         inference_file="${tmp_dir}/${model_name}_infer"

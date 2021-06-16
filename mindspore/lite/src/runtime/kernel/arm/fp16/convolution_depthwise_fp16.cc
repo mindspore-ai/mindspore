@@ -109,7 +109,7 @@ static int ConvDwFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sc
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Run() {
-  if (is_trainable() && (IsTrain() || is_repack())) {
+  if (IsTrainable() && (IsTrain() || IsRepack())) {
     auto ret = InitWeightBias();
     if (ret != 0) {
       MS_LOG(ERROR) << "Convolution depthwise fp16 repack weight failure";
@@ -125,7 +125,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Eval() {
-  if (is_trainable()) {
+  if (IsTrainable()) {
     is_repack_ = true;
   }
   return InnerKernel::Eval();

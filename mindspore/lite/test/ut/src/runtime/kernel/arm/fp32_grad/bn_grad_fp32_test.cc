@@ -194,7 +194,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   EXPECT_EQ(0, ret);
 
   kernel_obj->Train();
-  kernel_obj->set_trainable(true);
+  kernel_obj->SetTrainable(true);
   kernel_obj->Run();
 
   std::cout << "================save_mean==============================\n";

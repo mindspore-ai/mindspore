@@ -42,7 +42,7 @@ class MatmulBaseFP16CPUKernel : public InnerKernel {
 
  protected:
   void InitParameter();
-  bool is_repack() { return is_repack_; }
+  bool IsRepack() { return is_repack_; }
   bool is_repack_ = false;
 
  private:

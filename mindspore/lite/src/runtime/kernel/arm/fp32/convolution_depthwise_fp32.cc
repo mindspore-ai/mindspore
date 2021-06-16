@@ -105,7 +105,7 @@ int ConvDwRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
-  if (IsTrain() && is_trainable()) {
+  if (IsTrain() && IsTrainable()) {
     PackWeight();
   }
 
@@ -139,7 +139,7 @@ int ConvolutionDepthwiseCPUKernel::Eval() {
     MS_LOG(ERROR) << "eval failed!";
     return ret;
   }
-  if (is_trainable()) {
+  if (IsTrainable()) {
     PackWeight();
   }
   return RET_OK;

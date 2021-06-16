@@ -76,6 +76,9 @@ int ArithmeticCPUKernel::CheckDataType() {
                   << in0_dataType << " input 1 dataType: " << in1_dataType;
     return RET_ERROR;
   }
+  if (op_parameter_->is_train_session_) {
+    data_type_len_ = lite::DataTypeSize(in_tensors_.at(0)->data_type());
+  }
   return RET_OK;
 }
 

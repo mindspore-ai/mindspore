@@ -88,9 +88,9 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
     InnerKernel::Train();
     return conv_kernel_->Train();
   }
-  void set_trainable(bool trainable) override {
-    InnerKernel::set_trainable(trainable);
-    return conv_kernel_->set_trainable(trainable);
+  void SetTrainable(bool trainable) override {
+    InnerKernel::SetTrainable(trainable);
+    return conv_kernel_->SetTrainable(trainable);
   }
 
  protected:

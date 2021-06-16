@@ -88,7 +88,7 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     Float32ToFloat16(reinterpret_cast<float *>(variance->data_c()), reinterpret_cast<float16_t *>(variance_fp16),
                      variance->ElementsNum());
 
-    if (IsTrain() && is_trainable() && in_tensors_.size() >= 5) {
+    if (IsTrain() && IsTrainable() && in_tensors_.size() >= 5) {
       CalcMeanVar(reinterpret_cast<float16_t *>(input_fp16), reinterpret_cast<float16_t *>(scale_fp16),
                   reinterpret_cast<float16_t *>(offset_fp16), reinterpret_cast<float16_t *>(mean_fp16),
                   reinterpret_cast<float16_t *>(variance_fp16));
@@ -108,7 +108,7 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     return RET_OK;
   }
 
-  if (IsTrain() && is_trainable() && in_tensors_.size() >= 5) {
+  if (IsTrain() && IsTrainable() && in_tensors_.size() >= 5) {
     CalcMeanVar(
       static_cast<float16_t *>(in_tensors_.at(0)->data_c()), static_cast<float16_t *>(in_tensors_.at(1)->data_c()),
       static_cast<float16_t *>(in_tensors_.at(2)->data_c()), static_cast<float16_t *>(in_tensors_.at(3)->data_c()),

@@ -737,6 +737,8 @@ function Run_x86() {
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" != "" ]]; then
+            continue
         fi
         export_file="${ms_train_models_path}/${model_name}_tod"
         inference_file="${ms_train_models_path}/${model_name}_infer"
