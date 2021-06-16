@@ -22,8 +22,8 @@
 
 typedef unsigned char Byte;
 namespace mindspore {
-const size_t MAX_BLOCK_SIZE = 512 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
-const unsigned int MAGIC_NUM = 0x7F3A5ED8;        // Magic number
+constexpr size_t MAX_BLOCK_SIZE = 512 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
+constexpr unsigned int MAGIC_NUM = 0x7F3A5ED8;        // Magic number
 
 std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, Byte *plain_data, const size_t plain_len, const Byte *key,
                                 const size_t key_len, const std::string &enc_mode);

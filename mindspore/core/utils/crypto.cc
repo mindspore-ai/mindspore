@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include <fstream>
+#include "utils/crypto.h"
 #include <regex>
 #include <vector>
+#include <fstream>
 #include <algorithm>
-#include "utils/crypto.h"
 #include "utils/log_adapter.h"
 
 #if not defined(_WIN32)
@@ -66,17 +66,20 @@ bool IsCipherFile(const Byte *model_data) {
 #if defined(_WIN32)
 std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, Byte *plain_data, const size_t plain_len, const Byte *key,
                                 const size_t key_len, const std::string &enc_mode) {
-  MS_EXCEPTION(NotSupportError) << "Unsupported feature in Windows platform.";
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return nullptr;
 }
 
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_data_path, const Byte *key,
                                 const size_t key_len, const std::string &dec_mode) {
-  MS_EXCEPTION(NotSupportError) << "Unsupported feature in Windows platform.";
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return nullptr;
 }
 
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, const size_t data_size, const Byte *key,
                                 const size_t key_len, const std::string &dec_mode) {
-  MS_EXCEPTION(NotSupportError) << "Unsupported feature in Windows platform.";
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return nullptr;
 }
 #else
 
@@ -138,7 +141,8 @@ EVP_CIPHER_CTX *GetEVP_CIPHER_CTX(const std::string &work_mode, const Byte *key,
         funcPtr = EVP_aes_256_gcm;
         break;
       default:
-        MS_EXCEPTION(ValueError) << "The key length must be 16, 24 or 32, but got key length is " << key_len << ".";
+        MS_LOG(ERROR) << "The key length must be 16, 24 or 32, but got key length is " << key_len << ".";
+        return nullptr;
     }
   } else if (work_mode == "CBC") {
     switch (key_len) {
@@ -152,7 +156,8 @@ EVP_CIPHER_CTX *GetEVP_CIPHER_CTX(const std::string &work_mode, const Byte *key,
         funcPtr = EVP_aes_256_cbc;
         break;
       default:
-        MS_EXCEPTION(ValueError) << "The key length must be 16, 24 or 32, but got key length is " << key_len << ".";
+        MS_LOG(ERROR) << "The key length must be 16, 24 or 32, but got key length is " << key_len << ".";
+        return nullptr;
     }
   }
 
@@ -287,7 +292,8 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, Byte *plain_data, const siz
     memcpy(block_buf.data(), plain_data + cur_pos, cur_block_size);
     if (!_BlockEncrypt(block_enc_buf.data(), &block_enc_len, block_buf.data(), cur_block_size, key, key_len,
                        enc_mode)) {
-      MS_EXCEPTION(ValueError) << "Failed to encrypt data, please check if enc_key or enc_mode is valid.";
+      MS_LOG(ERROR) << "Failed to encrypt data, please check if enc_key or enc_mode is valid.";
+      return nullptr;
     }
     intToByte(int_buf.data(), MAGIC_NUM);
     memcpy(encrypt_data.get() + *encrypt_len, int_buf.data(), sizeof(int32_t));
@@ -303,7 +309,8 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
                                 const size_t key_len, const std::string &dec_mode) {
   std::ifstream fid(encrypt_data_path, std::ios::in | std::ios::binary);
   if (!fid) {
-    MS_EXCEPTION(ValueError) << "Open file '" << encrypt_data_path << "' failed, please check the correct of the file.";
+    MS_LOG(ERROR) << "Open file '" << encrypt_data_path << "' failed, please check the correct of the file.";
+    return nullptr;
   }
   fid.seekg(0, std::ios_base::end);
   size_t file_size = fid.tellg();
@@ -321,15 +328,16 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
     fid.read(int_buf.data(), sizeof(int32_t));
     int cipher_flag = ByteToint(reinterpret_cast<Byte *>(int_buf.data()));
     if (cipher_flag != MAGIC_NUM) {
-      MS_EXCEPTION(ValueError) << "File \"" << encrypt_data_path
-                               << "\" is not an encrypted file and cannot be decrypted";
+      MS_LOG(ERROR) << "File \"" << encrypt_data_path << "\" is not an encrypted file and cannot be decrypted";
+      return nullptr;
     }
     fid.read(int_buf.data(), sizeof(int32_t));
     int32_t block_size = ByteToint(reinterpret_cast<Byte *>(int_buf.data()));
     fid.read(block_buf.data(), sizeof(char) * block_size);
     if (!(_BlockDecrypt(decrypt_block_buf.data(), &decrypt_block_len, reinterpret_cast<Byte *>(block_buf.data()),
                         block_size, key, key_len, dec_mode))) {
-      MS_EXCEPTION(ValueError) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
+      MS_LOG(ERROR) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
+      return nullptr;
     }
     memcpy(decrypt_data.get() + *decrypt_len, decrypt_block_buf.data(), decrypt_block_len);
     *decrypt_len += decrypt_block_len;
@@ -353,7 +361,8 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, con
     cur_pos += 4;
     int cipher_flag = ByteToint(reinterpret_cast<Byte *>(int_buf.data()));
     if (cipher_flag != MAGIC_NUM) {
-      MS_EXCEPTION(ValueError) << "model_data is not encrypted and therefore cannot be decrypted.";
+      MS_LOG(ERROR) << "model_data is not encrypted and therefore cannot be decrypted.";
+      return nullptr;
     }
     memcpy(int_buf.data(), model_data + cur_pos, 4);
     cur_pos += 4;
@@ -363,7 +372,8 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, con
     cur_pos += block_size;
     if (!(_BlockDecrypt(decrypt_block_buf.data(), &decrypt_block_len, reinterpret_cast<Byte *>(block_buf.data()),
                         block_size, key, key_len, dec_mode))) {
-      MS_EXCEPTION(ValueError) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
+      MS_LOG(ERROR) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
+      return nullptr;
     }
     memcpy(decrypt_data.get() + *decrypt_len, decrypt_block_buf.data(), decrypt_block_len);
     *decrypt_len += decrypt_block_len;
