@@ -204,9 +204,10 @@ class GraphData:
         Get `neighbor_type` neighbors of the nodes in `node_list`.
         We try to use the following example to illustrate the definition of these formats. 1 represents connected
             between two nodes, and 0 represents not connected.
+
         .. list-table:: Adjacent Matrix
-        :widths: 20 20 20 20 20
-        :header-rows: 1
+           :widths: 20 20 20 20 20
+           :header-rows: 1
 
            * -
              - 0
@@ -304,9 +305,9 @@ class GraphData:
             >>> nodes = graph_dataset.get_all_nodes(node_type=1)
             >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2)
             >>> neighbors_coo = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-                                                                output_format=OutputFormat.COO)
+            >>>                                                 output_format=OutputFormat.COO)
             >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-                                                                              output_format=OutputFormat.CSR)
+            >>>                                                               output_format=OutputFormat.CSR)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
