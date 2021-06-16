@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
     DVPP is mandatory, and must choose from [DVPP|CPU], it's case-insensitive
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
@@ -30,17 +30,15 @@ get_real_path(){
 }
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
-label_path=$(get_real_path $3)
-DVPP=${4^^}
+DVPP=${3^^}
 
 device_id=0
-if [ $# == 5 ]; then
-    device_id=$5
+if [ $# == 4 ]; then
+    device_id=$4
 fi
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
-echo "label path: "$label_path
 echo "image process mode: "$DVPP
 echo "device id: "$device_id
 
@@ -57,6 +55,16 @@ else
     export PYTHONPATH=$ASCEND_HOME/fwkacllib/python/site-packages:$ASCEND_HOME/atc/python/site-packages:$PYTHONPATH
     export ASCEND_OPP_PATH=$ASCEND_HOME/opp
 fi
+
+function preprocess_data()
+{
+    if [ -d preprocess_Result ]; then
+        rm -rf ./preprocess_Result
+    fi
+    mkdir preprocess_Result
+    python ../preprocess.py --preprocess_output=./preprocess_Result --TEST_DATASET_PATH=$data_path &> preprocess.log
+    data_path=./preprocess_Result
+}
 
 function compile_app()
 {
@@ -88,9 +96,14 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --result_path=./result_Files --label_path=$label_path &> acc.log &
+    python3.7 ../postprocess.py --result_path=./result_Files --label_path=./label.txt &> acc.log &
 }
 
+preprocess_data
+if [ $? -ne 0 ]; then
+    echo "preprocess data failed"
+    exit 1
+fi
 compile_app
 if [ $? -ne 0 ]; then
     echo "compile app code failed"

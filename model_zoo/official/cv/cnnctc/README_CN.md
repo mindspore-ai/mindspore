@@ -127,19 +127,19 @@ pip install six
 - 单机训练：
 
 ```shell
-bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
+bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options)]
 ```
 
 - 分布式训练：
 
 ```shell
-bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
+bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT(options)]
 ```
 
 - 评估：
 
 ```shell
-bash scripts/run_eval_ascend.sh $TRAINED_CKPT
+bash scripts/run_eval_ascend.sh DEVICE_ID TRAINED_CKPT
 ```
 
 # 脚本说明
@@ -150,12 +150,15 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 
 ```python
 |--- CNNCTC/
+    |---README_CN.md    // CNN+CTC相关描述
     |---README.md    // CNN+CTC相关描述
     |---train.py    // 训练脚本
     |---eval.py    // 评估脚本
     |---export.py    // 模型导出脚本
     |---postprocess.py    // 推理后处理脚本
-    |---ascend310_infer    // 用于310推理
+    |---preprocess.py     // 推理前处理脚本
+    |---ascend310_infer       // 用于310推理
+    |---default_config.yaml    // 参数配置
     |---scripts
         |---run_standalone_train_ascend.sh    // Ascend单机shell脚本
         |---run_distribute_train_ascend.sh    // Ascend分布式shell脚本
@@ -164,18 +167,22 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
     |---src
         |---__init__.py    // init文件
         |---cnn_ctc.py    // cnn_ctc网络
-        |---config.py    // 总配置
         |---callback.py    // 损失回调文件
         |---dataset.py    // 处理数据集
         |---util.py    // 常规操作
         |---generate_hccn_file.py    // 生成分布式json文件
         |---preprocess_dataset.py    // 预处理数据集
+        |---model_utils
+           |---config.py                            # 参数生成
+           |---device_adapter.py                    # 设备相关信息
+           |---local_adapter.py                     # 设备相关信息
+           |---moxing_adapter.py                    # 装饰器(主要用于ModelArts数据拷贝)
 
 ```
 
 ## 脚本参数
 
-在`config.py`中可以同时配置训练参数和评估参数。
+在`default_config.yaml`中可以同时配置训练参数和评估参数。
 
 参数：
 
@@ -208,7 +215,7 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 - 单机训练：
 
 ```shell
-bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
+bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options)]
 ```
 
 结果和检查点被写入`./train`文件夹。日志可以在`./train/log`中找到，损失值记录在`./train/loss.log`中。
@@ -218,7 +225,7 @@ bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
 - 分布式训练：
 
 ```shell
-bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
+bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT(options)]
 ```
 
 结果和检查点分别写入设备`i`的`./train_parallel_{i}`文件夹。  
@@ -226,6 +233,10 @@ bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
 
 在Ascend上运行分布式任务时需要`$RANK_TABLE_FILE`。
 `$PATH_TO_CHECKPOINT`为模型检查点的路径，**可选**。如果值为none，模型将从头开始训练。
+
+> 注意:
+
+  RANK_TABLE_FILE相关参考资料见[链接](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html), 获取device_ip方法详见[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
 ### 训练结果
 
@@ -259,31 +270,104 @@ epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.3184
 - 评估：
 
 ```shell
-bash scripts/run_eval_ascend.sh $TRAINED_CKPT
+bash scripts/run_eval_ascend.sh [DEVICE_ID] [TRAINED_CKPT]
 ```
 
 在IIIT数据集上评估模型，并打印样本结果和总准确率。
+
+- 如果要在modelarts上进行模型的训练，可以参考modelarts的[官方指导文档](https://support.huaweicloud.com/modelarts/) 开始进行模型的训练和推理，具体操作如下：
+
+```ModelArts
+#  在ModelArts上使用分布式训练示例:
+#  数据集存放方式
+
+#  ├── CNNCTC_Data                                              # dataset dir
+#    ├──train                                                   # train dir
+#      ├── ST_MJ                                                # train dataset dir
+#        ├── data.mdb                                           # data file
+#        ├── lock.mdb
+#      ├── st_mj_fixed_length_index_list.pkl
+#    ├── eval                                                   # eval dir
+#      ├── IIIT5K_3000                                          # eval dataset dir
+#      ├── checkpoint                                           # checkpoint dir
+
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "run_distribute=True"
+#          设置 "TRAIN_DATASET_PATH=/cache/data/ST_MJ/"
+#          设置 "TRAIN_DATASET_INDEX_PATH=/cache/data/st_mj_fixed_length_index_list.pkl"
+#          设置 "SAVE_PATH=/cache/train/checkpoint"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/cnnctc"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../CNNCTC_Data/train"(选择CNNCTC_Data/train文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选择a或者b其中一种方式。
+#        a.设置 "enable_modelarts=True"
+#          设置 "TEST_DATASET_PATH=/cache/data/IIIT5K_3000/"
+#          设置 "CHECKPOINT_PATH=/cache/data/checkpoint/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (3) 设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/cnnctc"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "../CNNCTC_Data/eval"(选择CNNCTC_Data/eval文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
+```
 
 ## 推理过程
 
 ### 导出MindIR
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT] --TEST_BATCH_SIZE [BATCH_SIZE]
 ```
 
 参数ckpt_file为必填项，
-参数file_name为导出后文件名，
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"].
+`BATCH_SIZE` 目前仅支持batch_size为1的推理.
+
+- 在modelarts上导出MindIR
+
+```Modelarts
+在ModelArts上导出MindIR示例
+数据集存放方式同Modelart训练
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "file_name=/cache/train/cnnctc"
+#          设置 "file_format=MINDIR"
+#          设置 "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/cnnctc"。
+# (4) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../CNNCTC_Data/eval/checkpoint"(选择CNNCTC_Data/eval/checkpoint文件夹路径) ,
+# MindIR的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+```
 
 ### 在Ascend310执行推理
 
 在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
-目前仅支持batch_size为1的推理，导出模型前请修改`config.py`中的参数`TEST_BATCH_SIZE`为1。
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
 ```
 
 - `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。CNNCTC目前仅支持使用CPU算子进行推理。
@@ -294,7 +378,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
 推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
 
 ```bash
-'Accuracy':0.8546
+'Accuracy':0.8642
 ```
 
 # 模型描述
@@ -343,7 +427,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
 | 数据集 | IIIT5K |
 | batch_size | 1 |
 | 输出 | Accuracy |
-| 准确率 | Accuracy=0.8546 |
+| 准确率 | Accuracy=0.8642 |
 | 推理模型 | 675M（.ckpt文件） |
 
 ## 用法

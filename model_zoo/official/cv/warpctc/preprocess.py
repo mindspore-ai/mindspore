@@ -14,24 +14,18 @@
 # ============================================================================
 import os
 import math as m
-import argparse
-from src.config import config as cf
+from src.model_utils.config import config as cf
 from src.dataset import create_dataset
 
 batch_size = 1
-parser = argparse.ArgumentParser(description="Warpctc preprocess")
-parser.add_argument("--dataset_path", type=str, default=None, help="Dataset, default is None.")
-parser.add_argument("--output_path", type=str, default=None, help="output path")
-
-args_opt = parser.parse_args()
 
 if __name__ == "__main__":
     input_size = m.ceil(cf.captcha_height / 64) * 64 * 3
-    dataset = create_dataset(dataset_path=args_opt.dataset_path,
+    dataset = create_dataset(dataset_path=cf.dataset_path,
                              batch_size=batch_size,
                              device_target="Ascend")
 
-    img_path = args_opt.output_path
+    img_path = cf.output_path
     if not os.path.isdir(img_path):
         os.makedirs(img_path)
     total = dataset.get_dataset_size()

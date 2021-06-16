@@ -148,10 +148,13 @@ The entire code structure is as following:
 ```text
 |--- CNNCTC/
     |---README.md    // descriptions about cnnctc
+    |---README_cn.md    // descriptions about cnnctc
+    |---default_config.yaml   // config file
     |---train.py    // train scripts
     |---eval.py    // eval scripts
     |---export.py    // export scripts
-    |---pstprocess.py    // postprocess scripts
+    |---preprocess.py     // preprocess scripts
+    |---postprocess.py    // postprocess scripts
     |---ascend310_infer    // application for 310 inference
     |---scripts
         |---run_infer_310.sh    // shell script for infer on ascend310
@@ -166,12 +169,16 @@ The entire code structure is as following:
         |---dataset.py    // process dataset
         |---util.py    // routine operation
         |---preprocess_dataset.py    // preprocess dataset
-
+        |--- model_utils
+            |---config.py             // Parameter config
+            |---moxing_adapter.py     // modelarts device configuration
+            |---device_adapter.py     // Device Config
+            |---local_adapter.py      // local device config
 ```
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in `config.py`.
+Parameters for both training and evaluation can be set in `default_config.yaml`.
 
 Arguments:
 
@@ -204,7 +211,7 @@ Arguments:
 - Standalone Training:
 
 ```bash
-bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
+bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options)]
 ```
 
 Results and checkpoints are written to `./train` folder. Log can be found in `./train/log` and loss values are recorded in `./train/loss.log`.
@@ -214,8 +221,14 @@ Results and checkpoints are written to `./train` folder. Log can be found in `./
 - Distributed Training:
 
 ```bash
-bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
+bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT(options)]
 ```
+
+  For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+
+  Please follow the instructions in the link below:
+
+  <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
 
 Results and checkpoints are written to `./train_parallel_{i}` folder for device `i` respectively.
  Log can be found in `./train_parallel_{i}/log_{i}.log` and loss values are recorded in `./train_parallel_{i}/loss.log`.
@@ -248,6 +261,60 @@ epoch: 1 step: 8697 , loss is 9.709536406025824, average time per step is 0.2184
 epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.2184715309307257
 ```
 
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
+
+```python
+#  Example of using distributed training dpn on modelarts :
+#  Data set storage method
+
+#  ├── CNNCTC_Data                                              # dataset dir
+#    ├──train                                                   # train dir
+#      ├── ST_MJ                                                # train dataset dir
+#        ├── data.mdb                                           # data file
+#        ├── lock.mdb
+#      ├── st_mj_fixed_length_index_list.pkl
+#    ├── eval                                                   # eval dir
+#      ├── IIIT5K_3000                                          # eval dataset dir
+#      ├── checkpoint                                           # checkpoint dir
+
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+#       a. set "enable_modelarts=True"
+#          set "run_distribute=True"
+#          set "TRAIN_DATASET_PATH=/cache/data/ST_MJ/"
+#          set "TRAIN_DATASET_INDEX_PATH=/cache/data/st_mj_fixed_length_index_list.pkl"
+#          set "SAVE_PATH=/cache/train/checkpoint"
+#
+#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/cnnctc"。
+# (4) Set the model's startup file on the modelarts interface "export.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../CNNCTC_Data/train"(choices CNNCTC_Data/train Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path" 。
+# (6) start trainning the model。
+
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#        a.set "enable_modelarts=True"
+#          set "TEST_DATASET_PATH=/cache/data/IIIT5K_3000/"
+#          set "CHECKPOINT_PATH=/cache/data/checkpoint/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (4) Set the code path on the modelarts interface "/path/cnnctc"。
+# (5) Set the model's startup file on the modelarts interface "export.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../CNNCTC_Data/train"(choices CNNCTC_Data/train Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
+```
+
 ## [Evaluation Process](#contents)
 
 ### Evaluation
@@ -255,7 +322,7 @@ epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.2184
 - Evaluation:
 
 ```bash
-bash scripts/run_eval_ascend.sh $TRAINED_CKPT
+bash scripts/run_eval_ascend.sh [DEVICE_ID] [TRAINED_CKPT]
 ```
 
 The model will be evaluated on the IIIT dataset, sample results and overall accuracy will be printed.
@@ -265,21 +332,41 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 ### Export MindIR
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT] --TEST_BATCH_SIZE [BATCH_SIZE]
 ```
 
 The ckpt_file parameter is required,
-The file_name parameter is file name after export.
-`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
+`BATCH_SIZE` current batch_size can only be set to 1.
+
+- Export MindIR on Modelarts
+
+```Modelarts
+Export MindIR example on ModelArts
+Data storage method is the same as training
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters)。
+#       a. set "enable_modelarts=True"
+#          set "file_name=/cache/train/cnnctc"
+#          set "file_format=MINDIR"
+#          set "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+# (2)Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/cnnctc"。
+# (4) Set the model's startup file on the modelarts interface "export.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../CNNCTC_Data/eval/checkpoint"(choices CNNCTC_Data/eval/checkpoint Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+```
 
 ### Infer on Ascend310
 
 Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
-Current batch_size can only be set to 1, modify the parameter `TEST_BATCH_SIZE` in `config.py` to 1 before export the model
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
 ```
 
 - `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. CNNCTC only support CPU mode .
@@ -290,7 +377,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
 Inference result is saved in current path, you can find result like this in acc.log file.
 
 ```bash
-'Accuracy': 0.8546
+'Accuracy': 0.8642
 ```
 
 # [Model Description](#contents)
@@ -339,7 +426,7 @@ Inference result is saved in current path, you can find result like this in acc.
 | Dataset             | IIIT5K                      |
 | batch_size          | 1                           |
 | outputs             | Accuracy                    |
-| Accuracy            | Accuracy=0.8546             |
+| Accuracy            | Accuracy=0.8642             |
 | Model for inference | 675M(.ckpt file)            |
 
 ## [How to use](#contents)
