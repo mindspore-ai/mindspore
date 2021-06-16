@@ -26,15 +26,12 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-constexpr size_t kInputIndex2 = 2;
-}
 void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltwise(
   const CNodePtr &cnode, const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::unordered_set<AnfNodePtr> record{cnode};
-  auto eltwise_input = cnode->input(1);
+  auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
   if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
@@ -45,7 +42,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   MS_EXCEPTION_IF_NULL(manager);
   auto input_cnode = eltwise_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(input_cnode);
-  auto double_in_eltwise_input = input_cnode->input(kInputIndex2);
+  auto double_in_eltwise_input = input_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(double_in_eltwise_input);
   std::vector<int64_t> conv2d_bp_output_used_num;
   if (!double_in_eltwise_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(double_in_eltwise_input)) {
@@ -59,7 +56,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
     conv2d_bp_output_used_num.emplace_back(SizeToLong(manager->node_users()[double_in_eltwise_input].size()));
     AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(conv2d_bp_output_used_num), double_in_eltwise_input);
   } else {
-    auto double_in_eltwise_input_1 = input_cnode->input(1);
+    auto double_in_eltwise_input_1 = input_cnode->input(kIndex1);
     MS_EXCEPTION_IF_NULL(double_in_eltwise_input_1);
     if (!double_in_eltwise_input_1->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(double_in_eltwise_input_1)) {
       return;

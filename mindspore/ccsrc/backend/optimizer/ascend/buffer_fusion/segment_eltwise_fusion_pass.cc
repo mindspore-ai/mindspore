@@ -31,12 +31,12 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::unordered_set<AnfNodePtr> record{cnode};
-  auto eltwise_input = cnode->input(1);
+  auto eltwise_input = cnode->input(kIndex1);
   while (CheckEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
     auto input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(input_cnode);
-    eltwise_input = input_cnode->input(1);
+    eltwise_input = input_cnode->input(kIndex1);
     if (record.size() == MAX_ELTWISE_NUM) {
       break;
     }
@@ -51,13 +51,13 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
     (void)record.insert(eltwise_input);
     auto previous_input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(previous_input_cnode);
-    auto previous_eltwise_input = previous_input_cnode->input(1);
+    auto previous_eltwise_input = previous_input_cnode->input(kIndex1);
     auto previous_size = record.size();
     while (CheckEltWiseNode(kernel_graph, previous_eltwise_input)) {
       (void)record.insert(previous_eltwise_input);
       auto previous_node = previous_eltwise_input->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(previous_node);
-      previous_eltwise_input = previous_node->input(1);
+      previous_eltwise_input = previous_node->input(kIndex1);
       if (record.size() - previous_size == MAX_ELTWISE_NUM) {
         break;
       }

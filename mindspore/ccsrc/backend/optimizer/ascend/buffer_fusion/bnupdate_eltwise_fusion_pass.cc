@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace opt {
-constexpr size_t INPUT2 = 2;
 void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr &cnode, const AnfNodePtr &eltwise_input,
                                                                  const session::KernelGraph &kernel_graph,
                                                                  FusedNodeRecord *candidate_fusion) {
@@ -38,7 +37,7 @@ void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr 
   MS_EXCEPTION_IF_NULL(eltwise_input);
   auto getitem = eltwise_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(getitem);
-  auto bnupdate = getitem->input(1);
+  auto bnupdate = getitem->input(kIndex1);
   MS_EXCEPTION_IF_NULL(bnupdate);
   if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName) {
     std::vector<int64_t> output_used_num(AnfAlgo::GetOutputTensorNum(bnupdate), 0);
@@ -49,7 +48,7 @@ void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr 
       }
       auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(out_getitem_ptr);
-      auto input2 = out_getitem_ptr->input(INPUT2);
+      auto input2 = out_getitem_ptr->input(kIndex2);
       auto output_idx = GetValue<int64_t>(GetValueNode(input2));
       output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
     }

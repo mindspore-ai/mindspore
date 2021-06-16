@@ -31,7 +31,7 @@ void ConvDoubleInFusionPass::MatchConvDoubleInEltwise(const CNodePtr &cnode, con
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::unordered_set<AnfNodePtr> record{cnode};
-  auto eltwise_input = cnode->input(1);
+  auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
   if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input)) {
     (void)record.insert(eltwise_input);
@@ -40,7 +40,7 @@ void ConvDoubleInFusionPass::MatchConvDoubleInEltwise(const CNodePtr &cnode, con
   }
   auto input_cnode = eltwise_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(input_cnode);
-  auto double_in_eltwise_input = input_cnode->input(1);
+  auto double_in_eltwise_input = input_cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(double_in_eltwise_input);
   if (!double_in_eltwise_input->isa<CNode>() || !AnfAlgo::IsRealCNodeKernel(double_in_eltwise_input) ||
       fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input)) {

@@ -38,8 +38,9 @@ void CreateOutputsOfLSQPerLayerGradD(const FuncGraphPtr &graph, const CNodePtr &
                       << " trace: " << trace::DumpSourceLines(lsq_perlayer_grad_node);
   }
   std::vector<AnfNodePtr> lsq_perlayer_grad_d_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradDOpName)), lsq_perlayer_grad_inputs[1],
-    lsq_perlayer_grad_inputs[2], lsq_perlayer_grad_inputs[3], lsq_perlayer_grad_inputs[4]};
+    NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradDOpName)),
+    lsq_perlayer_grad_inputs[kIndex1], lsq_perlayer_grad_inputs[kIndex2], lsq_perlayer_grad_inputs[kIndex3],
+    lsq_perlayer_grad_inputs[kIndex4]};
   auto lsq_perlayer_grad_d = graph->NewCNode(lsq_perlayer_grad_d_inputs);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_d);
   lsq_perlayer_grad_d->set_scope(lsq_perlayer_grad_node->scope());
@@ -72,7 +73,7 @@ void CreateOutputsOfLSQPerLayerReduceGrad(const FuncGraphPtr &graph, const CNode
   }
   std::vector<AnfNodePtr> lsq_perlayer_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerLayerGradDReduceOpName)),
-    lsq_perlayer_grad_d_outputs[1]};
+    lsq_perlayer_grad_d_outputs[kIndex1]};
   auto lsq_perlayer_reduce_grad = graph->NewCNode(lsq_perlayer_reduce_grad_inputs);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_reduce_grad);
   lsq_perlayer_reduce_grad->set_scope(lsq_perlayer_grad_node->scope());
@@ -130,7 +131,7 @@ void CreateOutputsOfLSQPerChannelReduceGrad(const FuncGraphPtr &graph, const CNo
   }
   std::vector<AnfNodePtr> lsq_perchannel_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerChannelGradDReduceOpName)),
-    lsq_perchannel_grad_d_outputs[1]};
+    lsq_perchannel_grad_d_outputs[kIndex1]};
   auto lsq_perchannel_reduce_grad = graph->NewCNode(lsq_perchannel_reduce_grad_inputs);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_reduce_grad);
   lsq_perchannel_reduce_grad->set_scope(lsq_perchannel_grad_node->scope());

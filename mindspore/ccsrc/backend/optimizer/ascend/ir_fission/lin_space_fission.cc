@@ -28,6 +28,7 @@ constexpr size_t kLinSpaceInputNum = 3;
 constexpr size_t kFloat32Len = 4;
 tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   // 1 get tensor value of input num
+  MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = cnode->input(kLinSpaceInputNum);

@@ -883,12 +883,14 @@ bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &suppor
 ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(value_node);
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
+  MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(value_node->abstract());
   // create kernel_info fo new value node
   auto kernel_info = std::make_shared<device::KernelInfo>();
   new_value_node->set_kernel_info(kernel_info);
   // create kernel_build_info for new value node
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
   // set the format of value_node to DEFAULT_FORMAT
   kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
   // set value node initial device data type = infer data type
@@ -920,6 +922,7 @@ void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const C
     }
   }
 }
+
 AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(prim);
   auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();

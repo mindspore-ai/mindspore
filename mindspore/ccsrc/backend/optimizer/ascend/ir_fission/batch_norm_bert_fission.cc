@@ -27,9 +27,6 @@ namespace {
 const std::vector<int64_t> kOutputIndex{0, 3, 4, 5};
 constexpr size_t kBatchNormRealOutputNum = 3;
 constexpr size_t kBatchNormRealInputNum = 3;
-constexpr size_t kInputIndex2 = 2;
-constexpr size_t kInputIndex3 = 3;
-constexpr size_t kInputIndex4 = 4;
 
 bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vector<AnfNodePtr> *bn_outputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -72,12 +69,12 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
                       << (kBatchNormRealInputNum + 1) << " trace: " << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(1)};
+    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(kIndex1)};
   auto bn_training_reduce = func_graph->NewCNode(bn_training_reduce_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
-  auto bn_input1 = bn_cnode->input(kInputIndex2);
+  auto bn_input1 = bn_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(bn_input1);
-  auto bn_input2 = bn_cnode->input(kInputIndex3);
+  auto bn_input2 = bn_cnode->input(kIndex3);
   MS_EXCEPTION_IF_NULL(bn_input2);
   AbstractBasePtrList abstract_list{bn_input1->abstract(), bn_input2->abstract()};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
@@ -104,11 +101,11 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
   }
   std::vector<AnfNodePtr> bn_training_update_v2_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateV2OpName)),
-    bn_cnode->input(1),
-    bn_training_reduce_outputs[0],
-    bn_training_reduce_outputs[1],
-    bn_cnode->input(kInputIndex2),
-    bn_cnode->input(kInputIndex3)};
+    bn_cnode->input(kIndex1),
+    bn_training_reduce_outputs[kIndex0],
+    bn_training_reduce_outputs[kIndex1],
+    bn_cnode->input(kIndex2),
+    bn_cnode->input(kIndex3)};
   auto bn_training_update_v2 = func_graph->NewCNode(bn_training_update_v2_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_update_v2);
 
@@ -118,9 +115,9 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
     MS_LOG(EXCEPTION) << "The abstract size of node bn must be " << kBnOutputNum << ", but it is "
                       << bn_abstract_tuple->elements().size() << " trace: " << trace::DumpSourceLines(bn);
   }
-  std::vector<AbstractBasePtr> abstract_list{bn_abstract_tuple->elements()[0],
-                                             bn_abstract_tuple->elements()[kInputIndex3],
-                                             bn_abstract_tuple->elements()[kInputIndex4]};
+  std::vector<AbstractBasePtr> abstract_list{bn_abstract_tuple->elements()[kIndex0],
+                                             bn_abstract_tuple->elements()[kIndex3],
+                                             bn_abstract_tuple->elements()[kIndex4]};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update_v2->set_abstract(abstract_tuple);
   bn_training_update_v2->set_scope(bn->scope());

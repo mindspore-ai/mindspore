@@ -29,10 +29,6 @@ namespace {
 constexpr size_t kMaxPoolGradWithArgmaxInputNum = 4;
 constexpr size_t kMaxPoolWithArgmaxShape = 4;
 constexpr size_t kAlignBytes = 16;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
-constexpr size_t kIndex4 = 4;
 
 bool IsC(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
@@ -71,11 +67,11 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKernelSize);
   auto output_shape = AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0);
   auto argmax_shape = output_shape;
-  if (argmax_shape.size() != kMaxPoolWithArgmaxShape) {
-    MS_LOG(DEBUG) << "argmax's infer shape size not equal 4";
+  if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
+    MS_LOG(EXCEPTION) << "argmax or kernel_size's shape size not equal to 4";
   }
-  argmax_shape[kIndex2] = LongToSize(ksize[kIndex1] * ksize[kIndex2]);
-  argmax_shape[kIndex3] = (output_shape[kIndex2] * output_shape[kIndex3] + kAlignBytes - 1) / kAlignBytes + 1;
+  argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);
+  argmax_shape[kDim3] = (output_shape[kDim2] * output_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
   auto types = {AnfAlgo::GetOutputInferDataType(maxpool_with_argmax, 0), argmax_dtype};
   auto shapes = {output_shape, argmax_shape};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_with_argmax.get());
@@ -105,11 +101,11 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   TypeId argmax_dtype = kNumberTypeUInt16;
   auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
   auto argmax_shape = AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0);
-  if (argmax_shape.size() != kMaxPoolWithArgmaxShape) {
-    MS_LOG(DEBUG) << "argmax's infer shape size not equal 4";
+  if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
+    MS_LOG(EXCEPTION) << "argmax or kernel_size's shape size not equal to 4";
   }
-  argmax_shape[kIndex3] = (argmax_shape[kIndex2] * argmax_shape[kIndex3] + kAlignBytes - 1) / kAlignBytes + 1;
-  argmax_shape[kIndex2] = LongToSize(ksize[kIndex1] * ksize[kIndex2]);
+  argmax_shape[kDim3] = (argmax_shape[kDim2] * argmax_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
+  argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);
   AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
 
   return maxpool_grad_with_argmax;

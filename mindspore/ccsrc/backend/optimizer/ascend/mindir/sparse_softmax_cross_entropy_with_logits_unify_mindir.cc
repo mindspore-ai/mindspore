@@ -33,7 +33,6 @@ constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr auto kInput2 = 2;
 ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
@@ -72,6 +71,7 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   auto value_off_node = CreateValueNode(value_off, kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(value_off_node);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->AddValueNodeToGraph(value_on_node);
   kernel_graph->AddValueNodeToGraph(value_off_node);
 
@@ -83,14 +83,16 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
 
   std::vector<AnfNodePtr> one_hot_inputs;
   if (is_convert_const_to_attr) {
-    one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(2), value_on_node, value_off_node};
+    one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(kIndex2), value_on_node,
+                      value_off_node};
   } else {
     auto depth_node = NewValueNode(depth);
     MS_EXCEPTION_IF_NULL(depth_node);
     auto depth_abstract = std::make_shared<abstract::AbstractScalar>();
+    MS_EXCEPTION_IF_NULL(depth_abstract);
     depth_abstract->set_type(kInt64);
     depth_node->set_abstract(depth_abstract);
-    one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(2), depth_node, value_on_node,
+    one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(kIndex2), depth_node, value_on_node,
                       value_off_node};
   }
   auto one_hot_node = graph->NewCNode(one_hot_inputs);
@@ -112,7 +114,7 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   MS_EXCEPTION_IF_NULL(one_hot_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kSoftmaxCrossEntropyWithLogitsOpName)),
-                                    sparse_softmax_node->input(1), one_hot_node};
+                                    sparse_softmax_node->input(kIndex1), one_hot_node};
   auto softmax_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(softmax_node);
   softmax_node->set_scope(sparse_softmax_node->scope());
@@ -171,6 +173,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   reduce_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
 
   auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> inputs;
   if (is_pynative) {
     inputs = {NewValueNode(reduce_primitive), softmax_output_node};
@@ -199,6 +202,7 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   auto axis_node = NewValueNode(axis);
   MS_EXCEPTION_IF_NULL(axis_node);
   auto axis_abstract = std::make_shared<abstract::AbstractScalar>();
+  MS_EXCEPTION_IF_NULL(axis_abstract);
   axis_abstract->set_type(kInt64);
   axis_node->set_abstract(axis_abstract);
 
@@ -305,6 +309,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   auto y_node = CreateValueNode(y, kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(y_node);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->AddValueNodeToGraph(y_node);
 
   auto real_div_primitive = std::make_shared<Primitive>(kRealDivOpName);
@@ -332,7 +337,7 @@ CNodePtr GetSparseNode(const CNodePtr &depend_node, size_t index) {
 CNodePtr GetDependNode(const CNodePtr &mul_node) {
   MS_EXCEPTION_IF_NULL(mul_node);
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
-  auto depend_node = mul_node->input(1);
+  auto depend_node = mul_node->input(kIndex1);
   MS_EXCEPTION_IF_NULL(depend_node);
   return depend_node->cast<CNodePtr>();
 }
@@ -357,6 +362,7 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
   MS_EXCEPTION_IF_NULL(y_node);
 
   auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->AddValueNodeToGraph(y_node);
 
   auto mul_primitive = std::make_shared<Primitive>(kMulOpName);
@@ -427,7 +433,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
   auto depend_node = GetDependNode(mul_node);
-  auto sparse_softmax_node = GetSparseNode(depend_node, kInput2);
+  auto sparse_softmax_node = GetSparseNode(depend_node, kIndex2);
   auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1);
   CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
@@ -441,7 +447,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   auto tile_node = CreateTile(graph, sparse_softmax_node_grad, mul_node);
   CNodePtr real_div_node;
   if (tile_node == nullptr) {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kInput2));
+    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kIndex2));
   } else {
     real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node);
   }
@@ -481,7 +487,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::Process(c
 
   auto depend_node = node->cast<CNodePtr>();
   auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1);
-  auto sparse_softmax_node = GetSparseNode(depend_node, kInput2);
+  auto sparse_softmax_node = GetSparseNode(depend_node, kIndex2);
 
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad);
@@ -541,7 +547,7 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   MS_EXCEPTION_IF_NULL(mul_node);
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
-  auto sparse_softmax_node = mul_node->input(1);
+  auto sparse_softmax_node = mul_node->input(kIndex1);
   auto sparse_softmax_node_grad = sparse_softmax_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sparse_softmax_node_grad);
   CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
@@ -555,7 +561,7 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   auto tile_node = CreateTile(graph, sparse_softmax_node_grad, mul_node);
   CNodePtr real_div_node;
   if (tile_node == nullptr) {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kInput2));
+    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kIndex2));
   } else {
     real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node);
   }

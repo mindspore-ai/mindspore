@@ -26,20 +26,17 @@ namespace opt {
 namespace {
 constexpr size_t kFloat16Len = 2;
 constexpr size_t kSpaceToDepthInputNum = 1;
-constexpr size_t kInputIndex1 = 1;
-constexpr size_t DIM1 = 1;
-constexpr size_t DIM2 = 2;
-constexpr size_t DIM3 = 3;
 
 tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   // 1 create tensor
+  MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_x = cnode->input(kSpaceToDepthInputNum);
   int64_t block_size = AnfAlgo::GetNodeAttr<int64_t>(cnode, "block_size");
   std::vector<size_t> x_shape = AnfAlgo::GetOutputInferShape(input_x, 0);
-  int64_t input_channel = SizeToLong(x_shape[DIM1]);
-  int64_t assist_input_channel = SizeToLong(x_shape[DIM1]) * block_size * block_size;
+  int64_t input_channel = SizeToLong(x_shape[kDim1]);
+  int64_t assist_input_channel = SizeToLong(x_shape[kDim1]) * block_size * block_size;
   std::vector<int64_t> assist_input_shape = {assist_input_channel, input_channel, block_size, block_size};
   int64_t dest_size = assist_input_channel * input_channel * block_size * block_size;
   MS_LOG(DEBUG) << "For SpaceToDepth op, assist input shape is: (" << assist_input_channel << ", " << input_channel
@@ -50,7 +47,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   assist_tensor->set_device_info(device_info);
 
   // 2 set value of tensor
-  int64_t window_size = assist_input_shape[DIM2] * assist_input_shape[DIM3];
+  int64_t window_size = assist_input_shape[kDim2] * assist_input_shape[kDim3];
   int64_t channel_size = input_channel;
   auto data_ptr = assist_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
@@ -108,7 +105,7 @@ const AnfNodePtr SpaceToDepthSplit::Process(const FuncGraphPtr &graph, const Anf
     return nullptr;
   }
   const auto &ori_inputs = cnode->inputs();
-  TypeId x_dtype = AnfAlgo::GetOutputInferDataType(ori_inputs[kInputIndex1], 0);
+  TypeId x_dtype = AnfAlgo::GetOutputInferDataType(ori_inputs[kIndex1], 0);
   if (x_dtype != kNumberTypeFloat16) {
     MS_LOG(INFO) << "Node " << cnode->DebugString() << ": The data type of node's first input is: " << x_dtype
                  << ", not fp16, cannot do fusion.";

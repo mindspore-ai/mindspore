@@ -34,7 +34,7 @@ void ConvBnReduceFusionPass::MatchConvBnreduce(const CNodePtr &cnode, const sess
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto conv = cnode->input(1);
+  auto conv = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(conv);
   if (conv->isa<CNode>() && AnfAlgo::GetCNodeName(conv) == prim::kPrimConv2D->name()) {
     std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[conv].size())};

@@ -34,7 +34,7 @@ void BatchMatmulFusedMulAddFusionPass::MatchBatchMatmulFusedMulAdd(const CNodePt
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto batch_matmul = cnode->input(2);
+  auto batch_matmul = cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(batch_matmul);
   if (batch_matmul->isa<CNode>() && AnfAlgo::CheckPrimitiveType(batch_matmul, prim::kPrimBatchMatMul)) {
     std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[batch_matmul].size())};

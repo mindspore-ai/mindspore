@@ -27,6 +27,7 @@ CNodePtr CreateReduceMin(const FuncGraphPtr &graph, const AnfNodePtr &input, con
   MS_EXCEPTION_IF_NULL(old_node);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMin->name())), input};
   CNodePtr reduce_min = graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(reduce_min);
   reduce_min->set_scope(old_node->scope());
   AnfAlgo::CopyNodeAttr(kAttrKeepDims, old_node, reduce_min);
   return reduce_min;

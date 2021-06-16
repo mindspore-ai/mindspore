@@ -34,7 +34,7 @@ void MatmulConfusionTranposeFusionPass::MatchMatmulConfusionTranpose(const CNode
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto matmul = cnode->input(1);
+  auto matmul = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(matmul);
   if (matmul->isa<CNode>() && (AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul) ||
                                AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimBatchMatMul))) {

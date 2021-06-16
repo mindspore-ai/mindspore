@@ -32,9 +32,6 @@ constexpr size_t kMaxPoolInputNum = 2;
 constexpr size_t kMaxPoolAttrAxisNum = 4;
 constexpr size_t kMaxPoolGradInputNum = 4;
 constexpr size_t kMaxPoolWithArgmaxOutputNum = 2;
-constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
 
 CNodePtr GetMaxPool(const CNodePtr &maxpool_grad) {
   MS_EXCEPTION_IF_NULL(maxpool_grad);
@@ -55,7 +52,7 @@ CNodePtr CreateMaxPoolWithArgmax(const FuncGraphPtr &graph, const CNodePtr &maxp
                       << (maxpool->inputs().size() - 1);
   }
   std::vector<AnfNodePtr> maxpool_argmax_inputs = {NewValueNode(std::make_shared<Primitive>(kMaxPoolWithArgmaxOpName)),
-                                                   maxpool->input(1)};
+                                                   maxpool->input(kIndex1)};
   auto maxpool_argmax = graph->NewCNode(maxpool_argmax_inputs);
   MS_EXCEPTION_IF_NULL(maxpool_argmax);
   maxpool_argmax->set_scope(maxpool->scope());
@@ -80,8 +77,8 @@ CNodePtr CreateMaxPoolGradWithArgmax(const FuncGraphPtr &graph, const CNodePtr &
   // MaxPoolGrad's inputs are {input, output, grad_input}, MaxPoolGradWithArgmax's inputs are
   // {input, grad_input, argmax_output}
   std::vector<AnfNodePtr> maxpool_grad_argmax_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kMaxPoolGradWithArgmaxOpName)), maxpool_grad->input(1),
-    maxpool_grad->input(kIndex3), maxpool_argmax_outputs[1]};
+    NewValueNode(std::make_shared<Primitive>(kMaxPoolGradWithArgmaxOpName)), maxpool_grad->input(kIndex1),
+    maxpool_grad->input(kIndex3), maxpool_argmax_outputs[kIndex1]};
   auto maxpool_grad_argmax = graph->NewCNode(maxpool_grad_argmax_inputs);
   MS_EXCEPTION_IF_NULL(maxpool_grad_argmax);
   maxpool_grad_argmax->set_scope(maxpool_grad->scope());

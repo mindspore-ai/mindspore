@@ -23,8 +23,6 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kBatchNormGradInferOutputNum = 3;
-constexpr size_t kElementIndex1 = 1;
-constexpr size_t kElementIndex2 = 2;
 bool CheckOutputsIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
@@ -136,8 +134,8 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
     MS_LOG(EXCEPTION) << "The abstract tuple of node " << bn_grad->DebugString() << "should not be less than 3"
                       << trace::DumpSourceLines(bn_grad);
   }
-  std::vector<AbstractBasePtr> abstract_list{bn_grad_abstract_tuple->elements()[kElementIndex1],
-                                             bn_grad_abstract_tuple->elements()[kElementIndex2]};
+  std::vector<AbstractBasePtr> abstract_list{bn_grad_abstract_tuple->elements()[kIndex1],
+                                             bn_grad_abstract_tuple->elements()[kIndex2]};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update_grad->set_abstract(abstract_tuple);
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_training_update_grad);

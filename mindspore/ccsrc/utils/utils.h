@@ -484,6 +484,35 @@ constexpr auto kUpdateStateRealInput = 2;
 // index define of Load
 constexpr auto kLoadRealInput = 1;
 constexpr auto kLoadStateInput = 2;
+// index of input or output
+enum Index : size_t {
+  kIndex0 = 0,
+  kIndex1,
+  kIndex2,
+  kIndex3,
+  kIndex4,
+  kIndex5,
+  kIndex6,
+  kIndex7,
+  kIndex8,
+  kIndex9,
+  kIndex10,
+  kIndex11,
+  kIndex12,
+  kIndex13,
+  kIndex14,
+  kIndex15,
+  kIndex16,
+};
+// dim of shape
+enum Dim : size_t {
+  kDim0 = 0,
+  kDim1,
+  kDim2,
+  kDim3,
+  kDim4,
+  kDim5,
+};
 
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
