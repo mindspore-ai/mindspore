@@ -95,6 +95,11 @@ class DynamicMemPoolBestFit {
     return global_idle_mem_buf_map_;
   }
 
+  // Get the minimum memory unit size using for dynamic extend.
+  size_t mem_alloc_unit_size() const { return mem_alloc_unit_size_; }
+  // Set the minimum memory unit size using for dynamic extend.
+  void set_mem_alloc_unit_size(const size_t &size) { mem_alloc_unit_size_ = size; }
+
   // Get the related memory statistics information.
   size_t total_mem_statistics() const { return total_mem_statistics_; }
   size_t used_mem_statistics() const { return total_used_mem_statistics_; }
@@ -113,8 +118,6 @@ class DynamicMemPoolBestFit {
   virtual size_t CalMemBlockAllocSize(size_t size);
 
  private:
-  // Get the minimum memory unit size using for dynamic extend.
-  size_t mem_alloc_unit_size() const { return DYNAMIC_MEM_ALLOC_UNIT_SIZE; }
   // Find the idle memory buf by aligned size when memory alloc.
   DeviceMemPtr FindIdleMemBuf(size_t size);
   // Add the memory block and memory buf when memory alloc not find the idle memory buf.
@@ -142,6 +145,9 @@ class DynamicMemPoolBestFit {
   size_t total_mem_statistics_{0};
   size_t total_used_mem_statistics_{0};
   size_t used_mem_peak_statistics_{0};
+
+  // The minimum memory unit size.
+  size_t mem_alloc_unit_size_{DYNAMIC_MEM_ALLOC_UNIT_SIZE};
 
   // Support multi-thread.
   std::mutex mutex_;
