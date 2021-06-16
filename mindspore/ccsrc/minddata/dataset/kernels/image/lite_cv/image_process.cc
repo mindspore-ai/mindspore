@@ -18,38 +18,36 @@
 
 #include <cfloat>
 #include <climits>
-#include <cstring>
 #include <cmath>
+#include <cstring>
 #include <limits>
-#include <vector>
-#include <utility>
 #include <random>
+#include <utility>
+#include <vector>
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
 
-#define R2GRAY 9798
-#define G2GRAY 19235
-#define B2GRAY 3735
-#define GRAYSHIFT 15
-#define GRAYSHIFT_DELTA (1 << (GRAYSHIFT - 1))
-#define U32TOU8CAST(value) ((uint8_t)std::min(value, (uint32_t)UCHAR_MAX))
-
-#define YSCALE 0x0101
-#define UTOB (-128)
-#define UTOG 25
-#define VTOR (-102)
-#define VTOG 52
-#define YTOG 18997
-#define YTOGB (-1160)
-#define BTOB (UTOB * 128 + YTOGB)
-#define BTOG (UTOG * 128 + VTOG * 128 + YTOGB)
-#define BTOR (VTOR * 128 + YTOGB)
-#define Equ(a, b) ((std::fabs((a) - (b)) < 1e-6))
-
 namespace mindspore {
 namespace dataset {
+constexpr uint32_t kR2Gray = 9798;
+constexpr uint32_t kG2Gray = 19235;
+constexpr uint32_t kB2Gray = 3735;
+constexpr int32_t kGrayShift = 15;
+constexpr int32_t kGrayShiftDelta = 1 << (kGrayShift - 1);
+constexpr int32_t kYScale = 0x0101;
+constexpr int32_t kU2B = -128;
+constexpr int32_t kU2G = 25;
+constexpr int32_t kV2R = -102;
+constexpr int32_t kV2G = 52;
+constexpr int32_t kY2G = 18997;
+constexpr int32_t kY2GB = -1160;
+constexpr int32_t kB2B = kU2B * 128 + kY2GB;
+constexpr int32_t kB2G = kU2G * 128 + kV2G * 128 + kY2GB;
+constexpr int32_t kB2R = kV2R * 128 + kY2GB;
+
+static bool Equal(const float &a, const float &b) { return std::fabs(a - b) < 1e-6; }
 
 static inline void InitBilinearWeight(int *data_ptr, int16_t *weight_ptr, double scale, int dst_length, int src_length,
                                       int a) {
@@ -240,7 +238,7 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
   delete[] data_buf;
 }
 
-static inline uint8_t clip(float value, int min = 0, int max = 255) {
+static inline uint8_t clip(float value) {
   int int_val = roundf(value);
   return std::max<int32_t>(std::numeric_limits<uint8_t>::min(),
                            std::min<int32_t>(std::numeric_limits<uint8_t>::max(), int_val));
@@ -467,18 +465,18 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
           u = uv_buf[0];
           v = uv_buf[1];
         }
-        uint32_t tmp_y = (uint32_t)(y_buf[0] * YSCALE * YTOG) >> 16;
+        uint32_t tmp_y = (uint32_t)(y_buf[0] * kYScale * kY2G) >> 16;
         // b
-        bgr_buf[0] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
+        bgr_buf[0] = std::clamp((int32_t)(-(u * kU2B) + tmp_y + kB2B) >> 6, 0, 255);
         // g
-        bgr_buf[1] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
+        bgr_buf[1] = std::clamp((int32_t)(-(u * kU2G + v * kV2G) + tmp_y + kB2G) >> 6, 0, 255);
         // r
-        bgr_buf[2] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+        bgr_buf[2] = std::clamp((int32_t)(-(v * kV2R) + tmp_y + kB2R) >> 6, 0, 255);
 
-        tmp_y = (uint32_t)(y_buf[1] * YSCALE * YTOG) >> 16;
-        bgr_buf[3] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
-        bgr_buf[4] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
-        bgr_buf[5] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+        tmp_y = (uint32_t)(y_buf[1] * kYScale * kY2G) >> 16;
+        bgr_buf[3] = std::clamp((int32_t)(-(u * kU2B) + tmp_y + kB2B) >> 6, 0, 255);
+        bgr_buf[4] = std::clamp((int32_t)(-(u * kU2G + v * kV2G) + tmp_y + kB2G) >> 6, 0, 255);
+        bgr_buf[5] = std::clamp((int32_t)(-(v * kV2R) + tmp_y + kB2R) >> 6, 0, 255);
 
         y_buf += 2;
         uv_buf += 2;
@@ -494,10 +492,10 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
           u = uv_buf[0];
           v = uv_buf[1];
         }
-        uint32_t tmp_y = (uint32_t)(y_buf[0] * YSCALE * YTOG) >> 16;
-        bgr_buf[0] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
-        bgr_buf[1] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
-        bgr_buf[2] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+        uint32_t tmp_y = (uint32_t)(y_buf[0] * kYScale * kY2G) >> 16;
+        bgr_buf[0] = std::clamp((int32_t)(-(u * kU2B) + tmp_y + kB2B) >> 6, 0, 255);
+        bgr_buf[1] = std::clamp((int32_t)(-(u * kU2G + v * kV2G) + tmp_y + kB2G) >> 6, 0, 255);
+        bgr_buf[2] = std::clamp((int32_t)(-(v * kV2R) + tmp_y + kB2R) >> 6, 0, 255);
       }
 
       bgr_ptr += bgr_stride;
@@ -520,7 +518,7 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
     const unsigned char *data_ptr = data;
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
-        *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY + GRAYSHIFT_DELTA) >> GRAYSHIFT;
+        *ptr = (data_ptr[2] * kB2Gray + data_ptr[1] * kG2Gray + data_ptr[0] * kR2Gray + kGrayShiftDelta) >> kGrayShift;
         ptr++;
         data_ptr += 4;
       }
@@ -665,7 +663,7 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
 
 static bool CheckZero(const std::vector<float> &vs) {
   for (int i = 0; i < vs.size(); i++) {
-    if (Equ(vs[i], 0.0f)) {
+    if (Equal(vs[i], 0.0f)) {
       return true;
     }
   }
@@ -804,6 +802,7 @@ static int PadFromPos(int p, int len, PaddBorderType pad_type) {
   if (pad_type == PaddBorderType::PADD_BORDER_REPLICATE) {
     return p < 0 ? 0 : len - 1;
   } else {
+    // calculate the position of pixel in reflect mode like edcb|abcdef|edcb
     return p < 0 ? -p : 2 * len - p - 2;
   }
 }
@@ -1621,7 +1620,7 @@ bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, Lit
     const unsigned char *data_ptr = src;
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
-        *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY + GRAYSHIFT_DELTA) >> GRAYSHIFT;
+        *ptr = (data_ptr[2] * kB2Gray + data_ptr[1] * kG2Gray + data_ptr[0] * kR2Gray + kGrayShiftDelta) >> kGrayShift;
         ptr++;
         data_ptr += 3;
       }

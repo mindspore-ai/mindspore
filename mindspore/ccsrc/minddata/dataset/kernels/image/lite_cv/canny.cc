@@ -26,8 +26,11 @@
 #endif
 #endif
 
-#define ANGLE_22_5 0.39269908169872414
-#define ANGLE_67_5 1.1780972450961724
+constexpr float kAngle22_5 = 0.39269908169872414;
+constexpr float kAngle67_5 = 1.1780972450961724;
+constexpr int kCertainBorder = 2;
+constexpr int kUncertainBorder = 1;
+constexpr int kNotBorder = 0;
 
 namespace mindspore {
 namespace dataset {
@@ -153,8 +156,8 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
       float angle_value = atan2(gy_value_abs, gx_value_abs);
       float edge_value = temp[y * gx.width_ + x];
       float edge_pre, edge_nex;
-      if (angle_value < ANGLE_22_5 || angle_value > ANGLE_67_5) {
-        if (angle_value < ANGLE_22_5) {
+      if (angle_value < kAngle22_5 || angle_value > kAngle67_5) {
+        if (angle_value < kAngle22_5) {
           edge_pre = GetEdge(temp, gx.width_, gx.height_, x - 1, y);
           edge_nex = GetEdge(temp, gx.width_, gx.height_, x + 1, y);
         } else {
@@ -196,12 +199,12 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
       int pos = y * edges.width_ + x;
       float edge_value = edges_ptr[pos];
       if (edge_value > high_thresh) {
-        buffer[pos] = 2;
+        buffer[pos] = kCertainBorder;
         stack.push_back(pos);
       } else if (edge_value <= low_thresh) {
-        buffer[pos] = 0;
+        buffer[pos] = kNotBorder;
       } else {
-        buffer[pos] = 1;
+        buffer[pos] = kUncertainBorder;
       }
     }
   }
@@ -220,8 +223,8 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
           continue;
         }
         int next = next_y * buffer_step + next_x;
-        if (buffer[next] == 1) {
-          buffer[next] = 2;
+        if (buffer[next] == kUncertainBorder) {
+          buffer[next] = kCertainBorder;
           stack.push_back(next);
         }
       }
@@ -229,7 +232,7 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
   }
 
   for (int i = 0; i < size; i++) {
-    if (buffer[i] == 2) {
+    if (buffer[i] == kCertainBorder) {
       dst[i] = 255;
     } else {
       dst[i] = 0;
