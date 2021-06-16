@@ -494,14 +494,15 @@ Status CacheAdminArgHandler::ShowServerInfo() {
   int value_w = 50;
   std::cout << "Cache Server Configuration: " << std::endl;
   std::cout << std::string(name_w + value_w, '-') << std::endl;
-  std::cout << std::setw(name_w) << "config name" << std::setw(value_w) << "value" << std::endl;
+  std::cout << std::left << std::setw(name_w) << "config name" << std::setw(value_w) << "value" << std::endl;
   std::cout << std::string(name_w + value_w, '-') << std::endl;
-  std::cout << std::setw(name_w) << "hostname" << std::setw(value_w) << hostname_ << std::endl;
-  std::cout << std::setw(name_w) << "port" << std::setw(value_w) << port_ << std::endl;
-  std::cout << std::setw(name_w) << "number of workers" << std::setw(value_w) << std::to_string(num_workers)
+  std::cout << std::left << std::setw(name_w) << "hostname" << std::setw(value_w) << hostname_ << std::endl;
+  std::cout << std::left << std::setw(name_w) << "port" << std::setw(value_w) << port_ << std::endl;
+  std::cout << std::left << std::setw(name_w) << "number of workers" << std::setw(value_w)
+            << std::to_string(num_workers) << std::endl;
+  std::cout << std::left << std::setw(name_w) << "log level" << std::setw(value_w) << std::to_string(log_level)
             << std::endl;
-  std::cout << std::setw(name_w) << "log level" << std::setw(value_w) << std::to_string(log_level) << std::endl;
-  std::cout << std::setw(name_w) << "spill dir" << std::setw(value_w) << spill_dir << std::endl;
+  std::cout << std::left << std::setw(name_w) << "spill dir" << std::setw(value_w) << spill_dir << std::endl;
   std::cout << std::string(name_w + value_w, '-') << std::endl;
 
   std::cout << "Active sessions: " << std::endl;

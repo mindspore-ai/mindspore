@@ -56,7 +56,7 @@ constexpr static uint32_t kDataIsInSharedMemory = 2;
 /// \brief Size of each message used in message queue.
 constexpr static int32_t kSharedMessageSize = 2048;
 /// \brief The default common path for all users
-const char kDefaultCommonPath[] = "/tmp/mindspore/";
+const char kDefaultCommonPath[] = "/tmp/mindspore";
 
 /// \brief State of CacheService at the server.
 enum class CacheServiceState : int8_t {
@@ -83,7 +83,7 @@ inline std::string DefaultUserDir() {
   char user[LOGIN_NAME_MAX];
   int rc = getlogin_r(user, sizeof(user));
   if (rc == 0) {
-    return kDefaultCommonPath + std::string(user);
+    return kDefaultCommonPath + std::string("/") + std::string(user);
   } else {
     return kDefaultCommonPath;
   }
