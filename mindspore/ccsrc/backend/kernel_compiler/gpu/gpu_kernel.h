@@ -142,6 +142,13 @@ class GpuKernel : public KernelMod {
     std::swap((*shape)[2], (*shape)[1]);
   }
 
+  // transpose shape: NCDHW To NDHWC
+  void ShapeNCDHW2NDHWC(std::vector<size_t> *shape) {
+    std::swap((*shape)[1], (*shape)[2]);
+    std::swap((*shape)[2], (*shape)[3]);
+    std::swap((*shape)[3], (*shape)[4]);
+  }
+
   void SetDimA(const std::vector<size_t> &shape, int *dimA, size_t len, const std::string &format) {
     if (shape.size() != len) {
       MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
