@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 4 ] ; then
+if [ $# != 5 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE"
-echo "for example: sh run_distribute_pretrain.sh 8 52 /path/ende-l128-mindrecord00 /path/hccl.json"
+echo "sh run_distribute_train_ascend_multi_machines.sh DEVICE_NUM SERVER_ID EPOCH_SIZE DATA_PATH RANK_TABLE_FILE"
+echo "for example: sh run_distribute_train_ascend_multi_machines.sh 32 0 52 /path/ende-l128-mindrecord00 /path/hccl.json"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 exit 1;
@@ -27,19 +27,23 @@ rm -rf run_distribute_train
 mkdir run_distribute_train
 cd run_distribute_train || exit
 
-EPOCH_SIZE=$2
-DATA_PATH=$3
+EPOCH_SIZE=$3
+DATA_PATH=$4
 
 export HCCL_CONNECT_TIMEOUT=600
-export RANK_TABLE_FILE=$4
+export RANK_TABLE_FILE=$5
 export RANK_SIZE=$1
+export SERVER_ID=$2
+export DEVICE_NUM=8
 export HCCL_FLAG=1
 export DEPLOY_MODE=0
 
-for((i=0;i<RANK_SIZE;i++))
+RANK_START=$((DEVICE_NUM*SERVER_ID))
+
+for((i=0;i<DEVICE_NUM;i++))
 do
     export DEVICE_ID=$i
-    export RANK_ID=$i
+    export RANK_ID=$((i+RANK_START))
     export GE_USE_STATIC_MEMORY=1
 
     mkdir helper$i
@@ -51,7 +55,7 @@ do
     --distribute="true" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
-    --device_num=$RANK_SIZE \
+    --device_num=$DEVICE_NUM \
     --enable_save_ckpt="true" \
     --enable_lossscale="true" \
     --do_shuffle="true" \

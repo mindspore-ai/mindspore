@@ -34,7 +34,8 @@ from mindspore import context
 from mindspore.common import set_seed
 
 from src.transformer_for_train import TransformerTrainOneStepCell, TransformerNetworkWithLoss, \
-    TransformerTrainOneStepWithLossScaleCell
+                                      TransformerTrainOneStepWithLossScaleCell, \
+                                      TransformerTrainAccumulationAllReducePostWithLossScaleCell
 from src.config import cfg, transformer_net_cfg, transformer_net_cfg_gpu
 from src.dataset import create_transformer_dataset
 from src.lr_schedule import create_dynamic_lr
@@ -118,9 +119,9 @@ def argparse_init():
     parser.add_argument("--data_path", type=str, default="", help="Data path, it is better to use absolute path")
     parser.add_argument("--bucket_boundaries", type=ast.literal_eval, default=[16, 32, 48, 64, 128],
                         help="sequence length for different bucket")
+    parser.add_argument("--accumulation_steps", type=int, default=1, help="Gradient accumulation steps, default is 1.")
 
     return parser
-
 
 def run_transformer_train():
     """
@@ -203,8 +204,13 @@ def run_transformer_train():
                                                 scale_factor=cfg.scale_factor,
                                                 scale_window=cfg.scale_window)
         update_cell = scale_manager.get_update_cell()
-        netwithgrads = TransformerTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,
-                                                                scale_update_cell=update_cell)
+        if args.accumulation_steps > 1:
+            netwithgrads = TransformerTrainAccumulationAllReducePostWithLossScaleCell(netwithloss, optimizer,
+                                                                                      update_cell,
+                                                                                      args.accumulation_steps)
+        else:
+            netwithgrads = TransformerTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,
+                                                                    scale_update_cell=update_cell)
     else:
         netwithgrads = TransformerTrainOneStepCell(netwithloss, optimizer=optimizer)
 

@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+if [ $# != 5 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE DATA_PATH"
-echo "for example: sh run_standalone_train.sh Ascend 0 52 /path/ende-l128-mindrecord00"
+echo "sh run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE GRADIENT_ACCUMULATE_STEP DATA_PATH"
+echo "for example: sh run_standalone_train.sh Ascend 0 52 8 /path/ende-l128-mindrecord00"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
+exit 1;
+fi
 
 rm -rf run_standalone_train
 mkdir run_standalone_train
@@ -29,12 +31,14 @@ cd run_standalone_train || exit
 export DEVICE_TARGET=$1
 DEVICE_ID=$2
 EPOCH_SIZE=$3
-DATA_PATH=$4
+GRADIENT_ACCUMULATE_STEP=$4
+DATA_PATH=$5
 
 if [ $DEVICE_TARGET == 'Ascend' ];then
     python train.py  \
         --distribute="false" \
         --epoch_size=$EPOCH_SIZE \
+        --accumulation_steps=$GRADIENT_ACCUMULATE_STEP \
         --device_target=$DEVICE_TARGET \
         --device_id=$DEVICE_ID \
         --enable_save_ckpt="true" \

@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+if [ $# != 2 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "sh run_eval.sh DEVICE_TARGET DEVICE_ID"
 echo "for example: sh run_eval.sh Ascend 0"
 echo "Note: set the checkpoint and dataset path in src/eval_config.py"
 echo "=============================================================================================================="
+exit 1;
+fi
 
 export DEVICE_TARGET=$1
 DEVICE_ID=$2
