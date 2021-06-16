@@ -103,6 +103,8 @@ bool IsConcatNode(const BaseRef &n);
 
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 
+std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
+
 tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node);
 
 AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index);

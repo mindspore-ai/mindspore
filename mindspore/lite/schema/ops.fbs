@@ -213,6 +213,7 @@ union PrimitiveType {
     SplitWithOverlap,
     GenOP,
     RaggedRange,
+    GLU,
 }
 
 table Abs {
@@ -1166,4 +1167,8 @@ table GenOP {
 }
 
 table RaggedRange {
+}
+
+table GLU {
+    axis: long = -1;
 }

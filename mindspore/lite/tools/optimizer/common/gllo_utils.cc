@@ -172,6 +172,31 @@ std::vector<int> CastToInt(const ValuePtr &value) {
   return cur_value;
 }
 
+std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr) {
+  std::vector<int> result;
+  if (!param_ptr->has_default()) {
+    MS_LOG(DEBUG) << "param not have default";
+    return result;
+  }
+  auto default_param = param_ptr->default_param();
+  if (!utils::isa<tensor::TensorPtr>(default_param)) {
+    MS_LOG(DEBUG) << "tensor_info is not tensor::TensorPtr";
+    return result;
+  }
+  auto default_param_ptr = utils::cast<tensor::TensorPtr>(default_param);
+  if (default_param_ptr->data_type() != kNumberTypeInt32 && default_param_ptr->data_type() != kNumberTypeInt) {
+    MS_LOG(DEBUG) << "default param is not int";
+    return result;
+  }
+  auto ptr = reinterpret_cast<int *>(default_param_ptr->data_c());
+  int64_t shape_size =
+    std::accumulate(default_param_ptr->shape().begin(), default_param_ptr->shape().end(), 1, std::multiplies<int>());
+  for (int i = 0; i < shape_size; i++) {
+    result.emplace_back(ptr[i]);
+  }
+  return result;
+}
+
 std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value) {
   if (value == nullptr) {
     MS_LOG(WARNING) << "valueptr is nullptr.";
