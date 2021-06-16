@@ -2420,27 +2420,26 @@ void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr
   // Eg:[atomic, recv, memcpy] should be [recv, atomic, memcpy]
   std::vector<CNodePtr> update_orders;
   auto &exe_orders = graph_ptr->execution_order();
-  for (size_t i = 0; i < exe_orders.size(); i++) {
+  size_t i = 0;
+  while (i < exe_orders.size()) {
     auto cur_cnode = exe_orders.at(i);
     if (AnfAlgo::GetCNodeName(cur_cnode) != kAtomicAddrCleanOpName) {
       update_orders.emplace_back(cur_cnode);
+      i++;
       continue;
     }
-
-    for (size_t j = i + 1; j < exe_orders.size(); j++) {
-      auto next_cnode = exe_orders[j];
+    while (i < exe_orders.size() - 1) {
+      i++;
+      auto next_cnode = exe_orders.at(i);
       auto next_cnode_name = AnfAlgo::GetCNodeName(next_cnode);
       if (next_cnode_name == kSendOpName || next_cnode_name == kRecvOpName) {
         update_orders.emplace_back(next_cnode);
       } else {
         update_orders.emplace_back(cur_cnode);
-        // attention:i will be executed later i++;
-        i = j - 1;
         break;
       }
     }
   }
-
   graph_ptr->set_execution_order(update_orders);
 }
 }  // namespace ascend
