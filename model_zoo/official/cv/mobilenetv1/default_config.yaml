@@ -38,7 +38,7 @@ run_distribute: True
 device_num: 1
 dataset_path: "/cache/data"
 device_target: 'Ascend'
-pre_trained: "./mobilenetv2-200_625.ckpt" # "./mobilenetv1-90_195.ckpt" 
+pre_trained: ""
 parameter_server: False
 
 # Image classification - eval
