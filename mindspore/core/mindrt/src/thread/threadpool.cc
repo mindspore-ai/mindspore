@@ -68,8 +68,8 @@ void ThreadPool::AsyncRunTask(Worker *worker) const {
     }
     if (worker->spin >= kDefaultSpinCount) {
       // wait until distribute KernelTask
-      std::unique_lock<std::mutex> _l(worker->mutex);
       worker->spin = 0;
+      std::unique_lock<std::mutex> _l(worker->mutex);
       worker->cond_var.wait(_l, [&] { return worker->running || !alive_; });
     }
   }
@@ -85,10 +85,10 @@ void ThreadPool::YieldAndDeactive(Worker *worker) const {
 }
 
 bool ThreadPool::RunLocalKernelTask(Worker *worker) const {
-  if (!worker->running || worker->task == nullptr) {
+  Task *task = worker->task.load(std::memory_order_consume);
+  if (task == nullptr) {
     return false;
   }
-  Task *task = worker->task.load(std::memory_order_consume);
   int task_id = worker->task_id.load(std::memory_order_consume);
   task->status |= task->func(task->content, task_id, worker->lhs_scale, worker->rhs_scale);
   worker->task.store(nullptr, std::memory_order_relaxed);
