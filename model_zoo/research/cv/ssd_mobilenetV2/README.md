@@ -300,7 +300,7 @@ mAP: 0.2527925497483538
 | Loss Function       | Sigmoid Cross Entropy,SmoothL1Loss   |
 | Speed               | 8pcs: 80ms/step  |
 | Total time          | 8pcs: 4.67hours      |
-| Scripts             | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/SSD_mobielnetV2> |
+| Scripts             | <https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/research/cv/ssd_mobilenetV2> |
 
 #### Inference Performance
 
