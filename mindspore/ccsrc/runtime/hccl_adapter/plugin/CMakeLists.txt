@@ -1,8 +1,5 @@
 add_library(hccl_plugin SHARED hccl_plugin.cc)
-target_include_directories(hccl_plugin PRIVATE
-                            ${CMAKE_BINARY_DIR}/proto/graphengine_protos
-                            ${CMAKE_BINARY_DIR}/proto/metadef_protos
-                            )
+target_include_directories(hccl_plugin PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
 add_dependencies(hccl_plugin graph)
 
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/lib64)

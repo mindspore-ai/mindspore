@@ -227,12 +227,6 @@ if(NOT ENABLE_GE)
         endif()
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
 
-        install(
-            FILES ${CMAKE_SOURCE_DIR}/build/graphengine/c_sec/lib/libc_sec.so
-            DESTINATION ${INSTALL_LIB_DIR}
-            COMPONENT mindspore
-        )
-
         if(ENABLE_D)
             install(
                 TARGETS ms_profile
@@ -244,14 +238,6 @@ if(NOT ENABLE_GE)
               TARGETS hccl_plugin
               DESTINATION ${INSTALL_LIB_DIR}
               COMPONENT mindspore
-            )
-
-            install(
-                FILES
-                    ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
-                    ${CMAKE_BINARY_DIR}/graphengine/ge/common/libge_common.so
-                DESTINATION ${INSTALL_LIB_DIR}
-                COMPONENT mindspore
             )
         endif()
     elseif(ENABLE_TESTCASES)
