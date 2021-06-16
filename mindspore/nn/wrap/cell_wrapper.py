@@ -16,7 +16,7 @@
 from types import FunctionType, MethodType
 
 from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
-                                       _get_parallel_mode)
+                                       _get_parallel_mode, _get_enable_parallel_optimizer)
 from mindspore.context import ParallelMode, get_auto_parallel_context
 from mindspore._checkparam import Validator as validator
 from mindspore import ops, nn
@@ -538,6 +538,7 @@ class _TrainPipelineAccuStepCell(TrainOneStepCell):
         super(_TrainPipelineAccuStepCell, self).__init__(network, optimizer, sens)
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.hyper_map = ops.HyperMap()
+        self.opt_shard = _get_enable_parallel_optimizer()
 
     def construct(self, *inputs):
         weights = self.weights
@@ -545,7 +546,10 @@ class _TrainPipelineAccuStepCell(TrainOneStepCell):
         sens = ops.Fill()(ops.DType()(loss), ops.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(*inputs, sens)
         accu_grads = ops.depend(self.accu_grads, grads)
-        succ = self.optimizer(accu_grads)
+        if self.opt_shard:
+            succ = self.optimizer(grads)
+        else:
+            succ = self.optimizer(accu_grads)
         clear = self.hyper_map(_pipeline_clear_grad, accu_grads, grads)
         loss = ops.depend(loss, succ, clear)
         return loss

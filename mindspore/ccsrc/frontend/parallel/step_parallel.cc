@@ -199,7 +199,8 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
       if (op_name == MIRROR_MINI_STEP_OPERATOR) {
         op_name = MIRROR_OPERATOR;
         arg_forward.first.pop_back();
-      } else if (op_name == MINI_STEP_ALL_GATHER || op_name == MIRROR_MICRO_STEP_OPERATOR) {
+      } else if (op_name == MINI_STEP_ALL_GATHER || op_name == MIRROR_MICRO_STEP_OPERATOR ||
+                 op_name == MICRO_STEP_ALL_GATHER) {
         MS_LOG(EXCEPTION) << "You should define `accu_grads` when use " << op_name << " parameter:" << weight_name;
       }
     }
@@ -211,7 +212,7 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
 
   std::vector<AnfNodePtr> new_node_input;
   if (op_name == MIRROR_MINI_STEP_OPERATOR || op_name == MINI_STEP_ALL_GATHER ||
-      op_name == MIRROR_MICRO_STEP_OPERATOR) {
+      op_name == MIRROR_MICRO_STEP_OPERATOR || op_name == MICRO_STEP_ALL_GATHER) {
     new_node_input = {NewValueNode(pyop_instance), node, grad_accu};
     MS_LOG(INFO) << "Insert the grad accumulation node as the mirror op's input";
   } else {
@@ -1117,6 +1118,15 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   return std::make_pair(nullptr, false);
 }
 
+// only used for FindCNode
+CNodePtr SkipTrivialNodesMoveDown(FuncGraphManagerPtr manager, CNodePtr node) {
+  MS_EXCEPTION_IF_NULL(node);
+  while (IsInTrivialNodeList(node) || IsSomePrimitive(node, LOAD)) {
+    node = manager->node_users()[node].begin()->first->cast<CNodePtr>();
+  }
+  return node;
+}
+
 std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(anode);
   MS_EXCEPTION_IF_NULL(anode->func_graph());
@@ -1129,6 +1139,9 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &
     CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
       continue;
+    }
+    if (ParallelContext::GetInstance()->enable_parallel_optimizer()) {
+      use_apply = SkipTrivialNodesMoveDown(manager, use_apply);
     }
     ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(prim_anf_node);
@@ -1202,7 +1215,7 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
 }
 
 // only used for InsertMirrorOps
-CNodePtr SkipTrivialNodes(CNodePtr node) {
+CNodePtr SkipTrivialNodesMoveUp(CNodePtr node) {
   MS_EXCEPTION_IF_NULL(node);
   while (!IsSomePrimitive(node, LOAD)) {
     if (IsInTrivialNodeList(node) || IsInAllGatherNodeList(node)) {
@@ -1287,7 +1300,7 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
         // assume Load is inserted next to parameter
         // skip Load moving up and insert mirror next to the parameter
         if (pre_node->cast<CNodePtr>()) {
-          CNodePtr load_node = SkipTrivialNodes(node->input(index)->cast<CNodePtr>());
+          CNodePtr load_node = SkipTrivialNodesMoveUp(node->input(index)->cast<CNodePtr>());
           manager->SetEdge(load_node, 1, next_cnode.second);
         } else {
           manager->SetEdge(node, static_cast<int>(index), next_cnode.second);
@@ -1306,7 +1319,7 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
     if (pre_node->cast<CNodePtr>() && (InsertMirrorBeforeCast(node, index) || is_shared_param)) {
       // assume Load is inserted next to parameter
       // skip Load moving up and insert mirror next to the parameter
-      CNodePtr load_node = SkipTrivialNodes(pre_node->cast<CNodePtr>());
+      CNodePtr load_node = SkipTrivialNodesMoveUp(pre_node->cast<CNodePtr>());
       InsertNode(op, load_node, 1, load_node->input(1), func_graph, mirror_op_name, param_name, root);
       auto comm_op = load_node->input(1)->cast<CNodePtr>();
       // add fusion flag
@@ -1706,6 +1719,8 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   auto param_name = node->cast<ParameterPtr>()->name();
   if (op_name == MINI_STEP_ALL_GATHER) {
     op = CreateMiniStepAllGatherOp(group);
+  } else if (op_name == MICRO_STEP_ALL_GATHER) {
+    op = CreateMicroStepAllGatherOp(group);
   } else {
     op = CreateAllGatherOp(group);
   }
@@ -1733,9 +1748,12 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   MS_EXCEPTION_IF_NULL(parameter);
   MS_EXCEPTION_IF_NULL(manager);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   std::string op_name;
   if (grad_accumulation_step > 1) {
     op_name = MINI_STEP_ALL_GATHER;
+  } else if (split_stage_num > 1) {
+    op_name = MICRO_STEP_ALL_GATHER;
   } else {
     op_name = ALL_GATHER;
   }
@@ -1744,7 +1762,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   for (auto &param_pair : param_sub_set) {
     auto cnode = param_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->in_forward_flag()) {
+    if (cnode->in_forward_flag() && !IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
       OperatorInfoPtr distribute_operator = cnode->user_data<OperatorInfo>();
       if (distribute_operator == nullptr) {
         MS_LOG(DEBUG) << "Parallel optimizer: " << GetPrimName(cnode) << " 's OperatorInfoPtr is nullptr";
@@ -1759,6 +1777,8 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
           manager->SetEdge(cnode, SizeToLong(param_pair.second), next_cnode.second);
           MS_LOG(INFO) << "Parallel optimizer is shared between " << parameter->ToString() << " and "
                        << GetPrimName(cnode);
+        } else {
+          MS_LOG(ERROR) << "Can not find the shared AllGather with multiple node users.";
         }
       } else {
         // insert allgather operator between shard parameter and cnode
@@ -2852,12 +2872,14 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
       OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
       MS_EXCEPTION_IF_NULL(distribute_operator);
 
-      // insert forward ops
-      InsertForwardOps(distribute_operator, cnode);
+      // skip Send Receive
+      if (!cnode->HasPrimalAttr(PIPELINE_PARAM)) {
+        // insert forward ops
+        InsertForwardOps(distribute_operator, cnode);
 
-      // insert redistribution ops
-      StepRedistribution(cnode, distribute_operator, cnode, tensor_redistribution, cnode);
-
+        // insert redistribution ops
+        StepRedistribution(cnode, distribute_operator, cnode, tensor_redistribution, cnode);
+      }
       // insert backward ops
       if (has_backward) {
         BackwardCommunication(root, distribute_operator, cnode, sens_loss_pairs);
@@ -2873,7 +2895,8 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
-      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE)) {
+      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE) ||
+          IsSomePrimitive(cnode, SEND)) {
         continue;
       }
 
@@ -2922,7 +2945,8 @@ void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNo
 
 bool IsCohesiveNode(const CNodePtr &cnode) {
   return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
-         IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather);
+         IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) ||
+         IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather);
 }
 
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {

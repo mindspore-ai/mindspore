@@ -18,13 +18,14 @@ from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.communication import get_rank, get_group_size
+from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
                                    _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
                                    ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, AllSwap,
-                                   _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator)
+                                   _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator, _MicroStepAllGather)
 from .grad_base import bprop_getters
 from ..operations._inner_ops import Send, Receive
 
@@ -102,10 +103,14 @@ def get_bprop_receive(self):
     depend = P.Depend()
     cast = P.Cast()
     out_tensor = Tensor(0.0, mstype.float16)
+    is_opt_shard = _get_enable_parallel_optimizer()
 
     def bprop(x, out, dout):
         send_out = receive_grad(dout)
-        dx = depend(cast(out_tensor, F.dtype(x)), send_out)
+        if is_opt_shard:
+            dx = depend(F.zeros_like(x), send_out)
+        else:
+            dx = depend(cast(out_tensor, F.dtype(x)), send_out)
         return (dx,)
     return bprop
 
@@ -174,6 +179,7 @@ def get_bprop_mirror_micro_step_operator(self):
     if "parameter_micro" in self.get_attr_dict():
         assign.add_prim_attr("parameter_micro", 0)
     out_tensor = Tensor(1.0, mstype.float16)
+    opt_shard = _get_enable_parallel_optimizer()
 
     def bprop(x, z, out, dout):
         real_grad = z
@@ -188,6 +194,8 @@ def get_bprop_mirror_micro_step_operator(self):
                 z = F.depend(z, dout)
                 real_grad = all_reduce(z)
                 assign(z, real_grad)
+        if opt_shard:
+            return (real_grad, cast(out_tensor, dtype(z)))
         return (cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z)))
     return bprop
 
@@ -205,30 +213,17 @@ def get_bprop_broad_cast(self):
 def get_bprop_all_gather(self):
     """Generate bprop for AllGather"""
     fusion = self.get_attr_dict()["fusion"]
-    if fusion == 0:
-        reduce_scatter = ReduceScatter(ReduceOp.SUM, self.group)
-        if self.instance_name:
-            instance_name = "grad_" + self.instance_name
-            reduce_scatter.set_prim_instance_name(instance_name)
-    else:
-        all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
-        if self.instance_name:
-            instance_name = "grad_" + self.instance_name
-            all_reduce.set_prim_instance_name(instance_name)
-        rank = get_rank(self.group)
-        dev_num = get_group_size(self.group)
-        split = P.Split(output_num=dev_num)
-        mean_flag = self.get_attr_dict()["mean_flag"]
-        scale = 1/self.rank_size
+    reduce_scatter = ReduceScatter(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+    if self.instance_name:
+        instance_name = "grad_" + self.instance_name
+        reduce_scatter.set_prim_instance_name(instance_name)
+    mean_flag = self.get_attr_dict()["mean_flag"]
+    scale = 1 / self.rank_size
 
     def bprop(x, out, dout):
-        if fusion == 0:
-            dx = reduce_scatter(dout)
-        else:
-            grad = all_reduce(dout)
-            dx = split(grad)[rank]
-            if mean_flag:
-                dx = F.tensor_mul(dx, scale)
+        dx = reduce_scatter(dout)
+        if mean_flag:
+            dx = F.tensor_mul(dx, scale)
         return (dx,)
 
     return bprop
@@ -263,6 +258,35 @@ def get_bprop_mini_step_all_gather(self):
         else:
             dx = dout
         return (dx, zeros_like(z))
+
+    return bprop
+
+
+@bprop_getters.register(_MicroStepAllGather)
+def get_bprop_micro_step_all_gather(self):
+    """Generate bprop for _MicroStepAllGather"""
+    fusion = self.get_attr_dict()["fusion"]
+    mean_flag = self.get_attr_dict()["mean_flag"]
+    scale = 1 / self.rank_size
+    all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+    rank = get_rank(self.group)
+    dev_num = get_group_size(self.group)
+    split = P.Split(output_num=dev_num)
+    if self.instance_name:
+        instance_name = "grad_" + self.instance_name
+        all_reduce.set_prim_instance_name(instance_name)
+    cast = P.Cast()
+    dtype = P.DType()
+    out_tensor = Tensor(1.0, mstype.float16)
+
+    # z: accu_grad
+    def bprop(x, z, out, dout):
+        z = F.depend(z, dout)
+        real_grad = all_reduce(z)
+        real_grad = split(real_grad)[rank]
+        if mean_flag:
+            real_grad = F.tensor_mul(real_grad, scale)
+        return (real_grad, cast(out_tensor, dtype(z)))
 
     return bprop
 

@@ -309,6 +309,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.virtual_add_elim_,
       irpass.row_tensor_add_zeros_like_,
       irpass.mini_step_allgather_replace_,
+      irpass.micro_step_allgather_replace_,
     },
     false, true);
   opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({irpass.less_batch_normalization_});

@@ -160,6 +160,11 @@ def _get_parameter_broadcast():
     return parameter_broadcast
 
 
+def _get_enable_parallel_optimizer():
+    """Get if using parallel optimizer."""
+    return auto_parallel_context().get_enable_parallel_optimizer()
+
+
 def _device_number_check(parallel_mode, device_number):
     """
     Check device num.
