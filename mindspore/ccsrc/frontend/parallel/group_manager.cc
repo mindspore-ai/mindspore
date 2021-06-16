@@ -20,6 +20,7 @@
 #include <utility>
 #if !defined(NO_DLIB) || defined(ENABLE_GPU)
 #include "backend/session/executor_manager.h"
+#include "runtime/framework/actor/actor_common.h"
 #else
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 #endif
@@ -73,18 +74,24 @@ GroupManager::GroupManager() { groups_.clear(); }
 #if !defined(NO_DLIB) || defined(ENABLE_GPU)
 bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
                                          const std::vector<uint32_t> ranks, int device_id) {
-  auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
-  MS_EXCEPTION_IF_NULL(executor);
-  bool ret = executor->CreateCommGroup(group_name, ranks);
-  return ret;
+  if (IsMindRTUsed()) {
+    return CommManager::GetInstance().CreateGroupSync(group_name, ranks);
+  } else {
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+    MS_EXCEPTION_IF_NULL(executor);
+    return executor->CreateCommGroup(group_name, ranks);
+  }
 }
 
 bool GroupManager::DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name,
                                           int device_id) {
-  auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
-  MS_EXCEPTION_IF_NULL(executor);
-  bool ret = executor->DestroyCommGroup(group_name);
-  return ret;
+  if (IsMindRTUsed()) {
+    return CommManager::GetInstance().DestroyGroup(group_name);
+  } else {
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+    MS_EXCEPTION_IF_NULL(executor);
+    return executor->DestroyCommGroup(group_name);
+  }
 }
 
 Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_t>>> &group_info) {
@@ -96,7 +103,12 @@ Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_
   auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
   MS_EXCEPTION_IF_NULL(executor);
   for (auto &group : group_info) {
-    bool ret = executor->CreateCommGroup(group.first, group.second);
+    bool ret = true;
+    if (IsMindRTUsed()) {
+      ret = CommManager::GetInstance().CreateGroupSync(group.first, group.second);
+    } else {
+      ret = executor->CreateCommGroup(group.first, group.second);
+    }
     if (!ret) {
       MS_LOG(ERROR) << "Create group failed, group name is " << group.first << ", ranks is " << group.second;
       return FAILED;
