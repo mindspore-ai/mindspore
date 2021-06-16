@@ -280,6 +280,9 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
   while (folder_paths.empty() == false) {
     Path subdir(folder_paths.front());
     dir_itr = Path::DirIterator::OpenDirectory(&subdir);
+    if (subdir.Exists() == false || dir_itr == nullptr) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + subdir.toString());
+    }
     while (dir_itr->hasNext()) {
       if (exts.empty() || exts.find(subdir.Extension()) != exts.end()) {
         ++row_cnt;
