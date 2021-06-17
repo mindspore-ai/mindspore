@@ -322,7 +322,8 @@ def test_case_03(add_remove_file):
                         shuffle=False)
 
     i = 0
-    for item in d2.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+    # each data is a dictionary
+    for item in d2.create_dict_iterator(num_epochs=1, output_numpy=True):
         golden = np.array([i])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
@@ -351,7 +352,8 @@ def type_tester(t):
 
     i = 0
     num_repeat = 0
-    for item in d2.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+    # each data is a dictionary
+    for item in d2.create_dict_iterator(num_epochs=1, output_numpy=True):
         golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
         logger.info(item)
         np.testing.assert_array_equal(item["data"], golden)
@@ -433,6 +435,7 @@ def test_case_07():
     if os.path.exists("{}.db".format(AUTO_FILE)):
         os.remove("{}.db".format(AUTO_FILE))
 
+
 def generator_dynamic_1d():
     arr = []
     for i in range(10):
@@ -440,6 +443,7 @@ def generator_dynamic_1d():
             arr = []
         arr += [i]
         yield (np.array(arr),)
+
 
 def generator_dynamic_2d_0():
     for i in range(10):
@@ -455,6 +459,7 @@ def generator_dynamic_2d_1():
             yield (np.arange(5).reshape([5, 1]),)
         else:
             yield (np.arange(10).reshape([5, 2]),)
+
 
 def test_case_08(add_remove_file):
 
@@ -477,6 +482,7 @@ def test_case_08(add_remove_file):
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
 
+
 def test_case_09(add_remove_file):
 
     # apply dataset operations
@@ -497,10 +503,12 @@ def test_case_09(add_remove_file):
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
 
+
 def test_case_10(add_remove_file):
 
     # apply dataset operations
     d1 = ds.GeneratorDataset(generator_dynamic_2d_1, ["data"], shuffle=False)
 
-    with pytest.raises(Exception, match="Error: current tensor shape is different from the previous's"):
+    with pytest.raises(Exception, match=
+                       "Error: besides dimension 0, other dimension shape is different from the previous's"):
         d1.save(AUTO_FILE)

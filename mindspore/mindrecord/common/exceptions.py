@@ -100,8 +100,7 @@ class MindRecordException(Exception):
         return self._error_code
 
     def __str__(self):
-        return "[{}]: error_code: {}, error_msg: {}".format(
-            self.__class__.__name__, self._error_code, self._error_msg)
+        return "[{}]: {}".format(self.__class__.__name__, self._error_msg)
 
     @staticmethod
     def transform_error_code(exception_no):
