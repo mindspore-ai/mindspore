@@ -30,7 +30,7 @@ constexpr size_t kOutputSize = 2;
 void ApplyAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   update_slots_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
 bool ApplyAdagradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
