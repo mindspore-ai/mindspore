@@ -757,6 +757,9 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
             file_name += ".air"
         if os.path.exists(file_name):
             os.chmod(file_name, stat.S_IWUSR)
+        if "/" in file_name:
+            real_path = os.path.realpath(file_name[:file_name.rfind("/")])
+            os.makedirs(real_path, exist_ok=True)
         _executor.export(file_name, graph_id)
         os.chmod(file_name, stat.S_IRUSR)
     elif file_format == 'ONNX':
