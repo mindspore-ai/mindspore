@@ -285,14 +285,15 @@ void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size
                                        const AnfNodePtr &node, const TensorPtr &tensor,
                                        std::vector<TensorPtr> *host_tensors) {
   MS_EXCEPTION_IF_NULL(tensor);
-  if (std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
-    return;
-  }
 
   // Fill the host tensors for non weighted parameters.
   const auto &iter = data_node_position_map.find(node);
   if (iter != data_node_position_map.end()) {
     (*host_tensors)[iter->second] = tensor;
+    auto device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
+    if (device_address != nullptr) {
+      AnfAlgo::SetOutputAddr(device_address, 0, node.get());
+    }
   }
 }
 }  // namespace
@@ -434,7 +435,8 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 }
 
 void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info,
-                                const std::vector<std::vector<TensorPtr>> &input_tensors) {
+                                const std::vector<std::vector<TensorPtr>> &input_tensors,
+                                GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<TensorPtr> host_tensors;
   std::string actor_name = actor_set->name_ + "_HostDSActor";
@@ -466,7 +468,8 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
         // Prepare the device data for weights.
         const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
         PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context);
-      } else if (IsHostQueueDSActor(input_node, graph, input_tensor, graph_compiler_info.origin_parameters_order_)) {
+      } else if (IsHostQueueDSActor(input_node, graph, input_tensor, graph_compiler_info.origin_parameters_order_,
+                                    strategy)) {
         MS_EXCEPTION_IF_NULL(host_data_source_actor);
         PrepareDataForHostDataSourceActor(host_data_source_actor->data_node_position_map_, input_node, input_tensor,
                                           &host_tensors);

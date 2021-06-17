@@ -241,6 +241,11 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
     auto &device_tensor = device_tensors[i];
     MS_EXCEPTION_IF_NULL(host_tensor);
     MS_EXCEPTION_IF_NULL(device_tensor);
+
+    if (std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address()) != nullptr) {
+      continue;
+    }
+
     if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(data_nodes_[i], 0),
                                          LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(),
                                          host_tensor->data_c(), host_tensor->device_info().host_format_)) {
