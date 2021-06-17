@@ -15,27 +15,33 @@
 """Export DPN
 suggest run as python export.py --file_name [filename] --file_format [file format] --checkpoint_path [ckpt path]
 """
-
+import argparse
 import numpy as np
-from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
-from src.dpn import dpns
-from src.model_utils.config import config
+from mindspore import Tensor, context
+from mindspore.train.serialization import export, load_checkpoint
+from src.resnet import resnet152 as resnet
+from src.config import config5 as config
 
+parser = argparse.ArgumentParser(description="resnet152 export ")
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--ckpt_file", type=str, required=True, help="checkpoint file path")
+parser.add_argument("--dataset", type=str, default="imagenet2012", help="Dataset, either cifar10 or imagenet2012")
+parser.add_argument("--width", type=int, default=224, help="input width")
+parser.add_argument("--height", type=int, default=224, help="input height")
+parser.add_argument("--file_name", type=str, default='resnet152', help="output file name")
+parser.add_argument("--file_format", type=str, choices=['AIR', 'ONNX', 'MINDIR'], default='AIR', help="Device id")
+parser.add_argument("--device_target", type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend', help="target")
+args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
-if config.device_target == "Ascend":
-    context.set_context(device_id=config.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
 if __name__ == "__main__":
+    target = args.device_target
+    if target != "GPU":
+        context.set_context(device_id=args.device_id)
     # define net
-    backbone = config.backbone
-    num_classes = config.num_classes
-    net = dpns[backbone](num_classes=num_classes)
-
-    # load checkpoint
-    param_dict = load_checkpoint(config.checkpoint_path)
-    load_param_into_net(net, param_dict)
-    net.set_train(False)
-
-    image = Tensor(np.zeros([1, 3, config.height, config.width], np.float32))
-    export(net, image, file_name=config.file_name, file_format=config.file_format)
+    network = resnet(class_num=config.class_num)
+    param_dict = load_checkpoint(args.ckpt_file, net=network)
+    network.set_train(False)
+    input_data = Tensor(np.zeros([1, 3, args.height, args.width]).astype(np.float32))
+    export(network, input_data, file_name=args.file_name, file_format=args.file_format)

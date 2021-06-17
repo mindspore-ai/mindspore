@@ -15,6 +15,10 @@
             - [Training on Ascend](#training-on-ascend)
         - [Evaluation Process](#evaluation-process)
             - [Evaluation on Ascend](#evaluation-on-ascend)
+        - [Inference Process](#inference-process)
+            - [Export MindIR](#export-mindir)
+            - [Infer on Ascend](#infer-on-ascend)
+            - [Result](#result)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Evaluation Performance](#evaluation-performance)
@@ -280,6 +284,51 @@ Inference result will be stored in the example path, whose folder name begins wi
 ========================================
 
 mAP: 0.2527925497483538
+```
+
+### Inference Process
+
+#### [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+#### [Infer on Ascend310](#contents)
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space, otherwise the process will be killed for execeeding memory limits.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANNO_PATH] [DEVICE_ID]
+```
+
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. Note that the image shape of ssd_vgg16 inference is [300, 300], The DVPP hardware restricts width 16-alignment and height even-alignment. Therefore, the network needs to use the CPU operator to process images.
+- `ANNO_PATH` is mandatory, and must specify annotation file path including file name.
+- `DEVICE_ID` is optional, default value is 0.
+
+#### [Result](#contents)
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.256
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.422
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.262
+Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.042
+Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.230
+Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.453
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.263
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.410
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.442
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.133
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.466
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=large  | maxDets=100 ] = 0.714
+mAP: 0.2561487588412723
 ```
 
 ## [Model Description](#contents)
