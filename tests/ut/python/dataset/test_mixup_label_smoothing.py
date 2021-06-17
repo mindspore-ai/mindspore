@@ -157,7 +157,7 @@ def test_mix_up_multi():
                     assert image1[index].all() == img_golden.all()
                     logger.info("====test several batch mixup ok====")
             break
-        num_iter = num_iter + 1
+        num_iter += 1
 
 
 if __name__ == "__main__":

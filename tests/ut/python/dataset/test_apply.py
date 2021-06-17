@@ -88,7 +88,7 @@ def test_apply_flow_case_0(id_=0):
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
-        num_iter = num_iter + 1
+        num_iter += 1
 
     if id_ == 0:
         assert num_iter == 16
@@ -119,7 +119,7 @@ def test_apply_flow_case_1(id_=1):
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
-        num_iter = num_iter + 1
+        num_iter += 1
 
     if id_ == 0:
         assert num_iter == 16
@@ -150,7 +150,7 @@ def test_apply_flow_case_2(id_=2):
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
-        num_iter = num_iter + 1
+        num_iter += 1
 
     if id_ == 0:
         assert num_iter == 16
@@ -181,7 +181,7 @@ def test_apply_flow_case_3(id_=3):
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
-        num_iter = num_iter + 1
+        num_iter += 1
 
     if id_ == 0:
         assert num_iter == 16
