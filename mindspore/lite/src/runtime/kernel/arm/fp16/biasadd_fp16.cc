@@ -53,7 +53,7 @@ int BiasAddCPUFp16Kernel::Run() {
     }
   }
   if (op_parameter_->is_train_session_) {
-    if ((is_trainable() && (IsTrain() || is_repack())) || (bias_data_type_ == kNumberTypeFloat16)) {
+    if ((IsTrainable() && (IsTrain() || IsRepack())) || (bias_data_type_ == kNumberTypeFloat16)) {
       PackWeight();
       is_repack_ = false;
     }
@@ -133,7 +133,7 @@ void BiasAddCPUFp16Kernel::PackWeight() {
 
 int BiasAddCPUFp16Kernel::Eval() {
   InnerKernel::Eval();
-  if (is_trainable()) {
+  if (IsTrainable()) {
     is_repack_ = true;
   }
   return RET_OK;

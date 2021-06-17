@@ -270,13 +270,13 @@ int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {
 int MatmulBaseFP16CPUKernel::Run() {
   auto c_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
 
-  if ((params_->a_const_ == false) || is_repack()) {
+  if ((params_->a_const_ == false) || IsRepack()) {
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
     InitMatrixA(in_tensors_.at(0)->data_c());
   }
-  if ((params_->b_const_ == false) || is_repack()) {
+  if ((params_->b_const_ == false) || IsRepack()) {
     if (RET_OK != InitBufferB()) {
       FreeResizeBufA();
       return RET_ERROR;

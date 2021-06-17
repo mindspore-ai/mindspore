@@ -61,8 +61,8 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   void FreeAlignedData(void **ptr);
 
  protected:
+  bool IsRepack() { return is_repack_; }
   std::unordered_map<uintptr_t, void *> addr_map;
-  bool is_repack() { return is_repack_; }
   void *bias_data_ = nullptr;
   const InnerContext *ctx_ = nullptr;
   ConvParameter *conv_param_ = nullptr;

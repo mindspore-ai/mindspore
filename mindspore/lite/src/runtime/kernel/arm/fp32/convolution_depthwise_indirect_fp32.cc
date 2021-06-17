@@ -194,7 +194,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
     packed_input_ = input_ptr;
   }
 
-  if (IsTrain() && is_trainable()) {
+  if (IsTrain() && IsTrainable()) {
     PackWeight();
   }
 
@@ -233,7 +233,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Eval() {
     MS_LOG(ERROR) << "eval failed!";
     return ret;
   }
-  if (is_trainable()) {
+  if (IsTrainable()) {
     PackWeight();
   }
   return RET_OK;

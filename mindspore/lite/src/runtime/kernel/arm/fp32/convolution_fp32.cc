@@ -147,7 +147,7 @@ int ConvolutionCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (IsTrain() && is_trainable()) {
+  if (IsTrain() && IsTrainable()) {
     PackWeight();
   }
 
@@ -180,7 +180,7 @@ void ConvolutionCPUKernel::PackWeight() {
 
 int ConvolutionCPUKernel::Eval() {
   InnerKernel::Eval();
-  if (is_trainable()) {
+  if (IsTrainable()) {
     PackWeight();
   }
   return RET_OK;

@@ -38,7 +38,7 @@ class BiasAddCPUFp16Kernel : public InnerKernel {
  private:
   int GetBiasData();
   void PackWeight();
-  bool is_repack() { return is_repack_; }
+  bool IsRepack() { return is_repack_; }
   ArithmeticParameter *bias_param_ = nullptr;
   float16_t *bias_data_ = nullptr;
   lite::Tensor *bias_tensor_ = nullptr;

@@ -445,6 +445,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   if (ret == RET_OK) {
     MS_LOG(DEBUG) << "Get TypeId(" << kernel_data_type << ") op success: " << PrimitiveCurVersionTypeName(op_type);
     if (is_train_session_) {
+      (*kernel)->Init();
       RestoreTensorData(&restored_origin_tensors);
     } else {
       FreeRestoreTensors(&restored_origin_tensors);
@@ -721,7 +722,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
       kernel = SchedulePartialToKernel(node);
     } else {  // kernel
       kernel = ScheduleNodeToKernel(node, prefer_data_type);
-      if (kernel != nullptr) {
+      if ((kernel != nullptr) && (!is_train_session_)) {
         ret = kernel->Init();
       }
     }

@@ -97,7 +97,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
         return RET_ERROR;
       }
     }
-    void *bias_origin_tmp = is_trainable() ? in_tensors_.at(2)->data_c() : origin_bias_;
+    void *bias_origin_tmp = IsTrainable() ? in_tensors_.at(2)->data_c() : origin_bias_;
     memcpy(bias_data_, bias_origin_tmp, output_channel * sizeof(float16_t));
     memset(reinterpret_cast<char *>(bias_data_) + bias_size, 0, size - bias_size);
   }
@@ -111,7 +111,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       return RET_ERROR;
     }
   }
-  void *weight_origin_tmp = is_trainable() ? weight_tensor->data_c() : origin_weight_;
+  void *weight_origin_tmp = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
   memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
   ColMajor2Row8MajorFp16(weight_origin_tmp, weight_ptr_, input_channel, output_channel, true);
 
@@ -240,7 +240,7 @@ int Convolution1x1FP16CPUKernel::Run() {
     return RET_MEMORY_FAILED;
   }
 
-  if (is_trainable() && (IsTrain() || is_repack())) {
+  if (IsTrainable() && (IsTrain() || IsRepack())) {
     auto ret = InitWeightBias();
     if (ret != 0) {
       MS_LOG(ERROR) << "Convolution 1x1 fp16 repack weight failure";
@@ -283,7 +283,7 @@ int Convolution1x1FP16CPUKernel::Run() {
 }
 
 int Convolution1x1FP16CPUKernel::Eval() {
-  if (is_trainable()) {
+  if (IsTrainable()) {
     is_repack_ = true;
   }
   return InnerKernel::Eval();

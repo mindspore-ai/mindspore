@@ -192,17 +192,17 @@ class LiteKernel {
     return false;
   }
 
-  virtual void set_trainable(bool trainable = true) {
+  virtual void SetTrainable(bool trainable = true) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      std::static_pointer_cast<InnerKernel>(kernel_)->set_trainable(trainable);
+      std::static_pointer_cast<InnerKernel>(kernel_)->SetTrainable(trainable);
     }
   }
 
-  virtual bool is_trainable() const {
+  virtual bool IsTrainable() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->is_trainable();
+      return std::static_pointer_cast<InnerKernel>(kernel_)->IsTrainable();
     }
     return false;
   }

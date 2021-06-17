@@ -61,6 +61,10 @@ TrainSession::TrainSession() {
 
 int TrainSession::Init(const Context *context, const TrainCfg *train_cfg) {
   if (train_cfg != nullptr) {
+    if (train_cfg->mix_precision_cfg_.loss_scale_ <= 0) {
+      MS_LOG(ERROR) << "illegal loss scale configuration";
+      return RET_NULL_PTR;
+    }
     cfg_ = *train_cfg;
   }
   return lite::LiteSession::Init(context);
@@ -115,6 +119,9 @@ void TrainSession::FreeWorkSpace() {
 
 int TrainSession::InitCallBack() {
   sched_mix_precision_callback_ = [&](const Model::Node *node) {
+    if (!context_->IsCpuFloat16Enabled()) {
+      return false;
+    }
     auto node_type = GetPrimitiveType(node->primitive_);
     if (node_type == schema::PrimitiveType_Cast) {
       return false;
@@ -548,7 +555,7 @@ void TrainSession::CompileOptimizedKernels() {
     if (!IsOptimizer(kernel)) {
       for (auto it : kernel->in_tensors()) {
         if (std::find(out_tensor.begin(), out_tensor.end(), it) != out_tensor.end()) {
-          kernel->set_trainable(true);
+          kernel->SetTrainable(true);
           break;
         }
       }
@@ -610,7 +617,7 @@ int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr,
       }
     }
 
-    if (IsBN(kernel) && kernel->is_trainable()) {
+    if (IsBN(kernel) && kernel->IsTrainable()) {
       auto batchnorm = static_cast<kernel::BatchnormCPUKernel *>(kernel->kernel());
       auto ret = RET_OK;
       if (mod == kernel::OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
@@ -711,13 +718,6 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
 
 session::LiteSession *session::LiteSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
                                                                bool train_mode, const lite::TrainCfg *cfg) {
-  if (cfg != nullptr) {
-    // test legal configuration
-    if (cfg->mix_precision_cfg_.loss_scale_ <= 0) {
-      MS_LOG(ERROR) << "illegal loss scale configuration";
-      return nullptr;
-    }
-  }
   auto session = std::make_unique<lite::TrainSession>();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";

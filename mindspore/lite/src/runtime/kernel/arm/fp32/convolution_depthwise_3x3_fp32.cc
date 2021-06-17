@@ -119,7 +119,7 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
     return RET_MEMORY_FAILED;
   }
 
-  if (IsTrain() && is_trainable()) {
+  if (IsTrain() && IsTrainable()) {
     if (InitWeightBias() != RET_OK) {
       ctx_->allocator->Free(buffer_);
       MS_LOG(ERROR) << "Convolution depthwise 3x3 run InitWeightBias failed.";
@@ -148,7 +148,7 @@ int ConvolutionDepthwise3x3CPUKernel::Eval() {
     MS_LOG(ERROR) << "eval failed!";
     return ret;
   }
-  if (is_trainable()) {
+  if (IsTrainable()) {
     if (InitWeightBias() != RET_OK) {
       MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 Eval:InitWeightBias failed.";
       return RET_ERROR;

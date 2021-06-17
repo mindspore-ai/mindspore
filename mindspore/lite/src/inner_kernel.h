@@ -183,9 +183,9 @@ class InnerKernel : public Kernel {
 
   virtual bool IsEval() const { return !this->train_mode_; }
 
-  virtual void set_trainable(bool trainable = true) { this->trainable_ = trainable; }
+  virtual void SetTrainable(bool trainable = true) { this->trainable_ = trainable; }
 
-  virtual bool is_trainable() const { return this->trainable_; }
+  virtual bool IsTrainable() const { return this->trainable_; }
 
   TypeId registry_data_type(void) { return registry_data_type_; }
 

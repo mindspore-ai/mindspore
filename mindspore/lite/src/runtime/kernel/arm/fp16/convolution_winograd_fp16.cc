@@ -66,7 +66,7 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
     return ret;
   }
-  void *weight_origin_tmp = is_trainable() ? weight_tensor->data_c() : origin_weight_;
+  void *weight_origin_tmp = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
   ret = WinogradFilterTransformFp16(reinterpret_cast<float16_t *>(weight_origin_tmp), matrix_g, matrix_gt, col_tile_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "winograd filter transform failed.";
@@ -84,7 +84,7 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, oc_block_num * col_tile_ * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    void *bias_origin_tmp = is_trainable() ? bias_tensor->data_c() : origin_bias_;
+    void *bias_origin_tmp = IsTrainable() ? bias_tensor->data_c() : origin_bias_;
     memcpy(bias_data_, bias_origin_tmp, out_channel * sizeof(float16_t));
   }
   return RET_OK;
@@ -229,7 +229,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (is_trainable() && (IsTrain() || is_repack())) {
+  if (IsTrainable() && (IsTrain() || IsRepack())) {
     ret = InitWeightBias();
     if (ret != 0) {
       MS_LOG(ERROR) << "ConvolutionWinogradFP16 repack weight failure";
@@ -246,7 +246,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Eval() {
-  if (is_trainable()) {
+  if (IsTrainable()) {
     is_repack_ = true;
   }
   return InnerKernel::Eval();
