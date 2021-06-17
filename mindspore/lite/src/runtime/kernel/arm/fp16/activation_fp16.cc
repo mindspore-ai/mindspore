@@ -25,6 +25,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType_GELU;
+using mindspore::schema::ActivationType_HSIGMOID;
 using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
@@ -38,7 +39,7 @@ int ActivationFp16CPUKernel::Init() {
       type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
       type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&
       type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HARD_TANH &&
-      type_ != schema::ActivationType_GELU) {
+      type_ != schema::ActivationType_GELU && type_ != schema::ActivationType_HSIGMOID) {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type_;
     return RET_ERROR;
   }
@@ -71,6 +72,8 @@ int ActivationFp16CPUKernel::DoActivation(int task_id) {
     error_code = HSwishFp16(fp16_input_ + stride * task_id, fp16_output_ + stride * task_id, count);
   } else if (type_ == schema::ActivationType_SWISH) {
     error_code = SwishFp16(fp16_input_ + stride * task_id, fp16_output_ + stride * task_id, count);
+  } else if (type_ == schema::ActivationType_HSIGMOID) {
+    error_code = HSigmoidFp16(fp16_input_ + stride * task_id, fp16_output_ + stride * task_id, count);
   } else if (type_ == schema::ActivationType_HARD_TANH) {
     error_code =
       HardTanhFp16(fp16_input_ + stride * task_id, count, fp16_output_ + stride * task_id, min_val_, max_val_);
@@ -125,7 +128,8 @@ kernel::InnerKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tens
   if (type != schema::ActivationType_RELU && type != schema::ActivationType_RELU6 &&
       type != schema::ActivationType_LEAKY_RELU && type != schema::ActivationType_SIGMOID &&
       type != schema::ActivationType_TANH && type != schema::ActivationType_HSWISH &&
-      type != schema::ActivationType_SWISH && type != schema::ActivationType_HARD_TANH) {
+      type != schema::ActivationType_SWISH && type != schema::ActivationType_HARD_TANH &&
+      type != schema::ActivationType_GELU && type != schema::ActivationType_HSIGMOID) {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type;
     return nullptr;
   }

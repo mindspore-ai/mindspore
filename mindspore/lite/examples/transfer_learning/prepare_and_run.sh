@@ -51,9 +51,9 @@ fi
 
 if [ "$TARBALL" == "" ]; then
   if [ "${TARGET}" == "arm64" ]; then
-    file=$(ls ../../../../output/mindspore-lite-*-train-android-aarch64.tar.gz)
+    file=$(ls ../../../../output/mindspore-lite-*-android-aarch64.tar.gz)
   else
-    file=$(ls ../../../../output/mindspore-lite-*-train-linux-x64.tar.gz)
+    file=$(ls ../../../../output/mindspore-lite-*-linux-x64.tar.gz)
   fi
   if [[ ${file} != "" ]] && [[ -f ${file} ]]; then
     TARBALL=${file}
@@ -83,11 +83,11 @@ cp scripts/*.sh ${PACKAGE}/
 
 # Copy the shared MindSpore ToD library
 tar -xzf ${TARBALL}
-mv mindspore-*/inference/lib ${PACKAGE}/
-mv mindspore-*/inference/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
+mv mindspore-*/runtime/lib ${PACKAGE}/
+mv mindspore-*/runtime/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
 if [ "${TARGET}" == "arm64" ]; then
   tar -xzf ${TARBALL} --wildcards --no-anchored hiai_ddk
-  mv mindspore-*/inference/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
+  mv mindspore-*/runtime/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
 fi
 
 rm -rf msl

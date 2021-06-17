@@ -14,8 +14,8 @@ OBJ:=$(SRC:.cc=.o)
 
 CFLAGS := -Ofast -std=c++17  \
 	-I . \
-        -I ./msl/inference \
-        -I ./msl/inference/minddata \
+        -I ./msl/runtime \
+        -I ./msl/runtime/minddata \
         -I ./msl/tools/third_party/flatbuffers/include
 
 
@@ -25,7 +25,6 @@ CFLAGS  += --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/
 LDFLAGS := --target=aarch64-none-linux-android21 --gcc-toolchain=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Wl,--gc-sections 
 LDFLAGS += -L$(MSDIR) $(LMSLIB) $(LMDLIB) $(LHIAILIB) -pthread -llog -latomic -lm -Wl,-rpath,$(MSDIR)
 else
-CFLAGS += -g
 LDFLAGS := -L$(MSDIR) $(LMSLIB) $(LMDLIB) $(LHIAILIB) -lpthread -Wl,-rpath,$(MSDIR)
 endif  
 LD := ${CXX}
