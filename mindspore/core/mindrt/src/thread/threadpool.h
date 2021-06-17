@@ -45,9 +45,14 @@ typedef struct Task {
   std::atomic_int status{THREAD_OK};  // return status, RET_OK
 } Task;
 
+// busy, the thread is running task
+// held, the thread has been marked as occupied
+// idle, the thread is waiting
+enum ThreadStatus { kThreadBusy = 0, kThreadHeld = 1, kThreadIdle = 2 };
+
 typedef struct Worker {
   std::thread thread;
-  std::atomic_bool running{false};
+  std::atomic_int status{kThreadBusy};
   std::mutex mutex;
   std::condition_variable cond_var;
   std::atomic<Task *> task{nullptr};
@@ -84,9 +89,9 @@ class ThreadPool {
 
   void DistributeTask(Task *task, int task_num) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
-  void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num) const;
-
+  void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num, const Worker *curr) const;
   void YieldAndDeactive(Worker *worker) const;
+
   bool RunLocalKernelTask(Worker *worker) const;
 
   Worker *CurrentWorker() const;
