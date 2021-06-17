@@ -15,6 +15,9 @@
  */
 #include "minddata/dataset/engine/serdes.h"
 
+#include "debug/common.h"
+#include "utils/utils.h"
+
 namespace mindspore {
 namespace dataset {
 
@@ -46,8 +49,17 @@ Status Serdes::SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &
 
 Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &file_name) {
   try {
-    std::ofstream file(file_name);
+    auto realpath = Common::GetRealPath(file_name);
+    if (!realpath.has_value()) {
+      MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
+      RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
+    }
+
+    std::ofstream file(realpath.value());
     file << json_string;
+    file.close();
+
+    ChangeFileMode(realpath.value(), S_IRUSR | S_IWUSR);
   } catch (const std::exception &err) {
     RETURN_STATUS_UNEXPECTED("Save json string into " + file_name + " failed!");
   }

@@ -14,6 +14,7 @@
  * limitations under the License.
 */
 #include "minddata/dataset/engine/cache/cache_hw.h"
+
 #ifdef NUMA_ENABLED
 #include <numa.h>
 #endif
@@ -24,7 +25,10 @@
 #include <fstream>
 #include <regex>
 #include <thread>
+
+#include "debug/common.h"
 #include "utils/log_adapter.h"
+
 namespace mindspore {
 namespace dataset {
 CacheServerHW::CacheServerHW() {
@@ -118,7 +122,14 @@ Status CacheServerHW::GetNumaNodeInfo() {
     auto node_dir = p.Basename();
     numa_id_t numa_node = static_cast<numa_id_t>(strtol(node_dir.data() + strlen(kNodeName), nullptr, kDecimal));
     Path f = p / kCpuList;
-    std::ifstream fs(f.toString());
+
+    auto realpath = Common::GetRealPath(f.toString());
+    if (!realpath.has_value()) {
+      MS_LOG(ERROR) << "Get real path failed, path=" << f.toString();
+      RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + f.toString());
+    }
+
+    std::ifstream fs(realpath.value());
     CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + f.toString());
     std::string cpu_string;
     cpu_set_t cpuset;
@@ -235,7 +246,13 @@ bool CacheServerHW::numa_enabled() {
 }
 
 uint64_t CacheServerHW::GetAvailableMemory() {
-  std::ifstream mem_file(kMemInfoFileName);
+  auto realpath = Common::GetRealPath(kMemInfoFileName);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << kMemInfoFileName;
+    return 0;
+  }
+
+  std::ifstream mem_file(realpath.value());
   if (mem_file.fail()) {
     MS_LOG(WARNING) << "Fail to open file: " << kMemInfoFileName;
     return 0;

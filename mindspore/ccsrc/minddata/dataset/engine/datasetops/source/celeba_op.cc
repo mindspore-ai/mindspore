@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include "debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -69,7 +70,14 @@ Status CelebAOp::LaunchThreadsAndInitOp() {
 Status CelebAOp::ParseAttrFile() {
   TaskManager::FindMe()->Post();
   Path folder_path(folder_path_);
-  std::ifstream attr_file((folder_path / "list_attr_celeba.txt").toString());
+
+  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").toString());
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").toString();
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").toString());
+  }
+
+  std::ifstream attr_file(realpath.value());
   if (!attr_file.is_open()) {
     std::string attr_file_name = (folder_path / "list_attr_celeba.txt").toString();
     return Status(StatusCode::kMDFileNotExist, __LINE__, __FILE__,

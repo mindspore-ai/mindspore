@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/include/dataset/execute.h"
+
 #include <algorithm>
 #include <fstream>
-#include "minddata/dataset/include/dataset/execute.h"
+
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/core/tensor.h"

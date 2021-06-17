@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "minddata/dataset/text/vocab.h"
+
 #include <fstream>
 #include <unordered_set>
 #include <unordered_map>
 #include <utility>
 #include <algorithm>
 
-#include "minddata/dataset/text/vocab.h"
+#include "debug/common.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
 #else
@@ -121,8 +124,9 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
                                const std::vector<WordType> &special_tokens, bool prepend_special,
                                std::shared_ptr<Vocab> *vocab) {
   // Validate parameters
-  if (path.empty()) {
-    RETURN_STATUS_UNEXPECTED("from_file: vocab file path is not set!");
+  auto realpath = Common::GetRealPath(path);
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
   }
 
   if (vocab_size < 0 && vocab_size != -1) {
@@ -154,9 +158,10 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
   }
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   std::unordered_map<WordType, WordIdType> word2id;
-  std::fstream handle(path, std::ios::in);
+
+  std::fstream handle(realpath.value(), std::ios::in);
   if (!handle.good() || !handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("from_file: fail to open: " + path);
+    RETURN_STATUS_UNEXPECTED("from_file: fail to open: " + realpath.value());
   }
   std::string word;
   while (std::getline(handle, word)) {
@@ -198,7 +203,13 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
   }
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   std::unordered_map<WordType, WordIdType> word2id;
-  std::fstream handle(path, std::ios::in);
+
+  auto realpath = Common::GetRealPath(path);
+  if (!realpath.has_value()) {
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
+  }
+
+  std::fstream handle(realpath.value(), std::ios::in);
   CHECK_FAIL_RETURN_UNEXPECTED(handle.good() && handle.is_open(), "from_file: fail to open:" + path);
   std::string word;
   while (std::getline(handle, word)) {

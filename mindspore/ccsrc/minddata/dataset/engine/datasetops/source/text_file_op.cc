@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 
+#include "debug/common.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/util/wait_post.h"
@@ -78,7 +79,13 @@ Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
 }
 
 Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  std::ifstream handle(file);
+  auto realpath = Common::GetRealPath(file);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
+  }
+
+  std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
@@ -162,7 +169,13 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
 
 // Internal helper function to calculate rows
 int64_t CountTotalRows(const std::string &file) {
-  std::ifstream handle(file);
+  auto realpath = Common::GetRealPath(file);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    return 0;
+  }
+
+  std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
     return 0;

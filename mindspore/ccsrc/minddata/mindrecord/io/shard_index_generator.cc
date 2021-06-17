@@ -16,6 +16,8 @@
 #include <thread>
 
 #include "minddata/mindrecord/include/shard_index_generator.h"
+
+#include "debug/common.h"
 #include "utils/ms_utils.h"
 
 using mindspore::LogStream;
@@ -177,8 +179,14 @@ std::pair<MSRStatus, std::string> ShardIndexGenerator::GenerateFieldName(
 }
 
 std::pair<MSRStatus, sqlite3 *> ShardIndexGenerator::CheckDatabase(const std::string &shard_address) {
+  auto realpath = Common::GetRealPath(shard_address);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << shard_address;
+    return {FAILED, nullptr};
+  }
+
   sqlite3 *db = nullptr;
-  std::ifstream fin(common::SafeCStr(shard_address));
+  std::ifstream fin(realpath.value());
   if (!append_ && fin.good()) {
     MS_LOG(ERROR) << "Invalid file, DB file already exist: " << shard_address;
     fin.close();
@@ -522,8 +530,14 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, std::pair
     return FAILED;
   }
 
+  auto realpath = Common::GetRealPath(shard_address);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << shard_address;
+    return FAILED;
+  }
+
   std::fstream in;
-  in.open(common::SafeCStr(shard_address), std::ios::in | std::ios::binary);
+  in.open(realpath.value(), std::ios::in | std::ios::binary);
   if (!in.good()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << shard_address;
     return FAILED;

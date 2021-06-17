@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/perf/cpu_sampling.h"
+
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
 #endif
@@ -23,6 +24,7 @@
 #include <fstream>
 #include <memory>
 #include <string>
+
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
@@ -211,6 +213,7 @@ Status DeviceCpu::SaveToFile(const std::string &file_path) {
   // Discard the content of the file when opening.
   std::ofstream os(file_path, std::ios::trunc);
   os << output;
+  os.close();
 
   MS_LOG(INFO) << "Save device CPU success.";
   return Status::OK();
@@ -415,6 +418,7 @@ Status OperatorCpu::SaveToFile(const std::string &file_path) {
   // Discard the content of the file when opening.
   std::ofstream os(file_path, std::ios::trunc);
   os << output;
+  os.close();
 
   MS_LOG(INFO) << "Save device CPU success.";
   return Status::OK();
@@ -532,9 +536,11 @@ Status ProcessCpu::SaveToFile(const std::string &file_path) {
 
   output["process_info"] = {{"user_utilization", user_util}, {"sys_utilization", sys_util}};
   output["cpu_processor_num"] = cpu_processor_num_;
+
   // Discard the content of the file when opening.
   std::ofstream os(file_path, std::ios::trunc);
   os << output;
+  os.close();
 
   MS_LOG(INFO) << "Save process CPU success.";
   return Status::OK();
@@ -569,6 +575,7 @@ Status CpuSampling::SaveTimeStampToFile() {
   output["time_stamp"] = time_stamp_;
   std::ofstream os(file_path_, std::ios::trunc);
   os << output;
+  os.close();
 
   return Status::OK();
 }
@@ -584,6 +591,7 @@ Status CpuSampling::SaveSamplingItervalToFile() {
   output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
   std::ofstream os(file_path_, std::ios::trunc);
   os << output;
+  os.close();
 
   return Status::OK();
 }

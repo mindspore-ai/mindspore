@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#include "minddata/mindrecord/include/shard_reader.h"
+
 #include <algorithm>
 #include <thread>
 
+#include "debug/common.h"
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
-#include "minddata/mindrecord/include/shard_reader.h"
 #include "utils/ms_utils.h"
 
 using mindspore::LogStream;
@@ -199,8 +201,14 @@ MSRStatus ShardReader::Open() {
   file_streams_.clear();
 
   for (const auto &file : file_paths_) {
+    auto realpath = Common::GetRealPath(file);
+    if (!realpath.has_value()) {
+      MS_LOG(ERROR) << "Get real path failed, path=" << file;
+      return FAILED;
+    }
+
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-    fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
+    fs->open(realpath.value(), std::ios::in | std::ios::binary);
     if (!fs->good()) {
       MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
       return FAILED;
@@ -217,8 +225,14 @@ MSRStatus ShardReader::Open(int n_consumer) {
     std::vector<std::vector<std::shared_ptr<std::fstream>>>(n_consumer, std::vector<std::shared_ptr<std::fstream>>());
   for (const auto &file : file_paths_) {
     for (int j = 0; j < n_consumer; ++j) {
+      auto realpath = Common::GetRealPath(file);
+      if (!realpath.has_value()) {
+        MS_LOG(ERROR) << "Get real path failed, path=" << file;
+        return FAILED;
+      }
+
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-      fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
+      fs->open(realpath.value(), std::ios::in | std::ios::binary);
       if (!fs->good()) {
         MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
         return FAILED;
@@ -405,9 +419,16 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
   MS_LOG(INFO) << "Get " << static_cast<int>(labels.size()) << " records from shard " << shard_id << " index.";
 
   std::string file_name = file_paths_[shard_id];
+
+  auto realpath = Common::GetRealPath(file_name);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
+    return FAILED;
+  }
+
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
   if (!all_in_index_) {
-    fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::binary);
+    fs->open(realpath.value(), std::ios::in | std::ios::binary);
     if (!fs->good()) {
       MS_LOG(ERROR) << "Invalid file, failed to open file: " << file_name;
       return FAILED;
@@ -722,9 +743,16 @@ MSRStatus ShardReader::QueryWithCriteria(sqlite3 *db, const string &sql, const s
 std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabelsFromBinaryFile(
   int shard_id, const std::vector<std::string> &columns, const std::vector<std::vector<std::string>> &label_offsets) {
   std::string file_name = file_paths_[shard_id];
+
+  auto realpath = Common::GetRealPath(file_name);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
+    return {FAILED, {}};
+  }
+
   std::vector<json> res;
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-  fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::binary);
+  fs->open(realpath.value(), std::ios::in | std::ios::binary);
   if (!fs->good()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << file_name;
     return {FAILED, {}};
