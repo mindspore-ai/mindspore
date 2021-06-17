@@ -74,7 +74,7 @@ if cfg.bert_network == 'base':
     cfg.batch_size = 64
     bert_net_cfg = BertConfig(
         seq_length=128,
-        vocab_size=21128,
+        vocab_size=30522,
         hidden_size=768,
         num_hidden_layers=12,
         num_attention_heads=12,
