@@ -35,9 +35,9 @@ inline uint64_t BitAnd(uint64_t rhs, uint64_t lhs) { return rhs & lhs; }
 namespace mindspore {
 namespace dataset {
 Status BuddySpace::Init() {
-  const int32_t kBitOffset = 3;
-  const int32_t kLvlMin = 3;
-  const int32_t kLvlMax = 18;
+  const uint64_t kBitOffset = 3;
+  const int kLvlMin = 3;
+  const int kLvlMax = 18;
   if (log_min_ < 0) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "log_min must be positive : " + std::to_string(log_min_));
@@ -50,7 +50,7 @@ Status BuddySpace::Init() {
   max_ = BitLeftShift(1, log_min_ + num_lvl_ - 1);
   size_t offset_1 = sizeof(rel_addr_t) * num_lvl_;
   size_t offset_2 = sizeof(int) * num_lvl_ + offset_1;
-  size_t offset_3 = sizeof(char) * BitLeftShift(1, num_lvl_ - kBitOffset) + offset_2;
+  size_t offset_3 = sizeof(char) * BitLeftShift(1, static_cast<uint64_t>(num_lvl_ - kBitOffset)) + offset_2;
   try {
     mem_ = std::make_unique<uint8_t[]>(offset_3);
   } catch (const std::bad_alloc &e) {
@@ -62,7 +62,7 @@ Status BuddySpace::Init() {
   count_ = reinterpret_cast<int *>((reinterpret_cast<char *>(ptr) + offset_1));
   map_ = reinterpret_cast<char *>(ptr) + offset_2;
   count_[num_lvl_ - 1] = 1;
-  map_[0] = BitOr(MORE_BIT, num_lvl_ - kBitOffset);
+  map_[0] = BitOr(MORE_BIT, static_cast<uint64_t>(num_lvl_ - kBitOffset));
   return Status::OK();
 }
 
@@ -139,9 +139,9 @@ std::ostream &operator<<(std::ostream &os, const BuddySpace &s) {
 
 void BuddySpace::GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STATE *st) const {
   const int32_t kAddrOffset = 4;
-  const int32_t kBitLeftShift = 2;
-  const int32_t kPosOffset = 2;
   const int32_t kShiftOffset = 2;
+  const uint64_t kBitLeftShift = 2;
+  const uint64_t kPosOffset = 2;
   char byte;
   int pos;
   int offset;
@@ -173,7 +173,7 @@ void BuddySpace::GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STA
     *rel_sz = 2;
   } else if (BitAnd(val, MORE_BIT)) {
     log_t lg = BitAnd(val, 0x0F);
-    *rel_sz = BitLeftShift(1, lg + kBitLeftShift);
+    *rel_sz = BitLeftShift(1, static_cast<uint64_t>(lg + kBitLeftShift));
   } else {
     *st = STATE::kEmpty;
     return;
@@ -183,9 +183,9 @@ void BuddySpace::GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STA
 
 void BuddySpace::SetBuddySegState(rel_addr_t rel_addr, size_t rel_sz, STATE st) {
   const int32_t kAddrOffset = 4;
-  const int32_t kBitOffset = 2;
-  const int32_t kPosOffset = 2;
   const int32_t kShiftOffset = 2;
+  const uint64_t kBitOffset = 2;
+  const uint64_t kPosOffset = 2;
   int clr;
   int mask;
   int pos;
@@ -203,7 +203,7 @@ void BuddySpace::SetBuddySegState(rel_addr_t rel_addr, size_t rel_sz, STATE st) 
     val = TWO_BIT;
     mask = 0xF0;
   } else {
-    val = BitOr(log_sz - kBitOffset, MORE_BIT);
+    val = BitOr(static_cast<uint64_t>(log_sz - kBitOffset), MORE_BIT);
     mask = 0xFF;
   }
   if (st == STATE::kAlloc) {
