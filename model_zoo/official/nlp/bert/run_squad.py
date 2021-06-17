@@ -85,11 +85,11 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     model = Model(netwithgrads)
     callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack(dataset.get_dataset_size()), ckpoint_cb]
 
-    # add SummaryCollector
+    # add callbacks
     callbacks.append(SummaryCollector("./summary"))
     callbacks.append(LossMonitor())
 
-    model.train(epoch_num, dataset, callbacks=callbacks)
+    model.train(epoch_num, dataset, callbacks=callbacks, dataset_sink_mode=False)
 
 
 def do_eval(dataset=None, load_checkpoint_path="", eval_batch_size=1):
