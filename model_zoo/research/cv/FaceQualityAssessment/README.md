@@ -7,6 +7,10 @@
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Running Example](#running-example)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend](#infer-on-ascend)
+        - [Result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
@@ -258,6 +262,56 @@ You will get the result as following in "./scripts/device0/eval.log" or txt file
 3 eulers average err:['21.667', '15.627', '16.770']
 IPN of 5 keypoints:19.57019303768714
 MAE of elur:18.021210976971098
+```
+
+## [Inference Process](#contents)
+
+### [Export MindIR](#contents)
+
+```shell
+python export.py --pretrained [CKPT_PATH] --batch_size 1 --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`batch_size` should be set to 1
+`pretrained` is the ckpt file path referenced
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+for example, on Ascend:
+
+```bash
+python export.py --pretrained ./0-1_19000.ckpt --batch_size 1 --file_name faq.mindir --file_format MINDIR
+```
+
+### [Infer on Ascend310](#contents)
+
+Before performing inference, the mindir file must be exported by `export.py` script.
+Current batch_Size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+- `DATA_PATH` is mandatory, and must specify original data path.
+- `DEVICE_ID` is optional, default value is 0.
+
+for example, on Ascend:
+
+```bash
+cd ./scripts
+sh run_infer_310.sh ../fqa.mindir ../face_quality_dataset/ASLW2000 0
+```
+
+### [Result](#contents)
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+5 keypoints average err:['3.399', '4.320', '3.927', '3.109', '3.379']
+3 eulers average err:['21.192', '15.342', '16.559']
+IPN of 5 keypoints:20.30505629501458
+MAE of elur:17.69762644062826
 ```
 
 ### Convert model
