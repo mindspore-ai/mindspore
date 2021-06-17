@@ -14,8 +14,9 @@
 # ============================================================================
 """constexpr util"""
 
-from itertools import compress
+from itertools import compress, zip_longest
 from functools import partial
+from collections import deque
 import operator
 
 import numpy as np
@@ -810,3 +811,18 @@ def compute_slice_shape(slice_shape, broadcast_shape_len, slice_cnt, fancy_posit
     shape[slice_cnt] = slice_shape[slice_cnt]
     shape = shape[:fancy_position] + [1] * broadcast_shape_len + shape[fancy_position:]
     return shape
+
+
+@constexpr
+def infer_out_shape(*shapes):
+    """
+    Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
+    """
+    shape_out = deque()
+    reversed_shapes = map(reversed, shapes)
+    for items in zip_longest(*reversed_shapes, fillvalue=1):
+        max_size = 0 if 0 in items else max(items)
+        if any(item not in (1, max_size) for item in items):
+            raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
+        shape_out.appendleft(max_size)
+    return tuple(shape_out)

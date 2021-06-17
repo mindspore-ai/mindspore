@@ -38,8 +38,8 @@ shape_ = P.Shape()
 dtype_ = P.DType()
 abs_ = P.Abs()
 ndim_ = P.Rank()
-size_ = P.Size()
 cumsum_ = P.CumSum()
+size_op_ = P.Size()
 _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
 _mean_keepdims = P.ReduceMean(True)
@@ -115,6 +115,24 @@ def any_(x, axis=(), keep_dims=False):
         axis = ()
     reduce_any = P.ReduceAny(keep_dims)
     return reduce_any(x, axis)
+
+
+def size_(x):
+    """
+    Return the number of elements in tensor `x`.
+
+    Note:
+        To strictly follow Numpy's behaviour, return 1 for tensor scalar.
+
+    Args:
+        x (Tensor): Input tensor.
+
+    Returns:
+        size(int).
+    """
+    if not shape_(x):
+        return size_op_(x) + 1
+    return size_op_(x)
 
 
 def itemsize_(x):

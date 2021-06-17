@@ -372,11 +372,11 @@ class Tensor(Tensor_):
         return output
 
     def itemset(self, *args):
-        """
+        r"""
         Insert scalar into a tensor (scalar is cast to tensor’s dtype, if possible).
 
         There must be at least 1 argument, and define the last argument as item.
-        Then, tensor.itemset(*args) is equivalent to :math:`tensor[args] = item`.
+        Then, tensor.itemset(\*args) is equivalent to :math:`tensor[args] = item`.
 
         Args:
             args (Union[(Number), (int/tuple(int), Number)]): The arguments that

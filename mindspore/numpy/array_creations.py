@@ -2448,7 +2448,7 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
         [0. 0. 0. 1. 2. 3. 4. 5. 0. 0. 0. 0.]
         >>> print(np.pad(tensor, (3, 4), mode="wrap"))
         [3. 4. 5. 1. 2. 3. 4. 5. 1. 2. 3. 4.]
-        >>> >>> print(np.pad(tensor, (3, 4), mode="linear_ramp", end_values=(10, 10)))
+        >>> print(np.pad(tensor, (3, 4), mode="linear_ramp", end_values=(10, 10)))
         [10.    7.    4.    1.    2.    3.    4.    5.    6.25  7.5   8.75 10.  ]
     """
     arr = _to_tensor(arr)

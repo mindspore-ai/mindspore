@@ -2505,6 +2505,8 @@ def nanmin(a, axis=None, dtype=None, keepdims=False):
     Note:
         Numpy arguments `out` is not supported.
         For all-NaN slices, a very large number is returned instead of NaN.
+        On Ascend, since checking for NaN is currently not supported, it is not recommended to
+        use np.nanmin. If the array does not contain NaN, np.min should be used instead.
 
     Args:
         a (Union[int, float, list, tuple, Tensor]): Array containing numbers whose minimum
@@ -4038,8 +4040,6 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
         >>> import mindspore.numpy as np
         >>> print(np.sum([0.5, 1.5]))
         2.0
-        >>> print(np.sum(np.array([-1, 0, 1], np.int32)))
-        0
         >>> x = np.arange(10).reshape(2, 5).astype('float32')
         >>> print(np.sum(x, axis=1))
         [10. 35.]
@@ -4121,6 +4121,7 @@ def multi_dot(arrays):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> A = np.ones((10000, 100))
         >>> B = np.ones((100, 1000))
         >>> C = np.ones((1000, 5))
@@ -5093,13 +5094,13 @@ def polyval(p, x):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> print(np.polyval([3,0,1], 5))
-        76
+        >>> print(np.polyval([3.,0.,1.], 5.))
+        76.0
     """
     p = _to_poly1d(p)
     x = _to_tensor(x)
     shape = F.shape(x)
-    exp_p = arange(_type_convert(int, p.size) - 1, -1, -1)
+    exp_p = arange(_type_convert(int, p.size) - 1, -1, -1).astype(mstype.float32)
     var_p = (x.reshape(shape + (1,)))**exp_p
     return F.reduce_sum(p*var_p, -1)
 
@@ -5159,7 +5160,7 @@ def polymul(a1, a2):
         ValueError: if the input array has more than 1 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -5446,6 +5447,9 @@ def ravel_multi_index(multi_index, dims, mode='clip', order='C'):
         >>> output = np.ravel_multi_index(arr, (7, 6))
         >>> print(output)
         [22. 41. 37.]
+        >>> output = np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9))
+        >>> print(output)
+        1621.0
     """
     if isinstance(dims, int):
         dims = (dims,)
@@ -5548,7 +5552,7 @@ def norm(x, ord=None, axis=None, keepdims=False): # pylint: disable=redefined-bu
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> print(np.norm(np.arange(9)))
+        >>> print(np.norm(np.arange(9).astype(np.float32)))
         14.282857
     """
     if not isinstance(ord, (int, float)) and not _in(ord, (None, 'fro', 'nuc', inf, -inf)):
@@ -5787,6 +5791,9 @@ def correlate(a, v, mode='valid'):
         >>> output = np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
         >>> print(output)
         [2.  3.5 3. ]
+        >>> output = np.correlate([1, 2, 3, 4, 5], [1, 2], mode="same")
+        >>> print(output)
+        [ 2.  5.  8. 11. 14.]
     """
     a, v = _to_tensor(a, v)
     if a.ndim != 1 or v.ndim != 1:
