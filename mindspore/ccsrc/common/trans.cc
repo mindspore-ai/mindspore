@@ -930,7 +930,7 @@ bool TransShapeToNz(const std::vector<size_t> &host_shape, std::vector<size_t> *
       }
       hw_shape->push_back(times);
       hw_shape->push_back(host_shape[size - kH]);
-      hw_shape->push_back(host_shape[size - kN]);
+      hw_shape->push_back(host_shape[size - kC]);
       return true;
   }
 }
