@@ -187,6 +187,11 @@ int OpenCLSubGraph::InsertOpsPass() {
 }
 
 int OpenCLSubGraph::Init() {
+  // The fp16 operator in heterogeneous scenes needs to be set to fp32
+  // to prevent the frame from being converted to fp16 in advance.
+  if (in_tensors()[0]->data_type() == kNumberTypeFloat32 || in_tensors()[0]->data_type() == kNumberTypeFloat16) {
+    desc_.data_type = in_tensors()[0]->data_type();
+  }
   allocator_ = ocl_runtime_->GetAllocator();
   MS_LOG(DEBUG) << "input num=" << in_tensors().size() << ", output num=" << out_tensors().size();
   for (const auto tensor : in_tensors()) {
