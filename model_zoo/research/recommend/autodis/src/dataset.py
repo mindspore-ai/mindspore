@@ -24,7 +24,7 @@ import pandas as pd
 import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
 
-from .config import DataConfig
+from src.model_utils.config import data_config as DataConfig
 
 
 class DataType(Enum):

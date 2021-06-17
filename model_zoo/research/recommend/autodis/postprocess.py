@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 from mindspore import Tensor
 from src.autodis import AUCMetric
-from src.config import TrainConfig
+from src.model_utils.config import train_config
 
 parser = argparse.ArgumentParser(description='postprocess')
 parser.add_argument('--result_path', type=str, default="./result_Files", help='result path')
@@ -28,7 +28,6 @@ args_opt, _ = parser.parse_known_args()
 def get_acc():
     ''' get accuracy '''
     auc_metric = AUCMetric()
-    train_config = TrainConfig()
     files = os.listdir(args_opt.label_path)
     batch_size = train_config.batch_size
 

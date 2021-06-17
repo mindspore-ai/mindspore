@@ -57,7 +57,7 @@ After installing MindSpore via the official website, you can start training and 
   ```python
   # run training example
   python train.py \
-    --dataset_path='dataset/train' \
+    --train_data_dir='dataset/train' \
     --ckpt_path='./checkpoint' \
     --eval_file_name='auc.log' \
     --loss_file_name='loss.log' \
@@ -66,11 +66,11 @@ After installing MindSpore via the official website, you can start training and 
 
   # run evaluation example
   python eval.py \
-    --dataset_path='dataset/test' \
+    --test_data_dir='dataset/test' \
     --checkpoint_path='./checkpoint/autodis.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/autodis.ckpt
+  sh scripts/run_eval.sh 0 Ascend /test_data_dir /checkpoint_path/autodis.ckpt
   ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -79,6 +79,50 @@ After installing MindSpore via the official website, you can start training and 
 
   <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
 
+- running on ModelArts
+
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+    - Training with single cards on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/autodis" on the website UI interface.
+    # (4) Set the startup file to /{path}/autodis/train.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/autodis/default_config.yaml.
+    #         1. Set ”enable_modelarts: True“
+    #     b. adding on the website UI interface.
+    #         1. Add ”enable_modelarts=True“
+    # (6) Upload the dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of single cards.
+    # (10) Create your job.
+    ```
+
+    - evaluating with single card on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/autodis" on the website UI interface.
+    # (4) Set the startup file to /{path}/autodis/eval.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/autodis/default_config.yaml.
+    #         1. Set ”enable_modelarts: True“
+    #         2. Set “checkpoint_path: ./{path}/*.ckpt”('checkpoint_path' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+    #     b. adding on the website UI interface.
+    #         1. Add ”enable_modelarts=True“
+    #         2. Add “checkpoint_path=./{path}/*.ckpt”('checkpoint_path' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+    # (6) Upload the dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of a single card.
+    # (10) Create your job.
+    ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -86,54 +130,52 @@ After installing MindSpore via the official website, you can start training and 
 ```bash
 .
 └─autodis
-  ├─README.md
-  ├─mindspore_hub_conf.md             # config for mindspore hub
+  ├─README.md                         # descriptions of warpctc
+  ├─ascend310_infer                   # application for 310 inference
   ├─scripts
     ├─run_standalone_train.sh         # launch standalone training(1p) in Ascend or GPU
+    ├─run_infer_310.sh                # launch 310infer
     └─run_eval.sh                     # launch evaluating in Ascend or GPU
   ├─src
+    ├─model_utils
+      ├─config.py                     # parsing parameter configuration file of "*.yaml"
+      ├─device_adapter.py             # local or ModelArts training
+      ├─local_adapter.py              # get related environment variables in local training
+      └─moxing_adapter.py             # get related environment variables in ModelArts training
     ├─__init__.py                     # python init file
-    ├─config.py                       # parameter configuration
     ├─callback.py                     # define callback function
     ├─autodis.py                      # AutoDis network
-    ├─dataset.py                      # create dataset for AutoDis
-  ├─eval.py                           # eval net
-  └─train.py                          # train net
+    └─dataset.py                      # create dataset for AutoDis
+  ├─default_config.yaml               # parameter configuration
+  ├─eval.py                           # eval script
+  ├─export.py                         # export checkpoint file into air/mindir
+  ├─mindspore_hub_conf.py             # mindspore hub interface
+  ├─postprocess.py                    # 310infer postprocess script
+  ├─preprocess.py                     # 310infer preprocess script
+  └─train.py                          # train script
 ```
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py
+Parameters for both training and evaluation can be set in `default_config.yaml`
 
-- train parameters
-
-  ```python
-  optional arguments:
-  -h, --help            show this help message and exit
-  --dataset_path DATASET_PATH
-                        Dataset path
-  --ckpt_path CKPT_PATH
-                        Checkpoint path
-  --eval_file_name EVAL_FILE_NAME
-                        Auc log file path. Default: "./auc.log"
-  --loss_file_name LOSS_FILE_NAME
-                        Loss log file path. Default: "./loss.log"
-  --do_eval DO_EVAL     Do evaluation or not. Default: True
-  --device_target DEVICE_TARGET
-                        Ascend or GPU. Default: Ascend
-  ```
-
-- eval parameters
+- Parameters that can be modified at the terminal
 
   ```bash
-  optional arguments:
-  -h, --help            show this help message and exit
-  --checkpoint_path CHECKPOINT_PATH
-                        Checkpoint file path
-  --dataset_path DATASET_PATH
-                        Dataset path
-  --device_target DEVICE_TARGET
-                        Ascend or GPU. Default: Ascend
+  # Train
+  train_data_dir: ''                  # train dataset path
+  ckpt_path: 'ckpts'                  # the folder path to save '*.ckpt' files. Relative path.
+  eval_file_name: "./auc.log"         # file path to record accuracy
+  loss_file_name: "./loss.log"        # file path to record loss
+  do_eval: "True"                     # whether do eval while training, default is 'True'.
+  # Test
+  test_data_dir: ''                   # test dataset path
+  checkpoint_path: ''                 # the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.
+  # Export
+  batch_size: 16000                   # batch_size for exported model.
+  ckpt_file: ''                       # the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.
+  file_name: "autodis"                # output file name.
+  file_format: "AIR"                  # output file format, you can choose from AIR or MINDIR, default is AIR"
   ```
 
 ## [Training Process](#contents)
@@ -144,7 +186,7 @@ Parameters for both training and evaluation can be set in config.py
 
   ```python
   python train.py \
-    --dataset_path='dataset/train' \
+    --train_data_dir='dataset/train' \
     --ckpt_path='./checkpoint' \
     --eval_file_name='auc.log' \
     --loss_file_name='loss.log' \
@@ -174,11 +216,11 @@ Parameters for both training and evaluation can be set in config.py
 
   ```python
   python eval.py \
-    --dataset_path='dataset/test' \
+    --test_data_dir='dataset/test' \
     --checkpoint_path='./checkpoint/autodis.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/autodis.ckpt
+  sh scripts/run_eval.sh 0 Ascend /test_data_dir /checkpoint_path/autodis.ckpt
   ```
 
   The above python command will run in the background. You can view the results through the file "eval_output.log". The accuracy is saved in auc.log file.
@@ -191,12 +233,37 @@ Parameters for both training and evaluation can be set in config.py
 
 ### [Export MindIR](#contents)
 
-```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
-```
+- Export on local
 
-The ckpt_file parameter is required,
-`file_format` should be in ["AIR", "MINDIR"]
+  ```shell
+  # The ckpt_file parameter is required, `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+  python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+  ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+  ```python
+  # (1) Upload the code folder to S3 bucket.
+  # (2) Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/autodis" on the website UI interface.
+  # (4) Set the startup file to /{path}/autodis/export.py" on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in /{path}/autodis/default_config.yaml.
+  #         1. Set ”enable_modelarts: True“
+  #         2. Set “ckpt_file: ./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Set ”file_name: autodis“
+  #         4. Set ”file_format：AIR“(you can choose from AIR or MINDIR)
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts=True“
+  #         2. Add “ckpt_file=./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Add ”file_name=autodis“
+  #         4. Add ”file_format=AIR“(you can choose from AIR or MINDIR)
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (This step is useless, but necessary.).
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of a single card.
+  # (10) Create your job.
+  # You will see autodis.air under "Output file path".
+  ```
 
 ### Infer on Ascend310
 

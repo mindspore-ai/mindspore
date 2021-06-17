@@ -13,38 +13,42 @@
 # limitations under the License.
 # ============================================================================
 """export ckpt to model"""
-import argparse
+import os
 import numpy as np
 
 from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint
 
 from src.autodis import ModelBuilder
-from src.config import DataConfig, ModelConfig, TrainConfig
+from src.model_utils.config import config, data_config, model_config, train_config
+from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description="autodis export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="autodis", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+    config.ckpt_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), config.ckpt_file)
 
-if __name__ == "__main__":
-    data_config = DataConfig()
 
-    model_builder = ModelBuilder(ModelConfig, TrainConfig)
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''export checkpoint file into air/mindir'''
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
+
+    model_builder = ModelBuilder(model_config, train_config)
     _, network = model_builder.get_train_eval_net()
     network.set_train(False)
 
-    load_checkpoint(args.ckpt_file, net=network)
+    load_checkpoint(config.ckpt_file, net=network)
 
     batch_ids = Tensor(np.zeros([data_config.batch_size, data_config.data_field_size]).astype(np.int32))
     batch_wts = Tensor(np.zeros([data_config.batch_size, data_config.data_field_size]).astype(np.float32))
     labels = Tensor(np.zeros([data_config.batch_size, 1]).astype(np.float32))
 
     input_data = [batch_ids, batch_wts, labels]
-    export(network, *input_data, file_name=args.file_name, file_format=args.file_format)
+    export(network, *input_data, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == "__main__":
+    run_export()
