@@ -195,3 +195,5 @@ RTS_API rtError_t rtKernelLaunchWithFlag(const void *stubFunc, uint32_t blockDim
                                          rtSmDesc_t *smDesc, rtStream_t stream, uint32_t flags) {
   return RT_ERROR_NONE;
 }
+
+RTS_API rtError_t rtMemGetInfoEx(rtMemInfoType_t memInfoType, size_t *free, size_t *total) { return RT_ERROR_NONE; }
