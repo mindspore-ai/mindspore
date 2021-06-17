@@ -23,6 +23,7 @@
 namespace mindspore {
 namespace lite {
 int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out) {
+  MS_ASSERT(tensors_out != nullptr);
   for (size_t i = 0; i < tensors_in.size(); ++i) {
     size_t shape_size = tensors_in[i]->shape().size();
     if (shape_size >= MAX_SHAPE_SIZE) {
@@ -34,6 +35,7 @@ int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vect
       MS_LOG(ERROR) << "malloc tensor fail!";
       return RET_ERROR;
     }
+    memset(tensor_c, 0, sizeof(TensorC));
     tensor_c->format_ = tensors_in[i]->format();
     tensor_c->data_type_ = tensors_in[i]->data_type();
     tensor_c->shape_size_ = shape_size;
@@ -47,6 +49,7 @@ int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vect
 }
 
 int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector<TensorC *> *tensors_c) {
+  MS_ASSERT(tensors_c != nullptr);
   for (size_t i = 0; i < tensors.size(); ++i) {
     auto *tensor_c = static_cast<TensorC *>(malloc(sizeof(TensorC)));
     if (tensor_c == nullptr) {
@@ -80,6 +83,7 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
 }
 
 void FreeTensorListC(TensorListC *tensorlist_c) {
+  MS_ASSERT(tensorlist_c != nullptr);
   if (tensorlist_c->tensors_ != nullptr) {
     free(tensorlist_c->tensors_);
     tensorlist_c->tensors_ = nullptr;
@@ -87,7 +91,7 @@ void FreeTensorListC(TensorListC *tensorlist_c) {
   free(tensorlist_c);
 }
 
-int Tensor2TensorC(Tensor *src, TensorC *dst) {
+int Tensor2TensorC(const Tensor *src, TensorC *dst) {
   dst->is_ready_ = src->IsReady();
   dst->format_ = src->format();
   dst->data_ = src->data_c();
@@ -103,19 +107,26 @@ int Tensor2TensorC(Tensor *src, TensorC *dst) {
   return RET_OK;
 }
 
-void TensorC2Tensor(TensorC *src, Tensor *dst) {
+void TensorC2Tensor(const TensorC *src, Tensor *dst) {
+  MS_ASSERT(src != nullptr);
+  MS_ASSERT(dst != nullptr);
   dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_data_type(static_cast<TypeId>(src->data_type_));  // get data during the runtime period
   dst->set_shape(std::vector<int>(src->shape_, src->shape_ + src->shape_size_));
 }
 
 int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
+  MS_ASSERT(src != nullptr);
+  MS_ASSERT(dst != nullptr);
   dst->is_ready_ = src->IsReady();
   dst->data_type_ = static_cast<TypeIdC>(src->data_type());
   dst->format_ = src->format();
   dst->shape_value_ = src->shape().empty() ? 0 : src->shape().front();
   dst->element_num_ = src->shape().empty() ? 0 : src->tensors().size();
-
+  if (dst->element_num_ * sizeof(TensorC) < 0 || dst->element_num_ * sizeof(TensorC) > MAX_MALLOC_SIZE) {
+    MS_LOG(ERROR) << "data size error.";
+    return RET_ERROR;
+  }
   dst->tensors_ = reinterpret_cast<TensorC *>(malloc(dst->element_num_ * sizeof(TensorC)));
   if (dst->tensors_ == nullptr) {
     return RET_ERROR;
@@ -138,7 +149,7 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
   return NNACL_OK;
 }
 
-int TensorListC2TensorList(TensorListC *src, TensorList *dst) {
+int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
   dst->set_data_type(static_cast<TypeId>(src->data_type_));
   dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_shape(std::vector<int>(1, src->element_num_));
@@ -161,6 +172,7 @@ int TensorListC2TensorList(TensorListC *src, TensorList *dst) {
 
 int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                   std::vector<TensorC *> *out_tensor_c) {
+  MS_ASSERT(out_tensor_c != nullptr);
   int ret = RET_OK;
   for (size_t i = 0; i < outputs.size(); i++) {
     out_tensor_c->push_back(nullptr);
@@ -170,6 +182,8 @@ int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, con
 
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *out_tensor_c) {
+  MS_ASSERT(out_tensor_c != nullptr);
+  MS_ASSERT(parameter != nullptr);
   int ret = RET_OK;
   if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
@@ -192,6 +206,7 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
 
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *in_tensor_c) {
+  MS_ASSERT(in_tensor_c != nullptr);
   int ret = RET_OK;
   for (auto input : inputs) {
     if (input->data_type() == kObjectTypeTensorType) {

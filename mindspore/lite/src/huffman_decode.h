@@ -33,7 +33,9 @@ struct HuffmanNode {
   int key;
   unsigned int freq;
   std::string code;
-  HuffmanNode *left, *right, *parent;
+  HuffmanNode *left = nullptr;
+  HuffmanNode *right = nullptr;
+  HuffmanNode *parent = nullptr;
 };
 
 using HuffmanNodePtr = HuffmanNode *;

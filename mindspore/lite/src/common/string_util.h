@@ -29,8 +29,8 @@
 namespace mindspore {
 namespace lite {
 typedef struct {
-  int len;
-  const char *data;
+  int len = 0;
+  const char *data = nullptr;
 } StringPack;
 
 // example of string tensor:

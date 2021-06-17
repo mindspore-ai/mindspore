@@ -21,6 +21,10 @@
 namespace mindspore {
 namespace lite {
 std::vector<StringPack> ParseTensorBuffer(Tensor *tensor) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is nullptr.";
+    return std::vector<StringPack>{};
+  }
   if (tensor->data_c() == nullptr) {
     MS_LOG(ERROR) << "Tensor data is null, cannot be parsed";
     return std::vector<StringPack>{};
@@ -44,6 +48,10 @@ std::vector<StringPack> ParseStringBuffer(const void *data) {
 }
 
 int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_buffer) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is nullptr.";
+    return RET_ERROR;
+  }
   int32_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
   offset[0] = 4 * (num + 2);
@@ -73,6 +81,10 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
 }
 
 int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<StringPack>> &string_buffer) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is nullptr.";
+    return RET_ERROR;
+  }
   int32_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
   offset[0] = 4 * (num + 2);
@@ -112,7 +124,13 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
 
 int GetStringCount(const void *data) { return *(static_cast<const int32_t *>(data)); }
 
-int GetStringCount(Tensor *tensor) { return GetStringCount(tensor->MutableData()); }
+int GetStringCount(Tensor *tensor) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is nullptr.";
+    return RET_ERROR;
+  }
+  return GetStringCount(tensor->MutableData());
+}
 
 int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
   if (tensor == nullptr) {
@@ -141,6 +159,7 @@ std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
 }
 
 // Some primes between 2^63 and 2^64
+namespace {
 static uint64_t k0 = 0xc3a5c85c97cb3127ULL;
 static uint64_t k1 = 0xb492b66fbe98f273ULL;
 static uint64_t k2 = 0x9ae16a3b2f90404fULL;
@@ -230,6 +249,7 @@ std::pair<uint64_t, uint64_t> HashLen32WithSeeds(const char *s, uint64_t a, uint
   b += Rotate64(a, 44);
   return std::make_pair(a + Fetch64Bit(s + 24), b + c);
 }
+}  // namespace
 
 uint64_t StringHash64(const char *s, size_t len) {
   const uint64_t seed_value = 81;

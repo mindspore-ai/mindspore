@@ -37,7 +37,7 @@ class Graph::GraphData {
   std::shared_ptr<lite::Model> lite_model() { return lite_model_; }
 
  private:
-  std::shared_ptr<lite::Model> lite_model_;
+  std::shared_ptr<lite::Model> lite_model_ = nullptr;
 };
 }  // namespace mindspore
 

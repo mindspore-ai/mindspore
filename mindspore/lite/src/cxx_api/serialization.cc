@@ -28,6 +28,14 @@
 
 namespace mindspore {
 Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph) {
+  if (model_data == nullptr) {
+    MS_LOG(ERROR) << "model data is nullptr.";
+    return kLiteNullptr;
+  }
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "graph is nullptr.";
+    return kLiteNullptr;
+  }
   if (model_type != kMindIR) {
     MS_LOG(ERROR) << "Unsupported IR.";
     return kLiteInputParamInvalid;

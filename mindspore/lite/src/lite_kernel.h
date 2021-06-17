@@ -41,9 +41,9 @@ enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN =
 static const char *const kBuiltin = "Builtin";
 
 struct KernelKey {
-  KERNEL_ARCH arch;
-  TypeId data_type;
-  int type;
+  KERNEL_ARCH arch = kCPU;
+  TypeId data_type = kTypeUnknown;
+  int type = 0;
   std::string kernel_arch;
   std::string provider{kBuiltin};
   std::shared_ptr<Delegate> delegate = nullptr;
@@ -352,6 +352,10 @@ template <class T>
 kernel::InnerKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                        const lite::Context *ctx, const kernel::KernelKey &desc) {
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "parameter is nullptr.";
+    return nullptr;
+  }
   auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";

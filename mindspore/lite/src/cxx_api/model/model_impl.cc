@@ -129,6 +129,10 @@ static void ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MS
 }
 
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  if (outputs == nullptr) {
+    MS_LOG(ERROR) << "outputs is nullptr.";
+    return kLiteError;
+  }
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Run graph failed.";
     return kLiteError;

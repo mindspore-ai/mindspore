@@ -182,7 +182,7 @@ int CustomSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &
   for (auto kernel : nodes_) {
     MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Execute(before, after);
-    if (RET_OK != ret) {
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
@@ -206,7 +206,7 @@ int CpuSubGraph::Prepare() {
 }
 
 int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(nullptr != this->Context()->allocator.get());
+  MS_ASSERT(this->Context()->allocator.get() != nullptr);
 #ifdef SUPPORT_GPU
   // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
   if (this->Context()->IsGpuEnabled()) {
@@ -217,9 +217,9 @@ int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &aft
 #endif
 
   for (auto *kernel : nodes_) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Execute(before, after);
-    if (RET_OK != ret) {
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
@@ -264,7 +264,7 @@ int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
   }
   tensor->set_data(nullptr);
   auto ret = tensor->MallocData();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_ERROR;
   }
@@ -331,7 +331,7 @@ int CpuFp16SubGraph::PreProcess() {
     }
     if (real_tensor->data_type() == kNumberTypeFloat32) {
       ret = Float32TensorToFloat16Tensor(real_tensor);
-      if (RET_OK != ret) {
+      if (ret != RET_OK) {
         MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
         this->FreeOriginInputData();
         return ret;
@@ -342,7 +342,7 @@ int CpuFp16SubGraph::PreProcess() {
         tensorlist->set_tensors_data_type(kNumberTypeFloat16);
         for (auto inner_tensor : tensorlist->tensors()) {
           ret = Float32TensorToFloat16Tensor(inner_tensor);
-          if (RET_OK != ret) {
+          if (ret != RET_OK) {
             MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
             this->FreeOriginInputData();
             return ret;
@@ -379,7 +379,7 @@ int CpuFp16SubGraph::PostProcess() {
     MS_ASSERT(tensor != nullptr);
     if (tensor->data_type() == kNumberTypeFloat16) {
       ret = Float16TensorToFloat32Tensor(tensor);
-      if (RET_OK != ret) {
+      if (ret != RET_OK) {
         MS_LOG(ERROR) << "Float16TensorToFloat32Tensor failed.";
         return ret;
       }
@@ -389,7 +389,7 @@ int CpuFp16SubGraph::PostProcess() {
         tensorlist->set_tensors_data_type(kNumberTypeFloat32);
         for (auto inner_tensor : tensorlist->tensors()) {
           ret = Float16TensorToFloat32Tensor(inner_tensor);
-          if (RET_OK != ret) {
+          if (ret != RET_OK) {
             MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
             return ret;
           }
