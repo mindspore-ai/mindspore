@@ -49,4 +49,4 @@ def _logical_and_tensor(x, y):
     Returns:
        Tensor, Return logical and operation result of x and y.
    """
-    return  F.logical_and(x, y)
+    return F.logical_and(x, y)

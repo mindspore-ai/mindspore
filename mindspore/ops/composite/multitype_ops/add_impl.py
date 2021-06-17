@@ -44,6 +44,7 @@ class _TupleAdd(base.TupleAdd_):
     """
 
     def __init__(self, name):
+        """Initialize _TupleAdd."""
         base.TupleAdd_.__init__(self, name)
 
     def __call__(self, *args):

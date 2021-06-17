@@ -76,6 +76,7 @@ class L1Regularizer(Cell):
     """
 
     def __init__(self, scale):
+        """Initialize L1Regularizer."""
         super(L1Regularizer, self).__init__()
         Validator.check_value_type("scale", scale, [int, float], self.cls_name)
         if scale <= 0:
@@ -143,6 +144,7 @@ class Dropout(Cell):
     """
 
     def __init__(self, keep_prob=0.5, dtype=mstype.float32):
+        """Initialize Dropout."""
         super(Dropout, self).__init__()
         if keep_prob <= 0 or keep_prob > 1:
             raise ValueError("dropout probability should be a number in range (0, 1], but got {}".format(keep_prob))
@@ -197,6 +199,7 @@ class Flatten(Cell):
     """
 
     def __init__(self):
+        """Initialize Flatten."""
         super(Flatten, self).__init__()
 
     def construct(self, x):
@@ -269,13 +272,13 @@ class Dense(Cell):
                  bias_init='zeros',
                  has_bias=True,
                  activation=None):
+        """Initialize Dense."""
         super(Dense, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
         self.reshape = P.Reshape()
         self.shape_op = P.Shape()
-
 
         if isinstance(weight_init, Tensor):
             if weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
@@ -390,6 +393,7 @@ class ClipByNorm(Cell):
     """
 
     def __init__(self, axis=None):
+        """Initialize ClipByNorm."""
         super(ClipByNorm, self).__init__()
         if axis is None:
             axis = ()
@@ -468,6 +472,7 @@ class Norm(Cell):
     """
 
     def __init__(self, axis=(), keep_dims=False):
+        """Initialize Norm."""
         super(Norm, self).__init__()
         Validator.check_value_type("keep_dims", keep_dims, [bool], self.cls_name)
         self.axis = axis
@@ -561,6 +566,7 @@ class OneHot(Cell):
     """
 
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
+        """Initialize OneHot."""
         super(OneHot, self).__init__()
         self.onehot = P.OneHot(axis)
         self.depth = depth
@@ -633,6 +639,7 @@ class Pad(Cell):
     """
 
     def __init__(self, paddings, mode="CONSTANT"):
+        """Initialize Pad."""
         super(Pad, self).__init__()
         self.mode = mode
         self.paddings = paddings
@@ -722,6 +729,7 @@ class ResizeBilinear(Cell):
     """
 
     def __init__(self):
+        """Initialize ResizeBilinear."""
         super(ResizeBilinear, self).__init__()
 
     def construct(self, x, size=None, scale_factor=None, align_corners=False):
@@ -780,6 +788,7 @@ class Unfold(Cell):
     """
 
     def __init__(self, ksizes, strides, rates, padding="valid"):
+        """Initialize Unfold."""
         super(Unfold, self).__init__()
 
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
@@ -841,6 +850,7 @@ class Tril(Cell):
     """
 
     def __init__(self):
+        """Initialize Tril."""
         super(Tril, self).__init__()
         self.dtype = P.DType()
         self.mul = P.Mul()
@@ -888,6 +898,7 @@ class Triu(Cell):
     """
 
     def __init__(self):
+        """Initialize Triu."""
         super(Triu, self).__init__()
         self.dtype = P.DType()
         self.mul = P.Mul()
@@ -946,6 +957,7 @@ class MatrixDiag(Cell):
     """
 
     def __init__(self):
+        """Initialize MatrixDiag."""
         super(MatrixDiag, self).__init__()
         self.matrix_diag = inner.MatrixDiag()
         self.dtype = P.DType()
@@ -990,6 +1002,7 @@ class MatrixDiagPart(Cell):
     """
 
     def __init__(self):
+        """Initialize MatrixDiagPart."""
         super(MatrixDiagPart, self).__init__()
         self.matrix_diag_part = inner.MatrixDiagPart()
         self.dtype = P.DType()
@@ -1048,6 +1061,7 @@ class MatrixSetDiag(Cell):
     """
 
     def __init__(self):
+        """Initialize MatrixSetDiag."""
         super(MatrixSetDiag, self).__init__()
         self.matrix_set_diag = inner.MatrixSetDiag()
         self.dtype = P.DType()

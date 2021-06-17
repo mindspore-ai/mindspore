@@ -70,6 +70,7 @@ class Assign(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Assign."""
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
 
@@ -111,6 +112,7 @@ class InplaceAssign(PrimitiveWithInfer):
     @deprecated("1.3", "Assign", False)
     @ prim_attr_register
     def __init__(self):
+        """Initialize InplaceAssign."""
         self.init_prim_io_names(inputs=['x', 'y', 'z'], outputs=['output'])
 
     def infer_shape(self, x, y, z):
@@ -137,6 +139,7 @@ class Load(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Load."""
         self.init_prim_io_names(inputs=['ref', 'u'], outputs=['output'])
 
     def check_dtype(self, variable):
@@ -178,8 +181,9 @@ class BoundingBoxEncode(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
-        validator.check_value_type('means', means, (tuple), self.name)
-        validator.check_value_type('stds', stds, (tuple), self.name)
+        """Initialize BoundingBoxEncode."""
+        validator.check_value_type('means', means, tuple, self.name)
+        validator.check_value_type('stds', stds, tuple, self.name)
         for i, value in enumerate(means):
             validator.check_value_type("means[%d]" % i, value, [float], self.name)
         for i, value in enumerate(stds):
@@ -241,8 +245,9 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0), wh_ratio_clip=0.016):
-        validator.check_value_type('means', means, (tuple), self.name)
-        validator.check_value_type('stds', stds, (tuple), self.name)
+        """Initialize BoundingBoxDecode."""
+        validator.check_value_type('means', means, tuple, self.name)
+        validator.check_value_type('stds', stds, tuple, self.name)
         for i, value in enumerate(means):
             validator.check_value_type("means[%d]" % i, value, [float], self.name)
         for i, value in enumerate(stds):
@@ -313,6 +318,7 @@ class CheckValid(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize CheckValid."""
         self.init_prim_io_names(inputs=['bboxes', 'img_metas'], outputs=['output'])
 
     def infer_shape(self, bboxes_shape, metas_shape):
@@ -372,6 +378,7 @@ class IOU(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, mode='iou'):
+        """Initialize IOU."""
         if mode not in {'iou', 'iof'}:
             raise KeyError("Mode only support 'iou' or 'iof'.")
         self.init_prim_io_names(inputs=['anchor_boxes', 'gt_boxes'], outputs=['overlap'])
@@ -407,6 +414,7 @@ class Partial(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Partial."""
         self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, *args):
@@ -473,6 +481,7 @@ class Depend(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Depend."""
         self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, value, expr):
@@ -603,6 +612,7 @@ class ConfusionMatrix(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, num_classes, dtype="int32"):
+        """Initialize ConfusionMatrix."""
         validator.check_value_type("num_classes", num_classes, [int], self.name)
         validator.check_value_type("dtype", dtype, [str], self.name)
 
@@ -781,6 +791,7 @@ class identity(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize identity."""
         self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, x):

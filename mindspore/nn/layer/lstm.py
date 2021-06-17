@@ -120,10 +120,10 @@ class LSTM(Cell):
 
     Examples:
         >>> net = nn.LSTM(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
-        >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
+        >>> x = Tensor(np.ones([3, 5, 10]).astype(np.float32))
         >>> h0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
         >>> c0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
-        >>> output, (hn, cn) = net(input, (h0, c0))
+        >>> output, (hn, cn) = net(x, (h0, c0))
         >>> print(output.shape)
         (3, 5, 16)
     """
@@ -136,6 +136,7 @@ class LSTM(Cell):
                  batch_first=False,
                  dropout=0,
                  bidirectional=False):
+        """Initialize LSTM."""
         super(LSTM, self).__init__()
         validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
         validator.check_positive_int(hidden_size, "hidden_size", self.cls_name)
@@ -360,11 +361,11 @@ class LSTMCell(Cell):
 
     Examples:
         >>> net = nn.LSTMCell(10, 12, has_bias=True, batch_first=True, bidirectional=False)
-        >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
+        >>> x = Tensor(np.ones([3, 5, 10]).astype(np.float32))
         >>> h = Tensor(np.ones([1, 3, 12]).astype(np.float32))
         >>> c = Tensor(np.ones([1, 3, 12]).astype(np.float32))
         >>> w = Tensor(np.ones([1152, 1, 1]).astype(np.float32))
-        >>> output, h, c, _, _ = net(input, h, c, w)
+        >>> output, h, c, _, _ = net(x, h, c, w)
         >>> print(output.shape)
         (3, 5, 12)
     """
@@ -376,6 +377,7 @@ class LSTMCell(Cell):
                  batch_first=False,
                  dropout=0,
                  bidirectional=False):
+        """Initialize LSTMCell."""
         super(LSTMCell, self).__init__()
         self.batch_first = validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
         self.transpose = P.Transpose()

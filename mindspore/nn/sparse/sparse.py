@@ -57,6 +57,7 @@ class SparseToDense(Cell):
     """
 
     def __init__(self):
+        """Initialize SparseToDense."""
         super(SparseToDense, self).__init__()
         self.sparse_to_dense = P.SparseToDense()
 

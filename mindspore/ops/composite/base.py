@@ -316,6 +316,7 @@ class GradOperation(GradOperation_):
     """
 
     def __init__(self, get_all=False, get_by_list=False, sens_param=False):
+        """Initialize GradOperation."""
         if not isinstance(get_all, bool):
             raise TypeError(f'get_all should be bool, but got {type(get_all)}')
         if not isinstance(get_by_list, bool):
@@ -425,6 +426,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
     """
 
     def __init__(self, name, read_value=False):
+        """Initialize MultitypeFuncGraph."""
         MultitypeFuncGraph_.__init__(self, name)
         self.entries = list()
         if read_value:
@@ -523,6 +525,7 @@ class HyperMap(HyperMap_):
     """
 
     def __init__(self, ops=None):
+        """Initialize HyperMap."""
         self.ops = ops
         if ops:
             HyperMap_.__init__(self, ops)
@@ -586,6 +589,7 @@ class Map(Map_):
     """
 
     def __init__(self, ops=None):
+        """Initialize Map."""
         self.ops = ops
         if ops:
             Map_.__init__(self, ops)
@@ -610,6 +614,7 @@ class _ListAppend(ListAppend_):
     """
 
     def __init__(self, name):
+        """Initialize _ListAppend."""
         ListAppend_.__init__(self, name)
 
     def __call__(self, *args):
@@ -628,6 +633,7 @@ class _Tail(Tail_):
     """
 
     def __init__(self, name):
+        """Initialize _Tail."""
         Tail_.__init__(self, name)
 
     def __call__(self, *args):
@@ -641,6 +647,7 @@ class _ZipOperation(ZipOperation_):
     """Generates a tuple of zip iterations for inputs."""
 
     def __init__(self, name):
+        """Initialize _ZipOperation."""
         ZipOperation_.__init__(self, name)
 
     def __call__(self, *args):

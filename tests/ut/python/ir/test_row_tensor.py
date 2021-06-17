@@ -29,6 +29,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._utils.utils import generate_shape_index
 from mindspore import Tensor, RowTensor, context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import dtype as mstype
@@ -90,17 +91,6 @@ class MindDataSet(MindData):
 
 
 @constexpr
-def _generate_shape_index(out_shape, indices_shape, axis):
-    out_rank = len(out_shape)
-    ind_rank = len(indices_shape)
-    if axis < 0:
-        axis += out_rank - ind_rank + 1
-    perm_part1 = tuple(range(axis, axis + ind_rank))
-    index = tuple(range(out_rank))
-    perm = perm_part1 + index[:axis] + index[axis + ind_rank:]
-    return perm
-
-@constexpr
 def _generate_inverse_index(x_shape, axis):
     x_rank = len(x_shape)
     index = tuple(range(x_rank))
@@ -155,7 +145,7 @@ def get_bprop_sparse_gather_v2(self):
         out_shp = shape_op(dout)
         ind_shp = shape_op(indices)
         # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
-        perm_1 = _generate_shape_index(out_shp, ind_shp, axis)
+        perm_1 = generate_shape_index(out_shp, ind_shp, axis)
         values_transpose = transpose(dout, perm_1)
         params_grad = unsorted_segment_sum(values_transpose, indices, shape_op(x)[axis])
         # Example: out_shape:(3,2,3) axis 2 -> (1,2,0)

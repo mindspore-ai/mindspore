@@ -58,6 +58,7 @@ class _BatchNorm(Cell):
                  process_groups=0,
                  input_dims='2d',
                  data_format='NCHW'):
+        """Initialize _BatchNorm."""
         super(_BatchNorm, self).__init__()
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         if num_features < 1:
@@ -339,6 +340,7 @@ class BatchNorm1d(_BatchNorm):
                  moving_mean_init='zeros',
                  moving_var_init='ones',
                  use_batch_statistics=None):
+        """Initialize BatchNorm1d."""
         super(BatchNorm1d, self).__init__(num_features,
                                           eps,
                                           momentum,
@@ -447,6 +449,7 @@ class BatchNorm2d(_BatchNorm):
                  moving_var_init='ones',
                  use_batch_statistics=None,
                  data_format='NCHW'):
+        """Initialize BatchNorm2d."""
         super(BatchNorm2d, self).__init__(num_features,
                                           eps,
                                           momentum,
@@ -546,6 +549,7 @@ class BatchNorm3d(Cell):
                  moving_var_init='ones',
                  use_batch_statistics=None,
                  data_format='NCDHW'):
+        """Initialize BatchNorm3d."""
         super(BatchNorm3d, self).__init__()
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.cls_name)
         self.reshape = P.Reshape()
@@ -664,6 +668,7 @@ class GlobalBatchNorm(_BatchNorm):
                  moving_var_init='ones',
                  use_batch_statistics=None,
                  device_num_each_group=2):
+        """Initialize GlobalBatchNorm."""
         super(GlobalBatchNorm, self).__init__(num_features,
                                               eps,
                                               momentum,
@@ -782,6 +787,7 @@ class SyncBatchNorm(_BatchNorm):
                  moving_var_init='ones',
                  use_batch_statistics=None,
                  process_groups=None):
+        """Initialize SyncBatchNorm."""
         super(SyncBatchNorm, self).__init__(num_features,
                                             eps,
                                             momentum,
@@ -861,6 +867,7 @@ class LayerNorm(Cell):
                  beta_init='zeros',
                  epsilon=1e-7
                  ):
+        """Initialize LayerNorm."""
         super(LayerNorm, self).__init__()
         if not isinstance(normalized_shape, (tuple, list)):
             raise TypeError("The type of 'normalized_shape' should be tuple[int] or list[int], but '{}' type is {}."
@@ -965,6 +972,7 @@ class InstanceNorm2d(Cell):
                  affine=True,
                  gamma_init='ones',
                  beta_init='zeros'):
+        """Initialize InstanceNorm2d."""
         super(InstanceNorm2d, self).__init__()
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         validator.check_value_type('eps', eps, [float], self.cls_name)
@@ -1073,6 +1081,7 @@ class GroupNorm(Cell):
     """
 
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):
+        """Initialize GroupNorm."""
         super(GroupNorm, self).__init__()
         self.num_groups = validator.check_positive_int(num_groups)
         self.num_channels = validator.check_positive_int(num_channels)

@@ -85,6 +85,7 @@ class Softmax(Cell):
     """
 
     def __init__(self, axis=-1):
+        """Initialize Softmax."""
         super(Softmax, self).__init__()
         self.softmax = P.Softmax(axis)
 
@@ -135,6 +136,7 @@ class LogSoftmax(Cell):
     """
 
     def __init__(self, axis=-1):
+        """Initialize LogSoftmax."""
         super(LogSoftmax, self).__init__()
         self.log_softmax = P.LogSoftmax(axis)
 
@@ -185,6 +187,7 @@ class ELU(Cell):
     """
 
     def __init__(self, alpha=1.0):
+        """Initialize ELU."""
         super(ELU, self).__init__()
         self.elu = P.Elu(alpha)
 
@@ -229,6 +232,7 @@ class ReLU(Cell):
     """
 
     def __init__(self):
+        """Initialize ReLU."""
         super(ReLU, self).__init__()
         self.relu = P.ReLU()
 
@@ -271,6 +275,7 @@ class ReLU6(Cell):
     """
 
     def __init__(self):
+        """Initialize ReLU6."""
         super(ReLU6, self).__init__()
         self.relu6 = P.ReLU6()
 
@@ -316,6 +321,7 @@ class LeakyReLU(Cell):
     """
 
     def __init__(self, alpha=0.2):
+        """Initialize LeakyReLU."""
         super(LeakyReLU, self).__init__()
         validator.check_value_type('alpha', alpha, [float, int], self.cls_name)
         self.greater_equal = P.GreaterEqual()
@@ -366,6 +372,7 @@ class Tanh(Cell):
     """
 
     def __init__(self):
+        """Initialize Tanh."""
         super(Tanh, self).__init__()
         self.tanh = P.Tanh()
 
@@ -413,6 +420,7 @@ class GELU(Cell):
     """
 
     def __init__(self):
+        """Initialize GELU."""
         super(GELU, self).__init__()
         self.gelu = P.GeLU()
 
@@ -456,6 +464,7 @@ class FastGelu(Cell):
     """
 
     def __init__(self):
+        """Initialize FastGelu."""
         super(FastGelu, self).__init__()
         self.fast_gelu = P.FastGeLU()
 
@@ -501,6 +510,7 @@ class Sigmoid(Cell):
     """
 
     def __init__(self):
+        """Initialize Sigmoid."""
         super(Sigmoid, self).__init__()
         self.sigmoid = P.Sigmoid()
 
@@ -560,6 +570,7 @@ class PReLU(Cell):
     """
     @cell_attr_register(attrs="")
     def __init__(self, channel=1, w=0.25):
+        """Initialize PReLU."""
         super(PReLU, self).__init__()
         validator.check_positive_int(channel, 'channel', self.cls_name)
         if isinstance(w, (np.float32, float)):
@@ -619,6 +630,7 @@ class HSwish(Cell):
     """
 
     def __init__(self):
+        """Initialize HSwish."""
         super(HSwish, self).__init__()
         self.hswish = P.HSwish()
 
@@ -660,6 +672,7 @@ class HSigmoid(Cell):
     """
 
     def __init__(self):
+        """Initialize HSigmoid."""
         super(HSigmoid, self).__init__()
         self.hsigmoid = P.HSigmoid()
 
@@ -701,6 +714,7 @@ class LogSigmoid(Cell):
     """
 
     def __init__(self):
+        """Initialize LogSigmoid."""
         super(LogSigmoid, self).__init__()
         self.mul = P.Mul()
         self.exp = P.Exp()

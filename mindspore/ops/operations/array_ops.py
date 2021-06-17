@@ -860,7 +860,7 @@ class Gather(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize index_select"""
+        """Initialize Gather"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
 
@@ -870,11 +870,10 @@ class GatherV2(PrimitiveWithCheck):
     Please use Gather instead.
     """
 
-
     @deprecated("1.1", "Gather", True)
     @prim_attr_register
     def __init__(self):
-        """Initialize index_select"""
+        """Initialize GatherV2"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
     def __check__(self, params, indices, axis):
@@ -920,7 +919,7 @@ class SparseGatherV2(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize index_select"""
+        """Initialize SparseGatherV2"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
 
@@ -940,7 +939,7 @@ class Padding(PrimitiveWithInfer):
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
 
     Args:
-        pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive.
+        pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive. Default: 8.
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of `x` must be at least 2.
@@ -1649,7 +1648,7 @@ class InvertPermutation(PrimitiveWithInfer):
         if mstype.issubclass_(x['dtype'], mstype.tensor):
             raise ValueError(f'For \'{self.name}\' the input value must be non-Tensor.')
         for shp in x_shp:
-            if shp != []:
+            if shp:
                 x_rank = len(np.array(x_value, np.int64).shape)
                 raise ValueError(f'For \'{self.name}\' the rank of input must be 1, but got {x_rank}.')
         for i, value in enumerate(x_value):
@@ -2086,7 +2085,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         validator.check_positive_int(segment_ids_shp_len, "rank of segment_ids", self.name)
         validator.check(f'rank of input_x', len(x_shp),
                         'rank of segments_id', len(segment_ids_shp), Rel.GE, self.name)
-        if (not -1 in x_shp and not -1 in segment_ids_shp):
+        if -1 not in x_shp and -1 not in segment_ids_shp:
             # only validate when both shapes fully known
             for i, value in enumerate(segment_ids_shp):
                 validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
@@ -2176,7 +2175,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
-        if (not -1 in x_shape and not -1 in segment_ids_shape):
+        if -1 not in x_shape and -1 not in segment_ids_shape:
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -2236,7 +2235,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
-        if (not -1 in x_shape and not -1 in segment_ids_shape):
+        if -1 not in x_shape and -1 not in segment_ids_shape:
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -2701,20 +2700,20 @@ class Slice(PrimitiveWithInfer):
         >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
         ...                         [[3, 3, 3], [4, 4, 4]],
         ...                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
-        >>> slice = ops.Slice()
-        >>> output = slice(data, (1, 0, 0), (1, 1, 3))
+        >>> slice_op = ops.Slice()
+        >>> output = slice_op(data, (1, 0, 0), (1, 1, 3))
         >>> print(output)
         [[[3 3 3]]]
-        >>> output = slice(data, (1, 0, 0), (1, 1, 2))
+        >>> output = slice_op(data, (1, 0, 0), (1, 1, 2))
         >>> print(output)
         [[[3 3]]]
-        >>> output = slice(data, (1, 0, 0), (1, 1, 1))
+        >>> output = slice_op(data, (1, 0, 0), (1, 1, 1))
         >>> print(output)
         [[[3]]]
-        >>> output = slice(data, (1, 1, 0), (1, 1, 3))
+        >>> output = slice_op(data, (1, 1, 0), (1, 1, 3))
         >>> print(output)
         [[[4 4 4]]]
-        >>> output = slice(data, (1, 0, 1), (1, 1, 2))
+        >>> output = slice_op(data, (1, 0, 1), (1, 1, 2))
         >>> print(output)
         [[[3 3]]]
     """
@@ -2786,6 +2785,7 @@ class ReverseV2(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, axis):
+        """Initialize ReverseV2."""
         validator.check_value_type('axis', axis, [list, tuple], self.name)
         for i, each in enumerate(axis):
             validator.check_value_type(f'axis[{i}]', each, [int], self.name)
@@ -2847,6 +2847,7 @@ class Rint(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Rint."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -2916,7 +2917,7 @@ class Select(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize Select."""
         self.init_prim_io_names(inputs=['condition', 'x', 'y'], outputs=['output'])
 
     def infer_shape(self, cond_shape, x_shape, y_shape):
@@ -3099,9 +3100,9 @@ class StridedSlice(PrimitiveWithInfer):
         >>> #                 [6,6,6]
         >>> #             ]
         >>> #         ]
-        >>> slice = ops.StridedSlice()
-        >>> output = slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
-        >>> # Take the call of operator " output = slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1)) " as an example,
+        >>> strided_slice = ops.StridedSlice()
+        >>> output = strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
+        >>> # Take this " output = strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1)) " as an example,
         >>> # start = [1, 0, 2] , end = [3, 1, 3], stride = [1, 1, 1], Find a segment of (start, end),
         >>> # note that end is an open interval
         >>> # To facilitate understanding, this operator can be divided into three steps:
@@ -3144,7 +3145,7 @@ class StridedSlice(PrimitiveWithInfer):
         >>> # The final output after finishing is:
         [[[3], [5]]]
         >>> # anothor example like :
-        >>> output = slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
+        >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
         >>> print(output)
         [[[3. 3. 3.]]]
     """
@@ -5300,7 +5301,7 @@ class Meshgrid(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, indexing="xy"):
-        """Init Meshgrid"""
+        """Initialize Meshgrid."""
         validator.check_value_type("indexing", indexing, (str), self.name)
         if indexing not in ("xy", "ij"):
             raise ValueError("indexing parameter must be either 'xy' or 'ij'")
@@ -5598,6 +5599,7 @@ class TransShape(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize TransShape."""
         self.__setattr_flag__ = True
 
     def __infer__(self, x, shape):
@@ -5704,7 +5706,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize index_select"""
+        """Initialize EmbeddingLookup."""
         self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
                                 outputs=['output'])

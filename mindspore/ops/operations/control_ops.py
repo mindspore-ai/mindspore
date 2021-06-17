@@ -68,20 +68,20 @@ class GeSwitch(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize GeSwitch."""
 
     def __call__(self, data, pred):
         raise NotImplementedError
 
     def infer_shape(self, data, pred):
         validator.check_equal_int(len(pred), 0, "pred rank", self.name)
-        return (data, data)
+        return data, data
 
     def infer_dtype(self, data_type, pred_type):
         validator.check_subclass(
             "data", data_type, (mstype.tensor,) + mstype.number_type, self.name)
         validator.check_tensor_dtype_valid("pred", pred_type, [mstype.bool_], self.name)
-        return (data_type, data_type)
+        return data_type, data_type
 
 
 class Merge(PrimitiveWithInfer):
@@ -108,13 +108,13 @@ class Merge(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize Merge."""
 
     def __call__(self, *args):
         raise NotImplementedError
 
     def infer_shape(self, inputs):
-        return (inputs[0], [1])
+        return inputs[0], [1]
 
     def infer_dtype(self, inputs):
         args = {}
@@ -122,4 +122,4 @@ class Merge(PrimitiveWithInfer):
             args['inputs[%d]' % i] = item
 
         validator.check_scalar_or_tensor_types_same(args, (mstype.bool_,) + mstype.number_type, self.name)
-        return (inputs[0], mstype.int32)
+        return inputs[0], mstype.int32

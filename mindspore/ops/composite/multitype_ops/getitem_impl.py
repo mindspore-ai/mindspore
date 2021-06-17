@@ -39,6 +39,7 @@ class _TupleSlice(base.TupleSlice_):
     """
 
     def __init__(self, name):
+        """Initialize _TupleSlice."""
         base.TupleSlice_.__init__(self, name)
 
     def __call__(self, *args):
@@ -61,6 +62,7 @@ class _TupleGetItemTensor(base.TupleGetItemTensor_):
     """
 
     def __init__(self, name):
+        """Initialize _TupleGetItemTensor."""
         base.TupleGetItemTensor_.__init__(self, name)
 
     def __call__(self, *args):

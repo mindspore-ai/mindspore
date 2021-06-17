@@ -98,6 +98,7 @@ class Embedding(Cell):
 
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
                  dtype=mstype.float32, padding_idx=None):
+        """Initialize Embedding."""
         super(Embedding, self).__init__()
         self.vocab_size = validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
         self.embedding_size = validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
@@ -223,6 +224,7 @@ class EmbeddingLookup(Cell):
     def __init__(self, vocab_size, embedding_size, param_init='normal',
                  target='CPU', slice_mode='batch_slice', manual_shapes=None,
                  max_norm=None, sparse=True, vocab_cache_size=0):
+        """Initialize EmbeddingLookup."""
         super(EmbeddingLookup, self).__init__()
         validator.check_value_type('sparse', sparse, [bool], self.cls_name)
         self.vocab_size = validator.check_positive_int(vocab_size, 'vocab_size')
@@ -416,11 +418,12 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
             ['DEVICE', 'CPU']. Default: 'CPU'.
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
             nn.EmbeddingLookup. Default: nn.EmbeddingLookup.BATCH_SLICE.
-        feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently.
+        feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently. Default: None.
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: None
         sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
-        operator (str): The pooling method for the features in one field. Support 'SUM, 'MEAN' and 'MAX'
+        operator (str): The pooling method for the features in one field. Support 'SUM', 'MEAN' and 'MAX'.
+            Default: 'SUM'.
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.
@@ -464,6 +467,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
 
     def __init__(self, vocab_size, embedding_size, field_size, param_init='normal', target='CPU',
                  slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM'):
+        """Initialize MultiFieldEmbeddingLookup."""
         super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,
                                                         slice_mode, feature_num_list, max_norm, sparse)
         self.field_size = validator.check_positive_int(field_size, 'field_size')

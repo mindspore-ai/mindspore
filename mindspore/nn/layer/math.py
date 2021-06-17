@@ -99,6 +99,7 @@ class ReduceLogSumExp(Cell):
     """
 
     def __init__(self, axis, keep_dims=False):
+        """Initialize ReduceLogSumExp."""
         super(ReduceLogSumExp, self).__init__()
         validator.check_value_type('axis', axis, [int, list, tuple], self.cls_name)
         validator.check_value_type('keep_dims', keep_dims, [bool], self.cls_name)
@@ -129,7 +130,7 @@ class Range(Cell):
         start (Union[int, float]): If `limit` is `None`, the value acts as limit in the range and first entry
             defaults to `0`. Otherwise, it acts as first entry in the range.
         limit (Union[int, float]): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`. It can not be equal to `start`.
+            while set the first entry of the range to `0`. It can not be equal to `start`. Default: None.
         delta (Union[int, float]): Increment of the range. It can not be equal to zero. Default: 1.
 
     Outputs:
@@ -146,6 +147,7 @@ class Range(Cell):
     """
 
     def __init__(self, start, limit=None, delta=1):
+        """Initialize Range."""
         super(Range, self).__init__()
         if delta == 0:
             raise ValueError("The input of `delta` can not be equal to zero.")
@@ -211,6 +213,7 @@ class LGamma(Cell):
     """
 
     def __init__(self):
+        """Initialize LGamma."""
         super(LGamma, self).__init__()
         # const numbers
         self.k_lanczos_gamma = 7
@@ -258,7 +261,7 @@ class LGamma(Cell):
             for i in range(8):
                 product_ = k_lanczos_coefficients[i] / (z + i + 1)
                 reflex_x = product_ + reflex_x
-            return  reflex_x
+            return reflex_x
         reflex_x = _calculate_reflected_x(z, self.k_base_lanczos_coeff, self.k_lanczos_coefficients)
 
         t = z + self.lanczos_gamma_plus_one_half
@@ -322,6 +325,7 @@ class DiGamma(Cell):
     """
 
     def __init__(self):
+        """Initialize DiGamma."""
         super(DiGamma, self).__init__()
         # const numbers
         self.k_lanczos_gamma = 7
@@ -360,7 +364,7 @@ class DiGamma(Cell):
             for i in range(8):
                 num = num - k_lanczos_coefficients[i] / ((z + i + 1) * (z + i + 1))
                 denom = denom + k_lanczos_coefficients[i] / (z + i + 1)
-            return  num, denom
+            return num, denom
         num, denom = _calculate_num_denom(z, self.k_base_lanczos_coeff, self.k_lanczos_coefficients)
 
         t = z + self.lanczos_gamma_plus_one_half
@@ -586,6 +590,7 @@ class IGamma(Cell):
     """
 
     def __init__(self):
+        """Initialize IGamma."""
         super(IGamma, self).__init__()
         # const numbers
         # If more data types are supported, this float max value need to be selected.
@@ -674,6 +679,7 @@ class LBeta(Cell):
     """
 
     def __init__(self):
+        """Initialize LBeta."""
         super(LBeta, self).__init__()
         # const numbers
         self.log_2pi = np.log(2 * np.pi)
@@ -855,6 +861,7 @@ class MatMul(Cell):
 
     @deprecated('1.2', 'ops.matmul', False)
     def __init__(self, transpose_x1=False, transpose_x2=False):
+        """Initialize MatMul."""
         super(MatMul, self).__init__()
 
         validator.check_value_type('transpose_x1', transpose_x1, [bool], self.cls_name)
@@ -906,9 +913,9 @@ class Moments(Cell):
     Calculates the mean and variance of `x`.
 
     Args:
-        axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis. Default: ().
+        axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis. Default: None.
         keep_dims (bool): If true, The dimension of mean and variance are identical with input's.
-                          If false, don't keep these dimensions. Default: False.
+                          If false, don't keep these dimensions. Default: None.
 
     Inputs:
         - **input_x** (Tensor) - The tensor to be calculated. Only float16 and float32 are supported.
@@ -938,6 +945,7 @@ class Moments(Cell):
     """
 
     def __init__(self, axis=None, keep_dims=None):
+        """Initialize Moments."""
         super(Moments, self).__init__()
         if axis is None:
             axis = ()
@@ -997,6 +1005,7 @@ class MatInverse(Cell):
          [2.1111116  -0.5555557  0.11111111]]
     """
     def __init__(self):
+        """Initialize MatInverse."""
         super(MatInverse, self).__init__()
         self.dtype = P.DType()
         self.choleskytrsm = P.CholeskyTrsm()
@@ -1035,6 +1044,7 @@ class MatDet(Cell):
         35.999996
     """
     def __init__(self):
+        """Initialize MatDet."""
         super(MatDet, self).__init__()
         self.dtype = P.DType()
         self.cholesky = P.Cholesky()

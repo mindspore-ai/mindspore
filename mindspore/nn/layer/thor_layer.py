@@ -55,19 +55,19 @@ class DenseThor(Cell):
         activation (str): activate function applied to the output of the fully connected layer, eg. 'ReLU'.
             Default: None.
 
-    Raises:
-        ValueError: If weight_init shape or bias_init shape is incorrect.
-
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
 
     Outputs:
         Tensor of shape :math:`(N, out\_channels)`.
 
+    Raises:
+        ValueError: If the shape of `weight_init` or `bias_init` is incorrect.
+
     Examples:
-        >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
+        >>> x = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> net = nn.DenseThor(3, 4)
-        >>> net(input)
+        >>> net(x)
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
     """
@@ -78,6 +78,7 @@ class DenseThor(Cell):
                  bias_init='zeros',
                  has_bias=True,
                  activation=None):
+        """Initialize DenseThor."""
         super(DenseThor, self).__init__()
         self.thor = True
         self.in_channels = Validator.check_positive_int(in_channels)
@@ -117,7 +118,6 @@ class DenseThor(Cell):
             self.cube_matmul = P.MatMul(transpose_a=True)
         self.getG = P.InsertGradientOf(self.save_gradient)
 
-
     def _process_ascend_dense_thor(self, out_channels):
         """process ascend dense thor"""
         if out_channels == 1001:
@@ -138,7 +138,6 @@ class DenseThor(Cell):
         self.cube_matmul = P.CusMatMulCube(transpose_a=True)
         self.cast = P.Cast()
         self.is_nsp_layer = (out_channels == 2)
-
 
     def save_gradient(self, dout):
         """
@@ -201,6 +200,7 @@ class _ConvThor(Cell):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride, pad_mode,
                  padding, dilation, group, has_bias, weight_init, bias_init, transposed=False):
+        """Initialize _ConvThor."""
         super(_ConvThor, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
@@ -353,14 +353,15 @@ class Conv2dThor(_ConvThor):
 
     Examples:
         >>> net = nn.Conv2dThor(120, 240, 4, has_bias=False, weight_init='normal')
-        >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> print(net(input).shape)
+        >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> print(net(x).shape)
         (1, 240, 1024, 640)
     """
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
                  pad_mode='same', padding=0, dilation=1, group=1, has_bias=False,
                  weight_init='normal', bias_init='zeros'):
+        """Initialize Conv2dThor."""
         kernel_size = twice(kernel_size)
         stride = twice(stride)
         self._dilation = dilation
@@ -448,7 +449,6 @@ class Conv2dThor(_ConvThor):
                 self.weight_init.shape = weight_shape
             self.weight = Parameter(initializer(self.weight_init, weight_shape), name='weight')
 
-
     def save_gradient(self, dout):
         """save_gradient"""
         out = dout
@@ -473,7 +473,6 @@ class Conv2dThor(_ConvThor):
             self.g_normalizer = normalizer
             self.matrix_g_cov = matrix_g
         return out
-
 
     def construct(self, x):
         if self.thor:
@@ -563,6 +562,7 @@ class EmbeddingThor(Cell):
 
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
                  dtype=mstype.float32, padding_idx=None):
+        """Initialize EmbeddingThor."""
         super(EmbeddingThor, self).__init__()
         self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
         self.embedding_size = Validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
@@ -602,7 +602,6 @@ class EmbeddingThor(Cell):
             self.cube_matmul = P.MatMul(transpose_a=True)
         self.mul = P.Mul()
 
-
     def save_gradient(self, dout):
         """
            this function only for thor optimizer
@@ -634,10 +633,8 @@ class EmbeddingThor(Cell):
             else:
                 output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
 
-
         output = self.reshape(output_for_reshape, out_shape)
         return output
-
 
     def extend_repr(self):
         s = 'vocab_size={}, embedding_size={}, use_one_hot={}, embedding_table={}, dtype={}, padding_idx={}'.format(

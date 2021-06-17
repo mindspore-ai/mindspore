@@ -115,6 +115,7 @@ class _ClipByGlobalNorm(Cell):
     """
 
     def __init__(self, clip_norm=1.0, use_norm=None):
+        """Initialize _ClipByGlobalNorm."""
         super(_ClipByGlobalNorm, self).__init__()
         # Add interface. This parameter is not used at present
         if use_norm is not None:

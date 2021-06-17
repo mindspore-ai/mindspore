@@ -28,6 +28,7 @@ from .grad_base import bprop_getters
 @bprop_getters.register(P.Assign)
 def get_bprop_assign(self):
     """Generate bprop for Assign"""
+
     def bprop(x, y, out, dout):
         return (dout, zeros_like(y))
     return bprop
@@ -88,6 +89,7 @@ def get_bprop_sync_batch_norm(self):
 @bprop_getters.register(inner.GpuConvertToDynamicShape)
 def get_bprop_gpu_convert_to_dynamic_shape(self):
     """Get backprop for GpuConvertToDynamicShape."""
+
     def bprop(x, out, dout):
         return (dout,)
     return bprop

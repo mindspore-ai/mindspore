@@ -27,6 +27,7 @@ class _PoolNd(Cell):
     """N-D  AvgPool"""
 
     def __init__(self, kernel_size, stride, pad_mode, data_format="NCHW"):
+        """Initialize _PoolNd."""
         super(_PoolNd, self).__init__()
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
@@ -128,6 +129,7 @@ class MaxPool2d(_PoolNd):
     """
 
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid", data_format="NCHW"):
+        """Initialize MaxPool2d."""
         super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
         self.max_pool = P.MaxPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
@@ -196,6 +198,7 @@ class MaxPool1d(_PoolNd):
     """
 
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid"):
+        """Initialize MaxPool1d."""
         super(MaxPool1d, self).__init__(kernel_size, stride, pad_mode)
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
@@ -288,6 +291,7 @@ class AvgPool2d(_PoolNd):
                  stride=1,
                  pad_mode="valid",
                  data_format="NCHW"):
+        """Initialize AvgPool2d."""
         super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
         self.avg_pool = P.AvgPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
@@ -359,6 +363,7 @@ class AvgPool1d(_PoolNd):
                  kernel_size=1,
                  stride=1,
                  pad_mode="valid"):
+        """Initialize AvgPool1d."""
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)

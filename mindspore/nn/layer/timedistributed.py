@@ -85,15 +85,16 @@ class TimeDistributed(Cell):
         TypeError: If layer is not a Cell or Primitive.
 
     Examples:
-        >>> input = Tensor(np.random.random([32, 10, 3]), mindspore.float32)
+        >>> x = Tensor(np.random.random([32, 10, 3]), mindspore.float32)
         >>> dense = nn.Dense(3, 6)
         >>> net = nn.TimeDistributed(dense, time_axis=1, reshape_with_axis=0)
-        >>> output = net(input)
+        >>> output = net(x)
         >>> print(output.shape)
         (32, 10, 6)
     """
 
     def __init__(self, layer, time_axis, reshape_with_axis=None):
+        """Initialize TimeDistributed."""
         if not isinstance(layer, (Cell, Primitive)):
             raise TypeError("Please initialize TimeDistributed with mindspore.nn.Cell or "
                             "mindspore.ops.Primitive instance. You passed: {input}".format(input=layer))

@@ -46,6 +46,7 @@ class Loss(Cell):
         ``Ascend`` ``GPU`` ``CPU``
     """
     def __init__(self, reduction='mean'):
+        """Initialize Loss."""
         super(Loss, self).__init__()
 
         if reduction not in ('mean', 'sum', 'none'):
@@ -96,6 +97,7 @@ class _Loss(Loss):
     Base class for other losses.
     """
     def __init__(self, reduction='mean'):
+        """Initialize _Loss."""
         log.warning("'_Loss' is deprecated from version 1.3 and "
                     "will be removed in a future version, use 'Loss' instead.")
         super(_Loss, self).__init__()
@@ -150,6 +152,7 @@ class L1Loss(Loss):
         0.33333334
     """
     def __init__(self, reduction='mean'):
+        """Initialize L1Loss."""
         super(L1Loss, self).__init__(reduction)
         self.abs = P.Abs()
 
@@ -238,6 +241,7 @@ class RMSELoss(Loss):
         0.57735026
     """
     def __init__(self):
+        """Initialize RMSELoss."""
         super(RMSELoss, self).__init__()
         self.MSELoss = MSELoss()
 
@@ -285,6 +289,7 @@ class MAELoss(Loss):
         0.33333334
     """
     def __init__(self, reduction='mean'):
+        """Initialize MAELoss."""
         super(MAELoss, self).__init__(reduction)
         self.abs = P.Abs()
 
@@ -347,6 +352,7 @@ class SmoothL1Loss(Loss):
         [0.  0.  0.5]
     """
     def __init__(self, beta=1.0):
+        """Initialize SmoothL1Loss."""
         super(SmoothL1Loss, self).__init__()
         self.beta = beta
         self.smooth_l1_loss = P.SmoothL1Loss(self.beta)
@@ -418,6 +424,7 @@ class SoftmaxCrossEntropyWithLogits(Loss):
     def __init__(self,
                  sparse=False,
                  reduction='none'):
+        """Initialize SoftmaxCrossEntropyWithLogits."""
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
         self.sparse = validator.check_bool(sparse, "sparse")
         self.reduction = reduction
@@ -481,6 +488,7 @@ class DiceLoss(Loss):
         0.38596618
     """
     def __init__(self, smooth=1e-5):
+        """Initialize DiceLoss."""
         super(DiceLoss, self).__init__()
         self.smooth = validator.check_positive_float(smooth, "smooth")
         self.reshape = P.Reshape()
@@ -559,6 +567,7 @@ class MultiClassDiceLoss(Loss):
         0.3283009
     """
     def __init__(self, weights=None, ignore_indiex=None, activation="softmax"):
+        """Initialize MultiClassDiceLoss."""
         super(MultiClassDiceLoss, self).__init__()
         activation_list = ['softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'sigmoid']
 
@@ -604,7 +613,7 @@ class SampledSoftmaxLoss(Loss):
     Args:
         num_sampled (int): The number of classes to randomly sample per batch.
         num_classes (int): The number of possible classes.
-        num_true (int): The number of target classes per training example.
+        num_true (int): The number of target classes per training example. Default: 1.
         sampled_values (Union[list, tuple]):  List or tuple of (`sampled_candidates`, `true_expected_count`,
             `sampled_expected_count`) returned by a `*CandidateSampler` function.
             Default to None, `UniformCandidateSampler` is applied.
@@ -650,6 +659,7 @@ class SampledSoftmaxLoss(Loss):
     def __init__(self, num_sampled, num_classes, num_true=1,
                  sampled_values=None, remove_accidental_hits=True, seed=0,
                  reduction='none'):
+        """Initialize SampledSoftmaxLoss."""
         super(SampledSoftmaxLoss, self).__init__(reduction)
 
         if num_true < 1:
@@ -877,6 +887,7 @@ class BCELoss(Loss):
     """
 
     def __init__(self, weight=None, reduction='none'):
+        """Initialize BCELoss."""
         super(BCELoss, self).__init__()
         self.binary_cross_entropy = P.BinaryCrossEntropy(reduction=reduction)
         self.weight_one = weight is None
@@ -946,6 +957,7 @@ class CosineEmbeddingLoss(Loss):
         0.0003426075
     """
     def __init__(self, margin=0.0, reduction="mean"):
+        """Initialize CosineEmbeddingLoss."""
         super(CosineEmbeddingLoss, self).__init__(reduction)
         self.reduce_sum = P.ReduceSum()
         self.maximum = P.Maximum()
@@ -1035,6 +1047,7 @@ class BCEWithLogitsLoss(Loss):
     """
 
     def __init__(self, reduction='mean', weight=None, pos_weight=None):
+        """Initialize BCEWithLogitsLoss."""
         super(BCEWithLogitsLoss, self).__init__()
         self.bce_with_logits_loss = P.BCEWithLogitsLoss(reduction=reduction)
         if isinstance(weight, Parameter):
@@ -1139,6 +1152,7 @@ class FocalLoss(Loss):
     """
 
     def __init__(self, weight=None, gamma=2.0, reduction='mean'):
+        """Initialize FocalLoss."""
         super(FocalLoss, self).__init__(reduction=reduction)
 
         self.gamma = validator.check_value_type("gamma", gamma, [float])
