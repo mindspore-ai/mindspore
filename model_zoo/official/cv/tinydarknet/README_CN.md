@@ -68,8 +68,8 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 # [环境要求](#目录)
 
-- 硬件（Ascend）
-    - 请准备具有Ascend处理器的硬件环境.
+- 硬件（Ascend/CPU）
+    - 请准备具有Ascend/CPU处理器的硬件环境.
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 更多的信息请访问以下链接：
@@ -165,7 +165,9 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
     ├── scripts
         ├── run_standalone_train.sh     // Ascend单卡训练shell脚本
         ├── run_distribute_train.sh     // Ascend分布式训练shell脚本
+        ├── run_train_cpu.sh            // CPU训练shell脚本
         ├── run_eval.sh                 // Ascend评估shell脚本
+        ├── run_eval_cpu.sh             // CPU评估shell脚本
         └── run_infer_310.sh            // Ascend310推理shell脚本
     ├── src
         ├── lr_scheduler                // 学习率策略
@@ -184,7 +186,8 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
     ├── train.py                        // 训练脚本
     ├── eval.py                         // 评估脚本
     ├── export.py                       // 导出checkpoint文件
-    ├── imagenet_config.yaml            // 参数配置
+    ├── imagenet_config.yaml            // imagenet参数配置
+    ├── cifar10_config.yaml             // cifar10参数配置
     ├── mindspore_hub_conf.py           // hub配置文件
     └── postprocess.py                  // 310推理后处理脚本
 
@@ -256,6 +259,12 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   模型checkpoint文件将会保存在当前文件夹下.
   <!-- The model checkpoint will be saved in the current directory.  -->
 
+- 在CPU资源上运行：
+
+  ```python
+  bash scripts/run_train_cpu.sh [TRAIN_DATA_DIR] [cifar10|imagenet]
+  ```
+
 ### [分布式训练](#目录)
 
 - 在Ascend资源上运行：
@@ -303,6 +312,21 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   ```python
   # grep "accuracy: " eval.log
   accuracy:  {'top_1_accuracy': 0.5871979166666667, 'top_5_accuracy': 0.8175280448717949}
+  ```
+
+- 在CPU资源上进行评估
+
+  在运行如下命令前,请确认用于评估的checkpoint文件的路径.checkpoint文件须包含在tinydarknet文件夹内.请将checkpoint路径设置为相对于 eval.py文件 的路径,例如:"./ckpts/train_tinydarknet.ckpt"(ckpts 与 eval.py 同级).
+
+  ```python
+  bash scripts/run_eval.sh [VAL_DATA_DIR] [imagenet|cifar10] [CHECKPOINT_PATH]
+  ```
+
+  可以通过"eval.log"文件查看结果. 测试数据集的准确率将如下面所列:
+
+  ```python
+  # grep "accuracy: " eval.log
+  accuracy:  {'top_5_accuracy': 1.0, 'top_1_accuracy': 0.9829727564102564}
   ```
 
 ## 推理过程

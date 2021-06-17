@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,13 +23,15 @@ from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
+from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 
-from src.dataset import create_dataset_imagenet
+from src.dataset import create_dataset_imagenet, create_dataset_cifar
 from src.tinydarknet import TinyDarkNet
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.device_adapter import get_device_num
+
 set_seed(1)
 
 def modelarts_pre_process():
@@ -89,27 +91,32 @@ def modelarts_pre_process():
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_eval():
+    cfg = config
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target=cfg.device_target,
+                        device_id=cfg.device_id)
     if config.dataset_name == "imagenet":
-        cfg = config
-        dataset = create_dataset_imagenet(cfg.val_data_dir, 1, False)
         if not cfg.use_label_smooth:
             cfg.label_smooth_factor = 0.0
+        dataset = create_dataset_imagenet(cfg.data_path, 1, False)
         loss = CrossEntropySmooth(sparse=True, reduction="mean",
                                   smooth_factor=cfg.label_smooth_factor, num_classes=cfg.num_classes)
-        net = TinyDarkNet(num_classes=cfg.num_classes)
-        model = Model(net, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})
-
+    elif config.dataset_name == "cifar10":
+        dataset = create_dataset_cifar(dataset_path=config.data_path,
+                                       do_train=True,
+                                       repeat_num=1,
+                                       batch_size=config.batch_size,
+                                       target=cfg.device_target)
+        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     else:
         raise ValueError("Dataset is not support.")
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
-    if config.device_target == "Ascend":
-        context.set_context(device_id=config.device_id)
+    net = TinyDarkNet(num_classes=cfg.num_classes)
     param_dict = load_checkpoint(cfg.checkpoint_path)
     print("Load checkpoint from [{}].".format(cfg.checkpoint_path))
-
     load_param_into_net(net, param_dict)
     net.set_train(False)
+    model = Model(net, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})
 
     acc = model.eval(dataset)
     print("accuracy: ", acc)
