@@ -142,7 +142,9 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    SetProperty(kernel_node);
+    if (!SetProperty(kernel_node)) {
+      return false;
+    }
     InitSizeLists();
     return true;
   }
@@ -181,7 +183,7 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
   }
 
  private:
-  void SetProperty(const CNodePtr &kernel_node) {
+  bool SetProperty(const CNodePtr &kernel_node) {
     auto matrix_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto matrix_g_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
@@ -189,6 +191,7 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
     split_dim = LongToSize(GetAttr<int64_t>(kernel_node, "split_dim"));
     if (split_dim == 0) {
       MS_LOG(ERROR) << "Divide by zero, split_dim can not be zero.";
+      return false;
     }
     gradient_size.batch_h = gradient_shape[0] / split_dim;
     gradient_size.batch_w = gradient_shape[1] / split_dim;
@@ -229,6 +232,7 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
     gradient_size.ori_w = gradient_shape[1];
     gradient_size.ori_h = gradient_shape[0];
     gradient_size.dtype = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1)));
+    return true;
   }
 
   size_t split_dim;

@@ -73,6 +73,7 @@ class MeshgridGpuKernel : public GpuKernel {
       swap_indexing_ = false;
     } else {
       MS_LOG(ERROR) << "invalid string for argument \"indexing\", must be \"xy\" or \"ij\" but got " << indexing;
+      return false;
     }
 
     input_size_ = 1;

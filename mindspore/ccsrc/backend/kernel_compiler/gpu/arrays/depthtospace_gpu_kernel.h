@@ -53,6 +53,10 @@ class DepthToSpaceFwdKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     block_size_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "block_size"));
+    if (block_size_ == 0) {
+      MS_LOG(ERROR) << "block_size_ can not be 0.";
+      return false;
+    }
     // check input num and output num
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {

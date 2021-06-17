@@ -58,7 +58,7 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
     auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     need_broadcast_ = IsBroadcast(input_shape1, input_shape2);
     if (need_broadcast_ && output_shape.size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
     }
 
     lhs_shape_.resize(MAX_DIMS, 1);

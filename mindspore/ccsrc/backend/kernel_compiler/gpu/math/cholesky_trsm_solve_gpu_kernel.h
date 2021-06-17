@@ -57,13 +57,17 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     split_dim = static_cast<int>(GetAttr<int64_t>(kernel_node, "split_dim"));
     if (split_dim == 0) {
-      InitDim0(kernel_node, in_shape);
+      if (!InitDim0(kernel_node, in_shape)) {
+        return false;
+      }
     } else {
       if (in_shape.size() != 2) {
         MS_LOG(ERROR) << "CholeskyTrsm Split Matrix Need Input Rank as 2.";
+        return false;
       }
       if (in_shape[0] != in_shape[1]) {
         MS_LOG(ERROR) << "CholeskyTrsm Split Matrix Need Square Matrix as Input.";
+        return false;
       }
       InitDimOthers(kernel_node, in_shape);
     }
@@ -170,20 +174,23 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
                          d_array_addr, lda_, d_identity_addr, ldb_, batch_),
       "cublas trsm batched Fail");
   }
-  void InitDim0(const CNodePtr &kernel_node, const std::vector<size_t> &in_shape) {
+  bool InitDim0(const CNodePtr &kernel_node, const std::vector<size_t> &in_shape) {
     use_split_matrix = false;
     if (in_shape.size() == 2) {
       batch_ = 1;
       if (in_shape[0] != in_shape[1]) {
         MS_LOG(ERROR) << "CholeskyTrsm need square matrix as input.";
+        return false;
       }
     } else if (in_shape.size() == 3) {
       batch_ = SizeToInt(in_shape[0]);
       if (in_shape[1] != in_shape[2]) {
         MS_LOG(ERROR) << "CholeskyTrsm need square matrix as input.";
+        return false;
       }
     } else {
       MS_LOG(ERROR) << "Input Only support Rank 2 OR 3";
+      return false;
     }
 
     m_ = SizeToInt(in_shape[1]);
@@ -201,6 +208,7 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
         }
       }
     }
+    return true;
   }
   void InitDimOthers(const CNodePtr &kernel_node, const std::vector<size_t> &in_shape) {
     height = in_shape[0];

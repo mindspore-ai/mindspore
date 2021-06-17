@@ -106,28 +106,35 @@ class CholeskyGpuKernel : public GpuKernel {
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     split_dim = static_cast<int>(GetAttr<int64_t>(kernel_node, "split_dim"));
     if (split_dim == 0) {
-      InitNoSpltDim(in_shape);
+      if (!InitNoSpltDim(in_shape)) {
+        return false;
+      }
     } else {
-      InitSpltDim(in_shape);
+      if (!InitSpltDim(in_shape)) {
+        return false;
+      }
     }
     return true;
   }
 
  protected:
-  void InitNoSpltDim(const std::vector<size_t> &in_shape) {
+  bool InitNoSpltDim(const std::vector<size_t> &in_shape) {
     use_split_matrix = false;
     if (in_shape.size() == 2) {
       batch_ = 1;
       if (in_shape[0] != in_shape[1]) {
         MS_LOG(ERROR) << "Cholesky need square matrix as input.";
+        return false;
       }
     } else if (in_shape.size() == 3) {
       batch_ = SizeToInt(in_shape[0]);
       if (in_shape[1] != in_shape[2]) {
         MS_LOG(ERROR) << "Cholesky need square matrix as input.";
+        return false;
       }
     } else {
       MS_LOG(ERROR) << "Input Only support Rank 2 OR 3";
+      return false;
     }
 
     m_ = SizeToInt(in_shape[1]);
@@ -146,16 +153,19 @@ class CholeskyGpuKernel : public GpuKernel {
       }
     }
     InitSizeLists();
+    return true;
   }
 
-  void InitSpltDim(const std::vector<size_t> &in_shape) {
+  bool InitSpltDim(const std::vector<size_t> &in_shape) {
     if (in_shape.size() != 2) {
       MS_LOG(ERROR) << "Cholesky Split Matrix Need Input Rank as 2.";
+      return false;
     }
     height = in_shape[0];
     width = in_shape[1];
     if (height != width) {
       MS_LOG(ERROR) << "Cholesky Split Matrix Need Square Matrix as Input.";
+      return false;
     }
     if (SizeToInt(height) <= split_dim) {
       use_split_matrix = false;
@@ -202,6 +212,7 @@ class CholeskyGpuKernel : public GpuKernel {
       }
       InitSizeLists();
     }
+    return true;
   }
 
   void InitSizeLists() override {

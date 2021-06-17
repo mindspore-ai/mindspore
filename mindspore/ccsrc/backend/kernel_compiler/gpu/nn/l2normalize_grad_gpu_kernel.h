@@ -122,7 +122,7 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
       return false;
     }
     if (input_shape_list_[0].size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
     }
     return true;
   }
@@ -180,7 +180,7 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
   bool CheckIONumber(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_SIZE) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but l2normalize op needs 3 inputs.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but l2normalize op needs " << INPUT_SIZE << " inputs.";
       return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);

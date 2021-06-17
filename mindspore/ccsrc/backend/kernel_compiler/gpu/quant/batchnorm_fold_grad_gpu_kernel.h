@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 6;
 template <typename T>
 class BatchNormFoldGradGpuKernel : public GpuKernel {
  public:
@@ -99,8 +100,9 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 6) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but BatchNormFoldGrad GpuKernel OP needs 6 input.";
+    if (input_num != INPUT_NUM) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but BatchNormFoldGrad GpuKernel OP needs " << INPUT_NUM
+                    << " inputs.";
       return false;
     }
 

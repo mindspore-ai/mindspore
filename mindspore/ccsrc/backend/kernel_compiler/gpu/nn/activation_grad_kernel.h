@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr float ReLU6_UP_TURNING_POINT = 5.999999;
 template <typename T>
 class ActivationGradGpuKernel : public GpuKernel {
  public:
@@ -86,7 +87,7 @@ class ActivationGradGpuKernel : public GpuKernel {
     }
     CheckTensorSize({input_shape});
     std::vector<size_t> shape;
-    double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 5.999999 : 0.0;
+    double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? ReLU6_UP_TURNING_POINT : 0.0;
     if (mode_ == CUDNN_ACTIVATION_ELU) coef = 1.0;
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_PROPAGATE_NAN, coef),

@@ -28,6 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
+#define NBDIMS 4
 template <typename T>
 class Conv2dGpuFwdKernel : public GpuKernel {
  public:
@@ -126,18 +127,19 @@ class Conv2dGpuFwdKernel : public GpuKernel {
       pad_width_ = pad_list[2] + pad_list[3];
       pad_top_ = pad_list[0];
       pad_left_ = pad_list[2];
-      int dimA[4];
-      int strideApadded[4];
+      const int nbDims = 4;
+      int dimA[NBDIMS];
+      int strideApadded[NBDIMS];
       if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
         auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
                              IntToSize(old_width_ + pad_width_)};
-        SetDimA(padded_shape, dimA, 4, data_format_);
-        SetStrideA(padded_shape, strideApadded, 4, data_format_);
+        SetDimA(padded_shape, dimA, nbDims, data_format_);
+        SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
       } else if (data_format_ == kOpFormat_NHWC) {
         auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
                              IntToSize(c_)};
-        SetDimA(padded_shape, dimA, 4, data_format_);
-        SetStrideA(padded_shape, strideApadded, 4, data_format_);
+        SetDimA(padded_shape, dimA, nbDims, data_format_);
+        SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                   cudnnSetTensorNdDescriptor(padded_desc_, cudnn_data_type_, 4, dimA, strideApadded),
@@ -288,17 +290,17 @@ class Conv2dGpuFwdKernel : public GpuKernel {
   void Set4DDesc(const std::vector<size_t> &in_shape, const std::vector<size_t> &filter_shape,
                  const std::vector<size_t> &output_shape) {
     const int nbDims = 4;
-    int dimA[4];
-    int strideAin[4];
-    int dimAout[4];
-    int strideAout[4];
-    SetDimA(in_shape, dimA, 4, data_format_);
-    SetStrideA(in_shape, strideAin, 4, data_format_);
-    SetDimA(output_shape, dimAout, 4, data_format_);
-    SetStrideA(output_shape, strideAout, 4, data_format_);
+    int dimA[NBDIMS];
+    int strideAin[NBDIMS];
+    int dimAout[NBDIMS];
+    int strideAout[NBDIMS];
+    SetDimA(in_shape, dimA, nbDims, data_format_);
+    SetStrideA(in_shape, strideAin, nbDims, data_format_);
+    SetDimA(output_shape, dimAout, nbDims, data_format_);
+    SetStrideA(output_shape, strideAout, nbDims, data_format_);
     int filterDimA[4];
     // OHWI for NHWC; OIHW for NCHW
-    SetDimA(filter_shape, filterDimA, 4, data_format_);
+    SetDimA(filter_shape, filterDimA, nbDims, data_format_);
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetTensorNdDescriptor(input_desc_, cudnn_data_type_, nbDims, dimA, strideAin),
                                 "cudnnSetTensor4dDescriptor failed");

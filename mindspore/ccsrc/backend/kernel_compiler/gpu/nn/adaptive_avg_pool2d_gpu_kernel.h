@@ -65,6 +65,7 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
       output_width = static_cast<uint>(shape_addr[0]);
     } else {
       MS_LOG(ERROR) << "Input Error.";
+      return false;
     }
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);

@@ -28,6 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
+#define NBDIMS 4
 template <typename T>
 class ConvGradFilterGpuBkwKernel : public GpuKernel {
  public:
@@ -156,21 +157,22 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       if (pad_height_ % 2 == 0 && pad_width_ % 2 == 0) {
         use_pad_ = false;
       }
-      int dimA[4];
-      int strideApadded[4];
+      const int nbDims = 4;
+      int dimA[NBDIMS];
+      int strideApadded[NBDIMS];
       if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
         auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
                              IntToSize(old_width_ + pad_width_)};
-        SetDimA(padded_shape, dimA, 4, data_format_);
-        SetStrideA(padded_shape, strideApadded, 4, data_format_);
+        SetDimA(padded_shape, dimA, nbDims, data_format_);
+        SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
       } else if (data_format_ == kOpFormat_NHWC) {
         auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
                              IntToSize(c_)};
-        SetDimA(padded_shape, dimA, 4, data_format_);
-        SetStrideA(padded_shape, strideApadded, 4, data_format_);
+        SetDimA(padded_shape, dimA, nbDims, data_format_);
+        SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, 4, dimA, strideApadded),
+        kernel_node_, cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, nbDims, dimA, strideApadded),
         "cudnnSetTensor4dDescriptor failed");
       padA[0] = 0;
       padA[1] = 0;
@@ -311,17 +313,17 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &filter_shape,
                  const std::vector<size_t> &in_shape) {
     const int nbDims = 4;
-    int dimA[4];
-    int strideAin[4];
-    int dimAdy[4];
-    int strideAdy[4];
-    SetDimA(in_shape, dimA, 4, data_format_);
-    SetStrideA(in_shape, strideAin, 4, data_format_);
-    SetDimA(dy_shape, dimAdy, 4, data_format_);
-    SetStrideA(dy_shape, strideAdy, 4, data_format_);
+    int dimA[NBDIMS];
+    int strideAin[NBDIMS];
+    int dimAdy[NBDIMS];
+    int strideAdy[NBDIMS];
+    SetDimA(in_shape, dimA, nbDims, data_format_);
+    SetStrideA(in_shape, strideAin, nbDims, data_format_);
+    SetDimA(dy_shape, dimAdy, nbDims, data_format_);
+    SetStrideA(dy_shape, strideAdy, nbDims, data_format_);
     // filter shape relued by format_attr_. In native mode it's OHWI. In transpose mode it's OIHW.
-    int filterDimA[4];
-    SetDimA(filter_shape, filterDimA, 4, format_attr_);
+    int filterDimA[NBDIMS];
+    SetDimA(filter_shape, filterDimA, nbDims, format_attr_);
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetTensorNdDescriptor(dy_desc_, cudnn_data_type_, nbDims, dimAdy, strideAdy),
                                 "cudnnSetTensorNdDescriptor failed");

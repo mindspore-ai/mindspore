@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/adam_impl.cuh"
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUM = 9;
 template <typename T>
 class AdamWeightDecayGpuKernel : public GpuKernel {
  public:
@@ -61,8 +62,8 @@ class AdamWeightDecayGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 9) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but adam needs 9 inputs.";
+    if (input_num != INPUT_NUM) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but adam needs " << INPUT_NUM << " inputs.";
       return false;
     }
 

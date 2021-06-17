@@ -69,6 +69,7 @@ class LinSpaceGpuKernel : public GpuKernel {
     if (value_count.size() != 1) {
       MS_LOG(ERROR) << "For LinShape, output shape incorrect rank. Expect Rank: 1, got Rank: " << value_count.size()
                     << ".";
+      return false;
     }
     value_count_ = value_count[0];
     InitSizeLists();

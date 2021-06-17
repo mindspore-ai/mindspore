@@ -47,7 +47,6 @@ class CumProdGpuKernel : public GpuKernel {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but CumProdGpuKernel needs 1.";
-      return false;
     }
     input_size_0_ = sizeof(T);
     shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
