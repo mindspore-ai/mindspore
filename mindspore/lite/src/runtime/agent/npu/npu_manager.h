@@ -38,8 +38,8 @@ struct SubGraphModel {
   int index_;
   std::string model_name_;
   std::shared_ptr<domi::ModelBufferData> model_buffer_data_;
-  std::shared_ptr<hiai::AiModelMngerClient> client_;
-  std::shared_ptr<hiai::AiModelDescription> desc_;
+  std::shared_ptr<hiai::AiModelMngerClient> client_ = nullptr;
+  std::shared_ptr<hiai::AiModelDescription> desc_ = nullptr;
 };
 class NPUManager {
  public:
