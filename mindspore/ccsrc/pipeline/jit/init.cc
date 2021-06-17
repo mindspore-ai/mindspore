@@ -354,6 +354,11 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set threshold count ratio for updateModel round.")
     .def("set_update_model_time_window", &PSContext::set_update_model_time_window,
          "Set time window for updateModel round.")
+    .def("set_share_secrets_ratio", &PSContext::set_share_secrets_ratio,
+         "Set threshold count ratio for share secrets round.")
+    .def("set_get_model_ratio", &PSContext::set_get_model_ratio, "Set threshold count ratio for get model round.")
+    .def("set_reconstruct_secrets_threshhold", &PSContext::set_reconstruct_secrets_threshhold,
+         "Set threshold count for reconstruct secrets round.")
     .def("set_fl_name", &PSContext::set_fl_name, "Set federated learning name.")
     .def("set_fl_iteration_num", &PSContext::set_fl_iteration_num, "Set federated learning iteration number.")
     .def("set_client_epoch_num", &PSContext::set_client_epoch_num, "Set federated learning client epoch number.")

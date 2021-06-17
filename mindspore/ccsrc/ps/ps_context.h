@@ -35,6 +35,9 @@ constexpr char kEnvRoleOfServer[] = "MS_SERVER";
 constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
 constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
+constexpr char kDPEncryptType[] = "DPEncrypt";
+constexpr char kPWEncryptType[] = "PWEncrypt";
+constexpr char kNotEncryptType[] = "NotEncrypt";
 
 // Use binary data to represent federated learning server's context so that we can judge which round resets the
 // iteration. From right to left, each bit stands for:
@@ -125,6 +128,15 @@ class PSContext {
   void set_update_model_time_window(uint64_t update_model_time_window);
   uint64_t update_model_time_window() const;
 
+  void set_share_secrets_ratio(float share_secrets_ratio);
+  float share_secrets_ratio() const;
+
+  void set_get_model_ratio(float get_model_ratio);
+  float get_model_ratio() const;
+
+  void set_reconstruct_secrets_threshhold(uint64_t reconstruct_secrets_threshhold);
+  uint64_t reconstruct_secrets_threshhold() const;
+
   void set_fl_name(const std::string &fl_name);
   const std::string &fl_name() const;
 
@@ -173,6 +185,9 @@ class PSContext {
         start_fl_job_time_window_(3000),
         update_model_ratio_(1.0),
         update_model_time_window_(3000),
+        share_secrets_ratio_(1.0),
+        get_model_ratio_(1.0),
+        reconstruct_secrets_threshhold_(2000),
         fl_iteration_num_(20),
         client_epoch_num_(25),
         client_batch_size_(32),
@@ -221,6 +236,15 @@ class PSContext {
 
   // The time window of updateModel round in millisecond.
   uint64_t update_model_time_window_;
+
+  // Share model threshold is a certain ratio of share secrets threshold which is set as share_secrets_ratio_.
+  float share_secrets_ratio_;
+
+  // Get model threshold is a certain ratio of get model threshold which is set as get_model_ratio_.
+  float get_model_ratio_;
+
+  // The threshold count of reconstruct secrets round. Used in federated learning for now.
+  uint64_t reconstruct_secrets_threshhold_;
 
   // Iteration number of federeated learning, which is the number of interactions between client and server.
   uint64_t fl_iteration_num_;

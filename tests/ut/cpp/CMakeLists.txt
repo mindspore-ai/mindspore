@@ -159,6 +159,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/ps/*.cc"
         "../../../mindspore/ccsrc/profiler/device/common/*.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/adam_fp32.c"
+        "../../../mindspore/ccsrc/armour/*.cc"
         )
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST

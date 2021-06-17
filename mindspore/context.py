@@ -836,14 +836,15 @@ def set_fl_context(**kwargs):
         fl_server_port (int): The http port of the federated learning server.
                               Normally for each server this should be set to the same value. Default: 6668.
         enable_fl_client (bool): Whether this process is federated learning client. Default: False.
-        start_fl_job_threshold (int): The threshold count of startFLJob. Default: 0.
+        start_fl_job_threshold (int): The threshold count of startFLJob. Default: 1.
         start_fl_job_time_window (int): The time window duration for startFLJob in millisecond. Default: 3000.
-        update_model_ratio (float): The ratio for computing the threshold count of updateModel
-                                    which will be multiplied by start_fl_job_threshold.
-                                    Must be between 0 and 1.0.Default: 1.0.
+        share_secrets_ratio (float): The ratio for computing the threshold count of share secrets. Default: 1.0.
+        update_model_ratio (float): The ratio for computing the threshold count of updateModel. Default: 1.0.
+        get_model_ratio (float): The ratio for computing the threshold count of get model. Default: 1.0.
+        reconstruct_secrets_threshold (int): The threshold count of reconstruct threshold. Default: 0.
         update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 3000.
-        fl_name (str): The federated learning job name. Default: ''.
-        fl_iteration_num (int): Iteration number of federeated learning,
+        fl_name (string): The federated learning job name. Default: ''.
+        fl_iteration_num (int): Iteration number of federated learning,
                                 which is the number of interactions between client and server. Default: 20.
         client_epoch_num (int): Client training epoch number. Default: 25.
         client_batch_size (int): Client training data batch size. Default: 32.

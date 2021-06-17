@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CIPHER_SHARES_H
-#define MINDSPORE_CIPHER_SHARES_H
+#ifndef MINDSPORE_CCSRC_ARMOUR_CIPHER_SHARES_H
+#define MINDSPORE_CCSRC_ARMOUR_CIPHER_SHARES_H
 
 #include <vector>
 #include <string>
@@ -65,4 +65,4 @@ class CipherShares {
 }  // namespace armour
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CIPHER_KEYS_H
+#endif  // MINDSPORE_CCSRC_ARMOUR_CIPHER_SHARES_H

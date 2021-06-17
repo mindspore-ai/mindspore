@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CIPHER_KEYS_H
-#define MINDSPORE_CIPHER_KEYS_H
+#ifndef MINDSPORE_CCSRC_ARMOUR_CIPHER_KEYS_H
+#define MINDSPORE_CCSRC_ARMOUR_CIPHER_KEYS_H
 
 #include <vector>
 #include <string>
@@ -68,4 +68,4 @@ class CipherKeys {
 }  // namespace armour
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CIPHER_KEYS_H
+#endif  // MINDSPORE_CCSRC_ARMOUR_CIPHER_KEYS_H

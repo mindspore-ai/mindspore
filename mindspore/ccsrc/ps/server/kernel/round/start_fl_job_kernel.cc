@@ -21,6 +21,9 @@
 #include <vector>
 #include "ps/server/model_store.h"
 #include "ps/server/iteration.h"
+#ifdef ENABLE_ARMOUR
+#include "armour/cipher/cipher_init.h"
+#endif
 
 namespace mindspore {
 namespace ps {
@@ -192,6 +195,21 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   auto fbs_server_mode = fbb->CreateString(PSContext::instance()->server_mode());
   auto fbs_fl_name = fbb->CreateString(PSContext::instance()->fl_name());
 
+#ifdef ENABLE_ARMOUR
+  auto *param = armour::CipherInit::GetInstance().GetPublicParams();
+  auto prime = fbb->CreateVector(param->prime, PRIME_MAX_LEN);
+  auto p = fbb->CreateVector(param->p, SECRET_MAX_LEN);
+  int32_t t = param->t;
+  int32_t g = param->g;
+  float dp_eps = param->dp_eps;
+  float dp_delta = param->dp_delta;
+  float dp_norm_clip = param->dp_norm_clip;
+  auto encrypt_type = fbb->CreateString(param->encrypt_type);
+
+  auto cipher_public_params =
+    schema::CreateCipherPublicParams(*fbb.get(), t, p, g, prime, dp_eps, dp_delta, dp_norm_clip, encrypt_type);
+#endif
+
   schema::FLPlanBuilder fl_plan_builder(*(fbb.get()));
   fl_plan_builder.add_fl_name(fbs_fl_name);
   fl_plan_builder.add_server_mode(fbs_server_mode);
@@ -199,6 +217,9 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   fl_plan_builder.add_epochs(PSContext::instance()->client_epoch_num());
   fl_plan_builder.add_mini_batch(PSContext::instance()->client_batch_size());
   fl_plan_builder.add_lr(PSContext::instance()->client_learning_rate());
+#ifdef ENABLE_ARMOUR
+  fl_plan_builder.add_cipher(cipher_public_params);
+#endif
   auto fbs_fl_plan = fl_plan_builder.Finish();
 
   std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;

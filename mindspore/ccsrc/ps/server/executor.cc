@@ -268,10 +268,14 @@ std::map<std::string, AddressPtr> Executor::GetModel() {
   return model;
 }
 
-// bool Executor::Unmask() {
-//   auto model = GetModel();
-//   return mindarmour::CipherMgr::GetInstance().UnMask(model);
-// }
+bool Executor::Unmask() {
+#ifdef ENABLE_ARMOUR
+  auto model = GetModel();
+  return cipher_unmask_.UnMask(model);
+#else
+  return false;
+#endif
+}
 
 const std::vector<std::string> &Executor::param_names() const { return param_names_; }
 

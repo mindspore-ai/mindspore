@@ -59,6 +59,12 @@ struct RoundConfig {
   bool server_num_as_threshold = false;
 };
 
+struct CipherConfig {
+  float share_secrets_ratio = 1.0;
+  float get_model_ratio = 1.0;
+  size_t reconstruct_secrets_threshhold = 0;
+};
+
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::CPUKernel;
@@ -175,9 +181,17 @@ constexpr auto kCtxDeviceMetas = "device_metas";
 constexpr auto kCtxTotalTimeoutDuration = "total_timeout_duration";
 constexpr auto kCtxIterationNextRequestTimestamp = "iteration_next_request_timestamp";
 constexpr auto kCtxUpdateModelClientList = "update_model_client_list";
-constexpr auto kCtxUpdateModelClientNum = "update_model_client_num";
 constexpr auto kCtxUpdateModelThld = "update_model_threshold";
+constexpr auto kCtxUpdateModelClientNum = "update_model_client_num";
+constexpr auto kCtxClientsKeys = "clients_keys";
+constexpr auto kCtxClientNoises = "clients_noises";
+constexpr auto kCtxClientsEncryptedShares = "clients_encrypted_shares";
+constexpr auto kCtxClientsReconstructShares = "clients_restruct_shares";
+constexpr auto kCtxShareSecretsClientList = "share_secrets_client_list";
+constexpr auto kCtxReconstructClientList = "reconstruct_client_list";
+constexpr auto kCtxExChangeKeysClientList = "exchange_keys_client_list";
 constexpr auto kCtxFedAvgTotalDataSize = "fed_avg_total_data_size";
+constexpr auto kCtxCipherPrimer = "cipher_primer";
 
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIME_MILLI \

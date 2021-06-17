@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CIPHER_META_STORAGE_H
-#define MINDSPORE_CIPHER_META_STORAGE_H
+#ifndef MINDSPORE_CCSRC_ARMOUR_CIPHER_META_STORAGE_H
+#define MINDSPORE_CCSRC_ARMOUR_CIPHER_META_STORAGE_H
 
-#include <gmp.h>
 #include <utility>
 #include <algorithm>
 #include <map>
 #include <vector>
 #include <string>
 #include <memory>
+#ifndef _WIN32
+#include <gmp.h>
+#endif
 #include "proto/ps.pb.h"
 #include "utils/log_adapter.h"
 #include "armour/secure_protocol/secret_sharing.h"
@@ -52,7 +54,7 @@ struct CipherPublicPara {
   float dp_eps;
   float dp_delta;
   float dp_norm_clip;
-  int encrypt_type;
+  string encrypt_type;
 };
 
 class CipherMetaStorage {
@@ -89,4 +91,4 @@ class CipherMetaStorage {
 }  // namespace armour
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CIPHER_META_STORAGE_H
+#endif  // MINDSPORE_CCSRC_ARMOUR_CIPHER_META_STORAGE_H

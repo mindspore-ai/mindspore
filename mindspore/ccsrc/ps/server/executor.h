@@ -26,6 +26,9 @@
 #include <condition_variable>
 #include "ps/server/common.h"
 #include "ps/server/parameter_aggregator.h"
+#ifdef ENABLE_ARMOUR
+#include "armour/cipher/cipher_unmask.h"
+#endif
 
 namespace mindspore {
 namespace ps {
@@ -88,6 +91,7 @@ class Executor {
   bool initialized() const;
 
   const std::vector<std::string> &param_names() const;
+  bool Unmask();
 
  private:
   Executor() {}
@@ -117,6 +121,9 @@ class Executor {
   // Because ParameterAggregator is not threadsafe, we have to create mutex for each ParameterAggregator so we can
   // acquire lock before calling its method.
   std::map<std::string, std::mutex> parameter_mutex_;
+#ifdef ENABLE_ARMOUR
+  armour::CipherUnmask cipher_unmask_;
+#endif
 };
 }  // namespace server
 }  // namespace ps
