@@ -34,10 +34,11 @@ class Assign(Primitive):
 
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
-        - **value** (Tensor) - The value to be assigned.
+          :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
+        - **value** (Tensor) - The value to be assigned, has the same shape with `variable`.
 
     Outputs:
-        Tensor, has the same type as original `variable`.
+        Tensor, has the same data type and shape as original `variable`.
 
     Raises:
         TypeError: If `variable` is not a Parameter.
