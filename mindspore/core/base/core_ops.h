@@ -77,6 +77,7 @@ constexpr auto kFastGeLUGrad = "FastGeLUGrad";
 constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
+constexpr auto kTranspose = "Transpose";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -156,7 +157,7 @@ inline const PrimitivePtr kPrimCast = std::make_shared<Primitive>("Cast");
 inline const PrimitivePtr kPrimConcat = std::make_shared<Primitive>("Concat");
 inline const PrimitivePtr kPrimSqueeze = std::make_shared<Primitive>("Squeeze");
 inline const PrimitivePtr kPrimUnsqueeze = std::make_shared<Primitive>("Unsqueeze");
-inline const PrimitivePtr kPrimTranspose = std::make_shared<Primitive>("Transpose");
+inline const PrimitivePtr kPrimTranspose = std::make_shared<Primitive>(kTranspose);
 inline const PrimitivePtr kPrimGatherV2 = std::make_shared<Primitive>("GatherV2");
 inline const PrimitivePtr kPrimGatherD = std::make_shared<Primitive>("GatherD");
 inline const PrimitivePtr kPrimGather = std::make_shared<Primitive>("Gather");

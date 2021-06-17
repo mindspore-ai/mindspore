@@ -684,7 +684,7 @@ class Squeeze(PrimitiveWithInfer):
         return x_dtype
 
 
-class Transpose(PrimitiveWithInfer):
+class Transpose(Primitive):
     """
     Permutes the dimensions of the input tensor according to input permutation.
 
@@ -724,37 +724,6 @@ class Transpose(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Transpose"""
         self.init_prim_io_names(inputs=['x', 'perm'], outputs=['output'])
-
-    def __infer__(self, x, perm):
-        x_shape = x['shape']
-        p_value = perm['value']
-        x_type = x['dtype']
-        validator.check_value_type("p_value", p_value, [tuple], self.name)
-        validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
-        if len(x_shape) != len(p_value):
-            raise ValueError('The dimension of x and perm must be equal.')
-        tmp = list(p_value)
-        for i, dim in enumerate(p_value):
-            validator.check_int(dim, 0, Rel.GE, f'perm[{i}]', self.name)
-            validator.check_int(dim, len(p_value), Rel.LT, f'perm[{i}]', self.name)
-            tmp.remove(dim)
-            if dim in tmp:
-                raise ValueError('The value of perm is wrong.')
-        out_shapes = []
-        for i in p_value:
-            out_shapes.append(x_shape[i])
-        out = {'shape': tuple(out_shapes),
-               'dtype': x['dtype'],
-               'value': None}
-        if 'min_shape' in x and 'max_shape' in x:
-            min_vec = []
-            max_vec = []
-            for i in p_value:
-                min_vec.append(x['min_shape'][i])
-                max_vec.append(x['max_shape'][i])
-            out['min_shape'] = tuple(min_vec)
-            out['max_shape'] = tuple(max_vec)
-        return out
 
 
 class Unique(Primitive):
