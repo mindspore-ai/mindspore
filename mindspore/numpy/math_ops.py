@@ -4253,11 +4253,11 @@ def _get_sort_range(size):
 def searchsorted(a, v, side='left', sorter=None):
     """
     Finds indices where elements should be inserted to maintain order.
-    Finds the indices into a sorted array a such that, if the corresponding elements
-    in v were inserted before the indices, the order of a would be preserved.
+    Finds the indices into a sorted array `a` such that, if the corresponding elements
+    in `v` were inserted before the indices, the order of `a` would be preserved.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): 1-D input array. If `sorter` is
+        a (Union[list, tuple, Tensor]): 1-D input array. If `sorter` is
             None, then it must be sorted in ascending order, otherwise `sorter` must be
             an array of indices that sort it.
         v (Union[int, float, bool, list, tuple, Tensor]): Values to insert into `a`.
@@ -4289,6 +4289,8 @@ def searchsorted(a, v, side='left', sorter=None):
     if side not in ('left', 'right'):
         _raise_value_error('invalid value for keyword "side"')
     a = _to_tensor(a).astype(mstype.float32)
+    if F.rank(a) != 1:
+        _raise_value_error('`a` should be 1-D array')
     v = _to_tensor(v)
     shape = F.shape(v)
     if sorter is not None:
@@ -4671,13 +4673,17 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
         (Tensor(shape=[3], dtype=Float32, value= [1, 4, 1]),
         Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 3]))
     """
-    a = _to_tensor(a).ravel()
+    a = _to_tensor(a)
+    if weights is not None:
+        weights = _to_tensor(weights)
+        if F.shape(a) != F.shape(weights):
+            _raise_value_error('weights should have the same shape as a')
+        weights = weights.ravel()
+    a = a.ravel()
     bin_edges = histogram_bin_edges(a, bins, range, weights)
     data_to_bins = searchsorted(bin_edges, a, 'right')
     bin_size = _type_convert(int, bin_edges.size)
     data_to_bins = where_(a == bin_edges[-1], _to_tensor(bin_size - 1), data_to_bins)
-    if weights is not None:
-        weights = _to_tensor(weights).ravel()
     count = bincount(data_to_bins, weights, length=bin_size)[1:]
     if count.size == 0:
         return count, bin_edges
@@ -5003,8 +5009,8 @@ def polyadd(a1, a2):
         Numpy object poly1d is currently not supported.
 
     Args:
-        a1 (Union[int, float, bool, list, tuple, Tensor): Input polynomial.
-        a2 (Union[int, float, bool, list, tuple, Tensor): Input polynomial.
+        a1 (Union[int, float, list, tuple, Tensor): Input polynomial.
+        a2 (Union[int, float, list, tuple, Tensor): Input polynomial.
 
     Returns:
         Tensor, the sum of the inputs.
@@ -5039,8 +5045,8 @@ def polysub(a1, a2):
         Numpy object poly1d is currently not supported.
 
     Args:
-        a1 (Union[int, float, bool, list, tuple, Tensor): Minuend polynomial.
-        a2 (Union[int, float, bool, list, tuple, Tensor): Subtrahend polynomial.
+        a1 (Union[int, float, list, tuple, Tensor): Minuend polynomial.
+        a2 (Union[int, float, list, tuple, Tensor): Subtrahend polynomial.
 
     Returns:
         Tensor, the difference of the inputs.
