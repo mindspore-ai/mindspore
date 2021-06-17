@@ -68,7 +68,7 @@
 
 ```python
 # 分布式训练运行示例
-sh scripts/run_distribute_train.sh pretrained_model.ckpt
+sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 
 # 下载opencv库
 download pyblind11, opencv3.4
@@ -77,14 +77,16 @@ download pyblind11, opencv3.4
 setup pyblind11(install the library by the pip command)
 setup opencv3.4(compile source code install the library)
 
-# 输入路径，运行Makefile，找到产品文件
-cd ./src/ETSNET/pse/;make
-
-# 运行test.py
-python test.py --ckpt=pretrained_model.ckpt
-
 # 单击[此处](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization)下载评估方法
 # 点击"我的方法"按钮，下载评估脚本
+
+# 输入路径，运行Makefile，找到产品文件
+cd ./src/ETSNET/pse/;make clean&&make
+
+# 运行test.py
+python test.py --ckpt pretrained_model.ckpt --TEST_ROOT_DIR [test root path]
+
+
 download script.py
 # 运行评估示例
 sh scripts/run_eval_ascend.sh
@@ -98,13 +100,19 @@ sh scripts/run_eval_ascend.sh
 └── PSENet
  ├── export.py                           // mindir转换脚本
  ├── mindspore_hub_conf.py               // 网络模型
+ ├─postprogress.py                           # 310推理后处理脚本
  ├── README.md                           // PSENet相关描述英文版
  ├── README_CN.md                        // PSENet相关描述中文版
  ├── scripts
   ├── run_distribute_train.sh    // 用于分布式训练的shell脚本
   └── run_eval_ascend.sh     // 用于评估的shell脚本
+  ├─run_infer_310.sh                        # Ascend 310 推理shell脚本
  ├── src
-  ├── config.py                       // 参数配置
+  ├──model_utils
+   ├──config.py                            # 参数配置
+   ├──device_adapter.py                    # 设备相关信息
+   ├──local_adapter.py                     # 设备相关信息
+   ├──moxing_adapter.py                    # 装饰器(主要用于ModelArts数据拷贝)
   ├── dataset.py                      // 创建数据集
   ├── ETSNET
    ├── base.py                     // 卷积和BN算子
@@ -123,26 +131,29 @@ sh scripts/run_eval_ascend.sh
   ├── network_define.py               // PSENet架构
  ├── test.py                             // 测试脚本
  ├── train.py                            // 训练脚本
-
+ ├─default_config.yaml                       # 参数文件
+ ├─ma-pre-start.sh                       # modelarts配置系统环境变量
 ```
 
 ## 脚本参数
 
-```python
-train.py和config.py中主要参数如下：
+```default_config.yaml
+配置文件中主要参数如下：
 
 -- pre_trained：是从零开始训练还是基于预训练模型训练。可选值为True、False。
--- device_id：用于训练或评估数据集的设备ID。当使用train.sh进行分布式训练时，忽略此参数。
--- device_num：使用train.sh进行分布式训练时使用的设备。
-
+-- device_id：用于训练或评估数据集或导出的设备ID。当使用train.sh进行分布式训练时，忽略此参数。
 ```
 
 ## 训练过程
 
 ### 分布式训练
 
+  分布式训练需要提前创建JSON格式的HCCL配置文件。
+
+  请遵循链接中的说明：[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
+
 ```shell
-sh scripts/run_distribute_train.sh pretrained_model.ckpt
+sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 ```
 
 上述shell脚本将在后台运行分布训练。可以通过`device[X]/test_*.log`文件查看结果。
@@ -162,7 +173,65 @@ device_1/log:epcoh： 2, step: 40，loss is 0.76629
 
 ### 运行测试代码
 
-python test.py --ckpt=./device*/ckpt*/ETSNet-*.ckpt
+```test
+python test.py --ckpt [CKPK PATH] --TEST_ROOT_DIR [TEST DATA DIR]
+
+```
+
+- 如果要在modelarts上进行模型的训练，可以参考modelarts的[官方指导文档](https://support.huaweicloud.com/modelarts/) 开始进行模型的训练和推理，具体操作如下：
+
+```ModelArts
+#  在ModelArts上使用分布式训练示例:
+#  数据集存放方式
+
+#  ├── ICDAR2015                                                    # dir
+#    ├── train                                                      # train dir
+#       ├── ic15                                                    # train_dataset dir
+#           ├── ch4_training_images
+#           ├── ch4_training_localization_transcription_gt
+#       ├── train_predtrained                                       # predtrained dir
+#    ├── eval                                                       # eval dir
+#       ├── ic15                                                    # eval dataset dir
+#           ├── ch4_test_images
+#           ├── challenge4_Test_Task1_GT
+#       ├── checkpoint                                              # ckpt files dir
+
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "run_distribute=True"
+#          设置 "TRAIN_MODEL_SAVE_PATH=/cache/train/outputs/"
+#          设置 "TRAIN_ROOT_DIR=/cache/data/ic15/"
+#          设置 "pre_trained=/cache/data/train_predtrained/pred file name" 如果没有预训练权重 pre_trained=""
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/psenet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../ICDAR2015/train"(选择ICDAR2015/train文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选择a或者b其中一种方式。
+#        a.设置 "enable_modelarts=True"
+#          设置 "TEST_ROOT_DIR=/cache/data/ic15"
+#          设置 "ckpt=/cache/data/checkpoint/ckpt file"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (3) 设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/psenet"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "../ICDAR2015/eval"(选择ICDAR2015/eval文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
+```
 
 ### ICDAR2015评估脚本
 
@@ -187,11 +256,32 @@ Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"h
 ### [导出MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --ckpt [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
-参数ckpt_file为必填项，
+参数ckpt为必填项，
 `EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+- 在modelarts上导出MindIR
+
+```Modelarts
+在ModelArts上导出MindIR示例
+数据集存放方式同Modelart训练
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "file_name=/cache/train/psenet"
+#          设置 "file_format=MINDIR"
+#          设置 "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/psenet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../ICDAR2015/eval/checkpoint"(选择ICDAR2015/eval/checkpoint文件夹路径) ,
+# MindIR的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+```
 
 ### 在Ascend310执行推理
 

@@ -17,9 +17,9 @@
 current_exec_path=$(pwd)
 echo 'current_exec_path: '${current_exec_path}
 
-if [ $# != 2 ]
+if [ $# != 3 ]
 then
-    echo "Usage: sh run_distribute_train.sh [RANK_FILE] [PRETRAINED_PATH]"
+    echo "Usage: sh run_distribute_train.sh [RANK_FILE] [PRETRAINED_PATH] [TRAIN_ROOT_DIR]"
 exit 1
 fi
 
@@ -74,7 +74,6 @@ do
     cd ${current_exec_path}/device_$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
-    python ${current_exec_path}/train.py --run_distribute --device_id $i --pre_trained $PATH2 --device_num ${DEVICE_NUM} >test_deep$i.log 2>&1 &
+    python ${current_exec_path}/train.py --run_distribute=True --pre_trained $PATH2 --TRAIN_ROOT_DIR=$3 >test_deep$i.log 2>&1 &
     cd ${current_exec_path} || exit
 done
-

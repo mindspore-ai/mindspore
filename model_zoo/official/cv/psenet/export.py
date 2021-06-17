@@ -15,33 +15,29 @@
 """
 ##############export checkpoint file into air models#################
 """
-import argparse
-import numpy as np
 
+import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
-
-from src.config import config
+from src.model_utils.config import config
 from src.ETSNET.etsnet import ETSNet
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description="psenet export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="psenet", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=config.device_id)
 
-if __name__ == '__main__':
+
+@moxing_wrapper(pre_process=None)
+def model_export():
     net = ETSNet(config)
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.ones([args.batch_size, 3, config.INFER_LONG_SIZE, config.INFER_LONG_SIZE]), ms.float32)
-    export(net, input_arr, file_name=args.file_name, file_format=args.file_format)
+    input_arr = Tensor(np.ones([config.batch_size, 3, config.INFER_LONG_SIZE, config.INFER_LONG_SIZE]), ms.float32)
+    export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()

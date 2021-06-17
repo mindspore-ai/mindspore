@@ -14,18 +14,20 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 5 ]
 then
-    echo "Usage: sh run_eval.sh [DATASET] [DEVICE_ID]"
+    echo "Usage: sh scripts/run_eval.sh [DEVICE_ID] [DATASET] [MINDRECORD_DIR] [checkpoint_path] [instances_set]"
 exit 1
 fi
 
-DATASET=$1
+DATASET=$2
+MINDRECORD_DIR=$3
+CHECKPOINT_PATH=$4
+INSTANCE_SET=$5
 echo $DATASET
 
-
 export DEVICE_NUM=1
-export DEVICE_ID=$2
+export DEVICE_ID=$1
 export RANK_SIZE=$DEVICE_NUM
 export RANK_ID=0
 
@@ -40,10 +42,13 @@ fi
 mkdir ./eval$2
 cp ./*.py ./eval$2
 cp -r ./src ./eval$2
+cp ./*yaml ./eval$2
 cd ./eval$2 || exit
 env > env.log
 echo "start inferring for device $DEVICE_ID"
 python eval.py \
     --dataset=$DATASET \
-    --device_id=$2 > log.txt 2>&1 &
+    --checkpoint_path=$CHECKPOINT_PATH \
+    --instances_set=$INSTANCE_SET \
+    --mindrecord_dir=$MINDRECORD_DIR > log.txt 2>&1 &
 cd ..

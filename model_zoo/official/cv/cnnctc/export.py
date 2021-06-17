@@ -12,42 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""export checkpoint file into air, onnx, mindir models"""
-import argparse
+"""export checkpoint file into air, onnx, mindir models
+   suggest run as python export.py --filename cnnctc --file_format MINDIR --ckpt_file [ckpt file path]
+"""
 import numpy as np
-
 from mindspore import Tensor, context, load_checkpoint, export
 import mindspore.common.dtype as mstype
-
-from src.config import Config_CNNCTC
 from src.cnn_ctc import CNNCTC_Model
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description="CNNCTC_export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--file_name", type=str, default="cnn_ctc", help="CNN&CTC output air name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-parser.add_argument("--ckpt_file", type=str, default="./ckpts/cnn_ctc.ckpt", help="CNN&CTC ckpt file.")
-args_opt = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
-if args_opt.device_target == "Ascend":
-    context.set_context(device_id=args_opt.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=config.device_id)
 
-if __name__ == "__main__":
-    cfg = Config_CNNCTC()
-    ckpt_path = cfg.CKPT_PATH
 
-    if args_opt.ckpt_file != "":
-        ckpt_path = args_opt.ckpt_file
+def modelarts_pre_process():
+    pass
 
-    net = CNNCTC_Model(cfg.NUM_CLASS, cfg.HIDDEN_SIZE, cfg.FINAL_FEATURE_WIDTH)
 
-    load_checkpoint(ckpt_path, net=net)
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def model_export():
+    net = CNNCTC_Model(config.NUM_CLASS, config.HIDDEN_SIZE, config.FINAL_FEATURE_WIDTH)
 
-    bs = cfg.TEST_BATCH_SIZE
+    load_checkpoint(config.ckpt_file, net=net)
 
-    input_data = Tensor(np.zeros([bs, 3, cfg.IMG_H, cfg.IMG_W]), mstype.float32)
+    bs = config.TEST_BATCH_SIZE
 
-    export(net, input_data, file_name=args_opt.file_name, file_format=args_opt.file_format)
+    input_data = Tensor(np.zeros([bs, 3, config.IMG_H, config.IMG_W]), mstype.float32)
+
+    export(net, input_data, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()

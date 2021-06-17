@@ -17,7 +17,7 @@
 import os
 import json
 import numpy as np
-from .config import config
+from src.model_utils.config import config
 
 
 def apply_nms(all_boxes, all_scores, thres, max_boxes):

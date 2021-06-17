@@ -22,11 +22,10 @@ import json
 import xml.etree.ElementTree as et
 import numpy as np
 import cv2
-
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
-from .config import config
+from src.model_utils.config import config
 from .box_utils import jaccard_numpy, retinanet_bboxes_encode
 
 

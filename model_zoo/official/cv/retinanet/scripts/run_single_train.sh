@@ -16,57 +16,52 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_single_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "for example: sh run_single_train.sh 0 500 0.1 /opt/retinanet-500_458.ckpt(optional) 200(optional)"
+echo "sh scripts/run_single_train.sh DEVICE_ID MINDRECORD_DIR PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "for example: sh scripts/run_single_train.sh 0 /cache/mindrecord_dir/ /opt/retinanet-500_458.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-if [ $# != 3 ] && [ $# != 5 ]
+if [ $# != 2 ] && [ $# != 4 ]
 then
-    echo "Usage: sh run_single_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] \
+    echo "Usage: sh scripts/run_single_train.sh [DEVICE_ID] [MINDRECORD_DIR] \
 [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
 
 # Before start single train, first create mindrecord files.
-BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
-cd $BASE_PATH/../ || exit
+# BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
+# cd $BASE_PATH/../ || exit
+# python train.py --only_create_dataset=True
 
 echo "After running the script, the network runs in the background. The log will be generated in LOGx/log.txt"
 
 export DEVICE_ID=$1
-EPOCH_SIZE=$2
-LR=$3
-PRE_TRAINED=$4
-PRE_TRAINED_EPOCH_SIZE=$5
+MINDRECORD_DIR=$2
+PRE_TRAINED=$3
+PRE_TRAINED_EPOCH_SIZE=$4
 
 rm -rf LOG$1
 mkdir ./LOG$1
 cp ./*.py ./LOG$1
 cp -r ./src ./LOG$1
+cp ./*yaml ./LOG$1
 cd ./LOG$1 || exit
 echo "start training for device $1"
 env > env.log
-if [ $# == 3 ]
+if [ $# == 2 ]
 then
     python train.py  \
     --distribute=False  \
-    --lr=$LR \
-    --device_num=1  \
-    --device_id=$DEVICE_ID  \
-    --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+    --mindrecord_dir=$MINDRECORD_DIR  > log.txt 2>&1 &
 fi
 
-if [ $# == 5 ]
+if [ $# == 4 ]
 then
     python train,py  \
     --distribute=False  \
-    --lr=$LR \
-    --device_num=1  \
-    --device_id=$DEVICE_ID  \
+    --mindrecord_dir=$MINDRECORD_DIR \
     --pre_trained=$PRE_TRAINED \
-    --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE  \
-    --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+    --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE > log.txt 2>&1 &
 fi
 
 cd ../

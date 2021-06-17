@@ -66,7 +66,7 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # run distributed training example
-sh scripts/run_distribute_train.sh rank_table_file pretrained_model.ckpt
+sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 
 #download opencv library
 download pyblind11, opencv3.4
@@ -79,7 +79,7 @@ setup opencv3.4(compile source code install the library)
 cd ./src/ETSNET/pse/;make
 
 #run test.py
-python test.py --ckpt=pretrained_model.ckpt
+python test.py --ckpt pretrained_model.ckpt --TEST_ROOT_DIR [test root path]
 
 #download eval method from [here](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization).
 #click "My Methods" button,then download Evaluation Scripts
@@ -95,6 +95,7 @@ sh scripts/run_eval_ascend.sh
 ```path
 └── PSENet  
  ├── export.py                           // export mindir file
+ ├── postprocess.py                   // 310 Inference post-processing script
  ├── __init__.py
  ├── mindspore_hub_conf.py               // hub config file
  ├── README_CN.md                        // descriptions about PSENet in Chinese
@@ -102,8 +103,13 @@ sh scripts/run_eval_ascend.sh
  ├── scripts  
   ├── run_distribute_train.sh    // shell script for distributed
   └── run_eval_ascend.sh     // shell script for evaluation
+  ├── ascend310_infer              // application for 310 inference
  ├── src  
-  ├── config.py                       // parameter configuration
+  ├── model_utils
+   ├──config.py             // Parameter config
+   ├──moxing_adapter.py     // modelarts device configuration
+   ├──device_adapter.py     // Device Config
+   ├──local_adapter.py      // local device config
   ├── dataset.py                      // creating dataset
   ├── ETSNET  
    ├── base.py                     // convolution and BN operator
@@ -122,19 +128,18 @@ sh scripts/run_eval_ascend.sh
   ├── network_define.py               // learning ratio generation
  ├── test.py                             //  test script
  ├── train.py                            // training script
-
+ ├── default_config.yaml      //  config file
 ```
 
 ## [Script Parameters](#contents)
 
-```python
-Major parameters in train.py and config.py are:
+```default_config.yaml
+Major parameters in default_config.yaml are:
 
 --pre_trained: Whether training from scratch or training based on the
                pre-trained model.Optional values are True, False.
 --device_id: Device ID used to train or evaluate the dataset. Ignore it
              when you use train.sh for distributed training.
---device_num: devices used when you use train.sh for distributed training.
 
 ```
 
@@ -142,8 +147,12 @@ Major parameters in train.py and config.py are:
 
 ### Distributed Training
 
+  For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+
+  Please follow the instructions in the link below: <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
+
 ```shell
-sh scripts/run_distribute_train.sh rank_table_file pretrained_model.ckpt
+sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 ```
 
 rank_table_file which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -164,7 +173,66 @@ device_1/log:epcoh: 2, step: 40, loss is 0.76629
 
 ### run test code
 
-python test.py --ckpt=./device*/ckpt*/ETSNet-*.ckpt
+```test
+python test.py --ckpt [CKPK PATH] --TEST_ROOT_DIR [TEST DATA DIR]
+
+```
+
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
+
+```python
+#  Example of using distributed training on modelarts :
+#  Data set storage method
+
+#  ├── ICDAR2015                                                    # dir
+#    ├── train                                                      # train dir
+#       ├── ic15                                                    # train_dataset dir
+#           ├── ch4_training_images
+#           ├── ch4_training_localization_transcription_gt
+#       ├── train_predtrained                                       # predtrained dir
+#    ├── eval                                                       # eval dir
+#       ├── ic15                                                    # eval dataset dir
+#           ├── ch4_test_images
+#           ├── challenge4_Test_Task1_GT
+#       ├── checkpoint                                              # ckpt files dir
+
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+#       a. set "enable_modelarts=True" 。
+#          set "run_distribute=True"
+#          set "TRAIN_MODEL_SAVE_PATH=/cache/train/outputs_imagenet/"
+#          set "TRAIN_ROOT_DIR=/cache/data/ic15/"
+#          set "pre_trained=/cache/data/train_predtrained/pred file name" Without pre-training weights  train_pretrained=""
+
+#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/psenet"。
+# (4) Set the model's startup file on the modelarts interface "train.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ICDAR2015/train"(choices ICDAR2015/train Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path" 。
+# (6) start trainning the model。
+
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#       a. set "enable_modelarts=True" 。
+#          set "TEST_ROOT_DIR=/cache/data/ic15/"
+#          set "ckpt=/cache/data/checkpoint/ckpt file"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (4) Set the code path on the modelarts interface "/path/psenet"。
+# (5) Set the model's startup file on the modelarts interface "eval.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../ICDAR2015/eval"(choices ICDAR2015/eval Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
+```
 
 ### Eval Script for ICDAR2015
 
@@ -189,11 +257,32 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 ### [Export MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --ckpt [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+- Export MindIR on Modelarts
+
+```Modelarts
+Export MindIR example on ModelArts
+Data storage method is the same as training
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters)。
+#       a. set "enable_modelarts=True"
+#          set "file_name=/cache/train/psenet"
+#          set "file_format=MINDIR"
+#          set "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+# (2)Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/psenet"。
+# (4) Set the model's startup file on the modelarts interface "export.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ICDAR2015/eval/checkpoint"(choices ICDAR2015/eval/checkpoint Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+```
 
 ### Infer on Ascend310
 

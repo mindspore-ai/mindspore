@@ -18,25 +18,21 @@ import os
 import math
 import operator
 from functools import reduce
-import argparse
 import time
 import numpy as np
 import cv2
 from mindspore import Tensor, context
 import mindspore.common.dtype as mstype
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-
-from src.config import config
 from src.dataset import test_dataset_creator
 from src.ETSNET.etsnet import ETSNet
-from src.ETSNET.pse import pse
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description='Hyperparams')
-parser.add_argument("--ckpt", type=str, default=0, help='trained model path.')
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False,
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
                     save_graphs_path=".")
+
 
 class AverageMeter():
     """Computes and stores the average and current value"""
@@ -55,11 +51,13 @@ class AverageMeter():
         self.count += n
         self.avg = self.sum / self.count
 
+
 def sort_to_clockwise(points):
     center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), points), [len(points)] * 2))
     clockwise_points = sorted(points, key=lambda coord: (-135 - math.degrees(
         math.atan2(*tuple(map(operator.sub, coord, center))[::-1]))) % 360, reverse=True)
     return clockwise_points
+
 
 def write_result_as_txt(img_name, bboxes, path):
     if not os.path.isdir(path):
@@ -76,17 +74,43 @@ def write_result_as_txt(img_name, bboxes, path):
         for line in lines:
             f.write(line)
 
+
+def modelarts_pre_process():
+    local_path = '{}/{}'.format(config.modelarts_home, config.object_name)
+
+    os.system('cd {}&&tar -zxvf opencv-3.4.9.tar.gz'.format(local_path))
+
+    cmake_command = 'cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL=/usr/local ..&&make -j16&&sudo make install'
+    os.system('cd {}/opencv-3.4.9&&mkdir build&&cd ./build&&{}'.format(local_path, cmake_command))
+
+    os.system('cd {}/src/ETSNET/pse&&make clean&&make'.format(local_path))
+    os.system('cd {}&&sed -i ’s/\r//‘ scripts/run_eval_ascend.sh')
+
+
+def modelarts_post_process():
+    local_path = '{}/{}'.format(config.modelarts_home, config.object_name)
+    os.system('cd {}&&sh scripts/run_eval_ascend.sh'.format(local_path))
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process, post_process=modelarts_post_process)
 def test():
-    if not os.path.isdir('./res/submit_ic15/'):
-        os.makedirs('./res/submit_ic15/')
-    if not os.path.isdir('./res/vis_ic15/'):
-        os.makedirs('./res/vis_ic15/')
+    from src.ETSNET.pse import pse
+
+    local_path = ""
+    if config.enable_modelarts:
+        local_path = os.path.join(config.modelarts_home, config.object_name) + '/'
+    print('local_path: ', local_path)
+
+    if not os.path.isdir('{}./res/submit_ic15/'.format(local_path)):
+        os.makedirs('{}./res/submit_ic15/'.format(local_path))
+    if not os.path.isdir('{}./res/vis_ic15/'.format(local_path)):
+        os.makedirs('{}./res/vis_ic15/'.format(local_path))
     ds = test_dataset_creator()
 
     config.INFERENCE = True
     net = ETSNet(config)
-    print(args.ckpt)
-    param_dict = load_checkpoint(args.ckpt)
+    print(config.ckpt)
+    param_dict = load_checkpoint(config.ckpt)
     load_param_into_net(net, param_dict)
     print('parameters loaded!')
 
@@ -149,8 +173,9 @@ def test():
         end_pts = time.time()
 
         # save res
-        cv2.imwrite('./res/vis_ic15/{}'.format(img_name), img[:, :, [2, 1, 0]].copy())
-        write_result_as_txt(img_name, bboxes, './res/submit_ic15/')
+        cv2.imwrite('{}./res/vis_ic15/{}'.format(local_path, img_name), img[:, :, [2, 1, 0]].copy())
+        write_result_as_txt(img_name, bboxes, '{}./res/submit_ic15/'.format(local_path))
+
 
 if __name__ == "__main__":
     test()

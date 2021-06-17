@@ -87,7 +87,6 @@ MSCOCO2017
     ├─run_infer_310.sh                        # Ascend推理shell脚本
     ├─run_eval.sh                             # 使用Ascend环境运行推理脚本
   ├─src
-    ├─config.py                               # 参数配置
     ├─dataset.py                              # 数据预处理
     ├─retinanet.py                            # 网络模型定义
     ├─init_params.py                          # 参数初始化
@@ -95,17 +94,24 @@ MSCOCO2017
     ├─coco_eval                               # coco数据集评估
     ├─box_utils.py                            # 先验框设置
     ├─_init_.py                               # 初始化
+    ├──model_utils
+      ├──config.py                            # 参数生成
+      ├──device_adapter.py                    # 设备相关信息
+      ├──local_adapter.py                     # 设备相关信息
+      ├──moxing_adapter.py                    # 装饰器(主要用于ModelArts数据拷贝)
   ├─train.py                                  # 网络训练脚本
   ├─export.py                                 # 导出 AIR,MINDIR模型的脚本
   ├─postprogress.py                           # 310推理后处理脚本
   └─eval.py                                   # 网络推理脚本
+  └─create_data.py                            # 构建Mindrecord数据集脚本
+  └─default_config.yaml                       # 参数配置
 
 ```
 
 ### [脚本参数](#content)
 
-```python
-在train.py和config.py脚本中使用到的主要参数是:
+```default_config.yaml
+在脚本中使用到的主要参数是:
 "img_shape": [600, 600],                                                                        # 图像尺寸
 "num_retinanet_boxes": 67995,                                                                   # 设置的先验框总数
 "match_thershold": 0.5,                                                                         # 匹配阈值
@@ -125,10 +131,10 @@ MSCOCO2017
 "num_default": [9, 9, 9, 9, 9],                                                                 # 单个网格中先验框的个数
 "extras_out_channels": [256, 256, 256, 256, 256],                                               # 特征层输出通道数
 "feature_size": [75, 38, 19, 10, 5],                                                            # 特征层尺寸
-"aspect_ratios": [(0.5,1.0,2.0), (0.5,1.0,2.0), (0.5,1.0,2.0), (0.5,1.0,2.0), (0.5,1.0,2.0)],   # 先验框大小变化比值
-"steps": ( 8, 16, 32, 64, 128),                                                                 # 先验框设置步长
-"anchor_size":(32, 64, 128, 256, 512),                                                          # 先验框尺寸
-"prior_scaling": (0.1, 0.2),                                                                    # 用于调节回归与回归在loss中占的比值
+"aspect_ratios": [[0.5,1.0,2.0], [0.5,1.0,2.0], [0.5,1.0,2.0], [0.5,1.0,2.0], [0.5,1.0,2.0]],   # 先验框大小变化比值
+"steps": [8, 16, 32, 64, 128],                                                                 # 先验框设置步长
+"anchor_size":[32, 64, 128, 256, 512],                                                          # 先验框尺寸
+"prior_scaling": [0.1, 0.2],                                                                    # 用于调节回归与回归在loss中占的比值
 "gamma": 2.0,                                                                                   # focal loss中的参数
 "alpha": 0.75,                                                                                  # focal loss中的参数
 "mindrecord_dir": "/cache/MindRecord_COCO",                                                     # mindrecord文件路径
@@ -159,7 +165,7 @@ MSCOCO2017
 "save_checkpoint": True,                                                                        # 保存checkpoint
 "save_checkpoint_epochs": 1,                                                                    # 保存checkpoint epoch数
 "keep_checkpoint_max":1,                                                                        # 保存checkpoint的最大数量
-"save_checkpoint_path": "./model",                                                              # 保存checkpoint的路径
+"save_checkpoint_path": "./ckpt",                                                              # 保存checkpoint的路径
 "finish_epoch":0,                                                                               # 已经运行完成的 epoch 数
 "checkpoint_path":"/home/hitwh1/1.0/ckpt_0/retinanet-500_458_59.ckpt"                           # 用于验证的checkpoint路径
 ```
@@ -174,11 +180,11 @@ MSCOCO2017
 # 八卡并行训练示例：
 
 创建 RANK_TABLE_FILE
-sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR RANK_TABLE_FILE PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+sh scripts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE MINDRECORD_DIR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 # 单卡训练示例：
 
-sh run_single_train.sh DEVICE_ID EPOCH_SIZE LR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+sh scripts/run_single_train.sh DEVICE_ID MINDRECORD_DIR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 ```
 
@@ -189,22 +195,22 @@ sh run_single_train.sh DEVICE_ID EPOCH_SIZE LR PRE_TRAINED(optional) PRE_TRAINED
 #### 运行
 
 ```运行
-训练前，先创建MindRecord文件，以COCO数据集为例
+训练前，先创建MindRecord文件，以COCO数据集为例，yaml文件配置好coco数据集路径和mindrecord存储路径
 python create_data.py --dataset coco
 
 Ascend:
 # 八卡并行训练示例(在retinanet目录下运行)：
-sh scripts/run_distribute_train.sh 8 500 0.09 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址，可选) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小，可选）
+sh scripts/run_distribute_train.sh 8 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) MINDRECORD_DIR(mindrecord数据集文件夹路径) PRE_TRAINED(预训练checkpoint地址，可选) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小，可选）
 
-例如：sh scripts/run_distribute_train.sh 8 500 0.09 scripts/rank_table_8pcs.json
+例如：sh scripts/run_distribute_train.sh 8 scripts/rank_table_8pcs.json ./cache/mindrecord_coco
 
 # 单卡训练示例(在retinanet目录下运行)：
-sh scripts/run_single_train.sh 0 500 0.09
+sh scripts/run_single_train.sh 0 ./cache/mindrecord_coco
 ```
 
 #### 结果
 
-训练结果将存储在示例路径中。checkpoint将存储在 `./model` 路径下，训练日志将被记录到 `./log.txt` 中，训练日志部分示例如下：
+训练结果将存储在示例路径中。checkpoint将存储在 `./ckpt` 路径下，训练日志将被记录到 `./log.txt` 中，训练日志部分示例如下：
 
 ```训练日志
 epoch: 2 step: 458, loss is 120.56251
@@ -221,6 +227,60 @@ lr:[0.000064]
 Epoch time: 164531.610, per step time: 359.239
 ```
 
+- 如果要在modelarts上进行模型的训练，可以参考modelarts的[官方指导文档](https://support.huaweicloud.com/modelarts/) 开始进行模型的训练和推理，具体操作如下：
+
+```ModelArts
+#  在ModelArts上使用分布式训练示例:
+#  数据集存放方式
+
+#  ├── MindRecord_COCO                                              # dir
+#    ├── annotations                                                # annotations dir
+#       ├── instances_val2017.json                                  # annotations file
+#    ├── checkpoint                                                 # checkpoint dir
+#    ├── pred_train                                                 # predtrained dir
+#    ├── MindRecord_COCO.zip                                        # train mindrecord file and eval mindrecord file
+
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "distribute=True"
+#          设置 "keep_checkpoint_max=5"
+#          设置 "save_checkpoint_path=/cache/train/checkpoint"
+#          设置 "mindrecord_dir=/cache/data/MindRecord_COCO"
+#          设置 "epoch_size=550"
+#          设置 "modelarts_dataset_unzip_name=MindRecord_COCO"
+#          设置 "pre_trained=/cache/data/train/train_predtrained/pred file name" 如果没有预训练权重 pre_trained=""
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/retinanet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../MindRecord_COCO"(选择MindRecord_COCO文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选择a或者b其中一种方式。
+#        a.设置 "enable_modelarts=True"
+#          设置 "mindrecord_dir=/cache/data/MindRecord_COCO"
+#          设置 "checkpoint_path=/cache/data/checkpoint/checkpoint file name"
+#          设置 "instance_set=/cache/data/MindRecord_COCO/annotations/instances_{}.json"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (3) 设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/retinanet"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "../MindRecord_COCO"(选择MindRecord_COCO文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
+```
+
 ### [评估过程](#content)
 
 #### <span id="usage">用法</span>
@@ -228,13 +288,13 @@ Epoch time: 164531.610, per step time: 359.239
 使用shell脚本进行评估。shell脚本的用法如下:
 
 ```eval
-sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
+sh scripts/run_eval.sh [DEVICE_ID] [DATASET] [MINDRECORD_DIR] [CHECKPOINT_PATH] [ANN_FILE PATH]
 ```
 
 #### <span id="running">运行</span>
 
 ```eval运行
-sh scripts/run_eval.sh coco 0
+sh scripts/run_eval.sh 0 coco /cache/mindrecord_dir/ /cache/checkpoint/retinanet_500-458.ckpt /cache/anno_path/instances_{}.json
 ```
 
 > checkpoint 可以在训练过程中产生.
@@ -269,7 +329,7 @@ mAP: 0.34747137754625645
 导出模型前要修改config.py文件中的checkpoint_path配置项，值为checkpoint的路径。
 
 ```shell
-python export.py --run_platform [RUN_PLATFORM] --file_format[EXPORT_FORMAT]
+python export.py --file_name [RUN_PLATFORM] --file_format[EXPORT_FORMAT] --checkpoint_path [CHECKPOINT PATH]
 ```
 
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
@@ -277,7 +337,27 @@ python export.py --run_platform [RUN_PLATFORM] --file_format[EXPORT_FORMAT]
 #### <span id="running">运行</span>
 
 ```运行
-python export.py  --run_platform ascend --file_format MINDIR
+python export.py  --file_name retinanet --file_format MINDIR --checkpoint_path /cache/checkpoint/retinanet_550-458.ckpt
+```
+
+- 在modelarts上导出MindIR
+
+```Modelarts
+在ModelArts上导出MindIR示例
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "file_name=/cache/train/cnnctc"
+#          设置 "file_format=MINDIR"
+#          设置 "checkpoint_path=/cache/data/checkpoint/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/retinanet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../MindRecord_COCO"(选择MindRecord_COCO文件夹路径) ,
+# MindIR的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
 ```
 
 ### [推理过程](#content)
