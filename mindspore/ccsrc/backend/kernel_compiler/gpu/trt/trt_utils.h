@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <variant>
 #include <NvInfer.h>
 #include "utils/log_adapter.h"
 #include "utils/singleton.h"
@@ -47,7 +48,7 @@ class TrtUtils {
     return iter->second;
   }
 
-  static nvinfer1::DataType MsDtypeToTrtDtype(const TypeId &ms_dtype) {
+  static std::variant<bool, nvinfer1::DataType> MsDtypeToTrtDtype(const TypeId &ms_dtype) {
     static std::map<TypeId, nvinfer1::DataType> type_list = {{TypeId::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
                                                              {TypeId::kNumberTypeFloat16, nvinfer1::DataType::kHALF},
                                                              {TypeId::kNumberTypeInt8, nvinfer1::DataType::kINT8},
@@ -55,7 +56,8 @@ class TrtUtils {
                                                              {TypeId::kNumberTypeInt32, nvinfer1::DataType::kINT32}};
     auto iter = type_list.find(ms_dtype);
     if (iter == type_list.end()) {
-      MS_LOG(EXCEPTION) << "data type not support: " << ms_dtype;
+      MS_LOG(WARNING) << "data type not support: " << ms_dtype;
+      return false;
     }
     return iter->second;
   }
@@ -160,5 +162,12 @@ inline std::shared_ptr<T> TrtPtr(T *obj) {
     if (obj) obj->destroy();
   });
 }
+
+#define TRT_VARIANT_CHECK(input, expect, ret) \
+  do {                                        \
+    if ((input.index()) != (expect)) {        \
+      return ret;                             \
+    }                                         \
+  } while (0)
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_TRT_UTILS_H_
