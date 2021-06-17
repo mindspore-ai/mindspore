@@ -20,6 +20,8 @@
 #include <stack>
 #include <vector>
 #include <map>
+#include <set>
+#include <unordered_map>
 #include "include/model.h"
 #include "src/lite_kernel.h"
 #include "src/lite_model.h"
@@ -55,6 +57,10 @@ class SearchSubGraph {
       return result;
     }
     int cost() { return io_cost_ + mul_cost_; }
+    void empty() {
+      io_cost_ = 0;
+      mul_cost_ = 0;
+    }
   };
 
   struct Subgraph {
@@ -65,6 +71,7 @@ class SearchSubGraph {
     DeviceType device_;
     size_t thread_;
     CostModel cost_;
+    uint32_t tid_; /* 1 or 2 */
   };
 
  public:
@@ -78,29 +85,43 @@ class SearchSubGraph {
  private:
   void SubGraphSplitByOutput();
   void InitSearchSubGraphByOutput();
+  void InsertNode(uint32_t index, Subgraph *subgraph);
 
  private:
   void SubGraphSplitByMiddle();
   void InitSearchSubGraphByMiddle();
+  void SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes);
+  void InitMiddleSubgraph(std::vector<uint32_t> *multy_in_nodes);
+  void InsertNodeByMid(uint32_t node_index, Subgraph *subgraph);
+  void InsertHeadNode(uint32_t index, Subgraph *subgraph);
+  void OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint32_t root_node_index);
+  std::unordered_map<uint32_t, std::vector<Subgraph>> node_sub_map_;
 
  private:
   void SubGraphSplitByOffLineParallel();
 
  private:
+  void RemoveConstNode(std::vector<uint32_t> *nodes);
   void InitSearchTensor();
   void InitSearchParallelSubGraph();
-  void ConvertSubGraphToModel();
-  void InsertNode(uint32_t index, Subgraph *subgraph);
+  void InitMainGraphDevice(DeviceType dt = DT_CPU);
+
+  void InitSubgraphRuntimeInfo(std::vector<Subgraph> *sub_graphs);
+  void SubgraphFusion(std::vector<Subgraph> *sub_graphs);
+  void CalculateCostModel(std::vector<Subgraph> *sub_graphs);
+  void ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs);
+
+ private:
   void InsertParallelNode(uint32_t index, Subgraph *subgraph);
   bool IsNodeSubGraphHead(uint32_t node_index, const std::vector<uint32_t> &ready_nodes);
+  bool IsNodeSubGraphHeadWithRoot(uint32_t node_index, const std::vector<uint32_t> &ready_nodes,
+                                  uint32_t root_node_index);
   const schema::Primitive *CreatePartialPrimitive(int64_t subgraph_index);
-  void InitSubgraphRuntimeInfo();
-  void SubgraphFusion();
-  void InitMainGraphDevice();
-  void CalculateCostModel();
+
+ private:
   CostModel CalculateConv2DFusion(Model::Node *node);
   void dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
-           std::vector<bool> *cor_group);
+           std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs);
 
  private:
   std::vector<size_t> *output_nodes_ = nullptr;
