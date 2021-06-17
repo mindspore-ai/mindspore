@@ -57,7 +57,6 @@ class Cell : public Named {
   bool operator==(const Value &other) const override;
   bool operator==(const Cell &other) const;
   ~Cell() override = default;
-  const bool parse_info_ = true;
 
  private:
   std::unordered_map<std::string, ValuePtr> attrs_;

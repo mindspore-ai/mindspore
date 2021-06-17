@@ -95,7 +95,7 @@ class Cloner {
   void AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params, AnfNodePtrList *const lift_params,
                      AnfNodePtrList *const input_params);
   void AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph, const AnfNodePtrList &params);
-  void OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs);
+  void OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs, size_t arg_start_index);
   void SetEdges(const FuncGraphPtr &func_graph);
   void LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                       const AnfNodePtrList &params);

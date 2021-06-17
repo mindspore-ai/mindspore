@@ -61,78 +61,46 @@ bool TypeListEqual::operator()(TypePtrList const &lhs, TypePtrList const &rhs) c
 }
 
 TypePtr TypeIdToType(TypeId id) {
-  switch (id) {
-    case kNumberTypeFloat16:
-      return kFloat16;
-    case kNumberTypeFloat:
-    case kNumberTypeFloat32:
-      return kFloat32;
-    case kNumberTypeFloat64:
-      return kFloat64;
-    case kNumberTypeComplex64:
-      return kComplex64;
-    case kNumberTypeInt8:
-      return kInt8;
-    case kNumberTypeInt16:
-      return kInt16;
-    case kNumberTypeInt32:
-      return kInt32;
-    case kNumberTypeInt:
-      return kInt32;
-    case kNumberTypeInt64:
-      return kInt64;
-    case kNumberTypeUInt8:
-      return kUInt8;
-    case kNumberTypeUInt16:
-      return kUInt16;
-    case kNumberTypeUInt32:
-      return kUInt32;
-    case kNumberTypeUInt64:
-      return kUInt64;
-    case kNumberTypeBool:
-      return kBool;
-    case kMetaTypeExternal:
-      return kTypeExternal;
-    case kMetaTypeAnything:
-      return kAnyType;
-    case kMetaTypeNone:
-      return kTypeNone;
-    case kMetaTypeNull:
-      return kTypeNull;
-    case kMetaTypeEllipsis:
-      return kTypeEllipsis;
-    case kObjectTypeEnvType:
-      return kTypeEnv;
-    case kObjectTypeRefKey:
-      return kRefKeyType;
-    case kObjectTypeRef:
-      return kRefType;
-    case kMetaTypeTypeType:
-      return kTypeType;
-    case kObjectTypeString:
-      return kString;
-    case kObjectTypeList:
-      return kList;
-    case kObjectTypeTuple:
-      return kTuple;
-    case kObjectTypeDictionary:
-      return kDict;
-    case kObjectTypeSlice:
-      return kSlice;
-    case kObjectTypeKeyword:
-      return kKeyword;
-    case kObjectTypeTensorType:
-      return kTensorType;
-    case kObjectTypeUMonad:
-      return kUMonadType;
-    case kObjectTypeIOMonad:
-      return kIOMonadType;
-    case kTypeUnknown:
-    case kMetaTypeProblem:
-      return kTypeNone;
-    default:
-      MS_LOG(EXCEPTION) << "Not support the type: " << id;
+  static std::unordered_map<TypeId, TypePtr> type_id_to_type = {{kNumberTypeFloat16, kFloat16},
+                                                                {kNumberTypeFloat, kFloat32},
+                                                                {kNumberTypeFloat32, kFloat32},
+                                                                {kNumberTypeFloat64, kFloat64},
+                                                                {kNumberTypeComplex64, kComplex64},
+                                                                {kNumberTypeInt8, kInt8},
+                                                                {kNumberTypeInt16, kInt16},
+                                                                {kNumberTypeInt32, kInt32},
+                                                                {kNumberTypeInt, kInt32},
+                                                                {kNumberTypeInt64, kInt64},
+                                                                {kNumberTypeUInt8, kUInt8},
+                                                                {kNumberTypeUInt16, kUInt16},
+                                                                {kNumberTypeUInt32, kUInt32},
+                                                                {kNumberTypeUInt64, kUInt64},
+                                                                {kNumberTypeBool, kBool},
+                                                                {kMetaTypeExternal, kTypeExternal},
+                                                                {kMetaTypeAnything, kAnyType},
+                                                                {kMetaTypeNone, kTypeNone},
+                                                                {kMetaTypeNull, kTypeNull},
+                                                                {kMetaTypeEllipsis, kTypeEllipsis},
+                                                                {kObjectTypeEnvType, kTypeEnv},
+                                                                {kObjectTypeRefKey, kRefKeyType},
+                                                                {kObjectTypeRef, kRefType},
+                                                                {kMetaTypeTypeType, kTypeType},
+                                                                {kObjectTypeString, kString},
+                                                                {kObjectTypeList, kList},
+                                                                {kObjectTypeTuple, kTuple},
+                                                                {kObjectTypeDictionary, kDict},
+                                                                {kObjectTypeSlice, kSlice},
+                                                                {kObjectTypeKeyword, kKeyword},
+                                                                {kObjectTypeTensorType, kTensorType},
+                                                                {kObjectTypeUMonad, kUMonadType},
+                                                                {kObjectTypeIOMonad, kIOMonadType},
+                                                                {kTypeUnknown, kTypeNone},
+                                                                {kMetaTypeProblem, kTypeNone}};
+  const auto &it = type_id_to_type.find(id);
+  if (it == type_id_to_type.end()) {
+    MS_LOG(EXCEPTION) << "Not support the type: " << id;
   }
+  return it->second;
 }
 
 namespace {
@@ -142,16 +110,12 @@ TypePtr StringToNumberType(const std::string &type_name, const std::string &num_
   if (type_name == num_type_name) {
     type = std::make_shared<T>();
   } else {
-    try {
-      if (num_type_name.size() >= type_name.size()) {
-        MS_LOG(EXCEPTION) << "Convert type is error, type_name(" << type_name << "), num_type_name(" << num_type_name
-                          << ")";
-      }
-      auto bits = std::stoi(type_name.substr(num_type_name.size()));
-      type = std::make_shared<T>(bits);
-    } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << num_type_name << " convert from string error " << e.what();
+    if (num_type_name.size() >= type_name.size()) {
+      MS_LOG(EXCEPTION) << "Convert type is error, type_name(" << type_name << "), num_type_name(" << num_type_name
+                        << ")";
     }
+    auto bits = std::stoi(type_name.substr(num_type_name.size()));
+    type = std::make_shared<T>(bits);
   }
   return type;
 }
@@ -181,23 +145,18 @@ TypePtr TensorStrToType(const std::string &type_name) {
   if (type_name == "Tensor") {
     type = std::make_shared<TensorType>();
   } else {
-    try {
-      auto start = type_name.find_first_of('[') + 1;
-      auto end = type_name.find_last_of(']');
-      if (start >= type_name.size()) {
-        return nullptr;
-      }
-      auto element_str = type_name.substr(start, end - start);
-      auto element_type = StringToType(element_str);
-      if (element_type == nullptr) {
-        return nullptr;
-      }
-      type = std::make_shared<TensorType>(element_type);
-    } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
+    auto start = type_name.find_first_of('[') + 1;
+    auto end = type_name.find_last_of(']');
+    if (start >= type_name.size()) {
+      return nullptr;
     }
+    auto element_str = type_name.substr(start, end - start);
+    auto element_type = StringToType(element_str);
+    if (element_type == nullptr) {
+      return nullptr;
+    }
+    type = std::make_shared<TensorType>(element_type);
   }
-
   return type;
 }
 
@@ -257,23 +216,18 @@ TypePtr ListStrToType(const std::string &type_name) {
   if (type_name == "List") {
     type = std::make_shared<List>();
   } else {
-    try {
-      auto start = type_name.find_first_of('[') + 1;
-      auto end = type_name.find_last_of(']');
-      if (start >= type_name.size()) {
-        return nullptr;
-      }
-      std::string element_strs = type_name.substr(start, end - start);
-      std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
-      bool wrong =
-        std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
-      if (wrong) {
-        return nullptr;
-      }
-      type = std::make_shared<List>(element_types);
-    } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
+    auto start = type_name.find_first_of('[') + 1;
+    auto end = type_name.find_last_of(']');
+    if (start >= type_name.size()) {
+      return nullptr;
     }
+    std::string element_strs = type_name.substr(start, end - start);
+    std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
+    bool wrong = std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
+    if (wrong) {
+      return nullptr;
+    }
+    type = std::make_shared<List>(element_types);
   }
 
   return type;
@@ -284,23 +238,18 @@ TypePtr TupleStrToType(const std::string &type_name) {
   if (type_name == "Tuple") {
     type = std::make_shared<Tuple>();
   } else {
-    try {
-      size_t start = type_name.find_first_of('[') + 1;
-      size_t end = type_name.find_last_of(']');
-      if (start >= type_name.size()) {
-        return nullptr;
-      }
-      std::string element_strs = type_name.substr(start, end - start);
-      std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
-      bool wrong =
-        std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
-      if (wrong) {
-        return nullptr;
-      }
-      type = std::make_shared<Tuple>(element_types);
-    } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
+    size_t start = type_name.find_first_of('[') + 1;
+    size_t end = type_name.find_last_of(']');
+    if (start >= type_name.size()) {
+      return nullptr;
     }
+    std::string element_strs = type_name.substr(start, end - start);
+    std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
+    bool wrong = std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
+    if (wrong) {
+      return nullptr;
+    }
+    type = std::make_shared<Tuple>(element_types);
   }
   return type;
 }
@@ -311,95 +260,126 @@ TypePtr FunctionStrToType(const std::string &type_name) {
   if (type_name == "Function") {
     type = std::make_shared<Function>();
   } else {
-    try {
-      // format: [(para1, para2, para3, ...) retval]
-      size_t start = type_name.find_first_of('[') + 1;
-      size_t end = type_name.find_last_of(']');
-      if (start >= type_name.size()) {
-        return nullptr;
-      }
-      std::string str_all = type_name.substr(start, end - start);
-      size_t start_a = str_all.find_first_of('(') + 1;
-      size_t end_a = str_all.find_last_of(')');
-      if (start_a >= str_all.size()) {
-        return nullptr;
-      }
-      std::string str_args = str_all.substr(start_a, end_a - start_a);
-      // bypass " " between ")" and retval
-      start = end_a + 2;
-      if (start >= str_all.size()) {
-        return nullptr;
-      }
-      std::string str_retval = str_all.substr(start);
-
-      std::vector<TypePtr> args_type = StringToVectorOfType(str_args);
-      TypePtr retval = StringToType(str_retval);
-      bool wrong = std::any_of(args_type.begin(), args_type.end(), [](const TypePtr &x) { return x == nullptr; });
-      if (retval == nullptr || wrong) {
-        return nullptr;
-      }
-      type = std::make_shared<Function>(args_type, retval);
-    } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
+    // format: [(para1, para2, para3, ...) retval]
+    size_t start = type_name.find_first_of('[') + 1;
+    size_t end = type_name.find_last_of(']');
+    if (start >= type_name.size()) {
+      return nullptr;
     }
+    std::string str_all = type_name.substr(start, end - start);
+    size_t start_a = str_all.find_first_of('(') + 1;
+    size_t end_a = str_all.find_last_of(')');
+    if (start_a >= str_all.size()) {
+      return nullptr;
+    }
+    std::string str_args = str_all.substr(start_a, end_a - start_a);
+    // bypass " " between ")" and retval
+    start = end_a + 2;
+    if (start >= str_all.size()) {
+      return nullptr;
+    }
+    std::string str_retval = str_all.substr(start);
+    std::vector<TypePtr> args_type = StringToVectorOfType(str_args);
+    TypePtr retval = StringToType(str_retval);
+    bool wrong = std::any_of(args_type.begin(), args_type.end(), [](const TypePtr &x) { return x == nullptr; });
+    if (retval == nullptr || wrong) {
+      return nullptr;
+    }
+    type = std::make_shared<Function>(args_type, retval);
   }
   return type;
 }
 }  // namespace
 
-TypePtr StringToType(const std::string &type_name) {
-  TypePtr type = nullptr;
+TypePtr GetTypeByFullString(const std::string &type_name) {
   if (type_name == "None") {
-    type = std::make_shared<TypeNone>();
-  } else if (type_name == "Ellipsis") {
-    type = std::make_shared<TypeEllipsis>();
-  } else if (type_name == "TypeType") {
-    type = std::make_shared<TypeType>();
-  } else if (type_name == "SymbolicKeyType") {
-    type = std::make_shared<SymbolicKeyType>();
-  } else if (type_name == "RefKeyType") {
-    type = std::make_shared<RefKeyType>();
-  } else if (type_name == "EnvType") {
-    type = std::make_shared<EnvType>();
-  } else if (type_name == "Number") {
-    type = std::make_shared<Number>();
-  } else if (type_name == "Bool") {
-    type = std::make_shared<Bool>();
-  } else if (type_name.compare(0, strlen("Int"), "Int") == 0) {
-    type = StringToNumberType<Int>(type_name, "Int");
-  } else if (type_name.compare(0, strlen("UInt"), "UInt") == 0) {
-    type = StringToNumberType<UInt>(type_name, "UInt");
-  } else if (type_name.compare(0, strlen("Float"), "Float") == 0) {
-    type = StringToNumberType<Float>(type_name, "Float");
-  } else if (type_name.compare(0, strlen("Tensor"), "Tensor") == 0) {
-    type = TensorStrToType(type_name);
-  } else if (type_name.compare(0, strlen("Undetermined"), "Undetermined") == 0) {
-    type = UndeterminedStrToType(type_name);
-  } else if (type_name.compare(0, strlen("RowTensor"), "RowTensor") == 0) {
-    type = RowTensorStrToType(type_name);
-  } else if (type_name.compare(0, strlen("SparseTensor"), "SparseTensor") == 0) {
-    type = SparseTensorStrToType(type_name);
-  } else if (type_name.compare(0, strlen("List"), "List") == 0) {
-    type = ListStrToType(type_name);
-  } else if (type_name.compare(0, strlen("Tuple"), "Tuple") == 0) {
-    type = TupleStrToType(type_name);
-  } else if (type_name == "Slice") {
-    type = std::make_shared<Slice>();
-  } else if (type_name == "Dictionary") {
-    type = std::make_shared<Dictionary>();
-  } else if (type_name == "String") {
-    type = std::make_shared<String>();
-  } else if (type_name == "Problem") {
-    type = std::make_shared<Problem>();
-  } else if (type_name.compare(0, strlen("Function"), "Function") == 0) {
-    type = FunctionStrToType(type_name);
-  } else if (type_name == "mstype") {
-    type = std::make_shared<TypeType>();
-  } else if (type_name == "UMonad") {
-    type = kUMonadType;
-  } else if (type_name == "IOMonad") {
-    type = kIOMonadType;
-  } else {
+    return std::make_shared<TypeNone>();
+  }
+  if (type_name == "Ellipsis") {
+    return std::make_shared<TypeEllipsis>();
+  }
+  if (type_name == "TypeType") {
+    return std::make_shared<TypeType>();
+  }
+  if (type_name == "SymbolicKeyType") {
+    return std::make_shared<SymbolicKeyType>();
+  }
+  if (type_name == "RefKeyType") {
+    return std::make_shared<RefKeyType>();
+  }
+  if (type_name == "EnvType") {
+    return std::make_shared<EnvType>();
+  }
+  if (type_name == "Number") {
+    return std::make_shared<Number>();
+  }
+  if (type_name == "Bool") {
+    return std::make_shared<Bool>();
+  }
+  if (type_name == "Slice") {
+    return std::make_shared<Slice>();
+  }
+  if (type_name == "Dictionary") {
+    return std::make_shared<Dictionary>();
+  }
+  if (type_name == "String") {
+    return std::make_shared<String>();
+  }
+  if (type_name == "Problem") {
+    return std::make_shared<Problem>();
+  }
+  if (type_name == "mstype") {
+    return std::make_shared<TypeType>();
+  }
+  if (type_name == "UMonad") {
+    return kUMonadType;
+  }
+  if (type_name == "IOMonad") {
+    return kIOMonadType;
+  }
+  return nullptr;
+}
+
+TypePtr GetTypeByStringStarts(const std::string &type_name) {
+  if (type_name.compare(0, strlen("Int"), "Int") == 0) {
+    return StringToNumberType<Int>(type_name, "Int");
+  }
+  if (type_name.compare(0, strlen("UInt"), "UInt") == 0) {
+    return StringToNumberType<UInt>(type_name, "UInt");
+  }
+  if (type_name.compare(0, strlen("Float"), "Float") == 0) {
+    return StringToNumberType<Float>(type_name, "Float");
+  }
+  if (type_name.compare(0, strlen("Tensor"), "Tensor") == 0) {
+    return TensorStrToType(type_name);
+  }
+  if (type_name.compare(0, strlen("Undetermined"), "Undetermined") == 0) {
+    return UndeterminedStrToType(type_name);
+  }
+  if (type_name.compare(0, strlen("RowTensor"), "RowTensor") == 0) {
+    return RowTensorStrToType(type_name);
+  }
+  if (type_name.compare(0, strlen("SparseTensor"), "SparseTensor") == 0) {
+    return SparseTensorStrToType(type_name);
+  }
+  if (type_name.compare(0, strlen("List"), "List") == 0) {
+    return ListStrToType(type_name);
+  }
+  if (type_name.compare(0, strlen("Tuple"), "Tuple") == 0) {
+    return TupleStrToType(type_name);
+  }
+  if (type_name.compare(0, strlen("Function"), "Function") == 0) {
+    return FunctionStrToType(type_name);
+  }
+  return nullptr;
+}
+
+TypePtr StringToType(const std::string &type_name) {
+  auto type = GetTypeByFullString(type_name);
+  if (type == nullptr) {
+    type = GetTypeByStringStarts(type_name);
+  }
+  if (type == nullptr) {
     // - unsupported to convert
     // Class
     // SymbolicType
@@ -409,17 +389,6 @@ TypePtr StringToType(const std::string &type_name) {
     MS_LOG(EXCEPTION) << "Unsupported type name: " << type_name << "!";
   }
   return type;
-}
-
-bool IsParentOrChildrenType(TypePtr const &x, TypePtr const &base_type) {
-  if (x == nullptr || base_type == nullptr) {
-    MS_LOG(ERROR) << "Type is nullptr.";
-    return false;
-  }
-  if (base_type->type_id() == kTypeUnknown || x->type_id() == kTypeUnknown) {
-    return false;
-  }
-  return base_type->type_id() == x->parent_type() || x->type_id() == base_type->parent_type();
 }
 
 bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type) {

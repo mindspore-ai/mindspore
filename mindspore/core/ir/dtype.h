@@ -235,8 +235,6 @@ TypePtr StringToType(const std::string &type_name);
 // Judge whether x is predicate or is a subclass of predicate.
 bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type);
 
-bool IsParentOrChildrenType(TypePtr const &x, TypePtr const &base_type);
-
 // Whether t1 is identity or a subclass of t2.
 bool IsSubType(TypePtr const &t1, TypePtr const &t2 = nullptr);
 

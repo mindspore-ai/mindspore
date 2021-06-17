@@ -51,6 +51,7 @@ bool Cell::operator==(const Cell &other) const {
     if (iter == other.attrs_.end()) {
       return false;
     }
+    MS_EXCEPTION_IF_NULL(iter->second);
     return *item.second == *iter->second;
   });
   return all;

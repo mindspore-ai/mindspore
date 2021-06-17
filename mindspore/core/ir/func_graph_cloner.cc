@@ -70,6 +70,7 @@ void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, 
   TraceGuard trace_guard(node->debug_info(), relation_);
   auto new_param = (is_add) ? target->add_parameter() : std::make_shared<Parameter>(target);
   auto old_param = node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(old_param);
   new_param->set_abstract(old_param->abstract());
   new_param->set_name(old_param->name());
   if (old_param->has_default()) {
@@ -186,16 +187,20 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   target_func_graph->set_stage(func_graph->stage());
   auto old_return = func_graph->get_return();
   if (old_return != nullptr) {
-    auto return_node = repl_node_[old_return]->cast<CNodePtr>();
-    if (return_node == nullptr) {
+    auto iter = repl_node_.find(old_return);
+    if (iter == repl_node_.end()) {
       MS_LOG(EXCEPTION) << "Can't find replicate node for return.";
     }
+    MS_EXCEPTION_IF_NULL(iter->second);
+    auto return_node = iter->second->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(return_node);
     target_func_graph->set_return(return_node);
   }
 
   auto &cnodes = func_graph->func_graph_cnodes_index();
   for (auto &cnode : cnodes) {
     auto parent = cnode.first->first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(parent);
     auto valuenode = parent->input(cnode.first->second);
     CloneValueNode(valuenode, target_func_graph);
   }
@@ -333,8 +338,9 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   }
   auto cnode = node->cast<CNodePtr>();
   auto inputs = cnode->inputs();
+  constexpr auto caller_first_arg_index = 2;
   std::vector<AnfNodePtr> add_params{params.begin(), params.end()};
-  for (size_t i = 2; i < inputs.size(); i++) {
+  for (size_t i = caller_first_arg_index; i < inputs.size(); i++) {
     auto ret = std::find(add_params.begin(), add_params.end(), inputs[i]);
     if (ret != add_params.end()) {
       add_params.erase(ret);
@@ -342,10 +348,10 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   }
   (void)std::copy(add_params.begin(), add_params.end(), std::back_inserter(inputs));
   cnode->set_inputs(inputs);
-  OrderParameters(func_graph, inputs);
+  OrderParameters(func_graph, inputs, caller_first_arg_index);
 }
 
-void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs) {
+void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs, size_t arg_start_index) {
   std::unordered_set<AnfNodePtr> old_params;
   for (auto &param : func_graph->parameters()) {
     (void)old_params.insert(repl_node_[param]);
@@ -353,7 +359,7 @@ void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrLis
   std::unordered_set<AnfNodePtr> new_params;
   AnfNodePtrList parameters;
   // Ignore the 1st and 2nd param of inputs(such as. partial graph)
-  for (size_t i = 2; i < inputs.size(); ++i) {
+  for (size_t i = arg_start_index; i < inputs.size(); ++i) {
     auto input = inputs[i];
     auto param = repl_node_[input];
     if (old_params.find(param) != old_params.end()) {

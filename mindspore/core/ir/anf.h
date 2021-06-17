@@ -141,6 +141,7 @@ class AnfNode : public Base {
     return debug_info_;
   }
   void set_debug_info(const NodeDebugInfoPtr &debug_info) {
+    MS_EXCEPTION_IF_NULL(debug_info);
     debug_info_ = debug_info;
     if (debug_info_->get_node() == nullptr) {
       debug_info_->set_node(shared_from_base<AnfNode>());
@@ -253,7 +254,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
   bool IsApply(const PrimitivePtr &) const;
 
   const size_t size() const { return inputs_.size(); }
-  const AnfNodePtr &input(size_t i) const { return inputs_.at(i); }
+  const AnfNodePtr &input(size_t i) const;
   const std::vector<AnfNodePtr> &inputs() const { return inputs_; }
   void add_input(const AnfNodePtr &input);
   void set_input(size_t i, const AnfNodePtr &input);

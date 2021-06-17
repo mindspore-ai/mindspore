@@ -336,17 +336,18 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
       return false;
     }
   }
-  void GenerateVarParams(const FuncGraphPtr &specialized_graph, std::vector<AnfNodePtr> *specialized_parameter_list,
-                         std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes, int variable_args_count,
-                         int pos_args_input_count);
+  void GenerateVarParams(const FuncGraphPtr &specialized_graph, int variable_args_count, int pos_args_input_count,
+                         std::vector<AnfNodePtr> *specialized_parameter_list,
+                         std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
-  void GenerateKwParams(const FuncGraphPtr &specialized_graph, std::vector<AnfNodePtr> *specialized_parameter_list,
+  void GenerateKwParams(const FuncGraphPtr &specialized_graph,
                         const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list,
-                        std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes);
+                        std::vector<AnfNodePtr> *specialized_parameter_list,
+                        std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   void GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
                             const std::vector<AnfNodePtr> &specialized_parameter_list,
-                            std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes);
+                            std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   const std::vector<AnfNodePtr> &used_global_parameters() const { return used_global_parameters_; }
   void add_used_global_parameters(const AnfNodePtr &p) { used_global_parameters_.push_back(p); }
@@ -456,9 +457,9 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   GraphDebugInfoPtr debug_info_;
   void GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
-                             std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes,
                              const std::vector<AnfNodePtr> &kwarg_keys_tuple_nodes,
-                             const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes);
+                             const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes,
+                             std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   // CNode order which relates to origin code order.
   OrderedSet<CNodePtr> order_;
