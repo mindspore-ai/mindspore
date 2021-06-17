@@ -50,4 +50,14 @@ void CalPadGrad3d(const size_t size, const T* dy, const int num, const int chann
                   const int old_height, const int old_width, const int padded_depth, const int padded_height,
                   const int padded_width, const int pad_head, const int pad_top, const int pad_left, T* dx,
                   cudaStream_t cuda_stream);
+template <typename T>
+void CalPadNDHWC(const size_t size, const T *input, const int num, const int old_depth, const int old_height,
+                 const int old_width, const int channels, const int padded_depth, const int padded_height,
+                 const int padded_width, const int pad_head, const int pad_top, const int pad_left,
+                 const float pad_value, T *output, cudaStream_t cuda_stream);
+template <typename T>
+void CalPadGradNDHWC(const size_t size, const T *dy, const int num, const int old_depth, const int old_height,
+                     const int old_width, const int channels, const int padded_depth, const int padded_height,
+                     const int padded_width, const int pad_head, const int pad_top, const int pad_left, T *dx,
+                     cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_PADIMPL_H_
