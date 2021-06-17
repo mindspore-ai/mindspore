@@ -20,32 +20,37 @@ function android_release_package()
 {
     arch=$1
     device=$2
-    dst_pkg_name="mindspore-lite-${version}-android-${arch}"
-    rm -rf ${dst_pkg_name}
-    mv ${input_path}/android_${arch}/${device}/${dst_pkg_name}.tar.gz ${output_path}/release/android/${device}/${dst_pkg_name}.tar.gz
+    pkg_name="mindspore-lite-${version}-android-${arch}"
+
+    rm -rf ${pkg_name}
+    tar -xzf ${input_path}/android_${arch}/${device}/${pkg_name}.tar.gz
+    # Copy java runtime to Android package
+    cp ${input_path}/aar/avx/mindspore-lite-*maven*.zip ${pkg_name}
+
+    mkdir -p ${output_path}/release/android/${device}/
+    tar -czf ${output_path}/release/android/${device}/${pkg_name}.tar.gz ${pkg_name}
+    rm -rf ${pkg_name}
     cd ${output_path}/release/android/${device}/
-    sha256sum ${dst_pkg_name}.tar.gz > ${dst_pkg_name}.tar.gz.sha256
+    sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
+}
+
+function ios_release_package()
+{
+    arch=$1
+    mkdir -p ${output_path}/release/ios/
+    cp ${input_path}/ios_${arch}/*.tar.gz* ${output_path}/release/ios/
 }
 
 function linux_release_package()
 {
-
-    dst_pkg_name="mindspore-lite-${version}-linux-x64"
-    rm -rf ${dst_pkg_name}
     mkdir -p ${output_path}/release/linux/
-    mv ${input_path}/ubuntu_x86/${dst_pkg_name}.tar.gz ${output_path}/release/linux/
-    cd ${output_path}/release/linux/
-    sha256sum ${dst_pkg_name}.tar.gz > ${dst_pkg_name}.tar.gz.sha256
+    cp ${input_path}/ubuntu_x86/avx/*.tar.gz* ${output_path}/release/linux/
 }
 
 function windows_release_package()
 {
-    pkg_name="mindspore-lite-${version}-win-x64"
-
-    rm -rf ${pkg_name}
-    mv  ${input_path}/windows_x64/avx/${pkg_name}.zip ${output_path}/release/windows/${dst_pkg_name}.zip
-    cd ${output_path}/release/windows/
-    sha256sum ${dst_pkg_name}.zip > ${dst_pkg_name}.zip.sha256
+    mkdir -p ${output_path}/release/windows/
+    cp ${input_path}/windows_x64/avx/*.zip* ${output_path}/release/windows/
 }
 
 echo "============================== begin =============================="
@@ -58,6 +63,8 @@ version=`ls ${input_path}/android_aarch64/mindspore-lite-*-*.tar.gz | awk -F'/' 
 android_release_package aarch32
 android_release_package aarch64
 android_release_package aarch64 gpu
+ios_release_package aarch32
+ios_release_package aarch64
 linux_release_package
 windows_release_package
 
