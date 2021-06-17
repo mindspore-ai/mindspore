@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace common {
-#ifdef ENABLE_D
+#if ENABLE_D || ENABLE_GPU
 const size_t kDeviceNum = 8;
 #endif
 const size_t kMaxThreadNum = 23;
@@ -33,7 +33,7 @@ ThreadPool::ThreadPool() {
   if (process_core_num < 1) {
     process_core_num = 1;
   }
-#ifdef ENABLE_D
+#if ENABLE_D || ENABLE_GPU
   max_thread_num_ = process_core_num / kDeviceNum;
 #else
   max_thread_num_ = process_core_num;

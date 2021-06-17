@@ -21,6 +21,7 @@
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include <thread>
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/device/device_address.h"
 #include "backend/session/kernel_graph.h"
@@ -54,8 +55,7 @@ enum class GraphExecutionStrategy {
   kStep       // The actor running need be triggered by control in addition.
 };
 
-// Get the max available thread number of system.
-int64_t GetMaxThreadNum();
+void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num);
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node);
 

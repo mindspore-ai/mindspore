@@ -15,25 +15,28 @@
  */
 
 #include "runtime/framework/actor/actor_common.h"
-#include <unistd.h>
-#ifdef __WIN32__
-#include <windows.h>
-#endif
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/framework/device_tensor_store.h"
 
 namespace mindspore {
 namespace runtime {
-int64_t GetMaxThreadNum() {
-#ifdef __WIN32__
-  SYSTEM_INFO sys_info;
-  GetSystemInfo(&sys_info);
-  auto max_thread_num = sys_info.dwNumberOfProcessors;
-#else
-  auto max_thread_num = sysconf(_SC_NPROCESSORS_ONLN);
-#endif
+void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
+  MS_EXCEPTION_IF_NULL(actor_thread_num);
+  MS_EXCEPTION_IF_NULL(OMP_thread_num);
+  size_t cpu_core_num = std::thread::hardware_concurrency();
 
-  return max_thread_num;
+  const size_t kActorThreadMaxNum = 8;
+  // The MemoryManagerActor binds single thread, and the other actors share one thread at least, so the min num is 2.
+  const size_t kActorThreadMinNum = 2;
+  *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
+  *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
+
+  const size_t kOMPThreadNumThreshold = 16;
+  if (cpu_core_num <= kOMPThreadNumThreshold) {
+    *OMP_thread_num = cpu_core_num;
+  } else {
+    *OMP_thread_num = cpu_core_num / (*actor_thread_num);
+  }
 }
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
