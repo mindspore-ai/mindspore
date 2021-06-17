@@ -27,6 +27,13 @@ if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
 if __name__ == '__main__':
+    if hasattr(config, 'num_ssd_boxes') and config.num_ssd_boxes == -1:
+        num = 0
+        h, w = config.img_shape
+        for i in range(len(config.steps)):
+            num += (h // config.steps[i]) * (w // config.steps[i]) * config.num_default[i]
+        config.num_ssd_boxes = num
+
     if config.model_name == "ssd300":
         net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
     elif config.model_name == "ssd_vgg16":
@@ -37,13 +44,6 @@ if __name__ == '__main__':
         net = ssd_resnet50_fpn(config=config)
     else:
         raise ValueError(f'config.model: {config.model_name} is not supported')
-
-    if hasattr(config, 'num_ssd_boxes') and config.num_ssd_boxes == -1:
-        num = 0
-        h, w = config.img_shape
-        for i in range(len(config.steps)):
-            num += (h // config.steps[i]) * (w // config.steps[i]) * config.num_default[i]
-        config.num_ssd_boxes = num
 
     net = SsdInferWithDecoder(net, Tensor(default_boxes), config)
 

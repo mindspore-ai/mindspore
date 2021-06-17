@@ -182,9 +182,6 @@ Create a container layer over the created image and start it
 bash scripts/docker_start.sh ssd:20.1.0 [DATA_DIR] [MODEL_DIR]
 ```
 
-如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
-开始进行模型的训练和推理，具体操作如下：
-
 If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
 
 ```python
