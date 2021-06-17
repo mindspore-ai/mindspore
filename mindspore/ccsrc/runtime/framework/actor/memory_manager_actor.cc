@@ -35,7 +35,8 @@ void MemoryManagerActor::AllocateMemory(std::vector<DeviceTensor *> *alloc_list,
     }
     // Allocate memory through the device context.
     if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
-      std::string error_info = "Device memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
+      std::string error_info = "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
+                               ") memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
                                ", alloc size: " + std::to_string(device_tensor->GetSize());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
     }
@@ -69,7 +70,8 @@ void MemoryManagerActor::AllocateContinuousMemory(std::vector<std::vector<Device
     auto &device_context = (*device_contexts)[i];
     // Allocate memory through the device context.
     if (!device_context->AllocateContinuousMemory(alloc_list, total_size, size_list)) {
-      std::string error_info = "Device memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
+      std::string error_info = "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
+                               ") memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
                                ", alloc size: " + std::to_string(total_size);
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
     }
@@ -101,7 +103,8 @@ void MemoryManagerActor::AllocateBatchMemory(std::vector<DeviceTensor *> *alloc_
 
     // Allocate memory through the device context.
     if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
-      std::string error_info = "Device memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
+      std::string error_info = "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
+                               ") memory isn't enough and alloc failed, actor name: " + from_aid.Name() +
                                ", alloc size: " + std::to_string(device_tensor->GetSize());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
     }
