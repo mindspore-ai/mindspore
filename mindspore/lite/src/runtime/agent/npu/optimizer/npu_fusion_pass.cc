@@ -22,6 +22,10 @@
 #include "nnacl/pad_parameter.h"
 #include "nnacl/strided_slice_parameter.h"
 
+namespace {
+constexpr int kNumDims = 4;
+constexpr int kNumInputSize = 4;
+}  // namespace
 namespace mindspore::lite {
 bool CheckFusion(kernel::LiteKernel *kernel) {
   if (kernel->in_kernels().empty() || kernel->out_kernels().empty()) {
@@ -63,7 +67,7 @@ void NPUFusionPass::RemoveAndFreeKernel(kernel::LiteKernel *cur_kernel) {
   delete cur_kernel;
 }
 
-void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
+int NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
   for (auto in_kernel : cur_kernel->in_kernels()) {
     // graph in kernel
     if (in_kernel->in_kernels().empty()) {
@@ -90,9 +94,10 @@ void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
     cur_kernel->set_in_kernels(cur_in_kernels);
     RemoveAndFreeKernel(in_kernel);
   }
+  return RET_OK;
 }
 
-void NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
+int NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
   auto cur_out_kernels = cur_kernel->out_kernels();
   for (auto out_kernel : cur_kernel->out_kernels()) {
     // graph out kernel
@@ -119,11 +124,16 @@ void NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
     RemoveAndFreeKernel(out_kernel);
   }
   cur_kernel->set_out_kernels(cur_out_kernels);
+  return RET_OK;
 }
 
-void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
+int UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
   auto tensors_vec = NPUPassUtils::GetNonConstInputs(cur_kernel);
   for (auto in_kernel : cur_kernel->in_kernels()) {
+    if (in_kernel->in_tensors().empty() || in_kernel->out_tensors().empty() || in_kernel->in_kernels().empty()) {
+      MS_LOG(ERROR) << "in_tensors/out_tensors/in_kernels is empty.";
+      return RET_ERROR;
+    }
     lite::Tensor *cur_tensor = nullptr;
     auto in_tensor = in_kernel->in_tensors()[0];
     auto out_tensor = in_kernel->out_tensors()[0];
@@ -149,14 +159,15 @@ void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
     }
   }
   cur_kernel->set_in_tensors(tensors_vec);
+  return RET_OK;
 }
 
-void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
+int UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
   auto tensor = cur_kernel->out_tensors()[0];
 
   // in case: node->nh2nc->nc2nh(graph output) --->>> node->nc2nh, node out_tensor should be put to nnc2nh out tensors
   auto out_kernels = cur_kernel->out_kernels();
-  if (out_kernels.size() == 1 && out_kernels[0]->out_kernels().size() == 1 &&
+  if (!out_kernels.empty() && out_kernels.size() == 1 && out_kernels[0]->out_kernels().size() == 1 &&
       out_kernels[0]->out_kernels()[0]->out_kernels().empty() &&
       out_kernels[0]->out_kernels()[0]->type_str() == "Transpose") {
     auto nc_tensor = out_kernels[0]->out_tensors()[0];  // nh2nc's out tensor
@@ -167,11 +178,15 @@ void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
     post_post_k_in_tensors[0] = nc_tensor;
     post_post_kernel->set_in_tensors(post_post_k_in_tensors);
     post_post_kernel->set_out_tensors({tensor});
-    return;
+    return RET_OK;
   }
 
   tensor->set_format(mindspore::NCHW);
   auto nhwc_shape = tensor->shape();
+  if (nhwc_shape.size() < kNumDims) {
+    MS_LOG(ERROR) << "nhwc_shape < " << kNumDims;
+    return RET_ERROR;
+  }
   tensor->set_shape({nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]});
   for (auto out_kernel : cur_kernel->out_kernels()) {
     auto out_tensor = out_kernel->out_tensors()[0];
@@ -188,6 +203,7 @@ void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
       post_kernel->set_in_tensors(tensors_vec);
     }
   }
+  return RET_OK;
 }
 
 int TransFormAxis(int axis) {
@@ -206,20 +222,53 @@ int TransFormAxis(int axis) {
   }
 }
 
-void NPUFusionPass::UpdateKernel(kernel::LiteKernel *kernel) {
-  UpdatePreTensors(kernel);
-  UpdatePostTensors(kernel);
-  UpdatePreKernels(kernel);
-  UpdatePostKernels(kernel);
+int NPUFusionPass::UpdateKernel(kernel::LiteKernel *kernel) {
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return RET_ERROR;
+  }
+  auto ret = UpdatePreTensors(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdatePreTensors failed.";
+    return RET_ERROR;
+  }
+  ret = UpdatePostTensors(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdatePostTensors failed.";
+    return RET_ERROR;
+  }
+  ret = UpdatePreKernels(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdatePreKernels failed.";
+    return RET_ERROR;
+  }
+  ret = UpdatePostKernels(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdatePostKernels failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int NPUFusionPass::CommonFusion(kernel::LiteKernel *kernel) {
-  UpdateKernel(kernel);
+  auto ret = UpdateKernel(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdateKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int NPUFusionPass::ConcatFusion(kernel::LiteKernel *kernel) {
-  UpdateKernel(kernel);
+  auto ret = UpdateKernel(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdateKernel failed.";
+    return RET_ERROR;
+  }
+  if (kernel->op_parameter() == nullptr) {
+    MS_LOG(ERROR) << "op_parameter is nullptr.";
+    return RET_ERROR;
+  }
   auto concat_param = reinterpret_cast<ConcatParameter *>(kernel->op_parameter());
   concat_param->axis_ = TransFormAxis(concat_param->axis_);
   return RET_OK;
@@ -234,7 +283,7 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
   auto in_tensor = kernel->in_tensors()[0];
   std::vector<kernel::LiteKernel *> pre_insert_kernels;
   for (const auto &trans_kernel : kernel->out_kernels()) {
-    if (trans_kernel->out_kernels().empty()) {
+    if (trans_kernel->out_kernels().empty() && !is_input_kernel) {
       // kernel is a trans kernel, it's input kernel num and input tensor num must be 1
       kernel->in_kernels()[0]->set_out_tensors({trans_kernel->out_tensors()[0]});
       // in fp16 mode, tensor data type fp16 need to be changed back.
@@ -288,14 +337,26 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
 }
 
 int NPUFusionPass::SplitFusion(kernel::LiteKernel *kernel) {
-  UpdateKernel(kernel);
+  auto ret = UpdateKernel(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdateKernel failed.";
+    return RET_ERROR;
+  }
+  if (kernel->op_parameter() == nullptr) {
+    MS_LOG(ERROR) << "op_parameter is nullptr.";
+    return RET_ERROR;
+  }
   auto split_param = reinterpret_cast<SplitParameter *>(kernel->op_parameter());
   split_param->split_dim_ = TransFormAxis(split_param->split_dim_);
   return RET_OK;
 }
 
 int NPUFusionPass::PadFusion(kernel::LiteKernel *kernel) {
-  UpdateKernel(kernel);
+  auto ret = UpdateKernel(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdateKernel failed.";
+    return RET_ERROR;
+  }
   auto pad_param = reinterpret_cast<PadParameter *>(kernel->op_parameter());
   int c1 = pad_param->paddings_[6];
   int c2 = pad_param->paddings_[7];
@@ -313,7 +374,15 @@ int NPUFusionPass::PadFusion(kernel::LiteKernel *kernel) {
 
 int NPUFusionPass::StridedSliceFusion(kernel::LiteKernel *kernel) {
   // basic requirement: input is nhwc 4d
-  UpdateKernel(kernel);
+  auto ret = UpdateKernel(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UpdateKernel failed.";
+    return RET_ERROR;
+  }
+  if (kernel->in_tensors().size() < kNumInputSize) {
+    MS_LOG(ERROR) << "in tensors size < " << kNumInputSize;
+    return RET_ERROR;
+  }
   auto param = reinterpret_cast<StridedSliceParameter *>(kernel->op_parameter());
   auto begin_tensor = kernel->in_tensors().at(1);
   int *begin = reinterpret_cast<int *>(begin_tensor->data_c());
@@ -371,7 +440,10 @@ int NPUFusionPass::Run() {
     auto kernel = (*kernels)[i];
     if (CheckFormatFusion(kernel)) {
       i--;
-      FormatFusion(kernel);
+      if (FormatFusion(kernel) != RET_OK) {
+        MS_LOG(ERROR) << "FormatFusion failed.";
+        return RET_ERROR;
+      }
     }
   }
 

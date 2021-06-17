@@ -57,7 +57,11 @@ int NPUTransformPass::InsertPreNodes(kernel::LiteKernel *kernel, std::vector<ker
     std::vector<Tensor *> pre_trans_out_tensors = {tensor};
     all_tensors_->push_back(pre_trans_out_tensors[0]);
 
-    auto nh2nc_perm_tensor = new Tensor(kNumberTypeInt32, {4}, mindspore::NHWC, Tensor::CONST_TENSOR);
+    auto nh2nc_perm_tensor = new (std::nothrow) Tensor(kNumberTypeInt32, {4}, mindspore::NHWC, Tensor::CONST_TENSOR);
+    if (nh2nc_perm_tensor == nullptr) {
+      MS_LOG(ERROR) << "New nchw tensor failed when inserting pre nhwc2nchw kernel.";
+      return RET_ERROR;
+    }
     auto nh2nc_data = nh2nc_perm_tensor->MutableData();
     if (nh2nc_data == nullptr) {
       return RET_ERROR;
@@ -119,7 +123,11 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
 
     if (is_output_kernel) {
       // perm tensor
-      auto nc2nh_perm_tensor = new Tensor(kNumberTypeInt32, {4}, mindspore::NHWC, Tensor::CONST_TENSOR);
+      auto nc2nh_perm_tensor = new (std::nothrow) Tensor(kNumberTypeInt32, {4}, mindspore::NHWC, Tensor::CONST_TENSOR);
+      if (nc2nh_perm_tensor == nullptr) {
+        MS_LOG(ERROR) << "New nc2nh_perm_tensor failed when inserting post nchw2nhwc kernel.";
+        return RET_ERROR;
+      }
       auto nc2nh_data = nc2nh_perm_tensor->MutableData();
       if (nc2nh_data == nullptr) {
         return RET_ERROR;
@@ -141,7 +149,11 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
     for (auto i = 0; i < post_insert_kernels.size(); ++i) {
       auto post_insert_kernel = post_insert_kernels.at(i);
       // perm tensor
-      auto nc2nh_perm_tensor = new Tensor(kNumberTypeInt32, {4}, mindspore::NHWC, Tensor::CONST_TENSOR);
+      auto nc2nh_perm_tensor = new (std::nothrow) Tensor(kNumberTypeInt32, {4}, mindspore::NHWC, Tensor::CONST_TENSOR);
+      if (nc2nh_perm_tensor == nullptr) {
+        MS_LOG(ERROR) << "New nc2nh_perm_tensor failed when inserting post nchw2nhwc kernel.";
+        return RET_ERROR;
+      }
       auto nc2nh_data = nc2nh_perm_tensor->MutableData();
       if (nc2nh_data == nullptr) {
         return RET_ERROR;
