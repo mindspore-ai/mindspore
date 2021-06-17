@@ -259,6 +259,11 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
 
   graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend_name);
   graph_compiler_ = std::make_shared<GraphCompiler>();
+
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  device_context->Initialize();
+  device_id_ = device_context->device_context_key().device_id_;
 }
 
 const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {

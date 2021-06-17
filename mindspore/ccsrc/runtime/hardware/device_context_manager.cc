@@ -53,5 +53,18 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
   }
   return device_context.get();
 }
+
+void DeviceContextManager::UpdataDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key) {
+  std::string old_key_str = old_key.ToString();
+  std::string new_key_str = new_key.ToString();
+
+  auto handle = device_contexts_.extract(old_key_str);
+  if (handle.empty()) {
+    MS_LOG(EXCEPTION) << "Can not find device context for: " << old_key_str;
+  }
+
+  handle.key() = new_key_str;
+  device_contexts_.insert(std::move(handle));
+}
 }  // namespace device
 }  // namespace mindspore
