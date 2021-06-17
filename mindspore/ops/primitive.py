@@ -144,6 +144,12 @@ class Primitive(Primitive_):
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
         """
         mode = context.get_auto_parallel_context("parallel_mode")
+        if strategy is not None:
+            if not isinstance(strategy, tuple):
+                raise TypeError('strategy must be tuple type.')
+            for ele in strategy:
+                if not isinstance(ele, tuple):
+                    raise TypeError('The element of strategy must be tuple type.')
         if not _is_in_auto_parallel_mode() and strategy:
             logger.warning(f"The shard strategy {strategy} of {self.name} is not valid in {mode}. "
                            f"Please use semi auto or auto parallel mode.")
