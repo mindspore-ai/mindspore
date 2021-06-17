@@ -1622,7 +1622,7 @@ class ExecuteOrderGenerator {
     auto &all_graphs = context_.visited_graphs();
 
     // Count parameter write times by check all assign nodes.
-    auto param_write_times = CountParameterAssigns(search_list);
+    auto param_write_times = CountParameterAssigns(search_list, exec_order);
 
     // Erase redundant assigns.
     for (auto iter = exec_order.begin(); iter != exec_order.end();) {
@@ -1682,7 +1682,8 @@ class ExecuteOrderGenerator {
   }
 
   // Count parameter write times by check all assign nodes.
-  std::map<AnfNodePtr, std::pair<int, size_t>> CountParameterAssigns(const std::map<CNodePtr, size_t> &search_list) {
+  std::map<AnfNodePtr, std::pair<int, size_t>> CountParameterAssigns(const std::map<CNodePtr, size_t> &search_list,
+                                                                     const std::vector<CNodePtr> &exec_order) {
     auto ref_map = graph_->GetRefMap();
     std::multimap<AnfNodePtr, std::tuple<size_t, AnfNodePtr, size_t>> ref_multimap;
     std::set<AnfNodePtr> root_inputs(graph_->inputs().begin(), graph_->inputs().end());
@@ -1713,16 +1714,16 @@ class ExecuteOrderGenerator {
       }
     }
 
-    std::set<AnfNodePtr> refed_parameters;
-    for (auto &item : search_list) {
-      auto &node = item.first;
+    // Search all refnodes for parameter write assigns.
+    for (auto &node : exec_order) {
+      if (ref_multimap.find(node) == ref_multimap.end()) {
+        // if node is not refnode which cannot write param, skip it.
+        continue;
+      }
+      std::set<AnfNodePtr> refed_parameters;
       for (auto [iter, end] = ref_multimap.equal_range(node); iter != end; ++iter) {
         (void)refed_parameters.insert(validate_ref_parameter(std::get<1>(iter->second)));
       }
-    }
-    // Search all nodes for parameter write assigns.
-    for (auto &item : search_list) {
-      auto &node = item.first;
       for (auto &in : node->inputs()) {
         auto visit_node = AnfAlgo::VisitKernelWithReturnType(in, 0).first;
         visit_node = validate_ref_parameter(visit_node);
@@ -1734,7 +1735,10 @@ class ExecuteOrderGenerator {
           if (iter != param_write_times.end()) {
             // Found a parameter writer, count it.
             ++(iter->second.first);
-            iter->second.second = item.second;
+            if (search_list.find(node) == search_list.end()) {
+              MS_LOG(EXCEPTION) << "node: " << node->DebugString() << " cannot found in search list.";
+            }
+            iter->second.second = search_list.at(node);
           }
         }
       }
