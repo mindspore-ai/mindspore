@@ -18,7 +18,7 @@ Validator Functions for Offline Debugger APIs.
 from functools import wraps
 
 import mindspore.offline_debug.dbg_services as cds
-from mindspore.offline_debug.mi_validator_helpers import parse_user_args, type_check, type_check_list, check_dir, check_uint32, check_uint64
+from mindspore.offline_debug.mi_validator_helpers import parse_user_args, type_check, type_check_list, check_dir, check_uint32, check_uint64, check_iteration
 
 
 def check_init(method):
@@ -114,7 +114,7 @@ def check_check_watchpoints(method):
     def new_method(self, *args, **kwargs):
         [iteration], _ = parse_user_args(method, *args, **kwargs)
 
-        check_uint32(iteration, "iteration")
+        check_iteration(iteration, "iteration")
 
         return method(self, *args, **kwargs)
 
@@ -159,7 +159,7 @@ def check_tensor_info_init(method):
 
         type_check(node_name, (str,), "node_name")
         check_uint32(slot, "slot")
-        check_uint32(iteration, "iteration")
+        check_iteration(iteration, "iteration")
         check_uint32(device_id, "device_id")
         check_uint32(root_graph_id, "root_graph_id")
         type_check(is_parameter, (bool,), "is_parameter")
