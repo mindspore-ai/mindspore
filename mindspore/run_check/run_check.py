@@ -19,8 +19,8 @@ mindspore.run_check
 The goal is to provide a convenient API to check if the installation is successful or failed.
 """
 
-import numpy as np
 from importlib import import_module
+import numpy as np
 
 
 try:
@@ -63,5 +63,5 @@ def run_check():
         _check_mul()
     # pylint: disable=broad-except
     except Exception as e:
-        print("MindSpore installation failed!")
-        print("CheckFailed: ", str(e))
+        print("MindSpore running check failed.")
+        print(str(e))
