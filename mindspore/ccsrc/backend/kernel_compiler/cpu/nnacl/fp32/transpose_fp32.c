@@ -172,10 +172,13 @@ void TransposeDim6Fp32(const float *in_data, float *out_data, const int *strides
 }
 
 void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_shape,
-                       TransposeParameter *transpose_param, int task_id, int thread_num) {
-  int *perm = transpose_param->perm_;
-  int *strides = transpose_param->strides_;
-  int *out_strides = transpose_param->out_strides_;
+                       const TransposeParameter *transpose_param, int task_id, int thread_num) {
+  if (thread_num == 0) {
+    return;
+  }
+  int *perm = (int *)(transpose_param->perm_);
+  int *strides = (int *)(transpose_param->strides_);
+  int *out_strides = (int *)(transpose_param->out_strides_);
   int num_axes = transpose_param->num_axes_;
   size_t data_size = (*out_strides) * output_shape[0];
   size_t offset_size = UP_DIV(data_size, thread_num);
@@ -201,13 +204,13 @@ void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_
 }
 
 int DoTransposeFp32(const float *in_data, float *out_data, const int *output_shape,
-                    TransposeParameter *transpose_param) {
+                    const TransposeParameter *transpose_param) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
-  int *perm = transpose_param->perm_;
-  int *strides = transpose_param->strides_;
-  int *out_strides = transpose_param->out_strides_;
+  int *perm = (int *)(transpose_param->perm_);
+  int *strides = (int *)(transpose_param->strides_);
+  int *out_strides = (int *)(transpose_param->out_strides_);
   int data_size = transpose_param->data_num_ * sizeof(float);
   int num_axes = transpose_param->num_axes_;
 

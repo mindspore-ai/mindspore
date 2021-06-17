@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/base/minimal_filtering_generator.h"
+#include "nnacl/errorcode.h"
 
 #define MIN_UNIT 2
 #define MAX_UNIT 8
@@ -140,7 +141,9 @@ void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const fl
   }
   MatrixMultiplyVec(vec_at, src, t, NULL, out_unit, in_unit, in_unit);
   MatrixMultiplyVec(t, vec_a, m, bias_data, out_unit, in_unit, out_unit);
-
+  if ((out_unit - 1) * out_unit + out_unit - 1 > MAX_LEN) {
+    return;
+  }
   for (int i = 0; i < out_unit; i++) {
     int dst_k_offset = i * dst_step * C4NUM;
     int m_k_offset = i * out_unit;
@@ -3850,13 +3853,16 @@ void OutputTransform8x7Relu6Unit(const float *src_data, float *dst_data, const f
 // Reference to the paper "Fast Algorithms for Convolutional Neural Networks"
 // Utilize cost model to compute performance gain.
 // If the gain is greater than got from Im2col, winograd algorithm will be chosen.
-int SelectOutputUnit(ConvParameter *conv_param) {
+int SelectOutputUnit(const ConvParameter *conv_param) {
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_c = conv_param->input_channel_;
   int out_w = conv_param->output_w_;
   int out_h = conv_param->output_h_;
   int out_c = conv_param->output_channel_;
+  if (conv_param->op_parameter_.thread_num_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int unit2 = UP_DIV(out_w * out_h, C12NUM * conv_param->op_parameter_.thread_num_);
   int max_out_unit = (int)(sqrtf((float)unit2));
   max_out_unit = max_out_unit < MAX_UNIT ? max_out_unit : MAX_UNIT;
@@ -3887,7 +3893,7 @@ int SelectOutputUnit(ConvParameter *conv_param) {
   return unit;
 }
 
-bool CheckIfUseWinograd(int *output_unit, ConvParameter *conv_param) {
+bool CheckIfUseWinograd(int *output_unit, const ConvParameter *conv_param) {
   if (conv_param->kernel_w_ == conv_param->kernel_h_ && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
       conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1) {
     *output_unit = SelectOutputUnit(conv_param);

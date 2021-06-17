@@ -55,7 +55,9 @@ void DeConvPostFp32C8(const float *src, float *tmp, const float *bias, float *ds
   int dst_ow_stride = C8NUM;
   int dst_kh_stride = conv_param->dilation_h_ * conv_param->output_w_ * C8NUM;
   int dst_kw_stride = conv_param->dilation_w_ * C8NUM;
-
+  if (conv_param->dilation_h_ == 0 || conv_param->dilation_w_ == 0) {
+    return;
+  }
   for (int c = 0; c < oc8; c += 8) {
     float *dst_ptr = tmp + c * output_plane;
     const float *src_ptr = src + c * in_plane_round * kernel_plane;

@@ -485,6 +485,9 @@ int CropAndResizeBilinear(const float *input_data, float *output_data, const int
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                           CalculateOriginalCoordinate calculate, int coordinate_transform_mode, int tid,
                           int thread_num) {
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   int c = input_shape[3];
   bool align_corners = coordinate_transform_mode == 1;
   for (int batch = 0; batch < output_shape[0]; batch++) {

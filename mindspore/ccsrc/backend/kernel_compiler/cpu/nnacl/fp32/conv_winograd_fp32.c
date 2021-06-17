@@ -24,6 +24,9 @@
 void ConvWinogardFp32(const float *input_data, const float *trans_weight, const float *bias_data, float *output_data,
                       TmpBufferAddress *buffer_list, int task_id, const ConvParameter *conv_param,
                       InputTransFunc in_func, OutputTransFunc out_func) {
+  if (conv_param->output_unit_ == 0) {
+    return;
+  }
   int in_channel = conv_param->input_channel_;
   int out_w_block = UP_DIV(conv_param->output_w_, conv_param->output_unit_);
   int out_h_block = UP_DIV(conv_param->output_h_, conv_param->output_unit_);
@@ -38,6 +41,9 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
   int oc_tile = UP_DIV(conv_param->output_channel_, col_tile);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
   int input_unit_square = conv_param->input_unit_ * conv_param->input_unit_;
+  if (input_unit_square < conv_param->input_unit_) {
+    return;
+  }
 
   float *trans_input = buffer_list[0];
   float *gemm_out = buffer_list[1];

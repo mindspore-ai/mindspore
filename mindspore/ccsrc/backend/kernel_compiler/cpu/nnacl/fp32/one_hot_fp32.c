@@ -22,6 +22,9 @@ int OneHot(const int *indices, float *output, const OneHotParameter *one_hot_par
   if (indices == NULL || one_hot_param == NULL || output == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (thread_num == 0) {
+    return NNACL_PARAM_INVALID;
+  }
 
   int outer_size = one_hot_param->outer_size_;
   int inner_size = one_hot_param->inner_size_;

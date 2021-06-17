@@ -18,14 +18,12 @@
 
 void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_ptr, size_t output_channel,
                       size_t plane_size, size_t plane_stride, size_t oc_stride, ActType relu_type, int size) {
-  int oc_div = 0, oc_mod = 0;
+  if (size == 0) {
+    return;
+  }
   for (int oc = 0; oc < output_channel; oc++) {
-    if (size != 0) {
-      oc_div = oc / size;
-      oc_mod = oc % size;
-    } else {
-      return;
-    }
+    int oc_div = oc / size;
+    int oc_mod = oc % size;
     for (int hw = 0; hw < plane_size; hw++) {
       int src_index = oc_div * size * plane_stride + hw * size + oc_mod;
       int dst_index = hw * oc_stride + oc;

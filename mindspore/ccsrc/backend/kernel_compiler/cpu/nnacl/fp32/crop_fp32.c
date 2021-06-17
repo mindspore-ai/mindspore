@@ -22,7 +22,7 @@ void Pad4DOffset(const CropParameter *crop_param, int64_t *offset, int length) {
   int axis = crop_param->axis_;
   for (int i = length - 1; i >= 0; --i) {
     int offset_index = i - axis;
-    if (offset_index >= 0) {
+    if (offset_index >= 0 && offset_index < COMM_SHAPE_SIZE) {
       offset[i] = crop_param->offset_[offset_index];
     } else {
       offset[i] = 0;
@@ -44,6 +44,9 @@ void Crop4D(const float *input, float *output, const int *in_shape, const int *o
   size_t in_stride1 = in_stride2 * in_shape[2];
   size_t in_stride0 = in_stride1 * in_shape[1];
   size_t copy_size = out_shape3 * sizeof(float);
+  if (crop_param->op_parameter_.thread_num_ == 0) {
+    return;
+  }
   size_t count_per_thread = UP_DIV(out_shape1, crop_param->op_parameter_.thread_num_);
   size_t thread_stride = thread_id * count_per_thread;
   for (int i = 0; i < out_shape[0]; ++i) {

@@ -21,6 +21,9 @@
 
 void BatchNormFp32(const void *input, const void *mean, const void *variance, const BatchNormParameter *param,
                    int task_id, void *output) {
+  if (param->op_parameter_.thread_num_ == 0) {
+    return;
+  }
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
@@ -38,6 +41,9 @@ void BatchNormFp32(const void *input, const void *mean, const void *variance, co
 
 void FusedBatchNormFp32(const void *input, const void *scale, const void *offset, const void *mean,
                         const void *variance, const BatchNormParameter *param, int task_id, void *output) {
+  if (param->op_parameter_.thread_num_ == 0) {
+    return;
+  }
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);

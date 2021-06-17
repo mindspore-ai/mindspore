@@ -49,6 +49,9 @@ int CopyData(float *input_data, const int *ids, float *output_data, int num,
 
 int EmbeddingLookup(float *input_data, const int *ids, float *output_data, const EmbeddingLookupParameter *parameter,
                     int task_id) {
+  if (parameter->op_parameter_.thread_num_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   for (size_t i = task_id; i < parameter->ids_size_; i += parameter->op_parameter_.thread_num_) {
     int ret = CopyData(input_data, ids, output_data, i, parameter);
     if (ret != NNACL_OK) {

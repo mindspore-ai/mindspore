@@ -27,6 +27,9 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
   int out_channel = conv_param->output_channel_;
   int deep = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
   int output_count = conv_param->output_h_ * conv_param->output_w_;
+  if (conv_param->thread_num_ == 0) {
+    return;
+  }
   Row2ColMajorFuncPtr Row2ColMajor = NULL;
 #ifdef ENABLE_AVX
   const int cal_num = C6NUM;

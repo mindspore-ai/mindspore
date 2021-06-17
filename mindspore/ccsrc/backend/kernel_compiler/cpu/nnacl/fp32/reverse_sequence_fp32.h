@@ -25,7 +25,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ReverseSequence(float *input0, const void *input1, float *output, ReverseSequenceParameter *para);
+void ReverseSequence(const float *input0, const void *input1, float *output, ReverseSequenceParameter *para);
 #ifdef __cplusplus
 }
 #endif
