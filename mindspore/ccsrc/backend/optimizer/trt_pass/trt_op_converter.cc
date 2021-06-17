@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <string>
+#include <variant>
 #include <NvInfer.h>
 #include "backend/optimizer/trt_pass/trt_converter_context.h"
 #include "backend/optimizer/trt_pass/trt_op_factory.h"
@@ -879,7 +880,11 @@ MS_TRT_CONVERTER_FUNC_REG(Cast) {
   nvinfer1::ITensor *input = ToTensor(&inputs[0], input_shape, context);
 
   const TypeId &dst_type = AnfAlgo::GetOutputInferDataType(node, 0);
-  auto trt_type = TrtUtils::MsDtypeToTrtDtype(dst_type);
+  std::variant<bool, nvinfer1::DataType> type = TrtUtils::MsDtypeToTrtDtype(dst_type);
+  if (type.index() != 1) {
+    return {false, {}};
+  }
+  auto trt_type = std::get<nvinfer1::DataType>(type);
   auto *layer = context->network()->addIdentity(*input);
   layer->setOutputType(0, trt_type);
 
