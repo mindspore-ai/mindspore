@@ -42,8 +42,14 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
   int *ele_shape_ptr = (int *)(ele_shape->data_);
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
-  for (int i = 0; i < GetElementNum(ele_shape); ++i) {
-    ShapePush(output_shape, &output_shape_size, ele_shape_ptr[i]);
+  if (ele_shape_ptr[0] == -1) {
+    for (int i = 0; i < input0->element_shape_size_; i++) {
+      ShapePush(output_shape, &output_shape_size, input0->element_shape_[i]);
+    }
+  } else {
+    for (int i = 0; i < GetElementNum(ele_shape); ++i) {
+      ShapePush(output_shape, &output_shape_size, ele_shape_ptr[i]);
+    }
   }
 
   int status =
