@@ -128,7 +128,17 @@ package-arm64/
 │   │   ├── 98.bmp
 │   │   └── 99.bmp
 ├── lib
-│   └── libmindspore-lite.so           # MindSpore Lite library
+│   ├── libjpeg.so.62
+│   ├── libminddata-lite.a
+│   ├── libminddata-lite.so
+│   ├── libmindspore-lite.a
+│   ├── libmindspore-lite-jni.so
+│   ├── libmindspore-lite.so
+│   ├── libmindspore-lite-train.a
+│   ├── libmindspore-lite-train-jni.so
+│   ├── libmindspore-lite-train.so
+│   ├── libturbojpeg.so.0
+│   └── mindspore-lite-java.jar
 ├── model
 │   └── transfer_learning_tod.ms       # model to train
 ├── eval.sh                            # script that load the train model and evaluates its accuracy

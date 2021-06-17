@@ -18,7 +18,9 @@
 #include <math.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <malloc.h>
 #include <cstring>
+#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <utility>
