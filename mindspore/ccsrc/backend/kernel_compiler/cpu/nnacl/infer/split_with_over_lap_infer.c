@@ -82,7 +82,7 @@ int SplitWithOverlapInferShape(const TensorC *const *inputs, size_t inputs_size,
     for (int dim = 0; dim < input->shape_size_; dim++) {
       if (dim == split_dim) {
         int splited_size = borders[i + 1] - borders[i];
-        splited_size += extend_top[i] + extend_bottom[i];
+        splited_size += (extend_top[i] + extend_bottom[i]);
         output_shape[dim] = splited_size;
       } else {
         output_shape[dim] = input_shape[dim];

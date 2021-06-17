@@ -27,7 +27,7 @@
 #define REMOVE_PRELU 1
 
 // whether to enable count time and data printer in parallel_executor.cc or not
-#define PROFILE 1
+#define PROFILE 0
 
 // typical bind mode for parallel_executor
 // #define BASE 6

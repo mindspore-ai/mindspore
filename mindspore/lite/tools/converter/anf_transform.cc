@@ -63,7 +63,6 @@
 #include "tools/optimizer/parallel/parallel_pass.h"
 #include "include/registry/pass_registry.h"
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
-#include "tools/optimizer/fisson/eliminate_concat_split.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -162,17 +161,14 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
     parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
     parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
     std::set<int, opt::IntCompare> match_multi_numbers = opt::Spliter::GetInstance()->graph_match_multi_numbers();
-    for (const auto &match_multi_number : match_multi_numbers) {
+    int max_match_number = *match_multi_numbers.begin();
+    // we do not deal with single conv node
+    for (int match_number = max_match_number; match_number > opt::kDefaultBatch; --match_number) {
       // 3. multi_conv parallel pass
-      parallel_pm->AddPass(std::make_shared<opt::MultiConvSplitPass>(split_strategys, config->fmk, match_multi_number));
+      parallel_pm->AddPass(std::make_shared<opt::MultiConvSplitPass>(split_strategys, config->fmk, match_number));
       parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
       parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
     }
-    // 4. single conv parallel pass
-    parallel_pm->AddPass(std::make_shared<opt::ParallelPass>(split_strategys, config->fmk));
-    parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
-    parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
-    parallel_pm->AddPass(std::make_shared<opt::EliminateConcatSplit>());
     optimizer->AddPassManager(parallel_pm);
     if (optimizer->Optimize(old_graph) == nullptr) {
       MS_LOG(ERROR) << "run const fold failed.";

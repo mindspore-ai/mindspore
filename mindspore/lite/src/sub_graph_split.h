@@ -116,6 +116,7 @@ class SearchSubGraph {
   size_t major_thread_;
   size_t minor_thread_;
   size_t total_cost_ = 0;
+  bool offline_parallel_enable_ = false;
 };
 }  // namespace mindspore::lite
 

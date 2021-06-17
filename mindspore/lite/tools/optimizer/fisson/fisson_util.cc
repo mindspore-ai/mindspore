@@ -24,23 +24,29 @@
 #include "ops/concat.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "tools/optimizer/parallel/split_strategy.h"
+#include "nnacl/op_base.h"
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore {
 namespace opt {
-
-std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim) {
+std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
+                                     int64_t input_w) {
   if (ori_conv_prim->get_pad_mode() != SAME) {
     return ori_conv_prim->get_pad_list();
   }
+  int64_t output_h = static_cast<int64_t>(
+    std::ceil(static_cast<float>(input_h) / static_cast<float>(ori_conv_prim->get_stride().at(kIndexH))));
+  int64_t output_w = static_cast<int64_t>(
+    std::ceil(static_cast<float>(input_w) / static_cast<float>(ori_conv_prim->get_stride().at(kIndexW))));
+
   std::vector<int64_t> new_pad_list;
   int64_t pad_up = 0, pad_down = 0, pad_left = 0, pad_right = 0;
-  int64_t pad_h_all = -ori_conv_prim->get_stride().at(kIndexH) +
+  int64_t pad_h_all = (output_h - 1) * ori_conv_prim->get_stride().at(kIndexH) +
                       (ori_conv_prim->get_kernel_size().at(kIndexH) - 1) * ori_conv_prim->get_dilation().at(kIndexH) +
-                      1;
-  int64_t pad_w_all = -ori_conv_prim->get_stride().at(kIndexW) +
+                      1 - input_h;
+  int64_t pad_w_all = (output_w - 1) * ori_conv_prim->get_stride().at(kIndexW) +
                       (ori_conv_prim->get_kernel_size().at(kIndexW) - 1) * ori_conv_prim->get_dilation().at(kIndexW) +
-                      1;
+                      1 - input_w;
   if (pad_h_all >= 0) {
     pad_up = pad_h_all / 2;
     pad_down = pad_h_all - pad_up;
@@ -73,7 +79,7 @@ bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info
   // out-shape after splited
   int64_t tmp_value = 0;
   for (int64_t i = 0; i < split_num - 1; i++) {
-    int64_t tmp = (split_info->size_splits[i] * splited_axis_value) / split_len;
+    int64_t tmp = UP_DIV(split_info->size_splits[i] * splited_axis_value, split_len);
     tmp_value += tmp;
     split_axis_out_shape->push_back(tmp);
     split_axis_reduce_out_shape->push_back(tmp_value);
@@ -83,13 +89,16 @@ bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info
   return true;
 }
 
-void CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_shapes, int64_t splited_axis_value,
-                     const SplitInfo *split_info, const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim,
-                     int64_t index_node, std::vector<std::vector<int64_t>> *split_axis_inputs_shape,
+void CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_shapes, const SplitInfo *split_info,
+                     const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t index_node,
+                     std::vector<std::vector<int64_t>> *split_axis_inputs_shape,
                      std::vector<std::vector<int64_t>> *split_axis_reduce_inputs_shape) {
-  auto new_pad_list = GetSplitPadList(ori_conv_prim);
+  auto in_out_shape = node_in_out_shapes.at(index_node);
+  auto in_shape = in_out_shape.front();
+  int64_t input_h = in_shape.at(kAxisH);
+  int64_t input_w = in_shape.at(kAxisW);
+  auto new_pad_list = GetSplitPadList(ori_conv_prim, input_h, input_w);
   ori_conv_prim->set_pad_list(new_pad_list);
-  ori_conv_prim->set_pad_mode(PAD);
   int64_t split_num = split_info->out_num;
   int64_t tmp = 0;
   std::vector<int64_t> split_axis_shape;
@@ -98,90 +107,34 @@ void CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_sh
   for (int64_t index = 0; index < split_num; index++) {
     // shape
     if (split_info->axis == CuttingStragedy::CUT_H) {  // H
-      if ((splited_axis_value + ori_conv_prim->get_pad_list()[kPadUp] + ori_conv_prim->get_pad_list()[kPadDown] -
-           (ori_conv_prim->get_kernel_size()[kIndexH] - 1)) %
-            ori_conv_prim->get_stride()[kIndexH] ==
-          0) {
-        if (index == 0) {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index]) +
-                (ori_conv_prim->get_kernel_size()[kIndexH] - 1) - ori_conv_prim->get_pad_list()[kPadUp];
-        } else if (index == split_num - 1) {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index]) +
-                (ori_conv_prim->get_kernel_size()[kIndexH] - 1) - ori_conv_prim->get_pad_list()[kPadDown];
-        } else {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index]) +
-                (ori_conv_prim->get_kernel_size()[kIndexH] - 1) - 0;
-        }
-      } else {
-        if (index == 0) {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index] - 1) -
-                ori_conv_prim->get_pad_list()[kPadUp] + ori_conv_prim->get_kernel_size()[kIndexH];
-        } else if (index == split_num - 1) {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index] - 1) -
-                ori_conv_prim->get_pad_list()[kPadDown] + ori_conv_prim->get_kernel_size()[kIndexH];
-        } else {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index] - 1) - 0 +
-                ori_conv_prim->get_kernel_size()[kIndexH];
-        }
-      }
-
-    } else if (split_info->axis == CuttingStragedy::CUT_W) {  // W
       if (index == 0) {
-        tmp = ori_conv_prim->get_stride()[kIndexW] * ((*split_axis_inputs_shape)[index_node][index] - 1) -
-              ori_conv_prim->get_pad_list()[kPadLeft] + ori_conv_prim->get_kernel_size()[kIndexW];
+        tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index] - 1) -
+              ori_conv_prim->get_pad_list()[kPadUp] + ori_conv_prim->get_kernel_size()[kIndexH];
       } else if (index == split_num - 1) {
-        tmp = ori_conv_prim->get_stride()[kIndexW] * ((*split_axis_inputs_shape)[index_node][index] - 1) -
-              ori_conv_prim->get_pad_list()[kPadRight] + ori_conv_prim->get_kernel_size()[kIndexW];
+        tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index] - 1) -
+              ori_conv_prim->get_pad_list()[kPadDown] + ori_conv_prim->get_kernel_size()[kIndexH];
       } else {
-        tmp = ori_conv_prim->get_stride()[kIndexW] * ((*split_axis_inputs_shape)[index_node][index] - 1) - 0 +
-              ori_conv_prim->get_kernel_size()[kIndexW];
+        tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_inputs_shape)[index_node][index] - 1) - 0 +
+              ori_conv_prim->get_kernel_size()[kIndexH];
       }
     }
     split_axis_shape.push_back(tmp);
 
     // reduce shape
     if (split_info->axis == CuttingStragedy::CUT_H) {  // H
-      if ((splited_axis_value + ori_conv_prim->get_pad_list()[kPadUp] + ori_conv_prim->get_pad_list()[kPadDown] -
-           (ori_conv_prim->get_kernel_size()[kIndexH] - 1)) %
-            ori_conv_prim->get_stride()[kIndexH] ==
-          0) {
-        if (index == split_num - 1) {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_reduce_inputs_shape)[index_node][index]) +
-                ori_conv_prim->get_kernel_size()[kIndexH] - 1 - ori_conv_prim->get_pad_list()[kPadDown] -
-                ori_conv_prim->get_pad_list()[kPadUp];
-        } else {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_reduce_inputs_shape)[index_node][index]) +
-                ori_conv_prim->get_kernel_size()[kIndexH] - 1 - ori_conv_prim->get_pad_list()[kPadUp];
-        }
-      } else {
-        if (index == split_num - 1) {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_reduce_inputs_shape)[index_node][index] - 1) -
-                ori_conv_prim->get_pad_list()[kPadDown] - ori_conv_prim->get_pad_list()[kPadUp] +
-                ori_conv_prim->get_kernel_size()[kIndexH];
-        } else {
-          tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_reduce_inputs_shape)[index_node][index] - 1) -
-                ori_conv_prim->get_pad_list()[kPadUp] + ori_conv_prim->get_kernel_size()[kIndexH];
-        }
-      }
-    } else if (split_info->axis == CuttingStragedy::CUT_W) {  // W
       if (index == split_num - 1) {
-        tmp = ori_conv_prim->get_stride()[kIndexW] * ((*split_axis_reduce_inputs_shape)[index_node][index] - 1) -
-              ori_conv_prim->get_pad_list()[kPadRight] - ori_conv_prim->get_pad_list()[kPadLeft] +
-              ori_conv_prim->get_kernel_size()[kIndexW];
+        tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_reduce_inputs_shape)[index_node][index] - 1) -
+              ori_conv_prim->get_pad_list()[kPadDown] - ori_conv_prim->get_pad_list()[kPadUp] +
+              ori_conv_prim->get_kernel_size()[kIndexH];
       } else {
-        tmp = ori_conv_prim->get_stride()[kIndexW] * ((*split_axis_reduce_inputs_shape)[index_node][index] - 1) -
-              ori_conv_prim->get_pad_list()[kPadLeft] + ori_conv_prim->get_kernel_size()[kIndexW];
+        tmp = ori_conv_prim->get_stride()[kIndexH] * ((*split_axis_reduce_inputs_shape)[index_node][index] - 1) -
+              ori_conv_prim->get_pad_list()[kPadUp] + ori_conv_prim->get_kernel_size()[kIndexH];
       }
     }
     split_axis_reduce_shape.push_back(tmp);
   }
   split_axis_inputs_shape->push_back(split_axis_shape);
   split_axis_reduce_inputs_shape->push_back(split_axis_reduce_shape);
-}
-
-bool CheckPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, int32_t splited_axis_value) {
-  return !(splited_axis_value == ori_attr->get_kernel_size()[kIndexH] && ori_attr->get_pad_list()[kPadUp] == 0 &&
-           ori_attr->get_pad_list()[kPadDown] == 0);
 }
 }  // namespace
 
@@ -198,7 +151,12 @@ std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2
   new_prim->set_format(ori_conv_prim->get_format());
   new_prim->set_group(ori_conv_prim->get_group());
   new_prim->set_kernel_size(ori_conv_prim->get_kernel_size());
-  new_prim->set_pad_mode(ori_conv_prim->get_pad_mode());
+  if (ori_conv_prim->get_pad_mode() == SAME) {
+    new_prim->set_pad_mode(PAD);
+  } else {
+    new_prim->set_pad_mode(ori_conv_prim->get_pad_mode());
+  }
+
   new_prim->set_stride(ori_conv_prim->get_stride());
   new_prim->set_activation_type(ori_conv_prim->get_activation_type());
   new_prim->set_pad_list(ori_conv_prim->get_pad_list());
@@ -235,6 +193,8 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   }
 
   int64_t splited_axis_value = node_in_out_shapes[0][1][splited_axis];
+  int64_t final_split_axis_value = node_in_out_shapes[node_size - 1][0][splited_axis];
+  split_info->ori_split_axis_value = final_split_axis_value;
   size_t split_num = split_info->size_splits.size();
   std::vector<int64_t> split_axis_out_shape;
   std::vector<int64_t> split_axis_reduce_out_shape;
@@ -249,11 +209,8 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   while (index_node < node_size) {
     auto conv_cnode = conv_nodes[index_node]->cast<CNodePtr>();
     auto ori_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(conv_cnode->input(kAnfPrimitiveIndex));
-    if (!CheckPrim(ori_conv_prim, splited_axis_value)) {
-      return false;
-    }
-    CalSplitInShape(node_in_out_shapes, splited_axis_value, split_info, ori_conv_prim, index_node,
-                    &split_axis_inputs_shape, &split_axis_reduce_inputs_shape);
+    CalSplitInShape(node_in_out_shapes, split_info, ori_conv_prim, index_node, &split_axis_inputs_shape,
+                    &split_axis_reduce_inputs_shape);
     index_node++;
   }
 
@@ -334,6 +291,8 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
   concate_cnode->set_scope(conv_cnode->scope());
   std::vector<AnfNodePtr> outputs;
   GetMultipleOutputsOfAnfNode(func_graph, concate_cnode, 1, &outputs);
+  // only support split_overlap node implementation, to split sub_graph for runtime
+  concate_cnode->AddAttr(mindspore::ops::kDeviceType, MakeValue(static_cast<int>(lite::DT_CPU)));
   return concate_cnode;
 }
 
@@ -351,11 +310,11 @@ void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   split_prim->set_extend_bottom(split_info->extend_bottom);
   // default to format khwc or nhwc
   split_prim->set_trans_format(false);
+  auto conv_cnode = conv_node->cast<CNodePtr>();
   split_prim->set_split_stride(0);
 
   // the inputs of split is from the inputs of conv
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
-  auto conv_cnode = conv_node->cast<CNodePtr>();
 
   // this conv only has one input, which has been ensured before
   split_inputs.push_back(conv_cnode->input(1));
@@ -378,6 +337,8 @@ void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
     ptr_list.push_back(value_node);
   }
   split_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(ptr_list));
+  // only support split_overlap node implementation
+  split_cnode->AddAttr(mindspore::ops::kDeviceType, MakeValue(static_cast<int>(lite::DT_CPU)));
 }
 
 }  // namespace opt

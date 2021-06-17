@@ -19,12 +19,13 @@
 #include "tools/optimizer/parallel/spliter.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/parallel/split_strategy.h"
+#include "nnacl/op_base.h"
 
 using mindspore::lite::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {
-int MultiConvSplit ::GenSplitInfo() {
+int MultiConvSplit::GenSplitInfo() {
   split_info_.out_num = this->strategy_.dev_num;
   for (const auto &dev_type : this->strategy_.dev_types) {
     for (const auto &support_split_device : kSupportSplitedDevices) {
@@ -53,7 +54,47 @@ int MultiConvSplit ::GenSplitInfo() {
   split_info_.extend_bottom = std::vector<int64_t>(split_info_.size_splits.size(), 0);
   split_info_.extend_top = std::vector<int64_t>(split_info_.size_splits.size(), 0);
   split_info_.primitive_type = primitive_type_;
+  ori_split_ratios_ = split_info_.size_splits;
   return RET_OK;
+}
+
+//  assume we only split to two devices
+bool MultiConvSplit::CheckSplitValid() {
+  // check conv node prim
+  for (const auto &conv_node : conv_nodes_) {
+    auto conv_cnode = conv_node->cast<CNodePtr>();
+    auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(conv_cnode->input(kAnfPrimitiveIndex));
+    if (conv_prim->get_pad_mode() != SAME) {
+      return false;
+    }
+  }
+  // check final split ratio
+  int64_t total_block_count = 0;
+  int64_t visited_block = 0;
+  auto final_ratios = split_info_.size_splits;
+  for (int64_t i = 0; i < split_info_.out_num; ++i) {
+    if (final_ratios.at(i) <= 0) {
+      return false;
+    }
+    total_block_count += final_ratios.at(i);
+    if (i == 0) {
+      visited_block += final_ratios.at(i);
+    }
+  }
+  // check split extend_top
+  auto front_conv_node = conv_nodes_.back();
+  auto ori_graph_input_shape = Spliter::GetInstance()->graph_node_input_shapes();
+  auto ori_front_conv_input_iter = ori_graph_input_shape.find(front_conv_node->fullname_with_scope());
+  if (ori_front_conv_input_iter == ori_graph_input_shape.end()) {
+    return false;
+  }
+  int64_t split_axis_value_0 = UP_DIV(split_info_.ori_split_axis_value * visited_block, total_block_count);
+  if (split_axis_value_0 >= split_info_.ori_split_axis_value) {
+    return false;
+  }
+  int64_t split_axis_value_1 = split_info_.ori_split_axis_value - split_axis_value_0;
+  split_axis_value_1 += (split_info_.extend_top.back() + split_info_.extend_bottom.back());
+  return split_axis_value_1 < split_info_.ori_split_axis_value;
 }
 
 int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
@@ -65,7 +106,7 @@ int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
   std::string conv_cnode_name = conv_node->fullname_with_scope();
   auto graph_node_outputs = Spliter::GetInstance()->graph_node_outputs();
   auto it = graph_node_outputs.find(conv_cnode_name);
-  if (it == graph_node_outputs.end()) {
+  if (it == graph_node_outputs.end() || it->second.size() > kDefaultBatch) {
     MS_LOG(ERROR) << "This node may be the last node of graph,it do not has any out-nodes.";
     return RET_ERROR;
   }
@@ -90,8 +131,7 @@ int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
     conv_nodes_.push_back(tmp_node);
     index++;
   }
-  // no need split in multi_node_pass
-  if (conv_nodes_.size() < kDefaultBatch + 1) {
+  if (conv_nodes_.size() != static_cast<size_t>(split_info_.in_num_conv)) {
     return RET_ERROR;
   }
   return RET_OK;
@@ -126,8 +166,16 @@ void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
   for (int64_t output_conv_index = 0; output_conv_index < (split_info_.out_num); output_conv_index++) {
     // Create Conv node attr
     auto conv_prim = CopyConvPrim(ori_attr);
+    auto ori_node_name = ori_node->fullname_with_scope();
+    auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
+    auto input_shape_iter = graph_node_input_shapes.find(ori_node_name);
+    if (input_shape_iter == graph_node_input_shapes.end()) {
+      return;
+    }
+    auto input_shapes = input_shape_iter->second;
+    auto input_shape = input_shapes.front();
     // adjust primitive
-    AdJustConvPrim(conv_prim, output_conv_index);
+    AdJustConvPrim(conv_prim, input_shape, output_conv_index);
     // node inputs
     std::vector<AnfNodePtr> conv_inputs;
     conv_inputs.push_back(NewValueNode(conv_prim));
@@ -191,11 +239,17 @@ AnfNodePtr MultiConvSplitH::SplitMultiConv(const AnfNodePtr &node) {
   if (!UpdateSplitInfo(func_graph_, conv_nodes_, &split_info_)) {
     return node;
   }
+  if (!CheckSplitValid()) {
+    return node;
+  }
   return MultiConvNHSplit(node);
 }
 
-void MultiConvSplitH::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim, int output_conv_index) {
-  auto pad_list = GetSplitPadList(conv_prim);
+void MultiConvSplitH::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+                                     const ShapeVector &input_shape, int output_conv_index) {
+  int64_t input_h = input_shape.at(kAxisH);
+  int64_t input_w = input_shape.at(kAxisW);
+  auto pad_list = GetSplitPadList(conv_prim, input_h, input_w);
   if (output_conv_index == 0) {
     pad_list[kPadDown] = 0;
   } else if (output_conv_index == static_cast<int>(split_info_.out_num - 1)) {

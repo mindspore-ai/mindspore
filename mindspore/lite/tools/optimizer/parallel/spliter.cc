@@ -65,6 +65,9 @@ void Spliter::RecordGraphInfo(const FuncGraphPtr &func_graph) {
     if (!utils::isa<CNodePtr>(node)) {
       return;
     }
+    if (nodes_outputs_[node].size() > kDefaultBatch) {
+      continue;
+    }
     auto cnode = node->cast<CNodePtr>();
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(kAnfPrimitiveIndex));
     auto device_type =

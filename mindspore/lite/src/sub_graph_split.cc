@@ -560,8 +560,7 @@ void SearchSubGraph::SubGraphSplitByOffLineParallel() {
 }
 
 void SearchSubGraph::SubGraphSplit() {
-  bool offline_parallel_enable = model_->all_nodes_.front()->device_type_ != kDefaultDeviceType;
-  if (offline_parallel_enable) {
+  if (offline_parallel_enable_) {
     SubGraphSplitByOffLineParallel();
   } else {
     SubGraphSplitByOutput();
