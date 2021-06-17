@@ -29,11 +29,6 @@ void HostMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   MS_LOG(INFO) << "HostMetadataInfo.";
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (op_name != kDynamicShape) {
-    MS_LOG(DEBUG) << "Host does not have op [" << op_name << "]";
-    return;
-  }
 
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};

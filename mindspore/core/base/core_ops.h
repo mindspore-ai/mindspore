@@ -76,6 +76,7 @@ constexpr auto kFastGeLU = "FastGeLU";
 constexpr auto kFastGeLUGrad = "FastGeLUGrad";
 constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kOnesLike = "OnesLike";
+constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -637,6 +638,8 @@ inline const PrimitivePtr kPrimStringConcat = std::make_shared<Primitive>("strin
 inline const PrimitivePtr kPrimDictLen = std::make_shared<Primitive>("dict_len");
 inline const PrimitivePtr kPrimFakeBprop = std::make_shared<Primitive>("fake_bprop");
 inline const PrimitivePtr kPrimBroadcastGradientArgs = std::make_shared<Primitive>("BroadcastGradientArgs");
+inline const PrimitivePtr kPrimDynamicBroadcastGradientArgs =
+  std::make_shared<Primitive>(kDynamicBroadcastGradientArgs);
 
 class DoSignaturePrimitive : public Primitive {
  public:
