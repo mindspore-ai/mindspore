@@ -81,7 +81,7 @@ sh ./prepare_and_run.sh -D DATASET_PATH [-d MINDSPORE_DOCKER] [-r RELEASE.tar.gz
 
 # 工程目录
 
-``` python
+``` txt
 train_lenet/
 ├── Makefile              # Makefile of src code
 ├── model
@@ -104,7 +104,7 @@ train_lenet/
 
 在脚本`prepare_and_run.sh`运行前，必须确保以下目录结构正确，这些文件将被传入设备用于训练。
 
-``` python
+``` txt
 ├── package
 │   ├── bin
 │   │   └── net_runner                   # the executable that performs the training/evaluation
@@ -117,7 +117,17 @@ train_lenet/
 │   │       └── train-labels-idx1-ubyte  # train labels
 │   ├── eval.sh                          # on-device script that load the train model and evaluates its accuracy
 │   ├── lib
-│   │   └── libmindspore-lite.so         # MindSpore Lite library
+│   │   ├── libjpeg.so.62
+│   │   ├── libminddata-lite.a
+│   │   ├── libminddata-lite.so
+│   │   ├── libmindspore-lite.a
+│   │   ├── libmindspore-lite-jni.so
+│   │   ├── libmindspore-lite.so
+│   │   ├── libmindspore-lite-train.a
+│   │   ├── libmindspore-lite-train-jni.so
+│   │   ├── libmindspore-lite-train.so
+│   │   ├── libturbojpeg.so.0
+│   │   └── mindspore-lite-java.jar
 │   ├── model
 │   │   └── lenet_tod.ms                 # model to train
 │   └── train.sh                         # on-device script that load the initial model and train it
