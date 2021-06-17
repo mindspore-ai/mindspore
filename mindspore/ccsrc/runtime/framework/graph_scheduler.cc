@@ -688,6 +688,8 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     }
     // Link the control arrows for allreduce kernel by the send/recv nodes in the kernel graph.
     LinkControlArrowBySendRecvNodes(graph);
+    // Link the control arrows by the communication nodes to ensure communication nodes running order.
+    LinkControlArrowByCommunicationNode(graph);
   }
 
   // Link the arrow by control node.
@@ -1428,6 +1430,25 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       UpdateRefCount(device_tensor.get());
       to_recv_actor->external_reference_tensors_.emplace_back(device_tensor.get());
     }
+  }
+}
+
+void GraphScheduler::LinkControlArrowByCommunicationNode(const KernelGraphPtr &graph) {
+  std::vector<CNodePtr> communication_nodes;
+  auto execution_order = graph->execution_order();
+  for (auto &kernel : execution_order) {
+    if (AnfAlgo::IsCommunicationOp(kernel)) {
+      communication_nodes.emplace_back(kernel);
+    }
+  }
+
+  for (size_t i = 1; i < communication_nodes.size(); ++i) {
+    auto from_actor = dynamic_cast<KernelActor *>(FetchActor(communication_nodes[i - 1]->fullname_with_scope()));
+    auto to_actor = dynamic_cast<KernelActor *>(FetchActor(communication_nodes[i]->fullname_with_scope()));
+    MS_EXCEPTION_IF_NULL(from_actor);
+    MS_EXCEPTION_IF_NULL(to_actor);
+    from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
+    to_actor->input_controls_num_++;
   }
 }
 
