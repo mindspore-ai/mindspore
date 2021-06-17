@@ -4489,7 +4489,9 @@ def copysign(x1, x2, dtype=None):
     if not isinstance(x2, (int, float, list, tuple, Tensor)):
         _raise_type_error('integer, float, list, tuple or Tensor are expected, but got', x2)
     x1, x2 = _to_tensor(x1, x2)
-    x2 = _broadcast_to_shape(x2, x1.shape)
+    shape_out = _infer_out_shape(F.shape(x1), F.shape(x2))
+    x1 = _broadcast_to_shape(x1, shape_out)
+    x2 = _broadcast_to_shape(x2, shape_out)
     if _check_same_type(F.dtype(x1), mstype.bool_) or _check_same_type(F.dtype(x2), mstype.bool_):
         _raise_type_error("sign does not accept dtype bool.")
 

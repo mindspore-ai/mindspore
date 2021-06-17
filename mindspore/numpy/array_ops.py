@@ -2237,6 +2237,7 @@ def array_str(a):
 
     Note:
         Numpy argument `max_line_width`, `precision` and `suppress_small` are not supported.
+        Graph mode dose not support the function.
 
     Args:
         a (Tensor): Input data.
