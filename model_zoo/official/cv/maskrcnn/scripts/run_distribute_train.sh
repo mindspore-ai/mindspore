@@ -77,6 +77,6 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     taskset -c $cmdopt python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM \
-    --pre_trained=$PATH2 --data_path=$PATH3 &> log &
+    --pre_trained=$PATH2 --coco_root=$PATH3 &> log &
     cd ..
 done

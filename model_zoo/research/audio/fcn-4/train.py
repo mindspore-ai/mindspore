@@ -92,5 +92,5 @@ if __name__ == "__main__":
           save_checkpoint_steps=config.save_step,
           keep_checkpoint_max=config.keep_checkpoint_max,
           prefix=config.prefix,
-          directory=config.checkpoint_path + "_{}".format(get_device_id()))
+          directory=config.checkpoint_path) #  + "_{}".format(get_device_id())
     print("train success")

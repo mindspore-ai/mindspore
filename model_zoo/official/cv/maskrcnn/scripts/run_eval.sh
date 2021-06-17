@@ -65,5 +65,5 @@ cd ./eval || exit
 env > env.log_eval
 echo "start eval for device $DEVICE_ID"
 python ./eval.py --device_id=$DEVICE_ID --ann_file=$PATH1 --checkpoint_path=$PATH2 \
---data_path=$PATH3 &> log_eval.txt &
+--coco_root=$PATH3 &> log_eval.txt &
 cd ..

@@ -56,5 +56,5 @@ cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python ./train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 --data_path=$PATH2 &> log.txt &
+python ./train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 --coco_root=$PATH2 &> log.txt &
 cd ..

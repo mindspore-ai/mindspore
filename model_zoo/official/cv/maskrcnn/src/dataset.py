@@ -31,12 +31,6 @@ from .model_utils.config import config
 
 config.mask_shape = (28, 28)
 
-if config.enable_modelarts and config.need_modelarts_dataset_unzip:
-    config.coco_root = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
-else:
-    config.coco_root = config.data_path
-config.mindrecord_dir = os.path.join(config.coco_root, config.mindrecord_dir)
-
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.
 

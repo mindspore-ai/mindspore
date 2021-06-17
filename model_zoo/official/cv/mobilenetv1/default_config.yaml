@@ -11,7 +11,7 @@ device_target: Ascend
 enable_profiling: False
 
 # ==============================================================================
-modelarts_dataset_unzip_name: 'ImageNet_Original'
+modelarts_dataset_unzip_name: 'cifar10'
 need_modelarts_dataset_unzip: True
 
 # config for mobilenet, cifar10
@@ -34,11 +34,10 @@ lr_max: 0.1
 
 # Image classification - train
 dataset: 'cifar10'
-run_distribute: True
+run_distribute: False
 device_num: 1
 dataset_path: "/cache/data"
-device_target: 'Ascend'
-pre_trained: ""
+pre_trained: ''
 parameter_server: False
 
 # Image classification - eval
