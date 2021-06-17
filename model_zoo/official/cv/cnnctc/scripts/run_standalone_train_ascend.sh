@@ -14,6 +14,12 @@
 # limitations under the License.
 # ============================================================================
 
+if [ $# != 1 ] && [ $# != 2 ]
+then 
+    echo "run as sh scripts/run_standalone_train_ascend.sh DEVICE_ID PRE_TRAINED(options)"
+exit 1
+fi
+
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
     echo "$1"
@@ -21,7 +27,9 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-PATH1=$(get_real_path $1)
+PATH1=$(get_real_path $2)
+
+export DEVICE_ID=$1
 
 ulimit -u unlimited
 
@@ -33,13 +41,14 @@ mkdir ./train
 cp ./*.py ./train
 cp ./scripts/*.sh ./train
 cp -r ./src ./train
+cp ./*yaml ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
 if [ -f $PATH1 ]
 then
-  python train.py --device_id=$DEVICE_ID --ckpt_path=$PATH1 --run_distribute=False &> log &
+  python train.py --PRED_TRAINED=$PATH1 --run_distribute=False &> log &
 else
-  python train.py --device_id=$DEVICE_ID --run_distribute=False &> log &
+  python train.py --run_distribute=False &> log &
 fi
 cd .. || exit

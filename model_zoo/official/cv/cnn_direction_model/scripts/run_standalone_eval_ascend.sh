@@ -14,15 +14,15 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 3 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]"
+    echo "Usage: sh scripts/run_standalone_train.sh [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH]"
 exit 1
 fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
-export DEVICE_ID=4
+export DEVICE_ID=$1
 export RANK_ID=0
 export RANK_SIZE=1
 
@@ -35,8 +35,8 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $1)
-PATH2=$(get_real_path $2)
+PATH1=$(get_real_path $2)
+PATH2=$(get_real_path $3)
 
 if [ ! -f $PATH2 ]
 then
@@ -50,13 +50,14 @@ then
 fi
 
 mkdir ./eval
-cp ../*.py ./eval
-cp *.sh ./eval
-cp -r ../src ./eval
+cp ./*.py ./eval
+cp -r ./scripts ./eval
+cp -r ./src ./eval
+cp ./*yaml ./eval
 cd ./eval || exit
 echo "start evaluation for device $DEVICE_ID"
 env > env.log
 
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 > eval.log 2>&1 &
+python eval.py --eval_dataset_path=$PATH1 --checkpoint_path=$PATH2 > eval.log 2>&1 &
 
 cd ..

@@ -21,13 +21,10 @@ import six
 import numpy as np
 from PIL import Image
 import lmdb
-
 from mindspore.communication.management import get_rank, get_group_size
-
+from src.model_utils.config import config
 from .util import CTCLabelConverter
-from .config import Config_CNNCTC
 
-config = Config_CNNCTC()
 
 class NormalizePAD():
 

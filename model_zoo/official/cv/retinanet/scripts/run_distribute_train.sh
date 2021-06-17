@@ -16,15 +16,15 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "for example: sh run_distribute_train.sh 8 500 0.1 /data/hccl.json /opt/retinanet-500_458.ckpt(optional) 200(optional)"
+echo "sh scripts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE MINDRECORD_DIR PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "for example: sh scripts/run_distribute_train.sh 8 /data/hccl.json /cache/mindrecord_dir/ /opt/retinanet-500_458.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-if [ $# != 4 ] && [ $# != 6 ]
+if [ $# != 3 ] && [ $# != 5 ]
 then
-    echo "Usage: sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] \
-[RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
+    echo "Usage: sh scripts/run_distribute_train.sh [DEVICE_NUM] [RANK_TABLE_FILE] \ 
+    [MINDRECORD_DIR] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
 
@@ -34,11 +34,10 @@ process_cores=$(($core_num/8))
 echo "After running the script, the network runs in the background. The log will be generated in LOGx/log.txt"
 
 export RANK_SIZE=$1
-EPOCH_SIZE=$2
-LR=$3
-PRE_TRAINED=$5
-PRE_TRAINED_EPOCH_SIZE=$6
-export RANK_TABLE_FILE=$4
+MINDRECORD_DIR=$3
+PRE_TRAINED=$4
+PRE_TRAINED_EPOCH_SIZE=$5
+export RANK_TABLE_FILE=$2
 
 for((i=0;i<RANK_SIZE;i++))
 do
@@ -48,6 +47,7 @@ do
     cp ./*.py ./LOG$i
     cp -r ./src ./LOG$i
     cp -r ./scripts ./LOG$i
+    cp ./*yaml ./LOG$i
     start=`expr $i \* $process_cores`
     end=`expr $start \+ $(($process_cores-1))`
     cmdopt=$start"-"$end
@@ -55,28 +55,22 @@ do
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
-    if [ $# == 4 ]
+    if [ $# == 3 ]
     then
         taskset -c $cmdopt python train.py  \
         --workers=$process_cores  \
         --distribute=True  \
-        --lr=$LR \
-        --device_num=$RANK_SIZE  \
-        --device_id=$DEVICE_ID  \
-        --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+        --mindrecord_dir=$MINDRECORD_DIR > log.txt 2>&1 &
     fi
 
-    if [ $# == 6 ]
+    if [ $# == 5 ]
     then
         taskset -c $cmdopt python train.py  \
         --workers=$process_cores  \
         --distribute=True  \
-        --lr=$LR \
-        --device_num=$RANK_SIZE  \
-        --device_id=$DEVICE_ID  \
+        --mindrecord_dir=$MINDRECORD_DIR \
         --pre_trained=$PRE_TRAINED \
-        --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE \
-        --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+        --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE > log.txt 2>&1 &
     fi
 
     cd ../

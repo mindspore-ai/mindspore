@@ -15,7 +15,7 @@
 # ============================================================================
 if [ $# != 2 ] && [ $# != 3 ]
 then 
-    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "Usage: sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
 exit 1
 fi
 
@@ -67,21 +67,22 @@ do
     export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
-    cp ../*.py ./train_parallel$i
-    cp *.sh ./train_parallel$i
-    cp -r ../src ./train_parallel$i
+    cp ./*.py ./train_parallel$i
+    cp -r ./scripts ./train_parallel$i
+    cp ./*yaml ./train_parallel$i
+    cp -r ./src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     
     if [ $# == 2 ]
     then
-        python train.py --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 > train.log 2>&1 &
+        python train.py --run_distribute=True --train_dataset_path=$PATH2 > train.log 2>&1 &
     fi
     
     if [ $# == 3 ]
     then
-        python train.py --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 > train.log 2>&1 &
+        python train.py --run_distribute=True --train_dataset_path=$PATH2 --pre_trained=$PATH3 > train.log 2>&1 &
     fi
 
     cd ..

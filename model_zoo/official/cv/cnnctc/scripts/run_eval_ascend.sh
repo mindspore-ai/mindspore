@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 1 ]
+if [ $# -ne 2 ]
 then
-    echo "Usage: sh run_eval_ascend.sh [TRAINED_CKPT]"
+    echo "Usage: sh scripts/run_eval_ascend.sh [DEVICE_ID] [TRAINED_CKPT]"
 exit 1
 fi
 
@@ -28,7 +28,7 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $1)
+PATH1=$(get_real_path $2)
 echo $PATH1
 if [ ! -f $PATH1 ]
 then
@@ -37,7 +37,7 @@ exit 1
 fi
 
 ulimit -u unlimited
-export DEVICE_ID=0
+export DEVICE_ID=$1
 
 if [ -d "eval" ];
 then
@@ -47,8 +47,9 @@ mkdir ./eval
 cp ./*.py ./eval
 cp ./scripts/*.sh ./eval
 cp -r ./src ./eval
+cp ./*yaml ./eval
 cd ./eval || exit
 echo "start inferring for device $DEVICE_ID"
 env > env.log
-python eval.py --device_id=$DEVICE_ID --ckpt_path=$PATH1 &> log &
+python eval.py --CHECKPOINT_PATH=$PATH1 &> log &
 cd .. || exit

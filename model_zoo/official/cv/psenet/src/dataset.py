@@ -22,11 +22,9 @@ from PIL import Image
 import numpy as np
 import Polygon as plg
 import pyclipper
-
 import mindspore.dataset as ds
 import mindspore.dataset.vision.py_transforms as py_transforms
-
-from src.config import config
+from src.model_utils.config import config
 
 __all__ = ['train_dataset_creator', 'test_dataset_creator']
 
@@ -179,9 +177,9 @@ class TrainDataset:
         self.kernel_num = config.KERNEL_NUM
         self.min_scale = config.TRAIN_MIN_SCALE
 
-        root_dir = os.path.join(os.path.join(os.path.dirname(__file__), '..'), config.TRAIN_ROOT_DIR)
-        ic15_train_data_dir = root_dir + 'ch4_training_images/'
-        ic15_train_gt_dir = root_dir + 'ch4_training_localization_transcription_gt/'
+        root_dir = config.TRAIN_ROOT_DIR
+        ic15_train_data_dir = os.path.join(root_dir, 'ch4_training_images/')
+        ic15_train_gt_dir = os.path.join(root_dir, 'ch4_training_localization_transcription_gt/')
 
         self.img_size = self.img_size if \
             (self.img_size is None or isinstance(self.img_size, tuple)) \
@@ -276,7 +274,7 @@ class TrainDataset:
 
 
 def IC15_TEST_Generator():
-    ic15_test_data_dir = config.TEST_ROOT_DIR + 'ch4_test_images/'
+    ic15_test_data_dir = os.path.join(config.TEST_ROOT_DIR, 'ch4_test_images/')
     img_size = config.INFER_LONG_SIZE
 
     img_size = img_size if (img_size is None or isinstance(img_size, tuple)) else (img_size, img_size)

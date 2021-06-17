@@ -14,15 +14,15 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ] && [ $# != 2 ]
+if [ $# != 2 ] && [ $# != 3 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "Usage: sh scripts/run_standalone_train_ascend.sh [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
 exit 1
 fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
-export DEVICE_ID=3
+export DEVICE_ID=$1
 export RANK_ID=0
 export RANK_SIZE=1
 
@@ -35,14 +35,14 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $1)
+PATH1=$(get_real_path $2)
 
-if [ $# == 2 ]
+if [ $# == 3 ]
 then
-    PATH2=$(get_real_path $2)
+    PATH2=$(get_real_path $3)
 fi
 
-if [ $# == 2 ] && [ ! -f $PATH2 ]
+if [ $# == 3 ] && [ ! -f $PATH2 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH2 is not a file"
 exit 1
@@ -53,20 +53,20 @@ then
     rm -rf ./train
 fi
 mkdir ./train
-cp ../*.py ./train
-cp *.sh ./train
-cp -r ../src ./train
+cp ./*.py ./train
+cp -r ./scripts ./train
+cp ./*yaml ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-if [ $# == 1 ]
-then
-    python train.py --dataset_path=$PATH1 &> log &
-fi
-
 if [ $# == 2 ]
 then
-    python train.py --dataset_path=$PATH1 --pre_trained=$PATH2 > train.log 2>&1 &
+    python train.py --train_dataset_path=$PATH1 &> log &
+fi
+
+if [ $# == 3 ]
+then
+    python train.py --train_dataset_path=$PATH1 --pre_trained=$PATH2 > train.log 2>&1 &
 fi
 
 cd ..

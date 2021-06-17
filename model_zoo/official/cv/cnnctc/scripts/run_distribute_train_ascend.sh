@@ -14,6 +14,12 @@
 # limitations under the License.
 # ============================================================================
 
+if [ $# != 1 ] && [ $# != 2 ]
+then 
+    echo "run as scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE PRED_TRAINED(options)"
+exit 1
+fi
+
 current_exec_path=$(pwd)
 echo ${current_exec_path}
 
@@ -41,15 +47,16 @@ do
     cp ./*.py ./train_parallel_$i
     cp ./scripts/*.sh ./train_parallel_$i
     cp -r ./src ./train_parallel_$i
+    cp ./*yaml ./train_parallel_$i
     cd ./train_parallel_$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     if [ -f $PATH2 ]
     then
-      python train.py --device_id=$i --ckpt_path=$PATH2 --run_distribute=True >log_$i.log 2>&1 &
+      python train.py --PRED_TRAINED=$PATH2 --run_distribute=True >log_$i.log 2>&1 &
     else
-      python train.py --device_id=$i --run_distribute=True >log_$i.log 2>&1 &
+      python train.py --run_distribute=True >log_$i.log 2>&1 &
     fi
     cd .. || exit
 done
