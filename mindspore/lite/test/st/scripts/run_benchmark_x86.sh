@@ -800,12 +800,18 @@ function Run_x86() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
+        virtual_batch="false"
+        suffix_print=""
         if [[ $model_name == \#* ]]; then
           continue
         fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" == "vb" ]]; then
+            virtual_batch="true"
+            suffix_print="_virtual_batch"
+            accuracy_limit=${line_array[2]}    
         elif [[ "${line_array[1]}" != "" ]]; then
             continue
         fi
@@ -819,11 +825,11 @@ function Run_x86() {
         --inDataFile=${train_io_path}/${model_prefix}_input \
         --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
         --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
-        --exportFile=${export_file} >> "${run_x86_log_file}"
+        --exportFile=${export_file} --virtualBatch=${virtual_batch} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86_train: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86_train: '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='x86_train: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86_train: '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
             fail=1
         fi
     done < ${models_ms_train_config}
