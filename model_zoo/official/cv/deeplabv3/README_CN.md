@@ -55,6 +55,16 @@ DeepLab是一系列图像语义分割模型，DeepLabV3版本相比以前的版�
 
 Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD）
 
+- 准备Backbone模型
+
+准备resnet101模型，点此下载(https://download.pytorch.org/models/resnet101-5d3b4d8f.pth).
+
+使用convert_resnet101.py脚本转换Backbone模型.
+
+```shell
+python convert_resnet101.py
+```
+
 - 下载分段数据集。
 
 - 准备训练数据清单文件。清单文件用于保存图片和标注对的相对路径。如下：
@@ -199,6 +209,7 @@ run_eval_s8_multiscale_flip.sh
        ├── get_multicards_json.py                 # 获取rank table文件
     └── utils
        └── learning_rates.py                      # 生成学习率
+  ├── convert_resnet101.py                        # 转换resnet101模型
   ├── eval.py                                     # 评估网络
   ├── train.py                                    # 训练网络
   └── requirements.txt                            # requirements文件
