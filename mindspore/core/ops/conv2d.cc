@@ -162,9 +162,13 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
                     padding);
   if (x_shape[h_axis] == abstract::Shape::SHP_ANY) {
     output_hw[0] = abstract::Shape::SHP_ANY;
+    pad_list[0] = abstract::Shape::SHP_ANY;
+    pad_list[1] = abstract::Shape::SHP_ANY;
   }
   if (x_shape[w_axis] == abstract::Shape::SHP_ANY) {
     output_hw[1] = abstract::Shape::SHP_ANY;
+    pad_list[2] = abstract::Shape::SHP_ANY;
+    pad_list[3] = abstract::Shape::SHP_ANY;
   }
   Conv2DPadFunction(&output_hw_min, &pad_list_min, x_min_shape[h_axis], x_min_shape[w_axis], kernel_size, stride,
                     dilation, pad_mode, padding);

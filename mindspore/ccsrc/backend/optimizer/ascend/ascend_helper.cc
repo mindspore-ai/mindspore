@@ -254,7 +254,7 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
 
 CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                               const TypeId &input_type, const TypeId &output_type,
-                              const std::vector<size_t> &origin_shape, const TypeId &origin_type,
+                              const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type,
                               const std::string &reshape_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::string input_format = format;
@@ -281,8 +281,13 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
     auto kernel_info = std::make_shared<device::KernelInfo>();
     cast->set_kernel_info(kernel_info);
   }
+  if (origin_shape->IsDynamic()) {
+    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cast);
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
+    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
+  }
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
-  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, cast.get());
+  AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
   AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
   AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), cast);
   return cast;
@@ -361,7 +366,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
       origin_type = AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
     }
     const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
-    const std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
+    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
     // In graph kernel, we check parameter,
     // the eliminate pass will not eliminate this case, so we just do not insert the no used cast.
     if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {

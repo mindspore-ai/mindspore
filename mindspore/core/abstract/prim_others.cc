@@ -500,7 +500,6 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   // GPU has 2 inputs while tbe has 1 only. Skip CheckArgsSize.
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
-  MS_EXCEPTION_IF_NULL(input_x->shape());
   auto attr = primitive->GetAttr("dst_type");
   if (attr == nullptr) {
     attr = args_spec_list[1]->BuildValue();
@@ -508,7 +507,7 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
     primitive->set_attr("dst_type", attr);
   }
   auto input_type = attr->cast<TypePtr>();
-  auto ret = std::make_shared<AbstractTensor>(input_type, input_x->shape()->shape());
+  auto ret = std::make_shared<AbstractTensor>(input_type, input_x->shape());
   return ret;
 }
 
@@ -565,5 +564,15 @@ AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &pri
   }
   return args_spec_list[0]->Broaden();
 }
+
+AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // An object of a subclass of AbstractBase
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  auto output = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(output);
+  return output;
+}
+
 }  // namespace abstract
 }  // namespace mindspore

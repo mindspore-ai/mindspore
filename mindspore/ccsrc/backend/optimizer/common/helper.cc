@@ -492,9 +492,9 @@ CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr 
   CNodePtr tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   tuple_getitem->set_scope(node->scope());
-  std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
+  auto origin_shape = AnfAlgo::GetOutputDetailShape(node, output_idx);
   TypeId origin_type = AnfAlgo::GetOutputInferDataType(node, output_idx);
-  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
+  AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, tuple_getitem.get());
   return tuple_getitem;
 }
 

@@ -221,6 +221,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimConcat, {InferImplConcat, nullptr, true}},
     {prim::kPrimArgMaxWithValue, {InferImplArgMaxWithValue, nullptr, true}},
     {prim::kPrimFusedSparseAdam, {InferImplFusedSparseAdam, nullptr, true}},
+    {prim::KPrimTransData, {InferImplTransData, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }
