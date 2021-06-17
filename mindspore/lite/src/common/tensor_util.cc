@@ -87,15 +87,20 @@ void FreeTensorListC(TensorListC *tensorlist_c) {
   free(tensorlist_c);
 }
 
-void Tensor2TensorC(Tensor *src, TensorC *dst) {
+int Tensor2TensorC(Tensor *src, TensorC *dst) {
   dst->is_ready_ = src->IsReady();
   dst->format_ = src->format();
   dst->data_ = src->data_c();
   dst->data_type_ = src->data_type();
   dst->shape_size_ = src->shape().size();
+  if (dst->shape_size_ > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "tensor shape size " << dst->shape_size_ << " is larger than max shape size " << MAX_SHAPE_SIZE;
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < dst->shape_size_; i++) {
     dst->shape_[i] = src->shape().at(i);
   }
+  return RET_OK;
 }
 
 void TensorC2Tensor(TensorC *src, Tensor *dst) {
@@ -117,7 +122,11 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
   }
   memset(dst->tensors_, 0, dst->element_num_ * sizeof(TensorC));
   for (size_t i = 0; i < dst->element_num_; i++) {
-    Tensor2TensorC(src->tensors().at(i), &dst->tensors_[i]);
+    auto ret = Tensor2TensorC(src->tensors().at(i), &dst->tensors_[i]);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Tensor to TensorC failed.";
+      return ret;
+    }
   }
 
   dst->tensors_data_type_ = src->tensors_data_type();
@@ -207,7 +216,11 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
         ret = RET_NULL_PTR;
         break;
       }
-      Tensor2TensorC(input, tensor_c);
+      ret = Tensor2TensorC(input, tensor_c);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Tensor to TensorC failed.";
+        return ret;
+      }
       in_tensor_c->emplace_back(tensor_c);
     }
   }
@@ -234,6 +247,10 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
     if (tensor->format() != mindspore::NHWC) {
       MS_LOG(ERROR) << "model input's format mey be changed, which should keep default value NHWC";
       return RET_FORMAT_ERR;
+    }
+    if (tensor->data_c() == nullptr) {
+      MS_LOG(ERROR) << "tensor data should be filled before run op";
+      return RET_ERROR;
     }
   }
   return RET_OK;

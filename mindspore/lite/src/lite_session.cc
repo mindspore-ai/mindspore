@@ -195,9 +195,17 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     }
     ConvertTensorsQuantParam(src_tensor, dst_tensor);
     if (IsContain(model_input_indices, i)) {
+      if (dst_tensor->data_c() != nullptr) {
+        MS_LOG(ERROR) << "Graph input shouldn't have data";
+        return RET_ERROR;
+      }
       dst_tensor->set_category(Tensor::GRAPH_INPUT);
     }
     if (IsContain(model_output_indices, i)) {
+      if (dst_tensor->data_c() != nullptr) {
+        MS_LOG(ERROR) << "Graph output shouldn't have data";
+        return RET_ERROR;
+      }
       dst_tensor->set_category(Tensor::GRAPH_OUTPUT);
     }
     if (src_tensor->name() != nullptr) {
