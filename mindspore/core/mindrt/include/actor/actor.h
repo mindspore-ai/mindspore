@@ -31,6 +31,7 @@ namespace mindspore {
 class ActorBase;
 class ActorMgr;
 class ActorPolicy;
+class ActorWorker;
 class ActorThreadPool;
 
 using ActorReference = std::shared_ptr<ActorBase>;
@@ -149,7 +150,7 @@ class ActorBase {
 
  private:
   friend class ActorMgr;
-  friend class ActorThreadPool;
+  friend class ActorWorker;
 
   // KMSG Msg Handler
   virtual void HandlekMsg(const std::unique_ptr<MessageBase> &msg);

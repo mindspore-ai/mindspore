@@ -70,7 +70,7 @@ class ActorMgr {
       MS_LOG(ERROR) << "ThreadPOol is nullptr, actor: " << actor->GetAID().Name();
       return;
     }
-    pool->EnqueReadyActor(actor);
+    pool->PushActorToQueue(actor);
   }
   void SetActorStatus(const AID &pid, bool start);
 

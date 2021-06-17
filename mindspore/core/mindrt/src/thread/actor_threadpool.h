@@ -25,6 +25,19 @@
 #include "actor/actor.h"
 
 namespace mindspore {
+class ActorThreadPool;
+
+class ActorWorker : public Worker {
+ public:
+  void CreateThread(ActorThreadPool *pool);
+  bool Active();
+
+ private:
+  void Run() override;
+  bool RunQueueActorTask();
+  ActorThreadPool *pool_{nullptr};
+};
+
 class ActorThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains actor thread and kernel thread
@@ -33,14 +46,11 @@ class ActorThreadPool : public ThreadPool {
   static ActorThreadPool *CreateThreadPool(size_t thread_num);
   ~ActorThreadPool() override;
 
-  void EnqueReadyActor(const ActorReference &actor);
+  void PushActorToQueue(const ActorReference &actor);
+  ActorReference PopActorFromQueue();
 
  private:
   int CreateThreads(size_t actor_thread_num, size_t all_thread_num);
-
-  void AsyncRunMultiTask(Worker *worker);
-  bool PopActorFromQueue(ActorBase **actor);
-  bool RunPoolQueueActorTask();
 
   size_t actor_thread_num_{0};
 

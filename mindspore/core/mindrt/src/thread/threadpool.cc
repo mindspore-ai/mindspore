@@ -15,34 +15,98 @@
  */
 
 #include "thread/threadpool.h"
-#include <algorithm>
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-ThreadPool::~ThreadPool() {
-  alive_ = false;
-  DestructThreads();
+Worker::~Worker() {
+  {
+    std::lock_guard<std::mutex> _l(mutex_);
+    alive_ = false;
+  }
+  cond_var_.notify_one();
+  if (thread_.joinable()) {
+    thread_.join();
+  }
 }
 
-void ThreadPool::DestructThreads() {
-  for (auto &worker : workers_) {
-    worker->cond_var.notify_one();
-    if (worker->thread.joinable()) {
-      worker->thread.join();
+void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
+
+void Worker::Run() {
+  static std::atomic_int index = 0;
+  pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
+  while (alive_) {
+    if (RunLocalKernelTask()) {
+      spin_count_ = 0;
+    } else {
+      YieldAndDeactive();
     }
+    if (spin_count_ >= kDefaultSpinCount) {
+      WaitUntilActive();
+    }
+  }
+}
+
+bool Worker::RunLocalKernelTask() {
+  Task *task = task_.load(std::memory_order_consume);
+  if (task == nullptr) {
+    return false;
+  }
+  int task_id = task_id_.load(std::memory_order_consume);
+  task->status |= task->func(task->content, task_id, lhs_scale_, rhs_scale_);
+  task_.store(nullptr, std::memory_order_relaxed);
+  ++task->finished;
+  return true;
+}
+
+void Worker::YieldAndDeactive() {
+  // deactivate this worker only on the first entry
+  if (spin_count_ == 0) {
+    status_.store(kThreadIdle);
+  }
+  spin_count_++;
+  std::this_thread::yield();
+}
+
+void Worker::WaitUntilActive() {
+  std::unique_lock<std::mutex> _l(mutex_);
+  cond_var_.wait(_l, [&] { return status_ == kThreadBusy || !alive_; });
+}
+
+void Worker::set_scale(float lhs_scale, float rhs_scale) {
+  lhs_scale_ = lhs_scale;
+  rhs_scale_ = rhs_scale;
+}
+
+void Worker::Active(Task *task, int task_id) {
+  {
+    std::lock_guard<std::mutex> _l(mutex_);
+    task_id_.store(task_id, std::memory_order_relaxed);
+    task_.store(task, std::memory_order_relaxed);
+    status_ = kThreadBusy;
+  }
+  cond_var_.notify_one();
+}
+
+bool Worker::available() {
+  int expected = kThreadIdle;
+  return status_.compare_exchange_strong(expected, kThreadHeld);
+}
+
+ThreadPool::~ThreadPool() {
+  for (auto &worker : workers_) {
     delete worker;
     worker = nullptr;
   }
   workers_.clear();
   delete affinity_;
   affinity_ = nullptr;
-  THREAD_INFO("deconstruct threads success");
+  THREAD_INFO("destruct success");
 }
 
 int ThreadPool::CreateThreads(size_t thread_num) {
   size_t core_num = std::thread::hardware_concurrency();
-  thread_num = std::min(thread_num, core_num);
-  THREAD_INFO("ThreadInfo, ThreadNum: [%zu], CoreNum: [%zu]", thread_num, core_num);
+  thread_num = thread_num < core_num ? thread_num : core_num;
+  THREAD_INFO("ThreadInfo, Num: [%zu], CoreNum: [%zu]", thread_num, core_num);
   if (thread_num <= 0) {
     THREAD_ERROR("thread num is invalid");
     return THREAD_ERROR;
@@ -51,52 +115,15 @@ int ThreadPool::CreateThreads(size_t thread_num) {
   for (size_t i = 0; i < thread_num; ++i) {
     auto worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
-    worker->thread = std::thread(&ThreadPool::AsyncRunTask, this, worker);
+    worker->CreateThread();
     workers_.push_back(worker);
     THREAD_INFO("create kernel thread[%zu]", i);
   }
   return THREAD_OK;
 }
 
-void ThreadPool::AsyncRunTask(Worker *worker) const {
-  THREAD_RETURN_IF_NULL(worker);
-  while (alive_) {
-    if (RunLocalKernelTask(worker)) {
-      worker->spin = 0;
-    } else {
-      YieldAndDeactive(worker);
-    }
-    if (worker->spin >= kDefaultSpinCount) {
-      // wait until distribute KernelTask
-      std::unique_lock<std::mutex> _l(worker->mutex);
-      worker->cond_var.wait(_l, [&] { return worker->status == kThreadBusy || !alive_; });
-    }
-  }
-}
-
-void ThreadPool::YieldAndDeactive(Worker *worker) const {
-  // deactivate this worker only on the first entry
-  if (worker->spin == 0) {
-    worker->status.store(kThreadIdle);
-  }
-  worker->spin++;
-  std::this_thread::yield();
-}
-
-bool ThreadPool::RunLocalKernelTask(Worker *worker) const {
-  Task *task = worker->task.load(std::memory_order_consume);
-  if (task == nullptr) {
-    return false;
-  }
-  int task_id = worker->task_id.load(std::memory_order_consume);
-  task->status |= task->func(task->content, task_id, worker->lhs_scale, worker->rhs_scale);
-  worker->task.store(nullptr, std::memory_order_relaxed);
-  ++task->finished;
-  return true;
-}
-
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
-  // distribute task to the KernelThread and the free ActorThread,
+  // distribute task to the KernelThread and the idle ActorThread,
   // if the task num is greater than the KernelThread num
   THREAD_INFO("launch: %d", task_num);
   Task task = Task(func, content);
@@ -130,26 +157,25 @@ void ThreadPool::SyncRunTask(Task *task, int task_num) const {
 void ThreadPool::DistributeTask(Task *task, int task_num) const {
   Worker *curr = CurrentWorker();
   // if the current thread isn't nullptr, that is the curr is a ActorThread,
-  // then the count is equal to 1. otherwise the count is equal to 0
-  int count = curr != nullptr ? 1 : 0;
+  // then assign (task_num - 1) tasks to workers, and run the last one by itself
+  int count = 0;
+  int num_assigned = curr != nullptr ? task_num - 1 : task_num;
   int sum_frequency = 0;
   std::vector<Worker *> assigned;
   int num = static_cast<int>(workers_.size()) - 1;
-  for (int i = num; i >= 0 && count < task_num; --i) {
-    int expected = kThreadIdle;
-    if (workers_[i]->status.compare_exchange_strong(expected, kThreadHeld)) {
+  for (int i = num; i >= 0 && count < num_assigned; --i) {
+    if (workers_[i]->available()) {
       assigned.push_back(workers_[i]);
-      sum_frequency += workers_[i]->frequency;
+      sum_frequency += workers_[i]->frequency();
       count++;
     }
   }
   // when there are not enough free threads,
   // distribute other tasks to the master thread
   if (curr != nullptr) {
-    assigned.push_back(curr);
     for (; count < task_num; ++count) {
       assigned.push_back(curr);
-      sum_frequency += curr->frequency;
+      sum_frequency += curr->frequency();
     }
   } else if (assigned.size() != static_cast<size_t>(task_num)) {
     SyncRunTask(task, task_num);
@@ -160,14 +186,15 @@ void ThreadPool::DistributeTask(Task *task, int task_num) const {
 }
 
 void ThreadPool::CalculateScales(const std::vector<Worker *> &assigned, int sum_frequency) const {
-  // Divide task according to computing power(core frequency)
-  float start = 0.;
+  // divide task according to computing power(core frequency)
+  float lhs_scale = 0;
+  float rhs_scale = 0;
   for (const auto &worker : assigned) {
     THREAD_RETURN_IF_NULL(worker);
-    worker->lhs_scale = start;
-    start += worker->frequency * 1.0 / sum_frequency;
-    start = start < 1 ? start : 1;
-    worker->rhs_scale = start;
+    rhs_scale += worker->frequency() * 1.0 / sum_frequency;
+    rhs_scale = rhs_scale < 1 ? rhs_scale : 1;
+    worker->set_scale(lhs_scale, rhs_scale);
+    lhs_scale = rhs_scale;
   }
 }
 
@@ -176,22 +203,16 @@ void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task,
   for (int i = 0; i < task_num; ++i) {
     Worker *worker = workers[i];
     THREAD_RETURN_IF_NULL(worker);
-    {
-      std::lock_guard<std::mutex> _l(worker->mutex);
-      worker->task_id.store(i, std::memory_order_relaxed);
-      worker->task.store(task, std::memory_order_relaxed);
-      worker->status = kThreadBusy;
-    }
-    worker->cond_var.notify_one();
+    worker->Active(task, i);
     if (worker == curr) {
-      RunLocalKernelTask(worker);
+      worker->RunLocalKernelTask();
     }
   }
 }
 
 Worker *ThreadPool::CurrentWorker() const {
   for (const auto &worker : workers_) {
-    if (worker->thread.get_id() == std::this_thread::get_id()) {
+    if (worker->thread_id() == std::this_thread::get_id()) {
       return worker;
     }
   }

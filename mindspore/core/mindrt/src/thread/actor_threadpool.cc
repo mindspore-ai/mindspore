@@ -18,6 +18,59 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
+void ActorWorker::CreateThread(ActorThreadPool *pool) {
+  pool_ = pool;
+  thread_ = std::thread(&ActorWorker::Run, this);
+}
+
+void ActorWorker::Run() {
+  static std::atomic_int index = 0;
+  pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
+  while (alive_) {
+    // only run either local KernelTask or PoolQueue ActorTask
+#ifdef ENABLE_MINDRT
+    if (RunLocalKernelTask() || RunQueueActorTask()) {
+      spin_count_ = 0;
+    } else {
+      YieldAndDeactive();
+    }
+    if (spin_count_ >= kDefaultSpinCount) {
+      WaitUntilActive();
+    }
+#else
+    bool busy = RunLocalKernelTask() || RunQueueActorTask();
+    if (!busy) {
+      // wait until enqueue ActorTask or distribute KernelTask
+      std::unique_lock<std::mutex> _l(mutex_);
+      status_ = kThreadIdle;
+      cond_var_.wait(_l, [&] { return status_ == kThreadBusy || !alive_; });
+    }
+#endif  // ENABLE_MINDRT
+  }
+}
+
+bool ActorWorker::RunQueueActorTask() {
+  THREAD_ERROR_IF_NULL(pool_);
+  auto actor = pool_->PopActorFromQueue();
+  if (actor == nullptr) {
+    return false;
+  }
+  actor->Run();
+  return true;
+}
+
+bool ActorWorker::Active() {
+  {
+    std::lock_guard<std::mutex> _l(mutex_);
+    if (status_ != kThreadIdle) {
+      return false;
+    }
+    status_ = kThreadBusy;
+  }
+  cond_var_.notify_one();
+  return true;
+}
+
 ActorThreadPool::~ActorThreadPool() {
   // wait until actor queue is empty
   bool terminate = false;
@@ -29,46 +82,24 @@ ActorThreadPool::~ActorThreadPool() {
       std::this_thread::yield();
     }
   } while (!terminate);
-  alive_ = false;
-  DestructThreads();
+  for (auto &worker : workers_) {
+    delete worker;
+    worker = nullptr;
+  }
+  workers_.clear();
 }
 
-void ActorThreadPool::AsyncRunMultiTask(Worker *worker) {
-  THREAD_RETURN_IF_NULL(worker);
-  while (alive_) {
-    // only run either local KernelTask or PoolQueue ActorTask
-    bool busy = RunLocalKernelTask(worker) || RunPoolQueueActorTask();
-    if (!busy) {
-      // wait until Actor enqueue or distribute KernelTask
-      std::unique_lock<std::mutex> _l(worker->mutex);
-      worker->status = kThreadIdle;
-      worker->cond_var.wait(_l, [&] { return worker->status == kThreadBusy || !alive_; });
-    }
-  }
-}
-
-bool ActorThreadPool::RunPoolQueueActorTask() {
-  ActorBase *actor = nullptr;
-  if (!PopActorFromQueue(&actor)) {
-    return false;
-  }
-  if (actor != nullptr) {
-    actor->Run();
-  }
-  return true;
-}
-
-bool ActorThreadPool::PopActorFromQueue(ActorBase **actor) {
+ActorReference ActorThreadPool::PopActorFromQueue() {
   std::lock_guard<std::mutex> _l(actor_mutex_);
   if (actor_queue_.empty()) {
-    return false;
+    return nullptr;
   }
-  *actor = actor_queue_.front().get();
+  auto actor = actor_queue_.front();
   actor_queue_.pop();
-  return true;
+  return actor;
 }
 
-void ActorThreadPool::EnqueReadyActor(const ActorReference &actor) {
+void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
   {
     std::lock_guard<std::mutex> _l(actor_mutex_);
     actor_queue_.push(actor);
@@ -76,10 +107,8 @@ void ActorThreadPool::EnqueReadyActor(const ActorReference &actor) {
   THREAD_INFO("actor[%s] enqueue success", actor->GetAID().Name().c_str());
   // active one idle actor thread if exist
   for (size_t i = 0; i < actor_thread_num_; ++i) {
-    std::lock_guard<std::mutex> _l(workers_[i]->mutex);
-    if (workers_[i]->status == kThreadIdle) {
-      workers_[i]->status = kThreadBusy;
-      workers_[i]->cond_var.notify_one();
+    auto worker = reinterpret_cast<ActorWorker *>(workers_[i]);
+    if (worker->Active()) {
       break;
     }
   }
@@ -95,9 +124,9 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   }
   for (size_t i = 0; i < actor_thread_num_; ++i) {
     std::lock_guard<std::mutex> _l(pool_mutex_);
-    auto worker = new (std::nothrow) Worker();
+    auto worker = new (std::nothrow) ActorWorker();
     THREAD_ERROR_IF_NULL(worker);
-    worker->thread = std::thread(&ActorThreadPool::AsyncRunMultiTask, this, worker);
+    worker->CreateThread(this);
     workers_.push_back(worker);
     THREAD_INFO("create actor thread[%zu]", i);
   }
