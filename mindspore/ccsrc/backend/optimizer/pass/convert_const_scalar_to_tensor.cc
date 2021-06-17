@@ -68,6 +68,7 @@ const AnfNodePtr ConvertConstScalarToTensor::Process(const FuncGraphPtr &func_gr
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   bool input_changed = false;
   for (size_t i = 0; i < cnode->inputs().size(); ++i) {
     auto new_input = CreateTensorInput(func_graph->cast<KernelGraphPtr>(), cnode->inputs()[i]);

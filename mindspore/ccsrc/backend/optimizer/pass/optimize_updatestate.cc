@@ -35,6 +35,8 @@ const BaseRef OptimizeUpdateState::DefinePattern() const {
 
 const AnfNodePtr OptimizeUpdateState::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                               const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto update_state = dyn_cast<CNode>(node);
   MS_EXCEPTION_IF_NULL(update_state);
   if (update_state->size() <= kAdditionalAttachIndex) {

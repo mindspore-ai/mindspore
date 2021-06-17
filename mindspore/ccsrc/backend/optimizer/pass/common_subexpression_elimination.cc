@@ -105,6 +105,7 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bo
 bool CommonSubexpressionElimination::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto backend_cse = std::make_shared<BackendCSE>();
+  MS_EXCEPTION_IF_NULL(backend_cse);
   return backend_cse->Cse(func_graph, func_graph->manager());
 }
 }  // namespace opt

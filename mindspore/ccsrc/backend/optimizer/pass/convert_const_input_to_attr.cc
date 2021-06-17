@@ -34,7 +34,8 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
     return nullptr;
   }
 
-  CNodePtr cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   ConstInputToAttrInfoRegister reg;
   if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(cnode), &reg)) {
     return nullptr;
@@ -47,6 +48,7 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   }
   if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
     auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
     if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
       return nullptr;
     }
