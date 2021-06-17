@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,15 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 1 ]
+if [ $# -ne 2 ]
 then 
-    echo "Usage: sh run_standalone_train_gpu.sh [PRETRAINED_PATH]"
+    echo "Usage: sh run_standalone_train_gpu.sh [PRETRAINED_PATH] [BACKBONE]"
+exit 1
+fi
+
+if [ $2 != "resnet_v1_50" ] && [ $2 != "resnet_v1.5_50" ] && [ $2 != "resnet_v1_101" ] && [ $2 != "resnet_v1_152" ]
+then 
+  echo "error: the selected backbone must be resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152"
 exit 1
 fi
 
@@ -54,5 +60,5 @@ cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --device_id=$DEVICE_ID --pre_trained=$PATH1 --device_target="GPU"  &> log &
+python train.py --device_id=$DEVICE_ID --pre_trained=$PATH1 --device_target="GPU" --backbone=$2 &> log &
 cd ..

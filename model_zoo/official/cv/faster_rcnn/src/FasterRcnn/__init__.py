@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 # ============================================================================
 """FasterRcnn Init."""
 
-from .resnet50 import ResNetFea, ResidualBlockUsing
+from .resnet import ResNetFea, ResidualBlockUsing
+from .resnet50v1 import ResidualBlockUsing_V1
 from .bbox_assign_sample import BboxAssignSample
 from .bbox_assign_sample_stage2 import BboxAssignSampleForRcnn
 from .fpn_neck import FeatPyramidNeck
@@ -27,5 +28,5 @@ from .anchor_generator import AnchorGenerator
 __all__ = [
     "ResNetFea", "BboxAssignSample", "BboxAssignSampleForRcnn",
     "FeatPyramidNeck", "Proposal", "Rcnn",
-    "RPN", "SingleRoIExtractor", "AnchorGenerator", "ResidualBlockUsing"
+    "RPN", "SingleRoIExtractor", "AnchorGenerator", "ResidualBlockUsing", "ResidualBlockUsing_V1"
 ]

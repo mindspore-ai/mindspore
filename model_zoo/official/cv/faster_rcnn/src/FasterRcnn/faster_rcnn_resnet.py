@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""FasterRcnn based on ResNet50."""
+"""FasterRcnn based on ResNet."""
 
 import numpy as np
 import mindspore.nn as nn
@@ -21,7 +21,7 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
-from .resnet50 import ResNetFea, ResidualBlockUsing
+from .resnet import ResNetFea, ResidualBlockUsing
 from .bbox_assign_sample_stage2 import BboxAssignSampleForRcnn
 from .fpn_neck import FeatPyramidNeck
 from .proposal_generator import Proposal
@@ -31,12 +31,12 @@ from .roi_align import SingleRoIExtractor
 from .anchor_generator import AnchorGenerator
 
 
-class Faster_Rcnn_Resnet50(nn.Cell):
+class Faster_Rcnn_Resnet(nn.Cell):
     """
     FasterRcnn Network.
 
     Note:
-        backbone = resnet50
+        backbone = resnet
 
     Returns:
         Tuple, tuple of output tensor.
@@ -48,10 +48,10 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         rcnn_reg_loss: Scalar, Regression loss of RCNN subnet.
 
     Examples:
-        net = Faster_Rcnn_Resnet50()
+        net = Faster_Rcnn_Resnet()
     """
     def __init__(self, config):
-        super(Faster_Rcnn_Resnet50, self).__init__()
+        super(Faster_Rcnn_Resnet, self).__init__()
         self.dtype = np.float32
         self.ms_type = mstype.float32
         self.train_batch_size = config.batch_size
@@ -79,7 +79,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
 
         self.anchor_list = self.get_anchors(featmap_sizes)
 
-        # Backbone resnet50
+        # Backbone resnet
         self.backbone = ResNetFea(ResidualBlockUsing,
                                   config.resnet_block,
                                   config.resnet_in_channels,
@@ -121,7 +121,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         self.roi_init(config)
 
         # Rcnn
-        self.rcnn = Rcnn(config, config.rcnn_in_channels * config.roi_layer['out_size'] * config.roi_layer['out_size'],
+        self.rcnn = Rcnn(config, config.rcnn_in_channels * config.roi_layer.out_size * config.roi_layer.out_size,
                          self.train_batch_size, self.num_classes)
 
         # Op declare
@@ -148,6 +148,19 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         self.device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
 
     def roi_init(self, config):
+        """
+        Initialize roi from the config file
+
+        Args:
+            config (file): config file.
+            roi_layer (dict): Numbers of block in different layers.
+            roi_align_out_channels (int): Out channel in each layer.
+            config.roi_align_featmap_strides (list): featmap_strides in each layer.
+            roi_align_finest_scale (int): finest_scale in roi.
+
+        Examples:
+            self.roi_init(config)
+        """
         self.roi_align = SingleRoIExtractor(config,
                                             config.roi_layer,
                                             config.roi_align_out_channels,
@@ -164,6 +177,19 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         self.roi_align_test.set_train_local(config, False)
 
     def test_mode_init(self, config):
+        """
+        Initialize test_mode from the config file.
+
+        Args:
+            config (file): config file.
+            test_batch_size (int): Size of test batch.
+            rpn_max_num (int): max num of rpn.
+            test_score_thresh (float): threshold of test score.
+            test_iou_thr (float): threshold of test iou.
+
+        Examples:
+            self.test_mode_init(config)
+        """
         self.test_batch_size = config.test_batch_size
         self.split = P.Split(axis=0, output_num=self.test_batch_size)
         self.split_shape = P.Split(axis=0, output_num=4)
@@ -195,6 +221,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         self.test_num_proposal = self.test_batch_size * self.rpn_max_num
 
     def init_tensor(self, config):
+
         roi_align_index = [np.array(np.ones((config.num_expected_pos_stage2 + config.num_expected_neg_stage2, 1)) * i,
                                     dtype=self.dtype) for i in range(self.train_batch_size)]
 
@@ -205,6 +232,19 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         self.roi_align_index_test_tensor = Tensor(np.concatenate(roi_align_index_test))
 
     def construct(self, img_data, img_metas, gt_bboxes, gt_labels, gt_valids):
+        """
+        construct the FasterRcnn Network.
+
+        Args:
+            img_data: input image data.
+            img_metas: meta label of img.
+            gt_bboxes (Tensor): get the value of bboxes.
+            gt_labels (Tensor): get the value of labels.
+            gt_valids (Tensor): get the valid part of bboxes.
+
+        Returns:
+            Tuple,tuple of output tensor
+        """
         x = self.backbone(img_data)
         x = self.fpn_ncek(x)
 
@@ -440,7 +480,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
 class FasterRcnn_Infer(nn.Cell):
     def __init__(self, config):
         super(FasterRcnn_Infer, self).__init__()
-        self.network = Faster_Rcnn_Resnet50(config)
+        self.network = Faster_Rcnn_Resnet(config)
         self.network.set_train(False)
 
     def construct(self, img_data, img_metas):

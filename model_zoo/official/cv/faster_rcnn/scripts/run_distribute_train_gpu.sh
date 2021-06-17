@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,20 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train_gpu.sh DEVICE_NUM PRETRAINED_PATH"
-echo "for example: sh run_distribute_train_gpu.sh 8 /path/pretrain.ckpt"
+echo "sh run_distribute_train_gpu.sh DEVICE_NUM PRETRAINED_PATH BACKBONE"
+echo "for example: sh run_distribute_train_gpu.sh 8 /path/pretrain.ckpt resnet_v1_50"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
-if [ $# != 2 ]
+if [ $# != 3 ]
 then
-    echo "Usage: sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_PATH]"
+    echo "Usage: sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_PATH] [BACKBONE]"
+exit 1
+fi
+
+if [ $3 != "resnet_v1_50" ] && [ $3 != "resnet_v1.5_50" ] && [ $3 != "resnet_v1_101" ] && [ $3 != "resnet_v1_152" ]
+then 
+  echo "error: the selected backbone must be resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152"
 exit 1
 fi
 
@@ -41,4 +47,5 @@ mpirun -n $RANK_SIZE \
     --run_distribute=True \
     --device_target="GPU" \
     --device_num=$RANK_SIZE \
-    --pre_trained=$PRETRAINED_PATH  > log 2>&1 &
+    --pre_trained=$PRETRAINED_PATH \
+    --backbone=$3 > log 2>&1 &

@@ -25,8 +25,6 @@ import mmcv
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
-from src.config import config
-
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.
@@ -160,7 +158,7 @@ class Expand:
         return img, boxes, labels
 
 
-def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num):
+def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num, config):
     """rescale operation for image"""
     img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
     if img_data.shape[0] > config.img_height:
@@ -183,7 +181,7 @@ def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return  (pad_img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
-def rescale_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
+def rescale_column_test(img, img_shape, gt_bboxes, gt_label, gt_num, config):
     """rescale operation for image of eval"""
     img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
     if img_data.shape[0] > config.img_height:
@@ -203,7 +201,7 @@ def rescale_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
     return  (pad_img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
 
-def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
+def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num, config):
     """resize operation for image"""
     img_data = img
     img_data, w_scale, h_scale = mmcv.imresize(
@@ -221,7 +219,7 @@ def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
 
-def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
+def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num, config):
     """resize operation for image of eval"""
     img_data = img
     img_data, w_scale, h_scale = mmcv.imresize(
@@ -239,7 +237,7 @@ def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
 
-def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num):
+def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num, config):
     """impad operation for image"""
     img_data = mmcv.impad(img, (config.img_height, config.img_width))
     img_data = img_data.astype(np.float32)
@@ -294,16 +292,16 @@ def expand_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     return (img, img_shape, gt_bboxes, gt_label, gt_num)
 
 
-def preprocess_fn(image, box, is_training):
+def preprocess_fn(image, box, is_training, config):
     """Preprocess function for dataset."""
     def _infer_data(image_bgr, image_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert):
         image_shape = image_shape[:2]
         input_data = image_bgr, image_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert
 
         if config.keep_ratio:
-            input_data = rescale_column_test(*input_data)
+            input_data = rescale_column_test(*input_data, config=config)
         else:
-            input_data = resize_column_test(*input_data)
+            input_data = resize_column_test(*input_data, config=config)
         input_data = imnormalize_column(*input_data)
 
         output_data = transpose_column(*input_data)
@@ -336,9 +334,9 @@ def preprocess_fn(image, box, is_training):
         if expand:
             input_data = expand_column(*input_data)
         if config.keep_ratio:
-            input_data = rescale_column(*input_data)
+            input_data = rescale_column(*input_data, config=config)
         else:
-            input_data = resize_column(*input_data)
+            input_data = resize_column(*input_data, config=config)
         input_data = imnormalize_column(*input_data)
         if flip:
             input_data = flip_column(*input_data)
@@ -349,7 +347,7 @@ def preprocess_fn(image, box, is_training):
     return _data_aug(image, box, is_training)
 
 
-def create_coco_label(is_training):
+def create_coco_label(is_training, config):
     """Get image path and annotation from COCO."""
     from pycocotools.coco import COCO
 
@@ -431,13 +429,13 @@ def filter_valid_data(image_dir, anno_path):
     return image_files, image_anno_dict
 
 
-def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="fasterrcnn.mindrecord", file_num=8):
+def data_to_mindrecord_byte_image(config, dataset="coco", is_training=True, prefix="fasterrcnn.mindrecord", file_num=8):
     """Create MindRecord file."""
     mindrecord_dir = config.mindrecord_dir
     mindrecord_path = os.path.join(mindrecord_dir, prefix)
     writer = FileWriter(mindrecord_path, file_num)
     if dataset == "coco":
-        image_files, image_anno_dict = create_coco_label(is_training)
+        image_files, image_anno_dict = create_coco_label(is_training, config=config)
     else:
         image_files, image_anno_dict = filter_valid_data(config.IMAGE_DIR, config.ANNO_PATH)
 
@@ -456,7 +454,7 @@ def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="fast
     writer.commit()
 
 
-def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, device_num=1, rank_id=0, is_training=True,
+def create_fasterrcnn_dataset(config, mindrecord_file, batch_size=2, device_num=1, rank_id=0, is_training=True,
                               num_parallel_workers=8, python_multiprocessing=False):
     """Create FasterRcnn dataset with MindDataset."""
     cv2.setNumThreads(0)
@@ -465,7 +463,7 @@ def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, device_num=1, rank_
                         num_parallel_workers=4, shuffle=is_training)
     decode = C.Decode()
     ds = ds.map(input_columns=["image"], operations=decode)
-    compose_map_func = (lambda image, annotation: preprocess_fn(image, annotation, is_training))
+    compose_map_func = (lambda image, annotation: preprocess_fn(image, annotation, is_training, config=config))
 
     if is_training:
         ds = ds.map(input_columns=["image", "annotation"],

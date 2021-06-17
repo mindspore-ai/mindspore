@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ import argparse
 import numpy as np
 from pycocotools.coco import COCO
 
-from src.config import config
 from src.util import coco_eval, bbox2result_1image, results2json
+import src.config as cfg
 
 dst_width = 1280
 dst_height = 768
@@ -28,6 +28,7 @@ parser = argparse.ArgumentParser(description="FasterRcnn inference")
 parser.add_argument("--ann_file", type=str, required=True, help="ann file.")
 parser.add_argument("--result_path", type=str, required=True, help="result file path.")
 args = parser.parse_args()
+config = cfg.get_config("./src/config_50.yaml")
 
 def get_eval_result(ann_file, result_path):
     """ get evaluation result of faster rcnn"""
