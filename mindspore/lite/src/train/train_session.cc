@@ -714,6 +714,41 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
   if (orig_train_state) Train();
   return status;
 }
+std::vector<tensor::MSTensor *> TrainSession::GetFeatureMaps() const {
+  std::vector<tensor::MSTensor *> features;
+  for (auto cur_tensor : this->tensors_) {
+    if (cur_tensor->IsConst() && cur_tensor->data_type() == kNumberTypeFloat32) {
+      features.push_back(cur_tensor);
+    }
+  }
+  return features;
+}
+
+int TrainSession::UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features_map) {
+  for (auto feature : features_map) {
+    bool find = false;
+    for (auto tensor : tensors_) {
+      if (!tensor->IsConst() || tensor->data_type() != kNumberTypeFloat32) {
+        continue;
+      }
+      if (feature->tensor_name() != tensor->tensor_name()) {
+        continue;
+      }
+      if (feature->Size() != tensor->Size()) {
+        MS_LOG(ERROR) << "feature name:" << feature->tensor_name() << ",len diff:"
+                      << "old is:" << tensor->Size() << "new is:" << feature->Size();
+        return RET_ERROR;
+      }
+      find = true;
+      memcpy(tensor->data(), feature->data(), tensor->Size());
+    }
+    if (!find) {
+      MS_LOG(ERROR) << "cannot find feature:" << feature->tensor_name() << ",update failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace lite
 
 session::LiteSession *session::LiteSession::CreateTrainSession(const std::string &fn, const lite::Context *context,

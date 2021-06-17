@@ -246,3 +246,20 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_lite_MSTensor_tensorName
 
   return env->NewStringUTF(ms_tensor_ptr->tensor_name().c_str());
 }
+
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_createTensor(JNIEnv *env, jobject thiz,
+                                                                                 jstring tensor_name, jobject buffer) {
+  auto *p_data = reinterpret_cast<jbyte *>(env->GetDirectBufferAddress(buffer));  // get buffer pointer
+  jlong data_len = env->GetDirectBufferCapacity(buffer);                          // get buffer capacity
+  if (p_data == nullptr) {
+    MS_LOGE("GetDirectBufferAddress return null");
+    return false;
+  }
+  char *tensor_data(new char[data_len]);
+  memcpy(tensor_data, p_data, data_len);
+  int tensor_size = static_cast<jint>(data_len / sizeof(float));
+  std::vector<int> shape = {tensor_size};
+  auto tensor = mindspore::tensor::MSTensor::CreateTensor(
+    env->GetStringUTFChars(tensor_name, JNI_FALSE), mindspore::kNumberTypeFloat32, shape, tensor_data, tensor_size);
+  return jlong(tensor);
+}

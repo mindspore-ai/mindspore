@@ -183,6 +183,23 @@ public class LiteSession {
         return this.setupVirtualBatch(this.sessionPtr, virtualBatchMultiplier, learningRate, momentum);
     }
 
+   public List<MSTensor> getFeaturesMap() {
+         List<Long> ret = this.getFeaturesMap(this.sessionPtr);
+                ArrayList<MSTensor> tensors = new ArrayList<MSTensor>();
+                for (Long msTensorAddr : ret) {
+                    MSTensor msTensor = new MSTensor(msTensorAddr);
+                    tensors.add(msTensor);
+                }
+                return tensors;
+   }
+   public boolean updateFeatures(List<MSTensor> features) {
+            long[] inputsArray = new long[features.size()];
+            for (int i = 0; i < features.size(); i++) {
+                inputsArray[i] = features.get(i).getMSTensorPtr();
+            }
+             return this.updateFeatures(this.sessionPtr, inputsArray);
+   }
+
     private native long createSession(long msConfigPtr);
 
     private native long createSessionWithModel(MappedByteBuffer buffer, long msConfigPtr);
@@ -225,4 +242,7 @@ public class LiteSession {
 
     private native boolean setupVirtualBatch(long sessionPtr, int virtualBatchMultiplier, float learningRate, float momentum);
 
+    private native boolean updateFeatures(long sessionPtr, long[] newFeatures);
+
+    private native List<Long> getFeaturesMap(long sessionPtr);
 }

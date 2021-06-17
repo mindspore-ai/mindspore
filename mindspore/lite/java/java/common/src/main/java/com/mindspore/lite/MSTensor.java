@@ -29,6 +29,10 @@ public class MSTensor {
         this.tensorPtr = tensorPtr;
     }
 
+    public MSTensor(String tensorName, ByteBuffer buffer) {
+          this.tensorPtr = createTensor(tensorName, buffer);
+    }
+
     public int[] getShape() {
         return this.getShape(this.tensorPtr);
     }
@@ -81,6 +85,8 @@ public class MSTensor {
     protected long getMSTensorPtr() {
         return tensorPtr;
     }
+
+    private native long createTensor(String tensorName, ByteBuffer buffer);
 
     private native int[] getShape(long tensorPtr);
 

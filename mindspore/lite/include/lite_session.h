@@ -210,6 +210,19 @@ class MS_API LiteSession {
                      lite::QuantizationType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFERS) {
     return mindspore::lite::RET_ERROR;
   }
+
+  /// \brief Get model featuremap MindSpore Lite MSTensors of Training model prediction
+  ///
+  /// \return a vector of output tensors (MindSpore Lite MSTensor).
+  virtual std::vector<tensor::MSTensor *> GetFeatureMaps() const {
+    std::vector<tensor::MSTensor *> features;
+    return features;
+  }
+
+  /// \brief update model featuremap save to update_ms_file
+  /// \param[in] features new featuremap
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features) { return mindspore::lite::RET_ERROR; }
 };
 }  // namespace session
 }  // namespace mindspore
