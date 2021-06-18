@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CONV2D_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CONV2D_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_BATCHNORM_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_BATCHNORM_INFO_H_
 
 #include <string>
 #include <memory>
@@ -29,44 +29,36 @@
 
 namespace mindspore {
 namespace parallel {
-class Conv2DInfo : public OperatorInfo {
+class BatchNormInfo : public OperatorInfo {
  public:
-  Conv2DInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-             const PrimitiveAttrs &attrs)
+  BatchNormInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
-  ~Conv2DInfo() override = default;
+  ~BatchNormInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
-  void ReComputeBatchSplitFlagList() override;
 
  protected:
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
+  Status InferReplaceOps();
+  Status InferAsLossDivisor() override;
 
  private:
-  int64_t out_channel_ = 1;
-  std::vector<int64_t> kernel_size_;  // two integers
-  int64_t mode_ = 1;
-  int64_t pad_mode_ = 0;           // "pad": 0; "same": 1; "valid": 2;
-  std::vector<int64_t> pad_list_;  // four integers
-  std::vector<int64_t> stride_;    // four integers
-  std::vector<int64_t> dilation_;  // four integers
-  int64_t group_ = 1;
+  bool is_training_ = false;
+  float epsilon_ = 0.00001;
+  float momentum_ = 0.1;
+  bool input_is_4d_ = true;
   std::string format_;
-  bool out_channel_shard_ = false;
-  int64_t new_out_channel_ = 1;
+  std::vector<Group> forward_allreduce_group_;
 };
-
-constexpr size_t IN_CHANNEL_INDEX = 1;
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CONV2D_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_BATCHNORM_INFO_H_

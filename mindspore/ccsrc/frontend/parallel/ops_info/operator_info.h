@@ -214,6 +214,11 @@ class OperatorInfo {
   Status InferSliceShape(const Strategys &inputs_strategy, const Strategys &outputs_strategy,
                          Shapes *inputs_slice_shape, Shapes *outputs_slice_shape);
   void BreakingTiesForPerferringDataParallel(const StrategyPtr &, const CostPtr &);
+  int64_t GetIntAttr(const std::string &attr_name);
+  bool GetBoolAttr(const std::string &attr_name);
+  float GetFloatAttr(const std::string &attr_name);
+  std::string GetStringAttr(const std::string &attr_name);
+  std::vector<int64_t> GetTupleIntAttr(const std::string &attr_name);
 
   std::string name_;
   Shapes inputs_shape_;
