@@ -40,6 +40,8 @@ static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kCNodeShapeAttr[] = "shape";
 static constexpr char kCNodeShape1Attr[] = "shape1";
 static constexpr char kCNodeShape2Attr[] = "shape2";
+static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
+
 enum ParseForm : int {
   FORM_PARSE_TYPE = 0,
   FORM_PARSE_SCALAR = 1,
@@ -305,12 +307,13 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
   node->set_debug_info(debug_info_ptr);
   node->set_name(debug_info_name);
 
-  const mind_ir::TensorProto &tensor_proto = value_proto.tensor(0);
-
-  tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(tensor_proto);
-  MS_EXCEPTION_IF_NULL(tensor_info);
-  auto tensor_abstract = tensor_info->ToAbstract();
-  node->set_abstract(tensor_abstract);
+  if (value_proto.tensor_size() > 0) {
+    const mind_ir::TensorProto &tensor_proto = value_proto.tensor(0);
+    tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(tensor_proto);
+    MS_EXCEPTION_IF_NULL(tensor_info);
+    auto tensor_abstract = tensor_info->ToAbstract();
+    node->set_abstract(tensor_abstract);
+  }
 
   anfnode_build_map_[value_proto.name()] = node;
   return true;
@@ -768,8 +771,14 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   if (op_primc_fns.find(node_type) != op_primc_fns.end()) {
     prim = op_primc_fns[node_type]();
   } else {
-    prim = std::make_shared<Primitive>(node_type);
-    prim->set_instance_name(node_type);
+    if (node_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
+      auto op_name = node_type.substr(strlen(kDoSignaturePrimitivePrefix));
+      prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
+      prim->set_instance_name(op_name);
+    } else {
+      prim = std::make_shared<Primitive>(node_type);
+      prim->set_instance_name(node_type);
+    }
   }
   MS_EXCEPTION_IF_NULL(prim);
 
@@ -812,9 +821,14 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     } else {
       AbstractBasePtrList elem;
       for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
-        elem.push_back(cnode_ptr->input(index)->abstract());
+        auto abs = cnode_ptr->input(index)->abstract();
+        if (abs != nullptr) {
+          elem.push_back(abs);
+        }
       }
-      cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+      if (!elem.empty()) {
+        cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+      }
     }
   } else if (kv.size() == 1) {
     std::unordered_map<std::string, abstract::AbstractBasePtr>::iterator iter = kv.begin();
@@ -918,6 +932,9 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const
     debug_info_ptr->set_name(importProto.name());
   } else {
     MS_LOG(ERROR) << "FuncGraph under converting has not name!";
+  }
+  if (importProto.has_bprop_hash()) {
+    outputFuncGraph->set_bprop_hash(importProto.bprop_hash());
   }
 
   if (!ImportParametersForGraph(outputFuncGraph, importProto)) {

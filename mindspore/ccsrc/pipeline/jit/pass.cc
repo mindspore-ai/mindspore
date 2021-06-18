@@ -114,11 +114,6 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
     irpass.pynative_eliminate_,
   });
   opt::irpass::ResolveIRPassLib resolve_irpass;
-  opt::OptPassConfig resolver_prim = opt::OptPassConfig({
-    resolve_irpass.resolver_resolve_and_getattr_,
-    resolve_irpass.resolver_resolve_,
-    resolve_irpass.resolver_getattr_,
-  });
 
   opt::OptPassConfig switch_simplify = opt::OptPassConfig({
     irpass.switch_simplify_,
@@ -133,7 +128,6 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
   });
 
   OptPassGroupMap map({{"ad_eliminate", pynative_eliminate},
-                       {"ad_resolver_prim", resolver_prim},
                        {"ad_inline", inline_opt},
                        {"bool_scalar_eliminate", bool_scalar_eliminate},
                        {"ad_switch_simplify", switch_simplify}});
@@ -321,9 +315,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::irpass::ResolveIRPassLib resolve_irpass;
 
-  opt::OptPassConfig resolve_pass =
-    opt::OptPassConfig({resolve_irpass.resolver_resolve_, resolve_irpass.resolver_getattr_,
-                        irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
+  opt::OptPassConfig after_resolve_pass =
+    opt::OptPassConfig({irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
 
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"a_1", a_1},
@@ -336,7 +329,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"virtual_dataset", virtual_dataset},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
                          {"grad", opt::OptPassConfig(opt::irpass::ExpandJPrim())},
-                         {"resolve", resolve_pass},
+                         {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
                          {"auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper)},

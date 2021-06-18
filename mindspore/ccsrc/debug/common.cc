@@ -311,4 +311,11 @@ bool Common::SaveStringToFile(const std::string filename, const std::string stri
   ChangeFileMode(real_path.value(), S_IRUSR);
   return true;
 }
+
+bool Common::FileExists(const std::string &filepath) {
+  std::ifstream f(filepath);
+  bool cache_file_existed = f.good();
+  f.close();
+  return cache_file_existed;
+}
 }  // namespace mindspore

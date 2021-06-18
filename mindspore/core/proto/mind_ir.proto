@@ -80,6 +80,7 @@ message GraphProto {
   optional string doc_string = 4;
   repeated ValueInfoProto input = 5;
   repeated ValueInfoProto output = 6;
+  optional string bprop_hash = 7;
 }
 
 

@@ -141,7 +141,7 @@ class KPrim {
   FuncGraphPtr GetPossibleBprop(const PrimitivePtr &prim);
 
  private:
-  FuncGraphPtr GetBprop(const PrimitivePtr &prim);
+  FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources = nullptr);
   FuncGraphPtr GetFprop(const PrimitivePtr &prim);
   FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
   FuncGraphPtr BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);

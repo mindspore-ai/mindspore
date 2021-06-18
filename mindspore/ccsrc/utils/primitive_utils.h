@@ -33,6 +33,10 @@ py::function GetComputeFunction(std::string name);
 
 BaseRef RunComputeFunction(const PrimitivePtr &prim, const VectorRef &args);
 
+py::function GetComputeFunctionWithoutPyObj(const std::string &name);
+
+BaseRef RunComputeFunctionWithoutPyObj(const PrimitivePtr &prim, const VectorRef &args);
+
 py::tuple ConvertDatatoPyTuple(const VectorRef &args);
 }  // namespace mindspore
 
