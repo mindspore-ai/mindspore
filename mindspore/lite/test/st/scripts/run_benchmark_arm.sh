@@ -1061,6 +1061,8 @@ function Run_arm64() {
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
         enable_fp16="false"
+        virtual_batch="false"
+        suffix_print=""
         if [[ $model_name == \#* ]]; then
             continue
         fi
@@ -1070,6 +1072,10 @@ function Run_arm64() {
         elif [[ "${line_array[1]}" == "fp16" ]]; then
             enable_fp16="true"
             suffix_print="_fp16"
+            accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" == "vb" ]]; then
+            virtual_batch="true"
+            suffix_print="_virtual_batch"
             accuracy_limit=${line_array[2]}
         fi
         export_file="${tmp_dir}/${model_name}_tod"
@@ -1093,7 +1099,8 @@ function Run_arm64() {
         --accuracyThreshold=${accuracy_limit} \
         --enableFp16=${enable_fp16} \
         --inferenceFile=${inference_file} \
-        --exportFile=${export_file}
+        --exportFile=${export_file} \
+        --virtualBatch=${virtual_batch}
 ENDM
         )
         echo "${adb_cmd}" >> ${run_arm64_fp32_log_file}

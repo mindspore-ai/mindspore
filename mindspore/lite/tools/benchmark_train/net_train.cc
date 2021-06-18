@@ -175,11 +175,14 @@ int NetTrain::CompareOutput(const session::LiteSession &lite_session) {
     auto bin_buf = std::unique_ptr<float[]>(ReadFileBuf(output_file.c_str(), &size));
     if (bin_buf == nullptr) {
       MS_LOG(ERROR) << "ReadFile return nullptr";
+      std::cout << "ReadFile return nullptr" << std::endl;
       return RET_ERROR;
     }
     if (size != tensor->Size()) {
       MS_LOG(ERROR) << "Output buffer and output file differ by size. Tensor size: " << tensor->Size()
                     << ", read size: " << size;
+      std::cout << "Output buffer and output file differ by size. Tensor size: " << tensor->Size()
+                << ", read size: " << size << std::endl;
       return RET_ERROR;
     }
     float bias = CompareData<float>(bin_buf.get(), tensor->ElementsNum(), reinterpret_cast<float *>(outputs));
@@ -340,6 +343,9 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
       return RET_ERROR;
     }
     if (epochs > 0) {
+      if (flags_->virtual_batch_) {
+        session->SetupVirtualBatch(epochs);
+      }
       session->Train();
     }
   } else {
@@ -508,7 +514,7 @@ void NetTrain::CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_ty
       break;
 #endif
     default:
-      std::cout << "unsupported type:" << type;
+      std::cout << "unsupported type:" << type << std::endl;
       break;
   }
 }
@@ -586,6 +592,7 @@ int NetTrain::Init() {
   MS_LOG(INFO) << "expectedDataFile = " << this->flags_->data_file_;
   MS_LOG(INFO) << "exportDataFile = " << this->flags_->export_file_;
   MS_LOG(INFO) << "enableFp16 = " << this->flags_->enable_fp16_;
+  MS_LOG(INFO) << "virtualBatch = " << this->flags_->virtual_batch_;
 
   if (this->flags_->epochs_ < 0) {
     MS_LOG(ERROR) << "epochs:" << this->flags_->epochs_ << " must be equal/greater than 0";

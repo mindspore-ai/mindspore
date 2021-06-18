@@ -71,6 +71,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::enable_fp16_, "enableFp16", "Enable float16", false);
     AddFlag(&NetTrainFlags::loss_name_, "lossName", "loss layer name", "");
     AddFlag(&NetTrainFlags::inference_file_, "inferenceFile", "MS file to export inference model", "");
+    AddFlag(&NetTrainFlags::virtual_batch_, "virtualBatch", "use virtual batch", false);
   }
 
   ~NetTrainFlags() override = default;
@@ -84,6 +85,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::string in_data_type_in_ = "bin";
   int cpu_bind_mode_ = 1;
   bool enable_fp16_ = false;
+  bool virtual_batch_ = false;
   // MarkPerformance
   int num_threads_ = 1;
   int warm_up_loop_count_ = 0;
