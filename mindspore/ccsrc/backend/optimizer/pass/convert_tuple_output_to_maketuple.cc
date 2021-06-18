@@ -38,11 +38,12 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
   if (anf_graph != nullptr) {
     kernel_graph = anf_graph->cast<KernelGraphPtr>();
   }
-
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf)) {
     return kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf);
   }
   auto make_tuple = kernel_graph->TransTupleToMakeTuple(tuple_anf);
+  MS_EXCEPTION_IF_NULL(make_tuple);
   kernel_graph->InsertTupleParameterToMakeTupleMap(tuple_anf, make_tuple);
   // replace graph inputs if input is a parameter
   kernel_graph->ReplaceGraphInput(tuple_anf, make_tuple);

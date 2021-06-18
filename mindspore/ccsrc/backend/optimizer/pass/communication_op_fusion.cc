@@ -361,6 +361,7 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       continue;
     }
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
     auto graph_id = kernel_graph->graph_id();
     AnfNodePtr new_communication_op =
       CreateFusedCommunicationOp(func_graph, communication_op_info, start_index, end_index);

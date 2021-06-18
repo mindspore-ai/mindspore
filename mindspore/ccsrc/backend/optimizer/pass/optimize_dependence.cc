@@ -60,6 +60,7 @@ CNodePtr CheckIsolatedVirtualNode(const CNodePtr &cnode) {
     return nullptr;
   }
   auto real_input_op = AnfAlgo::GetInputNode(cnode, kIsolatedDependRealInputIndex);
+  MS_EXCEPTION_IF_NULL(real_input_op);
   if (!real_input_op->isa<CNode>()) {
     return nullptr;
   }
@@ -210,6 +211,7 @@ const AnfNodePtr OptimizeDependence::GetConvertNode(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto depend_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(depend_cnode);
   auto replacing_node = depend_cnode->input(index);
   MS_EXCEPTION_IF_NULL(replacing_node);
   if (!replacing_node->isa<CNode>()) {

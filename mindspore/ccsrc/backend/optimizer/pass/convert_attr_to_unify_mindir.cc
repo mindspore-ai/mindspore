@@ -29,11 +29,14 @@ const AnfNodePtr ConvertAttrToUnifyMindIR::Process(const FuncGraphPtr &, const A
     return nullptr;
   }
 
-  CNodePtr cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   auto inputs = cnode->inputs();
   AnfNodePtr op = inputs[0];
+  MS_EXCEPTION_IF_NULL(op);
   if (IsValueNode<Primitive>(op)) {
     auto prim = GetValueNode<PrimitivePtr>(op);
+    MS_EXCEPTION_IF_NULL(prim);
     auto attrs = prim->attrs();
     std::string type_name = prim->name();
     for (auto attr : attrs) {
