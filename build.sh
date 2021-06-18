@@ -593,6 +593,7 @@ build_lite()
 
     if [[ "${local_lite_platform}" == "arm64" ]]; then
       if [ "$(uname)" == "Darwin" ]; then
+        pkg_name=mindspore-lite-${VERSION_STR}-ios-aarch64
         cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="arm64" -DENABLE_BITCODE=0                   \
               -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM64="on" -DENABLE_NEON="on" -DENABLE_FP16="on" \
               -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="on" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off"        \
@@ -609,6 +610,7 @@ build_lite()
       fi
     elif [[ "${local_lite_platform}" == "arm32" ]]; then
       if [ "$(uname)" == "Darwin" ]; then
+        pkg_name=mindspore-lite-${VERSION_STR}-ios-aarch32
         cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="armv7;armv7s" -DENABLE_BITCODE=0     \
               -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM32="on" -DENABLE_NEON="on"             \
               -DMSLITE_ENABLE_TRAIN="off" -DENABLE_MINDRT="on" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off" \
@@ -650,9 +652,8 @@ build_lite()
           mkdir -p ${BASEPATH}/output
           cp -r ${BASEPATH}/mindspore/lite/build/src/Release-iphoneos/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
           cd ${BASEPATH}/output
-          tar -zcvf mindspore-lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz mindspore-lite.framework/
-          sha256sum mindspore-lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz > \
-                    mindspore-lite.framework-${VERSION_STR}-${local_lite_platform}.tar.gz.sha256
+          tar -zcvf ${pkg_name}.tar.gz mindspore-lite.framework/
+          sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
           rm -r mindspore-lite.framework
         else
           mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
