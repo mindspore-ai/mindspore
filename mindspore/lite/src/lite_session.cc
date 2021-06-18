@@ -33,8 +33,7 @@
 #include "src/mindrt_executor.h"
 #endif
 #if SUPPORT_NPU
-#include "src/runtime/agent/npu/npu_manager.h"
-#include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
+#include "src/delegate/npu/npu_delegate.h"
 #endif
 #if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
@@ -499,11 +498,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
   // scheduler kernels
-#if SUPPORT_NPU
-  Scheduler scheduler(context_, model, &tensors_, is_train_session_, npu_manager_, npu_pass_manager_, delegate_);
-#else
   Scheduler scheduler(context_, model, &tensors_, is_train_session_, delegate_);
-#endif
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
@@ -511,15 +506,6 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-#if SUPPORT_NPU
-  if (this->context_->IsNpuEnabled()) {
-    MS_ASSERT(npu_manager_ != nullptr);
-    if (npu_manager_->LoadOMModel() != RET_OK) {
-      MS_LOG(ERROR) << "NPU client load model failed.";
-      return RET_ERROR;
-    }
-  }
-#endif
   InitGraphInOutTensors(model);
 
   bool use_mindrt_run = IfUseMindrtExecutor();
@@ -636,30 +622,12 @@ int LiteSession::Init(const Context *context) {
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
-#if SUPPORT_NPU
-  npu_manager_ = new (std::nothrow) NPUManager();
-  if (npu_manager_ == nullptr) {
-    MS_LOG(ERROR) << "New npu_manager_ failed";
-    is_running_.store(false);
-    return RET_ERROR;
-  }
-  npu_pass_manager_ = new (std::nothrow) NPUPassManager();
-  if (npu_pass_manager_ == nullptr) {
-    MS_LOG(ERROR) << "New npu_pass_manager_ failed";
-    is_running_.store(false);
-    return RET_ERROR;
-  }
-#endif
   if (context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr";
     is_running_.store(false);
     return RET_NULL_PTR;
   }
-#if SUPPORT_NPU
-  this->context_ = new (std::nothrow) InnerContext(context, npu_manager_);
-#else
   this->context_ = new (std::nothrow) InnerContext(context);
-#endif
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "New Context failed";
     is_running_.store(false);
@@ -674,9 +642,22 @@ int LiteSession::Init(const Context *context) {
   if (context->delegate != nullptr) {
     delegate_ = context->delegate;
   }
+#if SUPPORT_NPU
+  if (delegate_ == nullptr && context_->IsNpuEnabled()) {
+    delegate_ = std::shared_ptr<NPUDelegate>(new (std::nothrow) NPUDelegate(context_->GetNpuInfo()));
+    if (delegate_ == nullptr) {
+      MS_LOG(ERROR) << "New delegate_ failed";
+      return RET_ERROR;
+    }
+  }
+#endif
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
-    if (delegate_ret != RET_OK) {
+    if (delegate_ret == RET_NOT_SUPPORT) {
+      MS_LOG(DEBUG) << "Delegate is unsupported";
+      delegate_ = nullptr;
+    }
+    if (delegate_ret == RET_ERROR) {
       MS_LOG(ERROR) << "Delegate init failed";
       return RET_ERROR;
     }
@@ -741,14 +722,6 @@ LiteSession::~LiteSession() {
 
   delete this->executor_;
   this->executor_ = nullptr;
-#if SUPPORT_NPU
-  MS_ASSERT(npu_manager_ != nullptr);
-  MS_ASSERT(npu_pass_manager_ != nullptr);
-  npu_pass_manager_->Clear();
-  delete npu_pass_manager_;
-  npu_manager_->Reset();
-  delete npu_manager_;
-#endif
 #if GPU_OPENCL
   delete opencl_runtime_wrapper_;
 #endif

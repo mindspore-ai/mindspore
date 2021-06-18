@@ -186,7 +186,20 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
     fi
 fi
 
-echo "Run_gpu is ended"
+# guard cropper
+if [[ $backend == "all" || $backend == "gpu" ]]; then
+    cd ${basepath} || exit 1
+    bash ${basepath}/scripts/run_cropper.sh -r ${release_path} -d ${device_id}
+    Run_cropper_status=$?
+    if [[ ${Run_cropper_status} != 0 ]];then
+        echo "Run cropper failed"
+        cat ${run_gpu_log_file}
+        isFailed=1
+        exit 1
+    fi
+fi
+
+echo "Run_gpu and Run_cropper is ended"
 Print_Benchmark_Result $run_benchmark_result_file
 exit ${isFailed}
 

@@ -24,9 +24,6 @@
 #ifdef ENABLE_ARM
 #include "src/cpu_info.h"
 #endif
-#ifdef SUPPORT_NPU
-#include "src/runtime/agent/npu/npu_manager.h"
-#endif
 
 namespace mindspore::lite {
 struct InnerContext : public Context {
@@ -34,9 +31,7 @@ struct InnerContext : public Context {
   InnerContext() = default;
 
   explicit InnerContext(const Context *context);
-#if SUPPORT_NPU
-  InnerContext(const Context *context, NPUManager *npu_manager);
-#endif
+
   int Init();
 
   bool IsCpuFloat16Enabled() const;
@@ -87,12 +82,6 @@ struct InnerContext : public Context {
 #ifdef ENABLE_ARM
 #ifndef MS_COMPILE_IOS
   CpuInfo *cpu_info_ = nullptr;
-#endif
-#endif
-
-#if SUPPORT_NPU
-#ifndef MS_COMPILE_IOS
-  NPUManager *npu_manager_ = nullptr;
 #endif
 #endif
 };

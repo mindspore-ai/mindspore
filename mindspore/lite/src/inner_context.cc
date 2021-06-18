@@ -19,7 +19,6 @@
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #ifdef SUPPORT_NPU
-#include "src/runtime/agent/npu/npu_manager.h"
 #include "include/HiAiModelManagerType.h"
 #endif
 #ifdef SUPPORT_GPU
@@ -39,22 +38,6 @@ InnerContext::InnerContext(const Context *context) {
 #endif
 #endif
 }
-
-#if SUPPORT_NPU
-InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
-  this->allocator = context->allocator;
-  this->thread_num_ = context->thread_num_;
-  this->enable_parallel_ = context->enable_parallel_;
-  SetContextDevice(context);
-  this->npu_manager_ = npu_manager;
-#ifdef ENABLE_ARM
-#ifndef MS_COMPILE_IOS
-  cpu_info_ = new CpuInfo;
-  fp16_flag_ = cpu_info_->ArmIsSupportFp16();
-#endif
-#endif
-}
-#endif
 
 void InnerContext::SetContextDevice(const Context *context) {
   bool isUserSetNPU = context->device_list_.end() !=
@@ -218,8 +201,8 @@ bool InnerContext::IsGpuEnabled() const {
 
 bool InnerContext::IsNpuEnabled() const {
 #ifdef SUPPORT_NPU
-  MS_ASSERT(npu_manager_ != nullptr);
-  return IsUserSetNpu() && npu_manager_->IsSupportNPU();
+  //  return IsUserSetNpu() && npu_manager_->IsSupportNPU();
+  return IsUserSetNpu();
 #else
   return false;
 #endif
