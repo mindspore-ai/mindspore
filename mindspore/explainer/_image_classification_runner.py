@@ -998,6 +998,7 @@ class ImageClassificationRunner(_Verifier):
             log.error(f"Failed to save manifest as {save_path}!")
             raise
         finally:
+            file.flush()
             os.close(fd)
         os.chmod(save_path, self._FILE_MODE)
 
