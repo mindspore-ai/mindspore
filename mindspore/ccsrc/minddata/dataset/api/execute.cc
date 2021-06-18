@@ -277,7 +277,11 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     }
 
     // Convert dataset::Tensor to mindspore::Tensor
-    CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(), "Apply transform failed, output tensor has no data");
+    if (!de_tensor->HasData()) {
+      std::stringstream ss;
+      ss << "Transformation returned an empty tensor with shape " << de_tensor->shape();
+      RETURN_STATUS_UNEXPECTED(ss.str());
+    }
     *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
   } else {  // Ascend310 case, where we must set Ascend resource on each operators
 #ifdef ENABLE_ACL
@@ -353,11 +357,17 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       // For next transform
       de_tensor_list = std::move(de_output_list);
     }
-
+    int32_t idx = 0;
     for (auto &tensor : de_tensor_list) {
-      CHECK_FAIL_RETURN_UNEXPECTED(tensor->HasData(), "Apply transform failed, output tensor has no data");
+      if (!tensor->HasData()) {
+        std::stringstream ss;
+        ss << "Transformation returned an empty tensor at location " << idx << ". ";
+        ss << "The shape of the tensor is " << tensor->shape();
+        RETURN_STATUS_UNEXPECTED(ss.str());
+      }
       auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(tensor));
       output_tensor_list->emplace_back(ms_tensor);
+      ++idx;
     }
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor is not valid");
   } else {  // Case Ascend310
