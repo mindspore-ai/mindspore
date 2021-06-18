@@ -52,22 +52,31 @@ You can download the dataset and put the directory in structure as follows:
 ```path
 ├── naml
   ├── README.md                    # descriptions about NAML
+  ├── model_utils
+  │   ├──__init__.py              // module init file
+  │   ├──config.py                // Parse arguments
+  │   ├──device_adapter.py        // Device adapter for ModelArts
+  │   ├──local_adapter.py         // Local adapter
+  │   ├──moxing_adapter.py        // Moxing adapter for ModelArts
   ├── scripts
+  │   ├──run_distribute_train.sh   # shell script for distribute training
   │   ├──run_train.sh              # shell script for training
   │   ├──run_eval.sh               # shell script for evaluation
   │   ├──run_infer_310.sh          # shell script for 310 inference
   ├── src
-  │   ├──option.py                 # parse args
+  │   ├──__init__.py               # module init file
   │   ├──callback.py               # callback file
   │   ├──dataset.py                # creating dataset
   │   ├──naml.py                   # NAML architecture
-  │   ├──config.py                 # config file
   │   ├──utils.py                  # utils to load ckpt_file for fine tune or incremental learn
-  ├──ascend310_infer               #application for 310 inference
+  ├── MINDdemo_config.yaml         # Configurations for demo
+  ├── MINDlarge_config.yaml        # Configurations for large
+  ├── MINDsmall_config.yaml        # Configurations for small
+  ├── ascend310_infer              # application for 310 inference
   ├── train.py                     # training script
   ├── eval.py                      # evaluation script
   ├── export.py                    # export mindir script
-  └──postprogress.py               # post process for 310 inference
+  └── postprogress.py              # post process for 310 inference
 ```
 
 ## [Training process](#contents)
@@ -76,21 +85,112 @@ You can download the dataset and put the directory in structure as follows:
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-```shell
-# train standalone
-bash run_train.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH]
-# train distribute
-bash run_distribute_train.sh [PLATFORM] [DEVICE_NUM] [DATASET] [DATASET_PATH] [RANK_TABLE_FILE]
-# evaluation
-bash run_eval.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH] [CHECKPOINT_PATH]
-```
+- running on Ascend
 
-- `PLATFORM` should be Ascend.
-- `DEVICE_ID` is the device id you want to run the network.
-- `DATASET` MIND dataset, support large, small and demo.
-- `DATASET_PATH` is the dataset path, the structure as [Dataset](#dataset).
-- `CHECKPOINT_PATH` is a pre-trained checkpoint path.
-- `RANK_TABLE_FILE` is HCCL configuration file when running on Ascend.
+    ```shell
+    # train standalone
+    bash run_train.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH]
+    # train distribute
+    bash run_distribute_train.sh [PLATFORM] [DEVICE_NUM] [DATASET] [DATASET_PATH] [RANK_TABLE_FILE]
+    # evaluation
+    bash run_eval.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH] [CHECKPOINT_PATH]
+    ```
+
+    - `PLATFORM` should be Ascend.
+    - `DEVICE_ID` is the device id you want to run the network.
+    - `DATASET` MIND dataset, support large, small and demo.
+    - `DATASET_PATH` is the dataset path, the structure as [Dataset](#dataset).
+    - `CHECKPOINT_PATH` is a pre-trained checkpoint path.
+    - `RANK_TABLE_FILE` is HCCL configuration file when running on Ascend.
+
+    For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+
+    Please follow the instructions in the link below:
+
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
+
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    - Train large dataset 1p/8p on ModelArts
+
+      ```python
+      # (1) Add "config_path='/path_to_code/MINDlarge_config.yaml'" on the website UI interface.
+      # (2) Perform a or b.
+      #       a. Set "enable_modelarts=True" on MINDlarge_config.yaml file.
+      #          Set "platform='Ascend'" on MINDlarge_config.yaml file.
+      #          Set "dataset='large'" on MINDlarge_config.yaml file.
+      #          Set "dataset_path='/cache/data/MINDlarge'" on MINDlarge_config.yaml file.
+      #          Set "save_checkpoint_path='./checkpoint'" on MINDlarge_config.yaml file.
+      #          Set "weight_decay=False" on MINDlarge_config.yaml file.
+      #          Set "sink_mode=True" on MINDlarge_config.yaml file.
+      #          Set other parameters on MINDlarge_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "platform=Ascend" on the website UI interface.
+      #          Add "dataset=large" on the website UI interface.
+      #          Add "dataset_path=/cache/data/MINDlarge" on the website UI interface.
+      #          Add "save_checkpoint_path=./checkpoint" on the website UI interface.
+      #          Add "weight_decay=False" on the website UI interface.
+      #          Add "sink_mode=True" on the website UI interface.
+      #          Add other parameters on the website UI interface.
+      # (3) Upload dataset to S3 bucket.
+      # (4) Set the code directory to "/path/naml" on the website UI interface.
+      # (5) Set the startup file to "train.py" on the website UI interface.
+      # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (7) Create your job.
+      ```
+
+    - Eval large dataset 1p on ModelArts
+
+      ```python
+      # (1) Add "config_path='/path_to_code/MINDlarge_config.yaml'" on the website UI interface.
+      # (2) Perform a or b.
+      #       a. Set "enable_modelarts=True" on MINDlarge_config.yaml file.
+      #          Set "platform='Ascend'" on MINDlarge_config.yaml file.
+      #          Set "dataset='large'" on MINDlarge_config.yaml file.
+      #          Set "dataset_path='/cache/data/MINDlarge'" on MINDlarge_config.yaml file.
+      #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on MINDlarge_config.yaml file.
+      #          Set "checkpoint_path='/cache/checkpoint_path/model.ckpt'" on MINDlarge_config.yaml file.
+      #          Set other parameters on MINDlarge_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "platform=Ascend" on the website UI interface.
+      #          Add "dataset=large" on the website UI interface.
+      #          Add "dataset_path=/cache/data/MINDlarge" on the website UI interface.
+      #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+      #          Add "checkpoint_path=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+      #          Add other parameters on the website UI interface.
+      # (3) Upload or copy your trained model to S3 bucket.
+      # (4) Upload dataset to S3 bucket.
+      # (5) Set the code directory to "/path/naml" on the website UI interface.
+      # (6) Set the startup file to "eval.py" on the website UI interface.
+      # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (8) Create your job.
+      ```
+
+    - Export 1p on ModelArts
+
+      ```python
+      # (1) Add "config_path='/path_to_code/MINDlarge_config.yaml'" on the website UI interface.
+      # (2) Perform a or b.
+      #       a. Set "enable_modelarts=True" on MINDlarge_config.yaml file.
+      #          Set "platform='Ascend'" on MINDlarge_config.yaml file.
+      #          Set "file_format='AIR'" on MINDlarge_config.yaml file.
+      #          Set "batch_size=1" on MINDlarge_config.yaml file.
+      #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on MINDlarge_config.yaml file.
+      #          Set "checkpoint_path='/cache/checkpoint_path/model.ckpt'" on MINDlarge_config.yaml file.
+      #          Set other parameters on MINDlarge_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "platform=Ascend" on the website UI interface.
+      #          Add "file_format=AIR" on the website UI interface.
+      #          Add "batch_size=1" on the website UI interface.
+      #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+      #          Add "checkpoint_path=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+      #          Add other parameters on the website UI interface.
+      # (3) Upload or copy your trained model to S3 bucket.
+      # (4) Set the code directory to "/path/naml" on the website UI interface.
+      # (5) Set the startup file to "export.py" on the website UI interface.
+      # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (7) Create your job.
+      ```
 
 ## [Model Export](#contents)
 
@@ -109,7 +209,7 @@ python export.py --platform [PLATFORM] --checkpoint_path [CHECKPOINT_PATH] --fil
 | Parameters                 | Ascend                                                       |
 | -------------------------- | ------------------------------------------------------------ |
 | Model Version              | NAML                                                         |
-| Resource                   |Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8            |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8   |
 | uploaded Date              | 02/23/2021 (month/day/year)                                  |
 | MindSpore Version          | 1.2.0                                                        |
 | Dataset                    | MINDlarge                                                    |
@@ -118,14 +218,14 @@ python export.py --platform [PLATFORM] --checkpoint_path [CHECKPOINT_PATH] --fil
 | Loss Function              | Softmax Cross Entropy                                        |
 | outputs                    | probability                                                  |
 | Speed                      | 1pc: 62 ms/step                                              |
-| Total time                 | 1pc: 54 mins                                                  |
+| Total time                 | 1pc: 54 mins                                                 |
 
 ### Inference Performance
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | NAML                        |
-| Resource            | Ascend 910; OS Euler2.8                   |
+| Resource            | Ascend 910; OS Euler2.8     |
 | Uploaded Date       | 02/23/2021 (month/day/year) |
 | MindSpore Version   | 1.2.0                       |  
 | Dataset             | MINDlarge                   |
@@ -144,7 +244,7 @@ python export.py --platform [PLATFORM] --checkpoint_path [CHECKPOINT_PATH] --fil
 | Dataset             | MINDlarge                   |
 | batch_size          | 64                          |
 | outputs             | probability                 |
-| Accuracy            | AUC: 0.667                   |
+| Accuracy            | AUC: 0.667                  |
 
 # [Description of Random Situation](#contents)
 
