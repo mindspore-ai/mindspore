@@ -302,9 +302,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     },
     false, true);
 
-  opt::OptPassConfig a_after_grad = opt::OptPassConfig({
-    irpass.inline_without_move_,
-  });
+  opt::OptPassConfig a_after_grad = opt::OptPassConfig({irpass.inline_without_move_});
+
   opt::OptPassConfig a_3 = opt::OptPassConfig(
     {
       irpass.arithmetic_simplify2_,
@@ -318,9 +317,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.mini_step_allgather_replace_,
     },
     false, true);
-  opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({
-    irpass.less_batch_normalization_,
-  });
+  opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({irpass.less_batch_normalization_});
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::irpass::ResolveIRPassLib resolve_irpass;
 
@@ -477,6 +474,12 @@ OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   return map;
 }
 
+OptPassGroupMap GetBeforeRecomputePass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig set_cell_output_no_recompute = opt::OptPassConfig({irpass.set_cell_output_no_recompute_});
+  OptPassGroupMap map({{"set_cell_output_no_recompute", set_cell_output_no_recompute}});
+  return map;
+}
+
 OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   OptPassGroupMap map({{"cse", opt::OptPassConfig(opt::CSEPass(false))}});
   return map;
@@ -499,6 +502,8 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_grad_epilogue"] =
       Optimizer::MakeOptimizer("opt_grad_epilogue", res, GetOptPynativeGradEpiloguePhases(irpass), true, false);
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
+    g_pass_opts["opt_before_recompute"] =
+      Optimizer::MakeOptimizer("opt_before_recompute", res, GetBeforeRecomputePass(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", res, GetAfterRecomputePass(irpass));
   }
@@ -537,6 +542,7 @@ bool OptPassAfterCconvGroup(const ResourcePtr &res) { return OptPassGroup(res, "
 bool OptPassTransformGraphGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_trans_graph"); }
 bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
 bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
+bool OptBeforeRecomputeGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_before_recompute"); }
 bool OptAfterRecomputeGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_recompute"); }
 
 bool OptPassRNGroup(const ResourcePtr &res) { return OptPassGroup(res, "renormal"); }
@@ -644,6 +650,7 @@ bool PynativeOptPass(const ResourcePtr &res) {
 }
 
 std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
+                                   {"opt_before_recompute", OptBeforeRecomputeGroup},
                                    {"opt_a", OptPassAGroup},
                                    {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},

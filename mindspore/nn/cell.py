@@ -1213,7 +1213,7 @@ class Cell(Cell_):
         elif not self._scope is None and self._scope.startswith(prefix):
             self._scope = self._scope[len(prefix):]
 
-    def recompute(self, mode=True):
+    def recompute(self, mode=True, output_recompute=False):
         """
         Set the cell recomputed. All the primitive in the cell will be set recomputed. If a primitive
         set recomputed feeds into some backward nodes for computing gradient, rather than storing the
@@ -1228,13 +1228,18 @@ class Cell(Cell_):
 
         Args:
             mode (bool): Specifies whether the cell is recomputed. Default: True.
+            output_recompute (bool): Specifies whether the output of this cell is recomputed when
+                the mode is true. Note that when the mode is false, this arg is not working. Default: False.
         """
         if context.get_context("mode") == context.PYNATIVE_MODE:
             raise TypeError("Recompute is not supported in pynative mode currently.")
         Validator.check_bool(mode)
+        Validator.check_bool(output_recompute)
         self._set_recompute_scope(mode)
+        if mode and not output_recompute:
+            self.add_flags(output_no_recompute=True)
         for cell in self.cells():
-            cell.recompute(mode)
+            cell.recompute(mode, True)
 
 
 class GraphKernel(Cell):

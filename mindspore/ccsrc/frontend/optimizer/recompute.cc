@@ -31,6 +31,14 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
+
+bool CanNotRecomputed(const CNodePtr &node) {
+  static std::unordered_set<PrimitivePtr> not_recomputed_op_list{prim::kPrimAllGather, prim::kPrimDropoutGenMask};
+
+  return std::any_of(not_recomputed_op_list.begin(), not_recomputed_op_list.end(),
+                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+}
+
 bool IsBpropNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
@@ -223,11 +231,8 @@ bool HasForwardOutput(const FuncGraphManagerPtr &mng, const AnfNodePtr &node) {
     return false;
   }
 
-  if (std::any_of(output_set_iter->second.begin(), output_set_iter->second.end(),
-                  [](const auto &node_index_set) { return !IsBpropNode(node_index_set.first); })) {
-    return true;
-  }
-  return false;
+  return std::any_of(output_set_iter->second.begin(), output_set_iter->second.end(),
+                     [](const auto &node_index_set) { return !IsBpropNode(node_index_set.first); });
 }
 
 void GetTupleGetItemOutputNodes(const FuncGraphManagerPtr &mng, const AnfNodePtr &node,
@@ -263,8 +268,8 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
     if (IsBpropNode(node)) {
       continue;
     }
-    // Do not recompute the communicate op.
-    if (IsPrimitiveCNode(node, prim::kPrimAllGather)) {
+    // Filter some unrecomputable operators.
+    if (CanNotRecomputed(node)) {
       continue;
     }
     if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {

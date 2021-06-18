@@ -156,6 +156,9 @@ class OptimizeIRPassLib {
 
   // Eliminate getattr bool scalar
   SubstitutionPtr bool_scalar_eliminate_;
+
+  // Recompute
+  SubstitutionPtr set_cell_output_no_recompute_;
 };
 
 // the collection of irpass for resolve action
