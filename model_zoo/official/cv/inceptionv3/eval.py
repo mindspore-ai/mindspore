@@ -118,5 +118,4 @@ def eval_inceptionv3():
     print("metric: ", metrics)
 
 if __name__ == '__main__':
-    config.dataset_path = os.path.join(config.dataset_path, 'validation_preprocess')
     eval_inceptionv3()
