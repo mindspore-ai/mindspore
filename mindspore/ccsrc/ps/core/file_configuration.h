@@ -56,6 +56,8 @@ class FileConfiguration : public Configuration {
 
   void Put(const std::string &key, const std::string &value) override;
 
+  bool Exists(const std::string &key) override;
+
  private:
   // The path of the configuration file.
   std::string file_path_;

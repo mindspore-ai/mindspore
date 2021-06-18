@@ -133,17 +133,21 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
 
   if (node_manager_.IsAllNodesRegistered()) {
     is_ready_ = true;
-    MS_LOG(INFO) << "Scheduler send meta data to worker/server.";
-    auto node_infos = node_manager_.nodes_info();
-    if (node_manager_.GetClusterState() == ClusterState::ClUSTER_STARTING) {
-      node_infos.clear();
-      node_infos = node_manager_.registered_nodes_info();
+    MS_LOG(INFO) << "All nodes is registered, scheduler send meta data to worker/server.";
+    if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_IN) {
+      auto nodes = node_manager_.nodes_info();
+      for (const auto &id : scale_in_node_ids_) {
+        MS_LOG(INFO) << "The scheduler send metadata to scale in node:" << id;
+        auto scale_in_client = GetOrCreateClient(nodes[id]);
+        SendMetadata(scale_in_client, nodes[id].rank_id_);
+      }
     }
+    node_manager_.UpdateNodesInfo();
+    auto node_infos = node_manager_.nodes_info();
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
       SendMetadata(client, kvs.second.rank_id_);
     }
-    node_manager_.UpdateNodesInfo();
     wait_start_cond_.notify_all();
   }
 }
@@ -341,8 +345,9 @@ void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const ui
 
   if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, event_resp_message.SerializeAsString().data(),
                        event_resp_message.ByteSizeLong())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " send event resp timeout!";
+    MS_LOG(ERROR) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                  << " the node id:" << node_info_.node_id_ << " send event resp timeout!";
+    return;
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -463,6 +468,7 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
   node_manager_.set_worker_num(total_worker_num);
   node_manager_.set_server_num(total_server_num);
   node_manager_.set_total_node_num(total_worker_num + total_server_num);
+
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT);
   auto node_infos = node_manager_.nodes_info();
   node_manager_.ResetMetadata();
@@ -500,20 +506,20 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
     return;
   }
 
-  std::vector<std::string> scale_in_node_ids;
-  status = resp->ParseNodeIdsFromKey(kNodesIds, &scale_in_node_ids);
+  scale_in_node_ids_.clear();
+  status = resp->ParseNodeIdsFromKey(kNodesIds, &scale_in_node_ids_);
   if (status != RequestProcessResultCode::kSuccess) {
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
   }
 
-  status = CheckIfNodeIdLegal(scale_in_node_ids);
+  status = CheckIfNodeIdLegal(scale_in_node_ids_);
   if (status != RequestProcessResultCode::kSuccess) {
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
   }
 
-  MS_LOG(WARNING) << "The scale in node ids:" << scale_in_node_ids;
+  MS_LOG(WARNING) << "The scale in node ids:" << scale_in_node_ids_;
 
   std::unordered_map<std::string, bool> scale_in_nodes;
 
@@ -521,7 +527,7 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
   int32_t scale_server_num = 0;
   auto node_infos = node_manager_.nodes_info();
   node_manager_.ResetMetadata();
-  for (auto const &val : scale_in_node_ids) {
+  for (auto const &val : scale_in_node_ids_) {
     if (node_infos.count(val)) {
       scale_in_nodes[val] = true;
       NodeInfo info = node_infos[val];

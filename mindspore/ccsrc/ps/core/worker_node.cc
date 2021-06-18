@@ -42,13 +42,21 @@ bool WorkerNode::Start(const uint32_t &timeout) {
 
 void WorkerNode::Initialize() {
   is_already_stopped_ = false;
+  config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  if (!config_->Initialize()) {
+    MS_LOG(INFO) << "The config file is empty, then init node by context.";
+    InitNodeNum();
+  } else {
+    if (!Recover()) {
+      MS_LOG(WARNING) << "Recover the worker node is failed.";
+    }
+  }
   InitServerHandler();
   CreateTcpServer();
   InitNodeInfo(NodeRole::WORKER);
 
   MS_LOG(INFO) << "[Worker start]: 2. Worker node create tcp server successful!";
 
-  InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Worker node connect to scheduler timeout!";

@@ -15,6 +15,7 @@
  */
 
 #include "ps/core/abstract_node.h"
+#include "ps/core/node_recovery.h"
 
 namespace mindspore {
 namespace ps {
@@ -54,8 +55,7 @@ void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const 
   // scheduler is alive
   UpdateSchedulerTime();
 
-  MS_LOG(INFO) << "The node id is:" << node_info_.node_id_ << ", and the rank id is:" << node_info_.rank_id_
-               << " registered scheduler success!";
+  MS_LOG(INFO) << "The node id is:" << node_info_.node_id_ << " registered scheduler success!";
 }
 
 bool AbstractNode::Broadcast(const enum NodeRole &node_role, const DataPtr &message, size_t size, int command,
@@ -143,8 +143,9 @@ void AbstractNode::BroadcastEvent(const uint32_t &event) {
 
   if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF, event_message.SerializeAsString().data(),
                        event_message.ByteSizeLong())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " send event timeout!";
+    MS_LOG(ERROR) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                  << " the node id:" << node_info_.node_id_ << " send event timeout!";
+    return;
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -377,6 +378,18 @@ int32_t AbstractNode::worker_num() const { return worker_num_; }
 
 int32_t AbstractNode::server_num() const { return server_num_; }
 
+void AbstractNode::set_worker_num(const int32_t &worker_num) { worker_num_ = worker_num; }
+
+void AbstractNode::set_server_num(const int32_t &server_num) { server_num_ = server_num; }
+
+std::string AbstractNode::scheduler_ip() const { return scheduler_ip_; }
+
+void AbstractNode::set_scheduler_ip(const std::string &scheduler_ip) { scheduler_ip_ = scheduler_ip; }
+
+uint16_t AbstractNode::scheduler_port() const { return scheduler_port_; }
+
+void AbstractNode::set_scheduler_port(const uint16_t &scheduler_port) { scheduler_port_ = scheduler_port; }
+
 ClusterState AbstractNode::cluster_state() const { return current_cluster_state_; }
 
 void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client) {
@@ -450,10 +463,13 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
     wait_start_cond_.notify_all();
   }
 
-  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
-    is_ready_ = true;
-    wait_start_cond_.notify_all();
-    OnEventCallback(ClusterEvent::NODE_TIMEOUT);
+  if (node_recovery_ == nullptr) {
+    MS_LOG(INFO) << "The recovery is disable.";
+    if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+      is_ready_ = true;
+      wait_start_cond_.notify_all();
+      OnEventCallback(ClusterEvent::NODE_TIMEOUT);
+    }
   }
 }
 
@@ -489,6 +505,7 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   MS_EXCEPTION_IF_NULL(data);
   if (is_current_node_scale_in_) {
     MS_LOG(WARNING) << "Trigger cluster scale in done event.";
+    node_info_.rank_id_ = UINT32_MAX;
     OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
     return;
   }
@@ -639,9 +656,7 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
 }
 
 bool AbstractNode::InitClientToScheduler() {
-  std::string scheduler_host = PSContext::instance()->cluster_config().scheduler_host;
-  uint16_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
-  client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_host, scheduler_port);
+  client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_);
   client_to_scheduler_->SetMessageCallback(
     [&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
       try {
@@ -851,6 +866,7 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
   node_info_.node_role_ = role;
   node_info_.ip_ = server_->BoundIp();
   node_info_.port_ = server_->BoundPort();
+
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " is generate uuid is:" << node_info_.node_id_ << ", the ip:" << server_->BoundIp()
                << ", the port:" << server_->BoundPort();
@@ -859,6 +875,20 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
 void AbstractNode::InitNodeNum() {
   worker_num_ = PSContext::instance()->cluster_config().initial_worker_num;
   server_num_ = PSContext::instance()->cluster_config().initial_server_num;
+  scheduler_ip_ = PSContext::instance()->cluster_config().scheduler_host;
+  scheduler_port_ = PSContext::instance()->cluster_config().scheduler_port;
+  MS_LOG(INFO) << "The worker num:" << worker_num_ << ", the server num:" << server_num_
+               << ", the scheduler ip:" << scheduler_ip_ << ", the scheduler port:" << scheduler_port_;
+}
+
+bool AbstractNode::Recover() {
+  if (config_->Exists(kKeyRecovery)) {
+    MS_LOG(INFO) << "The node is support recovery.";
+    node_recovery_ = std::make_unique<NodeRecovery>(this);
+    node_recovery_->Initialize(config_->Get(kKeyRecovery, ""));
+    return node_recovery_->Recover();
+  }
+  return false;
 }
 
 void AbstractNode::OnEventCallback(const ClusterEvent &event) {

@@ -362,7 +362,9 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set federated learning client learning rate.")
     .def("set_scheduler_manage_port", &PSContext::set_scheduler_manage_port,
          "Set scheduler manage port used to scale out/in.")
-    .def("set_enable_ssl", &PSContext::enable_ssl, "Set PS SSL mode enabled or disabled.");
+    .def("set_enable_ssl", &PSContext::set_enable_ssl, "Set PS SSL mode enabled or disabled.")
+    .def("set_config_file_path", &PSContext::set_config_file_path,
+         "Set configuration files required by the communication layer.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())

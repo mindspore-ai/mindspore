@@ -36,6 +36,7 @@
 #include "ps/core/node_info.h"
 #include "ps/core/communicator/tcp_client.h"
 #include "ps/core/communicator/tcp_server.h"
+#include "ps/core/file_configuration.h"
 
 namespace mindspore {
 namespace ps {
@@ -67,7 +68,7 @@ class Node {
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta>, const Protos &,
-                       const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
+                       const void *, size_t size, const uint32_t &timeout = kTimeoutInSeconds);
 
  protected:
   bool WaitForStart(const uint32_t &timeout);
@@ -105,6 +106,15 @@ class Node {
   // Worker and server receive the node state and cluster state from the scheduler.
   NodeState current_node_state_;
   ClusterState current_cluster_state_;
+
+  // Configuration file,The format is as follows
+  //{
+  // "recovery": {
+  //      "storage_type": 1,
+  //      "storge_file_path": "/home/cds/config.json"
+  //  }
+  // }
+  std::unique_ptr<Configuration> config_;
 };
 }  // namespace core
 }  // namespace ps

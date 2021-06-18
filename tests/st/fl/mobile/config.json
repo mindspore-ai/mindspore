@@ -1,0 +1,6 @@
+{
+    "recovery": {
+        "storge_type": 1,
+        "kStoreFilePath": "recovery.json"
+    }
+}

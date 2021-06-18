@@ -95,6 +95,19 @@ constexpr uint32_t kCheckRegisteredRetryCount = 30;
 // The timeout interval for judging whether all nodes are successfully registered.
 constexpr uint32_t kCheckRegisteredIntervalInMs = 1000;
 
+// The type of persistent storage, currently only supports file storage.
+constexpr char kStoreType[] = "storge_type";
+// The file used to storage metadata.
+constexpr char kStoreFilePath[] = "storge_file_path";
+// 1 indicates that the persistent storage type is file.
+constexpr char kFileStorage[] = "1";
+// The recovery key of json_config.
+constexpr char kKeyRecovery[] = "recovery";
+constexpr char kRecoveryWorkerNum[] = "worker_num";
+constexpr char kRecoveryServerNum[] = "server_num";
+constexpr char kRecoverySchedulerIp[] = "scheduler_ip";
+constexpr char kRecoverySchedulerPort[] = "scheduler_port";
+
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = uint64_t;

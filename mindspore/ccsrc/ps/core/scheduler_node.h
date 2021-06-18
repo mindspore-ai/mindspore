@@ -39,6 +39,7 @@
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/communicator/http_server.h"
 #include "ps/core/leader_scaler.h"
+#include "ps/core/recovery_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -53,7 +54,8 @@ class SchedulerNode : public Node {
         http_server_(nullptr),
         client_thread_(nullptr),
         is_client_started_(false),
-        leader_scaler_(nullptr) {}
+        leader_scaler_(nullptr),
+        scheduler_recovery_(nullptr) {}
   ~SchedulerNode() override;
 
   typedef void (SchedulerNode::*ResponseHandler)(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
@@ -65,6 +67,7 @@ class SchedulerNode : public Node {
 
  private:
   void Initialize();
+
   void InitCommandHandler();
   void CreateTcpServer();
   void StartUpdateClusterStateTimer();
@@ -144,6 +147,12 @@ class SchedulerNode : public Node {
   std::unique_ptr<LeaderScaler> leader_scaler_;
 
   std::unordered_map<std::string, OnRequestReceive> callbacks_;
+
+  // Used to persist and obtain metadata information for scheduler.
+  std::unique_ptr<RecoveryBase> scheduler_recovery_;
+
+  // The node id of scale in nodes.
+  std::vector<std::string> scale_in_node_ids_;
 };
 }  // namespace core
 }  // namespace ps
