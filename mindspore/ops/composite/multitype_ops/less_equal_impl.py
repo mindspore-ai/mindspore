@@ -51,4 +51,4 @@ def _less_equal_tensor(x, y):
     Returns:
        Tensor, return value by operator P.LessEqual.
    """
-    return  F.tensor_le(x, y)
+    return F.tensor_le(x, y)

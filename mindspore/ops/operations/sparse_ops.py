@@ -59,7 +59,7 @@ class SparseToDense(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize index_select"""
+        """Initialize SparseToDense."""
         self.init_prim_io_names(inputs=['indices', 'values', 'dense_shape'], outputs=['output'])
 
     def __infer__(self, indices, values, sparse_shape):

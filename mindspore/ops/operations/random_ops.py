@@ -336,7 +336,7 @@ class UniformInt(PrimitiveWithInfer):
         return out
 
 
-class UniformReal(PrimitiveWithInfer):
+class UniformReal(StandardNormal):
     r"""
     Produces random floating-point values i, uniformly distributed to the interval [0, 1).
 
@@ -366,27 +366,6 @@ class UniformReal(PrimitiveWithInfer):
         >>> print(result)
         (2, 2)
     """
-
-    @prim_attr_register
-    def __init__(self, seed=0, seed2=0):
-        """Initialize UniformReal"""
-        self.init_prim_io_names(inputs=['shape'], outputs=['output'])
-        self.add_prim_attr('side_effect_mem', True)
-        Validator.check_non_negative_int(seed, "seed", self.name)
-        Validator.check_non_negative_int(seed2, "seed2", self.name)
-
-    def __infer__(self, shape):
-        shape_v = shape["value"]
-        if shape_v is None:
-            raise ValueError(f"For {self.name}, shape must be const.")
-        Validator.check_value_type("shape", shape_v, [tuple], self.name)
-        for i, shape_i in enumerate(shape_v):
-            Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        out = {
-            'shape': shape_v,
-            'dtype': mstype.float32,
-            'value': None}
-        return out
 
 
 class RandomChoiceWithMask(PrimitiveWithInfer):
@@ -445,11 +424,11 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         Validator.check_int(len(x_shape), 1, Rel.GE, "input_x rank", self.name)
         Validator.check_int(len(x_shape), 5, Rel.LE, "input_x rank", self.name)
-        return ([self.count, len(x_shape)], [self.count])
+        return [self.count, len(x_shape)], [self.count]
 
     def infer_dtype(self, x_dtype):
         Validator.check_tensor_dtype_valid('x', x_dtype, [mstype.bool_], self.name)
-        return (mstype.int32, mstype.bool_)
+        return mstype.int32, mstype.bool_
 
 
 class RandomCategorical(PrimitiveWithInfer):
@@ -539,12 +518,12 @@ class Multinomial(PrimitiveWithInfer):
         seed2 (int): Random seed2, must be non-negative. Default: 0.
 
     Inputs:
-        - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
+        - **x** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
           dimensions.
         - **num_samples** (int32) - number of samples to draw.
 
     Outputs:
-        Tensor with the same rows as input, each row has num_samples sampled indices.
+        Tensor with the same rows as `x`, each row has num_samples sampled indices.
 
     Raises:
         TypeError: If neither `seed` nor `seed2` is an int.
@@ -555,16 +534,16 @@ class Multinomial(PrimitiveWithInfer):
         ``GPU``
 
     Examples:
-        >>> input = Tensor([0., 9., 4., 0.], mstype.float32)
+        >>> x = Tensor([0., 9., 4., 0.], mstype.float32)
         >>> multinomial = ops.Multinomial(seed=10)
-        >>> output = multinomial(input, 2)
+        >>> output = multinomial(x, 2)
         >>> print(output)
         [2 1]
     """
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """init"""
+        """Initialize Multinomial."""
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
         self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
@@ -655,11 +634,11 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         Validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor, self.name)
         Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type,
                                            (mstype.int32, mstype.int64), self.name)
-        return (true_classes_type, mstype.float32, mstype.float32)
+        return true_classes_type, mstype.float32, mstype.float32
 
     def infer_shape(self, true_classes_shape):
         Validator.check("true_class.shape[1]", true_classes_shape[1], "num_true", self.num_true, Rel.EQ, self.name)
-        return ([self.num_sampled], true_classes_shape, [self.num_sampled])
+        return [self.num_sampled], true_classes_shape, [self.num_sampled]
 
 
 class LogUniformCandidateSampler(PrimitiveWithInfer):
@@ -675,7 +654,7 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
           all sampled classes in a batch are unique. Default: True.
         range_max (int): The number of possible classes. When `unique` is True,
           `range_max` must be greater than or equal to `num_sampled`. Default: 5.
-        seed (int): Random seed, must be non-negative.
+        seed (int): Random seed, must be non-negative. Default: 0.
 
     Inputs:
         - **true_classes** (Tensor) - The target classes. With data type of int64 and shape [batch_size, num_true].

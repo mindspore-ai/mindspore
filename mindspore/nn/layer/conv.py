@@ -47,6 +47,7 @@ class _Conv(Cell):
                  bias_init,
                  data_format='NCHW',
                  transposed=False):
+        """Initialize _Conv."""
         super(_Conv, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
@@ -207,8 +208,8 @@ class Conv2d(_Conv):
 
     Examples:
         >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
-        >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> output = net(input).shape
+        >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> output = net(x).shape
         >>> print(output)
         (1, 240, 1024, 640)
     """
@@ -227,6 +228,7 @@ class Conv2d(_Conv):
                  weight_init='normal',
                  bias_init='zeros',
                  data_format='NCHW'):
+        """Initialize Conv2d."""
         kernel_size = twice(kernel_size)
         stride = twice(stride)
         self._dilation = dilation
@@ -372,8 +374,8 @@ class Conv1d(_Conv):
 
     Examples:
         >>> net = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
-        >>> input = Tensor(np.ones([1, 120, 640]), mindspore.float32)
-        >>> output = net(input).shape
+        >>> x = Tensor(np.ones([1, 120, 640]), mindspore.float32)
+        >>> output = net(x).shape
         >>> print(output)
         (1, 240, 640)
     """
@@ -391,7 +393,7 @@ class Conv1d(_Conv):
                  has_bias=False,
                  weight_init='normal',
                  bias_init='zeros'):
-
+        """Initialize Conv1d."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)
         Validator.check_value_type("stride", stride, [int], self.cls_name)
         Validator.check_value_type("padding", padding, [int], self.cls_name)
@@ -575,9 +577,9 @@ class Conv3d(_Conv):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float32)
+        >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float32)
         >>> conv3d = nn.Conv3d(in_channels=3, out_channels=32, kernel_size=(4, 3, 3))
-        >>> output = conv3d(input)
+        >>> output = conv3d(x)
         >>> print(output.shape)
         (16, 32, 10, 32, 32)
     """
@@ -596,6 +598,7 @@ class Conv3d(_Conv):
                  weight_init='normal',
                  bias_init='zeros',
                  data_format='NCDHW'):
+        """Initialize Conv3d."""
         kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.cls_name)
         stride = _check_3d_int_or_tuple("stride", stride, self.cls_name)
         dilation = _check_3d_int_or_tuple("dilation", dilation, self.cls_name)
@@ -746,10 +749,10 @@ class Conv3dTranspose(_Conv):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Examples:
-        >>> input = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)
+        >>> x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)
         >>> conv3d_transpose = nn.Conv3dTranspose(in_channels=16, out_channels=3, kernel_size=(4, 6, 2),
         ...                                       pad_mode='pad')
-        >>> output = conv3d_transpose(input)
+        >>> output = conv3d_transpose(x)
         >>> print(output.shape)
         (32, 3, 13, 37, 33)
     """
@@ -768,6 +771,7 @@ class Conv3dTranspose(_Conv):
                  weight_init='normal',
                  bias_init='zeros',
                  data_format='NCDHW'):
+        """Initialize Conv3dTranspose."""
         kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.cls_name)
         stride = _check_3d_int_or_tuple("stride", stride, self.cls_name)
         dilation = _check_3d_int_or_tuple("dilation", dilation, self.cls_name)
@@ -929,8 +933,8 @@ class Conv2dTranspose(_Conv):
 
     Examples:
         >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
-        >>> input = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
-        >>> output = net(input).shape
+        >>> x = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
+        >>> output = net(x).shape
         >>> print(output)
         (1, 64, 19, 53)
         """
@@ -947,6 +951,7 @@ class Conv2dTranspose(_Conv):
                  has_bias=False,
                  weight_init='normal',
                  bias_init='zeros'):
+        """Initialize Conv2dTranspose."""
         kernel_size = twice(kernel_size)
         stride = twice(stride)
         dilation = twice(dilation)
@@ -1098,8 +1103,8 @@ class Conv1dTranspose(_Conv):
 
     Examples:
         >>> net = nn.Conv1dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
-        >>> input = Tensor(np.ones([1, 3, 50]), mindspore.float32)
-        >>> output = net(input).shape
+        >>> x = Tensor(np.ones([1, 3, 50]), mindspore.float32)
+        >>> output = net(x).shape
         >>> print(output)
         (1, 64, 53)
     """
@@ -1116,6 +1121,7 @@ class Conv1dTranspose(_Conv):
                  has_bias=False,
                  weight_init='normal',
                  bias_init='zeros'):
+        """Initialize Conv1dTranspose."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)
         Validator.check_value_type("stride", stride, [int], self.cls_name)
         Validator.check_value_type("padding", padding, [int], self.cls_name)

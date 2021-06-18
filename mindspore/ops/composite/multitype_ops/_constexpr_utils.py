@@ -506,7 +506,6 @@ def generate_index_info_from_tuple_of_mixed_tensors(tensor_positions, tensor_ind
         tensor_index_continue_tag = _judge_order_continuous(tensor_positions)
         fancy_position = tensor_positions[0] if tensor_index_continue_tag else 0
     broadcast_shape = generate_broadcast_shape(tensor_indexes_shapes, op_name)
-    index_tensor_new_shape, final_shape = [], []
 
     final_shape = slice_shapes[:fancy_position] + broadcast_shape + slice_shapes[fancy_position:]
     index_tensor_new_shape = (1,) * len(slice_shapes[:fancy_position]) + \
@@ -620,14 +619,14 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
             if ellipsis_count > 1:
                 raise IndexError("An index can have only one ellipsis (...)")
             ellipsis_range_size = data_dim - tuple_index_len + 1
-            begin_strides.extend([0] * (ellipsis_range_size))
+            begin_strides.extend([0] * ellipsis_range_size)
             end_strides.extend(
                 [shape for shape in data_shape[index_count: index_count + ellipsis_range_size]])
-            step_strides.extend([1] * (ellipsis_range_size))
+            step_strides.extend([1] * ellipsis_range_size)
             index_count = index_count + ellipsis_range_size
         else:
             raise IndexError("Not supported index data type, got ",
-                             index, " type is ", type(item))
+                             index, " type is ", type(index))
     for index in range(index_count, data_dim):
         begin_strides.append(0)
         end_strides.append(data_shape[index])

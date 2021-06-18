@@ -135,7 +135,7 @@ def _axes_int_check(x1_shape, x2_shape, axes):
             raise ValueError(f"axes must be at least 0 for tensor dot, got {axes}")
         if axes == 0:
             # outer product, no input validation required
-            return ([], [])
+            return [], []
         if axes > len(x1_shape) or axes > len(x2_shape):
             raise ValueError(
                 "Axes value too high for given input arrays dimensions.")
@@ -599,7 +599,7 @@ def _check_matmul_shapes(shape1, shape2):
 @constexpr
 def _tile_size(shape, out_shape, ndim):
     """Returns tile_size such that shape*tile_size = out_shape"""
-    size = [1]*ndim
+    size = [1] * ndim
     for idx, (i, j) in enumerate(zip(shape, out_shape)):
         if i != j:
             size[idx] = j

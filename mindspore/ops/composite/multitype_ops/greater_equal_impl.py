@@ -51,4 +51,4 @@ def _greater_equal_tensor(x, y):
     Returns:
        Tensor, return value by operator P.GreaterEqual.
    """
-    return  F.tensor_ge(x, y)
+    return F.tensor_ge(x, y)

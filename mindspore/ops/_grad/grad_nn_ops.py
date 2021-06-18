@@ -622,20 +622,9 @@ def get_bprop_tanh_grad(self):
     return bprop
 
 
+@bprop_getters.register(P.Gelu)
 @bprop_getters.register(P.GeLU)
 def get_bprop_gelu(self):
-    """Grad definition for `GeLU` operation."""
-    input_grad = G.GeLUGrad()
-
-    def bprop(x, out, dout):
-        dx = input_grad(dout, x, out)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(P.Gelu)
-def get_bprop_gelu_2(self):
     """Grad definition for `GeLU` operation."""
     input_grad = G.GeLUGrad()
 
@@ -1156,28 +1145,9 @@ def get_bprop_dropout(self):
 
 
 @bprop_getters.register(P.Dropout2D)
-def get_bprop_dropout2d(self):
-    """Grad definition for `Dropout2D` operation."""
-    dtype = P.DType()
-    cast = P.Cast()
-    mul = P.Mul()
-    keep_prob = self.keep_prob
-
-    def bprop(x, out, dout):
-        _, mask = dout
-        y = cast(mask, mstype.float32)
-        if keep_prob != 0:
-            y = y * (1 / keep_prob)
-        y = mul(x, y)
-        y = cast(y, dtype(x))
-        return (y,)
-
-    return bprop
-
-
 @bprop_getters.register(P.Dropout3D)
 def get_bprop_dropout3d(self):
-    """Grad definition for `Dropout3D` operation."""
+    """Grad definition for `Dropout2D` and `Dropout3D` operation."""
     dtype = P.DType()
     cast = P.Cast()
     mul = P.Mul()

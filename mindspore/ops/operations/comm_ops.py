@@ -109,6 +109,7 @@ class AllReduce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
+        """Initialize AllReduce."""
         if not isinstance(op, type(ReduceOp.SUM)):
             raise TypeError("The operation of AllReduce should be str.")
         if not isinstance(_get_group(group), str):
@@ -182,6 +183,7 @@ class AllGather(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
+        """Initialize AllGather."""
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.rank = get_rank(_get_group(group))
         self.rank_size = get_group_size(_get_group(group))
@@ -215,6 +217,7 @@ class _MiniStepAllGather(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP, grad_accumulation_step=None, mean_flag=None):
+        """Initialize _MiniStepAllGather."""
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.rank = get_rank(_get_group(group))
         self.rank_size = get_group_size(_get_group(group))
@@ -247,7 +250,7 @@ class _HostAllGather(PrimitiveWithInfer):
         mpirun -output-filename log -merge-stderr-to-stdout -np 3 python test_host_all_gather.py
 
     Args:
-        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on.
+        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on. Default: None.
 
     Raises:
         TypeError: If group is not a list nor tuple, or elements of group are not int.
@@ -263,6 +266,7 @@ class _HostAllGather(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, group=None):
+        """Initialize _HostAllGather."""
         if group is None:
             raise ValueError(f"For '{self.name}' group must be set.")
         validator.check_value_type('group', group, (tuple, list), self.name)
@@ -338,6 +342,7 @@ class ReduceScatter(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
+        """Initialize ReduceScatter."""
         validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.op = op
@@ -347,9 +352,11 @@ class ReduceScatter(PrimitiveWithInfer):
         self.add_prim_attr('fusion', 0)
 
     def infer_shape(self, x_shape):
+        if self.rank_size == 0:
+            raise ValueError(f"For '{self.name}' rank_size can not be zero.")
         if x_shape[0] % self.rank_size != 0:
             raise ValueError(f"For '{self.name}' the first dimension of x should be divided by rank_size.")
-        x_shape[0] = int(x_shape[0]/self.rank_size)
+        x_shape[0] = int(x_shape[0] / self.rank_size)
         return x_shape
 
     def infer_dtype(self, x_dtype):
@@ -373,7 +380,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
     Args:
         op (str): Specifies an operation used for element-wise reductions,
                   like sum, max, avg. Default: ReduceOp.SUM.
-        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on.
+        group (Union[tuple[int],list[int]]): The rand_ids of communication group to work on. Default: None.
 
     Raises:
         TypeError: If op is not a string and group is not a list nor tuple,
@@ -383,6 +390,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=None):
+        """Initialize _HostReduceScatter."""
         if group is None:
             raise ValueError(f"For '{self.name}' group must be set.")
         validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
@@ -398,7 +406,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         if x_shape[0] % self.group_size != 0:
             raise ValueError(f"For '{self.name}' the first dimension of x should be divided by group_size.")
-        x_shape[0] = int(x_shape[0]/self.group_size)
+        x_shape[0] = int(x_shape[0] / self.group_size)
         return x_shape
 
     def infer_dtype(self, x_dtype):
@@ -465,6 +473,7 @@ class Broadcast(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, root_rank, group=GlobalComm.WORLD_COMM_GROUP):
+        """Initialize Broadcast."""
         validator.check_value_type('root_rank', root_rank, (int,), self.name)
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         check_hcom_group_valid(group)
@@ -592,6 +601,7 @@ class _MirrorOperator(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, group=None, dev_num=None, mean_flag=None):
+        """Initialize _MirrorOperator."""
         self.group = group
         self.dev_num = dev_num
         self.mean_flag = mean_flag
@@ -621,6 +631,7 @@ class _MirrorMiniStepOperator(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, group=None, dev_num=None, mean_flag=None, grad_accumulation_step=None):
+        """Initialize _MirrorMiniStepOperator."""
         self.group = group
         self.dev_num = dev_num
         self.mean_flag = mean_flag
@@ -645,6 +656,7 @@ class _VirtualDiv(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, divisor=None):
+        """Initialize _VirtualDiv."""
         self.divisor = divisor
 
     def infer_shape(self, x_shape):
@@ -661,7 +673,7 @@ class _VirtualAdd(PrimitiveWithInfer):
     """Auto parallel virtual operator. Do nothing in forward, do Add in backward."""
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize _VirtualAdd."""
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape
@@ -679,7 +691,7 @@ class _VirtualDataset(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize _VirtualDataset."""
 
     def infer_shape(self, *args):
         return args
@@ -696,12 +708,10 @@ class _VirtualAssignAdd(PrimitiveWithInfer):
     Auto parallel virtual operator. Do nothing in forward, do AssignAdd in backward. It is only for
     internal use of parallel modules and cannot be called by users.
 
-    Args:
-        micro (int): MicroBatch. Default: 0.
     """
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize _VirtualAssignAdd."""
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape
@@ -720,7 +730,7 @@ class _VirtualAccuGrad(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize _VirtualAccuGrad."""
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape
@@ -745,6 +755,7 @@ class _MirrorMicroStepOperator(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, group=None, dev_num=None, mean_flag=None):
+        """Initialize _MirrorMicroStepOperator."""
         self.group = group
         self.dev_num = dev_num
         self.mean_flag = mean_flag
@@ -765,7 +776,7 @@ class _VirtualOutput(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize _VirtualOutput."""
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -784,7 +795,7 @@ class _GetTensorSlice(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize ChunkTensor"""
+        """Initialize _GetTensorSlice."""
 
     def infer_value(self, x, dev_mat, tensor_map):
         from mindspore.parallel._tensor import _load_tensor

@@ -58,8 +58,9 @@ class BondForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize BondForce."""
+        validator.check_value_type('bond_numbers', bond_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -131,8 +132,9 @@ class BondEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize BondEnergy."""
+        validator.check_value_type('bond_numbers', bond_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -199,8 +201,9 @@ class BondAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize BondAtomEnergy."""
+        validator.check_value_type('bond_numbers', bond_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -266,8 +269,9 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize BondForceWithAtomEnergy."""
+        validator.check_value_type('bond_numbers', bond_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -346,8 +350,9 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        validator.check_value_type('bond_numbers', bond_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize BondForceWithAtomVirial."""
+        validator.check_value_type('bond_numbers', bond_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.bond_numbers = bond_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('bond_numbers', self.bond_numbers)
@@ -457,7 +462,8 @@ class DihedralForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
+        """Initialize DihedralForce."""
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, int, self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -549,7 +555,8 @@ class DihedralEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
+        """Initialize DihedralEnergy."""
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, int, self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -639,7 +646,8 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
+        """Initialize DihedralAtomEnergy."""
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, int, self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -729,7 +737,8 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dihedral_numbers):
-        validator.check_value_type('dihedral_numbers', dihedral_numbers, (int), self.name)
+        """Initialize DihedralForceWithAtomEnergy."""
+        validator.check_value_type('dihedral_numbers', dihedral_numbers, int, self.name)
         self.dihedral_numbers = dihedral_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'atom_d', 'ipn', 'pk',
                                         'gamc', 'gams', 'pn'],
@@ -826,7 +835,8 @@ class AngleForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
+        """Initialize AngleForce."""
+        validator.check_value_type('angle_numbers', angle_numbers, int, self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -902,7 +912,8 @@ class AngleEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
+        """Initialize AngleEnergy."""
+        validator.check_value_type('angle_numbers', angle_numbers, int, self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -972,7 +983,8 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
+        """Initialize AngleAtomEnergy."""
+        validator.check_value_type('angle_numbers', angle_numbers, int, self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -1043,7 +1055,8 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, angle_numbers):
-        validator.check_value_type('angle_numbers', angle_numbers, (int), self.name)
+        """Initialize AngleForceWithAtomEnergy."""
+        validator.check_value_type('angle_numbers', angle_numbers, int, self.name)
         self.angle_numbers = angle_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'atom_c', 'angle_k',
                                         'angle_theta0'],
@@ -1126,8 +1139,9 @@ class Dihedral14LJForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize Dihedral14LJForce."""
+        validator.check_value_type('nb14_numbers', nb14_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
         self.init_prim_io_names(
@@ -1217,8 +1231,9 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize Dihedral14LJEnergy"""
+        validator.check_value_type('nb14_numbers', nb14_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1312,8 +1327,9 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize Dihedral14LJForceWithDirectCF."""
+        validator.check_value_type('nb14_numbers', nb14_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1409,8 +1425,9 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize Dihedral14LJCFForceWithAtomEnergy."""
+        validator.check_value_type('nb14_numbers', nb14_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1500,8 +1517,9 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize Dihedral14LJAtomEnergy."""
+        validator.check_value_type('nb14_numbers', nb14_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1589,8 +1607,9 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize Dihedral14CFEnergy."""
+        validator.check_value_type('nb14_numbers', nb14_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1668,8 +1687,9 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, nb14_numbers, atom_numbers):
-        validator.check_value_type('nb14_numbers', nb14_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize Dihedral14CFAtomEnergy."""
+        validator.check_value_type('nb14_numbers', nb14_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.dihedral_14_numbers = nb14_numbers
         self.atom_numbers = atom_numbers
 
@@ -1755,13 +1775,14 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, float4_numbers, atom_numbers, half_dt, dt, exp_gamma, is_max_velocity, max_velocity):
-        validator.check_value_type('float4_numbers', float4_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('half_dt', half_dt, (float), self.name)
-        validator.check_value_type('dt', dt, (float), self.name)
-        validator.check_value_type('exp_gamma', exp_gamma, (float), self.name)
-        validator.check_value_type('is_max_velocity', is_max_velocity, (int), self.name)
-        validator.check_value_type('max_velocity', max_velocity, (float), self.name)
+        """Initialize MDIterationLeapFrog."""
+        validator.check_value_type('float4_numbers', float4_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('half_dt', half_dt, float, self.name)
+        validator.check_value_type('dt', dt, float, self.name)
+        validator.check_value_type('exp_gamma', exp_gamma, float, self.name)
+        validator.check_value_type('is_max_velocity', is_max_velocity, int, self.name)
+        validator.check_value_type('max_velocity', max_velocity, float, self.name)
         self.float4_numbers = float4_numbers
         self.atom_numbers = atom_numbers
         self.half_dt = half_dt
@@ -1828,14 +1849,15 @@ class PMEReciprocalForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, beta, fftx, ffty, fftz, box_length_0, box_length_1, box_length_2):
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('beta', beta, (float), self.name)
-        validator.check_value_type('fftx', fftx, (int), self.name)
-        validator.check_value_type('ffty', ffty, (int), self.name)
-        validator.check_value_type('fftz', fftz, (int), self.name)
-        validator.check_value_type('box_length_0', box_length_0, (float), self.name)
-        validator.check_value_type('box_length_1', box_length_1, (float), self.name)
-        validator.check_value_type('box_length_2', box_length_2, (float), self.name)
+        """Initialize PMEReciprocalForce."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('beta', beta, float, self.name)
+        validator.check_value_type('fftx', fftx, int, self.name)
+        validator.check_value_type('ffty', ffty, int, self.name)
+        validator.check_value_type('fftz', fftz, int, self.name)
+        validator.check_value_type('box_length_0', box_length_0, float, self.name)
+        validator.check_value_type('box_length_1', box_length_1, float, self.name)
+        validator.check_value_type('box_length_2', box_length_2, float, self.name)
         self.atom_numbers = atom_numbers
         self.beta = beta
         self.fftx = fftx
@@ -1906,9 +1928,10 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, excluded_numbers, beta):
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('excluded_numbers', excluded_numbers, (int), self.name)
-        validator.check_value_type('beta', beta, (float), self.name)
+        """Initialize PMEExcludedForce."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('excluded_numbers', excluded_numbers, int, self.name)
+        validator.check_value_type('beta', beta, float, self.name)
         self.atom_numbers = atom_numbers
         self.excluded_numbers = excluded_numbers
         self.beta = beta
@@ -1999,15 +2022,16 @@ class PMEEnergy(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, atom_numbers, excluded_numbers, beta, fftx, ffty, fftz, box_length_0, box_length_1,
                  box_length_2):
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('excluded_numbers', excluded_numbers, (int), self.name)
-        validator.check_value_type('beta', beta, (float), self.name)
-        validator.check_value_type('fftx', fftx, (int), self.name)
-        validator.check_value_type('ffty', ffty, (int), self.name)
-        validator.check_value_type('fftz', fftz, (int), self.name)
-        validator.check_value_type('box_length_0', box_length_0, (float), self.name)
-        validator.check_value_type('box_length_1', box_length_1, (float), self.name)
-        validator.check_value_type('box_length_2', box_length_2, (float), self.name)
+        """Initialize PMEEnergy."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('excluded_numbers', excluded_numbers, int, self.name)
+        validator.check_value_type('beta', beta, float, self.name)
+        validator.check_value_type('fftx', fftx, int, self.name)
+        validator.check_value_type('ffty', ffty, int, self.name)
+        validator.check_value_type('fftz', fftz, int, self.name)
+        validator.check_value_type('box_length_0', box_length_0, float, self.name)
+        validator.check_value_type('box_length_1', box_length_1, float, self.name)
+        validator.check_value_type('box_length_2', box_length_2, float, self.name)
         self.atom_numbers = atom_numbers
         self.excluded_numbers = excluded_numbers
         self.beta = beta
@@ -2113,8 +2137,9 @@ class LJEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff_square):
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('cutoff_square', cutoff_square, (float), self.name)
+        """Initialize LJEnergy."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('cutoff_square', cutoff_square, float, self.name)
         self.atom_numbers = atom_numbers
         self.cutoff_square = cutoff_square
         self.init_prim_io_names(
@@ -2199,8 +2224,9 @@ class LJForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff_square):
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('cutoff_square', cutoff_square, (float), self.name)
+        """Initialize LJForce."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('cutoff_square', cutoff_square, float, self.name)
         self.atom_numbers = atom_numbers
         self.cutoff_square = cutoff_square
         self.init_prim_io_names(
@@ -2280,9 +2306,10 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff, pme_beta):
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('cutoff', cutoff, (float), self.name)
-        validator.check_value_type('pme_beta', pme_beta, (float), self.name)
+        """Initialize LJForceWithPMEDirectForce."""
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('cutoff', cutoff, float, self.name)
+        validator.check_value_type('pme_beta', pme_beta, float, self.name)
         self.atom_numbers = atom_numbers
         self.cutoff = cutoff
         self.pme_beta = pme_beta
@@ -2340,8 +2367,9 @@ class GetCenterOfGeometry(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, center_numbers, center_numbers_inverse):
-        validator.check_value_type('center_numbers', center_numbers, (int), self.name)
-        validator.check_value_type('center_numbers_inverse', center_numbers_inverse, (float), self.name)
+        """Initialize GetCenterOfGeometry."""
+        validator.check_value_type('center_numbers', center_numbers, int, self.name)
+        validator.check_value_type('center_numbers_inverse', center_numbers_inverse, float, self.name)
         self.center_numbers = center_numbers
         self.center_numbers_inverse = center_numbers_inverse
         self.add_prim_attr('center_numbers', self.center_numbers)
@@ -2377,8 +2405,9 @@ class MDTemperature(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, residue_numbers, atom_numbers):
-        validator.check_value_type('residue_numbers', residue_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize MDTemperature."""
+        validator.check_value_type('residue_numbers', residue_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.residue_numbers = residue_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('residue_numbers', self.residue_numbers)
@@ -2423,8 +2452,8 @@ class NeighborListUpdate(PrimitiveWithInfer):
           list first time or not.
         nxy(int32): the total number of grids divided in xy plane.
         excluded_atom_numbers(int32): the total atom numbers in the excluded list.
-        cutoff(float32): the cutoff distance for short-range force calculation.
-        skin(float32): the overflow value of cutoff to maintain a neighbor list.
+        cutoff(float32): the cutoff distance for short-range force calculation. Default: 10.0.
+        skin(float32): the overflow value of cutoff to maintain a neighbor list. Default: 2.0.
         cutoff_square(float32): the suqare value of cutoff.
         half_skin_square(float32): skin*skin/4, indicates the maximum
           square value of the distance atom allowed to move between two updates.
@@ -2432,8 +2461,9 @@ class NeighborListUpdate(PrimitiveWithInfer):
           radius of the neighbor list for each atom.
         half_cutoff_with_skin(float32): cutoff_with_skin/2.
         cutoff_with_skin_square(float32): the square value of cutoff_with_skin.
-        refresh_interval(int32): the number of iteration steps between two updates of neighbor list.
-        max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid.
+        refresh_interval(int32): the number of iteration steps between two updates of neighbor list. Default: 20.
+        max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid. Default: 64.
+        max_neighbor_numbers(int32): The maximum number of neighbors. Default: 800.
 
     Inputs:
         - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number of atoms in each grid bucket.
@@ -2470,6 +2500,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
     def __init__(self, grid_numbers, atom_numbers, not_first_time, nxy, excluded_atom_numbers,
                  cutoff_square, half_skin_square, cutoff_with_skin, half_cutoff_with_skin, cutoff_with_skin_square,
                  refresh_interval=20, cutoff=10.0, skin=2.0, max_atom_in_grid_numbers=64, max_neighbor_numbers=800):
+        """Initialize NeighborListUpdate."""
         self.grid_numbers = grid_numbers
         self.atom_numbers = atom_numbers
         self.refresh_interval = refresh_interval
@@ -2641,13 +2672,14 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, float4_numbers, atom_numbers, half_dt, dt, exp_gamma, is_max_velocity, max_velocity):
-        validator.check_value_type('float4_numbers', float4_numbers, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
-        validator.check_value_type('half_dt', half_dt, (float), self.name)
-        validator.check_value_type('dt', dt, (float), self.name)
-        validator.check_value_type('exp_gamma', exp_gamma, (float), self.name)
-        validator.check_value_type('is_max_velocity', is_max_velocity, (int), self.name)
-        validator.check_value_type('max_velocity', max_velocity, (float), self.name)
+        """Initialize MDIterationLeapFrogWithRF."""
+        validator.check_value_type('float4_numbers', float4_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('half_dt', half_dt, float, self.name)
+        validator.check_value_type('dt', dt, float, self.name)
+        validator.check_value_type('exp_gamma', exp_gamma, float, self.name)
+        validator.check_value_type('is_max_velocity', is_max_velocity, int, self.name)
+        validator.check_value_type('max_velocity', max_velocity, float, self.name)
         self.float4_numbers = float4_numbers
         self.atom_numbers = atom_numbers
         self.half_dt = half_dt
@@ -2740,6 +2772,7 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, half_dt, dt, exp_gamma):
+        """Initialize MDIterationLeapFrogLiujian."""
         self.atom_numbers = atom_numbers
         self.half_dt = half_dt
         self.dt = dt
@@ -2792,6 +2825,7 @@ class CrdToUintCrd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers):
+        """Initialize CrdToUintCrd."""
         self.atom_numbers = atom_numbers
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(
@@ -2827,6 +2861,7 @@ class MDIterationSetupRandState(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, seed):
+        """Initialize MDIterationSetupRandState."""
         self.atom_numbers = atom_numbers
         self.seed = seed
         self.add_prim_attr('atom_numbers', self.atom_numbers)
@@ -2873,10 +2908,11 @@ class TransferCrd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, start_serial, end_serial, number, atom_numbers):
-        validator.check_value_type('start_serial', start_serial, (int), self.name)
-        validator.check_value_type('end_serial', end_serial, (int), self.name)
-        validator.check_value_type('number', number, (int), self.name)
-        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
+        """Initialize TransferCrd."""
+        validator.check_value_type('start_serial', start_serial, int, self.name)
+        validator.check_value_type('end_serial', end_serial, int, self.name)
+        validator.check_value_type('number', number, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.start_serial = start_serial
         self.end_serial = end_serial
         self.number = number

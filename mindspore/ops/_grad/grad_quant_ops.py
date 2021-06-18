@@ -139,6 +139,7 @@ def get_bprop_BatchNormFold(self):
 @bprop_getters.register(P.BNTrainingReduce)
 def get_bprop_BNTrainingReduce(self):
     """Generate bprop for BNTrainingReduce for Ascend"""
+
     def bprop(x, out, dout):
         return (zeros_like(x),)
 
@@ -199,6 +200,7 @@ def get_bprop_acts_ulq(self):
 @bprop_getters.register(Q.WtsARQ)
 def get_bprop_wts_arq(self):
     """Grad definition for 'WtsArq' operation"""
+
     def bprop(w, w_min, w_max, out, dout):
         return (dout, zeros_like(w_min), zeros_like(w_max))
 

@@ -78,13 +78,14 @@ class ExtractImagePatches(PrimitiveWithInfer):
 
     def infer_shape(self, input_x):
         """infer shape"""
+        if len(input_x) != 4:
+            raise ValueError("The `input_x` should be a 4-D tensor, "
+                             f"but got a {len(input_x)}-D tensor whose shape is {input_x}")
+
         in_batch, in_depth, in_row, in_col = input_x
         _, _, ksize_row, ksize_col = self.ksizes
         _, _, stride_row, stride_col = self.strides
         _, _, rate_row, rate_col = self.rates
-        if len(input_x) != 4:
-            raise ValueError("The `input_x` should be a 4-D tensor, "
-                             f"but got a {len(input_x)}-D tensor whose shape is {input_x}")
 
         out_batch = in_batch
         out_depth = ksize_row * ksize_col * in_depth
@@ -124,7 +125,7 @@ class Range(PrimitiveWithInfer):
         start (float): If `limit` is `None`, the value acts as limit in the range and first entry
             defaults to `0`. Otherwise, it acts as first entry in the range.
         limit (float): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`. It can not be equal to `start`.
+            while set the first entry of the range to `0`. It can not be equal to `start`. Default: None.
         delta (float): Increment of the range. It can not be equal to zero. Default: 1.0.
 
     Inputs:
@@ -134,9 +135,9 @@ class Range(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as `input_x`.
 
     Examples:
-        >>> range = ops.Range(1.0, 8.0, 2.0)
+        >>> range_op = ops.Range(1.0, 8.0, 2.0)
         >>> x = Tensor(np.array([1, 2, 3, 2]), mindspore.int32)
-        >>> output = range(x)
+        >>> output = range_op(x)
         >>> print(output)
         [3, 5, 7, 5]
     """
@@ -906,7 +907,7 @@ class StackInit(PrimitiveWithInfer):
     at the top of the stack using `StackPop`. Finally, the stack should be destroyed with `StackDestroy`.
 
     Args:
-        index (int): The index of the stack.
+        index (int): The index of the stack. Default: 1.
 
     Supported Platforms:
         ``Ascend``
@@ -940,7 +941,7 @@ class StackPush(PrimitiveWithInfer):
     Please refer to the usage in source code of `StackInit`.
 
     Args:
-        index (int): The index of the stack.
+        index (int): The index of the stack. Default: 1.
 
     Inputs:
         - **input** (Tensor) - A tensor to be pushed onto the stack.
@@ -966,9 +967,9 @@ class StackPop(PrimitiveWithInfer):
      Please refer to the usage in source code of `StackInit`.
 
     Args:
-        index (int): The index of the stack.
-        shape (tuple): The shape of the tensor at the top of the stack.
-        dtype (mindspore.dtype): The type of the tensor at the top of the stack.
+        index (int): The index of the stack. Default: 1.
+        shape (tuple): The shape of the tensor at the top of the stack. Default: (1,).
+        dtype (mindspore.dtype): The type of the tensor at the top of the stack. Default: mindspore.float32.
 
     Outputs:
         - **output** (Tensor) - The tensor at the top of the stack.
@@ -1010,7 +1011,7 @@ class StackDestroy(PrimitiveWithInfer):
      Please refer to the usage in source code of `StackInit`.
 
     Args:
-        index (int): The index of the stack.
+        index (int): The index of the stack. Default: 1.
 
     Supported Platforms:
         ``Ascend``

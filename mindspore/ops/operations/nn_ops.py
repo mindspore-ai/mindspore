@@ -172,6 +172,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, output_size):
+        """Initialize AdaptiveAvgPool2D."""
         validator.check_value_type("output_size", output_size, [int, tuple], self.name)
         if isinstance(output_size, tuple):
             validator.check_int(len(output_size), 2, Rel.EQ, 'output_size', self.name)
@@ -187,7 +188,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
         out_size = [i if i else j for i, j in zipped]
         for item in out_size:
             validator.check_value_type("item of output_size", item, [int], self.name)
-        self.add_prim_attr('output_size', (out_size))
+        self.add_prim_attr('output_size', out_size)
         output_shape = x_shape[:len(x_shape) - len(out_size)] + out_size
         return output_shape
 
@@ -238,6 +239,7 @@ class Softmax(Primitive):
 
     @prim_attr_register
     def __init__(self, axis=-1):
+        """Initialize Softmax."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type("axis", axis, [int, tuple], self.name)
         if isinstance(axis, int):
@@ -286,6 +288,7 @@ class LogSoftmax(Primitive):
 
     @prim_attr_register
     def __init__(self, axis=-1):
+        """Initialize LogSoftmax."""
         validator.check_value_type("axis", axis, [int], self.name)
 
 
@@ -684,6 +687,7 @@ class HSwish(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize HSwish."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, xshape):
@@ -728,6 +732,7 @@ class Sigmoid(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Sigmoid."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, input_x):
@@ -774,6 +779,7 @@ class HSigmoid(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize HSigmoid."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
@@ -865,7 +871,6 @@ class InstanceNorm(PrimitiveWithInfer):
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
             (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
             Momentum value must be [0, 1]. Default: 0.1.
-        data_format (str): The optional value for data format, is 'NCHW'. Default: "NCHW".
 
     Inputs:
         - **input_x** (Tensor) - The input of InstanceNorm, Tensor of shape :math:`(N, C)`,
@@ -928,6 +933,7 @@ class InstanceNorm(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, epsilon=1e-5, momentum=0.1):
+        """Initialize InstanceNorm."""
         self.init_prim_io_names(inputs=['x', 'gamma', 'beta', 'mean', 'variance'],
                                 outputs=['y', 'save_mean', 'save_variance'])
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
@@ -945,7 +951,7 @@ class InstanceNorm(PrimitiveWithInfer):
         validator.check("mean shape", mean, "gamma shape", gamma, Rel.EQ, self.name)
         save_mean_shape = gamma
         save_mean_shape[0] = save_mean_shape[0] * input_shape_norm[0]
-        return (input_x, save_mean_shape, save_mean_shape)
+        return input_x, save_mean_shape, save_mean_shape
 
     def infer_dtype(self, input_x, gamma, beta, mean, variance):
         validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
@@ -954,7 +960,7 @@ class InstanceNorm(PrimitiveWithInfer):
         args_moving = {"mean": mean, "variance": variance}
         valid_dtypes = [mstype.tensor_type(mstype.float32)]
         validator.check_types_same_and_valid(args_moving, valid_dtypes, self.name)
-        return (input_x, gamma, gamma)
+        return input_x, gamma, gamma
 
 
 class BNTrainingReduce(PrimitiveWithInfer):
@@ -992,15 +998,16 @@ class BNTrainingReduce(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize BNTrainingReduce."""
         self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
 
     def infer_shape(self, x_shape):
         validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
-        return ([x_shape[1]], [x_shape[1]])
+        return [x_shape[1]], [x_shape[1]]
 
     def infer_dtype(self, x_type):
         validator.check_tensor_dtype_valid("x", x_type, [mstype.float16, mstype.float32], self.name)
-        return (x_type, x_type)
+        return x_type, x_type
 
 
 class BNTrainingUpdate(PrimitiveWithInfer):
@@ -1076,6 +1083,7 @@ class BNTrainingUpdate(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, isRef=True, epsilon=1e-5, factor=0.1):
+        """Initialize BNTrainingUpdate."""
         self.init_prim_io_names(inputs=['x', 'sum', 'square_sum', 'scale', 'b', 'mean', 'variance'],
                                 outputs=['y', 'running_mean', 'running_variance', 'save_mean', 'save_inv_variance'])
         validator.check_value_type("isRef", isRef, [bool], self.name)
@@ -1098,14 +1106,14 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         validator.check("offset shape", b[0], "x_shape[1]", x[1], Rel.EQ, self.name)
         validator.check("mean shape", mean[0], "x_shape[1]", x[1], Rel.EQ, self.name)
         validator.check("variance shape", variance[0], "x_shape[1]", x[1], Rel.EQ, self.name)
-        return (x, variance, variance, variance, variance)
+        return x, variance, variance, variance, variance
 
     def infer_dtype(self, x, sum, square_sum, scale, b, mean, variance):
         tuple(map(partial(validator.check_tensor_dtype_valid,
                           valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
                   ("x", "sum", "square_sum", "scale", "b", "mean", "variance"),
                   (x, sum, square_sum, scale, b, mean, variance)))
-        return (x, variance, variance, variance, variance)
+        return x, variance, variance, variance, variance
 
 
 class BatchNorm(PrimitiveWithInfer):
@@ -1203,6 +1211,7 @@ class BatchNorm(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, is_training=False, epsilon=1e-5, momentum=0.1, data_format="NCHW"):
+        """Initialize BatchNorm."""
         if is_training is False:
             self.set_signatures(tuple())
         validator.check_value_type('is_training', is_training, (bool,), self.name)
@@ -1224,13 +1233,13 @@ class BatchNorm(PrimitiveWithInfer):
             validator.check_equal_int(len(mean), 1, "mean rank", self.name)
             validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
             validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
-        return (input_x, scale, scale, scale, scale)
+        return input_x, scale, scale, scale, scale
 
     def infer_dtype(self, input_x, scale, bias, mean, variance):
         validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
         args = {"scale": scale, "bias": bias, "mean": mean, "variance": variance}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        return (input_x, mstype.float32, mstype.float32, mstype.float32, mstype.float32)
+        return input_x, mstype.float32, mstype.float32, mstype.float32, mstype.float32
 
 
 class Conv2D(Primitive):
@@ -1524,6 +1533,7 @@ class _Pool(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        """Initialize _Pool."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
@@ -1642,6 +1652,7 @@ class MaxPool(_Pool):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        """Initialize MaxPool."""
         super(MaxPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
@@ -1710,6 +1721,7 @@ class MaxPoolWithArgmax(_Pool):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        """Initialize MaxPoolWithArgmax."""
         super(MaxPoolWithArgmax, self).__init__(kernel_size, strides, pad_mode, data_format)
 
     def infer_shape(self, x_shape):
@@ -1784,6 +1796,7 @@ class MaxPool3D(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCDHW"):
+        """Initialize MaxPool3D."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
@@ -1900,6 +1913,7 @@ class AvgPool(_Pool):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        """Initialize AvgPool."""
         super(AvgPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
@@ -2074,6 +2088,7 @@ class Conv2DTranspose(Conv2DBackpropInput):
     @prim_attr_register
     def __init__(self, out_channel, kernel_size, pad_mode="valid", pad=0,
                  pad_list=None, mode=1, stride=1, dilation=1, group=1, data_format="NCHW"):
+        """Initialize Conv2DTranspose."""
         super(Conv2DTranspose, self).__init__(out_channel, kernel_size, pad_mode, pad,
                                               pad_list, mode, stride, dilation, group, data_format)
 
@@ -2118,6 +2133,7 @@ class BiasAdd(Primitive):
 
     @prim_attr_register
     def __init__(self, data_format="NCHW"):
+        """Initialize BiasAdd."""
         self.init_prim_io_names(inputs=['x', 'b'], outputs=['output'])
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
@@ -2177,6 +2193,7 @@ class TopK(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, sorted=False):
+        """Initialize TopK."""
         validator.check_value_type("sorted", sorted, [bool], self.name)
         self.init_prim_io_names(inputs=['input', 'k'],
                                 outputs=['values', 'indices'])
@@ -2340,12 +2357,12 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         validator.check("logits_shape", logits_shape, "labels_shape", labels_shape, Rel.EQ, self.name)
         loss_shape = [logits_shape[0]]
         dlogits_shape = logits_shape
-        return (loss_shape, dlogits_shape)
+        return loss_shape, dlogits_shape
 
     def infer_dtype(self, logits_type, labels_type):
         args = {"logits": logits_type, "labels": labels_type}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
-        return (logits_type, logits_type)
+        return logits_type, logits_type
 
 
 class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
@@ -2401,6 +2418,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, is_grad=False):
+        """Initialize SparseSoftmaxCrossEntropyWithLogits."""
         validator.check_value_type('is_grad', is_grad, [bool], self.name)
         self.init_prim_io_names(inputs=['features', 'labels'], outputs=['output'])
         self.is_grad = is_grad
@@ -2473,6 +2491,7 @@ class ApplyMomentum(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_nesterov=False, use_locking=False, gradient_scale=1.0):
+        """Initialize ApplyMomentum."""
         self.use_nesterov = validator.check_bool(use_nesterov)
         self.use_locking = validator.check_bool(use_locking)
         validator.check_value_type('gradient_scale', gradient_scale, [float], self.name)
@@ -2543,6 +2562,7 @@ class SmoothL1Loss(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, beta=1.0):
+        """Initialize SmoothL1Loss."""
         validator.check_value_type('beta', beta, [float], self.name)
         validator.check('beta', beta, '', 0, Rel.GT, self.name)
         self.init_prim_io_names(inputs=['prediction', 'target'], outputs=['output'])
@@ -2636,6 +2656,7 @@ class DataFormatDimMap(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, src_format='NHWC', dst_format='NCHW'):
+        """Initialize DataFormatDimMap."""
         valid_values = ['NHWC', 'NCHW']
         self.src_format = validator.check_string(src_format, valid_values, "src_format", self.name)
         self.dst_format = validator.check_string(dst_format, valid_values, "dst_format", self.name)
@@ -2692,6 +2713,7 @@ class RNNTLoss(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, blank_label=0):
+        """Initialize RNNTLoss."""
         validator.check_value_type('blank_label', blank_label, [int], self.name)
         self.init_prim_io_names(inputs=['acts', 'labels', 'input_length', 'label_length'],
                                 outputs=['costs', 'grads'])
@@ -2706,7 +2728,7 @@ class RNNTLoss(PrimitiveWithInfer):
         validator.check('input_length size', input_length_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
         validator.check('label_length size', label_length_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
         costs_shape = (acts_shape[0],)
-        return (costs_shape, acts_shape)
+        return costs_shape, acts_shape
 
     def infer_dtype(self, acts_type, labels_type, input_length_type, label_length_type):
         validator.check_tensor_dtype_valid("acts_type", acts_type, [mstype.float32, mstype.float16], self.name)
@@ -2714,7 +2736,7 @@ class RNNTLoss(PrimitiveWithInfer):
                           valid_dtypes=(mstype.int32,), prim_name=self.name),
                   ("labels", "input_length", "label_length"),
                   (labels_type, input_length_type, label_length_type)))
-        return (acts_type, acts_type)
+        return acts_type, acts_type
 
 
 class SGD(PrimitiveWithCheck):
@@ -2771,6 +2793,7 @@ class SGD(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, dampening=0.0, weight_decay=0.0, nesterov=False):
+        """Initialize SGD."""
         validator.check_value_type("nesterov", nesterov, [bool], self.name)
         if nesterov and dampening != 0:
             raise ValueError(f"Nesterov need zero dampening!")
@@ -2863,6 +2886,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
+        """Initialize ApplyRMSProp."""
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['var', 'mean_square', 'moment', 'learning_rate', 'grad',
                                         'rho', 'momentum', 'epsilon'], outputs=['output'])
@@ -2969,6 +2993,7 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
+        """Initialize ApplyCenteredRMSProp."""
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
 
@@ -3056,6 +3081,7 @@ class LayerNorm(Primitive):
 
     @prim_attr_register
     def __init__(self, begin_norm_axis=1, begin_params_axis=1, epsilon=1e-7):
+        """Initialize LayerNorm."""
         validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
         validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
         validator.check_value_type('epsilon', epsilon, [float], self.name)
@@ -3102,6 +3128,7 @@ class L2Normalize(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, axis=0, epsilon=1e-4):
+        """Initialize L2Normalize."""
         axis = [axis] if isinstance(axis, int) else axis
         validator.check_value_type('axis', axis, [list, tuple], self.name)
         validator.check_value_type('epsilon', epsilon, [int, float], self.name)
@@ -3163,6 +3190,7 @@ class DropoutGenMask(Primitive):
 
     @prim_attr_register
     def __init__(self, Seed0=0, Seed1=0):
+        """Initialize DropoutGenMask."""
         self.init_prim_io_names(inputs=['shape', 'keep_prob'], outputs=['output'])
         validator.check_value_type("Seed0", Seed0, [int], self.name)
         validator.check_value_type("Seed1", Seed1, [int], self.name)
@@ -3264,6 +3292,7 @@ class ResizeBilinear(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, size, align_corners=False):
+        """Initialize ResizeBilinear."""
         validator.check_value_type("size", size, [tuple, list], self.name)
         validator.check_equal_int(len(size), 2, "size len", self.name)
         for item in size:
@@ -3337,6 +3366,7 @@ class OneHot(Primitive):
 
     @prim_attr_register
     def __init__(self, axis=-1):
+        """Initialize OneHot."""
         self.init_prim_io_names(inputs=['indices', 'depth', 'on_value', 'off_value'], outputs=['output'])
         validator.check_value_type("axis", axis, [int], self.name)
 
@@ -3412,7 +3442,7 @@ class FastGelu(PrimitiveWithInfer):
     @deprecated("1.1", "FastGeLU", True)
     @prim_attr_register
     def __init__(self):
-        """init FastGelu"""
+        """Initialize FastGelu."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, input_x):
@@ -3457,7 +3487,7 @@ class FastGeLU(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init FastGeLU"""
+        """Initialize FastGeLU."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, input_x):
@@ -3509,6 +3539,7 @@ class GetNext(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, types, shapes, output_num, shared_name):
+        """Initialize GetNext."""
         validator.check_value_type("types", types, [list, tuple], self.name)
         validator.check_value_type("shapes", shapes, [list, tuple], self.name)
         validator.check("types length", len(types), "shapes length", len(shapes), Rel.EQ, self.name)
@@ -3674,6 +3705,7 @@ class LSTM(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout):
+        """Initialize LSTM."""
         self.input_size = validator.check_positive_int(input_size, "input_size", self.name)
         self.hidden_size = validator.check_positive_int(hidden_size, "hidden_size", self.name)
         self.num_layers = validator.check_positive_int(num_layers, "num_layers", self.name)
@@ -3704,12 +3736,12 @@ class LSTM(PrimitiveWithInfer):
         # set arbitrary shape for reserved space
         reserved_shape = (1, 1)
         state_shape = (1, 1)
-        return (y_shape, h_shape, c_shape, reserved_shape, state_shape)
+        return y_shape, h_shape, c_shape, reserved_shape, state_shape
 
     def infer_dtype(self, x_dtype, h_dtype, c_dtype, w_dtype):
         args = {'x': x_dtype, 'h': h_dtype, 'c': c_dtype, 'w': w_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
-        return (x_dtype, x_dtype, x_dtype, x_dtype, x_dtype)
+        return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
 class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
@@ -4023,7 +4055,7 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
     the weight is -FLOAT_MAX. FLOAT_MAX indicates the max value in the type of Float
 
     Args:
-        num_true (int): The number of target classes per training example.
+        num_true (int): The number of target classes per training example. Default: 1.
 
     Inputs:
         - **true_classes** (Tensor) - The target classes. With data type of int32 or int64
@@ -4252,6 +4284,7 @@ class Adam(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
+        """Initialize Adam."""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
@@ -4368,6 +4401,7 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
+        """Initialize AdamNoUpdateParam."""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
 
@@ -4501,6 +4535,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
+        """Initialize FusedSparseAdam."""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
         self.init_prim_io_names(inputs=['var', 'm', 'v', 'beta1_power', 'beta2_power', 'lr', 'beta1', 'beta2',
@@ -4649,6 +4684,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False, use_nesterov=False):
+        """Initialize FusedSparseLazyAdam."""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
         self.init_prim_io_names(inputs=['var', 'm', 'v', 'beta1_power', 'beta2_power', 'lr', 'beta1', 'beta2',
@@ -4762,6 +4798,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, lr, l1, l2, lr_power, use_locking=False):
+        """Initialize FusedSparseFtrl."""
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'indices'],
                                 outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
@@ -4878,6 +4915,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
+        """Initialize FusedSparseProximalAdagrad"""
         self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad', 'indices'],
                                 outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
@@ -4968,6 +5006,7 @@ class KLDivLoss(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, reduction='mean'):
+        """Initialize KLDivLoss."""
         self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape):
@@ -5055,6 +5094,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, reduction='mean'):
+        """Initialize BinaryCrossEntropy."""
         self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape, weight_shape):
@@ -5442,6 +5482,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, update_slots=True):
+        """Initialize ApplyAdagrad."""
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
 
@@ -5543,6 +5584,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, epsilon, update_slots=True):
+        """Initialize ApplyAdagradV2."""
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
@@ -5644,6 +5686,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, lr, update_slots=True, use_locking=False):
+        """Initialize SparseApplyAdagrad."""
         validator.check_value_type("lr", lr, [float], self.name)
         validator.check_is_float(lr, "lr", self.name)
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
@@ -5748,6 +5791,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, lr, epsilon, use_locking=False, update_slots=True):
+        """Initialize SparseApplyAdagradV2."""
         self.lr = validator.check_value_type("lr", lr, [float], self.name)
         self.epsilon = validator.check_value_type("epsilon", epsilon, [float], self.name)
         self.use_locking = validator.check_value_type("update_slots", update_slots, [bool], self.name)
@@ -5860,6 +5904,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
+        """Initialize ApplyProximalAdagrad."""
         self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad'],
                                 outputs=['var', 'accum'])
         self.add_prim_attr('side_effect_mem', True)
@@ -5985,6 +6030,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
+        """Initialize SparseApplyProximalAdagrad."""
         self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad', 'indices'],
                                 outputs=['var', 'accum'])
         self.add_prim_attr('side_effect_mem', True)
@@ -6095,7 +6141,7 @@ class ApplyAddSign(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        "Initialize ApplyAddSign"
+        """Initialize ApplyAddSign."""
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, m_shape, lr_shape, alpha_shape, sign_decay_shape,
@@ -6225,7 +6271,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        "Initialize ApplyPowerSign"
+        """Initialize ApplyPowerSign."""
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, m_shape, lr_shape, logbase_shape, sign_decay_shape,
@@ -6320,7 +6366,7 @@ class ApplyGradientDescent(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        "Initialize ApplyGradientDescent"
+        """Initialize ApplyGradientDescent."""
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, alpha_shape, delta_shape):
@@ -6408,7 +6454,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        "Initialize ApplyGradientDescent"
+        """Initialize ApplyGradientDescent."""
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, alpha_shape, l1_shape, l2_shape, delta_shape):
@@ -6495,7 +6541,7 @@ class LARSUpdate(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, epsilon=1e-05, hyperpara=0.001, use_clip=False):
-        """init"""
+        """Initialize LARSUpdate."""
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         validator.check_value_type("hyperpara", hyperpara, [float], self.name)
         validator.check_value_type("use_clip", use_clip, [bool], self.name)
@@ -6601,6 +6647,7 @@ class ApplyFtrl(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
+        """Initialize ApplyFtrl."""
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'lr', 'l1', 'l2', 'lr_power'],
                                 outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
@@ -6706,6 +6753,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, lr, l1, l2, lr_power, use_locking=False):
+        """Initialize SparseApplyFtrl."""
         validator.check_value_type("lr", lr, [float], self.name)
         validator.check_value_type("l1", l1, [float], self.name)
         validator.check_value_type("l2", l2, [float], self.name)
@@ -6819,6 +6867,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, lr, l1, l2, l2_shrinkage, lr_power, use_locking=False):
+        """Initialize SparseApplyFtrlV2."""
         validator.check_value_type("lr", lr, [float], self.name)
         validator.check_value_type("l1", l1, [float], self.name)
         validator.check_value_type("l2", l2, [float], self.name)
@@ -6854,7 +6903,7 @@ class Dropout(PrimitiveWithCheck):
 
     Args:
         keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-            means dropping out 10% of input units.
+            means dropping out 10% of input units. Default: 0.5.
         Seed0 (int): Seed0 value for random generating. Default: 0.
         Seed1 (int): Seed1 value for random generating. Default: 0.
 
@@ -6884,6 +6933,7 @@ class Dropout(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, keep_prob=0.5, Seed0=0, Seed1=0):
+        """Initialize Dropout."""
         self.seed0 = validator.check_value_type("Seed0", Seed0, [int], self.name)
         self.seed1 = validator.check_value_type("Seed1", Seed1, [int], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0, 1, Rel.INC_RIGHT, "keep_prob", self.name)
@@ -6938,6 +6988,7 @@ class Dropout2D(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, keep_prob=0.5):
+        """Initialize Dropout2D."""
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
 
@@ -6995,6 +7046,7 @@ class Dropout3D(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, keep_prob=0.5):
+        """Initialize Dropout3D."""
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
 
@@ -7081,6 +7133,7 @@ class CTCLoss(Primitive):
     @prim_attr_register
     def __init__(self, preprocess_collapse_repeated=False, ctc_merge_repeated=True,
                  ignore_longer_outputs_than_inputs=False):
+        """Initialize CTCLoss."""
         self.init_prim_io_names(inputs=["inputs", "labels_indices", "labels_values", "sequence_length"],
                                 outputs=["loss", "gradient"])
         validator.check_value_type("preprocess_collapse_repeated", preprocess_collapse_repeated, [bool], self.name)
@@ -7140,6 +7193,7 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, merge_repeated=True):
+        """Initialize CTCGreedyDecoder."""
         self.merge_repeated = validator.check_value_type("merge_repeated", merge_repeated, [bool], self.name)
 
     def check_shape(self, inputs_shape, sequence_length_shape):
@@ -7169,6 +7223,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'):
+        """Initialize BasicLSTMCell."""
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
@@ -7195,7 +7250,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         ot_shape = c_shape
         tanhct_shape = c_shape
 
-        return (ct_shape, ht_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape)
+        return ct_shape, ht_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape
 
     def infer_dtype(self, x_dtype, h_dtype, c_dtype, w_dtype, b_dtype):
         tuple(map(partial(validator.check_tensor_dtype_valid,
@@ -7204,7 +7259,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
                   (x_dtype, h_dtype, w_dtype)))
         args = {"c_dtype": c_dtype, "b_dtype": b_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        return (c_dtype, mstype.float16, c_dtype, c_dtype, c_dtype, c_dtype, c_dtype)
+        return c_dtype, mstype.float16, c_dtype, c_dtype, c_dtype, c_dtype, c_dtype
 
 
 class DynamicRNN(PrimitiveWithInfer):
@@ -7315,6 +7370,7 @@ class DynamicRNN(PrimitiveWithInfer):
                  activation='tanh',
                  forget_bias=0.0,
                  is_training=True):
+        """Initialize DynamicRNN."""
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
@@ -7480,6 +7536,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
                  gate_order="rzh",
                  reset_after=True,
                  is_training=True):
+        """Initialize DynamicGRUV2."""
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.cell_clip = validator.check_value_type("cell_clip", cell_clip, [float], self.name)
@@ -7613,10 +7670,10 @@ class LRN(PrimitiveWithInfer):
         \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
 
     Args:
-        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D.
-        bias (float): An offset (usually positive to avoid dividing by 0).
-        alpha (float): A scale factor, usually positive.
-        beta (float): An exponent.
+        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: 5.
+        bias (float): An offset (usually positive to avoid dividing by 0). Default: 1.0.
+        alpha (float): A scale factor, usually positive. Default: 1.0.
+        beta (float): An exponent. Default: 0.5.
         norm_region (str): Specifies normalization region. Options: "ACROSS_CHANNELS". Default: "ACROSS_CHANNELS".
 
     Inputs:
@@ -7801,12 +7858,12 @@ class Conv3D(PrimitiveWithInfer):
     :math:`padding` is zero-padding added to both sides of the input.
 
     Args:
-        out_channels (int): The number of output channel :math:`C_{out}`.
+        out_channel (int): The number of output channel :math:`C_{out}`.
         kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
             and width of the 3D convolution window. Single int means the value is for the depth, height and the width
             of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
             width of the kernel.
-        mode (int): Modes for different convolutions. It is currently not used
+        mode (int): Modes for different convolutions. It is currently not used. Default: 1.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.

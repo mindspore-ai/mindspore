@@ -173,6 +173,7 @@ class TensorAdd(_MathBinaryOp):
     @deprecated("1.1", "Add", True)
     @prim_attr_register
     def __init__(self):
+        """Initialize TensorAdd."""
         _MathBinaryOp.__init__(self)
 
     def infer_value(self, x, y):
@@ -310,7 +311,7 @@ class _Reduce(PrimitiveWithInfer):
 
     Args:
          keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                           If false, don't keep these dimensions.
+                           If false, don't keep these dimensions. Default: False.
     """
 
     __mindspore_signature__ = (
@@ -603,7 +604,7 @@ class ReduceMax(_Reduce):
 
     @prim_attr_register
     def __init__(self, keep_dims=False):
-        """ReduceMax"""
+        """Initialize ReduceMax."""
         super(ReduceMax, self).__init__(keep_dims)
         self.__setattr_flag__ = True
 
@@ -745,6 +746,7 @@ class CumProd(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, exclusive=False, reverse=False):
+        """Initialize CumProd."""
         cls_name = self.name
         self.exclusive = validator.check_value_type("exclusive", exclusive, [bool], cls_name)
         self.reverse = validator.check_value_type("reverse", reverse, [bool], cls_name)
@@ -803,6 +805,7 @@ class MatMul(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False):
+        """Initialize MatMul."""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
@@ -908,6 +911,7 @@ class BatchMatMul(MatMul):
 
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False):
+        """Initialize BatchMatMul."""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
@@ -1016,13 +1020,14 @@ class AddN(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize AddN."""
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
     def check_elim(self, inputs):
         if len(inputs) != 1:
-            return (False, None)
+            return False, None
         if isinstance(inputs[0], Tensor):
-            return (True, inputs[0])
+            return True, inputs[0]
         raise TypeError("Expecting Tensor, got : {}".format(type(inputs[0])))
 
 
@@ -1068,14 +1073,15 @@ class AccumulateNV2(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize AccumulateNV2."""
         self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
     def check_elim(self, inputs):
         if len(inputs) != 1:
-            return (False, None)
+            return False, None
         if isinstance(inputs[0], Tensor):
-            return (True, inputs[0])
+            return True, inputs[0]
         raise TypeError("Expecting Tensor, got : {}".format(type(inputs[0])))
 
     def infer_shape(self, inputs):
@@ -1732,7 +1738,7 @@ class Expm1(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize Exp"""
+        """Initialize Expm1."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -1770,15 +1776,16 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Examples:
         >>> x = Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mindspore.float16)
-        >>> range = Tensor([0.0, 5.0], mindspore.float16)
+        >>> range_op = Tensor([0.0, 5.0], mindspore.float16)
         >>> hist = ops.HistogramFixedWidth(5)
-        >>> output = hist(x, range)
+        >>> output = hist(x, range_op)
         >>> print(output)
         [2 1 1 0 2]
     """
 
     @prim_attr_register
     def __init__(self, nbins, dtype='int32'):
+        """Initialize HistogramFixedWidth."""
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
         validator.check_int(nbins, 1, Rel.GE, "nbins", self.name)
         valid_values = ['int32', 'int64']
@@ -1825,6 +1832,7 @@ class Log(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Log."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x):
@@ -1870,6 +1878,7 @@ class Log1p(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Log1p."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
@@ -2437,6 +2446,7 @@ class Floor(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Floor."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -2515,6 +2525,7 @@ class Ceil(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Ceil."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def infer_shape(self, x_shape):
@@ -3782,11 +3793,11 @@ class NMSWithMask(PrimitiveWithInfer):
         validator.check_positive_int(bboxes_shape[0], "bboxes.shape[0]", cls_name)
         validator.check_equal_int(bboxes_shape[1], 5, "bboxes.shape[1]", cls_name)
         num = bboxes_shape[0]
-        return (bboxes_shape, (num,), (num,))
+        return bboxes_shape, (num,), (num,)
 
     def infer_dtype(self, bboxes_dtype):
         validator.check_tensor_dtype_valid("bboxes", bboxes_dtype, [mstype.float16, mstype.float32], self.name)
-        return (bboxes_dtype, mstype.int32, mstype.bool_)
+        return bboxes_dtype, mstype.int32, mstype.bool_
 
 
 class Abs(PrimitiveWithInfer):
@@ -3811,8 +3822,8 @@ class Abs(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
-        >>> abs = ops.Abs()
-        >>> output = abs(input_x)
+        >>> abs_op = ops.Abs()
+        >>> output = abs_op(input_x)
         >>> print(output)
         [1. 1. 0.]
     """
@@ -3896,8 +3907,8 @@ class Round(PrimitiveWithInfer):
 
     Examples:
          >>> input_x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
-         >>> round = ops.Round()
-         >>> output = round(input_x)
+         >>> round_op = ops.Round()
+         >>> output = round_op(input_x)
          >>> print(output)
          [ 1.  2.  2.  2. -4.]
     """

@@ -86,7 +86,7 @@ class ScalarSummary(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize ScalarSummary."""
         self.add_prim_attr("side_effect_io", True)
 
 
@@ -125,7 +125,7 @@ class ImageSummary(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize ImageSummary."""
         self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):
@@ -177,7 +177,7 @@ class TensorSummary(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize TensorSummary."""
         self.add_prim_attr("side_effect_io", True)
 
 
@@ -217,7 +217,7 @@ class HistogramSummary(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init"""
+        """Initialize HistogramSummary."""
         self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):
@@ -285,6 +285,7 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, f):
+        """Initialize InsertGradientOf."""
         self.add_prim_attr('side_effect_backprop', True)
         self.f = f
 
@@ -337,6 +338,7 @@ class HookBackward(PrimitiveWithInfer):
     """
 
     def __init__(self, hook_fn, cell_id=""):
+        """Initialize HookBackward."""
         super(HookBackward, self).__init__(self.__class__.__name__)
         self.add_prim_attr("cell_id", cell_id)
         self.init_attrs["cell_id"] = cell_id
@@ -398,6 +400,7 @@ class Print(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize Print."""
         self.add_prim_attr("side_effect_io", True)
 
     def __call__(self, *args):

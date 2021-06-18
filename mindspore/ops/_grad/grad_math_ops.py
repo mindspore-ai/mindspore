@@ -298,7 +298,6 @@ def get_bprop_floor(self):
         bc_x = fill_(dtype_(x), shape_(x), 0.)
         return (bc_x,)
 
-
     return bprop
 
 
@@ -420,7 +419,7 @@ def get_bprop_xlogy(self):
 
 @bprop_getters.register(P.SquareSumAll)
 def get_bprop_square_sum_all(self):
-    """Grad definition for `Square` operation."""
+    """Grad definition for `SquareSumAll` operation."""
     mul_func = P.Mul()
     fill_func = P.Fill()
     dtype = P.DType()

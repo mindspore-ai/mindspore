@@ -450,7 +450,6 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
 
 def _generate_indices_from_tuple_of_tensor(tuple_index, op_name):
     """Generate an indices tensor from a tuple of tensor."""
-    indices = None
     indexes_types = hyper_map(F.dtype, tuple_index)
     const_utils.check_types_valid(indexes_types, mstype.int_type, op_name)
     tensor_index_shape = hyper_map(F.shape, tuple_index)
@@ -615,11 +614,10 @@ def _tensor_setitem_by_bool_tensor_with_tensor(data, index, value):
     """Set a tensor item by a bool tensor with a tensor."""
     index_shape = F.shape(index)
     data_shape = F.shape(data)
-    data_shape = const_utils.check_equal(data_shape, index_shape,
-                                         "The tensor(shape={}) and tensor index(shape={}) should be the same shape.")
+    const_utils.check_equal(data_shape, index_shape,
+                            "The tensor(shape={}) and tensor index(shape={}) should be the same shape.")
     size = F.shape_mul(F.shape(value))
-    size = const_utils.check_equal(1, size,
-                                   "When assign value is a tensor, its size should be {}, but current size is {}.")
+    const_utils.check_equal(1, size, "When assign value is a tensor, its size should be {}, but current size is {}.")
     dtype = F.dtype(data)
     u_cast = F.cast(value, dtype)
     one_data = F.ones_like(data)

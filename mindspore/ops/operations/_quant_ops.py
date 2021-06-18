@@ -136,9 +136,9 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
 
     Examples:
         >>> x = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
-        >>> min = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
-        >>> max = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
-        >>> output_tensor = MinMaxUpdatePerChannel(num_bits=8)(x, min, max)
+        >>> min_value = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
+        >>> max_value = Tensor(np.random.uniform(-1, 1, size=16), mstype.float32)
+        >>> output_tensor = MinMaxUpdatePerChannel(num_bits=8)(x, min_value, max_value)
     """
     support_quant_bit = [4, 7, 8]
     ascend_support_x_rank = [2, 4]
@@ -519,7 +519,7 @@ class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
         >>> output_tensor = FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False)(
         ...                 input_tensor, min_tensor, max_tensor)
-        >>> output_tensor shape: (3, 16, 5, 5)  data type: mstype.float32
+        >>> output_tensor # shape: (3, 16, 5, 5)  data type: mstype.float32
     """
 
     @prim_attr_register
@@ -581,9 +581,9 @@ class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
         >>> x_gradient, min_gradient, max_gradient = FakeQuantWithMinMaxVarsGradient(num_bits=8,narrow_range=False)
         ...                                          (gradients, input_tensor, min_tensor, max_tensor)
-        >>> x_gradient   shape: (3, 16, 5, 5)  data type: mstype.float32
-        >>> min_gradient shape: (1,)           data type: mstype.float32
-        >>> max_gradient shape: (1,)           data type: mstype.float32
+        >>> x_gradient   # shape: (3, 16, 5, 5)  data type: mstype.float32
+        >>> min_gradient # shape: (1,)           data type: mstype.float32
+        >>> max_gradient # shape: (1,)           data type: mstype.float32
     """
 
     @prim_attr_register
@@ -642,7 +642,7 @@ class FakeQuantWithMinMaxVarsPerChannel(PrimitiveWithInfer):
         >>> max_tensor = Tensor(np.array([6, 1, 2, 3]), mstype.float32)
         >>> output_tensor = FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False)(
         ...                 input_tensor, min_tensor, max_tensor)
-        >>> output_tensor shape: (3, 16, 3, 4)  data type: mstype.float32
+        >>> output_tensor # shape: (3, 16, 3, 4)  data type: mstype.float32
     """
 
     @prim_attr_register
@@ -698,9 +698,9 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
         >>> x_gradient, min_gradient, max_gradient = FakeQuantWithMinMaxVarsPerChannelGradient(
         ...                                          num_bits=8, narrow_range=False)(
         ...                                          gradients, input_tensor, min_tensor, max_tensor)
-        >>> x_gradient   shape: (3, 16, 3, 4)  data type: mstype.float32
-        >>> min_gradient shape: (4,)           data type: mstype.float32
-        >>> max_gradient shape: (4,)           data type: mstype.float32
+        >>> x_gradient   # shape: (3, 16, 3, 4)  data type: mstype.float32
+        >>> min_gradient # shape: (4,)           data type: mstype.float32
+        >>> max_gradient # shape: (4,)           data type: mstype.float32
     """
 
     @prim_attr_register
@@ -726,6 +726,28 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
                   ("dout", "x", "min", "max"),
                   (dout_type, x_type, min_type, max_type)))
         return x_type, min_type, max_type
+
+
+def _fake_quant_per_infer_dtype(prim_name, x_type, min_type, max_type):
+    if context.get_context('device_target') == "GPU":
+        valid_dtypes = (mstype.float32,)
+    else:
+        valid_dtypes = (mstype.float16, mstype.float32)
+    tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=prim_name),
+              ("x", "min", "max"),
+              (x_type, min_type, max_type)))
+    return x_type
+
+
+def _fake_quant_per_grad_infer_dtype(prim_name, dout_type, x_type, min_type, max_type):
+    if context.get_context('device_target') == "GPU":
+        valid_dtypes = (mstype.float32,)
+    else:
+        valid_dtypes = (mstype.float16, mstype.float32)
+    tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=prim_name),
+              ("dout", "x", "min", "max"),
+              (dout_type, x_type, min_type, max_type)))
+    return dout_type
 
 
 class FakeQuantPerLayer(PrimitiveWithInfer):
@@ -797,19 +819,12 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
-        if context.get_context('device_target') == "GPU":
-            valid_dtypes = (mstype.float32,)
-        else:
-            valid_dtypes = (mstype.float16, mstype.float32)
-        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
-                  ("x", "min", "max"),
-                  (x_type, min_type, max_type)))
-        return x_type
+        return _fake_quant_per_infer_dtype(self.name, x_type, min_type, max_type)
 
 
 class FakeQuantPerLayerGrad(PrimitiveWithInfer):
     r"""
-    Performs grad of FakeQuantPerLayerGrad operation.
+    Performs grad of FakeQuantPerLayer operation.
 
     Examples:
         >>> fake_min_max_grad = FakeQuantPerLayerGrad()
@@ -852,14 +867,7 @@ class FakeQuantPerLayerGrad(PrimitiveWithInfer):
         return dout_shape
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
-        if context.get_context('device_target') == "GPU":
-            valid_dtypes = (mstype.float32,)
-        else:
-            valid_dtypes = (mstype.float16, mstype.float32)
-        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
-                  ("dout", "x", "min", "max"),
-                  (dout_type, x_type, min_type, max_type)))
-        return dout_type
+        return _fake_quant_per_grad_infer_dtype(self.name, dout_type, x_type, min_type, max_type)
 
 
 class FakeQuantPerChannel(PrimitiveWithInfer):
@@ -946,19 +954,12 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
-        if context.get_context('device_target') == "GPU":
-            valid_dtypes = (mstype.float32,)
-        else:
-            valid_dtypes = (mstype.float16, mstype.float32)
-        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
-                  ("x", "min", "max"),
-                  (x_type, min_type, max_type)))
-        return x_type
+        return _fake_quant_per_infer_dtype(self.name, x_type, min_type, max_type)
 
 
 class FakeQuantPerChannelGrad(PrimitiveWithInfer):
     r"""
-    Performs grad of FakeQuantPerChannelGrad operation.
+    Performs grad of FakeQuantPerChannel operation.
 
     Examples:
         >>> fqmmpc_grad = FakeQuantPerChannelGrad()
@@ -1001,14 +1002,7 @@ class FakeQuantPerChannelGrad(PrimitiveWithInfer):
         return dout_shape
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
-        if context.get_context('device_target') == "GPU":
-            valid_dtypes = (mstype.float32,)
-        else:
-            valid_dtypes = (mstype.float16, mstype.float32)
-        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
-                  ("dout", "x", "min", "max"),
-                  (dout_type, x_type, min_type, max_type)))
-        return dout_type
+        return _fake_quant_per_grad_infer_dtype(self.name, dout_type, x_type, min_type, max_type)
 
 
 class BatchNormFold(PrimitiveWithInfer):
@@ -1298,7 +1292,7 @@ class BatchNormFold2(PrimitiveWithInfer):
 
 class BatchNormFold2Grad(PrimitiveWithInfer):
     r"""
-    Performs grad of CorrectionAddGrad operation.
+    Performs grad of BatchNormFold2 operation.
 
     Examples:
         >>> bnf2_grad = ops.BatchNormFold2Grad()
@@ -1386,7 +1380,7 @@ class BatchNormFoldD(PrimitiveWithInfer):
 
 
 class BatchNormFoldGradD(PrimitiveWithInfer):
-    """Performs grad of _BatchNormFoldGrad operation."""
+    """Performs grad of BatchNormFold operation."""
 
     @prim_attr_register
     def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
@@ -1460,7 +1454,7 @@ class BatchNormFold2D(PrimitiveWithInfer):
 
 
 class BatchNormFold2GradD(PrimitiveWithInfer):
-    """Performs grad of CorrectionAddGrad operation."""
+    """Performs grad of BatchNormFold2 operation."""
     channel_axis = 1
 
     @prim_attr_register
@@ -1678,7 +1672,6 @@ class WtsARQ(PrimitiveWithInfer):
     The WtsARQ(Weights Adaptive Range Quantization).
 
     Args:
-        axes (list): Specify channels for ARQ algorithm.
         num_bits (int): The bits num used for quantize.
         offset_flag (bool): Whether use offset for quantize.
 

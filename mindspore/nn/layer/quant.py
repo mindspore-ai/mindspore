@@ -156,6 +156,7 @@ class _Observer(Cell):
     """
 
     def __init__(self, quant_dtype):
+        """Initialize _Observer."""
         super(_Observer, self).__init__()
         self.quant_dtype = quant_dtype
 
@@ -204,6 +205,7 @@ class UniformQuantObserver(_Observer):
 
     def __init__(self, quant_dtype=QuantDtype.INT8, per_channel=False, symmetric=False, narrow_range=False,
                  num_channels=1):
+        """Initialize UniformQuantObserver."""
         super(UniformQuantObserver, self).__init__(quant_dtype)
         self.per_channel = per_channel
         self.symmetric = symmetric
@@ -1109,6 +1111,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
                  bias_init='zeros',
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
+        """Initialize Conv2dBnWithoutFoldQuant."""
         super(Conv2dBnWithoutFoldQuant, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
@@ -1249,6 +1252,7 @@ class Conv2dQuant(Cell):
                  bias_init='zeros',
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
+        """Initialize Conv2dQuant."""
         super(Conv2dQuant, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
@@ -1380,6 +1384,7 @@ class DenseQuant(Cell):
                  activation=None,
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
+        """Initialize DenseQuant."""
         super(DenseQuant, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
@@ -1495,6 +1500,7 @@ class ActQuant(_QuantActivation):
                  fake_before=False,
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
+        """Initialize ActQuant."""
         super(ActQuant, self).__init__()
         act_class = activation.__class__
         act_list = [nn.ReLU, nn.ReLU6]
@@ -1578,6 +1584,7 @@ class TensorAddQuant(Cell):
                  ema_decay=0.999,
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
+        """Initialize TensorAddQuant."""
         super(TensorAddQuant, self).__init__()
         self.fake_quant_act = quant_config.activation(min_init=-6,
                                                       max_init=6,
@@ -1638,6 +1645,7 @@ class MulQuant(Cell):
                  ema_decay=0.999,
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
+        """Initialize MulQuant."""
         super(MulQuant, self).__init__()
         self.fake_quant_act = quant_config.activation(min_init=-6,
                                                       max_init=6,

@@ -154,21 +154,8 @@ class RsqrtGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class SoftmaxGrad(PrimitiveWithInfer):
+class SoftmaxGrad(ReciprocalGrad):
     """Performs grad of Softmax operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SoftmaxGrad"""
-
-    def infer_shape(self, x_shape, dout_shape):
-        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, x_dtype, dout_dtype):
-        args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        return x_dtype
 
 
 class SqrtGrad(PrimitiveWithInfer):
@@ -346,7 +333,6 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         >>> print(output.shape)
         (32, 32, 4, 6, 2)
     """
-
 
     @prim_attr_register
     def __init__(self,
@@ -644,7 +630,7 @@ class DropoutGrad(PrimitiveWithInfer):
 
     Args:
         keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-          means dropping out 10% of input units.
+          means dropping out 10% of input units. Default: 0.5.
 
     Inputs:
         - **shape** (tuple[int]) - The shape of target mask.
@@ -1029,6 +1015,9 @@ class MaximumGrad(Primitive):
     @prim_attr_register
     def __init__(self, grad_x=True, grad_y=True):
         """Initialize MaximumGrad"""
+
+    def __call__(self, x, y, dout):
+        raise NotImplementedError
 
 
 class MaxPoolGradWithArgmax(_PoolGrad):
@@ -1688,6 +1677,7 @@ class ROIAlignGrad(PrimitiveWithInfer):
     ROIAlignGrad operator.
 
     Args:
+       xdiff_shape (tuple): The diff shape.
        pooled_height (int): The output feature height.
        pooled_width (int): The output feature width.
        spatial_scale (float): The feature stride.
@@ -1892,7 +1882,7 @@ class StridedSliceGrad(PrimitiveWithInfer):
 
 
 class SoftplusGrad(PrimitiveWithInfer):
-    """Computes gradient for the Log Softmax activation."""
+    """Computes gradient for the Softplus activation."""
 
     @prim_attr_register
     def __init__(self):

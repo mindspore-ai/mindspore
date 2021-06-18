@@ -107,3 +107,15 @@ def get_1d_shape(in_shape):
     for i in in_shape:
         out_shape *= i
     return (out_shape,)
+
+
+@constexpr
+def generate_shape_index(out_shape, indices_shape, axis):
+    out_rank = len(out_shape)
+    ind_rank = len(indices_shape)
+    if axis < 0:
+        axis += out_rank - ind_rank + 1
+    perm_part1 = tuple(range(axis, axis + ind_rank))
+    index = tuple(range(out_rank))
+    perm = perm_part1 + index[:axis] + index[axis + ind_rank:]
+    return perm

@@ -72,7 +72,7 @@ def _get_prefix_and_index(cells):
     return prefix, index
 
 
-class _CellListBase():
+class _CellListBase:
     """
     An interface for base the cell as list.
 
@@ -84,6 +84,7 @@ class _CellListBase():
     by iterator or subscript , it will be interpreted as a list of cells.
     """
     def __init__(self):
+        """Initialize _CellListBase."""
         self.__cell_as_list__ = True
 
     @abstractmethod
@@ -133,6 +134,7 @@ class SequentialCell(Cell):
            [27. 27.]]]]
     """
     def __init__(self, *args):
+        """Initialize SequentialCell."""
         super(SequentialCell, self).__init__()
         self._is_dynamic_name = []
         if len(args) == 1:
@@ -270,6 +272,7 @@ class CellList(_CellListBase, Cell):
           >
     """
     def __init__(self, *args, **kwargs):
+        """Initialize CellList."""
         auto_prefix = kwargs["auto_prefix"] if "auto_prefix" in kwargs.keys() else True
         _CellListBase.__init__(self)
         Cell.__init__(self, auto_prefix)

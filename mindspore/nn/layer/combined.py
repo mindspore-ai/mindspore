@@ -112,6 +112,7 @@ class Conv2dBnAct(Cell):
                  activation=None,
                  alpha=0.2,
                  after_fake=True):
+        """Initialize Conv2dBnAct."""
         super(Conv2dBnAct, self).__init__()
 
         self.conv = nn.Conv2d(in_channels,
@@ -206,6 +207,7 @@ class DenseBnAct(Cell):
                  activation=None,
                  alpha=0.2,
                  after_fake=True):
+        """Initialize DenseBnAct."""
         super(DenseBnAct, self).__init__()
         self.dense = nn.Dense(
             in_channels,
