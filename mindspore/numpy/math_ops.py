@@ -4516,7 +4516,7 @@ def digitize(x, bins, right=False):
 
     Args:
         x (Union[int, float, bool, list, tuple, Tensor]): Input array to be binned.
-        bins (Union[int, float, bool, list, tuple, Tensor]): Array of bins. It has to
+        bins (Union[list, tuple, Tensor]): Array of bins. It has to
             be 1-dimensional and monotonic.
         right (boolean, optional): Indicating whether the intervals include the right
             or the left bin edge. Default behavior is ``(right==False)`` indicating
@@ -4539,7 +4539,7 @@ def digitize(x, bins, right=False):
         [1 3 3 4 5]
     """
     x, bins = _to_tensor(x, bins)
-    if F.rank(bins) > 1:
+    if F.rank(bins) != 1:
         _raise_value_error('bins should be 1-dimensional')
     if x.size == 0:
         return x
