@@ -121,6 +121,12 @@ if __name__ == "__main__":
     wide_deep_config.argparse_init()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
+
+    _enable_graph_kernel = wide_deep_config.device_target == "GPU"
+    if _enable_graph_kernel:
+        context.set_context(enable_graph_kernel=True)
+        context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
+
     context.set_context(enable_sparse=wide_deep_config.sparse)
     init()
     context.set_context(save_graphs_path='./graphs_of_device_id_'+str(get_rank()))

@@ -65,6 +65,7 @@ if __name__ == '__main__':
         elif args_opt.device_target == "GPU":
             init()
             context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target=args_opt.device_target)
+            context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=get_group_size(),
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -79,6 +80,7 @@ if __name__ == '__main__':
             context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
         elif args_opt.device_target == "GPU":
             context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target=args_opt.device_target)
+            context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
         else:
             context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
         rank_size = None
