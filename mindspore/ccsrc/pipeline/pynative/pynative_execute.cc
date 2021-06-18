@@ -2660,8 +2660,8 @@ void GradExecutor::EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell) {
 }
 
 void GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
-  if (!grad_flag_) {
-    MS_LOG(DEBUG) << "The grad flag is set to false, only run forward process. No need to make grad for ms_function";
+  if (!need_construct_graph()) {
+    MS_LOG(DEBUG) << "The grad flag is set to false or the cell stack is empty. No need to make grad for ms_function";
     set_graph_phase("");
     return;
   }
