@@ -116,6 +116,10 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
         std::string dec_mode_str(dec_mode.begin(), dec_mode.end());
         auto plain_data = mindspore::Decrypt(&plain_data_size, reinterpret_cast<const unsigned char *>(model_data),
                                              data_size, dec_key.key, dec_key.len, dec_mode_str);
+        if (plain_data == nullptr) {
+          MS_LOG(ERROR) << "Load model failed. Please check the valid of dec_key and dec_mode.";
+          return kMEInvalidInput;
+        }
         anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(plain_data.get()), plain_data_size);
       }
     } catch (const std::exception &) {
