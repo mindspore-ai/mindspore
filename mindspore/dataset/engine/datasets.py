@@ -1537,6 +1537,7 @@ class Dataset:
         if self.saved_output_shapes is None:
             runtime_getter = self._init_tree_getters()
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
+            self.saved_output_types = runtime_getter[0].GetOutputTypes()
             self.close_pool()
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
@@ -1551,8 +1552,11 @@ class Dataset:
         """
         if self.saved_output_types is None:
             runtime_getter = self._init_tree_getters()
+            self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             self.close_pool()
+        if self.dynamic_setting[0]:
+            self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_output_types
 
     def get_dataset_size(self):
