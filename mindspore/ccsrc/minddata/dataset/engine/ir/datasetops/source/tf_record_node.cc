@@ -171,7 +171,8 @@ Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   }
   int64_t num_rows;
   constexpr int64_t kThreadCount = 8;
-  if (!shard_equal_rows_) {
+  // By default, TFRecord will do file-based sharding. But when cache is injected, it will be row-based sharding.
+  if (!shard_equal_rows_ && !IsCached()) {
     // Data will be sharded by file
     std::vector<std::string> shard_file_list;
     RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
