@@ -627,6 +627,25 @@ std::vector<int64_t> CheckAndConvertUtils::CheckAttrIntOrTupleInt(const std::str
   return result;
 }
 
+std::vector<int64_t> CheckAndConvertUtils::CheckAttrTupleInt(const std::string &arg_name, const ValuePtr &attr,
+                                                             const std::string &prim_name) {
+  std::vector<int64_t> result;
+  MS_EXCEPTION_IF_NULL(attr);
+  if (attr->isa<ValueTuple>()) {
+    std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+    (void)std::transform(
+      attr_vec.begin(), attr_vec.end(), std::back_inserter(result), [=](const ValuePtr &e) -> int64_t {
+        if (!e->isa<Int64Imm>()) {
+          MS_EXCEPTION(TypeError) << "For " << prim_name << ", the element type of" << arg_name << " must be Int64";
+        }
+        return GetValue<int64_t>(e);
+      });
+  } else {
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the type of" << arg_name << " must be Tuple";
+  }
+  return result;
+}
+
 void CheckAndConvertUtils::CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape) {
   *min_shape = (*min_shape).empty() ? shape : *min_shape;
   *max_shape = (*max_shape).empty() ? shape : *max_shape;
