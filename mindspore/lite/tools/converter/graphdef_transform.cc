@@ -33,6 +33,7 @@
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
 #include "tools/converter/legacy_optimizer/graph/switch_pass.h"
+#include "tools/converter/legacy_optimizer/graph/convert_fp32_to_fp16_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_tensor_pass.h"
 #include "tools/converter/legacy_optimizer/graph/nested_loop_expand_pass.h"
@@ -186,6 +187,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     forming_model_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
     forming_model_optimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass());
     forming_model_optimizer.AddPass(new (std::nothrow) TensorNamePass());
+    forming_model_optimizer.AddPass(new (std::nothrow) ConvertFP32ToFP16Pass(ctx.save_fp16_));
     status = forming_model_optimizer.Run(graph_defT_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run InferShapeOptimizer graphPasses Failed.";

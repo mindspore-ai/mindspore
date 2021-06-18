@@ -97,12 +97,14 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::Flags &flag) {
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
-  if (CommonAnfAdjust(all_func_graphs) != RET_OK) {
+  if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  status = WeightFormatTransform(res_graph_);
-  if (status != RET_OK) {
+  if ((status = WeightFormatTransform(res_graph_)) != RET_OK) {
+    MS_LOG(ERROR) << "WeightFormatTransform failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   return res_graph_;

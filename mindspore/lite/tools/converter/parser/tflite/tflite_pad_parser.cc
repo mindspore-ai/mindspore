@@ -49,6 +49,20 @@ ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT>
       return nullptr;
     }
     prim->set_paddings(paddings);
+  } else if (tflite_op_type == tflite::BuiltinOperator_PADV2) {
+    prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
+    if (tflite_op->inputs.size() < 3) {
+      MS_LOG(ERROR) << "tflite padv2 input size less than 3, which is " << tflite_op->inputs.size();
+      return nullptr;
+    }
+
+    std::vector<float> constant_value;
+    auto ret = GetTfliteData(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, constant_value);
+    if (ret != RET_OK || constant_value.size() != 1) {
+      MS_LOG(ERROR) << "get Pad -> constant_value failed";
+      return nullptr;
+    }
+    prim->set_constant_value(constant_value.at(0));
   } else if (tflite_op_type == tflite::BuiltinOperator_MIRROR_PAD) {
     const auto &tflite_attr = tflite_op->builtin_options.AsMirrorPadOptions();
     if (tflite_attr == nullptr) {
@@ -75,6 +89,7 @@ ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 TfliteNodeRegister g_tflitePadParser(tflite::BuiltinOperator_PAD, new TflitePadParser());
+TfliteNodeRegister g_tflitePadV2Parser(tflite::BuiltinOperator_PADV2, new TflitePadParser());
 TfliteNodeRegister g_tfliteMirorPadParser(tflite::BuiltinOperator_MIRROR_PAD, new TflitePadParser());
 }  // namespace lite
 }  // namespace mindspore

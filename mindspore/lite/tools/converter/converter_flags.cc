@@ -270,6 +270,15 @@ int Flags::Init(int argc, const char **argv) {
     }
   }
 
+  if (save_fp16_str_ == "on") {
+    save_fp16_ = true;
+  } else if (save_fp16_str_ == "off") {
+    save_fp16_ = false;
+  } else {
+    std::cerr << "Init save_fp16 failed.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
   ret = InitInputOutputDataType();
   if (ret != RET_OK) {
     std::cerr << "Init input output datatype failed.";

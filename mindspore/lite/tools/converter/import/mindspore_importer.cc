@@ -187,17 +187,20 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   }
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return nullptr;
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
-  if (Mindir2AnfAdjust(func_graph, flag) != RET_OK) {
+  STATUS status;
+  if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto status = WeightFormatTransform(func_graph);
-  if (status != RET_OK) {
+  if ((status = WeightFormatTransform(func_graph)) != RET_OK) {
     MS_LOG(ERROR) << "WeightFormatTransform failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   return func_graph;
