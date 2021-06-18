@@ -42,19 +42,17 @@ def compose(transforms, *args):
     Returns:
         img (numpy.ndarray), An augmented image in NumPy ndarray.
     """
-    if all_numpy(args):
-        for transform in transforms:
-            try:
-                args = transform(*args)
-            except Exception:
-                result = ExceptionHandler(where="in map(or batch) worker and execute python function")
-                result.reraise()
-            args = (args,) if not isinstance(args, tuple) else args
+    for transform in transforms:
+        try:
+            args = transform(*args)
+        except Exception:
+            result = ExceptionHandler(where="in map(or batch) worker and execute Python function")
+            result.reraise()
+        args = (args,) if not isinstance(args, tuple) else args
 
-        if all_numpy(args):
-            return args
-        raise TypeError('args should be NumPy ndarray. Got {}. Append ToTensor() to transforms.'.format(type(args)))
-    raise TypeError('args should be NumPy ndarray. Got {}.'.format(type(args)))
+    if all_numpy(args):
+        return args
+    raise TypeError('args should be NumPy ndarray. Got {}. Append ToTensor() to transforms.'.format(type(args)))
 
 
 def one_hot_encoding(label, num_classes, epsilon):
