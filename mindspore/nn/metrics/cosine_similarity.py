@@ -35,8 +35,11 @@ class CosineSimilarity(Metric):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import numpy as np
+        >>> from mindspore import nn
+        >>>
         >>> test_data = np.array([[1, 3, 4, 7], [2, 4, 2, 5], [3, 1, 5, 8]])
-        >>> metric = CosineSimilarity()
+        >>> metric = nn.CosineSimilarity()
         >>> metric.clear()
         >>> metric.update(test_data)
         >>> square_matrix = metric.eval()

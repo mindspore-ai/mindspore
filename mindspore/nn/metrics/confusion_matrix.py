@@ -43,6 +43,9 @@ class ConfusionMatrix(Metric):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn, Tensor
+        >>>
         >>> x = Tensor(np.array([1, 0, 1, 0]))
         >>> y = Tensor(np.array([1, 0, 0, 1]))
         >>> metric = nn.ConfusionMatrix(num_classes=2, normalize='no_norm', threshold=0.5)

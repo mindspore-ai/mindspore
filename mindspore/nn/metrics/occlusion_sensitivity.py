@@ -50,6 +50,9 @@ class OcclusionSensitivity(Metric):
         ``Ascend`` ``GPU``
 
     Example:
+        >>> import numpy as np
+        >>> from mindspore import nn, Tensor
+        >>>
         >>> class DenseNet(nn.Cell):
         ...     def __init__(self):
         ...         super(DenseNet, self).__init__()
@@ -63,7 +66,7 @@ class OcclusionSensitivity(Metric):
         >>> model = DenseNet()
         >>> test_data = np.array([[0.1, 0.2, 0.3, 0.4]]).astype(np.float32)
         >>> label = np.array(1).astype(np.int32)
-        >>> metric = OcclusionSensitivity()
+        >>> metric = nn.OcclusionSensitivity()
         >>> metric.clear()
         >>> metric.update(model, test_data, label)
         >>> score = metric.eval()

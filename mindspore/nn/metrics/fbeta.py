@@ -33,6 +33,9 @@ class Fbeta(Metric):
         beta (Union[float, int]): The weight of precision.
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn, Tensor
+        >>>
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.Fbeta(1)
@@ -129,6 +132,9 @@ class F1(Fbeta):
         F_1=\frac{2\cdot true\_positive}{2\cdot true\_positive + false\_negative + false\_positive}
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn, Tensor
+        >>>
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.F1()

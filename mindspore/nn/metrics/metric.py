@@ -46,7 +46,7 @@ def rearrange_inputs(func):
         >>> rearrange_inputs_example = RearrangeInputsExample().set_indexes([1, 0])
         >>> outs = rearrange_inputs_example.update(5, 9)
         >>> print(outs)
-        >>> (9, 5)
+        (9, 5)
 
     Args:
         func (Callable): A candidate function to be wrapped whose input will be rearranged.
@@ -160,13 +160,13 @@ class Metric(metaclass=ABCMeta):
             :class:`Metric`, its original Class instance.
 
         Examples:
-            >>> from mindspore import Tensor
-            >>> from mindspore.nn import Accuracy
+            >>> import numpy as np
+            >>> from mindspore import nn, Tensor
             >>>
             >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
             >>> y = Tensor(np.array([1, 0, 1]))
             >>> y2 = Tensor(np.array([0, 0, 1]))
-            >>> metric = Accuracy('classification').set_indexes([0, 2])
+            >>> metric = nn.Accuracy('classification').set_indexes([0, 2])
             >>> metric.clear()
             >>> metric.update(x, y, y2)
             >>> accuracy = metric.eval()

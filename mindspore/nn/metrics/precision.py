@@ -41,6 +41,9 @@ class Precision(EvaluationBase):
                          multilabel. Default: 'classification'.
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn, Tensor
+        >>>
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.Precision('classification')
