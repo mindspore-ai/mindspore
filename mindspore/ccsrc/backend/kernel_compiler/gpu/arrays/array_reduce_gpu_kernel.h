@@ -27,9 +27,10 @@
 namespace mindspore {
 namespace kernel {
 const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
-  {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX}, {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
-  {"ReduceSum", CUDNN_REDUCE_TENSOR_ADD}, {"ReduceMin", CUDNN_REDUCE_TENSOR_MIN},
-  {"ReduceAny", CUDNN_REDUCE_TENSOR_MAX}, {"ReduceAll", CUDNN_REDUCE_TENSOR_MUL},
+  {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX},  {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
+  {"ReduceSum", CUDNN_REDUCE_TENSOR_ADD},  {"ReduceMin", CUDNN_REDUCE_TENSOR_MIN},
+  {"ReduceAny", CUDNN_REDUCE_TENSOR_MAX},  {"ReduceAll", CUDNN_REDUCE_TENSOR_MUL},
+  {"ReduceProd", CUDNN_REDUCE_TENSOR_MUL},
 };
 template <typename T>
 class ArrayReduceGpuKernel : public GpuKernel {
