@@ -77,7 +77,7 @@ def core(fn=None, **flags):
                       other flag. Default: None.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = Net()
@@ -271,9 +271,9 @@ class GradOperation(GradOperation_):
         >>> print(output)
         (Tensor(shape=[2, 3], dtype=Float32, value=
         [[ 2.21099997e+00,  5.09999990e-01,  1.49000001e+00],
-         [ 5.58799982e+00,  2.68000007e+00,  4.07000017e+00]]), Tensor(shape=[3, 3], dtype=Float32, value=
+         [ 5.58800030e+00,  2.68000007e+00,  4.07000017e+00]]), Tensor(shape=[3, 3], dtype=Float32, value=
         [[ 1.51999998e+00,  2.81999993e+00,  2.14000010e+00],
-         [ 1.09999990e+00,  2.04999971e+00,  1.54999995e+00],
+         [ 1.09999990e+00,  2.04999995e+00,  1.54999995e+00],
          [ 9.00000036e-01,  1.54999995e+00,  1.25000000e+00]]))
         >>>
         >>> class GradNetWithWrtParams(nn.Cell):
