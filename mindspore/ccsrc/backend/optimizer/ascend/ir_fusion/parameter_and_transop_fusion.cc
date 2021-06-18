@@ -28,7 +28,7 @@ namespace {
 const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool first_flag,
                                 std::vector<CNodePtr> *trans_road) {
   if (node == nullptr) {
-    MS_LOG(ERROR) << "nullptr";
+    MS_LOG(ERROR) << "node is nullptr";
     return nullptr;
   }
   if (node->isa<CNode>()) {
@@ -105,19 +105,19 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
       bool first_flag = true;
       auto final_node = ParamTransRoad(func_graph, AnfAlgo::GetInputNode(cnode, input_index), first_flag, &trans_road);
       if (final_node != nullptr && trans_road.size() == kTransRoadSize &&
-          AnfAlgo::GetCNodeName(trans_road[0]) == kTransDataOpName &&
-          AnfAlgo::GetCNodeName(trans_road[1]) == prim::kPrimCast->name() &&
-          AnfAlgo::GetCNodeName(trans_road[2]) == kTransDataOpName) {
-        auto cur_transop = trans_road[0];
+          AnfAlgo::GetCNodeName(trans_road[kIndex0]) == kTransDataOpName &&
+          AnfAlgo::GetCNodeName(trans_road[kIndex1]) == prim::kPrimCast->name() &&
+          AnfAlgo::GetCNodeName(trans_road[kIndex2]) == kTransDataOpName) {
+        auto cur_transop = trans_road[kIndex0];
         auto format = AnfAlgo::GetOutputFormat(cur_transop, 0);
         auto dtype = AnfAlgo::GetOutputDeviceDataType(cur_transop, 0);
         auto param_format = AnfAlgo::GetOutputFormat(final_node, 0);
         auto param_dtype = AnfAlgo::GetOutputDeviceDataType(final_node, 0);
 
-        auto cast = trans_road[1];
+        auto cast = trans_road[kIndex1];
         if (param_format == format && param_dtype != dtype) {
           AnfAlgo::SetSelectKernelBuildInfo(GetKernelBuildInfo(cast, format, param_dtype, dtype), cast.get());
-          manager->Replace(trans_road[2], final_node);
+          manager->Replace(trans_road[kIndex2], final_node);
           manager->Replace(cur_transop, cast);
         }
         changed = true;

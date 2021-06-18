@@ -80,15 +80,15 @@ void GetAttrs(const AnfNodePtr &node, std::vector<int64_t> *kernel_size, std::ve
 bool IsVectorImpl(const std::vector<int64_t> &fp_shape, const std::vector<int64_t> &k_size,
                   const std::vector<int64_t> &pad_list) {
   // NCDHW
-  auto fd = fp_shape[2];
-  auto fh = fp_shape[3];
-  auto fw = fp_shape[4];
-  auto kd = k_size[0];
-  auto kh = k_size[1];
-  auto kw = k_size[2];
-  bool flag1 = kd >= fd + pad_list[0] + pad_list[1];
-  bool flag2 = kh >= fh + pad_list[2] + pad_list[3];
-  bool flag3 = kw >= fw + pad_list[4] + pad_list[5];
+  auto fd = fp_shape[kDim2];
+  auto fh = fp_shape[kDim3];
+  auto fw = fp_shape[kDim4];
+  auto kd = k_size[kDim0];
+  auto kh = k_size[kDim1];
+  auto kw = k_size[kDim2];
+  bool flag1 = kd >= fd + pad_list[kDim0] + pad_list[kDim1];
+  bool flag2 = kh >= fh + pad_list[kDim2] + pad_list[kDim3];
+  bool flag3 = kw >= fw + pad_list[kDim4] + pad_list[kDim5];
   if (flag1 && flag2 && flag3) {
     return true;
   }
@@ -148,49 +148,50 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const std::vector
   std::vector<int64_t> assist_shape = grad_shape;  // NCDHW
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
   auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
-  auto pad_d = pad_list[0] + pad_list[1];
-  auto pad_h = pad_list[2] + pad_list[3];
-  auto pad_w = pad_list[4] + pad_list[5];
-  auto len_d = ori_input_shape[2] + pad_d;
-  auto len_h = ori_input_shape[3] + pad_h;
-  auto len_w = ori_input_shape[4] + pad_w;
-  for (int64_t nn = 0; nn < grad_shape[0]; nn++) {
-    for (int64_t cc = 0; cc < grad_shape[1]; cc++) {
+  auto pad_d = pad_list[kDim0] + pad_list[kDim1];
+  auto pad_h = pad_list[kDim2] + pad_list[kDim3];
+  auto pad_w = pad_list[kDim4] + pad_list[kDim5];
+  auto len_d = ori_input_shape[kDim2] + pad_d;
+  auto len_h = ori_input_shape[kDim3] + pad_h;
+  auto len_w = ori_input_shape[kDim4] + pad_w;
+  for (int64_t nn = 0; nn < grad_shape[kDim0]; nn++) {
+    for (int64_t cc = 0; cc < grad_shape[kDim1]; cc++) {
       int64_t start_d = 0;
-      for (int64_t di = 0; di < grad_shape[2]; di++) {
+      for (int64_t di = 0; di < grad_shape[kDim2]; di++) {
         int64_t start_h = 0;
-        for (int64_t hi = 0; hi < grad_shape[3]; hi++) {
+        for (int64_t hi = 0; hi < grad_shape[kDim3]; hi++) {
           int64_t start_w = 0;
-          for (int64_t wi = 0; wi < grad_shape[4]; wi++) {
+          for (int64_t wi = 0; wi < grad_shape[kDim4]; wi++) {
             int64_t vaild_d = 0;
             int64_t vaild_h = 0;
             int64_t vaild_w = 0;
             if (count_include_pad) {
-              vaild_d = start_d + kernel_size[0] <= len_d ? kernel_size[0] : len_d - start_d;
-              vaild_h = start_h + kernel_size[1] <= len_h ? kernel_size[1] : len_h - start_h;
-              vaild_w = start_w + kernel_size[2] <= len_w ? kernel_size[2] : len_w - start_w;
+              vaild_d = start_d + kernel_size[kDim0] <= len_d ? kernel_size[kDim0] : len_d - start_d;
+              vaild_h = start_h + kernel_size[kDim1] <= len_h ? kernel_size[kDim1] : len_h - start_h;
+              vaild_w = start_w + kernel_size[kDim2] <= len_w ? kernel_size[kDim2] : len_w - start_w;
             } else {
-              vaild_d =
-                std::min(start_d + kernel_size[0], pad_list[0] + ori_input_shape[2]) - std::max(pad_list[0], start_d);
-              vaild_h =
-                std::min(start_h + kernel_size[1], pad_list[2] + ori_input_shape[3]) - std::max(pad_list[2], start_h);
-              vaild_w =
-                std::min(start_w + kernel_size[2], pad_list[4] + ori_input_shape[4]) - std::max(pad_list[4], start_w);
+              vaild_d = std::min(start_d + kernel_size[kDim0], pad_list[kDim0] + ori_input_shape[kDim2]) -
+                        std::max(pad_list[kDim0], start_d);
+              vaild_h = std::min(start_h + kernel_size[kDim1], pad_list[kDim2] + ori_input_shape[kDim3]) -
+                        std::max(pad_list[kDim2], start_h);
+              vaild_w = std::min(start_w + kernel_size[kDim2], pad_list[kDim4] + ori_input_shape[kDim4]) -
+                        std::max(pad_list[kDim4], start_w);
             }
             auto vaild_data = vaild_d * vaild_h * vaild_w;
             float val = 1.0 / vaild_data;
             *tensor_data = float16(val);
             ++tensor_data;
-            start_w += strides[2];
+            start_w += strides[kDim2];
           }
-          start_h += strides[1];
+          start_h += strides[kDim1];
         }
-        start_d += strides[0];
+        start_d += strides[kDim0];
       }
     }
   }
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto value_node = kernel_graph->NewValueNode(x_abstract, tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
   AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {ori_shape}, value_node.get());
@@ -232,10 +233,10 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
   (void)new_inputs.insert(new_inputs.end(), avg_pool_3d_grad_node->inputs().begin() + 1,
                           avg_pool_3d_grad_node->inputs().end());
   // assist node 1
-  auto kd = kernel_size[0];
-  auto kh = kernel_size[1];
-  auto kw = kernel_size[2];
-  auto fc = origin_input_shape[1];
+  auto kd = kernel_size[kDim0];
+  auto kh = kernel_size[kDim1];
+  auto kw = kernel_size[kDim2];
+  auto fc = origin_input_shape[kDim1];
   auto filter_node = ConstructFilter(func_graph, pad_list, fc, kd, kh, kw, divisor_override, ceil_mode);
   new_inputs.push_back(filter_node);
   MS_EXCEPTION_IF_NULL(filter_node);
@@ -256,8 +257,9 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
   AnfAlgo::CopyNodeAttrs(avg_pool_3d_grad_node, new_3d_grad);
   const int64_t dim_one = SizeToLong(1);
   AnfAlgo::SetNodeAttr("kernel_size", MakeValue(std::vector<int64_t>{dim_one, dim_one, kd, kh, kw}), new_3d_grad);
-  AnfAlgo::SetNodeAttr("strides", MakeValue(std::vector<int64_t>{dim_one, dim_one, strides[0], strides[1], strides[2]}),
-                       new_3d_grad);
+  AnfAlgo::SetNodeAttr(
+    "strides", MakeValue(std::vector<int64_t>{dim_one, dim_one, strides[kDim0], strides[kDim1], strides[kDim2]}),
+    new_3d_grad);
   return new_3d_grad;
 }
 }  // namespace opt

@@ -30,6 +30,8 @@ namespace {
 constexpr size_t kAvgPool3DInputNum = 1;
 constexpr size_t k5DInferDims = 5;
 constexpr size_t kC0 = 16;
+constexpr size_t kDHWDimNum = 3;
+constexpr size_t kNCDHWDimNum = 5;
 
 int64_t GetInterSection(int64_t start_1, int64_t end_1, int64_t start_2, int64_t end_2) {
   if (end_1 <= start_2) {
@@ -52,18 +54,18 @@ bool GetKernelSize(const AnfNodePtr &node, int64_t *kd, int64_t *kh, int64_t *kw
   if (AnfAlgo::HasNodeAttr("kernel_size", node->cast<CNodePtr>())) {
     auto kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
     if (kernel_size.size() == 1) {
-      *kd = kernel_size[0];
-      *kh = kernel_size[0];
-      *kw = kernel_size[0];
-    } else if (kernel_size.size() == 3) {
-      *kd = kernel_size[0];
-      *kh = kernel_size[1];
-      *kw = kernel_size[2];
-    } else if (kernel_size.size() == 5) {
+      *kd = kernel_size[kDim0];
+      *kh = kernel_size[kDim0];
+      *kw = kernel_size[kDim0];
+    } else if (kernel_size.size() == kDHWDimNum) {
+      *kd = kernel_size[kDim0];
+      *kh = kernel_size[kDim1];
+      *kw = kernel_size[kDim2];
+    } else if (kernel_size.size() == kNCDHWDimNum) {
       // NCDHW
-      *kd = kernel_size[2];
-      *kh = kernel_size[3];
-      *kw = kernel_size[4];
+      *kd = kernel_size[kDim2];
+      *kh = kernel_size[kDim3];
+      *kw = kernel_size[kDim4];
     } else {
       MS_LOG(EXCEPTION) << "Unknown kernel size " << kernel_size.size();
     }
@@ -77,18 +79,18 @@ bool GetStrideSize(const AnfNodePtr &node, int64_t *sd, int64_t *sh, int64_t *sw
   if (AnfAlgo::HasNodeAttr("strides", node->cast<CNodePtr>())) {
     auto kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
     if (kernel_size.size() == 1) {
-      *sd = kernel_size[0];
-      *sh = kernel_size[0];
-      *sw = kernel_size[0];
-    } else if (kernel_size.size() == 3) {
-      *sd = kernel_size[0];
-      *sh = kernel_size[1];
-      *sw = kernel_size[2];
-    } else if (kernel_size.size() == 5) {
+      *sd = kernel_size[kDim0];
+      *sh = kernel_size[kDim0];
+      *sw = kernel_size[kDim0];
+    } else if (kernel_size.size() == kDHWDimNum) {
+      *sd = kernel_size[kDim0];
+      *sh = kernel_size[kDim1];
+      *sw = kernel_size[kDim2];
+    } else if (kernel_size.size() == kNCDHWDimNum) {
       // NCDHW
-      *sd = kernel_size[2];
-      *sh = kernel_size[3];
-      *sw = kernel_size[4];
+      *sd = kernel_size[kDim2];
+      *sh = kernel_size[kDim3];
+      *sw = kernel_size[kDim4];
     } else {
       MS_LOG(EXCEPTION) << "Unknown strides size " << kernel_size.size();
     }
@@ -132,7 +134,7 @@ bool IsZeroPads(const std::vector<int64_t> &pad_list) {
 AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int64_t> &pad_list, int64_t fc, int64_t kd,
                            int64_t kh, int64_t kw, bool ceil_mode, int64_t divisor_override) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  //  assist tensor 1
+  // assist tensor 1
   int64_t c1 = (fc + kC0 - 1) / kC0;
   std::vector<int64_t> assist_shape = {c1 * kd * kh * kw, 1, kC0, kC0};  // frac_z_3d
   auto infer_shape = {IntToSize(1), LongToSize(fc), LongToSize(kd), LongToSize(kh), LongToSize(kw)};
@@ -144,6 +146,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   }
   // create value node
   tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
+  MS_EXCEPTION_IF_NULL(assist_tensor);
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
   tensor::DeviceInfo device_info{kOpFormat_FRACTAL_Z_3D, tensor_type, kOpFormat_FRACTAL_Z_3D};
   assist_tensor->set_device_info(device_info);
@@ -177,9 +180,9 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
   auto infer_shape = {LongToSize(fn), LongToSize(fc), LongToSize(dd), LongToSize(dh), LongToSize(dw)};
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
   auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
-  auto pad_d = pad_list[0] + pad_list[1];
-  auto pad_h = pad_list[2] + pad_list[3];
-  auto pad_w = pad_list[4] + pad_list[5];
+  auto pad_d = pad_list[kDim0] + pad_list[kDim1];
+  auto pad_h = pad_list[kDim2] + pad_list[kDim3];
+  auto pad_w = pad_list[kDim4] + pad_list[kDim5];
   auto len_d = fd + pad_d;
   auto len_h = fh + pad_h;
   auto len_w = fw + pad_w;
@@ -194,9 +197,9 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
           int64_t start_w = 0;
           for (int64_t wi = 0; wi < dw; wi++) {
             auto v_kw = start_w + kw < len_w ? kw : len_w - start_w;
-            auto vaild_d = GetInterSection(start_d, start_d + kd, pad_list[0], pad_list[0] + fd);
-            auto vaild_h = GetInterSection(start_h, start_h + kh, pad_list[2], pad_list[2] + fh);
-            auto vaild_w = GetInterSection(start_w, start_w + kw, pad_list[4], pad_list[4] + fw);
+            auto vaild_d = GetInterSection(start_d, start_d + kd, pad_list[kDim0], pad_list[kDim0] + fd);
+            auto vaild_h = GetInterSection(start_h, start_h + kh, pad_list[kDim2], pad_list[kDim2] + fh);
+            auto vaild_w = GetInterSection(start_w, start_w + kw, pad_list[kDim4], pad_list[kDim4] + fw);
             auto vaild_data = vaild_d * vaild_h * vaild_w;
             auto vaild_kernel = v_kd * v_kh * v_kw;
             float val = count_include_pad ? 1.0 / vaild_kernel : 1.0 / vaild_data;
@@ -212,6 +215,7 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
   }
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto value_node = kernel_graph->NewValueNode(x_abstract, tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
   AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {infer_shape}, value_node.get());
@@ -240,14 +244,14 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   if (dims_in.size() < k5DInferDims || dims_out.size() < k5DInferDims) {
     MS_LOG(EXCEPTION) << "AvgPool3D's in_out infer shape dims can not be less " << k5DInferDims;
   }
-  auto fn = SizeToLong(dims_in[0]);
-  auto fc = SizeToLong(dims_in[1]);
-  auto fd = SizeToLong(dims_in[2]);
-  auto fh = SizeToLong(dims_in[3]);
-  auto fw = SizeToLong(dims_in[4]);
-  auto dout = SizeToLong(dims_out[2]);
-  auto dh = SizeToLong(dims_out[3]);
-  auto dw = SizeToLong(dims_out[4]);
+  auto fn = SizeToLong(dims_in[kDim0]);
+  auto fc = SizeToLong(dims_in[kDim1]);
+  auto fd = SizeToLong(dims_in[kDim2]);
+  auto fh = SizeToLong(dims_in[kDim3]);
+  auto fw = SizeToLong(dims_in[kDim4]);
+  auto dout = SizeToLong(dims_out[kDim2]);
+  auto dh = SizeToLong(dims_out[kDim3]);
+  auto dw = SizeToLong(dims_out[kDim4]);
   // kernel size
   int64_t kd;
   int64_t kh;

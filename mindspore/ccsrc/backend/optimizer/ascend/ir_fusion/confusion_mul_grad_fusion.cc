@@ -40,7 +40,7 @@ CNodePtr CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &reduce_sum,
   MS_EXCEPTION_IF_NULL(mul0);
 
   auto prim = std::make_shared<Primitive>(kConfusionMulGradOpName);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), mul0->input(1), mul0->input(2), input3};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), mul0->input(kIndex1), mul0->input(kIndex2), input3};
   auto fusion_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_scope(reduce_sum->scope());
@@ -66,7 +66,8 @@ AnfNodePtr GetMul0(const FuncGraphPtr &graph, const AnfNodePtr &input2, const An
   const AnfNodeIndexSet &outputs_set = manager->node_users()[input2];
   // input2 must be the 2rd input of mul0
   auto it = std::find_if(outputs_set.begin(), outputs_set.end(), [&mul1](const std::pair<AnfNodePtr, int> &node_index) {
-    return node_index.first != mul1 && node_index.second == 2;
+    constexpr int kMul0InputIndex2 = 2;
+    return node_index.first != mul1 && node_index.second == kMul0InputIndex2;
   });
   if (it != outputs_set.end() && AnfAlgo::GetCNodeName(it->first) == prim::kPrimMul->name()) {
     mul0 = it->first;
@@ -85,7 +86,7 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
   constexpr size_t kShape2Dim1 = 1024;
   constexpr size_t kShape2Dim2 = 768;
   if (addn == nullptr || AnfAlgo::GetCNodeName(addn) != prim::kPrimAddN->name()) {
-    MS_LOG(INFO) << "mul's second input is not addn";
+    MS_LOG(INFO) << "Mul's second input is not Addn, quit fusion";
     return true;
   }
   if (AnfAlgo::IsDynamicShape(addn)) {
@@ -93,7 +94,7 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
   }
   std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(addn, 0);
   if (shape.size() != kInferShapeIndex || !(shape[1] == kShape2Dim1 || shape[1] == kShape2Dim2)) {
-    MS_LOG(INFO) << "Addn's infer shape is not equal [x,1024] or [x,768]";
+    MS_LOG(INFO) << "Addn's infer shape is not equal to [x,1024] or [x,768], quit fusion";
     return true;
   }
   if (!mul0_anf->isa<CNode>() || !mul1_anf->isa<CNode>()) {

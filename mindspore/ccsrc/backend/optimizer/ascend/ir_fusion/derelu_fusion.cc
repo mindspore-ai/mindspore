@@ -30,9 +30,8 @@ const size_t kReluV2OutputNum = 2;
 
 CNodePtr GetRelu(const CNodePtr &relu_grad) {
   MS_EXCEPTION_IF_NULL(relu_grad);
-  constexpr size_t kReluIndex2 = 2;
   CheckCNodeInputSize(relu_grad, kReluGradInputTensorNum);
-  auto relu_anf = relu_grad->input(kReluIndex2);
+  auto relu_anf = relu_grad->input(kIndex2);
   MS_EXCEPTION_IF_NULL(relu_anf);
   return relu_anf->cast<CNodePtr>();
 }
@@ -43,7 +42,7 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   CheckCNodeInputSize(relu, kReluInputTensorNum);
   constexpr auto kMaskShapeSize = 4;
   auto prim = std::make_shared<Primitive>(kReluV2OpName);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(1)};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(kIndex1)};
   auto new_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(relu->scope());

@@ -61,10 +61,6 @@ AnfNodePtr LambNextMVRule::CreateLambNextMVNode(const FuncGraphPtr &func_graph,
                                                 const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto prim = std::make_shared<Primitive>(kLambNextMVOpName);
-  constexpr size_t kOutputsIndex1 = 1;
-  constexpr size_t kOutputsIndex2 = 2;
-  constexpr size_t kOutputsIndex3 = 3;
-
   std::vector<AnfNodePtr> lamb_next_mv_rule_inputs = {NewValueNode(prim)};
   lamb_next_mv_rule_inputs.push_back(utils::cast<AnfNodePtr>((*equiv)[input0_]));
   lamb_next_mv_rule_inputs.push_back(utils::cast<AnfNodePtr>((*equiv)[input1_]));
@@ -96,9 +92,9 @@ AnfNodePtr LambNextMVRule::CreateLambNextMVNode(const FuncGraphPtr &func_graph,
 
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  (void)manager->Replace(old_pattern_outputs[kOutputsIndex1], lamb_next_mv_rule_outputs[kOutputsIndex1]);
-  (void)manager->Replace(old_pattern_outputs[kOutputsIndex2], lamb_next_mv_rule_outputs[kOutputsIndex2]);
-  (void)manager->Replace(old_pattern_outputs[kOutputsIndex3], lamb_next_mv_rule_outputs[kOutputsIndex3]);
+  (void)manager->Replace(old_pattern_outputs[kIndex1], lamb_next_mv_rule_outputs[kIndex1]);
+  (void)manager->Replace(old_pattern_outputs[kIndex2], lamb_next_mv_rule_outputs[kIndex2]);
+  (void)manager->Replace(old_pattern_outputs[kIndex3], lamb_next_mv_rule_outputs[kIndex3]);
 
   return lamb_next_mv_rule_outputs[0];
 }

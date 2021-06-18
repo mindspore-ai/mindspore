@@ -26,31 +26,26 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr auto kFirstIndex1 = 1;
-constexpr auto kSecondIndex2 = 2;
-constexpr auto kThirdIndex3 = 3;
-
 std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr, AnfNodePtr> GetSharedNodes(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto add3 = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add3);
   CheckCNodeInputSize(add3, kAddInputTensorNum);
-  auto real_div2_anf = add3->input(kFirstIndex1);
+  auto real_div2_anf = add3->input(kIndex1);
   MS_EXCEPTION_IF_NULL(real_div2_anf);
   auto real_div2 = real_div2_anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(real_div2);
   CheckCNodeInputSize(real_div2, kRealDivInputTensorNum);
-  auto sqrt0_anf = real_div2->input(kSecondIndex2);
+  auto sqrt0_anf = real_div2->input(kIndex2);
   MS_EXCEPTION_IF_NULL(sqrt0_anf);
   auto sqrt0 = sqrt0_anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sqrt0);
   CheckCNodeInputSize(sqrt0, kSqrtInputTensorNum);
-  auto add2_anf = sqrt0->input(kFirstIndex1);
+  auto add2_anf = sqrt0->input(kIndex1);
   MS_EXCEPTION_IF_NULL(add2_anf);
   auto add2 = add2_anf->cast<CNodePtr>();
   CheckCNodeInputSize(add2, kAddInputTensorNum);
-  return std::make_tuple(add3->input(kSecondIndex2), real_div2->input(kFirstIndex1), add2->input(kFirstIndex1),
-                         add2->input(kSecondIndex2));
+  return std::make_tuple(add3->input(kIndex2), real_div2->input(kIndex1), add2->input(kIndex1), add2->input(kIndex2));
 }
 
 bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfNodePtr &real_div0,
@@ -62,7 +57,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
   if (AnfAlgo::GetCNodeName(add5) != prim::kPrimAdd->name() || AnfAlgo::GetInputTensorNum(add5) != kAddInputTensorNum) {
     return false;
   }
-  auto real_div4_anf = add5->input(kFirstIndex1);
+  auto real_div4_anf = add5->input(kIndex1);
   if (real_div4_anf == nullptr || !real_div4_anf->isa<CNode>()) {
     return false;
   }
@@ -71,7 +66,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
       AnfAlgo::GetInputTensorNum(real_div4) != kRealDivInputTensorNum) {
     return false;
   }
-  auto add4_anf = real_div4->input(kSecondIndex2);
+  auto add4_anf = real_div4->input(kIndex2);
   if (add4_anf == nullptr || !add4_anf->isa<CNode>()) {
     return false;
   }
@@ -79,7 +74,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
   if (AnfAlgo::GetCNodeName(add4) != prim::kPrimAdd->name() || AnfAlgo::GetInputTensorNum(add4) != kAddInputTensorNum) {
     return false;
   }
-  auto sqrt1_anf = add4->input(kFirstIndex1);
+  auto sqrt1_anf = add4->input(kIndex1);
   if (sqrt1_anf == nullptr || !sqrt1_anf->isa<CNode>()) {
     return false;
   }
@@ -87,8 +82,9 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
   if (AnfAlgo::GetCNodeName(sqrt1) != kSqrtOpName || AnfAlgo::GetInputTensorNum(sqrt1) != kSqrtInputTensorNum) {
     return false;
   }
-  return add5->input(kSecondIndex2) == mul4 && real_div4->input(kFirstIndex1) == real_div0 &&
-         sqrt1->input(kFirstIndex1) == real_div1 && *add4->input(kSecondIndex2) == *add2_y;
+  MS_EXCEPTION_IF_NULL(add2_y);
+  return add5->input(kIndex2) == mul4 && real_div4->input(kIndex1) == real_div0 && sqrt1->input(kIndex1) == real_div1 &&
+         *add4->input(kIndex2) == *add2_y;
 }
 
 std::tuple<AnfNodePtr, AnfNodePtr> GetAdd0Add1Nodes(const AnfNodePtr &real_div0_anf, const AnfNodePtr &real_div1_anf) {
@@ -159,7 +155,7 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(mul4) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input"
+    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input."
                       << " trace: " << trace::DumpSourceLines(node);
   }
   AnfNodeIndexSet mul4_output_node_index_set = manager->node_users()[mul4];
@@ -193,10 +189,10 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
     MS_LOG(EXCEPTION) << "create multiple outputs for fusion node fail!"
                       << " trace: " << trace::DumpSourceLines(node);
   }
-  (void)manager->Replace(add0, fusion_node_outputs[kFirstIndex1]);
-  (void)manager->Replace(add1, fusion_node_outputs[kSecondIndex2]);
-  (void)manager->Replace(add5, fusion_node_outputs[kThirdIndex3]);
-  return fusion_node_outputs[0];
+  (void)manager->Replace(add0, fusion_node_outputs[kIndex1]);
+  (void)manager->Replace(add1, fusion_node_outputs[kIndex2]);
+  (void)manager->Replace(add5, fusion_node_outputs[kIndex3]);
+  return fusion_node_outputs[kIndex0];
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -32,7 +32,7 @@ CNodePtr CreateFusionNode(const FuncGraphPtr &graph, const CNodePtr &mul, const 
   auto prim = std::make_shared<Primitive>(kFusedMulAddNOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
   inputs.push_back(mul->input(kMulInputTensorNum + 1 - lossscale_input_index));
-  inputs.push_back(addn->input(2));
+  inputs.push_back(addn->input(kIndex2));
   // scalar input should be 3rd input
   inputs.push_back(mul->input(lossscale_input_index));
   auto fusion_node = graph->NewCNode(inputs);
@@ -63,7 +63,7 @@ const AnfNodePtr MulAddNFusion::Process(const FuncGraphPtr &graph, const AnfNode
   if (addn == nullptr) {
     return nullptr;
   }
-  auto mul_anf = addn->input(1);
+  auto mul_anf = addn->input(kIndex1);
   if (mul_anf == nullptr) {
     return nullptr;
   }
