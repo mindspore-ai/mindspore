@@ -45,8 +45,8 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       std::unordered_set<CNodePtr> real_outputs;
       GetRealOutputNodes(output, &real_outputs);
       for (const auto &real_output : real_outputs) {
-        auto prim = GetValueNode<PrimitivePtr>(real_output->input(0));
-        prim->set_attr(kAttrRecompute, MakeValue(false));
+        // Set the attr of cnode in case of shared primitives.
+        real_output->AddAttr(kAttrRecompute, MakeValue(false));
       }
     }
     fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
