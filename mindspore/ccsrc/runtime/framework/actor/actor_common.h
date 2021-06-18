@@ -49,6 +49,11 @@ constexpr int kFailure = 1;
     return;                                   \
   }
 
+enum class GraphExecutionStrategy {
+  kPipeline,  // The actor running is triggered only by data.
+  kStep       // The actor running need be triggered by control in addition.
+};
+
 // Get the max available thread number of system.
 int64_t GetMaxThreadNum();
 
@@ -57,7 +62,8 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node);
 // Host parameters are parameters of root funcgraph, in control flow, only the parameters of the root funcgraph are
 // in the host data source.
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr,
-                        const TensorPtr &tensor = nullptr, const std::vector<AnfNodePtr> &host_parameters = {});
+                        const TensorPtr &tensor = nullptr, const std::vector<AnfNodePtr> &host_parameters = {},
+                        GraphExecutionStrategy strategy = GraphExecutionStrategy::kStep);
 bool IsKernelActor(const AnfNodePtr &node);
 bool IsSwitchActor(const AnfNodePtr &node);
 // The skip kernel doesn't run, it exists in the inplace optimizer.

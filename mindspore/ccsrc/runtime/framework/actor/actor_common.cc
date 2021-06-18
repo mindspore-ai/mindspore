@@ -47,12 +47,13 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
 bool IsSwitchActor(const AnfNodePtr &node) { return AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch); }
 
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor,
-                        const std::vector<AnfNodePtr> &host_parameters) {
+                        const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
     // There is device address in tensor, indicating the input tensor is certain kernel's output,
     // so it's unnecessary to put the input node to host queue data source actor.
-    if (tensor != nullptr && std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
+    if (strategy == GraphExecutionStrategy::kStep && tensor != nullptr &&
+        std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
       return false;
     }
 
