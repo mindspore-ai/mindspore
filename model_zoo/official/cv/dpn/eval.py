@@ -62,8 +62,7 @@ def dpn_evaluate():
         loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.num_classes)
 
         # create model
-    model = Model(net, amp_level="O2", keep_batchnorm_fp32=False, loss_fn=loss,
-                  metrics={'top_1_accuracy', 'top_5_accuracy'})
+    model = Model(net, keep_batchnorm_fp32=False, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})
     # evaluate
     output = model.eval(eval_dataset)
     print(f'Evaluation result: {output}.')
