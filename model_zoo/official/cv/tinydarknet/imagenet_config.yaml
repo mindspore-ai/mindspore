@@ -30,8 +30,8 @@ train_data_dir: './dataset/imagenet_original/train/'
 val_data_dir: './dataset/imagenet_original/val/'
 keep_checkpoint_max: 1
 checkpoint_path: './scripts/train_parallel4/ckpt_4/train_tinydarknet_imagenet-300_1251.ckpt'
-onnx_filename: 'tinydarknet.onnx'
-air_filename: 'tinydarknet.air'
+file_name: 'tinydarknet'
+file_format: 'MINDIR'
 # optimizer and lr related
 lr_scheduler: 'exponential'
 lr_epochs: [70, 140, 210, 280]
@@ -44,6 +44,9 @@ is_dynamic_loss_scale: False
 loss_scale: 1024
 label_smooth_factor: 0.1
 use_label_smooth: True
+#310infer postprocess
+result_path: ''
+label_file: ''
 
 ---
 
@@ -55,3 +58,4 @@ data_path: "The location of the input data."
 output_path: "The location of the output file."
 device_target: "Running platform, choose from Ascend, GPU or CPU, and default is Ascend."
 enable_profiling: 'Whether enable profiling while training, default: False'
+file_format: '["MINDIR", "AIR"]'
