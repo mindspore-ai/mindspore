@@ -207,7 +207,9 @@ def load_yolov4_params(args, network):
         if args.pretrained_checkpoint:
             param_dict = load_checkpoint(args.pretrained_checkpoint)
             for key in list(param_dict.keys()):
-                if key in args.checkpoint_filter_list:
+                for filter_key in args.checkpoint_filter_list:
+                    if filter_key not in key:
+                        continue
                     args.logger.info('filter {}'.format(key))
                     del param_dict[key]
             load_param_into_net(network, param_dict)

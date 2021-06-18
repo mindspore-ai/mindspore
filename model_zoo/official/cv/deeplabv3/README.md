@@ -94,6 +94,16 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
+- Prepare backbone
+
+Download resnet101 for here(https://download.pytorch.org/models/resnet101-5d3b4d8f.pth).
+
+Use convert_resnet101.py to convert as backbone.
+
+```shell
+python convert_resnet101.py
+```
+
 - Running on Ascend
 
 Based on original DeepLabV3 paper, we reproduce two training experiments on vocaug (also as trainaug) dataset and evaluate on voc val dataset.
@@ -416,6 +426,7 @@ run_standalone_train.sh
        ├── get_multicards_json.py                 # get rank table file
     └── utils
        └── learning_rates.py                      # generate learning rate
+  ├── convert_resnet101.py                        # convert resnet101 as backbone
   ├── eval.py                                     # eval net
   ├── train.py                                    # train net
   └── requirements.txt                            # requirements file
