@@ -387,8 +387,9 @@ class TbeProcess:
         if self.__running_tune_tasks:
             query_count = 0
             total_query_count = len(self.__running_tune_tasks) * 2 * 60
+            from .tuner import get_finish_tasks
             while query_count < total_query_count:
-                ret = self.__tuner.get_finish_tasks()
+                ret = get_finish_tasks()
                 if not ret:
                     query_count = query_count + 1
                     time.sleep(30)
