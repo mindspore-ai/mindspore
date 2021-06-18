@@ -20,30 +20,41 @@
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"
 
-#define BITS 5
-#define BITS1 15
-#define TAB_SZ (1 << BITS)
-#define TAB_SZ2 (TAB_SZ * TAB_SZ)
-#define FLOATTOSHORT(value) (IntCastShort(round(value)))
-#define REMAP_SCALE (1 << 15)
-#define INTTOUCHAR(v) ((uint8_t)((unsigned)v <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0))
-#define SrcValue(y, x) (reinterpret_cast<double *>(src + y * 3))[x]
-#define DstValue(y, x) (reinterpret_cast<double *>(dst + y * 3))[x]
+constexpr int kBits = 5;
+constexpr int kBits1 = 15;
+constexpr int kTabSz = 1 << kBits;
+constexpr int kTabSz2 = kTabSz * kTabSz;
+constexpr int kRemapScale = 1 << 15;
 
 namespace mindspore {
 namespace dataset {
-static int16_t BWBlock_i[TAB_SZ2][2][2];
+static int16_t BWBlock_i[kTabSz2][2][2];
+
+static double SrcValue(const double *src, const int &y, const int &x) { return (src + y * 3)[x]; }
+
+static double &DstValue(double *dst, const int &y, const int &x) { return (dst + y * 3)[x]; }
 
 static double GetDet3(double *src) {
-  double a1 = SrcValue(0, 0) * (SrcValue(1, 1) * SrcValue(2, 2) - SrcValue(1, 2) * SrcValue(2, 1));
-  double a2 = SrcValue(0, 1) * (SrcValue(1, 0) * SrcValue(2, 2) - SrcValue(1, 2) * SrcValue(2, 0));
-  double a3 = SrcValue(0, 2) * (SrcValue(1, 0) * SrcValue(2, 1) - SrcValue(1, 1) * SrcValue(2, 0));
+  double a1 =
+    SrcValue(src, 0, 0) * (SrcValue(src, 1, 1) * SrcValue(src, 2, 2) - SrcValue(src, 1, 2) * SrcValue(src, 2, 1));
+  double a2 =
+    SrcValue(src, 0, 1) * (SrcValue(src, 1, 0) * SrcValue(src, 2, 2) - SrcValue(src, 1, 2) * SrcValue(src, 2, 0));
+  double a3 =
+    SrcValue(src, 0, 2) * (SrcValue(src, 1, 0) * SrcValue(src, 2, 1) - SrcValue(src, 1, 1) * SrcValue(src, 2, 0));
   return a1 - a2 + a3;
 }
 
-static int16_t IntCastShort(int value) {
-  return (int16_t)((unsigned)(value - SHRT_MIN) <= (unsigned)USHRT_MAX ? value : value > 0 ? SHRT_MAX : SHRT_MIN);
+static uint8_t UIntToUChar(const uint32_t &v) {
+  return static_cast<uint8_t>(v <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0);
 }
+
+static int16_t IntCastShort(const int &value) {
+  return static_cast<int16_t>(static_cast<unsigned>(value - SHRT_MIN) <= static_cast<unsigned>(USHRT_MAX)
+                                ? value
+                                : value > 0 ? SHRT_MAX : SHRT_MIN);
+}
+
+static int16_t FloatToShort(float value) { return IntCastShort(round(value)); }
 
 static void InitWBlockInter(float *wBlock, int wBlockSz) {
   float scale = 1.f / wBlockSz;
@@ -56,27 +67,27 @@ static void InitWBlockInter(float *wBlock, int wBlockSz) {
 
 static const void *InitWBlock() {
   static bool initWB = false;
-  int16_t *iWBlock = 0;
+  int16_t *iWBlock = nullptr;
   int ks = 2;
 
   iWBlock = BWBlock_i[0][0];
 
   if (!initWB) {
-    float *_wblock = new float[8 * TAB_SZ];
+    float *_wblock = new float[8 * kTabSz];
     int i, j, h1, h2;
-    InitWBlockInter(_wblock, TAB_SZ);
-    for (i = 0; i < TAB_SZ; i++) {
-      for (j = 0; j < TAB_SZ; j++, iWBlock += ks * ks) {
+    InitWBlockInter(_wblock, kTabSz);
+    for (i = 0; i < kTabSz; i++) {
+      for (j = 0; j < kTabSz; j++, iWBlock += ks * ks) {
         int sum_i = 0;
         for (h1 = 0; h1 < ks; h1++) {
           float vy = _wblock[i * ks + h1];
           for (h2 = 0; h2 < ks; h2++) {
             float v = vy * _wblock[j * ks + h2];
-            sum_i += iWBlock[h1 * ks + h2] = FLOATTOSHORT(v * REMAP_SCALE);
+            sum_i += iWBlock[h1 * ks + h2] = FloatToShort(v * kRemapScale);
           }
         }
-        if (sum_i != REMAP_SCALE) {
-          int df = sum_i - REMAP_SCALE;
+        if (sum_i != kRemapScale) {
+          int df = sum_i - kRemapScale;
           int ks2 = 1;
           int tk1 = ks2;
           int tk2 = ks2;
@@ -99,14 +110,14 @@ static const void *InitWBlock() {
         }
       }
     }
-    iWBlock -= TAB_SZ2 * ks * ks;
+    iWBlock -= kTabSz2 * ks * ks;
     delete[] _wblock;
     initWB = true;
   }
   return (const void *)iWBlock;
 }
 
-static uint8_t CastToFixed(int v) { return INTTOUCHAR(((v + (1 << (BITS1 - 1))) >> BITS1)); }
+static uint8_t CastToFixed(int v) { return UIntToUChar(((v + (1 << (kBits1 - 1))) >> kBits1)); }
 
 static int BorderPolate(int value, int length, PaddBorderType borderType) {
   if ((unsigned)value < (unsigned)length) {
@@ -345,7 +356,7 @@ static void Remap(const LiteMat &src, LiteMat &dst, LiteMat &map1, const LiteMat
         const uint16_t *sa_ptr = map2.ptr<uint16_t>(y + y1) + x;
         x1 = 0;
         for (; x1 < bwidth; x1++) {
-          t_a_ptr[x1] = (uint16_t)(sa_ptr[x1] & (TAB_SZ2 - 1));
+          t_a_ptr[x1] = (uint16_t)(sa_ptr[x1] & (kTabSz2 - 1));
         }
       }
       RemapBilinear(src, lite_part, xy_ptr, a_ptr, wblock, borderType, borderValue);
@@ -401,7 +412,7 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
   const int B_SIZE = 64;
   int16_t WH[B_SIZE * B_SIZE * 2];
   int16_t A_Ptr[B_SIZE * B_SIZE];
-  int r_delta = SCALE / TAB_SZ / 2;
+  int r_delta = SCALE / kTabSz / 2;
   int x, y, x1, y1;
   for (x = 0; x < dst.width_; x++) {
     a[x] = round(IM[0] * x * SCALE);
@@ -426,11 +437,11 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
         int16_t *t_a = A_Ptr + y1 * t_bw;
         x1 = 0;
         for (; x1 < t_bw; x1++) {
-          int X = (X0 + a[x + x1]) >> (10 - BITS);
-          int Y = (Y0 + b[x + x1]) >> (10 - BITS);
-          t_xy[x1 * 2] = IntCastShort(X >> BITS);
-          t_xy[x1 * 2 + 1] = IntCastShort(Y >> BITS);
-          t_a[x1] = (int16_t)((Y & (TAB_SZ - 1)) * TAB_SZ + (X & (TAB_SZ - 1)));
+          int X = (X0 + a[x + x1]) >> (10 - kBits);
+          int Y = (Y0 + b[x + x1]) >> (10 - kBits);
+          t_xy[x1 * 2] = IntCastShort(X >> kBits);
+          t_xy[x1 * 2 + 1] = IntCastShort(Y >> kBits);
+          t_a[x1] = (int16_t)((Y & (kTabSz - 1)) * kTabSz + (X & (kTabSz - 1)));
         }
       }
 
@@ -449,27 +460,27 @@ static void PerspectiveInvert(double *src, double *dst) {
     value = 1. / value;
     double v[9];
 
-    v[0] = (SrcValue(1, 1) * SrcValue(2, 2) - SrcValue(1, 2) * SrcValue(2, 1)) * value;
-    v[1] = (SrcValue(0, 2) * SrcValue(2, 1) - SrcValue(0, 1) * SrcValue(2, 2)) * value;
-    v[2] = (SrcValue(0, 1) * SrcValue(1, 2) - SrcValue(0, 2) * SrcValue(1, 1)) * value;
+    v[0] = (SrcValue(src, 1, 1) * SrcValue(src, 2, 2) - SrcValue(src, 1, 2) * SrcValue(src, 2, 1)) * value;
+    v[1] = (SrcValue(src, 0, 2) * SrcValue(src, 2, 1) - SrcValue(src, 0, 1) * SrcValue(src, 2, 2)) * value;
+    v[2] = (SrcValue(src, 0, 1) * SrcValue(src, 1, 2) - SrcValue(src, 0, 2) * SrcValue(src, 1, 1)) * value;
 
-    v[3] = (SrcValue(1, 2) * SrcValue(2, 0) - SrcValue(1, 0) * SrcValue(2, 2)) * value;
-    v[4] = (SrcValue(0, 0) * SrcValue(2, 2) - SrcValue(0, 2) * SrcValue(2, 0)) * value;
-    v[5] = (SrcValue(0, 2) * SrcValue(1, 0) - SrcValue(0, 0) * SrcValue(1, 2)) * value;
+    v[3] = (SrcValue(src, 1, 2) * SrcValue(src, 2, 0) - SrcValue(src, 1, 0) * SrcValue(src, 2, 2)) * value;
+    v[4] = (SrcValue(src, 0, 0) * SrcValue(src, 2, 2) - SrcValue(src, 0, 2) * SrcValue(src, 2, 0)) * value;
+    v[5] = (SrcValue(src, 0, 2) * SrcValue(src, 1, 0) - SrcValue(src, 0, 0) * SrcValue(src, 1, 2)) * value;
 
-    v[6] = (SrcValue(1, 0) * SrcValue(2, 1) - SrcValue(1, 1) * SrcValue(2, 0)) * value;
-    v[7] = (SrcValue(0, 1) * SrcValue(2, 0) - SrcValue(0, 0) * SrcValue(2, 1)) * value;
-    v[8] = (SrcValue(0, 0) * SrcValue(1, 1) - SrcValue(0, 1) * SrcValue(1, 0)) * value;
+    v[6] = (SrcValue(src, 1, 0) * SrcValue(src, 2, 1) - SrcValue(src, 1, 1) * SrcValue(src, 2, 0)) * value;
+    v[7] = (SrcValue(src, 0, 1) * SrcValue(src, 2, 0) - SrcValue(src, 0, 0) * SrcValue(src, 2, 1)) * value;
+    v[8] = (SrcValue(src, 0, 0) * SrcValue(src, 1, 1) - SrcValue(src, 0, 1) * SrcValue(src, 1, 0)) * value;
 
-    DstValue(0, 0) = v[0];
-    DstValue(0, 1) = v[1];
-    DstValue(0, 2) = v[2];
-    DstValue(1, 0) = v[3];
-    DstValue(1, 1) = v[4];
-    DstValue(1, 2) = v[5];
-    DstValue(2, 0) = v[6];
-    DstValue(2, 1) = v[7];
-    DstValue(2, 2) = v[8];
+    DstValue(dst, 0, 0) = v[0];
+    DstValue(dst, 0, 1) = v[1];
+    DstValue(dst, 0, 2) = v[2];
+    DstValue(dst, 1, 0) = v[3];
+    DstValue(dst, 1, 1) = v[4];
+    DstValue(dst, 1, 2) = v[5];
+    DstValue(dst, 2, 0) = v[6];
+    DstValue(dst, 2, 1) = v[7];
+    DstValue(dst, 2, 2) = v[8];
   }
 }
 
@@ -532,15 +543,15 @@ bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M,
         int16_t *t_a = TA + y1 * tw;
         for (int x1 = 0; x1 < tw; x1++) {
           double W = WV + IM[6] * x1;
-          W = W ? TAB_SZ / W : 0;
+          W = W ? kTabSz / W : 0;
           double fX = std::max((double)INT_MIN, std::min((double)INT_MAX, (XV + IM[0] * x1) * W));  // NOLINT
           double fY = std::max((double)INT_MIN, std::min((double)INT_MAX, (YV + IM[3] * x1) * W));  // NOLINT
           int X = round(fX);
           int Y = round(fY);
 
-          xy[x1 * 2] = IntCastShort(X >> BITS);
-          xy[x1 * 2 + 1] = IntCastShort(Y >> BITS);
-          t_a[x1] = (int16_t)((Y & (TAB_SZ - 1)) * TAB_SZ + (X & (TAB_SZ - 1)));
+          xy[x1 * 2] = IntCastShort(X >> kBits);
+          xy[x1 * 2 + 1] = IntCastShort(Y >> kBits);
+          t_a[x1] = (int16_t)((Y & (kTabSz - 1)) * kTabSz + (X & (kTabSz - 1)));
         }
       }
       LiteMat _matA(tw, th, 1, TA, LDataType::UINT16);
