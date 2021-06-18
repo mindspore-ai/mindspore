@@ -215,6 +215,15 @@ class HcclParser:
 
     def _calculate_communication_operator_iter_cost(self, file_path):
         """Calculate the time-consuming of communication operator in one execution round."""
+        def _inner_calculate_communication_operator_iter_cost(events):
+            total_notify_wait = self._calculate_notify_wait_time(events)
+            # Divide information by src dst rank_id.
+            src_dst_dict = self._divide_communication_info_by_src_dst_rank(events)
+            src_dst_link_info = self._calculate_src_dst_link_info(src_dst_dict)
+            communication_cost, communication_wait = self._calculate_device_communication_cost(src_dst_link_info)
+            total_notify_wait -= communication_wait
+            return [communication_cost, total_notify_wait, src_dst_link_info]
+
         file_path = self._validate_file_path(file_path)
         with open(file_path, 'r') as src_file:
             try:
@@ -225,13 +234,20 @@ class HcclParser:
         trace_events = operator_info.get("traceEvents")
         operator_timestamp = trace_events[0].get("ts", 0)
         step_id = self._calculate_the_step_by_timestamp(operator_timestamp)
-        total_notify_wait = self._calculate_notify_wait_time(trace_events)
-        # Divide information by src dst rank_id.
-        src_dst_dict = self._divide_communication_info_by_src_dst_rank(trace_events)
-        src_dst_link_info = self._calculate_src_dst_link_info(src_dst_dict)
-        communication_cost, communication_wait = self._calculate_device_communication_cost(src_dst_link_info)
-        total_notify_wait -= communication_wait
-        return [step_id, communication_cost, total_notify_wait, src_dst_link_info]
+        # Statistics of communication operators in all streams.
+        total_communication_operator_iter_cost = \
+            _inner_calculate_communication_operator_iter_cost(trace_events)
+        # Statistics of communication operators in mainstream.
+        threads_dict = self._divide_communication_info_by_thread(trace_events)
+        # The largest value is mainstream.
+        major_thread = sorted(threads_dict, reverse=True)[0]
+        major_thread_trace_events = threads_dict.get(major_thread)
+        mainstream_communication_operator_iter_cost = \
+            _inner_calculate_communication_operator_iter_cost(major_thread_trace_events)
+        # index0:communication_cost,index1:communication_wait_cost,index2:link_info
+        return [step_id, mainstream_communication_operator_iter_cost[0],
+                mainstream_communication_operator_iter_cost[1],
+                total_communication_operator_iter_cost[2]]
 
     def _divide_communication_info_by_thread(self, trace_events: list):
         """Divide information by thread."""
