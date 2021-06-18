@@ -254,6 +254,7 @@ class GeLUCost : public SqrtCost {
 using BesselI0eCost = GeLUCost;
 using BesselI1eCost = GeLUCost;
 using L2NormalizeCost = GeLUCost;
+using MaxPoolCost = GeLUCost;
 
 class SoftmaxCost : public OperatorCost {
  public:

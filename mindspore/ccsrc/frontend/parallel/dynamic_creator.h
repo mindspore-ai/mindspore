@@ -198,6 +198,8 @@ REGISTER(ScatterUpdateInfo);
 REGISTER(VirtualOutputInfo);
 REGISTER(Conv2DInfo);
 REGISTER(BatchNormInfo);
+REGISTER(MaxPoolInfo);
+REGISTER(AvgPoolInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

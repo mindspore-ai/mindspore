@@ -236,6 +236,7 @@ constexpr char ACTIVATION[] = "Activation";
 constexpr char PRELU[] = "PReLU";
 constexpr char FLOORDIV[] = "FloorDiv";
 constexpr char MAXPOOL[] = "MaxPool";
+constexpr char AVGPOOL[] = "AvgPool";
 constexpr char MAXPOOLV2[] = "MaxPoolV2";
 constexpr char L2_NORMALIZE[] = "L2Normalize";
 constexpr char TRANSPOSE[] = "Transpose";
