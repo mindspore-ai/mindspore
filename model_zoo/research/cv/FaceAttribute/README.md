@@ -99,10 +99,16 @@ We use about 91K face images as training dataset and 11K as evaluating dataset i
 
 The entire code structure is as following:
 
-```python
+```text
 .
 └─ Face Attribute
   ├─ README.md
+  ├── model_utils
+  │   ├──__init__.py              // module init file
+  │   ├──config.py                // Parse arguments
+  │   ├──device_adapter.py        // Device adapter for ModelArts
+  │   ├──local_adapter.py         // Local adapter
+  │   ├──moxing_adapter.py        // Moxing adapter for ModelArts
   ├─ scripts
     ├─ run_standalone_train.sh              # launch standalone training(1p) in ascend
     ├─ run_distribute_train.sh              # launch distributed training(8p) in ascend
@@ -117,7 +123,6 @@ The entire code structure is as following:
       ├─ resnet18.py                        # network backbone
       ├─ head_factory_softmax.py            # network head with softmax
       └─ resnet18_softmax.py                # network backbone with softmax
-    ├─ config.py                            # parameter configuration
     ├─ dataset_eval.py                      # dataset loading and preprocessing for evaluating
     ├─ dataset_train.py                     # dataset loading and preprocessing for training
     ├─ logging.py                           # log function
@@ -125,6 +130,9 @@ The entire code structure is as following:
     ├─ data_to_mindrecord_train.py          # convert dataset to mindrecord for training
     ├─ data_to_mindrecord_train_append.py   # add dataset to an existed mindrecord for training
     └─ data_to_mindrecord_eval.py           # convert dataset to mindrecord for evaluating
+  ├─ default_config.yaml                    # Configurations
+  ├─ postprocess.py                         # postprocess scripts
+  ├─ preprocess.py                          # preprocess scripts
   ├─ train.py                               # training scripts
   ├─ eval.py                                # evaluation scripts
   └─ export.py                              # export air model
@@ -191,6 +199,89 @@ epoch[69], iter[6130], loss:1.209557, 8913.28 imgs/sec
 epoch[69], iter[6140], loss:1.158641, 9755.81 imgs/sec
 epoch[69], iter[6150], loss:1.167064, 9300.77 imgs/sec
 ```
+
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    ```bash
+    # Train 8p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "mindrecord_path='/cache/data/face_attribute_dataset/train/data_train.mindrecord'" on default_config.yaml file.
+    #          (option) Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file if load pretrain.
+    #          (option) Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file if load pretrain.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "mindrecord_path=/cache/data/face_attribute_dataset/train/data_train.mindrecord" on the website UI interface.
+    #          (option) Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface if load pretrain.
+    #          (option) Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface if load pretrain.
+    #          Add other parameters on the website UI interface.
+    # (2) (option) Upload or copy your pretrained model to S3 bucket if load pretrain.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/FaceAttribute" on the website UI interface.
+    # (5) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # Train 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "world_size=1" on default_config.yaml file.
+    #          Set "mindrecord_path='/cache/data/face_attribute_dataset/train/data_train.mindrecord'" on default_config.yaml file.
+    #          (option) Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file if load pretrain.
+    #          (option) Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file if load pretrain.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "world_size=1" on the website UI interface.
+    #          Add "mindrecord_path=/cache/data/face_attribute_dataset/train/data_train.mindrecord" on the website UI interface.
+    #          (option) Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface if load pretrain.
+    #          (option) Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface if load pretrain.
+    #          Add other parameters on the website UI interface.
+    # (2) (option) Upload or copy your pretrained model to S3 bucket if load pretrain.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/FaceAttribute" on the website UI interface.
+    # (5) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # Eval 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "mindrecord_path='/cache/data/face_attribute_dataset/train/data_train.mindrecord'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+    #          Set "model_path='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "mindrecord_path=/cache/data/face_attribute_dataset/train/data_train.mindrecord" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "model_path=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/FaceAttribute" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # Export 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "file_name='faceattri'" on default_config.yaml file.
+    #          Set "file_format='MINDIR'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "file_name=faceattri" on the website UI interface.
+    #          Add "file_format=MINDIR" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "ckpt_file=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Set the code directory to "/path/FaceAttribute" on the website UI interface.
+    # (4) Set the startup file to "export.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    ```
 
 ### Evaluation
 

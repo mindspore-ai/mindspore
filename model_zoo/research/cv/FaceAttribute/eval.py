@@ -14,7 +14,7 @@
 # ============================================================================
 """Face attribute eval."""
 import os
-import argparse
+import time
 import numpy as np
 
 from mindspore import context
@@ -23,22 +23,20 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import dtype as mstype
 
 from src.dataset_eval import data_generator_eval
-from src.config import config
 from src.FaceAttribute.resnet18 import get_resnet18
 
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
 
 
 def softmax(x, axis=0):
     return np.exp(x) / np.sum(np.exp(x), axis=axis)
 
-
-def main(args):
-    network = get_resnet18(args)
-    ckpt_path = args.model_path
-    if os.path.isfile(ckpt_path):
-        param_dict = load_checkpoint(ckpt_path)
+def load_pretrain(checkpoint, network):
+    '''load pretrain model.'''
+    if os.path.isfile(checkpoint):
+        param_dict = load_checkpoint(checkpoint)
         param_dict_new = {}
         for key, values in param_dict.items():
             if key.startswith('moments.'):
@@ -51,23 +49,77 @@ def main(args):
         print('-----------------------load model success-----------------------')
     else:
         print('-----------------------load model failed-----------------------')
+    return network
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_eval():
+    '''run eval.'''
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=get_device_id())
+
+    network = get_resnet18(config)
+    ckpt_path = config.model_path
+    network = load_pretrain(ckpt_path, network)
 
     network.set_train(False)
 
-    de_dataloader, steps_per_epoch, _ = data_generator_eval(args)
+    de_dataloader, steps_per_epoch, _ = data_generator_eval(config)
 
-    total_data_num_age = 0
-    total_data_num_gen = 0
-    total_data_num_mask = 0
-    age_num = 0
-    gen_num = 0
-    mask_num = 0
-    gen_tp_num = 0
-    mask_tp_num = 0
-    gen_fp_num = 0
-    mask_fp_num = 0
-    gen_fn_num = 0
-    mask_fn_num = 0
+    total_data_num_age, total_data_num_gen, total_data_num_mask = 0, 0, 0
+    age_num, gen_num, mask_num = 0, 0, 0
+    gen_tp_num, mask_tp_num, gen_fp_num = 0, 0, 0
+    mask_fp_num, gen_fn_num, mask_fn_num = 0, 0, 0
     for step_i, (data, gt_classes) in enumerate(de_dataloader):
 
         print('evaluating {}/{} ...'.format(step_i + 1, steps_per_epoch))
@@ -98,11 +150,12 @@ def main(args):
         if gt_mask == mask:
             mask_num += 1
 
-        if gt_gen == 1 and gen == 1:
-            gen_tp_num += 1
-        if gt_gen == 0 and gen == 1:
-            gen_fp_num += 1
-        if gt_gen == 1 and gen == 0:
+        if gen == 1:
+            if gt_gen == 1:
+                gen_tp_num += 1
+            elif gt_gen == 0:
+                gen_fp_num += 1
+        elif gen == 0 and gt_gen == 1:
             gen_fn_num += 1
 
         if gt_mask == 1 and mask == 1:
@@ -165,25 +218,6 @@ def main(args):
         ft.write('mask recall: {}\n'.format(mask_recall))
         ft.write('mask f1: {}\n'.format(mask_f1))
 
-def parse_args():
-    """parse_args"""
-    parser = argparse.ArgumentParser(description='face attributes eval')
-    parser.add_argument('--model_path', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--mindrecord_path', type=str, default='', help='dataset path, e.g. /home/data.mindrecord')
-
-    args_opt = parser.parse_args()
-    return args_opt
-
 
 if __name__ == '__main__':
-    args_1 = parse_args()
-
-    args_1.dst_h = config.dst_h
-    args_1.dst_w = config.dst_w
-    args_1.attri_num = config.attri_num
-    args_1.classes = config.classes
-    args_1.flat_dim = config.flat_dim
-    args_1.fc_dim = config.fc_dim
-    args_1.workers = config.workers
-
-    main(args_1)
+    run_eval()

@@ -14,19 +14,12 @@
 # ============================================================================
 """preprocess"""
 import os
-import argparse
-from src.config import config
+
 import mindspore.dataset as de
 import mindspore.dataset.vision.py_transforms as F
 import mindspore.dataset.transforms.py_transforms as F2
 
-def parse_args():
-    """parse_args"""
-    parser = argparse.ArgumentParser(description='face attribute dataset to bin')
-    parser.add_argument('--model_path', type=str, default='', help='mindir path referenced')
-    parser.add_argument('--mindrecord_path', type=str, default='', help='mindir file path')
-    args_opt = parser.parse_args()
-    return args_opt
+from model_utils.config import config
 
 def eval_data_generator(args):
     '''Build eval dataloader.'''
@@ -52,15 +45,7 @@ def eval_data_generator(args):
     return de_dataset
 
 if __name__ == "__main__":
-    args_1 = parse_args()
-    args_1.dst_h = config.dst_h
-    args_1.dst_w = config.dst_w
-    args_1.attri_num = config.attri_num
-    args_1.classes = config.classes
-    args_1.flat_dim = config.flat_dim
-    args_1.fc_dim = config.fc_dim
-    args_1.workers = config.workers
-    ds = eval_data_generator(args_1)
+    ds = eval_data_generator(config)
     cur_dir = os.getcwd()
     image_path = os.path.join(cur_dir, './data/image')
     if not os.path.isdir(image_path):

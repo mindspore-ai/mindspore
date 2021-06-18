@@ -17,7 +17,7 @@ import numpy as np
 
 from mindspore.mindrecord import FileWriter
 
-from config import config
+from model_utils.config import config
 
 dataset_txt_file = config.train_append_dataset_txt_file
 

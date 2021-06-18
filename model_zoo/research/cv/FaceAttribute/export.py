@@ -14,7 +14,6 @@
 # ============================================================================
 """Convert ckpt to air."""
 import os
-import argparse
 import numpy as np
 
 from mindspore import context
@@ -22,15 +21,22 @@ from mindspore import Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 
 from src.FaceAttribute.resnet18_softmax import get_resnet18
-from src.config import config
-
-devid = 0
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 
 
-def main(args):
-    network = get_resnet18(args)
-    ckpt_path = args.ckpt_file
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''run export.'''
+    devid = 0
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
+
+    network = get_resnet18(config)
+    ckpt_path = config.ckpt_file
     if os.path.isfile(ckpt_path):
         param_dict = load_checkpoint(ckpt_path)
         param_dict_new = {}
@@ -49,27 +55,9 @@ def main(args):
     input_data = np.random.uniform(low=0, high=1.0, size=(1, 3, 112, 112)).astype(np.float32)
     tensor_input_data = Tensor(input_data)
 
-    export(network, tensor_input_data, file_name=args.file_name,
-           file_format=args.file_format)
+    export(network, tensor_input_data, file_name=config.file_name,
+           file_format=config.file_format)
     print('-----------------------export model success-----------------------')
 
-def parse_args():
-    """parse_args"""
-    parser = argparse.ArgumentParser(description='Convert ckpt to designated format')
-    parser.add_argument('--ckpt_file', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--file_name', type=str, default='faceattri', help='file name')
-    parser.add_argument('--file_format', type=str, default='MINDIR', choices=['MINDIR', 'AIR'], help='file format')
-    args_opt = parser.parse_args()
-    return args_opt
-
 if __name__ == "__main__":
-    args_1 = parse_args()
-
-    args_1.dst_h = config.dst_h
-    args_1.dst_w = config.dst_w
-    args_1.attri_num = config.attri_num
-    args_1.classes = config.classes
-    args_1.flat_dim = config.flat_dim
-    args_1.fc_dim = config.fc_dim
-
-    main(args_1)
+    run_export()
