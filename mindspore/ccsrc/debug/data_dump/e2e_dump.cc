@@ -335,18 +335,34 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
         MS_LOG(EXCEPTION) << "failed at CreateNotExistDirs for " << cur_iter_dump_path;
       }
 
-      // move contents from active dump dir to final dump dir
-      command = "mv " + zero_dir_dump_path + "/* " + cur_iter_dump_path + "/.";
-      MS_LOG(INFO) << "mv command: " << command;
-      if (system(command.c_str())) {
-        MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
+      // test if zero_dir_dump_path exists (may not if there was
+      // no data dumped, for example for an overflow dump)
+      command = "test -d " + zero_dir_dump_path;
+      MS_LOG(INFO) << "test command: " << command;
+      if (!system(command.c_str())) {
+        // move contents from active dump dir to final dump dir
+        command = "mv " + zero_dir_dump_path + "/* " + cur_iter_dump_path + "/.";
+        MS_LOG(INFO) << "mv command: " << command;
+        if (system(command.c_str())) {
+          MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
+        }
+      } else {
+        MS_LOG(INFO) << "active dump dir, not created yet";
       }
     } else {
-      // delete contents from active dump dir
-      std::string command = "rm -f " + zero_dir_dump_path + "/*";
-      MS_LOG(INFO) << "rm command: " << command;
-      if (system(command.c_str())) {
-        MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
+      // test if zero_dir_dump_path exists (may not if there was
+      // no data dumped, for example for an overflow dump)
+      std::string command = "test -d " + zero_dir_dump_path;
+      MS_LOG(INFO) << "test command: " << command;
+      if (!system(command.c_str())) {
+        // delete contents from active dump dir
+        command = "rm -f " + zero_dir_dump_path + "/*";
+        MS_LOG(INFO) << "rm command: " << command;
+        if (system(command.c_str())) {
+          MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
+        }
+      } else {
+        MS_LOG(INFO) << "active dump dir, not created yet";
       }
     }
 
