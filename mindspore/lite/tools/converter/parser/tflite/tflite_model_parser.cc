@@ -93,17 +93,19 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::Flags &flag) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
 
-  if (CommonAnfAdjust(all_func_graphs) != RET_OK) {
+  if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  if (Tflite2AnfAdjust(all_func_graphs) != RET_OK) {
+  if ((status = Tflite2AnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "Tflite2AnfAdjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  status = WeightFormatTransform(res_graph_);
-  if (status != RET_OK) {
+  if ((status = WeightFormatTransform(res_graph_)) != RET_OK) {
     MS_LOG(ERROR) << "WeightFormatTransform failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   return res_graph_;
@@ -250,6 +252,7 @@ STATUS TfliteModelParser::ConvertOps() {
     if (node_parser == nullptr) {
       NotSupportOp::GetInstance()->InsertOp(op_type);
       status = (status == RET_OK ? RET_NOT_FIND_OP : status);
+      MS_LOG(ERROR) << "Can not find " << op_type << " op parser.";
       continue;
     }
     if (status != RET_OK) {

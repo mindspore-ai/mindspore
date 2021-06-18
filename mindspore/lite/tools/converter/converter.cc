@@ -37,19 +37,22 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
     MindsporeImporter ms_import;
     func_graph = ms_import.ImportMindIR(flag);
     if (func_graph == nullptr) {
-      MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
       return nullptr;
     }
   } else {
     model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmkIn);
     if (model_parser_ == nullptr) {
-      MS_LOG(ERROR) << "get funcGraph failed for fmk:" << flag.fmkIn;
       return nullptr;
     }
     func_graph = model_parser_->Parse(flag);
   }
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Get funcGraph failed for fmk: " << flag.fmkIn;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NOT_SUPPORT);
+    return nullptr;
+  }
   if (UpdateFuncGraphInputsAndOutputsDtype(func_graph) != RET_OK) {
-    MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
+    MS_LOG(ERROR) << "Update graph inputs and outputs dtype failed.";
     return nullptr;
   }
   return func_graph;

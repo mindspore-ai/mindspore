@@ -726,6 +726,7 @@ TypeId GetParameterDtype(const ParameterPtr &param_node) {
 }
 
 STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
   // update graph inputs dtype
   size_t idx = 0;
   for (auto &input : func_graph->get_inputs()) {

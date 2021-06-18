@@ -7,6 +7,7 @@ file(GLOB GRAPH_PASS
         ${CMAKE_CURRENT_SOURCE_DIR}/infershape_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor_quant_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_quant_param_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/convert_fp32_to_fp16_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/set_unused_quant_param_to_default_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor_name_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/switch_pass.cc

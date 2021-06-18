@@ -557,16 +557,19 @@ FuncGraphPtr TFModelParser::Parse(const converter::Flags &flag) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
 
-  if (CommonAnfAdjust(all_func_graphs) != RET_OK) {
+  if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  if (TF2AnfAdjust(all_func_graphs) != RET_OK) {
+  if ((status = TF2AnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "TF2AnfAdjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  status = WeightFormatTransform(res_graph_);
-  if (status != RET_OK) {
+  if ((status = WeightFormatTransform(res_graph_)) != RET_OK) {
+    MS_LOG(ERROR) << "WeightFormatTransform failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   res_graph_->set_manager(nullptr);
