@@ -15,7 +15,6 @@
 """train_criteo."""
 import os
 import sys
-import argparse
 
 from mindspore import context
 from mindspore.context import ParallelMode
@@ -25,57 +24,50 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMoni
 from mindspore.common import set_seed
 
 from src.autodis import ModelBuilder, AUCMetric
-from src.config import DataConfig, ModelConfig, TrainConfig
 from src.dataset import create_dataset, DataType
 from src.callback import EvalCallBack, LossCallBack
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config, train_config, data_config, model_config
+from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-parser = argparse.ArgumentParser(description='CTR Prediction')
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--ckpt_path', type=str, default=None, help='Checkpoint path')
-parser.add_argument('--eval_file_name', type=str, default="./auc.log",
-                    help='Auc log file path. Default: "./auc.log"')
-parser.add_argument('--loss_file_name', type=str, default="./loss.log",
-                    help='Loss log file path. Default: "./loss.log"')
-parser.add_argument('--do_eval', type=str, default='True', choices=["True", "False"],
-                    help='Do evaluation or not, only support "True" or "False". Default: "True"')
-parser.add_argument('--device_target', type=str, default="Ascend", choices=["Ascend"],
-                    help='Default: Ascend')
-args_opt, _ = parser.parse_known_args()
-args_opt.do_eval = args_opt.do_eval == 'True'
-rank_size = int(os.environ.get("RANK_SIZE", 1))
 
 set_seed(1)
 
-if __name__ == '__main__':
-    data_config = DataConfig()
-    model_config = ModelConfig()
-    train_config = TrainConfig()
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.train_data_dir = config.data_path
+    config.ckpt_path = os.path.join(config.output_path, config.ckpt_path)
 
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    '''train function'''
+    config.do_eval = config.do_eval == 'True'
+    rank_size = get_device_num()
     if rank_size > 1:
-        if args_opt.device_target == "Ascend":
-            device_id = int(os.getenv('DEVICE_ID'))
-            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
+        if config.device_target == "Ascend":
+            device_id = get_device_id()
+            context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=device_id)
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True)
             init()
-            rank_id = int(os.environ.get('RANK_ID'))
+            rank_id = get_rank_id()
         else:
-            print("Unsupported device_target ", args_opt.device_target)
+            print("Unsupported device_target ", config.device_target)
             exit()
     else:
-        if args_opt.device_target == "Ascend":
-            device_id = int(os.getenv('DEVICE_ID'))
-            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
+        if config.device_target == "Ascend":
+            device_id = get_device_id()
+            context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=device_id)
         else:
-            print("Unsupported device_target ", args_opt.device_target)
+            print("Unsupported device_target ", config.device_target)
             exit()
         rank_size = None
         rank_id = None
 
     # Init Profiler
 
-    ds_train = create_dataset(args_opt.dataset_path,
+    ds_train = create_dataset(config.train_data_dir,
                               train_mode=True,
                               epochs=1,
                               batch_size=train_config.batch_size,
@@ -84,34 +76,36 @@ if __name__ == '__main__':
                               rank_id=rank_id)
     print("ds_train.size: {}".format(ds_train.get_dataset_size()))
 
-    steps_size = ds_train.get_dataset_size()
+    # steps_size = ds_train.get_dataset_size()
 
-    model_builder = ModelBuilder(ModelConfig, TrainConfig)
+    model_builder = ModelBuilder(model_config, train_config)
     train_net, eval_net = model_builder.get_train_eval_net()
     auc_metric = AUCMetric()
     model = Model(train_net, eval_network=eval_net, metrics={"auc": auc_metric})
 
     time_callback = TimeMonitor(data_size=ds_train.get_dataset_size())
-    loss_callback = LossCallBack(loss_file_path=args_opt.loss_file_name)
+    loss_callback = LossCallBack(loss_file_path=config.loss_file_name)
     callback_list = [time_callback, loss_callback]
 
     if train_config.save_checkpoint:
         if rank_size:
             train_config.ckpt_file_name_prefix = train_config.ckpt_file_name_prefix + str(get_rank())
-            args_opt.ckpt_path = os.path.join(args_opt.ckpt_path, 'ckpt_' + str(get_rank()) + '/')
+            config.ckpt_path = os.path.join(config.ckpt_path, 'ckpt_' + str(get_rank()) + '/')
         config_ck = CheckpointConfig(save_checkpoint_steps=train_config.save_checkpoint_steps,
                                      keep_checkpoint_max=train_config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint(prefix=train_config.ckpt_file_name_prefix,
-                                  directory=args_opt.ckpt_path,
+                                  directory=config.ckpt_path,
                                   config=config_ck)
         callback_list.append(ckpt_cb)
 
-    if args_opt.do_eval:
-        ds_eval = create_dataset(args_opt.dataset_path, train_mode=False,
+    if config.do_eval:
+        ds_eval = create_dataset(config.train_data_dir, train_mode=False,
                                  epochs=1,
                                  batch_size=train_config.batch_size,
                                  data_type=DataType(data_config.data_format))
         eval_callback = EvalCallBack(model, ds_eval, auc_metric,
-                                     eval_file_path=args_opt.eval_file_name)
+                                     eval_file_path=config.eval_file_name)
         callback_list.append(eval_callback)
     model.train(train_config.train_epochs, ds_train, callbacks=callback_list)
+if __name__ == '__main__':
+    run_train()

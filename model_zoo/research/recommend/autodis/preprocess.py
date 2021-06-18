@@ -16,7 +16,7 @@
 import os
 import argparse
 
-from src.config import DataConfig, TrainConfig
+from src.model_utils.config import data_config, train_config
 from src.dataset import create_dataset, DataType
 
 parser = argparse.ArgumentParser(description='preprocess.')
@@ -24,11 +24,9 @@ parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path
 parser.add_argument('--result_path', type=str, default='./preprocess_Result', help='Result path')
 args_opt, _ = parser.parse_known_args()
 
+
 def generate_bin():
     '''generate bin files'''
-    data_config = DataConfig()
-    train_config = TrainConfig()
-
     ds = create_dataset(args_opt.dataset_path, train_mode=False,
                         epochs=1, batch_size=train_config.batch_size,
                         data_type=DataType(data_config.data_format))
@@ -52,6 +50,7 @@ def generate_bin():
         labels.tofile(os.path.join(labels_path, file_name))
 
     print("=" * 20, "export bin files finished", "=" * 20)
+
 
 if __name__ == '__main__':
     generate_bin()
