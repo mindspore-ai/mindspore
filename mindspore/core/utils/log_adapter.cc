@@ -418,6 +418,7 @@ void common_log_init(void) {
 #ifdef USE_GLOG
   // do not use glog predefined log prefix
   FLAGS_log_prefix = false;
+  FLAGS_logbufsecs = 0;
   // set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
     FLAGS_v = mindspore::WARNING;
