@@ -53,8 +53,8 @@ class DefaultAllocator : public Allocator {
   bool ReuseMemory(size_t free_size, size_t size);
   struct MemBuf {
     std::atomic_int ref_count_ = {0};
-    size_t size;
-    void *buf;
+    size_t size = 0;
+    void *buf = nullptr;
   };
 
   std::mutex lock_;

@@ -73,6 +73,10 @@ bool MSTensor::operator!=(std::nullptr_t) const { return impl_ != nullptr; }
 
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                  const void *data, size_t data_len) noexcept {
+  if (data_len < 0 || data_len > MAX_MALLOC_SIZE) {
+    MS_LOG(ERROR) << "data_len is error.";
+    return nullptr;
+  }
   auto new_data = malloc(data_len);
   if (new_data == nullptr) {
     MS_LOG(ERROR) << "Allocate data failed.";
@@ -139,7 +143,7 @@ MSTensor *MSTensor::Clone() const {
     return nullptr;
   }
   auto data_len = this->DataSize();
-  if (data_len <= 0) {
+  if (data_len <= 0 || data_len > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "Illegal data size of tensor.";
     return nullptr;
   }
@@ -148,6 +152,7 @@ MSTensor *MSTensor::Clone() const {
     MS_LOG(ERROR) << "Allocate data failed.";
     return nullptr;
   }
+  memset(new_data, 0, data_len);
   auto impl = Impl::CreateTensorImpl(this->Name(), this->DataType(), this->Shape(), new_data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";

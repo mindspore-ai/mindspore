@@ -68,6 +68,9 @@ kernel::SubGraphKernel *CreateCustomSubGraph(std::vector<kernel::LiteKernel *> &
 }  // namespace
 
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  if (dst_kernels == nullptr) {
+    return RET_ERROR;
+  }
   if (src_model_ == nullptr) {
     MS_LOG(ERROR) << "Input model is nullptr";
     return RET_PARAM_INVALID;
@@ -462,7 +465,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel) {
   MS_ASSERT(op_parameter != nullptr);
-
+  MS_ASSERT(kernel != nullptr);
   if (context_->IsGpuEnabled()) {
     // support more data type like int32
     kernel::KernelKey gpu_desc{kernel::KERNEL_ARCH::kGPU, desc.data_type, desc.type};
@@ -570,6 +573,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   if (status == RET_OK && kernel != nullptr) {
     return kernel;
   }
+  MS_ASSERT(!node->output_indices_.empty());
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
@@ -892,6 +896,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
 
 bool Scheduler::MergeOpIsReady(const kernel::LiteKernel *kernel,
                                std::map<const kernel::LiteKernel *, bool> is_kernel_finish) {
+  MS_ASSERT(kernel != nullptr);
   std::map<const lite::Tensor *, bool> merge_in_tensors_map;
   for (auto merge_in_tensor : kernel->in_tensors()) {
     merge_in_tensors_map[merge_in_tensor] = false;
@@ -1032,6 +1037,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
 }
 
 void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
+  MS_ASSERT(kernel != nullptr);
   if (kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
     return;
   }
@@ -1090,17 +1096,30 @@ void Scheduler::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &ker
 }
 
 int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  MS_ASSERT(dst_kernels != nullptr);
   int ret = RET_OK;
 #if SUPPORT_NPU
   if (!context_->IsNpuEnabled()) {
     return RET_OK;
   }
-  auto transform_pass = new NPUTransformPass(context_, dst_kernels, src_tensors_);
+  auto transform_pass = new (std::nothrow) NPUTransformPass(context_, dst_kernels, src_tensors_);
+  if (transform_pass == nullptr) {
+    MS_LOG(ERROR) << "transform_pass is nullptr";
+    return RET_ERROR;
+  }
   MS_ASSERT(npu_pass_manager_ != nullptr);
   npu_pass_manager_->AddPass(transform_pass);
-  auto concat_format_pass = new NPUInsertTransformPass(context_, dst_kernels, src_tensors_);
+  auto concat_format_pass = new (std::nothrow) NPUInsertTransformPass(context_, dst_kernels, src_tensors_);
+  if (concat_format_pass == nullptr) {
+    MS_LOG(ERROR) << "concat_format_pass is nullptr";
+    return RET_ERROR;
+  }
   npu_pass_manager_->AddPass(concat_format_pass);
-  auto fusion_pass = new NPUFusionPass(dst_kernels);
+  auto fusion_pass = new (std::nothrow) NPUFusionPass(dst_kernels);
+  if (fusion_pass == nullptr) {
+    MS_LOG(ERROR) << "fusion_pass is nullptr";
+    return RET_ERROR;
+  }
   npu_pass_manager_->AddPass(fusion_pass);
 
   ret = npu_pass_manager_->Run();

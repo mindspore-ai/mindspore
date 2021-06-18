@@ -37,6 +37,10 @@ int CreateOutputDir(std::string *dir);
 
 template <typename T>
 void WriteToTxt(const std::string &file_path, void *data, size_t element_size) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr.";
+    return;
+  }
   std::ofstream out_file;
   out_file.open(file_path, std::ios::out);
   if (!out_file.is_open()) {
@@ -51,14 +55,18 @@ void WriteToTxt(const std::string &file_path, void *data, size_t element_size) {
 }
 
 inline int WriteToBin(const std::string &file_path, void *data, const size_t size) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr.";
+    return RET_ERROR;
+  }
   std::ofstream out_file;
   out_file.open(file_path.c_str(), std::ios::binary);
   if (!out_file.good() || !out_file.is_open()) {
-    return -1;
+    return RET_ERROR;
   }
   out_file.write(reinterpret_cast<char *>(data), size);
   out_file.close();
-  return 0;
+  return RET_OK;
 }
 
 std::string GetAndroidPackageName();

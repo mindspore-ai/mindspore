@@ -23,7 +23,7 @@ struct MS_API Model {
   struct Node {
     String name_;
     int node_type_;
-    const void *primitive_;
+    const void *primitive_ = nullptr;
     Uint32Vector input_indices_;
     Uint32Vector output_indices_;
     int quant_type_;
@@ -42,7 +42,7 @@ struct MS_API Model {
   String version_;
   TensorPtrVector all_tensors_;
   NodePtrVector all_nodes_;
-  char *buf;
+  char *buf = nullptr;
   SubGraphPtrVector sub_graphs_;
 #ifdef ENABLE_MODEL_OBF
   using NodeStatVector = Vector<uint32_t>;
