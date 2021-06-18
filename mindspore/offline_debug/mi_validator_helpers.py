@@ -48,6 +48,11 @@ def check_uint64(arg, arg_name=""):
     check_value(arg, [UINT64_MIN, UINT64_MAX])
 
 
+def check_iteration(arg, arg_name=""):
+    type_check(arg, (int,), arg_name)
+    check_value(arg, [-1, UINT64_MAX])
+
+
 def check_dir(dataset_dir):
     if not os.path.isdir(dataset_dir) or not os.access(dataset_dir, os.R_OK):
         raise ValueError("The folder {} does not exist or permission denied!".format(dataset_dir))

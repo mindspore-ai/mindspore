@@ -636,16 +636,22 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
 
 void DebugServices::SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *dump_style_kernel_name,
                                      size_t slot) {
+  std::string dump_style_name_part = *dump_style_kernel_name;
+  std::size_t last_scope_marker;
+  std::string delim;
   if (is_sync_mode) {
-    std::string dump_style_name_part = *dump_style_kernel_name;
-    std::size_t last_scope_marker = dump_style_kernel_name->rfind("--");
-    if (last_scope_marker != std::string::npos) {
-      dump_style_name_part = dump_style_kernel_name->substr(last_scope_marker + 2);
-    }
-    *prefix_dump_file_name = dump_style_name_part + ".output." + std::to_string(slot);
+    delim = "--";
   } else {
-    *prefix_dump_file_name = *dump_style_kernel_name;
+    delim = "_";
   }
+  last_scope_marker = dump_style_kernel_name->rfind(delim);
+  if (last_scope_marker != std::string::npos) {
+    dump_style_name_part = dump_style_kernel_name->substr(last_scope_marker + delim.size());
+  }
+  if (is_sync_mode) {
+    dump_style_name_part += ".output." + std::to_string(slot);
+  }
+  *prefix_dump_file_name = dump_style_name_part;
 }
 
 void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
@@ -728,10 +734,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       bool found = false;
       // if async mode
       for (const std::string &file_path : async_file_pool) {
-        size_t first_dot_pos = file_path.find('.');
-        size_t second_dot_pos = file_path.find('.', first_dot_pos + 1);
-        std::string file_path_op_name = file_path.substr(first_dot_pos + 1, second_dot_pos - first_dot_pos - 1);
-        if (file_path_op_name == prefix_dump_file_name &&
+        if (file_path.find(prefix_dump_file_name) != std::string::npos &&
             file_path.find(".output." + std::to_string(slot[i])) != std::string::npos) {
           found = true;
           shape.clear();
@@ -761,8 +764,8 @@ std::string DebugServices::GetStrippedFilename(const std::string &file_name) {
 
   // Look for the second dot's position from the back to avoid issue due to dots in the node name.
   size_t second_dot = fifth_dot;
-  const int8_t kSeconeDotPosition = 2;
-  for (int8_t pos = 5; pos > kSeconeDotPosition; pos--) {
+  const int8_t kSecondDotPosition = 2;
+  for (int8_t pos = 5; pos > kSecondDotPosition; pos--) {
     second_dot = file_name.rfind(".", second_dot - 1);
   }
 
