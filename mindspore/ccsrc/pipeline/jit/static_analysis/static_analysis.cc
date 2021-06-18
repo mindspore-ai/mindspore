@@ -49,9 +49,7 @@ bool IsIntermediateAbstract(const AbstractBasePtr &arg_spec) {
 
 AbstractBasePtr IntermediateJoin(const AbstractBasePtr &arg1, const AbstractBasePtr &arg2) {
   if (dyn_cast<AbstractScalar>(arg1) && dyn_cast<AbstractScalar>(arg2)) {
-    auto abstract = arg1->Join(arg2);
-    MS_EXCEPTION_IF_NULL(abstract);
-    return abstract;
+    return arg1->Join(arg2);
   }
   return nullptr;
 }
@@ -644,7 +642,39 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   return latest_entry;
 }
 
-EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_specs) {
+std::string JoinBranchesFailedInfo(const AbstractBasePtr &spec, const AbstractBasePtr &last_spec,
+                                   const AnfNodePtr &node, const std::string &error_info) {
+  std::ostringstream buffer;
+  buffer << "The return values of different branches do not match. " << error_info
+         << " The abstract type of the return value of the current branch is " << spec->ToString()
+         << ", and that of the previous branch is " << last_spec->ToString() << ". Please check the node "
+         << node->DebugString();
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>()->input(0);
+    if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
+      // {prim::kPrimSwitch, cond, true_branch, false_branch}
+      constexpr int true_index = 2;
+      constexpr int false_index = 3;
+      auto inputs = cnode->cast<CNodePtr>()->inputs();
+      buffer << ", true branch: " << inputs.at(true_index)->ToString()
+             << ", false branch: " << inputs.at(false_index)->ToString();
+    } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
+      // {prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, branch1, branch2, ...}}
+      constexpr int branch_index = 2;
+      auto tuple_node = cnode->cast<CNodePtr>()->input(branch_index);
+      if (IsPrimitiveCNode(tuple_node, prim::kPrimMakeTuple)) {
+        auto tuple_inputs = tuple_node->cast<CNodePtr>()->inputs();
+        for (size_t i = 1; i < tuple_inputs.size(); i++) {
+          buffer << ", branch" << i << ": " << tuple_inputs.at(i);
+        }
+      }
+    }
+  }
+  buffer << ". trace: " << trace::DumpSourceLines(node);
+  return buffer.str();
+}
+
+EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node) {
   if (out_specs.size() == 0) {
     MS_LOG(EXCEPTION) << "There is an endless loop for evaluator.";
   }
@@ -654,8 +684,28 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
     // If only one result derived, then broaden it to avoid wrong constant propagation.
     return std::make_shared<EvalResult>(out_specs[0]->Broaden(), std::make_shared<AttrValueMap>());
   }
-  auto joined_spec = AbstractJoin(out_specs);
-  MS_EXCEPTION_IF_NULL(joined_spec);
+  MS_EXCEPTION_IF_NULL(node);
+
+  AbstractBasePtr last_spec = out_specs[0];
+  AbstractBasePtr joined_spec = out_specs[0];
+  for (const auto &spec : out_specs) {
+    MS_EXCEPTION_IF_NULL(spec);
+    try {
+      joined_spec = joined_spec->Join(spec);
+    } catch (const py::type_error &ex) {
+      auto error_info = ExtractLoggingInfo(ex.what());
+      MS_EXCEPTION(TypeError) << JoinBranchesFailedInfo(spec, last_spec, node, error_info);
+    } catch (const py::value_error &ex) {
+      auto error_info = ExtractLoggingInfo(ex.what());
+      MS_EXCEPTION(ValueError) << JoinBranchesFailedInfo(spec, last_spec, node, error_info);
+    } catch (const std::exception &ex) {
+      auto error_info = ExtractLoggingInfo(ex.what());
+      MS_LOG(EXCEPTION) << JoinBranchesFailedInfo(spec, last_spec, node, error_info);
+    }
+    MS_EXCEPTION_IF_NULL(joined_spec);
+    last_spec = spec;
+  }
+
   MS_LOG(DEBUG) << "Multiple evaluators joined: " << joined_spec->ToString();
   return std::make_shared<EvalResult>(joined_spec, std::make_shared<AttrValueMap>());
 }
@@ -664,8 +714,6 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
                                                         const AnfNodeConfigPtr &out_conf,
                                                         const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList out_specs;
-  EvaluatorPtr last_eval = nullptr;
-  AbstractBasePtr last_abstract = nullptr;
   const size_t evaluators_size = 2;
   if (evaluators.size() < evaluators_size) {
     MS_LOG(ERROR) << "evaluators size is less than 2";
@@ -691,17 +739,6 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
       auto eval_result = eval->Run(shared_from_this(), args_conf_list, out_conf);
       auto eval_abstract = eval_result->abstract();
       MS_EXCEPTION_IF_NULL(eval_abstract);
-
-      if (last_abstract != nullptr && eval_abstract->Join(last_abstract) == nullptr) {
-        auto node = out_conf->node();
-        MS_LOG(EXCEPTION) << "Abstracts cannot be joined! Please check the data type of node : " << node->DebugString()
-                          << ".\nThe current evaluator is " << eval->ToString() << " with abstract "
-                          << eval_abstract->ToString() << ", and the previous evaluator is " << last_eval->ToString()
-                          << " with abstract " << last_abstract->ToString() << trace::DumpSourceLines(node);
-      } else {
-        last_abstract = eval_abstract;
-        last_eval = eval;
-      }
 
       out_specs.push_back(eval_abstract);
       eval_trace_.pop_back();
@@ -729,7 +766,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
     }
   }
 
-  return ProcessEvalResults(out_specs);
+  return ProcessEvalResults(out_specs, out_conf->node());
 }
 
 EvalResultPtr AnfNodeConfig::ObtainEvalResult() {

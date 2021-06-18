@@ -45,6 +45,8 @@ using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 // to express the type, shape, and value of the real value.
 class AbstractBase : public Base {
  public:
+  using TraceNodeProvider = std::function<void(AnfNodePtr *node)>;
+
   explicit AbstractBase(const ValuePtr &value = nullptr, const TypePtr &type = kAnyType,
                         const BaseShapePtr &shape = kNoShape)
       : value_(value), type_(type), shape_(shape) {}
@@ -72,6 +74,11 @@ class AbstractBase : public Base {
   virtual BaseShapePtr BuildShape() const { return kNoShape; }
   virtual AbstractBasePtr Clone() const = 0;
 
+  static void set_trace_node_provider(TraceNodeProvider trace_node_provider) {
+    trace_node_provider_ = trace_node_provider;
+  }
+
+  inline static TraceNodeProvider trace_node_provider_ = nullptr;
   // mask for Broaden config
   inline static const uint8_t kBroadenTensorOnly = 1;
   inline static const uint8_t kBroadenParameterOnly = 2;
@@ -760,6 +767,8 @@ class AbstractIOMonad : public AbstractMonad {
 };
 using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
 
+AnfNodePtr GetTraceNode(const AbstractBasePtr &abs);
+std::string ExtractLoggingInfo(const std::string &info);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_
