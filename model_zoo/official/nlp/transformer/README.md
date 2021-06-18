@@ -78,7 +78,10 @@ python eval.py > eval.log 2>&1 &
     ├─process_output.sh
     ├─replace-quote.perl
     ├─run_distribute_train_ascend.sh
-    └─run_standalone_train_ascend.sh
+    ├─run_distribute_train_ascend_multi_machines.sh
+    ├─run_eval.sh
+    ├─run_infer_310.sh
+    └─run_standalone_train.sh
   ├─src
     ├─__init__.py
     ├─beam_search.py
@@ -93,6 +96,10 @@ python eval.py > eval.log 2>&1 &
     └─weight_init.py
   ├─create_data.py
   ├─eval.py
+  ├─export.py
+  ├─mindspore_hub_conf.py
+  ├─postprocess.py
+  ├─preprocess.py
   └─train.py
 ```
 
@@ -201,7 +208,7 @@ Parameters for learning rate:
 - Run `run_standalone_train.sh` for non-distributed training of Transformer model.
 
     ``` bash
-    sh scripts/run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE DATA_PATH
+    sh scripts/run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE GRADIENT_ACCUMULATE_STEP DATA_PATH
     ```
 
 - Run `run_distribute_train_ascend.sh` for distributed training of Transformer model.

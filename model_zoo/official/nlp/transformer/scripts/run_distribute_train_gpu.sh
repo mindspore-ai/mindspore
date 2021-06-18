@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+if [ $# != 3 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_pretrain_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_PATH"
+echo "sh run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_PATH"
 echo "for example: sh run_distribute_pretrain.sh 8 55 /path/ende-l128-mindrecord00"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
+exit 1;
+fi
 
 rm -rf run_distribute_train
 mkdir run_distribute_train
