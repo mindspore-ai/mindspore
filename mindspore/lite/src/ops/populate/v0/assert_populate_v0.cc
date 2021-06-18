@@ -33,6 +33,6 @@ OpParameter *PopulateAssertParameter(const void *prim) {
 }
 }  // namespace
 
-Registry g_assertV0ParameterRegistry(schema::v0::PrimitiveType_Assert, PopulateAssertParameter, SCHEMA_CUR);
+Registry g_assertV0ParameterRegistry(schema::v0::PrimitiveType_Assert, PopulateAssertParameter, SCHEMA_V0);
 }  // namespace lite
 }  // namespace mindspore

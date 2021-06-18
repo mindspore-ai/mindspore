@@ -47,10 +47,14 @@ int SpliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (param == NULL) {
     return NNACL_NULL_PTR;
   }
-  int context_size = param->context_dim_;
   int out_dim = param->output_dim_;
   ShapeSet(output->shape_, &output->shape_size_, inputs[max_dims_idx]->shape_, inputs[max_dims_idx]->shape_size_);
-  output->shape_[1] = input->shape_[1] - context_size + 1;
+
+  if (param->forward_indexes_dim_ % param->context_dim_ != 0) {
+    return NNACL_PARAM_INVALID;
+  }
+  int out_size = param->forward_indexes_dim_ / param->context_dim_;
+  output->shape_[1] = out_size;
   output->shape_[2] = out_dim;
   return NNACL_OK;
 }

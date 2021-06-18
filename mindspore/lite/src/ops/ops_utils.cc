@@ -780,6 +780,26 @@ std::unique_ptr<schema::PrimitiveT> GluPrimitiveCreator(const AnfNodePtr &node) 
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
+std::unique_ptr<schema::PrimitiveT> TensorArrayPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorArray>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
+std::unique_ptr<schema::PrimitiveT> TensorArrayReadPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorArrayRead>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
+std::unique_ptr<schema::PrimitiveT> TensorArrayWritePrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorArrayWrite>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
+std::unique_ptr<schema::PrimitiveT> AffinePrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Affine>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
 RegistryMSOps g_absPrimitiveCreatorRegistry("Abs", AbsPrimitiveCreator);
 RegistryMSOps g_absGradPrimitiveCreatorRegistry("AbsGrad", AbsGradPrimitiveCreator);
 RegistryMSOps g_activationPrimitiveCreatorRegistry("Activation", ActivationPrimitiveCreator);
@@ -999,6 +1019,10 @@ RegistryMSOps g_CallPrimitiveCreatorRegistry("call", CallPrimitiveCreator);
 RegistryMSOps g_CumSumPrimitiveCreatorRegistry("CumSum", CumSumPrimitiveCreator);
 RegistryMSOps g_SplitWithOverlapCreatorRegistry("SplitWithOverlap", SplitWithOverlapPrimitiveCreator);
 RegistryMSOps g_GluCreatorRegistry("GLU", GluPrimitiveCreator);
+RegistryMSOps g_TensorArrayCreatorRegistry("TensorArray", TensorArrayPrimitiveCreator);
+RegistryMSOps g_TensorArrayReadCreatorRegistry("TensorArrayRead", TensorArrayReadPrimitiveCreator);
+RegistryMSOps g_TensorArrayWriteCreatorRegistry("TensorArrayWrite", TensorArrayWritePrimitiveCreator);
+RegistryMSOps g_AffineCreatorRegistry("Affine", AffinePrimitiveCreator);
 
 std::unique_ptr<schema::PrimitiveT> CustomPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Custom>>(node);

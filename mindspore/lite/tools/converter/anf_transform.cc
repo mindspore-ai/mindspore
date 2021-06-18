@@ -21,6 +21,8 @@
 #include "src/common/log_adapter.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ir/primitive.h"
+#include "tools/optimizer/fusion/affine_activation_fusion.h"
+#include "tools/optimizer/fusion/affine_fusion.h"
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include "tools/optimizer/fusion/conv_activation_fusion.h"
 #include "tools/optimizer/fusion/conv_tuple_activation_fusion.h"
@@ -42,6 +44,7 @@
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
 #include "tools/optimizer/fusion/squeeze_fusion.h"
+#include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
@@ -101,6 +104,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     fusion_pm->AddPass(std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>());
     fusion_pm->AddPass(std::make_shared<opt::GLUFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
+    fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
   }
   if (config->fmk == lite::converter::FmkType_MS) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
@@ -190,6 +195,7 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
+  graph_pm->AddPass(std::make_shared<opt::AddTensorArray>());
   optimizer->AddPassManager(graph_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run  graph pass failed.";
