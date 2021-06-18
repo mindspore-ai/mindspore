@@ -36,7 +36,7 @@ def _reset_op_seed():
 
 def set_seed(seed):
     """
-    Set global random seed.
+    Set global seed.
 
     Note:
         The global seed is used by numpy.random, mindspore.common.Initializer, mindspore.ops.composite.random_ops and
@@ -57,12 +57,16 @@ def set_seed(seed):
         TypeError: If seed isn't a int.
 
     Examples:
-        >>> from mindspore.ops import composite as C
+        >>> import numpy as np
+        >>> from mindspore.ops as ops
         >>> from mindspore import Tensor
+        >>> from mindspore.common import set_seed
+        >>> from mindspore.common.initializer import initializer
+        >>> from mindspore.common.parameter import Parameter
         >>>
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
         >>> # (2) Because Composite-level ops need parameters to be Tensors, for below examples,
-        >>> # when using C.uniform operator, minval and maxval are initialised as:
+        >>> # when using ops.uniform operator, minval and maxval are initialised as:
         >>> minval = Tensor(1.0, ms.float32)
         >>> maxval = Tensor(2.0, ms.float32)
         >>>
@@ -92,58 +96,57 @@ def set_seed(seed):
         >>>
         >>> # 3. If neither global seed nor op seed is set, mindspore.ops.composite.random_ops and
         >>> # mindspore.nn.probability.distribution will choose a random seed:
-        >>> c1 = C.uniform((1, 4), minval, maxval) # C1
-        >>> c2 = C.uniform((1, 4), minval, maxval) # C2
+        >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval) # C2
         >>> # Rerun the program will get different results:
-        >>> c1 = C.uniform((1, 4), minval, maxval) # C3
-        >>> c2 = C.uniform((1, 4), minval, maxval) # C4
+        >>> c1 = ops.uniform((1, 4), minval, maxval) # C3
+        >>> c2 = ops.uniform((1, 4), minval, maxval) # C4
         >>>
         >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.composite.random_ops and
         >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
         >>> # default op seed. Each call will change the default op seed, thus each call get different
         >>> # results.
         >>> set_seed(1234)
-        >>> c1 = C.uniform((1, 4), minval, maxval) # C1
-        >>> c2 = C.uniform((1, 4), minval, maxval) # C2
+        >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval) # C2
         >>> # Rerun the program will get the same results:
         >>> set_seed(1234)
-        >>> c1 = C.uniform((1, 4), minval, maxval) # C1
-        >>> c2 = C.uniform((1, 4), minval, maxval) # C2
+        >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval) # C2
         >>>
         >>> # 5. If both global seed and op seed are set, mindspore.ops.composite.random_ops and
         >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
         >>> # op seed counter. Each call will change the op seed counter, thus each call get different
         >>> # results.
         >>> set_seed(1234)
-        >>> c1 = C.uniform((1, 4), minval, maxval, seed=2) # C1
-        >>> c2 = C.uniform((1, 4), minval, maxval, seed=2) # C2
+        >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>> # Rerun the program will get the same results:
         >>> set_seed(1234)
-        >>> c1 = C.uniform((1, 4), minval, maxval, seed=2) # C1
-        >>> c2 = C.uniform((1, 4), minval, maxval, seed=2) # C2
+        >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>>
         >>> # 6. If op seed is set but global seed is not set, 0 will be used as global seed. Then
         >>> # mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution act as in
         >>> # condition 5.
-        >>> c1 = C.uniform((1, 4), minval, maxval, seed=2) # C1
-        >>> c2 = C.uniform((1, 4), minval, maxval, seed=2) # C2
+        >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>> # Rerun the program will get the same results:
-        >>> c1 = C.uniform((1, 4), minval, maxval, seed=2) # C1
-        >>> c2 = C.uniform((1, 4), minval, maxval, seed=2) # C2
+        >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>>
         >>> # 7. Recall set_seed() in the program will reset numpy seed and op seed counter of
         >>> # mindspore.ops.composite.random_ops and mindspore.nn.probability.distribution.
         >>> set_seed(1234)
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
-        >>> c1 = C.uniform((1, 4), minval, maxval, seed=2) # C1
+        >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> set_seed(1234)
         >>> np_2 = np.random.normal(0, 1, [1]).astype(np.float32) # still get A1
-        >>> c2 = C.uniform((1, 4), minval, maxval, seed=2) # still get C1
+        >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # still get C1
     """
     if not isinstance(seed, int):
         raise TypeError("The seed must be type of int.")
     Validator.check_non_negative_int(seed, "seed", "global_seed")
-    # We put import here to solve an ut/cpp core issue
     import mindspore.dataset as de
     np.random.seed(seed)
     de.config.set_seed(seed)
@@ -171,10 +174,10 @@ def _truncate_seed(seed):
 
 def _update_seeds(op_seed, kernel_name):
     """
-    Update the seed every time when a random op is called.
+    Update the seed every time when the op seed is called.
 
     Args:
-        op_seed (int): The op-seed to be updated.
+        op_seed (int): The op seed to be updated.
         kernel_name (string): The random op kernel.
     """
     global _KERNEL_SEED
@@ -188,7 +191,7 @@ def _get_op_seed(op_seed, kernel_name):
     If the seed does not exist, add it into the kernel's dictionary.
 
     Args:
-        op_seed (int): The op-seed to be updated.
+        op_seed (int): The op seed to be updated.
         kernel_name (string): The random op kernel.
     """
     if (kernel_name, op_seed) not in _KERNEL_SEED:
