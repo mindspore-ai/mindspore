@@ -30,6 +30,7 @@
 #include "ops/neg.h"
 #include "ops/mul.h"
 #include "ops/sub.h"
+#include "ops/strided_slice.h"
 #include "abstract/abstract_function.h"
 #include "abstract/infer_functions.h"
 #include "ops/tile.h"
@@ -217,6 +218,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimRealDiv, {ops::RealDivInfer, nullptr, false}},
     {prim::kPrimShape, {InferImplShape, nullptr, false}},
     {prim::kPrimTranspose, {InferImplTranspose, nullptr, true}},
+    {prim::kPrimStridedSlice, {ops::StridedSliceInfer, nullptr, true}},
     {prim::kPrimReshape, {InferImplReshape, nullptr, true}},
     {prim::kPrimConcat, {InferImplConcat, nullptr, true}},
     {prim::kPrimArgMaxWithValue, {InferImplArgMaxWithValue, nullptr, true}},
