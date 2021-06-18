@@ -42,7 +42,7 @@ bool IsSpecialType(const CNodePtr &cnode) {
 STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *tensor_info, const CNodePtr &cnode, size_t index) {
   AbstractBasePtr abstract = GetCNodeInputAbstract(cnode, index);
   if (abstract == nullptr) {
-    MS_LOG(ERROR) << "Abstract of CNode: " << cnode->fullname_with_scope() << " is nullptr";
+    MS_LOG(WARNING) << "Abstract of CNode: " << cnode->fullname_with_scope() << " is nullptr, infershape is delayed.";
     return RET_ERROR;
   }
   if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
@@ -241,7 +241,7 @@ STATUS InferShapePass::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<
   MS_ASSERT(output_tensors != nullptr);
   auto abstract = cnode->abstract();
   if (abstract == nullptr) {
-    MS_LOG(ERROR) << "node " << cnode->fullname_with_scope() << " abstract is nullptr";
+    MS_LOG(WARNING) << "node " << cnode->fullname_with_scope() << " abstract is nullptr, infershape is delayed.";
     return RET_ERROR;
   }
   std::vector<TypeId> types;

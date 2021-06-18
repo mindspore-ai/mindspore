@@ -222,7 +222,7 @@ bool SparsityCompress(const std::set<T> &quant_data_set, const std::map<T, size_
   tensor->data.resize(new_data_str.size());
 
   tensor->weightQunatCompressType = schema::WeightQunatCompressType_SPARSE;
-  MS_LOG(ERROR) << "set WeightQunatCompressType_SPARSITY";
+  MS_LOG(INFO) << "set WeightQunatCompressType_SPARSITY";
   return true;
 }
 
