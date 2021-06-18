@@ -69,6 +69,14 @@ TEST:
     BBOX_THRE: 1.0
     IMAGE_THRE: 0.0
     NMS_THRE: 1.0
+#export-related
+EXPORT:
+    FILE_NAME: 'simple_pose'
+    FILE_FORMAT: 'MINDIR'
+#310 infer-related
+INFER:
+    PRE_RESULT_PATH: './preprocess_Result'
+    POST_RESULT_PATH: './result_Files'
 ---
 
 # Help description for each configuration
