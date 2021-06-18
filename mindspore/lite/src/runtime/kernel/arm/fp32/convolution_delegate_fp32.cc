@@ -118,7 +118,6 @@ int ConvolutionDelegateCPUKernel::ReSize() {
       MS_LOG(ERROR) << "Selecting execute kernel failed for conv_kernel, got a nullptr.";
       return RET_ERROR;
     }
-    // conv_kernel_->set_name(this->name_);
   }
   FreeCopiedData();
   return conv_kernel_->ReSize();
