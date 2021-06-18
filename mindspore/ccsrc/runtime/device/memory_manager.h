@@ -20,14 +20,12 @@
 #include <utility>
 #include <vector>
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
-#include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 #include "backend/optimizer/somas/somas.h"
 namespace mindspore {
 namespace device {
-enum MemType { kStaticMem, kDynamicMem, kReuseDynamicMem, kSomasReuseDynamicMem, kReuseDynamicCommMem };
+enum MemType { kStaticMem, kDynamicMem, kSomasReuseDynamicMem };
 const int kGetAllOuts = -1;
 const uint64_t kMemAlignSize = 512;
-using MemReuseUtilPtr = mindspore::memreuse::MemReuseUtilPtr;
 using SomasPtr = mindspore::somas::SomasPtr;
 
 class MemoryManager {
@@ -43,7 +41,6 @@ class MemoryManager {
   }
   virtual void ClearGlobalIdleMem() {}
 
-  void MallocReusedDynamicMem(const session::KernelGraph *graph);
   virtual void MallocSomasDynamicMem(const session::KernelGraph *graph);
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
                            const DeviceAddressPtr &address, bool comm_mem);
@@ -72,7 +69,6 @@ class MemoryManager {
   uint64_t static_mem_offset_{0};
   size_t total_static_size_ = 0;
   size_t total_dynamic_size_ = 0;
-  MemReuseUtilPtr mem_reuse_util_ptr_{nullptr};
   SomasPtr somas_reuse_util_ptr_{nullptr};
 };
 }  // namespace device

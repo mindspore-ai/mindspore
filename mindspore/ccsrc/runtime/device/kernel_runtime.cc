@@ -276,7 +276,7 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
 void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  MS_LOG(INFO) << "AssignStaticMemoryInput start";
+  MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph->graph_id();
   auto graph_inputs = graph->inputs();
   auto graph_valid_input = graph->valid_inputs();
   graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
@@ -342,8 +342,8 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
 #endif
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
       device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
-      MS_LOG(INFO) << "Malloc Input for graph " << graph->graph_id() << ", node: " << item->fullname_with_scope()
-                   << " index: " << index << " size: " << tensor_size;
+      MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
+                   << " node:" << item->fullname_with_scope() << " index: " << index;
       if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph->graph_id()) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
@@ -355,7 +355,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
 
 void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "AssignStaticMemoryOutput start";
+  MS_LOG(INFO) << "AssignStaticMemoryOutput start for graph " << graph->graph_id();
   auto nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   std::vector<session::KernelWithIndex> non_communication_op;
   // Assign Communicate Op Memory firstly.
@@ -500,12 +500,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
     return;
   }
 
-  if (type == kReuseDynamicMem) {
-    // reuse communication op's all outputs' memory
-    type = kReuseDynamicCommMem;
-  }
-
-  if (type == kReuseDynamicCommMem || type == kSomasReuseDynamicMem) {
+  if (type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
       type = kDynamicMem;
@@ -588,7 +583,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
     return;
   }
 
-  if (type == kReuseDynamicMem || type == kSomasReuseDynamicMem) {
+  if (type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
       type = kDynamicMem;
@@ -616,20 +611,8 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
 void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, int index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  if (AnfAlgo::IsGetNext(NOT_NULL(node)) && type == kReuseDynamicMem) {
-    MS_LOG(INFO) << "GetNext disable mem_reuse";
-    type = kDynamicMem;
-  }
 
-  if (node->isa<CNode>()) {
-    bool independent = AnfAlgo::IsIndependentNode(node->cast<CNodePtr>());
-    if (independent && (type == kReuseDynamicMem)) {
-      MS_LOG(INFO) << "Independent node " << node->fullname_with_scope() << " disable memory reuse";
-      type = kDynamicMem;
-    }
-  }
-
-  if (type == kReuseDynamicMem || type == kSomasReuseDynamicMem) {
+  if (type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
       type = kDynamicMem;
@@ -652,6 +635,10 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
       continue;
     }
     MS_LOG(DEBUG) << "Assign Node:" << node->fullname_with_scope() << " output memory size:" << output_sizes[i];
+    if (type == kStaticMem) {
+      MS_LOG(INFO) << "Assign Static Memory for Output node, size:" << output_sizes[i]
+                   << " node:" << node->fullname_with_scope();
+    }
     std::string output_format = AnfAlgo::GetOutputFormat(node, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
@@ -699,8 +686,12 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
         !mem_manager_->MallocMemFromMemPool(address, node_size)) {
       MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << node_size;
-    } else if (mem_manager_->MallocMem(kStaticMem, node_size, address, graph_id) == nullptr) {
-      MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << node_size;
+    } else {
+      MS_LOG(INFO) << "Assign Static Memory for Value node, size:" << node_size
+                   << " node:" << value_node->fullname_with_scope();
+      if (mem_manager_->MallocMem(kStaticMem, node_size, address, graph_id) == nullptr) {
+        MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << node_size;
+      }
     }
     AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
     if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
@@ -717,7 +708,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
 void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  MS_LOG(DEBUG) << "AssignStaticMemoryValueNode start";
+  MS_LOG(DEBUG) << "AssignStaticMemoryValueNode start for graph " << graph->graph_id();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // order the value nodes
@@ -747,8 +738,13 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
       if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
           !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
         MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << tensor_size;
-      } else if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph->graph_id()) == nullptr) {
-        MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
+      } else {
+        MS_LOG(INFO) << "Assign Static Memory for Value node, size:" << tensor_size
+                     << " node:" << value_node->fullname_with_scope();
+        if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph->graph_id()) == nullptr) {
+          MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem
+                            << ", tensor size is: " << tensor_size;
+        }
       }
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
       ShapeVector shape = {1, SizeToLong(tensor_size)};
@@ -776,13 +772,8 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
 
   if (is_enable_mem_reuse) {
     MS_LOG(INFO) << "Memory Reuse is enable...";
-#ifdef MEM_REUSE_DEBUG
-    mem_manager_->MallocReusedDynamicMem(graph);
-    mem_type = kReuseDynamicMem;
-#else
     mem_manager_->MallocSomasDynamicMem(graph);
     mem_type = kSomasReuseDynamicMem;
-#endif
   } else {
     MS_LOG(INFO) << "Memory Reuse is disable...";
   }
@@ -973,8 +964,8 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       MS_EXCEPTION_IF_NULL(kernel_mod);
 
       // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
-      // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata. And
-      // hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
+      // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
+      // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
       if (AnfAlgo::HasNodeAttr("nop_op", kernel)) {
         for (size_t idx = 0; idx < AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
           auto real_input = AnfAlgo::GetRealInputIndex(kernel, idx);

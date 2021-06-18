@@ -26,7 +26,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 namespace mindspore {
 namespace memreuse {
 constexpr auto kSplitC = '/';

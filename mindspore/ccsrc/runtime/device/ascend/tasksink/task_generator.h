@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <fstream>
 #include "runtime/device/kernel_runtime.h"
 #include "ir/anf.h"
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
