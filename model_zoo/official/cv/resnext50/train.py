@@ -134,12 +134,17 @@ def set_parameters():
     config.logger = get_logger(config.outputs_dir, config.rank)
     return config
 
+def set_graph_kernel_context(device_target):
+    if device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
+
 @moxing_wrapper()
 def train():
     """training process"""
     set_parameters()
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    set_graph_kernel_context(config.device_target)
 
     # init distributed
     if config.run_distribute:

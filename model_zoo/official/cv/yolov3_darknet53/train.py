@@ -64,7 +64,8 @@ def set_graph_kernel_context():
         context.set_context(enable_graph_kernel=True)
         context.set_context(graph_kernel_flags="--enable_parallel_fusion "
                                                "--disable_expand_ops=BatchNorm,BatchNormGrad "
-                                               "--disable_cluster_ops=ReduceMax,Reshape")
+                                               "--disable_cluster_ops=ReduceMax,Reshape "
+                                               "--enable_expand_ops=Conv2D")
 
 def network_init(args):
     devid = int(os.getenv('DEVICE_ID', '0'))
