@@ -14,12 +14,17 @@
 # limitations under the License.
 # ============================================================================
 
-echo "=============================================================================================================="
-echo "Please run the script as: "
-echo "bash run_eval.sh [TASK_NAME] [DEVICE_TARGET] [EVAL_DATA_DIR] [LOAD_CKPT_PATH]"
-echo "for example: bash run_eval.sh STS-B Ascend /path/sts-b/eval.tf_record /path/xxx.ckpt"
-echo "=============================================================================================================="
+if [ $# != 4 ]
+then
+    echo "============================================================================================================"
+    echo "Please run the script as: "
+    echo "bash run_eval.sh [TASK_NAME] [DEVICE_TARGET] [EVAL_DATA_DIR] [LOAD_CKPT_PATH]"
+    echo "for example: bash run_eval.sh STS-B Ascend /path/sts-b/eval.tf_record /path/xxx.ckpt"
+    echo "============================================================================================================"
+exit 1
+fi
 
+echo "===============================================start evaling================================================"
 
 task_name=$1
 device_target=$2
@@ -33,11 +38,10 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 
 python ${PROJECT_DIR}/../eval.py \
+    --task_name=$task_name \
     --device_target=$device_target \
     --device_id=0 \
-    --task_name=$task_name \
-    --do_shuffle="False" \
     --load_ckpt_path=$load_ckpt_path \
     --eval_data_dir=$eval_data_dir \
-    --do_quant="True" > eval_log.txt 2>&1 &
+    --do_quant=True > eval_log.txt 2>&1 &
 

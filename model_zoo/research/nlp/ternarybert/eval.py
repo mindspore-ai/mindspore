@@ -18,6 +18,7 @@
 import os
 import re
 import argparse
+
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.dataset import create_dataset
@@ -69,7 +70,7 @@ def do_eval_standalone(args_opt):
     eval_dataset = create_dataset(batch_size=eval_cfg.batch_size,
                                   device_num=1,
                                   rank=0,
-                                  do_shuffle='false',
+                                  do_shuffle=False,
                                   data_dir=eval_data_dir,
                                   data_type=args_opt.dataset_type,
                                   seq_length=task.seq_length,

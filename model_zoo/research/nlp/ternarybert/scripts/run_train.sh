@@ -14,14 +14,32 @@
 # limitations under the License.
 # ============================================================================
 
+if [ $# != 5 ]
+then
+    echo "============================================================================================================"
+    echo "Please run the script as: "
+    echo "sh scripts/run_train.sh [TASK_NAME] [DEVICE_TARGET] [TEACHER_MODEL_DIR] [STUDENT_MODEL_DIR] [DATA_DIR]"
+    echo "============================================================================================================"
+exit 1
+fi
+
+echo "===============================================start training==============================================="
+
+task_name=$1
+device_target=$2
+teacher_model_dir=$3
+student_model_dir=$4
+data_dir=$5
+
 mkdir -p ms_log
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../train.py \
-    --task_name=sts-b \
+    --task_name=$task_name \
+    --device_target=$device_target \
     --device_id=0 \
-    --teacher_model_dir="" \
-    --student_model_dir="" \
-    --data_dir="" > log.txt
+    --teacher_model_dir=$teacher_model_dir \
+    --student_model_dir=$student_model_dir \
+    --data_dir=$data_dir> log.txt 2>&1 &

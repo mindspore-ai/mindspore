@@ -17,6 +17,8 @@
 
 import os
 import argparse
+import ast
+
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.nn.optim import AdamWeightDecay
@@ -38,18 +40,18 @@ def parse_args():
     parser = argparse.ArgumentParser(description='ternarybert task distill')
     parser.add_argument('--device_target', type=str, default='GPU', choices=['Ascend', 'GPU'],
                         help='Device where the code will be implemented. (Default: GPU)')
-    parser.add_argument('--do_eval', type=str, default='true', choices=['true', 'false'],
-                        help='Do eval task during training or not. (Default: true)')
+    parser.add_argument('--do_eval', type=ast.literal_eval, default=True,
+                        help='Do eval task during training or not. (Default: True)')
     parser.add_argument('--epoch_size', type=int, default=3, help='Epoch size for train phase. (Default: 3)')
     parser.add_argument('--device_id', type=int, default=0, help='Device id. (Default: 0)')
-    parser.add_argument('--do_shuffle', type=str, default='true', choices=['true', 'false'],
-                        help='Enable shuffle for train dataset. (Default: true)')
-    parser.add_argument('--enable_data_sink', type=str, default='true', choices=['true', 'false'],
-                        help='Enable data sink. (Default: true)')
+    parser.add_argument('--do_shuffle', type=ast.literal_eval, default=True,
+                        help='Enable shuffle for train dataset. (Default: True)')
+    parser.add_argument('--enable_data_sink', type=ast.literal_eval, default=True,
+                        help='Enable data sink. (Default: True)')
     parser.add_argument('--save_ckpt_step', type=int, default=50,
-                        help='If do_eval is false, the checkpoint will be saved every save_ckpt_step. (Default: 50)')
+                        help='If do_eval is False, the checkpoint will be saved every save_ckpt_step. (Default: 50)')
     parser.add_argument('--eval_ckpt_step', type=int, default=50,
-                        help='If do_eval is true, the evaluation will be ran every eval_ckpt_step. (Default: 50)')
+                        help='If do_eval is True, the evaluation will be ran every eval_ckpt_step. (Default: 50)')
     parser.add_argument('--max_ckpt_num', type=int, default=10,
                         help='The number of checkpoints will not be larger than max_ckpt_num. (Default: 10)')
     parser.add_argument('--data_sink_steps', type=int, default=1, help='Sink steps for each epoch. (Default: 1)')
@@ -82,7 +84,12 @@ def run_task_distill(args_opt):
     eval_data_dir = os.path.join(args_opt.data_dir, args_opt.task_name, EVAL_DATA_NAME)
     save_ckpt_dir = os.path.join(args_opt.output_dir, args_opt.task_name)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args.device_id)
+    if args_opt.device_target == "Ascend":
+        context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
+    elif args_opt.device_target == "GPU":
+        context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+    else:
+        raise Exception("Target error, GPU or Ascend is supported.")
 
     rank = 0
     device_num = 1
@@ -108,7 +115,7 @@ def run_task_distill(args_opt):
                                   drop_remainder=False)
     print('eval dataset size:', eval_dataset.get_dataset_size())
 
-    if args_opt.enable_data_sink == 'true':
+    if args_opt.enable_data_sink:
         repeat_count = args_opt.epoch_size * dataset_size // args_opt.data_sink_steps
     else:
         repeat_count = args_opt.epoch_size
@@ -134,7 +141,7 @@ def run_task_distill(args_opt):
 
     netwithgrads = BertTrainCell(netwithloss, optimizer=optimizer)
 
-    if args_opt.do_eval == 'true':
+    if args_opt.do_eval:
         eval_dataset = list(eval_dataset.create_dict_iterator())
         callback = [EvalCallBack(network=netwithloss.bert,
                                  dataset=eval_dataset,
@@ -155,7 +162,7 @@ def run_task_distill(args_opt):
                                   clip_value=student_net_cfg.weight_clip_value)]
     model = Model(netwithgrads)
     model.train(repeat_count, train_dataset, callbacks=callback,
-                dataset_sink_mode=(args_opt.enable_data_sink == 'true'),
+                dataset_sink_mode=args_opt.enable_data_sink,
                 sink_size=args_opt.data_sink_steps)
 
 

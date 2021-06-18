@@ -14,11 +14,17 @@
 # limitations under the License.
 # ============================================================================
 
-echo "=============================================================================================================="
-echo "Please run the script as: "
-echo "bash run_standalone_train.sh [TASK_NAME] [DEVICE_TARGET] [TRAIN_DATA_DIR] [EVAL_DATA_DIR] [LOAD_CKPT_PATH]"
-echo "for example: bash run_standalone_train.sh STS-B Ascend /path/sts-b/train.tf_record /path/sts-b/eval.tf_record /path/xxx.ckpt"
-echo "=============================================================================================================="
+if [ $# != 5 ]
+then
+    echo "============================================================================================================"
+    echo "Please run the script as: "
+    echo "bash run_standalone_train.sh [TASK_NAME] [DEVICE_TARGET] [TRAIN_DATA_DIR] [EVAL_DATA_DIR] [LOAD_CKPT_PATH]"
+    echo "for example: bash run_standalone_train.sh STS-B Ascend /path/sts-b/train.tf_record /path/sts-b/eval.tf_record /path/xxx.ckpt"
+    echo "============================================================================================================"
+exit 1
+fi
+
+echo "===============================================start training==============================================="
 
 task_name=$1
 device_target=$2
@@ -33,19 +39,15 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 
 python ${PROJECT_DIR}/../train.py \
+    --task_name=$task_name \
     --device_target=$device_target \
     --device_id=0 \
-    --do_eval="True" \
-    --epoch_num=3 \
-    --task_name=$task_name \
-    --do_shuffle="True" \
-    --enable_data_sink="True" \
-    --data_sink_steps=100 \
-    --save_ckpt_step=100 \
-    --max_ckpt_num=1 \
+    --do_eval=True \
     --load_ckpt_path=$load_ckpt_path \
     --train_data_dir=$train_data_dir \
     --eval_data_dir=$eval_data_dir \
+    --epoch_num=3 \
     --logging_step=100 \
-    --do_quant="True" > train_log.txt 2>&1 &
-
+    --data_sink_steps=100 \
+    --save_ckpt_step=100 \
+    --do_quant=True > train_log.txt 2>&1 &

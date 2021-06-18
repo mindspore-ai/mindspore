@@ -114,13 +114,13 @@ python train.py  [--h] [--device_target {GPU,Ascend}] [--epoch_num EPOCH_NUM] [-
                        [--do_quant {True,False}]
 选项：
     --device_target                 代码运行平台，可选项为Ascend或GPU，默认为Ascend
-    --do_eval                       是否在训练的过程中加上推理默认为是
+    --do_eval                       是否在训练的过程中加上推理默认为True
     --epoch_num                     Epoch数，默认为3
     --device_id                     设备ID，默认为0
-    --do_shuffle                    是否使能轮换，可选项为true或false，默认为true
-    --enable_data_sink              是否使能数据下沉，可选项为true或false，默认为true
+    --do_shuffle                    是否数据轮换，可选项为True或False，默认为True
+    --enable_data_sink              是否数据下沉，可选项为True或False，默认为True
     --save_ckpt_step                保存检查点文件的步数，默认为1000
-    --eval_ckpt_step                如过do_eval为是， 在训练过程中执行推理的步数
+    --eval_ckpt_step                当do_eval为True， 在训练过程中执行推理的步数
     --max_ckpt_num                  保存检查点文件的最大数，默认为1
     --data_sink_steps               设置数据下沉步数，默认为1
     --load_ckpt_path                加载检查点文件的路径，默认为""

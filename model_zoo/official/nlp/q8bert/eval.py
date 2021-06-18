@@ -16,6 +16,7 @@
 """q8bert eval"""
 
 import argparse
+import ast
 import numpy as np
 
 from mindspore import context
@@ -34,12 +35,10 @@ def parse_args():
     parser.add_argument("--device_target", type=str, default="Ascend", choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--do_shuffle", type=str, default="False", choices=["True", "False"],
-                        help="Enable shuffle for dataset, default is True.")
     parser.add_argument("--eval_data_dir", type=str, default="",
                         help="Eval data path, it is better to use absolute path")
     parser.add_argument("--load_ckpt_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--do_quant", type=str, default="False", help="Do quant for model")
+    parser.add_argument("--do_quant", type=ast.literal_eval, default=True, help="Do quant for model")
     parser.add_argument("--task_name", type=str, default="STS-B", choices=["STS-B", "QNLI", "SST-2"],
                         help="The name of the task to eval.")
     parser.add_argument("--dataset_type", type=str, default="tfrecord",
@@ -103,8 +102,9 @@ def do_eval():
     device_num = 1
 
     eval_dataset = create_dataset(eval_cfg.batch_size,
-                                  device_num, rank, args_opt.do_shuffle,
-                                  args_opt.eval_data_dir,
+                                  device_num, rank,
+                                  do_shuffle=False,
+                                  data_dir=args_opt.eval_data_dir,
                                   data_type=args_opt.dataset_type,
                                   seq_length=task.seq_length,
                                   drop_remainder=False)

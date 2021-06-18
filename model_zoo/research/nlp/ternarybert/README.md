@@ -19,8 +19,6 @@
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
             - [evaluation on STS-B dataset](#evaluation-on-STS-B-dataset)
-            - [evaluation on QNLI dataset](#evaluation-on-qnli-dataset)
-            - [evaluation on MNLI dataset](#evaluation-on-mnli-dataset)
     - [Model Description](#model-description)
     - [Performance](#performance)
         - [training Performance](#training-performance)
@@ -197,7 +195,7 @@ Parameters for teacher bert network:
     save_ckpt_step                  number for saving checkponit: N, default is 100
     max_ckpt_num                    maximum number for saving checkpoint: N, default is 1
     type_vocab_size                 size of token type vocab: N, default is 2
-    initializer_range               initialization value of TruncatedNormal: Q, default is 0.02
+    initializer_range               initialization value of Normal: Q, default is 0.02
     use_relative_positions          use relative positions or not: True | False, default is False
     dtype                           data type of input: mstype.float16 | mstype.float32, default is mstype.float32
     compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float32
@@ -216,7 +214,7 @@ Parameters for student bert network:
     save_ckpt_step                  number for saving checkponit: N, default is 100
     max_ckpt_num                    maximum number for saving checkpoint: N, default is 1
     type_vocab_size                 size of token type vocab: N, default is 2
-    initializer_range               initialization value of TruncatedNormal: Q, default is 0.02
+    initializer_range               initialization value of Normal: Q, default is 0.02
     use_relative_positions          use relative positions or not: True | False, default is False
     dtype                           data type of input: mstype.float16 | mstype.float32, default is mstype.float32
     compute_type                    compute type in BertTransformer: mstype.float16 | mstype.float32, default is mstype.float32
@@ -238,9 +236,9 @@ Before running the command below, please check `teacher_model_dir`, `student_mod
 ```text
 
 python
-    python train.py --task_name='sts-b' --teacher_model_dir='/home/xxx/model_dir/' --student_model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
+    python train.py --task_name='sts-b' --device_target="Ascend" --teacher_model_dir='/home/xxx/model_dir/' --student_model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
 shell
-    sh scripts/run_train.sh
+    sh scripts/run_train.sh [TASK_NAME] [DEVICE_TARGET] [TEACHER_MODEL_DIR] [STUDENT_MODEL_DIR] [DATA_DIR]
 
 ```
 
@@ -268,9 +266,10 @@ If you want to after running and continue to eval.
 ```text
 
 python
-    python eval.py --task_name='sts-b' --model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
+    python eval.py --task_name='sts-b' --device_target="Ascend" --model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
 shell
-    sh scripts/run_eval.sh
+    sh scripts/run_eval.sh [TASK_NAME] [DEVICE_TARGET] [MODEL_DIR] [DATA_DIR]
+
 
 ```
 
@@ -286,69 +285,21 @@ The best Pearsonr: 87.58388835685437
 
 ```
 
-#### evaluation on QNLI dataset
-
-```text
-
-python
-    python eval.py --task_name='qnli' --model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
-shell
-    sh scripts/run_eval.sh
-
-```
-
-The shell command above will run in the background, you can view the results the file log.txt. The python command will run in the console, you can view the results on the interface. The metric value of the test dataset will be as follows:
-
-```text
-
-eval step: 0, Accuracy: 96.875
-eval step: 1, Accuracy: 89.0625
-eval step: 2, Accuracy: 89.58333333333334
-...
-The best Accuracy: 90.426505583013
-
-```
-
-#### evaluation on MNLI dataset
-
-```text
-
-python
-    python eval.py --task_name='mnli' --model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
-shell
-    sh scripts/run_eval.sh
-
-```
-
-The shell command above will run in the background, you can view the results the file log.txt. The python command will run in the console, you can view the results on the interface. The metric value of the test dataset will be as follows:
-
-```text
-
-eval step: 0, Accuracy: 90.625
-eval step: 1, Accuracy: 81.25
-eval step: 2, Accuracy: 79.16666666666666
-...
-The best Accuracy: 83.58388835685436
-
-```
-
 ## [Model Description](#contents)
 
 ## [Performance](#contents)
 
 ### training Performance
 
-| Parameters        | GPU                                                   |
-| ----------------- | :---------------------------------------------------- |
-| Model Version     | TernaryBERT                                           |
-| Resource          | NV SMX2 V100-32G                                      |
-| uploaded Date     | 02/01/2020                                            |
-| MindSpore Version | 1.1.0                                                 |
-| Dataset           | STS-B                                                 |
-| batch_size        | 16                                                    |
-| Metric value      | 87.5839                                               |
-| Speed             | 0.19s/step                                             |
-| Total time        | 6.7min(3epoch, 1p)                                    |
+| Parameters                   | Ascend                                                     | GPU                       |
+| -------------------------- | ---------------------------------------------------------- | ------------------------- |
+| Model Version              | TernaryBERT                                                   | TernaryBERT                           |
+| Resource                   | Ascend 910, cpu 2.60GHz, cores 172, mem 755G, os Euler2.8               | NV GeForce GTX1080ti, cpu 2.00GHz, cores 56, mem 251G, os Ubuntu 16.04         |
+| Date              | 2021-6-10                                           | 2021-6-10      |
+| MindSpore Version          | 1.2.0                                                      | 1.2.0                     |
+| Dataset                    | STS-B                                                | STS-B              |
+| batch_size                    | 16                                                | 16              |
+| Metric value                 | 87.1                                                        | 87.5                       |
 
 # [Description of Random Situation](#contents)
 

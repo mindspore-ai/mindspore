@@ -17,6 +17,7 @@
 
 import argparse
 import os
+import ast
 
 from mindspore import context
 from mindspore import set_seed
@@ -39,23 +40,22 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Q8Bert task train")
     parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
                         help="device where the code will be implemented. (Default: Ascend)")
-    parser.add_argument("--do_eval", type=str, default="True", choices=["True", "False"],
-                        help="Do eval task, default is True.")
+    parser.add_argument("--do_eval", type=ast.literal_eval, default=True, help="Do eval task, default is True.")
     parser.add_argument("--epoch_num", type=int, default=3, help="default is 3.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--do_shuffle", type=str, default="True", choices=["True", "False"],
+    parser.add_argument("--do_shuffle", type=ast.literal_eval, default=True,
                         help="Enable shuffle for dataset, default is True.")
-    parser.add_argument("--enable_data_sink", type=str, default="True", choices=["True", "False"],
+    parser.add_argument("--enable_data_sink", type=ast.literal_eval, default=True,
                         help="Enable data sink, default is True.")
     parser.add_argument("--save_ckpt_step", type=int, default=100, help="Enable save ckpt.")
-    parser.add_argument("--max_ckpt_num", type=int, default=1, help="Enable data sink, default is True.")
+    parser.add_argument("--max_ckpt_num", type=int, default=1, help="Number of saved pretrained models, default is 1.")
     parser.add_argument("--data_sink_steps", type=int, default=1, help="Sink steps for each epoch, default is 1.")
     parser.add_argument("--load_ckpt_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--train_data_dir", type=str, default="",
                         help="Train data path, it is better to use absolute path")
     parser.add_argument("--eval_data_dir", type=str, default="",
                         help="Eval data path, it is better to use absolute path")
-    parser.add_argument("--do_quant", type=str, default="True", help="Do quant for model")
+    parser.add_argument("--do_quant", type=ast.literal_eval, default=True, help="Do quant for model")
     parser.add_argument("--logging_step", type=int, default=100, help="Do evalate each logging step")
     parser.add_argument("--task_name", type=str, default="STS-B", choices=["STS-B", "QNLI", "SST-2"],
                         help="The name of the task to train.")
@@ -133,7 +133,7 @@ def do_train():
 
     dataset_size = train_dataset.get_dataset_size()
     print("train dataset size: ", dataset_size)
-    if args_opt.enable_data_sink == "True":
+    if args_opt.enable_data_sink:
         repeat_count = args_opt.epoch_num * train_dataset.get_dataset_size() // args_opt.data_sink_steps
         time_monitor_steps = args_opt.data_sink_steps
     else:
@@ -164,7 +164,7 @@ def do_train():
                                   drop_remainder=False)
     print("eval dataset size: ", eval_dataset.get_dataset_size())
 
-    if args_opt.do_eval == "True":
+    if args_opt.do_eval:
         callback = [TimeMonitor(time_monitor_steps), LossCallBack(),
                     EvalCallBack(netwithloss.bert, eval_dataset, args_opt.task_name, args_opt.logging_step,
                                  save_ckpt_dir)]
@@ -183,7 +183,7 @@ def do_train():
         netwithgrads = BertEvaluationCell(netwithloss, optimizer=optimizer)
     model = Model(netwithgrads)
     model.train(repeat_count, train_dataset, callbacks=callback,
-                dataset_sink_mode=(args_opt.enable_data_sink == "True"),
+                dataset_sink_mode=args_opt.enable_data_sink,
                 sink_size=args_opt.data_sink_steps)
 
 

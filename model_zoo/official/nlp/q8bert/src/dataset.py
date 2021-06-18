@@ -27,7 +27,7 @@ class DataType(Enum):
     MINDRECORD = 2
 
 
-def create_dataset(batch_size=32, device_num=1, rank=0, do_shuffle="True", data_dir=None, data_type=DataType.TFRECORD,
+def create_dataset(batch_size=32, device_num=1, rank=0, do_shuffle=True, data_dir=None, data_type=DataType.TFRECORD,
                    seq_length=128, drop_remainder=True):
     """create q8bert dataset"""
     if isinstance(data_dir, list):
@@ -37,17 +37,16 @@ def create_dataset(batch_size=32, device_num=1, rank=0, do_shuffle="True", data_
 
     columns_list = ["input_ids", "input_mask", "segment_ids", "label_ids"]
     shard_equal_rows = True
-    shuffle = (do_shuffle == "True")
     if device_num == 1:
         shard_equal_rows = False
     if data_type == DataType.MINDRECORD:
-        ds = de.MindDataset(data_files, columns_list=columns_list, shuffle=shuffle,
+        ds = de.MindDataset(data_files, columns_list=columns_list, shuffle=do_shuffle,
                             num_shards=device_num, shard_id=rank)
     else:
-        ds = de.TFRecordDataset(data_files, None, columns_list=columns_list, shuffle=shuffle,
+        ds = de.TFRecordDataset(data_files, None, columns_list=columns_list, shuffle=do_shuffle,
                                 num_shards=device_num, shard_id=rank,
                                 shard_equal_rows=shard_equal_rows)
-    if device_num == 1 and shuffle is True:
+    if device_num == 1 and do_shuffle is True:
         ds = ds.shuffle(10000)
     type_cast_op = C.TypeCast(mstype.int32)
     slice_op = C.Slice(slice(0, seq_length, 1))
