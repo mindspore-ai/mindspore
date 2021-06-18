@@ -30,6 +30,7 @@ do
     rm -rf log$i
     mkdir ./log$i
     cp *.py ./log$i
+    cp *.yaml ./log$i
     cp -r src ./log$i
     cd ./log$i || exit
     echo "start training for rank $i, device $DEVICE_ID"

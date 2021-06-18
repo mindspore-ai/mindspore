@@ -23,8 +23,7 @@ import numpy as np
 import pandas as pd
 import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
-
-from .config import DataConfig
+from .model_utils.config import config
 
 
 class DataType(Enum):
@@ -49,8 +48,8 @@ class H5Dataset():
     max_length = 39
 
     def __init__(self, data_path, train_mode=True,
-                 train_num_of_parts=DataConfig.train_num_of_parts,
-                 test_num_of_parts=DataConfig.test_num_of_parts):
+                 train_num_of_parts=config.train_num_of_parts,
+                 test_num_of_parts=config.test_num_of_parts):
         self._hdf_data_dir = data_path
         self._is_training = train_mode
         if self._is_training:
