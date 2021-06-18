@@ -64,6 +64,7 @@ class TestCustomOp : public Kernel {
  private:
   int PreProcess() {
     for (auto *output : outputs_) {
+      // malloc data for output tensor
       auto data = output->MutableData();
       if (data == nullptr) {
         MS_LOG(ERROR) << "Get data failed";
@@ -111,6 +112,7 @@ class TestCustomOpInfer : public KernelInterface {
   ~TestCustomOpInfer() = default;
   int Infer(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
             const schema::Primitive *primitive) override {
+    outputs[0]->set_format(inputs[0]->format());
     outputs[0]->set_data_type(inputs[0]->data_type());
     outputs[0]->set_shape(inputs[0]->shape());
     return RET_OK;
