@@ -221,8 +221,12 @@ enum PrimType {
   PrimType_GenOP = 194,
   PrimType_RaggedRange = 195,
   PrimType_GLU = 196,
+  PrimType_TensorArray = 197,
+  PrimType_TensorArrayRead = 198,
+  PrimType_TensorArrayWrite = 199,
+  PrimType_Affine = 200,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_GLU + 1
+  PrimType_MAX = PrimType_Affine + 1
 };
 
 void RegInfer(int prim_type, InferShape func);

@@ -24,6 +24,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_Splice;
 namespace mindspore::kernel {
 int SpliceCPUKernel::Init() { return RET_OK; }
@@ -50,6 +51,16 @@ int SpliceCPUKernel::Run() {
   if (src_col * parameter_->context_dim_ != dst_col) {
     MS_LOG(ERROR) << "splice kernel src_col not match dst_col";
     return RET_ERROR;
+  }
+  if (parameter_->context_dim_ * dst_row != parameter_->forward_indexes_dim_) {
+    MS_LOG(ERROR) << "splice kernel param not match dst_row";
+    return RET_PARAM_INVALID;
+  }
+  for (int i = 0; i < parameter_->forward_indexes_dim_; ++i) {
+    if (parameter_->forward_indexes_[i] >= src_row) {
+      MS_LOG(ERROR) << "splice kernel param not match dst_row";
+      return RET_PARAM_INVALID;
+    }
   }
   auto input_data = reinterpret_cast<float *>(input_tensor->data_c());
   auto output_data = reinterpret_cast<float *>(output_tensor->data_c());

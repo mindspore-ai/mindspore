@@ -44,6 +44,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/common/pass_manager_extends.cc
         ../optimizer/common/gllo_utils.cc
         ../optimizer/common/format_utils.cc
+        ../optimizer/fusion/affine_activation_fusion.cc
+        ../optimizer/fusion/affine_fusion.cc
         ../optimizer/fusion/conv_biasadd_fusion.cc
         ../optimizer/fusion/conv_activation_fusion.cc
         ../optimizer/fusion/conv_tuple_activation_fusion.cc
@@ -77,6 +79,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/parallel/multi_node_split.cc
         ../optimizer/parallel/multi_conv_info.cc
         ../optimizer/parallel/parallel_pass.cc
+        ../optimizer/graph/add_tensor_array.cc
         ../optimizer/parallel/conv2d_info.cc
         ../optimizer/parallel/depthwise_conv2d_info.cc
         ../optimizer/parallel/operator_info.cc

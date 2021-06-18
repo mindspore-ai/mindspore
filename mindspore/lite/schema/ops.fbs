@@ -214,6 +214,10 @@ union PrimitiveType {
     GenOP,
     RaggedRange,
     GLU,
+    TensorArray,
+    TensorArrayRead,
+    TensorArrayWrite,
+    Affine,
 }
 
 table Abs {
@@ -1171,4 +1175,25 @@ table RaggedRange {
 
 table GLU {
     axis: long = -1;
+}
+
+table TensorArray {
+    dynamic_size: bool = false;
+    identical_element_shapes: bool = false;
+    element_shape: [int];
+    data_type: int;
+}
+
+table TensorArrayRead {
+}
+
+table TensorArrayWrite {
+}
+
+table Affine {
+    context: [long];
+    output_dim: long;
+    activation_type: ActivationType = 0;
+    transpose_a: bool = false;
+    transpose_b: bool = false;
 }

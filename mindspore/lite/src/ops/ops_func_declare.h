@@ -241,6 +241,10 @@
 #include "ops/cumsum.h"
 #include "ops/split_with_overlap.h"
 #include "ops/glu.h"
+#include "ops/tensor_array.h"
+#include "ops/tensor_array_read.h"
+#include "ops/tensor_array_write.h"
+#include "ops/affine.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -450,6 +454,10 @@ FUNC_MSOP2SCHEMAOP_DECLARE(Call)
 FUNC_MSOP2SCHEMAOP_DECLARE(CumSum)
 FUNC_MSOP2SCHEMAOP_DECLARE(SplitWithOverlap)
 FUNC_MSOP2SCHEMAOP_DECLARE(GLU)
+FUNC_MSOP2SCHEMAOP_DECLARE(TensorArray)
+FUNC_MSOP2SCHEMAOP_DECLARE(TensorArrayRead)
+FUNC_MSOP2SCHEMAOP_DECLARE(TensorArrayWrite)
+FUNC_MSOP2SCHEMAOP_DECLARE(Affine)
 #endif
 }  // namespace mindspore::lite::ops
 #else

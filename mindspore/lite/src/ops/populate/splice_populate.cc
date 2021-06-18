@@ -80,6 +80,8 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
     return nullptr;
   }
   memset(param->forward_indexes_, 0, param->forward_indexes_dim_ * sizeof(int));
+  memcpy(param->forward_indexes_, primitive_forward_indexes.data(), param->forward_indexes_dim_ * sizeof(int));
+
   for (int i = 0; i < param->context_dim_; ++i) {
     param->context_[i] = primitive_context.at(i);
   }

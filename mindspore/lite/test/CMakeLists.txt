@@ -190,6 +190,8 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/common/format_utils.cc
+            ${LITE_DIR}/tools/optimizer/fusion/affine_activation_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/affine_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_biasadd_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_activation_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_tuple_activation_fusion.cc
@@ -215,6 +217,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/tf_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/onnx_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/squeeze_fusion.cc
+            ${LITE_DIR}/tools/optimizer/graph/add_tensor_array.cc
             ${LITE_DIR}/tools/optimizer/graph/conv1d_weight_expanding_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/group_depthwise_op_convert_pass.cc
