@@ -20,16 +20,14 @@
 
 int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
   for (size_t i = 0; i < inputs_size; i++) {
     if (inputs[i] == NULL) {
       return NNACL_NULL_PTR;
     }
   }
-  if (2 * (inputs_size - 1) != outputs_size) {
+  if (outputs_size < 1 || 2 * (inputs_size - 1) != outputs_size) {
     return NNACL_ERR;
   }
-#endif
 
   for (size_t i = 0; i < outputs_size / 2; i++) {
     outputs[i] = (TensorC *)inputs[i + 1];

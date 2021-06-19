@@ -20,13 +20,11 @@
 
 int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
   int check_ret =
     CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 2 * outputs_size + 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;

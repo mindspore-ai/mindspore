@@ -52,12 +52,10 @@ int ReduceOnSelectedAxes(const TensorC *input, size_t num_axes, const int *actua
 
 int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -65,6 +63,9 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   ReduceParameter *param = (ReduceParameter *)parameter;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
+  }
+  if (input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
   }
   bool keep_dims = param->keep_dims_;
   int out_shape[MAX_SHAPE_SIZE] = {0};
@@ -86,7 +87,9 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   } else {
     return NNACL_ERR;
   }
-
+  if (num_axes > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int rank = (int)(input->shape_size_);
   int actual_axes[MAX_SHAPE_SIZE] = {0};
   size_t actual_axes_size = 0;

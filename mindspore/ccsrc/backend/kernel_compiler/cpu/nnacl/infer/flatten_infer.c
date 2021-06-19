@@ -19,12 +19,10 @@
 
 int FlattenInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -34,6 +32,9 @@ int FlattenInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
     return NNACL_INFER_INVALID;
   }
 
+  if (input->shape_size_ <= 0 || input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, input->shape_, input->shape_size_);

@@ -18,6 +18,10 @@
 
 int GroupConv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                    size_t outputs_size, OpParameter *parameter) {
+  int ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   if (inputs_size < 2 || outputs_size != 1) {
     return NNACL_ERR;
   }
@@ -28,6 +32,9 @@ int GroupConv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_s
   SetDataTypeFormat(out, in0);
 
   size_t shape_size_ = in0->shape_size_;
+  if (shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int shape_[MAX_SHAPE_SIZE];
   for (int i = 0; i < shape_size_; i++) {
     shape_[i] = in0->shape_[i];

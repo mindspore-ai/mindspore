@@ -19,12 +19,13 @@
 
 int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullOutputSize(inputs, inputs_size, outputs, outputs_size, parameter, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
+  if (inputs_size < 1) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
 
   const TensorC *input0 = inputs[0];
   TensorC *output = outputs[0];
@@ -37,9 +38,12 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   size_t input0_shape_size = inputs[0]->shape_size_;
 
   ConcatParameter *param = (ConcatParameter *)parameter;
-  int axis = param->axis_ < 0 ? param->axis_ + input0_shape_size : param->axis_;
+  int axis = param->axis_ < 0 ? param->axis_ + (int)input0_shape_size : param->axis_;
   if (axis < 0 || axis >= input0_shape_size) {
     return NNACL_ERR;
+  }
+  if (input0_shape_size > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
   }
   int input0_shape_without_axis[MAX_SHAPE_SIZE] = {0};
   size_t input0_shape_without_axis_size = 0;
@@ -47,12 +51,12 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   ShapeErase(input0_shape_without_axis, &input0_shape_without_axis_size, axis);
   int output_axis_dim = input0_shape[axis];
   for (size_t i = 1; i < inputs_size; ++i) {
+    if (inputs[i]->shape_size_ != input0_shape_size) {
+      return NNACL_PARAM_INVALID;
+    }
     int shape_tmp[MAX_SHAPE_SIZE] = {0};
     size_t shape_tmp_size = 0;
     ShapeSet(shape_tmp, &shape_tmp_size, inputs[i]->shape_, inputs[i]->shape_size_);
-    if (shape_tmp_size != input0_shape_size) {
-      return NNACL_PARAM_INVALID;
-    }
     if ((inputs[i]->data_type_ != output->data_type_) &&
         !((inputs[i]->data_type_ == kNumberTypeFloat16 && output->data_type_ == kNumberTypeFloat32) ||
           (inputs[i]->data_type_ == kNumberTypeFloat32 && output->data_type_ == kNumberTypeFloat16))) {

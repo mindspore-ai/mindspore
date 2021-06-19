@@ -17,86 +17,94 @@
 #include "nnacl/infer/resize_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int CalculateNewHeightAndWidth(const TensorC *const *inputs, size_t inputs_size, ResizeParameter *param) {
+int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
   const TensorC *input = inputs[0];
-  if (inputs_size == 2) {
-    const TensorC *shape_tensor = inputs[1];
-    if (shape_tensor->data_ == NULL) {
-      return NNACL_INFER_INVALID;
-    }
-    size_t shape_size = GetElementNum(shape_tensor);
-    switch (shape_size) {
-      case 4: {
-        if (shape_tensor->data_type_ == kNumberTypeInt32) {
-          int32_t *data = (int32_t *)(shape_tensor->data_);
-          if (data == NULL) {
-            return NNACL_INFER_INVALID;
-          }
-          switch (shape_tensor->format_) {
-            case Format_NCHW:
-              param->new_height_ = data[2];
-              param->new_width_ = data[3];
-              break;
-            case Format_NHWC:
-              param->new_height_ = data[1];
-              param->new_width_ = data[2];
-              break;
-            default:
-              return NNACL_INFER_INVALID;
-          }
-        } else if (shape_tensor->data_type_ == kNumberTypeFloat32) {
-          float *data = (float *)(shape_tensor->data_);
-          if (data == NULL) {
-            return NNACL_INFER_INVALID;
-          }
-          switch (shape_tensor->format_) {
-            case Format_NCHW:
-              param->new_height_ = data[2] * GetHeight(input);
-              param->new_width_ = data[3] * GetWidth(input);
-              break;
-            case Format_NHWC:
-              param->new_height_ = data[1] * GetHeight(input);
-              param->new_width_ = data[2] * GetWidth(input);
-              break;
-            default:
-              return NNACL_INFER_INVALID;
-          }
-        }
-        break;
-      }
-      case 2: {
+  const TensorC *shape_tensor = inputs[1];
+  if (shape_tensor->data_ == NULL) {
+    return NNACL_INFER_INVALID;
+  }
+  size_t shape_size = GetElementNum(shape_tensor);
+  switch (shape_size) {
+    case 4: {
+      if (shape_tensor->data_type_ == kNumberTypeInt32) {
         int32_t *data = (int32_t *)(shape_tensor->data_);
         if (data == NULL) {
           return NNACL_INFER_INVALID;
         }
-        param->new_height_ = data[0];
-        param->new_width_ = data[1];
-        break;
-      }
-      case 1: {
-        // caffe zoom_factor
-        int scale;
-        if (shape_tensor->data_type_ == kNumberTypeInt32) {
-          int *data = (int *)(shape_tensor->data_);
-          if (data == NULL) {
+        switch (shape_tensor->format_) {
+          case Format_NCHW:
+            param->new_height_ = data[2];
+            param->new_width_ = data[3];
+            break;
+          case Format_NHWC:
+            param->new_height_ = data[1];
+            param->new_width_ = data[2];
+            break;
+          default:
             return NNACL_INFER_INVALID;
-          }
-          scale = data[0];
-        } else {
-          return NNACL_ERR;
         }
-        param->new_height_ = GetHeight(input) + (GetHeight(input) - 1) * (scale - 1);
-        param->new_width_ = GetWidth(input) + (GetWidth(input) - 1) * (scale - 1);
-        break;
+      } else if (shape_tensor->data_type_ == kNumberTypeFloat32) {
+        float *data = (float *)(shape_tensor->data_);
+        if (data == NULL) {
+          return NNACL_INFER_INVALID;
+        }
+        switch (shape_tensor->format_) {
+          case Format_NCHW:
+            param->new_height_ = data[2] * GetHeight(input);
+            param->new_width_ = data[3] * GetWidth(input);
+            break;
+          case Format_NHWC:
+            param->new_height_ = data[1] * GetHeight(input);
+            param->new_width_ = data[2] * GetWidth(input);
+            break;
+          default:
+            return NNACL_INFER_INVALID;
+        }
       }
-      default: {
+      break;
+    }
+    case 2: {
+      int32_t *data = (int32_t *)(shape_tensor->data_);
+      if (data == NULL) {
+        return NNACL_INFER_INVALID;
+      }
+      param->new_height_ = data[0];
+      param->new_width_ = data[1];
+      break;
+    }
+    case 1: {
+      // caffe zoom_factor
+      int scale;
+      if (shape_tensor->data_type_ == kNumberTypeInt32) {
+        int *data = (int *)(shape_tensor->data_);
+        if (data == NULL) {
+          return NNACL_INFER_INVALID;
+        }
+        scale = data[0];
+      } else {
         return NNACL_ERR;
       }
+      param->new_height_ = GetHeight(input) + (GetHeight(input) - 1) * (scale - 1);
+      param->new_width_ = GetWidth(input) + (GetWidth(input) - 1) * (scale - 1);
+      break;
     }
+    default: {
+      return NNACL_ERR;
+    }
+  }
+  return NNACL_OK;
+}
+
+int CalculateNewHeightAndWidth(const TensorC *const *inputs, size_t inputs_size, ResizeParameter *param) {
+  if (inputs_size == 2) {
+    return HandleTwoInputs(inputs, param);
   } else if (inputs_size == 1) {
   } else if (inputs_size == 4) {
     if (inputs[3]->data_ == NULL) {
       return NNACL_INFER_INVALID;
+    }
+    if (GetElementNum(inputs[3]) < 2) {
+      return NNACL_ERR;
     }
     param->new_height_ = ((int *)(inputs[3]->data_))[0];
     param->new_width_ = ((int *)(inputs[3]->data_))[1];
@@ -108,12 +116,10 @@ int CalculateNewHeightAndWidth(const TensorC *const *inputs, size_t inputs_size,
 
 int ResizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];

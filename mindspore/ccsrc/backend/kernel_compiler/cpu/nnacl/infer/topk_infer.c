@@ -19,12 +19,10 @@
 
 int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, 2, 2);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   if (input->shape_size_ == 4 && input->format_ != Format_NHWC) {
@@ -46,6 +44,9 @@ int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   TopkParameter *param = (TopkParameter *)parameter;
   param->k_ = ((int32_t *)input_k_tensor->data_)[0];
 
+  if (input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, input->shape_, input->shape_size_);

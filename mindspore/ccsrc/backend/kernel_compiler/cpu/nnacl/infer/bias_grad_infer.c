@@ -19,16 +19,17 @@
 
 int BiasGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                        OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *in0 = inputs[0];
   TensorC *out = outputs[0];
 
+  if (in0->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int inshape[MAX_SHAPE_SIZE];
   size_t inshape_size = 0;
   ShapeSet(inshape, &inshape_size, in0->shape_, in0->shape_size_);

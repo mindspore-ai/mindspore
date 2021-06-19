@@ -155,7 +155,7 @@ typedef struct VectorC {
   size_t per_malloc_size_;
 } VectorC;
 
-int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, vvector *tensor_shape);
+int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape);
 int TensorListMergeShape(int *element_shape, size_t *element_shape_size, const int *tmp, size_t tmp_size);
 bool TensorListIsFullyDefined(const int *shape, size_t shape_size);
 
@@ -167,16 +167,18 @@ int GetElementNum(const TensorC *tensor);
 int GetDimensionSize(const TensorC *tensor, const size_t index);
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                     OpParameter *parameter);
+                     const OpParameter *parameter);
 int CheckAugmentNullSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                         OpParameter *parameter, size_t inputs_size_obj, size_t outputs_size_obj);
+                         const OpParameter *parameter, size_t inputs_size_obj, size_t outputs_size_obj);
 int CheckAugmentNullSizeInputTwo(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
-                                 size_t outputs_size, OpParameter *parameter, size_t inputs_size_obj_0,
+                                 size_t outputs_size, const OpParameter *parameter, size_t inputs_size_obj_0,
                                  size_t inputs_size_obj_1, size_t outputs_size_obj);
 int CheckAugmentNullInputSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                              OpParameter *parameter, size_t inputs_size_obj);
+                              const OpParameter *parameter, size_t inputs_size_obj);
 int CheckAugmentNullOutputSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                               OpParameter *parameter, size_t outputs_size_obj);
+                               const OpParameter *parameter, size_t outputs_size_obj);
+int CheckAugmentWithMinSize(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                            const OpParameter *parameter, size_t inputs_size_obj, size_t outputs_size_obj);
 void SetDataTypeFormat(TensorC *dst, const TensorC *src);
 
 int SetShapeTensor(TensorC *dst, const TensorC *src);
@@ -195,14 +197,14 @@ int imax(int a, int b);
 int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter);
 int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                  OpParameter *parameter);
+                  const OpParameter *parameter);
 
 int VectorCInit(VectorC *vc, size_t per_malloc_size);
 int VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size);
 int VectorCPush(VectorC *vc, int value);
 int VectorCInsert(VectorC *vc, int index, int value);
 void VectorCErase(VectorC *vc, int index);
-bool VectorCEqual(VectorC *vc1, VectorC *vc2);
+bool VectorCEqual(const VectorC *vc1, const VectorC *vc2);
 void VectorCFree(VectorC *vc);
 bool InferFlag(const TensorC *const *inputs, size_t inputs_size);
 

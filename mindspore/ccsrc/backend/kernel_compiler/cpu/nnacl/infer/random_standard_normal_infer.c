@@ -19,12 +19,11 @@
 
 int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                    size_t outputs_size, OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
+
   outputs[0]->data_type_ = kNumberTypeFloat32;
   outputs[0]->format_ = inputs[0]->format_;
   if (!InferFlag(inputs, inputs_size)) {
@@ -36,6 +35,9 @@ int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_s
     return NNACL_INFER_INVALID;
   }
   int input_num = GetElementNum(inputs[0]);
+  if (input_num > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   for (int i = 0; i < input_num; i++) {

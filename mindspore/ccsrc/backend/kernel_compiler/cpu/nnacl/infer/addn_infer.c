@@ -19,12 +19,10 @@
 
 int AddnInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -55,7 +53,7 @@ int AddnInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     }
   }
 
-  for (size_t d = 0; d < input->shape_size_; ++d) {
+  for (size_t d = 0; d < inputs[max_dims_idx]->shape_size_; ++d) {
     size_t max_dim = 0;
     for (size_t i = 0; i < inputs_size; ++i) {
       size_t shift = max_dims - inputs[i]->shape_size_;

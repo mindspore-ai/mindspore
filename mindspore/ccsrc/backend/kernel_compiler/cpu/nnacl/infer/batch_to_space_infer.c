@@ -49,6 +49,9 @@ int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, OpP
       return NNACL_PARAM_INVALID;
     }
   }
+  if (mul_block_shape == 0) {
+    return NNACL_ERR;
+  }
   int32_t output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = input_shape_size;
   output_shape[kNHWC_N] = input_shape[kNHWC_N] / mul_block_shape;
@@ -94,6 +97,9 @@ int SetOutputShapeFromInput(const TensorC *const *inputs, TensorC **outputs) {
       return NNACL_PARAM_INVALID;
     }
   }
+  if (mul_block_shape_ == 0) {
+    return NNACL_ERR;
+  }
   int32_t output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = input_shape_size;
   output_shape[kNHWC_N] = input_shape[kNHWC_N] / mul_block_shape_;
@@ -106,6 +112,10 @@ int SetOutputShapeFromInput(const TensorC *const *inputs, TensorC **outputs) {
 
 int BatchToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                            OpParameter *parameter) {
+  int ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   if (outputs_size != 1 || (inputs_size != 1 && inputs_size != 3)) {
     return NNACL_PARAM_INVALID;
   }
@@ -120,18 +130,14 @@ int BatchToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   }
 
   if (inputs_size == 1) {
-    int ret = SetOutputShapeFromParam(inputs, outputs, parameter);
+    ret = SetOutputShapeFromParam(inputs, outputs, parameter);
     return ret;
   }
-  if (inputs_size == 3) {
-    if (inputs[1]->data_ == NULL || inputs[2]->data_ == NULL) {
-      return NNACL_INFER_INVALID;
-    }
-    int ret = SetOutputShapeFromInput(inputs, outputs);
-    return ret;
+  if (inputs[1]->data_ == NULL || inputs[2]->data_ == NULL) {
+    return NNACL_INFER_INVALID;
   }
-
-  return NNACL_OK;
+  ret = SetOutputShapeFromInput(inputs, outputs);
+  return ret;
 }
 
 REG_INFER(BatchToSpace, PrimType_BatchToSpace, BatchToSpaceInferShape)

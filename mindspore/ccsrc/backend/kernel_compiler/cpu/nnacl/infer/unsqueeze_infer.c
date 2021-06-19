@@ -19,12 +19,10 @@
 
 int UnsqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -42,6 +40,9 @@ int UnsqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (dim_rank == 0) {
     for (size_t i = 0; i < input->shape_size_; i++) {
       if (input->shape_[i] != 1) {
+        if (out_shape_size >= MAX_SHAPE_SIZE) {
+          return NNACL_ERR;
+        }
         ShapePush(out_shape, &out_shape_size, input->shape_[i]);
       }
     }
@@ -50,6 +51,9 @@ int UnsqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
     size_t in_itr = 0;
     size_t ax_itr = 0;
     for (size_t i = 0; i < sz; i++) {
+      if (out_shape_size >= MAX_SHAPE_SIZE) {
+        return NNACL_ERR;
+      }
       if (ax_itr < dim_rank && param->dims_[ax_itr] == (int)(i)) {
         ShapePush(out_shape, &out_shape_size, 1);
         ax_itr++;

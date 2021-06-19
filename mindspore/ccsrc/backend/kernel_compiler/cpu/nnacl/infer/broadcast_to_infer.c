@@ -64,6 +64,10 @@ int GetShapeByType(const TensorC *shape_tensor, size_t shape_size, int32_t *dst_
 
 int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
+  int ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   if (inputs_size != 1 && inputs_size != 2) {
     return NNACL_ERR;
   }
@@ -81,13 +85,19 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   if (inputs_size == 1) {
     BroadcastToParameter *param = (BroadcastToParameter *)parameter;
     dst_shape_size = param->shape_size_;
+    if (dst_shape_size > MAX_SHAPE_SIZE) {
+      return NNACL_PARAM_INVALID;
+    }
     for (size_t i = 0; i < dst_shape_size; i++) {
       dst_shape[i] = param->shape_[i];
     }
   } else {
     const TensorC *shape_tensor = inputs[1];
     dst_shape_size = GetElementNum(shape_tensor);
-    int ret = GetShapeByType(shape_tensor, dst_shape_size, dst_shape);
+    if (dst_shape_size > MAX_SHAPE_SIZE) {
+      return NNACL_INPUT_TENSOR_ERROR;
+    }
+    ret = GetShapeByType(shape_tensor, dst_shape_size, dst_shape);
     if (ret != NNACL_OK) {
       return ret;
     }

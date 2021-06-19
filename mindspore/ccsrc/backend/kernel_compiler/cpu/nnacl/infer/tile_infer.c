@@ -35,12 +35,13 @@ void TileParamCaffe2Tflite(TileParameter *param, size_t out_shape_size) {
 
 int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
+  if (inputs_size != 2 || outputs_size < 1) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -55,11 +56,8 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   TileParameter *param = (TileParameter *)parameter;
 
   size_t multiples_size = 0;
-  if (inputs_size != 2) {
-    return NNACL_ERR;
-  }
   int data_num = GetElementNum(inputs[1]);
-  if (data_num > (int)(input->shape_size_)) {
+  if (data_num > (int)(input->shape_size_) || input->shape_size_ > MAX_SHAPE_SIZE) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
   multiples_size = data_num;
@@ -77,7 +75,11 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   int *dims = param->dims_;
   size_t dims_size = param->dims_size_;
   if (dims_size == 0) {
-    for (int dim = 0; dim < GetElementNum(inputs[1]); ++dim) {
+    int dim_num = GetElementNum(inputs[1]);
+    if (dim_num > MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
+    for (int dim = 0; dim < dim_num; ++dim) {
       ShapePush(dims, &dims_size, dim);
     }
     param->dims_size_ = dims_size;

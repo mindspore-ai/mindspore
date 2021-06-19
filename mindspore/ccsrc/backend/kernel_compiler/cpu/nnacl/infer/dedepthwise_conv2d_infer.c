@@ -18,12 +18,10 @@
 
 int DeDepthwiseConv2DInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 2, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
@@ -37,6 +35,9 @@ int DeDepthwiseConv2DInferShape(const TensorC *const *inputs, size_t inputs_size
   int output_w = 0, output_h = 0;
 
   ConvParameter *param = (ConvParameter *)parameter;
+  if (param->stride_h_ == 0 || param->stride_w_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   output_h = param->stride_h_ * (input_h - 1) + param->kernel_h_ - param->pad_u_ - param->pad_d_;
   output_w = param->stride_w_ * (input_w - 1) + param->kernel_w_ - param->pad_l_ - param->pad_r_;
   if ((output_h + param->pad_u_ + param->pad_d_ - param->kernel_h_) % param->stride_h_ != 0) {

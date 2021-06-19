@@ -132,12 +132,11 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
 
 int ReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
+
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
@@ -166,6 +165,9 @@ int ReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
       return calRet;
     }
   } else if (inputs_size == 1) {
+    if (param->shape_dim_ > MAX_SHAPE_SIZE) {
+      return NNACL_PARAM_INVALID;
+    }
     for (size_t i = 0; i < param->shape_dim_; ++i) {
       ShapePush(out_shape, &out_shape_size, param->shape_[i]);
     }

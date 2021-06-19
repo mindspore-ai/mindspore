@@ -19,12 +19,10 @@
 
 int DepthToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                            OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   if (input->format_ != Format_NHWC) {
@@ -35,15 +33,15 @@ int DepthToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
+  if (input->shape_size_ != 4) {
+    return NNACL_PARAM_INVALID;
+  }
   int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, input->shape_, input->shape_size_);
-  if (input_shape_size != 4) {
-    return NNACL_PARAM_INVALID;
-  }
 
   int32_t block_size = param->block_size_;
-  if (input_shape[kNHWC_C] % (block_size * block_size) != 0 || input_shape[kNHWC_C] == 0) {
+  if (block_size == 0 || input_shape[kNHWC_C] % (block_size * block_size) != 0 || input_shape[kNHWC_C] == 0) {
     return NNACL_PARAM_INVALID;
   }
   int32_t output_shape[MAX_SHAPE_SIZE];

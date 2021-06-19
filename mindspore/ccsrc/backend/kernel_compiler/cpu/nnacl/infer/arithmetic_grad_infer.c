@@ -27,12 +27,10 @@
  * */
 int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 2);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *dy = inputs[0];
   const TensorC *x1 = inputs[1];
@@ -40,6 +38,9 @@ int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, T
   TensorC *dx1 = outputs[0];
   TensorC *dx2 = outputs[1];
 
+  if (dy->shape_size_ > MAX_SHAPE_SIZE || x1->shape_size_ > MAX_SHAPE_SIZE || x2->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int in_shape0[MAX_SHAPE_SIZE] = {0};
   size_t in_shape0_size = 0;
   ShapeSet(in_shape0, &in_shape0_size, x1->shape_, x1->shape_size_);

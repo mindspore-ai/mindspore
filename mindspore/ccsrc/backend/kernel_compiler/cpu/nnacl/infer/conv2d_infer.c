@@ -56,12 +56,10 @@ void ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, Conv
 
 int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 2, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input_tensor = inputs[0];
   const TensorC *weight_tensor = inputs[1];
@@ -85,6 +83,9 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   int input_w = in_shape[2];
   int output_w = 0, output_h = 0;
 
+  if (param->stride_h_ == 0 || param->stride_w_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   ConvInferShape(input_h, input_w, &output_h, &output_w, param);
 
   int out_shape[MAX_SHAPE_SIZE];

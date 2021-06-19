@@ -20,17 +20,17 @@
 
 int PoolingGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *input = inputs[0];
   int input_h = input->shape_[1];
   int input_w = input->shape_[2];
-
+  if (input->shape_size_ != 4) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   PoolingParameter *param = (PoolingParameter *)parameter;
   int window_h = param->window_h_;
   int window_w = param->window_w_;
@@ -39,6 +39,9 @@ int PoolingGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     window_w = input_w;
   }
 
+  if (param->stride_h_ == 0 || param->stride_w_ == 0) {
+    return NNACL_PARAM_INVALID;
+  }
   if (param->pad_mode_ == Pad_same) {
     int output_w = ceil((float)(input_w) / (float)(param->stride_w_));
     int output_h = ceil((float)(input_h) / (float)(param->stride_h_));

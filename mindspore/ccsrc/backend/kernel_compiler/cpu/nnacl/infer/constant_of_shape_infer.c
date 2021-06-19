@@ -19,12 +19,10 @@
 
 int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   const TensorC *in_tensor = inputs[0];
   TensorC *out_tensor = outputs[0];
@@ -35,6 +33,9 @@ int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return NNACL_INFER_INVALID;
   }
   int size = GetElementNum(in_tensor);
+  if (size < 0 || size > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = size;
   switch (in_tensor->data_type_) {

@@ -19,12 +19,10 @@
 
 int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 2, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   TensorC *input0 = (TensorC *)inputs[0];
   TensorC *input1 = (TensorC *)inputs[1];
@@ -35,7 +33,6 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-
   int a_shape[MAX_SHAPE_SIZE] = {0};
   size_t a_shape_size = 0;
   ShapeSet(a_shape, &a_shape_size, input0->shape_, input0->shape_size_);

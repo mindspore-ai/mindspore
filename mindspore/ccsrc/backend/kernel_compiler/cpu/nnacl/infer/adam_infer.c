@@ -18,12 +18,10 @@
 
 int AdamInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
-#ifdef Debug
   int check_ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 10);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
 
   if (GetElementNum(inputs[0]) != GetElementNum(inputs[1]) || GetElementNum(inputs[0]) != GetElementNum(inputs[2]) ||
       GetElementNum(inputs[0]) != GetElementNum(inputs[9]) || GetElementNum(inputs[3]) != 1 ||

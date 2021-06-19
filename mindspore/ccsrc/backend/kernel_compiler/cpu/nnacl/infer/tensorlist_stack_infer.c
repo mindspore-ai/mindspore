@@ -19,13 +19,15 @@
 
 int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
-#ifdef Debug
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-#endif
+
   TensorC *output = outputs[0];
+  if (inputs[0]->data_type_ != kObjectTypeTensorType) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   TensorListC *input0 = (TensorListC *)(inputs[0]);
   output->data_type_ = input0->tensors_data_type_;
   output->format_ = input0->format_;
@@ -43,11 +45,18 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   if (ele_shape_ptr[0] == -1) {
+    if (input0->element_shape_size_ > MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     for (int i = 0; i < input0->element_shape_size_; i++) {
       ShapePush(output_shape, &output_shape_size, input0->element_shape_[i]);
     }
   } else {
-    for (int i = 0; i < GetElementNum(ele_shape); ++i) {
+    int ele_shape_num = GetElementNum(ele_shape);
+    if (ele_shape_num > MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
+    for (int i = 0; i < ele_shape_num; ++i) {
       ShapePush(output_shape, &output_shape_size, ele_shape_ptr[i]);
     }
   }
@@ -70,6 +79,9 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
         }
       }
     }
+  }
+  if (output_shape_size >= MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
   }
   ShapeInsert(output_shape, &output_shape_size, 0, input0->element_num_);
   SetShapeArray(output, output_shape, output_shape_size);

@@ -19,6 +19,10 @@
 
 int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
+  int ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   if (inputs_size < 2 || outputs_size != 1) {
     return NNACL_ERR;
   }
@@ -32,6 +36,12 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   output->format_ = input->format_;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
+  }
+  if (input->shape_size_ > MAX_SHAPE_SIZE || indices->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
+  if (inputs[2]->data_ == NULL) {
+    return NNACL_NULL_PTR;
   }
   int axis = *((int *)inputs[2]->data_);
   if (axis < 0) {
