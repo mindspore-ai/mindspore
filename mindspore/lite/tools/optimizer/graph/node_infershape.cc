@@ -452,7 +452,7 @@ STATUS NodeInferShape::ConvertToLiteTensor(const std::vector<lite::DataInfo> &da
           return RET_ERROR;
         }
       } else {
-        auto tensor_data = new (std::nothrow) char[tensor_size];
+        auto tensor_data = reinterpret_cast<char *>(malloc(tensor_size));
         if (tensor_data == nullptr) {
           MS_LOG(ERROR) << "tensor_data is nullptr";
           delete tensor;
@@ -460,7 +460,7 @@ STATUS NodeInferShape::ConvertToLiteTensor(const std::vector<lite::DataInfo> &da
         }
         if (memcpy_s(tensor_data, tensor_size, data_info.data_.data(), tensor_size) != EOK) {
           delete tensor;
-          delete[](tensor_data);
+          free(tensor_data);
           MS_LOG(ERROR) << "memcpy error: ";
           return lite::RET_ERROR;
         }
