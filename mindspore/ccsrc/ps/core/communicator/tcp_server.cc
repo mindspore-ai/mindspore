@@ -287,7 +287,13 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   if (!PSContext::instance()->enable_ssl()) {
     bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   } else {
+    MS_LOG(INFO) << "Enable ssl support.";
     SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx());
+
+    X509 *cert = SSLWrapper::GetInstance().ReadCertFromFile(kCertificateChain);
+    if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
+      MS_LOG(EXCEPTION) << "Verify cert time failed.";
+    }
 
     if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
       MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
