@@ -14,34 +14,34 @@
 # ============================================================================
 
 """ export model for CRNN """
-
-import argparse
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context, load_checkpoint, export
-
 from src.crnn import crnn
-from src.config import config1 as config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
 
-parser = argparse.ArgumentParser(description="CRNN_export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="crnn", help="output file name.")
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    pass
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def model_export():
+    if config.device_target == "Ascend":
+        context.set_context(device_id=get_device_id())
+
     config.batch_size = 1
     net = crnn(config)
 
-    load_checkpoint(args.ckpt_file, net=net)
+    load_checkpoint(config.ckpt_file, net=net)
     net.set_train(False)
 
     input_data = Tensor(np.zeros([1, 3, config.image_height, config.image_width]), ms.float32)
 
-    export(net, input_data, file_name=args.file_name, file_format=args.file_format)
+    export(net, input_data, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()

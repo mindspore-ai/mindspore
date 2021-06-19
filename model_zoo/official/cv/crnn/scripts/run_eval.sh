@@ -58,12 +58,14 @@ run_ascend() {
     rm -rf ./eval
   fi
   mkdir ./eval
-  cp ../*.py ./eval
-  cp -r ../src ./eval
+  cp ./*.py ./eval
+  cp -r ./src ./eval
+  cp -r ./scripts ./eval
+  cp ./*yaml ./eval
   cd ./eval || exit
   env >env.log
   echo "start evaluation for device $DEVICE_ID"
-  python eval.py --dataset=$DATASET_NAME --dataset_path=$1 --checkpoint_path=$2 --platform=Ascend > log.txt 2>&1 &
+  python eval.py --eval_dataset=$DATASET_NAME --eval_dataset_path=$1 --checkpoint_path=$2 --device_target=Ascend> log.txt 2>&1 &
   cd ..
 }
 
@@ -72,15 +74,16 @@ run_gpu() {
     rm -rf ./eval
   fi
   mkdir ./eval
-  cp ../*.py ./eval
-  cp -r ../src ./eval
+  cp ./*.py ./eval
+  cp -r ./src ./eval
+  cp -r ./scripts ./eval
+  cp ./*yaml ./eval
   cd ./eval || exit
   env >env.log
-  python eval.py --dataset=$DATASET_NAME \
-                 --dataset_path=$1 \
+  python eval.py --eval_dataset=$DATASET_NAME \
+                 --eval_dataset_path=$1 \
                  --checkpoint_path=$2 \
-                 --platform=GPU \
-                 --dataset=$DATASET_NAME > log.txt 2>&1 &
+                 --device_target=GPU > log.txt 2>&1 &
   cd ..
 }
 

@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [ $# != 3 ]; then
-  echo "Usage: sh run_distribute_train.sh [DATASET_NAME] [RANK_TABLE_FILE] [DATASET_PATH]"
+  echo "Usage: sh scripts/run_distribute_train.sh [DATASET_NAME] [RANK_TABLE_FILE] [DATASET_PATH]"
   exit 1
 fi
 
@@ -51,12 +51,13 @@ for ((i = 0; i < ${DEVICE_NUM}; i++)); do
   export RANK_ID=$i
   rm -rf ./train_parallel$i
   mkdir ./train_parallel$i
-  cp ../*.py ./train_parallel$i
-  cp *.sh ./train_parallel$i
-  cp -r ../src ./train_parallel$i
+  cp ./*.py ./train_parallel$i
+  cp -r scripts/ ./train_parallel$i
+  cp -r ./src ./train_parallel$i
+  cp ./*yaml ./train_parallel$i
   cd ./train_parallel$i || exit
   echo "start training for rank $RANK_ID, device $DEVICE_ID"
   env >env.log
-  python train.py --platform=Ascend --dataset_path=$PATH2 --run_distribute --dataset=$DATASET_NAME > log.txt 2>&1 &
+  python train.py --train_dataset_path=$PATH2 --run_distribute=True --train_dataset=$DATASET_NAME > log.txt 2>&1 &
   cd ..
 done

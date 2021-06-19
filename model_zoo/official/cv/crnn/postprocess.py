@@ -14,17 +14,10 @@
 # ============================================================================
 """post process for 310 inference"""
 import os
-import argparse
 import numpy as np
-
 from src.metric import CRNNAccuracy
-from src.config import config1 as config
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description="yolov3_darknet53 inference")
-parser.add_argument("--ann_file", type=str, required=True, help="ann file.")
-parser.add_argument("--result_path", type=str, required=True, help="image file path.")
-parser.add_argument("--dataset", type=str, default="ic03", choices=['ic03', 'ic13', 'svt', 'iiit5k'])
-args = parser.parse_args()
 
 def read_annotation(ann_file):
     file = open(ann_file)
@@ -37,6 +30,7 @@ def read_annotation(ann_file):
 
     return ann
 
+
 def read_ic13_annotation(ann_file):
     file = open(ann_file)
 
@@ -47,6 +41,7 @@ def read_ic13_annotation(ann_file):
         ann[img_path] = img_info[1].strip().replace('\"', '')
 
     return ann
+
 
 def read_svt_annotation(ann_file):
     file = open(ann_file)
@@ -59,17 +54,18 @@ def read_svt_annotation(ann_file):
 
     return ann
 
+
 def get_eval_result(result_path, ann_file):
     """
     Calculate accuracy according to the annotation file and result file.
     """
     metrics = CRNNAccuracy(config)
 
-    if args.dataset == "ic03" or args.dataset == "iiit5k":
+    if config.dataset == "ic03" or config.dataset == "iiit5k":
         ann = read_annotation(ann_file)
-    elif args.dataset == "ic13":
+    elif config.dataset == "ic13":
         ann = read_ic13_annotation(ann_file)
-    elif args.dataset == "svt":
+    elif config.dataset == "svt":
         ann = read_svt_annotation(ann_file)
 
     for img_name, label in ann.items():
@@ -80,5 +76,6 @@ def get_eval_result(result_path, ann_file):
     print("result CRNNAccuracy is: ", metrics.eval())
     metrics.clear()
 
+
 if __name__ == '__main__':
-    get_eval_result(args.result_path, args.ann_file)
+    get_eval_result(config.result_path, config.ann_file)

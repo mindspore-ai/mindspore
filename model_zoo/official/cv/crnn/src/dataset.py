@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as vc
-from src.config import config1, label_dict
+from src.model_utils.config import config as config1
 from src.ic03_dataset import IC03Dataset
 from src.ic13_dataset import IC13Dataset
 from src.iiit5k_dataset import IIIT5KDataset
@@ -75,8 +75,8 @@ class CaptchaDataset:
         label_str = self.img_names[img_name]
         label = []
         for c in label_str:
-            if c in label_dict:
-                label.append(label_dict.index(c))
+            if c in config.label_dict:
+                label.append(config.label_dict.index(c))
         label.extend([int(self.blank)] * (self.max_text_length - len(label)))
         label = np.array(label)
         return image, label
