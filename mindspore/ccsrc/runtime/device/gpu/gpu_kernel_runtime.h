@@ -29,11 +29,13 @@
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/optimizer/mem_reuse/mem_swap_manager.h"
+#include "backend/optimizer/mem_reuse/mem_reuse.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
 using mindspore::device::memswap::MemSwapManagerPtr;
+using mindspore::memreuse::MemReuseUtilPtr;
 class GPUKernelRuntime : public KernelRuntime {
  public:
   GPUKernelRuntime() = default;

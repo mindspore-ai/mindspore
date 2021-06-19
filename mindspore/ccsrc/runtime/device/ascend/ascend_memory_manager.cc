@@ -47,6 +47,9 @@ void AscendMemoryManager::MallocDeviceMemory() {
     } else {
       MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
     }
+  } else {
+    MS_LOG(INFO) << "Call rtMalloc to allocate device memory Success, size : " << device_mem_size_
+                 << " bytes , address : " << reinterpret_cast<void *>(device_mem_base_);
   }
   AscendMemoryPool::GetInstance().Init(device_mem_base_, device_mem_size_, dynamic_mem_offset_);
 }
@@ -107,6 +110,12 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
   } else {
     align_size = GetCommonAlignSize(size);
   }
+  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
+  MS_LOG(INFO) << "Malloc Memory for Static: size[" << align_size << "], Memory statistics: total[" << device_mem_size_
+               << "] dynamic [" << total_dynamic_size_ << "] static [" << device_mem_size_ - device_mem_pool_offset
+               << "], Pool statistics: pool total size [" << AscendMemoryPool::GetInstance().total_mem_statistics()
+               << "] used [" << AscendMemoryPool::GetInstance().used_mem_statistics()
+               << "] communication_mem:" << communication_mem;
 
   if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable() && graph_id != kInvalidGraphId) {
     auto node = MemoryProfiling::GetInstance().GetGraphMemoryNode(graph_id);
@@ -136,9 +145,9 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   }
 
   auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
-  MS_LOG(INFO) << "Malloc Memory: Dynamic, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
-               << "] memory pool[" << device_mem_size_ - device_mem_pool_offset << "])"
-               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
+  MS_LOG(INFO) << "Malloc Memory for Dynamic: size[" << align_size << "], Memory statistics: total[" << device_mem_size_
+               << "] dynamic[" << total_dynamic_size_ << "] static[" << device_mem_size_ - device_mem_pool_offset
+               << "] communication_mem: " << communication_mem;
   auto offset = dynamic_mem_offset_;
   auto new_offset = dynamic_mem_offset_ + align_size;
   if (new_offset >= device_mem_pool_offset) {

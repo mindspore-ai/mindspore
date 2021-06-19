@@ -111,6 +111,26 @@ class MemReuseUtil {
   std::unordered_map<AnfNodePtr, session::KernelWithIndex> visit_kernel_with_return_type_in0pos_skip_nop_cache_;
 };
 using MemReuseUtilPtr = std::shared_ptr<MemReuseUtil>;
+
+enum Status { kUnused, kReused };
+enum MemType { kNew, kInStreamReuse, kBetweenStreamReuse, kKernelDependenceReuse };
+class Membuf {
+ public:
+  Membuf() = default;
+  Membuf(Status status, size_t size, size_t offset, int index, MemType type, const KernelDefPtr &used_kernel)
+      : status_(status), size_(size), offset_(offset), index_(index), type_(type), used_kernel_(used_kernel) {}
+  ~Membuf() = default;
+  // Memory block status flags
+  Status status_ = kUnused;
+  size_t size_{0};
+  size_t offset_{0};
+  // Store the tensor index stored in this memory block at a certain moment
+  int index_{0};
+  MemType type_{kNew};
+  KernelDefPtr used_kernel_;
+};
+using MembufPtr = std::shared_ptr<Membuf>;
+
 }  // namespace memreuse
 }  // namespace mindspore
 

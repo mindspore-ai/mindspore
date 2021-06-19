@@ -20,7 +20,6 @@
 #include "backend/session/session_basic.h"
 #include "backend/session/ascend_session.h"
 #include "backend/optimizer/mem_reuse/kernel_refcount.h"
-#include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
 #include "frontend/operator/ops.h"
@@ -227,19 +226,6 @@ TEST_F(TestMemReuseWithPy, KernelRef) {
   ASSERT_NE(kernel_def_ptr, nullptr);
   MembufPtr membuf_ptr = std::make_shared<Membuf>();
   ASSERT_NE(membuf_ptr, nullptr);
-}
-
-TEST_F(TestMemReuseWithPy, ReuseAssignDynamicMemory) {
-  MemReuseUtilPtr mem_reuse_util_ptr = std::make_shared<MemReuseUtil>();
-  ASSERT_NE(mem_reuse_util_ptr, nullptr);
-  auto bestfit_mem_reuse = std::make_shared<BestFitMemReuse>();
-  ASSERT_NE(bestfit_mem_reuse, nullptr);
-  bestfit_mem_reuse->Reuse(mem_reuse_util_ptr.get());
-  auto total_size = bestfit_mem_reuse->GetAllocatedSize();
-  ASSERT_EQ(total_size, 0);
-  KernelGraphPtr kernel_graph = std::make_shared<KernelGraph>();
-  bool ret = mem_reuse_util_ptr->InitDynamicKernelRef(kernel_graph.get());
-  ASSERT_EQ(ret, true);
 }
 
 TEST_F(TestMemReuseWithPy, TestSetInfo) {

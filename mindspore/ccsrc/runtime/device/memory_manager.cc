@@ -22,9 +22,6 @@
 #endif
 #include "utils/ms_context.h"
 
-using mindspore::memreuse::BestFitMemReuse;
-using mindspore::memreuse::MemReuseUtilPtr;
-
 namespace mindspore {
 namespace device {
 constexpr size_t kAlignBytes = 32;
@@ -35,24 +32,6 @@ size_t MemoryManager::GetCommonAlignSize(size_t input_size) {
 
 size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) const {
   return (input_size + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize + 2 * kMemAlignSize;
-}
-
-void MemoryManager::MallocReusedDynamicMem(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MemReuseUtilPtr mem_reuse_util_ptr = std::make_shared<memreuse::MemReuseUtil>();
-  MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
-  // set all infos
-  mem_reuse_util_ptr->SetAllInfo(graph);
-  auto bestfit_mem_reuse = std::make_shared<BestFitMemReuse>();
-  MS_EXCEPTION_IF_NULL(bestfit_mem_reuse);
-  bestfit_mem_reuse->Reuse(mem_reuse_util_ptr.get());
-  size_t total_allocated_size = bestfit_mem_reuse->GetAllocatedSize();
-  MS_LOG(INFO) << "TotalReuseDynamicSize [" << total_allocated_size << "]";
-  mem_reuse_util_ptr_ = mem_reuse_util_ptr;
-  auto base_ptr = MallocDynamicMem(total_allocated_size, false);
-  MS_LOG(INFO) << "Reuse Memory from [" << reinterpret_cast<void *>(base_ptr) << "] to ["
-               << reinterpret_cast<void *>(base_ptr + total_allocated_size) << "]";
-  mem_reuse_util_ptr_->set_mem_base(base_ptr);
 }
 
 void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
@@ -117,9 +96,6 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
       if (communication_mem) {
         address->communication_ptr_ = ptr - kMemAlignSize;
       }
-    } else if (type == kReuseDynamicCommMem) {
-      MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
-      ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
     } else if (type == kSomasReuseDynamicMem) {
       MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
       ptr = somas_reuse_util_ptr_->GetNodeOutputPtr(node, index);
@@ -135,9 +111,6 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     address->from_mem_pool_ = true;
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
-  } else if (type == kReuseDynamicMem) {
-    MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
-    ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
   } else if (type == kSomasReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
     ptr = somas_reuse_util_ptr_->GetNodeOutputPtr(node, index);
@@ -147,10 +120,7 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
 }
 
 uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size) {
-  if (type == kReuseDynamicMem) {
-    MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
-    return mem_reuse_util_ptr_->GetNodeWorkSpacePtr(node, index);
-  } else if (type == kSomasReuseDynamicMem) {
+  if (type == kSomasReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
     return somas_reuse_util_ptr_->GetNodeWorkSpacePtr(node, index);
   }
