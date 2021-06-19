@@ -34,10 +34,13 @@ class ROC(Metric):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn, Tensor
+        >>>
         >>> # 1) binary classification example
         >>> x = Tensor(np.array([3, 1, 4, 2]))
         >>> y = Tensor(np.array([0, 1, 2, 3]))
-        >>> metric = ROC(pos_label=2)
+        >>> metric = nn.ROC(pos_label=2)
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> fpr, tpr, thresholds = metric.eval()
@@ -52,7 +55,7 @@ class ROC(Metric):
         >>> x = Tensor(np.array([[0.28, 0.55, 0.15, 0.05], [0.10, 0.20, 0.05, 0.05], [0.20, 0.05, 0.15, 0.05],
         ...                     [0.05, 0.05, 0.05, 0.75]]))
         >>> y = Tensor(np.array([0, 1, 2, 3]))
-        >>> metric = ROC(class_num=4)
+        >>> metric = nn.ROC(class_num=4)
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> fpr, tpr, thresholds = metric.eval()

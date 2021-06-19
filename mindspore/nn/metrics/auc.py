@@ -36,6 +36,9 @@ def auc(x, y, reorder=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn
+        >>>
         >>> y_pred = np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]])
         >>> y = np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]])
         >>> metric = nn.ROC(pos_label=2)
