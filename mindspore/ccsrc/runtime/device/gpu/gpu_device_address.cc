@@ -33,10 +33,16 @@ namespace device {
 namespace gpu {
 bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  if (ptr_ == nullptr) {
+    MS_LOG(ERROR) << "The device address is null!";
+    return false;
+  }
   bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
     return true;
   }
+
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   auto ret = GPUDeviceManager::GetInstance().SyncStream(stream);
@@ -53,8 +59,13 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
 
 bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  if (ptr_ == nullptr) {
+    MS_LOG(ERROR) << "The device address is null!";
+    return false;
+  }
   bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
     return true;
   }
 

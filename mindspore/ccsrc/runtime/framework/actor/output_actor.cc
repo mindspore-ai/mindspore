@@ -25,11 +25,9 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index,
   MS_LOG(INFO) << "Create output tensor, output node: " << output_node->fullname_with_scope()
                << ", output index: " << output_index << ", output position: " << output_position;
 
-  // Create host tensor.
-  auto type_id = AnfAlgo::GetOutputDeviceDataType(output_node, output_index);
-  if (type_id == kTypeUnknown) {
-    type_id = AnfAlgo::GetOutputInferDataType(output_node, output_index);
-  }
+  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
+  // when infer type is not equal to device type.
+  auto type_id = AnfAlgo::GetOutputInferDataType(output_node, output_index);
   std::vector<int64_t> temp_shape;
   auto shape = AnfAlgo::GetOutputInferShape(output_node, output_index);
   (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));

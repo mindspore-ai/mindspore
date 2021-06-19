@@ -60,11 +60,10 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   auto a_values = reinterpret_cast<T *>(inputs[1]->addr);
   auto b = reinterpret_cast<T *>(inputs[3]->addr);
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t output_length = outputs[0]->size / sizeof(T);
   const size_t indices_length = inputs[0]->size / sizeof(I);
   const size_t values_length = inputs[1]->size / sizeof(T);
   const size_t b_length = inputs[3]->size / sizeof(T);
-  if (memset_s(out, output_length, 0, output_length) != EOK) {
+  if (memset_s(out, outputs[0]->size, 0, outputs[0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "Memset Failed!";
   }
 
