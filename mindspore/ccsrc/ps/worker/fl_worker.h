@@ -40,6 +40,9 @@ constexpr uint32_t kTrainEndStepNum = 0;
 // The worker has to sleep for a while before the networking is completed.
 constexpr uint32_t kWorkerSleepTimeForNetworking = 1000;
 
+// The time duration between retrying when server is in safemode.
+constexpr uint32_t kWorkerRetryDurationForSafeMode = 500;
+
 enum class IterationState {
   // This iteration is still in process.
   kRunning,
@@ -64,6 +67,10 @@ class FLWorker {
   uint32_t worker_num() const;
   uint64_t worker_step_num_per_iteration() const;
 
+  // These methods set the worker's iteration state.
+  void SetIterationRunning();
+  void SetIterationCompleted();
+
  private:
   FLWorker()
       : server_num_(0),
@@ -72,7 +79,8 @@ class FLWorker {
         scheduler_port_(0),
         worker_node_(nullptr),
         worker_step_num_per_iteration_(1),
-        iteration_state_(IterationState::kCompleted),
+        server_iteration_state_(IterationState::kCompleted),
+        worker_iteration_state_(IterationState::kCompleted),
         safemode_(false) {}
   ~FLWorker() = default;
   FLWorker(const FLWorker &) = delete;
@@ -104,9 +112,14 @@ class FLWorker {
   uint64_t worker_step_num_per_iteration_;
 
   // The iteration state is either running or completed.
-  std::atomic<IterationState> iteration_state_;
+  // This variable represents the server iteration state and should be changed by events
+  // kIterationRunning/kIterationCompleted. triggered by server.
+  std::atomic<IterationState> server_iteration_state_;
 
-  // The flag that represents whether worker is in safemode.
+  // The variable represents the worker iteration state and should be changed by worker training process.
+  std::atomic<IterationState> worker_iteration_state_;
+
+  // The flag that represents whether worker is in safemode, which is decided by both worker and server iteration state.
   std::atomic_bool safemode_;
 };
 }  // namespace worker

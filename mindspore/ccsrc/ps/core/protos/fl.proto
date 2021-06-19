@@ -163,3 +163,41 @@ message SyncIterationResponse {
   // The current iteration number.
   uint64 iteration = 1;
 }
+
+message PrepareForNextIterRequest {
+  bool is_last_iter_valid = 1;
+  string reason = 2;
+}
+
+message PrepareForNextIterResponse {
+  string result = 1;
+}
+
+message NotifyLeaderMoveToNextIterRequest {
+  uint32 rank = 1;
+  bool is_last_iter_valid = 2;
+  uint64 iter_num = 3;
+  string reason = 4;
+}
+
+message NotifyLeaderMoveToNextIterResponse {
+  string result = 1;
+}
+
+message MoveToNextIterRequest {
+  bool is_last_iter_valid = 1;
+  uint64 last_iter_num = 2;
+  string reason = 3;
+}
+
+message MoveToNextIterResponse {
+  string result = 1;
+}
+
+message EndLastIterRequest {
+  uint64 last_iter_num = 1;
+}
+
+message EndLastIterResponse {
+  string result = 1;
+}

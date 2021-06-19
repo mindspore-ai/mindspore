@@ -67,12 +67,23 @@ bool FLWorker::SendToServer(uint32_t server_rank, void *data, size_t size, core:
   }
 
   if (output != nullptr) {
-    do {
+    while (true) {
       if (!worker_node_->Send(core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command), output)) {
         MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
         return false;
       }
-    } while (std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size()) == kClusterSafeMode);
+      if (*output == nullptr) {
+        MS_LOG(WARNING) << "Response from server " << server_rank << " is empty.";
+        return false;
+      }
+
+      if (std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size()) == kClusterSafeMode) {
+        MS_LOG(INFO) << "The server " << server_rank << " is in safemode.";
+        std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerRetryDurationForSafeMode));
+      } else {
+        break;
+      }
+    }
   } else {
     if (!worker_node_->Send(core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command))) {
       MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
@@ -87,6 +98,16 @@ uint32_t FLWorker::server_num() const { return server_num_; }
 uint32_t FLWorker::worker_num() const { return worker_num_; }
 
 uint64_t FLWorker::worker_step_num_per_iteration() const { return worker_step_num_per_iteration_; }
+
+void FLWorker::SetIterationRunning() {
+  MS_LOG(INFO) << "Worker iteration starts.";
+  worker_iteration_state_ = IterationState::kRunning;
+}
+
+void FLWorker::SetIterationCompleted() {
+  MS_LOG(INFO) << "Worker iteration completes.";
+  worker_iteration_state_ = IterationState::kCompleted;
+}
 
 void FLWorker::InitializeFollowerScaler() {
   if (!worker_node_->InitFollowerScaler()) {
@@ -112,21 +133,22 @@ void FLWorker::InitializeFollowerScaler() {
 }
 
 void FLWorker::HandleIterationRunningEvent() {
-  MS_LOG(INFO) << "Worker iteration starts, safemode is " << safemode_.load();
-  iteration_state_ = IterationState::kRunning;
+  MS_LOG(INFO) << "Server iteration starts, safemode is " << safemode_.load();
+  server_iteration_state_ = IterationState::kRunning;
   if (safemode_.load() == true) {
     safemode_ = false;
   }
 }
 
 void FLWorker::HandleIterationCompletedEvent() {
-  MS_LOG(INFO) << "Worker iteration completes";
-  iteration_state_ = IterationState::kCompleted;
+  MS_LOG(INFO) << "Server iteration completes";
+  server_iteration_state_ = IterationState::kCompleted;
 }
 
 void FLWorker::ProcessBeforeScalingOut() {
   MS_LOG(INFO) << "Starting Worker scaling out barrier.";
-  while (iteration_state_.load() != IterationState::kCompleted) {
+  while (server_iteration_state_.load() != IterationState::kCompleted ||
+         worker_iteration_state_.load() != IterationState::kCompleted) {
     std::this_thread::yield();
   }
   MS_LOG(INFO) << "Ending Worker scaling out barrier. Switch to safemode.";
@@ -135,7 +157,8 @@ void FLWorker::ProcessBeforeScalingOut() {
 
 void FLWorker::ProcessBeforeScalingIn() {
   MS_LOG(INFO) << "Starting Worker scaling in barrier.";
-  while (iteration_state_.load() != IterationState::kCompleted) {
+  while (server_iteration_state_.load() != IterationState::kCompleted ||
+         worker_iteration_state_.load() != IterationState::kCompleted) {
     std::this_thread::yield();
   }
   MS_LOG(INFO) << "Ending Worker scaling in barrier. Switch to safemode.";
@@ -148,9 +171,6 @@ void FLWorker::ProcessAfterScalingOut() {
   }
 
   MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize for worker.";
-  while (iteration_state_.load() != IterationState::kCompleted) {
-    std::this_thread::yield();
-  }
   server_num_ = worker_node_->server_num();
   worker_num_ = worker_node_->worker_num();
   MS_LOG(INFO) << "After scheduler scaling out, worker number is " << worker_num_ << ", server number is "
@@ -165,9 +185,6 @@ void FLWorker::ProcessAfterScalingIn() {
   }
 
   MS_LOG(INFO) << "Cluster scaling in completed. Reinitialize for worker.";
-  while (iteration_state_.load() != IterationState::kCompleted) {
-    std::this_thread::yield();
-  }
   server_num_ = worker_node_->server_num();
   worker_num_ = worker_node_->worker_num();
   MS_LOG(INFO) << "After scheduler scaling in, worker number is " << worker_num_ << ", server number is " << server_num_

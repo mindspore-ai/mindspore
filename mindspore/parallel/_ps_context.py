@@ -15,10 +15,20 @@
 """Context for parameter server training mode"""
 
 import os
+from mindspore._checkparam import Validator
 from mindspore._c_expression import PSContext
 
 _ps_context = None
 
+_check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",
+                            "start_fl_job_threshold", "start_fl_job_time_window", "update_model_time_window",
+                            "fl_iteration_num", "client_epoch_num", "client_batch_size", "scheduler_manage_port"]
+
+_check_non_negative_int_keys = ["worker_num"]
+
+_check_positive_float_keys = ["update_model_ratio", "client_learning_rate"]
+
+_check_port_keys = ["scheduler_port", "fl_server_port", "scheduler_manage_port"]
 
 def ps_context():
     """
@@ -181,3 +191,20 @@ def _set_cache_enable(cache_enable):
 
 def _set_rank_id(rank_id):
     ps_context().set_rank_id(rank_id)
+
+def _check_value(key, value):
+    """
+    Validate the value for parameter server context keys.
+    """
+    if key in _check_positive_int_keys:
+        Validator.check_positive_int(value, key)
+
+    if key in _check_non_negative_int_keys:
+        Validator.check_non_negative_int(value, key)
+
+    if key in _check_positive_float_keys:
+        Validator.check_positive_float(value, key)
+
+    if key in _check_port_keys:
+        if value < 1 or value > 65535:
+            raise ValueError("The range of %s must be 1 to 65535, but got %d." % (key, value))

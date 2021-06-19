@@ -62,6 +62,7 @@ bool GetModelKernel::Reset() {
 }
 
 void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, const std::shared_ptr<FBBuilder> &fbb) {
+  auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
   std::map<std::string, AddressPtr> feature_maps;
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
   size_t get_model_iter = static_cast<size_t>(get_model_req->iteration());
@@ -70,9 +71,11 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
 
   // If this iteration is not finished yet, return ResponseCode_SucNotReady so that clients could get model later.
   if ((current_iter == get_model_iter && latest_iter_num != current_iter) || current_iter == get_model_iter - 1) {
-    std::string reason = "The model is not ready yet for iteration " + std::to_string(get_model_iter);
+    std::string reason = "The model is not ready yet for iteration " + std::to_string(get_model_iter) +
+                         ". Maybe this is because\n" + "1.Client doesn't send enough update model requests.\n" +
+                         "2. Worker has not push all the weights to servers.";
     BuildGetModelRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps,
-                     std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+                     std::to_string(next_req_time));
     MS_LOG(WARNING) << reason;
     return;
   }
@@ -88,11 +91,12 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
 
   // If the iteration of this model is invalid, return ResponseCode_OutOfTime to the clients could startFLJob according
   // to next_req_time.
-  auto response_code =
-    Iteration::GetInstance().is_last_iteration_valid() ? schema::ResponseCode_SUCCEED : schema::ResponseCode_OutOfTime;
+  bool last_iter_valid = Iteration::GetInstance().is_last_iteration_valid();
+  MS_LOG(INFO) << "GetModel last iteration is valid or not: " << last_iter_valid << ", next request time is "
+               << next_req_time << ", current iteration is " << current_iter;
+  auto response_code = last_iter_valid ? schema::ResponseCode_SUCCEED : schema::ResponseCode_OutOfTime;
   BuildGetModelRsp(fbb, response_code, "Get model for iteration " + std::to_string(get_model_iter), current_iter,
-                   feature_maps,
-                   std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+                   feature_maps, std::to_string(next_req_time));
   return;
 }
 

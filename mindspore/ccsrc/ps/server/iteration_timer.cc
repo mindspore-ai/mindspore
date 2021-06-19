@@ -29,7 +29,7 @@ void IterationTimer::Start(const std::chrono::milliseconds &duration) {
   monitor_thread_ = std::thread([&]() {
     while (running_.load()) {
       if (CURRENT_TIME_MILLI > end_time_) {
-        timeout_callback_(false);
+        timeout_callback_(false, "");
         running_ = false;
       }
       // The time tick is 1 millisecond.

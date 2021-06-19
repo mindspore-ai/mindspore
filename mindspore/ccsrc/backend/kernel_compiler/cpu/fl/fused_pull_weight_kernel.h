@@ -107,6 +107,7 @@ class FusedPullWeightKernel : public CPUKernel {
       }
     }
     MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
+    ps::worker::FLWorker::GetInstance().SetIterationRunning();
     return true;
   }
 
