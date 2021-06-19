@@ -61,7 +61,8 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
             py::object ret_py_ele = ret_py_tuple[i];
             // Object is none if pyfunc timeout
             if (ret_py_ele.is_none()) {
-              MS_LOG(INFO) << "PyFunc execute time out";
+              MS_LOG(INFO) << "Expected that PyFunc should return numpy array, got None. If python_multiprocessing is "
+                              "True, PyFunc may execute time out.";
               goto TimeoutError;
             }
             if (!py::isinstance<py::array>(ret_py_ele)) {
@@ -94,7 +95,9 @@ ShapeMisMatch:
   goto ComputeReturn;
 
 TimeoutError:
-  ret = Status(StatusCode::kMDTimeOut, __LINE__, __FILE__, "PyFunc execute time out");
+  ret = Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
+               "Expected that PyFunc should return numpy array, got None. If python_multiprocessing is True, "
+               "PyFunc may execute time out.");
   goto ComputeReturn;
 }
 
