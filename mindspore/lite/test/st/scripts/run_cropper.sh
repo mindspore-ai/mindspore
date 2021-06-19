@@ -1,17 +1,5 @@
 #!/bin/bash
-
-# Print start msg after run testcase
-function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-}
-
-# Print start msg before run testcase
-function MS_PRINT_TESTCASE_START_MSG() {
-    echo ""
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                  Testcase                                                                                             Result   "
-    echo -e "---                  --------                                                                                             ------   "
-}
+source ./base_functions.sh
 
 function Print_Cropper_Result() {
     MS_PRINT_TESTCASE_START_MSG
