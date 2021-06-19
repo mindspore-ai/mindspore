@@ -1,4 +1,5 @@
 #!/bin/bash
+source ./scripts/base_functions.sh
 
 # Run Export on x86 platform and create output test files:
 docker_image=mindspore_build:210301
@@ -89,13 +90,19 @@ function Run_x86() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
+        virtual_batch="false"
+        suffix_print=""
         if [[ $model_name == \#* ]]; then
           continue
         fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
-        elif [[ "${line_array[1]}" == "fp16" ]]; then
+        elif [[ "${line_array[1]}" == "vb" ]]; then
+            virtual_batch="true"
+            suffix_print="_virtual_batch"
+            accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" != "" ]]; then
             continue
         fi
         export_file="${ms_models_path}/${model_name}_tod"
@@ -108,11 +115,11 @@ function Run_x86() {
         --inDataFile=${train_io_path}/${model_prefix}_input \
         --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
         --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
-        --exportFile=${export_file} >> "${run_x86_log_file}"
+        --exportFile=${export_file} --virtualBatch=${virtual_batch} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86_train: '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86_train: '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
             fail=1
         fi
     done < ${modes_ms_train_config}
@@ -181,23 +188,21 @@ function Run_arm() {
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
         enable_fp16="false"
+        virtual_batch="false"
         suffix_print=""
         if [[ $model_name == \#* ]]; then
             continue
         fi
-        if [[ "${line_array[1]}" == "weight_quant" ]]; then
-            model_name=${line_array[0]}'_train_quant'
-            accuracy_limit=${line_array[2]}
-        fi
-        export_file="${tmp_dir}/${model_name}_tod"
-        inference_file="${tmp_dir}/${model_name}_infer"
 
         if [[ "${line_array[1]}" == "noarm32" ]] && [[ "$1" == arm32 ]]; then
             run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
             continue
         fi
 
-        if [[ "${line_array[1]}" == "fp16" ]]; then
+        if [[ "${line_array[1]}" == "weight_quant" ]]; then
+            model_name=${line_array[0]}'_train_quant'
+            accuracy_limit=${line_array[2]}
+        elif [[ "${line_array[1]}" == "fp16" ]]; then
             if [[ "$1" == arm64 ]]; then
             enable_fp16="true"
             suffix_print="_fp16"
@@ -205,7 +210,14 @@ function Run_arm() {
             else
                 continue
             fi
+        elif [[ "${line_array[1]}" == "vb" ]]; then
+            virtual_batch="true"
+            suffix_print="_virtual_batch"
+            accuracy_limit=${line_array[2]}
         fi
+
+        export_file="${tmp_dir}/${model_name}_tod"
+        inference_file="${tmp_dir}/${model_name}_infer"
 
         # run benchmark_train test without clib data
         echo ${model_name} >> "${run_arm_log_file}"
@@ -231,7 +243,8 @@ function Run_arm() {
         --accuracyThreshold=${accuracy_limit} \
         --enableFp16=${enable_fp16} \
         --inferenceFile=${inference_file} \
-        --exportFile=${export_file}
+        --exportFile=${export_file} \
+        --virtualBatch=${virtual_batch}
 ENDM
         )
         echo "${adb_cmd}" >> ${run_arm_log_file}
@@ -247,19 +260,6 @@ ENDM
         
     done < ${modes_ms_train_config}
     return ${fail}
-}
-
-# Print start msg before run testcase
-function MS_PRINT_TESTCASE_START_MSG() {
-    echo ""
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                  Testcase                                                                                             Result   "
-    echo -e "---                  --------                                                                                             ------   "
-}
-
-# Print start msg after run testcase
-function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
 }
 
 function Print_Result() {
@@ -282,19 +282,15 @@ modes_ms_train_config=${basepath}/../config/models_ms_train.cfg
 epoch_num=1
 threads=2
 train_io_path=""
-while getopts "r:M:c:m:d:i:e:vt:q:D" opt; do
+while getopts "r:c:m:d:i:e:v:t:q:D:" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
            echo "release_path is ${OPTARG}"
             ;;
         m)
-            models_path=${OPTARG}"/models_train"
+            models_path=${OPTARG}"/../../models_train"
             echo "models_path is ${OPTARG}"
-            ;;
-        M)
-            models_path=${OPTARG}
-            echo "models_path is ${models_path}"
             ;;
         c)
             modes_ms_train_config=${OPTARG}
@@ -308,11 +304,15 @@ while getopts "r:M:c:m:d:i:e:vt:q:D" opt; do
            device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
             ;;
-        e)
+        D)
             enable_export=1
             docker_image=${OPTARG}
             echo "enable_export = 1, docker_image = ${OPTARG}"
-            ;;          
+            ;;
+        e)
+            backend=${OPTARG}
+            echo "backend is ${OPTARG}"
+            ;;
         v)
             run_valgrind="valgrind --log-file=valgrind.log "
             echo "Run x86 with valgrind"
@@ -406,7 +406,6 @@ else
     exit 1
 fi
 
-
 # Write benchmark_train result to temp file
 run_benchmark_train_result_file=${logs_path}/run_benchmark_train_result.txt
 echo ' ' > ${run_benchmark_train_result_file}
@@ -434,28 +433,55 @@ rm -rf ${benchmark_train_test_path}
 mkdir -p ${benchmark_train_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_train_test_path} || exit 1
 
-# Run on x86
-echo "start Run x86 ..."
-Run_x86 &
-Run_x86_PID=$!
-sleep 1
+isFailed=0
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-train" ]]; then
+    # Run on x86
+    echo "start Run x86 ..."
+    Run_x86 &
+    Run_x86_PID=$!
+    sleep 1
+fi
+if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_train" ]]; then
+    # Run on arm64
+    echo "start Run arm64 ..."
+    Run_arm arm64
+    Run_arm64_status=$?
+    sleep 1
+fi
+if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" || $backend == "arm32_train" ]]; then
+    # Run on arm32
+    echo "start Run arm32 ..."
+    Run_arm arm32
+    Run_arm32_status=$?
+    sleep 1
+fi
 
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-train" ]]; then
+    wait ${Run_x86_PID}
+    Run_x86_status=$?
+    cat ${run_benchmark_train_result_file}
 
-# Run on arm64
-echo "start Run arm64 ..."
-Run_arm arm64 
-Run_arm64_status=$?
-sleep 1
-
-# Run on arm32
-echo "start Run arm32 ..."
-Run_arm arm32
-Run_arm32_status=$?
-sleep 1
-
-wait ${Run_x86_PID}
-Run_x86_status=$?
-cat ${run_benchmark_train_result_file}
+    # Check benchmark_train result and return value
+    if [[ ${Run_x86_status} != 0 ]];then
+        echo "Run_x86 train failed"
+        cat ${run_x86_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_train" ]]; then
+    if [[ ${Run_arm64_status} != 0 ]];then
+        echo "Run_arm64 train failed"
+        cat ${run_arm64_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" || $backend == "arm32_train" ]]; then
+    if [[ ${Run_arm32_status} != 0 ]];then
+        echo "Run_arm32 train failed"
+        cat ${run_arm32_log_file}
+        isFailed=1
+    fi
+fi
 
 END=$(date +%s.%N)
 DIFF=$(echo "$END - $START" | bc)
@@ -469,28 +495,7 @@ function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
-
-result=0
-# Check benchmark_train result and return value
-if [[ ${Run_x86_status} != 0 ]];then
-    echo "Run_x86 failed"
-    cat ${run_x86_log_file}
-    result=1
-fi
-
-if [[ ${Run_arm64_status} != 0 ]];then
-    echo "Run_arm64 failed"
-    cat ${run_arm64_log_file}
-    result=1
-fi
-
-if [[ ${Run_arm32_status} != 0 ]];then
-    echo "Run_arm32 failed"
-    cat ${run_arm32_log_file}
-    result=1
-fi
-
 echo "Test ended - Results:"
 Print_Benchmark_Result
 echo "Test run Time:" $DIFF
-exit ${result}
+exit ${isFailed}

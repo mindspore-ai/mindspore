@@ -1,4 +1,5 @@
 #!/bin/bash
+source ./scripts/base_functions.sh
 
 # Run converter on x86 platform:
 function Run_Converter() {
@@ -13,254 +14,22 @@ function Run_Converter() {
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
 
-    # Convert gpu models:
-    while read line; do
-        if [[ $line == \#* ]]; then
-          continue
-        fi
-        model_name=${line%%;*}
-        model_type=${model_name##*.}
-        case $model_type in
-          pb)
-            model_fmk="TF"
-            ;;
-          tflite)
-            model_fmk="TFLITE"
-            ;;
-          onnx)
-            model_fmk="ONNX"
-            ;;
-          mindir)
-            model_fmk="MINDIR"
-            ;;
-          *)
-            model_type="caffe"
-            model_fmk="CAFFE"
-            ;;
-        esac
-        if [[ $model_fmk == "CAFFE" ]]; then
-          echo ${model_name} >> "${run_converter_log_file}"
-          echo './converter_lite  --fmk='${model_fmk}' --modelFile='$models_path/${model_name}'.prototxt --weightFile='$models_path'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
-          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name}
-        else
-          echo ${model_name} >> "${run_converter_log_file}"
-          echo './converter_lite  --fmk='${model_fmk}' --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
-          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
-        fi
-        if [ $? = 0 ]; then
-            converter_result='converter '${model_type}' '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter '${model_type}' '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
-    done < ${models_gpu_fp32_config}
-
-    while read line; do
-        if [[ $line == \#* ]]; then
-          continue
-        fi
-        model_name=${line%%;*}
-        model_type=${model_name##*.}
-        case $model_type in
-          pb)
-            model_fmk="TF"
-            ;;
-          tflite)
-            model_fmk="TFLITE"
-            ;;
-          onnx)
-            model_fmk="ONNX"
-            ;;
-          mindir)
-            model_fmk="MINDIR"
-            ;;
-          *)
-            model_type="caffe"
-            model_fmk="CAFFE"
-            ;;
-        esac
-        if [[ $model_fmk == "CAFFE" ]]; then
-          echo ${model_name} >> "${run_converter_log_file}"
-          echo './converter_lite  --fmk='${model_fmk}' --modelFile='$models_path/${model_name}'.prototxt --weightFile='$models_path'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name}'_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0' >> "${run_converter_log_file}"
-          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0
-        else
-          echo ${model_name} >> "${run_converter_log_file}"
-          echo './converter_lite  --fmk='${model_fmk}' --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0' >> "${run_converter_log_file}"
-          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0
-        fi
-        if [ $? = 0 ]; then
-            converter_result='converter gpu weightquant'${model_type}' '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter gpu weightquant'${model_type}' '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
-    done < ${models_gpu_weightquant_config}
-
-    while read line; do
-      fp16_line_info=${line}
-      if [[ $fp16_line_info == \#* ]]; then
-        continue
-      fi
-      model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
-      model_name=${model_info%%;*}
-      echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
-      cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
-      if [ $? = 0 ]; then
-          converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-      else
-          converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-      fi
-    done < ${models_gpu_fp16_config}
+    # Prepare the config file list
+    local cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_weightquant_config")
+    # Convert models:
+    # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
+    Convert "${cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
 }
 
 # Run on gpu platform:
 function Run_gpu() {
-    cd ${arm64_path} || exit 1
-    tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
-
-    # If build with minddata, copy the minddata related libs
-    cd ${benchmark_test_path} || exit 1
-    if [ -f ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libminddata-lite.so ]; then
-        cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
-    fi
-    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
-
-    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
-
-    # adb push all needed files to the phone
-    adb -s ${device_id} push ${benchmark_test_path} /data/local/tmp/ > adb_push_log.txt
-
-    # run adb ,run session ,check the result:
-    echo 'cd  /data/local/tmp/benchmark_test' > adb_cmd.txt
-    echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
-    echo 'chmod 777 benchmark' >> adb_cmd.txt
-
-    adb -s ${device_id} shell < adb_cmd.txt
-
-    # Run gpu fp32 converted models:
-    while read line; do
-        model_name=${line%%;*}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${line} | awk -F ';' '{print $1}'`
-        accuracy_limit=`echo ${line} | awk -F ';' '{print $2}'`
-        input_num=`echo ${line} | awk -F ';' '{print $3}'`
-        input_shapes=`echo ${line} | awk -F ';' '{print $4}'`
-        input_files=""
-        data_path="/data/local/tmp/input_output/"
-        output_file=${data_path}'output/'${model_name}'.ms.out'
-        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
-          input_files=/data/local/tmp/input_output/input/${model_name}.ms.bin
-        else
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        if [[ ${accuracy_limit} == "" ]]; then
-          accuracy_limit="0.5"
-        fi
-        echo ${model_name} >> "${run_gpu_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        if [[ $input_shapes == "" ]]; then
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-        else
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --device=GPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --device=GPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-        fi
-
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_gpu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_gpu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_gpu_fp32_config}
-
-    # Run GPU fp16 converted models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${line} | awk -F ';' '{print $1}'`
-        accuracy_limit=`echo ${line} | awk -F ';' '{print $2}'`
-        input_num=`echo ${line} | awk -F ';' '{print $3}'`
-        input_shapes=`echo ${line} | awk -F ';' '{print $4}'`
-        input_files=""
-        data_path="/data/local/tmp/input_output/"
-        output_file=${data_path}'output/'${model_name}'.ms.out'
-        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
-          input_files=/data/local/tmp/input_output/input/${model_name}.ms.bin
-        else
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        if [[ ${accuracy_limit} == "" ]]; then
-          accuracy_limit="5"
-        fi
-        echo ${model_name} >> "${run_gpu_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        if [[ $input_shapes == "" ]]; then
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-        else
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-        fi
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_gpu_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_gpu_fp16_config}
-
-    # Run GPU weightquant converted models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${line} | awk -F ';' '{print $1}'`
-        accuracy_limit=`echo ${line} | awk -F ';' '{print $2}'`
-        input_num=`echo ${line} | awk -F ';' '{print $3}'`
-        input_shapes=`echo ${line} | awk -F ';' '{print $4}'`
-        input_files=""
-        data_path="/data/local/tmp/input_output/"
-        output_file=${data_path}'output/'${model_name}'.ms.out'
-        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
-          input_files=/data/local/tmp/input_output/input/${model_name}.ms.bin
-        else
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        if [[ ${accuracy_limit} == "" ]]; then
-          accuracy_limit="5"
-        fi
-        echo ${model_name} >> "${run_gpu_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        if [[ $input_shapes == "" ]]; then
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'_weightquant.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'_weightquant.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-        else
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'_weightquant.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_gpu_log_file}"
-          echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --enableFp16=true --inputShapes='${input_shapes}' --accuracyThreshold='${accuracy_limit}' --modelFile='${model_name}'_weightquant.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
-        fi
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_gpu_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_gpu_weightquant: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_gpu_weightquant: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_gpu_weightquant_config}
+    # Push files to the phone
+    Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
+    # Prepare the config file list
+    local gpu_cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_fp16_config" "$models_gpu_weightquant_config")
+    # Run converted models:
+    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
+    Run_Benchmark "${gpu_cfg_file_list[*]}" . '/data/local/tmp' $run_gpu_log_file $run_benchmark_result_file 'arm64' 'GPU' $device_id
 }
 
 
@@ -312,46 +81,6 @@ function Run_mindrt_parallel() {
     done < ${models_mindrt_parallel_config}
 }
 
-# Print start msg before run testcase
-function MS_PRINT_TESTCASE_START_MSG() {
-    echo ""
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                  Testcase                                                                                             Result   "
-    echo -e "---                  --------                                                                                             ------   "
-}
-
-# Print start msg after run testcase
-function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-}
-
-function Print_Converter_Result() {
-    MS_PRINT_TESTCASE_START_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
-    done < ${run_converter_result_file}
-    MS_PRINT_TESTCASE_END_MSG
-}
-
-function Print_Benchmark_Result() {
-    MS_PRINT_TESTCASE_START_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
-    done < ${run_benchmark_result_file}
-    MS_PRINT_TESTCASE_END_MSG
-}
-
-function Print_Parallel_Result() {
-    MS_PRINT_TESTCASE_START_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
-    done < ${run_parallel_result_file}
-    MS_PRINT_TESTCASE_END_MSG
-}
-
 basepath=$(pwd)
 echo ${basepath}
 #set -e
@@ -382,7 +111,6 @@ while getopts "r:m:d:e:" opt; do
 done
 
 # mkdir train
-
 x86_path=${release_path}/ubuntu_x86
 file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
@@ -406,20 +134,17 @@ echo ' ' > ${run_converter_result_file}
 # Run converter
 echo "start Run converter ..."
 Run_Converter
-Run_converter_PID=$!
-sleep 1
-
-wait ${Run_converter_PID}
 Run_converter_status=$?
+sleep 1
 
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
-    Print_Converter_Result
+    Print_Converter_Result $run_converter_result_file
 else
     echo "Run converter failed"
     cat ${run_converter_log_file}
-    Print_Converter_Result
+    Print_Converter_Result $run_converter_result_file
     exit 1
 fi
 
@@ -454,8 +179,6 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
     Run_gpu
     Run_gpu_status=$?
     sleep 1
-fi
-if [[ $backend == "all" || $backend == "gpu" ]]; then
     if [[ ${Run_gpu_status} != 0 ]];then
         echo "Run_gpu failed"
         cat ${run_gpu_log_file}
@@ -464,11 +187,8 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
 fi
 
 echo "Run_gpu is ended"
-Print_Benchmark_Result
-if [[ $isFailed == 1 ]]; then
-    exit 1
-fi
-
+Print_Benchmark_Result $run_benchmark_result_file
+exit ${isFailed}
 
 ########## mindrt parallel test ##############
 run_parallel_result_file=${basepath}/run_parallel_result.txt
@@ -490,7 +210,7 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
     fi
 
     echo "Run_parallel is ended"
-    Print_Parallel_Result
+    Print_Parallel_Result $run_parallel_result_file
 
     if [[ ${Run_mindrt_parallel_status} != 0 ]];then
         exit 1

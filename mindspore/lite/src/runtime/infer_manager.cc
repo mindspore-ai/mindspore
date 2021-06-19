@@ -62,7 +62,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {
-  MS_ASSERT(primitive != nullptr);
+  MS_ASSERT(parameter != nullptr);
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
   int ret = 0;
