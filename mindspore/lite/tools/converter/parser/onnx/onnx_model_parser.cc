@@ -172,6 +172,8 @@ lite::STATUS OnnxModelParser::HardCodeONNX(const CNodePtr &conv_node, const tens
         if (format == schema::Format::Format_NHWC) {
           prim->AddAttr(ops::kFormat, MakeValue<int64_t>(Format_NHWC));
           weight_src_format = schema::Format::Format_KHWC;
+        } else if (format == schema::Format::Format_KHWC) {
+          weight_src_format = schema::Format::Format_KHWC;
         } else {
           prim->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
           weight_src_format = schema::Format::Format_KCHW;
@@ -205,7 +207,7 @@ int OnnxModelParser::DoWeightFormatTransform(const CNodePtr &conv_node, const An
   if (weight_value != nullptr) {
     auto status = opt::TransFilterFormat(weight_value, weight_src_format, weight_dst_format);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
+      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_src_format]) << "To"
                     << EnumNameFormat(weight_dst_format) << " failed, node : " << conv_node->fullname_with_scope()
                     << "quant type:" << quant_type_;
       return RET_ERROR;
