@@ -392,6 +392,14 @@ def check_version_and_env_config():
     os.environ["MS_CLOSE_VERSION_CHECK"] = "ON"
     if __package_name__.lower() == "mindspore-ascend":
         env_checker = AscendEnvChecker()
+        # Note: pre-load libgomp.so to solve error like "cannot allocate memory in statis TLS block"
+        try:
+            import ctypes
+            ctypes.cdll.LoadLibrary("libgomp.so.1")
+        except OSError:
+            logger.warning(
+                "Pre-Load Lirary libgomp.so.1 failed, this might cause cannot allocate TLS memory problem, "
+                "if so find solution in FAQ in https://www.mindspore.cn/doc/faq/en/master/index.html.")
     elif __package_name__.lower() == "mindspore-gpu":
         env_checker = GPUEnvChecker()
     else:
