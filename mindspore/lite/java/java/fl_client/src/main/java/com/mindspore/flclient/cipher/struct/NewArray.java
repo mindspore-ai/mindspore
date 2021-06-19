@@ -13,9 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mindspore.flclient;
 
-public enum ServerMod {
-    FEDERATED_LEARNING,
-    HYBRID_TRAINING
+package com.mindspore.flclient.cipher.struct;
+
+public class NewArray<T> {
+    private int size;
+    private T array;
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public T getArray() {
+        return array;
+    }
+
+    public void setArray(T array) {
+        this.array = array;
+    }
+
 }

@@ -13,9 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mindspore.flclient;
 
-public enum ServerMod {
-    FEDERATED_LEARNING,
-    HYBRID_TRAINING
+package com.mindspore.flclient.cipher.struct;
+
+public class ShareSecret {
+    private String flID;
+    private NewArray<byte[]> share;
+    private int index;
+
+    public String getFlID() {
+        return flID;
+    }
+
+    public void setFlID(String flID) {
+        this.flID = flID;
+    }
+
+    public NewArray<byte[]> getShare() {
+        return share;
+    }
+
+    public void setShare(NewArray<byte[]> share) {
+        this.share = share;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
 }
