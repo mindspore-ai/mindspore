@@ -87,9 +87,8 @@ if(ENABLE_D OR ENABLE_ACL)
     find_library(libopskernel libopskernel.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(libaicore_utils libaicore_utils.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(libaicpu_engine_common libaicpu_engine_common.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(atc_protobuf libascend_protobuf.so.3.8.0.0 ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
-    target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler} ${atc_protobuf}
+    target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler}
             ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel}
             ${libaicore_utils} ${libaicpu_engine_common} ${acl})
     add_dependencies(mindspore_shared_lib graph)
