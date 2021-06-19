@@ -14,35 +14,52 @@
 # ============================================================================
 
 """Evaluation for CTPN"""
-import argparse
-from mindspore import context
+import os
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 from src.ctpn import CTPN
-from src.config import config
 from src.dataset import create_ctpn_dataset
 from src.eval_utils import eval_for_ctpn
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+
+
 set_seed(1)
 
-parser = argparse.ArgumentParser(description="CTPN evaluation")
-parser.add_argument("--dataset_path", type=str, default="", help="Dataset path.")
-parser.add_argument("--image_path", type=str, default="", help="Image path.")
-parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path.")
-parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-args_opt = parser.parse_args()
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
-def ctpn_infer_test(dataset_path='', ckpt_path='', img_dir=''):
-    """ctpn infer."""
-    print("ckpt path is {}".format(ckpt_path))
-    ds = create_ctpn_dataset(dataset_path, batch_size=config.test_batch_size, repeat_num=1, is_training=False)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id)
+
+
+def modelarts_pre_process():
+    pass
+
+
+def modelarts_post_process():
+    local_path = os.path.join(config.modelarts_home, config.object_name)
+    basename = os.path.basename(config.checkpoint_path)
+    copy_label = 'cd {}&&zip submit_{}.zip ./submit *.txt'.format(local_path, basename)
+    os.system(copy_label)
+    os.system('cd {}&&sed -i "s/\r//" scripts/eval_res.sh'.format(local_path))
+    os.system('cd {}&& sh scripts/eval_res.sh'.format(local_path))
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process, post_process=modelarts_post_process)
+def ctpn_infer_test():
+    config.feature_shapes = [config.img_height // 16, config.img_width // 16]
+    config.num_bboxes = (config.img_height // 16) * (config.img_width // 16) * config.num_anchors
+    config.num_step = config.img_width // 16
+    config.rnn_batch_size = config.img_height // 16
+
+    print("ckpt path is {}".format(config.checkpoint_path))
+    ds = create_ctpn_dataset(config.dataset_path, batch_size=config.test_batch_size, repeat_num=1, is_training=False)
     total = ds.get_dataset_size()
     print("eval dataset size is {}".format(total))
     net = CTPN(config, batch_size=config.test_batch_size, is_training=False)
-    param_dict = load_checkpoint(ckpt_path)
+    param_dict = load_checkpoint(config.checkpoint_path)
     load_param_into_net(net, param_dict)
     net.set_train(False)
-    eval_for_ctpn(net, ds, img_dir)
+    eval_for_ctpn(net, ds, config.img_dir)
+
 
 if __name__ == '__main__':
-    ctpn_infer_test(args_opt.dataset_path, args_opt.checkpoint_path, img_dir=args_opt.image_path)
+    ctpn_infer_test()

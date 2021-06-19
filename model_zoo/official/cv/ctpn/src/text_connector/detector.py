@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from src.config import config
+from src.model_utils.config import config
 from src.text_connector.utils import nms
 from src.text_connector.connect_text_lines import connect_text_lines
 

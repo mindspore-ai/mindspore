@@ -16,7 +16,7 @@
 
 if [ $# -ne 3 ]
 then 
-    echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TASK_TYPE] [PRETRAINED_PATH]"
+    echo "Usage: sh scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TASK_TYPE] [PRETRAINED_PATH]"
 exit 1
 fi
 
@@ -57,13 +57,13 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ./*.py ./train_parallel$i
-    cp ./*.zip ./train_parallel$i
-    cp ../*.py ./train_parallel$i
-    cp *.sh ./train_parallel$i
-    cp -r ../src ./train_parallel$i
+    cp ./*.py ./train_parallel$i
+    cp ./*yaml ./train_parallel$i
+    cp -r ./scripts/ ./train_parallel$i
+    cp -r ./src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --task_type=$TASK_TYPE --pre_trained=$PATH2 &> log &
+    python train.py --run_distribute=True --task_type=$TASK_TYPE --pre_trained=$PATH2 &> log &
     cd ..
 done

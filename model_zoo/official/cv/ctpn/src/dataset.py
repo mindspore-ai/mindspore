@@ -22,7 +22,8 @@ import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as CC
 import mindspore.common.dtype as mstype
-from src.config import config
+from src.model_utils.config import config
+
 
 class PhotoMetricDistortion:
     """Photo Metric Distortion"""

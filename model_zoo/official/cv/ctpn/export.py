@@ -13,32 +13,35 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into air, onnx, mindir models"""
-import argparse
 import numpy as np
-
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
-
 from src.ctpn import CTPN_Infer
-from src.config import config
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description='fasterrcnn_export')
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--file_name", type=str, default="ctpn", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-parser.add_argument('--ckpt_file', type=str, default='', help='ctpn ckpt file.')
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 
-if __name__ == '__main__':
+
+if config.device_target == "Ascend":
+    context.set_context(device_id=config.device_id)
+
+
+def modelarts_pre_process():
+    pass
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def model_export():
+    config.feature_shapes = [config.img_height // 16, config.img_width // 16]
+    config.num_bboxes = (config.img_height // 16) * (config.img_width // 16) * config.num_anchors
+    config.num_step = config.img_width // 16
+    config.rnn_batch_size = config.img_height // 16
+
     net = CTPN_Infer(config=config, batch_size=config.test_batch_size)
 
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
 
     param_dict_new = {}
     for key, value in param_dict.items():
@@ -48,4 +51,8 @@ if __name__ == '__main__':
 
     img = Tensor(np.zeros([config.test_batch_size, 3, config.img_height, config.img_width]), ms.float16)
 
-    export(net, img, file_name=args.file_name, file_format=args.file_format)
+    export(net, img, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()
