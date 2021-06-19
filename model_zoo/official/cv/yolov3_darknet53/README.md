@@ -67,6 +67,11 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
                     └─picturen.jpg
     ```
 
+- If the user uses his own data set, the data set format needs to be converted to coco data format,
+  and the data in the JSON file should correspond to the image data one by one.
+  After accessing user data, because the size and quantity of image data are different,
+  lr, anchor_scale and training_shape may need to be adjusted appropriately.
+
 ## [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU）
@@ -81,10 +86,10 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
 
 - After installing MindSpore via the official website, you can start training and evaluation in as follows. If running on GPU, please add `--device_target=GPU` in the python command or use the "_gpu" shell script ("xxx_gpu.sh").
 - Prepare the backbone_darknet53.ckpt and hccl_8p.json files, before run network.
-    - Pretrained_backbone can use src/convert_weight.py, convert darknet53.conv.74 to mindspore ckpt.
+    - Pretrained_backbone can use convert_weight.py, convert darknet53.conv.74 to mindspore ckpt.
 
       ```
-      python src/convert_weight.py --input_file ./darknet53.conv.74
+      python convert_weight.py --input_file ./darknet53.conv.74
       ```
 
       darknet53.conv.74 can get from [download](https://pjreddie.com/media/files/darknet53.conv.74) .
@@ -120,8 +125,11 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
       --training_shape=416 \
       --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 
-  # standalone training example(1p) by shell script
+  # For Ascend device, standalone training example(1p) by shell script
   bash run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
+
+  # For GPU device, standalone training example(1p) by shell script
+  bash run_standalone_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 
   # For Ascend device, distributed training example(8p) by shell script
   bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
@@ -394,7 +402,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 ```
 
 The ckpt_file parameter is required,
-`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+Currently,`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 `keep_detect` keep the detect module or not, default: True
 
 ### [Inference Process](#contents)
