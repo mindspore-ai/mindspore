@@ -22,20 +22,20 @@
 #include <iosfwd>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 #include "include/api/model.h"
 #include "include/api/context.h"
 #include "include/api/types.h"
 #include "include/api/serialization.h"
-#include "include/minddata/dataset/include/vision_ascend.h"
-#include "include/minddata/dataset/include/execute.h"
-#include "include/minddata/dataset/include/vision.h"
+#include "include/dataset/vision_ascend.h"
+#include "include/dataset/execute.h"
+#include "include/dataset/vision.h"
 #include "inc/utils.h"
 
-using mindspore::GlobalContext;
+using mindspore::Context;
 using mindspore::Serialization;
 using mindspore::Model;
-using mindspore::ModelContext;
 using mindspore::Status;
 using mindspore::ModelType;
 using mindspore::GraphCell;
@@ -64,21 +64,24 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
-  GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
-  auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
-  auto model_context = std::make_shared<mindspore::ModelContext>();
+  auto context = std::make_shared<Context>();
+  auto ascend310 = std::make_shared<mindspore::Ascend310DeviceInfo>();
+  ascend310->SetDeviceID(FLAGS_device_id);
+  ascend310->SetBufferOptimizeMode("off_optimize");
+  context->MutableDeviceInfo().push_back(ascend310);
+  mindspore::Graph graph;
+  Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
   if (FLAGS_cpu_dvpp == "DVPP") {
     if (RealPath(FLAGS_aipp_path).empty()) {
       std::cout << "Invalid aipp path" << std::endl;
       return 1;
     } else {
-      ModelContext::SetInsertOpConfigPath(model_context, FLAGS_aipp_path);
+      ascend310->SetInsertOpConfigPath(FLAGS_aipp_path);
     }
   }
 
-  Model model(GraphCell(graph), model_context);
-  Status ret = model.Build();
+  Model model;
+  Status ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;
@@ -142,7 +145,7 @@ int main(int argc, char **argv) {
   }
   double average = 0.0;
   int inferCount = 0;
-  char tmpCh[256] = {0};
+
   for (auto iter = costTime_map.begin(); iter != costTime_map.end(); iter++) {
     double diff = 0.0;
     diff = iter->second - iter->first;
@@ -150,12 +153,12 @@ int main(int argc, char **argv) {
     inferCount++;
   }
   average = average / inferCount;
-  snprintf(tmpCh, sizeof(tmpCh), \
-  "NN inference cost average time: %4.3f ms of infer_count %d \n", average, inferCount);
+  std::stringstream timeCost;
+  timeCost << "NN inference cost average time: "<< average << " ms of infer_count " << inferCount << std::endl;
   std::cout << "NN inference cost average time: "<< average << "ms of infer_count " << inferCount << std::endl;
   std::string fileName = "./time_Result" + std::string("/test_perform_static.txt");
   std::ofstream fileStream(fileName.c_str(), std::ios::trunc);
-  fileStream << tmpCh;
+  fileStream << timeCost.str();
   fileStream.close();
   costTime_map.clear();
   return 0;
