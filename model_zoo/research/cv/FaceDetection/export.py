@@ -19,13 +19,17 @@ import numpy as np
 from mindspore import context
 from mindspore import Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
-
+from src.network_define import BuildTestNetwork
 from src.FaceDetection.yolov3 import HwYolov3 as backbone_HwYolov3
 from model_utils.config import config
 
 def save_air():
-    '''save air'''
-    print('============= yolov3 start save air ==================')
+    '''save air or mindir'''
+    anchors = config.anchors
+    reduction_0 = 64.0
+    reduction_1 = 32.0
+    reduction_2 = 16.0
+    print('============= yolov3 start save air or mindir ==================')
     devid = int(os.getenv('DEVICE_ID', '0')) if config.run_platform != 'CPU' else 0
     context.set_context(mode=context.GRAPH_MODE, device_target=config.run_platform, save_graphs=False, device_id=devid)
 
@@ -47,12 +51,12 @@ def save_air():
                 param_dict_new[key] = values
         load_param_into_net(network, param_dict_new)
         print('load model {} success'.format(config.pretrained))
-
+        test_net = BuildTestNetwork(network, reduction_0, reduction_1, reduction_2, anchors, anchors_mask, num_classes,
+                                    config)
         input_data = np.random.uniform(low=0, high=1.0, size=(config.batch_size, 3, 448, 768)).astype(np.float32)
 
         tensor_input_data = Tensor(input_data)
-        export(network, tensor_input_data,
-               file_name=config.pretrained.replace('.ckpt', '_' + str(config.batch_size) + 'b.air'), file_format='AIR')
+        export(test_net, tensor_input_data, file_name=config.file_name, file_format=config.file_format)
 
         print("export model success.")
 
