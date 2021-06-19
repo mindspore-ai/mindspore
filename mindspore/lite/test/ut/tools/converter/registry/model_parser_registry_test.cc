@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#include <functional>
+#include <vector>
 #include "common/common_test.h"
-#include "include/registry/model_parser_registry.h"
-#include "tools/converter/model_parser.h"
+#include "ut/tools/converter/registry/model_parser_test.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/converter_flags.h"
 
-using mindspore::lite::ModelRegistrar;
 using mindspore::lite::converter::Flags;
 namespace mindspore {
 class ModelParserRegistryTest : public mindspore::CommonTest {
@@ -28,26 +27,27 @@ class ModelParserRegistryTest : public mindspore::CommonTest {
   ModelParserRegistryTest() = default;
 };
 
-class ModelParserTest : public lite::ModelParser {
- public:
-  ModelParserTest() = default;
-};
-
-lite::ModelParser *TestModelParserCreator() {
-  auto *parser = new (std::nothrow) ModelParserTest();
-  if (parser == nullptr) {
-    MS_LOG(ERROR) << "new model parser failed";
-    return nullptr;
-  }
-  return parser;
-}
-REG_MODEL_PARSER(TEST, TestModelParserCreator);
-
 TEST_F(ModelParserRegistryTest, TestRegistry) {
+  auto node_parser_reg = NodeParserTestRegistry::GetInstance();
+  auto add_parser = node_parser_reg->GetNodeParser("add");
+  ASSERT_NE(add_parser, nullptr);
+  auto proposal_parser = node_parser_reg->GetNodeParser("proposal");
+  ASSERT_NE(proposal_parser, nullptr);
   auto model_parser = lite::ModelParserRegistry::GetInstance()->GetModelParser("TEST");
   ASSERT_NE(model_parser, nullptr);
   Flags flags;
   auto func_graph = model_parser->Parse(flags);
-  ASSERT_EQ(func_graph, nullptr);
+  ASSERT_NE(func_graph, nullptr);
+  auto node_list = func_graph->GetOrderedCnodes();
+  ASSERT_EQ(node_list.size(), 3);
+  auto iter = node_list.begin();
+  bool is_add = opt::CheckPrimitiveType(*iter, prim::kPrimAddFusion);
+  ASSERT_EQ(is_add, true);
+  ++iter;
+  is_add = opt::CheckPrimitiveType(*iter, prim::kPrimAddFusion);
+  ASSERT_EQ(is_add, true);
+  ++iter;
+  bool is_return = opt::CheckPrimitiveType(*iter, prim::kPrimReturn);
+  ASSERT_EQ(is_return, true);
 }
 }  // namespace mindspore
