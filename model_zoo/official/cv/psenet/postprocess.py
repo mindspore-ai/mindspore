@@ -18,18 +18,18 @@ import os
 import math
 import operator
 from functools import reduce
-import argparse
 import numpy as np
 import cv2
-
-from src.config import config
+from src.model_utils.config import config
 from src.ETSNET.pse import pse
+
 
 def sort_to_clockwise(points):
     center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), points), [len(points)] * 2))
     clockwise_points = sorted(points, key=lambda coord: (-135 - math.degrees(
         math.atan2(*tuple(map(operator.sub, coord, center))[::-1]))) % 360, reverse=True)
     return clockwise_points
+
 
 def write_result_as_txt(image_name, img_bboxes, path):
     if not os.path.isdir(path):
@@ -51,10 +51,6 @@ def get_img(image_path):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
 
-parser = argparse.ArgumentParser(description='postprocess')
-parser.add_argument("--result_path", type=str, default="./scripts/result_Files", help='result Files path.')
-parser.add_argument("--img_path", type=str, default="", help='image files path.')
-args = parser.parse_args()
 
 if __name__ == "__main__":
     if not os.path.isdir('./res/submit_ic15/'):
@@ -62,17 +58,17 @@ if __name__ == "__main__":
     if not os.path.isdir('./res/vis_ic15/'):
         os.makedirs('./res/vis_ic15/')
 
-    file_list = os.listdir(args.img_path)
+    file_list = os.listdir(config.img_path)
     for k in file_list:
         if os.path.splitext(k)[-1].lower() in ['.jpg', '.jpeg', '.png']:
-            img_path = os.path.join(args.img_path, k)
+            img_path = os.path.join(config.img_path, k)
             img = get_img(img_path).reshape(1, 720, 1280, 3)
             img = img[0].astype(np.uint8).copy()
             img_name = os.path.split(img_path)[-1]
 
-            score = np.fromfile(os.path.join(args.result_path, k.split('.')[0] + '_0.bin'), np.float32)
+            score = np.fromfile(os.path.join(config.result_path, k.split('.')[0] + '_0.bin'), np.float32)
             score = score.reshape(1, 1, config.INFER_LONG_SIZE, config.INFER_LONG_SIZE)
-            kernels = np.fromfile(os.path.join(args.result_path, k.split('.')[0] + '_1.bin'), bool)
+            kernels = np.fromfile(os.path.join(config.result_path, k.split('.')[0] + '_1.bin'), bool)
             kernels = kernels.reshape(1, config.KERNEL_NUM, config.INFER_LONG_SIZE, config.INFER_LONG_SIZE)
             score = np.squeeze(score)
             kernels = np.squeeze(kernels)

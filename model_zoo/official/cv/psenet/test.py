@@ -84,7 +84,7 @@ def modelarts_pre_process():
     os.system('cd {}/opencv-3.4.9&&mkdir build&&cd ./build&&{}'.format(local_path, cmake_command))
 
     os.system('cd {}/src/ETSNET/pse&&make clean&&make'.format(local_path))
-    os.system('cd {}&&sed -i ’s/\r//‘ scripts/run_eval_ascend.sh')
+    os.system('cd {}&&sed -i ’s/\r//‘ scripts/run_eval_ascend.sh'.format(local_path))
 
 
 def modelarts_post_process():

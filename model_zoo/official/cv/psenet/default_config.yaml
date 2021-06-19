@@ -55,13 +55,17 @@ TEST_BUFFER_SIZE: 4
 TEST_DROP_REMAINDER: False
 INFERENCE: True
 
-
+# ======================================================================================
 #export options
 device_id: 0
 batch_size: 1
 file_name: "psenet"
 file_format: "MINDIR"
 
+# ======================================================================================
+#postprocess
+result_path: "./scripts/result_Files"
+img_path: ""
 
 ---
 # Help description for each configuration
@@ -81,3 +85,5 @@ file_name: "output file name"
 file_format: "file format choices[AIR, MINDIR, ONNX]"
 object_home: "your direction name"
 modelarts_home: "modelarts working path"
+result_path: "result Files path."
+img_path: "image files path."
