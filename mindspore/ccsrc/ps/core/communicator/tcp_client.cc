@@ -109,7 +109,15 @@ void TcpClient::Init() {
   if (!PSContext::instance()->enable_ssl()) {
     buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   } else {
+    MS_LOG(INFO) << "Enable ssl support.";
+
     SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx(false));
+
+    X509 *cert = SSLWrapper::GetInstance().ReadCertFromFile(kCertificateChain);
+    if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
+      MS_LOG(EXCEPTION) << "Verify cert time failed.";
+    }
+
     if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(false), kCertificateChain)) {
       MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
     }

@@ -26,10 +26,17 @@ bool HttpRequestHandler::Initialize(int fd, const std::unordered_map<std::string
   MS_EXCEPTION_IF_NULL(http);
 
   if (PSContext::instance()->enable_ssl()) {
+    MS_LOG(INFO) << "Enable ssl support.";
     SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(),
                         SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_NO_SSLv2);
     EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
     MS_EXCEPTION_IF_NULL(ecdh);
+
+    X509 *cert = SSLWrapper::GetInstance().ReadCertFromFile(kCertificateChain);
+    if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
+      MS_LOG(INFO) << "Verify cert time failed.";
+      return false;
+    }
 
     if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
       MS_LOG(ERROR) << "SSL use certificate chain file failed!";
