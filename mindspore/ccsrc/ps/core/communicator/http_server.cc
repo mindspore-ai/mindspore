@@ -66,6 +66,8 @@ bool HttpServer::InitServer() {
   result = setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&one), sizeof(int));
   if (result < 0) {
     MS_LOG(ERROR) << "Set sock opt error!";
+    close(fd_);
+    fd_ = -1;
     return false;
   }
 
@@ -82,18 +84,24 @@ bool HttpServer::InitServer() {
   result = ::bind(fd_, (struct sockaddr *)&addr, sizeof(addr));
   if (result < 0) {
     MS_LOG(ERROR) << "Bind ip:" << server_address_ << " port:" << server_port_ << "failed!";
+    close(fd_);
+    fd_ = -1;
     return false;
   }
 
   result = ::listen(fd_, backlog_);
   if (result < 0) {
     MS_LOG(ERROR) << "Listen ip:" << server_address_ << " port:" << server_port_ << "failed!";
+    close(fd_);
+    fd_ = -1;
     return false;
   }
 
   int flags = 0;
   if ((flags = fcntl(fd_, F_GETFL, 0)) < 0 || fcntl(fd_, F_SETFL, flags | O_NONBLOCK) < 0) {
     MS_LOG(ERROR) << "Set fcntl O_NONBLOCK failed!";
+    close(fd_);
+    fd_ = -1;
     return false;
   }
 

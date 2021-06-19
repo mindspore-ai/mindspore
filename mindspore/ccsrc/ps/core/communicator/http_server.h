@@ -27,6 +27,7 @@
 #include <event2/util.h>
 #include <event2/thread.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <cstdio>
 #include <cstdlib>

@@ -33,7 +33,11 @@ std::uniform_int_distribution<> CommUtil::dis = std::uniform_int_distribution<>{
 std::uniform_int_distribution<> CommUtil::dis2 = std::uniform_int_distribution<>{8, 11};
 
 bool CommUtil::CheckIpWithRegex(const std::string &ip) {
-  std::regex pattern("((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
+  std::regex pattern(
+    "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
   std::smatch res;
   if (regex_match(ip, res, pattern)) {
     return true;

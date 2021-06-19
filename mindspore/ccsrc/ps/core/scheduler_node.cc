@@ -689,7 +689,9 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
   callbacks_["/state"] = cluster_state;
   http_server_->RegisterRoute("/state", &callbacks_["/state"]);
 
-  http_server_->InitServer();
+  if (!http_server_->InitServer()) {
+    MS_LOG(EXCEPTION) << "The scheduler init http server failed.";
+  }
 
   http_server_->Start(false);
   restful_thread_ = std::make_unique<std::thread>([&]() { http_server_->Wait(); });
