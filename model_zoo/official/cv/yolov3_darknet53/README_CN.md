@@ -71,6 +71,9 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
                     └─picturen.jpg
     ```
 
+- 如果，用户使用的是用户自己的数据集，则需要将数据集格式转化为coco数据格式，并且，json文件中的数据要和图片数据对应好。
+  接入用户数据后，因为图片数据尺寸和数量不一样，lr、anchor_scale和training_shape可能需要适当调整。
+
 # 环境要求
 
 - 硬件（Ascend/GPU）
@@ -85,10 +88,10 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
 
 - 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：如果在GPU上运行，请在python命令中添加`--device_target=GPU`，或者使用“_gpu”shell脚本（“xxx_gpu.sh”）。
 - 在运行任务之前，需要准备backbone_darknet53.ckpt和hccl_8p.json文件。
-    - 使用src路径下的convert_weight.py脚本将darknet53.conv.74转换成mindspore ckpt格式。
+    - 使用yolov3_darknet53路径下的convert_weight.py脚本将darknet53.conv.74转换成mindspore ckpt格式。
 
       ```command
-      python src/convert_weight.py --input_file ./darknet53.conv.74
+      python convert_weight.py --input_file ./darknet53.conv.74
       ```
 
       可以从网站[下载](https://pjreddie.com/media/files/darknet53.conv.74) darknet53.conv.74文件。
@@ -121,8 +124,11 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
       --training_shape=416 \
       --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 
-  # shell脚本单机训练示例(1卡)
+  # 对于Ascend设备，shell脚本单机训练示例(1卡)
   bash run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
+
+  # 对于GPU设备，shell脚本单机训练示例(1卡)
+  bash run_standalone_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 
   # 对于Ascend设备，使用shell脚本分布式训练示例(8卡)
   bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
@@ -386,7 +392,7 @@ bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
 python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --keep_detect [Bool]
 ```
 
-参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+参数`ckpt_file` 是必需的，目前,`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
 参数`keep_detect` 是否保留坐标检测模块, 默认为True
 
 ## 推理过程
