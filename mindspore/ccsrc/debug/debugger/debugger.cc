@@ -1040,14 +1040,14 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
             MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
             continue;
           }
-          const uint32_t offset = 313;
+          const uint32_t offset = 321;
           (void)infile.seekg(offset, std::ios::beg);
           std::vector<char> buffer;
           const size_t buf_size = 256;
           buffer.resize(buf_size);
           (void)infile.read(buffer.data(), buf_size);
-          const uint8_t stream_id_offset = 8;
-          const uint8_t task_id_offset = 16;
+          const uint8_t stream_id_offset = 16;
+          const uint8_t task_id_offset = 24;
           // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
           // byte values currently.
           uint64_t stream_id = BytestoUInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
