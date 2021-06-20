@@ -113,17 +113,22 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   }
   void *weight_origin_tmp = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
   memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
+#ifdef ENABLE_ARM64
+  RowMajor2Col16MajorFp16Opt(static_cast<const float16_t *>(weight_origin_tmp), weight_ptr_, output_channel,
+                             input_channel);
+#else
   ColMajor2Row8MajorFp16(weight_origin_tmp, weight_ptr_, input_channel, output_channel, true);
-
+#endif
   return RET_OK;
 }
 
 int Convolution1x1FP16CPUKernel::Init() {
-  col_tile_ = C8NUM;
 #ifdef ENABLE_ARM64
-  row_tile_ = C16NUM;
+  row_tile_ = C12NUM;
+  col_tile_ = C16NUM;
 #else
   row_tile_ = C12NUM;
+  col_tile_ = C8NUM;
 #endif
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
@@ -174,11 +179,15 @@ int Convolution1x1FP16CPUKernel::RunOc(int task_id) {
   }
 
   auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float16_t *>(bias_data_) + thread_stride_ * task_id;
-
-  MatMulFp16(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
-             output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
-             matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
-
+#ifdef ENABLE_ARM64
+  MatMul12x16Fp16Opt(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
+                     output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
+                     matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
+#else
+  MatMul12x8A32Fp16(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
+                    output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
+                    matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
+#endif
   return RET_OK;
 }
 
@@ -191,16 +200,18 @@ int Convolution1x1FP16CPUKernel::RunHw(int task_id) {
 
   float16_t *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
   float16_t *thread_pack_input = pack_input_ + task_id * thread_stride_ * matmul_param_->deep_;
-#ifdef ENABLE_ARM64
-  RowMajor2Col16MajorFp16Opt(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
-#else
   RowMajor2Col12MajorFp16Opt(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
-#endif
-  float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
-  MatMulFp16(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
-             matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
-             OutType_Nhwc);
 
+  float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
+#ifdef ENABLE_ARM64
+  MatMul12x16Fp16Opt(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
+                     matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
+                     OutType_Nhwc);
+#else
+  MatMul12x8A32Fp16(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
+                    matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
+                    OutType_Nhwc);
+#endif
   return RET_OK;
 }
 
@@ -263,11 +274,7 @@ int Convolution1x1FP16CPUKernel::Run() {
     if (multi_thread_by_hw_) {
       ret = ParallelLaunch(this->context_, Convolution1x1Fp16RunHw, this, thread_count_);
     } else {
-#ifdef ENABLE_ARM64
-      RowMajor2Col16MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-#else
       RowMajor2Col12MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-#endif
       ret = ParallelLaunch(this->context_, Convolution1x1Fp16RunOc, this, thread_count_);
     }
     if (ret != RET_OK) {

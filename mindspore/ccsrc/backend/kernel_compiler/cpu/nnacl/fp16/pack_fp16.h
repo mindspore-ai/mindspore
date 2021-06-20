@@ -78,6 +78,7 @@ void Transpose12x8A32Fp16(const float16_t *src, float16_t *dst, size_t src_strid
 #endif
 
 #ifdef ENABLE_ARM64
+void Transpose12x8ARM64Fp16(const float16_t *src_ptr, float16_t *dst_ptr, size_t src_stride, size_t dst_stride);
 void Transpose16x8ARM64Fp16(const float16_t *src, float16_t *dst, size_t src_stride, size_t dst_stride);
 #endif
 
