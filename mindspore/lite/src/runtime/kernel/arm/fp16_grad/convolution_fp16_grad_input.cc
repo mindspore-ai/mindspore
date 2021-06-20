@@ -114,10 +114,7 @@ int ConvolutionGradInputCPUKernelFp16::Execute(int task_id) {
     count = MSMIN(stride, groups - stride * task_id);
     count = (count < 0) ? 0 : count;
     start = stride * task_id;
-    for (i = 0; i < batch; ++i) {
-      ConvDwInputGradFp16(dy_addr + (i * groups) * m * k, w_addr, dx_addr + (i * groups) * in_h * in_w, start, count,
-                          conv_param);
-    }
+    ConvDwInputGradFp16(dy_addr, w_addr, dx_addr, start, count, conv_param);
     return RET_OK;
   }
 

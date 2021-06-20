@@ -37,7 +37,7 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" |
       exit 1
     fi
     # run train
-    sh $cur_path/scripts/run_net_train.sh -r $release_path -m $models_path -d $device_id -e $backend
+    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend
     arm64_status=$?
     if [[ $arm64_status -ne 0 ]]; then
       echo "Run arm64 train failed"
@@ -54,7 +54,7 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" |
       exit 1
     fi
     # run train
-    sh $cur_path/scripts/run_net_train.sh -r $release_path -m $models_path -d $device_id -e $backend
+    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend
     arm32_status=$?
     if [[ $arm32_status -ne 0 ]]; then
       echo "Run arm32 train failed"
@@ -89,7 +89,7 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backen
       exit 1
     fi
     # run train
-    sh $cur_path/scripts/run_net_train.sh -r $release_path -m $models_path -e $backend
+    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -e $backend
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
       echo "Run x86 train failed"

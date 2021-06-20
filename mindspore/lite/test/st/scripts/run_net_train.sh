@@ -289,7 +289,7 @@ while getopts "r:c:m:d:i:e:v:t:q:D:" opt; do
            echo "release_path is ${OPTARG}"
             ;;
         m)
-            models_path=${OPTARG}"/../../models_train"
+            models_path=${OPTARG}
             echo "models_path is ${OPTARG}"
             ;;
         c)

@@ -135,8 +135,20 @@ static void Row2Col16Block16(const float16_t *src_ptr, float16_t *dst_ptr, size_
 void AddMatrixFp16(const float16_t *restrict v1, float16_t *restrict v2, float16_t beta, int row, int col, int stride) {
   const float16_t *src_ptr = v1;
   float16_t *dst_ptr = v2;
+#ifdef ENABLE_NEON
+  float16x8_t beta_0 = vdupq_n_f16(beta);
+#endif
   for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
+    int c = 0;
+#ifdef ENABLE_NEON
+    for (; c <= (col - C8NUM); c += C8NUM) {
+      float16x8_t dst_0 = vld1q_f16(dst_ptr + c);
+      float16x8_t src_0 = vld1q_f16(src_ptr + c);
+      float16x8_t sum_0 = vfmaq_f16(dst_0, beta_0, src_0);
+      vst1q_f16(dst_ptr + c, sum_0);
+    }
+#endif
+    for (; c < col; c++) {
       dst_ptr[c] += beta * src_ptr[c];
     }
     src_ptr += stride;
