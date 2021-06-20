@@ -26,23 +26,22 @@
 #include <stack>
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
-using EvaluatorCacheMap =
-  std::unordered_map<AbstractBasePtrList, EvalResultPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
-using EvaluatorCacheMapPtr = std::shared_ptr<EvaluatorCacheMap>;
-
+using EvaluatorCacheMgrPtr = std::shared_ptr<EvaluatorCacheMgr>;
 using EvaluatorAttrMap =
   std::unordered_map<AbstractBasePtrList, AttrValueMapPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
-using EvaluatorAttrMapPtr = std::shared_ptr<EvaluatorAttrMap>;
+using EvaluatorAttrCache = MultiThreadCache<AbstractBasePtrList, AttrValueMapPtr, EvaluatorAttrMap>;
+using EvaluatorAttrCachePtr = std::shared_ptr<EvaluatorAttrCache>;
 
 class Evaluator : public Base {
  public:
   explicit Evaluator(const std::string &id)
-      : evaluator_cache_map_(std::make_shared<EvaluatorCacheMap>()),
-        attr_cache_(std::make_shared<EvaluatorAttrMap>()),
+      : evaluator_cache_mgr_(std::make_shared<EvaluatorCacheMgr>()),
+        attr_cache_(std::make_shared<EvaluatorAttrCache>()),
         identifier_(id) {}
   ~Evaluator() override = default;
   MS_DECLARE_PARENT(Evaluator, Base);
@@ -50,9 +49,12 @@ class Evaluator : public Base {
   // difference between Run() and Eval():
   // Run() will be called with ConfigPtrList, but Eval() will be called with AbstractBasePtr.
   // Run() will modify cache_ member, so it cannot marked as const;
-  virtual EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, AnfNodeConfigPtr out_conf);
+  virtual EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                            const AnfNodeConfigPtr &out_conf);
 
   virtual EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) = 0;
+  virtual EvalResultPtr SingleRun(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                  const AnfNodeConfigPtr &out_conf);
 
   virtual AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const { return args_spec_list; }
 
@@ -87,14 +89,16 @@ class Evaluator : public Base {
 
   virtual void set_bound_node(const AnfNodePtr &node) { bound_node_ = AnfNodeWeakPtr(node); }
 
-  EvaluatorCacheMapPtr &evaluator_cache_map() { return evaluator_cache_map_; }
-  EvaluatorAttrMapPtr &attr_cache() { return attr_cache_; }
+  EvaluatorCacheMgrPtr evaluator_cache_mgr() const { return evaluator_cache_mgr_; }
+  EvaluatorAttrCachePtr attr_cache() const { return attr_cache_; }
 
-  EvaluatorCacheMapPtr evaluator_cache_map_;
-  EvaluatorAttrMapPtr attr_cache_;
+  EvaluatorCacheMgrPtr evaluator_cache_mgr_;
+  EvaluatorAttrCachePtr attr_cache_;
+
   std::string identifier_;
 
   AnfNodeWeakPtr bound_node_;
+  std::recursive_timed_mutex eval_loc_;
 };
 
 class PrimEvaluator : public Evaluator {
@@ -112,7 +116,8 @@ class TrivialPrimEvaluator : public PrimEvaluator {
   explicit TrivialPrimEvaluator(const std::string &id) : PrimEvaluator(id) {}
   ~TrivialPrimEvaluator() override = default;
   MS_DECLARE_PARENT(TrivialPrimEvaluator, PrimEvaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, AnfNodeConfigPtr out_conf) final;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) final;
   virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list) = 0;
 };
 
@@ -121,7 +126,8 @@ class TransitionPrimEvaluator : public PrimEvaluator {
   explicit TransitionPrimEvaluator(const std::string &id) : PrimEvaluator(id) {}
   ~TransitionPrimEvaluator() override = default;
   MS_DECLARE_PARENT(TransitionPrimEvaluator, PrimEvaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, AnfNodeConfigPtr out_conf) final;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) final;
   // Parameter in_conf0 : the first element in args_conf_list;
   virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                                  const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) = 0;
@@ -132,7 +138,8 @@ class SymbolicPrimEvaluator : public PrimEvaluator {
   explicit SymbolicPrimEvaluator(const std::string &id) : PrimEvaluator(id) {}
   ~SymbolicPrimEvaluator() override = default;
   MS_DECLARE_PARENT(SymbolicPrimEvaluator, PrimEvaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, AnfNodeConfigPtr out_conf) final;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) final;
   virtual EvalResultPtr EvalPrim(const ConfigPtrList &args_conf_list) = 0;
 };
 
@@ -173,7 +180,8 @@ class TrackedEvaluator : public Evaluator {
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, AnfNodeConfigPtr out_conf) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
   std::string ToString() const override { return identifier_ + "_" + sub_evaluator_->ToString(); }
 
  private:
@@ -211,9 +219,9 @@ class BaseFuncGraphEvaluator : public Evaluator {
   AbstractBasePtr LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg);
   // Add functions for stack frame routine.
   AbstractBasePtr LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg);
-  void EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
-                       const StackFramePtr &new_stack_frame);
-  void LeaveStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame);
+  static void EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
+                              const StackFramePtr &new_stack_frame);
+  static void LeaveStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame);
 
   AnalysisContextPtr context_;
 };
@@ -287,7 +295,8 @@ class PartialAppEvaluator : public Evaluator {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
 
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, AnfNodeConfigPtr out_conf) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
 
  private:
@@ -333,7 +342,8 @@ class JEvaluator : public Evaluator {
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, AnfNodeConfigPtr out_conf) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
 
  private:

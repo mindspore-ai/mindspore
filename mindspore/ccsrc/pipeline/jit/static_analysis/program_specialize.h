@@ -91,7 +91,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_node_;
   std::vector<AnfNodePtr> todo_;
   std::unordered_set<AnfNodePtr> marked_;
-  std::unordered_map<EvaluatorPtr, EvaluatorCacheMapPtr> evalcaches_;
+  std::unordered_map<EvaluatorPtr, EvaluatorCacheMgrPtr> evalcaches_;
 
   void FirstPass();
   void SecondPass();
@@ -127,7 +127,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
                                          const AbstractBasePtrList &argvals,
                                          std::pair<AbstractBasePtrList, AbstractBasePtr> *result);
   // Get cache, it may be eval's cache or cache built from broaded argument values.
-  const EvaluatorCacheMapPtr &GetEvalCache(const EvaluatorPtr &eval);
+  const EvaluatorCacheMgrPtr GetEvalCache(const EvaluatorPtr &eval);
   // Try to build unique argvals from the broaded arg vals if it is unique.
   std::pair<AbstractBasePtrList, AbstractBasePtr> BuildFromBroadedArgsVal(const EvaluatorPtr &eval);
   void UpdateNewCNodeInputs(const AnfNodePtr &node, const AnfNodePtr &new_node);

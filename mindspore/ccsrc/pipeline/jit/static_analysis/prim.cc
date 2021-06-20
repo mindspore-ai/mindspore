@@ -51,7 +51,7 @@ std::unordered_set<std::string> prims_to_skip_undetermined_infer{
   "MakeTuple", "make_list", "Switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                        AnfNodeConfigPtr out_conf) {
+                                        const AnfNodeConfigPtr &out_conf) {
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
@@ -136,7 +136,7 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_s
 }
 
 EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                        AnfNodeConfigPtr out_conf) {
+                                        const AnfNodeConfigPtr &out_conf) {
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
@@ -238,7 +238,7 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
 }
 
 EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                               AnfNodeConfigPtr out_conf) {
+                                               const AnfNodeConfigPtr &out_conf) {
   AbstractBasePtrList args_spec_list;
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
@@ -603,7 +603,6 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
       return ret_abstract;
     }
   }
-
   if (prim_->prim_type() == PrimType::kPrimTypePyCheck) {
     return EvalPyCheckPrim(engine, args);
   }
@@ -640,10 +639,12 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   }
   MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
 
-  const auto &iter = evaluator_cache_map_->find(args);
-  if (iter != evaluator_cache_map_->end()) {
-    return iter->second;
+  const auto eval_result = evaluator_cache_mgr_->GetValue(args);
+  if (eval_result != nullptr) {
+    return eval_result;
   }
+
+  pybind11::gil_scoped_acquire gil;
   auto py_args = PreparePyInputs(prim_py_, args);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
@@ -653,7 +654,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   auto res_spec = PyInferRes2Abstract(prim_py_, output);
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
   auto infer_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
-  (*evaluator_cache_map_)[args] = infer_result;
+  evaluator_cache_mgr_->SetValue(args, infer_result);
   return infer_result;
 }
 
@@ -1016,6 +1017,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       return nullptr;
     }
     AbstractBasePtr abs = node_conf->ObtainEvalResult()->abstract();
+
     AbstractRefPtr ref_abs = abs->cast<AbstractRefPtr>();
     if (ref_abs == nullptr) {
       MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref, but " << abs->ToString();
@@ -1082,7 +1084,7 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     }
     // don't lookup from cache, as different out_conf with same node but different context
     // may add different entry to anfnode_config_map, like getattr primitive;
-    (*evaluator_cache_map_)[args_spec_list] = ret;
+    evaluator_cache_mgr_->SetValue(args_spec_list, ret);
     return ret;
   }
 };
@@ -1169,7 +1171,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
 
     AbstractBasePtr ret = ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
     auto infer_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
-    (*evaluator_cache_map_)[args_spec_list] = infer_result;
+    evaluator_cache_mgr_->SetValue(args_spec_list, infer_result);
     return infer_result;
   }
 
@@ -1197,7 +1199,7 @@ class PartialEvaluator : public Evaluator {
   PartialEvaluator() : Evaluator("PartialEvaluator") {}
   ~PartialEvaluator() override = default;
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    AnfNodeConfigPtr out_conf = nullptr) override {
+                    const AnfNodeConfigPtr &out_conf = nullptr) override {
     if (args_conf_list.size() == 0) {
       MS_LOG(EXCEPTION) << "Args size should be greater than 0";
     }
@@ -1214,7 +1216,7 @@ class PartialEvaluator : public Evaluator {
       MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
                     << " as func is: " << arg0_value->ToString();
       auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
-      (*evaluator_cache_map_)[args_spec_list] = eval_result;
+      evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
       return eval_result;
     }
     auto func = CheckArg<AbstractFunction>("partial", args_spec_list, 0);
@@ -1248,7 +1250,7 @@ class PartialEvaluator : public Evaluator {
 
     auto ret = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
     auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
-    (*evaluator_cache_map_)[args_spec_list] = eval_result;
+    evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
     return eval_result;
   }
 

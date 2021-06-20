@@ -79,8 +79,8 @@ class TraceManager {
   static void ClearParseOrResolveDebugInfo();
   static DebugInfoPtr GetParseOrResolveDebugInfo();
 
-  static std::stack<TraceContextPtr> trace_context_stack_;
-  static DebugInfoPtr parse_or_resolve_debug_info_;
+  thread_local static std::stack<TraceContextPtr> trace_context_stack_;
+  thread_local static DebugInfoPtr parse_or_resolve_debug_info_;
 };
 
 class TraceGuard {

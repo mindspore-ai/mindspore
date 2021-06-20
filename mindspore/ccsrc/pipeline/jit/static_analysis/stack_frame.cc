@@ -16,6 +16,7 @@
 
 #include "pipeline/jit/static_analysis/stack_frame.h"
 #include "debug/trace.h"
+#include "pipeline/jit/static_analysis/async_eval_result.h"
 
 namespace mindspore {
 namespace abstract {
@@ -66,8 +67,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   AbstractBasePtrList args_abs_list = GenerateArgsAbsList(engine, evaluator, current_cnode);
 
   // Check if already evaluated before.
-  EvaluatorCacheMap &evaluator_cache_map = *evaluator->evaluator_cache_map();
-  if (evaluator_cache_map.find(args_abs_list) != evaluator_cache_map.end()) {
+  if (evaluator->evaluator_cache_mgr()->GetValue(args_abs_list) != nullptr) {
     return nullptr;
   }
 
@@ -128,6 +128,8 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
                 << ", current_context_: " << current_context_->ToString();
   AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_);
   auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+  MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString()
+                << ") = " << node_eval_result->abstract()->ToString();
   return node_eval_result;
 }
 

@@ -312,7 +312,7 @@ class AbstractTensor : public AbstractUndetermined {
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Broaden(uint8_t config = 0) const override;
   AbstractBasePtr BroadenWithShape() const;
-  AbstractBasePtr Join(const AbstractBasePtr &other);
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
   bool operator==(const AbstractTensor &other) const;
   bool operator==(const AbstractBase &other) const override;
   std::string ToString() const override;
@@ -564,6 +564,21 @@ class AbstractNull : public AbstractBase {
   std::string ToString() const override;
 };
 using AbstractNullPtr = std::shared_ptr<AbstractNull>;
+
+// the timeout state value for variable, which means the variable is not assigned because it is  timeout
+class AbstractTimeOut : public AbstractBase {
+ public:
+  AbstractTimeOut() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
+  ~AbstractTimeOut() override = default;
+  MS_DECLARE_PARENT(AbstractTimeOut, AbstractBase)
+
+  TypePtr BuildType() const override { return std::make_shared<TypeNull>(); }
+  bool operator==(const AbstractTimeOut &other) const;
+  bool operator==(const AbstractBase &other) const override;
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractTimeOut>(); }
+  std::string ToString() const override;
+};
+using AbstractTimeOutPtr = std::shared_ptr<AbstractTimeOut>;
 
 class AbstractEllipsis : public AbstractBase {
  public:
