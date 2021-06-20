@@ -3714,6 +3714,10 @@ class TensorScatterAdd(PrimitiveWithInfer):
     there must be a corresponding value in `update`. The shape of `update` should be
     equal to the shape of `input_x[indices]`.
 
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `update` will not be updated to `input_x`.
+
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
@@ -3748,16 +3752,18 @@ class TensorScatterAdd(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
 
     def infer_shape(self, x_shape, indices_shape, value_shape):
+        if indices_shape[-1] > len(x_shape):
+            raise ValueError("For 'TensorScatterAdd', indies.shape[-1] is larger than the rank of input_x.")
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterAdd', the rank of the indices must > 2.")
+            raise ValueError("For 'TensorScatterAdd', the rank of the indices must >= 2.")
         update_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:]
         if update_shape != value_shape:
-            raise ValueError("For 'TensorScatterAdd', input value are not match with input indices.")
+            raise ValueError("For 'TensorScatterAdd', input update does not match with indices.")
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
-        args = {"x": x_dtype, "value": value_dtype}
+        args = {"input_x": x_dtype, "update": value_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
 
