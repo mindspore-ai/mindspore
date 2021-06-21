@@ -121,21 +121,31 @@ class L1Loss(Loss):
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        L(x, y) = \{l_1,\dots,l_N\}, \quad \text{with } l_n = \left| x_n - y_n \right|
+        \ell(x, y) = L = \{l_1,\dots,l_N\}, \quad \text{with } l_n = \left| x_n - y_n \right|,
 
-    When argument reduction is 'mean', the mean value of :math:`L(x, y)` will be returned.
-    When argument reduction is 'sum', the sum of :math:`L(x, y)` will be returned. :math:`N` is the batch size.
+    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+
+    .. math::
+        \ell(x, y) =
+        \begin{cases}
+            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        \end{cases}
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             Default: "mean".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
-        - **labels** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+          additional dimensions.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits` in common cases.
+          However, it supports the shape of `logits` is different from the shape of `labels`
+          and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, loss float tensor.
+        Tensor, loss float tensor, the shape is zero if `reduction` is 'mean' or 'sum',
+        while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
@@ -144,12 +154,21 @@ class L1Loss(Loss):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.L1Loss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         0.33333334
+        >>> # Case 2: logits.shape = (3,), labels.shape = (2, 3)
+        >>> loss = nn.L1Loss(reduction='none')
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        [[0. 1. 2.]
+         [0. 0. 1.]]
     """
     def __init__(self, reduction='mean'):
         """Initialize L1Loss."""
@@ -172,21 +191,31 @@ class MSELoss(Loss):
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        L(x, y) = \{l_1,\dots,l_N\}, \quad \text{with} \quad l_n = (x_n - y_n)^2.
+        \ell(x, y) = L = \{l_1,\dots,l_N\}, \quad \text{with} \quad l_n = (x_n - y_n)^2.
 
-    When argument reduction is 'mean', the mean value of :math:`L(x, y)` will be returned.
-    When argument reduction is 'sum', the sum of :math:`L(x, y)` will be returned. :math:`N` is the batch size.
+    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+
+    .. math::
+        \ell(x, y) =
+        \begin{cases}
+            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        \end{cases}
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             Default: "mean".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
-        - **labels** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+          additional dimensions.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits` in common cases.
+          However, it supports the shape of `logits` is different from the shape of `labels`
+          and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, weighted loss float tensor.
+        Tensor, loss float tensor, the shape is zero if `reduction` is 'mean' or 'sum',
+        while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
@@ -195,12 +224,21 @@ class MSELoss(Loss):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.MSELoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> labels = Tensor(np.array([1, 1, 1]), mindspore.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
-        0.33333334
+        1.6666667
+        >>> # Case 2: logits.shape = (3,), labels.shape = (2, 3)
+        >>> loss = nn.MSELoss(reduction='none')
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        [[0. 1. 4.]
+         [0. 0. 1.]]
     """
     def construct(self, base, target):
         _check_input_type('logits', base, Tensor, self.cls_name)
@@ -211,34 +249,45 @@ class MSELoss(Loss):
 
 class RMSELoss(Loss):
     r"""
-    RMSELoss creates a standard to measure the root mean square error between :math:`x` and :math:`y`
+    RMSELoss creates a criterion to measure the root mean square error between :math:`x` and :math:`y`
     element-wise, where :math:`x` is the input and :math:`y` is the target.
 
-    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`M` and :math:`N`,
-    the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
+    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
+    the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y`
+    is given as:
 
     .. math::
-        loss =  \begin{cases} \sqrt{\frac{1}{M}\sum_{m=1,n=1}^{M,N}{(x_m-y_n)^2}}, & \text {if  M > N }
-        \\\\ \sqrt{\frac{1}{N}\sum_{m=1,n=1}^{M,N}{(x_m-y_n)^2}}, &\text{if  M < N } \end{cases}
+        loss = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{(x_i-y_i)^2}}
 
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_M)`.
-        - **labels** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_N)`.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+          additional dimensions.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits` in common cases.
+          However, it supports the shape of `logits` is different from the shape of `labels`
+          and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, weighted loss float tensor.
+        Tensor, weighted loss float tensor and its shape is zero.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.RMSELoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         0.57735026
+        >>> # Case 2: logits.shape = (3,), labels.shape = (2, 3)
+        >>> loss = nn.RMSELoss()
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        1.0
     """
     def __init__(self):
         """Initialize RMSELoss."""
@@ -253,26 +302,29 @@ class RMSELoss(Loss):
 
 class MAELoss(Loss):
     r"""
-    MAELoss creates a standard to measure the average absolute error between :math:`x` and :math:`y`
+    MAELoss creates a criterion to measure the average absolute error between :math:`x` and :math:`y`
     element-wise, where :math:`x` is the input and :math:`y` is the target.
 
-    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`M` and :math:`N`,
+    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        MAE =  \begin{cases} \sqrt{\frac{1}{M}\sum_{m=1,n=1}^{M,N}{|x_m-y_n|}}, & \text {if  M > N } \\\\
-        \sqrt{\frac{1}{N}\sum_{m=1,n=1}^{M,N}{|x_m-y_n|}}, &\text{if  M < N } \end{cases}
+        MAE = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{|x_i-y_i|}}
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
                          Default: "mean".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_M)`.
-        - **labels** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_N)`.
+        - **logits** (Tensor) - Tensor of shape :math:`(M, *)` where :math:`*` means, any number of
+          additional dimensions.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits` in common cases.
+          However, it supports the shape of `logits` is different from the shape of `labels`
+          and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, weighted loss float tensor.
+        Tensor, weighted loss float tensor, the shape is zero if `reduction` is 'mean' or 'sum',
+        while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
@@ -281,12 +333,21 @@ class MAELoss(Loss):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.MAELoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         0.33333334
+        >>> # Case 2: logits.shape = (3,), labels.shape = (2, 3)
+        >>> loss = nn.MAELoss(reduction='none')
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        [[0. 1. 2.]
+         [0. 0. 1.]]
     """
     def __init__(self, reduction='mean'):
         """Initialize MAELoss."""
@@ -328,11 +389,13 @@ class SmoothL1Loss(Loss):
             quadratic to linear. Default: 1.0.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`. Data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth data, with the same type and shape as `logits`.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+          additional dimensions. Data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth data, tensor of shape :math:`(N, *)`,
+          same shape and dtype as the `logits`.
 
     Outputs:
-        Tensor, loss float tensor.
+        Tensor, loss float tensor, same shape and dtype as the `logits`.
 
     Raises:
         TypeError: If `beta` is not a float.
@@ -383,7 +446,7 @@ class SoftmaxCrossEntropyWithLogits(Loss):
 
     Note:
         While the target classes are mutually exclusive, i.e., only one class is positive in the target, the predicted
-        probabilities need not to be exclusive. It is only required that the predicted probability distribution
+        probabilities does not need to be exclusive. It is only required that the predicted probability distribution
         of entry is a valid one.
 
     Args:
@@ -394,7 +457,7 @@ class SoftmaxCrossEntropyWithLogits(Loss):
     Inputs:
         - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32.
         - **labels** (Tensor) - Tensor of shape (N, ). If `sparse` is True, The type of
-          `labels` is int32 or int64. If `sparse` is False, the type of `labels` is the same as the type of `logits`.
+          `labels` is int32 or int64. Otherwise, the type of `labels` is the same as the type of `logits`.
 
     Outputs:
         Tensor, a tensor of the same shape and type as logits with the component-wise logistic losses.
@@ -409,10 +472,7 @@ class SoftmaxCrossEntropyWithLogits(Loss):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
+        >>> # case 1: sparse=True
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mindspore.float32)
         >>> labels_np = np.array([1]).astype(np.int32)
@@ -420,6 +480,14 @@ class SoftmaxCrossEntropyWithLogits(Loss):
         >>> output = loss(logits, labels)
         >>> print(output)
         [67.]
+        >>> # case 2: sparse=False
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+        >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mindspore.float32)
+        >>> labels_np = np.array([[0, 0, 0, 0, 0, 0, 1, 0, 0, 0]]).astype(np.float32)
+        >>> labels = Tensor(labels_np)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        [30.]
     """
     def __init__(self,
                  sparse=False,
@@ -466,14 +534,16 @@ class DiceLoss(Loss):
                         Default: 1e-5.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape (N, ...). The data type must be float16 or float32.
-        - **labels** (Tensor) - Tensor of shape (N, ...). The data type must be float16 or float32.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+          additional dimensions. The data type must be float16 or float32.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits`.
+          The data type must be float16 or float32.
 
     Outputs:
         Tensor, a tensor of shape with the per-example sampled Dice losses.
 
     Raises:
-        ValueError: If the dimensions are different.
+        ValueError: If the dimension of `logits` is different from `labels`.
         TypeError: If the type of `logits` or `labels` are not Tensor.
 
     Supported Platforms:
@@ -533,38 +603,38 @@ class MultiClassDiceLoss(Loss):
     obtained through the binary loss of each category, and then the average value.
 
     Args:
-        weights (Union[Tensor, None]): Tensor of shape `[num_classes, dim]`. The weight shape[0] should be equal to
-            y shape[1].
+        weights (Union[Tensor, None]): Tensor of shape :math:`(num_classes, dim)`. The weight shape[0] should be
+            equal to labels shape[1].
         ignore_indiex (Union[int, None]): Class index to ignore.
         activation (Union[str, Cell]): Activate function applied to the output of the fully connected layer, eg. 'ReLU'.
             Default: 'softmax'. Choose from: ['softmax', 'logsoftmax', 'relu', 'relu6', 'tanh','Sigmoid']
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape (N, C, ...). The logits dimension should be greater than 1. The data
-          type must be float16 or float32.
-        - **labels** (Tensor) - Tensor of shape (N, C, ...). The labels dimension should be greater than 1.
-          The data type must be loat16 or float32.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, C, *)` where :math:`*` means, any number of additional
+          dimensions. The logits dimension should be greater than 1. The data type must be float16 or float32.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, C, *)`, same shape as the `logits`.
+          The labels dimension should be greater than 1. The data type must be loat16 or float32.
 
     Outputs:
         Tensor, a tensor of shape with the per-example sampled MultiClass Dice Losses.
 
     Raises:
-        ValueError: If the shapes are different.
-        TypeError: If the type of inputs are not Tensor.
+        ValueError: If the shape of `logits` is different from `labels`.
+        TypeError: If the type of `logits` or `labels` is not a Tensor.
         ValueError: If the dimension of `logits` or `labels` is less than 2.
-        ValueError: If the weight shape[0] is not equal to labels.shape[1].
-        ValueError: If weight is a tensor, but the dimension is not 2.
+        ValueError: If the weights.shape[0] is not equal to labels.shape[1].
+        ValueError: If `weights` is a tensor, but its dimension is not 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
         >>> loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation="softmax")
-        >>> logits = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
-        >>> labels = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
+        >>> logits = Tensor(np.array([[0.2, 0.5, 0.7], [0.3, 0.1, 0.5], [0.9, 0.6, 0.3]]), mstype.float32)
+        >>> labels = Tensor(np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]]), mstype.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
-        0.3283009
+        0.5918486
     """
     def __init__(self, weights=None, ignore_indiex=None, activation="softmax"):
         """Initialize MultiClassDiceLoss."""
@@ -608,7 +678,8 @@ class MultiClassDiceLoss(Loss):
 
 class SampledSoftmaxLoss(Loss):
     r"""
-    Computes the sampled softmax training loss.
+    Computes the sampled softmax training loss. This operator can accelerate the trainging of the softmax classifier
+    over a large number of classes.
 
     Args:
         num_sampled (int): The number of classes to randomly sample per batch.
@@ -624,15 +695,14 @@ class SampledSoftmaxLoss(Loss):
             If "none", do not perform reduction. Default: "none".
 
     Inputs:
-        - **weights** (Tensor) - Tensor of shape (C, dim).
-        - **bias** (Tensor) - Tensor of shape (C).  The class biases.
-        - **labels** (Tensor) - Tensor of shape (N, num_true), type `int64, int32`. The
-          target classes.
-        - **inputs** (Tensor) - Tensor of shape (N, dim). The forward activations of
-          the input network.
+        - **weights** (Tensor) - Tensor of shape :math:`(C, dim)`.
+        - **bias** (Tensor) - Tensor of shape :math:`(C)`. The class biases.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, num_true)`, type `int64, int32`. The target classes.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, dim)`. The forward activations of the input network.
 
     Outputs:
-        Tensor, a tensor of shape (N) with the per-example sampled softmax losses.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor with shape :math:`(N)`.
+        Otherwise, the output is a scalar.
 
     Raises:
         TypeError: If `sampled_values` is not a list or tuple.
@@ -650,8 +720,8 @@ class SampledSoftmaxLoss(Loss):
         >>> weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)
         >>> biases = Tensor(np.random.randint(0, 9, [7]), mindspore.float32)
         >>> labels = Tensor([0, 1, 2])
-        >>> inputs = Tensor(np.random.randint(0, 9, [3, 10]), mindspore.float32)
-        >>> output = loss(weights, biases, labels, inputs)
+        >>> logits = Tensor(np.random.randint(0, 9, [3, 10]), mindspore.float32)
+        >>> output = loss(weights, biases, labels, logits)
         >>> print(output)
         [4.6051701e+01 1.4000047e+01 6.1989022e-06]
     """
@@ -861,8 +931,9 @@ class BCELoss(Loss):
             Its value must be one of 'none', 'mean', 'sum'. Default: 'none'.
 
     Inputs:
-        - **logits** (Tensor) - The input Tensor. The data type must be float16 or float32.
-        - **labels** (Tensor) - The label Tensor which has same shape and data type as `logits`.
+        - **logits** (Tensor) - The input Tensor with shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions. The data type must be float16 or float32.
+        - **labels** (Tensor) - The label Tensor with shape :math:`(N, *)`, same shape and data type as `logits`.
 
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
@@ -914,9 +985,9 @@ def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name):
 
 class CosineEmbeddingLoss(Loss):
     r"""
-    Computes the similarity between two tensors using cosine distance.
+    CosineEmbeddingLoss creates a criterion to measure the similarity between two tensors using cosine distance.
 
-    Given two tensors `x1`, `x2`, and a Tensor label `y` with values 1 or -1:
+    Given two tensors :math:`x1`, :math:`x2`, and a Tensor label :math:`y` with values 1 or -1:
 
     .. math::
         loss(x_1, x_2, y) = \begin{cases}
@@ -930,14 +1001,15 @@ class CosineEmbeddingLoss(Loss):
           "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
 
     Inputs:
-        - **logits_x1** (Tensor) - Input tensor.
-        - **logits_x2** (Tensor) - Its shape and data type must be the same as `logits_x1`'s shape and data type.
-        - **labels** (Tensor) - Contains value 1 or -1. Suppose the shape of `logits_x1` is
-          :math:`(x_1, x_2, x_3,..., x_R)`, then the shape of `labels` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
+        - **logits_x1** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions.
+        - **logits_x2** (Tensor) - Tensor of shape :math:`(N, *)`, same shape and dtype as `logits_x1`.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as logits_x1.shape[:-1].
+          Contains value 1 or -1. .
 
     Outputs:
-        - **loss** (Tensor) - If `reduction` is "none", its shape is the same as `labels`'s shape,
-          otherwise a scalar value will be returned.
+        Tensor or Scalar, if `reduction` is "none", its shape is the same as `labels`.
+        Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `margin` is not a float.
@@ -990,16 +1062,16 @@ class CosineEmbeddingLoss(Loss):
 
 class BCEWithLogitsLoss(Loss):
     r"""
-    Adds sigmoid activation function to input `predict`, and uses the given logits to compute binary cross entropy
-    between the target and the output.
+    Adds sigmoid activation function to input logits, and uses the given logits to compute binary cross entropy
+    between the labels and the output.
 
-    Sets input predict as `X`, input target as `Y`, output as `L`. Then,
+    Sets input `logits` as :math:`X`, input `labels` as :math:`Y`, output as :math:`L`. Then,
 
     .. math::
         p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
 
     .. math::
-        L_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]
+        L_{ij} = -[Y_{ij} \cdot log(p_{ij}) + (1 - Y_{ij}) \cdot log(1 - p_{ij})]
 
     Then,
 
@@ -1014,18 +1086,20 @@ class BCEWithLogitsLoss(Loss):
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none'.
             If 'none', do not perform reduction. Default:'mean'.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, it must can be broadcast to a tensor with shape of `predict`,
+            If not None, it must can be broadcast to a tensor with shape of `logits`,
             data type must be float16 or float32. Default: None.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
-            number of classes. If not None, it must can be broadcast to a tensor with shape of `predict`,
+            number of classes. If not None, it must can be broadcast to a tensor with shape of `logits`,
             data type must be float16 or float32. Default: None.
 
     Inputs:
-        - **logits** (Tensor) - Input logits. The data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth label. Has the same data type and shape with `logits`.
+        - **logits** (Tensor) - Input logits with shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions. The data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth label with shape :math:`(N, *)`, same shape and dtype as `logits`.
 
     Outputs:
-        Scalar. If reduction is 'none', it's a tensor with the same shape and type as input `logits`.
+        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If data type of `logits` or `labels` is neither float16 nor float32.
@@ -1108,7 +1182,7 @@ class FocalLoss(Loss):
     The loss function proposed by Kaiming team in their paper ``Focal Loss for Dense Object Detection`` improves the
     effect of image object detection. It is a loss function to solve the imbalance of categories and the difference of
     classification difficulty. If you want to learn more, please refer to the paper.
-    `https://arxiv.org/pdf/1708.02002.pdf`. The function is shown as follows:
+    `Focal Loss for Dense Object Detection https://arxiv.org/pdf/1708.02002.pdf`_. The function is shown as follows:
 
     .. math::
         FL(p_t) = -(1-p_t)^\gamma log(p_t)
@@ -1121,23 +1195,25 @@ class FocalLoss(Loss):
                          If "none", do not perform reduction. Default: "mean".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape should be (B, C) or (B, C, H) or (B, C, H, W). Where C is the number
-          of classes. Its value is greater than 1. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
-          and W should be the same as labels.
-        - **labels** (Tensor) - Tensor of shape should be (B, C) or (B, C, H) or (B, C, H, W). The value of C is 1 or
-          it needs to be the same as predict's C. If C is not 1, the shape of target should be the same as that of
-          predict, where C is the number of classes. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
-          and W should be the same as logits.
+        - **logits** (Tensor) - Tensor of shape should be :math:`(B, C)` or :math:`(B, C, H)` or :math:`(B, C, H, W)`.
+          Where :math:`C` is the number of classes. Its value is greater than 1. If the shape is :math:`(B, C, H, W)`
+          or :math:`(B, C, H)`, the :math:`H` or product of :math:`H` and :math:`W` should be the same as labels.
+        - **labels** (Tensor) - Tensor of shape should be :math:`(B, C)` or :math:`(B, C, H)` or :math:`(B, C, H, W)`.
+          The value of :math:`C` is 1 or it needs to be the same as predict's :math:`C`. If :math:`C` is not 1,
+          the shape of target should be the same as that of predict, where :math:`C` is the number of classes.
+          If the shape is :math:`(B, C, H, W)` or :math:`(B, C, H)`, the :math:`H` or product of :math:`H`
+          and :math:`W` should be the same as logits.
 
     Outputs:
-        Tensor, it's a tensor with the same shape and type as input `logits`.
+        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If the data type of ``gamma`` is not float.
-        TypeError: If ``weight`` is not a Tensor.
-        ValueError: If ``labels`` dim different from ``logits``.
-        ValueError: If ``labels`` channel is not 1 and ``labels`` shape is different from ``logits``.
-        ValueError: If ``reduction`` is not one of 'none', 'mean', 'sum'.
+        TypeError: If the data type of `gamma` is not a float.
+        TypeError: If `weight` is not a Tensor.
+        ValueError: If `labels` dim is different from `logits`.
+        ValueError: If `labels` channel is not 1 and `labels` shape is different from `logits`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
         ``Ascend``
