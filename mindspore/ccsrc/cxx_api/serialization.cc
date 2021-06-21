@@ -151,7 +151,8 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     } else {
-      anf_graph = LoadMindIR(file_path, false, nullptr, dec_key.len, CharToString(dec_mode));
+      anf_graph =
+        LoadMindIR(file_path, false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode));
     }
     if (anf_graph == nullptr) {
       err_msg << "Load model failed. Please check the valid of dec_key and dec_mode";
