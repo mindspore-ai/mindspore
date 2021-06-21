@@ -197,7 +197,12 @@ void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func
   if (!func_graph->has_flag(AUTO_PARALLEL)) {
     return;
   }
-
+  if (func_graph->has_flag(IS_FIRST_ITERATION)) {
+    param_shapes.clear();
+    init_param_shape_ = true;
+    MS_LOG(INFO) << "Init the parameter shape dict in increment predict with two graph";
+    return;
+  }
   if (!func_graph->has_flag(TRAINING)) {
     init_param_shape_ = false;
     MS_LOG(INFO) << "In parallel evaluation or prediction, may be need to restore the parameter shape";

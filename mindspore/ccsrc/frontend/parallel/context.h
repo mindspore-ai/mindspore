@@ -50,6 +50,7 @@ constexpr char ALL_GROUP_PARALLEL[] = "all_group_parallel";
 constexpr char SAME_SERVER_GROUP_PARALLEL[] = "same_server_group_parallel";
 constexpr char NO_GROUP_PARALLEL[] = "no_group_parallel";
 
+constexpr char IS_FIRST_ITERATION[] = "is_first_iteration";
 class ParallelContext {
  public:
   ~ParallelContext() = default;

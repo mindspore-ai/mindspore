@@ -782,14 +782,24 @@ class Cell(Cell_):
         for _, cell in cells:
             params = cell._params.items()
             for param_name, param in params:
-                cell._params[param_name] = _updata(param)
+                if not auto_parallel_mode:
+                    cell._params[param_name] = _updata(param)
+                    continue
+                if param.name in self.parallel_parameter_name_list:
+                    cell._params[param_name] = _updata(param)
             cell_dict = cell.__dict__
             for key in cell_dict:
                 if isinstance(cell_dict[key], ParameterTuple):
                     param_tuple = cell_dict[key]
                     new_param_tuple = []
                     for param in param_tuple:
-                        new_param_tuple.append(_updata(param))
+                        if not auto_parallel_mode:
+                            new_param_tuple.append(_updata(param))
+                            continue
+                        if param.name in self.parallel_parameter_name_list:
+                            new_param_tuple.append(_updata(param))
+                        else:
+                            new_param_tuple.append(param)
                     cell.__dict__[key] = ParameterTuple(new_param_tuple)
         return replace
 
