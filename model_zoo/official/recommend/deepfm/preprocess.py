@@ -14,34 +14,27 @@
 # ============================================================================
 """preprocess."""
 import os
-import argparse
 
-from src.config import DataConfig, TrainConfig
 from src.dataset import create_dataset, DataType
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description='preprocess.')
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--result_path', type=str, default='./preprocess_Result', help='Result path')
-args_opt, _ = parser.parse_known_args()
 
 def generate_bin():
     '''generate bin files'''
-    data_config = DataConfig()
-    train_config = TrainConfig()
 
-    ds = create_dataset(args_opt.dataset_path, train_mode=False,
-                        epochs=1, batch_size=train_config.batch_size,
-                        data_type=DataType(data_config.data_format))
-    batch_ids_path = os.path.join(args_opt.result_path, "00_batch_ids")
-    batch_wts_path = os.path.join(args_opt.result_path, "01_batch_wts")
-    labels_path = os.path.join(args_opt.result_path, "02_labels")
+    ds = create_dataset(config.dataset_path, train_mode=False,
+                        epochs=1, batch_size=config.batch_size,
+                        data_type=DataType(config.data_format))
+    batch_ids_path = os.path.join(config.result_path, "00_batch_ids")
+    batch_wts_path = os.path.join(config.result_path, "01_batch_wts")
+    labels_path = os.path.join(config.result_path, "02_labels")
 
     os.makedirs(batch_ids_path)
     os.makedirs(batch_wts_path)
     os.makedirs(labels_path)
 
     for i, data in enumerate(ds.create_dict_iterator(output_numpy=True)):
-        file_name = "criteo_bs" + str(train_config.batch_size) + "_" + str(i) + ".bin"
+        file_name = "criteo_bs" + str(config.batch_size) + "_" + str(i) + ".bin"
         batch_ids = data['feat_ids']
         batch_ids.tofile(os.path.join(batch_ids_path, file_name))
 

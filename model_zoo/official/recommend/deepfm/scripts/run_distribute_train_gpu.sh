@@ -25,6 +25,7 @@ DATA_URL=$2
 rm -rf log
 mkdir ./log
 cp *.py ./log
+cp *.yaml ./log
 cp -r src ./log
 cd ./log || exit
 env > env.log
