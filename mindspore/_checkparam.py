@@ -834,6 +834,8 @@ class Validator:
                 raise ValueError(f'axis {ax} is out of bounds for array of dimension {ndim}')
             ax = ax if ax >= 0 else ax + ndim
             new_axes += (ax,)
+        if any(new_axes.count(el) > 1 for el in new_axes):
+            raise ValueError('duplicate value in "axis"')
         return new_axes
 
     @staticmethod
