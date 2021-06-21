@@ -51,7 +51,7 @@ if(ENABLE_CPU)
         list(REMOVE_ITEM CPU_SRC_LIST ${qcc})
     endforeach()
 
-    if(ENABLE_CPU AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux"
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux"
         AND ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x86_64")
         message("compiled quantum kernel_compiler")
         set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
@@ -61,6 +61,10 @@ if(ENABLE_CPU)
     else()
         message("not compiled quantum kernel_compiler")
         set(QUANTUM_SRC_LIST "")
+    endif()
+
+    if(PLATFORM_ARM64)
+        add_compile_definitions(ENABLE_ARM)
     endif()
 
     if("${ARM_SIMD}" STREQUAL "neon")

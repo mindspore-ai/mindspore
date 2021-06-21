@@ -466,14 +466,14 @@ void DumpJsonParser::JudgeDumpEnabled() {
   if (!async_dump_enabled_ && !e2e_dump_enabled_) {
     MS_LOG(WARNING) << "Dump json parse failed. Dump not enabled";
   }
-
-  auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  if (support_devices_.find(device_id) == support_devices_.end()) {
-    async_dump_enabled_ = false;
-    e2e_dump_enabled_ = false;
-    MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kCPUDevice) {
+    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    if (support_devices_.find(device_id) == support_devices_.end()) {
+      async_dump_enabled_ = false;
+      e2e_dump_enabled_ = false;
+      MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
+    }
   }
-
   JsonConfigToString();
 }
 
