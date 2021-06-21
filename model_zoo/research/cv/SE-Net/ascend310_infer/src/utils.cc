@@ -30,17 +30,22 @@ std::vector<std::string> GetAllFiles(std::string_view dirName) {
         return {};
     }
     std::vector<std::string> res;
+    std::vector<std::string> res_temp;
     while ((filename = readdir(dir)) != nullptr) {
         std::string dName = std::string(filename->d_name);
+        if (dName != "." && dName != ".." && filename->d_type == DT_DIR) {
+            res_temp = GetAllFiles(std::string(dirName) + "/" + filename->d_name);
+            for (int i = 0; i < static_cast<int>(res_temp.size()); i++) {
+                res.emplace_back(res_temp[i]);
+            }
+            continue;
+        }
         if (dName == "." || dName == ".." || filename->d_type != DT_REG) {
             continue;
         }
         res.emplace_back(std::string(dirName) + "/" + filename->d_name);
     }
     std::sort(res.begin(), res.end());
-    for (auto &f : res) {
-        std::cout << "image file: " << f << std::endl;
-    }
     return res;
 }
 
