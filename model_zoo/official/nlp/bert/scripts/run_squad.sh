@@ -30,7 +30,7 @@ export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_squad.py  \
     --device_target="GPU" \
     --do_train="true" \
-    --do_eval="false" \
+    --do_eval="true" \
     --device_id=0 \
     --epoch_num=1 \
     --num_class=2 \
