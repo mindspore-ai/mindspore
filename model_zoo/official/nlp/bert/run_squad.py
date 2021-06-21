@@ -37,8 +37,8 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 _cur_dir = os.getcwd()
 
 # seed
-from mindspore.common import set_seed
-set_seed(1)
+#  from mindspore.common import set_seed
+#  set_seed(1)
 
 def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
     """ do train """
