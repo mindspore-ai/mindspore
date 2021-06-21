@@ -1825,6 +1825,8 @@ def _check_indices(dims, indices, mode, allow_negative_index=True):
         _raise_unimplemented_error('"raise" mode is not implemented')
     if mode == 'wrap':
         return _mod(indices, F.fill(mstype.float32, shape, dims)).astype(dtype)
+    if mode != 'clip':
+        _raise_value_error('invalid mode. Expected "raise", "wrap", or "clip"')
     zeros = F.fill(dtype, shape, 0)
     clipped = F.select(out_of_lowerbounds, zeros, indices)
     clipped = F.select(out_of_upperbounds, upperbounds, clipped)
@@ -2179,6 +2181,7 @@ def choose(a, choices, mode='clip'):
     else:
         choices = _to_tensor(choices)
         shape_choice = _infer_out_shape(F.shape(a), F.shape(choices)[1:])
+        choices = F.reshape(choices, choices.shape[:1] + _add_unit_axes(choices.shape[1:], len(shape_choice)))
         choices = broadcast_to(choices, (F.shape(choices)[0],) + shape_choice)
 
     if F.rank(a) == 0 or F.rank(choices) == 0:
