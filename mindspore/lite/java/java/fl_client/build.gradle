@@ -86,7 +86,7 @@ archivesBaseName ='mindspore-lite-java-flclient'
 task packFLJarAAR(type: Jar){
     println("-----------------executing task: packFLJarAAR-----------------")
     manifest {
-        attributes "Main-Class": "com.huawei.flclient.SyncFLJob"
+        attributes "Main-Class": "com.mindspore.flclient.SyncFLJob"
     }
     from('build/classes/java/main')
     from {
@@ -108,7 +108,7 @@ task flReleaseJarAAR (type:Exec, dependsOn: ['packFLJarAAR']){
 task packFLJarX86(type: Jar){
     println("-----------------executing task: packFLJarX86-----------------")
     manifest {
-        attributes "Main-Class": "com.huawei.flclient.SyncFLJob"
+        attributes "Main-Class": "com.mindspore.flclient.SyncFLJob"
     }
     from ('build/classes/java/main')
     from ('../common/build/classes/java/main')

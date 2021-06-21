@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.huawei.flclient;
+package com.mindspore.flclient;
 
-public enum EarlyStopMod {
-    LOSS_DIFF,
-    LOSS_ABS,
-    WEIGHT_DIFF,
-    NOT_EARLY_STOP
+public enum EncryptLevel {
+    PW_ENCRYPT,
+    DP_ENCRYPT,
+    NOT_ENCRYPT
 }
 
 

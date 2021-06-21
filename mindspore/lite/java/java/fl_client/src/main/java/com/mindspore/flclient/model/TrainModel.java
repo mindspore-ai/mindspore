@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.huawei.flclient.model;
+package com.mindspore.flclient.model;
 
-import com.huawei.flclient.Common;
+import com.mindspore.flclient.Common;
 import com.mindspore.lite.MSTensor;
 import com.mindspore.lite.LiteSession;
 
@@ -38,11 +38,6 @@ public abstract class TrainModel {
     int numOfClass = 0;
 
     int padSize = 0;
-
-    static {
-        System.loadLibrary("mindspore-lite-jni");
-    }
-
 
     public abstract int initSessionAndInputs(String modelPath, boolean trainMod);
 
@@ -192,7 +187,7 @@ public abstract class TrainModel {
     }
 
     private int getPredictLabel(float[] scores, int start, int end) {
-        if (start >= scores.length || start < 0 || end >= scores.length || end < 0) {
+        if (start >= scores.length || start < 0 || end > scores.length || end < 0) {
             logger.severe(Common.addTag("start,end cannot out of scores length"));
             return -1;
         }

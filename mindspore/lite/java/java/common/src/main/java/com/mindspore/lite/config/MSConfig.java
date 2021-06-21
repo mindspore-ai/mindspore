@@ -17,6 +17,10 @@
 package com.mindspore.lite.config;
 
 public class MSConfig {
+    static {
+        System.loadLibrary("mindspore-lite-jni");
+    }
+
     private long msConfigPtr;
 
     public MSConfig() {

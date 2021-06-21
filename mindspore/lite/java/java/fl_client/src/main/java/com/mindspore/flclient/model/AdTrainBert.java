@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.huawei.flclient.model;
+package com.mindspore.flclient.model;
 
-import com.huawei.flclient.Common;
+import com.mindspore.flclient.Common;
 
 import java.util.logging.Logger;
 

@@ -14,12 +14,20 @@
   * limitations under the License.
   */
 
-package com.huawei.flclient;
+package com.mindspore.flclient;
 
-import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
-public interface IAsyncCallBack {
-    public FLClientStatus onFailure(IOException exception);
+/**
+ * @author smurf
+ *
+ */
+public interface IFLCommunication {
 
-    public FLClientStatus onResponse(byte[] msg);
+    public void setTimeOut(int timeout) throws TimeoutException;
+
+    public byte[] syncRequest(String url, byte[] msg) throws Exception;
+
+    public void asyncRequest(String url, byte[] msg, IAsyncCallBack callBack) throws Exception;
 }
+
