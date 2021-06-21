@@ -29,7 +29,7 @@ TdtPlugin::TdtPlugin(const std::string &channel_name, int32_t device_id) {
   if (acl_handle_ == nullptr) {
     MS_LOG(ERROR) << "Failed to create channel for tdt queue.";
   }
-  TdtHandle::AddHandle(&acl_handle_);
+  TdtHandle::AddHandle(&acl_handle_, nullptr);
 }
 
 TdtPlugin::~TdtPlugin() {

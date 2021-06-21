@@ -17,14 +17,15 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TDT_TDT_HANDLE_H_
 
 #include <iostream>
-#include <set>
+#include <map>
+#include <thread>
 #include "acl/acl_tdt.h"
 
 namespace mindspore {
 namespace dataset {
 class TdtHandle {
  public:
-  static void AddHandle(acltdtChannelHandle **handle);
+  static void AddHandle(acltdtChannelHandle **handle, std::thread *use_thread);
 
   static bool DestroyHandle();
 

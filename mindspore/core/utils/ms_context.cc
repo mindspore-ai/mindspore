@@ -116,14 +116,13 @@ void MsContext::CreateTensorPrintThread(PrintThreadCrt ctr) {
   std::string kReceivePrefix = "TF_RECEIVE_";
   std::string channel_name = "_npu_log";
   acl_handle_ = acltdtCreateChannel(device_id, (kReceivePrefix + channel_name).c_str());
-  if (acl_handle_ != nullptr) {
-    MS_LOG(INFO) << "Success to create acltdt handle, tsd reference = " << get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
-    TdtHandle::AddHandle(&acl_handle_);
-  } else {
+  if (acl_handle_ == nullptr) {
     MS_LOG(EXCEPTION) << "Get acltdt handle failed";
   }
+  MS_LOG(INFO) << "Success to create acltdt handle, tsd reference = " << get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   std::string print_file_path = get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
   acl_tdt_print_ = ctr(print_file_path, acl_handle_);
+  TdtHandle::AddHandle(&acl_handle_, &acl_tdt_print_);
 }
 
 static void JoinAclPrintThread(std::thread *thread) {
