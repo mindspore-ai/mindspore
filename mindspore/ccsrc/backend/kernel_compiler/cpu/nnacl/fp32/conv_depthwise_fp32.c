@@ -380,10 +380,7 @@ static void ConvDw3x3RowLeft(const float *src, float *line, int lw, int channel)
   }
   if (ic < channel) {
     float *remain_line = line + ic * lw;
-    memset(remain_line, 0, 16);
-    memset(remain_line + 4, 0, 16);
-    memset(remain_line + 8, 0, 16);
-    memset(remain_line + 12, 0, 16);
+    memset(remain_line, 0, 64);
     for (int i = 0; i < channel - ic; i++) {
       float d1 = src[i + ic];
       float d2 = src[i + ic + channel];
@@ -415,10 +412,7 @@ static void ConvDw3x3RowMiddle(const float *src, float *line, int lw, int channe
   }
   if (ic < channel) {
     float *remain_line = line + ic * lw;
-    memset(remain_line, 0, 16);
-    memset(remain_line + 4, 0, 16);
-    memset(remain_line + 8, 0, 16);
-    memset(remain_line + 12, 0, 16);
+    memset(remain_line, 0, 64);
     for (int i = 0; i < channel - ic; i++) {
       float d0 = src[i + ic];
       float d1 = src[i + ic + channel];
@@ -451,10 +445,7 @@ static void ConvDw3x3RowRight(const float *src, float *line, int lw, int channel
   }
   if (ic < channel) {
     float *remain_line = line + ic * lw;
-    memset(remain_line, 0, 16);
-    memset(remain_line + 4, 0, 16);
-    memset(remain_line + 8, 0, 16);
-    memset(remain_line + 12, 0, 16);
+    memset(remain_line, 0, 64);
     for (int i = 0; i < channel - ic; i++) {
       float d0 = src[i + ic];
       float d1 = src[i + ic + channel];
@@ -482,10 +473,7 @@ static void ConvDw3x3RowSingle(const float *src, float *line, int lw, int channe
   }
   if (ic < channel) {
     float *remain_line = line + ic * lw;
-    memset(remain_line, 0, 16);
-    memset(remain_line + 4, 0, 16);
-    memset(remain_line + 8, 0, 16);
-    memset(remain_line + 12, 0, 16);
+    memset(remain_line, 0, 64);
     for (int i = 0; i < channel - ic; i++) {
       float d0 = src[i + ic];
       float d1 = src[i + ic + channel];

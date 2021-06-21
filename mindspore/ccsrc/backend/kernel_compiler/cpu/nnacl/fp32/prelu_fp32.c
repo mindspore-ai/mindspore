@@ -134,11 +134,30 @@ void PRelu(const float *input, float *output, const float *slope, int start, int
 }
 
 void PReluShareChannel(const float *input, float *output, float slope, int start, int end) {
-  for (int i = start; i < end; i++) {
-    if (input[i] > 0) {
-      output[i] = input[i];
-    } else {
-      output[i] = input[i] * slope;
-    }
+  int i = start;
+#if defined(ENABLE_AVX)
+#define mask_offset 30
+  for (; i <= end - C8NUM; i += C8NUM) {
+    MS_FLOAT32X8 src_tmp = MS_LD256_F32(input + i);
+    MS_FLOAT32X8 mul_tmp = MS_MUL256_N_F32(src_tmp, slope);
+    MS_FLOAT32X8 mask = MS_CMP256_F32(src_tmp, MS_MOV256_F32(0.0f), mask_offset);
+    MS_ST256_F32(output + i, MS_BLEND256_F32(mul_tmp, src_tmp, mask));
+  }
+#endif
+
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  for (; i <= end - C4NUM; i += C4NUM) {
+    MS_FLOAT32X4 src_tmp = MS_LDQ_F32(input + i);
+    MS_FLOAT32X4 mul_tmp = MS_MULQ_N_F32(src_tmp, slope);
+#ifdef ENABLE_ARM
+    MS_UINT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+#else
+    MS_FLOAT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+#endif
+    MS_STQ_F32(output + i, MS_BLENDQ_F32(mul_tmp, src_tmp, mask));
+  }
+#endif
+  for (; i < end; i++) {
+    output[i] = input[i] > 0 ? input[i] : input[i] * slope;
   }
 }
