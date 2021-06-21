@@ -2653,7 +2653,7 @@ class Slice(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor): The target tensor.
-        - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value is allowed.
+        - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
         - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
     Outputs:
@@ -2709,6 +2709,7 @@ class Slice(PrimitiveWithInfer):
                             'len x\'s dim', x_shp_len)
         for i in range(x_shp_len):
             validator.check_positive_int(size_v[i], f'input size[{i}]')
+            validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
             if x_shape[i] < begin_v[i] + size_v[i]:
                 y = begin_v[i] + size_v[i]
                 raise ValueError("For '%s' slice shape can not bigger than origin shape %d, %d." %
