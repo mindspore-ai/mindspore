@@ -282,7 +282,7 @@ void FuncGraphManager::RemoveRoots() {
 void FuncGraphManager::AddIntoManaged(const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   if (is_manage_) {
-    if (fg->manager().get() != this) {
+    if (fg->manager() != nullptr && fg->manager().get() != this) {
       MS_LOG(INFO) << "A func graph can only have one manager.";
     }
     fg->set_manager(shared_from_this());

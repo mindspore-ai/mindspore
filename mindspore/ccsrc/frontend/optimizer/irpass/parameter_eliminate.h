@@ -37,53 +37,64 @@ class ParameterEliminator {
   ParameterEliminator() = default;
   virtual ~ParameterEliminator() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
-    const auto &func_graph_callers = SearchFuncGraphCallers(func_graph);
     const auto &manager = func_graph->manager();
-    auto tr = manager->Transact();
-    bool change = false;
-    for (const auto &fg_and_caller : func_graph_callers) {
-      const auto &fg = fg_and_caller.first;
-      const auto &erase_indexes = EraseUnusedParameters(fg, &tr);
-      // If no parameter unused, do nothing.
-      if (erase_indexes.empty()) {
-        continue;
+    bool changes = false;
+    while (true) {
+      auto tr = manager->Transact();
+      const auto &[fg, callers] = SearchFuncGraphCallers(func_graph);
+      if (fg == nullptr) {
+        break;
       }
-      // Erase the corresponding args.
-      change = true;
-      for (const auto &caller : fg_and_caller.second) {
+      const auto &erase_indexes = EraseUnusedParameters(fg, &tr);
+      for (auto caller : callers) {
+        // Erase the corresponding args.
         EraseArgs(caller, erase_indexes, &tr);
       }
+      changes = true;
+      tr.Commit();
     }
-    tr.Commit();
-    return change;
+    return changes;
   }
 
  private:
-  static OrderedMap<FuncGraphPtr, std::vector<CNodePtr>> SearchFuncGraphCallers(const FuncGraphPtr &func_graph) {
-    OrderedMap<FuncGraphPtr, std::vector<CNodePtr>> func_graph_callers;
+  static std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
+    const auto &fg_caller_and_indexes = fg->func_graph_cnodes_index();
+    std::vector<CNodePtr> caller_cnodes = {};
+    // Find all caller of fg.
+    for (const auto &it : fg_caller_and_indexes) {
+      const auto &fg_caller_and_index = it.first;
+      auto caller_cnode = fg_caller_and_index->first;
+      auto index = fg_caller_and_index->second;
+      // If index != 0, the caller is a indirect caller, can't erase the parameter of graph.Because
+      // in this situation ValueNode<FuncGraph> is a input of Return or of MakeTuple.
+      if (index != 0) {
+        return {};
+      }
+      caller_cnodes.push_back(caller_cnode->cast<CNodePtr>());
+    }
+    return caller_cnodes;
+  }
+
+  static std::pair<FuncGraphPtr, std::vector<CNodePtr>> SearchFuncGraphCallers(const FuncGraphPtr &func_graph) {
     for (const auto &fg : func_graph->func_graphs_used_total()) {
       if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
         continue;
       }
-      const auto &fg_caller_and_indexes = fg->func_graph_cnodes_index();
-      std::vector<CNodePtr> caller_cnodes = {};
-      // Find all caller of fg.
-      for (const auto &it : fg_caller_and_indexes) {
-        const auto &fg_caller_and_index = it.first;
-        auto caller_cnode = fg_caller_and_index->first;
-        auto index = fg_caller_and_index->second;
-        // If index != 0, the caller is a indirect caller, can't erase the parameter of graph.
-        if (index != 0) {
-          caller_cnodes.clear();
-          break;
+      const auto &parameters = fg->parameters();
+      const auto &manager_node_users = fg->manager()->node_users();
+      bool exist_param_unused =
+        std::any_of(parameters.begin(), parameters.end(), [&manager_node_users](const AnfNodePtr &parameter) {
+          const auto &node_users_it = manager_node_users.find(parameter);
+          return node_users_it == manager_node_users.end() || node_users_it->second.empty();
+        });
+      if (exist_param_unused) {
+        const auto &callers = GetCallers(fg);
+        if (!callers.empty()) {
+          return {fg, callers};
         }
-        caller_cnodes.push_back(caller_cnode->cast<CNodePtr>());
-      }
-      if (!caller_cnodes.empty()) {
-        func_graph_callers[fg] = caller_cnodes;
       }
     }
-    return func_graph_callers;
+    return {nullptr, {}};
   }
 
   static std::unordered_set<size_t> EraseUnusedParameters(const FuncGraphPtr &fg, FuncGraphTransaction *tr) {
