@@ -520,7 +520,12 @@ void CUPTIAPI ActivityAllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNum
 
 void CUPTIAPI ActivityProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *buffer, size_t size, size_t validSize) {
   PROFILER_ERROR_IF_NULLPTR(buffer);
-  GPUProfiler::GetInstance()->ProcessBuffer(ctx, streamId, buffer, size, validSize);
+  auto gpu_profiler_inst = GPUProfiler::GetInstance();
+  if (gpu_profiler_inst == nullptr) {
+    MS_LOG(ERROR) << "GPU profiler instance is nullptr";
+    return;
+  }
+  gpu_profiler_inst->ProcessBuffer(ctx, streamId, buffer, size, validSize);
 }
 
 void ProcessActivityMemcpyRecord(Event *profilingData, CUpti_Activity *record, CUpti_ActivityMemcpy *memcpy) {
@@ -673,6 +678,7 @@ void GPUProfiler::HandleActivityRecord(CUpti_Activity *record) {
 void GPUProfiler::SetStepTraceOpName(ProfilingTraceInfo trace_op_name) { step_trace_op_name = trace_op_name; }
 
 void GPUProfiler::RegisterProfilingOp(std::shared_ptr<ProfilingOp> node) {
+  PROFILER_ERROR_IF_NULLPTR(node);
   if (profiling_op_.find(node->Name()) != profiling_op_.end()) {
     return;
   }
@@ -681,6 +687,8 @@ void GPUProfiler::RegisterProfilingOp(std::shared_ptr<ProfilingOp> node) {
 }
 
 void CUPTIAPI GPUProfiler::AllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNumRecords) {
+  PROFILER_ERROR_IF_NULLPTR(size);
+  PROFILER_ERROR_IF_NULLPTR(maxNumRecords);
   int stat = posix_memalign(reinterpret_cast<void **>(buffer), ALIGN_SIZE, BUF_SIZE);
   if (stat) {
     MS_LOG(ERROR) << "Out of memory, activity buffer alloc failed.";

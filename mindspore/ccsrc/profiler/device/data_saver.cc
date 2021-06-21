@@ -41,6 +41,10 @@ void DataSaver::ParseOpInfo(const OpInfoMap &op_info_maps) {
     op_timestamps_map_[item.first] = item.second.start_duration;
     float proportion = item.second.op_host_cost_time / total_time_sum;
     auto op_info = std::make_shared<OpInfo>(item.second);
+    if (op_info == nullptr) {
+      MS_LOG(ERROR) << "Create Operation information node failed when parse operation information.";
+      return;
+    }
     OpDetailInfo op_detail_info = OpDetailInfo(op_info, proportion);
     op_detail_infos_.emplace_back(op_detail_info);
     AddOpDetailInfoForType(op_detail_info);

@@ -72,6 +72,7 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
   if (profiling_enable_) {
     std::string path = profiler_inst->ProfileDataPath();
     profiling_op_ = std::make_shared<GetNextProfiling>(path);
+    MS_EXCEPTION_IF_NULL(profiling_op_);
     profiler_inst->RegisterProfilingOp(profiling_op_);
   }
   return true;

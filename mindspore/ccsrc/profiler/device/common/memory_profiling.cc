@@ -44,6 +44,7 @@ bool MemoryProfiling::IsMemoryProfilingEnable() const {
 
 std::shared_ptr<GraphMemory> MemoryProfiling::AddGraphMemoryNode(uint32_t graph_id) {
   std::shared_ptr<GraphMemory> node = std::make_shared<GraphMemory>(graph_id);
+  MS_EXCEPTION_IF_NULL(node);
   graph_memory_[graph_id] = node;
   return node;
 }
