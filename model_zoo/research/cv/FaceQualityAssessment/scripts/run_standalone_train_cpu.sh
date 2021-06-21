@@ -22,13 +22,11 @@ fi
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-if [ -d "../train" ]
-then
-  rm -rf ../train
-fi
 
-mkdir ../train
-cd ../train || exit
+current_exec_path=$(pwd)
+rm -rf ${current_exec_path}/cpu
+mkdir ${current_exec_path}/cpu
+cd ${current_exec_path}/cpu || exit
 
 if [ $2 ] # pretrained ckpt
 then
