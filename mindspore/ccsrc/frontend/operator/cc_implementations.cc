@@ -237,12 +237,20 @@ bool InnerScalarGe(T x, U y) {
         double sum = InnerScalar##op_t(LongToDouble(GetValue<int64_t>(x)), FloatToDouble(GetValue<float>(y))); \
         return MakeValue(sum);                                                                                 \
       }                                                                                                        \
+      if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                          \
+        int64_t sum = InnerScalar##op_t(GetValue<int64_t>(x), IntToLong(GetValue<int>(y)));                    \
+        return MakeValue(sum);                                                                                 \
+      }                                                                                                        \
       if (x->isa<FP32Imm>() && y->isa<Int64Imm>()) {                                                           \
         double sum = InnerScalar##op_t(FloatToDouble(GetValue<float>(x)), LongToDouble(GetValue<int64_t>(y))); \
         return MakeValue(sum);                                                                                 \
       }                                                                                                        \
       if (x->isa<FP64Imm>() && y->isa<Int64Imm>()) {                                                           \
         double sum = InnerScalar##op_t(GetValue<double>(x), LongToDouble(GetValue<int64_t>(y)));               \
+        return MakeValue(sum);                                                                                 \
+      }                                                                                                        \
+      if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                          \
+        int64_t sum = InnerScalar##op_t(IntToLong(GetValue<int>(x)), GetValue<int64_t>(y));                    \
         return MakeValue(sum);                                                                                 \
       }                                                                                                        \
       MS_LOG(EXCEPTION) << "Unsupported Value for Scalar" << #op_t << ", x: " << x->ToString()                 \
