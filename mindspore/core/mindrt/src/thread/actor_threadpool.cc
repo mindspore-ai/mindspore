@@ -24,8 +24,10 @@ void ActorWorker::CreateThread(ActorThreadPool *pool) {
 }
 
 void ActorWorker::Run() {
+#ifndef __APPLE__
   static std::atomic_int index = 0;
   pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
+#endif
   while (alive_) {
     // only run either local KernelTask or PoolQueue ActorTask
 #ifdef ENABLE_MINDRT
