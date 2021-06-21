@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *beta_data, int8_t *dst_data,
-                  LayerNormParameter *param, LayerNormQuantArg *quant, int task_id);
+                  const LayerNormParameter *param, const LayerNormQuantArg *quant, int task_id);
 
 #ifdef __cplusplus
 }

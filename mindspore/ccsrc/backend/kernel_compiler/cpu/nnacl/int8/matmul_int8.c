@@ -92,7 +92,7 @@ void RowMajor2Row4x16MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, 
   }
 }
 
-void RowMajor2Row16x4MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
+void RowMajor2Row16x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   /* Row-major to row16x4-major (block row-major) */
   int col16 = UP_ROUND(col, C16NUM);
   size_t row_4div = row / C4NUM * C4NUM;
@@ -231,8 +231,9 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
 
 #ifndef ENABLE_ARM
 void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
-                   const int *bias, int mini, int maxi, int out_zp, int32_t *multiplier, int32_t *left_shift,
-                   int32_t *right_shift, size_t stride, size_t filter_peroc, int32_t *filter_zp) {
+                   const int *bias, int mini, int maxi, int out_zp, const int32_t *multiplier,
+                   const int32_t *left_shift, const int32_t *right_shift, size_t stride, size_t filter_peroc,
+                   const int32_t *filter_zp) {
   /*
    * row4x16-major * row16x4-major => (int8)row-major
    * support per-layer && weight per-channel
