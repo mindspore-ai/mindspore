@@ -81,10 +81,16 @@ We use about 122K face images as training dataset and 2K as evaluating dataset i
 
 The entire code structure is as following:
 
-```python
+```text
 .
 └─ Face Quality Assessment
   ├─ README.md
+  ├─ model_utils
+    ├─ __init__.py                          # module init file
+    ├─ config.py                            # Parse arguments
+    ├─ device_adapter.py                    # Device adapter for ModelArts
+    ├─ local_adapter.py                     # Local adapter
+    └─ moxing_adapter.py                    # Moxing adapter for ModelArts
   ├─ scripts
     ├─ run_standalone_train.sh              # launch standalone training(1p) in ascend
     ├─ run_distribute_train.sh              # launch distributed training(8p) in ascend
@@ -98,12 +104,12 @@ The entire code structure is as following:
     ├─ run_eval_cpu.sh                      # launch evaluating in cpu
     └─ run_export_cpu.sh                    # launch exporting mindir model in cpu
   ├─ src
-    ├─ config.py                            # parameter configuration
     ├─ dataset.py                           # dataset loading and preprocessing for training
     ├─ face_qa.py                           # network backbone
     ├─ log.py                               # log function
     ├─ loss_factory.py                      # loss function
     └─ lr_generator.py                      # generate learning rate
+  ├─ default_config.yaml                    # Configurations
   ├─ train.py                               # training scripts
   ├─ eval.py                                # evaluation scripts
   └─ export.py                              # export air model
@@ -220,6 +226,95 @@ epoch[39], iter[19090], loss:2.091236, 7601.15 imgs/sec
 epoch[39], iter[19100], loss:2.140766, 8088.52 imgs/sec
 epoch[39], iter[19110], loss:2.111101, 8791.05 imgs/sec
 ```
+
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    ```bash
+    # Train 8p on ModelArts with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "is_distributed=1" on default_config.yaml file.
+    #          Set "per_batch_size=32" on default_config.yaml file.
+    #          Set "train_label_file='/cache/data/face_quality_dataset/qa_300W_LP_train.txt'" on default_config.yaml file.
+    #          (option) Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file if load pretrain.
+    #          (option) Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file if load pretrain.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "is_distributed=1" on the website UI interface.
+    #          Add "per_batch_size=32" on the website UI interface.
+    #          Add "train_label_file=/cache/data/face_quality_dataset/qa_300W_LP_train.txt" on the website UI interface.
+    #          (option) Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface if load pretrain.
+    #          (option) Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface if load pretrain.
+    #          Add other parameters on the website UI interface.
+    # (2) (option) Upload or copy your pretrained model to S3 bucket if load pretrain.
+    # (3) Modify imagepath on "/dir_to_your_dataset/qa_300W_LP_train.txt" file.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceQualityAssessment" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p on ModelArts with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "is_distributed=0" on default_config.yaml file.
+    #          Set "per_batch_size=256" on default_config.yaml file.
+    #          Set "train_label_file='/cache/data/face_quality_dataset/qa_300W_LP_train.txt'" on default_config.yaml file.
+    #          (option) Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file if load pretrain.
+    #          (option) Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file if load pretrain.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "is_distributed=0" on the website UI interface.
+    #          Add "per_batch_size=256" on the website UI interface.
+    #          Add "train_label_file=/cache/data/face_quality_dataset/qa_300W_LP_train.txt" on the website UI interface.
+    #          (option) Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface if load pretrain.
+    #          (option) Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface if load pretrain.
+    #          Add other parameters on the website UI interface.
+    # (2) (option) Upload or copy your pretrained model to S3 bucket if load pretrain.
+    # (3) Modify imagepath on "/dir_to_your_dataset/qa_300W_LP_train.txt" file.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceQualityAssessment" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p on ModelArts with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "eval_dir='/cache/data/face_quality_dataset/AFLW2000'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+    #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "eval_dir=/cache/data/face_quality_dataset/AFLW2000" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/FaceQualityAssessment" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # Export 1p on ModelArts with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "batch_size=8" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+    #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "batch_size=8" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Set the code directory to "/path/FaceQualityAssessment" on the website UI interface.
+    # (4) Set the startup file to "export.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    ```
 
 ### Evaluation
 

@@ -34,10 +34,12 @@ if [ $2 ] # pretrained ckpt
 then
   python ${BASEPATH}/../train.py \
             --train_label_file=$1 \
+            --per_batch_size=256 \
             --device_target='GPU' \
             --pretrained=$2 > train.log  2>&1 &
 else
   python ${BASEPATH}/../train.py \
             --train_label_file=$1 \
+            --per_batch_size=256 \
             --device_target='GPU' > train.log  2>&1 &
 fi

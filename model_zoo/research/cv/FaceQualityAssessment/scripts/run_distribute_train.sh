@@ -80,6 +80,7 @@ do
     dev=`expr $i + 0`
     export DEVICE_ID=$dev
     python ${dirname_path}/${SCRIPT_NAME} \
+        --per_batch_size=32 \
         --is_distributed=1 \
         --train_label_file=$TRAIN_LABEL_FILE \
         --pretrained=$PRETRAINED_BACKBONE > train.log  2>&1 &

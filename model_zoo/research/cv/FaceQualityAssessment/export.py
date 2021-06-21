@@ -14,7 +14,6 @@
 # ============================================================================
 """Convert ckpt to air/mindir."""
 import os
-import argparse
 import numpy as np
 
 from mindspore import context
@@ -23,10 +22,25 @@ from mindspore.train.serialization import export, load_checkpoint, load_param_in
 
 from src.face_qa import FaceQABackbone
 
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 
-def main(args):
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''run export.'''
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
+    if config.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
+
     network = FaceQABackbone()
-    ckpt_path = args.pretrained
+    ckpt_path = config.pretrained
     if os.path.isfile(ckpt_path):
         param_dict = load_checkpoint(ckpt_path)
         param_dict_new = {}
@@ -42,28 +56,12 @@ def main(args):
     else:
         print('-----------------------load model failed -----------------------')
 
-    input_data = np.random.uniform(low=0, high=1.0, size=(args.batch_size, 3, 96, 96)).astype(np.float32)
+    input_data = np.random.uniform(low=0, high=1.0, size=(config.batch_size, 3, 96, 96)).astype(np.float32)
     tensor_input_data = Tensor(input_data)
 
-    export(network, tensor_input_data, file_name=args.file_name, file_format=args.file_format)
+    export(network, tensor_input_data, file_name=config.file_name, file_format=config.file_format)
     print('-----------------------export model success-----------------------')
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='Convert ckpt to air/mindir')
-    parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--batch_size', type=int, default=8, help='batch size')
-    parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
-                        help='device target')
-    parser.add_argument('--file_name', type=str, default='FaceQualityAssessment', help='output file name')
-    parser.add_argument('--file_format', type=str, choices=['AIR', 'ONNX', 'MINDIR'], default='AIR', help='file format')
-
-    arg = parser.parse_args()
-
-    context.set_context(mode=context.GRAPH_MODE, device_target=arg.device_target, save_graphs=False)
-    if arg.device_target == 'Ascend':
-        devid = int(os.getenv('DEVICE_ID'))
-        context.set_context(device_id=devid)
-
-    main(arg)
+    run_export()
