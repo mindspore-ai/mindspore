@@ -88,14 +88,12 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::shared_ptr<TensorTransform> decode(new Decode());
-  std::shared_ptr<TensorTransform> resize(new Resize({256}));
-  std::shared_ptr<TensorTransform> dvpp_resize(new Resize({256, 256}));
-  auto crop_size = {FLAGS_image_height, FLAGS_image_width};
-  std::shared_ptr<TensorTransform> center_crop(new CenterCrop(crop_size));
-  std::shared_ptr<TensorTransform> normalize(new Normalize({123.675, 116.28, 103.53},
-                                                           {58.395, 57.120, 57.375}));
-  std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
+  auto decode = Decode();
+  auto resize = Resize({256});
+  auto dvpp_resize = Resize({256, 256});
+  auto center_crop = CenterCrop({FLAGS_image_height, FLAGS_image_width});
+  auto normalize = Normalize({123.675, 116.28, 103.53}, {58.395, 57.120, 57.375});
+  auto hwc2chw = HWC2CHW();
   Execute transform({decode, resize, center_crop, normalize, hwc2chw});
   Execute dvpptransform({decode, dvpp_resize});
 

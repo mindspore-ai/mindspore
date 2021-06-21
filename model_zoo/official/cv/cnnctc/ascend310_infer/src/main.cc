@@ -61,9 +61,8 @@ DEFINE_int32(image_height, 32, "image height");
 DEFINE_int32(image_width, 100, "image width");
 
 int PadImage(const MSTensor &input, MSTensor *output) {
-  std::shared_ptr<TensorTransform> normalize(new Normalize({127.5, 127.5, 127.5},
-                                                           {127.5, 127.5, 127.5}));
-  Execute composeNormalize({normalize});
+  auto normalize = Normalize({127.5, 127.5, 127.5}, {127.5, 127.5, 127.5});
+  Execute composeNormalize(normalize);
   std::vector<int64_t> shape = input.Shape();
   auto imgResize = MSTensor();
   auto imgNormalize = MSTensor();
@@ -74,19 +73,17 @@ int PadImage(const MSTensor &input, MSTensor *output) {
   NewWidth = ceil(FLAGS_image_height * ratio);
   paddingSize = FLAGS_image_width - NewWidth;
   if (NewWidth > FLAGS_image_width) {
-    std::shared_ptr<TensorTransform> resize(new Resize({FLAGS_image_height, FLAGS_image_width},
-                                                       InterpolationMode::kCubicPil));
-    Execute composeResize({resize});
+    auto resize = Resize({FLAGS_image_height, FLAGS_image_width}, InterpolationMode::kArea);
+    Execute composeResize(resize);
     composeResize(input, &imgResize);
     composeNormalize(imgResize, output);
   } else {
-    std::shared_ptr<TensorTransform> resize(new Resize({FLAGS_image_height, NewWidth},
-                                                       InterpolationMode::kCubicPil));
-    Execute composeResize({resize});
+    auto resize = Resize({FLAGS_image_height, NewWidth}, InterpolationMode::kArea);
+    Execute composeResize(resize);
     composeResize(input, &imgResize);
     composeNormalize(imgResize, &imgNormalize);
-    std::shared_ptr<TensorTransform> pad(new Pad({0, 0, paddingSize, 0}));
-    Execute composePad({pad});
+    auto pad = Pad({0, 0, paddingSize, 0});
+    Execute composePad(pad);
     composePad(imgNormalize, output);
   }
   return 0;
@@ -118,10 +115,10 @@ int main(int argc, char **argv) {
   auto all_files = GetAllFiles(FLAGS_dataset_path);
   std::map<double, double> costTime_map;
   size_t size = all_files.size();
-  std::shared_ptr<TensorTransform> decode(new Decode());
-  std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
-  Execute composeDecode({decode});
-  Execute composeTranspose({hwc2chw});
+  auto decode = Decode();
+  auto hwc2chw = HWC2CHW();
+  Execute composeDecode(decode);
+  Execute composeTranspose(hwc2chw);
   for (size_t i = 0; i < size; ++i) {
     struct timeval start = {0};
     struct timeval end = {0};
