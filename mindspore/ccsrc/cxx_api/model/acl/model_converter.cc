@@ -72,6 +72,7 @@ bool CreateSessionAndGraphRunner() {
 }  // namespace
 
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
   transform::DfGraphConvertor converter(anf_graph);
   std::string net_id = "0";
   std::string init_graph = "init_subgraph." + net_id;
@@ -229,7 +230,6 @@ Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
     std::tie(init_options, build_options) = options_->GenAclOptions();
   }
 
-  auto om_data = BuildAirModel(df_graph, init_options, build_options);
-  return om_data;
+  return BuildAirModel(df_graph, init_options, build_options);
 }
 }  // namespace mindspore
