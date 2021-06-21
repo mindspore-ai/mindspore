@@ -1053,6 +1053,7 @@ class Cell(Cell_):
             raise ValueError("dst_type should inside float32 or float16.")
         flags = {'fp16': dst_type == mstype.float16, 'fp32': dst_type == mstype.float32}
         self.add_flags_recursive(**flags)
+        self._add_init_args(**flags)
         return self
 
     def set_acc(self, acc_type):
