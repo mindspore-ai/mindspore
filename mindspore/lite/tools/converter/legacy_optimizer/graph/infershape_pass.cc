@@ -40,7 +40,9 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
     return;
   }
   for (auto &tensor : *input_tensors) {
-    tensor->set_data(nullptr);
+    if (tensor->data_type() != kObjectTypeString && tensor->data_type() != kObjectTypeTensorType) {
+      tensor->set_data(nullptr);
+    }
     delete tensor;
     tensor = nullptr;
   }
@@ -48,7 +50,9 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
     return;
   }
   for (auto &tensor : *output_tensors) {
-    tensor->set_data(nullptr);
+    if (tensor->data_type() != kObjectTypeString && tensor->data_type() != kObjectTypeTensorType) {
+      tensor->set_data(nullptr);
+    }
     delete tensor;
     tensor = nullptr;
   }
@@ -128,12 +132,6 @@ void ConvertOtherTensor(MetaGraphT *graph, uint32_t index, bool *convert_succ, s
   // when tensorT as param input
   if (lite_tensor_size == 0) {
     lite_tensors->emplace_back(lite_tensor.release());
-    return;
-  }
-  auto ret = lite_tensor->MallocData();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Malloc tensor data failed";
-    *convert_succ = false;
     return;
   }
   if (lite_tensor->root_tensor() != nullptr) {
