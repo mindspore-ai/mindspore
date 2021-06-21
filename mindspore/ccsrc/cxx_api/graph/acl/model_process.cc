@@ -180,9 +180,9 @@ Status ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size
   aclError ret;
   auto free_data_buffer = [this](void *dataMemBuffer) {
     if (!is_run_on_device_) {
-      aclrtFree(dataMemBuffer);
+      (void)aclrtFree(dataMemBuffer);
     } else {
-      aclrtFreeHost(dataMemBuffer);
+      (void)aclrtFreeHost(dataMemBuffer);
     }
   };
 
@@ -210,7 +210,7 @@ Status ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "add data buffer failed";
     free_data_buffer(*data_mem_buffer);
-    aclDestroyDataBuffer(data_buffer);
+    (void)aclDestroyDataBuffer(data_buffer);
     return kMCDeviceError;
   }
   return kSuccess;
@@ -238,9 +238,9 @@ Status ModelProcess::InitOutputsBuffer() {
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Get input shape failed";
       if (!is_run_on_device_) {
-        aclrtFree(data_mem_buffer);
+        (void)aclrtFree(data_mem_buffer);
       } else {
-        aclrtFreeHost(data_mem_buffer);
+        (void)aclrtFreeHost(data_mem_buffer);
       }
       return kMCDeviceError;
     }
@@ -264,16 +264,16 @@ void ModelProcess::DestroyInputsDataset() {
   }
   for (size_t i = 0; i < aclmdlGetDatasetNumBuffers(inputs_); i++) {
     auto dataBuffer = aclmdlGetDatasetBuffer(inputs_, i);
-    aclDestroyDataBuffer(dataBuffer);
+    (void)aclDestroyDataBuffer(dataBuffer);
   }
-  aclmdlDestroyDataset(inputs_);
+  (void)aclmdlDestroyDataset(inputs_);
   inputs_ = nullptr;
 }
 
 void ModelProcess::DestroyInputsDataMem() {
   if (!is_run_on_device_) {
     for (const auto &item : input_infos_) {
-      aclrtFree(item.device_data);
+      (void)aclrtFree(item.device_data);
     }
   }
   input_infos_.clear();
@@ -287,9 +287,9 @@ void ModelProcess::DestroyInputsBuffer() {
 void ModelProcess::DestroyOutputsBuffer() {
   for (const auto &item : output_infos_) {
     if (!is_run_on_device_) {
-      aclrtFree(item.device_data);
+      (void)aclrtFree(item.device_data);
     } else {
-      aclrtFreeHost(item.device_data);
+      (void)aclrtFreeHost(item.device_data);
     }
   }
   output_infos_.clear();
@@ -299,9 +299,9 @@ void ModelProcess::DestroyOutputsBuffer() {
   }
   for (size_t i = 0; i < aclmdlGetDatasetNumBuffers(outputs_); i++) {
     auto dataBuffer = aclmdlGetDatasetBuffer(outputs_, i);
-    aclDestroyDataBuffer(dataBuffer);
+    (void)aclDestroyDataBuffer(dataBuffer);
   }
-  aclmdlDestroyDataset(outputs_);
+  (void)aclmdlDestroyDataset(outputs_);
   outputs_ = nullptr;
 }
 
@@ -417,7 +417,7 @@ Status ModelProcess::CheckAndInitInput(const std::vector<MSTensor> &inputs) {
     ret = aclmdlAddDatasetBuffer(inputs_, data_buffer);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "add data buffer failed";
-      aclDestroyDataBuffer(data_buffer);
+      (void)aclDestroyDataBuffer(data_buffer);
       return kMCDeviceError;
     }
   }
