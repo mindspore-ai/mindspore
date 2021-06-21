@@ -1602,6 +1602,38 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
   return true;
 }
 
+bool ConvertRgbToBgr(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat) {
+  if (data_type == LDataType::UINT8) {
+    if (src.IsEmpty()) {
+      return false;
+    }
+    if (mat.IsEmpty()) {
+      mat.Init(w, h, 3, LDataType::UINT8);
+    }
+    if (mat.channel_ != 3) {
+      return false;
+    }
+    if ((src.width_ != w) || (src.height_ != h)) {
+      return false;
+    }
+    unsigned char *ptr = mat;
+    const unsigned char *data_ptr = src;
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        ptr[0] = data_ptr[2];
+        ptr[1] = data_ptr[1];
+        ptr[2] = data_ptr[0];
+
+        ptr += 3;
+        data_ptr += 3;
+      }
+    }
+  } else {
+    return false;
+  }
+  return true;
+}
+
 bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     if (src.IsEmpty()) {

@@ -42,9 +42,10 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         resize_ir.cc
         resize_preserve_ar_ir.cc
         resize_with_bbox_ir.cc
+        rgb_to_bgr_ir.cc
+        rgb_to_gray_ir.cc
         rgba_to_bgr_ir.cc
         rgba_to_rgb_ir.cc
-        rgb_to_gray_ir.cc
         rotate_ir.cc
         softdvpp_decode_random_crop_resize_jpeg_ir.cc
         softdvpp_decode_resize_jpeg_ir.cc

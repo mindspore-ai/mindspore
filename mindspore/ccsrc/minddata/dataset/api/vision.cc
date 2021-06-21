@@ -61,9 +61,10 @@
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_preserve_ar_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
+#include "minddata/dataset/kernels/ir/vision/rgb_to_gray_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgba_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgba_to_rgb_ir.h"
-#include "minddata/dataset/kernels/ir/vision/rgb_to_gray_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
@@ -180,9 +181,6 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
   }
   return std::make_shared<CenterCropOperation>(data_->size_);
 }
-
-// RGB2GRAY Transform Operation.
-std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
 
 // Crop Transform Operation.
 struct Crop::Data {
@@ -862,6 +860,12 @@ ResizeWithBBox::ResizeWithBBox(std::vector<int32_t> size, InterpolationMode inte
 std::shared_ptr<TensorOperation> ResizeWithBBox::Parse() {
   return std::make_shared<ResizeWithBBoxOperation>(data_->size_, data_->interpolation_);
 }
+
+// RGB2BGR Transform Operation.
+std::shared_ptr<TensorOperation> RGB2BGR::Parse() { return std::make_shared<RgbToBgrOperation>(); }
+
+// RGB2GRAY Transform Operation.
+std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
 
 // RgbaToBgr Transform Operation.
 RGBA2BGR::RGBA2BGR() {}

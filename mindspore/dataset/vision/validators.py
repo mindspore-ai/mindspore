@@ -547,6 +547,17 @@ def check_mix_up(method):
     return new_method
 
 
+def check_rgb_to_bgr(method):
+    """Wrapper method to check the parameters of rgb_to_bgr."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [is_hwc], _ = parse_user_args(method, *args, **kwargs)
+        type_check(is_hwc, (bool,), "is_hwc")
+        return method(self, *args, **kwargs)
+    return new_method
+
+
 def check_rgb_to_hsv(method):
     """Wrapper method to check the parameters of rgb_to_hsv."""
 

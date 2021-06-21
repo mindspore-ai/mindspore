@@ -1462,6 +1462,23 @@ class ResizeWithBBox(ImageTensorOperation):
         return cde.ResizeWithBBoxOperation(size, DE_C_INTER_MODE[self.interpolation])
 
 
+class RgbToBgr(ImageTensorOperation):
+    """
+    Convert RGB image to BGR.
+
+    Examples:
+        >>> from mindspore.dataset.vision import Inter
+        >>> decode_op = c_vision.Decode()
+        >>> rgb2bgr_op = c_vision.RgbToBgr()
+        >>> transforms_list = [decode_op, rgb2bgr_op]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    def parse(self):
+        return cde.RgbToBgrOperation()
+
+
 class Rotate(ImageTensorOperation):
     """
     Rotate the input image by specified degrees.

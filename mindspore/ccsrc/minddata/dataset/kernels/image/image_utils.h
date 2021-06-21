@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,6 +298,12 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 /// \param[out] output The output image
 /// \return Status code
 Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
+/// \brief Take in a 3 channel image in RBG to BGR
+/// \param[in] input The input image
+/// \param[out] output The output image
+/// \return Status code
+Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
 /// \brief Take in a 3 channel image in RBG to GRAY
 /// \param[in] input The input image

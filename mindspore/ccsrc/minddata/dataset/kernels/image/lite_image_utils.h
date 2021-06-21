@@ -106,6 +106,12 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, int32_t img_orientation,
                       TensorRow *outputs);
 
+/// \brief Take in a 3 channel image in RBG to BGR
+/// \param[in] input The input image
+/// \param[out] output The output image
+/// \return Status code
+Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
 /// \brief Take in a 3 channel image in RBG to GRAY
 /// \param[in] input The input image
 /// \param[out] output The output image

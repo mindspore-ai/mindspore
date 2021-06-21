@@ -1223,6 +1223,71 @@ def mix_up_muti(tmp, batch_size, img, label, alpha=0.2):
     return mix_img, mix_label
 
 
+def rgb_to_bgr(np_rgb_img, is_hwc):
+    """
+    Convert RGB img to BGR img.
+
+    Args:
+        np_rgb_img (numpy.ndarray): NumPy RGB image array of shape (H, W, C) or (C, H, W) to be converted.
+        is_hwc (Bool): If True, the shape of np_hsv_img is (H, W, C), otherwise must be (C, H, W).
+
+    Returns:
+        np_bgr_img (numpy.ndarray), NumPy BGR image with same type of np_rgb_img.
+    """
+    if is_hwc:
+        np_bgr_img = np_rgb_img[:, :, ::-1]
+    else:
+        np_bgr_img = np_rgb_img[::-1, :, :]
+    return np_bgr_img
+
+def rgb_to_bgrs(np_rgb_imgs, is_hwc):
+    """
+    Convert RGB imgs to BGR imgs.
+
+    Args:
+        np_rgb_imgs (numpy.ndarray): NumPy RGB images array of shape (H, W, C) or (N, H, W, C),
+                                      or (C, H, W) or (N, C, H, W) to be converted.
+        is_hwc (Bool): If True, the shape of np_rgb_imgs is (H, W, C) or (N, H, W, C);
+                       If False, the shape of np_rgb_imgs is (C, H, W) or (N, C, H, W).
+
+    Returns:
+        np_bgr_imgs (numpy.ndarray), NumPy BGR images with same type of np_rgb_imgs.
+    """
+    if not is_numpy(np_rgb_imgs):
+        raise TypeError("img should be NumPy image. Got {}".format(type(np_rgb_imgs)))
+
+    if not isinstance(is_hwc, bool):
+        raise TypeError("is_hwc should be bool type. Got {}.".format(type(is_hwc)))
+
+    shape_size = len(np_rgb_imgs.shape)
+
+    if shape_size == 2:
+        raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). "
+                        "Got (H, W).")
+
+    if not shape_size in (3, 4):
+        raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). "
+                        "Got {}.".format(np_rgb_imgs.shape))
+
+    if shape_size == 3:
+        batch_size = 0
+        if is_hwc:
+            num_channels = np_rgb_imgs.shape[2]
+        else:
+            num_channels = np_rgb_imgs.shape[0]
+    else:
+        batch_size = np_rgb_imgs.shape[0]
+        if is_hwc:
+            num_channels = np_rgb_imgs.shape[3]
+        else:
+            num_channels = np_rgb_imgs.shape[1]
+
+    if num_channels != 3:
+        raise TypeError("img should be 3 channels RGB img. Got {} channels.".format(num_channels))
+    if batch_size == 0:
+        return rgb_to_bgr(np_rgb_imgs, is_hwc)
+    return np.array([rgb_to_bgr(img, is_hwc) for img in np_rgb_imgs])
+
 def rgb_to_hsv(np_rgb_img, is_hwc):
     """
     Convert RGB img to HSV img.
