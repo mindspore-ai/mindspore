@@ -110,6 +110,16 @@ std::string TensorFlowUtils::GetFlattenNodeName(const std::string &input_name) {
                                         std::sregex_token_iterator());
   std::string ret = input_name;
   if (input_splits.size() == 3) {
+    if (input_splits[0] == "RaggedRange") {  // Both output index of RaggedRange is 0
+      if (input_splits[1] == "rt_nested_splits") {
+        ret = input_splits[0] + ":0";
+      } else if (input_splits[1] == "rt_dense_values") {
+        ret = input_splits[0] + ":1";
+      } else {
+        MS_LOG(ERROR) << "Failed to flatten RaggedRange node name!";
+      }
+      return ret;
+    }
     if (input_splits[2] == "0") {
       ret = input_splits[0];
     } else {
