@@ -75,16 +75,16 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 ```buildoutcfg
 cd ./scripts
 # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
-bash run_process_data.sh [SRC_PATH] [DATASET_NAME]
+sh run_process_data.sh [SRC_PATH] [DATASET_NAME]
 ```
 
 ### Launch
 
 ```bash
 #Generate dataset in mindrecord format for cora
-bash run_process_data.sh ./data cora
+sh run_process_data.sh ./data cora
 #Generate dataset in mindrecord format for citeseer
-bash run_process_data.sh ./data citeseer
+sh run_process_data.sh ./data citeseer
 ```
 
 - Running on local with Ascend
@@ -149,15 +149,12 @@ sh run_train.sh [DATASET_NAME]
   ├─scripts
   | ├─run_infer_310.sh     # shell script for infer on Ascend 310
   | ├─run_process_data.sh  # Generate dataset in mindrecord format
-  | ├─run_train_gpu.sh     # Launch GPU training.
-  | ├─run_eval_gpu.sh      # Launch GPU inference.
-  | └─run_train.sh         # Launch Ascend training.
+  | └─run_train.sh         # Launch training, now only Ascend backend is supported.
   |
   ├─src
   | ├─config.py            # Parameter configuration
   | ├─dataset.py           # Data preprocessin
   | ├─gcn.py               # GCN backbone
-  | ├─eval_callback.py     # Callback function
   | └─metrics.py           # Loss and accuracy
   |
   ├─default_config.py      # Configurations
@@ -165,8 +162,7 @@ sh run_train.sh [DATASET_NAME]
   ├─mindspore_hub_conf.py  # mindspore_hub_conf scripts
   ├─postprocess.py         # postprocess script
   ├─preprocess.py          # preprocess scripts
-  |─eval.py                # Evaluation net, testing is performed.
-  └─train.py               # Train net, evaluation is performed after every training epoch. After the verification result converges, the training stops.
+  └─train.py               # Train net, evaluation is performed after every training epoch. After the verification result converges, the training stops, then testing is performed.
 ```
 
 ## [Script Parameters](#contents)
@@ -180,14 +176,6 @@ Parameters for training can be set in config.py.
 "dropout": 0.5,                   # Dropout ratio for the first graph convolution layer
 "weight_decay": 5e-4,             # Weight decay for the parameter of the first graph convolution layer
 "early_stopping": 10,             # Tolerance for early stopping
-"save_ckpt_steps": 549            # Step to save checkpoint
-"keep_ckpt_max": 10               # Maximum step to save checkpoint
-"ckpt_dir": './ckpt'              # The folder to save checkpoint
-"best_ckpt_dir": './best_ckpt'    # The folder to save the best checkpoint
-"best_ckpt_name": 'best.ckpt'     # The file name of the best checkpoint
-"eval_start_epoch": 100           # Start step for eval
-"save_best_ckpt": True            # Save the best checkpoint or not
-"eval_interval": 1                # The interval of eval
 ```
 
 ### [Training, Evaluation, Test Process](#contents)
@@ -195,22 +183,14 @@ Parameters for training can be set in config.py.
 #### Usage
 
 ```bash
-# run train with cora or citeseer dataset on Ascend, DATASET_NAME is cora or citeseer
-bash run_train.sh [DATASET_NAME]
-
-# run train with cora or citeseer dataset on GPU, DATASET_NAME is cora or citeseer
-bash run_train_gpu.sh [DATASET_NAME]
-
-# run inference with cora or citeseer dataset on GPU, DATASET_NAME is cora or citeseer
-bash run_eval_gpu.sh [DATASET_NAME] [CKPT]
+# run train with cora or citeseer dataset, DATASET_NAME is cora or citeseer
+sh run_train.sh [DATASET_NAME]
 ```
 
 #### Launch
 
 ```bash
-bash run_train.sh cora
-bash run_train_gpu.sh cora
-bash run_eval_gpu.sh cora ckpt/gcn.ckpt
+sh run_train.sh cora
 ```
 
 #### Result
@@ -270,18 +250,18 @@ Test set results: accuracy= 0.81300
 
 ### [Performance](#contents)
 
-| Parameters          | GCN                                                          | GCN                                                          |
-| ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Resource            | Ascend 910; OS Euler2.8                                      | NV SMX3 V100-32G                                             |
-| uploaded Date       | 06/09/2020 (month/day/year)                                  | 05/06/2021 (month/day/year)                                  |
-| MindSpore Version   | 1.0.0                                                        | 1.1.0                                                        |
-| Dataset             | Cora/Citeseer                                                | Cora/Citeseer                                                |
-| Training Parameters | epoch=200                                                    | epoch=200                                                    |
-| Optimizer           | Adam                                                         | Adam                                                         |
-| Loss Function       | Softmax Cross Entropy                                        | Softmax Cross Entropy                                                |
-| Accuracy            | 81.5/70.3                                                    | 87.5/76.9                                                    |
-| Parameters (B)      | 92160/59344                                                  | 92160/59344                                                  |
-| Scripts             | [GCN Script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn) | [GCN Script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn) |
+| Parameters                 | GCN                                                            |
+| -------------------------- | -------------------------------------------------------------- |
+| Resource                   | Ascend 910; OS Euler2.8                                                    |
+| uploaded Date              | 06/09/2020 (month/day/year)                                    |
+| MindSpore Version          | 1.0.0                                                   |
+| Dataset                    | Cora/Citeseer                                                  |
+| Training Parameters        | epoch=200                                                      |
+| Optimizer                  | Adam                                                           |
+| Loss Function              | Softmax Cross Entropy                                          |
+| Accuracy                   | 81.5/70.3                                                      |
+| Parameters (B)             | 92160/59344                                                    |
+| Scripts                    | [GCN Script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/gcn) |
 
 ## [Description of Random Situation](#contents)
 
