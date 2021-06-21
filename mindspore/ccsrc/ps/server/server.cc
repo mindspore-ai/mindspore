@@ -154,7 +154,7 @@ bool Server::InitCommunicatorWithWorker() {
     communicators_with_worker_.push_back(tcp_comm);
   }
   if (use_http_) {
-    auto http_comm = server_node_->GetOrCreateHttpComm("0.0.0.0", http_port_, task_executor_);
+    auto http_comm = server_node_->GetOrCreateHttpComm(server_node_->BoundIp(), http_port_, task_executor_);
     MS_EXCEPTION_IF_NULL(http_comm);
     communicators_with_worker_.push_back(http_comm);
   }
