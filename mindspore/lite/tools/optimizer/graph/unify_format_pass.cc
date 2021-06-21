@@ -150,6 +150,10 @@ void ConvertNcTensor2Nh(const FuncGraphPtr &func_graph, const CNodePtr &cnode, s
   lite::DataInfo data_info;
   int status;
   if (utils::isa<ParameterPtr>(cnode->input(index))) {
+    auto input_node = cnode->input(index)->cast<ParameterPtr>();
+    if (!input_node->has_default()) {
+      return;
+    }
     status = lite::FetchDataFromParameterNode(cnode, index, fmk_type, train_flag, &data_info);
   } else {
     status = lite::FetchDataFromValueNode(cnode, index, fmk_type, train_flag, &data_info);
@@ -161,7 +165,7 @@ void ConvertNcTensor2Nh(const FuncGraphPtr &func_graph, const CNodePtr &cnode, s
       (data_info.data_type_ != kNumberTypeFloat32 && data_info.data_type_ != kNumberTypeFloat)) {
     return;
   }
-  std::vector<int> new_shape;
+  std::vector<int> new_shape = data_info.shape_;
   if (data_info.shape_.size() == 1) {
     new_shape = {1, 1, 1, data_info.shape_[0]};
   } else if (data_info.shape_.size() == 2) {
