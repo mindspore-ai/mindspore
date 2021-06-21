@@ -264,6 +264,8 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
   device_context->Initialize();
   device_id_ = device_context->device_context_key().device_id_;
+
+  runtime::GraphScheduler::GetInstance().Initialize();
 }
 
 const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {

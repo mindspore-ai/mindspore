@@ -338,11 +338,18 @@ void GraphScheduler::Initialize() {
   MS_EXCEPTION_IF_NULL(actorMgr);
   actorMgr->Initialize();
 
-  // Create the thread pool of actor runtime.
-  auto max_thread_num = GetMaxThreadNum();
-  MS_LOG(INFO) << "Max available thread number: " << max_thread_num;
-  thread_pool_ = ActorThreadPool::CreateThreadPool(max_thread_num);
+  // Create the thread pool of actor runtime and Set the OMP_NUM_THREADS env.
+  size_t actor_thread_num = 0;
+  size_t OMP_thread_num = 0;
+  ComputeThreadNums(&actor_thread_num, &OMP_thread_num);
+  thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num);
   MS_EXCEPTION_IF_NULL(thread_pool_);
+  std::string OMP_env = std::to_string(OMP_thread_num);
+  common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
+  auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
+  MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
+               << ", the computed OMP thread number : " << OMP_thread_num
+               << ", the used OMP thread number : " << stoi(OMP_thread_num_used);
 
   // Create and schedule memory manager actor.
   auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
@@ -374,7 +381,6 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   if (graph_compiler_info.graphs_.size() != graph_compiler_info.device_contexts_.size()) {
     MS_LOG(EXCEPTION) << "The number of graphs is not equal to the number of device contexts.";
   }
-  Initialize();
 
   PersistDeviceTensor(graph_compiler_info);
   const auto &actor_set = Build(graph_compiler_info, strategy);
@@ -555,16 +561,16 @@ bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strat
   op_context.sequential_num_ = (strategy == GraphExecutionStrategy::kPipeline) ? &sequential_num : nullptr;
   op_context.results_ = &result;
 
-  // Trigger no input kernel actor running.
-  for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
-    Async(no_input_kernel_actor->GetAID(), &KernelActor::RunOpControl, nullptr, &op_context);
-  }
-
   // Trigger data source actor running.
   for (auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
     Async(data_source_actor->GetAID(), &DataSourceActor::FetchData, &op_context);
+  }
+
+  // Trigger no input kernel actor running.
+  for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
+    Async(no_input_kernel_actor->GetAID(), &KernelActor::RunOpControl, nullptr, &op_context);
   }
 
   // Trigger kernel actor running in the step execution strategy.
