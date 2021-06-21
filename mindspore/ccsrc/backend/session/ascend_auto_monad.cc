@@ -142,6 +142,31 @@ uint32_t GetGraphLabel(const KernelGraphPtr &kg) {
   }
   return GetValue<uint32_t>(value);
 }
+// Check if one abstract base is compatible with another abstract base.
+bool IsAbstractCompatible(const abstract::AbstractBase &a1, const abstract::AbstractBase &a2) {
+  if (&a1 == &a2) {
+    return true;
+  }
+  auto type1 = a1.BuildType();
+  auto type2 = a2.BuildType();
+  auto shape1 = a1.BuildShape();
+  auto shape2 = a2.BuildShape();
+  return (((type1 == type2) || (*type1 == *type2)) && ((shape1 == shape2) || (*shape1 == *shape2)));
+}
+
+// Check if one abstract is compatible with another abstract.
+bool IsCompatible(const abstract::AbstractBasePtr &a1, const abstract::AbstractBasePtr &a2) {
+  if (a1 == nullptr || a2 == nullptr) {
+    return false;
+  }
+  if (a1->isa<abstract::AbstractTensor>() && a2->isa<abstract::AbstractTensor>()) {
+    // This make AbstractRef compatible with AbstractTensor.
+    auto &t1 = static_cast<abstract::AbstractTensor &>(*a1);
+    auto &t2 = static_cast<abstract::AbstractTensor &>(*a2);
+    return IsAbstractCompatible(t1, t2);
+  }
+  return IsAbstractCompatible(*a1, *a2);
+}
 
 struct CallBranch {
   KernelGraphPtr graph;
@@ -231,21 +256,6 @@ class ParameterPool {
     // Save new para to pool.
     paras_.push_back(out_para);
     return out_para;
-  }
-
- protected:
-  // Check if one abstract is compatible with another abstract.
-  static bool IsCompatible(const abstract::AbstractBasePtr &a1, const abstract::AbstractBasePtr &a2) {
-    if (a1 == nullptr || a2 == nullptr) {
-      return false;
-    }
-    if (a1->isa<abstract::AbstractTensor>() && a2->isa<abstract::AbstractTensor>()) {
-      // This make AbstractRef compatible with AbstractTensor.
-      auto &t1 = static_cast<abstract::AbstractTensor &>(*a1);
-      auto &t2 = static_cast<abstract::AbstractTensor &>(*a2);
-      return t1 == t2;
-    }
-    return *a1 == *a2;
   }
 
  private:
@@ -535,6 +545,13 @@ class CallInfoFinder {
     if (call_site->return_label == kNoLabel) {
       call_site->return_label = context_.NewLabel();
     }
+    if (!IsCompatible(call_site->cnode->abstract(), callee->output()->abstract())) {
+      MS_LOG(EXCEPTION) << "call_site node: " << call_site->cnode->DebugString() << " has different abstract() with "
+                        << callee->ToString() << " output(), [ " << call_site->cnode->abstract()->ToString()
+                        << " != " << call_site->cnode->abstract()->ToString() << " ],"
+                        << "Do not support this situation, pls check if the graghs are correct.";
+    }
+
     // Create a parameter for the return value.
     if (call_site->out_param == nullptr) {
       call_site->out_param = context_.CreateParameter(call_site->cnode->abstract());
