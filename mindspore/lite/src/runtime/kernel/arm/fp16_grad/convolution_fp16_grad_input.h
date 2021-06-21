@@ -38,7 +38,7 @@ class ConvolutionGradInputCPUKernelFp16 : public InnerKernel {
   size_t mat_alloc_ = 0;
   bool do_img2col_ = true;
   bool do_dw_ = false;
-  const int chunk_ = C12NUM;
+  const int chunk_ = C16NUM;
 };
 }  // namespace mindspore::kernel
 

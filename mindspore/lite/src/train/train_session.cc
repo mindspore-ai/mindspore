@@ -126,22 +126,16 @@ int TrainSession::InitCallBack() {
     if (node_type == schema::PrimitiveType_Cast) {
       return false;
     }
-    TensorPtrVector inputs;
     auto in_size = node->input_indices_.size();
-    inputs.reserve(in_size);
-    for (size_t k = 0; k < in_size; ++k) {
-      inputs.emplace_back(model_->all_tensors_.at(node->input_indices_[k]));
+    bool force_fp16 = false;
+    for (std::size_t k = 0; k < in_size; k++) {
+      schema::Tensor *tensor = model_->all_tensors_.at(node->input_indices_[k]);
+      if ((tensor->dataType() == kNumberTypeFloat16) && (tensor->nodeType() == NodeType_ValueNode)) {
+        force_fp16 = true;
+        break;
+      }
     }
-    bool force_fp16 = (inputs.size() > 0 && std::any_of(inputs.begin(), inputs.end(),
-                                                        [&](schema::Tensor *tensor) {
-                                                          return ((tensor->dataType() == kNumberTypeFloat16) &&
-                                                                  (tensor->nodeType() == NodeType_ValueNode));
-                                                        }))
-                        ? true
-                        : false;
-    inputs.clear();
-    auto node_name = node->name_;
-
+    const auto &node_name = node->name_;
     bool is_fp16 = true;
     if (!force_fp16) {
       // optimizer runs in fp32
@@ -256,18 +250,16 @@ bool TrainSession::IsLossTensor(Tensor *tensor) {
 
 bool TrainSession::AllInputsNeedScale(kernel::LiteKernel *kernel) {
   auto type = kernel->type();
-  auto is_scale = false;
-
-  for (auto &tensor : kernel->in_tensors()) {
-    is_scale |= tensor->IsScale();
-  }
-
+  bool is_scale = false;
   switch (type) {
     case schema::PrimitiveType_AbsGrad:
     case schema::PrimitiveType_AddFusion:
     case schema::PrimitiveType_SubFusion:
     case schema::PrimitiveType_AddN:
-      return (true && is_scale);
+      for (auto &tensor : kernel->in_tensors()) {
+        is_scale = is_scale || tensor->IsScale();
+      }
+      return (is_scale);
     default:
       return false;
   }
@@ -791,7 +783,6 @@ session::LiteSession *session::LiteSession::CreateTrainSession(const std::string
     MS_LOG(ERROR) << "Could not switch to Train Modei " << train_mode;
     return nullptr;
   }
-
   return session.release();
 }
 

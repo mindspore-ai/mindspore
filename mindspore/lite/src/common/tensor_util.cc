@@ -252,7 +252,7 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
       MS_LOG(ERROR) << "Graph input tensor data is nullptr " << tensor->tensor_name();
       return RET_ERROR;
     }
-    auto shape = tensor->shape();
+    const auto &shape = tensor->shape();
     bool valid = all_of(shape.begin(), shape.end(), [](int i) { return i >= 0; });
     if (!valid) {
       MS_LOG(ERROR) << "The shape of tensor contains negative dimension,"
@@ -260,7 +260,7 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
       return RET_ERROR;
     }
     if (tensor->format() != mindspore::NHWC) {
-      MS_LOG(ERROR) << "model input's format mey be changed, which should keep default value NHWC";
+      MS_LOG(ERROR) << "model input's format may be changed, which should keep default value NHWC";
       return RET_FORMAT_ERR;
     }
     if (tensor->data_c() == nullptr) {

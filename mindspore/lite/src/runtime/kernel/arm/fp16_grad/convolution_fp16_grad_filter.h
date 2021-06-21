@@ -43,7 +43,7 @@ class ConvolutionGradFilterCPUKernelFp16 : public InnerKernel {
 #ifdef ENABLE_ARM32
   const int chunk_ = C4NUM * 2;
 #else
-  const int chunk_ = C12NUM * 2;
+  const int chunk_ = C32NUM;
 #endif
 };
 }  // namespace mindspore::kernel
