@@ -214,6 +214,7 @@ Status AscendGraphImpl::Load(uint32_t device_id) {
       MS_LOG(ERROR) << "Compile graph model failed";
       return ret;
     }
+    MS_EXCEPTION_IF_NULL(session_impl_);
     session_impl_->GetModelInputsInfo(graph_id_, &inputs_info_, &input_names_);
     session_impl_->GetModelOutputsInfo(graph_id_, &outputs_info_, &output_names_);
     if (inputs_info_.size() != input_names_.size()) {
