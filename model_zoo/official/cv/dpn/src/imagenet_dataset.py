@@ -15,6 +15,8 @@
 """
 dataset processing.
 """
+import cv2
+
 from PIL import ImageFile
 from mindspore.common import dtype as mstype
 import mindspore.dataset as de
@@ -74,6 +76,7 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
         >>>                               rank=0, group_size=4,
         >>>                               input_mode="txt", root=images_dir)
     """
+    cv2.setNumThreads(0)
     if mode == 'eval':
         drop_remainder = False
     else:
