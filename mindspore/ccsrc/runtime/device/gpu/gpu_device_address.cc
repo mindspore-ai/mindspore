@@ -27,6 +27,9 @@
 #include "debug/tensor_load.h"
 #include "debug/debugger/debugger.h"
 #endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -47,6 +50,9 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(stream);
   auto ret = GPUDeviceManager::GetInstance().SyncStream(stream);
   if (!ret) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MS_LOG(ERROR) << "SyncStream failed";
     return ret;
   }
