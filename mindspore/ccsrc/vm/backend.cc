@@ -629,9 +629,21 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
     return;
   }
 
-  // Judge the output whether tuple or not by the outputs number.
+  // The empty value node return the empty VectorRef.
+  if (output_node->isa<ValueNode>()) {
+    auto value = output_node->cast<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<ValueTuple>() && (value->cast<ValueTuplePtr>()->size() == 0)) {
+      outputs->emplace_back(VectorRef());
+      return;
+    }
+  }
+
   auto outputs_num = AnfAlgo::GetOutputTensorNum(output_node);
-  if (outputs_num > 1) {
+  auto &output_abstract = output_node->abstract();
+  MS_EXCEPTION_IF_NULL(output_abstract);
+  // Wrap output to VectorRef if the output is tuple.
+  if (output_abstract->isa<abstract::AbstractTuple>()) {
     VectorRef output_tuple;
     for (size_t i = 0; i < outputs_num; ++i) {
       output_tuple.emplace_back(std::move(output_tensors[*output_position]));
@@ -639,8 +651,10 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
     }
     outputs->emplace_back(std::move(output_tuple));
   } else {
-    outputs->emplace_back(std::move(output_tensors[*output_position]));
-    ++(*output_position);
+    for (size_t i = 0; i < outputs_num; ++i) {
+      outputs->emplace_back(std::move(output_tensors[*output_position]));
+      ++(*output_position);
+    }
   }
 }
 

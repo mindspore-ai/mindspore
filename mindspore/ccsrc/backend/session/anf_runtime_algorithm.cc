@@ -339,6 +339,15 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
       continue;
     }
 
+    // Skip the empty value node.
+    if (output_with_index.first->isa<ValueNode>()) {
+      auto value = output_with_index.first->cast<ValueNodePtr>()->value();
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<ValueTuple>() && (value->cast<ValueTuplePtr>()->size() == 0)) {
+        continue;
+      }
+    }
+
     // Ignore the output of front call node.
     if (output_with_index.first->isa<CNode>()) {
       auto cnode = output_with_index.first->cast<CNodePtr>();

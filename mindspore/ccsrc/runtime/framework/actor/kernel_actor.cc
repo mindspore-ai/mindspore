@@ -147,15 +147,16 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
 
   PreLaunchKernel(context);
 
-  bool ret = true;
   try {
-    ret = device_context_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_,
-                                        is_dynamic_shape_);
+    auto ret = device_context_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                             launch_info_.outputs_, is_dynamic_shape_);
+    if (!ret) {
+      std::string error_info = "Launch kernel failed: " + kernel_->ToString();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
-  }
-  if (!ret) {
-    std::string error_info = "Launch kernel failed: " + kernel_->ToString();
+    std::string error_info = "Launch kernel exception: " + kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
