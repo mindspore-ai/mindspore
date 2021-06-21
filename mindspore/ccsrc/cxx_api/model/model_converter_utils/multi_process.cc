@@ -124,6 +124,7 @@ void MultiProcess::ChildProcess(ProcessFuncCall child_process) {
   receive_msg_ = parent_msg;
   std::thread heartbeat_thread(MultiProcess::HeartbeatThreadFunc, this);
   try {
+    MS_EXCEPTION_IF_NULL(child_process);
     auto ret = child_process(this);
     if (ret != kSuccess) {
       MS_LOG_ERROR << "Child process process failed";
@@ -143,7 +144,12 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
   while (msg_len > cur_offset) {
     uint64_t sub_msg_len = std::min(msg_len - cur_offset, shmat_data_max_size_);
 
-    memcpy_s(shmat_data_addr_, shmat_data_max_size_, static_cast<const uint8_t *>(buffer) + cur_offset, sub_msg_len);
+    auto ret =
+      memcpy_s(shmat_data_addr_, shmat_data_max_size_, static_cast<const uint8_t *>(buffer) + cur_offset, sub_msg_len);
+    if (ret != EOK) {
+      MS_LOG(INFO) << "memcpy_s failed, ret = " << ret;
+      return kMEFailed;
+    }
     cur_offset += sub_msg_len;
 
     send_msg_->msg_len = sub_msg_len;
@@ -181,7 +187,11 @@ Status MultiProcess::ReceiveMsg(CreateBufferCall create_buffer_call) {
       msg_len = receive_msg_->msg_total_len;
       msg_buffer = create_buffer_call(msg_len);
     }
-    memcpy_s(msg_buffer + cur_offset, msg_len - cur_offset, shmat_data_addr_, receive_msg_->msg_len);
+    auto ret = memcpy_s(msg_buffer + cur_offset, msg_len - cur_offset, shmat_data_addr_, receive_msg_->msg_len);
+    if (ret != EOK) {
+      MS_LOG(INFO) << "memcpy_s failed, ret = " << ret;
+      return kMEFailed;
+    }
     cur_offset += receive_msg_->msg_len;
     receive_msg_->read_ready_flag = false;
     receive_msg_->read_finish_flag = true;

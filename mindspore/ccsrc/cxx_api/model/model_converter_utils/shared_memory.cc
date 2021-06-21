@@ -42,7 +42,7 @@ Status SharedMemory::Attach() {
 }
 
 void SharedMemory::Detach() {
-  if (shmat_addr_) {
+  if (shmat_addr_ != nullptr) {
     auto err = shmdt(shmat_addr_);
     if (err == -1) {
       MS_LOG_ERROR << "Shared memory detach failed. Errno " + std::to_string(errno);
