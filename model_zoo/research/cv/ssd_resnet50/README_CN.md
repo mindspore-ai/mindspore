@@ -16,7 +16,10 @@
     - [评估过程](#评估过程)
         - [Ascend处理器环境评估](#ascend处理器环境评估)
         - [性能](#性能)
-    - [导出MindIR](#导出MindIR)
+    - [导出过程](#导出过程)
+        - [导出](#导出)
+    - [推理过程](#推理过程)
+        - [推理](#推理)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
@@ -112,8 +115,10 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 └─ cv
   └─ ssd
     ├─ README.md                      ## SSD相关说明
+    ├─ ascend310_infer                ## 实现310推理源代码
     ├─ scripts
       ├─ run_distribute_train.sh      ## Ascend分布式shell脚本
+      ├─ run_infer_310.sh             ## Ascend推理shell脚本
       └─ run_eval.sh                  ## Ascend评估shell脚本
     ├─ src
       ├─ __init__.py                  ## 初始化文件
@@ -125,6 +130,8 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
       ├─ lr_schedule.py               ## 学习率生成器
       └─ ssd.py                       ## SSD架构
     ├─ eval.py                        ## 评估脚本
+    ├─ export.py                      ## 导出 AIR,MINDIR模型的脚本
+    ├─ postprogress.py                ## 310推理后处理脚本
     ├─ train.py                       ## 训练脚本
     └─ mindspore_hub_conf.py          ## MindSpore Hub接口
 ```
@@ -233,6 +240,39 @@ mAP: 0.32719216721918915
 
 ```
 
+## 导出过程
+
+### 导出
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT`可选 ["AIR", "MINDIR"]
+
+## 推理过程
+
+### 推理
+
+在还行推理之前我们需要先导出模型。Air模型只能在昇腾910环境上导出，mindir可以在任意环境上导出。batch_size只支持1。
+
+```shell
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.327
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.475
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.358
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.115
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.353
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.455
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.314
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.485
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.509
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.200
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.554
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.692
+
+mAP: 0.3266651054070853
+```
+
 ### 性能
 
 | 参数          | Ascend                      |
@@ -244,12 +284,6 @@ mAP: 0.32719216721918915
 | 数据集         | COCO2017                    |
 | mAP | IoU=0.50: 32.7%              |
 | 模型大小   | 281M（.ckpt文件）            |
-
-## 导出MindIR
-
-```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
-```
 
 参数ckpt_file为必填项，
 `EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。

@@ -16,7 +16,10 @@
         - [Evaluation Process](#evaluation-process)
             - [Evaluation on Ascend](#evaluation-on-ascend)
             - [Performance](#performance)
-        - [Export MindIR](#export-mindir)
+        - [Export Process](#Export-process)
+            - [Export](#Export)
+        - [Inference Process](#Inference-process)
+            - [Inference](#Inference)
     - [Description of Random Situation](#description-of-random-situation)
     - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -150,9 +153,11 @@ Then you can run everything just like on ascend.
 └─ cv
   └─ ssd
     ├─ README.md                      # descriptions about SSD
+    ├─ ascend310_infer                # application for 310 inference
     ├─ scripts
       ├─ run_distribute_train.sh      # shell script for distributed on ascend
-      └─ run_eval.sh                  # shell script for eval on ascend
+      ├─ run_eval.sh                  # shell script for eval on ascend
+      └─ run_infer_310.sh             # shell script for 310 inference
     ├─ src
       ├─ __init__.py                  # init file
       ├─ box_utils.py                 # bbox utils
@@ -165,6 +170,7 @@ Then you can run everything just like on ascend.
     ├─ eval.py                        # eval scripts
     ├─ train.py                       # train scripts
     ├─ export.py                      # export mindir script
+    ├─ postprogress.py                # post process for 310 inference
     └─ mindspore_hub_conf.py          # mindspore hub interface
 ```
 
@@ -273,6 +279,47 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.689
 
 mAP: 0.32719216721918915
 
+```
+
+## [Export Process](#contents)
+
+### [Export](#content)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### [Inference](#content)
+
+Before performing inference, we need to export model first. Air model can only be exported in Ascend 910 environment, mindir model can be exported in any environment.
+Current batch_ Size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+Inference result will be stored in the example path, you can find result like the followings in acc.log.
+
+```shell
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.327
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.475
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.358
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.115
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.353
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.455
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.314
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.485
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.509
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.200
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.554
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.692
+
+mAP: 0.3266651054070853
 ```
 
 ### [Performance](#contents)
