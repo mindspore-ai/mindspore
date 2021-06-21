@@ -14,7 +14,8 @@
 # ============================================================================
 
 
-from ast import literal_eval as liter
+import ast
+import operator
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.communication.management import init
@@ -37,6 +38,32 @@ set_seed(1)
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
 
 
+binOps = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Mod: operator.mod
+}
+
+
+def arithmeticeval(s):
+    node = ast.parse(s, mode='eval')
+
+    def _eval(node):
+        if isinstance(node, ast.BinOp):
+            return binOps[type(node.op)](_eval(node.left), _eval(node.right))
+
+        if isinstance(node, ast.Num):
+            return node.n
+
+        if isinstance(node, ast.Expression):
+            return _eval(node.body)
+
+        raise Exception('unsupported type{}'.format(node))
+    return _eval(node.body)
+
+
 def modelarts_pre_process():
     pass
 
@@ -44,8 +71,8 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train():
     rank_id = 0
-    config.BASE_LR = liter(config.BASE_LR)
-    config.WARMUP_RATIO = liter(config.WARMUP_RATIO)
+    config.BASE_LR = arithmeticeval(config.BASE_LR)
+    config.WARMUP_RATIO = arithmeticeval(config.WARMUP_RATIO)
 
     device_num = get_device_num()
     if config.run_distribute:
