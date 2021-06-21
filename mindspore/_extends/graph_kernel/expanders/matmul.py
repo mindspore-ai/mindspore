@@ -34,7 +34,7 @@ class MatMul(Expander):
 
     def _optimize_to_mul(self):
         """check if matmul can be replace by mul"""
-        if self.left_format != DF.DEFAULT or self.right_format != DF.DEFAULT:
+        if self.processor != 'aicore' or self.left_format != DF.DEFAULT or self.right_format != DF.DEFAULT:
             return False
         k_a = self.shape_a[-2] if self.transpose_a else self.shape_a[-1]
         k_b = self.shape_b[-1] if self.transpose_b else self.shape_b[-2]
