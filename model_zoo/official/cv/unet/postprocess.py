@@ -78,7 +78,7 @@ if __name__ == '__main__':
     metrics = dice_coeff()
 
     if config.dataset == "Cell_nuclei":
-        img_size = tuple(config.img_size)
+        img_size = tuple(config.image_size)
         for i, bin_name in enumerate(os.listdir('./preprocess_Result/')):
             f = bin_name.replace(".png", "")
             bin_name_softmax = f + "_0.bin"

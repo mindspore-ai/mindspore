@@ -12,6 +12,10 @@
         - [Training](#training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Export Process](#Export-process)
+        - [Export](#Export)
+    - [Inference Process](#Inference-process)
+        - [Inference](#Inference)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
@@ -87,10 +91,12 @@ sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]
 ├── cv
     ├── cnn_direction_model
         ├── README.md                    // descriptions about cnn_direction_model
+        ├── ascend310_infer              // application for 310 inference
         ├── requirements.txt             // packages needed
         ├── scripts
         │   ├──run_distribute_train_ascend.sh          // distributed training in ascend
         │   ├──run_standalone_eval_ascend.sh             //  evaluate in ascend
+        │   ├──run_eval.sh                               // shell script for evaluation on Ascend
         │   ├──run_standalone_train_ascend.sh          //  train standalone in ascend
         ├── src
         │   ├──dataset.py                               // creating dataset
@@ -104,6 +110,8 @@ sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]
         ├── train.py               // training script
         ├── eval.py               //  evaluation script
         ├── default_config.yaml   //  config file
+        ├── postprogress.py       // post process for 310 inference
+        ├── export.py             // export checkpoint files into air/mindir
 ```
 
 ## [Script Parameters](#contents)
@@ -220,6 +228,36 @@ sh scripts/run_distribute_train_ascend.sh /home/rank_table.json /home/fsns/train
 # (6) Set the data path of the model on the modelarts interface ".../FSNS/eval"(choices FSNS/eval Folder path) ,
 # The output path of the model "Output file path" and the log path of the model "Job log path"  。
 # (7) Start model inference。
+```
+
+## [Export Process](#contents)
+
+### [Export](#content)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, we need to export model first. Air model can only be exported in Ascend 910 environment, mindir model can be exported in any environment.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```python
+top1_correct=10096, total=10202, acc=98.96%
+top1_correct=8888, total=10202, acc=87.12%
 ```
 
 # [Model Description](#contents)

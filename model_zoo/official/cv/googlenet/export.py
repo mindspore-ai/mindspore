@@ -33,7 +33,7 @@ if config.device_target == "Ascend":
 if __name__ == '__main__':
     net = GoogleNet(num_classes=config.num_classes)
 
-    assert config.checkpoint_path is not None, "config.checkpoint_path is None."
+    assert config.ckpt_file is not None, "config.ckpt_file is None."
     param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
 
