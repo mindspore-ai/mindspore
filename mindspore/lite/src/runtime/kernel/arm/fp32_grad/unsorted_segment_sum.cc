@@ -83,7 +83,7 @@ int UnsortedSegmentSumCPUKernel::Execute(int task_id) {
   int *indices = reinterpret_cast<int *>(indices_tensor->data_c());
   float *output = reinterpret_cast<float *>(output_tensor->MutableData());
   std::fill(output, output + output_tensor->ElementsNum(), 0.f);
-  ret = UnsortedSegmentSum(float, input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);
+  ret = UnsortedSegmentSum(float, int, input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSliceGrad error error_code[" << ret << "]";
     return RET_ERROR;

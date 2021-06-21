@@ -16,25 +16,27 @@
 #include "nnacl/base/unsorted_segment_sum_base.h"
 #include "nnacl/errorcode.h"
 
-#define UNSORTEDSEGMENTSUM(type)                                                                                   \
-  int UnsortedSegmentSum_##type(const type *input, int unit_num, int input_dim1, const int *indices, type *output, \
-                                int output_dim0, int output_dim1) {                                                \
-    if (input_dim1 == 0) {                                                                                         \
-      return NNACL_ERR;                                                                                            \
-    }                                                                                                              \
-    for (int i = 0; i < unit_num; ++i) {                                                                           \
-      int j = i / input_dim1;                                                                                      \
-      int k = i % input_dim1;                                                                                      \
-                                                                                                                   \
-      int index = indices[j];                                                                                      \
-      if (index < 0 || index >= output_dim0) {                                                                     \
-        continue;                                                                                                  \
-      }                                                                                                            \
-      int output_index = index * output_dim1 + k;                                                                  \
-      output[output_index] += input[i];                                                                            \
-    }                                                                                                              \
-    return NNACL_OK;                                                                                               \
+#define UNSORTEDSEGMENTSUM(type, type1)                                                                          \
+  int UnsortedSegmentSum_##type##_##type1(const type *input, int unit_num, int input_dim1, const type1 *indices, \
+                                          type *output, int output_dim0, int output_dim1) {                      \
+    if (input_dim1 == 0) {                                                                                       \
+      return NNACL_ERR;                                                                                          \
+    }                                                                                                            \
+    for (int i = 0; i < unit_num; ++i) {                                                                         \
+      int j = i / input_dim1;                                                                                    \
+      int k = i % input_dim1;                                                                                    \
+                                                                                                                 \
+      type1 index = indices[j];                                                                                  \
+      if (index < 0 || index >= output_dim0) {                                                                   \
+        continue;                                                                                                \
+      }                                                                                                          \
+      type1 output_index = index * output_dim1 + k;                                                              \
+      output[output_index] += input[i];                                                                          \
+    }                                                                                                            \
+    return NNACL_OK;                                                                                             \
   }
 
-UNSORTEDSEGMENTSUM(int)
-UNSORTEDSEGMENTSUM(float)
+UNSORTEDSEGMENTSUM(int, int)
+UNSORTEDSEGMENTSUM(float, int)
+UNSORTEDSEGMENTSUM(int, int64_t)
+UNSORTEDSEGMENTSUM(float, int64_t)
