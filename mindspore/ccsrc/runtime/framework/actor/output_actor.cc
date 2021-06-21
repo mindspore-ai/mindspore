@@ -42,6 +42,13 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index,
 }
 }  // namespace
 
+void OutputActor::Init() {
+  // Set the number of actor running dependent messages.
+  if ((!need_loop_count_) && (device_tensor_store_keys_.size() == 1)) {
+    running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_[kMainBranchID].size());
+  }
+}
+
 void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   if (branch_id_ == kInvalidBranchID) {

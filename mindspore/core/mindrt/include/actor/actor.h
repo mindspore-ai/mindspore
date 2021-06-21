@@ -83,6 +83,9 @@ class ActorBase {
 
   void set_thread_pool(ActorThreadPool *pool) { pool_ = pool; }
 
+  // Judge if actor running by the received message number, the default is true.
+  virtual bool IsActive(int msg_num) { return true; }
+
  protected:
   using ActorFunction = std::function<void(const std::unique_ptr<MessageBase> &msg)>;
 

@@ -25,6 +25,9 @@
 namespace mindspore {
 namespace runtime {
 void KernelActor::Init() {
+  // Set the number of actor running dependent messages.
+  running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
+
   MS_EXCEPTION_IF_NULL(kernel_);
   real_input_num_ = AnfAlgo::GetInputTensorNum(kernel_);
   kernel_info_ = static_cast<KernelInfo *>(kernel_->kernel_info());
@@ -132,6 +135,7 @@ void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<Devi
 }
 
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
+  running_dependent_msg_num_ = 1;
   Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_context_, context,
         GetAID());
 }
@@ -170,6 +174,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
 }
 
 void KernelActor::SendDebugReq(OpContext<DeviceTensor> *context) {
+  running_dependent_msg_num_ = 1;
   Async(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_context_, context, &GetAID());
 }
 
@@ -300,6 +305,8 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *context) {
+  running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
+
   // The input is invalid and needs to be erased when finish kernel launch.
   EraseInput(context);
 

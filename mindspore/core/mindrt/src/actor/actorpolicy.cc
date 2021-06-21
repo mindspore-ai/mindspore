@@ -86,17 +86,17 @@ void ShardedThread::Terminate(const ActorBase *aActor) {
 }
 
 int ShardedThread::EnqueMessage(std::unique_ptr<MessageBase> &&msg) {
-  int result;
   mailboxLock.lock();
   enqueMailbox->push_back(std::move(msg));
+  ++msgCount;
+
   // true : The actor is running. else  the actor will  be  ready to run.
-  if (start && ready == false && terminated == false) {
+  if (start && (ready == false) && (terminated == false) && actor->IsActive(msgCount)) {
     ActorMgr::GetActorMgrRef()->SetActorReady(actor);
     ready = true;
   }
-  result = ++msgCount;
   mailboxLock.unlock();
-  return result;
+  return msgCount;
 }
 
 void ShardedThread::Notify() {
