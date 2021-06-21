@@ -256,7 +256,7 @@ getOpsFile "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "${MINDSPORE_HOME}
 wait
 sleep 1
 # remove duplicate files
-sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | egrep -v "*.h.o" | uniq >${CPU_MAPPING_OUTPUT_FILE}
+sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${CPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${CPU_MAPPING_OUTPUT_FILE}
 
 # support for gpu
@@ -282,35 +282,24 @@ getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "
 getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeInt32" &
 sleep 1
 wait
-sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | egrep -v "*.h.o" | uniq >${GPU_MAPPING_OUTPUT_FILE}
+sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${GPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${GPU_MAPPING_OUTPUT_FILE}
 
 # support for npu
 npu_files=()
-while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/agent/npu/*.cc)
-while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/agent/npu/optimizer/*.cc)
-npu_other_files=(
-  "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm/fp32/transpose_fp32.cc"
-)
-# shellcheck disable=SC2068
-for file in ${npu_other_files[@]}; do
-  getDeep CommonFile ${file} common
-done
-opencl_files=("${opencl_files[@]}" "${npu_other_files[@]}")
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/delegate/delegate.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/delegate/npu/*.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/delegate/npu/op/*.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/delegate/npu/pass/*.cc)
+
 # shellcheck disable=SC2068
 for file in ${npu_files[@]}; do
   file=$(echo ${file} | awk -F '/' '{print $NF}')
   echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
 done
 
-getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeFloat32" &
-getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeFloat16" &
-getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeInt8" &
-getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeInt32" &
-getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeInt32" &
-wait
 sleep 1
-sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | egrep -v "*.h.o" | uniq >${NPU_MAPPING_OUTPUT_FILE}
+sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${NPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${NPU_MAPPING_OUTPUT_FILE}
 
 # modify file permissions to read-only

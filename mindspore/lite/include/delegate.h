@@ -28,18 +28,37 @@ namespace mindspore {
 using KernelIter = std::vector<kernel::Kernel *>::iterator;
 class DelegateModel {
  public:
+  /// \brief Constructor of MindSpore Lite DelegateModel.
   DelegateModel(std::vector<kernel::Kernel *> *kernels,
                 const std::map<kernel::Kernel *, const schema::Primitive *> primitives)
       : kernels_(kernels), primitives_(primitives) {}
 
+  /// \brief Destructor of MindSpore Lite DelegateModel.
   ~DelegateModel() = default;
 
+  /// \brief Get Primitive of kernel::Kernel.
+  ///
+  /// \param[in] a kernel in DelegateModel kernels vector.
+  ///
+  /// \return The schema::Primitive of The kernel.
   const schema::Primitive *GetPrimitive(kernel::Kernel *kernel) const;
 
+  /// \brief Get the begin iterator of the DelegateModel kernels vector.
+  ///
+  /// \return The begin iterator of the DelegateModel kernels vector.
   KernelIter BeginKernelIterator();
 
+  /// \brief Get the end iterator of the DelegateModel kernels vector.
+  ///
+  /// \return The end iterator of the DelegateModel kernels vector.
   KernelIter EndKernelIterator();
 
+  /// \brief Replace the continuous kernel supported by the delegate with a delegate graph kernel.
+  ///
+  /// \param[in] from Define the begin iterator of continuous kernel supported by the delegate.
+  /// \param[in] end Define the end iterator of continuous kernel supported by the delegate.
+  ///
+  /// \return The next iterator after graph_kernel, point to the next kernel that is not visited.
   KernelIter Replace(KernelIter from, KernelIter end, kernel::Kernel *graph_kernel);
 
  protected:
@@ -51,12 +70,22 @@ typedef void (*DelegateHook)(std::shared_ptr<Delegate> delegate);
 static void HookNullFuc(std::shared_ptr<Delegate> delegate) {}
 class Delegate {
  public:
+  /// \brief Constructor of MindSpore Lite Delegate.
   Delegate() = default;
 
+  /// \brief Destructor of MindSpore Lite Delegate.
   virtual ~Delegate() = default;
 
+  /// \brief Init delegate.
+  ///
+  /// \note Init willed be called in CreateSession.
   virtual int Init() = 0;
 
+  /// \brief Build delegate graph for MindSpore Lite model.
+  ///
+  /// \note Build willed be called in LiteSession::CompileGraph.
+  ///
+  /// \param[in] model Define the delegate model to be built.
   virtual int Build(DelegateModel *model) = 0;
 
   DelegateHook init_hook_ = HookNullFuc;

@@ -38,14 +38,6 @@
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
-#if SUPPORT_NPU
-#include "src/runtime/agent/npu/subgraph_npu_kernel.h"
-#include "src/runtime/agent/npu/npu_manager.h"
-#include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
-#include "src/runtime/agent/npu/optimizer/npu_transform_pass.h"
-#include "src/runtime/agent/npu/optimizer/npu_fusion_pass.h"
-#include "src/runtime/agent/npu/optimizer/npu_insert_transform_pass.h"
-#endif
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
@@ -109,11 +101,6 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
   FindAllInoutKernels(*dst_kernels);
 
-  ret = RunPass(dst_kernels);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Schedule run pass failed.";
-    return ret;
-  }
   auto src_kernel = *dst_kernels;
   dst_kernels->clear();
   std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
@@ -138,6 +125,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
   }
   auto ret = delegate_->Build(model);
   if (ret != RET_OK) {
+    delete model;
     MS_LOG(ERROR) << "Delegate prepare kernels failed.";
     return ret;
   }
@@ -163,6 +151,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
       std::shared_ptr<kernel::Kernel> shared_kernel(kernel);
       auto lite_kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
       if (lite_kernel == nullptr) {
+        delete model;
         MS_LOG(ERROR) << "New LiteKernel for delegate subgraph failed.";
         return RET_NULL_PTR;
       }
@@ -178,6 +167,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
       delete kernel;
     }
   }
+  delete model;
   return RET_OK;
 }
 
@@ -496,35 +486,6 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   return RET_NOT_SUPPORT;
 }
 
-int Scheduler::FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                             OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel) {
-  MS_ASSERT(op_parameter != nullptr);
-  kernel::KernelKey npu_desc{kernel::KERNEL_ARCH::kNPU, desc.data_type, desc.type};
-  if (context_->IsNpuEnabled()) {
-    if (npu_desc.data_type == kNumberTypeFloat16) {
-      npu_desc.data_type = kNumberTypeFloat32;
-    }
-    auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
-    if (ret != RET_OK) {
-      MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
-      return RET_NOT_SUPPORT;
-    }
-    for (auto tensor : in_tensors) {
-      if (tensor->data_type() == kNumberTypeFloat16) {
-        tensor->set_data_type(kNumberTypeFloat32);
-      }
-    }
-    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, npu_desc, op_parameter, kernel);
-    if (ret == RET_OK) {
-      MS_LOG(DEBUG) << "Get npu op success: " << PrimitiveCurVersionTypeName(npu_desc.type);
-    } else {
-      MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(npu_desc.type);
-    }
-    return ret;
-  }
-  return RET_NOT_SUPPORT;
-}
-
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                   const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
   MS_ASSERT(kernel != nullptr);
@@ -603,27 +564,6 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   }
 #endif
-#ifdef SUPPORT_NPU
-  if (node->device_type_ == DT_NPU || node->device_type_ == kDefaultDeviceType) {
-    status = FindNpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
-    if (status == RET_OK) {
-      return kernel;
-    } else {
-      MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
-                    << node->name_;
-      if (status == RET_ERROR) {
-        auto ret = InferNodeShape(node);
-        if (ret == RET_INFER_INVALID || ret == RET_OK) {
-          op_parameter = op_parameters_[node->output_indices_.at(0)];
-          op_parameter->thread_num_ = kernel_thread_count;
-        } else {
-          MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
-          return nullptr;
-        }
-      }
-    }
-  }
-#endif
   if ((prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kTypeUnknown) &&
       ((is_train_session_ == false) || (sched_cb_ && sched_cb_->SchedFp16Kernel(node)))) {
     status = FindCpuKernel(in_tensors, out_tensors, op_parameter, desc, kNumberTypeFloat16, &kernel);
@@ -681,11 +621,6 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
   }
 
   FindAllInoutKernels(sub_kernels);
-  ret = RunPass(&sub_kernels);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "SchedulePartialToKernel run pass failed.";
-    return nullptr;
-  }
 
   auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(sub_kernels.front());
   auto subgraph = CreateSubGraphKernel(sub_kernels, &in_tensors, &out_tensors, cur_sub_graph_type);
@@ -965,21 +900,6 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
     return nullptr;
 #endif
   }
-  if (type == kernel::kNpuSubGraph) {
-#if SUPPORT_NPU
-    auto sub_kernel =
-      new (std::nothrow) kernel::SubGraphNpuKernel(input_kernels, output_kernels, kernels, innerkernel, npu_manager_);
-    if (sub_kernel == nullptr) {
-      MS_LOG(ERROR) << "NPU subgraph new failed.";
-      delete innerkernel;
-      return nullptr;
-    }
-    return sub_kernel;
-#else
-    delete innerkernel;
-    return nullptr;
-#endif
-  }
   if (type == kernel::kCpuFP16SubGraph) {
 #ifdef ENABLE_FP16
     auto sub_kernel = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, innerkernel);
@@ -1093,38 +1013,5 @@ void Scheduler::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &ker
     MS_ASSERT(kernel != nullptr);
     kernel->FindInoutKernels(kernels);
   }
-}
-
-int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
-  MS_ASSERT(dst_kernels != nullptr);
-  int ret = RET_OK;
-#if SUPPORT_NPU
-  if (!context_->IsNpuEnabled()) {
-    return RET_OK;
-  }
-  auto transform_pass = new (std::nothrow) NPUTransformPass(context_, dst_kernels, src_tensors_);
-  if (transform_pass == nullptr) {
-    MS_LOG(ERROR) << "transform_pass is nullptr";
-    return RET_ERROR;
-  }
-  MS_ASSERT(npu_pass_manager_ != nullptr);
-  npu_pass_manager_->AddPass(transform_pass);
-  auto concat_format_pass = new (std::nothrow) NPUInsertTransformPass(context_, dst_kernels, src_tensors_);
-  if (concat_format_pass == nullptr) {
-    MS_LOG(ERROR) << "concat_format_pass is nullptr";
-    return RET_ERROR;
-  }
-  npu_pass_manager_->AddPass(concat_format_pass);
-  auto fusion_pass = new (std::nothrow) NPUFusionPass(dst_kernels);
-  if (fusion_pass == nullptr) {
-    MS_LOG(ERROR) << "fusion_pass is nullptr";
-    return RET_ERROR;
-  }
-  npu_pass_manager_->AddPass(fusion_pass);
-
-  ret = npu_pass_manager_->Run();
-  npu_pass_manager_->Clear();
-#endif
-  return ret;
 }
 }  // namespace mindspore::lite

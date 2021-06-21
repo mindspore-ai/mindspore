@@ -74,8 +74,8 @@ function Run_cropper() {
 
         echo "mindspore run cropper: ${model_name}, accuracy limit:4" >> "${run_cropper_log_file}"
         echo 'cd  /data/local/tmp/cropper_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/cropper_test;./benchmark --device=NPU --modelFile=/data/local/tmp/benchmark_test/'${model_name}'.ms --loopCount=1 --warmUpLoopCount=0' >> "${run_cropper_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/cropper_test;./benchmark --device=NPU --modelFile=/data/local/tmp/benchmark_test/'${model_name}'.ms --loopCount=1 --warmUpLoopCount=0' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/cropper_test;./benchmark --device=GPU --modelFile=/data/local/tmp/benchmark_test/'${model_name}'.ms --loopCount=1 --warmUpLoopCount=0' >> "${run_cropper_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/cropper_test;./benchmark --device=GPU --modelFile=/data/local/tmp/benchmark_test/'${model_name}'.ms --loopCount=1 --warmUpLoopCount=0' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_cropper_log_file}"
         if [ $? = 0 ]; then
             run_result='run_benchmark: '${model_name}' pass'; echo ${run_result} >> "${run_cropper_result}"

@@ -1,0 +1,97 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "src/delegate/npu/op/instance_norm_npu.h"
+#include <memory>
+#include "src/delegate/npu/npu_converter_utils.h"
+
+namespace mindspore {
+int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
+                            const std::vector<tensor::MSTensor *> &out_tensors) {
+  instance_norm_ = new (std::nothrow) hiai::op::InstanceNorm(name_);
+  if (instance_norm_ == nullptr) {
+    MS_LOG(ERROR) << "New instance norm npu operator for op " << name_ << " failed.";
+    return RET_ERROR;
+  }
+  auto instance_norm_prim = primitive->value_as_InstanceNorm();
+  if (instance_norm_prim == nullptr) {
+    MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
+    return RET_ERROR;
+  }
+  instance_norm_->set_attr_epsilon(instance_norm_prim->epsilon());
+  return RET_OK;
+}
+
+int InstanceNormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
+                                    const std::vector<tensor::MSTensor *> &out_tensors,
+                                    const std::vector<ge::Operator *> &npu_inputs) {
+  instance_norm_->set_input_x(*npu_inputs[0]);
+
+  auto gamma_shape = in_tensors[1]->shape();
+  std::shared_ptr<ge::Tensor> gamma_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  if (gamma_tensor == nullptr) {
+    MS_LOG(ERROR) << "new gamma_tensor failed.";
+    return RET_ERROR;
+  }
+  ge::TensorDesc gamma_tensor_desc(ConverterToNPUShape({1, gamma_shape[0], 1, 1}), ge::FORMAT_NCHW,
+                                   ConverterToNPUDataType(in_tensors[1]->data_type()));
+  gamma_tensor->SetTensorDesc(gamma_tensor_desc);
+  gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(in_tensors[1]->data()), in_tensors[1]->Size());
+  gamma_ = new (std::nothrow) hiai::op::Const(name_ + "_gamma");
+  if (gamma_ == nullptr) {
+    MS_LOG(ERROR) << "New gamma_ const failed.";
+    return RET_ERROR;
+  }
+  gamma_->set_attr_value(gamma_tensor);
+  instance_norm_->set_input_gamma(*gamma_);
+
+  auto beta_shape = in_tensors[2]->shape();
+  std::shared_ptr<ge::Tensor> beta_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  if (beta_tensor == nullptr) {
+    MS_LOG(ERROR) << "new beta_tensor failed.";
+    return RET_ERROR;
+  }
+  ge::TensorDesc beta_tensor_desc(ConverterToNPUShape({1, beta_shape[0], 1, 1}), ge::FORMAT_NCHW,
+                                  ConverterToNPUDataType(in_tensors[2]->data_type()));
+  beta_tensor->SetTensorDesc(beta_tensor_desc);
+  beta_tensor->SetData(reinterpret_cast<const uint8_t *>(in_tensors[2]->data()), in_tensors[2]->Size());
+  beta_ = new (std::nothrow) hiai::op::Const(name_ + "_beta");
+  if (beta_ == nullptr) {
+    MS_LOG(ERROR) << "New beta_ const failed.";
+    return RET_ERROR;
+  }
+  beta_->set_attr_value(beta_tensor);
+  instance_norm_->set_input_beta(*beta_);
+  return RET_OK;
+}
+
+ge::Operator *InstanceNormNPUOp::GetNPUOp() { return this->instance_norm_; }
+
+InstanceNormNPUOp::~InstanceNormNPUOp() {
+  if (instance_norm_ != nullptr) {
+    delete instance_norm_;
+    instance_norm_ = nullptr;
+  }
+  if (gamma_ != nullptr) {
+    delete gamma_;
+    gamma_ = nullptr;
+  }
+  if (beta_ != nullptr) {
+    delete beta_;
+    beta_ = nullptr;
+  }
+}
+}  // namespace mindspore

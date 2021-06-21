@@ -26,9 +26,6 @@
 #include "include/model.h"
 #include "src/scheduler_cb.h"
 
-#if SUPPORT_NPU
-#include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
-#endif
 #include "include/delegate.h"
 
 namespace mindspore::lite {
@@ -41,18 +38,6 @@ class Scheduler {
         src_tensors_(src_tensors),
         is_train_session_(is_train_session),
         delegate_(delegate) {}
-#if SUPPORT_NPU
-  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors, bool is_train_session,
-            NPUManager *npu_manager = nullptr, NPUPassManager *npu_pass_manager = nullptr,
-            std::shared_ptr<Delegate> delegate = nullptr)
-      : context_(ctx),
-        src_model_(src_model),
-        src_tensors_(src_tensors),
-        npu_manager_(npu_manager),
-        npu_pass_manager_(npu_pass_manager),
-        is_train_session_(is_train_session),
-        delegate_(delegate) {}
-#endif
   ~Scheduler() = default;
 
   int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
@@ -122,16 +107,10 @@ class Scheduler {
 
   static kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel);
 
-  int RunPass(std::vector<kernel::LiteKernel *> *dst_kernels);
-
  protected:
   const InnerContext *context_ = nullptr;
   Model *src_model_ = nullptr;
   std::vector<Tensor *> *src_tensors_;
-#if SUPPORT_NPU
-  NPUManager *npu_manager_ = nullptr;
-  NPUPassManager *npu_pass_manager_ = nullptr;
-#endif
   std::vector<size_t> graph_output_node_indexes_;
   std::map<int, OpParameter *> op_parameters_;
   bool is_train_session_ = false;

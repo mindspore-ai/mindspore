@@ -133,19 +133,6 @@ if [[ $backend == "all" || $backend == "npu" ]]; then
     fi
 fi
 
-# guard cropper
-if [[ $backend == "all" || $backend == "npu" ]]; then
-    cd ${basepath} || exit 1
-    bash ${basepath}/scripts/run_cropper.sh -r ${release_path} -d ${device_id}
-    Run_cropper_status=$?
-    if [[ ${Run_cropper_status} != 0 ]];then
-        echo "Run cropper failed"
-        cat ${run_npu_log_file}
-        isFailed=1
-        exit 1
-    fi
-fi
-
-echo "Run_npu and Run_cropper is ended"
+echo "Run_npu is ended"
 Print_Benchmark_Result $run_benchmark_result_file
 exit ${isFailed}
