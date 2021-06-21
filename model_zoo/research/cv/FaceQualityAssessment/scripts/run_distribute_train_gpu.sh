@@ -32,13 +32,11 @@ export RANK_SIZE=$1
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-if [ -d "../train" ]
-then
-  rm -rf ../train
-fi
 
-mkdir ../train
-cd ../train || exit
+current_exec_path=$(pwd)
+rm -rf ${current_exec_path}/gpu_distributed
+mkdir ${current_exec_path}/gpu_distributed
+cd ${current_exec_path}/gpu_distributed || exit
 
 export CUDA_VISIBLE_DEVICES="$2"
 
