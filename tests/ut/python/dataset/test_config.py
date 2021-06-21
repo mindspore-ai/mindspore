@@ -364,7 +364,7 @@ def test_auto_num_workers_error():
     except TypeError as e:
         err_msg = str(e)
 
-    assert "isn't of type bool" in err_msg
+    assert "must be of type bool" in err_msg
 
 
 def test_auto_num_workers():

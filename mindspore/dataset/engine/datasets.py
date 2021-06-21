@@ -38,6 +38,8 @@ import threading
 
 import copy
 import weakref
+import platform
+import psutil
 import numpy as np
 
 import mindspore._c_dataengine as cde
@@ -45,6 +47,7 @@ from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
+from mindspore.parallel._utils import _get_device_num
 
 import mindspore.dataset.transforms.py_transforms as py_transforms
 
@@ -2168,6 +2171,7 @@ class BatchDataset(Dataset):
                 num_parallel = get_num_parallel_workers()
 
             if get_enable_shared_mem():
+                _check_shm_usage(num_parallel, 1, self.max_rowsize * self.batch_size, 2)
                 for _ in range(num_parallel):
                     arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize * self.batch_size))
                     res_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize * self.batch_size))
@@ -2631,6 +2635,7 @@ class MapDataset(Dataset):
                 num_parallel = get_num_parallel_workers()
 
             if get_enable_shared_mem():
+                _check_shm_usage(num_parallel, 1, self.max_rowsize, 2)
                 for _ in range(num_parallel):
                     arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize))
                     res_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize))
@@ -3542,6 +3547,26 @@ def _fill_worker_indices(workers, indices, idx):
     return idx
 
 
+def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
+    """
+    Check sufficient shared memory is available for shared memory queues
+    when training in parallel mode.
+    """
+    threshold_ratio = 0.8
+    if platform.system() != "Windows" and _get_device_num() > 1:
+        shm_estimate_usage = _get_device_num() * num_worker * num_queues * \
+            (queue_size + 2) * max_rowsize * 1024 * 1024
+        try:
+            shm_available = psutil.disk_usage('/dev/shm').free
+            if shm_estimate_usage >= threshold_ratio * shm_available:
+                raise RuntimeError(
+                    "Insufficient shared memory available. Required: {}, Available: {}. "
+                    "Recommend to set_enable_shared_mem to False, reduce max_rowsize or reduce num_parallel_workers."
+                    .format(shm_estimate_usage, shm_available))
+        except FileNotFoundError:
+            logger.warning("Expected /dev/shm to exist.")
+
+
 class SamplerFn:
     """
     Multiprocessing or multithread generator function wrapper master process.
@@ -3570,6 +3595,8 @@ class SamplerFn:
         queue_size = min(queue_size, queue_size * 4 // num_worker)
         queue_size = max(2, queue_size)
 
+        if multi_process and get_enable_shared_mem():
+            _check_shm_usage(num_worker, queue_size, max_rowsize)
         for _ in range(num_worker):
             if multi_process is True:
                 try:
