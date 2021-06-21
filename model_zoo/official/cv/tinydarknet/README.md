@@ -60,8 +60,8 @@ Dataset used can refer to [paper](<https://ieeexplore.ieee.org/abstract/document
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend or GPU processor.
+- Hardware（Ascend/CPU）
+    - Prepare hardware environment with Ascend/CPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information,please check the resources below：
@@ -158,7 +158,9 @@ For more details, please refer the specify script.
     ├── scripts
         ├── run_standalone_train.sh     // shell script for single on Ascend
         ├── run_distribute_train.sh     // shell script for distributed on Ascend
+        ├── run_train_cpu.sh            // shell script for distributed on CPU
         ├── run_eval.sh                 // shell script for evaluation on Ascend
+        ├── run_eval_cpu.sh             // shell script for evaluation on CPU
         ├── run_infer_310.sh            // shell script for inference on Ascend310
     ├── src
         ├── lr_scheduler                //learning rate scheduler
@@ -177,7 +179,8 @@ For more details, please refer the specify script.
     ├── train.py                        // training script
     ├── eval.py                         //  evaluation script
     ├── export.py                       // export checkpoint file into air/onnx
-    ├── imagenet_config.yaml            // parameter configuration
+    ├── imagenet_config.yaml            // imagenet parameter configuration
+    ├── cifar10_config.yaml             // cifar10 parameter configuration
     ├── mindspore_hub_conf.py           // hub config
     ├── postprocess.py                  // postprocess script
 
@@ -227,7 +230,7 @@ For more configuration details, please refer the script `imagenet_config.yaml`.
 - running on Ascend：
 
   ```python
-  bash scripts/run_standalone_train.sh [DEVICE_ID]
+  bash ./scripts/run_standalone_train.sh [DEVICE_ID]
   ```
 
   The command above will run in the background, you can view the results through the file train.log.
@@ -248,6 +251,12 @@ For more configuration details, please refer the script `imagenet_config.yaml`.
 
   The model checkpoint file will be saved in the current folder.
   <!-- The model checkpoint will be saved in the current directory.  -->
+
+- running on CPU
+
+  ```python
+  bash scripts/run_train_cpu.sh [TRAIN_DATA_DIR] [cifar10|imagenet]
+  ```
 
 ### [Distributed Training](#contents)
 
@@ -296,6 +305,21 @@ For more configuration details, please refer the script `imagenet_config.yaml`.
   ```python
   # grep "accuracy: " eval.log
   accuracy:  {'top_1_accuracy': 0.5871979166666667, 'top_5_accuracy': 0.8175280448717949}
+  ```
+
+- evaluation on cifar-10 dataset when running on CPU:
+
+  Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "/username/tinydaeknet/train_tinydarknet.ckpt".
+
+  ```python
+  bash scripts/run_eval.sh [VAL_DATA_DIR] [imagenet|cifar10] [CHECKPOINT_PATH]
+  ```
+
+  You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
+
+  ```python
+  # grep "accuracy: " eval.log
+  accuracy:  {'top_5_accuracy': 1.0, 'top_1_accuracy': 0.9829727564102564}
   ```
 
 ## [Inference process](#contents)

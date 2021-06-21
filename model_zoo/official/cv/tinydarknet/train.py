@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,12 +25,13 @@ from mindspore.communication.management import init
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
+from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 
-from src.dataset import create_dataset_imagenet
+from src.dataset import create_dataset_imagenet, create_dataset_cifar
 from src.tinydarknet import TinyDarkNet
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.model_utils.config import config
@@ -120,9 +121,13 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     if config.dataset_name == "imagenet":
-        pass
+        dataset = create_dataset_imagenet(config.data_path, 1)
     elif config.dataset_name == "cifar10":
-        raise ValueError("Unsupported dataset: 'cifar10'.")
+        dataset = create_dataset_cifar(dataset_path=config.data_path,
+                                       do_train=True,
+                                       repeat_num=1,
+                                       batch_size=config.batch_size,
+                                       target=config.device_target)
     else:
         raise ValueError("Unsupported dataset.")
 
@@ -133,22 +138,16 @@ def run_train():
     device_num = get_device_num()
 
     rank = 0
-    if device_target == "Ascend":
+    if device_target == "CPU":
+        pass
+    else:
         context.set_context(device_id=get_device_id())
-
         if device_num > 1:
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             init()
             rank = get_rank_id()
-    else:
-        raise ValueError("Unsupported platform.")
-
-    if config.dataset_name == "imagenet":
-        dataset = create_dataset_imagenet(config.train_data_dir, 1)
-    else:
-        raise ValueError("Unsupported dataset.")
 
     batch_num = dataset.get_dataset_size()
 
@@ -159,50 +158,56 @@ def run_train():
         load_param_into_net(net, param_dict)
 
     loss_scale_manager = None
+    lr = lr_steps_imagenet(config, batch_num)
+
+    def get_param_groups(network):
+        """ get param groups """
+        decay_params = []
+        no_decay_params = []
+        for x in network.trainable_params():
+            parameter_name = x.name
+            if parameter_name.endswith('.bias'):
+                # all bias not using weight decay
+                no_decay_params.append(x)
+            elif parameter_name.endswith('.gamma'):
+                # bn weight bias not using weight decay, be carefully for now x not include BN
+                no_decay_params.append(x)
+            elif parameter_name.endswith('.beta'):
+                # bn weight bias not using weight decay, be carefully for now x not include BN
+                no_decay_params.append(x)
+            else:
+                decay_params.append(x)
+
+        return [{'params': no_decay_params, 'weight_decay': 0.0}, {'params': decay_params}]
+
+
+    if config.is_dynamic_loss_scale:
+        config.loss_scale = 1
+
+    opt = Momentum(params=get_param_groups(net),
+                   learning_rate=Tensor(lr),
+                   momentum=config.momentum,
+                   weight_decay=config.weight_decay,
+                   loss_scale=config.loss_scale)
+    if not config.use_label_smooth:
+        config.label_smooth_factor = 0.0
     if config.dataset_name == 'imagenet':
-        lr = lr_steps_imagenet(config, batch_num)
-
-        def get_param_groups(network):
-            """ get param groups """
-            decay_params = []
-            no_decay_params = []
-            for x in network.trainable_params():
-                parameter_name = x.name
-                if parameter_name.endswith('.bias'):
-                    # all bias not using weight decay
-                    no_decay_params.append(x)
-                elif parameter_name.endswith('.gamma'):
-                    # bn weight bias not using weight decay, be carefully for now x not include BN
-                    no_decay_params.append(x)
-                elif parameter_name.endswith('.beta'):
-                    # bn weight bias not using weight decay, be carefully for now x not include BN
-                    no_decay_params.append(x)
-                else:
-                    decay_params.append(x)
-
-            return [{'params': no_decay_params, 'weight_decay': 0.0}, {'params': decay_params}]
-
-
-        if config.is_dynamic_loss_scale:
-            config.loss_scale = 1
-
-        opt = Momentum(params=get_param_groups(net),
-                       learning_rate=Tensor(lr),
-                       momentum=config.momentum,
-                       weight_decay=config.weight_decay,
-                       loss_scale=config.loss_scale)
-        if not config.use_label_smooth:
-            config.label_smooth_factor = 0.0
         loss = CrossEntropySmooth(sparse=True, reduction="mean",
                                   smooth_factor=config.label_smooth_factor, num_classes=config.num_classes)
+    else:
+        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
-        if config.is_dynamic_loss_scale:
-            loss_scale_manager = DynamicLossScaleManager(init_loss_scale=65536, scale_factor=2, scale_window=2000)
-        else:
-            loss_scale_manager = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
 
-    model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
-                  amp_level="O3", loss_scale_manager=loss_scale_manager)
+    if config.is_dynamic_loss_scale:
+        loss_scale_manager = DynamicLossScaleManager(init_loss_scale=65536, scale_factor=2, scale_window=2000)
+    else:
+        loss_scale_manager = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+
+    if device_target == "CPU":
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'}, loss_scale_manager=loss_scale_manager)
+    else:
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
+                      amp_level="O3", loss_scale_manager=loss_scale_manager)
 
     config_ck = CheckpointConfig(save_checkpoint_steps=batch_num * 50, keep_checkpoint_max=config.keep_checkpoint_max)
     time_cb = TimeMonitor(data_size=batch_num)
