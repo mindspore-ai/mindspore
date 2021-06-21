@@ -103,8 +103,6 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_inceptionv3():
     print(config)
-
-    config.dataset_path = os.path.join(config.dataset_path, 'train')
     create_dataset = DS_DICT[config.ds_type]
 
     if config.platform == "GPU":

@@ -24,7 +24,7 @@ lr_init: 0.00
 lr_end: 0.00
 lr_max: 0.4
 momentum: 0.9
-weight_decay: 0.00001 # 4e-5
+weight_decay: 0.00004 # 4e-5
 label_smooth: 0.1
 loss_scale: 1024
 save_checkpoint: True
