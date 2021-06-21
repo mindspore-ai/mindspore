@@ -14,11 +14,12 @@
   * limitations under the License.
   */
 
-package com.huawei.flclient;
+package com.mindspore.flclient;
 
-public enum FLClientStatus {
-    SUCCESS,
-    FAILED,
-    WAIT,
-    RESTART
+import java.io.IOException;
+
+public interface IAsyncCallBack {
+    public FLClientStatus onFailure(IOException exception);
+
+    public FLClientStatus onResponse(byte[] msg);
 }

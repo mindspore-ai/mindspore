@@ -260,6 +260,6 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_createTensor
   int tensor_size = static_cast<jint>(data_len / sizeof(float));
   std::vector<int> shape = {tensor_size};
   auto tensor = mindspore::tensor::MSTensor::CreateTensor(
-    env->GetStringUTFChars(tensor_name, JNI_FALSE), mindspore::kNumberTypeFloat32, shape, tensor_data, tensor_size);
+    env->GetStringUTFChars(tensor_name, JNI_FALSE), mindspore::kNumberTypeFloat32, shape, tensor_data, data_len);
   return jlong(tensor);
 }
