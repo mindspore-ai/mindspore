@@ -38,30 +38,34 @@ from mindspore.context import ParallelMode
 
 _cur_dir = os.getcwd()
 
-# seed
+""" seed """
 #  from mindspore.common import set_seed
 #  set_seed(1)
 
 
 def _set_bert_all_reduce_split():
-    """set bert all_reduce fusion split, support num_hidden_layers is 12 and 24."""
-    device_target = context.get_context('device_target')
-    enable_graph_kernel = context.get_context('enable_graph_kernel')
-    device_num = context.get_auto_parallel_context('device_num')
-    if bert_net_cfg.num_hidden_layers == 12:
-        if bert_net_cfg.use_relative_positions:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 87, 116, 145, 174, 203, 217])
-        else:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[28, 55, 82, 109, 136, 163, 190, 205])
-            if device_target == 'GPU' and enable_graph_kernel and device_num == 8:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[180, 205])
-            elif device_target == 'GPU' and enable_graph_kernel and device_num == 16:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[120, 205])
-    elif bert_net_cfg.num_hidden_layers == 24:
-        if bert_net_cfg.use_relative_positions:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
-        else:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
+    context.set_auto_parallel_context(parameter_broadcast=True)
+
+#  def _set_bert_all_reduce_split():
+    #  """set bert all_reduce fusion split, support num_hidden_layers is 12 and 24."""
+    #  device_target = context.get_context('device_target')
+    #  enable_graph_kernel = context.get_context('enable_graph_kernel')
+    #  device_num = context.get_auto_parallel_context('device_num')
+    #  if bert_net_cfg.num_hidden_layers == 12:
+        #  if bert_net_cfg.use_relative_positions:
+            #  context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 87, 116, 145, 174, 203, 217])
+        #  else:
+            #  context.set_auto_parallel_context(all_reduce_fusion_config=[28, 55, 82, 109, 136, 163, 190, 205])
+            #  print("here")
+            #  if device_target == 'GPU' and enable_graph_kernel and device_num == 8:
+                #  context.set_auto_parallel_context(all_reduce_fusion_config=[180, 205])
+            #  elif device_target == 'GPU' and enable_graph_kernel and device_num == 16:
+                #  context.set_auto_parallel_context(all_reduce_fusion_config=[120, 205])
+    #  elif bert_net_cfg.num_hidden_layers == 24:
+        #  if bert_net_cfg.use_relative_positions:
+            #  context.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
+        #  else:
+            #  context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
 
 
 def _check_compute_type(args_opt, is_auto_enable_graph_kernel):
@@ -206,11 +210,12 @@ def run_squad():
         if args_opt.eval_json_path == "":
             raise ValueError("'tokenization_file_path' must be set when do evaluation task")
 
-    # distributed
+    """ distributed """
     D.init()
     device_num = D.get_group_size()
     rank = D.get_rank()
-    save_finetune_checkpoint_path = save_finetune_checkpoint_path + "ckpt_" + str(rank) + "/"
+    save_finetune_checkpoint_path = os.path.join(save_finetune_checkpoint_path,
+                                                 "ckpt_" + str(rank) + "/")
 
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
