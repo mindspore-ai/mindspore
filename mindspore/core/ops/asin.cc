@@ -28,7 +28,7 @@ AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto asin_prim = primitive->cast<PrimAsinPtr>();
   MS_EXCEPTION_IF_NULL(asin_prim);
   auto prim_name = asin_prim->name();
-  CheckAndConvertUtils::CheckInteger("Asin_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("Asin_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
 
   // Infer Shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
