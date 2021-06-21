@@ -246,12 +246,12 @@ OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode) {
   return op_info;
 }
 
-std::pair<OperatorInfoPtr, TensorInfoPtr> PipelineTransformer::GetOpInfo(const AnfNodePtr &node) {
+std::pair<OperatorInfoPtr, int> PipelineTransformer::GetOpInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Handle Cast and TupleGetitem situation
-  size_t tensor_info_index = 0;
+  int tensor_info_index = 0;
   OperatorInfoPtr op_info;
   if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
     op_info = node->user_data<OperatorInfo>();
@@ -259,19 +259,17 @@ std::pair<OperatorInfoPtr, TensorInfoPtr> PipelineTransformer::GetOpInfo(const A
     if (IsPrimitiveCNode(node, prim::kPrimCast)) {
       cnode = cnode->input(1)->cast<CNodePtr>();
     } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
-      tensor_info_index = LongToSize(GetTupleGetItemIndex(cnode));
+      tensor_info_index = LongToInt(GetTupleGetItemIndex(cnode));
       cnode = cnode->input(1)->cast<CNodePtr>();
     }
     // Create OperatorInfo to get slice_shape for send/recv
     MS_EXCEPTION_IF_NULL(cnode);
     op_info = CreateOpInfo(cnode);
   }
-  MS_EXCEPTION_IF_NULL(op_info);
-  auto tensor_info = op_info->outputs_tensor_info()[tensor_info_index];
-  return std::make_pair(op_info, std::make_shared<TensorInfo>(tensor_info));
+  return std::make_pair(op_info, tensor_info_index);
 }
 
-std::pair<OperatorInfoPtr, TensorInfoPtr> PipelineTransformer::GetParameterPair(const AnfNodePtr &node) {
+std::pair<OperatorInfoPtr, int> PipelineTransformer::GetParameterPair(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto node_users_map = manager_->node_users();
   auto node_users = node_users_map[node];
@@ -322,11 +320,9 @@ std::pair<OperatorInfoPtr, TensorInfoPtr> PipelineTransformer::GetParameterPair(
       continue;
     }
     auto op_info = CreateOpInfo(care_node);
-    MS_EXCEPTION_IF_NULL(op_info);
-    auto tensor_info = op_info->inputs_tensor_info()[IntToSize(index) - 1];
-    return std::make_pair(op_info, std::make_shared<TensorInfo>(tensor_info));
+    return std::make_pair(op_info, index - 1);
   }
-  return std::make_pair(nullptr, nullptr);
+  return std::make_pair(nullptr, 0);
 }
 
 std::vector<AnfNodePtr> PipelineTransformer::HandleSharedParameter() {
@@ -478,10 +474,12 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
   auto send_op = CreatOpInstance(attrs, SEND, SEND);
   auto send_node = NewValueNode(send_op);
   auto prim = GetValueNode<PrimitivePtr>(send_node);
-  std::pair<OperatorInfoPtr, TensorInfoPtr> op_info_pair;
+  std::pair<OperatorInfoPtr, int> op_info_pair;
   AnfNodePtr care_node;
+  TensorInfo tensor_info;
   if (parameter->isa<Parameter>()) {
     op_info_pair = GetParameterPair(parameter);
+    tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
   } else {
     if (IsPrimitiveCNode(parameter, prim::kPrimCast)) {
       auto parameter_cnode = parameter->cast<CNodePtr>();
@@ -491,13 +489,15 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
     }
     if (care_node->isa<Parameter>()) {
       op_info_pair = GetParameterPair(care_node);
+      tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
     } else {
       op_info_pair = GetOpInfo(care_node);
+      tensor_info = op_info_pair.first->outputs_tensor_info().at(IntToSize(op_info_pair.second));
     }
   }
-  auto tensor_info = op_info_pair.second;
-  MS_EXCEPTION_IF_NULL(tensor_info);
-  auto slice_shape = tensor_info->slice_shape();
+  auto index = op_info_pair.second;
+  auto op_info = op_info_pair.first;
+  auto slice_shape = tensor_info.slice_shape();
   auto shape_type_pair = GetShapeType(parameter, slice_shape);
   prim->set_attr(SHAPE, shape_type_pair.first);
   prim->set_attr(DTYPE, shape_type_pair.second);
@@ -508,6 +508,8 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
   } else {
     send->AddPrimalAttr(PIPELINE_PARAM, value);
     send->AddPrimalAttr(MICRO, value);
+    send->set_user_data<OperatorInfo>(op_info);
+    send->AddPrimalAttr(PARAM_INDEX, MakeValue(index));
   }
   OperatorAttrs depend_attrs;
   auto depend_op = CreatOpInstance(depend_attrs, DEPEND, DEPEND);
@@ -533,23 +535,25 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   }
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(recv_tag));
   Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(node_stage));
-  std::pair<OperatorInfoPtr, TensorInfoPtr> op_info_pair;
+  std::pair<OperatorInfoPtr, int> op_info_pair;
   bool is_param = true;
+  TensorInfo tensor_info;
   if (node->isa<Parameter>()) {
     op_info_pair = GetParameterPair(node);
+    tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
   } else {
     auto care_node = FindPipelineCareNode(node);
     if (care_node->isa<Parameter>()) {
       op_info_pair = GetParameterPair(care_node);
+      tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
     } else {
       op_info_pair = GetOpInfo(care_node);
+      tensor_info = op_info_pair.first->outputs_tensor_info().at(IntToSize(op_info_pair.second));
       is_param = false;
     }
   }
-  auto tensor_info = op_info_pair.second;
-  MS_EXCEPTION_IF_NULL(tensor_info);
-  auto tensor_layout = tensor_info->tensor_layout();
-  Shape slice_shape = tensor_info->slice_shape();
+  auto tensor_layout = tensor_info.tensor_layout();
+  Shape slice_shape = tensor_info.slice_shape();
   auto shape_type_pair = GetShapeType(node, slice_shape);
   Attr attr_shape = std::make_pair(SHAPE, shape_type_pair.first);
   Attr attr_dtype = std::make_pair(DTYPE, shape_type_pair.second);

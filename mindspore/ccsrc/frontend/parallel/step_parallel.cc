@@ -611,6 +611,9 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
   AnfNodeIndexSet node_set = manager->node_users()[node];
   CNodePtr insert_node_new;
 
+  if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+    return;
+  }
   if (AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST)) {
     MS_LOG(INFO) << "No need to insert redistribution op between make_tuple node and the next node";
     return;
@@ -1091,9 +1094,6 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
     }
   }
 
-  if (IsSomePrimitive(cnode, RECEIVE) && cnode->has_user_data(PIPELINE_PARAM)) {
-    return std::make_pair(node, false);
-  }
   // When not fully use opt shard, allgather and mirror would be both inserted.
   // Skip allgather here and find parameter recursively.
   if (IsParallelCareNode(cnode) && !IsInAllGatherNodeList(cnode)) {
@@ -1180,6 +1180,9 @@ bool InsertMirrorBeforeCast(const CNodePtr &node, size_t index) {
 }
 
 static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node, size_t node_size) {
+  if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+    return true;
+  }
   if ((node->inputs().size() == 2) && (IsValueNode<ValueSequeue>(node->input(1)))) {
     MS_LOG(INFO) << "Input is ValueList, skip it.";
     return false;
@@ -1242,6 +1245,10 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
 
   for (size_t index = 1; index < node_size; ++index) {
     OperatorVector backward_op = mirror_ops[index - 1];
+    if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+      auto param_index = GetValue<int>(node->GetPrimalAttr(PARAM_INDEX));
+      backward_op = mirror_ops[IntToSize(param_index)];
+    }
     if (backward_op.empty()) {
       continue;
     }
@@ -1271,10 +1278,6 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
     }
     // not a RefKey
     std::string mirror_op_name = MirrorOpName();
-    if (IsPrimitiveCNode(param_node_pair.first, prim::kPrimReceive)) {
-      param_ptr = param_node_pair.first->cast<CNodePtr>()->user_data<AnfNode>(PIPELINE_PARAM)->cast<ParameterPtr>();
-      param_name = param_ptr->name();
-    }
     AnfNodePtr pre_node = node->input(index);
     if (!param_node_pair.second) {
       auto next_cnode = FindCNode(param_node_pair.first, mirror_op_name, func_graph);
@@ -1329,6 +1332,9 @@ void BackwardCommunication(const FuncGraphPtr &root, const OperatorInfoPtr &dist
   MS_EXCEPTION_IF_NULL(distribute_operator);
   MS_EXCEPTION_IF_NULL(node);
 
+  if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
+    return;
+  }
   bool is_loss_cnode =
     std::any_of(sens_loss_pairs.begin(), sens_loss_pairs.end(),
                 [node](const std::pair<CNodePtr, LossNodeInfo> &element) { return element.second.loss_node == node; });
@@ -2109,7 +2115,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
 
   for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
-    if (!CheckExtractInfomation(cnode)) {
+    if (!CheckExtractInfomation(cnode) || IsPrimitiveCNode(node, prim::kPrimSend)) {
       continue;
     }
 
@@ -2631,6 +2637,9 @@ void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_grad_lay
 void InsertForwardOps(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(distribute_operator);
   MS_EXCEPTION_IF_NULL(cnode);
+  if (IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
+    return;
+  }
   OperatorVector forward_op = distribute_operator->forward_op();
   if (!forward_op.empty()) {
     MS_LOG(INFO) << "Insert forward op for " << distribute_operator->name();
@@ -2820,7 +2829,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       // the make_tuple is parallel care node, but it may have not operator info
-      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>() || cnode->HasPrimalAttr(PIPELINE_PARAM)) {
+      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) {
         continue;
       }
 
@@ -2828,15 +2837,13 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
       MS_EXCEPTION_IF_NULL(distribute_operator);
 
       // insert forward ops
-      if (!IsSomePrimitive(cnode, RECEIVE)) {
-        InsertForwardOps(distribute_operator, cnode);
-      }
+      InsertForwardOps(distribute_operator, cnode);
 
       // insert redistribution ops
       StepRedistribution(cnode, distribute_operator, cnode, tensor_redistribution, cnode);
 
       // insert backward ops
-      if (has_backward && !IsSomePrimitive(cnode, RECEIVE)) {
+      if (has_backward) {
         BackwardCommunication(root, distribute_operator, cnode, sens_loss_pairs);
       }
 
@@ -3414,12 +3421,18 @@ ParameterSliceInfo GetParameterSliceInfo(const std::pair<AnfNodePtr, int64_t> &p
   OperatorInfoPtr op_info = user_cnode->user_data<OperatorInfo>();
   MS_EXCEPTION_IF_NULL(op_info);
 
-  size_t input_tensor_info_size = op_info->inputs_tensor_info().size();
-  if (SizeToLong(input_tensor_info_size) <= user_input_index - 1) {
-    MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
-                      << ", but the index is " << user_input_index - 1;
+  TensorInfo tensor_info;
+  if (IsPrimitiveCNode(user_cnode, prim::kPrimSend)) {
+    auto param_index = IntToSize(GetValue<int>(user_cnode->GetPrimalAttr(PARAM_INDEX)));
+    tensor_info = op_info->inputs_tensor_info()[param_index];
+  } else {
+    size_t input_tensor_info_size = op_info->inputs_tensor_info().size();
+    if (SizeToLong(input_tensor_info_size) <= user_input_index - 1) {
+      MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
+                        << ", but the index is " << user_input_index - 1;
+    }
+    tensor_info = op_info->inputs_tensor_info()[user_input_index - 1];
   }
-  TensorInfo tensor_info = op_info->inputs_tensor_info()[user_input_index - 1];
 
   ParameterSliceInfo parameter_slice_info;
   parameter_slice_info.slice_shape = tensor_info.slice_shape();

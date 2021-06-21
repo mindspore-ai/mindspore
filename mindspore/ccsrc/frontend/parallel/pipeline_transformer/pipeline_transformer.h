@@ -72,8 +72,8 @@ class PipelineTransformer {
   AnfNodePtr Reuse(const AnfNodePtr &node, int64_t stage, const std::vector<AnfNodePtr> &out_input,
                    const std::string &tag);
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
-  std::pair<OperatorInfoPtr, TensorInfoPtr> GetOpInfo(const AnfNodePtr &node);
-  std::pair<OperatorInfoPtr, TensorInfoPtr> GetParameterPair(const AnfNodePtr &node);
+  std::pair<OperatorInfoPtr, int> GetOpInfo(const AnfNodePtr &node);
+  std::pair<OperatorInfoPtr, int> GetParameterPair(const AnfNodePtr &node);
   OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode);
   bool IsPipelineCareNode(const CNodePtr &cnode);
   std::pair<CNodePtr, FuncGraphPtr> FindSensNode();
