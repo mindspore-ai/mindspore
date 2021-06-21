@@ -29,10 +29,12 @@ reciprocal = P.Reciprocal()
 
 
 @_grad_scale.register("Tensor", "Tensor")
+
 def tensor_grad_scale(scale, grad):
     return grad * F.cast(reciprocal(scale), F.dtype(grad))
 
 @_grad_scale.register("Tensor", "RowTensor")
+
 def tensor_grad_scale_row_tensor(scale, grad):
     return RowTensor(grad.indices,
                      grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
@@ -43,10 +45,12 @@ grad_overflow = P.FloatStatus()
 
 
 @_grad_overflow.register("Tensor")
+
 def _tensor_grad_overflow(grad):
     return grad_overflow(grad)
 
 @_grad_overflow.register("RowTensor")
+
 def _tensor_grad_overflow_row_tensor(grad):
     return grad_overflow(grad.values)
 

@@ -858,7 +858,6 @@ class SampledSoftmaxLoss(Loss):
         n_sampled = self.shape(sampled)[0]
         n_dim = self.shape(all_w)[1]
 
-        # true_w shape is [batch_size * num_true, dim]
         true_w = self.slice_op(all_w, [0, 0], [n_true, n_dim])
         sampled_w = self.slice_op(all_w, [n_true, 0], [n_sampled, n_dim])
         sampled_logits = self.matmul(inputs, sampled_w)
@@ -867,9 +866,6 @@ class SampledSoftmaxLoss(Loss):
         true_b = self.slice_op(all_b, [0], [n_true])
         sampled_b = self.slice_op(all_b, [n_true], [n_sampled])
 
-        # inputs shape is [batch_size, dim]
-        # true_w shape is [batch_size * num_true, dim]
-        # row_wise_dots is [batch_size, num_true, dim]
         new_true_w_shape = (-1, num_true, n_dim)
         row_wise_dots = self.mul(self.expand_dims(inputs, 1),
                                  self.reshape(true_w, new_true_w_shape))
