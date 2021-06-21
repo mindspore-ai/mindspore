@@ -303,7 +303,7 @@ int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) cons
     CPU_SET(i, &mask);
   }
   for (auto worker : workers) {
-    int ret = SetAffinity(worker->thread.native_handle(), &mask);
+    int ret = SetAffinity(worker->handle(), &mask);
     if (ret != THREAD_OK) {
       return THREAD_ERROR;
     }
@@ -325,12 +325,12 @@ int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) co
     CPU_ZERO(&mask);
     CPU_SET(bind_id_[i % window], &mask);
     // affinity mask determines the CPU core which it is eligible to run
-    int ret = SetAffinity(workers[i]->thread.native_handle(), &mask);
+    int ret = SetAffinity(workers[i]->handle(), &mask);
     if (ret != THREAD_OK) {
       return THREAD_ERROR;
     }
     THREAD_INFO("set thread[%zu] affinity to core[%d] success", i, bind_id_[i % window]);
-    workers[i]->frequency = core_freq_[bind_id_[i]];
+    workers[i]->set_frequency(core_freq_[bind_id_[i]]);
   }
 #endif  // BIND_CORE
   return THREAD_OK;

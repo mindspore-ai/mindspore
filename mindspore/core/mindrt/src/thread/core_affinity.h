@@ -32,7 +32,7 @@ enum BindMode {
   Power_Middle = 2,
 };
 
-struct Worker;
+class Worker;
 class CoreAffinity {
  public:
   CoreAffinity() = default;

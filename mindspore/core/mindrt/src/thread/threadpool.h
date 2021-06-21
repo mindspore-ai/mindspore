@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
 #define MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
 
+#include <new>
 #include <vector>
 #include <memory>
 #include <thread>
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <new>
 #include "thread/threadlog.h"
 #include "thread/core_affinity.h"
 
@@ -31,6 +31,12 @@ namespace mindspore {
 constexpr int kDefaultSpinCount = 300000;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
+
+enum ThreadStatus {
+  kThreadBusy = 0,  // busy, the thread is running task
+  kThreadHeld = 1,  // held, the thread has been marked as occupied
+  kThreadIdle = 2   // idle, the thread is waiting
+};
 
 // used in scenarios with unequal division of task
 // the parameters indicate the start and end coefficients
@@ -45,23 +51,48 @@ typedef struct Task {
   std::atomic_int status{THREAD_OK};  // return status, RET_OK
 } Task;
 
-// busy, the thread is running task
-// held, the thread has been marked as occupied
-// idle, the thread is waiting
-enum ThreadStatus { kThreadBusy = 0, kThreadHeld = 1, kThreadIdle = 2 };
+class Worker {
+ public:
+  Worker() = default;
+  virtual ~Worker();
+  // create thread and start running at the same time
+  void CreateThread();
+  // assign task and then activate thread
+  void Active(Task *task, int task_id);
+  // whether or not it is idle and marked as held
+  bool available();
+  // assigns task first before running
+  bool RunLocalKernelTask();
 
-typedef struct Worker {
-  std::thread thread;
-  std::atomic_int status{kThreadBusy};
-  std::mutex mutex;
-  std::condition_variable cond_var;
-  std::atomic<Task *> task{nullptr};
-  std::atomic_int task_id{0};
-  float lhs_scale{0.};
-  float rhs_scale{kMaxScale};
-  int frequency{kDefaultFrequency};
-  int spin{0};
-} Worker;
+  void set_frequency(int frequency) { frequency_ = frequency; }
+  int frequency() const { return frequency_; }
+
+  void set_scale(float lhs_scale, float rhs_scale);
+  float lhs_scale() const { return lhs_scale_; }
+  float rhs_scale() const { return rhs_scale_; }
+
+  std::thread::id thread_id() const { return thread_.get_id(); }
+  pthread_t handle() { return thread_.native_handle(); }
+
+ protected:
+  virtual void Run();
+  void YieldAndDeactive();
+  void WaitUntilActive();
+
+  bool alive_{true};
+  std::thread thread_;
+  std::atomic_int status_{kThreadBusy};
+
+  std::mutex mutex_;
+  std::condition_variable cond_var_;
+
+  std::atomic<Task *> task_{nullptr};
+  std::atomic_int task_id_{0};
+  float lhs_scale_{0.};
+  float rhs_scale_{kMaxScale};
+  int frequency_{kDefaultFrequency};
+  int spin_count_{0};
+};
 
 class ThreadPool {
  public:
@@ -80,27 +111,19 @@ class ThreadPool {
   ThreadPool() = default;
 
   int CreateThreads(size_t thread_num);
-  void DestructThreads();
 
   int InitAffinityInfo();
 
-  void AsyncRunTask(Worker *worker) const;
   void SyncRunTask(Task *task, int task_num) const;
 
   void DistributeTask(Task *task, int task_num) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
   void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num, const Worker *curr) const;
-  void YieldAndDeactive(Worker *worker) const;
-
-  bool RunLocalKernelTask(Worker *worker) const;
 
   Worker *CurrentWorker() const;
 
   std::mutex pool_mutex_;
-  std::atomic_bool alive_{true};
-
   std::vector<Worker *> workers_;
-
   CoreAffinity *affinity_{nullptr};
 };
 
