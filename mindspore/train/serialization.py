@@ -404,6 +404,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                 pb_content = f.read()
         else:
             pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
+            if pb_content is None:
+                raise ValueError
         checkpoint_list.ParseFromString(pb_content)
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
