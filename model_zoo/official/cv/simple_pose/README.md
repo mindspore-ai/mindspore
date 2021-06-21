@@ -17,6 +17,10 @@
         - [Training](#training)
         - [Distributed Training](#distributed-training)
     - [Evaluation Process](#evaluation-process)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
 - [Description of Random Situation](#description-of-random-situation)
@@ -363,6 +367,38 @@ Total boxes: 104125
 1024 samples validated in 18.133189916610718 seconds
 2048 samples validated in 4.724390745162964 seconds
 ...
+```
+
+## Inference Process
+
+### [Export MindIR](#contents)
+
+```shell
+python export.py
+```
+
+The `TEST.MODEL_FILE` parameter is required
+`FILE_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+When the network processes datasets, if the last batch is insufficient, it will not be automatically supplemented, in a nutshell, batch_Size set to 1 will go better.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+- `NEED_PREPROCESS` means weather the dataset is processed in binary format, it's value is 'y' or 'n'.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+AP: 0.7036180026660003
 ```
 
 # [Model Description](#contents)
