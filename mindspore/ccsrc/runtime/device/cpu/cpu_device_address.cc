@@ -44,8 +44,13 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
     MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
     return true;
   }
+
   if (type == type_id_) {
-    auto ret_code = memcpy_s(host_ptr, size, ptr_, size_);
+    if ((size == 0) || (size_ == 0) || (size > size_)) {
+      MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+      return true;
+    }
+    auto ret_code = memcpy_s(host_ptr, size, ptr_, size);
     if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";
       return false;
@@ -78,7 +83,11 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /* shape */, size_t 
   }
 
   if (type == type_id_) {
-    auto ret_code = memcpy_s(ptr_, size_, host_ptr, size);
+    if ((size == 0) || (size_ == 0) || (size > size_)) {
+      MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+      return true;
+    }
+    auto ret_code = memcpy_s(ptr_, size, host_ptr, size);
     if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";
       return false;

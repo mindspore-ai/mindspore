@@ -585,11 +585,8 @@ bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strat
   // Get the run result.
   auto result_future = result[0].GetFuture();
   result_future.Wait();
-  if (!result_future.IsOK()) {
-    return false;
-  }
-
-  return true;
+  MsException::Instance().CheckException();
+  return result_future.IsOK();
 }
 
 ActorSet *GraphScheduler::Fetch(const ActorInfo &actor_info) const {
