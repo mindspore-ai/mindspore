@@ -95,7 +95,6 @@ class AscendSession : public SessionBasic {
   // below functions are used for run op
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
 
-  static void BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs);
   void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
