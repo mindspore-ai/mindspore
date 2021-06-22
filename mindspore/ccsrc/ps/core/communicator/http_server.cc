@@ -44,6 +44,14 @@ namespace core {
 HttpServer::~HttpServer() { Stop(); }
 
 bool HttpServer::InitServer() {
+  if (server_address_ == "") {
+    MS_LOG(INFO) << "The server ip is empty.";
+    std::string interface;
+    std::string server_ip;
+    CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
+    server_address_ = server_ip;
+  }
+
   if (!CommUtil::CheckIp(server_address_)) {
     MS_LOG(ERROR) << "The http server ip:" << server_address_ << " is illegal!";
     return false;

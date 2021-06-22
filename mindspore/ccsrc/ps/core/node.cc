@@ -25,6 +25,10 @@ uint32_t Node::rank_id() const { return node_info_.rank_id_; }
 
 NodeRole Node::role() const { return node_info_.node_role_; }
 
+uint16_t Node::BoundPort() const { return node_info_.port_; }
+
+std::string Node::BoundIp() const { return node_info_.ip_; }
+
 bool Node::WaitForStart(const uint32_t &timeout) {
   std::unique_lock<std::mutex> lock(wait_start_mutex_);
   bool res = wait_start_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {

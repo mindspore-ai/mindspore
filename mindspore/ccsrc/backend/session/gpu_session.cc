@@ -544,7 +544,11 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         // address, to avoid that the device address context of tensor be rewritten in the next step or next loop.
         // But one time memory application scenarios need to be skipped, because the memory is not allocated next step:
         // 1. Non cnode 2. Communication kernel.
-        if (node->isa<CNode>() && !AnfAlgo::IsCommunicationOp(node) && !ps::PSContext::instance()->is_ps_mode()) {
+        bool ps_mode = false;
+#if (ENABLE_CPU && !_WIN32)
+        ps_mode = ps::PSContext::instance()->is_ps_mode();
+#endif
+        if (node->isa<CNode>() && !AnfAlgo::IsCommunicationOp(node) && !ps_mode) {
           auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
           AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
           if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {

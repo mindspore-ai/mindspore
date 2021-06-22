@@ -36,7 +36,7 @@ enum class ClusterEvent {
 };
 
 struct NodeInfo {
-  NodeInfo() : port_(0), node_role_(NodeRole::SCHEDULER), rank_id_(0), is_alive(false) {}
+  NodeInfo() : ip_(""), port_(0), node_role_(NodeRole::SCHEDULER), rank_id_(0), is_alive(false) {}
   // ip
   std::string ip_;
   // the port of this node

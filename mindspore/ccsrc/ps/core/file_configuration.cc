@@ -21,7 +21,7 @@ namespace ps {
 namespace core {
 bool FileConfiguration::Initialize() {
   if (!CommUtil::IsFileExists(file_path_)) {
-    MS_LOG(ERROR) << "The file path:" << file_path_ << " is not exist.";
+    MS_LOG(INFO) << "The file path:" << file_path_ << " is not exist.";
     return false;
   }
 
