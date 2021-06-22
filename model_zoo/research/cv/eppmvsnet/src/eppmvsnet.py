@@ -472,7 +472,7 @@ class EPPMVSNetP3(nn.Cell):
                                                           depth_interval_override=stage2_conf_interval,
                                                           uncertainty_maps=uncertainty_maps_2)
             stage3_conf_interval = self.shrink_ratio * conf_range_2 / self.n_depths[1] * (
-                    stage2_conf_interval * self.n_depths[1]) / self.n_depths[2]
+                        stage2_conf_interval * self.n_depths[1]) / self.n_depths[2]
         else:
             est_depth_2, _, _ = self.stage2([ref_feat_2, srcs_feat_2, proj_mats[:, :, 1]],
                                             depth_num=self.n_depths[1], depth_start_override=depth_start_2,
@@ -496,8 +496,7 @@ class EPPMVSNetP3(nn.Cell):
             est_depth_3, prob_map_3, _ = self.stage3([ref_feat_3, srcs_feat_3, proj_mats[:, :, 0]],
                                                      depth_num=self.n_depths[2],
                                                      depth_start_override=depth_start_3,
-                                                     depth_interval_override=depth_interval *
-                                                                             self.interval_ratios[2],
+                                                     depth_interval_override=depth_interval * self.interval_ratios[2],
                                                      uncertainty_maps=uncertainty_maps_3)
         refined_depth = est_depth_3
         return refined_depth, prob_map_3
