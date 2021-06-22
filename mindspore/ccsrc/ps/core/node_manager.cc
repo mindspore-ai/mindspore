@@ -130,6 +130,21 @@ std::vector<ServersMeta> NodeManager::FetchServersMeta() {
   return servers_meta_list;
 }
 
+std::vector<ServersMeta> NodeManager::FetchAllNodesMeta() {
+  std::vector<ServersMeta> servers_meta_list;
+  for (auto it = registered_nodes_info_.begin(); it != registered_nodes_info_.end(); ++it) {
+    ServersMeta servers_meta;
+    servers_meta.set_rank_id(it->second.rank_id_);
+    servers_meta.set_ip(it->second.ip_);
+    servers_meta.set_port(it->second.port_);
+    servers_meta.set_is_alive(it->second.is_alive);
+    servers_meta.set_role(it->second.node_role_);
+    servers_meta.set_node_id(it->second.node_id_);
+    servers_meta_list.push_back(servers_meta);
+  }
+  return servers_meta_list;
+}
+
 void NodeManager::UpdateCluster() {
   // 1. update cluster timeout state
   struct timeval current_time {};
