@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.14.0)
 project(MindSpore)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.3.0)
-    message(FATAL_ERROR "GCC version ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.3.0)
+        message(FATAL_ERROR "GCC version ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
+    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.3.0)
+        message(WARNING "GCC version ${CMAKE_CXX_COMPILER_VERSION} is greater than 7.3.0, may cause unknown problems.")
+    endif()
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/options.cmake)

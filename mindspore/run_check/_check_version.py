@@ -15,6 +15,7 @@
 """version and config check"""
 import os
 import sys
+import time
 import subprocess
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
@@ -290,6 +291,10 @@ class AscendEnvChecker(EnvChecker):
             process = subprocess.run(call_cmd, timeout=3, text=True, capture_output=True, check=False)
             if process.stdout.strip() != "":
                 logger.warning(process.stdout.strip())
+                warning_countdown = 3
+                for i in range(warning_countdown, 0, -1):
+                    logger.warning(f"Please pay attention to the above warning, countdown: {i}")
+                    time.sleep(1)
         except subprocess.TimeoutExpired:
             logger.info("Package te, topi, hccl version check timed out, skip.")
 
@@ -382,6 +387,9 @@ class AscendEnvChecker(EnvChecker):
 
 def check_version_and_env_config():
     """check version and env config"""
+    if os.getenv("MS_CLOSE_VERSION_CHECK") == "ON":
+        return
+    os.environ["MS_CLOSE_VERSION_CHECK"] = "ON"
     if __package_name__.lower() == "mindspore-ascend":
         env_checker = AscendEnvChecker()
     elif __package_name__.lower() == "mindspore-gpu":
