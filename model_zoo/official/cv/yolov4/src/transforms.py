@@ -21,7 +21,6 @@ import numpy as np
 from PIL import Image
 import cv2
 
-
 def _rand(a=0., b=1.):
     return np.random.rand() * (b - a) + a
 
@@ -323,7 +322,8 @@ def _is_iou_satisfied_constraint(min_iou, max_iou, box, crop_box):
     return min_iou <= iou.min() and max_iou >= iou.max()
 
 
-def _choose_candidate_by_constraints(max_trial, input_w, input_h, image_w, image_h, jitter, box, use_constraints):
+def _choose_candidate_by_constraints(max_trial, input_w, input_h, image_w, image_h,
+                                     jitter, box, use_constraints, each_multiscale):
     """Choose candidate by constraints."""
     if use_constraints:
         constraints = (
@@ -349,13 +349,16 @@ def _choose_candidate_by_constraints(max_trial, input_w, input_h, image_w, image
             # box_data should have at least one box
             new_ar = float(input_w) / float(input_h) * _rand(1 - jitter, 1 + jitter) / _rand(1 - jitter, 1 + jitter)
             scale = _rand(0.25, 2)
-
-            if new_ar < 1:
-                nh = int(scale * input_h)
-                nw = int(nh * new_ar)
+            if each_multiscale:
+                if new_ar < 1:
+                    nh = int(scale * input_h)
+                    nw = int(nh * new_ar)
+                else:
+                    nw = int(scale * input_w)
+                    nh = int(nw / new_ar)
             else:
-                nw = int(scale * input_w)
-                nh = int(nw / new_ar)
+                nh = input_h
+                nw = input_w
 
             dx = int(_rand(0, input_w - nw))
             dy = int(_rand(0, input_h - nh))
@@ -375,8 +378,8 @@ def _choose_candidate_by_constraints(max_trial, input_w, input_h, image_w, image
     return candidates
 
 
-def _correct_bbox_by_candidates(candidates, input_w, input_h, image_w,
-                                image_h, flip, box, box_data, allow_outside_center):
+def _correct_bbox_by_candidates(candidates, input_w, input_h, image_w, image_h,
+                                flip, box, box_data, allow_outside_center, max_boxes, mosaic):
     """Calculate correct boxes."""
     while candidates:
         if len(candidates) > 1:
@@ -412,10 +415,13 @@ def _correct_bbox_by_candidates(candidates, input_w, input_h, image_w,
             # break if number of find t_box
             box_data[: len(t_box)] = t_box
             return box_data, candidate
-    raise Exception('all candidates can not satisfied re-correct bbox')
+    if not mosaic:
+        raise Exception('all candidates can not satisfied re-correct bbox')
+    return np.zeros(shape=[max_boxes, 5], dtype=np.float64), (0, 0, nw, nh)
 
 
-def _data_aug(image, box, jitter, hue, sat, val, image_input_size, max_boxes, max_trial=10, device_num=1):
+def _data_aug(image, box, jitter, hue, sat, val, image_input_size,
+              max_boxes, max_trial=10, device_num=1, mosaic=False, each_multiscale=True):
     """Crop an image randomly with bounding box constraints.
 
         This data augmentation is used in training of
@@ -444,7 +450,8 @@ def _data_aug(image, box, jitter, hue, sat, val, image_input_size, max_boxes, ma
                                                   image_w=image_w,
                                                   image_h=image_h,
                                                   jitter=jitter,
-                                                  box=box)
+                                                  box=box,
+                                                  each_multiscale=each_multiscale)
     box_data, candidate = _correct_bbox_by_candidates(candidates=candidates,
                                                       input_w=input_w,
                                                       input_h=input_h,
@@ -453,7 +460,9 @@ def _data_aug(image, box, jitter, hue, sat, val, image_input_size, max_boxes, ma
                                                       flip=flip,
                                                       box=box,
                                                       box_data=box_data,
-                                                      allow_outside_center=True)
+                                                      allow_outside_center=True,
+                                                      max_boxes=max_boxes,
+                                                      mosaic=mosaic)
     dx, dy, nw, nh = candidate
     interp = get_interp_method(interp=10)
     image = image.resize((nw, nh), pil_image_reshape(interp))
@@ -477,42 +486,45 @@ def _data_aug(image, box, jitter, hue, sat, val, image_input_size, max_boxes, ma
     return image_data, box_data
 
 
-def preprocess_fn(image, box, config, input_size, device_num):
+def preprocess_fn(image, box, default_config, input_size, device_num, each_multiscale):
     """Preprocess data function."""
-    max_boxes = config.max_box
-    jitter = config.jitter
-    hue = config.hue
-    sat = config.saturation
-    val = config.value
+    max_boxes = default_config.max_box
+    jitter = default_config.jitter
+    hue = default_config.hue
+    sat = default_config.saturation
+    val = default_config.value
+    mosaic = default_config.mosaic
     image, anno = _data_aug(image, box, jitter=jitter, hue=hue, sat=sat, val=val,
-                            image_input_size=input_size, max_boxes=max_boxes, device_num=device_num)
+                            image_input_size=input_size, max_boxes=max_boxes,
+                            device_num=device_num, mosaic=mosaic, each_multiscale=each_multiscale)
     return image, anno
 
 
-def reshape_fn(image, img_id, config):
-    input_size = config.test_img_shape
+def reshape_fn(image, img_id, default_config):
+    input_size = default_config.test_img_shape
     image, ori_image_shape = _reshape_data(image, image_size=input_size)
     return image, ori_image_shape, img_id
 
 
 class MultiScaleTrans:
     """Multi scale transform."""
-    def __init__(self, config, device_num):
-        self.config = config
+    def __init__(self, default_config, device_num, each_multiscale=True):
+        self.default_config = default_config
         self.seed = 0
         self.size_list = []
-        self.resize_rate = config.resize_rate
-        self.dataset_size = config.dataset_size
+        self.resize_rate = default_config.resize_rate
+        self.dataset_size = default_config.dataset_size
         self.size_dict = {}
         self.seed_num = int(1e6)
         self.seed_list = self.generate_seed_list(seed_num=self.seed_num)
         self.resize_count_num = int(np.ceil(self.dataset_size / self.resize_rate))
         self.device_num = device_num
-        self.anchor_scales = config.anchor_scales
-        self.num_classes = config.num_classes
-        self.max_box = config.max_box
-        self.label_smooth = config.label_smooth
-        self.label_smooth_factor = config.label_smooth_factor
+        self.anchor_scales = default_config.anchor_scales
+        self.num_classes = default_config.num_classes
+        self.max_box = default_config.max_box
+        self.label_smooth = default_config.label_smooth
+        self.label_smooth_factor = default_config.label_smooth_factor
+        self.each_multiscale = each_multiscale
 
     def generate_seed_list(self, init_seed=1234, seed_num=int(1e6), seed_range=(1, 1000)):
         seed_list = []
@@ -544,7 +556,7 @@ class MultiScaleTrans:
 
         input_size = self.size_dict[seed]
         for img, anno in zip(imgs, annos):
-            img, anno = preprocess_fn(img, anno, self.config, input_size, self.device_num)
+            img, anno = preprocess_fn(img, anno, self.config, input_size, self.device_num, self.each_multiscale)
             ret_imgs.append(img.transpose(2, 0, 1).copy())
             bbox_true_1, bbox_true_2, bbox_true_3, gt_box1, gt_box2, gt_box3 = \
                 _preprocess_true_boxes(true_boxes=anno, anchors=self.anchor_scales, in_shape=img.shape[0:2],
@@ -561,15 +573,16 @@ class MultiScaleTrans:
                np.array(gt1), np.array(gt2), np.array(gt3)
 
 
-def thread_batch_preprocess_true_box(annos, config, input_shape, result_index, batch_bbox_true_1, batch_bbox_true_2,
-                                     batch_bbox_true_3, batch_gt_box1, batch_gt_box2, batch_gt_box3):
+def thread_batch_preprocess_true_box(annos, default_config, input_shape, result_index, batch_bbox_true_1,
+                                     batch_bbox_true_2, batch_bbox_true_3, batch_gt_box1, batch_gt_box2, batch_gt_box3):
     """Preprocess true box for multi-thread."""
     i = 0
     for anno in annos:
         bbox_true_1, bbox_true_2, bbox_true_3, gt_box1, gt_box2, gt_box3 = \
-            _preprocess_true_boxes(true_boxes=anno, anchors=config.anchor_scales, in_shape=input_shape,
-                                   num_classes=config.num_classes, max_boxes=config.max_box,
-                                   label_smooth=config.label_smooth, label_smooth_factor=config.label_smooth_factor)
+            _preprocess_true_boxes(true_boxes=anno, anchors=default_config.anchor_scales, in_shape=input_shape,
+                                   num_classes=default_config.num_classes, max_boxes=default_config.max_box,
+                                   label_smooth=default_config.label_smooth,
+                                   label_smooth_factor=default_config.label_smooth_factor)
         batch_bbox_true_1[result_index + i] = bbox_true_1
         batch_bbox_true_2[result_index + i] = bbox_true_2
         batch_bbox_true_3[result_index + i] = bbox_true_3
@@ -579,7 +592,7 @@ def thread_batch_preprocess_true_box(annos, config, input_shape, result_index, b
         i = i + 1
 
 
-def batch_preprocess_true_box(annos, config, input_shape):
+def batch_preprocess_true_box(annos, default_config, input_shape):
     """Preprocess true box with multi-thread."""
     batch_bbox_true_1 = []
     batch_bbox_true_2 = []
@@ -600,7 +613,7 @@ def batch_preprocess_true_box(annos, config, input_shape):
             batch_gt_box3.append(None)
         step_anno = annos[index: index + step]
         t = threading.Thread(target=thread_batch_preprocess_true_box,
-                             args=(step_anno, config, input_shape, index, batch_bbox_true_1, batch_bbox_true_2,
+                             args=(step_anno, default_config, input_shape, index, batch_bbox_true_1, batch_bbox_true_2,
                                    batch_bbox_true_3, batch_gt_box1, batch_gt_box2, batch_gt_box3))
         t.start()
         threads.append(t)
@@ -612,7 +625,7 @@ def batch_preprocess_true_box(annos, config, input_shape):
            np.array(batch_gt_box1), np.array(batch_gt_box2), np.array(batch_gt_box3)
 
 
-def batch_preprocess_true_box_single(annos, config, input_shape):
+def batch_preprocess_true_box_single(annos, default_config, input_shape):
     """Preprocess true boxes."""
     batch_bbox_true_1 = []
     batch_bbox_true_2 = []
@@ -622,9 +635,10 @@ def batch_preprocess_true_box_single(annos, config, input_shape):
     batch_gt_box3 = []
     for anno in annos:
         bbox_true_1, bbox_true_2, bbox_true_3, gt_box1, gt_box2, gt_box3 = \
-            _preprocess_true_boxes(true_boxes=anno, anchors=config.anchor_scales, in_shape=input_shape,
-                                   num_classes=config.num_classes, max_boxes=config.max_box,
-                                   label_smooth=config.label_smooth, label_smooth_factor=config.label_smooth_factor)
+            _preprocess_true_boxes(true_boxes=anno, anchors=default_config.anchor_scales, in_shape=input_shape,
+                                   num_classes=default_config.num_classes, max_boxes=default_config.max_box,
+                                   label_smooth=default_config.label_smooth,
+                                   label_smooth_factor=default_config.label_smooth_factor)
         batch_bbox_true_1.append(bbox_true_1)
         batch_bbox_true_2.append(bbox_true_2)
         batch_bbox_true_3.append(bbox_true_3)

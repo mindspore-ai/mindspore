@@ -37,6 +37,8 @@ resume: False
 resume_ckpt: "./"
 transfer_training: False
 filter_weight: ["final1.weight", "final2.weight", "final3.weight", "final4.weight"]
+show_eval: False
+color: [[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 0, 255], [255, 255, 255]]
 
 #Eval options
 keep_checkpoint_max: 10

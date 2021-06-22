@@ -50,7 +50,7 @@ def run_export():
     param_dict = load_checkpoint(config.checkpoint_file_path)
     # load the parameter into net
     load_param_into_net(net, param_dict)
-    net = UnetEval(net)
+    net = UnetEval(net, eval_activate=config.eval_activate.lower())
     input_data = Tensor(np.ones([config.batch_size, config.num_channels, config.height, \
         config.width]).astype(np.float32))
     export(net, input_data, file_name=config.file_name, file_format=config.file_format)

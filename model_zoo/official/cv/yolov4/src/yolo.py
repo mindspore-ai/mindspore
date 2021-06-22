@@ -354,6 +354,10 @@ class YoloLossBlock(nn.Cell):
 
         self.reduce_sum = P.ReduceSum()
         self.giou = Giou()
+        self.bbox_class_loss_coff = self.config.bbox_class_loss_coff
+        self.ciou_loss_me_coff = int(self.bbox_class_loss_coff[0])
+        self.confidence_loss_coff = int(self.bbox_class_loss_coff[1])
+        self.class_loss_coff = int(self.bbox_class_loss_coff[2])
 
     def construct(self, prediction, pred_xy, pred_wh, y_true, gt_box, input_shape):
         """
@@ -410,7 +414,8 @@ class YoloLossBlock(nn.Cell):
         ciou = self.giou(pred_boxes_me, true_boxes_me)
         ciou_loss = object_mask_me * box_loss_scale_me * (1 - ciou)
         ciou_loss_me = self.reduce_sum(ciou_loss, ())
-        loss = ciou_loss_me * 10 + confidence_loss + class_loss
+        loss = ciou_loss_me * self.ciou_loss_me_coff + confidence_loss * \
+               self.confidence_loss_coff + class_loss * self.class_loss_coff
         batch_size = P.Shape()(prediction)[0]
         return loss / batch_size
 
@@ -464,6 +469,10 @@ class YoloWithLossCell(nn.Cell):
         super(YoloWithLossCell, self).__init__()
         self.yolo_network = network
         self.config = default_config
+        self.loss_coff = default_config.detect_head_loss_coff
+        self.loss_l_coff = int(self.loss_coff[0])
+        self.loss_m_coff = int(self.loss_coff[1])
+        self.loss_s_coff = int(self.loss_coff[2])
         self.loss_big = YoloLossBlock('l', self.config)
         self.loss_me = YoloLossBlock('m', self.config)
         self.loss_small = YoloLossBlock('s', self.config)
@@ -473,7 +482,7 @@ class YoloWithLossCell(nn.Cell):
         loss_l = self.loss_big(*yolo_out[0], y_true_0, gt_0, input_shape)
         loss_m = self.loss_me(*yolo_out[1], y_true_1, gt_1, input_shape)
         loss_s = self.loss_small(*yolo_out[2], y_true_2, gt_2, input_shape)
-        return loss_l + loss_m + loss_s
+        return loss_l*self.loss_l_coff + loss_m*self.loss_m_coff + loss_s*self.loss_s_coff
 
 
 class TrainingWrapper(nn.Cell):

@@ -116,8 +116,8 @@ def train_net(cross_valid_ind=1,
     print("============== Starting Training ==============")
     callbacks = [StepLossTimeMonitor(batch_size=batch_size, per_print_times=per_print_times), ckpoint_cb]
     if config.run_eval:
-        eval_model = Model(UnetEval(net, need_slice=need_slice), loss_fn=TempLoss(),
-                           metrics={"dice_coeff": dice_coeff(False)})
+        eval_model = Model(UnetEval(net, need_slice=need_slice, eval_activate=config.eval_activate.lower()),
+                           loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff(False, config.show_eval)})
         eval_param_dict = {"model": eval_model, "dataset": valid_dataset, "metrics_name": config.eval_metrics}
         eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=config.eval_interval,
                                eval_start_epoch=config.eval_start_epoch, save_best_ckpt=True,
