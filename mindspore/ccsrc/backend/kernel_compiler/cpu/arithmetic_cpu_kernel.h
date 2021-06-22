@@ -21,6 +21,9 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
+#define MAX_SUB_SERIAL_SIZE 15000
+#define MAX_POW_SERIAL_SIZE 700
+
 namespace mindspore {
 namespace kernel {
 template <typename T>
@@ -35,7 +38,6 @@ class ArithmeticCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void GenIndex(size_t num, std::vector<size_t> *idx);
   void Sub(const T *input1, const T *input2, T *out);
   void Add(const T *input1, const T *input2, T *out);
   void Mul(const T *input1, const T *input2, T *out);

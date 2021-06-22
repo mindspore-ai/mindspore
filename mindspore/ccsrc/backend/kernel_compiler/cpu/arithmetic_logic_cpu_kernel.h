@@ -21,6 +21,8 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
+#define MAX_LESS_SERIAL_SIZE 15000
+
 namespace mindspore {
 namespace kernel {
 template <typename T>

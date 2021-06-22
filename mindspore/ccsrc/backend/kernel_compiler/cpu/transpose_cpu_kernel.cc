@@ -87,7 +87,7 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   size_t data_count = (inputs[0]->size) / sizeof(T);
   if (axes_.size() <= DIMENSION_6D && data_count < MAX_TRANSPOSE_SERIAL_SIZE) {
-    int res = NNACL_OK;
+    int res = NNACL_ERR;
     if constexpr (std::is_same_v<T, int8_t>) {
       res = DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, int16_t>) {
