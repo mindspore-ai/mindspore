@@ -101,6 +101,7 @@ constexpr char kResizePreserveAROp[] = "ResizePreserveAROp";
 constexpr char kResizeWithBBoxOp[] = "ResizeWithBBoxOp";
 constexpr char kRgbaToBgrOp[] = "RgbaToBgrOp";
 constexpr char kRgbaToRgbOp[] = "RgbaToRgbOp";
+constexpr char kRgbToBgrOp[] = "RgbToBgrOp";
 constexpr char kRgbToGrayOp[] = "RgbToGrayOp";
 constexpr char kRotateOp[] = "RotateOp";
 constexpr char kSharpnessOp[] = "SharpnessOp";

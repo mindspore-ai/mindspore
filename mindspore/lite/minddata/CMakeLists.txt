@@ -212,6 +212,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/image/normalize_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_preserve_ar_op.cc
+        ${MINDDATA_DIR}/kernels/image/rgb_to_bgr_op.cc
         ${MINDDATA_DIR}/kernels/image/rgb_to_gray_op.cc
         ${MINDDATA_DIR}/kernels/image/rotate_op.cc
         ${MINDDATA_DIR}/kernels/image/random_affine_op.cc
@@ -264,9 +265,10 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/ir/vision/resize_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/resize_preserve_ar_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/resize_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_bgr_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_gray_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_bgr_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_rgb_ir.cc
-        ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_gray_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/rotate_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.cc

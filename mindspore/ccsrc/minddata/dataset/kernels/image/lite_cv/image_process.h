@@ -151,6 +151,9 @@ bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMa
 bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize = 3, double scale = 1.0,
            PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
 
+/// \brief Convert RGB image or color image to BGR image
+bool ConvertRgbToBgr(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
+
 /// \brief Convert RGB image or color image to grayscale image
 bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
 

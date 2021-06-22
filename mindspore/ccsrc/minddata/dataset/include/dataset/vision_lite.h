@@ -91,6 +91,22 @@ class CenterCrop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief RGB2BGR TensorTransform.
+/// \notes Convert RGB image to BGR image
+class RGB2BGR final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  RGB2BGR() = default;
+
+  /// \brief Destructor.
+  ~RGB2BGR() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+};
+
 /// \brief RGB2GRAY TensorTransform.
 /// \note Convert RGB image or color image to grayscale image.
 class RGB2GRAY final : public TensorTransform {

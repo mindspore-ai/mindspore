@@ -56,6 +56,7 @@
 #include "minddata/dataset/kernels/ir/vision/rescale_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
@@ -527,6 +528,17 @@ PYBIND_REGISTER(ResizeWithBBoxOperation, 1, ([](const py::module *m) {
                       THROW_IF_ERROR(resize_with_bbox->ValidateParams());
                       return resize_with_bbox;
                     }));
+                }));
+
+PYBIND_REGISTER(RgbToBgrOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<vision::RgbToBgrOperation, TensorOperation, std::shared_ptr<vision::RgbToBgrOperation>>(
+                      *m, "RgbToBgrOperation")
+                      .def(py::init([]() {
+                        auto rgb2bgr = std::make_shared<vision::RgbToBgrOperation>();
+                        THROW_IF_ERROR(rgb2bgr->ValidateParams());
+                        return rgb2bgr;
+                      }));
                 }));
 
 PYBIND_REGISTER(RotateOperation, 1, ([](const py::module *m) {

@@ -31,7 +31,7 @@ from .validators import check_prob, check_center_crop, check_five_crop, check_re
     check_normalize_py, check_normalizepad_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_ten_crop, check_num_channels, check_pad, check_rgb_to_hsv, check_hsv_to_rgb, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
-    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast
+    check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast, check_rgb_to_bgr
 from .utils import Inter, Border
 from .py_transforms_util import is_pil
 
@@ -1335,6 +1335,45 @@ class MixUp:
         if self.is_single:
             return util.mix_up_single(self.batch_size, image, label, self.alpha)
         return util.mix_up_muti(self, self.batch_size, image, label, self.alpha)
+
+
+class RgbToBgr:
+    """
+    Convert a NumPy RGB image or a batch of NumPy RGB images to BGR images.
+
+    Args:
+        is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
+                       and (C, H, W) or (N, C, H, W) if False (default=False).
+
+    Examples:
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.CenterCrop(20),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.RgbToBgr()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_rgb_to_bgr
+    def __init__(self, is_hwc=False):
+        self.is_hwc = is_hwc
+        self.random = False
+
+    def __call__(self, rgb_imgs):
+        """
+        Call method.
+
+        Args:
+            rgb_imgs (numpy.ndarray): NumPy RGB images array of shape (H, W, C) or (N, H, W, C),
+                                      or (C, H, W) or (N, C, H, W) to be converted.
+
+        Returns:
+            bgr_img (numpy.ndarray), NumPy BGR images array with same shape of rgb_imgs.
+        """
+        return util.rgb_to_bgrs(rgb_imgs, self.is_hwc)
+
 
 
 class RgbToHsv:

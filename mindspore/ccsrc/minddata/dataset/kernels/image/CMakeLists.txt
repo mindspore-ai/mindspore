@@ -47,6 +47,7 @@ add_library(kernels-image OBJECT
     rescale_op.cc
     resize_op.cc
     resize_preserve_ar_op.cc
+    rgb_to_bgr_op.cc
     rgb_to_gray_op.cc
     rgba_to_bgr_op.cc
     rgba_to_rgb_op.cc

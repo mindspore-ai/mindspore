@@ -1795,6 +1795,45 @@ TEST_F(MindDataImageProcess, TestSobelFlag) {
   EXPECT_EQ(distance_x, 0.0f);
 }
 
+TEST_F(MindDataImageProcess, testConvertRgbToBgr) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat rgb_mat1;
+
+  cv::cvtColor(image, rgb_mat1, CV_BGR2RGB);
+
+  LiteMat lite_mat_rgb;
+  lite_mat_rgb.Init(rgb_mat1.cols, rgb_mat1.rows, rgb_mat1.channels(), rgb_mat1.data, LDataType::UINT8);
+  LiteMat lite_mat_bgr;
+  bool ret = ConvertRgbToBgr(lite_mat_rgb, LDataType::UINT8, image.cols, image.rows, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+
+  cv::Mat dst_image(lite_mat_bgr.height_, lite_mat_bgr.width_, CV_8UC1, lite_mat_bgr.data_ptr_);
+  cv::imwrite("./mindspore_image.jpg", dst_image);
+  CompareMat(image, lite_mat_bgr);
+}
+
+TEST_F(MindDataImageProcess, testConvertRgbToBgrFail) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat rgb_mat1;
+
+  cv::cvtColor(image, rgb_mat1, CV_BGR2RGB);
+
+  // The width and height of the output image is different from the original image.
+  LiteMat lite_mat_rgb;
+  lite_mat_rgb.Init(rgb_mat1.cols, rgb_mat1.rows, rgb_mat1.channels(), rgb_mat1.data, LDataType::UINT8);
+  LiteMat lite_mat_bgr;
+  bool ret = ConvertRgbToBgr(lite_mat_rgb, LDataType::UINT8, 1000, 1000, lite_mat_bgr);
+  ASSERT_TRUE(ret == false);
+
+  // The input lite_mat_rgb object is null.
+  LiteMat lite_mat_rgb1;
+  LiteMat lite_mat_bgr1;
+  bool ret1 = ConvertRgbToBgr(lite_mat_rgb1, LDataType::UINT8, image.cols, image.rows, lite_mat_bgr1);
+  ASSERT_TRUE(ret1 == false);
+}
+
 TEST_F(MindDataImageProcess, testConvertRgbToGray) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
