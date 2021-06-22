@@ -128,6 +128,10 @@ void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, cons
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     MS_LOG(DEBUG) << "start replace new_hccl_node to old hccl_node";
+    auto kernel_graph = graph->cast<KernelGraphPtr>();
+    if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(hccl_node)) {
+      kernel_graph->ReplaceInternalOutput(hccl_node, new_hccl_node);
+    }
     (void)manager->Replace(hccl_node, new_hccl_node);
     MS_LOG(DEBUG) << "end replace";
   }

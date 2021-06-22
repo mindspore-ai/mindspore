@@ -371,7 +371,8 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       std::vector<AnfNodePtr> tuple_getitem_input;
       tuple_getitem_input.push_back(NewValueNode(prim::kPrimTupleGetItem));
       tuple_getitem_input.push_back(new_communication_op);
-      auto index = NewValueNode(SizeToLong(idx - start_index));
+      auto offset = SizeToLong(idx - start_index);
+      auto index = NewValueNode(offset);
       MS_EXCEPTION_IF_NULL(index);
       auto imm = std::make_shared<Int64Imm>(idx - start_index);
       MS_EXCEPTION_IF_NULL(imm);
@@ -384,6 +385,9 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       auto communication_op_node_item = communication_op_info.communication_op_nodes.at(idx);
       MS_EXCEPTION_IF_NULL(communication_op_node_item);
       tuple_getitem->set_abstract(communication_op_node_item->abstract());
+      if (kernel_graph->IsInternalOutput(communication_op_node_item, 0)) {
+        kernel_graph->ReplaceInternalOutput(communication_op_node_item, new_communication_op, 0, offset);
+      }
       if (!manager->Replace(communication_op_node_item, tuple_getitem)) {
         MS_LOG(EXCEPTION) << "manager replace node failed";
       }

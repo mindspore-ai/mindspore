@@ -278,11 +278,16 @@ bool UpdatedByAssign(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node)
            user.second == kAssignUpdateIndex && output_cnode->inputs().size() > kAssignInputSize;
   });
 }
-}  // namespace
 
-size_t GPUSession::UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::TensorPtr tensor) const {
+size_t UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::TensorPtr tensor) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(tensor);
   size_t size = LongToSize(tensor->data().nbytes());
-  if (input_node->isa<Parameter>() && input_node->cast<ParameterPtr>()->is_used_by_dynamic_kernel()) {
+  if (!input_node->isa<Parameter>()) {
+    return size;
+  }
+  auto input_param = input_node->cast<ParameterPtr>();
+  if (input_param != nullptr && input_param->has_dynamic_shape()) {
     auto tensor_shape = tensor->shape();
     std::vector<size_t> shape_tmp;
     (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
@@ -292,6 +297,7 @@ size_t GPUSession::UpdateGraphInputAbstract(const AnfNodePtr input_node, const t
   }
   return size;
 }
+}  // namespace
 
 void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                const std::vector<tensor::TensorPtr> &inputs_const) const {
