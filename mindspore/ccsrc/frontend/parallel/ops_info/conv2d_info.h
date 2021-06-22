@@ -43,15 +43,15 @@ class Conv2DInfo : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
+  Status GetAttrsBase();
   Status GetAttrs() override;
+  Status CheckStrategyBase(const StrategyPtr &strategy);
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
- private:
   int64_t out_channel_ = 1;
   std::vector<int64_t> kernel_size_;  // two integers
   int64_t mode_ = 1;
@@ -63,9 +63,43 @@ class Conv2DInfo : public OperatorInfo {
   std::string format_;
   bool out_channel_shard_ = false;
   int64_t new_out_channel_ = 1;
+
+ private:
+  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
+};
+
+class Conv2DBackpropInputInfo : public Conv2DInfo {
+ public:
+  Conv2DBackpropInputInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                          const PrimitiveAttrs &attrs)
+      : Conv2DInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~Conv2DBackpropInputInfo() override = default;
+  void UpdateOutShape(const CNodePtr &cnode);
+
+ protected:
+  Status GetAttrs() override;
+  Status GetOutShape();
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferDevMatrixShape() override;
+  Status InferTensorMap() override;
+  Status InferMirrorOps() override;  // can not use OperatorInfo::InferMirrorOps(), since the 'out_shape' is not tensor
+
+ private:
+  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
+  Shape out_shape_;
+  Shape out_slice_shape_;
+};
+
+class Conv2DTransposeInfo : public Conv2DBackpropInputInfo {
+ public:
+  Conv2DTransposeInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                      const PrimitiveAttrs &attrs)
+      : Conv2DBackpropInputInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~Conv2DTransposeInfo() override = default;
 };
 
 constexpr size_t IN_CHANNEL_INDEX = 1;
+using Conv2DBackpropInputInfoPtr = std::shared_ptr<Conv2DBackpropInputInfo>;
 }  // namespace parallel
 }  // namespace mindspore
 
