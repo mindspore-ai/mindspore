@@ -111,7 +111,7 @@ bool IsTypeDebuggerSupported(TypeId type) {
   if (type < TypeId::kNumberTypeEnd && type > TypeId::kNumberTypeBegin && type != kNumberTypeComplex64) {
     return true;
   } else {
-    MS_LOG(WARNING) << "Debugger does not support type id: " << type;
+    MS_LOG(INFO) << "Debugger does not support type: " << TypeIdLabel(type);
     return false;
   }
 }
