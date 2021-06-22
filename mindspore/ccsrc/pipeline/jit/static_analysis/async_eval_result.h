@@ -33,7 +33,7 @@
 
 namespace mindspore {
 namespace abstract {
-constexpr size_t kInferTimeout = 60;
+constexpr size_t kInferTimeout = 1800;  // 60*30 30min, next pr will change the solution of endless.
 
 template <typename KeyType, typename ValueType, typename CacheType>
 class MultiThreadCache {
@@ -110,6 +110,61 @@ class AsyncEvalResult {
   std::condition_variable condition_var_;
 };
 
+template <typename Type>
+class AsyncResult {
+ public:
+  AsyncResult() = default;
+  ~AsyncResult() = default;
+  // wait
+  Type GetResult() {
+    std::unique_lock<std::mutex> lock(lock_);
+    if (result_ != nullptr) {
+      return result_;
+    }
+    auto time = std::chrono::seconds(kInferTimeout);
+    auto cond = condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
+    if (cond) {
+      return result_;
+    } else {
+      MS_LOG(ERROR) << "Timeout!";
+      return nullptr;
+    }
+  }
+  // not wait
+  Type TryGetResult(int ms = 0) {
+    std::unique_lock<std::mutex> lock(lock_);
+    if (ms == 0) {
+      return result_;
+    }
+    auto time = std::chrono::microseconds(ms);
+    // Wait for ms.
+    (void)condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
+    return result_;
+  }
+  void JoinResult(const Type &result) {
+    MS_EXCEPTION_IF_NULL(result);
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      result_ = result;
+    }
+    condition_var_.notify_all();
+  }
+  std::string ToString() {
+    std::ostringstream buffer;
+    std::lock_guard<std::mutex> lock(lock_);
+    buffer << (result_ == nullptr ? "NOT SET" : result_->ToString());
+    return buffer.str();
+  }
+
+ private:
+  Type result_{nullptr};
+  std::mutex lock_;
+  std::condition_variable condition_var_;
+};
+
+using AsyncAbstractResult = AsyncResult<AbstractBasePtr>;
+using AsyncAbstractResultPtr = std::shared_ptr<AsyncAbstractResult>;
+
 class EvaluatorCacheMgr {
  public:
   EvaluatorCacheMgr() = default;
@@ -151,7 +206,7 @@ class AnalysisResultCacheMgr {
   void DumpCache(const std::string &filename);
   // Wait for async Eval(conf) to finish.
   void Wait();
-  void PushTowait(const std::shared_future<EvalResultPtr> &future0, const std::shared_future<EvalResultPtr> &future1);
+  void PushTowait(std::future<void> &&future0, std::future<void> &&future1);
   void PushTodo(const AnfNodeConfigPtr &conf);
   void Todo();
   static void UpdateCaller(const std::string &caller);
@@ -165,8 +220,9 @@ class AnalysisResultCacheMgr {
   AnalysisResultCacheMgr() = default;
 
   static std::mutex tiggerToken_;
-  std::recursive_mutex lock_;
-  std::list<std::shared_future<EvalResultPtr>> waiting_;
+  std::mutex lock_;
+  std::list<std::future<void>> waiting_;
+  std::mutex todo_lock_;
   std::list<AnfNodeConfigPtr> todo_;
 
   AnalysisConfigResultCache cache_;
