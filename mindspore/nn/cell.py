@@ -327,7 +327,7 @@ class Cell(Cell_):
             _pynative_exec.leave_construct(self)
         return output
 
-    def check_construct_args(self, *inputs, **kwargs):
+    def _check_construct_args(self, *inputs, **kwargs):
         """Check the args needed by the function construct"""
         if kwargs:
             raise ValueError("For 'graph' mode, the outermost network does not support passing "
@@ -361,7 +361,7 @@ class Cell(Cell_):
             inputs = bound_args.args
             kwargs = bound_args.kwargs
         if context.get_context("mode") == context.GRAPH_MODE:
-            self.check_construct_args(*inputs, **kwargs)
+            self._check_construct_args(*inputs, **kwargs)
             if self.enable_hook:
                 raise ValueError("The graph mode does not support hook function.")
             out = self.compile_and_run(*inputs)
