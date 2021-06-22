@@ -1298,8 +1298,7 @@ py::bytes PyEncrypt(char *plain_data, const size_t plain_len, char *key, const s
   auto encrypt_data = mindspore::Encrypt(&encrypt_len, reinterpret_cast<Byte *>(plain_data), plain_len,
                                          reinterpret_cast<Byte *>(key), key_len, enc_mode);
   if (encrypt_data == nullptr) {
-    MS_LOG(ERROR) << "Encrypt failed";
-    return py::bytes();
+    MS_EXCEPTION(ValueError) << "Encrypt failed";
   }
   auto py_encrypt_data = py::bytes(reinterpret_cast<char *>(encrypt_data.get()), encrypt_len);
   return py_encrypt_data;
@@ -1311,7 +1310,7 @@ py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const size_t key_l
     mindspore::Decrypt(&decrypt_len, encrypt_data_path, reinterpret_cast<Byte *>(key), key_len, dec_mode);
   if (decrypt_data == nullptr) {
     MS_LOG(ERROR) << "Decrypt failed";
-    return py::bytes();
+    return py::none();
   }
   auto py_decrypt_data = py::bytes(reinterpret_cast<char *>(decrypt_data.get()), decrypt_len);
   return py_decrypt_data;
