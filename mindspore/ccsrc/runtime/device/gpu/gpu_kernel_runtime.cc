@@ -399,6 +399,10 @@ void GPUKernelRuntime::FetchMemUnitSize(const session::KernelGraph *graph) {
   }
   if (max_sum_size > GPUMemoryAllocator::GetInstance().mem_alloc_unit_size()) {
     size_t unit_size = (max_sum_size / DYNAMIC_MEM_ALLOC_UNIT_SIZE + 1) * DYNAMIC_MEM_ALLOC_UNIT_SIZE;
+    size_t free_mem_size = GPUMemoryAllocator::GetInstance().free_mem_size();
+    constexpr float kValidMemoryRatio = 0.9;
+    free_mem_size = kValidMemoryRatio * free_mem_size;
+    unit_size = std::min(unit_size, free_mem_size);
     GPUMemoryAllocator::GetInstance().set_mem_alloc_unit_size(unit_size);
   }
 }

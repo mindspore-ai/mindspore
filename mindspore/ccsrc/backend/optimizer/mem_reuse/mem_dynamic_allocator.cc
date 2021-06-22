@@ -117,6 +117,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size) {
                     << "].";
     return nullptr;
   }
+  mem_alloc_unit_size_ = DYNAMIC_MEM_ALLOC_UNIT_SIZE;
   auto mem_block = std::make_shared<DynamicMemBlock>(device_addr, real_alloc_size);
   MS_EXCEPTION_IF_NULL(mem_block);
   auto iter = std::upper_bound(global_mem_block_list_.begin(), global_mem_block_list_.end(), device_addr, CmpMemBlock);
