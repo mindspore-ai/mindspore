@@ -278,7 +278,13 @@ def run_squad():
                                   device_num=device_num, rank=rank)
         outputs = do_eval(ds, load_finetune_checkpoint_path, args_opt.eval_batch_size)
         all_predictions = write_predictions(eval_examples, eval_features, outputs, 20, 30, True)
-        SQuad_postprocess(args_opt.eval_json_path, all_predictions, output_metrics="output.json")
+
+        if distributed:
+            output_path = "./output_{}.json".format(rank)
+        else:
+            output_path = "./output.json"
+
+        SQuad_postprocess(args_opt.eval_json_path, all_predictions, output_metrics=output_path)
 
 
 if __name__ == "__main__":
