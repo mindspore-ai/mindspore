@@ -177,7 +177,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // Accelerated Algorithm
   less_batch_normalization_ =
-    MakeSubstitution(std::make_shared<LessBatchNormalization>(), "less_batch_normalization", prim::kPrimAdd);
+    MakeSubstitution(std::make_shared<LessBatchNormalization>(), "less_batch_normalization",
+                     {prim::kPrimAdd, prim::kPrimRelu6, prim::kPrimMatMul, prim::kPrimMakeTuple, prim::kPrimMaxPool});
 
   // inline
   inline_ = MakeSubstitution(std::make_shared<Inliner>(), "inline", IsCNodeGraph);
