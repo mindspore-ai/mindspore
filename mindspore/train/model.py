@@ -31,6 +31,7 @@ from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
+from ..nn.acc import acc
 from ..context import ParallelMode
 from ..parallel._cost_model_context import _set_multi_subgraphs
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
@@ -124,7 +125,7 @@ class Model:
     """
 
     def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
-                 eval_indexes=None, amp_level="O0", **kwargs):
+                 eval_indexes=None, amp_level="O0", acc_level="O0", **kwargs):
         self._network = network
         self._loss_fn = loss_fn
         self._optimizer = optimizer
@@ -133,6 +134,8 @@ class Model:
         self._keep_bn_fp32 = True
         self._check_kwargs(kwargs)
         self._amp_level = amp_level
+        self._acc_level = acc_level
+        self._eval_network = eval_network
         self._process_amp_args(kwargs)
         self._parallel_mode = _get_parallel_mode()
         self._device_number = _get_device_num()
@@ -141,8 +144,9 @@ class Model:
 
         self._check_amp_level_arg(optimizer, amp_level)
         self._check_for_graph_cell(kwargs)
+        self._build_acc_network(kwargs)
         self._train_network = self._build_train_network()
-        self._build_eval_network(metrics, eval_network, eval_indexes)
+        self._build_eval_network(metrics, self._eval_network, eval_indexes)
         self._build_predict_network()
 
     def _check_for_graph_cell(self, kwargs):
@@ -173,7 +177,7 @@ class Model:
 
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
-            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32']:
+            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32', 'total_steps']:
                 raise ValueError(f"Unsupported arg '{arg}'")
 
     def _check_reuse_dataset(self, dataset):
@@ -182,11 +186,25 @@ class Model:
         if hasattr(dataset, '__model_hash__') and dataset.__model_hash__ != hash(self):
             raise RuntimeError('The Dataset cannot be bound to different models, please create a new dataset.')
 
+    def _build_acc_network(self, kwargs):
+        """Build the acc network."""
+        processor = acc.AutoAcc(self._acc_level, kwargs)
+        if self._optimizer is None:
+            logger.warning("In acc mode, the optimizer must be defined.")
+            return
+        if self._eval_network is None:
+            logger.warning("In acc mode, the eval_network must be defined.")
+            return
+
+        self._network, self._optimizer = processor.network_auto_process_train(self._network, self._optimizer)
+        self._eval_network = processor.network_auto_process_eval(self._eval_network)
+
     def _build_train_network(self):
         """Build train network"""
         network = self._network
         if self._loss_scale_manager is not None and self._optimizer is None:
             raise ValueError("Optimizer can not be None when set loss_scale_manager.")
+
         if self._optimizer:
             if self._loss_scale_manager_set:
                 network = amp.build_train_network(network,

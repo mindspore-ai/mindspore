@@ -65,19 +65,6 @@ def _tensors_cast_datatype(datatype, param):
     """
     return F.cast(param, datatype)
 
-_gradient_accumulation_op = C.MultitypeFuncGraph("gradient_accumulation_op")
-
-@_gradient_accumulation_op.register("Int64", "Tensor", "Tensor")
-def _cumulative_grad(accumulation_step, cumulative_grad, grad):
-    """Apply gradient accumulation to cumulative grad."""
-    return P.AssignAdd()(cumulative_grad, grad / accumulation_step)
-
-_gradient_clear_op = C.MultitypeFuncGraph("gradient_clear_op")
-
-@_gradient_clear_op.register("Tensor")
-def  _clear_grad(cumulative_grad):
-    zero_grad = P.ZerosLike()(cumulative_grad)
-    return F.assign(cumulative_grad, zero_grad)
 
 class WithLossCell(Cell):
     r"""
@@ -294,32 +281,6 @@ class ForwardValueAndGrad(Cell):
         return loss, grads
 
 
-class _TrainFreezeCell(Cell):
-    """Gradient freezing training network."""
-    def __init__(self, net, sens, grad, grad_reducer, use_grad_accumulation, max_accumulation_step, optimizer):
-        super(_TrainFreezeCell, self).__init__(auto_prefix=False)
-        self.net = net
-        self.grad = grad
-        self.grad_reducer = grad_reducer
-        self.opt = optimizer
-        self.parameters = optimizer.parameters
-        self.sens = sens
-        self.use_grad_accumulation = use_grad_accumulation
-        if use_grad_accumulation:
-            self.grad_accumulation = GradientAccumulation(max_accumulation_step, optimizer)
-
-    def construct(self, *inputs):
-        loss = self.net(*inputs)
-        sens = F.fill(loss.dtype, loss.shape, self.sens)
-        grads = self.grad(self.net, self.parameters)(*inputs, sens)
-        grads = self.grad_reducer(grads)
-        if self.use_grad_accumulation:
-            loss = self.grad_accumulation(loss, grads)
-        else:
-            loss = F.depend(loss, self.opt(grads))
-        return loss
-
-
 class TrainOneStepCell(Cell):
     r"""
     Network training package class.
@@ -395,23 +356,20 @@ class TrainOneStepCell(Cell):
                 self.use_grad_accumulation = False
         self.grad_accumulation = None
         if self.use_grad_accumulation:
-            self.grad_accumulation = GradientAccumulation(self.max_accumulation_step, self.optimizer)
+            self.grad_accumulation = acc.GradientAccumulation(self.max_accumulation_step, self.optimizer)
         if self.reducer_flag:
             self.mean = _get_gradients_mean()
             self.degree = _get_device_num()
             if self.freeze:
-                self.grad_reducers = (DistributedGradReducer(opt.parameters, self.mean, self.degree)
-                                      for opt in self.optimizer.opts)
-                self.freeze_nets = tuple(_TrainFreezeCell(self.network, self.sens, self.grad, reducer,
-                                                          self.use_grad_accumulation, self.max_accumulation_step, opt)
-                                         for reducer, opt in zip(self.grad_reducers, self.optimizer))
+                self.freeze_nets = acc.freeze_cell(self.reducer_flag, self.network, self.optimizer, self.sens,
+                                                   self.grad, self.use_grad_accumulation, self.mean, self.degree,
+                                                   self.max_accumulation_step)
             else:
                 self.grad_reducer = DistributedGradReducer(self.optimizer.parameters, self.mean, self.degree)
         else:
             if self.freeze:
-                self.freeze_nets = tuple(_TrainFreezeCell(self.network, self.sens, self.grad, self.grad_reducer,
-                                                          self.use_grad_accumulation, self.max_accumulation_step, opt)
-                                         for opt in self.optimizer.opts)
+                self.freeze_nets = acc.freeze_cell(self.reducer_flag, self.network, self.optimizer, self.sens,
+                                                   self.grad, self.use_grad_accumulation, self.max_accumulation_step)
         self.step = Parameter(Tensor(0, dtype=mstype.int32))
 
     def construct(self, *inputs):
@@ -726,34 +684,3 @@ class _BroadCastCell(Cell):
         params = self.broadcast(params)
         new_params = self.map_(F.partial(_cast_datatype), datatypes, params)
         return new_params
-
-class GradientAccumulation(Cell):
-    """
-    After accumulating the gradients of multiple steps, call to optimize its update.
-
-    Args:
-       max_accumulation_step (int): Steps to accumulate gradients.
-       optimizer(Cell):Optimizer used.
-    """
-    def __init__(self, max_accumulation_step, optimizer):
-        super(GradientAccumulation, self).__init__()
-        self._max_accumulation_step = max_accumulation_step
-        self.optimizer = optimizer
-        self.weights = optimizer.parameters
-        self.hyper_map = C.HyperMap()
-        self._grad_accumulation = self.weights.clone(prefix="grad_accumulation", init='zeros')
-        self._accumulation_step = Parameter(Tensor(0, dtype=mstype.int32), name="accumulation_step")
-
-    def construct(self, loss, grads):
-        loss = F.depend(loss, self.hyper_map(F.partial(_gradient_accumulation_op, self._max_accumulation_step),
-                                             self._grad_accumulation, grads))
-        self._accumulation_step += 1
-
-        if self._accumulation_step >= self._max_accumulation_step:
-            loss = F.depend(loss, self.optimizer(self._grad_accumulation))
-            self._accumulation_step = 0
-
-        if self._accumulation_step == 0:
-            loss = F.depend(loss, self.hyper_map(F.partial(_gradient_clear_op), self._grad_accumulation))
-
-        return loss

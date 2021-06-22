@@ -19,6 +19,7 @@ from mindspore.ops import functional as F
 from mindspore._checkparam import Validator as validator
 from mindspore.common import Tensor, Parameter, dtype as mstype
 from .optimizer import _grad_scale, Optimizer
+from .optimizer import opt_init_args_register
 
 _lars_opt = C.MultitypeFuncGraph("lars_opt")
 
@@ -100,6 +101,7 @@ class LARS(Optimizer):
         >>> model = Model(net, loss_fn=loss, optimizer=opt_lars, metrics=None)
     """
 
+    @opt_init_args_register
     def __init__(self, optimizer, epsilon=1e-05, coefficient=0.001, use_clip=False,
                  lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name):
         super(LARS, self).__init__(0.0, [Parameter(Tensor(0.0), name="fake_param")])

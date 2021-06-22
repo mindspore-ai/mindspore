@@ -37,12 +37,18 @@ from mindspore.nn.learning_rate_schedule import LearningRateSchedule
 __all__ = ['Optimizer', 'opt_init_args_register']
 
 def opt_init_args_register(fn):
+    """Register optimizer init args."""
     def deco(self, *args, **kwargs):
         bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
         bound_args.apply_defaults()
         arguments = bound_args.arguments
         arguments.pop('self')
-        arguments.pop('params')
+        if 'params' in arguments.keys():
+            setattr(self, 'init_params', dict({"params": arguments['params']}))
+            arguments.pop('params')
+        if 'optimizer' in arguments.keys():
+            setattr(self, 'init_params', dict({"params": arguments['optimizer'].init_params["params"]}))
+            arguments.pop('optimizer')
         setattr(self, 'init_args', arguments)
         fn(self, *args, **kwargs)
     return deco

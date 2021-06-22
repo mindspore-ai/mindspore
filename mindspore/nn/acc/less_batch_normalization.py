@@ -93,12 +93,13 @@ class LessBN(Cell):
         >>> network = acc.LessBN(network)
     """
 
-    def __init__(self, network):
+    def __init__(self, network, fn_flag=False):
         super(LessBN, self).__init__()
         self.network = network
         self.network.set_acc("less_bn")
         self.network.update_cell_prefix()
-        self._convert_to_less_bn_net(self.network)
+        if fn_flag:
+            self._convert_to_less_bn_net(self.network)
         self.network.add_flags(defer_inline=True)
 
     def _convert_dense(self, subcell):
@@ -110,7 +111,7 @@ class LessBN(Cell):
                                        subcell.out_channels,
                                        subcell.weight,
                                        subcell.bias,
-                                       subcell.has_bias)
+                                       False)
         new_subcell.update_parameters_name(prefix + '.')
 
         return new_subcell
