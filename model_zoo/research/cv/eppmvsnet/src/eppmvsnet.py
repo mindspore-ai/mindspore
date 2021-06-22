@@ -110,7 +110,7 @@ class SingleStageP1(nn.Cell):
         self.D = Tensor(self.depth_number - 1, mstype.float32)
 
     def construct(self, sample, depth_num, depth_start_override=None, depth_interval_override=None, timing=True):
-        """construct fuction of part1 of single stage 1"""
+        """construct function of part1 of single stage 1"""
         ref_feat, _, _ = sample
         depth_start = depth_start_override  # n111 or n1hw
         depth_interval = depth_interval_override  # n111
@@ -407,8 +407,7 @@ class EPPMVSNetP1(nn.Cell):
                                                                          depth_num=self.n_depths[0],
                                                                          depth_start_override=depth_start,
                                                                          depth_interval_override=depth_interval *
-                                                                                                 self.interval_ratios[
-                                                                                                     0])
+                                                                         self.interval_ratios[0])
 
         _, src_feats, proj_mats = [ref_feat_1, srcs_feat_1, proj_mats[:, :, 2]]
         pixel_distances = []
@@ -451,7 +450,7 @@ class EPPMVSNetP3(nn.Cell):
                                                                                    proj_mats[:, :, 2]],
                                                              self.n_depths[0])
             stage2_conf_interval = self.shrink_ratio * conf_range_1 / self.n_depths[0] * (
-                    depth_interval * self.interval_ratios[0] * self.n_depths[0]) / self.n_depths[1]
+                depth_interval * self.interval_ratios[0] * self.n_depths[0]) / self.n_depths[1]
         else:
             est_depth_1, _, _ = self.stage1_p3(cost_volume_list_stage1,
                                                depth_values_stage1, [ref_feat_1, srcs_feat_1,
@@ -474,7 +473,7 @@ class EPPMVSNetP3(nn.Cell):
                                                           depth_interval_override=stage2_conf_interval,
                                                           uncertainty_maps=uncertainty_maps_2)
             stage3_conf_interval = self.shrink_ratio * conf_range_2 / self.n_depths[1] * (
-                    stage2_conf_interval * self.n_depths[1]) / self.n_depths[2]
+                stage2_conf_interval * self.n_depths[1]) / self.n_depths[2]
         else:
             est_depth_2, _, _ = self.stage2([ref_feat_2, srcs_feat_2, proj_mats[:, :, 1]],
                                             depth_num=self.n_depths[1], depth_start_override=depth_start_2,
@@ -489,17 +488,17 @@ class EPPMVSNetP3(nn.Cell):
         depth_start_3 = P.ResizeBilinear((H // 2, W // 2), False)(est_depth_2)
 
         if self.entropy_range:
-            est_depth_3, prob_map_3, pair_results_3, _ = self.stage3([ref_feat_3, srcs_feat_3, proj_mats[:, :, 0]],
+            est_depth_3, prob_map_3, _, _ = self.stage3([ref_feat_3, srcs_feat_3, proj_mats[:, :, 0]],
                                                                      depth_num=self.n_depths[2],
                                                                      depth_start_override=depth_start_3,
                                                                      depth_interval_override=stage3_conf_interval,
                                                                      uncertainty_maps=uncertainty_maps_3)
         else:
-            est_depth_3, prob_map_3, pair_results_3 = self.stage3([ref_feat_3, srcs_feat_3, proj_mats[:, :, 0]],
+            est_depth_3, prob_map_3, _ = self.stage3([ref_feat_3, srcs_feat_3, proj_mats[:, :, 0]],
                                                                   depth_num=self.n_depths[2],
                                                                   depth_start_override=depth_start_3,
                                                                   depth_interval_override=depth_interval *
-                                                                                          self.interval_ratios[2],
+                                                                  self.interval_ratios[2],
                                                                   uncertainty_maps=uncertainty_maps_3)
         refined_depth = est_depth_3
         return refined_depth, prob_map_3

@@ -14,17 +14,17 @@
 # ============================================================================
 """blendedmvs dataset"""
 
-from collections import defaultdict
-from object import Compose
-from PIL import Image
-from copy import deepcopy
-from src.utils import read_pfm
-
 import os
-import cv2
+from collections import defaultdict
+from copy import deepcopy
 
+import cv2
 import numpy as np
+from PIL import Image
+
 import mindspore.dataset.vision.py_transforms as py_vision
+
+from src.utils import read_pfm
 
 
 class Compose:
@@ -59,6 +59,7 @@ class Compose:
 
 class BlendedMVSDataset:
     """blendedmvs dataset"""
+
     def __init__(self, root_dir, split, n_views=3, levels=3, depth_interval=128.0, img_wh=(768, 576),
                  crop_wh=(640, 512), scale=False, scan=None, training_tag=False):
         """
