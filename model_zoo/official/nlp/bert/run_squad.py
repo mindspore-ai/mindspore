@@ -67,7 +67,8 @@ def _set_bert_all_reduce_split():
             #  context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
 
 
-def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
+def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="",
+             epoch_num=1, distributed=False):
     """ do train """
     if load_checkpoint_path == "":
         raise ValueError("Pretrain model missed, finetune task must load pretrain model!")
@@ -112,8 +113,13 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     model = Model(netwithgrads)
     callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack(dataset.get_dataset_size()), ckpoint_cb]
 
-    # add callbacks
-    callbacks.append(SummaryCollector("./summary"))
+    """ callbacks """
+    if distributed:
+        rank = rank = D.get_rank()
+        summary_path = "./summary_{}".format(rank)
+    else:
+        summary_path = "./summary"
+    callbacks.append(SummaryCollector(summary_path))
     callbacks.append(LossMonitor())
 
     model.train(epoch_num, dataset, callbacks=callbacks, dataset_sink_mode=False)
@@ -201,12 +207,16 @@ def run_squad():
             raise ValueError("'tokenization_file_path' must be set when do evaluation task")
 
     """ distributed """
-    if args_opt.distribute == "true":
+    if args_opt.distribute.lower() == "true":
+        distributed = True
+    else:
+        distributed = False
+    if distributed:
         D.init()
         device_num = D.get_group_size()
         rank = D.get_rank()
         save_finetune_checkpoint_path = os.path.join(save_finetune_checkpoint_path,
-                                                     "ckpt_" + str(rank) + "/")
+                                                     "ckpt_" + str(rank))
 
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
@@ -235,7 +245,8 @@ def run_squad():
                                   schema_file_path=args_opt.schema_file_path,
                                   do_shuffle=(args_opt.train_data_shuffle.lower() == "true"),
                                   device_num=device_num, rank=rank)
-        do_train(ds, netwithloss, load_pretrain_checkpoint_path, save_finetune_checkpoint_path, epoch_num)
+        do_train(ds, netwithloss, load_pretrain_checkpoint_path, save_finetune_checkpoint_path,
+                epoch_num, distributed)
         if args_opt.do_eval.lower() == "true":
             if save_finetune_checkpoint_path == "":
                 load_finetune_checkpoint_dir = _cur_dir
