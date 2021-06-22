@@ -62,6 +62,10 @@ class OutputActor : public OpActor<DeviceTensor> {
 
   void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context);
 
+  // The graph output need be set new device address every step or loop, to avoid that the device address
+  // context of tensor be rewritten in the next step or next loop.
+  void UpdateOutputDeviceAddress();
+
   std::vector<TensorPtr> &outputs() { return outputs_; }
 
  private:
