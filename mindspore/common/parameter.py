@@ -564,6 +564,9 @@ class Parameter(Tensor_):
         obj.sliced = set_sliced
         return obj
 
+    def __del__(self):
+        self.param_info = None
+
 
 class ParameterTuple(tuple):
     """
@@ -630,6 +633,3 @@ class ParameterTuple(tuple):
 
     def __parameter_tuple__(self):
         """For parse check."""
-
-    def __del__(self):
-        self.param_info = None
