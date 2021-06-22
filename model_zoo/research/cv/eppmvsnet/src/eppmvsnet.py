@@ -446,16 +446,16 @@ class EPPMVSNetP3(nn.Cell):
         ref_feat_1, srcs_feat_1 = feat_pack_1[:, 0], feat_pack_1[:, 1:]
         if self.entropy_range:
             est_depth_1, _, pair_results_1, conf_range_1 = self.stage1_p3(cost_volume_list_stage1,
-                                                             depth_values_stage1, [ref_feat_1, srcs_feat_1,
+                                                                            depth_values_stage1, [ref_feat_1, srcs_feat_1,
                                                                                    proj_mats[:, :, 2]],
-                                                             self.n_depths[0])
+                                                                            self.n_depths[0])
             stage2_conf_interval = self.shrink_ratio * conf_range_1 / self.n_depths[0] * (
                 depth_interval * self.interval_ratios[0] * self.n_depths[0]) / self.n_depths[1]
         else:
             est_depth_1, _, pair_results_1 = self.stage1_p3(cost_volume_list_stage1,
-                                               depth_values_stage1, [ref_feat_1, srcs_feat_1,
+                                                            depth_values_stage1, [ref_feat_1, srcs_feat_1,
                                                                      proj_mats[:, :, 2]],
-                                               self.n_depths[0])
+                                                            self.n_depths[0])
             stage2_conf_interval = None
         uncertainty_maps_1, uncertainty_maps_2 = [], []
         for pair_result in pair_results_1:
