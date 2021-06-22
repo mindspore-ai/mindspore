@@ -45,7 +45,6 @@ _cur_dir = os.getcwd()
 
 def _set_bert_all_reduce_split():
     context.set_auto_parallel_context(parameter_broadcast=True)
-
 #  def _set_bert_all_reduce_split():
     #  """set bert all_reduce fusion split, support num_hidden_layers is 12 and 24."""
     #  device_target = context.get_context('device_target')
@@ -66,17 +65,6 @@ def _set_bert_all_reduce_split():
             #  context.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
         #  else:
             #  context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
-
-
-def _check_compute_type(args_opt, is_auto_enable_graph_kernel):
-    if args_opt.device_target == 'GPU' and bert_net_cfg.compute_type != mstype.float32 and \
-       not is_auto_enable_graph_kernel:
-        warning_message = 'Gpu only support fp32 temporarily, run with fp32.'
-        bert_net_cfg.compute_type = mstype.float32
-        if args_opt.enable_lossscale == "true":
-            args_opt.enable_lossscale = "false"
-            warning_message = 'Gpu only support fp32 temporarily, run with fp32 and disable lossscale.'
-        logger.warning(warning_message)
 
 
 def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
@@ -124,7 +112,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     model = Model(netwithgrads)
     callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack(dataset.get_dataset_size()), ckpoint_cb]
 
-    # add callbacks
+    """ add callbacks """
     callbacks.append(SummaryCollector("./summary"))
     callbacks.append(LossMonitor())
 
@@ -211,16 +199,21 @@ def run_squad():
             raise ValueError("'tokenization_file_path' must be set when do evaluation task")
 
     """ distributed """
-    D.init()
-    device_num = D.get_group_size()
-    rank = D.get_rank()
-    save_finetune_checkpoint_path = os.path.join(save_finetune_checkpoint_path,
-                                                 "ckpt_" + str(rank) + "/")
+    distributed = True
+    if distributed:
+        D.init()
+        device_num = D.get_group_size()
+        rank = D.get_rank()
+        save_finetune_checkpoint_path = os.path.join(save_finetune_checkpoint_path,
+                                                     "ckpt_" + str(rank) + "/")
 
-    context.reset_auto_parallel_context()
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
-                                      device_num=device_num)
-    _set_bert_all_reduce_split()
+        context.reset_auto_parallel_context()
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
+                                          device_num=device_num)
+        _set_bert_all_reduce_split()
+    else:
+        device_num = 1
+        rank = 0
 
     target = args_opt.device_target
     if target == "Ascend":
@@ -268,7 +261,8 @@ def run_squad():
         ds = create_squad_dataset(batch_size=args_opt.eval_batch_size, repeat_count=1,
                                   data_file_path=eval_features,
                                   schema_file_path=args_opt.schema_file_path, is_training=False,
-                                  do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))
+                                  do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"),
+                                  device_num=device_num, rank=rank)
         outputs = do_eval(ds, load_finetune_checkpoint_path, args_opt.eval_batch_size)
         all_predictions = write_predictions(eval_examples, eval_features, outputs, 20, 30, True)
         SQuad_postprocess(args_opt.eval_json_path, all_predictions, output_metrics="output.json")

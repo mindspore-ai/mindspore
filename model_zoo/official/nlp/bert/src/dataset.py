@@ -105,14 +105,16 @@ def generator_squad(data_features):
 
 
 def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, schema_file_path=None,
-                         is_training=True, do_shuffle=True):
+                         is_training=True, do_shuffle=True,
+                         device_num=1, rank=0):
     """create finetune or evaluation dataset"""
     type_cast_op = C.TypeCast(mstype.int32)
     if is_training:
         data_set = ds.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
                                       columns_list=["input_ids", "input_mask", "segment_ids", "start_positions",
                                                     "end_positions", "unique_ids", "is_impossible"],
-                                      shuffle=do_shuffle)
+                                      shuffle=do_shuffle,
+                                      num_shards=device_num, shard_id=rank, shard_equal_rows=True)
         data_set = data_set.map(operations=type_cast_op, input_columns="start_positions")
         data_set = data_set.map(operations=type_cast_op, input_columns="end_positions")
     else:

@@ -46,7 +46,6 @@ echo  `date +"%Y-%m-%d %T"`
         --save_checkpoint_steps=10000  \
         --save_checkpoint_num=1      \
         --data_dir=$DATA_DIR      \
-        --train_steps=100 \
         --schema_dir=$SCHEMA_DIR > log.txt 2>&1
 
 echo  `date +"%Y-%m-%d %T"`

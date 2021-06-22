@@ -32,8 +32,9 @@ export LD_LIBRARY_PATH=$(ld_library_path /home/marcel/Mindspore/kungfu-mindspore
 /home/marcel/.local/bin/mpirun --allow-run-as-root \
     -n $RANK_SIZE \
     --output-filename mpirun_log \
-    python run_squad_distributed.py  \
+    python run_squad.py  \
         --device_target="GPU" \
+        --distribute="true" \
         --do_train="true" \
         --do_eval="true" \
         --device_id=0 \
