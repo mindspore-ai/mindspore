@@ -55,6 +55,10 @@ int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_pa
   MS_LOG(INFO) << "cpp DbgServices initialize network name " << net_name;
   MS_LOG(INFO) << "cpp DbgServices initialize dump folder path " << dump_folder_path;
   MS_LOG(INFO) << "cpp DbgServices initialize sync mode " << is_sync_mode;
+  if (debug_services == nullptr) {
+    MS_LOG(EXCEPTION) << "Debugger services initialize failed as occur null pointer error,"
+                      << "may be due to memory allocation failure, check as: top";
+  }
   debug_services->SetNetName(net_name);
   debug_services->SetDumpDir(dump_folder_path);
   debug_services->SetSyncMode(is_sync_mode);

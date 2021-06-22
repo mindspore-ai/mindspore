@@ -360,6 +360,11 @@ def _fill_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
             f"The tensor with dim({np_value.ndim}) can't convert the format({input_format}) because dim not same")
         return False
 
+    if 0 in np_value.shape:
+        logger.error(
+            f"The tensor with shape({np_value.shape}) is not a valid image because the shape contains zero.")
+        return False
+
     # convert the tensor format
     tensor = _convert_image_format(np_value, input_format)
 

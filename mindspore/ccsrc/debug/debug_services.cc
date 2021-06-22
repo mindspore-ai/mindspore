@@ -390,7 +390,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
   }
   uint64_t file_size = infile.tellg();
   infile.seekg(0, std::ios::beg);
-  std::unique_ptr<std::vector<char>> buffer(new std::vector<char>(file_size));
+  auto buffer = std::make_unique<std::vector<char>>(file_size);
   if (!infile.read(buffer->data(), file_size)) {
     MS_LOG(ERROR) << "Failed to read file (In ReadTensorFromNpy) " << file_path;
     return;
@@ -413,7 +413,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
   std::size_t data_size = data_len * word_size;
   infile.seekg(header_len + 10);
   *data_buffer = new std::vector<char>(data_size);
-  if (!infile.read((*data_buffer)->data(), data_size)) {
+  if (data_buffer == nullptr || !infile.read((*data_buffer)->data(), data_size)) {
     MS_LOG(ERROR) << "Unable to get tensor data from npy";
   }
   *size = data_size;
