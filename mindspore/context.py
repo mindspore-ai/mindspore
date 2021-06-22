@@ -828,18 +828,19 @@ def set_fl_context(**kwargs):
                               Default: 'FEDERATED_LEARNING'.
         ms_role (string): The process's role in the federated learning mode,
                           which must be one of 'MS_SERVER', 'MS_WORKER' and 'MS_SCHED'.
-                          Default: 'MS_NOT_PS'.
-        worker_num (int): The number of workers. Default: 0.
+                          Default: 'MS_SERVER'.
+        worker_num (int): The number of workers. For current version, this must be set to 1 or 0.
         server_num (int): The number of federated learning servers. Default: 0.
-        scheduler_ip (string): The scheduler IP. Default: ''.
-        scheduler_port (int): The scheduler port. Default: 0.
+        scheduler_ip (string): The scheduler IP. Default: '0.0.0.0'.
+        scheduler_port (int): The scheduler port. Default: 6667.
         fl_server_port (int): The http port of the federated learning server.
-                              Normally for each server this should be set to the same value. Default: 0.
+                              Normally for each server this should be set to the same value. Default: 6668.
         enable_fl_client (bool): Whether this process is federated learning client. Default: False.
         start_fl_job_threshold (int): The threshold count of startFLJob. Default: 0.
         start_fl_job_time_window (int): The time window duration for startFLJob in millisecond. Default: 3000.
         update_model_ratio (float): The ratio for computing the threshold count of updateModel
-                                    which will be multiplied by start_fl_job_threshold. Default: 1.0.
+                                    which will be multiplied by start_fl_job_threshold.
+                                    Must be between 0 and 1.0.Default: 1.0.
         update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 3000.
         fl_name (string): The federated learning job name. Default: ''.
         fl_iteration_num (int): Iteration number of federeated learning,

@@ -68,8 +68,8 @@ class FusedPushWeightKernel : public CPUKernel {
       std::shared_ptr<std::vector<unsigned char>> push_weight_rsp_msg = nullptr;
       if (!ps::worker::FLWorker::GetInstance().SendToServer(
             i, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPushWeight, &push_weight_rsp_msg)) {
-        MS_LOG(EXCEPTION) << "Sending request for FusedPushWeight to server " << i << " failed.";
-        return false;
+        MS_LOG(ERROR) << "Sending request for FusedPushWeight to server " << i << " failed.";
+        continue;
       }
       MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
 
@@ -83,6 +83,7 @@ class FusedPushWeightKernel : public CPUKernel {
       }
     }
     MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
+    ps::worker::FLWorker::GetInstance().SetIterationCompleted();
     return true;
   }
 

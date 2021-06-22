@@ -46,6 +46,8 @@ class Server {
   // func_graph is the frontend graph which will be parse in server's exector and aggregator.
   void Run();
 
+  void SwitchToSafeMode();
+  void CancelSafeMode();
   bool IsSafeMode();
 
  private:
@@ -133,6 +135,9 @@ class Server {
   // In some cases, both types should be supported in one distributed training job. So here we may have multiple
   // communicators.
   std::vector<std::shared_ptr<core::CommunicatorBase>> communicators_with_worker_;
+
+  // Mutex for scaling operations. We must wait server's initialization done before handle scaling events.
+  std::mutex scaling_mtx_;
 
   // Iteration consists of multiple kinds of rounds.
   Iteration *iteration_;

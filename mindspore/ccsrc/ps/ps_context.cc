@@ -45,7 +45,7 @@ void PSContext::SetPSEnable(bool enabled) {
     } else if (ms_role == kEnvRoleOfScheduler) {
       is_sched_ = true;
     } else {
-      MS_LOG(WARNING) << "MS_ROLE is " << ms_role << ", which is invalid.";
+      MS_LOG(INFO) << "MS_ROLE is " << ms_role;
     }
 
     worker_num_ = std::strtol(common::GetEnv(kEnvWorkerNum).c_str(), nullptr, 10);
@@ -273,7 +273,13 @@ void PSContext::set_start_fl_job_time_window(uint64_t start_fl_job_time_window) 
 
 uint64_t PSContext::start_fl_job_time_window() const { return start_fl_job_time_window_; }
 
-void PSContext::set_update_model_ratio(float update_model_ratio) { update_model_ratio_ = update_model_ratio; }
+void PSContext::set_update_model_ratio(float update_model_ratio) {
+  if (update_model_ratio > 1.0) {
+    MS_LOG(EXCEPTION) << "update_model_ratio must be between 0 and 1.";
+    return;
+  }
+  update_model_ratio_ = update_model_ratio;
+}
 
 float PSContext::update_model_ratio() const { return update_model_ratio_; }
 

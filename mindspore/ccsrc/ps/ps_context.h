@@ -161,12 +161,12 @@ class PSContext {
         rank_id_(0),
         worker_num_(0),
         server_num_(0),
-        scheduler_host_(""),
-        scheduler_port_(0),
+        scheduler_host_("0.0.0.0"),
+        scheduler_port_(6667),
         role_(kEnvRoleOfNotPS),
         server_mode_(""),
         resetter_round_(ResetterRound::kNoNeedToReset),
-        fl_server_port_(0),
+        fl_server_port_(6668),
         fl_client_enable_(false),
         fl_name_(""),
         start_fl_job_threshold_(0),
@@ -179,7 +179,7 @@ class PSContext {
         client_learning_rate_(0.001),
         secure_aggregation_(false),
         cluster_config_(nullptr),
-        scheduler_manage_port_(0),
+        scheduler_manage_port_(11202),
         config_file_path_("") {}
   bool ps_enabled_;
   bool is_worker_;

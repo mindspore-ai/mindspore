@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "ps/core/communicator/communicator_base.h"
 #include "ps/server/common.h"
 #include "ps/server/round.h"
@@ -33,6 +34,9 @@ enum class IterationState {
   // This iteration is completed and the next iteration is not started yet.
   kCompleted
 };
+
+// The time duration between retrying when sending prepare for next iteration request failed.
+constexpr uint32_t kRetryDurationForPrepareForNextIter = 500;
 
 // In server's logic, Iteration is the minimum execution unit. For each execution, it consists of multiple kinds of
 // Rounds, only after all the rounds are finished, this iteration is considered as completed.
@@ -56,9 +60,10 @@ class Iteration {
   void InitRounds(const std::vector<std::shared_ptr<core::CommunicatorBase>> &communicators,
                   const TimeOutCb &timeout_cb, const FinishIterCb &finish_iteration_cb);
 
-  // The server proceeds to the next iteration only after the last round finishes or the timer expires.
-  // If the timer expires, we consider this iteration as invalid.
-  void ProceedToNextIter(bool is_iteration_valid);
+  // This method will control servers to proceed to next iteration.
+  // There's communication between leader and follower servers in this method.
+  // The server moves to next iteration only after the last round finishes or the time expires.
+  void MoveToNextIteration(bool is_last_iter_valid, const std::string &reason);
 
   // Set current iteration state to running and trigger events about kIterationRunning.
   void SetIterationRunning();
@@ -84,7 +89,8 @@ class Iteration {
         communicator_(nullptr),
         iteration_state_(IterationState::kCompleted),
         iteration_num_(1),
-        is_last_iteration_valid_(true) {
+        is_last_iteration_valid_(true),
+        pinned_iter_num_(0) {
     LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   }
   ~Iteration() = default;
@@ -98,6 +104,32 @@ class Iteration {
   // Synchronize iteration form the leader server(Rank 0).
   bool SyncIteration(uint32_t rank);
   void HandleSyncIterationRequest(const std::shared_ptr<core::MessageHandler> &message);
+
+  // The request for moving to next iteration is not reentrant.
+  bool IsMoveToNextIterRequestReentrant(uint64_t iteration_num);
+
+  // The methods for moving to next iteration for all the servers.
+  // Step 1: follower servers notify leader server that they need to move to next iteration.
+  bool NotifyLeaderMoveToNextIteration(bool is_last_iter_valid, const std::string &reason);
+  void HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<core::MessageHandler> &message);
+
+  // Step 2: leader server broadcast to all follower servers to prepare for next iteration and switch to safemode.
+  bool BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, const std::string &reason);
+  void HandlePrepareForNextIterRequest(const std::shared_ptr<core::MessageHandler> &message);
+  // The server prepare for the next iteration. This method will switch the server to safemode.
+  void PrepareForNextIter();
+
+  // Step 3: leader server broadcast to all follower servers to move to next iteration.
+  bool BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const std::string &reason);
+  void HandleMoveToNextIterRequest(const std::shared_ptr<core::MessageHandler> &message);
+  // Move to next iteration. Store last iterations model and reset all the rounds.
+  void Next(bool is_iteration_valid, const std::string &reason);
+
+  // Step 4: leader server broadcasts to all follower servers to end last iteration and cancel the safemode.
+  bool BroadcastEndLastIterRequest(uint64_t iteration_num);
+  void HandleEndLastIterRequest(const std::shared_ptr<core::MessageHandler> &message);
+  // The server end the last iteration. This method will increase the iteration number and cancel the safemode.
+  void EndLastIter();
 
   std::shared_ptr<core::ServerNode> server_node_;
   std::shared_ptr<core::TcpCommunicator> communicator_;
@@ -113,6 +145,10 @@ class Iteration {
 
   // Last iteration is successfully finished.
   bool is_last_iteration_valid_;
+
+  // To avoid Next method is called multiple times in one iteration, we should mark the iteration number.
+  uint64_t pinned_iter_num_;
+  std::mutex pinned_mtx_;
 };
 }  // namespace server
 }  // namespace ps

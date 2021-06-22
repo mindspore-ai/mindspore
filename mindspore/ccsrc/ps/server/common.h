@@ -63,9 +63,9 @@ using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::CPUKernel;
 using FBBuilder = flatbuffers::FlatBufferBuilder;
-using TimeOutCb = std::function<void(bool)>;
+using TimeOutCb = std::function<void(bool, const std::string &)>;
 using StopTimerCb = std::function<void(void)>;
-using FinishIterCb = std::function<void(bool)>;
+using FinishIterCb = std::function<void(bool, const std::string &)>;
 using FinalizeCb = std::function<void(void)>;
 using MessageCallback = std::function<void(const std::shared_ptr<core::MessageHandler> &)>;
 

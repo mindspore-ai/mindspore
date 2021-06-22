@@ -61,7 +61,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
 
   if (ReachThresholdForStartFLJob(fbb)) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-    return false;
+    return true;
   }
 
   const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
@@ -102,7 +102,7 @@ bool StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuild
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     return true;
   }
   return false;

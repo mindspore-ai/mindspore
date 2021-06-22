@@ -73,6 +73,7 @@ void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const s
 // InitCipher---->InitExecutor
 void Server::Run() {
   signal(SIGINT, SignalHandler);
+  std::unique_lock<std::mutex> lock(scaling_mtx_);
   InitServerContext();
   InitCluster();
   InitIteration();
@@ -82,6 +83,7 @@ void Server::Run() {
   RegisterRoundKernel();
   MS_LOG(INFO) << "Server started successfully.";
   safemode_ = false;
+  lock.unlock();
 
   // Wait communicators to stop so the main thread is blocked.
   std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
@@ -89,6 +91,16 @@ void Server::Run() {
   communicator_with_server_->Join();
   MsException::Instance().CheckException();
   return;
+}
+
+void Server::SwitchToSafeMode() {
+  MS_LOG(INFO) << "Server switch to safemode.";
+  safemode_ = true;
+}
+
+void Server::CancelSafeMode() {
+  MS_LOG(INFO) << "Server cancel safemode.";
+  safemode_ = false;
 }
 
 bool Server::IsSafeMode() { return safemode_.load(); }
@@ -166,8 +178,10 @@ void Server::InitIteration() {
   }
 
   // 2.Initialize all the rounds.
-  TimeOutCb time_out_cb = std::bind(&Iteration::ProceedToNextIter, iteration_, std::placeholders::_1);
-  FinishIterCb finish_iter_cb = std::bind(&Iteration::ProceedToNextIter, iteration_, std::placeholders::_1);
+  TimeOutCb time_out_cb =
+    std::bind(&Iteration::MoveToNextIteration, iteration_, std::placeholders::_1, std::placeholders::_2);
+  FinishIterCb finish_iter_cb =
+    std::bind(&Iteration::MoveToNextIteration, iteration_, std::placeholders::_1, std::placeholders::_2);
   iteration_->InitRounds(communicators_with_worker_, time_out_cb, finish_iter_cb);
   return;
 }
@@ -288,28 +302,29 @@ void Server::ProcessBeforeScalingIn() {
 }
 
 void Server::ProcessAfterScalingOut() {
+  std::unique_lock<std::mutex> lock(scaling_mtx_);
   if (server_node_ == nullptr) {
     return;
   }
 
   if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
     return;
   }
   if (!CollectiveOpsImpl::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
     return;
   }
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "DistributedCountService reinitializing failed.";
+    MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
     return;
   }
   if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
-    MS_LOG(ERROR) << "Iteration reinitializing failed.";
+    MS_LOG(WARNING) << "Iteration reinitializing failed.";
     return;
   }
   if (!Executor::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "Executor reinitializing failed.";
+    MS_LOG(WARNING) << "Executor reinitializing failed.";
     return;
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -317,6 +332,7 @@ void Server::ProcessAfterScalingOut() {
 }
 
 void Server::ProcessAfterScalingIn() {
+  std::unique_lock<std::mutex> lock(scaling_mtx_);
   if (server_node_ == nullptr) {
     return;
   }
@@ -331,23 +347,23 @@ void Server::ProcessAfterScalingIn() {
 
   // If the server is not the one to be scaled in, reintialize modules and recover service.
   if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
     return;
   }
   if (!CollectiveOpsImpl::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "DistributedMetadataStore reinitializing failed.";
+    MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
     return;
   }
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "DistributedCountService reinitializing failed.";
+    MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
     return;
   }
   if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
-    MS_LOG(ERROR) << "Iteration reinitializing failed.";
+    MS_LOG(WARNING) << "Iteration reinitializing failed.";
     return;
   }
   if (!Executor::GetInstance().ReInitForScaling()) {
-    MS_LOG(ERROR) << "Executor reinitializing failed.";
+    MS_LOG(WARNING) << "Executor reinitializing failed.";
     return;
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));

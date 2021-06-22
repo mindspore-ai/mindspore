@@ -68,7 +68,7 @@ void RoundKernel::StopTimer() {
 
 void RoundKernel::FinishIteration() {
   if (finish_iteration_cb_) {
-    finish_iteration_cb_(true);
+    finish_iteration_cb_(true, "");
   }
   return;
 }

@@ -98,9 +98,9 @@ class DistributedCountService {
   void HandleCounterEvent(const std::shared_ptr<core::MessageHandler> &message);
 
   // Call the callbacks when the first/last count event is triggered.
-  void TriggerCounterEvent(const std::string &name);
-  void TriggerFirstCountEvent(const std::string &name);
-  void TriggerLastCountEvent(const std::string &name);
+  bool TriggerCounterEvent(const std::string &name);
+  bool TriggerFirstCountEvent(const std::string &name);
+  bool TriggerLastCountEvent(const std::string &name);
 
   // Members for the communication between counting server and other servers.
   std::shared_ptr<core::ServerNode> server_node_;

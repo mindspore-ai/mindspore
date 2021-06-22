@@ -163,6 +163,9 @@ while True:
     rsp_fl_job = ResponseFLJob.ResponseFLJob.GetRootAsResponseFLJob(x.content, 0)
     while rsp_fl_job.Retcode() != ResponseCode.ResponseCode.SUCCEED:
         x = session.post(url1, data=build_start_fl_job(current_iteration))
+        while x.text == "The cluster is in safemode.":
+            time.sleep(0.2)
+            x = session.post(url1, data=build_start_fl_job(current_iteration))
         rsp_fl_job = ResponseFLJob.ResponseFLJob.GetRootAsResponseFLJob(x.content, 0)
     print("epoch is", rsp_fl_job.FlPlanConfig().Epochs())
     print("iteration is", rsp_fl_job.Iteration())
@@ -173,6 +176,10 @@ while True:
     print("req update model iteration:", current_iteration, ", id:", args.pid)
     update_model_buf, update_model_np_data = build_update_model(current_iteration)
     x = session.post(url2, data=update_model_buf)
+    while x.text == "The cluster is in safemode.":
+        time.sleep(0.2)
+        x = session.post(url1, data=update_model_buf)
+
     print("rsp update model iteration:", current_iteration, ", id:", args.pid)
     sys.stdout.flush()
 
@@ -227,4 +234,5 @@ while True:
         # Sleep to the next request timestamp
         current_ts = datetime_to_timestamp(datetime.datetime.now())
         duration = next_req_timestamp - current_ts
-        time.sleep(duration / 1000)
+        if duration > 0:
+            time.sleep(duration / 1000)

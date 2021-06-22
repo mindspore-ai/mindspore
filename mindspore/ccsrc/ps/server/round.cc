@@ -18,11 +18,13 @@
 #include <memory>
 #include <string>
 #include "ps/server/server.h"
+#include "ps/server/iteration.h"
 
 namespace mindspore {
 namespace ps {
 namespace server {
 class Server;
+class Iteration;
 Round::Round(const std::string &name, bool check_timeout, size_t time_window, bool check_count, size_t threshold_count,
              bool server_num_as_threshold)
     : name_(name),
@@ -42,9 +44,9 @@ void Round::Initialize(const std::shared_ptr<core::CommunicatorBase> &communicat
     name_, [&](std::shared_ptr<core::MessageHandler> message) { LaunchRoundKernel(message); });
 
   // Callback when the iteration is finished.
-  finish_iteration_cb_ = [this, finish_iteration_cb](bool is_iteration_valid) -> void {
-    MS_LOG(INFO) << "Round " << name_ << " finished! This iteration is valid. Proceed to next iteration.";
-    finish_iteration_cb(is_iteration_valid);
+  finish_iteration_cb_ = [this, finish_iteration_cb](bool is_iteration_valid, const std::string &) -> void {
+    std::string reason = "Round " + name_ + " finished! This iteration is valid. Proceed to next iteration.";
+    finish_iteration_cb(is_iteration_valid, reason);
   };
 
   // Callback for finalizing the server. This can only be called once.
@@ -54,9 +56,9 @@ void Round::Initialize(const std::shared_ptr<core::CommunicatorBase> &communicat
     iter_timer_ = std::make_shared<IterationTimer>();
 
     // 1.Set the timeout callback for the timer.
-    iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool is_iteration_valid) -> void {
-      MS_LOG(INFO) << "Round " << name_ << " timeout! This iteration is invalid. Proceed to next iteration.";
-      timeout_cb(is_iteration_valid);
+    iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool is_iteration_valid, const std::string &) -> void {
+      std::string reason = "Round " + name_ + " timeout! This iteration is invalid. Proceed to next iteration.";
+      timeout_cb(is_iteration_valid, reason);
     });
 
     // 2.Stopping timer callback which will be set to the round kernel.
@@ -89,7 +91,7 @@ bool Round::ReInitForScaling(uint32_t server_num) {
   }
 
   if (kernel_ == nullptr) {
-    MS_LOG(ERROR) << "Reinitializing for round " << name_ << " failed: round kernel is nullptr.";
+    MS_LOG(WARNING) << "Reinitializing for round " << name_ << " failed: round kernel is nullptr.";
     return false;
   }
   kernel_->InitKernel(threshold_count_);
@@ -129,13 +131,14 @@ void Round::LaunchRoundKernel(const std::shared_ptr<core::MessageHandler> &messa
     communicator_->SendResponse(reason.c_str(), reason.size(), message);
     return;
   }
+  communicator_->SendResponse(output->addr, output->size, message);
+  kernel_->Release(output);
 
   // Must send response back no matter what value Launch method returns.
   if (!ret) {
-    MS_LOG(WARNING) << "Launching round kernel of round " << name_ << " failed.";
+    std::string reason = "Launching round kernel of round " + name_ + " failed.";
+    Iteration::GetInstance().MoveToNextIteration(false, reason);
   }
-  communicator_->SendResponse(output->addr, output->size, message);
-  kernel_->Release(output);
   return;
 }
 
