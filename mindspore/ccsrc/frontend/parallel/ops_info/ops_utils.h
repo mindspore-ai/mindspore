@@ -380,6 +380,7 @@ constexpr char VIRTUAL_ASSIGN_ADD[] = "_VirtualAssignAdd";
 constexpr char VIRTUAL_ACCU_GRAD[] = "_VirtualAccuGrad";
 constexpr char ACCU_GRAD[] = "accu_grad";
 constexpr char PARAMETER_START[] = "parameter_start";
+constexpr char PARAM_INDEX[] = "param_index";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";
