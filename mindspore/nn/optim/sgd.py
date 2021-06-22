@@ -19,6 +19,7 @@ from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
+from .optimizer import opt_init_args_register
 
 _sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
@@ -133,6 +134,8 @@ class SGD(Optimizer):
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
+
+    @opt_init_args_register
     def __init__(self, params, learning_rate=0.1, momentum=0.0, dampening=0.0, weight_decay=0.0, nesterov=False,
                  loss_scale=1.0):
 

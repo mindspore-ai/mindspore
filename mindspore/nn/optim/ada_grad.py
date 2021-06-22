@@ -16,6 +16,7 @@
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
+from .optimizer import opt_init_args_register
 
 _ada_grad_opt = C.MultitypeFuncGraph("ada_grad_opt")
 
@@ -144,6 +145,7 @@ class Adagrad(Optimizer):
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
 
+    @opt_init_args_register
     def __init__(self, params, accum=0.1, learning_rate=0.001,
                  update_slots=True, loss_scale=1.0, weight_decay=0.0):
         super(Adagrad, self).__init__(learning_rate, params, weight_decay, loss_scale)

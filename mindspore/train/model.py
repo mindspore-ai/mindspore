@@ -139,6 +139,7 @@ class Model:
         self._device_number = _get_device_num()
         self._global_rank = _get_global_rank()
         self._parameter_broadcast = _get_parameter_broadcast()
+        self._metrics = metrics
 
         self._check_amp_level_arg(optimizer, amp_level)
         self._check_for_graph_cell(kwargs)
@@ -175,7 +176,7 @@ class Model:
 
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
-            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32', 'total_steps']:
+            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32']:
                 raise ValueError(f"Unsupported arg '{arg}'")
 
     def _check_reuse_dataset(self, dataset):
@@ -187,15 +188,18 @@ class Model:
     def _build_acc_network(self, kwargs):
         """Build the acc network."""
         processor = acc.AutoAcc(self._acc_level, kwargs)
+        if processor.level not in ["O1", "O2"]:
+            return
         if self._optimizer is None:
             logger.warning("In acc mode, the optimizer must be defined.")
             return
-        if self._eval_network is None:
-            logger.warning("In acc mode, the eval_network must be defined.")
+        if self._eval_network is None and self._metrics is None:
+            logger.warning("In acc mode, the eval_network and metrics cannot be undefined at the same time.")
             return
 
         self._network, self._optimizer = processor.network_auto_process_train(self._network, self._optimizer)
-        self._eval_network = processor.network_auto_process_eval(self._eval_network)
+        if self._eval_network is not None:
+            self._eval_network = processor.network_auto_process_eval(self._eval_network)
 
     def _build_train_network(self):
         """Build train network"""

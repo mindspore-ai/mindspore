@@ -40,6 +40,7 @@ class AutoAcc:
     def __init__(self, level, kwargs):
         if level not in _acc_config_level.keys():
             level = 'O0'
+        self.level = level
         acc_config = _acc_config_level[level]
         self._acc_config = acc_config
         self._fn_flag = True
@@ -66,12 +67,11 @@ class AutoAcc:
             optimizer_process = OptimizerProcess(optimizer)
             group_params = self._param_processer.assign_parameter_group(network.trainable_params(),
                                                                         self._gradient_groups)
-            optimizer_process.origin_params = self._param_processer.generate_group_params(group_params)
+            optimizer_process.origin_params = \
+                self._param_processer.generate_group_params(group_params, optimizer_process.origin_params)
             if self._gc_flag:
-                parameters = optimizer_process.add_grad_centralization()
-            else:
-                parameters = optimizer_process.origin_params
-            optimizer = optimizer_process.generate_new_optimizer(parameters)
+                optimizer_process.add_grad_centralization()
+            optimizer = optimizer_process.generate_new_optimizer()
 
         if self._acc_config["grad_freeze"]:
             freeze_processer = GradientFreeze(self._param_groups, self._freeze_type,
