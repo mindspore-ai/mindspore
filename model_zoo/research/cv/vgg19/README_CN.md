@@ -21,6 +21,13 @@
             - [GPU处理器环境运行VGG19](#gpu处理器环境运行vgg19)
     - [评估过程](#评估过程)
         - [评估](#评估-1)
+    - [模型导出](#模型导出)
+        - [用法](#用法)
+        - [运行](#运行)
+    - [推理过程](#推理过程)
+        - [用法](#用-法)
+        - [运行](#运-行)
+        - [结果](#结-果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
@@ -93,7 +100,7 @@ VGG 19网络主要由几个基本模块（包括卷积层和池化层）和三�
 python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH]
+bash run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH]
 
 # 评估示例
 python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
@@ -110,7 +117,7 @@ python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eva
 python train.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train_gpu.sh [DATA_PATH]
+bash run_distribute_train_gpu.sh [DATA_PATH]
 
 # 评估示例
 python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
@@ -124,6 +131,7 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
 ├── model_zoo
     ├── README.md                                 // 所有模型相关说明
     ├── vgg19
+        ├── ascend310_infer                       // 实现310推理源代码
         ├── README.md                             // GoogLeNet相关说明
         ├── scripts
         │   ├── run_distribute_train.sh           // Ascend分布式训练shell脚本
@@ -251,6 +259,71 @@ python eval.py --data_path=your_data_path --dataset="imagenet2012" --device_targ
 after allreduce eval: top1_correct=37101, tot=49984,acc=74.23%
 
 after allreduce eval: top5_correct=46007, tot=49984,acc=92.04%
+```
+
+## [模型导出](#content)
+
+### 用法
+
+导出模型前要修改config.py文件中的checkpoint_path配置项，值为checkpoint的路径。
+
+```shell
+python export.py --file_name [RUN_PLATFORM] --file_format[EXPORT_FORMAT] --checkpoint_path [CHECKPOINT PATH]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+
+### 运行
+
+```运行
+python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+- 在modelarts上导出MindIR
+
+```Modelarts
+在ModelArts上导出MindIR示例
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "file_name=vgg19"
+#          设置 "file_format=MINDIR"
+#          设置 "checkpoint_path=/cache/data/checkpoint/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/vgg19"。
+# (4) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../MindRecord_COCO"(选择MindRecord_COCO文件夹路径) ,
+# MindIR的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+```
+
+## [推理过程](#content)
+
+### 用 法
+
+在推理之前需要在昇腾910环境上完成模型的导出。推理时要将iscrowd为true的图片排除掉。在ascend310_infer目录下保存了去排除后的图片id。
+还需要修改config.py文件中的coco_root、val_data_type、instances_set配置项，值分别取coco数据集的目录，推理所用数据集的目录名称，推理完成后计算精度用的annotation文件，instances_set是用val_data_type拼接起来的，要保证文件正确并且存在。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+```
+
+### 运 行
+
+```运行
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_NAME] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+### 结 果
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+
+```bash
+Top1 acc: 0.74818
+Top5 acc: 0.92156
 ```
 
 # 模型描述
