@@ -23,23 +23,35 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) {
-  auto task = [&](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] < input2[idx[1]];
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  if (output_size_ > MAX_LESS_SERIAL_SIZE) {
+    auto task = [&](size_t start, size_t end) {
+      auto iter = base_iter;
+      iter.SetPos(start);
+      for (size_t i = start; i < end; i++) {
+        out[i] = input1[iter.GetInputPosA()] < input2[iter.GetInputPosB()];
+        iter.GenNextPos();
+      }
+    };
+    CPUKernelUtils::ParallelFor(task, output_size_);
+  } else {
+    base_iter.SetPos(0);
+    for (size_t i = 0; i < output_size_; i++) {
+      out[i] = input1[base_iter.GetInputPosA()] < input2[base_iter.GetInputPosB()];
+      base_iter.GenNextPos();
     }
-  };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  }
 }
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] == input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] == input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -47,11 +59,13 @@ void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] != input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] != input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -59,11 +73,13 @@ void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, boo
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] && input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] && input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -71,11 +87,13 @@ void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, b
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] || input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] || input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -83,11 +101,13 @@ void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bo
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] > input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] > input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -95,11 +115,13 @@ void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] >= input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] >= input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -107,11 +129,13 @@ void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2,
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] <= input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] <= input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -192,38 +216,6 @@ bool ArithmeticLogicCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
     return false;
   }
   return true;
-}
-
-template <typename T>
-void ArithmeticLogicCPUKernel<T>::GenIndex(size_t num, std::vector<size_t> *idx) {
-  std::vector<size_t> tmp;
-  for (size_t i = 0; i < output_shape_.size() - 1; ++i) {
-    if (output_element_num_[i] > num) {
-      tmp.push_back(0);
-    } else {
-      tmp.push_back(num / output_element_num_[i]);
-      num %= output_element_num_[i];
-    }
-  }
-  tmp.push_back(num);
-  size_t idx1 = 0;
-  size_t idx2 = 0;
-  for (size_t k = 0; k < tmp.size() - 1; ++k) {
-    if (input_shape1_[k] > 1) {
-      idx1 += tmp[k] * input_element_num1_[k];
-    }
-    if (input_shape2_[k] > 1) {
-      idx2 += tmp[k] * input_element_num2_[k];
-    }
-  }
-  if (input_shape1_[tmp.size() - 1] > 1) {
-    idx1 += tmp[tmp.size() - 1];
-  }
-  if (input_shape2_[tmp.size() - 1] > 1) {
-    idx2 += tmp[tmp.size() - 1];
-  }
-  idx->push_back(idx1);
-  idx->push_back(idx2);
 }
 }  // namespace kernel
 }  // namespace mindspore
