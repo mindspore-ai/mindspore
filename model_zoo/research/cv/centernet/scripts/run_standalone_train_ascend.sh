@@ -35,6 +35,7 @@ PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
+export DEVICE_ID=$DEVICE_ID
 
 python ${PROJECT_DIR}/../train.py  \
     --distribute=false \

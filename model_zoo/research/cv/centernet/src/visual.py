@@ -22,7 +22,7 @@ import random
 import cv2
 import numpy as np
 import pycocotools.coco as COCO
-from .config import dataset_config as data_cfg
+from .model_utils.config import dataset_config as data_cfg
 from .image import get_affine_transform, affine_transform
 
 _NUM_JOINTS = data_cfg.num_joints

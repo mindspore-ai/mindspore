@@ -30,7 +30,7 @@ from .backbone_dla import DLASeg
 from .utils import Sigmoid, GradScale
 from .utils import FocalLoss, RegLoss, RegWeightedL1Loss
 from .decode import MultiPoseDecode
-from .config import dataset_config as data_cfg
+from .model_utils.config import dataset_config as data_cfg
 
 
 def _generate_feature(cin, cout, kernel_size, head_name, head_conv=0):

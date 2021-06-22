@@ -17,15 +17,9 @@ Post-process functions after decoding
 """
 
 import numpy as np
-from src.config import dataset_config as config
+from src.model_utils.config import dataset_config as config
 from .image import get_affine_transform, affine_transform, transform_preds
 from .visual import coco_box_to_bbox
-
-try:
-    from nms import soft_nms_39
-except ImportError:
-    print('NMS not installed! Do \n cd $CenterNet_ROOT/scripts/ \n'
-          'and see run_standalone_eval.sh for more details to install it\n')
 
 _NUM_JOINTS = config.num_joints
 
@@ -48,6 +42,11 @@ def merge_outputs(detections, soft_nms=True):
     """merge detections together by nms"""
     results = np.concatenate([detection for detection in detections], axis=0).astype(np.float32)
     if soft_nms:
+        try:
+            from nms import soft_nms_39
+        except ImportError:
+            print('NMS not installed! Do \n cd $CenterNet_ROOT/scripts/ \n'
+                  'and see run_standalone_eval.sh for more details to install it\n')
         soft_nms_39(results, Nt=0.5, threshold=0.01, method=2)
     results = results.tolist()
     return results
