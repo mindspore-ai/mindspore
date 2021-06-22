@@ -16,10 +16,9 @@
 import os
 import pickle
 import collections
-import argparse
 import numpy as np
 from mindspore.mindrecord import FileWriter
-
+from .model_utils.config import config
 
 class StatsDict():
     """preprocessed data"""
@@ -259,34 +258,23 @@ def random_split_trans2mindrecord(input_file_path, output_file_path, recommendat
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Recommendation dataset")
-    parser.add_argument("--data_path", type=str, default="./recommendation_dataset/", help='The path of the data file')
-    parser.add_argument("--dense_dim", type=int, default=13, help='The number of your continues fields')
-    parser.add_argument("--slot_dim", type=int, default=26,
-                        help='The number of your sparse fields, it can also be called catelogy features.')
-    parser.add_argument("--threshold", type=int, default=100,
-                        help='Word frequency below this will be regarded as OOV. It aims to reduce the vocab size')
-    parser.add_argument("--train_line_count", type=int, help='The number of examples in your dataset')
-    parser.add_argument("--skip_id_convert", type=int, default=0, choices=[0, 1],
-                        help='Skip the id convert, regarding the original id as the final id.')
 
-    args, _ = parser.parse_known_args()
-    data_path = args.data_path
+    data_path = config.data_path
 
-    target_field_size = args.dense_dim + args.slot_dim
-    stats = StatsDict(field_size=target_field_size, dense_dim=args.dense_dim, slot_dim=args.slot_dim,
-                      skip_id_convert=args.skip_id_convert)
+    target_field_size = config.dense_dim + config.slot_dim
+    stats = StatsDict(field_size=target_field_size, dense_dim=config.dense_dim, slot_dim=config.slot_dim,
+                      skip_id_convert=config.skip_id_convert)
     data_file_path = data_path + "origin_data/train.txt"
     stats_output_path = data_path + "stats_dict/"
     mkdir_path(stats_output_path)
-    statsdata(data_file_path, stats_output_path, stats, dense_dim=args.dense_dim, slot_dim=args.slot_dim)
+    statsdata(data_file_path, stats_output_path, stats, dense_dim=config.dense_dim, slot_dim=config.slot_dim)
 
     stats.load_dict(dict_path=stats_output_path, prefix="")
-    stats.get_cat2id(threshold=args.threshold)
+    stats.get_cat2id(threshold=config.threshold)
 
     in_file_path = data_path + "origin_data/train.txt"
     output_path = data_path + "mindrecord/"
     mkdir_path(output_path)
     random_split_trans2mindrecord(in_file_path, output_path, stats, part_rows=2000000,
-                                  train_line_count=args.train_line_count, line_per_sample=1000,
-                                  test_size=0.1, seed=2020, dense_dim=args.dense_dim, slot_dim=args.slot_dim)
+                                  train_line_count=config.train_line_count, line_per_sample=1000,
+                                  test_size=0.1, seed=2020, dense_dim=config.dense_dim, slot_dim=config.slot_dim)

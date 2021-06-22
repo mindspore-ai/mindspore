@@ -95,6 +95,58 @@ python train_and_eval.py --data_path=./data/mindrecord --data_type=mindrecord
 python eval.py  --data_path=./data/mindrecord --data_type=mindrecord
 ```
 
+- 在ModelArts上运行（如果想在modelarts中运行，请查看【modelarts】官方文档（https://support.huaweicloud.com/modelarts/），如下开始训练即可）
+
+    ```python
+    # 在 ModelArts 上训练 8p
+    # (1) 执行 a 或 b。
+    # a. 在 default_config.yaml 文件上设置“enable_modelarts=True”。
+    #    在 default_config.yaml 文件上设置“run_distribute=True”。
+    #    在 default_config.yaml 文件上设置“data_path=/cache/data/criteo_mindrecord/”。
+    #    在 default_config.yaml 文件上设置您需要的其他参数。
+    # b. 在网站UI界面添加“enable_modelarts=True”。
+    #    在网站UI界面添加“run_distribute=True”。
+    #    在网站UI界面添加“dataset_path=/cache/data/criteo_mindrecord/”。
+    #    在网站UI界面添加其他参数。
+    # (2) 将 zip 数据集上传到 S3 存储桶。 （您也可以上传原始数据集，但速度可能很慢。）
+    # (3) 在网站UI界面设置代码目录为“/path/wide_and_deep”。
+    # (4) 在网站UI界面设置启动文件为“train.py”。
+    # (5​​) 将“数据集路径”和“输出文件路径”和“作业日志路径”设置为您在网站UI界面上的路径。
+    # (6) 创建你的工作。
+    #
+    # 在 ModelArts 上训练 1p
+    # (1) 执行 a 或 b。
+    # a. 在 default_config.yaml 文件上设置“enable_modelarts=True”。
+    #    在 default_config.yaml 文件中设置“dataset_path='/cache/data/criteo_mindrecord/'”。
+    #    在 default_config.yaml 文件上设置您需要的其他参数。
+    # b. 在网站UI界面添加“enable_modelarts=True”。
+    #    在网站UI界面添加“dataset_path=/cache/data/criteo_mindrecord/”。
+    #    在网站UI界面添加其他参数。
+    # (2) 将 zip 数据集上传到 S3 存储桶。 （您也可以上传原始数据集，但速度可能很慢。）
+    # (3) 在网站UI界面设置代码目录为“/path/wide_and_deep”。
+    # (4) 在网站UI界面设置启动文件为“train.py”。
+    # (5​​) 将“数据集路径”和“输出文件路径”和“作业日志路径”设置为您在网站UI界面上的路径。
+    # (6) 创建你的工作。
+    #
+    # ModelArts 上的 Eval 1p
+    # (1) 执行 a 或 b。
+    # a. 在 default_config.yaml 文件上设置“enable_modelarts=True”。
+    #    在 default_config.yaml 文件上设置“ckpt_file='/cache/checkpoint_path/model.ckpt'”。
+    #    在 default_config.yaml 文件中设置“checkpoint_url='s3://dir_to_trained_ckpt/'”。
+    #    在 default_config.yaml 文件中设置“dataset_path='/cache/data/criteo_mindrecord/'”。
+    #    在 default_config.yaml 文件上设置您需要的其他参数。
+    # b. 在网站UI界面添加“enable_modelarts=True”。
+    #    在网站UI界面添加“ckpt_file=/cache/checkpoint_path/model.ckpt”。
+    #    在网站UI界面添加“checkpoint_url=s3://dir_to_trained_ckpt/”。
+    #    在网站UI界面添加“dataset_path=/cache/data/criteo_mindrecord/”。
+    #    在网站UI界面添加其他参数。
+    # (2) 将 zip 数据集上传到 S3 存储桶。 （您也可以上传原始数据集，但速度可能很慢。）
+    # (3) 在网站UI界面设置代码目录为“/path/wide_and_deep”。
+    # (4) 在网站UI界面设置启动文件为“eval.py”。
+    # (5​​) 将“数据集路径”和“输出文件路径”和“作业日志路径”设置为您在网站UI界面上的路径。
+    # (6) 创建你的工作。
+    ```
+
 ## 脚本说明
 
 ## 脚本和样例代码
@@ -124,7 +176,13 @@ python eval.py  --data_path=./data/mindrecord --data_type=mindrecord
     │   ├── metrics.py
     │   ├── preprocess_data.py
     │   ├── process_data.py
-    │   └── wide_and_deep.py
+    │   ├── wide_and_deep.py
+    │   └── model_utils
+    │       ├── config.py                         # 训练配置
+    │       ├── device_adapter.py                 # 获取云上id
+    │       ├── local_adapter.py                  # 获取本地id
+    │       └── moxing_adapter.py                 # 参数处理
+    ├── default_config.yaml                       # 训练参数配置文件
     ├── train_and_eval_auto_parallel.py
     ├── train_and_eval_distribute.py
     ├── train_and_eval_parameter_server.py

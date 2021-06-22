@@ -21,7 +21,7 @@ from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClas
 from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType
 from src.metrics import AUCMetric
-from src.config import WideDeepConfig
+from src.model_utils.config import config as cfg
 
 
 def get_WideDeep_net(config):
@@ -103,12 +103,10 @@ def test_train_eval(config):
 
 
 if __name__ == "__main__":
-    wide_deep_config = WideDeepConfig()
-    wide_deep_config.argparse_init()
-    _enable_graph_kernel = wide_deep_config.device_target == "GPU"
+    _enable_graph_kernel = cfg.device_target == "GPU"
     context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=_enable_graph_kernel, device_target=wide_deep_config.device_target)
+                        enable_graph_kernel=_enable_graph_kernel, device_target=cfg.device_target)
     if _enable_graph_kernel:
         context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
-    context.set_context(enable_sparse=wide_deep_config.sparse)
-    test_train_eval(wide_deep_config)
+    context.set_context(enable_sparse=cfg.sparse)
+    test_train_eval(cfg)

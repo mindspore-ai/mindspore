@@ -15,40 +15,37 @@
 """
 ##############export checkpoint file into air, mindir and onnx models#################
 """
-import argparse
 import numpy as np
-
 from mindspore import Tensor, context, load_checkpoint, export, load_param_into_net
-
 from eval import ModelBuilder
-from src.config import WideDeepConfig
 
-parser = argparse.ArgumentParser(description="wide_and_deep export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="wide_and_deep", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
-args = parser.parse_args()
+from src.model_utils.device_adapter import get_device_id
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
 
-if __name__ == '__main__':
-    widedeep_config = WideDeepConfig()
-    widedeep_config.argparse_init()
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=get_device_id())
 
+def modelarts_pre_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def export_widedeep():
+    """ export_widedeep """
     net_builder = ModelBuilder()
-    _, eval_net = net_builder.get_net(widedeep_config)
+    _, eval_net = net_builder.get_net(config)
 
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(eval_net, param_dict)
     eval_net.set_train(False)
 
-    ids = Tensor(np.ones([widedeep_config.eval_batch_size, widedeep_config.field_size]).astype(np.int32))
-    wts = Tensor(np.ones([widedeep_config.eval_batch_size, widedeep_config.field_size]).astype(np.float32))
-    label = Tensor(np.ones([widedeep_config.eval_batch_size, 1]).astype(np.float32))
+    ids = Tensor(np.ones([config.eval_batch_size, config.field_size]).astype(np.int32))
+    wts = Tensor(np.ones([config.eval_batch_size, config.field_size]).astype(np.float32))
+    label = Tensor(np.ones([config.eval_batch_size, 1]).astype(np.float32))
     input_tensor_list = [ids, wts, label]
-    export(eval_net, *input_tensor_list, file_name=args.file_name, file_format=args.file_format)
+    export(eval_net, *input_tensor_list, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_widedeep()

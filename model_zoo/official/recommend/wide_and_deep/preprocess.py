@@ -14,33 +14,25 @@
 # ============================================================================
 """preprocess."""
 import os
-import argparse
-
 from src.datasets import create_dataset, DataType
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description='preprocess.')
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--result_path', type=str, default='./preprocess_Result', help='Result path')
-parser.add_argument("--batch_size", type=int, default=16000, help="infer batch size.")
-parser.add_argument("--dataset_type", type=str, default="mindrecord", choices=["tfrecord", "mindrecord", "hd5"])
-
-args_opt, _ = parser.parse_known_args()
 
 def generate_bin():
     '''generate bin files'''
-    data_path = args_opt.dataset_path
-    batch_size = args_opt.batch_size
-    if args_opt.dataset_type == "tfrecord":
+    data_path = config.dataset_path
+    batch_size = config.batch_size
+    if config.dataset_type == "tfrecord":
         dataset_type = DataType.TFRECORD
-    elif args_opt.dataset_type == "mindrecord":
+    elif config.dataset_type == "mindrecord":
         dataset_type = DataType.MINDRECORD
     else:
         dataset_type = DataType.H5
     ds = create_dataset(data_path, train_mode=False, epochs=1,
                         batch_size=batch_size, data_type=dataset_type)
-    feat_ids_path = os.path.join(args_opt.result_path, "00_feat_ids")
-    feat_vals_path = os.path.join(args_opt.result_path, "01_feat_vals")
-    label_path = os.path.join(args_opt.result_path, "02_labels")
+    feat_ids_path = os.path.join(config.result_path, "00_feat_ids")
+    feat_vals_path = os.path.join(config.result_path, "01_feat_vals")
+    label_path = os.path.join(config.result_path, "02_labels")
 
     os.makedirs(feat_ids_path)
     os.makedirs(feat_vals_path)

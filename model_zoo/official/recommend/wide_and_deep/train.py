@@ -18,7 +18,8 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMoni
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack
 from src.datasets import create_dataset, DataType
-from src.config import WideDeepConfig
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 def get_WideDeep_net(configure):
@@ -85,12 +86,18 @@ def test_train(configure):
     model.train(epochs, ds_train, callbacks=[TimeMonitor(ds_train.get_dataset_size()), callback, ckpoint_cb])
 
 
-if __name__ == "__main__":
-    config = WideDeepConfig()
-    config.argparse_init()
+def modelarts_pre_process():
+    pass
+    # config.ckpt_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_wide_and_deep():
     _enable_graph_kernel = config.device_target == "GPU"
     context.set_context(mode=context.GRAPH_MODE,
                         enable_graph_kernel=_enable_graph_kernel, device_target=config.device_target)
     if _enable_graph_kernel:
         context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
     test_train(config)
+
+if __name__ == "__main__":
+    train_wide_and_deep()

@@ -28,7 +28,7 @@ from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClas
 from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType, compute_manual_shape
 from src.metrics import AUCMetric
-from src.config import WideDeepConfig
+from src.model_utils.config import config as cfg
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -143,18 +143,16 @@ def train_and_eval(config):
 
 
 if __name__ == "__main__":
-    wide_deep_config = WideDeepConfig()
-    wide_deep_config.argparse_init()
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target=wide_deep_config.device_target)
+                        device_target=cfg.device_target)
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
     init()
     context.set_context(save_graphs_path='./graphs_of_device_id_' + str(get_rank()), save_graphs=True)
-    if wide_deep_config.sparse:
+    if cfg.sparse:
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, gradients_mean=True)
     else:
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.AUTO_PARALLEL, gradients_mean=True)
-    train_and_eval(wide_deep_config)
+    train_and_eval(cfg)

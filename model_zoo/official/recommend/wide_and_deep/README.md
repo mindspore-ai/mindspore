@@ -93,6 +93,58 @@ To evaluate the model, command as follows:
 python eval.py  --data_path=./data/mindrecord --dataset_type=mindrecord
 ```
 
+- Running on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    ```python
+    # Train 8p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "run_distribute=True" on default_config.yaml file.
+    #          Set "data_path=/cache/data/criteo_mindrecord/" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "run_distribute=True" on the website UI interface.
+    #          Add "dataset_path=/cache/data/criteo_mindrecord/" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (3) Set the code directory to "/path/wide_and_deep" on the website UI interface.
+    # (4) Set the startup file to "train.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    #
+    # Train 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data/criteo_mindrecord/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "dataset_path=/cache/data/criteo_mindrecord/" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (3) Set the code directory to "/path/wide_and_deep" on the website UI interface.
+    # (4) Set the startup file to "train.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    #
+    # Eval 1p on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data/criteo_mindrecord/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "ckpt_file=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "dataset_path=/cache/data/criteo_mindrecord/" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (3) Set the code directory to "/path/wide_and_deep" on the website UI interface.
+    # (4) Set the startup file to "eval.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -115,14 +167,19 @@ python eval.py  --data_path=./data/mindrecord --dataset_type=mindrecord
     │   └── start_cluster.sh
     ├── src
     │   ├── callbacks.py
-    │   ├── config.py
     │   ├── datasets.py
     │   ├── generate_synthetic_data.py
     │   ├── __init__.py
     │   ├── metrics.py
     │   ├── preprocess_data.py
     │   ├── process_data.py
-    │   └── wide_and_deep.py
+    │   ├── wide_and_deep.py
+    │   └── model_utils
+    │       ├── config.py                         # Processing configuration parameters
+    │       ├── device_adapter.py                 # Get cloud ID
+    │       ├── local_adapter.py                  # Get local ID
+    │       └── moxing_adapter.py                 # Parameter processing
+    ├── default_config.yaml                       # Training parameter profile
     ├── train_and_eval_auto_parallel.py
     ├── train_and_eval_distribute.py
     ├── train_and_eval_parameter_server.py
