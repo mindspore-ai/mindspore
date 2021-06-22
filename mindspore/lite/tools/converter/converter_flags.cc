@@ -23,6 +23,7 @@
 #include <vector>
 #include <memory>
 #include "ir/dtype/type_id.h"
+#include "common/file_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -198,7 +199,10 @@ int Flags::InitConfigFile() {
   auto plugins_path_str = GetStrFromConfigFile(this->configFile, "plugin_path");
   if (!plugins_path_str.empty()) {
     const char *delimiter = ";";
-    this->pluginsPath = SplitStringToVector(plugins_path_str, *delimiter);
+    auto relative_path = SplitStringToVector(plugins_path_str, *delimiter);
+    for (size_t i = 0; i < relative_path.size(); i++) {
+      this->pluginsPath.push_back(RealPath(relative_path[i].c_str()));
+    }
   }
 
   auto disable_fusion_flag = GetStrFromConfigFile(this->configFile, "disable_fusion");

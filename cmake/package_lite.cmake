@@ -398,7 +398,9 @@ else()
         file(GLOB PROTOBUF_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/protobuf_*/lib/libprotobuf.a)
         install(FILES ${PROTOBUF_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libmslite_converter_plugin.so
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/converter.cfg
+                DESTINATION ${CONVERTER_ROOT_DIR}/ COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libmslite_nnie_converter.so
                 DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D/ COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libmslite_nnie_data_process.so
                 DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
