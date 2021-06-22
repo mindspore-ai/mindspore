@@ -285,16 +285,39 @@ TensorPtr FetchInputTensor(const GraphCompilerInfo &graph_compiler_info, size_t 
 
 void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
                                        const AnfNodePtr &node, const TensorPtr &tensor,
-                                       std::vector<TensorPtr> *host_tensors) {
+                                       std::vector<TensorPtr> *host_tensors,
+                                       const DeviceContext *device_context = nullptr,
+                                       GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline) {
   MS_EXCEPTION_IF_NULL(tensor);
 
   // Fill the host tensors for non weighted parameters.
   const auto &iter = data_node_position_map.find(node);
-  if (iter != data_node_position_map.end()) {
-    (*host_tensors)[iter->second] = tensor;
-    auto device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
-    if (device_address != nullptr) {
-      AnfAlgo::SetOutputAddr(device_address, 0, node.get());
+  if (iter == data_node_position_map.end()) {
+    return;
+  }
+
+  (*host_tensors)[iter->second] = tensor;
+  auto device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
+  if (device_address != nullptr) {
+    AnfAlgo::SetOutputAddr(device_address, 0, node.get());
+    return;
+  }
+
+  if (strategy == GraphExecutionStrategy::kStep) {
+    auto node_device_address = AnfAlgo::GetMutableOutputAddr(node, 0, false);
+    MS_EXCEPTION_IF_NULL(node_device_address);
+    tensor->set_device_address(node_device_address);
+    UpdateRefCount(node_device_address.get(), true);
+
+    MS_EXCEPTION_IF_NULL(device_context);
+    if (!device_context->AllocateMemory(node_device_address.get(), node_device_address->GetSize())) {
+      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope();
+    }
+
+    if (!node_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0),
+                                               LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                               tensor->data_c(), tensor->device_info().host_format_)) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
     }
   }
 }
@@ -492,7 +515,7 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
                                     strategy)) {
         MS_EXCEPTION_IF_NULL(host_data_source_actor);
         PrepareDataForHostDataSourceActor(host_data_source_actor->data_node_position_map_, input_node, input_tensor,
-                                          &host_tensors);
+                                          &host_tensors, device_context, strategy);
       }
     }
   }

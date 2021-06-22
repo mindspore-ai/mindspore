@@ -247,8 +247,11 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
     auto &device_tensor = device_tensors[i];
     MS_EXCEPTION_IF_NULL(host_tensor);
     MS_EXCEPTION_IF_NULL(device_tensor);
-
-    if (std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address()) != nullptr) {
+    auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
+    if (tensor_device_address != nullptr) {
+      if (tensor_device_address.get() != device_tensor) {
+        MS_LOG(EXCEPTION) << "The device tensor of host queue node should be equal to device address of input tensor";
+      }
       continue;
     }
 

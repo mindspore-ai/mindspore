@@ -54,7 +54,7 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
   return device_context.get();
 }
 
-void DeviceContextManager::UpdataDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key) {
+void DeviceContextManager::UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key) {
   std::string old_key_str = old_key.ToString();
   std::string new_key_str = new_key.ToString();
 
