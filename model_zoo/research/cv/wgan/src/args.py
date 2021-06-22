@@ -62,7 +62,18 @@ def get_args(phase):
     elif phase == 'eval':
         parser.add_argument('--config', required=True, type=str, help='path to generator config .json file')
         parser.add_argument('--ckpt_file', required=True, type=str, help='path to generator weights .ckpt file')
-        parser.add_argument('--output_dir', required=True, type=str, help="path to to output directory")
+        parser.add_argument('--output_dir', required=True, type=str, help="path to output directory")
+        parser.add_argument('--nimages', required=True, type=int, help="number of images to generate", default=1)
+
+    elif phase == 'pre310':
+        parser.add_argument('--config', required=True, type=str, help='path to generator config .json file')
+        parser.add_argument('--pre_result_path', type=str, help="preprocess dir", default='./preprocess_Result/')
+        parser.add_argument('--nimages', required=True, type=int, help="number of images to generate", default=1)
+
+    elif phase == 'post310':
+        parser.add_argument('--config', required=True, type=str, help='path to generator config .json file')
+        parser.add_argument('--output_dir', type=str, help="path to output directory", default='./infer_output')
+        parser.add_argument('--post_result_path', type=str, help="postprocess dir", default='./result_Files')
         parser.add_argument('--nimages', required=True, type=int, help="number of images to generate", default=1)
 
     args_opt = parser.parse_args()
