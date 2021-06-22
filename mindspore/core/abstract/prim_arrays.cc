@@ -897,7 +897,7 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
   int64_t axis_value = CheckAxis(op_name, axis, -(rank + 1), rank);
   uint64_t axis_value_pos = LongToUlong(GetPositiveAxis(axis_value, LongToSize(rank)));
   int64_t output_num_value = primitive->GetAttr("output_num")->cast<Int64ImmPtr>()->value();
-  if ((x_shape[axis_value] != Shape::SHP_ANY) && (x_shape[axis_value_pos] % output_num_value != 0)) {
+  if ((x_shape[axis_value_pos] != Shape::SHP_ANY) && (x_shape[axis_value_pos] % output_num_value != 0)) {
     MS_LOG(EXCEPTION) << "x_shape[" << axis_value_pos << "] = " << x_shape[axis_value_pos]
                       << " must be divisible by output_num = " << output_num_value;
   }
