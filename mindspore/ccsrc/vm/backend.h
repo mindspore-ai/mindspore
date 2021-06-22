@@ -43,6 +43,7 @@ using GraphCompiler = runtime::GraphCompiler;
 using GraphCompilerInfo = runtime::GraphCompilerInfo;
 using ControlNodeParser = runtime::ControlNodeParser;
 using ControlNodeParserPtr = runtime::ControlNodeParserPtr;
+using KernelWithIndex = session::KernelWithIndex;
 
 enum SwitchCondStatus {
   kCondOk = 0,
@@ -153,6 +154,9 @@ class MindRTBackend : public Backend {
   std::vector<AnfNodePtr> control_nodes_;
 
   std::unordered_map<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
+
+  // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
+  std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;
 
   FuncGraphPtr root_graph_;
   GraphPartitionPtr graph_partition_;

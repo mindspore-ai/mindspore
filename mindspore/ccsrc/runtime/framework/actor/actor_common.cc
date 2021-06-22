@@ -47,8 +47,12 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
   }
 }
 
-bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
+bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
+  if (strategy == GraphExecutionStrategy::kStep) {
+    return false;
+  }
+
   if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
     return true;
   }
@@ -70,12 +74,17 @@ bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph) {
   return false;
 }
 
-bool IsKernelActor(const AnfNodePtr &node) {
+bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) != kGetNextOpName)) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+
+  if (strategy == GraphExecutionStrategy::kStep) {
     return true;
   }
-  return false;
+
+  return (AnfAlgo::GetCNodeName(node) != kGetNextOpName);
 }
 
 bool IsSkippedKernelActor(const AnfNodePtr &node) {

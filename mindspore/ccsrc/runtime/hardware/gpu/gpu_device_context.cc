@@ -294,17 +294,35 @@ void GPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr>
   graph->UpdateGraphDynamicAttr();
 }
 
-void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
-  SetOperatorInfo(graph->execution_order());
+namespace {
+void RunOpOptimize(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
 
+void RunOpHardwareOptimize(const KernelGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
   optimizer->AddPassManager(pm);
-  (void)optimizer->Optimize(graph);
-  graph->SetExecOrderByDefault();
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+}  // namespace
+
+void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  RunOpOptimize(graph);
+
+  FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
+  SetOperatorInfo(graph->execution_order());
+
+  RunOpHardwareOptimize(graph);
 }
 
 void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {

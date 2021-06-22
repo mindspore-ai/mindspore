@@ -37,6 +37,11 @@ using DeviceTensor = mindspore::device::DeviceAddress;
 constexpr int kSuccess = 0;
 constexpr int kFailure = 1;
 
+enum class GraphExecutionStrategy {
+  kPipeline,  // The actor running is triggered only by data.
+  kStep       // The actor running need be triggered by control in addition.
+};
+
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
   {                                                            \
     MS_LOG(ERROR) << message;                                  \
@@ -50,12 +55,24 @@ constexpr int kFailure = 1;
     return;                                   \
   }
 
+#define SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy, op_context, message) \
+  {                                                                                  \
+    if (strategy == GraphExecutionStrategy::kStep) {                                 \
+      MS_LOG(EXCEPTION) << message;                                                  \
+    }                                                                                \
+    MS_LOG(ERROR) << message;                                                        \
+    op_context.SetFailed(kFailure);                                                  \
+    return;                                                                          \
+  }
+
 void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num);
 
-bool IsDeviceQueueDSActor(const AnfNodePtr &node);
+bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
-bool IsKernelActor(const AnfNodePtr &node);
+bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
+
 bool IsSwitchActor(const AnfNodePtr &node);
+
 // The skip kernel doesn't run, it exists in the inplace optimizer.
 bool IsSkippedKernelActor(const AnfNodePtr &node);
 

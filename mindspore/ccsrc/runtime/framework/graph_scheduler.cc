@@ -285,9 +285,7 @@ TensorPtr FetchInputTensor(const GraphCompilerInfo &graph_compiler_info, size_t 
 
 void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
                                        const AnfNodePtr &node, const TensorPtr &tensor,
-                                       std::vector<TensorPtr> *host_tensors,
-                                       const DeviceContext *device_context = nullptr,
-                                       GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline) {
+                                       std::vector<TensorPtr> *host_tensors) {
   MS_EXCEPTION_IF_NULL(tensor);
 
   // Fill the host tensors for non weighted parameters.
@@ -302,30 +300,94 @@ void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size
     AnfAlgo::SetOutputAddr(device_address, 0, node.get());
     return;
   }
+}
 
-  if (strategy == GraphExecutionStrategy::kStep) {
-    auto node_device_address = AnfAlgo::GetMutableOutputAddr(node, 0, false);
-    MS_EXCEPTION_IF_NULL(node_device_address);
-    tensor->set_device_address(node_device_address);
-    UpdateRefCount(node_device_address.get(), true);
+void PrepareDataForInputData(HostQueueDataSourceActor *host_data_source_actor, const AnfNodePtr &node,
+                             const TensorPtr &tensor, std::vector<TensorPtr> *host_tensors,
+                             const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  // Fill the host tensors for non weighted parameters.
+  if (host_data_source_actor) {
+    (*host_tensors)[host_data_source_actor->FetchDataNodePosition(node)] = tensor;
+  }
 
-    MS_EXCEPTION_IF_NULL(device_context);
-    if (node_device_address->GetPtr() == nullptr &&
-        !device_context->AllocateMemory(node_device_address.get(), node_device_address->GetSize())) {
-      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope();
+  auto device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
+  if (device_address != nullptr) {
+    AnfAlgo::SetOutputAddr(device_address, 0, node.get());
+    return;
+  }
+
+  DeviceTensorPtr node_device_address = nullptr;
+  if (!AnfAlgo::OutputAddrExist(node, 0, false)) {
+    TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(node, 0);
+    if (output_type_id == kTypeUnknown) {
+      output_type_id = AnfAlgo::GetOutputInferDataType(node, 0);
     }
 
-    if (!node_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0),
-                                               LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                               tensor->data_c(), tensor->device_info().host_format_)) {
-      MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
-    }
+    size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(node, 0);
+    auto new_device_address =
+      device_context->CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(node, 0), output_type_id);
+    AnfAlgo::SetOutputAddr(new_device_address, 0, node.get());
+    node_device_address = new_device_address;
+  } else {
+    node_device_address = AnfAlgo::GetMutableOutputAddr(node, 0, false);
+  }
+
+  tensor->set_device_address(node_device_address);
+  UpdateRefCount(node_device_address.get(), true);
+
+  MS_EXCEPTION_IF_NULL(device_context);
+  if (node_device_address->GetPtr() == nullptr &&
+      !device_context->AllocateMemory(node_device_address.get(), node_device_address->GetSize())) {
+    MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope();
+  }
+
+  if (!node_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0),
+                                             LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
+                                             tensor->device_info().host_format_)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
   }
 }
 
 inline bool IsSingleOpActorSet(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
   return actor_set->kernel_actors_.size() == 1;
+}
+
+bool RunInStepMode(const ActorSet *actor_set, const std::vector<TensorPtr> *input_tensors) {
+  OpContext<DeviceTensor> op_context;
+  // Step mode does not need sequential number.
+  op_context.sequential_num_ = nullptr;
+
+  // Trigger kernel actor running in the step execution strategy.
+  if (IsSingleOpActorSet(actor_set)) {
+    MS_EXCEPTION_IF_NULL(input_tensors);
+    for (auto &kernel_actor : actor_set->kernel_actors_) {
+      MS_EXCEPTION_IF_NULL(kernel_actor);
+      kernel_actor->RunOpControlWithInputTensor(nullptr, &op_context, input_tensors);
+    }
+    return true;
+  }
+
+  std::vector<Promise<int>> result(1);
+  op_context.results_ = &result;
+
+  // Trigger data source actor running.
+  for (auto &data_source_actor : actor_set->data_source_actors_) {
+    MS_EXCEPTION_IF_NULL(data_source_actor);
+    Async(data_source_actor->GetAID(), &DataSourceActor::FetchData, &op_context);
+  }
+
+  // Trigger no input kernel actor running.
+  for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
+    Async(no_input_kernel_actor->GetAID(), &KernelActor::RunOpControl, nullptr, &op_context);
+  }
+
+  auto result_future = result[0].GetFuture();
+  result_future.Wait();
+  MsException::Instance().CheckException();
+  return result_future.IsOK();
 }
 }  // namespace
 
@@ -498,7 +560,6 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-
     // 1.Prepare the data of device tensor store(value nodes of graph).
     for (const auto &value_node : graph->graph_value_nodes()) {
       if (AnfAlgo::OutputAddrExist(value_node, 0)) {
@@ -521,7 +582,7 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
                                     graph_compiler_info.strategy_)) {
         MS_EXCEPTION_IF_NULL(host_data_source_actor);
         PrepareDataForHostDataSourceActor(host_data_source_actor->data_node_position_map_, input_node, input_tensor,
-                                          &host_tensors, device_context, graph_compiler_info.strategy_);
+                                          &host_tensors);
       }
     }
   }
@@ -553,6 +614,52 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
                             input_tensors.back(), host_data_source_actor->data_node_position_map_, &host_tensors);
 
   // 4.Prepare the data of host tensor queue(non weighted parameters of graph).
+  if (host_data_source_actor != nullptr) {
+    const auto &host_tensor_queue = FetchHostQueue(actor_set->name_);
+    MS_EXCEPTION_IF_NULL(host_tensor_queue);
+    host_tensor_queue->Push(host_tensors);
+  }
+}
+
+void GraphScheduler::PrepareRunOp(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info,
+                                  const std::vector<std::vector<TensorPtr>> &input_tensors) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  std::vector<TensorPtr> host_tensors;
+  std::string actor_name = actor_set->name_ + "_HostDSActor";
+  const auto &host_data_source_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
+  if (host_data_source_actor != nullptr) {
+    host_tensors.resize(host_data_source_actor->data_nodes_.size());
+  }
+
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &graph = graph_compiler_info.graphs_[i];
+    const auto &device_context = graph_compiler_info.device_contexts_[i];
+    MS_EXCEPTION_IF_NULL(graph);
+
+    // 1.Prepare the data of device tensor store(value nodes of graph).
+    for (const auto &value_node : graph->graph_value_nodes()) {
+      if (AnfAlgo::OutputAddrExist(value_node, 0)) {
+        PrepareDataForValueNode(value_node, device_context);
+      }
+    }
+
+    // 2.Prepare the data of device tensor store(weights of graph), and fill host tensors for non weighted parameters.
+    const auto &input_nodes = graph->input_nodes();
+    const auto &tensors = input_tensors[i];
+    for (size_t j = 0; j < input_nodes.size(); ++j) {
+      const auto &input_node = input_nodes[j];
+      const auto &input_tensor = tensors[j];
+      MS_EXCEPTION_IF_NULL(input_node);
+      if (IsPersistentDeviceTensor(input_node)) {
+        // Prepare the device data for weights.
+        PrepareDataForWeightNode(input_node, input_node, input_tensor, device_context);
+      } else {
+        PrepareDataForInputData(host_data_source_actor, input_node, input_tensor, &host_tensors, device_context);
+      }
+    }
+  }
+
+  // 3.Prepare the data of host tensor queue(non weighted parameters of graph).
   if (host_data_source_actor != nullptr) {
     const auto &host_tensor_queue = FetchHostQueue(actor_set->name_);
     MS_EXCEPTION_IF_NULL(host_tensor_queue);
@@ -596,12 +703,16 @@ void GraphScheduler::PrepareDataForControlNode(const ControlNodeParserPtr &contr
 bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strategy,
                          const std::vector<TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(actor_set);
+
+  if (strategy == GraphExecutionStrategy::kStep) {
+    return RunInStepMode(actor_set, input_tensors);
+  }
+
   // Construct OpContext.
   OpContext<DeviceTensor> op_context;
   uuids::uuid sequential_num;
   std::vector<Promise<int>> result(1);
-  // Step mode does not need sequential number.
-  op_context.sequential_num_ = (strategy == GraphExecutionStrategy::kPipeline) ? &sequential_num : nullptr;
+  op_context.sequential_num_ = &sequential_num;
   op_context.results_ = &result;
 
   // Trigger data source actor running.
@@ -614,15 +725,6 @@ bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strat
   for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
     Async(no_input_kernel_actor->GetAID(), &KernelActor::RunOpControl, nullptr, &op_context);
-  }
-
-  // Trigger kernel actor running in the step execution strategy.
-  if (strategy == GraphExecutionStrategy::kStep && IsSingleOpActorSet(actor_set)) {
-    MS_EXCEPTION_IF_NULL(input_tensors);
-    for (auto &kernel_actor : actor_set->kernel_actors_) {
-      MS_EXCEPTION_IF_NULL(kernel_actor);
-      Async(kernel_actor->GetAID(), &KernelActor::RunOpControlWithInputTensor, nullptr, &op_context, input_tensors);
-    }
   }
 
   // Trigger output actor running when there are no data source actor and kernel actor.
@@ -679,9 +781,9 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
 
       auto actor_output_index = output_with_index.second;
       OpActor<DeviceTensor> *actor = nullptr;
-      if (IsKernelActor(output_kernel)) {
+      if (IsKernelActor(output_kernel, graph_compiler_info.strategy_)) {
         actor = FetchActor(output_kernel->fullname_with_scope());
-      } else if (IsDeviceQueueDSActor(output_kernel)) {
+      } else if (IsDeviceQueueDSActor(output_kernel, graph_compiler_info.strategy_)) {
         std::string actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
         actor = FetchActor(actor_name);
       } else if (IsHostQueueDSActor(output_kernel, graph, nullptr, graph_compiler_info.origin_parameters_order_,
@@ -721,7 +823,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     MS_EXCEPTION_IF_NULL(graph);
     auto execution_order = graph->execution_order();
     for (auto &kernel : execution_order) {
-      if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel))) {
+      if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel, graph_compiler_info.strategy_))) {
         continue;
       }
       const auto &kernel_actor = dynamic_cast<KernelActor *>(FetchActor(kernel->fullname_with_scope()));
@@ -752,8 +854,10 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     LinkControlArrowByCommunicationNode(graph);
   }
 
-  // Link the arrow by control node.
-  LinkArrowByControlNode(graph_compiler_info, actor_set);
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
+    // Link the arrow by control node.
+    LinkArrowByControlNode(graph_compiler_info, actor_set);
+  }
 
   // Auto monad actor may modify the device tensor store.
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
@@ -831,8 +935,10 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
 
     // Build device queue data source actor.
     const auto &execution_order = graph->execution_order();
-    const auto &iter = std::find_if(execution_order.begin(), execution_order.end(),
-                                    [](const CNodePtr &node) { return IsDeviceQueueDSActor(node); });
+    const auto &iter =
+      std::find_if(execution_order.begin(), execution_order.end(), [&graph_compiler_info](const CNodePtr &node) {
+        return IsDeviceQueueDSActor(node, graph_compiler_info.strategy_);
+      });
     if (iter != execution_order.end()) {
       auto actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
       MS_LOG(INFO) << "Create queue data source actor: " << actor_name;
@@ -891,10 +997,18 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
     auto execution_order = graph->execution_order();
+
+    // Single op graph in step mode, kernel actor executes synchronously.
+    bool is_single_op_graph = execution_order.size() == 1;
+    GraphExecutionStrategy strategy = graph_compiler_info.strategy_;
+    if (strategy == GraphExecutionStrategy::kStep) {
+      strategy = (is_single_op_graph ? strategy : GraphExecutionStrategy::kPipeline);
+    }
+
     for (auto &kernel : execution_order) {
-      if (IsKernelActor(kernel) && (!IsSkippedKernelActor(kernel))) {
+      if (IsKernelActor(kernel, graph_compiler_info.strategy_) && (!IsSkippedKernelActor(kernel))) {
         auto kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context,
-                                                          memory_manager_aid_, debug_aid_, recorder_aid_);
+                                                          memory_manager_aid_, debug_aid_, recorder_aid_, strategy);
         MS_EXCEPTION_IF_NULL(kernel_actor);
         InsertActor(kernel_actor.get());
         kernel_actors.emplace_back(kernel_actor);
@@ -949,6 +1063,10 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
 }
 
 OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_compiler_info) {
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
+    return nullptr;
+  }
+
   auto loop_count = ConfigManager::GetInstance().iter_num();
   auto actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
   bool need_loop_count = (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) ? true : false;
@@ -1162,7 +1280,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
     return;
   }
 
-  if (IsDeviceQueueDSActor(from_kernel)) {
+  if (IsDeviceQueueDSActor(from_kernel, graph_compiler_info.strategy_)) {
     // Link the data arrows of device queue data source actor.
     std::string actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
     const auto &from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(FetchActor(actor_name));
@@ -1187,7 +1305,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
     std::string actor_name = graph_compiler_info.name_ + "_HostDSActor";
     const auto &from_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
     LinkDataArrowForHostDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsKernelActor(from_kernel)) {
+  } else if (IsKernelActor(from_kernel, graph_compiler_info.strategy_)) {
     // Link the data arrows of kernel actor.
     const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(from_kernel->fullname_with_scope()));
     LinkDataArrowForKernelActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
@@ -1639,6 +1757,10 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
 
 void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
                                                          const GraphCompilerInfo &graph_compiler_info) {
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
+    return;
+  }
+
   MS_EXCEPTION_IF_NULL(to_actor);
 
   size_t number = 0;
@@ -1696,7 +1818,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
           from_actor_output_index = host_queue_ds_actor->FetchDataNodePosition(output_with_index.first);
           UpdateRefCount(host_queue_ds_actor->data_nodes_[from_actor_output_index], output_with_index.second, true);
           from_actor = static_cast<DataSourceActor *>(host_queue_ds_actor);
-        } else if (IsDeviceQueueDSActor(output_with_index.first)) {
+        } else if (IsDeviceQueueDSActor(output_with_index.first, graph_compiler_info.strategy_)) {
           actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
           from_actor = dynamic_cast<DataSourceActor *>(FetchActor(actor_name));
           from_actor_output_index = output_with_index.second;
@@ -2085,7 +2207,7 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
     auto actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     LinkDataArrowForSwitchActor(dynamic_cast<SwitchActor *>(actor), 0, to_actor, to_index);
-  } else if (IsKernelActor(input_node)) {
+  } else if (IsKernelActor(input_node, graph_compiler_info.strategy_)) {
     // The actor input is a cnode.
     if (front_node_to_actor_.find(input_node) == front_node_to_actor_.end()) {
       MS_LOG(EXCEPTION) << "Cannot find actor:" << to_actor->GetAID()
@@ -2559,21 +2681,8 @@ bool GraphScheduler::IsHostQueueDSActor(const AnfNodePtr &node, const KernelGrap
   }
 
   if (strategy == GraphExecutionStrategy::kStep) {
-    if (is_host_queue_node_.find(node.get()) != is_host_queue_node_.end()) {
-      return true;
-    }
-
-    if (graph != nullptr && graph->execution_order().size() > 1) {
-      is_host_queue_node_.try_emplace(node.get(), true);
-      return true;
-    }
-    // There is device address in tensor, indicating the input tensor is certain kernel's output,
-    // so it's unnecessary to put the input node to host queue data source actor.
-    if (tensor != nullptr && std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
-      return false;
-    }
-    is_host_queue_node_.try_emplace(node.get(), true);
-    return true;
+    MS_EXCEPTION_IF_NULL(graph);
+    return graph->execution_order().size() > 1;
   }
 
   if (graph == nullptr) {

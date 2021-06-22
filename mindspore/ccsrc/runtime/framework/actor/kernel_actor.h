@@ -44,7 +44,8 @@ using mindspore::tensor::TensorPtr;
 class KernelActor : public DebugAwareActor {
  public:
   KernelActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
-              const AID memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
+              const AID memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
+              GraphExecutionStrategy strategy)
       : DebugAwareActor(name),
         kernel_(kernel),
         kernel_info_(nullptr),
@@ -56,7 +57,8 @@ class KernelActor : public DebugAwareActor {
         input_datas_num_(0),
         input_controls_num_(0),
         real_input_num_(0),
-        running_dependent_msg_num_(1) {}
+        running_dependent_msg_num_(1),
+        strategy_(strategy) {}
   ~KernelActor() override = default;
 
   void Init() override;
@@ -125,6 +127,11 @@ class KernelActor : public DebugAwareActor {
   size_t real_input_num_;
   // The dependent messages number of actor running.
   int running_dependent_msg_num_;
+
+  // The execution strategy of kernel actor.
+  // In pipeline mode, kernel actor executes asynchronously.
+  // In step mode, kernel actor executes synchronously.
+  GraphExecutionStrategy strategy_{GraphExecutionStrategy::kPipeline};
 
   // The dependent input actors.
   std::vector<AID> input_data_arrow_aids_;

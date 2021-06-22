@@ -258,6 +258,18 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
     device_address->ResetRefCount();
   }
 }
+
+void UpdateRefCountForGraphOutput(const std::vector<KernelWithIndex> &output_with_index) {
+  for (const auto &item_with_index : output_with_index) {
+    if (!AnfAlgo::OutputAddrExist(item_with_index.first, item_with_index.second, false)) {
+      continue;
+    }
+    auto device_address = AnfAlgo::GetMutableOutputAddr(item_with_index.first, item_with_index.second, false);
+    MS_EXCEPTION_IF_NULL(device_address);
+    device_address->set_original_ref_count(SIZE_MAX);
+    device_address->ResetRefCount();
+  }
+}
 }  // namespace
 
 GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs,
@@ -352,6 +364,16 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
   run_op_graphs_[graph_info] = graph;
+
+  auto output_nodes = graph->outputs();
+  auto &outputs_with_index = run_op_graph_output_nodes_[graph->graph_id()];
+  for (auto &node : output_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    outputs_with_index.emplace_back(AnfAlgo::VisitKernelWithReturnType(node, 0, false));
+  }
+
+  UpdateRefCountForGraphOutput(outputs_with_index);
+
   return graph->graph_id();
 }
 
@@ -430,6 +452,14 @@ void GraphCompiler::AddGradAddrToBucket(const GraphId &graph_id, const std::vect
 void GraphCompiler::ClearAllBucket(const GraphId &graph_id) {
   MS_EXCEPTION_IF_NULL(session_);
   session_->ClearAllBucket(graph_id);
+}
+
+const std::vector<KernelWithIndex> &GraphCompiler::GetGraphOutputNodes(GraphId graph_id) const {
+  const auto &iter = run_op_graph_output_nodes_.find(graph_id);
+  if (iter == run_op_graph_output_nodes_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find output nodes for graph id: " << graph_id;
+  }
+  return iter->second;
 }
 
 void GraphCompiler::RegisterSummaryCallBackFunc(const CallBackFunc &callback) const {
