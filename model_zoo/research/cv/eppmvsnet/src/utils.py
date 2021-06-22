@@ -12,22 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""other functions of EPP-MVSNet"""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
 import re
 import sys
 
+import numpy as np
+
+
 def read_pfm(filename):
+    """read pfm files"""
     file = open(filename, 'rb')
     color = None
     width = None
     height = None
     scale = None
     endian = None
-    
+
     header = file.readline().decode('utf-8').rstrip()
     if header == 'PF':
         color = True
@@ -59,6 +64,7 @@ def read_pfm(filename):
 
 
 def save_pfm(filename, image, scale=1):
+    """save pfm files"""
     file = open(filename, "wb")
     color = None
 
@@ -88,20 +94,23 @@ def save_pfm(filename, image, scale=1):
     file.close()
 
 
-class AverageMeter(object):
+class AverageMeter:
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 
     def reset(self):
+        """reset averagemeter"""
         self.val = 0
         self.avg = 0
         self.sum = 0
         self.count = 0
 
     def update(self, val, n=1):
+        """update averagemeter"""
         self.val = val
         self.sum += val * n
         self.count += n
         if self.count > 0:
-          self.avg = self.sum / self.count
+            self.avg = self.sum / self.count

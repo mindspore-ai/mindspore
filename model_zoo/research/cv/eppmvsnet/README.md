@@ -21,20 +21,20 @@
 
 # [EPP-MVSNet](#contents)
 
-EPP-MVSNet was proposed in 2021 by Parallel Distributed Computing Lab & Huawei Riemann Lab. By aggregating features at high resolution to a 
+EPP-MVSNet was proposed in 2021 by Parallel Distributed Computing Lab & Huawei Riemann Lab. By aggregating features at high resolution to a
 limited cost volume with an optimal depth range, thus, EPP-MVSNet leads to effective and efﬁcient 3D construction. Moreover, EPP-MVSNet achieved
 highest F-Score on the online TNT intermediate benchmark. This is a example of evaluation of EPP-MVSNet with BlendedMVS dataset in MindSpore. More
 importantly, this is the first open source version for EPP-MVSNet.
 
 # [Model Architecture](#contents)
 
-Specially, EPP-MVSNet contains two main modules. The first part is feature extraction network, which extracts 2D features of a group of pictures(one reference 
-view and some source views) iteratively. The second part which contains three stages, iteratively regularizes the 3D cost volume composed of 2D features 
+Specially, EPP-MVSNet contains two main modules. The first part is feature extraction network, which extracts 2D features of a group of pictures(one reference
+view and some source views) iteratively. The second part which contains three stages, iteratively regularizes the 3D cost volume composed of 2D features
 using homography transformation, and finally predicts depth map.
 
 # [Dataset](#contents)
 
-The dataset used in this example is BlendedMVS, which is a large-scale MVS dataset for generalized multi-view stereo networks. The dataset contains 
+The dataset used in this example is BlendedMVS, which is a large-scale MVS dataset for generalized multi-view stereo networks. The dataset contains
 17k MVS training samples covering a variety of 113 scenes, including architectures, sculptures and small objects.
 
 # [Features](#contents)

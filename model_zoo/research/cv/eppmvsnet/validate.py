@@ -12,21 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import cv2
+"""EPP-MVSNet's validation process on BlendedMVS dataset"""
+
 import os
 import time
-import numpy as np
-import mindspore.dataset as ds
-from tqdm import tqdm
-from mindspore import context
 from argparse import ArgumentParser
+
+import cv2
+import numpy as np
+from tqdm import tqdm
+
+import mindspore.dataset as ds
+from mindspore import context
 from mindspore.ops import operations as P
+
 from src.eppmvsnet import EPPMVSNet
 from src.blendedmvs import BlendedMVSDataset
 from src.utils import save_pfm, AverageMeter
 
 
 def get_opts():
+    """set options"""
     parser = ArgumentParser()
     parser.add_argument('--gpu_id', type=int, default=0, choices=[0, 1, 2, 3, 4, 5, 6, 7],
                         help='which gpu used to inference')
@@ -78,7 +84,7 @@ if __name__ == "__main__":
     print(args.interval_ratios)
     # Step 1. Create depth estimation and probability for each scan
     EPPMVSNet_eval = EPPMVSNet(n_depths=args.n_depths, interval_ratios=args.interval_ratios,
-                                       entropy_range=args.entropy_range, height=args.img_wh[1], width=args.img_wh[0])
+                               entropy_range=args.entropy_range, height=args.img_wh[1], width=args.img_wh[0])
     EPPMVSNet_eval.set_train(False)
 
     depth_dir = f'results/{args.dataset_name}/{args.split}/depth'
@@ -89,7 +95,7 @@ if __name__ == "__main__":
         data_range = range(len(dataset))
     test_loader = ds.GeneratorDataset(dataset, column_names=["imgs", "proj_mats", "init_depth_min", "depth_interval",
                                                              "scan", "vid", "depth_0", "mask_0", "fix_depth_interval"],
-                                       num_parallel_workers=1, shuffle=False)
+                                      num_parallel_workers=1, shuffle=False)
     test_loader = test_loader.batch(batch_size=1)
     test_data_size = test_loader.get_dataset_size()
     print("train dataset length is:", test_data_size)

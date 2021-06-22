@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""sub-networks of EPP-MVSNet"""
+
 import numpy as np
 import mindspore
 import mindspore.ops as P
@@ -21,6 +23,7 @@ from src.modules import depth_regression, soft_argmin, entropy
 
 
 class BasicBlockA(nn.Cell):
+    """BasicBlockA"""
 
     def __init__(self, in_channels, out_channels, stride):
         super(BasicBlockA, self).__init__()
@@ -34,6 +37,7 @@ class BasicBlockA(nn.Cell):
         self.relu_8 = nn.ReLU()
 
     def construct(self, x):
+        """construct"""
         x1 = self.conv2d_0(x)
         x1 = self.batchnorm2d_2(x1)
         x1 = self.relu_4(x1)
@@ -49,6 +53,7 @@ class BasicBlockA(nn.Cell):
 
 
 class BasicBlockB(nn.Cell):
+    """BasicBlockB"""
 
     def __init__(self, in_channels, out_channels):
         super(BasicBlockB, self).__init__()
@@ -60,6 +65,7 @@ class BasicBlockB(nn.Cell):
         self.relu_6 = nn.ReLU()
 
     def construct(self, x):
+        """construct"""
         x1 = self.conv2d_0(x)
         x1 = self.batchnorm2d_1(x1)
         x1 = self.relu_2(x1)
@@ -74,6 +80,7 @@ class BasicBlockB(nn.Cell):
 
 
 class UNet2D(nn.Cell):
+    """UNet2D"""
 
     def __init__(self):
         super(UNet2D, self).__init__()
@@ -113,9 +120,9 @@ class UNet2D(nn.Cell):
         params_not_loaded = mindspore.load_param_into_net(self, param_dict, strict_load=True)
         print(params_not_loaded)
 
-
     def construct(self, imgs):
-        nv, ch, h, w = imgs.shape
+        """construct"""
+        _, _, h, w = imgs.shape
 
         x = self.conv2d_0(imgs)
         x = self.batchnorm2d_1(x)
@@ -129,14 +136,14 @@ class UNet2D(nn.Cell):
         x3 = self.convblockb_2(x3)
 
         x2_upsample = self.conv2dbackpropinput_51(x3, self.conv2dbackpropinput_51_weight,
-                                                  (x2.shape[0], x2.shape[1], h//4, w//4))
-        x2_upsample = self.concat((x2_upsample, x2, ))
+                                                  (x2.shape[0], x2.shape[1], h // 4, w // 4))
+        x2_upsample = self.concat((x2_upsample, x2,))
         x2_upsample = self.conv2d_54(x2_upsample)
         x2_upsample = self.convblockb_3(x2_upsample)
 
         x1_upsample = self.conv2dbackpropinput_62(x2_upsample, self.conv2dbackpropinput_62_weight,
-                                                  (x1.shape[0], x1.shape[1], h//2, w//2))
-        x1_upsample = self.concat((x1_upsample, x1, ))
+                                                  (x1.shape[0], x1.shape[1], h // 2, w // 2))
+        x1_upsample = self.concat((x1_upsample, x1,))
         x1_upsample = self.conv2d_65(x1_upsample)
         x1_upsample = self.convblockb_4(x1_upsample)
 
@@ -147,6 +154,7 @@ class UNet2D(nn.Cell):
 
 
 class ConvBnReLu(nn.Cell):
+    """ConvBnReLu"""
 
     def __init__(self, in_channels, out_channels):
         super(ConvBnReLu, self).__init__()
@@ -156,6 +164,7 @@ class ConvBnReLu(nn.Cell):
         self.leakyrelu_2 = nn.LeakyReLU(alpha=0.009999999776482582)
 
     def construct(self, x):
+        """construct"""
         x = self.conv3d_0(x)
         x = self.batchnorm3d_1(x)
         x = self.leakyrelu_2(x)
@@ -163,6 +172,7 @@ class ConvBnReLu(nn.Cell):
 
 
 class CostCompression(nn.Cell):
+    """CostCompression"""
 
     def __init__(self):
         super(CostCompression, self).__init__()
@@ -175,25 +185,33 @@ class CostCompression(nn.Cell):
         print(params_not_loaded)
 
     def construct(self, x):
+        """construct"""
         x = self.basicblock_0(x)
         x = self.basicblock_1(x)
         x = self.basicblock_2(x)
         return x
 
+
 class Pseudo3DBlock_A(nn.Cell):
+    """Pseudo3DBlock_A"""
 
     def __init__(self, in_channels, out_channels):
         super(Pseudo3DBlock_A, self).__init__()
-        self.conv3d_0 = nn.Conv3d(in_channels, out_channels, (1, 3, 3), stride=1, padding=(0, 0, 1, 1, 1, 1), pad_mode="pad")
-        self.conv3d_1 = nn.Conv3d(out_channels, out_channels, (3, 1, 1), stride=1, padding=(1, 1, 0, 0, 0, 0), pad_mode="pad")
+        self.conv3d_0 = nn.Conv3d(in_channels, out_channels, (1, 3, 3), stride=1, padding=(0, 0, 1, 1, 1, 1),
+                                  pad_mode="pad")
+        self.conv3d_1 = nn.Conv3d(out_channels, out_channels, (3, 1, 1), stride=1, padding=(1, 1, 0, 0, 0, 0),
+                                  pad_mode="pad")
         self.batchnorm3d_2 = nn.BatchNorm3d(out_channels, eps=9.999999747378752e-06, momentum=0.8999999761581421)
         self.relu_3 = nn.ReLU()
-        self.conv3d_4 = nn.Conv3d(out_channels, out_channels, (1, 3, 3), stride=1, padding=(0, 0, 1, 1, 1, 1), pad_mode="pad")
-        self.conv3d_5 = nn.Conv3d(out_channels, out_channels, (3, 1, 1), stride=1, padding=(1, 1, 0, 0, 0, 0), pad_mode="pad")
+        self.conv3d_4 = nn.Conv3d(out_channels, out_channels, (1, 3, 3), stride=1, padding=(0, 0, 1, 1, 1, 1),
+                                  pad_mode="pad")
+        self.conv3d_5 = nn.Conv3d(out_channels, out_channels, (3, 1, 1), stride=1, padding=(1, 1, 0, 0, 0, 0),
+                                  pad_mode="pad")
         self.batchnorm3d_6 = nn.BatchNorm3d(out_channels, eps=9.999999747378752e-06, momentum=0.8999999761581421)
         self.relu_8 = nn.ReLU()
 
     def construct(self, x):
+        """construct"""
         x1 = self.conv3d_0(x)
         x1 = self.conv3d_1(x1)
         x1 = self.batchnorm3d_2(x1)
@@ -210,6 +228,7 @@ class Pseudo3DBlock_A(nn.Cell):
 
 
 class Pseudo3DBlock_B(nn.Cell):
+    """Pseudo3DBlock_B"""
 
     def __init__(self):
         super(Pseudo3DBlock_B, self).__init__()
@@ -225,6 +244,7 @@ class Pseudo3DBlock_B(nn.Cell):
         self.relu_10 = nn.ReLU()
 
     def construct(self, x):
+        """construct"""
         x1 = self.conv3d_0(x)
         x1 = self.conv3d_2(x1)
         x1 = self.batchnorm3d_4(x1)
@@ -242,6 +262,7 @@ class Pseudo3DBlock_B(nn.Cell):
 
 
 class CoarseStageRegFuse(nn.Cell):
+    """CoarseStageRegFuse"""
 
     def __init__(self):
         super(CoarseStageRegFuse, self).__init__()
@@ -260,8 +281,9 @@ class CoarseStageRegFuse(nn.Cell):
         params_not_loaded = mindspore.load_param_into_net(self, param_dict, strict_load=True)
         print(params_not_loaded)
 
-    def construct(self, fused_interm, depth_values):
-        x1 = self.basicblocka_0(fused_interm)
+    def construct(self, fused_interim, depth_values):
+        """construct"""
+        x1 = self.basicblocka_0(fused_interim)
         x2 = self.basicblockb_0(x1)
         x1_upsample = self.conv3dtranspose_21(x2)
 
@@ -272,12 +294,13 @@ class CoarseStageRegFuse(nn.Cell):
 
         score_volume = self.squeeze_1(score_volume)
 
-        prob_volume, est_depth_class, prob_map = soft_argmin(score_volume, dim=1, keepdim=True, window=2)
+        prob_volume, _, prob_map = soft_argmin(score_volume, dim=1, keepdim=True, window=2)
         est_depth = depth_regression(prob_volume, depth_values, keep_dim=True)
         return est_depth, prob_map, prob_volume
 
 
 class CoarseStageRegPair(nn.Cell):
+    """CoarseStageRegPair"""
 
     def __init__(self):
         super(CoarseStageRegPair, self).__init__()
@@ -307,18 +330,18 @@ class CoarseStageRegPair(nn.Cell):
         print(params_not_loaded)
 
     def construct(self, cost_volume, depth_values):
-        """3D UNet"""
+        """construct"""
         x1 = self.basicblocka_0(cost_volume)
         x2 = self.basicblockb_0(x1)
         x1_upsample = self.conv3dtranspose_21(x2)
 
-        interm = self.concat_1((x1_upsample, x1))
-        interm = self.conv3d_23(interm)
-        interm = self.conv3d_24(interm)
-        score_volume = self.conv3d_25(interm)
+        interim = self.concat_1((x1_upsample, x1))
+        interim = self.conv3d_23(interim)
+        interim = self.conv3d_24(interim)
+        score_volume = self.conv3d_25(interim)
 
         score_volume = self.squeeze_1(score_volume)
-        prob_volume, est_depth_class = soft_argmin(score_volume, dim=1, keepdim=True)
+        prob_volume, _ = soft_argmin(score_volume, dim=1, keepdim=True)
         est_depth = depth_regression(prob_volume, depth_values, keep_dim=True)
         entropy_ = entropy(prob_volume, dim=1, keepdim=True)
 
@@ -333,10 +356,11 @@ class CoarseStageRegPair(nn.Cell):
         uncertainty_map = self.conv2d_45(out)
         occ = self.conv2d_46(out)
 
-        return interm, est_depth, uncertainty_map, occ
+        return interim, est_depth, uncertainty_map, occ
 
 
 class StageRegFuse(nn.Cell):
+    """StageRegFuse"""
 
     def __init__(self, ckpt_path):
         super(StageRegFuse, self).__init__()
@@ -358,8 +382,9 @@ class StageRegFuse(nn.Cell):
         params_not_loaded = mindspore.load_param_into_net(self, param_dict, strict_load=True)
         print(params_not_loaded)
 
-    def construct(self, fused_interm, depth_values):
-        x1 = self.basicblocka_0(fused_interm)
+    def construct(self, fused_interim, depth_values):
+        """construct"""
+        x1 = self.basicblocka_0(fused_interim)
         x1 = self.basicblocka_1(x1)
         x2 = self.basicblockb_0(x1)
         x2 = self.basicblocka_2(x2)
@@ -372,6 +397,6 @@ class StageRegFuse(nn.Cell):
 
         score_volume = self.squeeze_1(score_volume)
 
-        prob_volume, est_depth_class, prob_map = soft_argmin(score_volume, dim=1, keepdim=True, window=2)
+        prob_volume, _, prob_map = soft_argmin(score_volume, dim=1, keepdim=True, window=2)
         est_depth = depth_regression(prob_volume, depth_values, keep_dim=True)
         return est_depth, prob_map, prob_volume

@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""blendedmvs dataset"""
+
+from collections import defaultdict
+from object import Compose
+from PIL import Image
+from copy import deepcopy
+from src.utils import read_pfm
+
 import os
 import cv2
 
 import numpy as np
 import mindspore.dataset.vision.py_transforms as py_vision
 
-from collections import defaultdict
-from PIL import Image
-from copy import deepcopy
-from mindspore.ops import operations as P
-from .utils import read_pfm
 
-
-class Compose(object):
+class Compose:
     """Composes several transforms together.
 
     Args:
@@ -56,6 +58,7 @@ class Compose(object):
 
 
 class BlendedMVSDataset:
+    """blendedmvs dataset"""
     def __init__(self, root_dir, split, n_views=3, levels=3, depth_interval=128.0, img_wh=(768, 576),
                  crop_wh=(640, 512), scale=False, scan=None, training_tag=False):
         """
@@ -69,7 +72,7 @@ class BlendedMVSDataset:
             'split must be either "train", "val" or "all"!'
         self.img_wh = img_wh
         if img_wh is not None:
-            assert img_wh[0]%32==0 and img_wh[1]%32==0, \
+            assert img_wh[0] % 32 == 0 and img_wh[1] % 32 == 0, \
                 'img_wh must both be multiples of 32!'
         self.single_scan = scan
         self.crop_wh = crop_wh
@@ -86,12 +89,14 @@ class BlendedMVSDataset:
         self.define_transforms()
 
     def cal_crop_factors(self):
+        """"calculate crop factors"""
         self.start_w = (self.img_wh[0] - self.crop_wh[0]) // 2
         self.start_h = (self.img_wh[1] - self.crop_wh[1]) // 2
         self.finish_w = self.start_w + self.crop_wh[0]
         self.finish_h = self.start_h + self.crop_wh[1]
 
     def build_metas(self):
+        """"build meta information"""
         self.metas = []
         self.ref_views_per_scan = defaultdict(list)
         if self.split == 'train':
@@ -121,9 +126,10 @@ class BlendedMVSDataset:
                     self.metas += [(scan, -1, ref_view, src_views)]
 
     def build_proj_mats(self):
-        self.proj_mats = {} # proj mats for each scan
+        """"build projection matrix"""
+        self.proj_mats = {}  # proj mats for each scan
         if self.root_dir.endswith('dataset_low_res') \
-            or self.root_dir.endswith('dataset_low_res/'):
+                or self.root_dir.endswith('dataset_low_res/'):
             img_w, img_h = 768, 576
         else:
             img_w, img_h = 2048, 1536
@@ -131,7 +137,7 @@ class BlendedMVSDataset:
             self.proj_mats[scan] = {}
             for vid in self.ref_views_per_scan[scan]:
                 proj_mat_filename = os.path.join(self.root_dir, scan,
-                                                     f'cams/{vid:08d}_cam.txt')
+                                                 f'cams/{vid:08d}_cam.txt')
                 intrinsics, extrinsics, depth_min, depth_max = \
                     self.read_cam_file(scan, proj_mat_filename)
                 intrinsics[0] *= self.img_wh[0] / img_w / 8
@@ -143,7 +149,7 @@ class BlendedMVSDataset:
 
                 # multiply intrinsics and extrinsics to get projection matrix
                 proj_mat_ls = []
-                for l in reversed(range(self.levels)):
+                for _ in reversed(range(self.levels)):
                     proj_mat_l = np.eye(4)
                     proj_mat_l[:3, :4] = intrinsics @ extrinsics[:3, :4]
                     intrinsics[:2] *= 2  # 1/8->1/4->1/2
@@ -152,6 +158,7 @@ class BlendedMVSDataset:
                 self.proj_mats[scan][vid] = (proj_mat_ls, depth_min, depth_max)
 
     def read_cam_file(self, scan, filename):
+        """"read camera file"""
         with open(filename) as f:
             lines = [line.rstrip() for line in f.readlines()]
         # extrinsics: line [1,5), 4x4 matrix
@@ -166,6 +173,7 @@ class BlendedMVSDataset:
         return intrinsics, extrinsics, depth_min, depth_max
 
     def read_depth_and_mask(self, scan, filename, depth_min):
+        """"read depth and mask"""
         depth = np.array(read_pfm(filename)[0], dtype=np.float32)
         h, w = depth.shape
         if (h, w) != self.img_wh:
@@ -174,7 +182,7 @@ class BlendedMVSDataset:
             if self.training_tag:
                 depth_0 = depth_0[self.start_h:self.finish_h, self.start_w:self.finish_w]
         depth_0 = cv2.resize(depth_0, None, fx=0.5, fy=0.5,
-                         interpolation=cv2.INTER_LINEAR)
+                             interpolation=cv2.INTER_LINEAR)
         depth_1 = cv2.resize(depth_0, None, fx=0.5, fy=0.5,
                              interpolation=cv2.INTER_LINEAR)
         depth_2 = cv2.resize(depth_1, None, fx=0.5, fy=0.5,
@@ -184,25 +192,25 @@ class BlendedMVSDataset:
                   "level_1": depth_1,
                   "level_2": depth_2}
 
-        masks = {"level_0": depth_0>depth_min,
-                 "level_1": depth_1>depth_min,
-                 "level_2": depth_2>depth_min,}
+        masks = {"level_0": depth_0 > depth_min,
+                 "level_1": depth_1 > depth_min,
+                 "level_2": depth_2 > depth_min, }
         depth_max = depth_0.max()
         return depths, masks, depth_max
 
     def define_transforms(self):
-        if self.training_tag and self.split == 'train': # you can add augmentation here
+        if self.training_tag and self.split == 'train':  # you can add augmentation here
             self.transform = Compose([
-                                        py_vision.ToTensor(),
-                                        py_vision.Normalize(mean=[0.485, 0.456, 0.406],
-                                                    std=[0.229, 0.224, 0.225]),
-                                       ])
+                py_vision.ToTensor(),
+                py_vision.Normalize(mean=[0.485, 0.456, 0.406],
+                                    std=[0.229, 0.224, 0.225]),
+            ])
         else:
             self.transform = Compose([
-                                        py_vision.ToTensor(),
-                                        py_vision.Normalize(mean=[0.485, 0.456, 0.406],
-                                                    std=[0.229, 0.224, 0.225]),
-                                       ])
+                py_vision.ToTensor(),
+                py_vision.Normalize(mean=[0.485, 0.456, 0.406],
+                                    std=[0.229, 0.224, 0.225]),
+            ])
 
     def __len__(self):
         return len(self.metas)
@@ -211,7 +219,7 @@ class BlendedMVSDataset:
         sample = {}
         scan, _, ref_view, src_views = self.metas[idx]
         # use only the reference view and first nviews-1 source views
-        view_ids = [ref_view] + src_views[:self.n_views-1]
+        view_ids = [ref_view] + src_views[:self.n_views - 1]
 
         imgs = []
         proj_mats = []  # record proj mats between views
@@ -246,8 +254,8 @@ class BlendedMVSDataset:
                 sample['depth_interval'] = [depth_interval]
                 sample['fix_depth_interval'] = [fix_depth_interval]
                 ref_proj_inv = np.asarray(proj_mat_ls)
-                for i in range(proj_mat_ls.shape[0]):
-                    ref_proj_inv[i] = np.mat(proj_mat_ls[i]).I
+                for j in range(proj_mat_ls.shape[0]):
+                    ref_proj_inv[j] = np.mat(proj_mat_ls[j]).I
             else:
                 proj_mats += [proj_mat_ls @ ref_proj_inv]
 

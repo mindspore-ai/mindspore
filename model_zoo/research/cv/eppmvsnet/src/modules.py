@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""math operations of EPP-MVSNet"""
+
 import math
+import numpy as np
+
 import mindspore
 import mindspore.nn as nn
-import numpy as np
 import mindspore.common as mstype
 from mindspore import Tensor
 from mindspore.ops import constexpr
@@ -26,6 +29,7 @@ from mindspore.ops import composite as C
 @constexpr
 def generate_FloatTensor(x):
     return mindspore.Tensor(x, dtype=mstype.float32)
+
 
 def get_depth_values(current_depth, n_depths, depth_interval, inverse_depth=False):
     """
@@ -38,26 +42,30 @@ def get_depth_values(current_depth, n_depths, depth_interval, inverse_depth=Fals
     linspace = P.LinSpace()
     if not isinstance(depth_interval, float) and depth_interval.shape != current_depth.shape:
         depth_interval = depth_interval.reshape(-1, 1, 1, 1)
-    depth_min = C.clip_by_value(current_depth - n_depths/2 * depth_interval, generate_FloatTensor(1e-7), generate_FloatTensor(58682))
+    depth_min = C.clip_by_value(current_depth - n_depths / 2 * depth_interval, generate_FloatTensor(1e-7),
+                                generate_FloatTensor(58682))
     if inverse_depth:
         depth_end = depth_min + (n_depths - 1) * depth_interval
         inverse_depth_interval = (1 / depth_min - 1 / depth_end) / (n_depths - 1)
         depth_values = 1 / depth_end + inverse_depth_interval * \
-                       linspace(generate_FloatTensor(0), generate_FloatTensor(n_depths-1), n_depths).reshape(1, -1, 1, 1)
+                       linspace(generate_FloatTensor(0), generate_FloatTensor(n_depths - 1), n_depths).reshape(1, -1, 1,
+                                                                                                               1)
         depth_values = 1.0 / depth_values
     else:
         depth_values = depth_min + depth_interval * \
-                       linspace(generate_FloatTensor(0), generate_FloatTensor(n_depths-1), n_depths).reshape(1, -1, 1, 1)
+                       linspace(generate_FloatTensor(0), generate_FloatTensor(n_depths - 1), n_depths).reshape(1, -1, 1,
+                                                                                                               1)
     return depth_values
 
 
 class HomoWarp(nn.Cell):
     '''STN'''
+
     def __init__(self, H, W):
         super(HomoWarp, self).__init__()
         # batch_size = 1
-        x = np.linspace(0, W-1, W)
-        y = np.linspace(0, H-1, H)
+        x = np.linspace(0, W - 1, W)
+        y = np.linspace(0, H - 1, H)
         x_t, y_t = np.meshgrid(x, y)
         x_t = Tensor(x_t, mstype.float32)
         y_t = Tensor(y_t, mstype.float32)
@@ -106,8 +114,6 @@ class HomoWarp(nn.Cell):
         img[:, H - 1, :, :] = self.zero
         img[:, :, 0, :] = self.zero
         img[:, :, W - 1, :] = self.zero
-
-        _, _, _, C = img.shape
 
         tile = P.Tile()
         batch_idx = P.Slice()(self.batch_idx, (0, 0, 0, 0), (batch_size, 1, 1, 1))
@@ -222,7 +228,6 @@ class HomoWarp(nn.Cell):
         max_x = cast(W - 1, mstype.float32)
         zero = self.zero
 
-
         # grab 4 nearest corner points for each (x_i, y_i)
         floor = P.Floor()
         x0 = floor(x)
@@ -314,7 +319,6 @@ class HomoWarp(nn.Cell):
         input_fmap = trans(input_fmap, (0, 2, 3, 1))
         shape = P.Shape()
         input_size = shape(input_fmap)
-        B = input_size[0]
         H = input_size[1]
         W = input_size[2]
 
@@ -343,19 +347,19 @@ def determine_center_pixel_interval(src_feat, proj_mat, depth_values):
     depth_values: (B, D, H, W)
     out: (B, C, D, H, W)
     """
-    B, Ch, H, W = src_feat.shape
+    B, _, H, W = src_feat.shape
     D = depth_values.shape[1]
 
-    R = proj_mat[:, :, :3] # (B, 3, 3)
-    T = proj_mat[:, :, 3:] # (B, 3, 1)
+    R = proj_mat[:, :, :3]  # (B, 3, 3)
+    T = proj_mat[:, :, 3:]  # (B, 3, 1)
 
     concat = P.Concat(axis=1)
-    ref_center = generate_FloatTensor([H/2, W/2]).view(1, 2, 1, 1)
+    ref_center = generate_FloatTensor([H / 2, W / 2]).view(1, 2, 1, 1)
     ref_center = ref_center.reshape(1, 2, -1)
     ref_center = P.Tile()(ref_center, (B, 1, 1))
     ref_center = concat((ref_center, C.ones_like(ref_center[:, :1])))  # (B, 3, H*W)
     ref_center_d = C.repeat_elements(ref_center, rep=D, axis=2)  # (B, 3, D*H*W)
-    src_center_d = C.matmul(R, ref_center_d) + T/depth_values.view(B, 1, D*1*1)
+    src_center_d = C.matmul(R, ref_center_d) + T / depth_values.view(B, 1, D * 1 * 1)
 
     negative_depth_mask = src_center_d[:, 2:] <= 1e-7
     src_center_d[:, 0:1][negative_depth_mask] = W
@@ -364,14 +368,15 @@ def determine_center_pixel_interval(src_feat, proj_mat, depth_values):
 
     transpose = P.Transpose()
     sqrt = P.Sqrt()
-    pow = P.Pow()
+    pow_ms = P.Pow()
     src_center = src_center_d[:, :2] / src_center_d[:, 2:]  # divide by depth (B, 2, D*H*W)
     src_grid_valid = transpose(src_center, (0, 2, 1)).view(B, D, 1, 2)  # (B, D*H*W, 2)
     delta_p = src_grid_valid[:, 1:, :, :] - src_grid_valid[:, :-1, :, :]
-    epipolar_pixel = sqrt(pow(delta_p[:, :, :, 0], 2)+pow(delta_p[:, :, :, 1], 2))
+    epipolar_pixel = sqrt(pow_ms(delta_p[:, :, :, 0], 2) + pow_ms(delta_p[:, :, :, 1], 2))
     epipolar_pixel = epipolar_pixel.mean(1)
 
     return epipolar_pixel
+
 
 def depth_regression(p, depth_values, keep_dim=False):
     """
@@ -385,7 +390,9 @@ def depth_regression(p, depth_values, keep_dim=False):
     depth = cumsum(p * depth_values, 1)
     return depth
 
+
 def soft_argmin(volume, dim, keepdim=False, window=None):
+    """soft argmin"""
     softmax = nn.Softmax(1)
     prob_vol = softmax(volume)
     length = volume.shape[dim]
@@ -397,40 +404,34 @@ def soft_argmin(volume, dim, keepdim=False, window=None):
         else:
             index_shape.append(1)
     index = index.reshape(index_shape)
-    sum = P.ReduceSum(True)
-    out = sum(index * prob_vol, dim)
+    out = P.ReduceSum(True)(index * prob_vol, dim)
     squeeze = P.Squeeze(axis=dim)
     out_sq = squeeze(out) if not keepdim else out
     if window is None:
         return prob_vol, out_sq
-    else:
-        # |depth hypothesis - predicted depth|, assemble to UCSNet
-        #        1d11    n1hw
-        mask = ((index - out).abs() <= window)
-        mask = mask.astype(mstype.float32)
-        sum = P.ReduceSum(keepdim)
-        prob_map = sum(prob_vol * mask, dim)
-        return prob_vol, out_sq, prob_map
+    # |depth hypothesis - predicted depth|, assemble to UCSNet
+    #        1d11    n1hw
+    mask = ((index - out).abs() <= window)
+    mask = mask.astype(mstype.float32)
+    prob_map = P.ReduceSum(keepdim)(prob_vol * mask, dim)
+    return prob_vol, out_sq, prob_map
 
-@constexpr
-def generate_FloatTensor(x):
-    return mindspore.Tensor(x, dtype=mstype.float32)
 
 def entropy(volume, dim, keepdim=False):
-    sum = P.ReduceSum(keepdim)
-    log = P.Log()
-    return sum(-volume * log(C.clip_by_value(volume, generate_FloatTensor(1e-9), generate_FloatTensor(1.))), dim)
+    return P.ReduceSum(keepdim)(
+        -volume * P.Log()(C.clip_by_value(volume, generate_FloatTensor(1e-9), generate_FloatTensor(1.))), dim)
+
 
 def entropy_num_based(volume, dim, depth_num, keepdim=False):
-    sum = P.ReduceSum(keepdim)
-    log = P.Log()
-    return sum(-volume * log(C.clip_by_value(volume, generate_FloatTensor(1e-9), generate_FloatTensor(1.)))/math.log(math.e, depth_num), dim)
+    return P.ReduceSum(keepdim)(
+        -volume * P.Log()(C.clip_by_value(volume, generate_FloatTensor(1e-9), generate_FloatTensor(1.))) / math.log(
+            math.e, depth_num), dim)
+
 
 def groupwise_correlation(v1, v2, groups, dim):
-    sum = P.ReduceSum()
     n, c, d, h, w = v1.shape
     reshaped_size = (n, groups, c // groups, d, h, w)
     v1_reshaped = v1.view(*reshaped_size)
     v2_reshaped = v2.view(*reshaped_size)
-    vc = sum(v1_reshaped * v2_reshaped, dim + 1)
+    vc = P.ReduceSum()(v1_reshaped * v2_reshaped, dim + 1)
     return vc

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""main architecture of EPP-MVSNet"""
+
 import mindspore.nn as nn
 import mindspore.common as mstype
 from mindspore import Tensor
@@ -22,6 +24,7 @@ from src.networks import UNet2D, CostCompression, CoarseStageRegPair, CoarseStag
 
 
 class SingleStage(nn.Cell):
+    """single stage"""
 
     def __init__(self, fuse_reg, height, width, entropy_range=False):
         super(SingleStage, self).__init__()
@@ -40,7 +43,7 @@ class SingleStage(nn.Cell):
 
     def construct(self, sample, depth_num, depth_start_override=None, depth_interval_override=None,
                   uncertainty_maps=None):
-
+        """construct function of single stage"""
         ref_feat, src_feats, proj_mats = sample
         depth_start = depth_start_override  # n111 or n1hw
         depth_interval = depth_interval_override  # n111
@@ -49,17 +52,17 @@ class SingleStage(nn.Cell):
         B, C, H, W = ref_feat.shape
 
         depth_interval = depth_interval.view(B, 1, 1, 1)
-        interm_scale = 1
+        interim_scale = 1
 
         ref_ncdhw = self.expand_dims(ref_feat, 2).view(B, C, 1, -1)
         ref_ncdhw = self.tile(ref_ncdhw, (1, 1, D, 1)).view(B, C, D, H, W)
 
         pair_results = []  # MVS
 
-        weight_sum = self.zeros((ref_ncdhw.shape[0], 1, 1, ref_ncdhw.shape[3] // interm_scale,
-                                  ref_ncdhw.shape[4] // interm_scale), mstype.float32)
-        fused_interm = self.zeros((ref_ncdhw.shape[0], 8, ref_ncdhw.shape[2] // interm_scale,
-                                        ref_ncdhw.shape[3] // interm_scale, ref_ncdhw.shape[4] // interm_scale), mstype.float32)
+        weight_sum = self.zeros((ref_ncdhw.shape[0], 1, 1, ref_ncdhw.shape[3] // interim_scale,
+                                 ref_ncdhw.shape[4] // interim_scale), mstype.float32)
+        fused_interim = self.zeros((ref_ncdhw.shape[0], 8, ref_ncdhw.shape[2] // interim_scale, ref_ncdhw.shape[3] //
+                                    interim_scale, ref_ncdhw.shape[4] // interim_scale), mstype.float32)
 
         depth_values = get_depth_values(depth_start, D, depth_interval, False)
 
@@ -70,26 +73,26 @@ class SingleStage(nn.Cell):
             warped_src = self.homo_warp(src_feat, proj_mat, depth_values)
             cost_volume = groupwise_correlation(ref_ncdhw, warped_src, 8, 1)
 
-            interm = cost_volume
+            interim = cost_volume
             heads = [uncertainty_map]
 
             weight = self.expand_dims(self.exp(-heads[0]), 2)
             weight_sum = weight_sum + weight
-            fused_interm = fused_interm + interm * weight
+            fused_interim = fused_interim + interim * weight
 
-        fused_interm /= weight_sum
-        est_depth, prob_map, prob_volume = self.fuse_reg(fused_interm, depth_values)
+        fused_interim /= weight_sum
+        est_depth, prob_map, prob_volume = self.fuse_reg(fused_interim, depth_values)
 
         if self.entropy_range:
             # mean entropy
             entropy_num = entropy_num_based(prob_volume, dim=1, depth_num=D, keepdim=True)
             conf_range = self.pow(D, entropy_num).view(B, -1).mean()
             return est_depth, prob_map, pair_results, conf_range  # MVS
-        else:
-            return est_depth, prob_map, pair_results  # MVS
+        return est_depth, prob_map, pair_results  # MVS
 
 
 class SingleStageP1(nn.Cell):
+    """part1 of single stage 1"""
 
     def __init__(self, depth_number=32):
         super(SingleStageP1, self).__init__()
@@ -107,7 +110,8 @@ class SingleStageP1(nn.Cell):
         self.D = Tensor(self.depth_number - 1, mstype.float32)
 
     def construct(self, sample, depth_num, depth_start_override=None, depth_interval_override=None, timing=True):
-        ref_feat, src_feats, proj_mats = sample
+        """construct fuction of part1 of single stage 1"""
+        ref_feat, _, _ = sample
         depth_start = depth_start_override  # n111 or n1hw
         depth_interval = depth_interval_override  # n111
 
@@ -115,7 +119,7 @@ class SingleStageP1(nn.Cell):
         depth_interval /= self.compression_ratio
 
         D = depth_num
-        B, _, H, W = ref_feat.shape
+        B = ref_feat.shape[0]
 
         depth_interval = depth_interval.view(B, 1, 1, 1)
         depth_start = depth_start.reshape(B, 1, 1, 1)
@@ -134,6 +138,7 @@ class SingleStageP1(nn.Cell):
 
 
 class SingleStageP3(nn.Cell):
+    """part3 of single stage 1"""
 
     def __init__(self, entropy_range=False, compression_ratio=5):
         super(SingleStageP3, self).__init__()
@@ -153,43 +158,44 @@ class SingleStageP3(nn.Cell):
         self.pow = P.Pow()
 
     def construct(self, cost_volume_list, depth_values, sample, depth_num):
+        """construct function"""
         ref_feat, _, _ = sample
 
-        B, _, H, W = ref_feat.shape
+        B, _, _, _ = ref_feat.shape
 
         d_scale = 1
-        interm_scale = 1
+        interim_scale = 1
 
         ref_ncdhw = self.expand_dims(ref_feat, 2)
         pair_results = []  # MVS
 
-        weight_sum = self.zeros((ref_ncdhw.shape[0], 1, 1, ref_ncdhw.shape[3] // interm_scale,
-                                 ref_ncdhw.shape[4] // interm_scale), mstype.float32)
-        fused_interm = self.zeros((ref_ncdhw.shape[0], 8, depth_num // d_scale,
-                                   ref_ncdhw.shape[3] // interm_scale, ref_ncdhw.shape[4] // interm_scale),
-                                  mstype.float32)
+        weight_sum = self.zeros((ref_ncdhw.shape[0], 1, 1, ref_ncdhw.shape[3] // interim_scale,
+                                 ref_ncdhw.shape[4] // interim_scale), mstype.float32)
+        fused_interim = self.zeros((ref_ncdhw.shape[0], 8, depth_num // d_scale,
+                                    ref_ncdhw.shape[3] // interim_scale, ref_ncdhw.shape[4] // interim_scale),
+                                   mstype.float32)
 
         for i in range(cost_volume_list.shape[1]):
             cost_volume = cost_volume_list[:, i]
 
-            interm, est_depth, uncertainty_map, occ = self.pair_reg(cost_volume, depth_values)
+            interim, est_depth, uncertainty_map, occ = self.pair_reg(cost_volume, depth_values)
             pair_results.append([est_depth, [uncertainty_map, occ]])
 
             weight = self.expand_dims(self.exp(-uncertainty_map), 2)
             weight_sum = weight_sum + weight
-            fused_interm = fused_interm + interm * weight
-        fused_interm /= weight_sum
-        est_depth, prob_map, prob_volume = self.fuse_reg(fused_interm, depth_values)
+            fused_interim = fused_interim + interim * weight
+        fused_interim /= weight_sum
+        est_depth, prob_map, prob_volume = self.fuse_reg(fused_interim, depth_values)
         if self.entropy_range:
             # mean entropy
             entropy_num = entropy_num_based(prob_volume, dim=1, depth_num=depth_num, keepdim=True)
             conf_range = self.pow(depth_num, entropy_num).view(B, -1).mean()
             return est_depth, prob_map, pair_results, conf_range  # MVS
-        else:
-            return est_depth, prob_map, pair_results  # MVS
+        return est_depth, prob_map, pair_results  # MVS
 
 
 class SingleStageP2_S1(nn.Cell):
+    """0 interpolation, part2 of single stage 1"""
 
     def __init__(self, cost_compression, height=32, width=40):
         super(SingleStageP2_S1, self).__init__()
@@ -207,6 +213,7 @@ class SingleStageP2_S1(nn.Cell):
 
     def construct(self, sample, depth_num, depth_start_override=None, depth_interval_override=None, depth_values=None,
                   idx=None):
+        """construct function"""
         ref_feat, src_feats, proj_mats = sample
 
         compression_ratio = 1
@@ -229,6 +236,7 @@ class SingleStageP2_S1(nn.Cell):
 
 
 class SingleStageP2_S3(nn.Cell):
+    """2 interpolation, part2 of single stage 1"""
 
     def __init__(self, cost_compression, height=64, width=80, depth_number=96, depth_ratio=3, compression_ratio=5):
         super(SingleStageP2_S3, self).__init__()
@@ -256,6 +264,7 @@ class SingleStageP2_S3(nn.Cell):
 
     def construct(self, sample, depth_num, depth_start_override=None, depth_interval_override=None, depth_values=None,
                   idx=None):
+        """construct function"""
         ref_feat, src_feats, proj_mats = sample
         depth_start = depth_start_override  # n111 or n1hw
         depth_interval = depth_interval_override  # n111
@@ -302,8 +311,9 @@ class SingleStageP2_S3(nn.Cell):
 
 
 class EPPMVSNet(nn.Cell):
+    """EPP-MVSNet"""
 
-    def __init__(self, n_depths=[32, 16, 8], interval_ratios=[4, 2, 1], entropy_range=False, shrink_ratio=1,
+    def __init__(self, n_depths, interval_ratios, entropy_range=False, shrink_ratio=1,
                  height=None, width=None, distance=0.5):
         super(EPPMVSNet, self).__init__()
 
@@ -320,14 +330,14 @@ class EPPMVSNet(nn.Cell):
 
         self.cost_compression = CostCompression()
 
-        self.stage1_p2_s1 = SingleStageP2_S1(self.cost_compression, height=height//8, width=width//8)
-        self.stage1_p2_s3 = SingleStageP2_S3(self.cost_compression, height=height//8, width=width//8)
+        self.stage1_p2_s1 = SingleStageP2_S1(self.cost_compression, height=height // 8, width=width // 8)
+        self.stage1_p2_s3 = SingleStageP2_S3(self.cost_compression, height=height // 8, width=width // 8)
 
         self.fuse_reg_2 = StageRegFuse("./ckpts/stage2_reg_fuse.ckpt")
         self.fuse_reg_3 = StageRegFuse("./ckpts/stage3_reg_fuse.ckpt")
 
-        self.stage2 = SingleStage(self.fuse_reg_2, height//4, width//4, entropy_range=self.entropy_range)
-        self.stage3 = SingleStage(self.fuse_reg_3, height//2, width//2, entropy_range=self.entropy_range)
+        self.stage2 = SingleStage(self.fuse_reg_2, height // 4, width // 4, entropy_range=self.entropy_range)
+        self.stage3 = SingleStage(self.fuse_reg_3, height // 2, width // 2, entropy_range=self.entropy_range)
 
         self.eppmvsnet_p1 = EPPMVSNetP1(self.feat_ext, self.stage1_p1, n_depths=n_depths,
                                         interval_ratios=interval_ratios)
@@ -336,8 +346,9 @@ class EPPMVSNet(nn.Cell):
                                         entropy_range=self.entropy_range, shrink_ratio=self.shrink_ratio)
 
     def construct(self, imgs, proj_mats=None, depth_start=None, depth_interval=None):
-        feat_pack_1, feat_pack_2, feat_pack_3, depth_values_stage1, pixel_distances, single_depth_values_stage1, \
-                                            = self.eppmvsnet_p1(imgs, proj_mats, depth_start, depth_interval)
+        """construct function"""
+        feat_pack_1, feat_pack_2, feat_pack_3, depth_values_stage1, pixel_distances \
+            = self.eppmvsnet_p1(imgs, proj_mats, depth_start, depth_interval)
 
         cost_volume_list = []
         ref_feat_1, srcs_feat_1 = feat_pack_1[:, 0], feat_pack_1[:, 1:]
@@ -360,13 +371,14 @@ class EPPMVSNet(nn.Cell):
                 cost_volume_list.append(cost_volume_3)
         cost_volume_list = P.Stack(1)(cost_volume_list)
         results = self.eppmvsnet_p3(feat_pack_1, feat_pack_2, feat_pack_3, depth_values_stage1, cost_volume_list,
-                                              proj_mats, depth_start, depth_interval)
+                                    proj_mats, depth_start, depth_interval)
         return results
 
 
 class EPPMVSNetP1(nn.Cell):
+    """EPPMVSNet part1"""
 
-    def __init__(self, feat_ext, stage1_p1, n_depths=[32, 16, 8], interval_ratios=[4, 2, 1], entropy_range=False):
+    def __init__(self, feat_ext, stage1_p1, n_depths, interval_ratios, entropy_range=False):
         super(EPPMVSNetP1, self).__init__()
         self.n_depths = n_depths
         self.interval_ratios = interval_ratios
@@ -381,7 +393,8 @@ class EPPMVSNetP1(nn.Cell):
         self.expand_dims = P.ExpandDims()
 
     def construct(self, imgs, proj_mats=None, depth_start=None, depth_interval=None):
-        B, V, Ch, H, W = imgs.shape
+        """construct function"""
+        B, V, _, H, W = imgs.shape
         imgs = imgs.reshape(B * V, 3, H, W)
         feat_pack_1, feat_pack_2, feat_pack_3 = self.feat_ext(imgs)
         feat_pack_1 = feat_pack_1.view(B, V, *feat_pack_1.shape[1:])  # (B, V, C, h, w)
@@ -391,22 +404,26 @@ class EPPMVSNetP1(nn.Cell):
         ref_feat_1, srcs_feat_1 = feat_pack_1[:, 0], feat_pack_1[:, 1:]
 
         depth_values_stage1, single_depth_values_stage1 = self.stage1_p1([ref_feat_1, srcs_feat_1, proj_mats[:, :, 2]],
-                                                                  depth_num=self.n_depths[0], depth_start_override=depth_start,
-                                                                  depth_interval_override=depth_interval * self.interval_ratios[0])
+                                                                         depth_num=self.n_depths[0],
+                                                                         depth_start_override=depth_start,
+                                                                         depth_interval_override=depth_interval *
+                                                                                                 self.interval_ratios[
+                                                                                                     0])
 
-        ref_feat, src_feats, proj_mats = [ref_feat_1, srcs_feat_1, proj_mats[:, :, 2]]
+        _, src_feats, proj_mats = [ref_feat_1, srcs_feat_1, proj_mats[:, :, 2]]
         pixel_distances = []
         for i in range(src_feats.shape[1]):
             src_feat = src_feats[:, i]
             proj_mat = proj_mats[:, i]
             pixel_distance = determine_center_pixel_interval(src_feat, proj_mat, single_depth_values_stage1)
             pixel_distances.append(pixel_distance)
-        return feat_pack_1, feat_pack_2, feat_pack_3, depth_values_stage1, pixel_distances, single_depth_values_stage1
+        return feat_pack_1, feat_pack_2, feat_pack_3, depth_values_stage1, pixel_distances
 
 
 class EPPMVSNetP3(nn.Cell):
+    """EPPMVSNet part3"""
 
-    def __init__(self, stage1_p3, stage2, stage3, n_depths=[32, 16, 8], interval_ratios=[4, 2, 1], entropy_range=False,
+    def __init__(self, stage1_p3, stage2, stage3, n_depths, interval_ratios, entropy_range=False,
                  shrink_ratio=1, height=None, width=None):
         super(EPPMVSNetP3, self).__init__()
         self.n_depths = n_depths
@@ -423,61 +440,66 @@ class EPPMVSNetP3(nn.Cell):
 
     def construct(self, feat_pack_1, feat_pack_2, feat_pack_3, depth_values_stage1, cost_volume_list_stage1,
                   proj_mats=None, depth_start=None, depth_interval=None):
+        """construct function"""
         H = self.height
         W = self.width
 
         ref_feat_1, srcs_feat_1 = feat_pack_1[:, 0], feat_pack_1[:, 1:]
         if self.entropy_range:
-            est_depth_1, prob_map_1, pair_results_1, conf_range_1 = self.stage1_p3(cost_volume_list_stage1,
-                                                                     depth_values_stage1, [ref_feat_1, srcs_feat_1,
-                                                                                           proj_mats[:, :, 2]],
-                                                                     self.n_depths[0])
+            est_depth_1, _, _, conf_range_1 = self.stage1_p3(cost_volume_list_stage1,
+                                                             depth_values_stage1, [ref_feat_1, srcs_feat_1,
+                                                                                   proj_mats[:, :, 2]],
+                                                             self.n_depths[0])
             stage2_conf_interval = self.shrink_ratio * conf_range_1 / self.n_depths[0] * (
                     depth_interval * self.interval_ratios[0] * self.n_depths[0]) / self.n_depths[1]
         else:
-            est_depth_1, prob_map_1, pair_results_1 = self.stage1_p3(cost_volume_list_stage1,
-                                                                     depth_values_stage1, [ref_feat_1, srcs_feat_1,
-                                                                                           proj_mats[:, :, 2]],
-                                                                     self.n_depths[0])
+            est_depth_1, _, _ = self.stage1_p3(cost_volume_list_stage1,
+                                               depth_values_stage1, [ref_feat_1, srcs_feat_1,
+                                                                     proj_mats[:, :, 2]],
+                                               self.n_depths[0])
             stage2_conf_interval = None
         uncertainty_maps_1, uncertainty_maps_2 = [], []
         for pair_result in pair_results_1:
             uncertainty_maps_1.append(pair_result[1][0])
         for uncertainty_map in uncertainty_maps_1:
-            uncertainty_maps_2.append(P.ResizeBilinear((H//4, W//4), False)(uncertainty_map))
+            uncertainty_maps_2.append(P.ResizeBilinear((H // 4, W // 4), False)(uncertainty_map))
 
         ref_feat_2, srcs_feat_2 = feat_pack_2[:, 0], feat_pack_2[:, 1:]
-        depth_start_2 = P.ResizeBilinear((H//4, W//4), False)(est_depth_1)
+        depth_start_2 = P.ResizeBilinear((H // 4, W // 4), False)(est_depth_1)
 
         if self.entropy_range:
-            est_depth_2, prob_map_2, pair_results_2, conf_range_2 = self.stage2([ref_feat_2, srcs_feat_2, proj_mats[:, :, 1]],
-                                                                  depth_num=self.n_depths[1], depth_start_override=depth_start_2,
-                                                                  depth_interval_override=stage2_conf_interval,
-                                                                  uncertainty_maps=uncertainty_maps_2)
+            est_depth_2, _, _, conf_range_2 = self.stage2([ref_feat_2, srcs_feat_2, proj_mats[:, :, 1]],
+                                                          depth_num=self.n_depths[1],
+                                                          depth_start_override=depth_start_2,
+                                                          depth_interval_override=stage2_conf_interval,
+                                                          uncertainty_maps=uncertainty_maps_2)
             stage3_conf_interval = self.shrink_ratio * conf_range_2 / self.n_depths[1] * (
                     stage2_conf_interval * self.n_depths[1]) / self.n_depths[2]
         else:
-            est_depth_2, prob_map_2, pair_results_2 = self.stage2([ref_feat_2, srcs_feat_2, proj_mats[:, :, 1]],
-                                                                  depth_num=self.n_depths[1], depth_start_override=depth_start_2,
-                                                                  depth_interval_override=depth_interval * self.interval_ratios[1],
-                                                                  uncertainty_maps=uncertainty_maps_2)
+            est_depth_2, _, _ = self.stage2([ref_feat_2, srcs_feat_2, proj_mats[:, :, 1]],
+                                            depth_num=self.n_depths[1], depth_start_override=depth_start_2,
+                                            depth_interval_override=depth_interval * self.interval_ratios[1],
+                                            uncertainty_maps=uncertainty_maps_2)
             stage3_conf_interval = None
         uncertainty_maps_3 = []
         for uncertainty_map in uncertainty_maps_2:
-            uncertainty_maps_3.append(P.ResizeBilinear((H//2, W//2), False)(uncertainty_map))
+            uncertainty_maps_3.append(P.ResizeBilinear((H // 2, W // 2), False)(uncertainty_map))
 
         ref_feat_3, srcs_feat_3 = feat_pack_3[:, 0], feat_pack_3[:, 1:]
-        depth_start_3 = P.ResizeBilinear((H//2, W//2), False)(est_depth_2)
+        depth_start_3 = P.ResizeBilinear((H // 2, W // 2), False)(est_depth_2)
 
         if self.entropy_range:
             est_depth_3, prob_map_3, pair_results_3, _ = self.stage3([ref_feat_3, srcs_feat_3, proj_mats[:, :, 0]],
-                                                                  depth_num=self.n_depths[2], depth_start_override=depth_start_3,
-                                                                  depth_interval_override=stage3_conf_interval,
-                                                                  uncertainty_maps=uncertainty_maps_3)
+                                                                     depth_num=self.n_depths[2],
+                                                                     depth_start_override=depth_start_3,
+                                                                     depth_interval_override=stage3_conf_interval,
+                                                                     uncertainty_maps=uncertainty_maps_3)
         else:
             est_depth_3, prob_map_3, pair_results_3 = self.stage3([ref_feat_3, srcs_feat_3, proj_mats[:, :, 0]],
-                                                                  depth_num=self.n_depths[2], depth_start_override=depth_start_3,
-                                                                  depth_interval_override=depth_interval * self.interval_ratios[2],
+                                                                  depth_num=self.n_depths[2],
+                                                                  depth_start_override=depth_start_3,
+                                                                  depth_interval_override=depth_interval *
+                                                                                          self.interval_ratios[2],
                                                                   uncertainty_maps=uncertainty_maps_3)
         refined_depth = est_depth_3
         return refined_depth, prob_map_3
