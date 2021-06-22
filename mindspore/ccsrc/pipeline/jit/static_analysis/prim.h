@@ -71,7 +71,7 @@ class DoSignatureEvaluator : public Evaluator {
   explicit DoSignatureEvaluator(const PrimitivePtr primitive) : Evaluator("DoSignatureEvaluator"), prim_(primitive) {}
   ~DoSignatureEvaluator() override = default;
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    AnfNodeConfigPtr out_config = nullptr) override;
+                    const AnfNodeConfigPtr &out_config = nullptr) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
@@ -86,7 +86,7 @@ class UnpackGraphEvaluator : public Evaluator {
   explicit UnpackGraphEvaluator(const PrimitivePtr primitive) : Evaluator("UnpackGraphEvaluator"), prim_(primitive) {}
   ~UnpackGraphEvaluator() override = default;
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    AnfNodeConfigPtr out_config = nullptr) override;
+                    const AnfNodeConfigPtr &out_config = nullptr) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
@@ -102,7 +102,7 @@ class MixedPrecisionCastEvaluator : public Evaluator {
       : Evaluator("MixedPrecisionCastEvaluator"), prim_(primitive) {}
   ~MixedPrecisionCastEvaluator() override = default;
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    AnfNodeConfigPtr out_config = nullptr) override;
+                    const AnfNodeConfigPtr &out_config = nullptr) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";

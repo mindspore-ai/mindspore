@@ -18,6 +18,7 @@
 
 #include "common/common_test.h"
 
+#include "pybind11/pybind11.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "abstract/utils.h"
 #include "pipeline/jit/static_analysis/prim.h"
@@ -37,6 +38,12 @@ class TestAbstract : public UT::Common {
 };
 
 TEST_F(TestAbstract, TestParseDataClass) {
+  // Check initialization before callback to Python.
+  if (Py_IsInitialized() == 0) {
+    Py_Initialize();
+  }
+  PyEval_InitThreads();
+
   py::object fn = parse::python_adapter::GetPyFn("gtest_input.pipeline.parse.parser_test", "TestFoo");
 
   ClassPtr cls_ptr = parse::ParseDataClass(fn);

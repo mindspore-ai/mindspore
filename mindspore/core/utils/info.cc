@@ -230,7 +230,7 @@ DebugInfoPtr TraceManager::GetParseOrResolveDebugInfo() { return TraceManager::p
 
 void TraceManager::ClearParseOrResolveDebugInfo() { TraceManager::parse_or_resolve_debug_info_ = nullptr; }
 
-std::stack<TraceContextPtr> TraceManager::trace_context_stack_;
+thread_local std::stack<TraceContextPtr> TraceManager::trace_context_stack_;
 
-DebugInfoPtr TraceManager::parse_or_resolve_debug_info_ = nullptr;
+thread_local DebugInfoPtr TraceManager::parse_or_resolve_debug_info_ = nullptr;
 }  // namespace mindspore

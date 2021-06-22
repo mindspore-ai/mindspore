@@ -34,6 +34,7 @@
 #include "debug/anf_ir_utils.h"
 #include "debug/common.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
+#include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "utils/log_adapter.h"
 #include "abstract/abstract_value.h"
 
@@ -177,7 +178,7 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
 
   MS_EXCEPTION_IF_NULL(engine_);
   auto cfg = engine_->MakeConfig(node, cur_ctx_);
-  auto ret = engine_->analysis_cache().GetValue(cfg);
+  auto ret = abstract::AnalysisResultCacheMgr::GetInstance().GetValue(cfg);
   if (ret == nullptr) {
     return "Undefined";
   }
@@ -190,7 +191,7 @@ AbstractBasePtr AnalyzedFuncGraphExporter::GetNodeAbstract(const AnfNodePtr &nod
   }
   MS_EXCEPTION_IF_NULL(engine_);
   auto cfg = engine_->MakeConfig(node, cur_ctx_);
-  auto ret = engine_->analysis_cache().GetValue(cfg);
+  auto ret = abstract::AnalysisResultCacheMgr::GetInstance().GetValue(cfg);
   return ret == nullptr ? nullptr : ret->abstract();
 }
 
@@ -548,9 +549,9 @@ void GetEvalStackInfo(std::ostringstream &oss) {
 }
 
 // trace the graph evaluator stack
-static std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
+thread_local static std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
 // trace the cnode infer debug info
-static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};
+thread_local static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};
 
 void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node) {
   if (eval == nullptr) {

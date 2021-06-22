@@ -30,6 +30,7 @@
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/optimizer/ad/dfunctor.h"
+#include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "debug/anf_ir_utils.h"
@@ -728,10 +729,12 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
     MS_LOG(DEBUG) << PrintArgs(args);
     ret_value = CompileInner(obj, args, phase, use_vm);
   } catch (const py::error_already_set &ex) {
-    // print function call stack info before release
-    std::string exception_info = GetCompileExceptionInfo();
-    if (!exception_info.empty()) {
-      MS_LOG(ERROR) << exception_info;
+    if (!StaticAnalysisException::Instance().HasException()) {
+      // print function call stack info before release
+      std::string exception_info = GetCompileExceptionInfo();
+      if (!exception_info.empty()) {
+        MS_LOG(ERROR) << exception_info;
+      }
     }
     ReleaseResource(phase);
 
@@ -1281,6 +1284,7 @@ void ClearResAtexit() {
 
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
+  abstract::AnalysisResultCacheMgr::GetInstance().Clear();
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif

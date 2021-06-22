@@ -162,6 +162,10 @@ AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const {
   if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) || config == kBroadenScalarParameterOnly) {
     return AbstractBase::Broaden(config);
   } else {
+    auto type = this->BuildType()->type_id();
+    if (type < kNumberTypeBegin || type > kNumberTypeEnd) {
+      return AbstractBase::Broaden(config);
+    }
     return Clone();
   }
 }
@@ -1082,6 +1086,27 @@ bool AbstractNull::operator==(const AbstractBase &other) const {
 std::string AbstractNull::ToString() const {
   std::ostringstream buffer;
   buffer << type_name() << "(Value: Null)";
+  return buffer.str();
+}
+
+bool AbstractTimeOut::operator==(const AbstractTimeOut &) const { return true; }
+
+bool AbstractTimeOut::operator==(const AbstractBase &other) const {
+  if (&other == this) {
+    return true;
+  }
+  if (other.isa<AbstractTimeOut>()) {
+    auto other_none = static_cast<const AbstractTimeOut *>(&other);
+    return *this == *other_none;
+  } else {
+    return false;
+  }
+}
+
+std::string AbstractTimeOut::ToString() const {
+  std::ostringstream buffer;
+  buffer << "AbstractTimeOut "
+         << "(Value: Null)";
   return buffer.str();
 }
 

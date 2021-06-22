@@ -494,11 +494,11 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &n
   return wrapped_node;
 }
 
-const EvaluatorCacheMapPtr &FuncGraphSpecializer::GetEvalCache(const EvaluatorPtr &eval) {
+const EvaluatorCacheMgrPtr FuncGraphSpecializer::GetEvalCache(const EvaluatorPtr &eval) {
   auto cache_iter = evalcaches_.find(eval);
   if (cache_iter == evalcaches_.end()) {
-    evalcaches_[eval] = eval->evaluator_cache_map();
-    return eval->evaluator_cache_map();
+    evalcaches_[eval] = eval->evaluator_cache_mgr();
+    return eval->evaluator_cache_mgr();
   }
   return cache_iter->second;
 }
@@ -509,7 +509,8 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   std::unordered_set<AbstractBasePtrList, AbstractBasePtrListHasher, AbstractBasePtrListEqual> choices;
   EvalResultPtr ret = nullptr;
   AbstractBasePtrList broaded_argvals;
-  for (auto &argvals_map : *evalcaches_[eval]) {
+  EvalResultCache &cache = evalcaches_[eval]->GetCache();
+  for (auto &argvals_map : cache) {
     auto argvals = argvals_map.first;
     broaded_argvals.clear();
 
@@ -524,11 +525,10 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
     (void)std::transform(broaded_argvals.begin(), broaded_argvals.end(), std::back_inserter(args_conf_list),
                          [](AbstractBasePtr v) -> ConfigPtr { return std::make_shared<VirtualConfig>(v); });
 
-    // if broaden return null
-    ret = eval->Run(engine_, args_conf_list, nullptr);
-    EvaluatorCacheMapPtr real = std::make_shared<EvaluatorCacheMap>();
-
-    (*real)[broaded_argvals] = ret;
+    // If broaden return null
+    ret = eval->SingleRun(engine_, args_conf_list, nullptr);
+    EvaluatorCacheMgrPtr real = std::make_shared<EvaluatorCacheMgr>();
+    real->SetValue(broaded_argvals, ret);
     evalcaches_[eval] = real;
     return std::make_pair(broaded_argvals, ret->abstract());
   } else {
@@ -615,11 +615,12 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
 }
 
 namespace {
-void DumpEvaluatorCache(const EvaluatorCacheMap &evaluator_cache_map, const AbstractBasePtrList &argvals) {
+void DumpEvaluatorCache(const EvaluatorCacheMgrPtr &evaluator_cache_mgr, const AbstractBasePtrList &argvals) {
   MS_LOG(DEBUG) << "Find unique argvals failed: " << argvals.size() << ", " << argvals << ". Check cache all items.";
   int64_t i = 0;
-  for (const auto &item : evaluator_cache_map) {
-    MS_LOG(DEBUG) << "evaluator_cache_map[" << i++ << "]: " << item.first;
+  const EvalResultCache &map = evaluator_cache_mgr->GetCache();
+  for (const auto &item : map) {
+    MS_LOG(DEBUG) << "evaluator_cache[" << i++ << "]: " << item.first;
   }
 }
 
@@ -650,24 +651,24 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
   MS_EXCEPTION_IF_NULL(eval);
   MS_EXCEPTION_IF_NULL(result);
 
-  EvaluatorCacheMap &evaluator_cache_map = *eval->evaluator_cache_map();
-  if (evaluator_cache_map.find(argvals) != evaluator_cache_map.end()) {
-    *result = std::make_pair(argvals, evaluator_cache_map[argvals]->abstract());
+  EvaluatorCacheMgrPtr evaluator_cache_mgr = eval->evaluator_cache_mgr();
+  auto data = evaluator_cache_mgr->GetValue(argvals);
+  if (data != nullptr) {
+    *result = std::make_pair(argvals, data->abstract());
     return kSpecializeSuccess;
   }
-  DumpEvaluatorCache(evaluator_cache_map, argvals);
+  DumpEvaluatorCache(evaluator_cache_mgr, argvals);
 
-  const EvaluatorCacheMapPtr &choices = GetEvalCache(eval);
-  MS_EXCEPTION_IF_NULL(choices);
-
-  if (choices->count(argvals)) {
-    *result = std::make_pair(argvals, (*choices)[argvals]->abstract());
+  MS_EXCEPTION_IF_NULL(GetEvalCache(eval));
+  EvalResultCache &choices = GetEvalCache(eval)->GetCache();
+  if (choices.get(argvals) != nullptr) {
+    *result = std::make_pair(argvals, GetEvalCache(eval)->GetValue(argvals)->abstract());
     return kSpecializeSuccess;
-  } else if (choices->size() == 1) {
+  } else if (choices.size() == 1) {
     MS_LOG(DEBUG) << "Evaluator cache has a single item, just use it.";
-    *result = std::make_pair(choices->begin()->first, choices->begin()->second->abstract());
+    *result = std::make_pair(choices.begin()->first, choices.begin()->second->abstract());
     return kSpecializeSuccess;
-  } else if (choices->empty()) {
+  } else if (choices.empty()) {
     MS_LOG(DEBUG) << "Find DEAD code, it may be optimized in later phase " << func->ToString() << " | "
                   << func->type_name();
     return kSpecializeFindUniqueArgvalDead;

@@ -28,6 +28,7 @@
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <mutex>
 
 #ifdef DEBUG
 #include <stack>
@@ -154,19 +155,6 @@ class VirtualConfig : public Config {
   AbstractBasePtr abstract_;
 };
 
-// AnalysisCache
-class AnalysisCache {
- public:
-  AnalysisCache() = default;
-  ~AnalysisCache() = default;
-  void Clear() { analysis_cache_map_.clear(); }
-  void set_value(const AnfNodeConfigPtr &conf, const EvalResultPtr &arg);
-  EvalResultPtr GetValue(const AnfNodeConfigPtr &conf);
-
- private:
-  std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual> analysis_cache_map_;
-};
-
 using PrimEvaluatorMap = std::unordered_map<PrimitivePtr, EvaluatorPtr, PrimitiveHasher, PrimitiveEqual>;
 using AnfNodeConfigMap =
   std::unordered_map<AnfNodeConfigPtr, AnfNodeConfigPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
@@ -183,12 +171,38 @@ struct PartialAppHasher {
     return h1 ^ h2;
   }
 };
+
+// Should compare Args based on value other than pointer;
+struct EvaluatorArgs {
+  EvaluatorArgs(const EvaluatorPtr &eval, const AbstractBasePtrList &args) : evaluator_(eval), args_(args) {}
+  bool operator==(const EvaluatorArgs &other) const {
+    if (evaluator_ != other.evaluator_) {
+      return false;
+    }
+    if (AbstractBasePtrListDeepEqual(args_, other.args_)) {
+      return true;
+    }
+    return false;
+  }
+  bool operator!=(const EvaluatorArgs &other) { return !(*this == other); }
+
+  EvaluatorPtr evaluator_;
+  AbstractBasePtrList args_;
+};
+using EvalTraceRevIter = std::list<EvaluatorArgs>::reverse_iterator;
+struct EvaluatorArgsHasher {
+  std::size_t operator()(const EvaluatorArgs &eval_args) const {
+    return hash_combine(std::hash<EvaluatorPtr>{}(eval_args.evaluator_), AbstractBasePtrListHash(eval_args.args_));
+  }
+};
+struct EvaluatorArgsEqual {
+  bool operator()(const EvaluatorArgs &lhs, const EvaluatorArgs &rhs) const { return lhs == rhs; }
+};
+
 class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
-      : analysis_cache_(AnalysisCache()),
-        prim_constructors_(prim_evaluator_map),
-        func_graph_manager_(func_graph_manager) {
+      : prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {
     function_call_depth_ = 0;
     function_call_max_depth_ = 0;
     stack_frame_depth_ = 0;
@@ -202,11 +216,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   // func_graph: The func_graph to analyze.
   // args_spec_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.
   AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
-  void SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) {
-    MS_EXCEPTION_IF_NULL(conf);
-    MS_EXCEPTION_IF_NULL(result);
-    analysis_cache_.set_value(conf, result);
-  }
+  void SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result);
   EvalResultPtr ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf);
   // Return the Evaluator for the given function.
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
@@ -218,7 +228,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr Execute(const AbstractFunctionPtr &fn, const AbstractBasePtrList &args_spec_list);
   void Clear();
   void ClearEvaluatorCache();
-  AnalysisCache &analysis_cache() { return analysis_cache_; }
   AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node, const AnalysisContextPtr &context) {
     return std::make_shared<AnfNodeConfig>(shared_from_this(), node, context);
   }
@@ -239,7 +248,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf);
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
-  AnalysisCache analysis_cache_;
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
   void ResetFunctionCallDepth() {
@@ -249,7 +257,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   void IncreaseFunctionCallDepth() {
     function_call_depth_++;
     if (function_call_max_depth_ < function_call_depth_) {
-      function_call_max_depth_ = function_call_depth_;
+      function_call_max_depth_ = function_call_depth_.load();
     }
   }
   void DecreaseFunctionCallDepth() {
@@ -268,7 +276,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   void IncreaseStackFrameDepth() {
     stack_frame_depth_++;
     if (stack_frame_max_depth_ < stack_frame_depth_) {
-      stack_frame_max_depth_ = stack_frame_depth_;
+      stack_frame_max_depth_ = stack_frame_depth_.load();
     }
   }
   void DecreaseStackFrameDepth() {
@@ -279,39 +287,10 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   }
   size_t stack_frame_depth() const { return stack_frame_depth_; }
   size_t stack_frame_max_depth() const { return stack_frame_max_depth_; }
-
   void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
-
   bool enable_recursive_eval() const { return enable_recursive_eval_; }
 
  private:
-  // Should compare Args based on value other than pointer;
-  struct EvaluatorArgs {
-    EvaluatorArgs(const EvaluatorPtr &eval, const AbstractBasePtrList &args) : evaluator_(eval), args_(args) {}
-    bool operator==(const EvaluatorArgs &other) const {
-      if (evaluator_ != other.evaluator_) {
-        return false;
-      }
-      if (AbstractBasePtrListDeepEqual(args_, other.args_)) {
-        return true;
-      }
-      return false;
-    }
-    bool operator!=(const EvaluatorArgs &other) { return !(*this == other); }
-
-    EvaluatorPtr evaluator_;
-    AbstractBasePtrList args_;
-  };
-  using EvalTraceRevIter = std::list<EvaluatorArgs>::reverse_iterator;
-  struct EvaluatorArgsHasher {
-    std::size_t operator()(const EvaluatorArgs &eval_args) const {
-      return hash_combine(std::hash<EvaluatorPtr>{}(eval_args.evaluator_), AbstractBasePtrListHash(eval_args.args_));
-    }
-  };
-  struct EvaluatorArgsEqual {
-    bool operator()(const EvaluatorArgs &lhs, const EvaluatorArgs &rhs) const { return lhs == rhs; }
-  };
-
   void SetUndeterminedFlag(const EvaluatorPtr &evaluator);
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
@@ -323,6 +302,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> evaluators_;
   std::unordered_map<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
     constructors_app_;
+
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<EvaluatorArgs> eval_trace_;
@@ -337,15 +317,18 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                   const ConfigPtrList &args_conf_list);
   EvalResultPtr ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
                                           const ConfigPtrList &args_conf_list);
+  EvalResultPtr ExecuteMultipleEvaluatorsMultiThread(const std::vector<EvaluatorPtr> &evaluators,
+                                                     const AnfNodeConfigPtr &out_conf,
+                                                     const ConfigPtrList &args_conf_list);
   // Record current depth of function call stack, including `stack_frame_depth_`.
-  size_t function_call_depth_;
-  size_t function_call_max_depth_;
+  std::atomic_long function_call_depth_;
+  std::atomic_long function_call_max_depth_;
 
   // Record current depth of stack frames call.
-  size_t stack_frame_depth_;
-  size_t stack_frame_max_depth_;
+  std::atomic_long stack_frame_depth_;
+  std::atomic_long stack_frame_max_depth_;
 
-  size_t forward_count_;
+  std::atomic_long forward_count_;
 
   bool enable_recursive_eval_;
 
