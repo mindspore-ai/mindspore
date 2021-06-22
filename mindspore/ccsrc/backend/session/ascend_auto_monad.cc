@@ -142,30 +142,34 @@ uint32_t GetGraphLabel(const KernelGraphPtr &kg) {
   }
   return GetValue<uint32_t>(value);
 }
-// Check if one abstract base is compatible with another abstract base.
-bool IsAbstractCompatible(const abstract::AbstractBase &a1, const abstract::AbstractBase &a2) {
-  if (&a1 == &a2) {
-    return true;
-  }
-  auto type1 = a1.BuildType();
-  auto type2 = a2.BuildType();
-  auto shape1 = a1.BuildShape();
-  auto shape2 = a2.BuildShape();
-  return (((type1 == type2) || (*type1 == *type2)) && ((shape1 == shape2) || (*shape1 == *shape2)));
-}
 
 // Check if one abstract is compatible with another abstract.
 bool IsCompatible(const abstract::AbstractBasePtr &a1, const abstract::AbstractBasePtr &a2) {
   if (a1 == nullptr || a2 == nullptr) {
     return false;
   }
-  if (a1->isa<abstract::AbstractTensor>() && a2->isa<abstract::AbstractTensor>()) {
-    // This make AbstractRef compatible with AbstractTensor.
-    auto &t1 = static_cast<abstract::AbstractTensor &>(*a1);
-    auto &t2 = static_cast<abstract::AbstractTensor &>(*a2);
-    return IsAbstractCompatible(t1, t2);
+  if (a1 == a2) {
+    return true;
   }
-  return IsAbstractCompatible(*a1, *a2);
+  auto type1 = a1->BuildType();
+  auto type2 = a2->BuildType();
+  if (type1 != type2 && *type1 != *type2) {
+    return false;
+  }
+  auto shape1 = a1->BuildShape();
+  auto shape2 = a2->BuildShape();
+  if (shape1 == shape2) {
+    return true;
+  }
+  if (shape1->isa<abstract::Shape>() && shape2->isa<abstract::Shape>()) {
+    const auto &shape1_vec = shape1->cast<abstract::ShapePtr>()->shape();
+    const auto &shape2_vec = shape2->cast<abstract::ShapePtr>()->shape();
+    if ((shape1_vec == ShapeVector({1}) && shape2_vec == ShapeVector()) ||
+        (shape1_vec == ShapeVector() && shape2_vec == ShapeVector({1}))) {
+      return true;
+    }
+  }
+  return *shape1 == *shape2;
 }
 
 struct CallBranch {
@@ -548,7 +552,7 @@ class CallInfoFinder {
     if (!IsCompatible(call_site->cnode->abstract(), callee->output()->abstract())) {
       MS_LOG(EXCEPTION) << "call_site node: " << call_site->cnode->DebugString() << " has different abstract() with "
                         << callee->ToString() << " output(), [ " << call_site->cnode->abstract()->ToString()
-                        << " != " << call_site->cnode->abstract()->ToString() << " ],"
+                        << " != " << callee->output()->abstract()->ToString() << " ],"
                         << "Do not support this situation, pls check if the graghs are correct.";
     }
 
