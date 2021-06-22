@@ -111,6 +111,12 @@ file_format: "MINDIR"
 export_batch_size: 1
 file_name: "retinanet"
 
+# ======================================================================================
+# postprocess options
+result_path: ""
+img_path: ""
+img_id_file: ""
+
 ---
 # Help description for each configuration
 enable_modelarts: "Whether training on modelarts default: False"
@@ -135,3 +141,6 @@ device_id: "Device id, default is 0."
 file_format: "file format choices [AIR, MINDIR]"
 file_name: "output file name."
 export_batch_size: "batch size"
+result_path: "result file path."
+img_path: "image file path."
+img_id_file: "image id file."
