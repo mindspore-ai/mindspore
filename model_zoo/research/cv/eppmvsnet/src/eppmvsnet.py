@@ -407,8 +407,7 @@ class EPPMVSNetP1(nn.Cell):
                                                                          depth_num=self.n_depths[0],
                                                                          depth_start_override=depth_start,
                                                                          depth_interval_override=depth_interval *
-                                                                                                 self.interval_ratios[
-                                                                                                     0])
+                                                                         self.interval_ratios[0])
 
         _, src_feats, proj_mats = [ref_feat_1, srcs_feat_1, proj_mats[:, :, 2]]
         pixel_distances = []
@@ -450,7 +449,7 @@ class EPPMVSNetP3(nn.Cell):
                                                                           [ref_feat_1, srcs_feat_1, proj_mats[:, :, 2]],
                                                                           self.n_depths[0])
             stage2_conf_interval = self.shrink_ratio * conf_range_1 / self.n_depths[0] * (
-                    depth_interval * self.interval_ratios[0] * self.n_depths[0]) / self.n_depths[1]
+                depth_interval * self.interval_ratios[0] * self.n_depths[0]) / self.n_depths[1]
         else:
             est_depth_1, _, pair_results_1 = self.stage1_p3(cost_volume_list_stage1, depth_values_stage1,
                                                             [ref_feat_1, srcs_feat_1, proj_mats[:, :, 2]],
@@ -472,7 +471,7 @@ class EPPMVSNetP3(nn.Cell):
                                                           depth_interval_override=stage2_conf_interval,
                                                           uncertainty_maps=uncertainty_maps_2)
             stage3_conf_interval = self.shrink_ratio * conf_range_2 / self.n_depths[1] * (
-                        stage2_conf_interval * self.n_depths[1]) / self.n_depths[2]
+                stage2_conf_interval * self.n_depths[1]) / self.n_depths[2]
         else:
             est_depth_2, _, _ = self.stage2([ref_feat_2, srcs_feat_2, proj_mats[:, :, 1]],
                                             depth_num=self.n_depths[1], depth_start_override=depth_start_2,
