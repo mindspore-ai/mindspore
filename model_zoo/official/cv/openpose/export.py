@@ -14,34 +14,34 @@
 # ============================================================================
 """export"""
 
-import argparse
 import numpy as np
 from mindspore import Tensor
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
-
 from src.openposenet import OpenPoseNet
-from src.config import params
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description="openpose export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="openpose", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=config.device_id)
 
-if __name__ == "__main__":
+
+def modelarts_pre_process():
+    pass
+
+
+@moxing_wrapper(pre_process=None)
+def model_export():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     # define net
     net = OpenPoseNet()
 
     # load checkpoint
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
-    inputs = np.ones([args.batch_size, 3, params["insize"], params["insize"]]).astype(np.float32)
-    export(net, Tensor(inputs), file_name=args.file_name, file_format=args.file_format)
+    inputs = np.ones([config.batch_size, 3, config.insize, config.insize]).astype(np.float32)
+    export(net, Tensor(inputs), file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()

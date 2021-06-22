@@ -22,8 +22,7 @@ from mindspore.context import ParallelMode, get_auto_parallel_context
 from mindspore.communication.management import get_group_size
 from mindspore import context
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-
-from src.config import params
+from src.model_utils.config import config
 
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 time_stamp_init = False
@@ -32,8 +31,8 @@ grad_scale = C.MultitypeFuncGraph("grad_scale")
 _grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
 reciprocal = P.Reciprocal()
 
-GRADIENT_CLIP_TYPE = params['GRADIENT_CLIP_TYPE']
-GRADIENT_CLIP_VALUE = params['GRADIENT_CLIP_VALUE']
+GRADIENT_CLIP_TYPE = config.GRADIENT_CLIP_TYPE
+GRADIENT_CLIP_VALUE = config.GRADIENT_CLIP_VALUE
 
 clip_grad = C.MultitypeFuncGraph("clip_grad")
 

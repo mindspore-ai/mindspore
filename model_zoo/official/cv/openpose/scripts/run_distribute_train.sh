@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-if [ $# != 1 ]
+if [ $# != 4 ]
 then
-    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE]"
+    echo "Usage: sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [IAMGEPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN]"
 exit 1
 fi
 
@@ -47,15 +46,16 @@ do
     export RANK_ID=$i
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
-    cp ../*.py ./train_parallel$i
-    cp -r ../src ./train_parallel$i
+    cp ./*.py ./train_parallel$i
+    cp -r ./src ./train_parallel$i
+    cp -r ./scripts ./train_parallel$i
+    cp ./*yaml ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     python train.py \
-        --train_dir train2017 \
-        --group_size 8 \
-        --train_ann person_keypoints_train2017.json > log.txt 2>&1 &
+        --imgpath_train=$2 \
+        --jsonpath_train=$3 \
+        --maskpath_train=$4 > log.txt 2>&1 &
     cd ..
 done
-

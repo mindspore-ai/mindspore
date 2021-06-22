@@ -14,6 +14,20 @@
 # limitations under the License.
 # ============================================================================
 
+if [ $# != 3 ]
+then
+    echo "Usage: sh scripts/run_standalone_train.sh [IAMGEPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN]"
+exit 1
+fi
+
 export DEVICE_ID=0
-cd ..
-python train.py --train_dir train2017 --train_ann person_keypoints_train2017.json > scripts/train.log 2>&1 &
+export DEVICE_NUM=1
+export RANK_ID=0
+rm -rf train
+mkdir train
+cp -r ./src ./train
+cp -r ./scripts ./train
+cp ./*.py ./train
+cp ./*yaml ./train
+cd ./train
+python train.py --imgpath_train=$1 --jsonpath_train=$2 --maskpath_train=$3 > train.log 2>&1 &

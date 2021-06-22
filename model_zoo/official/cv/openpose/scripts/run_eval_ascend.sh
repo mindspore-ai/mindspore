@@ -14,9 +14,17 @@
 # limitations under the License.
 # ============================================================================
 
+if [ $# != 3 ]
+then
+    echo "Usage: sh scripts/run_eval_ascend.sh [MODEL_PATH] [IMPATH_VAL] [ANN]"
+exit 1
+fi
+
 export DEVICE_ID=0
+export DEVICE_NUM=1
+export RANK_ID=0
 python eval.py \
-  --model_path ./scripts/train_parallel0/checkpoints/ckpt_0/0-80_663.ckpt \
-  --imgpath_val ./dataset/val2017 \
-  --ann ./dataset/annotations/person_keypoints_val2017.json \
+  --model_path=$1 \
+  --imgpath_val=$2 \
+  --ann=$3 \
   > eval.log 2>&1 &
