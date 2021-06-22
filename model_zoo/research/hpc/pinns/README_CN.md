@@ -160,29 +160,29 @@ Navier-Stokes方程是流体力学中描述粘性牛顿流体的方程。针对N
 - 配置Schrodinger方程场景。
 
   ```python
-  'epoch':50000    #训练轮次
-  'lr':0.0001        #学习率
-  'N0':50        #训练集在初始条件处的采样点数量,对于NLS数据集，0<N0<=256
-  'Nb':50        #训练集在边界条件处的采样点数量,对于NLS数据集，0<Nb<=201
-  'Nf':20000       #训练时用于计算Schrodinger方程约束的配点数
-  'num_neuron':100    #PINNs网络全连接隐藏层的神经元数量
-  'seed':2        #随机种子
-  'path':'./Data/NLS.mat'    #数据集存储路径
-  'ck_path':'./ckpoints/'    #保存checkpoint文件(.ckpt)的路径
+  'epoch':50000    # 训练轮次
+  'lr':0.0001        # 学习率
+  'N0':50        # 训练集在初始条件处的采样点数量,对于NLS数据集，0<N0<=256
+  'Nb':50        # 训练集在边界条件处的采样点数量,对于NLS数据集，0<Nb<=201
+  'Nf':20000       # 训练时用于计算Schrodinger方程约束的配点数
+  'num_neuron':100    # PINNs网络全连接隐藏层的神经元数量
+  'seed':2        # 随机种子
+  'path':'./Data/NLS.mat'    # 数据集存储路径
+  'ck_path':'./ckpoints/'    # 保存checkpoint文件(.ckpt)的路径
   ```
 
 - 配置Navier-Stokes方程场景。
 
   ```python
-  'epoch':18000    # number of epochs in training
-  'lr': 0.01       # learning rate
-  'n_train':5000   # amount of training data
-  'path':'./Data/cylinder_nektar_wake.mat'  # data set path
-  'noise':0.0     # noise intensity
-  'num_neuron':20  # number of neurons in fully connected hidden layer
-  'ck_path':'./navier_ckpoints/'  # path to save checkpoint files (.ckpt)
-  'seed':0        # random seed
-  'batch_size':500  # batch size
+  'epoch':18000    # 默认训练论次
+  'lr': 0.01       # 学习率
+  'n_train':5000   # 训练集数据量
+  'path':'./Data/cylinder_nektar_wake.mat'  # 数据集路径
+  'noise':0.0     # 噪声强度
+  'num_neuron':20  # 全连接隐藏层的神经元数量
+  'ck_path':'./navier_ckpoints/'  # 保存checkpoint文件(.ckpt)的路径
+  'seed':1        # 随机种子
+  'batch_size':500  # 训练批次大小
   ```
 
 更多配置细节请参考脚本`config.py`。
@@ -202,7 +202,7 @@ Navier-Stokes方程场景
 - GPU处理器环境运行Navier-Stokes方程场景
 
   ```bash
-  python train.py --scenario='NavierStokes' --datapath=[DATAPATH] --noise=[NOISE]  > train.log 2>&1 &
+  python train.py --scenario='NavierStokes' --datapath=[DATAPATH] --noise=[NOISE]  --epoch=[EPOCH] > train.log 2>&1 &
   ```
 
 - 以上python命令将在后台运行。您可以通过train.log文件查看结果。
@@ -299,13 +299,13 @@ Navier-Stokes方程场景
 | 上传日期      | 2021-6-7                                                     |
 | MindSpore版本 | 1.2.0                                                        |
 | 数据集        | cylinder nektar wake                                         |
-| 训练参数      | epoch=18000,  lr=0.01, batch size=500. 详见src/config.py     |
+| 训练参数      | epoch=19500,  lr=0.01, batch size=500. 详见src/config.py     |
 | 优化器        | Adam                                                         |
 | 损失函数      | src/NavierStokes/loss.py                                     |
 | 输出          | 速度场(x分量、y分量)，压强，对Navier-Stokes方程的拟合(x分量、y分量) |
-| 损失          | 0.0007302                                                    |
+| 损失          | 0.00042734024                                                |
 | 速度          | 99毫秒/步                                                    |
-| 总时长        | 4.9431 小时                                                  |
+| 总时长        | 5.355 小时                                                   |
 | 参数          | 3.1K                                                         |
 | 微调检查点    | 39K (.ckpt文件)                                              |
 
@@ -317,13 +317,13 @@ Navier-Stokes方程场景
 | MindSpore版本  | 1.2.0                                                        |
 | 数据集         | cylinder nektar wake                                         |
 | 训练集噪声强度 | 0.01                                                         |
-| 训练参数       | epoch=18000,  lr=0.01, batch size=500. 详见src/config.py     |
+| 训练参数       | epoch=19400,  lr=0.01, batch size=500. 详见src/config.py     |
 | 优化器         | Adam                                                         |
 | 损失函数       | src/NavierStokes/loss.py                                     |
 | 输出           | 速度场(x分量、y分量)，压强，对Navier-Stokes方程的拟合(x分量、y分量) |
-| 损失           | 0.001309                                                     |
+| 损失           | 0.00045599302                                                |
 | 速度           | 100毫秒/步                                                   |
-| 总时长         | 5.0084 小时                                                  |
+| 总时长         | 5.3979 小时                                                  |
 | 参数           | 3.1K                                                         |
 | 微调检查点     | 39K (.ckpt文件)                                              |
 
@@ -351,8 +351,8 @@ Navier-Stokes方程场景
 | MindSpore 版本        | 1.2.0                                               |
 | 数据集                | cylinder nektar wake                                |
 | 输出                  | Navier-Stokes方程的待定系数$\lambda_1$和$\lambda_2$ |
-| $\lambda_1$误差百分比 | 0.2698%                                             |
-| $\lambda_2$误差百分比 | 0.8558%                                             |
+| $\lambda_1$误差百分比 | 0.2545%                                             |
+| $\lambda_2$误差百分比 | 0.9312%                                             |
 
 | 参数                  | GPU                                                 |
 | --------------------- | --------------------------------------------------- |
@@ -363,8 +363,8 @@ Navier-Stokes方程场景
 | 数据集                | cylinder nektar wake                                |
 | 训练集噪声强度        | 0.01                                                |
 | 输出                  | Navier-Stokes方程的待定系数$\lambda_1$和$\lambda_2$ |
-| $\lambda_1$误差百分比 | 0.3655%                                             |
-| $\lambda_2$误差百分比 | 2.3851%                                             |
+| $\lambda_1$误差百分比 | 0.2497%                                             |
+| $\lambda_2$误差百分比 | 1.8279%                                             |
 
 # [随机情况说明](#目录)
 

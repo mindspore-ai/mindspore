@@ -302,13 +302,13 @@ Navier-Stokes equation scenario
 | uploaded Date              | 6/7/2021 (month/day/year)                                    |
 | MindSpore Version          | 1.2.0                                                        |
 | Dataset                    | cylinder nektar wake                                         |
-| Training Parameters        | epoch=18000,  lr=0.01, batch size=500. See src/config.py for details |
+| Training Parameters        | epoch=19500,  lr=0.01, batch size=500. See src/config.py for details |
 | Optimizer                  | Adam                                                         |
 | Loss Function              | src/NavierStokes/loss.py                                     |
 | outputs                    | the velocity field (x and y component), presure, and the fitting of the Navier-Stokes equation (x and y component) |
-| Loss                       | 0.0007302                                                    |
+| Loss                       | 0.00042734024                                                |
 | Speed                      | 99ms/step                                                    |
-| Total time                 | 4.9431 hours                                                 |
+| Total time                 | 5.355 hours                                                  |
 | Parameters                 | 3.1K                                                         |
 | Checkpoint for Fine tuning | 39K (.ckpt file)                                             |
 
@@ -320,13 +320,13 @@ Navier-Stokes equation scenario
 | MindSpore Version                    | 1.2.0                                                        |
 | Dataset                              | cylinder nektar wake                                         |
 | Noise intensity of the training data | 0.01                                                         |
-| Training Parameters                  | epoch=18000,  lr=0.01, batch size=500. See src/config.py for details |
+| Training Parameters                  | epoch=19400,  lr=0.01, batch size=500. See src/config.py for details |
 | Optimizer                            | Adam                                                         |
 | Loss Function                        | src/NavierStokes/loss.py                                     |
 | outputs                              | the velocity field (x and y component), presure, and the fitting of the Navier-Stokes equation (x and y component) |
-| Loss                                 | 0.001309                                                     |
+| Loss                                 | 0.00045599302                                                |
 | Speed                                | 100ms/step                                                   |
-| Total time                           | 5.0084 hours                                                 |
+| Total time                           | 5.3979 hours                                                 |
 | Parameters                           | 3.1K                                                         |
 | Checkpoint for Fine tuning           | 39K (.ckpt file)                                             |
 
@@ -354,8 +354,8 @@ Navier-Stokes equation scenario
 | MindSpore Version                | 1.2.0                                                        |
 | Dataset                          | cylinder nektar wake                                         |
 | outputs                          | undermined coefficient $\lambda_1$ and $\lambda_2$ of the Naiver-Stokes equation |
-| error percentage of  $\lambda_1$ | 0.2698%                                                      |
-| error percentage of  $\lambda_2$ | 0.8558%                                                      |
+| error percentage of  $\lambda_1$ | 0.2545%                                                      |
+| error percentage of  $\lambda_2$ | 0.9312%                                                      |
 
 | Parameters                           | GPU                                                          |
 | ------------------------------------ | ------------------------------------------------------------ |
@@ -366,8 +366,8 @@ Navier-Stokes equation scenario
 | Dataset                              | cylinder nektar wake                                         |
 | Noise intensity of the training data | 0.01                                                         |
 | outputs                              | undermined coefficient $\lambda_1$ and $\lambda_2$ of the Naiver-Stokes equation |
-| error percentage of  $\lambda_1$     | 0.3655%                                                      |
-| error percentage of  $\lambda_2$     | 2.3851%                                                      |
+| error percentage of  $\lambda_1$     | 0.2497%                                                      |
+| error percentage of  $\lambda_2$     | 1.8279%                                                      |
 
 # [Description of Random Situation](#contents)
 
