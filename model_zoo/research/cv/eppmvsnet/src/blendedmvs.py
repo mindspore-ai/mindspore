@@ -195,7 +195,7 @@ class BlendedMVSDataset:
 
         masks = {"level_0": depth_0 > depth_min,
                  "level_1": depth_1 > depth_min,
-                 "level_2": depth_2 > depth_min, }
+                 "level_2": depth_2 > depth_min}
         depth_max = depth_0.max()
         return depths, masks, depth_max
 
