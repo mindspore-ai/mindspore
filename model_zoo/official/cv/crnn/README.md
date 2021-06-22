@@ -127,7 +127,11 @@ crnn
 │   ├── run_eval.sh                             # Launch evaluation
 │   └── run_standalone_train.sh                 # Launch standalone training(1 pcs)
 ├── src
-│   ├── config.py                               # Parameter configuration
+│   ├── model_utils
+│       ├── config.py                           # Parameter config
+│       ├── moxing_adapter.py                   # modelarts device configuration
+│       └── device_adapter.py                   # Device Config
+│       └── local_adapter.py                    # local device config
 │   ├── crnn.py                                 # crnn network definition
 │   ├── crnn_for_train.py                       # crnn network with grad, loss and gradient clip
 │   ├── dataset.py                              # Data preprocessing for training and evaluation
@@ -140,6 +144,8 @@ crnn
 │   └── svt_dataset.py                          # Data preprocessing for SVT
 └── train.py                                    # Training script
 ├── eval.py                                     # Evaluation Script
+├── default_config.yaml                         # config file
+
 ```
 
 ### [Script Parameters](#contents)
@@ -156,7 +162,7 @@ Usage: bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
 
 #### Parameters Configuration
 
-Parameters for both training and evaluation can be set in config.py.
+Parameters for both training and evaluation can be set in default_config.yaml.
 
 ```shell
 max_text_length": 23,                     # max number of digits in each
@@ -210,6 +216,59 @@ epoch: 10 step: 14110, loss is 0.0029097411
 Epoch time: 2743.688s, per step time: 0.097s
 ```
 
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
+
+```python
+#  Example of using distributed training dpn on modelarts :
+#  Data set storage method
+
+#  ├── crnn_dataset                                             # dataset dir
+#    ├──train                                                   # train dir
+#      ├── mnt                                                  # train dataset dir
+#      ├── pred_trained                                         # pred_train
+#    ├── eval                                                   # eval dir
+#      ├── IIIT5K-Word_V3.0                                     # eval dataset dir
+#      ├── checkpoint                                           # checkpoint dir
+#      ├── svt                                                  # checkpoint dir
+
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+#       a. set "enable_modelarts=True"
+#          set "run_distribute=True"
+#          set "save_checkpoint_path=/cache/train/checkpoint"
+#          set "train_dataset_path=/cache/data/mnt/ramdisk/max/90kDICT32px"
+#
+#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/crnn"。
+# (4) Set the model's startup file on the modelarts interface "train.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../crnn_dataset/train"(choices crnn_dataset/train Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path" 。
+# (6) start trainning the model。
+
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#        a.set "enable_modelarts=True"
+#          set "eval_dataset=svt" or eval_dataset=iiit5k
+#          set "eval_dataset_path=/cache/data/svt/converted/img/" or eval_dataset_path=/cache/data/IIIT5K-Word_V3/IIIT5K/
+#          set "CHECKPOINT_PATH=/cache/data/checkpoint/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (4) Set the code path on the modelarts interface "/path/crnn"。
+# (5) Set the model's startup file on the modelarts interface "eval.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../crnn_dataset/eval"(choices crnn/eval Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
+```
+
 ## [Evaluation Process](#contents)
 
 ### [Evaluation](#contents)
@@ -240,6 +299,27 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 The ckpt_file parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+- Export MindIR on Modelarts
+
+```Modelarts
+Export MindIR example on ModelArts
+Data storage method is the same as training
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters)。
+#       a. set "enable_modelarts=True"
+#          set "file_name=/cache/train/crnn"
+#          set "file_format=MINDIR"
+#          set "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+# (2)Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/crnn"。
+# (4) Set the model's startup file on the modelarts interface "export.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../crnn_dataset/eval/checkpoint"(choices crnn_dataset/eval/checkpoint Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+```
 
 ### Infer on Ascend310
 

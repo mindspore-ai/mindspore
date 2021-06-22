@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [ $# != 3 ] && [ $# != 2 ]; then
-  echo "Usage: sh run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM](optional)"
+  echo "Usage: sh scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM](optional)"
   exit 1
 fi
 
@@ -49,13 +49,13 @@ run_ascend() {
 
   echo "start training for device $DEVICE_ID"
   env >env.log
-  python train.py --dataset=$DATASET_NAME --dataset_path=$1 --platform=Ascend > log.txt 2>&1 &
+  python train.py --train_dataset=$DATASET_NAME --train_dataset_path=$1 --device_target=Ascend > log.txt 2>&1 &
   cd ..
 }
 
 run_gpu() {
   env >env.log
-  python train.py --dataset=$DATASET_NAME --dataset_path=$1 --platform=GPU  > log.txt 2>&1 &
+  python train.py --train_dataset=$DATASET_NAME --train_dataset_path=$1 --device_target=GPU  > log.txt 2>&1 &
   cd ..
 }
 
@@ -63,9 +63,12 @@ if [ -d "train" ]; then
     rm -rf ./train
 fi
 WORKDIR=./train${DEVICE_ID}
+rm -rf $WORKDIR
 mkdir $WORKDIR
-cp ../*.py $WORKDIR
-cp -r ../src $WORKDIR
+cp ./*.py $WORKDIR
+cp -r ./src $WORKDIR
+cp -r ./scripts $WORKDIR
+cp ./*yaml $WORKDIR
 cd $WORKDIR || exit
 
 if [ "Ascend" == $PLATFORM ]; then

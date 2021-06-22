@@ -17,7 +17,7 @@
 import os
 import numpy as np
 from PIL import Image, ImageFile
-from src.config import config1, label_dict
+from src.model_utils.config import config as config1
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
@@ -48,7 +48,7 @@ class IC03Dataset:
                 if filter_by_dict:
                     flag = True
                     for c in label:
-                        if c not in label_dict:
+                        if c not in config.label_dict:
                             flag = False
                             break
                     if not flag:
@@ -73,8 +73,8 @@ class IC03Dataset:
         label_str = self.img_names[img_name]
         label = []
         for c in label_str:
-            if c in label_dict:
-                label.append(label_dict.index(c))
+            if c in config.label_dict:
+                label.append(config.label_dict.index(c))
         label.extend([int(self.blank)] * (self.max_text_length - len(label)))
         label = np.array(label)
         return image, label
