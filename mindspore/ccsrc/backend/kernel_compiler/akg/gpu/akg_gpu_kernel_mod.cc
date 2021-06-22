@@ -26,6 +26,11 @@ using std::fstream;
 using std::string;
 using std::vector;
 
+const int MAX_REGISTER_PER_THREAD_BLOCK = 65536;
+const int REGISTER_UNIT_IN_WARP = 256;
+const int WARP_SIZE = 32;
+const int WARP_ALLOC_GRAN = 4;
+
 GpuKernelManagerPtr GpuKernelMod::kernelmanager_ = std::make_shared<GpuKernelManager>();
 GpuKernelManager::GpuKernelManager() {}
 
@@ -54,8 +59,20 @@ CUresult GpuKernelManager::GetFunction(const KernelPackPtr &kernel_pack, bool fo
   thread_info->emplace_back(js["threadIdx.x"]);
   thread_info->emplace_back(js["threadIdx.y"]);
   thread_info->emplace_back(js["threadIdx.z"]);
+
   CUmodule module;
-  CUresult result = cuModuleLoadData(&module, kernel_pack->GetKernel()->contents);
+  CUjit_option options[1];
+  options[0] = CU_JIT_MAX_REGISTERS;
+  void *values[1];
+  int total_threads = thread_info->at(3) * thread_info->at(4) * thread_info->at(5);
+  int total_warps = std::ceil(static_cast<float>(total_threads) / static_cast<float>(WARP_SIZE));
+  int limit_warps = (total_warps + WARP_ALLOC_GRAN - 1) / WARP_ALLOC_GRAN * WARP_ALLOC_GRAN;
+  int total_register_unit_nums = MAX_REGISTER_PER_THREAD_BLOCK / REGISTER_UNIT_IN_WARP;
+  int register_unit_nums_per_warp = total_register_unit_nums / limit_warps;
+  int64_t register_nums = (register_unit_nums_per_warp * REGISTER_UNIT_IN_WARP) / WARP_SIZE;
+  values[0] = reinterpret_cast<void *>(register_nums);
+
+  CUresult result = cuModuleLoadDataEx(&module, kernel_pack->GetKernel()->contents, 1, options, values);
   if (result != CUDA_SUCCESS) {
     MS_LOG(ERROR) << "cuModuleLoadData failed.";
     return result;

@@ -17,6 +17,9 @@
 
 CUresult cuModuleLoadData(CUmodule *module, const void *image) { return CUDA_SUCCESS; }
 
+CUresult cuModuleLoadDataEx(CUmodule *module, const void *image, unsigned int numOptions,
+                            CUjit_option *options, void **optionValues) { return CUDA_SUCCESS; }
+
 CUresult cuModuleGetFunction(CUfunction *hfunc, CUmodule hmod, const char *name) { return CUDA_SUCCESS; }
 
 CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ,
