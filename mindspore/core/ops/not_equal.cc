@@ -53,7 +53,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr NotEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  (void)InferType(primitive, input_args);
+  return abstract::MakeAbstract(InferShape(primitive, input_args), kBool);
 }
 REGISTER_PRIMITIVE_C(kNameNotEqual, NotEqual);
 }  // namespace ops
