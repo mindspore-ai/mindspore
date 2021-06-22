@@ -90,7 +90,11 @@ Here we used 6 datasets for training, and 1 datasets for Evaluation.
   │   │   ├── proposal_generator.py         # proposla generator
   │   │   ├── rpn.py                        # region-proposal network
   │   │   └── vgg16.py                      # backbone
-  │   ├── config.py                         # training configuration
+  │   ├── model_utils
+  │   │   ├──config.py             // Parameter config
+  │   │   ├──moxing_adapter.py     // modelarts device configuration
+  │   │   ├──device_adapter.py     // Device Config
+  │   │   ├──local_adapter.py      // local device config
   │   ├── convert_icdar2015.py              # convert icdar2015 dataset label
   │   ├── convert_svt.py                    # convert svt label
   │   ├── create_dataset.py                 # create mindrecord dataset
@@ -109,6 +113,7 @@ Here we used 6 datasets for training, and 1 datasets for Evaluation.
   ├──postprogress.py                        # post process for 310 inference
   ├──export.py                              # script to export AIR,MINDIR model
   └── train.py                              # train net
+  ├── default_config.yaml                   #  config file
 
 ```
 
@@ -221,6 +226,65 @@ Training result will be stored in the example path. Checkpoints will be stored a
 424 epoch: 3 step: 229 ,rpn_loss: 0.00910,  rpn_cls_loss: 0.00385, rpn_reg_loss: 0.00175,
 ```
 
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
+
+```python
+#  Example of using distributed training dpn on modelarts :
+#  Data set storage method
+
+#  ├── ctpn_dataset              # dir
+#    ├──train                         # train dir
+#      ├── pretrain               # pretrain dataset dir
+#      ├── finetune               # finetune dataset dir
+#      ├── backbone               # predtrained dir if exists
+#    ├── eval                    # eval dir
+#      ├── ICDAR2013              # ICDAR2013 img dir
+#      ├── checkpoint           # ckpt files dir
+#      ├── test                  # ckpt files dir
+#          ├── ctpn_test.mindrecord       # test img of mindrecord
+#          ├── ctpn_test.mindrecord.db    # test img of mindrecord.db
+
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+#       a. set "enable_modelarts=True" 。
+#          set "run_distribute=True"
+#          set "save_checkpoint_path=/cache/train/checkpoint/"
+#          set "finetune_dataset_file=/cache/data/finetune/ctpn_finetune.mindrecord0"
+#          set "pretrain_dataset_file=/cache/data/finetune/ctpn_pretrain.mindrecord0"
+#          set "task_type=Pretraining" or task_type=Finetune
+#          set "pre_trained=/cache/data/backbone/pred file name" Without pre-training weights  pre_trained=""
+#
+#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/ctpn"。
+# (4) Set the model's startup file on the modelarts interface "train.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ctpn_dataset/train"(choices ctpn_dataset/train Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path" 。
+# (6) start trainning the model。
+
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#       a. set "enable_modelarts=True" 。
+#          set "dataset_path=/cache/data/test/ctpn_test.mindrecord"
+#          set "img_dir=/cache/data/ICDAR2013/test"
+#          set "checkpoint_path=/cache/data/checkpoint/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (4) Set the code path on the modelarts interface "/path/ctpn"。
+# (5) Set the model's startup file on the modelarts interface "eval.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../ctpn_dataset/eval"(choices FSNS/eval Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
+```
+
 ## [Eval process](#contents)
 
 ### Usage
@@ -264,7 +328,28 @@ Evaluation result will be stored in the example path, you can find result like t
 ## Model Export
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_format[EXPORT_FORMAT]
+```
+
+- Export MindIR on Modelarts
+
+```Modelarts
+Export MindIR example on ModelArts
+Data storage method is the same as training
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters)。
+#       a. set "enable_modelarts=True"
+#          set "file_name=/cache/train/cnnctc"
+#          set "file_format=MINDIR"
+#          set "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+# (2)Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/ctpn"。
+# (4) Set the model's startup file on the modelarts interface "export.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ctpn_dataset/eval/checkpoint"(choices CNNCTC_Data/eval/checkpoint Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
 ```
 
 `EXPORT_FORMAT` should be in ["AIR",  "MINDIR"]

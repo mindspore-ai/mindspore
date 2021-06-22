@@ -16,7 +16,7 @@
 
 if [ $# != 3 ]
 then 
-    echo "Usage: sh run_eval_ascend.sh [IMAGE_PATH] [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: sh scripts/run_eval_ascend.sh [IMAGE_PATH] [DATASET_PATH] [CHECKPOINT_PATH]"
 exit 1
 fi
 
@@ -64,14 +64,15 @@ do
         rm -rf ./eval
     fi
     mkdir ./eval
-    cp ../*.py ./eval
-    cp *.sh ./eval
-    cp -r ../src ./eval
+    cp ./*.py ./eval
+    cp -r ./scripts ./eval
+    cp -r ./src ./eval
+    cp ./*yaml ./eval
     cd ./eval || exit
     env > env.log
     CHECKPOINT_FILE_PATH=$file
     echo "start eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"
-    python eval.py --device_id=$DEVICE_ID --image_path=$IMAGE_PATH --dataset_path=$DATASET_PATH --checkpoint_path=$CHECKPOINT_FILE_PATH &> log
+    python eval.py --image_path=$IMAGE_PATH --dataset_path=$DATASET_PATH --checkpoint_path=$CHECKPOINT_FILE_PATH &> log
     echo "end eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"
     cd ./submit || exit
     file_base_name=$(basename $file)

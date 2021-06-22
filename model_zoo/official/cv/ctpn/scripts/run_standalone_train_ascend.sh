@@ -22,7 +22,7 @@ echo "It is better to use absolute path."
 echo "=============================================================================================================="
 if [ $# -ne 3 ]
 then 
-    echo "Usage: sh run_standalone_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH] [DEVICE_ID]"
+    echo "Usage: sh scripts/run_standalone_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH] [DEVICE_ID]"
 exit 1
 fi
 
@@ -51,11 +51,12 @@ export RANK_SIZE=1
 
 rm -rf ./train
 mkdir ./train
-cp ../*.py ./train
-cp *.sh ./train
-cp -r ../src ./train
+cp ./*.py ./train
+cp -r ./scripts ./train
+cp ./*yaml ./train
+cp -r ./src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --device_id=$DEVICE_ID --task_type=$TASK_TYPE --pre_trained=$PRETRAINED_PATH &> log &
+python train.py --task_type=$TASK_TYPE --pre_trained=$PRETRAINED_PATH &> log &
 cd ..

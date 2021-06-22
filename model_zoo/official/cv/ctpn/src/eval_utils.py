@@ -16,8 +16,9 @@
 import os
 import subprocess
 import numpy as np
-from src.config import config
+from src.model_utils.config import config
 from src.text_connector.detector import detect
+
 
 def exec_shell_cmd(cmd):
     sub = subprocess.Popen(args="{}".format(cmd), shell=True, stdin=subprocess.PIPE, \
@@ -34,11 +35,15 @@ def get_eval_result():
     hmean = exec_shell_cmd(get_eval_output)
     return float(hmean)
 
+
 def eval_for_ctpn(network, dataset, eval_image_path):
     network.set_train(False)
     eval_iter = 0
     img_basenames = []
-    output_dir = os.path.join(os.getcwd(), "submit")
+    local_path = os.getcwd()
+    if config.enable_modelarts:
+        local_path = os.path.join(config.modelarts_home, config.object_name)
+    output_dir = os.path.join(local_path, "submit")
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     for file in os.listdir(eval_image_path):

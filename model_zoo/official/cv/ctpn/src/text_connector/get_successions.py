@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from src.config import config
+from src.model_utils.config import config
 from src.text_connector.utils import overlaps_v, size_similarity
 
 def get_successions(text_proposals, scores, im_size):
