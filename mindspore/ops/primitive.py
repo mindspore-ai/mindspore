@@ -146,10 +146,10 @@ class Primitive(Primitive_):
         mode = context.get_auto_parallel_context("parallel_mode")
         if strategy is not None:
             if not isinstance(strategy, tuple):
-                raise TypeError('strategy must be tuple type.')
+                raise TypeError(f'strategy must be tuple type, but got:{type(strategy)}')
             for ele in strategy:
                 if not isinstance(ele, tuple):
-                    raise TypeError('The element of strategy must be tuple type.')
+                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(ele)}')
         if not _is_in_auto_parallel_mode() and strategy:
             logger.warning(f"The shard strategy {strategy} of {self.name} is not valid in {mode}. "
                            f"Please use semi auto or auto parallel mode.")
