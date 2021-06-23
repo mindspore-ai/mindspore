@@ -15,9 +15,8 @@
 
 """Generate the synthetic data for wide&deep model training"""
 import time
-import argparse
 import numpy as np
-
+from .model_utils.config import config
 
 def generate_data(output_path, label_dim, number_examples, dense_dim, slot_dim, vocabulary_size, random_slot_values):
     """
@@ -75,21 +74,8 @@ def generate_data(output_path, label_dim, number_examples, dense_dim, slot_dim, 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generate Synthetic Data')
+    config.random_slot_values = bool(config.random_slot_values)
 
-    parser.add_argument("--output_file", type=str, default="./train.txt", help='The output path of the generated file')
-    parser.add_argument("--label_dim", type=int, default=2, help='The label category')
-    parser.add_argument("--number_examples", type=int, default=4000000, help='The row numbers of the generated file')
-    parser.add_argument("--dense_dim", type=int, default=13, help='The number of the continue feature.')
-    parser.add_argument("--slot_dim", type=int, default=26, help="The number of the category features")
-    parser.add_argument("--vocabulary_size", type=int, default=400000000,
-                        help="The vocabulary size of the total dataset")
-    parser.add_argument("--random_slot_values", type=int, default=0,
-                        help="If 1, the id is geneted by the random. If false, the id is set by "
-                             "the row_index mod part_size, where part_size the the vocab size for each slot")
-    args = parser.parse_args()
-    args.random_slot_values = bool(args.random_slot_values)
-
-    generate_data(output_path=args.output_file, label_dim=args.label_dim, number_examples=args.number_examples,
-                  dense_dim=args.dense_dim, slot_dim=args.slot_dim, vocabulary_size=args.vocabulary_size,
-                  random_slot_values=args.random_slot_values)
+    generate_data(output_path=config.output_file, label_dim=config.label_dim, number_examples=config.number_examples,
+                  dense_dim=config.dense_dim, slot_dim=config.slot_dim, vocabulary_size=config.vocabulary_size,
+                  random_slot_values=config.random_slot_values)

@@ -29,7 +29,7 @@ from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClas
 from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType
 from src.metrics import AUCMetric
-from src.config import WideDeepConfig
+from src.model_utils.config import config as cfg
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -144,11 +144,9 @@ def train_and_eval(config):
 
 
 if __name__ == "__main__":
-    wide_deep_config = WideDeepConfig()
-    wide_deep_config.argparse_init()
-    context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
-    cache_enable = wide_deep_config.vocab_cache_size > 0
-    if cache_enable and wide_deep_config.device_target != "GPU":
+    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=True)
+    cache_enable = cfg.vocab_cache_size > 0
+    if cache_enable and cfg.device_target != "GPU":
         context.set_context(variable_memory_max_size="24GB")
     context.set_ps_context(enable_ps=True)
     init()
@@ -160,11 +158,11 @@ if __name__ == "__main__":
     else:
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=get_group_size())
-        wide_deep_config.sparse = True
+        cfg.sparse = True
 
-    if wide_deep_config.sparse:
+    if cfg.sparse:
         context.set_context(enable_sparse=True)
-    if wide_deep_config.device_target == "GPU":
+    if cfg.device_target == "GPU":
         context.set_context(enable_graph_kernel=True)
         context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
-    train_and_eval(wide_deep_config)
+    train_and_eval(cfg)

@@ -27,7 +27,7 @@ from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClas
 from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType
 from src.metrics import AUCMetric
-from src.config import WideDeepConfig
+from src.model_utils.config import config as cfg
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -117,20 +117,18 @@ def train_and_eval(config):
 
 
 if __name__ == "__main__":
-    wide_deep_config = WideDeepConfig()
-    wide_deep_config.argparse_init()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=True)
 
-    _enable_graph_kernel = wide_deep_config.device_target == "GPU"
+    _enable_graph_kernel = cfg.device_target == "GPU"
     if _enable_graph_kernel:
         context.set_context(enable_graph_kernel=True)
         context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
 
-    context.set_context(enable_sparse=wide_deep_config.sparse)
+    context.set_context(enable_sparse=cfg.sparse)
     init()
     context.set_context(save_graphs_path='./graphs_of_device_id_'+str(get_rank()))
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                       device_num=get_group_size(), all_reduce_fusion_config=[6, 12])
 
-    train_and_eval(wide_deep_config)
+    train_and_eval(cfg)

@@ -19,10 +19,11 @@ Recommendation dataset process
 import os
 import pickle
 import collections
-import argparse
 
 import numpy as np
 import pandas as pd
+
+from .model_utils.config import config
 
 TRAIN_LINE_COUNT = 45840617
 TEST_LINE_COUNT = 6042135
@@ -231,13 +232,7 @@ def random_split_trans2h5(in_file_path, output_path, recommendation_dataset_stat
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description="Get and Process datasets")
-    parser.add_argument("--raw_data_path", default="./raw_data", help="The path to save dataset")
-    parser.add_argument("--output_path", default="./output",
-                        help="The path to save dataset")
-    args, _ = parser.parse_known_args()
-    base_path = args.raw_data_path
+    base_path = config.raw_data_path
     recommendation_dataset_stat = RecommendationDatasetStatsDict()
     # step 1, stats the vocab and normalize value
     datafile_path = base_path + "train_small.txt"
@@ -249,6 +244,6 @@ if __name__ == "__main__":
     recommendation_dataset_stat.get_cat2id(threshold=100)
     # step 2, transform data trans2h5; version 2: np.random.shuffle
     infile_path = base_path + "train_small.txt"
-    mkdir_path(args.output_path)
-    random_split_trans2h5(infile_path, args.output_path, recommendation_dataset_stat,
+    mkdir_path(config.output_path)
+    random_split_trans2h5(infile_path, config.output_path, recommendation_dataset_stat,
                           part_rows=2000000, test_size=0.1, seed=2020)

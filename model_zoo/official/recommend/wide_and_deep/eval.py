@@ -25,7 +25,8 @@ from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClas
 from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType
 from src.metrics import AUCMetric
-from src.config import WideDeepConfig
+from src.model_utils.config import config as cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 def get_WideDeep_net(config):
@@ -114,9 +115,13 @@ def test_eval(config):
     model.eval(ds_eval, callbacks=eval_callback)
 
 
-if __name__ == "__main__":
-    widedeep_config = WideDeepConfig()
-    widedeep_config.argparse_init()
+def modelarts_pre_process():
+    cfg.ckpt_path = cfg.ckpt_file
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=widedeep_config.device_target)
-    test_eval(widedeep_config)
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def eval_wide_and_deep():
+    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
+    test_eval(cfg)
+
+if __name__ == "__main__":
+    eval_wide_and_deep()

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
-from src.model_utils.config import config as cfg
-from src.wide_and_deep import PredictWithSigmoid, WideDeepModel
+
+"""Local adapter"""
+
+import os
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
 
 
-def get_WideDeep_net(config):
-    """
-    Get network of wide&deep model.
-    """
-    WideDeep_net = WideDeepModel(config)
-    eval_net = PredictWithSigmoid(WideDeep_net)
-    return eval_net
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
 
-def create_network(name, *args, **kwargs):
-    if name == 'wide_and_deep':
-        eval_net = get_WideDeep_net(cfg)
-        return eval_net
-    raise NotImplementedError(f"{name} is not implemented in the repo")
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"
