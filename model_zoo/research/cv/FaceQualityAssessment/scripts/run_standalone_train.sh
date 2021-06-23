@@ -77,6 +77,7 @@ dev=`expr $USE_DEVICE_ID + 0`
 export DEVICE_ID=$dev
 python ${dirname_path}/${SCRIPT_NAME} \
     --is_distributed=0 \
+    --per_batch_size=256 \
     --train_label_file=$TRAIN_LABEL_FILE \
     --pretrained=$PRETRAINED_BACKBONE > train.log  2>&1 &
 

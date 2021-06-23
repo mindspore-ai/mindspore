@@ -31,11 +31,13 @@ cd ${current_exec_path}/cpu || exit
 if [ $2 ] # pretrained ckpt
 then
   python ${BASEPATH}/../train.py \
+            --per_batch_size=256 \
             --train_label_file=$1 \
             --device_target='CPU' \
             --pretrained=$2 > train.log  2>&1 &
 else
   python ${BASEPATH}/../train.py \
+            --per_batch_size=256 \
             --train_label_file=$1 \
             --device_target='CPU' > train.log  2>&1 &
 fi

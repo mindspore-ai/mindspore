@@ -16,7 +16,6 @@
 import os
 import time
 import datetime
-import argparse
 import warnings
 import numpy as np
 
@@ -31,37 +30,95 @@ from mindspore.nn.optim import Momentum
 from mindspore.communication.management import get_group_size, init, get_rank
 
 from src.loss import CriterionsFaceQA
-from src.config import faceqa_1p_cfg, faceqa_8p_cfg
 from src.face_qa import FaceQABackbone, BuildTrainNetwork
 from src.lr_generator import warmup_step
 from src.dataset import faceqa_dataset
 from src.log import get_logger, AverageMeter
 
+from model_utils.config import config as cfg
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
+
 warnings.filterwarnings('ignore')
 mindspore.common.seed.set_seed(1)
 
-def main(args):
 
-    if args.is_distributed == 0:
-        cfg = faceqa_1p_cfg
-    else:
-        cfg = faceqa_8p_cfg
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, cfg.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
-    cfg.data_lst = args.train_label_file
-    cfg.pretrained = args.pretrained
+    if cfg.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(cfg.data_path, cfg.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(cfg.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    cfg.ckpt_path = os.path.join(cfg.output_path, cfg.ckpt_path)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    '''run train.'''
+    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=False)
+    if cfg.device_target == 'Ascend':
+        context.set_context(device_id=get_device_id())
+
+    cfg.data_lst = cfg.train_label_file
 
     # Init distributed
-    if args.is_distributed:
+    if cfg.is_distributed:
         init()
         cfg.local_rank = get_rank()
         cfg.world_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
     else:
+        cfg.local_rank = 0
+        cfg.world_size = 1
         parallel_mode = ParallelMode.STAND_ALONE
 
     # parallel_mode 'STAND_ALONE' do not support parameter_broadcast and mirror_mean
-    context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=cfg.world_size,
-                                      gradients_mean=True)
+    context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=cfg.world_size, gradients_mean=True)
 
     mindspore.common.set_seed(1)
 
@@ -104,11 +161,8 @@ def main(args):
 
     # optimizer and lr scheduler
     lr = warmup_step(cfg, gamma=0.9)
-    opt = Momentum(params=network.trainable_params(),
-                   learning_rate=lr,
-                   momentum=cfg.momentum,
-                   weight_decay=cfg.weight_decay,
-                   loss_scale=cfg.loss_scale)
+    opt = Momentum(params=network.trainable_params(), learning_rate=lr, momentum=cfg.momentum,
+                   weight_decay=cfg.weight_decay, loss_scale=cfg.loss_scale)
 
     # package training process, adjust lr + forward + backward + optimizer
     train_net = BuildTrainNetwork(network, criterion)
@@ -142,7 +196,6 @@ def main(args):
         loss = train_net(data, gt)
         loss_meter.update(loss.asnumpy())
 
-        # ckpt
         if cfg.local_rank == 0:
             cb_params.cur_step_num = i + 1  # current step number
             cb_params.batch_num = i + 2
@@ -175,18 +228,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Face Quality Assessment')
-    parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
-    parser.add_argument('--train_label_file', type=str, default='', help='image label list file, e.g. /home/label.txt')
-    parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
-                        help='device target')
-
-    arg = parser.parse_args()
-
-    context.set_context(mode=context.GRAPH_MODE, device_target=arg.device_target, save_graphs=False)
-    if arg.device_target == 'Ascend':
-        devid = int(os.getenv('DEVICE_ID'))
-        context.set_context(device_id=devid)
-
-    main(arg)
+    run_train()

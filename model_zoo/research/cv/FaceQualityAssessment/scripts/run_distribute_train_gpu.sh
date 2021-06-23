@@ -47,12 +47,14 @@ then
     mpirun -n $1 --allow-run-as-root python ${BASEPATH}/../train.py \
                                                   --train_label_file=$3 \
                                                   --is_distributed=1 \
+                                                  --per_batch_size=32 \
                                                   --device_target='GPU' \
                                                   --pretrained=$4 > train.log  2>&1 &
   else
     python ${BASEPATH}/../train.py \
             --train_label_file=$3 \
             --is_distributed=0 \
+            --per_batch_size=256 \
             --device_target='GPU' \
             --pretrained=$4 > train.log  2>&1 &
   fi
@@ -62,11 +64,13 @@ else
     mpirun -n $1 --allow-run-as-root python ${BASEPATH}/../train.py \
                                                   --train_label_file=$3 \
                                                   --is_distributed=1 \
+                                                  --per_batch_size=32 \
                                                   --device_target='GPU' > train.log  2>&1 &
   else
     python ${BASEPATH}/../train.py \
             --train_label_file=$3 \
             --is_distributed=0 \
+            --per_batch_size=256 \
             --device_target='GPU' > train.log  2>&1 &
   fi
 fi
