@@ -371,7 +371,7 @@ YOLOv5 on 118K images(The annotation and data format must be the same as coco201
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
 | uploaded Date              | 5/14/2021 (month/day/year)                                  |
 | MindSpore Version          | 1.0.0-alpha                                                 |
-| Dataset                    | 11.8K images                                                |
+| Dataset                    | 118K images                                                |
 | Training Parameters        | epoch=320, batch_size=8, lr=0.01, momentum=0.9              |
 | Optimizer                  | Momentum                                                    |
 | Loss Function              | Sigmoid Cross Entropy with logits, Giou Loss                |

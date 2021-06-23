@@ -78,7 +78,7 @@ def parse_args(cloud_args=None):
     # logging related
     parser.add_argument('--log_interval', type=int, default=100, help='Logging interval steps. Default: 100')
     parser.add_argument('--ckpt_path', type=str, default='outputs/', help='Checkpoint save location. Default: outputs/')
-    parser.add_argument('--ckpt_interval', type=int, default=None, help='Save checkpoint interval. Default: None')
+    parser.add_argument('--ckpt_interval', type=int, default=10, help='Save checkpoint interval. Default: 10')
 
     parser.add_argument('--is_save_on_master', type=int, default=1,
                         help='Save ckpt on master or all rank, 1 for master, 0 for all ranks. Default: 1')
