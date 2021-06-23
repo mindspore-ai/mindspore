@@ -34,6 +34,15 @@
 #include "debug/data_dump/e2e_dump.h"
 #include "utils/config_manager.h"
 #include "debug/env_config_parser.h"
+#include "utils/comm_manager.h"
+#include "runtime/framework/actor/actor_common.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "debug/anf_ir_dump.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/proto_exporter.h"
+#else
+#include "debug/debugger/proto_exporter_stub.h"
+#endif
 
 using debugger::Chunk;
 using debugger::EventReply;
@@ -228,6 +237,9 @@ bool Debugger::CheckDebuggerDumpEnabled() const {
   // see if dump is enabled
   if (device_target_ == kGPUDevice) {
     return device::KernelRuntime::DumpDataEnabled();
+  } else if (IsMindRTUsed()) {
+    auto &dump_json_parser = DumpJsonParser::GetInstance();
+    return dump_json_parser.e2e_dump_enabled();
   }
   return false;
 }
@@ -289,8 +301,23 @@ void Debugger::Reset() {
   graph_ptr_list_.clear();
 }
 
+void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs) {
+  // Only GPU is supported for MindRTBackend
+  if (device_target_ != kGPUDevice) {
+    return;
+  }
+  uint32_t graph_sum = graphs.size();
+  for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
+    const auto &graph = graphs[graph_index];
+    if (debugger_) {
+      debugger_->PreExecute(graph, graph_sum);
+    }
+    DumpSetup(graph);
+  }
+}
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
   // access lock for public method
+
   std::lock_guard<std::mutex> a_lock(access_lock_);
   CheckDatasetSinkMode();
   auto graph_id = graph_ptr->graph_id();
@@ -313,7 +340,6 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
       if (!debugger_enabled_) {
         EnableDebugger();
       }
-
       if (debugger_enabled_) {
         if (graph_proto_list_.size()) {
           // only send compiled graphs once.
@@ -323,7 +349,9 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
           LoadParametersAndConst();
           // revert graph ptr to original value
           graph_ptr_ = dbg_graph_ptr;
+
           SendMultiGraphsAndSuspend(graph_proto_list_);
+
           graph_proto_list_.clear();
         } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
           // stop only when receive the first sub run graph for each step
@@ -351,6 +379,89 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
   // resets for the new graph
   suspended_at_last_kernel_ = 0;
 }
+bool Debugger::DumpDataEnabledIteration() const {
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!dump_json_parser.e2e_dump_enabled()) {
+    return false;
+  }
+
+  auto cur_iter = dump_json_parser.cur_dump_iter();
+  if (dump_json_parser.IsDumpIter(cur_iter)) {
+    return true;
+  }
+  return false;
+}
+
+void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
+  uint32_t rank_id = device_context->GetRankID();
+  if (debugger_->DebuggerBackendEnabled()) {
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    E2eDump::DumpData(kernel_graph.get(), rank_id, debugger_.get());
+  } else {
+    DumpJsonParser::GetInstance().UpdateDumpIter();
+  }
+}
+
+void Debugger::DumpSetup(const KernelGraphPtr &kernel_graph) const {
+  MS_LOG(INFO) << "Start!";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
+  uint32_t rank_id = device_context->GetRankID();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  E2eDump::DumpSetup(kernel_graph.get(), rank_id);
+  MS_LOG(INFO) << "Finish!";
+}
+void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
+  // This function will be called for new GPU runtime using MindRTBackend
+  auto &json_parser = DumpJsonParser::GetInstance();
+  if (json_parser.e2e_dump_enabled()) {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    const auto &device_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
+    uint32_t rank_id = device_context->GetRankID();
+    kernel_graph->set_root_graph_id(kernel_graph->graph_id());
+    std::string final_graph = "trace_code_graph_" + std::to_string(kernel_graph->graph_id());
+    std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
+    std::string target_dir = root_dir + "/graphs";
+    std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
+    DumpIRProtoWithSrcInfo(kernel_graph, final_graph, target_dir, kDebugWholeStack);
+    DumpIR("trace_code_graph", kernel_graph, true, kWholeStack, ir_file_path);
+    DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(kernel_graph->graph_id()) + ".csv", root_dir,
+                      kernel_graph->execution_order());
+  }
+}
+void Debugger::PostExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs) {
+  // Only GPU is supported for MindRTBackend
+  if (device_target_ != kGPUDevice) {
+    return;
+  }
+  for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
+    const auto &graph = graphs[graph_index];
+    bool dump_enabled = debugger_->DumpDataEnabledIteration();
+    // debug used for dump
+    if (debugger_ && dump_enabled) {
+      debugger_->Dump(graph);
+    } else {
+      DumpJsonParser::GetInstance().UpdateDumpIter();
+    }
+    if (debugger_) {
+      debugger_->PostExecute();
+    }
+  }
+}
 
 void Debugger::PostExecute() {
   // access lock for public method
@@ -365,6 +476,7 @@ void Debugger::PostExecute() {
         num_step_++;
       }
       SendWatchpoints(CheckWatchpoints());
+
       // no need to suspend at each graph for GPU, suspension happens in preExecute
       if (device_target_ != kGPUDevice) {
         CommandLoop();
@@ -388,7 +500,6 @@ bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) const {
   }
   return false;
 }
-
 void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
@@ -405,6 +516,7 @@ void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
       if (!hits.empty()) {
         SendWatchpoints(hits);
         CommandLoop();
+
         hit_empty_flag = false;
       }
     }
@@ -507,7 +619,6 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
   return model.graph();
 }
-
 void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   if (SendMetadata(true)) {
     // send graph to Mindinsight server
@@ -533,7 +644,9 @@ bool Debugger::SendMetadata(bool version_check) {
   MS_LOG(INFO) << "Is training done?" << training_done_;
   // set graph munber to not_dataset_graph_sum_
   metadata.set_graph_num(not_dataset_graph_sum_);
+
   EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
+
   bool ret = false;
   if (reply_metadata.status() == reply_metadata.OK) {
     if (version_check) {
@@ -575,6 +688,7 @@ void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_prot
     auto graph_size = graph.ByteSize();
     if (graph_size > g_chunk_size) {
       auto sub_graph_str = grpc_client_->ChunkString(str, graph_size);
+
       for (unsigned int i = 0; i < sub_graph_str.size(); i++) {
         chunk.set_buffer(sub_graph_str[i]);
         chunked_graph_proto_list.push_back(chunk);
@@ -834,7 +948,6 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
   }
   return tensor_list;
 }
-
 void Debugger::Exit() {
   // clear resource before exit
   // debugger will notify main thread to exit because main thread can only exit at step boundary
@@ -1171,6 +1284,13 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
     return;
   }
+  // When MindRT is used, only ValueNodes and ParameterWeights can be loaded from device to host
+  if (IsMindRTUsed() && (device_target_ == kGPUDevice)) {
+    if (!anf_node->isa<ValueNode>() &&
+        !(anf_node->isa<Parameter>() && AnfAlgo::IsParameterWeight(anf_node->cast<ParameterPtr>()))) {
+      return;
+    }
+  }
   // for parameters and value nodes, set its execution order to be 0;
   int exec_order = 0;
   std::string node_name = anf_node->fullname_with_scope();
@@ -1263,6 +1383,14 @@ void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
   // update step number if we are processing the first graph (to support multigraph)
   if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()) &&
       (graph->graph_id() == debugger_->GetFirstRunGraphId())) {
+    // access lock for public method
+    std::lock_guard<std::mutex> a_lock(access_lock_);
+    ++num_step_;
+  }
+}
+void Debugger::UpdateStepNumGPU() {
+  // UpdateStepNum with DebugActor::DebugOnStepEnd
+  if (device_target_ == kGPUDevice && (debugger_enabled_ || DumpDataEnabledIteration())) {
     // access lock for public method
     std::lock_guard<std::mutex> a_lock(access_lock_);
     ++num_step_;

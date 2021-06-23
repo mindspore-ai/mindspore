@@ -24,6 +24,10 @@
 #include "ir/tensor.h"
 #include "backend/optimizer/common/helper.h"
 #include "base/base_ref_utils.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
+#include "debug/data_dump/dump_json_parser.h"
 
 namespace mindspore {
 namespace runtime {
@@ -278,6 +282,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
 
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+
   // Execute optimization pass.
   auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
   device_context->OptimizeGraph(graph);
@@ -297,13 +304,20 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   }
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
-
+#ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  debugger->DumpInGraphCompiler(graph);
+#endif
   MS_EXCEPTION_IF_NULL(session_);
   session_->InitAllBucket(graph, device_context);
 
   session_->SetSummaryNodes(graph.get());
   SetSummaryNodesRefCount(graph.get());
-
+#ifdef ENABLE_DEBUGGER
+  if (debugger && debugger->DebuggerBackendEnabled()) {
+    debugger->LoadGraphs(graph);
+  }
+#endif
   return graph->graph_id();
 }
 

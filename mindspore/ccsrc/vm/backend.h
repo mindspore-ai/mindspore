@@ -118,6 +118,9 @@ class MindRTBackend : public Backend {
   // Run Graph in the pyNative mode.
   void RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info, const std::vector<int64_t> *tensors_mask,
                 const std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs);
+#ifdef ENABLE_DEBUGGER
+  void SetDebugger() override;
+#endif
 
  private:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,

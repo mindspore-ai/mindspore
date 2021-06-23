@@ -31,7 +31,9 @@
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/recorder_manager.h"
 #endif
-
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
 namespace mindspore {
 namespace runtime {
 namespace {
@@ -369,6 +371,18 @@ void GraphScheduler::Initialize() {
     auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
     base_recorder_actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(base_recorder_actor, true);
+  }
+#endif
+// Create and schedule debug actor.
+#ifdef ENABLE_DEBUGGER
+  auto debugger = mindspore::Debugger::GetInstance();
+  if (debugger->DebuggerBackendEnabled()) {
+    auto debug_actor = std::make_shared<DebugActor>();
+    MS_EXCEPTION_IF_NULL(debug_actor);
+    debug_aid_ = &(debug_actor->GetAID());
+    auto base_debug_actor = static_cast<ActorReference>(debug_actor);
+    base_debug_actor->set_thread_pool(thread_pool_);
+    (void)actorMgr->Spawn(base_debug_actor, true);
   }
 #endif
 }

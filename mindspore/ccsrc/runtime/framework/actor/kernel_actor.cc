@@ -170,7 +170,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
 }
 
 void KernelActor::SendDebugReq(OpContext<DeviceTensor> *context) {
-  Async(*debug_aid_, &DebugActor::Debug, kernel_, device_context_, context, &GetAID());
+  Async(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_context_, context, &GetAID());
 }
 
 void KernelActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
