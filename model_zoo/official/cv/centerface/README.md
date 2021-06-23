@@ -17,12 +17,15 @@
         - [Testing](#testing)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-    - [Convert Process](#convert-process)
-        - [Convert](#convert)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
+        - [310Inference Performance](#310inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -185,8 +188,12 @@ sh eval_all.sh
         ├── train.py                     // training scripts
         ├── test.py                      // testing training outputs
         ├── export.py                    // convert mindspore model to air model
+        ├── preprocess.py                // 310infer preprocess scripts
+        ├── postprocess.py               // 310infer postprocess scripts
         ├── README.md                    // descriptions about CenterFace
+        ├── ascend310_infer              // application for 310 inference
         ├── scripts
+        │   ├──run_infer_310.sh          // shell script for infer on ascend310
         │   ├──eval.sh                   // evaluate a single testing result
         │   ├──eval_all.sh               // choose a range of testing results to evaluate
         │   ├──test.sh                   // testing a single model
@@ -509,14 +516,50 @@ Hard   Val AP: 0.7822182013830674
 =================================================
 ```
 
-## [Convert Process](#contents)
-
-### Convert
-
-If you want to infer the network on Ascend 310, you should convert the model to AIR:
+## [Inference process](#contents)
 
 ```python
-python export.py [BATCH_SIZE] [PRETRAINED_BACKBONE]
+# prepare for infer CenterFace
+cd ./dependency/centernet/src/lib/external;
+python setup.py install;
+make;
+cd ../../../../evaluate;
+python setup.py install;
+```
+
+### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT] --TEST_BATCH_SIZE [BATCH_SIZE]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
+`BATCH_SIZE` current batch_size can only be set to 1.
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Need to install OpenCV, You can download it from [OpenCV](https://opencv.org/).  
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. Only support CPU mode .
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in ap.log file.
+
+```bash
+==================== Results = ====================
+Easy   Val AP: 0.924429369476229
+Medium Val AP: 0.918026660923143
+Hard   Val AP: 0.776737419299741
+=================================================
 ```
 
 # [Model Description](#contents)
@@ -557,6 +600,22 @@ CenterFace on 3.2K images(The annotation and data format must be the same as wid
 | outputs                    | box position and sorces, and probability                    |
 | Accuracy                   | Easy 92.2%  Medium 91.5% Hard 78.2% (+-0.5%)                |
 | Model for inference        | 22M (.ckpt file)                                            |
+
+### 310Inference Performance
+
+CenterFace on 3.2K images(The annotation and data format must be the same as widerFace)
+
+| Parameters          | CenterFace                      |
+| ------------------- | --------------------------- |
+| Model Version       | CNNCTC                      |
+| Resource            | Ascend 310; CentOS 3.10     |
+| Uploaded Date       | 23/06/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | 3.2K images                 |
+| batch_size          | 1                           |
+| outputs             | box position and sorces, and probability |
+| Accuracy            | Easy 92.4%  Medium 91.8% Hard 77.6% |
+| Model for inference | 22M(.ckpt file)             |
 
 # [Description of Random Situation](#contents)
 
