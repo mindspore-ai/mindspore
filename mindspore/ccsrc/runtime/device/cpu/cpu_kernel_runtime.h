@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ class CPUKernelRuntime : public KernelRuntime {
   bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override { return true; };
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
+  DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
+                                       const AnfNodePtr &node, size_t out_index) override;
 
  private:
   tensor::TensorPtr CreatTensorForOutput(session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index,

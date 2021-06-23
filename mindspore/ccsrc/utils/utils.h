@@ -344,6 +344,9 @@ constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active
 constexpr auto kAttrFpBpEnd = "fpbp_end";
 constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrGroup = "group";
+constexpr auto kAttrGroups = "groups";
+constexpr auto kAttrFracZGroup = "fracz_group";
+constexpr auto kAttrFracZGroupIdx = "fracz_group_idx";
 constexpr auto kAttrOp = "op";
 constexpr auto kAttrDestRank = "dest_rank";
 constexpr auto kAttrSrcRank = "src_rank";
@@ -428,6 +431,7 @@ const size_t kShape5dDims = 5;
 const size_t kShape1dDims = 1;
 const size_t kCubeSize = 16;
 const size_t kC04Size = 4;
+const size_t kNiSize = 16;
 const size_t kMemAlignSize = 512;
 const size_t kBNChannelMultipleFactor = 4;
 const int kParameterDataTensorMask = 0;
@@ -509,9 +513,12 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kApplyProximalAdagradOpName,
                                                kApplyProximalGradientDescentOpName,
                                                kApplyRMSPropOpName,
+                                               kAdamApplyOneWithDecayOpName,
+                                               kAdamApplyOneWithDecayAssignOpName,
                                                kFusedAdamWeightDecayName,
                                                kFusedAdamName,
                                                kFusedSparseAdamName,
+                                               kFusedMulApplyMomentumOpName,
                                                kFusedWeightScaleApplyMomentum,
                                                kFusedScaleApplyMomentum,
                                                kApplyCenteredRMSPropOpName,

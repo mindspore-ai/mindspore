@@ -636,7 +636,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx));
   }
-  return trans::TransShapeToDevice(infer_shape, format);
+  return trans::TransShapeToDevice(infer_shape, format, node, output_idx);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
@@ -649,7 +649,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &n
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
   }
-  return trans::TransShapeToDevice(infer_shape, format);
+  auto input_node_index = GetPrevNodeOutput(node, input_idx);
+  return trans::TransShapeToDevice(infer_shape, format, input_node_index.first, input_node_index.second);
 }
 
 std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, size_t input_idx) {
@@ -1161,7 +1162,7 @@ bool AnfRuntimeAlgorithm::IsTupleOutput(const AnfNodePtr &anf) {
 AnfNodePtr AnfRuntimeAlgorithm::GetInputNode(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto get_input_index = index + 1;
-  if (index + 1 >= node->inputs().size()) {
+  if (get_input_index >= node->inputs().size()) {
     MS_LOG(EXCEPTION) << "Input index size " << get_input_index << "but the node input size just"
                       << node->inputs().size() << " trace: " << trace::DumpSourceLines(node);
   }
@@ -1715,7 +1716,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
     auto max_shape = GetInputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetInputFormat(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format);
+    auto input_node_index = GetPrevNodeOutput(anf_node, index);
+    trans::TransShapeToDevice(device_shape, format, input_node_index.first, input_node_index.second);
   }
   return device_shape;
 }
@@ -1727,7 +1729,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
     auto max_shape = GetOutputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetOutputFormat(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format);
+    trans::TransShapeToDevice(device_shape, format, anf_node, index);
   }
   return device_shape;
 }

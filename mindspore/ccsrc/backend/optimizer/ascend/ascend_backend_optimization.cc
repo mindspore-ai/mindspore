@@ -67,6 +67,7 @@
 #include "backend/optimizer/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/set_fracz_group_attr.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
 #include "backend/optimizer/ascend/format_type/trans_op_format_refine.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
@@ -376,6 +377,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
+  other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  other_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

@@ -211,6 +211,11 @@ DeviceAddressPtr GPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
+DeviceAddressPtr GPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+                                                       TypeId type_id, const AnfNodePtr &node, size_t out_index) {
+  return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id, node, out_index);
+}
+
 bool GPUKernelRuntime::InitDevice() {
   if (GPUDeviceManager::GetInstance().device_count() <= 0) {
     MS_LOG(ERROR) << "No GPU device found.";

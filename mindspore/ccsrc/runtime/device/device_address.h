@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
 #include "utils/shape_utils.h"
@@ -49,6 +50,7 @@ class GPUMemoryManager;
 
 namespace mindspore {
 namespace device {
+using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
 enum class DeviceAddressType { kUnknown, kAscend, kCPU, kGPU };
 
@@ -57,6 +59,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   explicit DeviceAddress(void *ptr, size_t size) : ptr_(ptr), size_(size) {}
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : ptr_(ptr), size_(size), format_(format), type_id_(type_id) {}
+  explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const AnfNodePtr &node,
+                         size_t out_index)
+      : ptr_(ptr), size_(size), format_(format), type_id_(type_id), node_index_({node, out_index}) {}
   virtual ~DeviceAddress() { ptr_ = nullptr; }
   const void *GetPtr() const { return ptr_; }
   size_t GetSize() const { return size_; }
@@ -67,6 +72,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
+  virtual void SetNodeIndex(const AnfNodePtr &node, size_t out_index) { node_index_ = {node, out_index}; }
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
                              TypeId host_type, bool trans_flag) const {
     return true;
@@ -82,6 +88,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   const void *ptr() const { return ptr_; }
   size_t size() const { return size_; }
   void set_ptr(void *ptr) { ptr_ = ptr; }
+  KernelWithIndex GetNodeIndex() const {
+    return node_index_.first.expired() ? KernelWithIndex{nullptr, node_index_.second}
+                                       : KernelWithIndex{node_index_.first.lock(), node_index_.second};
+  }
   void *ptr_{nullptr};
   size_t size_{0};
   size_t ref_count_{0};
@@ -90,6 +100,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
   ShapeVector host_shape_{};
+  // {node, out_index}
+  std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
   friend class KernelRuntime;
   friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ class AscendKernelRuntime : public KernelRuntime {
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
+  DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
+                                       const AnfNodePtr &node, size_t out_index) override;
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
 
   void KernelLaunchProfiling(const std::string &kernel_name) override;
