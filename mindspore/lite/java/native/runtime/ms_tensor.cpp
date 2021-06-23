@@ -158,7 +158,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setData(J
     return static_cast<jboolean>(false);
   }
   auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
-  if (data_len != ms_tensor_ptr->Size()) {
+  if (static_cast<size_t>(data_len) != ms_tensor_ptr->Size()) {
 #ifdef ENABLE_ARM32
     MS_LOGE("data_len(%lld) not equal to Size of ms_tensor(%zu)", data_len, ms_tensor_ptr->Size());
 #else
@@ -191,7 +191,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setByteBu
   }
 
   auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
-  if (data_len != ms_tensor_ptr->Size()) {
+  if (static_cast<size_t>(data_len) != ms_tensor_ptr->Size()) {
 #ifdef ENABLE_ARM32
     MS_LOGE("data_len(%lld) not equal to Size of ms_tensor(%zu)", data_len, ms_tensor_ptr->Size());
 #else
