@@ -49,7 +49,7 @@ device_id: 0
 width: 224
 height: 224
 file_name: "resnext101"
-file_format: "AIR"
+file_format: "MINDIR"
 
 ---
 # Help description for each configuration

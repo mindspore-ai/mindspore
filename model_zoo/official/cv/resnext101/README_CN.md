@@ -103,15 +103,17 @@ ResNeXt是ResNet网络的改进版本，比ResNet的网络多了块多了cardina
 .
 └─resnext101-64x4d-mindspore
   ├─README.md
+  ├─ascend310_infer                   #310推理依赖的应用
   ├─scripts
     ├─run_standalone_train.sh         # 启动Ascend单机训练（单卡）
     ├─run_distribute_train.sh         # 启动Ascend分布式训练（8卡）
     ├─run_standalone_train_for_gpu.sh # 启动GPU单机训练（单卡）
     ├─run_distribute_train_for_gpu.sh # 启动GPU分布式训练（8卡）
+    ├─run_infer_310.sh                # 启动Ascend310推理
     └─run_eval.sh                     # 启动评估
   ├─src
     ├─backbone
-      ├─_init_.py                     # 初始化
+      ├─_init_.py                      # 初始化
       ├─resnext.py                     # ResNeXt101骨干
     ├─utils
       ├─_init_.py                     # 初始化
@@ -134,8 +136,11 @@ ResNeXt是ResNet网络的改进版本，比ResNet的网络多了块多了cardina
       │   ├──device_adapter.py      # 设备配置
       │   ├──local_adapter.py       # 本地设备配置
       │   ├──moxing_adapter.py      # modelarts设备配置
+  ├──create_imagenet2012_label.py    # 转换推理数据
   ├──default_config.yaml             # 参数配置
   ├──eval.py                         # 评估网络
+  ├──export.py                       # 转换ckpt至MINDIR格式
+  ├──postprogress.py                 # 310推理后处理
   ├──train.py                        # 训练网络
   ├──mindspore_hub_conf.py           # MindSpore Hub接口
 ```
@@ -191,13 +196,37 @@ python eval.py --data_path ~/imagenet/val/ --platform Ascend --checkpoint_file_p
 bash scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH DEVICE_TARGET
 ```
 
+## [推理过程](#contents)
+
+### 用法
+
+在执行推理之前，需要通过export.py导出mindir文件。
+目前仅可处理batch_Size为1。
+
 ## 模型导出
 
 ```shell
 python export.py --device_target [PLATFORM] --checkpoint_file_path [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` 可选 ["AIR", "ONNX", "MINDIR"].
+`checkpoint_file_path` 参数为必填项
+`device_target` 可选 ["Ascend", "GPU"]
+`file_format` 可选 ["AIR", "MINDIR"]
+
+```shell
+#Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+`DEVICE_ID` 可选，默认值为 0。
+
+### 结果
+
+推理结果保存在当前路径，可在acc.log中看到最终精度结果。
+
+```log
+Total data:50000, top1 accuracy:0.79858, top5 accuracy:0.94716
+```
 
 ## 高级设置
 
@@ -251,10 +280,25 @@ python export.py --device_target [PLATFORM] --checkpoint_file_path [CKPT_PATH] -
 
 | **epochs** |   Top1/Top5   |
 | :--------: | :-----------: |
-|     150     | 79.56%(TOP1)/94.68%(TOP5) |
+|     150    | 79.56%(TOP1)/94.68%(TOP5) |
 
 #### 训练性能结果
 
 | **NPUs** | train performance |
 | :------: | :---------------: |
-|    1     |   196.33image/sec   |
+|    1     |   196.33image/sec |
+
+### 310 推理性能
+
+#### ResNeXt101 on ImageNet
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | ResNeXt101                  |
+| Resource            | Ascend 310; OS Euler2.8     |
+| Uploaded Date       | 22/06/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | ImageNet                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | TOP1: 79.85%, TOP5: 94.71%  |
