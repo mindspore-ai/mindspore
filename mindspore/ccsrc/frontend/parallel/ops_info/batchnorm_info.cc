@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "utils/ms_context.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
@@ -196,6 +197,8 @@ Status BatchNormInfo::InferForwardCommunication() {
 }
 
 Status BatchNormInfo::InferReplaceOps() {
+  replace_op_.clear();
+
   if (!is_training_) {
     MS_LOG(INFO) << name_ << ": It is not training, no need to replace op";
     return SUCCESS;
@@ -203,6 +206,15 @@ Status BatchNormInfo::InferReplaceOps() {
 
   if (forward_allreduce_group_.empty()) {
     MS_LOG(INFO) << name_ << ": The forward allreduce group is empty, no need to replace op";
+    return SUCCESS;
+  }
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+
+  if (backend != kAscendDevice && backend != kDavinciDevice) {
+    MS_LOG(INFO) << name_ << ": The backend is " << backend << ", it does not support SyncBatchNorm operator";
     return SUCCESS;
   }
 
