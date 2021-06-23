@@ -44,6 +44,7 @@ constexpr size_t kLambWeightInputIdx = 4;
 
 std::vector<PrimitivePtr> GetExpandOps() {
   std::vector<PrimitivePtr> expand_ops = {
+    prim::kPrimAddN,
     prim::kPrimSquare,
     prim::kPrimGeLUGrad,
     prim::kPrimAssignAdd,

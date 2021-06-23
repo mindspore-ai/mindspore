@@ -53,7 +53,6 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::kPrimSub,
     prim::kPrimRsqrt,
     prim::kPrimSqrt,
-    prim::kPrimAddN,
     prim::kPrimReciprocal,
     prim::kPrimTanh,
     prim::kPrimReshape,
