@@ -391,7 +391,7 @@ def check_generatordataset(method):
                 raise ValueError("schema should be a path to schema file or a schema object.")
 
         # check optional argument
-        nreq_param_int = ["num_samples", "num_parallel_workers", "num_shards", "shard_id"]
+        nreq_param_int = ["max_rowsize", "num_samples", "num_parallel_workers", "num_shards", "shard_id"]
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         nreq_param_list = ["column_types"]
         validate_dataset_param_value(nreq_param_list, param_dict, list)

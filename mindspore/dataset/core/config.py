@@ -266,7 +266,7 @@ def set_auto_num_workers(enable):
         >>> ds.config.set_auto_num_workers(True)
     """
     if not isinstance(enable, bool):
-        raise TypeError("enable isn't of type bool.")
+        raise TypeError("enable must be of type bool.")
     _config.set_auto_num_workers(enable)
 
 
@@ -411,6 +411,8 @@ def set_enable_shared_mem(enable):
     Examples:
         >>> ds.config.set_enable_shared_mem(True)
     """
+    if not isinstance(enable, bool):
+        raise TypeError("enable must be of type bool.")
     _config.set_enable_shared_mem(enable)
 
 def set_sending_batches(batch_num):
@@ -429,5 +431,5 @@ def set_sending_batches(batch_num):
         >>> ds.config.set_sending_batches(10)
     """
     if not isinstance(batch_num, int):
-        raise TypeError("batch_num must be a int dtype.")
+        raise TypeError("batch_num must be an int dtype.")
     _config.set_sending_batches(batch_num)
