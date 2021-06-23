@@ -19,6 +19,7 @@
 #include "sys/stat.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "runtime/framework/actor/actor_common.h"
 
 namespace mindspore {
 namespace profiler {
@@ -120,8 +121,11 @@ void GpuDataSaver::WriteFile(std::string out_path_dir, const BaseTime &start_tim
   WriteOpType(out_path_dir);
   WriteActivity(out_path_dir);
   WriteOpTimestamp(out_path_dir);
-  WriteStepTrace(out_path_dir);
   WriteStartTime(out_path_dir, start_time);
+  if (IsMindRTUsed())
+    WriteStepTraceAsyncLaunchKernel(out_path_dir);
+  else
+    WriteStepTrace(out_path_dir);
 }
 
 void GpuDataSaver::WriteActivity(const std::string &saver_base_dir) {
@@ -162,6 +166,82 @@ void GpuDataSaver::WriteActivity(const std::string &saver_base_dir) {
   }
 }
 
+void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base_dir) {
+  std::string file_path = saver_base_dir + "/step_trace_profiling_" + device_id_ + ".txt";
+  std::ofstream ofs(file_path);
+  // check if the file is writable
+  if (!ofs.is_open()) {
+    MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
+    return;
+  }
+
+  // write step trace time info into file
+  uint32_t step = 0;
+  uint64_t duration;
+  for (auto step_start_end : all_step_start_end_info_) {
+    auto iter_start_op_name = step_start_end.iter_start_op_name;
+    auto fp_op_name = step_start_end.fp_start_op_name;
+    auto iter_end_op_name = step_start_end.iter_end_op_name;
+    auto iter_start_op_timestamp = op_timestamps_map_.find(iter_start_op_name);
+    auto fp_op_timestamp = op_timestamps_map_.find(fp_op_name);
+    auto bp_end_op_timestamp = op_timestamps_map_.find(step_trace_op_name_.trace_bp_end);
+    auto iter_end_op_timestamp = op_timestamps_map_.find(iter_end_op_name);
+
+    if (iter_end_op_name == "Default/InitDataSetQueue-op0") continue;
+
+    if (iter_start_op_timestamp == op_timestamps_map_.end() || fp_op_timestamp == op_timestamps_map_.end() ||
+        iter_end_op_timestamp == op_timestamps_map_.end() || bp_end_op_timestamp == op_timestamps_map_.end()) {
+      MS_LOG(ERROR) << "[profiling step trace] failed, do not find " << fp_op_name << " or " << iter_end_op_name << "or"
+                    << step_trace_op_name_.trace_bp_end;
+      return;
+    }
+    if (iter_start_op_timestamp->second.size() <= step || fp_op_timestamp->second.size() <= step ||
+        iter_end_op_timestamp->second.size() <= step || bp_end_op_timestamp->second.size() <= step) {
+      MS_LOG(ERROR) << "[profiling step trace] the number of fp/bp/iter_end timestamp not enough";
+      return;
+    }
+
+    try {
+      // write fp,bp and iter_end timestamp.
+      duration = iter_end_op_timestamp->second[step].duration * kTimeUnit;
+      uint64_t iter_end_timestamp = iter_end_op_timestamp->second[step].start_timestamp + duration;
+      ofs << iter_start_op_name << "," << iter_start_op_timestamp->second[step].start_timestamp << " " << fp_op_name
+          << "," << fp_op_timestamp->second[step].start_timestamp << " " << step_trace_op_name_.trace_bp_end << ","
+          << bp_end_op_timestamp->second[step].start_timestamp << " " << iter_end_op_name << "," << iter_end_timestamp;
+
+      // write communication op info
+      for (auto op_name : step_trace_op_name_.trace_custom_node) {
+        // convert the time unit from 1ns to 10ns (keep the same with ascend)
+        auto iter_op_timestamp = op_timestamps_map_.find(op_name);
+        if (iter_op_timestamp == op_timestamps_map_.end()) {
+          MS_LOG(ERROR) << "[profiling step trace] failed, do not find " << fp_op_name << " or " << iter_end_op_name
+                        << "or" << step_trace_op_name_.trace_bp_end;
+          return;
+        }
+
+        if (iter_op_timestamp->second.size() <= step) {
+          MS_LOG(ERROR) << "[profiling step trace] the number of communication op timestamp not enough";
+          return;
+        }
+
+        duration = iter_op_timestamp->second[step].duration * kTimeUnit;
+        uint64_t end_timestamp = (duration + iter_op_timestamp->second[step].start_timestamp);
+        uint64_t start_timestamp = iter_op_timestamp->second[step].start_timestamp;
+        ofs << " " << op_name << "," << start_timestamp << "," << end_timestamp;
+      }
+      ofs << std::endl;
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
+      ofs.close();
+    }
+    step++;
+  }
+
+  ofs.close();
+  ChangeFileMode(file_path);
+  MS_LOG(INFO) << "Write step trace infos into file: " << file_path;
+}
+
 void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {
   std::string file_path = saver_base_dir + "/step_trace_profiling_" + device_id_ + ".txt";
   std::ofstream ofs(file_path);
@@ -174,12 +254,12 @@ void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {
   // write step trace time info into file
   const uint32_t factor = 10;
   std::vector<std::string> op_name_arr;
-  op_name_arr.push_back(step_trace_op_name.trace_fp_start);
-  op_name_arr.push_back(step_trace_op_name.trace_bp_end);
-  op_name_arr.push_back(step_trace_op_name.trace_iter_end);
-  if (!step_trace_op_name.trace_custom_node.empty()) {
-    auto start = step_trace_op_name.trace_custom_node.begin();
-    auto end = step_trace_op_name.trace_custom_node.end();
+  op_name_arr.push_back(step_trace_op_name_from_graph_.trace_fp_start);
+  op_name_arr.push_back(step_trace_op_name_from_graph_.trace_bp_end);
+  op_name_arr.push_back(step_trace_op_name_from_graph_.trace_iter_end);
+  if (!step_trace_op_name_from_graph_.trace_custom_node.empty()) {
+    auto start = step_trace_op_name_from_graph_.trace_custom_node.begin();
+    auto end = step_trace_op_name_from_graph_.trace_custom_node.end();
     std::copy(start, end, std::back_inserter(op_name_arr));
   }
   for (auto op_name : op_name_arr) {
@@ -227,8 +307,6 @@ void GpuDataSaver::WriteStartTime(const std::string &saver_base_dir, const BaseT
   ChangeFileMode(file_path);
   MS_LOG(INFO) << "Write profiler start time infos into file: " << file_path;
 }
-
-void GpuDataSaver::SetStepTraceOpName(ProfilingTraceInfo trace_op_name) { step_trace_op_name = trace_op_name; }
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore

@@ -351,7 +351,10 @@ class Profiler:
 
         # analyse step trace info
         try:
-            self._analyse_step_trace(is_training_mode_flag=timeline_generator.check_op_name('Gradients'))
+            self._analyse_step_trace(
+                is_training_mode_flag=timeline_generator.check_op_name('Gradients'),
+                is_gpu_kernel_async_launch_flag=timeline_generator.is_gpu_kernel_async_launch()
+            )
         except ProfilerException as err:
             logger.warning(err.message)
 
@@ -363,7 +366,8 @@ class Profiler:
             'otherwise, this warning can be ignored.'
         )
 
-    def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True):
+    def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
+                            is_gpu_kernel_async_launch_flag=False):
         """
         Analyse step trace data and save the result.
 
@@ -380,7 +384,7 @@ class Profiler:
         )
         point_info_file_path = os.path.join(
             self._output_path,
-            'step_trace_point_info.json'
+            f'step_trace_point_info_{self._dev_id}.json'
         )
         step_trace_intermediate_file_path = validate_and_normalize_path(step_trace_intermediate_file_path)
         point_info_file_path = validate_and_normalize_path(point_info_file_path)
@@ -392,7 +396,8 @@ class Profiler:
             )
             parser = GpuStepTraceParser(input_dir=input_file_path,
                                         output_file_path=step_trace_intermediate_file_path,
-                                        is_training_mode=is_training_mode_flag)
+                                        is_training_mode=is_training_mode_flag,
+                                        is_gpu_kernel_async_launch=is_gpu_kernel_async_launch_flag)
             parser.parse_and_save()
             point_info = parser.record_point_info(input_file_path, point_info_file_path)
         else:

@@ -33,6 +33,14 @@ struct StartDuration {
   float duration = 0l;
 };
 
+struct OneStepStartEndInfo {
+  std::string iter_start_op_name;
+  std::string fp_start_op_name;
+  std::string iter_end_op_name;
+  uint64_t fp_start_timestamp = 0l;
+  uint64_t iter_end_timestamp = 0l;
+};
+
 struct OpInfo {
   std::string op_name;
   float cupti_api_call_time = 0l;
@@ -67,6 +75,8 @@ class Profiler {
   bool enable_flag_ = false;
   std::string profile_data_path_;
   std::unordered_map<std::string, OpInfo> op_info_map_;
+  OneStepStartEndInfo step_start_end_info_;
+  std::vector<OneStepStartEndInfo> all_step_start_end_info_;
 };
 }  // namespace profiler
 }  // namespace mindspore

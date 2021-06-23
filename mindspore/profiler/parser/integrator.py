@@ -733,6 +733,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
     _output_op_execute_time_file_path = "gpu_op_execute_timestamp_{}.txt"
     _output_activity_execute_time_file_path = "activity_execute_timestamp_{}.txt"
     _output_gpu_activity_info_file_path = "gpu_activity_data_{}.csv"
+    _step_trace_original_filename = 'step_trace_profiling_{}.txt'
     _activity_keys_list = []
 
     def __init__(self, profiling_dir, device_id):
@@ -811,7 +812,12 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         # Generate step time.
         factor_start_time_uint_to_duration = 1e-3
         self._set_step_start_and_end_op_name(timeline_list)
-        step_time_list = self._get_step_time_list(timeline_list, factor_start_time_uint_to_duration)
+        # Fit gpu kernel async launch solution.
+        if self.is_gpu_kernel_async_launch():
+            step_time_list = self._get_step_time_list_from_step_trace()
+        else:
+            step_time_list = self._get_step_time_list(timeline_list, factor_start_time_uint_to_duration)
+
         # Add Scope Name.
         default_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Default",
                                                                       factor_start_time_uint_to_duration)
@@ -933,6 +939,54 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             if full_op_name and full_op_name.startswith(op_name):
                 return True
         return False
+
+    def _get_step_time_list_from_step_trace(self):
+        """Produce the time of each step based on step_trace_profiling file."""
+        # Record the time of each step.
+        step_time_list = []
+        step_start_op_name = []
+        step_end_op_name = []
+        step_num = 1
+        tid = "Steps"
+        step_trace_profiling_path = self._get_and_validate_path(
+            self._step_trace_original_filename
+        )
+
+        try:
+            with open(step_trace_profiling_path, 'r') as f_obj:
+                for line in f_obj:
+                    line = line.strip().split()
+                    step_start_op_name.append(line[0].split(',')[0])
+                    step_end_op_name.append(line[3].split(',')[0])
+                    cur_step_start_time = float(line[0].split(',')[1])
+                    cur_step_end_time = float(line[3].split(',')[1])
+                    # convert duration time unit from ns to us.
+                    cur_step_duration_time = (cur_step_end_time - cur_step_start_time) / 1e3
+                    step_time_item = [str(step_num), tid, cur_step_start_time, cur_step_duration_time]
+                    step_time_list.append(step_time_item)
+                    step_num += 1
+        except (IOError, OSError) as err:
+            logger.error(f'Error occurred when read {step_trace_profiling_path}: {err}')
+            raise ProfilerIOException
+
+        return step_time_list
+
+    def is_gpu_kernel_async_launch(self):
+        """Recognize the solution that launch the gpu kernel async."""
+        step_trace_profiling_path = self._get_and_validate_path(
+            self._step_trace_original_filename
+        )
+        try:
+            with open(step_trace_profiling_path, 'r') as f_obj:
+                line = next(f_obj)
+                first_string = line.strip().split()[0]
+                # the data format of launch the gpu kernel async is "Default/op1,160123 op-name"
+                # otherwise, the data format is "Default/op1 160123,12 "
+                return bool(len(first_string.split(',')) == 2)
+        except (IOError, OSError) as err:
+            logger.error(f'Error occurred when read {step_trace_profiling_path}: {err}')
+            raise ProfilerIOException
+
 
 class AscendTimelineGenerator(BaseTimelineGenerator):
     """Generate ascend Timeline data from file."""
