@@ -243,6 +243,7 @@ other datasets need to use the same format as MS COCO.
 ```text
 └─yolov4
   ├─README.md
+  ├─README_CN.md
   ├─mindspore_hub_conf.py             # config for mindspore hub
   ├─scripts
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
@@ -263,7 +264,6 @@ other datasets need to use the same format as MS COCO.
     ├─util.py                         # util function
     ├─yolo.py                         # yolov4 network
     ├─yolo_dataset.py                 # create dataset for YOLOV4
-
   ├─eval.py                           # evaluate val results
   ├─test.py#                          # evaluate test results
   └─train.py                          # train net
