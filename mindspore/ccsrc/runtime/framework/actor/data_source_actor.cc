@@ -56,7 +56,8 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
 void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   // No output.
-  if ((output_data_arrows_.size() == 0) && (output_result_arrows_.size() == 0)) {
+  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
+      (output_result_arrows_.size() == 0)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 
@@ -80,6 +81,14 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
 
   // Send graph output result.
   SendResult(context);
+
+  // Send output control.
+  if (output_control_arrows_.size() > 0) {
+    auto source_aid = const_cast<AID *>(&GetAID());
+    for (auto &output_control : output_control_arrows_) {
+      Async(output_control, &OpActor::RunOpControl, source_aid, context);
+    }
+  }
 
   // Send recorder info.
   if (recorder_aid_ != nullptr) {

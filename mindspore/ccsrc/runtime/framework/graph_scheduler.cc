@@ -731,7 +731,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
         KernelWithIndex from_kernel_with_output_idx = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
         KernelWithIndex to_kernel_with_input_idx = std::make_pair(kernel, i);
         const auto &tensor = FetchInputTensor(graph_compiler_info, index, i);
-        // The gather of linking data allows of kernel by the different from kernel type.
+        // The gather of linking data arrows of kernel by the different from kernel type.
         LinkDataArrow(kernel_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx,
                       tensor);
       }
@@ -745,17 +745,14 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   // Link the arrow by control node.
   LinkArrowByControlNode(graph_compiler_info, actor_set);
 
-  // Link the control arrows of kernel actors.
-  LinkControlArrowForKernelActor(&(actor_set->kernel_actors_), actor_set->loop_count_actor_.get(), strategy);
-
   // Auto monad actor may modify the device tensor store.
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
 
   // BuildNoInputKernelActor depends on whether kernel actors have input, so must be behind the link of kernel actors.
-  actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set);
+  actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set, strategy);
 
   // Link the control arrows of loop count actor, which depends on the no input kernel actors.
-  LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set, strategy);
+  LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set);
 
   // Link the output result arrows for output actors.
   LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
@@ -954,12 +951,19 @@ OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_c
   return output_actor;
 }
 
-std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorSet *actor_set) {
+std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorSet *actor_set,
+                                                                    GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<KernelActorPtr> no_input_kernel_actors;
 
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
+    // Framework will trigger kernel actor running in the step execution strategy.
+    if (strategy == GraphExecutionStrategy::kStep) {
+      kernel_actor->input_controls_num_++;
+      continue;
+    }
+
     if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0)) {
       // Check whether the kernel actor belongs to the root graph.
       // In general, all no input nodes belong to the root funcgraph, and the corresponding gather actor should be
@@ -975,8 +979,6 @@ std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorS
       }
 
       no_input_kernel_actors.emplace_back(kernel_actor);
-      // The no input kernel actor will be triggered by loop count actor, so need set the input_controls_num_.
-      kernel_actor->input_controls_num_ = 1;
     }
   }
   return no_input_kernel_actors;
@@ -1317,31 +1319,6 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *from_actor
   UpdateRefCount(copy_actor->output_.get());
 }
 
-void GraphScheduler::LinkControlArrowForKernelActor(std::vector<KernelActorPtr> *from_actors, LoopCountActor *to_actor,
-                                                    GraphExecutionStrategy strategy) {
-  MS_EXCEPTION_IF_NULL(from_actors);
-
-  for (auto &from_actor : *from_actors) {
-    MS_EXCEPTION_IF_NULL(from_actor);
-    if (strategy == GraphExecutionStrategy::kStep) {
-      from_actor->input_controls_num_++;
-      continue;
-    }
-
-    // If the kernel actor has no output in the pipeline mode, then adds the output control to loop count actor.
-    if (strategy == GraphExecutionStrategy::kPipeline) {
-      MS_EXCEPTION_IF_NULL(to_actor);
-      if ((from_actor->output_data_arrows_.size() == 0) && (from_actor->output_control_arrows_.size() == 0)) {
-        MS_EXCEPTION_IF_NULL(from_actor->kernel_);
-        MS_LOG(INFO) << from_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
-        auto to_aid = to_actor->GetAID();
-        from_actor->output_control_arrows_.emplace_back(to_aid);
-        to_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
-      }
-    }
-  }
-}
-
 void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_node);
@@ -1502,28 +1479,52 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const KernelGraphPtr &g
   }
 }
 
-void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
-                                                       GraphExecutionStrategy strategy) {
+void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
   // There is no loop count actor in step mode.
-  if (strategy == GraphExecutionStrategy::kStep) {
+  if (loop_count_actor == nullptr) {
     return;
   }
 
-  MS_EXCEPTION_IF_NULL(loop_count_actor);
-  // Set the source data actor.
+  // Collect the actors which have no output.
+  std::vector<MemoryAwareActor *> no_output_actors;
+  for (auto &kernel_actor : actor_set->kernel_actors_) {
+    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
+      MS_EXCEPTION_IF_NULL(kernel_actor->kernel_);
+      MS_LOG(INFO) << kernel_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
+      no_output_actors.emplace_back(kernel_actor.get());
+    }
+  }
+  for (auto &data_actor : actor_set->data_source_actors_) {
+    if ((data_actor->output_data_arrows_.size() == 0) && (data_actor->output_control_arrows_.size() == 0)) {
+      no_output_actors.emplace_back(data_actor.get());
+    }
+  }
+  for (auto &copy_actor : copy_actors_) {
+    if ((copy_actor->output_data_arrows_.size() == 0) && (copy_actor->output_control_arrows_.size() == 0)) {
+      no_output_actors.emplace_back(copy_actor.get());
+    }
+  }
+  // No output actor --> loop count actor.
+  for (auto &no_output_actor : no_output_actors) {
+    no_output_actor->output_control_arrows_.emplace_back(loop_count_actor->GetAID());
+    loop_count_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
+  }
+
+  // Loop count actor --> data source actor.
   for (auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
     loop_count_actor->data_source_aids_.emplace_back(data_source_actor->GetAID());
   }
 
-  // Set the no input kernel actor.
+  // Loop count actor --> no input kernel actor.
   for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
     loop_count_actor->no_input_kernel_aids_.emplace_back(no_input_kernel_actor->GetAID());
+    no_input_kernel_actor->input_controls_num_++;
   }
 
-  // Set the output actor.
+  // Loop count actor --> output actor.
   MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
   loop_count_actor->output_aid_ = actor_set->output_actor_->GetAID();
 }
@@ -1684,7 +1685,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
 
       // LInk from copy actor to kernel actor users.
       if (kernel_actor->output_control_arrows_.size() == 0) {
-        MS_LOG(WARNING) << "The kernel actor has no control arrow:" << kernel_actor->GetAID().Name();
+        MS_LOG(INFO) << "The kernel actor has no control arrow:" << kernel_actor->GetAID().Name();
       }
       for (auto &output_contorl : kernel_actor->output_control_arrows_) {
         copy_actor->output_control_arrows_.emplace_back(output_contorl);
@@ -2197,6 +2198,16 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
                     << " is wrong, input data num: " << input_data_num
                     << ", device tensor store num: " << device_tensor_store_num
                     << ", total input num: " << kCopyActorInputDataNum;
+      return false;
+    }
+  }
+
+  // Check the loop count actor.
+  const auto &loop_count_actor = actor_set->loop_count_actor_;
+  if ((loop_count_actor != nullptr) &&
+      (actor_set->data_source_actors_.size() + actor_set->kernel_actors_.size() + actor_set->copy_actors_.size() > 0)) {
+    if (loop_count_actor->branch_id_to_input_controls_num_[kMainBranchID] == 0) {
+      MS_LOG(ERROR) << loop_count_actor->GetAID().Name() << " has no source.";
       return false;
     }
   }
