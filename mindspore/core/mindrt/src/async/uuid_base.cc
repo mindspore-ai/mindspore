@@ -46,7 +46,7 @@ Option<uuid> uuid::FromBytes(const std::string &s) {
   uuid u;
   memcpy(&u.uuidData, s.data(), s.size());
 
-  return Option(u);
+  return Option<uuid>(u);
 }
 
 Option<unsigned char> uuid::GetValue(char c) {
@@ -106,7 +106,7 @@ Option<uuid> uuid::FromString(const std::string &s) {
     MS_LOG(ERROR) << "No } end or leng invalid";
     return Option<uuid>(MindrtNone());
   }
-  return Option(u);
+  return Option<uuid>(u);
 }
 
 // To check whether uuid looks like 0000000-000-000-000-000000000000000

@@ -181,20 +181,24 @@ int AffineFp32CPUKernel::Init() {
     return RET_PARAM_INVALID;
   }
   if (affine_parameter_->activation_type_ != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    if (auto ret = CheckActivationValid(); ret != RET_OK) {
+    auto ret = CheckActivationValid();
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "CheckActivationValid failed";
       return ret;
     }
   }
-  if (auto ret = ReSize(); ret != RET_OK) {
+  auto ret = ReSize();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "ReSize failed";
     return ret;
   }
-  if (auto ret = FullRunInit(); ret != RET_OK) {
+  ret = FullRunInit();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "FullRunInit failed";
     return ret;
   }
-  if (auto ret = IncrementInit(); ret != RET_OK) {
+  ret = IncrementInit();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "IncrementInit failed";
     return ret;
   }
@@ -214,7 +218,8 @@ int AffineFp32CPUKernel::ReSize() {
     }
     full_mult_kernel_->set_name(this->name_);
   }
-  if (auto ret = full_mult_kernel_->ReSize(); ret != RET_OK) {
+  auto ret = full_mult_kernel_->ReSize();
+  if (ret != RET_OK) {
     return ret;
   }
 
@@ -227,7 +232,8 @@ int AffineFp32CPUKernel::ReSize() {
     }
     increment_mult_kernel_->set_name(this->name_);
   }
-  if (auto ret = increment_mult_kernel_->ReSize(); ret != RET_OK) {
+  ret = increment_mult_kernel_->ReSize();
+  if (ret != RET_OK) {
     return ret;
   }
   return RET_OK;
@@ -372,7 +378,8 @@ int AffineFp32CPUKernel::IncrementSplice() {
 }
 
 int AffineFp32CPUKernel::IncrementMatmulRun() {
-  if (auto ret = IncrementSplice(); ret != RET_OK) {
+  auto ret = IncrementSplice();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "IncrementSplice failed.";
     return ret;
   }
@@ -381,7 +388,8 @@ int AffineFp32CPUKernel::IncrementMatmulRun() {
     MS_LOG(ERROR) << "increment_mult_kernel_ is null, can't call increment_mult_kernel_->Run().";
     return RET_NULL_PTR;
   }
-  if (auto ret = increment_mult_kernel_->Run(); ret != RET_OK) {
+  ret = increment_mult_kernel_->Run();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "increment_mult_kernel_->Run() failed";
     return ret;
   }
@@ -392,7 +400,8 @@ int AffineFp32CPUKernel::IncrementMatmulRun() {
   }
 
   if (affine_parameter_->activation_type_ != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    if (auto ret = DoActivation(increment_output_) != RET_OK) {
+    ret = DoActivation(increment_output_);
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "DoActivation() failed";
       return ret;
     }
@@ -431,7 +440,8 @@ int AffineFp32CPUKernel::FullSpliceRun() {
 
 int AffineFp32CPUKernel::FullMatmulRun() {
   // Run Splice
-  if (auto ret = FullSpliceRun(); ret != RET_OK) {
+  auto ret = FullSpliceRun();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "run FullSplice failed";
     return ret;
   }
@@ -440,13 +450,15 @@ int AffineFp32CPUKernel::FullMatmulRun() {
     MS_LOG(ERROR) << "full_mult_kernel_ is null, can't call full_mult_kernel_->Run().";
     return RET_NULL_PTR;
   }
-  if (auto ret = full_mult_kernel_->Run(); ret != RET_OK) {
+  ret = full_mult_kernel_->Run();
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "full_mult_kernel_->Run() failed";
     return ret;
   }
 
   if (affine_parameter_->activation_type_ != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    if (auto ret = DoActivation(out_tensors_.at(kOutputIndex)) != RET_OK) {
+    ret = DoActivation(out_tensors_.at(kOutputIndex));
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "DoActivation() failed";
       return ret;
     }
