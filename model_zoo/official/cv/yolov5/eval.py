@@ -18,6 +18,7 @@ import argparse
 import datetime
 import time
 import sys
+import ast
 from collections import defaultdict
 
 import numpy as np
@@ -56,7 +57,7 @@ parser.add_argument('--nms_thresh', type=float, default=0.6, help='threshold for
 parser.add_argument('--ann_file', type=str, default='', help='path to annotation')
 parser.add_argument('--testing_shape', type=str, default='', help='shape for test ')
 parser.add_argument('--ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
-parser.add_argument('--multi_label', type=ast.iteral_eval, default=True, help='whether to use multi label')
+parser.add_argument('--multi_label', type=ast.literal_eval, default=True, help='whether to use multi label')
 parser.add_argument('--multi_label_thresh', type=float, default=0.1, help='threshhold to throw low quality boxes')
 
 args, _ = parser.parse_known_args()
@@ -115,7 +116,7 @@ class DetectionEngine:
             for clsi in self.results[img_id]:
                 dets = self.results[img_id][clsi]
                 dets = np.array(dets)
-                keep_index = self._diou_nms(dets, thresh=nms_thresh)
+                keep_index = self._diou_nms(dets, thresh=self.nms_thresh)
 
                 keep_box = [{'image_id': int(img_id),
                              'category_id': int(clsi),
