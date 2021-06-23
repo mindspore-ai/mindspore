@@ -140,15 +140,16 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   }
 
   // Copy data from device queue by data kernel launching.
-  bool ret = true;
   try {
-    ret = device_context_->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                        launch_info_.outputs_);
+    auto ret = device_context_->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                             launch_info_.outputs_);
+    if (!ret) {
+      std::string error_info = "Launch kernel failed: " + data_kernel_->ToString();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
-  }
-  if (!ret) {
-    std::string error_info = "Launch kernel failed: " + data_kernel_->ToString();
+    std::string error_info = "Launch kernel exception: " + data_kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 

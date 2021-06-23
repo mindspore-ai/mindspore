@@ -582,6 +582,13 @@ bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strat
     }
   }
 
+  // Trigger output actor running when there are no data source actor and kernel actor.
+  if ((actor_set->data_source_actors_.size() == 0) && (actor_set->kernel_actors_.size() == 0)) {
+    MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
+    Async(actor_set->output_actor_->GetAID(), &OutputActor::CollectLoopCount, actor_set->output_actor_->loop_count_,
+          &op_context);
+  }
+
   // Get the run result.
   auto result_future = result[0].GetFuture();
   result_future.Wait();
@@ -2153,15 +2160,6 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
                     << " is wrong, input data num: " << input_data_num
                     << ", device tensor store num: " << device_tensor_store_num
                     << ", total input num: " << kCopyActorInputDataNum;
-      return false;
-    }
-  }
-
-  // Check the loop count actor.
-  const auto &loop_count_actor = actor_set->loop_count_actor_;
-  if (loop_count_actor != nullptr) {
-    if (loop_count_actor->branch_id_to_input_controls_num_[kMainBranchID] == 0) {
-      MS_LOG(ERROR) << loop_count_actor->GetAID().Name() << " has no source.";
       return false;
     }
   }
