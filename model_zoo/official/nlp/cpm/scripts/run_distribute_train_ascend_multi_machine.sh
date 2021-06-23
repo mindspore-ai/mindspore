@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 4 ] ; then
+if [ $# != 5 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train_ascend_multi_machine.sh DATASET_PATH CKPT_PATH RANK_TABLE_PATH SERVER_ID"
+echo "sh run_distribute_train_ascend_multi_machine.sh DATASET_PATH CKPT_PATH RANK_TABLE_PATH SERVER_ID RANK_SIZE_ALL"
 echo "for example:"
-echo "sh run_distribute_train_ascend_multi_machine.sh /disk0/dataset/finetune_dataset/train.mindrecord /disk0/cpm_ckpt_ms/cpm_mindspore_1p_fp32.ckpt /disk0/rank_table_32p.json 0"
+echo "sh run_distribute_train_ascend_multi_machine.sh /disk0/dataset/finetune_dataset/train.mindrecord /disk0/cpm_ckpt_ms/cpm_mindspore_1p_fp32.ckpt /disk0/rank_table_32p.json 0 32"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 exit 1;
@@ -37,6 +37,7 @@ echo $DATASET
 PRECKPT=$(get_real_path $2)
 RANK_TABLE_PATH=$(get_real_path $3)
 SERVER_ID=$4
+RANK_SIZE_ALL=$5
 
 echo $DATANAME
 
@@ -47,7 +48,7 @@ export RANK_TABLE_FILE=$RANK_TABLE_PATH
 
 
 echo $RANK_TABLE_FILE
-export RANK_SIZE=8
+export RANK_SIZE=$RANK_SIZE_ALL
 export DEVICE_NUM=8
 
 RANK_START=$(($DEVICE_NUM * $SERVER_ID))

@@ -34,7 +34,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore.parallel import set_algo_parameters
 
-from src.config import config_train_8p, config_train_32p
+from src.config import config_train_single_machine, config_train_multi_machine
 from src.cpm_train import CPMWithLoss, CPMTrainOneStepWithLossScaleCell, VirtualDatasetOneInputCell, \
     CPMTrainAccuStepsWithLossScaleCell
 from src.lr_schedule import CPMLearningRate
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.multi_machine:
         print("Training on multiple machines")
-        train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_32p)
+        train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_multi_machine)
     else:
         print("Training on single machine and using 8 cards.")
-        train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_8p)
+        train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_single_machine)
