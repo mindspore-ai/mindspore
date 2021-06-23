@@ -88,7 +88,7 @@ class WithLossCell(Cell):
         TypeError: If dtype of `data` or `label` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = Net()
@@ -150,7 +150,7 @@ class WithGradCell(Cell):
         TypeError: If `sens` is not one of None, Tensor, Scalar or Tuple.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # For a defined network Net without loss function
@@ -304,7 +304,7 @@ class TrainOneStepCell(Cell):
         TypeError: If `sens` is not a number.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = Net()
@@ -605,7 +605,7 @@ class WithEvalCell(Cell):
         TypeError: If `add_cast_fp32` is not a bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # For a defined network Net without loss function
@@ -642,7 +642,7 @@ class ParameterUpdate(Cell):
         KeyError: If parameter with the specified name does not exist.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> network = nn.Dense(3, 4)
