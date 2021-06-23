@@ -18,19 +18,23 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-void ActorWorker::CreateThread(ActorThreadPool *pool) {
+void ActorWorker::CreateThread(ActorThreadPool *pool, ThreadPolicy policy) {
+  THREAD_RETURN_IF_NULL(pool);
   pool_ = pool;
-  thread_ = std::thread(&ActorWorker::Run, this);
+  if (policy == KThreadSpin) {
+    thread_ = std::thread(&ActorWorker::RunWithSpin, this);
+  } else if (policy == kThreadWait) {
+    thread_ = std::thread(&ActorWorker::RunWithWait, this);
+  }
 }
 
-void ActorWorker::Run() {
+void ActorWorker::RunWithSpin() {
 #ifndef __APPLE__
   static std::atomic_int index = 0;
   pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
 #endif
   while (alive_) {
     // only run either local KernelTask or PoolQueue ActorTask
-#ifdef ENABLE_MINDRT
     if (RunLocalKernelTask() || RunQueueActorTask()) {
       spin_count_ = 0;
     } else {
@@ -39,7 +43,16 @@ void ActorWorker::Run() {
     if (spin_count_ >= kDefaultSpinCount) {
       WaitUntilActive();
     }
-#else
+  }
+}
+
+void ActorWorker::RunWithWait() {
+#ifndef __APPLE__
+  static std::atomic_int index = 0;
+  pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
+#endif
+  while (alive_) {
+    // only run either local KernelTask or PoolQueue ActorTask
     bool busy = RunLocalKernelTask() || RunQueueActorTask();
     if (!busy) {
       // wait until enqueue ActorTask or distribute KernelTask
@@ -47,7 +60,6 @@ void ActorWorker::Run() {
       status_ = kThreadIdle;
       cond_var_.wait(_l, [&] { return status_ == kThreadBusy || !alive_; });
     }
-#endif  // ENABLE_MINDRT
   }
 }
 
@@ -116,7 +128,7 @@ void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
   }
 }
 
-int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num) {
+int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num, ThreadPolicy policy) {
   size_t core_num = std::thread::hardware_concurrency();
   THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;
@@ -128,7 +140,7 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
     std::lock_guard<std::mutex> _l(pool_mutex_);
     auto worker = new (std::nothrow) ActorWorker();
     THREAD_ERROR_IF_NULL(worker);
-    worker->CreateThread(this);
+    worker->CreateThread(this, policy);
     workers_.push_back(worker);
     THREAD_INFO("create actor thread[%zu]", i);
   }
@@ -139,12 +151,13 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   return THREAD_OK;
 }
 
-ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num) {
+ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
+                                                   ThreadPolicy policy) {
   ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret = pool->CreateThreads(actor_thread_num, all_thread_num);
+  int ret = pool->CreateThreads(actor_thread_num, all_thread_num, policy);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;
@@ -159,12 +172,12 @@ ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size
   return pool;
 }
 
-ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t thread_num) {
+ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t thread_num, ThreadPolicy policy) {
   ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret = pool->CreateThreads(thread_num, thread_num);
+  int ret = pool->CreateThreads(thread_num, thread_num, policy);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

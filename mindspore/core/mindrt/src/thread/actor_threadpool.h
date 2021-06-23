@@ -25,32 +25,39 @@
 #include "actor/actor.h"
 
 namespace mindspore {
+enum ThreadPolicy {
+  KThreadSpin = 0,  // thread run in spin
+  kThreadWait = 1   // synchronous and wait
+};
+
 class ActorThreadPool;
 
 class ActorWorker : public Worker {
  public:
-  void CreateThread(ActorThreadPool *pool);
+  void CreateThread(ActorThreadPool *pool, ThreadPolicy policy);
   bool Active();
 
  private:
-  void Run() override;
+  void RunWithWait();
+  void RunWithSpin();
   bool RunQueueActorTask();
+
   ActorThreadPool *pool_{nullptr};
 };
 
 class ActorThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains actor thread and kernel thread
-  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num);
+  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num, ThreadPolicy policy);
   // create ThreadPool that contains only actor thread
-  static ActorThreadPool *CreateThreadPool(size_t thread_num);
+  static ActorThreadPool *CreateThreadPool(size_t thread_num, ThreadPolicy policy);
   ~ActorThreadPool() override;
 
   void PushActorToQueue(const ActorReference &actor);
   ActorReference PopActorFromQueue();
 
  private:
-  int CreateThreads(size_t actor_thread_num, size_t all_thread_num);
+  int CreateThreads(size_t actor_thread_num, size_t all_thread_num, ThreadPolicy policy);
 
   size_t actor_thread_num_{0};
 

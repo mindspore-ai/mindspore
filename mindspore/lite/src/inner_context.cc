@@ -67,7 +67,7 @@ int InnerContext::Init() {
   }
   if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
     int actor_parallel_thread = this->enable_parallel_ ? 2 : 1;
-    thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_);
+    thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, KThreadSpin);
     if (thread_pool_ == nullptr) {
       MS_LOG(ERROR) << "Create ThreadPool failed";
       return RET_NULL_PTR;

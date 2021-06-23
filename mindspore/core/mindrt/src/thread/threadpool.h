@@ -75,7 +75,7 @@ class Worker {
   pthread_t handle() { return thread_.native_handle(); }
 
  protected:
-  virtual void Run();
+  void Run();
   void YieldAndDeactive();
   void WaitUntilActive();
 
