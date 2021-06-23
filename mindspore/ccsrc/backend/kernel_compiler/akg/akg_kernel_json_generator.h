@@ -54,6 +54,7 @@ constexpr auto kJsonKeyFusionType = "fusion_type";
 constexpr auto kJsonKeySubGraph = "sub_graph";
 constexpr auto kJsonKeyCoreNum = "core_num";
 constexpr auto kJsonKeyTypeInfo = "type_info";
+constexpr auto kJsonKeyRecomputeOps = "recompute_ops";
 constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
 constexpr auto kJsonKeyStitchOp = "stitch_op";
 constexpr auto kJsonKeyStitchAtomicOp = "stitch_atomic_op";

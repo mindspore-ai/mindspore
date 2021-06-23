@@ -203,11 +203,13 @@ class CompositeGraph:
             desc['buffer_stitch'] = buffer_stitch
         return desc
 
-    def dump(self, subgraph):
-        """Dump Graph to json"""
-        desc = {}
-        inputs, outputs = subgraph.deduce_parameters()
-        graph_ops = set(subgraph.ops)
+    def add_recompute_ops(self, subgraph, desc):
+        if subgraph.recompute_ops:
+            desc['recompute_ops'] = [op.output.name for op in subgraph.recompute_ops]
+        return desc
+
+    def _pre_dump(self, outputs):
+        """restore name to before load"""
         inplace_assign = {}  # y_name, output_name
         inplace_assign_z = None
         for op in self.desc['op_desc']:
@@ -217,6 +219,14 @@ class CompositeGraph:
             for t in outputs:
                 if t.name not in inplace_assign:
                     inplace_assign_z = t
+        return inplace_assign, inplace_assign_z
+
+    def dump(self, subgraph):
+        """Dump Graph to json"""
+        desc = {}
+        inputs, outputs = subgraph.deduce_parameters()
+        graph_ops = set(subgraph.ops)
+        inplace_assign, inplace_assign_z = self._pre_dump(outputs)
         for key in self.desc:
             if key == 'input_desc':
                 desc[key] = [
@@ -251,7 +261,7 @@ class CompositeGraph:
                             op_desc.append(inplace_desc)
                     else:
                         op = self.tensors[d['output_desc'][0]['tensor_name']].op
-                        if op in graph_ops:
+                        if op in graph_ops or op in subgraph.recompute_ops:
                             op_desc.append(d)
                 desc[key] = op_desc
             elif key == 'op':
@@ -260,6 +270,7 @@ class CompositeGraph:
                 desc[key] = self.desc[key]
 
         desc = self.add_stitch_info(subgraph, desc)
+        desc = self.add_recompute_ops(subgraph, desc)
         return desc
 
 

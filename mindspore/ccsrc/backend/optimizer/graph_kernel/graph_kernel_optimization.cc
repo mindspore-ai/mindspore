@@ -117,7 +117,7 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   // which can avoid unnecessary input-output and get better performance.
   // preprocess for ShapeOpsSplitter
   pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
-  std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
+  std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
 
   // Split kernel according to costmodel

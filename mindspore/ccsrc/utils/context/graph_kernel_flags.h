@@ -68,6 +68,11 @@ class GraphKernelFlags {
   bool enable_stitch_fusion;
 
   /**
+   * Enable recompute fusion in graph kernel fusion strategy.
+   */
+  bool enable_recompute_fusion{true};
+
+  /**
    * Enable parallel fusion in graph kernel fusion strategy.
    *
    * Experimental feature, enabled by default when opt_level=3
