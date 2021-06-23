@@ -28,10 +28,10 @@ class FlopsParser:
     The parser for parsing aicore file.
 
     Args:
-        input_dir (str): directory(JOBXXX) where the original profiling data are located.
-        output_dir (str): directory(profiler-{timestamp}) where the parsed profiling files are located.
-        op_task_dict (dict): the mapping relation of task_id and op_full_name.
-        device_id (str): the device ID.
+        input_dir (str): Directory(JOBXXX) where the original profiling data are located.
+        output_dir (str): Directory(profiler-{timestamp}) where the parsed profiling files are located.
+        op_task_dict (dict): The mapping relation of task_id and op_full_name.
+        device_id (str): The device ID.
     """
     HEX = 16
     PMU_COUNT = 8
@@ -72,11 +72,10 @@ class FlopsParser:
                                         (idx + 1) * self.AICORE_LOG_SIZE]
             result = [hex(i) for i in struct.unpack(self.RUNTIME_COMMON, log_struct)]
             op_name = self._get_op_name(result)
-            if op_name in op_name_set:
+            if op_name in op_name_set or op_name == "":
                 continue
             # Convert the unit of task_fops to MFLOPs(1e6).
             task_fops = self._compute_task_flops(result) * 1e-6
-            op_name = self._get_op_name(result)
             op_avg_time = op_avg_time_dict[op_name]
             # Time unit of op_avg_time is ms.
             # The unit of gflop_per_second is GFLOPS(1e9).
@@ -179,6 +178,8 @@ class FlopsParser:
         stream_id = int(log_result[17].replace('0x', ''), self.HEX)
         if task_id < self._task_id_threshold:
             task_id = '_'.join([str(stream_id), str(task_id)])
+        if str(task_id) not in self._op_task_dict:
+            return ""
         op_name = self._op_task_dict[str(task_id)]
 
         return op_name
@@ -228,6 +229,8 @@ class FlopsParser:
             logger.error(f'Error occurred when writing {output_file_path} file: {err}')
             raise ProfilerIOException()
 
+        for key in self._flops_summary:
+            self._flops_summary[key] = round(self._flops_summary[key], 3)
         try:
             with open(output_summary_file_path, 'w') as json_file:
                 json.dump(self._flops_summary, json_file)
