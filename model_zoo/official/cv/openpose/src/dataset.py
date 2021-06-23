@@ -18,10 +18,10 @@ import random
 import numpy as np
 import cv2
 from pycocotools.coco import COCO as ReadJson
-
 import mindspore.dataset as de
+from src.model_utils.config import config, JointType
 
-from src.config import JointType, params
+
 
 cv2.setNumThreads(0)
 
@@ -60,8 +60,8 @@ class txtdataset():
                 valid_annotations_for_img = []
                 for annotation in annotations_for_img:
                     # if too few keypoints or too small
-                    if annotation['num_keypoints'] >= params['min_keypoints'] and \
-                            annotation['area'] > params['min_area']:
+                    if annotation['num_keypoints'] >= config.min_keypoints and \
+                            annotation['area'] > config.min_area:
                         person_cnt += 1
                         valid_annotations_for_img.append(annotation)
 
@@ -129,11 +129,11 @@ class txtdataset():
         joint_bboxes = self.get_pose_bboxes(poses)
         bbox_sizes = ((joint_bboxes[:, 2:] - joint_bboxes[:, :2] + 1) ** 2).sum(axis=1) ** 0.5
 
-        min_scale = params['min_box_size'] / bbox_sizes.min()
-        max_scale = params['max_box_size'] / bbox_sizes.max()
+        min_scale = config.min_box_size / bbox_sizes.min()
+        max_scale = config.max_box_size / bbox_sizes.max()
 
-        min_scale = min(max(min_scale, params['min_scale']), 1)
-        max_scale = min(max(max_scale, 1), params['max_scale'])
+        min_scale = min(max(min_scale, config.min_scale), 1)
+        max_scale = min(max(max_scale, 1), config.max_scale)
 
         scale = float((max_scale - min_scale) * random.random() + min_scale)
         shape = (round(w * scale), round(h * scale))
@@ -143,7 +143,7 @@ class txtdataset():
 
     def random_rotate_img(self, img, mask, poses):
         h, w, _ = img.shape
-        degree = np.random.randn() / 3 * params['max_rotate_degree']
+        degree = np.random.randn() / 3 * config.max_rotate_degree
         rad = degree * math.pi / 180
         center = (w / 2, h / 2)
         R = cv2.getRotationMatrix2D(center, degree, 1)
@@ -169,7 +169,7 @@ class txtdataset():
         bbox_center = bbox[:2] + (bbox[2:] - bbox[:2]) / 2
 
         r_xy = np.random.rand(2)
-        perturb = ((r_xy - 0.5) * 2 * params['center_perterb_max'])
+        perturb = ((r_xy - 0.5) * 2 * config.center_perterb_max)
         center = (bbox_center + perturb + 0.5).astype('i')
 
         crop_img = np.zeros((insize, insize, 3), 'uint8') + 127.5
@@ -329,7 +329,7 @@ class txtdataset():
     def generate_pafs(self, img, poses, paf_sigma):
         pafs = np.zeros((0,) + img.shape[:-1])
 
-        for limb in params['limbs_point']:
+        for limb in config.limbs_point:
             paf = np.zeros((2,) + img.shape[:-1])
             paf_flags = np.zeros(paf.shape) # for constant paf
 
@@ -376,7 +376,7 @@ class txtdataset():
         resize_shape = (img.shape[0]//8, img.shape[1]//8, 3)
         pafs = np.zeros((0,) + resize_shape[:-1])
 
-        for limb in params['limbs_point']:
+        for limb in config.limbs_point:
             paf = np.zeros((2,) + resize_shape[:-1])
             paf_flags = np.zeros(paf.shape) # for constant paf
 
@@ -410,7 +410,7 @@ class txtdataset():
             valid_annotations_for_img = []
             for annotation in annotations_for_img:
                 # if too few keypoints or too small
-                if annotation['num_keypoints'] >= params['min_keypoints'] and annotation['area'] > params['min_area']:
+                if annotation['num_keypoints'] >= config.min_keypoints and annotation['area'] > config.min_area:
                     person_cnt += 1
                     valid_annotations_for_img.append(annotation)
 
@@ -440,7 +440,7 @@ class txtdataset():
             pose = np.zeros((1, len(JointType), 3), dtype=np.int32)
 
             # convert poses position
-            for i, joint_index in enumerate(params['joint_indices']):
+            for i, joint_index in enumerate(config.joint_indices):
                 pose[0][joint_index] = ann_pose[i]
 
             # compute neck position
@@ -470,9 +470,9 @@ class txtdataset():
         resized_img, ignore_mask, resized_poses = self.resize_data(img, ignore_mask, poses,
                                                                    shape=(self.insize, self.insize))
 
-        resized_heatmaps = self.generate_heatmaps_fast(resized_img, resized_poses, params['heatmap_sigma'])
+        resized_heatmaps = self.generate_heatmaps_fast(resized_img, resized_poses, config.heatmap_sigma)
 
-        resized_pafs = self.generate_pafs_fast(resized_img, resized_poses, params['paf_sigma'])
+        resized_pafs = self.generate_pafs_fast(resized_img, resized_poses, config.paf_sigma)
 
         ignore_mask = cv2.morphologyEx(ignore_mask.astype('uint8'), cv2.MORPH_DILATE, np.ones((16, 16))).astype('bool')
         resized_ignore_mask = self.resize_output(ignore_mask)
@@ -540,10 +540,11 @@ class DistributedSampler():
     def __len__(self):
         return self.num_samplers
 
+
 def valdata(jsonpath, imgpath, rank, group_size, mode='val', maskpath=''):
     #cv2.setNumThreads(0)
     val = ReadJson(jsonpath)
-    dataset = txtdataset(val, imgpath, maskpath, params['insize'], mode=mode)
+    dataset = txtdataset(val, imgpath, maskpath, config.insize, mode=mode)
     sampler = DistributedSampler(dataset, rank, group_size)
     ds = de.GeneratorDataset(dataset, ['img', 'img_id'], num_parallel_workers=8, sampler=sampler)
     ds = ds.repeat(1)
@@ -554,7 +555,7 @@ def create_dataset(jsonpath, imgpath, maskpath, batch_size, rank, group_size, mo
                    multiprocessing=True, num_worker=20):
 
     train = ReadJson(jsonpath)
-    dataset = txtdataset(train, imgpath, maskpath, params['insize'], mode=mode)
+    dataset = txtdataset(train, imgpath, maskpath, config.insize, mode=mode)
     if group_size == 1:
         de_dataset = de.GeneratorDataset(dataset, ["image", "pafs", "heatmaps", "ignore_mask"],
                                          shuffle=shuffle,

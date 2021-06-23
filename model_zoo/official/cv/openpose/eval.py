@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import json
 import os
-import argparse
 import warnings
 import sys
 import numpy as np
@@ -23,34 +23,23 @@ from scipy.ndimage.filters import gaussian_filter
 from tqdm import tqdm
 from pycocotools.coco import COCO as LoadAnn
 from pycocotools.cocoeval import COCOeval as MapEval
-
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init
 from mindspore.common import dtype as mstype
-
-from src.config import params, JointType
 from src.openposenet import OpenPoseNet
 from src.dataset import valdata
+from src.model_utils.config import config, JointType
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_rank_id, get_device_num
 
 
 warnings.filterwarnings("ignore")
-devid = int(os.getenv('DEVICE_ID'))
+devid = get_device_id()
 context.set_context(mode=context.GRAPH_MODE,
-                    device_target="Ascend", save_graphs=False, device_id=devid)
+                    device_target=config.device_target, save_graphs=False, device_id=devid)
 show_gt = 0
 
-parser = argparse.ArgumentParser('mindspore openpose_net test')
-parser.add_argument('--model_path', type=str, default='./0-33_170000.ckpt', help='path of testing model')
-parser.add_argument('--imgpath_val', type=str, default='./dataset/coco/val2017', help='path of testing imgs')
-parser.add_argument('--ann', type=str, default='./dataset/coco/annotations/person_keypoints_val2017.json',
-                    help='path of annotations')
-parser.add_argument('--output_path', type=str, default='./output_img', help='path of testing imgs')
-# distributed related
-parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
-parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
-parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
-args, _ = parser.parse_known_args()
 
 def evaluate_mAP(res_file, ann_file, ann_type='keypoints', silence=True):
     class NullWriter():
@@ -94,12 +83,14 @@ def load_model(test_net, model_path):
 
     load_param_into_net(test_net, param_dict_new)
 
+
 def preprocess(img):
     x_data = img.astype('f')
     x_data /= 255
     x_data -= 0.5
     x_data = x_data.transpose(2, 0, 1)[None]
     return x_data
+
 
 def getImgsPath(img_dir_path):
     filepaths = []
@@ -114,6 +105,7 @@ def getImgsPath(img_dir_path):
             dir_path = os.path.join(root, d)
             dirpaths.append(dir_path)
     return filepaths
+
 
 def compute_optimal_size(orig_img, img_size, stride=8):
     orig_img_h, orig_img_w, _ = orig_img.shape
@@ -132,6 +124,7 @@ def compute_optimal_size(orig_img, img_size, stride=8):
             img_h += stride - surplus
     return (img_w, img_h)
 
+
 def compute_peaks_from_heatmaps(heatmaps):
 
     heatmaps = heatmaps[:-1]
@@ -139,7 +132,7 @@ def compute_peaks_from_heatmaps(heatmaps):
     all_peaks = []
     peak_counter = 0
     for i, heatmap in enumerate(heatmaps):
-        heatmap = gaussian_filter(heatmap, sigma=params['gaussian_sigma'])
+        heatmap = gaussian_filter(heatmap, sigma=config.gaussian_sigma)
 
         map_left = np.zeros(heatmap.shape)
         map_right = np.zeros(heatmap.shape)
@@ -152,7 +145,7 @@ def compute_peaks_from_heatmaps(heatmaps):
         map_bottom[:, :-1] = heatmap[:, 1:]
 
         peaks_binary = np.logical_and.reduce((
-            heatmap > params['heatmap_peak_thresh'],
+            heatmap > config.heatmap_peak_thresh,
             heatmap > map_left,
             heatmap > map_right,
             heatmap > map_top,
@@ -172,6 +165,7 @@ def compute_peaks_from_heatmaps(heatmaps):
 
     return all_peaks
 
+
 def compute_candidate_connections(paf, cand_a, cand_b, img_len, params_):
     candidate_connections = []
     for joint_a in cand_a:
@@ -180,28 +174,29 @@ def compute_candidate_connections(paf, cand_a, cand_b, img_len, params_):
             norm = np.linalg.norm(vector)
             if norm == 0:
                 continue
-            ys = np.linspace(joint_a[1], joint_b[1], num=params_['n_integ_points'])
-            xs = np.linspace(joint_a[0], joint_b[0], num=params_['n_integ_points'])
+            ys = np.linspace(joint_a[1], joint_b[1], num=params_.n_integ_points)
+            xs = np.linspace(joint_a[0], joint_b[0], num=params_.n_integ_points)
             integ_points = np.stack([ys, xs]).T.round().astype('i')
 
             paf_in_edge = np.hstack([paf[0][np.hsplit(integ_points, 2)], paf[1][np.hsplit(integ_points, 2)]])
             unit_vector = vector / norm
             inner_products = np.dot(paf_in_edge, unit_vector)
             integ_value = inner_products.sum() / len(inner_products)
-            integ_value_with_dist_prior = integ_value + min(params_['limb_length_ratio'] * img_len / norm -
-                                                            params_['length_penalty_value'], 0)
-            n_valid_points = sum(inner_products > params_['inner_product_thresh'])
-            if n_valid_points > params_['n_integ_points_thresh'] and integ_value_with_dist_prior > 0:
+            integ_value_with_dist_prior = integ_value + min(params_.limb_length_ratio * img_len / norm -
+                                                            params_.length_penalty_value, 0)
+            n_valid_points = sum(inner_products > params_.inner_product_thresh)
+            if n_valid_points > params_.n_integ_points_thresh and integ_value_with_dist_prior > 0:
                 candidate_connections.append([int(joint_a[3]), int(joint_b[3]), integ_value_with_dist_prior])
     candidate_connections = sorted(candidate_connections, key=lambda x: x[2], reverse=True)
     return candidate_connections
 
+
 def compute_connections(pafs, all_peaks, img_len, params_):
     all_connections = []
-    for i in range(len(params_['limbs_point'])):
+    for i in range(len(params_.limbs_point)):
         paf_index = [i * 2, i * 2 + 1]
         paf = pafs[paf_index]  # shape: (2, 320, 320)
-        limb_point = params_['limbs_point'][i]  # example: [<JointType.Neck: 1>, <JointType.RightWaist: 8>]
+        limb_point = params_.limbs_point[i]  # example: [<JointType.Neck: 1>, <JointType.RightWaist: 8>]
         cand_a = all_peaks[all_peaks[:, 0] == limb_point[0]][:, 1:]
         cand_b = all_peaks[all_peaks[:, 0] == limb_point[1]][:, 1:]
 
@@ -224,7 +219,7 @@ def grouping_key_points(all_connections, candidate_peaks, params_):
     subsets = -1 * np.ones((0, 20))
 
     for l, connections in enumerate(all_connections):
-        joint_a, joint_b = params_['limbs_point'][l]
+        joint_a, joint_b = params_.limbs_point[l]
         for ind_a, ind_b, score in connections[:, :3]:
             ind_a, ind_b = int(ind_a), int(ind_b)
             joint_found_cnt = 0
@@ -284,10 +279,11 @@ def grouping_key_points(all_connections, candidate_peaks, params_):
                 pass
 
     # delete low score subsets
-    keep = np.logical_and(subsets[:, -1] >= params_['n_subset_limbs_thresh'],
-                          subsets[:, -2] / subsets[:, -1] >= params_['subset_score_thresh'])
+    keep = np.logical_and(subsets[:, -1] >= params_.n_subset_limbs_thresh,
+                          subsets[:, -2] / subsets[:, -1] >= params_.subset_score_thresh)
     subsets = subsets[keep]
     return subsets
+
 
 def subsets_to_pose_array(subsets, all_peaks):
     person_pose_array = []
@@ -308,8 +304,8 @@ def detect(img, network):
     orig_img = img.copy()
     orig_img_h, orig_img_w, _ = orig_img.shape
 
-    input_w, input_h = compute_optimal_size(orig_img, params['inference_img_size']) # 368
-    map_w, map_h = compute_optimal_size(orig_img, params['inference_img_size'])
+    input_w, input_h = compute_optimal_size(orig_img, config.inference_img_size) # 368
+    map_w, map_h = compute_optimal_size(orig_img, config.inference_img_size)
 
     resized_image = cv2.resize(orig_img, (input_w, input_h))
     x_data = preprocess(resized_image)
@@ -338,8 +334,8 @@ def detect(img, network):
     all_peaks = compute_peaks_from_heatmaps(heatmaps)
     if all_peaks.shape[0] == 0:
         return np.empty((0, len(JointType), 3)), np.empty(0)
-    all_connections = compute_connections(pafs, all_peaks, map_w, params)
-    subsets = grouping_key_points(all_connections, all_peaks, params)
+    all_connections = compute_connections(pafs, all_peaks, map_w, config)
+    subsets = grouping_key_points(all_connections, all_peaks, config)
     all_peaks[:, 1] *= orig_img_w / map_w
     all_peaks[:, 2] *= orig_img_h / map_h
     poses = subsets_to_pose_array(subsets, all_peaks)
@@ -369,7 +365,7 @@ def draw_person_pose(orig_img, poses):
 
     # limbs
     for pose in poses.round().astype('i'):
-        for i, (limb, color) in enumerate(zip(params['limbs_point'], limb_colors)):
+        for i, (limb, color) in enumerate(zip(config.limbs_point, limb_colors)):
             if i not in (9, 13):  # don't show ear-shoulder connection
                 limb_ind = np.array(limb)
                 if np.all(pose[limb_ind][:, 2] != 0):
@@ -383,6 +379,7 @@ def draw_person_pose(orig_img, poses):
                 cv2.circle(canvas, (x, y), 3, color, -1)
     return canvas
 
+
 def depreprocess(img):
     x_data = img[0]
     x_data += 0.5
@@ -391,19 +388,24 @@ def depreprocess(img):
     x_data = x_data.transpose(1, 2, 0)
     return x_data
 
+
+@moxing_wrapper(pre_process=None)
 def val():
-    if args.is_distributed:
+    config.rank = get_rank_id()
+    config.group_size = get_device_num()
+
+    if config.is_distributed:
         init()
-        args.rank = get_rank()
-        args.group_size = get_group_size()
-    if not os.path.exists(args.output_path):
-        os.mkdir(args.output_path)
-    network = OpenPoseNet(vgg_with_bn=params['vgg_with_bn'])
+        config.rank = get_rank_id()
+        config.group_size = get_device_num()
+    if not os.path.exists(config.output_img_path):
+        os.mkdir(config.output_img_path)
+    network = OpenPoseNet(vgg_with_bn=config.vgg_with_bn)
     network.set_train(False)
-    load_model(network, args.model_path)
+    load_model(network, config.model_path)
 
     print("load models right")
-    dataset = valdata(args.ann, args.imgpath_val, args.rank, args.group_size, mode='val')
+    dataset = valdata(config.ann, config.imgpath_val, config.rank, config.group_size, mode='val')
     dataset_size = dataset.get_dataset_size()
     de_dataset = dataset.create_tuple_iterator()
 
@@ -431,14 +433,15 @@ def val():
             print("Predict poses size is zero.", flush=True)
         img = draw_person_pose(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), poses)
 
-        save_path = os.path.join(args.output_path, str(img_id)+".png")
+        save_path = os.path.join(config.output_img_path, str(img_id)+".png")
         cv2.imwrite(save_path, img)
 
     result_json = 'eval_result.json'
-    with open(os.path.join(args.output_path, result_json), 'w') as fid:
+    with open(os.path.join(config.output_img_path, result_json), 'w') as fid:
         json.dump(kpt_json, fid)
-    res = evaluate_mAP(os.path.join(args.output_path, result_json), ann_file=args.ann)
+    res = evaluate_mAP(os.path.join(config.output_img_path, result_json), ann_file=config.ann)
     print('result: ', res)
+
 
 if __name__ == "__main__":
     val()
