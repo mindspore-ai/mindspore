@@ -97,7 +97,7 @@ Dataset used: [COCO2017](https://cocodataset.org/)
         pip install mmcv==0.2.14
         ```
 
-        And change the COCO_ROOT and other settings you need in `config.py`. The directory structure is as follows:
+        And change the COCO_ROOT and other settings you need in `default_config.yaml`. The directory structure is as follows:
 
         ```path
         .
@@ -115,32 +115,90 @@ Dataset used: [COCO2017](https://cocodataset.org/)
 
 # [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start training and evaluation as follows:
+- running on local
 
-Note: 1.the first run of training will generate the mindrecord file, which will take a long time.
-      2.MINDRECORD_DATASET_PATH is the mindrecord dataset directory.
-      3.LOAD_CHECKPOINT_PATH is the pretrained checkpoint file directory, if no just set ""
-      4.RUN_MODE support validation and testing, set to be "val"/"test"
+  After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-```shell
-# create dataset in mindrecord format
-bash scripts/convert_dataset_to_mindrecord.sh [COCO_DATASET_DIR] [MINDRECORD_DATASET_DIR]
+  Note: 1.the first run of training will generate the mindrecord file, which will take a long time.
+        2.MINDRECORD_DATASET_PATH is the mindrecord dataset directory.
+        3.For `train.py`, LOAD_CHECKPOINT_PATH is the pretrained checkpoint file directory, if no just set "".
+        4.For `eval.py`, LOAD_CHECKPOINT_PATH is the checkpoint to be evaluated.
+        5.RUN_MODE support validation and testing, set to be "val"/"test"
 
-# standalone training on Ascend
-bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH](optional)
+    ```shell
+    # create dataset in mindrecord format
+    bash scripts/convert_dataset_to_mindrecord.sh [COCO_DATASET_DIR] [MINDRECORD_DATASET_DIR]
 
-# standalone training on CPU
-bash scripts/run_standalone_train_cpu.sh [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH](optional)
+    # standalone training on Ascend
+    bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH](optional)
 
-# distributed training on Ascend
-bash scripts/run_distributed_train_ascend.sh [MINDRECORD_DATASET_PATH] [RANK_TABLE_FILE] [LOAD_CHECKPOINT_PATH](optional)
+    # standalone training on CPU
+    bash scripts/run_standalone_train_cpu.sh [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH](optional)
 
-# eval on Ascend
-bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID] [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_PATH]
+    # distributed training on Ascend
+    bash scripts/run_distributed_train_ascend.sh [MINDRECORD_DATASET_PATH] [RANK_TABLE_FILE] [LOAD_CHECKPOINT_PATH](optional)
 
-# eval on CPU
-bash scripts/run_standalone_eval_cpu.sh [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_PATH]
-```
+    # eval on Ascend
+    bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID] [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_PATH]
+
+    # eval on CPU
+    bash scripts/run_standalone_eval_cpu.sh [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_PATH]
+    ```
+
+- running on ModelArts
+
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+    - Training with single cards on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/centernet" on the website UI interface.
+    # (4) Set the startup file to /{path}/centernet/train.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/centernet/default_config.yaml.
+    #         1. Set ”enable_modelarts: True“
+    #         2. Set “epoch_size: 350”
+    #         3. Set “distribute: 'true'”
+    #         4. Set “data_sink_steps: 50”
+    #         5. Set “save_checkpoint_path: ./checkpoints”
+    #     b. adding on the website UI interface.
+    #         1. Add ”enable_modelarts=True“
+    #         2. Add “epoch_size=350”
+    #         3. Add “distribute=true”
+    #         4. Add “data_sink_steps=50”
+    #         5. Add “save_checkpoint_path=./checkpoints”
+    # (6) Upload the mindrecdrd dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of single cards.
+    # (10) Create your job.
+    ```
+
+    - evaluating with single card on ModelArts
+
+    ```python
+    # (1) Upload the code folder 'centernet' to S3 bucket.
+    # (2) Git clone https://github.com/xingyizhou/CenterNet.git on local, and put the folder 'CenterNet' under the folder 'centernet' on s3 bucket.
+    # (3) Click to "create training task" on the website UI interface.
+    # (4) Set the code directory to "/{path}/centernet" on the website UI interface.
+    # (5) Set the startup file to /{path}/centernet/eval.py" on the website UI interface.
+    # (6) Perform a or b.
+    #     a. setting parameters in /{path}/centernet/default_config.yaml.
+    #         1. Set ”enable_modelarts: True“
+    #         2. Set “run_mode: 'val'”
+    #         3. Set “load_checkpoint_path: ./{path}/*.ckpt”('load_checkpoint_path' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+    #     b. adding on the website UI interface.
+    #         1. Add ”enable_modelarts=True“
+    #         2. Add “run_mode=val”
+    #         3. Add “load_checkpoint_path=./{path}/*.ckpt”('load_checkpoint_path' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+    # (7) Upload the dataset(not mindrecord format) to S3 bucket.
+    # (8) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+    # (9) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (10) Under the item "resource pool selection", select the specification of a single card.
+    # (11) Create your job.
+    ```
 
 # [Script Description](#contents)
 
@@ -154,12 +212,13 @@ bash scripts/run_standalone_eval_cpu.sh [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_P
         ├── eval.py                      // testing and evaluation outputs
         ├── export.py                    // convert mindspore model to air model
         ├── README.md                    // descriptions about CenterNet
+        ├── default_config.yaml          // parameter configuration
         ├── scripts
-        │   ├── ascend_distributed_launcher
-        │   │    ├──__init__.py
-        │   │    ├──hyper_parameter_config.ini         // hyper parameter for distributed training
-        │   │    ├──get_distribute_train_cmd.py     // script for distributed training
-        │   │    ├──README.md
+        │   ├──ascend_distributed_launcher
+        │   │   ├──__init__.py
+        │   │   ├──hyper_parameter_config.ini          // hyper parameter for distributed training
+        │   │   ├──get_distribute_train_cmd.py         // script for distributed training
+        │   │   └──README.md
         │   ├──convert_dataset_to_mindrecord.sh        // shell script for converting coco type dataset to mindrecord
         │   ├──run_standalone_train_ascend.sh          // shell script for standalone training on ascend
         │   ├──run_distributed_train_ascend.sh         // shell script for distributed training on ascend
@@ -167,10 +226,14 @@ bash scripts/run_standalone_eval_cpu.sh [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_P
         │   ├──run_standalone_train_cpu.sh             // shell script for standalone training on cpu
         │   ├──run_standalone_eval_cpu.sh              // shell script for standalone evaluation on cpu
         └── src
+            ├──model_utils
+            │   ├──config.py            // parsing parameter configuration file of "*.yaml"
+            │   ├──device_adapter.py    // local or ModelArts training
+            │   ├──local_adapter.py     // get related environment variables on local
+            │   └──moxing_adapter.py    // get related environment variables abd transfer data on ModelArts
             ├──__init__.py
             ├──centernet_pose.py         // centernet networks, training entry
             ├──dataset.py                // generate dataloader and data processing entry
-            ├──config.py                 // centernet unique configs
             ├──dcn_v2.py                 // deformable convolution operator v2
             ├──decode.py                 // decode the head features
             ├──backbone_dla.py           // deep layer aggregation backbone
@@ -255,34 +318,34 @@ options:
 
 ### Options and Parameters
 
-Parameters for training and evaluation can be set in file `config.py` and `finetune_eval_config.py` respectively.
+Parameters for training and evaluation can be set in file `default_config.yaml`.
 
 #### Options
 
-```text
-config for training.
-    batch_size                      batch size of input dataset: N, default is 32
-    loss_scale_value                initial value of loss scale: N, default is 1024
-    optimizer                       optimizer used in the network: Adam, default is Adam
-    lr_schedule                     schedules to get the learning rate
+```python
+train_config:
+    batch_size: 32                    // batch size of input dataset: N, default is 32
+    loss_scale_value: 1024            // initial value of loss scale: N, default is 1024
+    optimizer: 'Adam'                 // optimizer used in the network: Adam, default is Adam
+    lr_schedule: 'MultiDecay'         // schedules to get the learning rate
 ```
 
 ```text
-config for evaluation.
-    soft_nms                        nms after decode: True | False, default is True
-    keep_res                        keep original or fix resolution: True | False, default is False
-    multi_scales                    use multi-scales of image: List, default is [1.0]
-    pad                             pad size when keep original resolution, default is 31
-    K                               number of bboxes to be computed by TopK, default is 100
-    score_thresh                    threshold of score when visualize image and annotation info
+eval_config:
+    soft_nms: True                     // nms after decode: True | False, default is True
+    keep_res: c                        // keep original or fix resolution: True | False, default is False
+    multi_scales: [1.0]                // use multi-scales of image: List, default is [1.0]
+    pad: 31                            // pad size when keep original resolution, default is 31
+    K: 100                             // number of bboxes to be computed by TopK, default is 100
+    score_thresh: 0.3                  // threshold of score when visualize image and annotation info
 ```
 
 ```text
 config for export.
-    input_res                       input resolution of the model air, default is [512, 512]
-    ckpt_file                       checkpoint file, default is "./ckkt_file.ckpt"
-    export_format                   the exported format of model air, default is MINDIR
-    export_name                     the exported file name, default is "CentNet_MultiPose"
+    input_res: dataset_config.input_res            // input resolution of the model air, default is [512, 512]
+    ckpt_file: "./ckpt_file.ckpt"                  // checkpoint file, default is "./ckkt_file.ckpt"
+    export_format: "MINDIR"                        // the exported format of model air, default is MINDIR
+    export_name: "CenterNet_MultiPose"             // the exported file name, default is "CentNet_MultiPose"
 ```
 
 #### Parameters
@@ -462,9 +525,36 @@ overall performance on coco2017 test-dev dataset
 
 If you want to infer the network on Ascend 310, you should convert the model to AIR:
 
-```python
-python export.py [DEVICE_ID]
-```
+- Export on local
+
+  ```python
+  python export.py --device_id [DEVICE_ID] --export_format MINDIR --export_load_ckpt [CKPT_FILE__PATH] --export_name [EXPORT_FILE_NAME]
+  ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+  ```python
+  # (1) Upload the code folder to S3 bucket.
+  # (2) Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/centernet" on the website UI interface.
+  # (4) Set the startup file to /{path}/centernet/export.py" on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in /{path}/centernet/default_config.yaml.
+  #         1. Set ”enable_modelarts: True“
+  #         2. Set “export_load_ckpt: ./{path}/*.ckpt”('export_load_ckpt' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Set ”export_name: centernet“
+  #         4. Set ”export_format：MINDIR“
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts=True“
+  #         2. Add “export_load_ckpt=./{path}/*.ckpt”('export_load_ckpt' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Add ”export_name=centernet“
+  #         4. Add ”export_format=MINDIR“
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (This step is useless, but necessary.).
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of a single card.
+  # (10) Create your job.
+  # You will see centernet.mindir under {Output file path}.
+  ```
 
 # [Model Description](#contents)
 
