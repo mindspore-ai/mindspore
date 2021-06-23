@@ -89,7 +89,7 @@ After training, the following results are stored in `ala_NVT_290_10ns.out`:
 
 ```text
 _steps_ _TEMP_ _TOT_POT_ENE_ _BOND_ENE_ _ANGLE_ENE_ _DIHEDRAL_ENE_ _14LJ_ENE_ _14CF_ENE_ _LJ_ENE_ _CF_PME_ENE_
-      1 293.105   -6117.709   1204.406       7.096          4.491      3.456     44.018 1372.488    -8753.664
+      0 0.000   -5713.804         0.037       0.900         14.909      9.072    194.477  765.398    -6698.648
    ...
 ```
 
@@ -106,8 +106,8 @@ There are sorts of energy in the output, steps (_steps_), temperature (_TEMP_), 
 | MindSpore version          | 1.2
 | Training parameter        | step=1
 | Output                    | numpy file
-| Speed                      | 16.7 ms/step
-| Total time                 | 10.7 s
+| Speed                      | 5.0 ms/step
+| Total time                 | 5.7 s
 | Script                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge)
 
 ## ModelZoo Homepage
