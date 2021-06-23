@@ -74,6 +74,7 @@ void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &input
     MS_LOG(EXCEPTION) << "The beta1_power can't be set 1.";
   }
   float new_lr = lr * std::sqrt(1.0 - beta2_power) / (1 - beta1_power);
+
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
   auto task = [&](size_t start, size_t end) {
