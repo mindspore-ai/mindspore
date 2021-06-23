@@ -22,7 +22,7 @@
 namespace mindspore {
 enum LocDebugDumpMode { kDebugOff = 0, kDebugTopStack = 1, kDebugWholeStack = 2 };
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix, const std::string &target_dir,
-                            LocDebugDumpMode dump_location = kDebugOff) {
+                            LocDebugDumpMode dump_location = kDebugWholeStack) {
   return;
 }
 }  // namespace mindspore
