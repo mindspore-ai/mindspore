@@ -456,7 +456,23 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
   heartbeat_resp_message.ParseFromArray(data, size);
 
   current_cluster_state_ = heartbeat_resp_message.cluster_state();
-  MS_LOG(DEBUG) << "The current cluster state from heartbeat:" << current_cluster_state_;
+  MS_LOG(DEBUG) << "The current cluster state from heartbeat:"
+                << CommUtil::ClusterStateToString(current_cluster_state_);
+
+  all_nodes_info_.clear();
+  for (const auto &it : heartbeat_resp_message.servers_meta()) {
+    NodeInfo info;
+    info.ip_ = it.ip();
+    info.node_id_ = it.node_id();
+    info.port_ = it.port();
+    info.node_role_ = it.role();
+    info.rank_id_ = it.rank_id();
+    info.is_alive = it.is_alive();
+
+    all_nodes_info_[info.node_id_] = info;
+    MS_LOG(DEBUG) << "The node id:" << info.node_id_ << ", the rank id:" << info.rank_id_
+                  << ", the node role:" << CommUtil::NodeRoleToString(info.node_role_) << " is alive:" << info.is_alive;
+  }
 
   if (current_cluster_state_ == ClusterState::CLUSTER_READY) {
     is_ready_ = true;

@@ -61,6 +61,9 @@ class NodeManager {
   void UpdateHeartbeat(const std::string &node_id);
 
   std::vector<ServersMeta> FetchServersMeta();
+  // Fetch metadata information of all nodes.
+  std::vector<ServersMeta> FetchAllNodesMeta();
+
   void UpdateCluster();
   void CheckClusterTimeout();
   void AddFinishNode(const std::string &finish_message);

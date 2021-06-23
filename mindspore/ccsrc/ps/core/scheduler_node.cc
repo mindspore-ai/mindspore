@@ -56,8 +56,12 @@ void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::sha
 
   HeartbeatRespMessage heartbeat_resp_message;
 
-  MS_LOG(DEBUG) << "The cluster state:" << node_manager_.GetClusterState();
+  MS_LOG(DEBUG) << "The cluster state:" << CommUtil::ClusterStateToString(node_manager_.GetClusterState());
   heartbeat_resp_message.set_cluster_state(node_manager_.GetClusterState());
+
+  std::vector<ServersMeta> servers_meta_list = node_manager_.FetchAllNodesMeta();
+
+  *heartbeat_resp_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
   server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
                       heartbeat_resp_message.ByteSizeLong());

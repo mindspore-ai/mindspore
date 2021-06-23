@@ -30,6 +30,7 @@
 #include "utils/ms_exception.h"
 #include "ps/constants.h"
 #include "ps/core/recovery_base.h"
+#include "ps/core/node_info.h"
 
 namespace mindspore {
 namespace ps {
@@ -245,6 +246,9 @@ class AbstractNode : public Node {
   std::string scheduler_ip_;
   // The port of scheduler.
   uint16_t scheduler_port_;
+
+  // Synchronize all node metadata from the scheduler.
+  std::unordered_map<std::string, NodeInfo> all_nodes_info_;
 };
 }  // namespace core
 }  // namespace ps

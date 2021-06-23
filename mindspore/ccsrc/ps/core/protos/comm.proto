@@ -97,6 +97,7 @@ enum ClusterState {
 
 message HeartbeatRespMessage {
   ClusterState cluster_state = 1;
+  repeated ServersMeta servers_meta = 2;
 }
 
 message FetchServersMessage {
@@ -111,7 +112,9 @@ message ServersMeta {
   uint32 rank_id = 1;
   string ip = 2;
   int32 port = 3;
-
+  bool is_alive = 4;
+  NodeRole role = 5;
+  string node_id = 6;
 }
 
 message SendMetadataMessage {
