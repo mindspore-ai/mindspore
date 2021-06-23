@@ -318,7 +318,6 @@ class ThorGpu(Optimizer):
         self.params = self.parameters
         self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
-        self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
         self.net = net
         self.matrix_a_cov = ParameterTuple(filter(lambda x: 'matrix_a' in x.name, net.get_parameters()))
@@ -606,7 +605,6 @@ class ThorAscend(Optimizer):
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self.parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
-        self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum()
         self.net = net
         self.matrix_a_cov = ParameterTuple(filter(lambda x: 'matrix_a' in x.name, net.get_parameters()))

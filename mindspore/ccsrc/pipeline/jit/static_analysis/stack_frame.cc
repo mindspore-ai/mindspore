@@ -65,7 +65,6 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
 
   // Evaluate the inputs firstly. Build arguments for the func graph.
   AbstractBasePtrList args_abs_list = GenerateArgsAbsList(engine, evaluator, current_cnode);
-
   // Check if already evaluated before.
   if (evaluator->evaluator_cache_mgr()->GetValue(args_abs_list) != nullptr) {
     return nullptr;
@@ -80,7 +79,6 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
                             << fg->parameters().size() << ", but the number of provided arguments is "
                             << args_abs_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
-
   MS_LOG(DEBUG) << "current_node: " << current_cnode->DebugString() << ", fg: " << fg->ToString()
                 << ", current_context_: " << current_context_->ToString();
 
@@ -133,8 +131,20 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   return node_eval_result;
 }
 
-// Return back from branch func graph.
-void StackFrame::Back(const AnalysisEnginePtr &engine, const EvalResultPtr &result) {
+// Return back from child func graph.
+void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last_stack_frame,
+                      const EvalResultPtr &eval_result) {
+  // Overwrite the result if func graph is stub.
+  EvalResultPtr result = eval_result;
+  if (last_stack_frame->func_graph()->stub()) {
+    result = std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
+  }
+  // Save func graph eval result for specialize.
+  auto evaluator = last_stack_frame->evaluator();
+  MS_EXCEPTION_IF_NULL(evaluator);
+  evaluator->evaluator_cache_mgr()->SetValue(last_stack_frame->args_abs_list(), result);
+
+  // Continue saving node's result for parent func graph.
   auto &current_node = NextNode();
   MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
                 << ", current_context_: " << current_context_->ToString();

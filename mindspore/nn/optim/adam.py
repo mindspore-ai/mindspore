@@ -329,7 +329,6 @@ class Adam(Optimizer):
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
 
         self._is_device = True
-        self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
         self.sparse_opt = P.FusedSparseAdam(use_locking, use_nesterov)
         self.sparse_opt.add_prim_attr("primitive_target", "CPU")
@@ -352,15 +351,15 @@ class Adam(Optimizer):
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
         if self.is_group_lr:
-            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                          self.use_locking, self.use_nesterov, self._is_device,
-                                          beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
-                                lr, gradients, params, moment1, moment2, self.ps_parameters, self.cache_enable)
+            success = self.map_reverse(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                                 self.use_locking, self.use_nesterov, self._is_device,
+                                                 beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
+                                       lr, gradients, params, moment1, moment2, self.ps_parameters, self.cache_enable)
         else:
-            success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                          self.use_locking, self.use_nesterov, self._is_device,
-                                          beta1_power, beta2_power, self.beta1, self.beta2, self.eps, lr),
-                                gradients, params, moment1, moment2, self.ps_parameters, self.cache_enable)
+            success = self.map_reverse(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                                 self.use_locking, self.use_nesterov, self._is_device,
+                                                 beta1_power, beta2_power, self.beta1, self.beta2, self.eps, lr),
+                                       gradients, params, moment1, moment2, self.ps_parameters, self.cache_enable)
         return success
 
     @Optimizer.target.setter
@@ -460,23 +459,23 @@ class AdamWeightDecay(Optimizer):
         self.eps = Tensor(np.array([eps]).astype(np.float32))
         self.moments1 = self.parameters.clone(prefix="adam_m", init='zeros')
         self.moments2 = self.parameters.clone(prefix="adam_v", init='zeros')
-        self.hyper_map = C.HyperMap()
 
     def construct(self, gradients):
         lr = self.get_lr()
         if self.is_group:
             if self.is_group_lr:
-                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
-                                              lr, self.weight_decay, self.parameters, self.moments1, self.moments2,
-                                              gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map_reverse(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
+                                                      lr, self.weight_decay, self.parameters, self.moments1,
+                                                      self.moments2, gradients, self.decay_flags, self.optim_filter)
             else:
-                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
-                                              self.weight_decay, self.parameters, self.moments1, self.moments2,
-                                              gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map_reverse(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
+                                                      self.weight_decay, self.parameters, self.moments1, self.moments2,
+                                                      gradients, self.decay_flags, self.optim_filter)
         else:
-            optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr, self.weight_decay),
-                                          self.parameters, self.moments1, self.moments2,
-                                          gradients, self.decay_flags, self.optim_filter)
+            optim_result = self.hyper_map_reverse(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
+                                                            self.weight_decay),
+                                                  self.parameters, self.moments1, self.moments2,
+                                                  gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
             self.broadcast_params(optim_result)
         return optim_result
@@ -614,8 +613,6 @@ class AdamOffload(Optimizer):
         self.use_locking = use_locking
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
-
-        self.hyper_map = C.HyperMap()
         self.opt = P.AdamNoUpdateParam(use_locking, use_nesterov)
         self.opt.add_prim_attr("primitive_target", "CPU")
 
@@ -632,11 +629,11 @@ class AdamOffload(Optimizer):
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
         if self.is_group_lr:
-            success = self.map_(F.partial(_adam_opt, self.opt,
-                                          beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
-                                lr, gradients, params, moment1, moment2)
+            success = self.map_reverse(F.partial(_adam_opt, self.opt,
+                                                 beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
+                                       lr, gradients, params, moment1, moment2)
         else:
-            success = self.map_(F.partial(_adam_opt, self.opt,
-                                          beta1_power, beta2_power, self.beta1, self.beta2, self.eps, lr),
-                                gradients, params, moment1, moment2)
+            success = self.map_reverse(F.partial(_adam_opt, self.opt,
+                                                 beta1_power, beta2_power, self.beta1, self.beta2, self.eps, lr),
+                                       gradients, params, moment1, moment2)
         return success

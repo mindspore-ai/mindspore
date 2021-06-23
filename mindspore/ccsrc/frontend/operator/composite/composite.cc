@@ -123,16 +123,21 @@ void HyperMap::Init() {
                             {"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});
 }
 
-HyperMap::HyperMap(const std::shared_ptr<MultitypeFuncGraph> &fn_leaf)
+HyperMap::HyperMap(bool reverse, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf)
     : MetaFuncGraph("hyper_map"),
       fn_leaf_(fn_leaf),
+      reverse_(reverse),
       broadcast_(false),
       nonleaf_({kObjectTypeList, kObjectTypeTuple, kObjectTypeClass}) {
   Init();
 }
 
 HyperMap::HyperMap(const HyperMap &h)
-    : MetaFuncGraph("hyper_map"), fn_leaf_(h.fn_leaf_), broadcast_(h.broadcast_), nonleaf_(h.nonleaf_) {
+    : MetaFuncGraph("hyper_map"),
+      fn_leaf_(h.fn_leaf_),
+      reverse_(h.reverse_),
+      broadcast_(h.broadcast_),
+      nonleaf_(h.nonleaf_) {
   Init();
 }
 
@@ -156,12 +161,23 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
-  std::size_t size = type->elements().size();
-  bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [size](const std::pair<AnfNodePtr, TypePtr> &item) {
-    auto lhs = std::static_pointer_cast<List>(item.second);
-    MS_EXCEPTION_IF_NULL(lhs);
-    return lhs->elements().size() != size;
-  });
+  size_t size = type->elements().size();
+  size_t num = 0;
+  bool is_not_same =
+    std::any_of(arg_map.begin(), arg_map.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+      num++;
+      auto lhs = std::static_pointer_cast<List>(item.second);
+      if (lhs == nullptr) {
+        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a List, but got "
+                          << item.second->ToString();
+      }
+      if (lhs->elements().size() != size) {
+        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
+                      << lhs->elements().size();
+        return true;
+      }
+      return false;
+    });
   if (is_not_same) {
     MS_LOG(EXCEPTION) << "List in HyperMap should have same length";
   }
@@ -169,24 +185,31 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
   auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
+  constexpr size_t kPrimHoldLen = 1;
   std::vector<AnfNodePtr> inputs;
+  inputs.reserve(size + kPrimHoldLen);
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
-  for (int64_t i = 0; i < SizeToLong(size); ++i) {
+  for (size_t i = 0; i < size; i++) {
+    MS_LOG(DEBUG) << "FullMakeList for the " << i << "th element of the target, reverse_: " << reverse_;
     std::vector<AnfNodePtr> inputs2;
     inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
       inputs2.push_back(fn_arg);
     }
-
-    (void)std::transform(
-      arg_map.begin(), arg_map.end(), std::back_inserter(inputs2),
-      [&func_graph, i](const std::pair<AnfNodePtr, Any> &item) {
-        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
-      });
+    size_t pos = (reverse_ ? (size - 1 - i) : i);
+    (void)std::transform(arg_map.begin(), arg_map.end(), std::back_inserter(inputs2),
+                         [&func_graph, pos](const std::pair<AnfNodePtr, Any> &item) {
+                           return func_graph->NewCNodeInOrder(
+                             {NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(SizeToLong(pos))});
+                         });
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    inputs.push_back(call_node);
+    if (reverse_) {
+      inputs.insert(inputs.begin() + 1, call_node);
+    } else {
+      inputs.emplace_back(call_node);
+    }
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -196,12 +219,23 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
-  std::size_t size = type->elements().size();
-  bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [size](const std::pair<AnfNodePtr, TypePtr> &item) {
-    auto lhs = std::static_pointer_cast<Tuple>(item.second);
-    MS_EXCEPTION_IF_NULL(lhs);
-    return lhs->elements().size() != size;
-  });
+  size_t size = type->elements().size();
+  size_t num = 0;
+  bool is_not_same =
+    std::any_of(arg_map.begin(), arg_map.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+      num++;
+      auto lhs = std::static_pointer_cast<Tuple>(item.second);
+      if (lhs == nullptr) {
+        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a Tuple, but got "
+                          << item.second->ToString();
+      }
+      if (lhs->elements().size() != size) {
+        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
+                      << lhs->elements().size();
+        return true;
+      }
+      return false;
+    });
   if (is_not_same) {
     MS_LOG(EXCEPTION) << "tuple in HyperMap should have same length";
   }
@@ -209,23 +243,31 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
   auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
+  constexpr size_t kPrimHoldLen = 1;
   std::vector<AnfNodePtr> inputs;
+  inputs.reserve(size + kPrimHoldLen);
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
-  for (int64_t i = 0; i < SizeToLong(size); ++i) {
+  for (size_t i = 0; i < size; i++) {
+    MS_LOG(DEBUG) << "FullMakeTuple for the " << i << "th element of the target, reverse_: " << reverse_;
     std::vector<AnfNodePtr> inputs2;
     inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
       inputs2.push_back(fn_arg);
     }
-
-    (void)std::transform(
-      arg_map.begin(), arg_map.end(), std::back_inserter(inputs2), [&func_graph, &i](std::pair<AnfNodePtr, Any> item) {
-        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(i)});
-      });
+    size_t pos = (reverse_ ? (size - 1 - i) : i);
+    (void)std::transform(arg_map.begin(), arg_map.end(), std::back_inserter(inputs2),
+                         [&func_graph, &pos](std::pair<AnfNodePtr, Any> item) {
+                           return func_graph->NewCNodeInOrder(
+                             {NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(SizeToLong(pos))});
+                         });
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    inputs.push_back(call_node);
+    if (reverse_) {
+      inputs.insert(inputs.begin() + 1, call_node);
+    } else {
+      inputs.emplace_back(call_node);
+    }
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -235,29 +277,38 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
   MS_EXCEPTION_IF_NULL(type);
   MS_EXCEPTION_IF_NULL(func_graph);
 
+  std::size_t attrSize = type->GetAttributes().size();
+  constexpr size_t kPrimAndTypeLen = 2;
   std::vector<AnfNodePtr> inputs;
+  inputs.reserve(attrSize + kPrimAndTypeLen);
   inputs.push_back(NewValueNode(prim::kPrimMakeRecord));
   inputs.push_back(NewValueNode(type));
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
   auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
-  std::size_t attrSize = type->GetAttributes().size();
-  for (std::size_t i = 0; i < attrSize; ++i) {
+  for (std::size_t i = 0; i < attrSize; i++) {
+    MS_LOG(DEBUG) << "FullMakeClass for the " << i << "th element of the target, reverse_: " << reverse_;
     std::vector<AnfNodePtr> inputs2;
     inputs2.push_back(fn_rec);
     if (fn_arg) {
       inputs2.push_back(fn_arg);
     }
 
-    int64_t j = 0;
-    for (auto item : arg_map) {
-      inputs2.push_back(func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
-      j++;
+    size_t size = arg_map.size();
+    for (size_t j = 0; j < size; j++) {
+      size_t pos = (reverse_ ? (size - 1 - j) : j);
+      auto &item = arg_map[pos];
+      inputs2.push_back(
+        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(SizeToLong(pos))}));
     }
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    inputs.push_back(call_node);
+    if (reverse_) {
+      inputs.insert(inputs.begin() + 2, call_node);
+    } else {
+      inputs.emplace_back(call_node);
+    }
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -383,8 +434,9 @@ abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList 
 
 REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
                          (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
-                           .def(py::init<std::shared_ptr<MultitypeFuncGraph>>(), py::arg("leaf"))
-                           .def(py::init<>());
+                           .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"),
+                                py::arg("ops"))
+                           .def(py::init<bool>(), py::arg("reverse"));
                        }));
 
 FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) const {

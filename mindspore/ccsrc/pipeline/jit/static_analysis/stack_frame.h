@@ -46,7 +46,7 @@ class StackFrame : public Base {
   virtual ~StackFrame() = default;
 
   void Load() {
-    node_slots = TopoSort(func_graph_->get_return(), SuccIncoming, [this](const AnfNodePtr &node) -> IncludeType {
+    node_slots_ = TopoSort(func_graph_->get_return(), SuccIncoming, [this](const AnfNodePtr &node) -> IncludeType {
       if (node->isa<ValueNode>() || node->isa<Parameter>()) {
         return EXCLUDE;
       }
@@ -61,17 +61,17 @@ class StackFrame : public Base {
   // Run one step in current func graph.
   EvalResultPtr Step(const AnalysisEnginePtr &engine);
   // Return back from branch func graph.
-  void Back(const AnalysisEnginePtr &engine, const EvalResultPtr &result);
+  void Back(const AnalysisEnginePtr &engine, const StackFramePtr &last_stack_frame, const EvalResultPtr &eval_result);
 
   bool Done() { return done_; }
 
   AnfNodePtr &CurrentNode() {
-    if (slot_index_ >= node_slots.size()) {
+    if (slot_index_ >= node_slots_.size()) {
       MS_LOG(EXCEPTION) << "The stack frame of " << func_graph_->ToString()
                         << " is invalid. Try to access frame sequence by index " << slot_index_
-                        << ", while the size is " << node_slots.size() << ".";
+                        << ", while the size is " << node_slots_.size() << ".";
     }
-    return node_slots[slot_index_];
+    return node_slots_[slot_index_];
   }
 
   AnfNodePtr &NextNode() {
@@ -97,8 +97,8 @@ class StackFrame : public Base {
     MS_EXCEPTION_IF_NULL(func_graph_);
     std::ostringstream buffer;
     buffer << "StackFrame: " << this << ", " << func_graph_->ToString();
-    if (slot_index_ < node_slots.size()) {
-      auto current_node = node_slots[slot_index_];
+    if (slot_index_ < node_slots_.size()) {
+      auto current_node = node_slots_[slot_index_];
       buffer << "(#" << slot_index_ << " / Running " << current_node->DebugString() << ")";
     } else {
       buffer << "(Exhausted..)";
@@ -132,7 +132,7 @@ class StackFrame : public Base {
   AnalysisContextPtr current_context_;
   AnalysisContextPtr parent_context_;
   AbstractBasePtrList args_abs_list_;
-  std::vector<AnfNodePtr> node_slots;
+  std::vector<AnfNodePtr> node_slots_;
   size_t slot_index_;
   bool done_;
 };

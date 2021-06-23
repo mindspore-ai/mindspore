@@ -170,7 +170,6 @@ class SGD(Optimizer):
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.accum = self.parameters.clone(prefix="accum", init='zeros')
         self.stat = self.parameters.clone(prefix="stat", init='ones')
-        self.hyper_map = C.HyperMap()
 
     def construct(self, gradients):
         params = self.parameters
@@ -180,7 +179,9 @@ class SGD(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.hyper_map(F.partial(_sgd_opt, self.opt, self.momentum), lr, gradients, params, accum, stat)
+            success = self.hyper_map_reverse(F.partial(_sgd_opt, self.opt, self.momentum),
+                                             lr, gradients, params, accum, stat)
         else:
-            success = self.hyper_map(F.partial(_sgd_opt, self.opt, self.momentum, lr), gradients, params, accum, stat)
+            success = self.hyper_map_reverse(F.partial(_sgd_opt, self.opt, self.momentum, lr),
+                                             gradients, params, accum, stat)
         return success

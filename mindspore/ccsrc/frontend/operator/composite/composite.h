@@ -48,12 +48,13 @@ using ArgsPairList = std::vector<std::pair<AnfNodePtr, TypePtr>>;
 
 class HyperMap : public MetaFuncGraph {
  public:
-  explicit HyperMap(const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr);
+  explicit HyperMap(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr);
   HyperMap(const HyperMap &h);
   void Init();
   HyperMap &operator=(const HyperMap &h) {
     if (this != &h) {
       fn_leaf_ = h.fn_leaf_;
+      reverse_ = h.reverse_;
       broadcast_ = h.broadcast_;
       nonleaf_ = h.nonleaf_;
       if (fn_leaf_) {
@@ -82,6 +83,7 @@ class HyperMap : public MetaFuncGraph {
   ArgsPairList Harmonize(const FuncGraphPtr &graph, const ArgsPairList &args_spec_list);
 
   MultitypeFuncGraphPtr fn_leaf_;
+  bool reverse_;
   bool broadcast_;
   std::set<TypeId> nonleaf_;
 };
@@ -89,7 +91,8 @@ using HyperMapPtr = std::shared_ptr<HyperMap>;
 
 class HyperMapPy : public HyperMap {
  public:
-  explicit HyperMapPy(const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr) : HyperMap(fn_leaf) {}
+  explicit HyperMapPy(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
+      : HyperMap(reverse, fn_leaf) {}
   ~HyperMapPy() override = default;
   MS_DECLARE_PARENT(HyperMapPy, HyperMap)
 };

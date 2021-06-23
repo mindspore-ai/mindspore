@@ -157,7 +157,6 @@ class Momentum(Optimizer):
         self.params = self.parameters
         self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
-        self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
 
     def construct(self, gradients):
@@ -168,9 +167,9 @@ class Momentum(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum), lr, gradients, params, moments,
-                                     self.ps_parameters, self.cache_enable)
+            success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum),
+                                             lr, gradients, params, moments, self.ps_parameters, self.cache_enable)
         else:
-            success = self.hyper_map(F.partial(_momentum_opt, self.opt, self.momentum, lr), gradients, params, moments,
-                                     self.ps_parameters, self.cache_enable)
+            success = self.hyper_map_reverse(F.partial(_momentum_opt, self.opt, self.momentum, lr),
+                                             gradients, params, moments, self.ps_parameters, self.cache_enable)
         return success

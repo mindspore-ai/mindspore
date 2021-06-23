@@ -197,7 +197,6 @@ class RMSProp(Optimizer):
         self.momentum = momentum
         self.ms = self.parameters.clone(prefix="mean_square", init='ones')
         self.moment = self.parameters.clone(prefix="moment", init='zeros')
-        self.hyper_map = C.HyperMap()
         self.epsilon = epsilon
         self.decay = decay
 
@@ -209,17 +208,20 @@ class RMSProp(Optimizer):
         lr = self.get_lr()
         if self.centered:
             if self.is_group_lr:
-                success = self.hyper_map(F.partial(_centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
-                                                   self.momentum), lr, params, self.mg, self.ms, self.moment, gradients)
+                success = self.hyper_map_reverse(F.partial(_centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                           self.momentum),
+                                                 lr, params, self.mg, self.ms, self.moment, gradients)
             else:
-                success = self.hyper_map(F.partial(_centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
-                                                   self.momentum, lr), params, self.mg, self.ms, self.moment, gradients)
-
+                success = self.hyper_map_reverse(F.partial(_centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                           self.momentum, lr),
+                                                 params, self.mg, self.ms, self.moment, gradients)
         else:
             if self.is_group_lr:
-                success = self.hyper_map(F.partial(_rmsprop_opt, self.opt, self.decay, self.epsilon,
-                                                   self.momentum), lr, params, self.ms, self.moment, gradients)
+                success = self.hyper_map_reverse(F.partial(_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                           self.momentum),
+                                                 lr, params, self.ms, self.moment, gradients)
             else:
-                success = self.hyper_map(F.partial(_rmsprop_opt, self.opt, self.decay, self.epsilon,
-                                                   self.momentum, lr), params, self.ms, self.moment, gradients)
+                success = self.hyper_map_reverse(F.partial(_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                           self.momentum, lr),
+                                                 params, self.ms, self.moment, gradients)
         return success

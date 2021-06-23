@@ -71,21 +71,33 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
   MS_EXCEPTION_IF_NULL(type);
 
   std::size_t size = type->elements().size();
+  size_t num = 0;
   bool is_not_same =
-    std::any_of(arg_pairs.begin(), arg_pairs.end(), [size](const std::pair<AnfNodePtr, TypePtr> &item) {
+    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+      num++;
       auto lhs = std::dynamic_pointer_cast<List>(item.second);
-      MS_EXCEPTION_IF_NULL(lhs);
-      return lhs->elements().size() != size;
+      if (lhs == nullptr) {
+        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a List, but got "
+                          << item.second->ToString();
+      }
+      if (lhs->elements().size() != size) {
+        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
+                      << lhs->elements().size();
+        return true;
+      }
+      return false;
     });
   if (is_not_same) {
     MS_LOG(EXCEPTION) << "List in Map should have same length";
   }
 
+  constexpr size_t kPrimHoldLen = 1;
   std::vector<AnfNodePtr> inputs;
+  inputs.reserve(size + kPrimHoldLen);
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
-  for (int64_t i = 0; i < SizeToLong(size); ++i) {
-    MS_LOG(DEBUG) << "GenerateLeafFunc for the " << i << "th arg of the target";
+  for (size_t i = 0; i < size; i++) {
+    MS_LOG(DEBUG) << "FullMakeList for the " << i << "th arg of the target, reverse_: " << reverse_;
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
 
@@ -95,13 +107,19 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
       inputs2.push_back(fn_arg);
     }
 
-    (void)std::transform(
-      arg_pairs.begin(), arg_pairs.end(), std::back_inserter(inputs2),
-      [&func_graph, i](const std::pair<AnfNodePtr, Any> &item) {
-        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
-      });
+    size_t pos = (reverse_ ? (size - 1 - i) : i);
+    (void)std::transform(arg_pairs.begin(), arg_pairs.end(), std::back_inserter(inputs2),
+                         [&func_graph, pos](const std::pair<AnfNodePtr, Any> &item) {
+                           return func_graph->NewCNodeInOrder(
+                             {NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(SizeToLong(pos))});
+                         });
 
-    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
+    auto call_node = func_graph->NewCNodeInOrder(inputs2);
+    if (reverse_) {
+      inputs.insert(inputs.begin() + 1, call_node);
+    } else {
+      inputs.emplace_back(call_node);
+    }
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -111,22 +129,34 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
-  std::size_t size = type->elements().size();
+  size_t size = type->elements().size();
+  size_t num = 0;
   bool is_not_same =
-    std::any_of(arg_pairs.begin(), arg_pairs.end(), [size](const std::pair<AnfNodePtr, TypePtr> &item) {
+    std::any_of(arg_pairs.begin(), arg_pairs.end(), [&num, size](const std::pair<AnfNodePtr, TypePtr> &item) {
+      num++;
       auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
-      MS_EXCEPTION_IF_NULL(lhs);
-      return lhs->elements().size() != size;
+      if (lhs == nullptr) {
+        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a Tuple, but got "
+                          << item.second->ToString();
+      }
+      if (lhs->elements().size() != size) {
+        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
+                      << lhs->elements().size();
+        return true;
+      }
+      return false;
     });
   if (is_not_same) {
     MS_LOG(EXCEPTION) << "tuple in Map should have same length";
   }
 
+  constexpr size_t kPrimHoldLen = 1;
   std::vector<AnfNodePtr> inputs;
+  inputs.reserve(size + kPrimHoldLen);
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
-  for (int64_t i = 0; i < SizeToLong(size); ++i) {
-    MS_LOG(DEBUG) << "GenerateLeafFunc for the " << i << "th arg of the tuple inputs";
+  for (size_t i = 0; i < size; i++) {
+    MS_LOG(DEBUG) << "FullMakeTuple for the " << i << "th arg of the tuple inputs, reverse_: " << reverse_;
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
 
@@ -136,13 +166,19 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
       inputs2.push_back(fn_arg);
     }
 
-    (void)std::transform(
-      arg_pairs.begin(), arg_pairs.end(), std::back_inserter(inputs2),
-      [&func_graph, &i](std::pair<AnfNodePtr, Any> item) {
-        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(i)});
-      });
+    size_t pos = (reverse_ ? (size - 1 - i) : i);
+    (void)std::transform(arg_pairs.begin(), arg_pairs.end(), std::back_inserter(inputs2),
+                         [&func_graph, &pos](const std::pair<AnfNodePtr, Any> &item) {
+                           return func_graph->NewCNodeInOrder(
+                             {NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(SizeToLong(pos))});
+                         });
 
-    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
+    auto call_node = func_graph->NewCNodeInOrder(inputs2);
+    if (reverse_) {
+      inputs.insert(inputs.begin() + 1, call_node);
+    } else {
+      inputs.emplace_back(call_node);
+    }
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -152,13 +188,15 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
   MS_EXCEPTION_IF_NULL(type);
   MS_EXCEPTION_IF_NULL(func_graph);
 
+  size_t attrSize = type->GetAttributes().size();
+  constexpr size_t kPrimAndTypeLen = 2;
   std::vector<AnfNodePtr> inputs;
+  inputs.reserve(attrSize + kPrimAndTypeLen);
   inputs.push_back(NewValueNode(prim::kPrimMakeRecord));
   inputs.push_back(NewValueNode(type));
 
-  std::size_t attrSize = type->GetAttributes().size();
-  for (std::size_t i = 0; i < attrSize; ++i) {
-    MS_LOG(DEBUG) << "GenerateLeafFunc for the " << i << "th element of the inputs";
+  for (size_t i = 0; i < attrSize; i++) {
+    MS_LOG(DEBUG) << "FullMakeClass for the " << i << "th element of the inputs, reverse_: " << reverse_;
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
 
@@ -168,13 +206,20 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
       inputs2.push_back(fn_arg);
     }
 
-    int64_t j = 0;
-    for (auto item : arg_pairs) {
-      inputs2.push_back(func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
-      j++;
+    size_t size = arg_pairs.size();
+    for (size_t j = 0; j < size; j++) {
+      size_t pos = (reverse_ ? (size - 1 - j) : j);
+      auto &item = arg_pairs[pos];
+      inputs2.push_back(
+        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(SizeToLong(pos))}));
     }
 
-    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
+    auto call_node = func_graph->NewCNodeInOrder(inputs2);
+    if (reverse_) {
+      inputs.insert(inputs.begin() + 2, call_node);
+    } else {
+      inputs.emplace_back(call_node);
+    }
   }
   return func_graph->NewCNodeInOrder(inputs);
 }
@@ -284,8 +329,9 @@ abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args
 
 REGISTER_PYBIND_DEFINE(Map_, ([](const py::module *m) {
                          (void)py::class_<MapPy, MetaFuncGraph, std::shared_ptr<MapPy>>(*m, "Map_")
-                           .def(py::init<std::shared_ptr<MultitypeFuncGraph>>(), py::arg("leaf"))
-                           .def(py::init<>());
+                           .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"),
+                                py::arg("ops"))
+                           .def(py::init<bool>(), py::arg("reverse"));
                        }));
 }  // namespace prim
 }  // namespace mindspore

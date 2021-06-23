@@ -160,7 +160,6 @@ class ProximalAdagrad(Optimizer):
         self.accum = self.parameters.clone(prefix="accum", init=accum)
         self.l1 = Tensor(l1, mstype.float32)
         self.l2 = Tensor(l2, mstype.float32)
-        self.hyper_map = C.HyperMap()
         self.use_locking = use_locking
         self.opt = P.ApplyProximalAdagrad(use_locking=use_locking)
         self.sparse_opt = P.SparseApplyProximalAdagrad(use_locking=use_locking)
@@ -174,11 +173,12 @@ class ProximalAdagrad(Optimizer):
         grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.map_(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2), lr,
-                                grads, params, accum)
+            success = self.map_reverse(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2),
+                                       lr, grads, params, accum)
         else:
-            success = self.map_(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2, lr),
-                                grads, params, accum)
+            success = self.map_reverse(F.partial(_proximal_ada_grad_opt, self.opt, self.sparse_opt, self.l1, self.l2,
+                                                 lr),
+                                       grads, params, accum)
         return success
 
     @Optimizer.target.setter
