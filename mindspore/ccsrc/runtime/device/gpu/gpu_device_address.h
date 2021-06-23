@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ class GPUDeviceAddress : public DeviceAddress {
   GPUDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
   GPUDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : DeviceAddress(ptr, size, format, type_id) {}
+  GPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const AnfNodePtr &node,
+                   size_t out_index)
+      : DeviceAddress(ptr, size, format, type_id, node, out_index) {}
   ~GPUDeviceAddress() override;
 
   bool SyncDeviceToHost(size_t size, void *host_ptr) const override;
@@ -51,6 +54,7 @@ class GPUDeviceAddress : public DeviceAddress {
   bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                      const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev) const override;
 #endif
+
  private:
   DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
 };

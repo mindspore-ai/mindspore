@@ -175,6 +175,11 @@ DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
+DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+                                                       TypeId type_id, const AnfNodePtr &node, size_t out_index) {
+  return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id, node, out_index);
+}
+
 tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
   session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index,
   std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {

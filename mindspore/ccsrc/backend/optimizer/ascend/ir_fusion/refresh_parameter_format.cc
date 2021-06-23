@@ -23,9 +23,7 @@
 namespace mindspore {
 namespace opt {
 void DoRefresh(const CNodePtr &cnode) {
-  if (cnode == nullptr) {
-    MS_LOG(EXCEPTION) << "node is nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(cnode);
   size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
   for (size_t input_index = 0; input_index < input_num; input_index++) {
     auto input_kernel_node = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(cnode, input_index), 0).first;
