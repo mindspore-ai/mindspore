@@ -57,12 +57,12 @@ public class MSTensor {
         return this.getLongData(this.tensorPtr);
     }
 
-    public void setData(byte[] data) {
-        this.setData(this.tensorPtr, data, data.length);
+    public boolean setData(byte[] data) {
+        return this.setData(this.tensorPtr, data, data.length);
     }
 
-    public void setData(ByteBuffer data) {
-        this.setByteBufferData(this.tensorPtr, data);
+    public boolean setData(ByteBuffer data) {
+        return this.setByteBufferData(this.tensorPtr, data);
     }
 
     public long size() {

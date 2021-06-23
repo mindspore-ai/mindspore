@@ -66,6 +66,10 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getByte
   }
 
   auto local_size = ms_tensor_ptr->Size();
+  if (local_size <= 0) {
+    MS_LOGE("Size of tensor is negative: %zu", local_size);
+    return env->NewByteArray(0);
+  }
   auto ret = env->NewByteArray(local_size);
   env->SetByteArrayRegion(ret, 0, local_size, local_data);
   return ret;
@@ -92,6 +96,10 @@ extern "C" JNIEXPORT jlongArray JNICALL Java_com_mindspore_lite_MSTensor_getLong
     return env->NewLongArray(0);
   }
   auto local_element_num = ms_tensor_ptr->ElementsNum();
+  if (local_element_num <= 0) {
+    MS_LOGE("ElementsNum of tensor is negative: %d", local_element_num);
+    return env->NewLongArray(0);
+  }
   auto ret = env->NewLongArray(local_element_num);
   env->SetLongArrayRegion(ret, 0, local_element_num, local_data);
   return ret;
@@ -118,6 +126,10 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getIntDa
     return env->NewIntArray(0);
   }
   auto local_element_num = ms_tensor_ptr->ElementsNum();
+  if (local_element_num <= 0) {
+    MS_LOGE("ElementsNum of tensor is negative: %d", local_element_num);
+    return env->NewIntArray(0);
+  }
   auto ret = env->NewIntArray(local_element_num);
   env->SetIntArrayRegion(ret, 0, local_element_num, local_data);
   return ret;
@@ -144,6 +156,10 @@ extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_lite_MSTensor_getFlo
     return env->NewFloatArray(0);
   }
   auto local_element_num = ms_tensor_ptr->ElementsNum();
+  if (local_element_num <= 0) {
+    MS_LOGE("ElementsNum of tensor is negative: %d", local_element_num);
+    return env->NewFloatArray(0);
+  }
   auto ret = env->NewFloatArray(local_element_num);
   env->SetFloatArrayRegion(ret, 0, local_element_num, local_data);
   return ret;
@@ -259,7 +275,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_createTensor
   memcpy(tensor_data, p_data, data_len);
   int tensor_size = static_cast<jint>(data_len / sizeof(float));
   std::vector<int> shape = {tensor_size};
-  auto tensor = mindspore::tensor::MSTensor::CreateTensor(
-    env->GetStringUTFChars(tensor_name, JNI_FALSE), mindspore::kNumberTypeFloat32, shape, tensor_data, data_len);
+  auto tensor = mindspore::tensor::MSTensor::CreateTensor(env->GetStringUTFChars(tensor_name, JNI_FALSE),
+                                                          mindspore::kNumberTypeFloat32, shape, tensor_data, data_len);
   return jlong(tensor);
 }

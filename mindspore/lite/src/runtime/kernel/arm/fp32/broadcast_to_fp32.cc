@@ -44,6 +44,12 @@ int BroadcastToCPUKernel::ReSize() {
     shape_info_->output_shape_[i] = output_shape[i];
   }
   shape_info_->output_shape_size_ = static_cast<int>(output_shape.size());
+
+  data_type_ = in_tensors_.at(0)->data_type();
+  if (data_type_ != out_tensors_.at(0)->data_type()) {
+    MS_LOG(ERROR) << "BroadcastTo infer has error";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -60,10 +66,36 @@ int BroadcastToCPUKernel::Init() {
 }
 
 int BroadcastToCPUKernel::Run() {
-  const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  return BroadcastTo(float, input_data, shape_info_, output_data);
+  if (in_tensors_.size() == 2) {
+    auto shape_tensor = in_tensors_.at(1);
+    MS_ASSERT(shape_tensor->data_type() == kNumberTypeInt32);
+    if (shape_tensor->ElementsNum() > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "Size of broadcast_to shape exceed MAX_SHAPE_SIZE";
+      return RET_ERROR;
+    }
+    auto shape_data = reinterpret_cast<int *>(shape_tensor->data());
+    for (int i = 0; i < shape_tensor->ElementsNum(); i++) {
+      shape_info_->output_shape_[i] = (shape_data[i] == -1) ? (shape_info_->input_shape_[i]) : shape_data[i];
+    }
+  }
+  switch (data_type_) {
+    case kNumberTypeFloat32: {
+      const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+      auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+      return BroadcastTo(float, input_data, shape_info_, output_data);
+    }
+    case kNumberTypeInt32:
+    case kNumberTypeInt: {
+      const auto input_data = reinterpret_cast<int *>(in_tensors_.at(0)->MutableData());
+      auto output_data = reinterpret_cast<int *>(out_tensors_.at(0)->MutableData());
+      return BroadcastTo(int, input_data, shape_info_, output_data);
+    }
+    default:
+      MS_LOG(ERROR) << "UnSupported data type: " << data_type_;
+      return RET_ERROR;
+  }
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 }  // namespace mindspore::kernel
