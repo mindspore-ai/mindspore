@@ -31,6 +31,8 @@
 
 namespace mindspore::lite {
 constexpr int kDefaultDeviceType = -1;
+constexpr int kDefalutSubGraphSize = 2;
+constexpr int kDefaultInputs = 1;
 class SearchSubGraph {
   enum TensorType { NORMAL, CONST, INPUT };
 
@@ -122,6 +124,8 @@ class SearchSubGraph {
   CostModel CalculateConv2DFusion(Model::Node *node);
   void dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
            std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs);
+  void UpdateOfflineParallelFlag();
+  bool CheckIsParallelSubGraph(const std::vector<Subgraph> &subgraphs);
 
  private:
   std::vector<size_t> *output_nodes_ = nullptr;

@@ -50,7 +50,7 @@ void InnerContext::SetContextDevice(const Context *context) {
   for (auto &device_ctx : context->device_list_) {
     // npu/gpu server would use one core so we don't bind core to avoid competition.
     // If user does not set npu/gpu device, we still bind core.
-    if (device_ctx.device_type_ == DT_CPU && (isUserSetNPU || isUserSetGPU)) {
+    if (device_ctx.device_type_ == DT_CPU && (isUserSetNPU || (isUserSetGPU && !enable_parallel_))) {
       auto cpu_ctx = device_ctx;
       cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
       this->device_list_.push_back(cpu_ctx);

@@ -291,8 +291,6 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
   concate_cnode->set_scope(conv_cnode->scope());
   std::vector<AnfNodePtr> outputs;
   GetMultipleOutputsOfAnfNode(func_graph, concate_cnode, 1, &outputs);
-  // only support split_overlap node implementation, to split sub_graph for runtime
-  concate_cnode->AddAttr(mindspore::ops::kDeviceType, MakeValue(static_cast<int>(lite::DT_CPU)));
   return concate_cnode;
 }
 
@@ -337,8 +335,6 @@ void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
     ptr_list.push_back(value_node);
   }
   split_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(ptr_list));
-  // only support split_overlap node implementation
-  split_cnode->AddAttr(mindspore::ops::kDeviceType, MakeValue(static_cast<int>(lite::DT_CPU)));
 }
 
 }  // namespace opt
