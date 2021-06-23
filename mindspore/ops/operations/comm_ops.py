@@ -171,9 +171,9 @@ class AllGather(PrimitiveWithInfer):
         ...     def construct(self, x):
         ...         return self.allgather(x)
         ...
-        >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+        >>> input_x = Tensor(np.ones([2, 8]).astype(np.float32))
         >>> net = Net()
-        >>> output = net(input_)
+        >>> output = net(input_x)
         >>> print(output)
         [[1. 1. 1. 1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1. 1. 1. 1.]
@@ -462,9 +462,9 @@ class Broadcast(PrimitiveWithInfer):
         ...     def construct(self, x):
         ...         return self.broadcast((x,))
         ...
-        >>> input_ = Tensor(np.ones([2, 4]).astype(np.int32))
+        >>> input_x = Tensor(np.ones([2, 4]).astype(np.int32))
         >>> net = Net()
-        >>> output = net(input_)
+        >>> output = net(input_x)
         >>> print(output)
         (Tensor(shape[2,4], dtype=Int32, value=
         [[1, 1, 1, 1],

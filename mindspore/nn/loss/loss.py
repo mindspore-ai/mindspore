@@ -1182,7 +1182,7 @@ class FocalLoss(Loss):
     The loss function proposed by Kaiming team in their paper ``Focal Loss for Dense Object Detection`` improves the
     effect of image object detection. It is a loss function to solve the imbalance of categories and the difference of
     classification difficulty. If you want to learn more, please refer to the paper.
-    `Focal Loss for Dense Object Detection https://arxiv.org/pdf/1708.02002.pdf`_. The function is shown as follows:
+    `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_. The function is shown as follows:
 
     .. math::
         FL(p_t) = -(1-p_t)^\gamma log(p_t)
