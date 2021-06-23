@@ -353,7 +353,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   for (const auto &graph : all_graphs) {
     UnifyMindIR(graph);
   }
-  BackendOptimization(all_graphs);
+  opt::BackendCommonOptimization(root_graph);
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {
     MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
@@ -1167,14 +1167,6 @@ void AscendSession::SyncInitialTenosrToDevice() {
       MS_LOG(EXCEPTION) << "Tensor SyncHostToDevice fail!";
     }
   }
-}
-
-void AscendSession::BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs) {
-  MS_LOG(INFO) << "Start BackendCommonOptimization";
-  for (auto &graph : all_graphs) {
-    opt::BackendCommonOptimization(graph);
-  }
-  MS_LOG(INFO) << "End.";
 }
 
 void AscendSession::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph) {
