@@ -381,6 +381,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   {
     std::lock_guard<std::mutex> lock(pending_task_mutex_);
     if (!IsTaskReady(task)) {
+      ClearDoneTasks();
       pending_tasks_.push_back(task);
       return;
     }
