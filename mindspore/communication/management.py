@@ -146,7 +146,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Raises:
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+        RuntimeError: If HCCL/NCCL is not available.
     """
     return _get_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
@@ -156,7 +156,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Gets local rank ID for current device in specified collective communication group.
 
     Note:
-        Nccl is not supported.
+        GPU version of MindSpore doesn't support this method.
         This method should be used after init().
 
     Args:
@@ -170,7 +170,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
     Raises:
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
     """
     return _get_local_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
@@ -193,7 +193,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     Raises:
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+        RuntimeError: If HCCL/NCCL is not available.
     """
     return _get_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
@@ -203,7 +203,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
     Gets local rank size of the specified collective communication group.
 
     Note:
-        Nccl is not supported.
+        GPU version of MindSpore doesn't support this method.
         This method should be used after init().
 
     Args:
@@ -216,7 +216,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
     Raises:
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
     """
     return _get_local_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
@@ -227,7 +227,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     the rank ID in the specified user communication group.
 
     Note:
-        NCCL is not supported.
+        GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
         This method should be used after init().
 
@@ -242,7 +242,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     Raises:
         TypeError: If `group_rank_id` is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
 
     Examples:
         >>> from mindspore.context import set_context
@@ -263,7 +263,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
     the rank ID in the world communication group.
 
     Note:
-        NCCL is not supported.
+        GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
         This method should be used after init().
 
@@ -278,7 +278,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
     Raises:
         TypeError: If world_rank_id is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
 
     Examples:
         >>> from mindspore.context import set_context
@@ -298,7 +298,7 @@ def create_group(group, rank_ids):
     Create a user collective communication group.
 
     Note:
-        NCCL is not supported.
+        GPU version of MindSpore doesn't support this method.
         The size of rank_ids should be larger than 1.
         Rank_ids should not have duplicate data.
         This method should be used after init().
@@ -310,7 +310,7 @@ def create_group(group, rank_ids):
     Raises:
         TypeError: If group is not a string or `rank_ids` is not a list.
         ValueError: If `rank_ids` size is not larger than 1, or `rank_ids` has duplicate data, or backend is invalid.
-        RuntimeError: If hccl/nccl is not available or nccl not supports.
+        RuntimeError: If hccl/nccl is not available or MindSpore is GPU version..
 
     Examples:
         >>> from mindspore.context import set_context
@@ -328,7 +328,7 @@ def destroy_group(group):
     Destroy the user collective communication group.
 
     Note:
-        Nccl is not supported.
+        GPU version of MindSpore doesn't support this method.
         The parameter group should not be "hccl_world_group".
         This method should be used after init().
 
@@ -338,6 +338,6 @@ def destroy_group(group):
     Raises:
         TypeError: If group is not a string.
         ValueError: If group is "hccl_world_group" or backend is invalid.
-        RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+        RuntimeError: If HCCL/NCCL is not available or MindSpore is GPU version.
     """
     _destroy_group_helper(group, backend=GlobalComm.BACKEND)
