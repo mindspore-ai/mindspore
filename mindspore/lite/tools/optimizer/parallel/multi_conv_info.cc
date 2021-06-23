@@ -89,12 +89,12 @@ bool MultiConvSplit::CheckSplitValid() {
     return false;
   }
   int64_t split_axis_value_0 = UP_DIV(split_info_.ori_split_axis_value * visited_block, total_block_count);
-  if (split_axis_value_0 >= split_info_.ori_split_axis_value) {
+  if (split_axis_value_0 > split_info_.ori_split_axis_value) {
     return false;
   }
   int64_t split_axis_value_1 = split_info_.ori_split_axis_value - split_axis_value_0;
   split_axis_value_1 += (split_info_.extend_top.back() + split_info_.extend_bottom.back());
-  return split_axis_value_1 < split_info_.ori_split_axis_value;
+  return split_axis_value_1 <= split_info_.ori_split_axis_value;
 }
 
 int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {

@@ -66,8 +66,8 @@ int SplitWithOverlapBaseCPUKernel::Init() { return RET_OK; }
 int SplitWithOverlapBaseCPUKernel::ReSize() { return RET_OK; }
 
 int SplitWithOverlapBaseCPUKernel::Split(int task_id) {
-  DoSplitWithOverlap(input_ptr_, output_ptr_.data(), param_->num_split_, split_dim_size_, element_bytes_,
-                     outer_total_dim_, inner_stride_, start_indices_.data(), end_indices_.data());
+  DoSplitWithOverlapParallel(input_ptr_, output_ptr_.data(), task_id, split_dim_size_, element_bytes_, outer_total_dim_,
+                             inner_stride_, start_indices_.data(), end_indices_.data());
 
   return RET_OK;
 }
@@ -117,7 +117,7 @@ int SplitWithOverlapBaseCPUKernel::Run() {
     inner_stride_ *= input_shape[i];
   }
 
-  auto ret = ParallelLaunch(this->context_, SplitWithOverlapRun, this, context_->thread_num_);
+  auto ret = ParallelLaunch(this->context_, SplitWithOverlapRun, this, param_->num_split_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch for SplitWIthOverlapRun run fail. errorcode:[" << ret << "]";
     return RET_ERROR;
