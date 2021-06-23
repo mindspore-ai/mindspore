@@ -29,8 +29,7 @@ void RecorderManager::UpdateRdrEnable() {
   if (config_parser.HasRdrSetting()) {
 #ifdef __linux__
     if (!rdr_enable_) {
-      MS_LOG(WARNING) << "Please set the 'enable' as true using 'rdr' setting in file '" << config_parser.ConfigPath()
-                      << "' if you want to use RDR.";
+      MS_LOG(WARNING) << "Not enabling RDR. You can enable RDR through configuration file or environment variables.";
     }
 #else
     if (rdr_enable_) {
