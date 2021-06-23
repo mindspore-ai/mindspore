@@ -14,28 +14,19 @@
 # ============================================================================
 """Evaluation api."""
 import os
-import argparse
-from config import TransformerConfig
+from src.model_utils.config import config
 from src.dataset import load_dataset
-
-parser = argparse.ArgumentParser(description='preprocess.')
-parser.add_argument("--config", type=str, required=True,
-                    help="Model config json file path.")
-parser.add_argument("--result_path", type=str, default='./preprocess_Result/',
-                    help="preprocess result path.")
-args, _ = parser.parse_known_args()
 
 def generate_bin():
     '''
     Generate bin files.
     '''
-    config = TransformerConfig.from_json_file(args.config)
     ds = load_dataset(data_files=config.test_dataset,
                       batch_size=config.batch_size,
                       epoch_count=1,
                       sink_mode=config.dataset_sink_mode,
                       shuffle=False) if config.test_dataset else None
-    cur_dir = args.result_path
+    cur_dir = config.result_path
     source_eos_ids_path = os.path.join(cur_dir, "00_source_eos_ids")
     source_eos_mask_path = os.path.join(cur_dir, "01_source_eos_mask")
     target_eos_ids_path = os.path.join(cur_dir, "target_eos_ids")

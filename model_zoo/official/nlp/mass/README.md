@@ -81,6 +81,37 @@ First of all, through a sequence to sequence framework, mass only predicts the b
 Secondly, by predicting the continuous token of the decoder, the decoder can build better language modeling ability than only predicting discrete token.
 Third, by further shielding the input token of the decoder which is not shielded in the encoder, the decoder is encouraged to extract more useful information from the encoder side, rather than using the rich information in the previous token.
 
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the task"task=train"
+# (3) Set the code directory to "/path/mass" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a.  Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the task"task=infer" and path of vocab
+# (4) Set the code directory to "/path/mass" on the website UI interface.
+# (5) Set the startup file to "eval.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+```
+
 # Script description
 
 MASS script and code structure are as follow:
@@ -90,8 +121,12 @@ MASS script and code structure are as follow:
   ├── README.md                              // Introduction of MASS model.
   ├── config
   │   ├──config.py                           // Configuration instance definition.
-  │   ├──config.json                         // Configuration file.
   ├── src
+  │   ├── model_utils
+          │   ├──config.py                   // parameter configuration
+          │   ├──device_adapter.py           // device adapter
+          │   ├──local_adapter.py            // local adapter
+          │   ├──moxing_adapter.py           // moxing adapter
   │   ├──dataset
   │      ├──bi_data_loader.py                // Dataset loader for fine-tune or inferring.
   │      ├──mono_data_loader.py              // Dataset loader for pre-training.
@@ -134,6 +169,7 @@ MASS script and code structure are as follow:
   ├── requirements.txt                       // Requirements of third party package.
   ├── train.py                               // Train API entry.
   ├── eval.py                                // Infer API entry.
+  ├── default_config.yaml                    // parameter configuration
   ├── tokenize_corpus.py                     // Corpus tokenization.
   ├── apply_bpe_encoding.py                  // Applying bpe encoding.
   ├── weights_average.py                     // Average multi model checkpoints to NPZ format.
@@ -332,9 +368,8 @@ python cornell_dialog.py --src_folder /{path}/cornell_dialog \
 
 ## Configuration
 
-Json file under the path `config/` is the template configuration file.
 Almost all of the options and arguments needed could be assigned conveniently, including the training platform, configurations of dataset and model, arguments of optimizer etc. Optional features such as loss scale and checkpoint are also available by setting the options correspondingly.
-For more detailed information about the attributes, refer to the file `config/config.py`.
+For more detailed information about the attributes, refer to the file `default_config.yaml`.
 
 ## Training & Evaluation process
 
@@ -357,9 +392,7 @@ The usage of `run_ascend.sh` is shown as below:
 
 ```text
 Usage: run_ascend.sh [-h, --help] [-t, --task <CHAR>] [-n, --device_num <N>]
-                     [-i, --device_id <N>] [-j, --hccl_json <FILE>]
-                     [-c, --config <FILE>] [-o, --output <FILE>]
-                     [-v, --vocab <FILE>]
+                     [-i, --device_id <N>] [-o, --output <FILE>] [-v, --vocab <FILE>]
 
 options:
     -h, --help               show usage
@@ -367,7 +400,6 @@ options:
     -n, --device_num         device number used for training: N, default is 1.
     -i, --device_id          device id used for training with single device: N, 0<=N<=7, default is 0.
     -j, --hccl_json          rank table file used for training with multiple devices: FILE.
-    -c, --config             configuration file as shown in the path 'mass/config': FILE.
     -o, --output             assign output file of inference: FILE.
     -v, --vocab              set the vocabulary.
     -m, --metric             set the metric.
@@ -379,15 +411,13 @@ The usage of `run_gpu.sh` is shown as below:
 
 ```text
 Usage: run_gpu.sh [-h, --help] [-t, --task <CHAR>] [-n, --device_num <N>]
-                     [-i, --device_id <N>] [-c, --config <FILE>]
-                     [-o, --output <FILE>] [-v, --vocab <FILE>]
+                     [-i, --device_id <N>] [-o, --output <FILE>] [-v, --vocab <FILE>]
 
 options:
     -h, --help               show usage
     -t, --task               select task: CHAR, 't' for train and 'i' for inference".
     -n, --device_num         device number used for training: N, default is 1.
     -i, --device_id          device id used for training with single device: N, 0<=N<=7, default is 0.
-    -c, --config             configuration file as shown in the path 'mass/config': FILE.
     -o, --output             assign output file of inference: FILE.
     -v, --vocab              set the vocabulary.
     -m, --metric             set the metric.
@@ -397,7 +427,7 @@ The command followed shows a example for training with 2 devices.
 Ascend:
 
 ```ascend
-sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json --config /{path}/config.json
+sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json
 ```
 
 ps. Discontinuous device id is not supported in `run_ascend.sh` at present, device id in `rank_table.json` must start from 0.
@@ -405,20 +435,20 @@ ps. Discontinuous device id is not supported in `run_ascend.sh` at present, devi
 GPU:
 
 ```gpu
-sh run_gpu.sh --task t --device_num 2 --config /{path}/config.json
+sh run_gpu.sh --task t --device_num 2
 ```
 
 If use a single chip, it would be like this:
 Ascend:
 
 ```ascend
-sh run_ascend.sh --task t --device_num 1 --device_id 0 --config /{path}/config.json
+sh run_ascend.sh --task t --device_num 1 --device_id 0
 ```
 
 GPU:
 
 ```gpu
-sh run_gpu.sh --task t --device_num 1 --device_id 0 --config /{path}/config.json
+sh run_gpu.sh --task t --device_num 1 --device_id 0
 ```
 
 ## Weights average
@@ -427,16 +457,14 @@ sh run_gpu.sh --task t --device_num 1 --device_id 0 --config /{path}/config.json
 python weights_average.py --input_files your_checkpoint_list --output_file model.npz
 ```
 
-The input_files is a list of you checkpoints file. To use model.npz as the weights, add its path in config.json at "existed_ckpt".
+The input_files is a list of you checkpoints file. To use model.npz as the weights, add its path in default_config.yaml at "default_config.yaml".
 
-```json
+```default_config.yaml
 {
   ...
-  "checkpoint_options": {
-    "existed_ckpt": "/xxx/xxx/model.npz",
+    "checkpoint_file_path": "/xxx/xxx/model.npz",
     "save_ckpt_steps": 1000,
     ...
-  },
   ...
 }
 ```
@@ -448,14 +476,13 @@ Two learning rate scheduler are provided in our model:
 1. [Polynomial decay scheduler](https://towardsdatascience.com/learning-rate-schedules-and-adaptive-learning-rate-methods-for-deep-learning-2c8f433990d1).
 2. [Inverse square root scheduler](https://ece.uwaterloo.ca/~dwharder/aads/Algorithms/Inverse_square_root/).
 
-LR scheduler could be config in `config/config.json`.
+LR scheduler could be config in `default_config.yaml`.
 
 For Polynomial decay scheduler, config could be like:
 
-```json
+```default_config.yaml
 {
   ...
-  "learn_rate_config": {
     "optimizer": "adam",
     "lr": 1e-4,
     "lr_scheduler": "poly",
@@ -463,24 +490,21 @@ For Polynomial decay scheduler, config could be like:
     "decay_steps": 10000,
     "warmup_steps": 2000,
     "min_lr": 1e-6
-  },
   ...
 }
 ```
 
 For Inverse square root scheduler, config could be like:
 
-```json
+```default_config.yaml
 {
   ...
-  "learn_rate_config": {
     "optimizer": "adam",
     "lr": 1e-4,
     "lr_scheduler": "isr",
     "decay_start_step": 12000,
     "warmup_steps": 2000,
     "min_lr": 1e-6
-  },
   ...
 }
 ```
@@ -516,79 +540,79 @@ MASS pre-trains a sequence to sequence model by predicting the masked fragments 
 Here we provide a practice example to demonstrate the basic usage of MASS for pre-training, fine-tuning a model, and the inference process. The overall process is as follows:
 
 1. Download and process the dataset.
-2. Modify the `config.json` to config the network.
+2. Modify the `default_config.yaml` to config the network.
 3. Run a task for pre-training and fine-tuning.
 4. Perform inference and validation.
 
 ## Pre-training
 
-For pre-training a model, config the options in `config.json` firstly:
+For pre-training a model, config the options in `default_config.yaml` firstly:
 
 - Assign the `pre_train_dataset` under `dataset_config` node to the dataset path.
 - Choose the optimizer('momentum/adam/lamb' is available).
 - Assign the 'ckpt_prefix' and 'ckpt_path' under `checkpoint_path` to save the model files.
 - Set other arguments including dataset configurations and network configurations.
-- If you have a trained model already, assign the `existed_ckpt` to the checkpoint file.
+- If you have a trained model already, assign the `checkpoint_file_path` to the checkpoint file.
 
 If you use the ascend chip, run the shell script `run_ascend.sh` as followed:
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1 -c /mass/config/config.json
+sh run_ascend.sh -t t -n 1 -i 1
 ```
 
 You can also run the shell script `run_gpu.sh` on gpu as followed:
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1 -c /mass/config/config.json
+sh run_gpu.sh -t t -n 1 -i 1
 ```
 
-Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `config/config.json` file.
+Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `default_config.yaml` file.
 
 ## Fine-tuning
 
-For fine-tuning a model, config the options in `config.json` firstly:
+For fine-tuning a model, config the options in `default_config.yaml` firstly:
 
 - Assign the `fine_tune_dataset` under `dataset_config` node to the dataset path.
-- Assign the `existed_ckpt` under `checkpoint_path` node to the existed model file generated by pre-training.
+- Assign the `checkpoint_file_path` under `checkpoint_path` node to the existed model file generated by pre-training.
 - Choose the optimizer('momentum/adam/lamb' is available).
-- Assign the `ckpt_prefix` and `ckpt_path` under `checkpoint_path` node to save the model files.
+- Assign the `ckpt_prefix` and `checkpoint_file_path` under `checkpoint_path` node to save the model files.
 - Set other arguments including dataset configurations and network configurations.
 
 If you use the ascend chip, run the shell script `run_ascend.sh` as followed:
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1 -c config/config.json
+sh run_ascend.sh -t t -n 1 -i 1
 ```
 
 You can also run the shell script `run_gpu.sh` on gpu as followed:
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1 -c config/config.json
+sh run_gpu.sh -t t -n 1 -i 1
 ```
 
-Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `config/config.json` file.
+Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `default_config.yaml` file.
 
 ## Inference
 
 If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html).
-For inference, config the options in `config.json` firstly:
+For inference, config the options in `default_config.yaml` firstly:
 
-- Assign the `test_dataset` under `dataset_config` node to the dataset path.
-- Assign the `existed_ckpt` under `checkpoint_path` node to the model file produced by fine-tuning.
+- Assign the `default_config.yaml` under `data_path` node to the dataset path.
+- Assign the `default_config.yaml` under `checkpoint_path` node to the model file produced by fine-tuning.
 - Choose the optimizer('momentum/adam/lamb' is available).
-- Assign the `ckpt_prefix` and `ckpt_path` under `checkpoint_path` node to save the model files.
+- Assign the `ckpt_prefix` and `checkpoint_file_path` under `checkpoint_path` node to save the model files.
 - Set other arguments including dataset configurations and network configurations.
 
 If you use the ascend chip, run the shell script `run_ascend.sh` as followed:
 
 ```bash
-sh run_ascend.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
+sh run_ascend.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 You can also run the shell script `run_gpu.sh` on gpu as followed:
 
 ```gpu
-sh run_gpu.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
+sh run_gpu.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 ## Mindir Inference Process
@@ -596,7 +620,7 @@ sh run_gpu.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
 ### [Export MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,
@@ -675,7 +699,7 @@ The comparisons between MASS and other baseline methods in terms of PPL on Corne
 
 # Description of random situation
 
-MASS model contains dropout operations, if you want to disable dropout, please set related dropout_rate to 0 in `config/config.json`.
+MASS model contains dropout operations, if you want to disable dropout, please set related dropout_rate to 0 in `default_config.yaml`.
 
 # others
 

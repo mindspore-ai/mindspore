@@ -14,34 +14,14 @@
 # ============================================================================
 """Evaluation api."""
 import os
-import argparse
 import pickle
 import numpy as np
 
-
-
-from config import TransformerConfig
+from src.model_utils.config import config
 from src.utils import Dictionary
 from src.utils import get_score
 
-parser = argparse.ArgumentParser(description='postprocess.')
-parser.add_argument("--config", type=str, required=True,
-                    help="Model config json file path.")
-parser.add_argument("--vocab", type=str, required=True,
-                    help="Vocabulary to use.")
-parser.add_argument("--output", type=str, required=True,
-                    help="Result file path.")
-parser.add_argument("--metric", type=str, default='rouge',
-                    help='Set eval method.')
-parser.add_argument("--source_id_folder", type=str, default='',
-                    help="source_eos_ids folder path.")
-parser.add_argument("--target_id_folder", type=str, default='',
-                    help="target_eos_ids folder path.")
-parser.add_argument("--result_dir", type=str, default='./result_Files',
-                    help="result dir path.")
-args, _ = parser.parse_known_args()
-
-def read_from_file(config):
+def read_from_file():
     '''
      calculate accuraty.
     '''
@@ -49,16 +29,16 @@ def read_from_file(config):
     probs = []
     source_sentences = []
     target_sentences = []
-    file_num = len(os.listdir(args.source_id_folder))
+    file_num = len(os.listdir(config.source_id_folder))
     for i in range(file_num):
         f_name = "gigaword_bs_" + str(config.batch_size) + "_" + str(i)
-        source_ids = np.fromfile(os.path.join(args.source_id_folder, f_name + ".bin"), np.int32)
+        source_ids = np.fromfile(os.path.join(config.source_id_folder, f_name + ".bin"), np.int32)
         source_ids = source_ids.reshape(1, config.max_decode_length)
-        target_ids = np.fromfile(os.path.join(args.target_id_folder, f_name + ".bin"), np.int32)
+        target_ids = np.fromfile(os.path.join(config.target_id_folder, f_name + ".bin"), np.int32)
         target_ids = target_ids.reshape(1, config.max_decode_length)
-        predicted_ids = np.fromfile(os.path.join(args.result_dir, f_name + "_0.bin"), np.int32)
+        predicted_ids = np.fromfile(os.path.join(config.result_dir, f_name + "_0.bin"), np.int32)
         predicted_ids = predicted_ids.reshape(1, config.max_decode_length + 1)
-        entire_probs = np.fromfile(os.path.join(args.result_dir, f_name + "_1.bin"), np.float32)
+        entire_probs = np.fromfile(os.path.join(config.result_dir, f_name + "_1.bin"), np.float32)
         entire_probs = entire_probs.reshape(1, config.beam_width, config.max_decode_length + 1)
 
         source_sentences.append(source_ids)
@@ -87,13 +67,12 @@ def read_from_file(config):
 
 
 if __name__ == '__main__':
-    conf = TransformerConfig.from_json_file(args.config)
-    result = read_from_file(conf)
-    vocab = Dictionary.load_from_persisted_dict(args.vocab)
+    result = read_from_file()
+    vocab = Dictionary.load_from_persisted_dict(config.vocab)
 
-    with open(args.output, "wb") as f:
+    with open(config.output, "wb") as f:
         pickle.dump(result, f, 1)
 
     # get score by given metric
-    score = get_score(result, vocab, metric=args.metric)
+    score = get_score(result, vocab, metric=config.metric)
     print(score)

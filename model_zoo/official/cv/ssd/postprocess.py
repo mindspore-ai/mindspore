@@ -14,19 +14,13 @@
 # ============================================================================
 """post process for 310 inference"""
 import os
-import argparse
 import numpy as np
 from PIL import Image
 
-from src.config import config
+from src.model_utils.config import config
 from src.eval_utils import metrics
 
 batch_size = 1
-parser = argparse.ArgumentParser(description="ssd acc calculation")
-parser.add_argument("--result_path", type=str, required=True, help="result files path.")
-parser.add_argument("--img_path", type=str, required=True, help="image file path.")
-parser.add_argument("--drop", action="store_true", help="drop iscrowd images or not.")
-args = parser.parse_args()
 
 def get_imgSize(file_name):
     img = Image.open(file_name)
@@ -35,7 +29,7 @@ def get_imgSize(file_name):
 def get_result(result_path, img_id_file_path):
     anno_json = os.path.join(config.coco_root, config.instances_set.format(config.val_data_type))
 
-    if args.drop:
+    if config.drop:
         from pycocotools.coco import COCO
         train_cls = config.classes
         train_cls_dict = {}
@@ -53,7 +47,7 @@ def get_result(result_path, img_id_file_path):
     for file in files:
         img_ids_name = file.split('.')[0]
         img_id = int(np.squeeze(img_ids_name))
-        if args.drop:
+        if config.drop:
             anno_ids = coco.getAnnIds(imgIds=img_id, iscrowd=None)
             anno = coco.loadAnns(anno_ids)
             annos = []
@@ -86,4 +80,4 @@ def get_result(result_path, img_id_file_path):
     print(f" mAP:{mAP}")
 
 if __name__ == '__main__':
-    get_result(args.result_path, args.img_path)
+    get_result(config.result_path, config.img_path)

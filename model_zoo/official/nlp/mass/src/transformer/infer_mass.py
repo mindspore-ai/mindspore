@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Infer api."""
+import os
 import time
 
 import mindspore.nn as nn
@@ -143,11 +144,16 @@ def infer(config):
     Returns:
         list, result with
     """
+    if config.enable_modelarts:
+        config.test_dataset = os.path.join(config.data_path, \
+            "tfrecords/gigaword_new_prob/gigaword_test_dataset.tfrecord-001-of-001")
+    else:
+        config.test_dataset = os.path.join(config.data_path, "gigaword_test_dataset.tfrecord-001-of-001")
     eval_dataset = load_dataset(data_files=config.test_dataset,
                                 batch_size=config.batch_size,
                                 epoch_count=1,
                                 sink_mode=config.dataset_sink_mode,
-                                shuffle=False) if config.test_dataset else None
+                                shuffle=False) if config.data_path else None
     prediction = transformer_infer(config, eval_dataset)
     return prediction
 
@@ -269,10 +275,15 @@ def infer_ppl(config):
     Returns:
         list, result with
     """
+    if config.enable_modelarts:
+        config.test_dataset = os.path.join(config.data_path, \
+            "tfrecords/gigaword_new_prob/gigaword_test_dataset.tfrecord-001-of-001")
+    else:
+        config.test_dataset = os.path.join(config.data_path, "gigaword_test_dataset.tfrecord-001-of-001")
     eval_dataset = load_dataset(data_files=config.test_dataset,
                                 batch_size=config.batch_size,
                                 epoch_count=1,
                                 sink_mode=config.dataset_sink_mode,
-                                shuffle=False) if config.test_dataset else None
+                                shuffle=False) if config.data_path else None
     prediction = transformer_infer_ppl(config, eval_dataset)
     return prediction

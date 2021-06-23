@@ -27,7 +27,7 @@ def load_infer_weights(config):
     Returns:
         dict, weights.
     """
-    model_path = config.existed_ckpt
+    model_path = config.checkpoint_file_path
     if model_path.endswith(".npz"):
         ms_ckpt = np.load(model_path)
         is_npz = True

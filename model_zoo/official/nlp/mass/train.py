@@ -14,7 +14,6 @@
 # ============================================================================
 """Train api."""
 import os
-import argparse
 import pickle
 
 import numpy as np
@@ -32,7 +31,6 @@ from mindspore.communication import management as MultiAscend
 from mindspore.train.serialization import load_checkpoint
 from mindspore.common import set_seed
 
-from config import TransformerConfig
 from src.dataset import load_dataset
 from src.transformer import TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
 from src.transformer.infer_mass import infer
@@ -40,27 +38,26 @@ from src.utils import LossCallBack
 from src.utils import one_weight, zero_weight, weight_variable
 from src.utils import square_root_schedule
 from src.utils.lr_scheduler import polynomial_decay_scheduler, BertLearningRate
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description='MASS train entry point.')
-parser.add_argument("--config", type=str, required=True, help="model config json file path.")
-parser.add_argument("--platform", type=str, required=True, help="model working platform.")
+def get_config():
+    if config.compute_type == "float16":
+        config.compute_type = mstype.float16
+    if config.compute_type == "float32":
+        config.compute_type = mstype.float32
+    if config.dtype == "float16":
+        config.dtype = mstype.float16
+    if config.dtype == "float32":
+        config.dtype = mstype.float32
 
-def get_config(config):
-    config = TransformerConfig.from_json_file(config)
-    config.compute_type = mstype.float16
-    config.dtype = mstype.float32
-    return config
-
-
-def _train(model, config: TransformerConfig,
-           pre_training_dataset=None, fine_tune_dataset=None, test_dataset=None,
+def _train(model, pre_training_dataset=None, fine_tune_dataset=None, test_dataset=None,
            callbacks: list = None):
     """
     Train model.
 
     Args:
         model (Model): MindSpore model instance.
-        config (TransformerConfig): Config of mass model.
         pre_training_dataset (Dataset): Pre-training dataset.
         fine_tune_dataset (Dataset): Fine-tune dataset.
         test_dataset (Dataset): Test dataset.
@@ -81,7 +78,7 @@ def _train(model, config: TransformerConfig,
         # Test the accuracy of the model.
         if test_dataset is not None:
             print(" | Start test job.")
-            result = infer(_config)
+            result = infer(config)
             with open("validation_res_after_pre_training.bin", "wb") as f:
                 pickle.dump(result, f, 1)
 
@@ -95,18 +92,18 @@ def _train(model, config: TransformerConfig,
         # Test the accuracy of the model.
         if test_dataset is not None:
             print(" | Start test job.")
-            result = infer(_config)
+            result = infer(config)
             with open("validation_res_after_pre_training.bin", "wb") as f:
                 pickle.dump(result, f, 1)
 
 
-def _load_checkpoint_to_net(config, network):
+def _load_checkpoint_to_net(network):
     """load parameters to network from checkpoint."""
-    if config.existed_ckpt:
-        if config.existed_ckpt.endswith(".npz"):
-            weights = np.load(config.existed_ckpt)
+    if config.checkpoint_file_path:
+        if config.checkpoint_file_path.endswith(".npz"):
+            weights = np.load(config.checkpoint_file_path)
         else:
-            weights = load_checkpoint(config.existed_ckpt)
+            weights = load_checkpoint(config.checkpoint_file_path)
         for param in network.trainable_params():
             weights_name = param.name
             if weights_name not in weights:
@@ -133,7 +130,7 @@ def _load_checkpoint_to_net(config, network):
                     param.set_data(weight_variable(value.asnumpy().shape))
 
 
-def _get_lr(config, update_steps):
+def _get_lr(update_steps):
     """generate learning rate."""
     if config.lr_scheduler == "isr":
         lr = Tensor(square_root_schedule(lr=config.lr,
@@ -153,7 +150,7 @@ def _get_lr(config, update_steps):
     return lr
 
 
-def _get_optimizer(config, network, lr):
+def _get_optimizer(network, lr):
     """get mass optimizer, support Adam, Lamb, Momentum."""
     if config.optimizer.lower() == "adam":
         optimizer = Adam(network.trainable_params(), lr, beta1=0.9, beta2=0.98)
@@ -175,8 +172,7 @@ def _get_optimizer(config, network, lr):
     return optimizer
 
 
-def _build_training_pipeline(config: TransformerConfig,
-                             pre_training_dataset=None,
+def _build_training_pipeline(pre_training_dataset=None,
                              fine_tune_dataset=None,
                              test_dataset=None,
                              platform="Ascend"):
@@ -184,14 +180,13 @@ def _build_training_pipeline(config: TransformerConfig,
     Build training pipeline.
 
     Args:
-        config (TransformerConfig): Config of mass model.
         pre_training_dataset (Dataset): Pre-training dataset.
         fine_tune_dataset (Dataset): Fine-tune dataset.
         test_dataset (Dataset): Test dataset.
     """
     net_with_loss = TransformerNetworkWithLoss(config, is_training=True)
     net_with_loss.init_parameters_data()
-    _load_checkpoint_to_net(config, net_with_loss)
+    _load_checkpoint_to_net(net_with_loss)
 
     dataset = pre_training_dataset if pre_training_dataset is not None \
         else fine_tune_dataset
@@ -201,9 +196,9 @@ def _build_training_pipeline(config: TransformerConfig,
 
     update_steps = config.epochs * dataset.get_dataset_size()
 
-    lr = _get_lr(config, update_steps)
+    lr = _get_lr(update_steps)
 
-    optimizer = _get_optimizer(config, net_with_loss, lr)
+    optimizer = _get_optimizer(net_with_loss, lr)
 
     # loss scale.
     if config.loss_scale_mode == "dynamic":
@@ -223,27 +218,28 @@ def _build_training_pipeline(config: TransformerConfig,
     rank_size = os.getenv('RANK_SIZE')
     callbacks = []
     callbacks.append(time_cb)
+    ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
     if rank_size is not None and int(rank_size) > 1:
         loss_monitor = LossCallBack(config, rank_id=MultiAscend.get_rank())
         callbacks.append(loss_monitor)
         if MultiAscend.get_rank() % 8 == 0:
             ckpt_callback = ModelCheckpoint(
                 prefix=config.ckpt_prefix,
-                directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(MultiAscend.get_rank())),
+                directory=os.path.join(ckpt_save_dir, 'ckpt_{}'.format(MultiAscend.get_rank())),
                 config=ckpt_config)
             callbacks.append(ckpt_callback)
 
     if rank_size is None or int(rank_size) == 1:
         ckpt_callback = ModelCheckpoint(
             prefix=config.ckpt_prefix,
-            directory=os.path.join(config.ckpt_path, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
+            directory=os.path.join(ckpt_save_dir, 'ckpt_{}'.format(os.getenv('DEVICE_ID'))),
             config=ckpt_config)
         loss_monitor = LossCallBack(config, rank_id=os.getenv('DEVICE_ID'))
         callbacks.append(loss_monitor)
         callbacks.append(ckpt_callback)
 
     print(f" | ALL SET, PREPARE TO TRAIN.")
-    _train(model=model, config=config,
+    _train(model=model,
            pre_training_dataset=pre_training_dataset,
            fine_tune_dataset=fine_tune_dataset,
            test_dataset=test_dataset,
@@ -260,17 +256,21 @@ def _setup_parallel_env(platform):
     )
 
 
-def train_parallel(config: TransformerConfig, platform: "Ascend"):
+@moxing_wrapper()
+def train_parallel(platform: "Ascend"):
     """
     Train model with multi ascend chips.
 
-    Args:
-        config (TransformerConfig): Config for MASS model.
     """
     _setup_parallel_env(platform)
 
     print(f" | Starting training on {os.getenv('RANK_SIZE', None)} devices.")
 
+    if config.task == "train":
+        filenames = os.listdir(config.data_path)
+        config.fine_tune_dataset = [os.path.join(config.data_path, filename) for filename in filenames]
+    else:
+        config.test_dataset = os.path.join(config.data_path, "gigaword_test_dataset.tfrecord-001-of-001")
     pre_train_dataset = load_dataset(
         data_files=config.pre_train_dataset,
         batch_size=config.batch_size, epoch_count=1,
@@ -296,21 +296,23 @@ def train_parallel(config: TransformerConfig, platform: "Ascend"):
         rank_id=MultiAscend.get_rank()
     ) if config.test_dataset else None
 
-    _build_training_pipeline(config=config,
-                             pre_training_dataset=pre_train_dataset,
+    _build_training_pipeline(pre_training_dataset=pre_train_dataset,
                              fine_tune_dataset=fine_tune_dataset,
                              test_dataset=test_dataset,
                              platform=platform)
 
 
-def train_single(config: TransformerConfig, platform: "Ascend"):
+@moxing_wrapper()
+def train_single(platform: "Ascend"):
     """
     Train model on single device.
-
-    Args:
-        config (TransformerConfig): Config for model.
     """
     print(" | Starting training on single device.")
+    if config.task == "train":
+        filenames = os.listdir(config.data_path)
+        config.fine_tune_dataset = [os.path.join(config.data_path, filename) for filename in filenames]
+    else:
+        config.test_dataset = os.path.join(config.data_path, "gigaword_test_dataset.tfrecord-001-of-001")
     pre_train_dataset = load_dataset(data_files=config.pre_train_dataset,
                                      batch_size=config.batch_size,
                                      epoch_count=1,
@@ -327,43 +329,30 @@ def train_single(config: TransformerConfig, platform: "Ascend"):
                                 sink_mode=config.dataset_sink_mode,
                                 sink_step=config.dataset_sink_step) if config.test_dataset else None
 
-    _build_training_pipeline(config=config,
-                             pre_training_dataset=pre_train_dataset,
+    _build_training_pipeline(pre_training_dataset=pre_train_dataset,
                              fine_tune_dataset=fine_tune_dataset,
                              test_dataset=test_dataset,
                              platform=platform)
 
 
-def _check_args(config):
-    if not os.path.exists(config):
-        raise FileNotFoundError("`config` is not existed.")
-    if not isinstance(config, str):
-        raise ValueError("`config` must be type of str.")
-
-
 if __name__ == '__main__':
-    args, _ = parser.parse_known_args()
-
     device_id = os.getenv('DEVICE_ID', None)
     if device_id is None:
         device_id = 0
     device_id = int(device_id)
     context.set_context(
         mode=context.GRAPH_MODE,
-        device_target=args.platform,
+        device_target=config.device_target,
         reserve_class_name_in_scope=False,
         device_id=device_id,
         max_call_depth=2000)
 
     _rank_size = os.getenv('RANK_SIZE')
-
-    _check_args(args.config)
-    _config = get_config(args.config)
-
-    set_seed(_config.random_seed)
-    context.set_context(save_graphs=_config.save_graphs)
+    get_config()
+    set_seed(config.random_seed)
+    context.set_context(save_graphs=config.save_graphs)
 
     if _rank_size is not None and int(_rank_size) > 1:
-        train_parallel(_config, args.platform)
+        train_parallel(config.device_target)
     else:
-        train_single(_config, args.platform)
+        train_single(config.device_target)
