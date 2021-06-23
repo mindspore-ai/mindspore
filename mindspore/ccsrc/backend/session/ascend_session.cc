@@ -708,6 +708,9 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
     MS_EXCEPTION_IF_NULL(real_input);
     tensor::TensorPtr tensor = nullptr;
     if (real_input->isa<ValueNode>()) {
+      if (HasAbstractMonad(real_input)) {
+        continue;
+      }
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
       input_tensor_info->input_tensors_mask.emplace_back(kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
