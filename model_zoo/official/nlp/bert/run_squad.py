@@ -101,7 +101,8 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
         raise Exception("Optimizer not supported. support: [AdamWeightDecay, Lamb, Momentum]")
 
     # load checkpoint into network
-    ckpt_config = CheckpointConfig(save_checkpoint_steps=steps_per_epoch, keep_checkpoint_max=1)
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=250, keep_checkpoint_max=10)
+    #  ckpt_config = CheckpointConfig(save_checkpoint_steps=steps_per_epoch, keep_checkpoint_max=1)
     ckpoint_cb = ModelCheckpoint(prefix="squad",
                                  directory=None if save_checkpoint_path == "" else save_checkpoint_path,
                                  config=ckpt_config)
