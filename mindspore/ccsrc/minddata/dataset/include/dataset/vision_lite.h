@@ -35,18 +35,17 @@ namespace vision {
 // Forward Declarations
 class RotateOperation;
 
-/// \brief Affine TensorTransform.
-/// \note Apply affine transform on input image.
+/// \brief Apply affine transform on the input image.
 class Affine final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] degrees The degrees to rotate the image by.
-  /// \param[in] translation The value representing vertical and horizontal translation (default = {0.0, 0.0}).
-  ///     The first value represent the x axis translation while the second represents y axis translation.
+  /// \param[in] degrees The degrees to rotate the image.
+  /// \param[in] translation The values representing vertical and horizontal translation (default = {0.0, 0.0}).
+  ///     The first value represents the x axis translation while the second represents the y axis translation.
   /// \param[in] scale The scaling factor for the image (default = 0.0).
   /// \param[in] shear A float vector of size 2, representing the shear degrees (default = {0.0, 0.0}).
   /// \param[in] interpolation An enum for the mode of interpolation.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
+  /// \param[in] fill_value A vector representing the value to fill the area outside the transformation
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
   explicit Affine(float_t degrees, const std::vector<float> &translation = {0.0, 0.0}, float scale = 0.0,
@@ -57,7 +56,7 @@ class Affine final : public TensorTransform {
   /// \brief Destructor.
   ~Affine() = default;
 
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -66,21 +65,20 @@ class Affine final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief CenterCrop TensorTransform.
-/// \note Crops the input image at the center to the given size.
+/// \brief Crop the input image at the center to the given size.
 class CenterCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
-  ///     If size is a single value, a square crop of size (size, size) is returned.
-  ///     If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, a squared crop of size (size, size) is returned.
+  ///     If the size has 2 values, it should be (height, width).
   explicit CenterCrop(std::vector<int32_t> size);
 
   /// \brief Destructor.
   ~CenterCrop() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -92,7 +90,7 @@ class CenterCrop final : public TensorTransform {
 };
 
 /// \brief RGB2BGR TensorTransform.
-/// \notes Convert RGB image to BGR image
+/// \notes Convert the format of input image from RGB to BGR.
 class RGB2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -102,13 +100,14 @@ class RGB2BGR final : public TensorTransform {
   ~RGB2BGR() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
 /// \brief RGB2GRAY TensorTransform.
 /// \note Convert RGB image or color image to grayscale image.
+/// \brief Convert a RGB image or color image to a grayscale one.
 class RGB2GRAY final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -118,27 +117,26 @@ class RGB2GRAY final : public TensorTransform {
   ~RGB2GRAY() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief Crop TensorTransform.
-/// \note Crop an image based on location and crop size.
+/// \brief Crop an image based on location and crop size.
 class Crop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}.
   /// \param[in] size Size of the cropped area.
-  ///     If size is a single value, a square crop of size (size, size) is returned.
-  ///     If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, a squared crop of size (size, size) is returned.
+  ///     If the size has 2 values, it should be (height, width).
   Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
 
   /// \brief Destructor.
   ~Crop() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -147,19 +145,18 @@ class Crop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Decode TensorTransform.
-/// \note Decode the input image in RGB mode.
+/// \brief Decode the input image in RGB mode.
 class Decode final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] rgb A boolean of whether to decode in RGB mode or not.
+  /// \param[in] rgb A boolean indicating whether to decode the image in RGB mode or not.
   explicit Decode(bool rgb = true);
 
   /// \brief Destructor.
   ~Decode() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -170,12 +167,11 @@ class Decode final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief GaussianBlur TensorTransform.
-/// \notes Blur the input image with specified Gaussian kernel.
+/// \brief Blur the input image with the specified Gaussian kernel.
 class GaussianBlur final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] kernel_size A vector of Gaussian kernel size for width and height. The values must be positive and odd.
+  /// \param[in] kernel_size A vector of Gaussian kernel size for width and height. The value must be positive and odd.
   /// \param[in] sigma A vector of Gaussian kernel standard deviation sigma for width and height. The values must be
   ///     positive. Using default value 0 means to calculate the sigma according to the kernel size.
   GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma = {0., 0.});
@@ -184,7 +180,7 @@ class GaussianBlur final : public TensorTransform {
   ~GaussianBlur() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -193,14 +189,13 @@ class GaussianBlur final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Normalize TensorTransform.
-/// \note Normalize the input image with respect to mean and standard deviation.
+/// \brief Normalize the input image with respect to mean and standard deviation.
 class Normalize final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
+  /// \param[in] mean A vector of mean values for each channel, with respect to channel order.
   ///     The mean values must be in range [0.0, 255.0].
-  /// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
+  /// \param[in] std A vector of standard deviations for each channel, with respect to channel order.
   ///     The standard deviation values must be in range (0.0, 255.0].
   Normalize(std::vector<float> mean, std::vector<float> std);
 
@@ -208,7 +203,7 @@ class Normalize final : public TensorTransform {
   ~Normalize() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -219,25 +214,24 @@ class Normalize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomAffine TensorTransform.
-/// \note Applies a Random Affine transformation on input image in RGB or Greyscale mode.
+/// \brief Apply a Random Affine transformation on the input image in RGB or Greyscale mode.
 class RandomAffine final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the starting and ending degree.
   /// \param[in] translate_range A float vector of size 2 or 4, representing percentages of translation on x and y axes.
-  ///    If size is 2, (min_dx, max_dx, 0, 0).
-  ///    if size is 4, (min_dx, max_dx, min_dy, max_dy),
+  ///    If the size is 2, (min_dx, max_dx, 0, 0).
+  ///    If the size is 4, (min_dx, max_dx, min_dy, max_dy),
   ///    all values are in range [-1, 1].
   /// \param[in] scale_range A float vector of size 2, representing the starting and ending scales in the range.
   /// \param[in] shear_ranges A float vector of size 2 or 4, representing the starting and ending shear degrees
   ///    vertically and horizontally.
-  ///    If size is 2, (min_shear_x, max_shear_x, 0, 0),
-  ///    if size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y).
+  ///    If the size is 2, (min_shear_x, max_shear_x, 0, 0),
+  ///    if the size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y).
   /// \param[in] interpolation An enum for the mode of interpolation.
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
+  ///    If 3 values are provided, it is used to fill R, G and B channels respectively.
   explicit RandomAffine(const std::vector<float_t> &degrees,
                         const std::vector<float_t> &translate_range = {0.0, 0.0, 0.0, 0.0},
                         const std::vector<float_t> &scale_range = {1.0, 1.0},
@@ -248,7 +242,7 @@ class RandomAffine final : public TensorTransform {
   /// \brief Destructor.
   ~RandomAffine() = default;
 
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -257,14 +251,13 @@ class RandomAffine final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Resize TensorTransform.
-/// \note Resize the input image to the given size.
+/// \brief Resize the input image to the given size.
 class Resize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
-  ///     If size is a single value, the image will be resized to this value with
-  ///     the same image aspect ratio. If size has 2 values, it should be (height, width).
+  ///     If the size is a single value, the image will be resized to this value with
+  ///     the same image aspect ratio. If the size has 2 values, it should be (height, width).
   /// \param[in] interpolation An enum for the mode of interpolation.
   explicit Resize(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
 
@@ -272,7 +265,7 @@ class Resize final : public TensorTransform {
   ~Resize() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -283,8 +276,7 @@ class Resize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief ResizePreserveAR TensorTransform.
-/// \note Keep the original picture ratio and fill the rest.
+/// \brief Keep the original picture ratio and fills the rest.
 class ResizePreserveAR final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -297,7 +289,7 @@ class ResizePreserveAR final : public TensorTransform {
   ~ResizePreserveAR() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
@@ -306,8 +298,7 @@ class ResizePreserveAR final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Rotate TensorTransform.
-/// \note Rotate the input image according to parameters.
+/// \brief Rotate the input image according to parameters.
 class Rotate final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -318,7 +309,7 @@ class Rotate final : public TensorTransform {
   /// \param[in] resample An enum for the mode of interpolation.
   /// \param[in] expand A boolean representing whether the image is expanded after rotation.
   /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform.
+  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
   Rotate(float degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
@@ -328,7 +319,7 @@ class Rotate final : public TensorTransform {
   ~Rotate() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 

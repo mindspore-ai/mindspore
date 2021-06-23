@@ -87,7 +87,7 @@ class DistributedSampler final : public Sampler {
   ~DistributedSampler() = default;
 
  protected:
-  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \brief The function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
   std::shared_ptr<SamplerObj> Parse() const override;
 
@@ -118,7 +118,7 @@ class PKSampler final : public Sampler {
   ~PKSampler() = default;
 
  protected:
-  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \brief The function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
   std::shared_ptr<SamplerObj> Parse() const override;
 
@@ -143,7 +143,7 @@ class RandomSampler final : public Sampler {
   ~RandomSampler() = default;
 
  protected:
-  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \brief The function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
   std::shared_ptr<SamplerObj> Parse() const override;
 
@@ -167,7 +167,7 @@ class SequentialSampler final : public Sampler {
   ~SequentialSampler() = default;
 
  protected:
-  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \brief The function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
   std::shared_ptr<SamplerObj> Parse() const override;
 
@@ -191,7 +191,7 @@ class SubsetSampler : public Sampler {
   ~SubsetSampler() = default;
 
  protected:
-  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \brief The function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
   std::shared_ptr<SamplerObj> Parse() const override;
 
@@ -214,7 +214,7 @@ class SubsetRandomSampler final : public SubsetSampler {
   ~SubsetRandomSampler() = default;
 
  protected:
-  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \brief The function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
   std::shared_ptr<SamplerObj> Parse() const override;
 };
@@ -236,7 +236,7 @@ class WeightedRandomSampler final : public Sampler {
   ~WeightedRandomSampler() = default;
 
  protected:
-  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \brief The function to convert a Sampler into an IR SamplerObj.
   /// \return shared pointer to the newly created SamplerObj.
   std::shared_ptr<SamplerObj> Parse() const override;
 

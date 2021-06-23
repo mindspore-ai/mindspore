@@ -280,3 +280,18 @@ TEST_F(MindDataTestExecute, TestRotate) {
 
   EXPECT_EQ(rc, Status::OK());
 }
+
+TEST_F(MindDataTestExecute, TestResizeWithBBox) {
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> resizewithbbox_op =
+    std::make_shared<vision::ResizeWithBBox>(std::vector<int32_t>{250, 500});
+
+  // Test Compute(Tensor, Tensor) method of ResizeWithBBox
+  auto transform = Execute({decode_op, resizewithbbox_op});
+
+  // Expect fail since Compute(Tensor, Tensor) is not a valid behaviour for this Op,
+  // while Compute(TensorRow, TensorRow) is the correct one.
+  Status rc = transform(image, &image);
+  EXPECT_FALSE(rc.IsOk());
+}

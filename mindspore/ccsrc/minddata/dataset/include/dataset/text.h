@@ -40,19 +40,19 @@ namespace text {
 
 #ifndef _WIN32
 /// \brief Tokenize a scalar tensor of UTF-8 string by specific rules.
-/// \note BasicTokenizer is not supported on Windows platform yet.
+/// \note BasicTokenizer is not supported on the Windows platform yet.
 class BasicTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode), RegexReplace operation on input text to
-  ///   fold the text to lower case and strip accents characters. If false, only apply
-  ///   NormalizeUTF8('normalization_form' mode) operation on input text (default=false).
-  /// \param[in] keep_whitespace If true, the whitespace will be kept in out tokens (default=false).
-  /// \param[in] normalize_form Used to specify a specific normalize mode. This is only effective when 'lower_case' is
-  ///   false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
-  /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]',
-  ///   '[MASK]' (default=true).
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode) and RegexReplace operations to
+  ///    the input text to fold the text to lower case and strip accents characters. If false, only apply
+  ///    the NormalizeUTF8('normalization_form' mode) operation to the input text (default=false).
+  /// \param[in] keep_whitespace If true, the whitespace will be kept in output tokens (default=false).
+  /// \param[in] normalize_form This parameter is used to specify a specific normalize mode. This is only effective
+  ///    when 'lower_case' is false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
+  /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]' and
+  ///    '[MASK]' (default=true).
+  /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
   explicit BasicTokenizer(bool lower_case = false, bool keep_whitespace = false,
                           const NormalizeForm normalize_form = NormalizeForm::kNone, bool preserve_unused_token = true,
                           bool with_offsets = false);
@@ -61,8 +61,8 @@ class BasicTokenizer final : public TensorTransform {
   ~BasicTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -70,25 +70,26 @@ class BasicTokenizer final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Tokenizer used for Bert text process.
-/// \note BertTokenizer is not supported on Windows platform yet.
+/// \brief A tokenizer used for Bert text process.
+/// \note BertTokenizer is not supported on the Windows platform yet.
 class BertTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab A Vocab object.
-  /// \param[in] suffix_indicator Used to show that the subword is the last part of a word (default='##').
+  /// \param[in] suffix_indicator This parameter is used to show that the sub-word
+  ///    is the last part of a word (default='##').
   /// \param[in] max_bytes_per_token Tokens exceeding this length will not be further split (default=100).
   /// \param[in] unknown_token When a token cannot be found, return the token directly if 'unknown_token' is an empty
-  ///   string, else return the string specified(default='[UNK]').
-  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode), RegexReplace operation on input text to
-  ///   fold the text to lower case and strip accents characters. If false, only apply
-  ///   NormalizeUTF8('normalization_form' mode) operation on input text (default=false).
-  /// \param[in] keep_whitespace If true, the whitespace will be kept in out tokens (default=false).
-  /// \param[in] normalize_form Used to specify a specific normalize mode. This is only effective when 'lower_case' is
-  ///   false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
-  /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]',
+  ///    string, else return the specified string (default='[UNK]').
+  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode) and RegexReplace operations to
+  ///    the input text to fold the text to lower case and strip accents characters. If false, only apply
+  ///    the NormalizeUTF8('normalization_form' mode) operation to the input text (default=false).
+  /// \param[in] keep_whitespace If true, the whitespace will be kept in output tokens (default=false).
+  /// \param[in] normalize_form This parameter is used to specify a specific normalize mode. This is only effective
+  ///    when 'lower_case' is false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
+  /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]' and
   ///   '[MASK]' (default=true).
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
   explicit BertTokenizer(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator = "##",
                          int32_t max_bytes_per_token = 100, const std::string &unknown_token = "[UNK]",
                          bool lower_case = false, bool keep_whitespace = false,
@@ -106,8 +107,8 @@ class BertTokenizer final : public TensorTransform {
   ~BertTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -115,7 +116,7 @@ class BertTokenizer final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Apply case fold operation on UTF-8 string tensor.
+/// \brief Apply case fold operation on UTF-8 string tensors.
 /// \return Shared pointer to the current TensorOperation.
 class CaseFold final : public TensorTransform {
  public:
@@ -126,26 +127,26 @@ class CaseFold final : public TensorTransform {
   ~CaseFold() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 #endif
 
-/// \brief Tokenize Chinese string into words based on dictionary.
-/// \note The integrity of the HMMSEgment algorithm and MPSegment algorithm files must be confirmed.
+/// \brief Tokenize a Chinese string into words based on the dictionary.
+/// \note The integrity of the HMMSegment algorithm and MPSegment algorithm files must be confirmed.
 class JiebaTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] hmm_path Dictionary file is used by HMMSegment algorithm. The dictionary can be obtained on the
-  ///   official website of cppjieba.
-  /// \param[in] mp_path Dictionary file is used by MPSegment algorithm. The dictionary can be obtained on the
-  ///   official website of cppjieba.
-  /// \param[in] mode Valid values can be any of [JiebaMode.MP, JiebaMode.HMM, JiebaMode.MIX](default=JiebaMode.MIX).
-  ///   - JiebaMode.kMP, tokenize with MPSegment algorithm.
-  ///   - JiebaMode.kHMM, tokenize with Hiddel Markov Model Segment algorithm.
-  ///   - JiebaMode.kMIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  /// \param[in] hmm_path Dictionary file is used by the HMMSegment algorithm. The dictionary can be obtained on the
+  ///   official website of cppjieba (https://github.com/yanyiwu/cppjieba).
+  /// \param[in] mp_path Dictionary file is used by the MPSegment algorithm. The dictionary can be obtained on the
+  ///   official website of cppjieba (https://github.com/yanyiwu/cppjieba).
+  /// \param[in] mode Valid values can be any of JiebaMode.MP, JiebaMode.HMM and JiebaMode.MIX (default=JiebaMode.MIX).
+  ///   - JiebaMode.kMP, tokenizes with MPSegment algorithm.
+  ///   - JiebaMode.kHMM, tokenizes with Hidden Markov Model Segment algorithm.
+  ///   - JiebaMode.kMIX, tokenizes with a mix of MPSegment and HMMSegment algorithms.
+  /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
   explicit JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path,
                           const JiebaMode &mode = JiebaMode::kMix, bool with_offsets = false)
       : JiebaTokenizer(StringToChar(hmm_path), StringToChar(mp_path), mode, with_offsets) {}
@@ -156,46 +157,46 @@ class JiebaTokenizer final : public TensorTransform {
   /// \brief Destructor
   ~JiebaTokenizer() = default;
 
-  /// \brief Add user defined word to JiebaTokenizer's dictionary.
+  /// \brief Add a user defined word to the JiebaTokenizer's dictionary.
   /// \param[in] word The word to be added to the JiebaTokenizer instance.
   ///   The added word will not be written into the built-in dictionary on disk.
   /// \param[in] freq The frequency of the word to be added. The higher the frequency,
   ///   the better chance the word will be tokenized (default=None, use default frequency).
-  /// \return Status error code, returns OK if no error encountered.
+  /// \return Status error code, returns OK if no error is encountered.
   Status AddWord(const std::string &word, int64_t freq = 0) { return AddWordChar(StringToChar(word), freq); }
 
-  /// \brief Add user defined dictionary of word-freq pairs to JiebaTokenizer's dictionary.
-  /// \param[in] user_dict Vector of word-freq pairs to be added to JiebaTokenizer's dictionary.
-  /// \return Status error code, returns OK if no error encountered.
+  /// \brief Add a user defined dictionary of word-freq pairs to the JiebaTokenizer's dictionary.
+  /// \param[in] user_dict Vector of word-freq pairs to be added to the JiebaTokenizer's dictionary.
+  /// \return Status error code, returns OK if no error is encountered.
   Status AddDict(const std::vector<std::pair<std::string, int64_t>> &user_dict) {
     return AddDictChar(PairStringInt64ToPairCharInt64(user_dict));
   }
 
-  /// \brief Add user defined dictionary of word-freq pairs to JiebaTokenizer's dictionary from a file.
-  ///   Only valid word-freq pairs in user provided file will be added into the dictionary.
-  ///   Rows containing invalid input will be ignored, no error nor warning Status is returned.
+  /// \brief Add user defined dictionary of word-freq pairs to the JiebaTokenizer's dictionary from a file.
+  ///   Only valid word-freq pairs in user defined file will be added into the dictionary.
+  ///   Rows containing invalid inputs will be ignored, no error nor warning status is returned.
   /// \param[in] file_path Path to the dictionary which includes user defined word-freq pairs.
-  /// \return Status error code, returns OK if no error encountered.
+  /// \return Status error code, returns OK if no error is encountered.
   Status AddDict(const std::string &file_path) { return AddDictChar(StringToChar(file_path)); }
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  /// \brief Parser user defined word by file.
+  /// \brief Parser user defined words by files.
   /// \param[in] file_path Path to the user defined file.
-  /// \param[in] user_dict Vector of word-freq pairs extracted from the user provided file.
+  /// \param[in] user_dict Vector of word-freq pairs extracted from the user defined file.
   Status ParserFile(const std::string &file_path, std::vector<std::pair<std::string, int64_t>> *const user_dict);
 
-  /// \brief Used to translate all API string to vector of char and back
+  /// \brief Used to translate all API strings to vector of char and reverse.
   Status AddWordChar(const std::vector<char> &word, int64_t freq = 0);
 
-  /// \brief Used to translate all API string to vector of char and back
+  /// \brief Used to translate all API strings to vector of char and reverse.
   Status AddDictChar(const std::vector<std::pair<std::vector<char>, int64_t>> &user_dict);
 
-  /// \brief Used to translate all API string to vector of char and back
+  /// \brief Used to translate all API strings to vector of char and reverse.
   Status AddDictChar(const std::vector<char> &file_path);
 
   struct Data;
@@ -207,9 +208,9 @@ class Lookup final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab a Vocab object.
-  /// \param[in] unknown_token word to use for lookup if the word being looked up is out of Vocabulary (oov).
-  ///   If unknown_token is oov, runtime error will be thrown. If unknown_token is {}, which means that not to
-  ///    specify unknown_token when word being out of Vocabulary (default={}).
+  /// \param[in] unknown_token Word is used for lookup. In case of the word is out of vocabulary (OOV),
+  ///    the result of lookup will be replaced to unknown_token. If the unknown_token is not specified or it is OOV,
+  ///    runtime error will be thrown (default={}, means no unknown_token is specified).
   /// \param[in] data_type mindspore::DataType of the tensor after lookup; must be numeric, including bool.
   ///   (default=mindspore::DataType::kNumberTypeInt32).
   explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token = {},
@@ -223,8 +224,8 @@ class Lookup final : public TensorTransform {
   ~Lookup() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -232,17 +233,17 @@ class Lookup final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief TensorOp to generate n-gram from a 1-D string Tensor.
+/// \brief Generate n-gram from a 1-D string Tensor.
 class Ngram final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] ngrams ngrams is a vector of positive integers. For example, if ngrams={4, 3}, then the result
-  ///   would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
-  ///   for a n-gram, an empty string will be returned.
+  ///    would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
+  ///    a n-gram, an empty string will be returned.
   /// \param[in] left_pad {"pad_token", pad_width}. Padding performed on left side of the sequence. pad_width will
-  ///   be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (default={"", 0}}).
+  ///    be capped at n-1. left_pad=("_",2) would pad the left side of the sequence with "__" (default={"", 0}}).
   /// \param[in] right_pad {"pad_token", pad_width}. Padding performed on right side of the sequence.pad_width will
-  ///   be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--" (default={"", 0}}).
+  ///    be capped at n-1. right_pad=("-":2) would pad the right side of the sequence with "--" (default={"", 0}}).
   /// \param[in] separator Symbol used to join strings together (default=" ").
   explicit Ngram(const std::vector<int32_t> &ngrams, const std::pair<std::string, int32_t> &left_pad = {"", 0},
                  const std::pair<std::string, int32_t> &right_pad = {"", 0}, const std::string &separator = " ")
@@ -255,8 +256,8 @@ class Ngram final : public TensorTransform {
   ~Ngram() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -265,7 +266,7 @@ class Ngram final : public TensorTransform {
 };
 
 #ifndef _WIN32
-/// \brief Apply normalize operation on UTF-8 string tensor.
+/// \brief Apply normalize operation to UTF-8 string tensors.
 class NormalizeUTF8 final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -273,19 +274,19 @@ class NormalizeUTF8 final : public TensorTransform {
   ///   NormalizeForm::kNfkc,
   ///   NormalizeForm::kNfd, NormalizeForm::kNfkd](default=NormalizeForm::kNfkc).
   ///   See http://unicode.org/reports/tr15/ for details.
-  ///   - NormalizeForm.NONE, do nothing for input string tensor.
-  ///   - NormalizeForm.NFC, normalize with Normalization Form C.
-  ///   - NormalizeForm.NFKC, normalize with Normalization Form KC.
-  ///   - NormalizeForm.NFD, normalize with Normalization Form D.
-  ///   - NormalizeForm.NFKD, normalize with Normalization Form KD.
+  ///   - NormalizeForm.NONE, remain the input string tensor unchanged.
+  ///   - NormalizeForm.NFC, normalizes with Normalization Form C.
+  ///   - NormalizeForm.NFKC, normalizes with Normalization Form KC.
+  ///   - NormalizeForm.NFD, normalizes with Normalization Form D.
+  ///   - NormalizeForm.NFKD, normalizes with Normalization Form KD.
   explicit NormalizeUTF8(NormalizeForm normalize_form = NormalizeForm::kNfkc);
 
   /// \brief Destructor
   ~NormalizeUTF8() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -293,13 +294,13 @@ class NormalizeUTF8 final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
+/// \brief Replace a UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
 class RegexReplace final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] pattern The regex expression patterns.
-  /// \param[in] replace The string to replace matched element.
-  /// \param[in] replace_all Confirm whether to replace all. If false, only replace first matched element;
+  /// \param[in] replace The string to replace the matched element.
+  /// \param[in] replace_all Confirm whether to replace all. If false, only replace the first matched element;
   ///   if true, replace all matched elements (default=true).
   explicit RegexReplace(std::string pattern, std::string replace, bool replace_all = true)
       : RegexReplace(StringToChar(pattern), StringToChar(replace), replace_all) {}
@@ -310,8 +311,8 @@ class RegexReplace final : public TensorTransform {
   ~RegexReplace() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -319,15 +320,15 @@ class RegexReplace final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
+/// \brief Tokenize a scalar tensor of UTF-8 string by the regex expression pattern.
 class RegexTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] delim_pattern The pattern of regex delimiters.
-  /// \param[in] keep_delim_pattern The string matched by 'delim_pattern' can be kept as a token if it can be
+  /// \param[in] keep_delim_pattern The string matched with 'delim_pattern' can be kept as a token if it can be
   ///   matched by 'keep_delim_pattern'. The default value is an empty string ("").
   ///   which means that delimiters will not be kept as an output token (default="").
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
   explicit RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern = "", bool with_offsets = false)
       : RegexTokenizer(StringToChar(delim_pattern), StringToChar(keep_delim_pattern), with_offsets) {}
 
@@ -338,8 +339,8 @@ class RegexTokenizer final : public TensorTransform {
   ~RegexTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -348,18 +349,18 @@ class RegexTokenizer final : public TensorTransform {
 };
 #endif
 
-/// \brief Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+/// \brief Tokenize a scalar token or a 1-D token to tokens by sentencepiece.
 class SentencePieceTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab a SentencePieceVocab object.
-  /// \param[in] out_type The type of output.
+  /// \param[in] out_type The type of the output.
   SentencePieceTokenizer(const std::shared_ptr<SentencePieceVocab> &vocab,
                          mindspore::dataset::SPieceTokenizerOutType out_type);
 
   /// \brief Constructor.
   /// \param[in] vocab_path vocab model file path.
-  /// \param[in] out_type The type of output.
+  /// \param[in] out_type The type of the output.
   SentencePieceTokenizer(const std::string &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type)
       : SentencePieceTokenizer(StringToChar(vocab_path), out_type) {}
 
@@ -369,8 +370,8 @@ class SentencePieceTokenizer final : public TensorTransform {
   ~SentencePieceTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -378,22 +379,22 @@ class SentencePieceTokenizer final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension
+/// \brief Construct a tensor from data (only 1-D for now), where each element in the dimension
 ///   axis is a slice of data starting at the corresponding position, with a specified width.
 class SlidingWindow final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] width The width of the window. It must be an integer and greater than zero.
-  /// \param[in] axis The axis along which the sliding window is computed (default=0), axis support 0 or -1 only
-  ///   for now.
+  /// \param[in] axis The axis where the sliding window is computed (default=0), axis only
+  ///    supports 0 or -1 for now.
   explicit SlidingWindow(const int32_t width, const int32_t axis = 0);
 
   /// \brief Destructor
   ~SlidingWindow() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -401,7 +402,7 @@ class SlidingWindow final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Tensor operation to convert every element of a string tensor to a number.
+/// \brief Convert every element in a string tensor to a number.
 ///   Strings are cast according to the rules specified in the following links:
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stof,
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stoul,
@@ -416,8 +417,8 @@ class ToNumber final : public TensorTransform {
   ~ToNumber() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -436,8 +437,8 @@ class TruncateSequencePair final : public TensorTransform {
   ~TruncateSequencePair() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -449,15 +450,15 @@ class TruncateSequencePair final : public TensorTransform {
 class UnicodeCharTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets whether to output offsets of tokens (default=false).
   explicit UnicodeCharTokenizer(bool with_offsets = false);
 
   /// \brief Destructor
   ~UnicodeCharTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -465,16 +466,17 @@ class UnicodeCharTokenizer final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Tokenize scalar token or 1-D tokens to 1-D subword tokens.
+/// \brief Tokenize scalar token or 1-D tokens to 1-D sub-word tokens.
 class WordpieceTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] vocab A Vocab object.
-  /// \param[in] suffix_indicator Used to show that the subword is the last part of a word (default='##').
+  /// \param[in] suffix_indicator This parameter is used to show that the sub-word
+  ///    is the last part of a word (default='##').
   /// \param[in] max_bytes_per_token Tokens exceeding this length will not be further split (default=100).
   /// \param[in] unknown_token When a token cannot be found, return the token directly if 'unknown_token' is an empty
-  ///   string, else return the string specified (default='[UNK]').
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  ///    string, else return the specified string (default='[UNK]').
+  /// \param[in] with_offsets whether to output offsets of tokens (default=false).
   explicit WordpieceTokenizer(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator = "##",
                               int32_t max_bytes_per_token = 100, const std::string &unknown_token = "[UNK]",
                               bool with_offsets = false)
@@ -488,8 +490,8 @@ class WordpieceTokenizer final : public TensorTransform {
   ~WordpieceTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -502,16 +504,16 @@ class WordpieceTokenizer final : public TensorTransform {
 class UnicodeScriptTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] keep_whitespace Whether or not emit whitespace tokens (default=false).
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  /// \param[in] keep_whitespace whether to emit whitespace tokens (default=false).
+  /// \param[in] with_offsets whether to output offsets of tokens (default=false).
   explicit UnicodeScriptTokenizer(bool keep_whitespace = false, bool with_offsets = false);
 
   /// \brief Destructor
   ~UnicodeScriptTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
@@ -523,15 +525,15 @@ class UnicodeScriptTokenizer final : public TensorTransform {
 class WhitespaceTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
+  /// \param[in] with_offsets whether to output offsets of tokens (default=false).
   explicit WhitespaceTokenizer(bool with_offsets = false);
 
   /// \brief Destructor
   ~WhitespaceTokenizer() = default;
 
  protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:

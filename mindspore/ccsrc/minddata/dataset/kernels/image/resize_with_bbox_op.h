@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_WITH_BBOX_OP_H
 
 #include <string>
+#include <memory>
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -36,9 +37,21 @@ class ResizeWithBBoxOp : public ResizeOp {
 
   void Print(std::ostream &out) const override { out << Name() << ": " << size1_ << " " << size2_; }
 
+  // Use in pipeline mode
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
+  // Use in execute mode
+  // ResizeWithBBoxOp is inherited from ResizeOp and this function has been overridden by ResizeOp,
+  // thus we need to change the behaviour back to basic class (TensorOp).
+  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override {
+    return TensorOp::Compute(input, output);
+  }
+
   std::string Name() const override { return kResizeWithBBoxOp; }
+
+  uint32_t NumInput() override { return 2; }
+
+  uint32_t NumOutput() override { return 2; }
 };
 }  // namespace dataset
 }  // namespace mindspore

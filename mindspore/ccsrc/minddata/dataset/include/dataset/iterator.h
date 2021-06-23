@@ -47,21 +47,21 @@ using MSTensorVec = std::vector<mindspore::MSTensor>;
 // Abstract class for iterating over the dataset.
 class Iterator {
  public:
-  /// \brief Constructor
+  /// \brief Constructor.
   Iterator();
 
-  /// \brief Destructor
+  /// \brief Destructor.
   ~Iterator();
 
   /// \brief Method for building and launching the pipeline.
-  /// \param[in] ops - a vector of DatasetOp in the data pipeline.
-  /// \param[in] num_epochs Number of epochs passed down to EpochCtrlNode, default -1, infinite epochs
+  /// \param[in] ds The last DatasetOp in the dataset pipeline.
+  /// \param[in] num_epochs Number of epochs passed down to EpochCtrlNode (default=-1, which means infinite epochs).
   /// \return Status error code, returns OK if no error encountered.
   Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs);
 
   /// \brief Function to get the next row from the data pipeline.
-  /// \note Type of return data is a map(with column name).
-  /// \param[out] row - the output tensor row.
+  /// \note Type of return data is a unordered_map(with column name).
+  /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered.
   Status GetNextRow(MSTensorMap *row) {
     MSTensorMapChar row_;
@@ -72,13 +72,14 @@ class Iterator {
     return s;
   }
 
-  // Char interface(CharIF) of GetNextRow
-  // This This API exists because std::string will constrained by ABI compile option while char don't.
+  /// \brief Char interface(CharIF) of GetNextRow.
+  /// \note The reason for using this API is that std::string will be constrained by the
+  ///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
   Status GetNextRowCharIF(MSTensorMapChar *row);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
-  /// \param[out] row - the output tensor row.
+  /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered.
   virtual Status GetNextRow(MSTensorVec *row);
 
@@ -119,10 +120,10 @@ class Iterator {
 
 class PullIterator : public Iterator {
  public:
-  /// \brief Constructor
+  /// \brief Constructor.
   PullIterator();
 
-  /// \brief Destructor
+  /// \brief Destructor.
   ~PullIterator() = default;
 
   /// \brief Function to get next row from the data pipeline.
@@ -133,7 +134,7 @@ class PullIterator : public Iterator {
 
   /// \brief Function to get specified rows from the data pipeline.
   /// \note Type of return data is a vector(without column name).
-  /// \note This behavior is subject to change
+  /// \note This behavior is subject to change.
   /// \param[in] num_rows The number of rows to fetch.
   /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered else false.
@@ -141,7 +142,7 @@ class PullIterator : public Iterator {
 
   /// \brief Method for building and launching the pipeline.
   /// \note Consider making this function protected.
-  /// \param[in] ds - The root node that calls the function
+  /// \param[in] ds The root node that calls the function.
   /// \return Status error code, returns OK if no error encountered.
   Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds);
 
