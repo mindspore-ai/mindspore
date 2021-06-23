@@ -221,6 +221,9 @@ void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const st
                                      const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!dump_json_parser.OutputNeedDump()) {
+    return;
+  }
   MS_LOG(INFO) << "Start e2e dump parameters and Const values";
   bool trans_flag = dump_json_parser.trans_flag();
   std::map<std::string, size_t> const_map;
