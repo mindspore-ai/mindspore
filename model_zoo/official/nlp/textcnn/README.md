@@ -41,7 +41,7 @@ Dataset used: [Movie Review Data](<http://www.cs.cornell.edu/people/pabo/movie-r
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
+- Hardware（Ascend/CPU）
     - Prepare hardware environment with Ascend processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
@@ -53,7 +53,7 @@ Dataset used: [Movie Review Data](<http://www.cs.cornell.edu/people/pabo/movie-r
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- running on Ascend
+- running on Ascend/CPU
 
   ```python
   # run training example
@@ -110,6 +110,8 @@ If you want to run in modelarts, please check the official documentation of [mod
         ├──scripts
         │   ├── run_train.sh              // shell script for distributed on Ascend
         │   ├── run_eval.sh               // shell script for evaluation on Ascend
+        │   ├── run_train_cpu.sh          // shell script for training on CPU
+        │   ├── run_eval_cpu.sh           // shell script for evaluation on CPU
         ├── src
         │   ├── dataset.py                // Processing dataset
         │   ├── textcnn.py                // textcnn architecture
@@ -119,6 +121,7 @@ If you want to run in modelarts, please check the official documentation of [mod
         │   ├──moxing_adapter.py          // moxing adapter
         │   ├──config.py                  // parameter analysis
         ├── mr_config.yaml                 // parameter configuration
+        ├── mr_config_cpu.yaml             // parameter configuration
         ├── sst2_config.yaml               // parameter configuration
         ├── subj_config.yaml               // parameter configuration
         ├── train.py                       // training script
@@ -152,7 +155,7 @@ For more configuration details, please refer the script `*.yaml`.
 
 ## [Training Process](#contents)
 
-- running on Ascend
+- running on Ascend/CPU
 
   ```python
   # need set config_path in config.py file and set data_path in yaml file
@@ -176,7 +179,7 @@ For more configuration details, please refer the script `*.yaml`.
 
 ## [Evaluation Process](#contents)
 
-- evaluation on movie review dataset when running on Ascend
+- evaluation on movie review dataset when running on Ascend/CPU
 
   Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/textcnn/ckpt/train_textcnn.ckpt".
 

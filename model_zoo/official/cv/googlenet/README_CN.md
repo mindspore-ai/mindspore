@@ -78,8 +78,8 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
 
 # 环境要求
 
-- 硬件（Ascend/GPU）
-    - 使用Ascend或GPU处理器来搭建硬件环境。
+- 硬件（Ascend/GPU/CPU）
+    - 使用Ascend/GPU/CPU处理器来搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需查看详情，请参见如下资源：
@@ -130,6 +130,16 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   python eval.py --checkpoint_path=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
   sh run_eval_gpu.sh [CHECKPOINT_PATH]
+  ```
+
+- CPU处理器环境运行
+
+  ```python
+  # 运行训练示例
+  nohup python train.py --config_path=cifar10_config_cpu.yaml --dataset_name=cifar10  > train.log 2>&1 &
+
+  # 运行评估示例
+  nohup python eval.py --checkpoint_path=[CHECKPOINT_PATH] > eval.log 2>&1 &
   ```
 
 默认使用CIFAR-10数据集。您也可以将`$dataset_type`传入脚本，以便选择其他数据集。如需查看更多详情，请参考指定脚本。
@@ -239,9 +249,11 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
         ├── scripts
         │   ├──run_train.sh             // 分布式到Ascend的shell脚本
         │   ├──run_train_gpu.sh         // 分布式到GPU处理器的shell脚本
+        │   ├──run_train_cpu.sh         // CPU处理器训练的shell脚本
         │   ├──run_eval.sh              // Ascend评估的shell脚本
         │   ├──run_infer_310.sh         // Ascend推理shell脚本
         │   ├──run_eval_gpu.sh          // GPU处理器评估的shell脚本
+        │   ├──run_eval_cpu.sh          // CPU处理器评估的shell脚本
         ├── src
         │   ├──dataset.py             // 创建数据集
         │   ├──googlenet.py          //  googlenet架构
@@ -312,6 +324,16 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   上述python命令将在后台运行，您可以通过train.log文件查看结果。
 
   训练结束后，您可在默认`./ckpt_0/`脚本文件夹下找到检查点文件。
+
+- CPU处理器环境运行
+
+  ```bash
+  nohup python train.py --config_path=cifar10_config_cpu.yaml --dataset_name=cifar10 > train.log 2>&1 &
+  ```
+
+  上述python命令将在后台运行，您可以通过train.log文件查看结果。
+
+  训练结束后，您可在yaml文件中配置的文件夹下找到检查点文件。
 
 ### 分布式训练
 

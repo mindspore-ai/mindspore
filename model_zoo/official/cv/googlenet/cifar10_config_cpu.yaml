@@ -1,0 +1,51 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+# Url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+# Path for local
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+device_target: "CPU"
+need_modelarts_dataset_unzip: True
+modelarts_dataset_unzip_name: "cifar10"
+
+# ==============================================================================
+# options
+dataset_name: "cifar10"
+name: "cifar10"
+pre_trained: False
+num_classes: 10
+lr_init: 0.1
+batch_size: 128
+epoch_size: 125
+momentum: 0.9
+weight_decay: 0.0005 #5e-4
+image_height: 224
+image_width: 224
+train_data_path: "/cache/data/cifar10/"
+val_data_path: "/cache/data/cifar10/"
+keep_checkpoint_max: 10
+checkpoint_path: "./train_googlenet_cifar10-125_390.ckpt"
+onnx_filename: "googlenet"
+air_filename: "googlenet"
+ckpt_save_dir: "./ckpt/"
+
+# export option
+ckpt_file: ""
+file_name: "googlenet"
+file_format: "MINDIR"
+#batch_size: 1
+
+---
+
+# Help description for each configuration
+enable_modelarts: "Whether training on modelarts, default: False"
+data_url: "Url for modelarts"
+train_url: "Url for modelarts"
+data_path: "The location of the input data."
+output_path: "The location of the output file."
+device_target: 'Target device type'
+enable_profiling: 'Whether enable profiling while training, default: False'
