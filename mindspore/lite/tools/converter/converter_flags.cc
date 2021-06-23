@@ -48,7 +48,7 @@ Flags::Flags() {
   AddFlag(&Flags::quantWeightChannelStr, "quantWeightChannel", "Channel threshold for weight quantization", "16");
   AddFlag(&Flags::configFile, "configFile",
           "Configuration for post-training, offline split op to parallel,"
-          "and converter for nnie",
+          "disable op fusion ability and set plugin so path",
           "");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device. "
@@ -107,12 +107,12 @@ int Flags::InitFmk() {
   } else if (this->fmkIn == "TF") {
     this->fmk = FmkType_TF;
   } else {
-    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX";
+    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->fmk != FmkType_CAFFE && !weightFile.empty()) {
-    std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag";
+    std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
@@ -126,27 +126,27 @@ bool Flags::IsValidNum(const std::string &str, int *num) {
 
 int Flags::QuantParamInputCheck() {
   if (!Flags::IsValidNum(this->quantWeightChannelStr, &this->quantWeightChannel)) {
-    std::cerr << "quantWeightChannel should be a valid number.";
+    std::cerr << "quantWeightChannel should be a valid number." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   if (this->quantWeightChannel < 0) {
-    std::cerr << "quantWeightChannel should be greater than or equal to zero.";
+    std::cerr << "quantWeightChannel should be greater than or equal to zero." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   if (!Flags::IsValidNum(this->quantWeightSizeStr, &this->quantWeightSize)) {
-    std::cerr << "quantWeightSize should be a valid number.";
+    std::cerr << "quantWeightSize should be a valid number." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   if (this->quantWeightSize < 0) {
-    std::cerr << "quantWeightSize should be greater than or equal to zero.";
+    std::cerr << "quantWeightSize should be greater than or equal to zero." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   if (!Flags::IsValidNum(this->bitNumIn, &this->bitNum)) {
-    std::cerr << "bitNum should be a valid number.";
+    std::cerr << "bitNum should be a valid number." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   if (this->bitNum <= 0 || this->bitNum > 16) {
-    std::cerr << "bitNum should be greater than zero and lesser than 16 currently.";
+    std::cerr << "bitNum should be greater than zero and lesser than 16 currently." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
@@ -160,7 +160,7 @@ int Flags::InitQuantParam() {
   } else if (this->quantTypeStr.empty()) {
     this->quantType = QuantType_QUANT_NONE;
   } else {
-    std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining";
+    std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
@@ -174,21 +174,21 @@ int Flags::InitTrainModel() {
   } else if (this->trainModelIn == "false") {
     this->trainModel = false;
   } else {
-    std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
+    std::cerr << "INPUT ILLEGAL: trainModel must be true|false " << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->trainModel) {
     if (this->fmk != FmkType_MS) {
-      std::cerr << "INPUT ILLEGAL: train model converter supporting only MINDIR format";
+      std::cerr << "INPUT ILLEGAL: train model converter supporting only MINDIR format" << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
     if ((this->inputDataType != TypeId::kNumberTypeFloat32) && (this->inputDataType != TypeId::kTypeUnknown)) {
-      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 input tensors";
+      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 input tensors" << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
     if ((this->outputDataType != TypeId::kNumberTypeFloat32) && (this->outputDataType != TypeId::kTypeUnknown)) {
-      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 output tensors";
+      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 output tensors" << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
   }
@@ -212,13 +212,13 @@ int Flags::InitConfigFile() {
     } else if (disable_fusion_flag == "off") {
       this->disableFusion = false;
     } else {
-      std::cerr << "CONFIG SETTING ILLEGAL: disable_fusion should be on/off";
+      std::cerr << "CONFIG SETTING ILLEGAL: disable_fusion should be on/off" << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
   }
-  if (!CheckOfflineParallelConfig(this->configFile, &parallel_split_config_) &&
-      parallel_split_config_.parallel_split_type_ != SplitNo) {
-    std::cerr << "offline kernel parallel split config set error.";
+  if (parallel_split_config_.parallel_split_type_ != SplitNo &&
+      !CheckOfflineParallelConfig(this->configFile, &parallel_split_config_)) {
+    std::cerr << "offline kernel parallel split config set error." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
@@ -233,7 +233,7 @@ int Flags::Init(int argc, const char **argv) {
   Option<std::string> err = this->ParseFlags(argc, argv);
 
   if (err.IsSome()) {
-    std::cerr << err.Get();
+    std::cerr << err.Get() << std::endl;
     std::cerr << this->Usage() << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
@@ -243,11 +243,11 @@ int Flags::Init(int argc, const char **argv) {
     return RET_SUCCESS_EXIT;
   }
   if (this->modelFile.empty()) {
-    std::cerr << "INPUT MISSING: model file path is necessary";
+    std::cerr << "INPUT MISSING: model file path is necessary" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   if (this->outputFile.empty()) {
-    std::cerr << "INPUT MISSING: output file path is necessary";
+    std::cerr << "INPUT MISSING: output file path is necessary" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
@@ -257,19 +257,19 @@ int Flags::Init(int argc, const char **argv) {
 
   if (this->outputFile.rfind('/') == this->outputFile.length() - 1 ||
       this->outputFile.rfind('\\') == this->outputFile.length() - 1) {
-    std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path";
+    std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   if (this->fmkIn.empty()) {
-    std::cerr << "INPUT MISSING: fmk is necessary";
+    std::cerr << "INPUT MISSING: fmk is necessary" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   if (!this->configFile.empty()) {
     ret = InitConfigFile();
     if (ret != RET_OK) {
-      std::cerr << "Init config file failed.";
+      std::cerr << "Init config file failed." << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
   }
@@ -279,31 +279,31 @@ int Flags::Init(int argc, const char **argv) {
   } else if (save_fp16_str_ == "off") {
     save_fp16_ = false;
   } else {
-    std::cerr << "Init save_fp16 failed.";
+    std::cerr << "Init save_fp16 failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   ret = InitInputOutputDataType();
   if (ret != RET_OK) {
-    std::cerr << "Init input output datatype failed.";
+    std::cerr << "Init input output datatype failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   ret = InitFmk();
   if (ret != RET_OK) {
-    std::cerr << "Init fmk failed.";
+    std::cerr << "Init fmk failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   ret = InitQuantParam();
   if (ret != RET_OK) {
-    std::cerr << "Init quant param failed.";
+    std::cerr << "Init quant param failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
   ret = InitTrainModel();
   if (ret != RET_OK) {
-    std::cerr << "Init train model failed.";
+    std::cerr << "Init train model failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
@@ -316,17 +316,17 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   std::vector<std::string> config_devices = {"cpu", "gpu", "npu"};
   auto compute_rate_result = GetStrFromConfigFile(file, kComputeRate);
   if (compute_rate_result.empty()) {
-    std::cerr << "config setting error: compute rate should be set.";
+    std::cerr << "config setting error: compute rate should be set." << std::endl;
     return false;
   }
   std::string device0_result = GetStrFromConfigFile(file, kSplitDevice0);
   if (device0_result.empty()) {
-    std::cerr << "config setting error: device0 should be set.";
+    std::cerr << "config setting error: device0 should be set." << std::endl;
     return false;
   }
   std::string device1_result = GetStrFromConfigFile(file, kSplitDevice1);
   if (device1_result.empty()) {
-    std::cerr << "config setting error: device1 should be set.";
+    std::cerr << "config setting error: device1 should be set." << std::endl;
     return false;
   }
   bool device0_flag = false;
