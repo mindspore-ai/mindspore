@@ -17,6 +17,26 @@
 #include "nnacl/fp16/pack_fp16.h"
 #include <string.h>
 
+#ifdef ENABLE_ARM
+void PackWeightConvDw3x3Fp16(const void *src, void *dst, int channel) {
+  // nchw to nc8hw8 with 1D F(2,3)
+  for (int i = 0; i < channel; i++) {
+    float16_t *src_kernel = (float16_t *)src + i * 9;
+    float16_t *dst_kernel = (float16_t *)dst + (i / 8) * 96 + i % 8;
+    for (int y = 0; y < 3; y++) {
+      float16_t g0 = src_kernel[3 * y];
+      float16_t g1 = src_kernel[3 * y + 1];
+      float16_t g2 = src_kernel[3 * y + 2];
+
+      dst_kernel[32 * y] = g0;
+      dst_kernel[32 * y + 8] = (float16_t)0.5 * (g0 + g1 + g2);
+      dst_kernel[32 * y + 16] = (float16_t)0.5 * (g0 - g1 + g2);
+      dst_kernel[32 * y + 24] = g2;
+    }
+  }
+}
+#endif
+
 void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
                         int block_index) {
   // input format : nhwc

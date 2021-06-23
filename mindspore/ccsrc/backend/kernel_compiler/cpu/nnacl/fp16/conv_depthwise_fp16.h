@@ -50,6 +50,14 @@ void ConvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const flo
 void DeconvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const float16_t *weight_data,
                     const float16_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
                     int task_id);
+
+#ifdef ENABLE_ARM
+void ConvDw3x3LineFp16(float16_t *dst, float16_t **lines, const float16_t *weight, const float16_t *bias_data,
+                       int width, int ori_channel, bool relu, bool relu6);
+void ConvDw3x3Fp16(float16_t *output_data, float16_t *buffer, const float16_t *input_data, const float16_t *weight_data,
+                   const float16_t *bias_data, const ConvParameter *conv_param, int start_oh, int end_oh);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

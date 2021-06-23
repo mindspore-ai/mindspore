@@ -22,6 +22,7 @@
 #include "src/runtime/kernel/arm/fp16/group_convolution_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_slidewindow_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_depthwise_3x3_fp16.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -117,6 +118,17 @@ kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *
   MS_ASSERT(opParameter != nullptr);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::InnerKernel *kernel = nullptr;
+#if defined(ENABLE_ARM)
+  if (CheckConvDw1DWinograd(conv_param, ctx->thread_num_)) {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3Fp16CPUKernel(opParameter, inputs, outputs, ctx);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "kernel is nullptr.";
+      free(opParameter);
+      return nullptr;
+    }
+    return kernel;
+  }
+#endif
   if (conv_param->input_channel_ < 32) {
     kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWFp16CPUKernel(opParameter, inputs, outputs, ctx);
   } else {

@@ -81,6 +81,10 @@ void Transpose12x8A32Fp16(const float16_t *src, float16_t *dst, size_t src_strid
 void Transpose16x8ARM64Fp16(const float16_t *src, float16_t *dst, size_t src_stride, size_t dst_stride);
 #endif
 
+#ifdef ENABLE_ARM
+void PackWeightConvDw3x3Fp16(const void *src, void *dst, int channel);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
