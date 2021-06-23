@@ -685,7 +685,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     }
     std::string path = filepath + '.' + format_;
     MS_LOG(INFO) << "E2E Dump path is " << path;
-    ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_, host_shape_, type_id_);
+    ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_, host_shape, type_id_);
   }
 
   return ret;
