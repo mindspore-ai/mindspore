@@ -19,13 +19,13 @@ from mindspore import dtype as mstype
 from mindspore import Model, context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.dataset import create_dataset
-from src.unet3d_model import UNet3d
+from src.unet3d_model import UNet3d, UNet3d_
 from src.utils import create_sliding_window, CalculateDice
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 
 device_id = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False, device_id=device_id)
 
 @moxing_wrapper()
 def test_net(data_path, ckpt_path):
@@ -35,7 +35,10 @@ def test_net(data_path, ckpt_path):
     eval_data_size = eval_dataset.get_dataset_size()
     print("train dataset length is:", eval_data_size)
 
-    network = UNet3d()
+    if config.device_target == 'Ascend':
+        network = UNet3d()
+    else:
+        network = UNet3d_()
     network.set_train(False)
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(network, param_dict)

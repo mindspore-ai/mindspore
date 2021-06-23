@@ -36,6 +36,25 @@ __global__ void Slice4D(const size_t s1, const size_t s2, const size_t s3, const
 }
 
 template <typename T>
+__global__ void Slice5D(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                        const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                        const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                        const T *input, T *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (l1 * l2 * l3 * l4 * l5);
+       pos += blockDim.x * gridDim.x) {
+    size_t i = pos / (l2 * l3 * l4 * l5) % l1;
+    size_t j = pos / (l3 * l4 * l5) % l2;
+    size_t k = pos / (l4 * l5) % l3;
+    size_t o = pos / l5 % l4;
+    size_t q = pos % l5;
+
+    size_t offset =
+      (i + s1) * (d2 * d3 * d4 * d5) + (j + s2) * (d3 * d4 * d5) + (k + s3) * (d4 * d5) + (o + s4) * d5 + (q + s5);
+    output[pos] = input[offset];
+  }
+}
+
+template <typename T>
 __global__ void Slice4DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                         const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                         const size_t d1, const size_t d2, const size_t d3, const size_t d4,
@@ -70,7 +89,13 @@ void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size
   Slice4D<<<GET_BLOCKS(l1 * l2 * l3 * l4), GET_THREADS, 0, stream>>>(s1, s2, s3, s4, l1, l2, l3, l4, d1, d2, d3, d4,
                                                                      input, output);
 }
-
+template <typename T>
+void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t l1,
+                   const size_t l2, const size_t l3, const size_t l4, const size_t l5, const size_t d1, const size_t d2,
+                   const size_t d3, const size_t d4, const size_t d5, const T *input, T *output, cudaStream_t stream) {
+  Slice5D<<<GET_BLOCKS(l1 * l2 * l3 * l4 * l5), GET_THREADS, 0, stream>>>(s1, s2, s3, s4, s5, l1, l2, l3, l4, l5, d1,
+                                                                          d2, d3, d4, d5, input, output);
+}
 template <typename T>
 void CalSlice4DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
                    const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
@@ -183,6 +208,39 @@ template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, c
 template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
                             const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
                             const size_t d3, const size_t d4, const bool *input, bool *output, cudaStream_t stream);
+
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const double *input, double *output, cudaStream_t stream);
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const float *input, float *output, cudaStream_t stream);
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const half *input, half *output, cudaStream_t stream);
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const int64_t *input, int64_t *output, cudaStream_t stream);
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const int *input, int *output, cudaStream_t stream);
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const short *input, short *output, cudaStream_t stream);  // NOLINT
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const unsigned char *input, unsigned char *output, cudaStream_t stream);
+template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                            const bool *input, bool *output, cudaStream_t stream);
 
 template void CalSlice4DGrad<double>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                      const size_t l1, const size_t l2, const size_t l3, const size_t l4,
