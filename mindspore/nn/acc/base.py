@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """base process"""
+import copy
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim import LARS
 from mindspore import log as logger
@@ -58,24 +59,37 @@ class OptimizerProcess:
 
         if isinstance(parameters[0], Parameter):
             logger.warning("Only group parameters support gradient centralization.")
-            return parameters
+            return
 
-        change_dict = parameters[0]
-        if 'order_params' in change_dict.keys():
-            logger.warning("Only support normal parameters for gradient centralization.")
-            return parameters
+        group_params = []
+        for group_param in parameters:
+            if 'order_params' in group_param.keys():
+                group_params.append(group_param)
+                continue
+            params_gc_value = []
+            params_value = []
+            for param in group_param['params']:
+                if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+                    params_gc_value.append(param)
+                else:
+                    params_value.append(param)
+                if params_gc_value:
+                    new_group_param = copy.deepcopy(group_param)
+                    new_group_param['params'] = params_gc_value
+                    new_group_param['grad_centralization'] = True
+                    group_params.append(new_group_param)
+                if params_value:
+                    new_group_param = copy.deepcopy(group_param)
+                    new_group_param['params'] = params_value
+                    group_params.append(new_group_param)
+            self.origin_params = group_params
 
-        change_dict['grad_centralization'] = True
-        self.origin_params[0] = change_dict
-
-        return self.origin_params
-
-    def generate_new_optimizer(self, params):
+    def generate_new_optimizer(self):
         """Generate new optimizer."""
         if not self.is_lars:
-            opt = self.opt_class(params=params, **self.opt_init_args)
+            opt = self.opt_class(params=self.origin_params, **self.opt_init_args)
         else:
-            opt = LARS(self.opt_class(params=params, **self.opt_init_args), **self.lars_init_args)
+            opt = LARS(self.opt_class(params=self.origin_params, **self.opt_init_args), **self.lars_init_args)
 
         return opt
 
@@ -103,19 +117,38 @@ class ParameterProcess:
             parameters[i].comm_fusion = self._parameter_indices
         return parameters
 
-    def generate_group_params(self, parameters):
+    def generate_group_params(self, parameters, origin_params):
         """Generate group parameters."""
-        decayed_params = []
-        no_decayed_params = []
-        for param in parameters:
-            if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
-                decayed_params.append(param)
-            else:
-                no_decayed_params.append(param)
-        group_params = [{'params': decayed_params, 'weight_decay': 0.0001},
-                        {'params': no_decayed_params},
-                        {'order_params': parameters}]
+        origin_params_copy = origin_params
+        if origin_params_copy is not None:
+            if not isinstance(origin_params_copy, list):
+                origin_params_copy = list(origin_params_copy)
 
+        if not origin_params_copy:
+            raise ValueError("Optimizer got an empty parameter list.")
+
+        if not isinstance(origin_params_copy[0], (dict, Parameter)):
+            raise TypeError("Only a list of Parameter or dict can be supported.")
+
+        if isinstance(origin_params_copy[0], Parameter):
+            group_params = [{"params": parameters}]
+        else:
+            group_params = []
+            params_name = [param.name for param in parameters]
+            for group_param in origin_params_copy:
+                if 'order_params' in group_param.keys():
+                    new_group_param = copy.deepcopy(group_param)
+                    new_group_param['order_params'] = parameters
+                    group_params.append(new_group_param)
+                    continue
+                params_value = []
+                for param in group_param['params']:
+                    if param.name in params_name:
+                        index = params_name.index(param.name)
+                        params_value.append(parameters[index])
+                new_group_param = copy.deepcopy(group_param)
+                new_group_param['params'] = params_value
+                group_params.append(new_group_param)
         return group_params
 
 _gradient_accumulation_op = C.MultitypeFuncGraph("gradient_accumulation_op")

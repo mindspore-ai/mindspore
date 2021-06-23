@@ -49,13 +49,25 @@ def _init_allreduce_operators(length, split_indices):
 def _init_allreduce_operators_by_parameters(parameters):
     """ initialize allreduce communication operators by parameters"""
     op_list = ()
+    param_fusion = False
+    last_comm_fusion = None
+    first_parameter_flag = True
     for parameter in parameters:
         comm_fusion = parameter.comm_fusion
+        if first_parameter_flag:
+            last_comm_fusion = comm_fusion
+            first_parameter_flag = False
+        elif not param_fusion:
+            if comm_fusion != last_comm_fusion:
+                param_fusion = True
+                last_comm_fusion = comm_fusion
         op = AllReduce('sum', GlobalComm.WORLD_COMM_GROUP)
         op.add_prim_attr('fusion', comm_fusion)
         op.add_prim_attr('index', comm_fusion)
         op_list = op_list + (op,)
-    return op_list
+    if not param_fusion:
+        op_list = ()
+    return op_list, param_fusion
 
 
 @reduce_opt.register("Tensor", "Bool", "Function", "Function", "Bool", "Tensor")
@@ -354,7 +366,7 @@ class DistributedGradReducer(Cell):
         256.0
     """
 
-    def __init__(self, parameters, mean=True, degree=None, fusion_type=1, param_fusion=False):
+    def __init__(self, parameters, mean=True, degree=None, fusion_type=1):
         super(DistributedGradReducer, self).__init__(auto_prefix=False)
         self.map_ = C.Map()
         if degree is None:
@@ -371,12 +383,12 @@ class DistributedGradReducer(Cell):
         if is_parallel_optimizer and split_indices:
             self.split_fusion = True
             self.op_list = _init_allreduce_operators(len(parameters), split_indices)
-        elif param_fusion:
-            self.split_fusion = True
-            self.op_list = _init_allreduce_operators_by_parameters(parameters)
         else:
-            self.split_fusion = False
-            self.allreduce = AllReduce().add_prim_attr('fusion', fusion_type)
+            self.split_fusion = True
+            self.op_list, param_fusion = _init_allreduce_operators_by_parameters(parameters)
+            if not param_fusion:
+                self.split_fusion = False
+                self.allreduce = AllReduce().add_prim_attr('fusion', fusion_type)
         self.allgather = AllGather(GlobalComm.WORLD_COMM_GROUP)
         ps_filter = lambda x: x.is_param_ps
         self.ps_parameters = tuple(ps_filter(x) for x in parameters)

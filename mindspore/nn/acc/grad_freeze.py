@@ -235,7 +235,8 @@ class GradientFreeze:
         train_para_groups = self.split_parameters_groups(
             network, self._param_groups)
         for i in range(self._param_groups):
-            train_para_groups[i] = self._param_processer.generate_group_params(train_para_groups[i])
+            train_para_groups[i] = self._param_processer.generate_group_params(train_para_groups[i],
+                                                                               optimizer.init_params['params'])
         train_strategy = self.generate_freeze_index_sequence(
             self._param_groups, self._freeze_type, self._freeze_p, self._total_steps)
         optimizer = FreezeOpt(optimizer, train_para_groups, train_strategy)
@@ -248,7 +249,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
     if reducer_flag:
         param_processer = ParameterProcess()
         grad_reducers = (DistributedGradReducer(param_processer.assign_parameter_group(opt.parameters),
-                                                mean, degree, param_fusion=True) for opt in optimizer.opts)
+                                                mean, degree) for opt in optimizer.opts)
         freeze_nets = tuple(_TrainFreezeCell(network, sens, grad, reducer,
                                              use_grad_accumulation, opt, max_accumulation_step)
                             for reducer, opt in zip(grad_reducers, optimizer.opts))

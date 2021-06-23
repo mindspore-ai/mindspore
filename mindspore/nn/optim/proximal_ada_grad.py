@@ -18,6 +18,7 @@ from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
+from .optimizer import opt_init_args_register
 
 _proximal_ada_grad_opt = C.MultitypeFuncGraph("proximal_ada_grad_opt")
 
@@ -167,6 +168,7 @@ class ProximalAdagrad(Optimizer):
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
 
+    @opt_init_args_register
     def __init__(self, params, accum=0.1, learning_rate=0.001, l1=0.0, l2=0.0,
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
         super(ProximalAdagrad, self).__init__(learning_rate, params, weight_decay, loss_scale)

@@ -23,6 +23,7 @@ from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
+from .optimizer import opt_init_args_register
 
 _lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 
@@ -231,6 +232,7 @@ class LazyAdam(Optimizer):
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
 
+    @opt_init_args_register
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
         super(LazyAdam, self).__init__(learning_rate, params, weight_decay, loss_scale)
