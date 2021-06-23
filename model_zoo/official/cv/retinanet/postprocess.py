@@ -16,16 +16,11 @@
 """Evaluation for retinanet"""
 
 import os
-import argparse
 import numpy as np
 from PIL import Image
 from src.coco_eval import metrics
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description='retinanet evaluation')
-parser.add_argument("--result_path", type=str, required=True, help="result file path.")
-parser.add_argument("--img_path", type=str, required=True, help="image file path.")
-parser.add_argument("--img_id_file", type=str, required=True, help="image id file.")
-args = parser.parse_args()
 
 def get_pred(result_path, img_id):
     boxes_file = os.path.join(result_path, img_id + '_0.bin')
@@ -35,9 +30,11 @@ def get_pred(result_path, img_id):
     scores = np.fromfile(scores_file, dtype=np.float32).reshape(67995, 81)
     return boxes, scores
 
+
 def get_img_size(file_name):
     img = Image.open(file_name)
     return img.size
+
 
 def get_img_id(img_id_file):
     f = open(img_id_file)
@@ -48,6 +45,7 @@ def get_img_id(img_id_file):
         ids.append(int(line))
 
     return ids
+
 
 def cal_acc(result_path, img_path, img_id_file):
     ids = get_img_id(img_id_file)
@@ -70,5 +68,6 @@ def cal_acc(result_path, img_path, img_id_file):
     mAP = metrics(pred_data)
     print(f"mAP: {mAP}")
 
+
 if __name__ == '__main__':
-    cal_acc(args.result_path, args.img_path, args.img_id_file)
+    cal_acc(config.result_path, config.img_path, config.img_id_file)

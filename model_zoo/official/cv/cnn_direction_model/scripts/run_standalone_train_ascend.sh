@@ -55,13 +55,14 @@ fi
 mkdir ./train
 cp ./*.py ./train
 cp -r ./scripts ./train
+cp -r ./src ./train
 cp ./*yaml ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
 if [ $# == 2 ]
 then
-    python train.py --train_dataset_path=$PATH1 &> log &
+    python train.py --train_dataset_path=$PATH1 &> train.log &
 fi
 
 if [ $# == 3 ]
