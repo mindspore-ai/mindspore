@@ -167,12 +167,14 @@ class ConvertModelUtils():
             metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
                                         training. eg: {'accuracy', 'recall'}. Default: None.
             amp_level (str): Level for mixed precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
+
                 - O0: Do not change.
                 - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
                 - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
                 - auto: Set level to recommended level in different devices. O2 is recommended on GPU, O3 is
                   recommended on Ascend. The recommended level is based on the expert experience, cannot
                   always generalize. User should specify the level for special network.
+
             loss_scale_manager (Union[None, LossScaleManager]): If it is None, the loss would not be scaled.
                 Otherwise, scale the loss by LossScaleManager and optimizer can not be None. It is a key argument.
                 e.g. Use `loss_scale_manager=None` to set the value.
