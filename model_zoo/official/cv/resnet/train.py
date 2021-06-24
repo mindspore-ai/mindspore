@@ -86,7 +86,7 @@ if args_opt.net in ("resnet18", "resnet50"):
 elif args_opt.net == "resnet34":
     from src.resnet import resnet34 as resnet
     from src.config import config_resnet34 as config
-    from src.dataset import create_dataset_resnet34 as create_dataset
+    from src.dataset import create_dataset2 as create_dataset
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config
