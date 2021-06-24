@@ -87,14 +87,12 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,
                             const AnfNodePtr &accu_parameter) {
   auto cnode = node_user.first->cast<CNodePtr>();
-  if (IsPrimitiveCNode(cnode, prim::kPrimReceive) || !cnode->in_forward_flag() ||
-      ((IsPrimitiveCNode(node_user.first, prim::kPrimSend) || IsPrimitiveCNode(node_user.first, prim::kPrimDepend)) &&
-       ParallelContext::GetInstance()->enable_parallel_optimizer())) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimReceive) || !cnode->in_forward_flag()) {
     return;
   }
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
-    MS_LOG(WARNING) << cnode->DebugString() << " can not insert _VirtualAssignAd";
+    MS_LOG(WARNING) << cnode->DebugString() << " can not insert _VirtualAssignAdd.";
     return;
   }
   OperatorAttrs attrs;
@@ -154,10 +152,12 @@ void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> 
     auto node_users = node_users_map[node];
     for (auto &temp_user : node_users) {
       auto temp_node = temp_user.first;
+      // Micro virtual operator might be inserted after cast
       if (IsPrimitiveCNode(temp_node, prim::kPrimCast)) {
         temp_node = node_users_map[temp_node].begin()->first;
       }
-      if (IsPrimitiveCNode(temp_node, prim::kPrimMirrorMicroStep)) {
+      if (IsPrimitiveCNode(temp_node, prim::kPrimMirrorMicroStep) ||
+          IsPrimitiveCNode(temp_node, prim::kPrimMicroStepAllGather)) {
         auto node_set = node_users_map[temp_node];
         for (auto &node_user : node_set) {
           InsertVirtualAssignAdd(node_user, root->manager(), accu_parameter);
@@ -182,10 +182,12 @@ void AddVirtualAssignAdd(const FuncGraphPtr &root) {
     auto node_users = node_users_map[parameter];
     for (auto &temp_user : node_users) {
       auto temp_node = temp_user.first;
+      // Micro virtual operator might be inserted after cast
       if (IsPrimitiveCNode(temp_node, prim::kPrimCast)) {
         temp_node = node_users_map[temp_node].begin()->first;
       }
-      if (IsPrimitiveCNode(temp_node, prim::kPrimMirrorMicroStep)) {
+      if (IsPrimitiveCNode(temp_node, prim::kPrimMirrorMicroStep) ||
+          IsPrimitiveCNode(temp_node, prim::kPrimMicroStepAllGather)) {
         auto node_set = node_users_map[temp_node];
         for (auto &node_user : node_set) {
           InsertVirtualAssignAdd(node_user, root->manager(), accu_parameter);

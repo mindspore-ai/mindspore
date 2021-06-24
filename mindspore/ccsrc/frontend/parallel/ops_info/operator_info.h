@@ -299,6 +299,7 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateMiniStepAllGatherOp(const std::string &group);
 void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
+Operator CreateMicroStepAllGatherOp(const std::string &group);
 void AddCommOpMeanFlag(const CNodePtr &comm_node);
 void AddCommOpParamFlag(const CNodePtr &comm_node);
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);

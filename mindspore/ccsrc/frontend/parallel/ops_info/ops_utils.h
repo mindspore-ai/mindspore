@@ -217,6 +217,7 @@ constexpr char LOCAL_STEP[] = "local_step";
 constexpr char STRIDED_SLICE[] = "StridedSlice";
 constexpr char ALL_GATHER[] = "AllGather";
 constexpr char MINI_STEP_ALL_GATHER[] = "_MiniStepAllGather";
+constexpr char MICRO_STEP_ALL_GATHER[] = "_MicroStepAllGather";
 constexpr char REDUCE_SCATTER[] = "ReduceScatter";
 constexpr char HOST_REDUCE_SCATTER[] = "_HostReduceScatter";
 constexpr char EMBEDDING_LOOKUP[] = "EmbeddingLookup";
@@ -383,6 +384,7 @@ constexpr char VIRTUAL_ACCU_GRAD[] = "_VirtualAccuGrad";
 constexpr char ACCU_GRAD[] = "accu_grad";
 constexpr char PARAMETER_START[] = "parameter_start";
 constexpr char PARAM_INDEX[] = "param_index";
+constexpr char PARAMETER[] = "parameter";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";
