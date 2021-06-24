@@ -15,7 +15,6 @@
 """train ImageNet."""
 import os
 import time
-import argparse
 import datetime
 
 import mindspore.nn as nn
@@ -36,7 +35,8 @@ from src.utils.logging import get_logger
 from src.utils.optimizers__init__ import get_param_groups
 from src.utils.var_init import load_pretrain_model
 from src.image_classification import get_network
-from src.config import config
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 set_seed(1)
 
@@ -104,155 +104,101 @@ class ProgressMonitor(Callback):
         self.args.logger.info('end network train...')
 
 
-def parse_args(cloud_args=None):
+def set_parameters():
     """parameters"""
-    parser = argparse.ArgumentParser('mindspore classification training')
-    parser.add_argument('--platform', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='run platform')
-
-    # dataset related
-    parser.add_argument('--data_dir', type=str, default='', help='train data dir')
-    parser.add_argument('--per_batch_size', default=128, type=int, help='batch size for per gpu')
-    # network related
-    parser.add_argument('--pretrained', default='', type=str, help='model_path, local pretrained model to load')
-
-    # distributed related
-    parser.add_argument('--is_distributed', type=int, default=1, help='if multi device')
-    # roma obs
-    parser.add_argument('--train_url', type=str, default="", help='train url')
-
-    args, _ = parser.parse_known_args()
-    args = merge_args(args, cloud_args)
-    args.image_size = config.image_size
-    args.num_classes = config.num_classes
-    args.lr = config.lr
-    args.lr_scheduler = config.lr_scheduler
-    args.lr_epochs = config.lr_epochs
-    args.lr_gamma = config.lr_gamma
-    args.eta_min = config.eta_min
-    args.T_max = config.T_max
-    args.max_epoch = config.max_epoch
-    args.warmup_epochs = config.warmup_epochs
-    args.weight_decay = config.weight_decay
-    args.momentum = config.momentum
-    args.is_dynamic_loss_scale = config.is_dynamic_loss_scale
-    args.loss_scale = config.loss_scale
-    args.label_smooth = config.label_smooth
-    args.label_smooth_factor = config.label_smooth_factor
-    args.ckpt_interval = config.ckpt_interval
-    args.ckpt_save_max = config.ckpt_save_max
-    args.ckpt_path = config.ckpt_path
-    args.is_save_on_master = config.is_save_on_master
-    args.rank = config.rank
-    args.group_size = config.group_size
-    args.lr_epochs = list(map(int, args.lr_epochs.split(',')))
-    args.image_size = list(map(int, args.image_size.split(',')))
-
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=args.platform, save_graphs=False)
+                        device_target=config.device_target, save_graphs=False)
     # init distributed
-    if args.is_distributed:
+    if config.run_distribute:
         init()
-        args.rank = get_rank()
-        args.group_size = get_group_size()
+        config.rank = get_rank()
+        config.group_size = get_group_size()
     else:
-        args.rank = 0
-        args.group_size = 1
+        config.rank = 0
+        config.group_size = 1
 
-    if args.is_dynamic_loss_scale == 1:
-        args.loss_scale = 1  # for dynamic loss scale can not set loss scale in momentum opt
+    if config.is_dynamic_loss_scale == 1:
+        config.loss_scale = 1  # for dynamic loss scale can not set loss scale in momentum opt
 
     # select for master rank save ckpt or all rank save, compatible for model parallel
-    args.rank_save_ckpt_flag = 0
-    if args.is_save_on_master:
-        if args.rank == 0:
-            args.rank_save_ckpt_flag = 1
+    config.rank_save_ckpt_flag = 0
+    if config.is_save_on_master:
+        if config.rank == 0:
+            config.rank_save_ckpt_flag = 1
     else:
-        args.rank_save_ckpt_flag = 1
+        config.rank_save_ckpt_flag = 1
 
     # logger
-    args.outputs_dir = os.path.join(args.ckpt_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-    args.logger = get_logger(args.outputs_dir, args.rank)
-    return args
+    config.outputs_dir = os.path.join(config.output_path,
+                                      datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    config.logger = get_logger(config.outputs_dir, config.rank)
+    return config
 
-def merge_args(args, cloud_args):
-    """dictionary"""
-    args_dict = vars(args)
-    if isinstance(cloud_args, dict):
-        for key in cloud_args.keys():
-            val = cloud_args[key]
-            if key in args_dict and val:
-                arg_type = type(args_dict[key])
-                if arg_type is not type(None):
-                    val = arg_type(val)
-                args_dict[key] = val
-    return args
-
-
-def train(cloud_args=None):
+@moxing_wrapper()
+def train():
     """training process"""
-    args = parse_args(cloud_args)
+    set_parameters()
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
     # init distributed
-    if args.is_distributed:
+    if config.run_distribute:
         parallel_mode = ParallelMode.DATA_PARALLEL
-        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=config.group_size,
                                           gradients_mean=True)
     # dataloader
-    de_dataset = classification_dataset(args.data_dir, args.image_size,
-                                        args.per_batch_size, 1,
-                                        args.rank, args.group_size, num_parallel_workers=8)
+    de_dataset = classification_dataset(config.data_path, config.image_size,
+                                        config.per_batch_size, 1,
+                                        config.rank, config.group_size, num_parallel_workers=8)
     de_dataset.map_model = 4  # !!!important
-    args.steps_per_epoch = de_dataset.get_dataset_size()
+    config.steps_per_epoch = de_dataset.get_dataset_size()
 
-    args.logger.save_args(args)
+    config.logger.save_args(config)
 
     # network
-    args.logger.important_info('start create network')
+    config.logger.important_info('start create network')
     # get network and init
-    network = get_network(num_classes=args.num_classes, platform=args.platform)
+    network = get_network(num_classes=config.num_classes, platform=config.device_target)
 
-    load_pretrain_model(args.pretrained, network, args)
+    load_pretrain_model(config.checkpoint_file_path, network, config)
 
     # lr scheduler
-    lr = get_lr(args)
+    lr = get_lr(config)
 
     # optimizer
     opt = Momentum(params=get_param_groups(network),
                    learning_rate=Tensor(lr),
-                   momentum=args.momentum,
-                   weight_decay=args.weight_decay,
-                   loss_scale=args.loss_scale)
+                   momentum=config.momentum,
+                   weight_decay=config.weight_decay,
+                   loss_scale=config.loss_scale)
 
 
     # loss
-    if not args.label_smooth:
-        args.label_smooth_factor = 0.0
-    loss = CrossEntropy(smooth_factor=args.label_smooth_factor, num_classes=args.num_classes)
+    if not config.label_smooth:
+        config.label_smooth_factor = 0.0
+    loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.num_classes)
 
-    if args.is_dynamic_loss_scale == 1:
+    if config.is_dynamic_loss_scale == 1:
         loss_scale_manager = DynamicLossScaleManager(init_loss_scale=65536, scale_factor=2, scale_window=2000)
     else:
-        loss_scale_manager = FixedLossScaleManager(args.loss_scale, drop_overflow_update=False)
+        loss_scale_manager = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
 
     model = Model(network, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale_manager,
                   metrics={'acc'}, amp_level="O3")
 
     # checkpoint save
-    progress_cb = ProgressMonitor(args)
+    progress_cb = ProgressMonitor(config)
     callbacks = [progress_cb,]
-    if args.rank_save_ckpt_flag:
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval * args.steps_per_epoch,
-                                       keep_checkpoint_max=args.ckpt_save_max)
-        save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
+    if config.rank_save_ckpt_flag:
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_interval * config.steps_per_epoch,
+                                       keep_checkpoint_max=config.ckpt_save_max)
+        save_ckpt_path = os.path.join(config.outputs_dir, 'ckpt_' + str(config.rank) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=save_ckpt_path,
-                                  prefix='{}'.format(args.rank))
+                                  prefix='{}'.format(config.rank))
         callbacks.append(ckpt_cb)
 
-    model.train(args.max_epoch, de_dataset, callbacks=callbacks, dataset_sink_mode=True)
+    model.train(config.max_epoch, de_dataset, callbacks=callbacks, dataset_sink_mode=True)
 
 
 if __name__ == "__main__":

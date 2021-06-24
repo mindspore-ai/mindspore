@@ -23,8 +23,9 @@ then
 fi
 
 python train.py  \
-    --is_distribute=0 \
+    --run_distribute=0 \
     --device_id=$DEVICE_ID \
-    --pretrained=$PATH_CHECKPOINT \
-    --data_dir=$DATA_DIR > log.txt 2>&1 &
+    --checkpoint_file_path=$PATH_CHECKPOINT \
+    --data_path=$DATA_DIR \
+    --output_path './output' > log.txt 2>&1 &
 

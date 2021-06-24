@@ -61,6 +61,35 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
 - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the code directory to "/path/resnext50" on the website UI interface.
+# (3) Set the startup file to "train.py" on the website UI interface.
+# (4) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (5) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the code directory to "/path/resnext50" on the website UI interface.
+# (4) Set the startup file to "eval.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+```
+
 # [Script description](#contents)
 
 ## [Script and sample code](#contents)
@@ -95,10 +124,16 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─linear_warmup.py                # linear warmup learning rate
     ├─warmup_cosine_annealing.py      # learning rate each step
     ├─warmup_step_lr.py               # warmup step learning rate
-  ├─eval.py                           # eval net
+  ├── model_utils
+    ├──config.py                      # parameter configuration
+    ├──device_adapter.py              # device adapter
+    ├──local_adapter.py               # local adapter
+    ├──moxing_adapter.py              # moxing adapter
+  ├── default_config.yaml             # parameter configuration
+  ├──eval.py                          # eval net
   ├──train.py                         # train net
   ├──export.py                        # export mindir script
-  ├──mindspore_hub_conf.py            #  mindspore hub interface
+  ├──mindspore_hub_conf.py            # mindspore hub interface
 
 ```
 
@@ -138,7 +173,7 @@ Parameters for both training and evaluating can be set in config.py.
 You can start training by python script:
 
 ```script
-python train.py --data_dir ~/imagenet/train/ --platform Ascend --is_distributed 0
+python train.py --data_path ~/imagenet/train/ --device_target Ascend --run_distribute 0
 ```
 
 or shell script:
@@ -179,14 +214,14 @@ You can find checkpoint file together with result in log.
 You can start training by python script:
 
 ```script
-python eval.py --data_dir ~/imagenet/val/ --platform Ascend --pretrained resnext.ckpt
+python eval.py --data_path ~/imagenet/val/ --device_target Ascend --checkpoint_file_path resnext.ckpt
 ```
 
 or shell script:
 
 ```script
 # Evaluation
-sh run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
+sh run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH DEVICE_TARGET
 ```
 
 PLATFORM is Ascend or GPU, default is Ascend.
@@ -210,7 +245,7 @@ acc=93.88%(TOP5)
 ## [Model Export](#contents)
 
 ```shell
-python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
+python export.py --device_target [PLATFORM] --checkpoint_file_path [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
 The `ckpt_file` parameter is required.

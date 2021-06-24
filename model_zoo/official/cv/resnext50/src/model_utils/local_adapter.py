@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-export DEVICE_ID=$1
-DATA_DIR=$2
-PATH_CHECKPOINT=""
-if [ $# == 3 ]
-then
-  PATH_CHECKPOINT=$3
-fi
+"""Local adapter"""
 
-python train.py  \
-    --run_distribute=0 \
-    --checkpoint_file_path=$PATH_CHECKPOINT \
-    --device_target="GPU" \
-    --data_path=$DATA_DIR \
-    --output_path './output' > log.txt 2>&1 &
+import os
 
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
+
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

@@ -44,14 +44,17 @@ do
     rm -rf LOG$i
     mkdir ./LOG$i
     cp  *.py ./LOG$i
+    cp  *.yaml ./LOG$i
+    cp  ./src ./LOG$i
     cd ./LOG$i || exit
     echo "start training for rank $i, device $DEVICE_ID"
 
     env > env.log
     taskset -c $cmdopt python ../train.py  \
-    --is_distribute=1 \
+    --run_distribute=1 \
     --device_id=$DEVICE_ID \
-    --pretrained=$PATH_CHECKPOINT \
-    --data_dir=$DATA_DIR > log.txt 2>&1 &
+    --checkpoint_file_path=$PATH_CHECKPOINT \
+    --data_path=$DATA_DIR \
+    --output_path './output' > log.txt 2>&1 &
     cd ../
 done

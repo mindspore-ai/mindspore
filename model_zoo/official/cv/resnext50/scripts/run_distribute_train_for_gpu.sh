@@ -24,7 +24,8 @@ fi
 
 mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
     python train.py  \
-    --is_distribute=1 \
-    --platform="GPU" \
-    --pretrained=$PATH_CHECKPOINT \
-    --data_dir=$DATA_DIR > log.txt 2>&1 &
+    --run_distribute=1 \
+    --device_target="GPU" \
+    --checkpoint_file_path=$PATH_CHECKPOINT \
+    --data_path=$DATA_DIR \
+    --output_path './output' > log.txt 2>&1 &
