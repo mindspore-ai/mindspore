@@ -13,7 +13,7 @@
 // w5: depth
 // w6: col
 
-asm_function MatVecMulFp32
+asm_default_function MatVecMulFp32
   sub sp, sp, #128
   st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
   st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64

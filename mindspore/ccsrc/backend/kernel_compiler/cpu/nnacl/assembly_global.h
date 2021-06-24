@@ -31,6 +31,20 @@ _\fname:
 #endif
 .endm
 
+// clang-format off
+.macro asm_default_function fname
+#ifdef __APPLE__
+.globl _\fname
+_\fname:
+#else
+.global \fname
+#ifdef __ELF__
+.type \fname, %function
+#endif
+\fname:
+#endif
+.endm
+
 // clang-format on
 
 #endif  // MINDSPORE_NNACL_ASSEMBLY_GLOBAL_H
