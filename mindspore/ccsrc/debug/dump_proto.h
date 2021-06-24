@@ -28,7 +28,7 @@ std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
 
 std::string GetBinaryProtoString(const FuncGraphPtr &func_graph);
 
-mind_ir::ModelProto GetBinaryProto(const FuncGraphPtr &func_graph);
+mind_ir::ModelProto GetBinaryProto(const FuncGraphPtr &func_graph, bool save_tensor_data = false);
 
 void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 }  // namespace mindspore

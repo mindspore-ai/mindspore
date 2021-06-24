@@ -38,7 +38,7 @@ def get_func_graph(obj, *args, phase="validate"):
     else:
         phase = phase_prefix + phase + '.' + str(obj.create_time)
     _executor = Executor_.get_instance()
-    _executor.compile(obj, args_list, phase, False)
+    _executor.compile(obj, args_list, phase, False, "")
     return _executor.get_func_graph(phase)
 
 def test_softmax_relu():

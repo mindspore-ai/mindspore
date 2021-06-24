@@ -178,7 +178,7 @@ void SetGpuLoopSink(const ResourcePtr &resource) {
   }
 }
 
-void GetCachedFuncGraph(const ResourcePtr &resource) {
+void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_name) {
   MS_EXCEPTION_IF_NULL(resource);
   auto realpath = Common::GetRealPath(kCompileCacheFilePath);
   if (!realpath.has_value()) {
@@ -204,6 +204,14 @@ void GetCachedFuncGraph(const ResourcePtr &resource) {
     res_mng->AddFuncGraph(fg);
     fg->set_manager(res_mng);
   }
+  auto cnodes = fg->GetOrderedCnodes();
+  for (auto cnode : cnodes) {
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim != nullptr && prim->HasAttr("shared_name")) {
+      prim->set_attr("shared_name", MakeValue(queue_name));
+      break;
+    }
+  }
   resource->set_func_graph(fg);
 }
 
@@ -220,7 +228,7 @@ void CacheFuncGraph(const ResourcePtr &resource) {
     MS_LOG(EXCEPTION) << "Open cache file '" << realpath.value() << "' failed!";
   }
   FuncGraphPtr fg = resource->func_graph();
-  mind_ir::ModelProto fg_model = GetBinaryProto(fg);
+  mind_ir::ModelProto fg_model = GetBinaryProto(fg, true);
   if (!fg_model.SerializeToOstream(&fout)) {
     MS_LOG(EXCEPTION) << "Failed to cache the graph to file " << realpath.value();
   }
@@ -599,6 +607,11 @@ bool IsPhaseExportAir(const std::string &phase_s) {
   return phase_s.rfind(phase_to_export) != std::string::npos;
 }
 
+bool IsPhaseTrain(const std::string &phase_s) {
+  const std::string phase_to_train = "train";
+  return phase_s.rfind(phase_to_train) != std::string::npos;
+}
+
 std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
   bool is_air = IsPhaseExportAir(phase_s);
 
@@ -627,7 +640,8 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     resource->results()[kBackend] = backend_ptr;
     // If the 'use_frontend_compile_cache' context has been set true and the cache is read successfully,
     // do the backend actions only.
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) && resource->func_graph() != nullptr) {
+    if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) &&
+        resource->func_graph() != nullptr) {
       return BackendPipeline();
     }
     return VmPipeline();
@@ -635,7 +649,8 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   return GePipeline();
 }
 
-bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm) {
+bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
+                              const std::string &queue_name) {
   MS_LOG(DEBUG) << "Start ExecutorPy compile!";
   if ((!py::isinstance<py::str>(phase))) {
     MS_LOG(ERROR) << "Arg phase must be string.";
@@ -658,7 +673,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   ResourcePtr resource = std::make_shared<Resource>(obj);
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE)) {
-    GetCachedFuncGraph(resource);
+    GetCachedFuncGraph(resource, queue_name);
   }
 
   auto p_actions = GetPipeline(resource, phase_s, use_vm);
@@ -680,7 +695,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   executor_info->arg_list_size = size;
   executor_info->resource = resource;
   info_[phase_s] = executor_info;
-  pip->Run();
+  pip->Run(phase_s);
 
   // save the run graph func to MsPipeLine
   SaveCompiledGraph(phase_s);
@@ -724,11 +739,12 @@ static std::string PrintArgs(const py::tuple &args) {
   return "";
 }
 
-bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm) {
+bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
+                         const std::string &queue_name) {
   bool ret_value = false;
   try {
     MS_LOG(DEBUG) << PrintArgs(args);
-    ret_value = CompileInner(obj, args, phase, use_vm);
+    ret_value = CompileInner(obj, args, phase, use_vm, queue_name);
   } catch (const py::error_already_set &ex) {
     if (!StaticAnalysisException::Instance().HasException()) {
       // print function call stack info before release
@@ -771,12 +787,12 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   return ret_value;
 }
 
-void Pipeline::Run() {
+void Pipeline::Run(const std::string &phase_s) {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
 
-  WITH(MsProfile::GetProfile())[&user_graph, this]() {
+  WITH(MsProfile::GetProfile())[&user_graph, &phase_s, this]() {
     size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
@@ -792,7 +808,7 @@ void Pipeline::Run() {
       if (action.first == "task_emit") {
         SetGpuLoopSink(resource_);
       } else if (action.first == "validate") {
-        if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
+        if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
           CacheFuncGraph(resource_);
         }
       }

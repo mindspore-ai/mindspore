@@ -49,7 +49,7 @@ class Pipeline {
 
   ~Pipeline() = default;
 
-  void Run();
+  void Run(const std::string &phase_s);
 
   ResourcePtr resource() { return resource_; }
 
@@ -72,8 +72,10 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   ~ExecutorPy();
 
   void SaveCompiledGraph(const std::string &phase_s);
-  bool CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm);
-  bool Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm);
+  bool CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
+                    const std::string &queue_name);
+  bool Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
+               const std::string &queue_name);
 
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list);
 

@@ -392,6 +392,14 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
     case mind_ir::AttributeProto_AttributeType_BOOL: {
       return ParseAttrInScalar_int32_t_bool(attr_proto, index);
     }
+    case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      const int attr_tensor_type = attr_proto.tensors(index).data_type();
+      if (kDefaultValueSwitchMap.find(attr_tensor_type) == kDefaultValueSwitchMap.end()) {
+        MS_LOG(ERROR) << "Obtain attr in type-form has not support input type:" << attr_tensor_type;
+        return {};
+      }
+      return TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]);
+    }
     default:
       MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_type;
       return {};
@@ -418,6 +426,11 @@ void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto
     multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
   }
   for (int i = 0; i < attr_proto.strings_size(); i++) {
+    auto res = ParseAttrInScalarForm(attr_proto, i);
+    name = "value" + std::to_string(i + 1);
+    multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
+  }
+  for (int i = 0; i < attr_proto.tensors_size(); i++) {
     auto res = ParseAttrInScalarForm(attr_proto, i);
     name = "value" + std::to_string(i + 1);
     multi_value_map->insert(std::pair<string, ValuePtr>(name, res));
@@ -810,7 +823,8 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     inputs.push_back(anfnode_build_map_[input_name]);
   }
   prim->set_attr("is_load", MakeValue(true));
-  auto cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
+  CNodePtr cnode_ptr;
+  cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
 
   if (kv.size() == 0) {
@@ -818,6 +832,9 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
       const ValuePtr kUMonad = std::make_shared<UMonad>();
       auto monad_abs = kUMonad->ToAbstract();
       cnode_ptr->set_abstract(monad_abs);
+    } else if (node_type == "Depend") {
+      const ValuePtr kBool = std::make_shared<BoolImm>(true);
+      cnode_ptr->set_abstract(kBool->ToAbstract());
     } else {
       AbstractBasePtrList elem;
       for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
