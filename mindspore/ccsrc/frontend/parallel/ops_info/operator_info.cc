@@ -1581,8 +1581,11 @@ Status OperatorInfo::InferAsLossDivisor() {
     return SUCCESS;
   }
 
-  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(dev_matrix_shape_, outputs_tensor_map_[0]);
-  MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(dev_matrix_shape_)
+  if (out_dev_matrix_shape_.empty()) {
+    out_dev_matrix_shape_ = dev_matrix_shape_;
+  }
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(out_dev_matrix_shape_, outputs_tensor_map_[0]);
+  MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(out_dev_matrix_shape_)
                << ", the output tensor map is " << ShapeToString(outputs_tensor_map_[0]) << ", loss divisor is "
                << as_loss_divisor_;
   return SUCCESS;

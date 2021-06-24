@@ -232,6 +232,7 @@ class OperatorInfo {
   std::vector<TensorInfo> inputs_tensor_info_;
   std::vector<TensorInfo> outputs_tensor_info_;
   Shape dev_matrix_shape_;  // if repeated calculation, it contains the repeated_calc_num_
+  Shape out_dev_matrix_shape_;
   int64_t repeated_calc_num_ = 1;
   int64_t as_loss_divisor_ = 1;
   TensorMaps inputs_tensor_map_;

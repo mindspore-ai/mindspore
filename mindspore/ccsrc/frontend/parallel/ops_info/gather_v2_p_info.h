@@ -79,7 +79,6 @@ class GatherPInfo : public OperatorInfo {
   int64_t index_offset_;
   int64_t slice_size_;
   std::string replace_op_name_ = GATHERV2;
-  Shape out_dev_matrix_shape_;
   Group group_;
   bool manual_split_ = false;
   bool dynamic_shape_indices_ = false;
