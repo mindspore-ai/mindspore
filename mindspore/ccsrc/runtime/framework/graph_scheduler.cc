@@ -35,6 +35,7 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
+#include "profiler/device/profiling.h"
 
 namespace mindspore {
 namespace runtime {
@@ -456,6 +457,13 @@ void GraphScheduler::Initialize() {
                << ", the computed OMP thread number : " << OMP_thread_num
                << ", the used OMP thread number : " << stoi(OMP_thread_num_used);
 
+  BuildAndScheduleGlobalActor();
+}
+
+void GraphScheduler::BuildAndScheduleGlobalActor() {
+  auto actorMgr = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actorMgr);
+
   // Create and schedule memory manager actor.
   auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
@@ -465,9 +473,17 @@ void GraphScheduler::Initialize() {
   // Bind single thread to response to memory alloc and free quickly.
   (void)actorMgr->Spawn(base_actor, false);
 
-// Create and schedule recorder actor.
+  // Create and schedule recorder actor.
+  bool recorder_actor_need = false;
+  if (profiler::ProfilerManager::GetInstance()->GetEnableRecorderActorFlag()) {
+    recorder_actor_need = true;
+  }
 #ifdef ENABLE_DUMP_IR
   if (mindspore::RecorderManager::Instance().RdrEnable()) {
+    recorder_actor_need = true;
+  }
+#endif
+  if (recorder_actor_need) {
     auto recorder_actor = std::make_shared<RecorderActor>();
     MS_EXCEPTION_IF_NULL(recorder_actor);
     recorder_aid_ = &(recorder_actor->GetAID());
@@ -475,7 +491,7 @@ void GraphScheduler::Initialize() {
     base_recorder_actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(base_recorder_actor, true);
   }
-#endif
+
   // Create and schedule debug actor.
   bool debugger_actor_need = DumpJsonParser::GetInstance().e2e_dump_enabled();
 #ifdef ENABLE_DEBUGGER

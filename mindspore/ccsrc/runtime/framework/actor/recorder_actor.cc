@@ -65,12 +65,8 @@ void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchInfo
 void RecorderActor::RecordOnStepEnd(OpContext<DeviceTensor> *op_context) {
   MS_EXCEPTION_IF_NULL(op_context);
   // todo clear
-#if ENABLE_GPU
-  // Record fp_start and iter_end op name and timestamp at the step end. (GPU)
-  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_inst);
-  if (profiler_inst->GetEnableFlag()) profiler_inst->RecordOneStepStartEndInfo();
-#endif
+  // Record iter_start, fp_start and iter_end op name and timestamp at the step end. (GPU)
+  profiler::ProfilerManager::GetInstance()->RecordOneStepStartEndInfo();
 }
 
 }  // namespace runtime

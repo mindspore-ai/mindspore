@@ -561,7 +561,7 @@ class BaseTimelineGenerator:
                 os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.error('Error occurred when write timeline display file: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
     def write_timeline_summary(self):
         """Write timeline summary to json."""
@@ -578,7 +578,7 @@ class BaseTimelineGenerator:
             os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.error('Error occurred when write timeline summary file: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
     @staticmethod
     def _update_num_of_streams(timeline, stream_count_dict):
@@ -852,7 +852,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 gpu_start_time = int(lines[1].strip().split(':')[-1])
         except (IOError, OSError) as err:
             logger.error(f'Error occurred when read {start_time_file_path}: {err}')
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
         time_diff = gpu_start_time - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
@@ -874,7 +874,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                         op_timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.error('Error occurred when load operator timeline data intermediate file: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
         return op_timeline_list
 
@@ -898,7 +898,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     activity_timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.error('Error occurred when load activity timeline data intermediate file: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
         return activity_timeline_list
 
@@ -967,7 +967,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     step_num += 1
         except (IOError, OSError) as err:
             logger.error(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
         return step_time_list
 
@@ -985,7 +985,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 return bool(len(first_string.split(',')) == 2)
         except (IOError, OSError) as err:
             logger.error(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
 
 class AscendTimelineGenerator(BaseTimelineGenerator):
@@ -1018,7 +1018,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                         timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.error('Error occurred when read timeline intermediate file: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
         return timeline_list
 
@@ -1139,7 +1139,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 host_monotonic = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
             logger.error('Error occurred when read host_start.log: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException()
         try:
             with open(dev_start_file_path) as f_obj:
                 lines = f_obj.readlines()
@@ -1147,7 +1147,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 dev_cntvct = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
             logger.error('Error occurred when read dev_start.log: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException()
 
         factor_ns_to_ms = 1e-6
         factor_ten_ns_to_ns = 10

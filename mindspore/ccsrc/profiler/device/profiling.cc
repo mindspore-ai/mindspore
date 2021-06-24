@@ -19,13 +19,17 @@
 #include <cxxabi.h>
 #include <cmath>
 #include <ctime>
-#include "profiler/device/cpu/cpu_data_saver.h"
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
+#if ENABLE_GPU
+#include "profiler/device/gpu/gpu_profiling.h"
+#endif
 
 namespace mindspore {
 namespace profiler {
+std::shared_ptr<ProfilerManager> ProfilerManager::profiler_manager_inst_ = std::make_shared<ProfilerManager>();
+
 uint64_t Profiler::GetHostMonoTimeStamp() const {
   struct timespec ts;
 #if defined(_WIN32) || defined(_WIN64)
@@ -56,6 +60,52 @@ void Profiler::SetRunTimeData(const std::string &op_name, const uint64_t start, 
   if (iter != op_info_map_.end()) {
     iter->second.start_duration.emplace_back(StartDuration({start, duration}));
   }
+}
+
+void Profiler::RecordOneStepStartEndInfo() {
+  std::lock_guard<std::mutex> locker(record_mutex_);
+  all_step_start_end_info_.push_back(step_start_end_info_);
+  step_start_end_info_.iter_start_op_name = "";
+  step_start_end_info_.fp_start_op_name = "";
+}
+
+void Profiler::RecordOneStepStartEndInfo(const std::string op_name) {
+  std::lock_guard<std::mutex> locker(record_mutex_);
+  if (step_start_end_info_.iter_start_op_name.empty()) {
+    step_start_end_info_.iter_start_op_name = op_name;
+    step_start_end_info_.fp_start_op_name = op_name;
+  }
+
+  std::string fp_start_op_name = step_start_end_info_.fp_start_op_name;
+
+  auto op_type_begin_iter = fp_start_op_name.rfind('/') + 1;
+  auto op_type_end_iter = fp_start_op_name.rfind('-');
+  auto op_type = fp_start_op_name.substr(op_type_begin_iter, op_type_end_iter - op_type_begin_iter);
+  if (op_type == "InitDataSetQueue" || op_type == "GetNext") {
+    step_start_end_info_.fp_start_op_name = op_name;
+  }
+  step_start_end_info_.iter_end_op_name = op_name;
+}
+
+std::shared_ptr<ProfilerManager> &ProfilerManager::GetInstance() {
+  MS_EXCEPTION_IF_NULL(profiler_manager_inst_);
+  return profiler_manager_inst_;
+}
+
+bool ProfilerManager::GetEnableRecorderActorFlag() {
+#if ENABLE_GPU
+  return profiler::gpu::GPUProfiler::GetInstance()->GetEnableFlag();
+#endif
+  return false;
+}
+
+void ProfilerManager::RecordOneStepStartEndInfo() {
+#if ENABLE_GPU
+  auto gpu_profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  if (gpu_profiler_inst->GetEnableFlag()) {
+    gpu_profiler_inst->RecordOneStepStartEndInfo();
+  }
+#endif
 }
 }  // namespace profiler
 }  // namespace mindspore
