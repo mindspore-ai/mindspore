@@ -48,12 +48,6 @@ void ConvDoubleInFusionPass::MatchConvDoubleInEltwise(const CNodePtr &cnode, con
   }
   if (AnfAlgo::GetKernelType(double_in_eltwise_input) == KernelType::TBE_KERNEL &&
       AnfAlgo::GetFusionType(double_in_eltwise_input) == kernel::FusionType::CONVLUTION) {
-    auto manager = kernel_graph.manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    std::vector<int64_t> eltwise_output_used_num{SizeToLong(manager->node_users()[eltwise_input].size())};
-    AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(eltwise_output_used_num), eltwise_input);
-    std::vector<int64_t> conv_output_used_num{SizeToLong(manager->node_users()[double_in_eltwise_input].size())};
-    AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(conv_output_used_num), double_in_eltwise_input);
     (void)record.insert(double_in_eltwise_input);
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);

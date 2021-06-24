@@ -36,8 +36,6 @@ void MatmulEltwiseFusionPass::MatchMatmulEltwise(const CNodePtr &cnode, const An
   if (fusion_id_allocator->HasFusionIdAttr(relu_input)) {
     return;
   }
-  std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[relu_input].size())};
-  AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), relu_input);
   std::unordered_set<AnfNodePtr> record{cnode, relu_input};
   candidate_fusion->push_back(record);
   SetRecordFusionId(record);
