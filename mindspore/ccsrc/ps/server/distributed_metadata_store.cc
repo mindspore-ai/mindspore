@@ -106,9 +106,10 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
       return false;
     }
 
-    std::string update_meta_rsp = reinterpret_cast<const char *>(update_meta_rsp_msg->data());
+    std::string update_meta_rsp =
+      std::string(reinterpret_cast<char *>(update_meta_rsp_msg->data()), update_meta_rsp_msg->size());
     if (update_meta_rsp != kSuccess) {
-      MS_LOG(ERROR) << "Updating metadata in server " << stored_rank << " failed.";
+      MS_LOG(ERROR) << "Updating metadata in server " << stored_rank << " failed. " << update_meta_rsp;
       return false;
     }
   }

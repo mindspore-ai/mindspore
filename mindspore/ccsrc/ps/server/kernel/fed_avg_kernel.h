@@ -68,7 +68,6 @@ class FedAvgKernel : public AggregationKernel {
       AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, cnode_weight_idx_), 0).first;
     MS_EXCEPTION_IF_NULL(weight_node);
     name_ = cnode_name + "." + weight_node->fullname_with_scope();
-    MS_LOG(INFO) << "Register counter for " << name_;
     first_cnt_handler_ = [&](std::shared_ptr<core::MessageHandler>) {
       std::unique_lock<std::mutex> lock(weight_mutex_);
       if (!participated_) {
@@ -123,9 +122,8 @@ class FedAvgKernel : public AggregationKernel {
 
     accum_count_++;
     participated_ = true;
-    DistributedCountService::GetInstance().Count(
+    return DistributedCountService::GetInstance().Count(
       name_, std::to_string(DistributedCountService::GetInstance().local_rank()) + "_" + std::to_string(accum_count_));
-    return true;
   }
 
   void Reset() override {

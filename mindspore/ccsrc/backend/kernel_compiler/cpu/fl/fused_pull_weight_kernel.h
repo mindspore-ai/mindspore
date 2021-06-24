@@ -73,8 +73,9 @@ class FusedPullWeightKernel : public CPUKernel {
     while (retcode == schema::ResponseCode_SucNotReady) {
       if (!ps::worker::FLWorker::GetInstance().SendToServer(
             0, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPullWeight, &pull_weight_rsp_msg)) {
-        MS_LOG(EXCEPTION) << "Sending request for FusedPullWeight to server 0 failed.";
-        return false;
+        MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. This iteration is dropped.";
+        ps::worker::FLWorker::GetInstance().SetIterationRunning();
+        return true;
       }
       MS_EXCEPTION_IF_NULL(pull_weight_rsp_msg);
 
@@ -82,6 +83,13 @@ class FusedPullWeightKernel : public CPUKernel {
       retcode = pull_weight_rsp->retcode();
       if (retcode == schema::ResponseCode_SucNotReady) {
         std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPullWeights));
+        fl_iteration_ = pull_weight_rsp->iteration();
+        MS_LOG(DEBUG) << "Server is not ready for downloading yet. Reason: " << pull_weight_rsp->reason()->str()
+                      << ". Retry later.";
+        if (!BuildPullWeightReq(fbb)) {
+          MS_LOG(EXCEPTION) << "Building request for FusedDownloadWeightsByKeys failed.";
+          return false;
+        }
         continue;
       } else if (retcode != schema::ResponseCode_SUCCEED) {
         MS_LOG(EXCEPTION) << "FusedPullWeight failed. Server return code: " << pull_weight_rsp->retcode()

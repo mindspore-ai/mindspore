@@ -19,6 +19,7 @@
 #include <vector>
 #include <utility>
 #include "ps/worker/fl_worker.h"
+#include "utils/ms_exception.h"
 
 namespace mindspore {
 namespace ps {
@@ -39,10 +40,36 @@ void FLWorker::Run() {
   worker_node_ = std::make_shared<core::WorkerNode>();
   MS_EXCEPTION_IF_NULL(worker_node_);
 
+  worker_node_->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
+    Finalize();
+    try {
+      MS_LOG(EXCEPTION)
+        << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
+    } catch (std::exception &e) {
+      MsException::Instance().SetException();
+    }
+  });
+  worker_node_->RegisterEventCallback(core::ClusterEvent::NODE_TIMEOUT, [this]() {
+    Finalize();
+    try {
+      MS_LOG(EXCEPTION)
+        << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
+           "network building phase.";
+    } catch (std::exception &e) {
+      MsException::Instance().SetException();
+    }
+  });
+
   InitializeFollowerScaler();
   worker_node_->Start();
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
   return;
+}
+
+void FLWorker::Finalize() {
+  MS_EXCEPTION_IF_NULL(worker_node_);
+  worker_node_->Finish();
+  worker_node_->Stop();
 }
 
 bool FLWorker::SendToServer(uint32_t server_rank, void *data, size_t size, core::TcpUserCommand command,

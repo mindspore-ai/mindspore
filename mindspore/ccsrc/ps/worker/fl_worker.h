@@ -60,6 +60,7 @@ class FLWorker {
     return instance;
   }
   void Run();
+  void Finalize();
   bool SendToServer(uint32_t server_rank, void *data, size_t size, core::TcpUserCommand command,
                     std::shared_ptr<std::vector<unsigned char>> *output = nullptr);
 

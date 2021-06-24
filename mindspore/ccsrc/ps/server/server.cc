@@ -222,6 +222,7 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<core::TcpCommu
   MS_EXCEPTION_IF_NULL(communicator);
   communicator->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
     MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
+    safemode_ = true;
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
                   [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
     communicator_with_server_->Stop();
@@ -231,6 +232,7 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<core::TcpCommu
     MS_LOG(ERROR)
       << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
          "network building phase.";
+    safemode_ = true;
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
                   [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
     communicator_with_server_->Stop();
@@ -285,6 +287,7 @@ void Server::StartCommunicator() {
   DistributedMetadataStore::GetInstance().Initialize(server_node_);
   CollectiveOpsImpl::GetInstance().Initialize(server_node_);
   DistributedCountService::GetInstance().Initialize(server_node_, kLeaderServerRank);
+  MS_LOG(INFO) << "This server rank is " << server_node_->rank_id();
 
   MS_LOG(INFO) << "Start communicator with worker.";
   std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),

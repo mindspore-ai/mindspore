@@ -41,6 +41,8 @@ void CommunicatorBase::Join() {
   running_thread_.join();
   return;
 }
+
+bool CommunicatorBase::running() const { return running_; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

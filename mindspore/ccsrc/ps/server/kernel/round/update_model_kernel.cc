@@ -56,9 +56,9 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   }
 
   MS_LOG(INFO) << "Launching UpdateModelKernel kernel.";
-  if (!ReachThresholdForUpdateModel(fbb)) {
+  if (ReachThresholdForUpdateModel(fbb)) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-    return false;
+    return true;
   }
 
   const schema::RequestUpdateModel *update_model_req = flatbuffers::GetRoot<schema::RequestUpdateModel>(req_data);
@@ -103,14 +103,14 @@ void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHand
 
 bool UpdateModelKernel::ReachThresholdForUpdateModel(const std::shared_ptr<FBBuilder> &fbb) {
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
-    std::string reason = "Current amount for updateModel is enough.";
+    std::string reason = "Current amount for updateModel is enough. Please retry later.";
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
-    return false;
+    MS_LOG(WARNING) << reason;
+    return true;
   }
-  return true;
+  return false;
 }
 
 bool UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
@@ -118,19 +118,20 @@ bool UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_mod
   size_t iteration = static_cast<size_t>(update_model_req->iteration());
   if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
     std::string reason = "UpdateModel iteration number is invalid:" + std::to_string(iteration) +
-                         ", current iteration:" + std::to_string(LocalMetaStore::GetInstance().curr_iter_num());
+                         ", current iteration:" + std::to_string(LocalMetaStore::GetInstance().curr_iter_num()) +
+                         ". Retry later.";
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
-    return false;
+    MS_LOG(WARNING) << reason;
+    return true;
   }
 
   PBMetadata device_metas = DistributedMetadataStore::GetInstance().GetMetadata(kCtxDeviceMetas);
   FLIdToDeviceMeta fl_id_to_meta = device_metas.device_metas();
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   if (fl_id_to_meta.fl_id_to_meta().count(update_model_fl_id) == 0) {
-    std::string reason = "devices_meta for " + update_model_fl_id + " is not set.";
+    std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
@@ -193,7 +194,7 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
 bool UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                             const schema::RequestUpdateModel *update_model_req) {
   if (!DistributedCountService::GetInstance().Count(name_, update_model_req->fl_id()->str())) {
-    std::string reason = "UpdateModel counting failed.";
+    std::string reason = "Counting for update model request failed. Please retry later.";
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
