@@ -32,6 +32,8 @@ class MemoryAwareActor : public OpActor<DeviceTensor> {
   virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *context) {}
   virtual void SendMemoryFreeReq(OpContext<DeviceTensor> *context) {}
   virtual void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {}
+
+  friend class GraphScheduler;
 };
 }  // namespace runtime
 }  // namespace mindspore

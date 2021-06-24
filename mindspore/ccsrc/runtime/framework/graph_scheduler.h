@@ -174,7 +174,7 @@ class GraphScheduler {
   std::vector<KernelActorPtr> BuildKernelActor(const GraphCompilerInfo &graph_compiler_info);
   LoopCountActorPtr BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
   OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
-  std::vector<KernelActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set);
+  std::vector<KernelActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set, GraphExecutionStrategy strategy);
   std::vector<SwitchActorPtr> BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info);
   std::vector<GatherActorPtr> BuildGatherActor(const GraphCompilerInfo &graph_compiler_info);
 
@@ -183,11 +183,11 @@ class GraphScheduler {
   void CacheGraphOutputToActor(const GraphCompilerInfo &graph_compiler_info);
 
   // The processing of actors link statically.
-  // The gather of linking data allows of kernel, it will call following functions by the different from actor type.
+  // 1. The processing of linking data arrows.
+  // The gather of linking data arrows of kernel, it will call following functions by the different from actor type.
   void LinkDataArrow(KernelActor *to_actor, const GraphCompilerInfo &graph_compiler_info, const KernelGraphPtr &graph,
                      KernelWithIndex from_kernel_with_output_idx, KernelWithIndex to_kernel_with_input_idx,
                      const TensorPtr &tensor);
-
   // Link data arrows for internal parameter, convert internal parameter to actor by internal parameter cache to link.
   void LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter,
                                          const std::vector<AnfNodePtr> &host_parameters, const KernelGraphPtr &graph,
@@ -204,10 +204,9 @@ class GraphScheduler {
   void LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *to_actor,
                                    KernelWithIndex from_kernel_with_output_idx,
                                    KernelWithIndex to_kernel_with_input_idx);
-  void LinkControlArrowForKernelActor(std::vector<KernelActorPtr> *from_actors, LoopCountActor *to_actor,
-                                      GraphExecutionStrategy strategy);
-  void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
-                                         GraphExecutionStrategy strategy);
+
+  // 2. The processing of linking control arrows.
+  void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set);
   void LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node);
   // The skipped node doesn't run, so need link the control arrow between the inputs and user of skipped node.
   void LinkControlArrowBySkippedNode(KernelActor *to_actor, const AnfNodePtr &skipped_node);
@@ -215,10 +214,12 @@ class GraphScheduler {
   void LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph);
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
   void LinkControlArrowByCommunicationNode(const KernelGraphPtr &graph);
-  void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
 
-  // Control flow link interface.
+  // 3. The processing of linking output result arrows.
+  void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
+
+  // 4. The processing of control flow linking.
   void LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set);
   void LinkDataArrowForGatherActor(GatherActor *from_actor, KernelActor *to_actor,
                                    KernelWithIndex from_kernel_with_output_idx,
@@ -239,19 +240,17 @@ class GraphScheduler {
   void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void LinkOutputResultArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
-
-  // The processing of actors link dynamically.
-  // Analyze necessary input data of current actor, generate and cache op arrow
-  // between current actor and prev actor, the method executes before calling Schedule.
-  void PrepareForDynamiclyLink(ActorSet *actor_set, const CNodePtr &kernel, const AID &aid,
-                               const std::vector<TensorPtr> *input_tensors);
-
   void PrepareDataForControlNode(const ControlNodeParserPtr &control_node_parser,
                                  const std::vector<AnfNodePtr> &origin_parameters,
                                  const std::vector<TensorPtr> &tensors,
                                  const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
                                  std::vector<TensorPtr> *host_tensors);
 
+  // The processing of actors link dynamically.
+  // Analyze necessary input data of current actor, generate and cache op arrow
+  // between current actor and prev actor, the method executes before calling Schedule.
+  void PrepareForDynamiclyLink(ActorSet *actor_set, const CNodePtr &kernel, const AID &aid,
+                               const std::vector<TensorPtr> *input_tensors);
   // Link to prev actor dynamically, and send message to prev actor to add the
   // new DataArrow and send output data back, the method must execute after calling Schedule.
   void LinkDataArrowForKernelActorDynamicly(const ActorSet *actor_set);
@@ -279,6 +278,7 @@ class GraphScheduler {
   void DumpOutputActor(const OutputActor *actor, std::ofstream &ofs) const;
   void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
+
   // The global maps, only be cleared in the deconstruction.
   std::unordered_map<ActorInfo, ActorSetPtr> actors_;
   std::unordered_map<std::string, OpActor<DeviceTensor> *> actor_name_to_actor_;

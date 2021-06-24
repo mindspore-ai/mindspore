@@ -1204,7 +1204,8 @@ void KernelGraph::UpdateGraphOutputMap(const std::vector<AnfWithOutIndex> &old_o
       continue;
     }
     // Update the front backend node map.
-    if (backend_front_anf_map_.count(old_output.first) > 0) {
+    if ((backend_front_anf_map_.count(old_output.first) > 0) && old_output.first->isa<CNode>() &&
+        new_output.first->isa<CNode>()) {
       MS_LOG(INFO) << "Replace backend output node " << old_output.first->fullname_with_scope() << " to "
                    << new_output.first->fullname_with_scope();
       auto front_node = backend_front_anf_map_[old_output.first];
