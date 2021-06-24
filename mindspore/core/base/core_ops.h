@@ -61,6 +61,7 @@ constexpr auto kTile = "Tile";
 constexpr auto kBiasAddGrad = "BiasAddGrad";
 
 // Arrays
+constexpr auto kDynamicShape = "DynamicShape";
 constexpr auto kStack = "Stack";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
@@ -167,7 +168,7 @@ inline const PrimitivePtr kPrimSparseGatherV2 = std::make_shared<Primitive>("Spa
 inline const PrimitivePtr kPrimSparseToDense = std::make_shared<Primitive>("SparseToDense");
 inline const PrimitivePtr kPrimShape = std::make_shared<Primitive>("Shape");
 inline const PrimitivePtr kPrimStridedSlice = std::make_shared<Primitive>(kStridedSlice);
-inline const PrimitivePtr kPrimDynamicShape = std::make_shared<Primitive>("DynamicShape");
+inline const PrimitivePtr kPrimDynamicShape = std::make_shared<Primitive>(kDynamicShape);
 inline const PrimitivePtr kPrimEmbeddingLookup = std::make_shared<Primitive>("EmbeddingLookup");
 inline const PrimitivePtr kPrimEmbeddingLookupCommGrad = std::make_shared<Primitive>("EmbeddingLookupCommGrad");
 inline const PrimitivePtr kPrimSize = std::make_shared<Primitive>("Size");

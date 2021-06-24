@@ -20,15 +20,23 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kDynamicShape = "DynamicShape";
+static const std::set<std::string> host_kernel = {prim::kPrimDynamicShape->name(),
+                                                  prim::kPrimDynamicBroadcastGradientArgs->name()};
 
 void HostMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   MS_LOG(INFO) << "HostMetadataInfo.";
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
+
+  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  if (host_kernel.find(op_name) == host_kernel.end()) {
+    MS_LOG(DEBUG) << "Host dose not have op [" << op_name << "]";
+    return;
+  }
 
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};
