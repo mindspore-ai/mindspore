@@ -408,6 +408,7 @@ def get_log_config():
         >>> os.environ['GLOG_log_dir'] = '/var/log'
         >>> os.environ['logger_maxBytes'] = '5242880'
         >>> os.environ['logger_backupCount'] = '10'
+        >>> os.environ['GLOG_stderrthreshold'] = '2'
         >>> from mindspore import log as logger
         >>> logger.get_log_config()
     """
