@@ -2705,9 +2705,25 @@ void HandleTileNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &
   tile->UpdateMultiples(cnode);
 }
 
+void HandleConv2dTransposeNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->size() != 4 || !IsValueNode<Primitive>(cnode->input(0))) {
+    return;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim->name() != CONV2D_BACK_PROP_INPUT && prim->name() != CONV2D_TRANSPOSE) {
+    return;
+  }
+
+  Conv2DBackpropInputInfoPtr op_ptr = std::dynamic_pointer_cast<Conv2DBackpropInputInfo>(distribute_operator);
+  MS_EXCEPTION_IF_NULL(op_ptr);
+  op_ptr->UpdateOutShape(cnode);
+}
+
 void HandleSpecialNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   HandleDropoutNode(distribute_operator, cnode);
   HandleTileNode(distribute_operator, cnode);
+  HandleConv2dTransposeNode(distribute_operator, cnode);
 }
 
 std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {

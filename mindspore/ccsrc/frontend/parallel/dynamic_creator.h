@@ -197,6 +197,8 @@ REGISTER(TopKInfo);
 REGISTER(ScatterUpdateInfo);
 REGISTER(VirtualOutputInfo);
 REGISTER(Conv2DInfo);
+REGISTER(Conv2DBackpropInputInfo);
+REGISTER(Conv2DTransposeInfo);
 REGISTER(BatchNormInfo);
 REGISTER(MaxPoolInfo);
 REGISTER(AvgPoolInfo);

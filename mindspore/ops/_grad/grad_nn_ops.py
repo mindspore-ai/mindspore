@@ -44,6 +44,8 @@ def get_bprop_bias_add(self):
 @bprop_getters.register(P.Conv2D)
 def get_bprop_conv2d(self):
     """Grad definition for `Conv2D` operation."""
+    self.out_channel = self.get_attr_dict()["out_channel"]
+    self.pad_list = self.get_attr_dict()["pad_list"]
     input_grad = P.Conv2DBackpropInput(
         self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
@@ -1055,12 +1057,13 @@ def get_bprop_roi_align(self):
 def get_bprop_conv2d_backprop_input(self):
     """Grad definition for `Conv2DBackpropInput` operation."""
     pad_list = self.get_attr_dict()['pad_list']
+    out_channel = self.get_attr_dict()['out_channel']
     filter_grad = G.Conv2DBackpropFilter(
-        self.out_channel, self.kernel_size, self.pad_mode, self.pad, pad_list, mode=self.mode,
+        out_channel, self.kernel_size, self.pad_mode, self.pad, pad_list, mode=self.mode,
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     input_grad = P.Conv2D(
-        self.out_channel, self.kernel_size, pad_mode=self.pad_mode.lower(), pad=self.pad,
+        out_channel, self.kernel_size, pad_mode=self.pad_mode.lower(), pad=self.pad,
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
 
