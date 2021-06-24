@@ -33,6 +33,7 @@ class RemoveRedundantOpPass : public Pass {
   int ReplaceTupleGetItem(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int RemoveDropoutOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int RemoveInvalidPadOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
+  int RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   bool Run(const FuncGraphPtr &graph) override;
 
  private:

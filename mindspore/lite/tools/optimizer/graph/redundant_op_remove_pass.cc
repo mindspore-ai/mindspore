@@ -127,6 +127,13 @@ int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraph
       return lite::RET_NO_CHANGE;
     }
   }
+  if (CheckPrimitiveType(anf_node, prim::kPrimTranspose)) {
+    if (cnode->size() != kInputTripleNum) {
+      MS_LOG(DEBUG) << "The node inputs size is bigger than 2";
+      remove_cnode_.insert(anf_node);
+      return lite::RET_NO_CHANGE;
+    }
+  }
 
   bool replace_succ = manager->Replace(anf_node, cnode->input(1));
   if (!replace_succ) {
@@ -287,6 +294,23 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
   return lite::RET_OK;
 }
 
+int RemoveRedundantOpPass::RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (cnode->size() != kInputTripleNum) {
+    MS_LOG(DEBUG) << "The node inputs size is bigger than 2";
+    return lite::RET_NO_CHANGE;
+  }
+  auto index_node = cnode->inputs()[2]->cast<ParameterPtr>();
+  if (index_node == nullptr) {
+    return RET_OK;
+  }
+  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(index_node->default_param());
+  if (tensor_info->Size() != 0) {
+    return RET_OK;
+  }
+  return ReplaceOp(anf_node, manager);
+}
+
 bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
@@ -314,6 +338,9 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
     }
     if (CheckPrimitiveType(node, prim::kPrimPadFusion)) {
       status = RemoveInvalidPadOp(node, manager);
+    }
+    if (CheckPrimitiveType(node, prim::kPrimTranspose)) {
+      status = RemoveInvalidTransposeOp(node, manager);
     }
     if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(1));
