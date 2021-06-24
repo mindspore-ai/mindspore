@@ -78,9 +78,9 @@ sh scripts/create_mindrecord.sh [TRAIN_DATA_DIR]
 # 环境要求
 
 - 硬件
-    - 准备Ascend处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 准备Ascend处理器搭建硬件环境。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
@@ -173,12 +173,13 @@ eval_data_dir           # directory of evaluating corpus
 
   训练检查点保存在config.py中指定的文件夹中。训练日志保存在工作区所在的文件夹下的train.log，内容如下所示。
 
-  ```text
-  # 分布式训练结果（1P）
-  epoch: 1 step: 1000, loss is 3.0921426
-  epoch: 1 step: 2000, loss is 2.8683748
-  epoch: 1 step: 3000, loss is 2.7949429
-  ...
+```text
+# 分布式训练结果（1P）
+epoch: 1 step: 1000, loss is 3.0921426
+epoch: 1 step: 2000, loss is 2.8683748
+epoch: 1 step: 3000, loss is 2.7949429
+...
+
 ```
 
 - GPU处理器环境运行
