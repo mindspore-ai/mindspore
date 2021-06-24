@@ -13,24 +13,27 @@
 # limitations under the License.
 # ===========================================================================
 """DSCNN export."""
-import argparse
-
 import numpy as np
 from mindspore import Tensor
 from mindspore.train.serialization import export
-
-from src.config import eval_config
 from src.ds_cnn import DSCNN
 from src.models import load_ckpt
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--ckpt_path', type=str, default="", required=True, help='checkpoint path.')
-parser.add_argument('--file_name', type=str, default="dscnn", help='model name.')
-parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
 
-args, model_settings = eval_config(parser)
-network = DSCNN(model_settings, args.model_size_info)
-load_ckpt(network, args.ckpt_path, False)
-x = np.random.uniform(0.0, 1.0, size=[args.per_batch_size, 1, model_settings['spectrogram_length'],
-                                      model_settings['dct_coefficient_count']]).astype(np.float32)
-export(network, Tensor(x), file_name=args.file_name, file_format=args.file_format)
+def modelarts_pre_process():
+    pass
+
+
+@moxing_wrapper(pre_process=None)
+def model_export():
+    network = DSCNN(config, config.model_size_info)
+    load_ckpt(network, config.export_ckpt_path, False)
+    x = np.random.uniform(0.0, 1.0, size=[config.per_batch_size, 1, config.model_setting_spectrogram_length,
+                                          config.model_setting_dct_coefficient_count]).astype(np.float32)
+    export(network, Tensor(x), file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()

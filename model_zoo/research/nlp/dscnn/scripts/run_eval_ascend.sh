@@ -14,4 +14,19 @@
 # limitations under the License.
 # ===========================================================================
 
-python eval.py --device_id $1 --model_dir $2
+if [ $# != 2 ]
+then
+    echo "Usage: sh scripts/run_train_ascend.sh [EVAL_FEAT_DIR] [MODEL_DIR]"
+    exit 1
+fi
+
+rm -rf eval
+mkdir eval
+cp -r ./src ./eval
+cp -r ./scripts ./eval
+cp ./*.py ./eval
+cp ./*yaml ./eval
+cd ./eval || exit
+echo "start eval network"
+python eval.py --eval_feat_dir=$1 --model_dir=$2 > eval.log 2>&1 &
+cd ..

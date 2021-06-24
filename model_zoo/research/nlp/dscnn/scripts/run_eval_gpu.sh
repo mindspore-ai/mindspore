@@ -14,4 +14,20 @@
 # limitations under the License.
 # ===========================================================================
 
-python eval.py --device_id $1 --model_dir $2 --device_target 'GPU' > eval.log 2>&1 &
+if [ $# != 2 ]
+then
+    echo "run as scripts/run_train_gpu.sh [EVAL_FEAT_DIR] [MODEL_DIR]"
+    exit 1
+fi
+
+export DEVICE_ID=0
+rm -rf eval_gpu
+mkdir eval_gpu
+cp -r ./src ./eval_gpu
+cp -r ./scripts ./eval_gpu
+cp ./*.py ./eval_gpu
+cp ./*yaml ./eval_gpu
+cd ./eval_gpu || exit
+echo "start eval network"
+python eval.py --model_dir $2 --device_target 'GPU' --eval_feat_dir $1 > eval.log 2>&1 &
+cd ..
