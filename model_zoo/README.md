@@ -96,6 +96,12 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 | September 01, 2020 | Support [MindSpore v0.7.0-beta](https://www.mindspore.cn/news/newschildren/en?id=246) |
 | July 31, 2020 | Support [MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren/en?id=237) |
 
+## Related Website
+
+Here is the ModelZoo for MindSpore which support different devices including Ascend, GPU, CPU and mobile.
+
+If you are looking for exclusive models only for Ascend using different ML platform, you could refer to [Ascend ModelZoo](https://hiascend.com/software/modelzoo) and corresponding [gitee repository](https://gitee.com/ascend/modelzoo)
+
 ## Disclaimers
 
 Mindspore only provides scripts that downloads and preprocesses public datasets. We do not own these datasets and are not responsible for their quality or maintenance. Please make sure you have permission to use the dataset under the dataset’s license. The models trained on these dataset are for non-commercial research and educational purpose only.
