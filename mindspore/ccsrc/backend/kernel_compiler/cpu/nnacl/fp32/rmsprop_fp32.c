@@ -29,10 +29,10 @@ int RMSPropUnuseCenterFp32(float *variable, float *mean_square, float *moment, f
   size_t c1 = start;
 #ifdef ENABLE_AVX
   size_t c8 = ((end - start) / C8NUM) * C8NUM;
-  float *variable_ptr = variable;
-  float *mean_square_ptr = mean_square;
-  float *gradients_ptr = gradients;
-  float *moment_ptr = moment;
+  float *variable_ptr = variable + start;
+  float *mean_square_ptr = mean_square + start;
+  float *gradients_ptr = gradients + start;
+  float *moment_ptr = moment + start;
 
   __m256 decay_r = _mm256_set1_ps(1.0 - decay);
   __m256 momentum_r = _mm256_set1_ps(momentum);
@@ -78,11 +78,11 @@ int RMSPropUseCenterFp32(float *variable, float *mean_square, float *moment, flo
   size_t c1 = start;
 #ifdef ENABLE_AVX
   size_t c8 = ((end - start) / C8NUM) * C8NUM;
-  float *variable_ptr = variable;
-  float *mean_gradients_ptr = mean_gradients;
-  float *mean_square_ptr = mean_square;
-  float *moment_ptr = moment;
-  float *gradients_ptr = gradients;
+  float *variable_ptr = variable + start;
+  float *mean_gradients_ptr = mean_gradients + start;
+  float *mean_square_ptr = mean_square + start;
+  float *moment_ptr = moment + start;
+  float *gradients_ptr = gradients + start;
 
   __m256 decay_r = _mm256_set1_ps(1.0 - decay);
   __m256 momentum_r = _mm256_set1_ps(momentum);
