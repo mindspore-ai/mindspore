@@ -25,7 +25,7 @@ from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_group_size, get_rank
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 
@@ -37,14 +37,12 @@ from src.config import config
 
 parser = argparse.ArgumentParser(description='Image classification with HarDNet on Imagenet')
 
-parser.add_argument('--dataset_path', type=str, default='/home/hardnet/imagenet_original/train/',
-                    help='Dataset path')
+parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
-parser.add_argument('--device_num', type=int, default=8, help='Device num')
 parser.add_argument('--pre_trained', type=str, default=True)
 parser.add_argument('--train_url', type=str)
 parser.add_argument('--data_url', type=str)
-parser.add_argument('--pre_ckpt_path', type=str, default='/home/work/user-job-dir/hardnet/src/HarDNet85.ckpt')
+parser.add_argument('--pre_ckpt_path', type=str, default='', help='Pretrain path')
 parser.add_argument('--label_smooth_factor', type=float, default=0.1, help='label_smooth_factor')
 parser.add_argument('--isModelArts', type=ast.literal_eval, default=True)
 parser.add_argument('--distribute', type=ast.literal_eval, default=True)
@@ -57,22 +55,25 @@ if args.isModelArts:
 
 if __name__ == '__main__':
     target = args.device_target
+    context.set_context(mode=context.GRAPH_MODE, device_target=target,
+                        enable_auto_mixed_precision=True, save_graphs=False)
 
     if args.distribute:
-        # init context
-        device_id = int(os.getenv('DEVICE_ID'))
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
-        context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True)
-        init()
-
+        if target == "Ascend":
+            init()
+            device_id = int(os.getenv('DEVICE_ID'))
+            context.set_auto_parallel_context(device_id=device_id,
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+        if target == "GPU":
+            init()
+            context.set_auto_parallel_context(device_num=get_group_size(),
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
     else:
-        device_id = args.device_id
-        context.set_context(mode=context.GRAPH_MODE,
-                            device_target=target,
-                            save_graphs=False,
-                            device_id=args.device_id)
+        if target == "Ascend":
+            device_id = args.device_id
+            context.set_context(device_id=args.device_id)
 
     if args.isModelArts:
         import moxing as mox
@@ -146,8 +147,12 @@ if __name__ == '__main__':
 
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
 
-    model = Model(network, loss_fn=loss, optimizer=net_opt,
-                  loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O3")
+    if target == "Ascend":
+        model = Model(network, loss_fn=loss, optimizer=net_opt,
+                      loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O3")
+    if target == "GPU":
+        model = Model(network, loss_fn=loss, optimizer=net_opt,
+                      loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O2")
 
     # define callbacks
     time_cb = TimeMonitor(data_size=train_dataset.get_dataset_size())
@@ -156,10 +161,14 @@ if __name__ == '__main__':
     if config.save_checkpoint:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
+
         if args.isModelArts:
             save_checkpoint_path = '/cache/train_output/device_' + os.getenv('DEVICE_ID') + '/'
         else:
-            save_checkpoint_path = config.save_checkpoint_path
+            if target == "GPU" and args.distribute:
+                save_checkpoint_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(get_rank()) + '/')
+            else:
+                save_checkpoint_path = config.save_checkpoint_path
 
         ckpt_cb = ModelCheckpoint(prefix="HarDNet85",
                                   directory=save_checkpoint_path,
@@ -171,7 +180,7 @@ if __name__ == '__main__':
     print("Total epoch: {}".format(config.epoch_size))
     print("Batch size: {}".format(config.batch_size))
     print("Class num: {}".format(config.class_num))
-    print("======= Multiple Training begin========")
+    print("=======Training begin========")
     model.train(config.epoch_size, train_dataset,
                 callbacks=cb, dataset_sink_mode=True)
     if args.isModelArts:
