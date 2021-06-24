@@ -37,7 +37,7 @@ class DeviceContextManager {
   }
   void Register(const std::string &device_name, DeviceContextCreator &&device_context_creator);
   DeviceContext *GetOrCreateDeviceContext(const DeviceContextKey &device_context_key);
-  void UpdataDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key);
+  void UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key);
   void ClearDeviceContexts();
 
  private:

@@ -65,7 +65,7 @@ bool GPUDeviceContext::Initialize() {
     MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
     device_context_key_.device_id_ = IntToUint((*get_local_rank_funcptr)());
 
-    DeviceContextManager::GetInstance().UpdataDeviceContextKey(old_key, device_context_key_);
+    DeviceContextManager::GetInstance().UpdateDeviceContextKey(old_key, device_context_key_);
 
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);

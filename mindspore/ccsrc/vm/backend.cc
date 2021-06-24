@@ -253,7 +253,7 @@ void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
 #endif
 
 MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id)
-    : Backend(backend_name), device_name_(device_name), device_id_(device_id) {
+    : Backend(backend_name), device_name_(device_name) {
   root_graph_ = nullptr;
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
