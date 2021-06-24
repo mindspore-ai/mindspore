@@ -678,6 +678,10 @@ bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
 
 int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,
                          FormatType format) {
+  if (file_name.empty()) {
+    MS_LOG(ERROR) << "File name cannot be empty";
+    return RET_ERROR;
+  }
   if (format != FT_FLATBUFFERS) {
     MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
     return RET_ERROR;

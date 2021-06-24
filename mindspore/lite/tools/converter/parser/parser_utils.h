@@ -34,8 +34,8 @@ int TransposeInsertForWeightConst(const FuncGraphPtr &graph, const CNodePtr &con
                                   std::vector<int> perm);
 int HandleWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,
                       schema::Format src_format, schema::Format dst_format);
-int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t format, const ParameterPtr &weight_node,
-                                    std::vector<int> perm);
+int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t dst_format, int64_t format,
+                                    const ParameterPtr &weight_node, std::vector<int> perm);
 int HandleWeightSharing(const FuncGraphPtr &graph, int64_t format, const ParameterPtr &weight_node,
                         schema::Format src_format, schema::Format dst_format);
 }  // namespace lite
