@@ -44,7 +44,7 @@ WGAN网络包含两部分，生成器网络和判别器网络。判别器网络�
     - 训练集：42.8G，共3033044张图像。
     - 注：对于生成对抗网络，推理部分是传入噪声数据生成图片，故无需使用测试集数据。
 - 数据格式：原始数据格式为lmdb格式，需要使用LSUN官网格式转换脚本把lmdb数据export所有图片，并将Bedrooms这一类图片放到同一文件夹下。
-    - 注：LSUN数据集官网的数据格式转换脚本地址：(https://github.com/fyu/lsun)
+    - 注：LSUN数据集官网的数据格式转换脚本地址：(<https://github.com/fyu/lsun>)
 
 # 环境要求
 
@@ -218,7 +218,7 @@ WGAN网络包含两部分，生成器网络和判别器网络。判别器网络�
 | 参数(M)             | 6.57                                                        |
 | 微调检查点 | 13.98M (.ckpt文件)                                         |
 | 推理模型        | 14.00M (.mindir文件)                     |
-| 脚本                    | [WGAN脚本](https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/research/cv/WGAN) |
+| 脚本                    | [WGAN脚本](https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/research/cv/wgan) |
 
 生成图片效果如下：
 
@@ -241,7 +241,7 @@ WGAN网络包含两部分，生成器网络和判别器网络。判别器网络�
 | 参数(M)             | 6.45                                                        |
 | 微调检查点 | 13.98M (.ckpt文件)                                         |
 | 推理模型        | 14.00M (.mindir文件)                     |
-| 脚本                    | [WGAN脚本](https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/research/cv/WGAN) |
+| 脚本                    | [WGAN脚本](https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/research/cv/wgan) |
 
 生成图片效果如下：
 
