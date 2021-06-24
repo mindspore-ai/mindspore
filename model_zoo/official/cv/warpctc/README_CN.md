@@ -286,9 +286,36 @@ bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 
 ### 导出MindIR
 
-```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
-```
+- 在本地导出
+
+  ```shell
+  python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+  ```
+
+- 在ModelArts上导出
+
+  ```python
+  # (1) 上传你的代码到 s3 桶上
+  # (2) 在ModelArts上创建训练任务
+  # (3) 选择代码目录 /{path}/warpctc
+  # (4) 选择启动文件 /{path}/warpctc/export.py
+  # (5) 执行a或b
+  #     a. 在 /{path}/warpctc/default_config.yaml 文件中设置参数
+  #         1. 设置 ”enable_modelarts: True“
+  #         2. 设置 “ckpt_file: ./{path}/*.ckpt”('ckpt_file' 指待导出的'*.ckpt'权重文件相对于`export.py`的路径, 且权重文件必须包含在代码目录下)
+  #         3. 设置 ”file_name: warpctc“
+  #         4. 设置 ”file_format：MINDIR“
+  #     b. 在 网页上设置
+  #         1. 添加 ”enable_modelarts=True“
+  #         2. 添加 “ckpt_file=./{path}/*.ckpt”(('ckpt_file' 指待导出的'*.ckpt'权重文件相对于`export.py`的路径, 且权重文件必须包含在代码目录下)
+  #         3. 添加 ”file_name=warpctc“
+  #         4. 添加 ”file_format=MINDIR“
+  # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径(这一步不起作用，但必须要有)
+  # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+  # (9) 在网页上的’资源池选择‘项目下， 选择单卡规格的资源
+  # (10) 创建训练作业
+  # 你将在{Output file path}下看到 'warpctc.mindir'文件
+  ```
 
 参数ckpt_file为必填项，
 `EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。

@@ -63,4 +63,5 @@ ckpt_file: "required, warpctc ckpt file."
 file_format: "file format, choose from AIR, MINDIR, and default is MINDIR"
 
 
-
+---
+device_target: ['Ascend', 'CPU', 'GPU']
