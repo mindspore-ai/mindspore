@@ -438,14 +438,14 @@ void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CN
     // add full_name for debugger
     node_proto->set_full_name(node->fullname_with_scope());
     MS_LOG(INFO) << "full_name: " << node->fullname_with_scope();
-    if (dump_location == kDebugWholeStack) {
-      std::ostringstream buffer;
-      auto traces = mindspore::trace::GetSourceLineList(node);
-      for (auto &trace : traces) {
-        buffer << "      # " << trace;
-      }
-      node_proto->set_source_address(buffer.str());
+
+    std::ostringstream buffer;
+    auto traces = mindspore::trace::GetSourceLineList(node);
+    for (auto &trace : traces) {
+      buffer << "      # " << trace;
     }
+    node_proto->set_source_address(buffer.str());
+
     // process OP inputs
     for (size_t i = 1; i < inputs.size(); ++i) {
       debugger::InputProto *input_proto = node_proto->add_input();

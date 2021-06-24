@@ -34,7 +34,8 @@ class DebuggerProtoExporter {
   DebuggerProtoExporter() {}
   ~DebuggerProtoExporter() {}
 
-  std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph, LocDebugDumpMode dump_location = kDebugOff);
+  std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph,
+                                      LocDebugDumpMode dump_location = kDebugWholeStack);
   debugger::ModelProto GetFuncGraphProto(const FuncGraphPtr &func_graph);
 
  private:
@@ -49,13 +50,13 @@ class DebuggerProtoExporter {
   void SetDictionaryToProto(const ValueDictionaryPtr &val, debugger::ValueProto *value_proto);
   void SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto);
   void ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
-                       LocDebugDumpMode dump_location = kDebugOff);
+                       LocDebugDumpMode dump_location = kDebugWholeStack);
   void ExportParameters(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto);
   void ExportCNodes(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
-                    std::map<AnfNodePtr, size_t> *const_map_ptr, LocDebugDumpMode dump_location = kDebugOff);
+                    std::map<AnfNodePtr, size_t> *const_map_ptr, LocDebugDumpMode dump_location = kDebugWholeStack);
   void ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node, std::map<AnfNodePtr, size_t> *apply_map_ptr,
                    std::map<AnfNodePtr, size_t> *const_map_ptr, debugger::GraphProto *const graph_proto,
-                   LocDebugDumpMode dump_location = kDebugOff);
+                   LocDebugDumpMode dump_location = kDebugWholeStack);
   void ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &ret_node,
                              const std::map<AnfNodePtr, size_t> &apply_map, std::map<AnfNodePtr, size_t> *const_map_ptr,
                              debugger::GraphProto *graph_proto);
@@ -66,6 +67,6 @@ class DebuggerProtoExporter {
   debugger::ModelProto model_;
 };
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix, const std::string &target_dir,
-                            LocDebugDumpMode dump_location = kDebugOff);
+                            LocDebugDumpMode dump_location = kDebugWholeStack);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_MINDSPORE_PROTO_EXPORTER_H_
