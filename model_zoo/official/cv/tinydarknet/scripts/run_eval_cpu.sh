@@ -59,6 +59,6 @@ cp ./*.yaml ./eval
 env >env.log
 echo "start evaluation for device CPU"
 cd ./eval || exit
-python ./eval.py --device_target=CPU --data_path=$PATH1 --dataset_name=$2 --config_path=$CONFIG_FILE \
+python ./eval.py --device_target=CPU --val_data_dir=$PATH1 --dataset_name=$2 --config_path=$CONFIG_FILE \
 --checkpoint_path=$PATH2 > ./eval.log 2>&1 &
 cd ..

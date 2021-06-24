@@ -26,8 +26,8 @@ momentum: 0.9
 weight_decay: 0.0001
 image_height: 227
 image_width: 227
-train_data_dir: './dataset/imagenet_original/train/'
-val_data_dir: './dataset/imagenet_original/val/'
+train_data_dir: './data/cifar10_train/'
+val_data_dir: './data/cifar10_val/'
 keep_checkpoint_max: 1
 checkpoint_path: './scripts/train_parallel4/ckpt_4/train_tinydarknet_imagenet-300_1251.ckpt'
 onnx_filename: 'tinydarknet.onnx'
