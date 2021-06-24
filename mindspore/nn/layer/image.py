@@ -206,6 +206,11 @@ class SSIM(Cell):
     assessment: from error visibility to structural similarity <https://ieeexplore.ieee.org/document/1284395>`_.
     IEEE transactions on image processing.
 
+    SSIM is a measure of the similarity of two pictures.
+    Like PSNR, SSIM is often used as an evaluation of image quality. SSIM is a number between 0 and 1.The larger it is,
+    the smaller the gap between the output image and the undistorted image, that is, the better the image quality.
+    When the two images are exactly the same, SSIM=1.
+
     .. math::
 
         l(x,y)&=\frac{2\mu_x\mu_y+C_1}{\mu_x^2+\mu_y^2+C_1}, C_1=(K_1L)^2.\\

@@ -77,9 +77,9 @@ class Softmax(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> softmax = nn.Softmax()
-        >>> output = softmax(input_x)
+        >>> output = softmax(x)
         >>> print(output)
         [0.03168 0.01166 0.0861  0.636   0.2341 ]
     """
@@ -127,9 +127,9 @@ class LogSoftmax(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> log_softmax = nn.LogSoftmax()
-        >>> output = log_softmax(input_x)
+        >>> output = log_softmax(x)
         >>> print(output)
         [[-5.00672150e+00 -6.72150636e-03 -1.20067215e+01]
          [-7.00091219e+00 -1.40009127e+01 -9.12250078e-04]]
@@ -165,23 +165,24 @@ class ELU(Cell):
         alpha (float): The coefficient of negative factor whose type is float. Default: 1.0.
 
     Inputs:
-        - **input_data** (Tensor) - The input of ELU with data type of float16 or float32.
+        - **x** (Tensor) - The input of ELU with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
         TypeError: If `alpha` is not a float.
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `alpha` is not equal to 1.0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
         >>> elu = nn.ELU()
-        >>> result = elu(input_x)
+        >>> result = elu(x)
         >>> print(result)
         [-0.63212055  -0.86466473  0.  2.  1.]
     """
@@ -212,21 +213,22 @@ class ReLU(Cell):
     Activation_function#/media/File:Activation_rectified_linear.svg>`_.
 
     Inputs:
-        - **input_data** (Tensor) - The input of ReLU.
+        - **x** (Tensor) - The input of ReLU. The data type is Number.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is not a number.
+        TypeError: If dtype of `x` is not a number.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> relu = nn.ReLU()
-        >>> output = relu(input_x)
+        >>> output = relu(x)
         >>> print(output)
         [0. 2. 0. 2. 0.]
     """
@@ -255,21 +257,22 @@ class ReLU6(Cell):
     The input is a Tensor of any valid shape.
 
     Inputs:
-        - **input_data** (Tensor) - The input of ReLU6 with data type of float16 or float32.
+        - **x** (Tensor) - The input of ReLU6 with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, which has the same type as `input_data`.
+        Tensor, which has the same type as `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> relu6 = nn.ReLU6()
-        >>> output = relu6(input_x)
+        >>> output = relu6(x)
         >>> print(output)
         [0. 0. 0. 2. 1.]
     """
@@ -300,10 +303,11 @@ class LeakyReLU(Cell):
         alpha (Union[int, float]): Slope of the activation function at x < 0. Default: 0.2.
 
     Inputs:
-        - **input_x** (Tensor) - The input of LeakyReLU.
+        - **x** (Tensor) - The input of LeakyReLU.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, has the same type and shape as the `input_x`.
+        Tensor, has the same type and shape as the `x`.
 
     Raises:
         TypeError: If `alpha` is not a float or an int.
@@ -312,9 +316,9 @@ class LeakyReLU(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> leaky_relu = nn.LeakyReLU()
-        >>> output = leaky_relu(input_x)
+        >>> output = leaky_relu(x)
         >>> print(output)
         [[-0.2  4.  -1.6]
          [ 2.  -1.   9. ]]
@@ -352,21 +356,22 @@ class Tanh(Cell):
     where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Tanh with data type of float16 or float32.
+        - **x** (Tensor) - The input of Tanh with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
+        >>> x = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
         >>> tanh = nn.Tanh()
-        >>> output = tanh(input_x)
+        >>> output = tanh(x)
         >>> print(output)
         [0.7617 0.964  0.995  0.964  0.7617]
     """
@@ -399,21 +404,22 @@ class GELU(Cell):
     Activation_function#/media/File:Activation_gelu.png>`_.
 
     Inputs:
-        - **input_data** (Tensor) - The input of GELU with data type of float16 or float32.
+        - **x** (Tensor) - The input of GELU with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> gelu = nn.GELU()
-        >>> output = gelu(input_x)
+        >>> output = gelu(x)
         >>> print(output)
         [[-1.5880802e-01  3.9999299e+00 -3.1077917e-21]
          [ 1.9545976e+00 -2.2918017e-07  9.0000000e+00]]
@@ -443,21 +449,22 @@ class FastGelu(Cell):
     where :math:`x_i` is the element of the input.
 
     Inputs:
-        - **input_data** (Tensor) - The input of FastGelu with data type of float16 or float32.
+        - **x** (Tensor) - The input of FastGelu with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> fast_gelu = nn.FastGelu()
-        >>> output = fast_gelu(input_x)
+        >>> output = fast_gelu(x)
         >>> print(output)
         [[-1.5418735e-01  3.9921875e+00 -9.7473649e-06]
          [ 1.9375000e+00 -1.0052517e-03  8.9824219e+00]]
@@ -490,21 +497,22 @@ class Sigmoid(Cell):
     Sigmoid_function#/media/File:Logistic-curve.svg>`_.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Sigmoid with data type of float16 or float32.
+        - **x** (Tensor) - The input of Sigmoid with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> sigmoid = nn.Sigmoid()
-        >>> output = sigmoid(input_x)
+        >>> output = sigmoid(x)
         >>> print(output)
         [0.2688  0.11914 0.5     0.881   0.7305 ]
     """
@@ -544,25 +552,26 @@ class PReLU(Cell):
         w (Union[float, list, Tensor]): The initial value of w. Default: 0.25.
 
     Inputs:
-        - **input_data** (Tensor) - The input of PReLU with data type of float16 or float32.
+        - **x** (Tensor) - The input of PReLU with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
         TypeError: If `channel` is not an int.
         TypeError: If `w` is not one of float, list, Tensor.
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `channel` is less than 1.
-        ValueError: If length of shape of `input_data` is equal to 1.
+        ValueError: If length of shape of `x` is equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)
+        >>> x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)
         >>> prelu = nn.PReLU()
-        >>> output = prelu(input_x)
+        >>> output = prelu(x)
         >>> print(output)
         [[[[0.1 0.6]
            [0.9 0.9]]]]
@@ -610,21 +619,22 @@ class HSwish(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSwish, data type must be float16 or float32.
+        - **x** (Tensor) - The input of HSwish, data type must be float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hswish = nn.HSwish()
-        >>> result = hswish(input_x)
+        >>> result = hswish(x)
         >>> print(result)
         [-0.3333  -0.3333  0  1.666  0.6665]
     """
@@ -652,21 +662,22 @@ class HSigmoid(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSigmoid, data type must be float16 or float32.
+        - **x** (Tensor) - The input of HSigmoid, data type must be float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hsigmoid = nn.HSigmoid()
-        >>> result = hsigmoid(input_x)
+        >>> result = hsigmoid(x)
         >>> print(result)
         [0.3333  0.1666  0.5  0.833  0.6665]
     """
@@ -694,21 +705,22 @@ class LogSigmoid(Cell):
     where :math:`x_{i}` is the element of the input.
 
     Inputs:
-        - **input_data** (Tensor) - The input of LogSigmoid with data type of float16 or float32.
+        - **x** (Tensor) - The input of LogSigmoid with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
         >>> net = nn.LogSigmoid()
-        >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> output = net(input_x)
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> output = net(x)
         >>> print(output)
         [-0.31326166 -0.12692806 -0.04858734]
     """

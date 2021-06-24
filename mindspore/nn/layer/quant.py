@@ -339,10 +339,10 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         mode (string): Optional quantization mode, currently only `DEFAULT`(QAT) and `LEARNED_SCALE` are supported.
             Default: ("DEFAULT")
     Inputs:
-        - **input** (Tensor) - The input of FakeQuantWithMinMaxObserver.
+        - **x** (Tensor) - The input of FakeQuantWithMinMaxObserver. The input dimension is preferably 2D or 4D.
 
     Outputs:
-        Tensor, with the same type and shape as the `input`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
         TypeError: If `min_init` or `max_init` is not int, float or list.
@@ -360,8 +360,8 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         >>> import mindspore
         >>> from mindspore import Tensor
         >>> fake_quant = nn.FakeQuantWithMinMaxObserver()
-        >>> input_data = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = fake_quant(input_data)
+        >>> x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = fake_quant(x)
         >>> print(result)
         [[ 0.9882355  1.9764705  0.9882355]
          [-1.9764705  0.        -0.9882355]]
@@ -584,7 +584,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
         stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the `x`. Default: 0.
         eps (float): Parameters for Batch Normalization. Default: 1e-5.
         momentum (float): Parameters for Batch Normalization op. Default: 0.997.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
@@ -610,7 +610,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -634,8 +634,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
         >>> qconfig = quant.create_quant_config()
         >>> conv2d_bnfold = nn.Conv2dBnFoldQuantOneConv(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
         ...                                             weight_init="ones", quant_config=qconfig)
-        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
-        >>> result = conv2d_bnfold(input_data)
+        >>> x = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_bnfold(x)
         >>> print(result)
         [[[[5.9296875 13.8359375]
            [11.859375 17.78125]]]]
@@ -822,7 +822,7 @@ class Conv2dBnFoldQuant(Cell):
         kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
         stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the `x`. Default: 0.
         eps (float): Parameters for Batch Normalization. Default: 1e-5.
         momentum (float): Parameters for Batch Normalization op. Default: 0.997.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
@@ -850,7 +850,7 @@ class Conv2dBnFoldQuant(Cell):
             Default: 100000.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -874,8 +874,8 @@ class Conv2dBnFoldQuant(Cell):
         >>> qconfig = quant.create_quant_config()
         >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
         ...                                      weight_init="ones", quant_config=qconfig)
-        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
-        >>> result = conv2d_bnfold(input_data)
+        >>> x = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_bnfold(x)
         >>> print(result)
         [[[[5.9296875 13.8359375]
            [11.859375 17.78125]]]]
@@ -1049,7 +1049,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
         stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the `x`. Default: 0.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
@@ -1065,7 +1065,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -1088,8 +1088,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
         >>> qconfig = quant.create_quant_config()
         >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
         ...                                                weight_init='ones', quant_config=qconfig)
-        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
-        >>> result = conv2d_no_bnfold(input_data)
+        >>> x = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_no_bnfold(x)
         >>> print(result)
         [[[[5.929658  13.835868]
            [11.859316  17.78116]]]]
@@ -1194,7 +1194,7 @@ class Conv2dQuant(Cell):
         kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
         stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the `x`. Default: 0.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
@@ -1208,7 +1208,8 @@ class Conv2dQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+          The input dimension is preferably 2D or 4D.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -1231,8 +1232,8 @@ class Conv2dQuant(Cell):
         >>> qconfig = quant.create_quant_config()
         >>> conv2d_quant = nn.Conv2dQuant(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
         ...                               weight_init='ones', quant_config=qconfig)
-        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
-        >>> result = conv2d_quant(input_data)
+        >>> x = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_quant(x)
         >>> print(result)
         [[[[5.9296875  13.8359375]
            [11.859375  17.78125]]]]
@@ -1332,9 +1333,9 @@ class DenseQuant(Cell):
         in_channels (int): The dimension of the input space.
         out_channels (int): The dimension of the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as input. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as input. The values of str refer to the function `initializer`. Default: 'zeros'.
+            same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (Union[str, Cell, Primitive]): The regularization function applied to the output of the layer,
             eg. 'relu'. Default: None.
@@ -1344,7 +1345,8 @@ class DenseQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+           The input dimension is preferably 2D or 4D.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -1368,8 +1370,8 @@ class DenseQuant(Cell):
         >>> from mindspore import Tensor
         >>> qconfig = quant.create_quant_config()
         >>> dense_quant = nn.DenseQuant(2, 1, weight_init='ones', quant_config=qconfig)
-        >>> input_data = Tensor(np.array([[1, 5], [3, 4]]), mindspore.float32)
-        >>> result = dense_quant(input_data)
+        >>> x = Tensor(np.array([[1, 5], [3, 4]]), mindspore.float32)
+        >>> result = dense_quant(x)
         >>> print(result)
         [[5.929413]
          [6.9176483]]
@@ -1468,10 +1470,10 @@ class ActQuant(_QuantActivation):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **input** (Tensor) - The input of ActQuant.
+        - **x** (Tensor) - The input of ActQuant. The input dimension is preferably 2D or 4D.
 
     Outputs:
-        Tensor, with the same type and shape as the `input`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
         TypeError: If `activation` is not an instance of Cell.
@@ -1486,8 +1488,8 @@ class ActQuant(_QuantActivation):
         >>> from mindspore import Tensor
         >>> qconfig = quant.create_quant_config()
         >>> act_quant = nn.ActQuant(nn.ReLU(), quant_config=qconfig)
-        >>> input_data = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = act_quant(input_data)
+        >>> x = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = act_quant(x)
         >>> print(result)
         [[0.9882355 1.9764705 0.       ]
          [0.        0.        0.       ]]
@@ -1554,14 +1556,15 @@ class TensorAddQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **input_x1** (Tensor) - The first tensor of TensorAddQuant.
-        - **input_x2** (Tensor) - The second tensor of TensorAddQuant.
+        - **x1** (Tensor) - The first tensor of TensorAddQuant. The input dimension is preferably 2D or 4D.
+        - **x2** (Tensor) - The second tensor of TensorAddQuant. Has the same shape with `x1`.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_x1`.
+        Tensor, with the same type and shape as the `x1`.
 
     Raises:
         TypeError: If `ema_decay` is not a float.
+        ValueError: If the shape of `x2` is different with `x1`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -1572,9 +1575,9 @@ class TensorAddQuant(Cell):
         >>> from mindspore import Tensor
         >>> qconfig = quant.create_quant_config()
         >>> add_quant = nn.TensorAddQuant(quant_config=qconfig)
-        >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones((2, 3)), mindspore.float32)
-        >>> output = add_quant(input_x1, input_x2)
+        >>> x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> x2 = Tensor(np.ones((2, 3)), mindspore.float32)
+        >>> output = add_quant(x1, x2)
         >>> print(output)
         [[ 1.9764705  3.011765   1.9764705]
          [-0.9882355  0.9882355  0.       ]]
@@ -1615,14 +1618,15 @@ class MulQuant(Cell):
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
-        - **input_x1** (Tensor) - The first tensor of MulQuant.
-        - **input_x2** (Tensor) - The second tensor of MulQuant.
+        - **x1** (Tensor) - The first tensor of MulQuant. The input dimension is preferably 2D or 4D.
+        - **x2** (Tensor) - The second tensor of MulQuant. Has the same shape with `x1`.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_x1`.
+        Tensor, with the same type and shape as the `x1`.
 
     Raises:
         TypeError: If `ema_decay` is not a float.
+        ValueError: If the shape of `x2` is different with `x1`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -1633,9 +1637,9 @@ class MulQuant(Cell):
         >>> from mindspore import Tensor
         >>> qconfig = quant.create_quant_config()
         >>> mul_quant = nn.MulQuant(quant_config=qconfig)
-        >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones((2, 3)) * 2, mindspore.float32)
-        >>> output = mul_quant(input_x1, input_x2)
+        >>> x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> x2 = Tensor(np.ones((2, 3)) * 2, mindspore.float32)
+        >>> output = mul_quant(x1, x2)
         >>> print(output)
         [[ 1.9764705  4.0000005  1.9764705]
          [-4.         0.        -1.9764705]]

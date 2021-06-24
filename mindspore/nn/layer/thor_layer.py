@@ -48,15 +48,15 @@ class DenseThor(Cell):
         in_channels (int): The number of the input channels.
         out_channels (int): The number of the output channels.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
+            same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (str): activate function applied to the output of the fully connected layer, eg. 'ReLU'.
             Default: None.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
 
     Outputs:
         Tensor of shape :math:`(N, out\_channels)`.
@@ -289,7 +289,7 @@ class Conv2dThor(_ConvThor):
     of kernel and it has shape :math:`(\text{ks_h}, \text{ks_w})`, where :math:`\text{ks_h}` and
     :math:`\text{ks_w}` are the height and width of the convolution kernel. The full kernel has shape
     :math:`(C_{out}, C_{in} // \text{group}, \text{ks_h}, \text{ks_w})`, where group is the group number
-    to split the input in the channel dimension.
+    to split the input `x` in the channel dimension.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
     :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
@@ -311,7 +311,7 @@ class Conv2dThor(_ConvThor):
             "same", "valid", "pad". Default: "same".
 
             - same: Adopts the way of completion. The shape of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
+              the `x`. The total number of padding will be calculated in horizontal and vertical
               directions and evenly distributed to top and bottom, left and right if possible. Otherwise, the
               last extra padding will be done from the bottom and the right side. If this mode is set, `padding`
               must be 0.
@@ -319,17 +319,17 @@ class Conv2dThor(_ConvThor):
             - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
               without padding. Extra pixels will be discarded. If this mode is set, `padding` must be 0.
 
-            - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
+            - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
 
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is an integer,
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input `x`. If `padding` is an integer,
                     the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
                     with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
-                                      be greater or equal to 1 and bounded by the height and width of the  input.
+                                      be greater or equal to 1 and bounded by the height and width of the  input `x`.
                                       Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. If the group is equal to `in_channels` and `out_channels`,
@@ -346,7 +346,7 @@ class Conv2dThor(_ConvThor):
             Initializer for more details. Default: 'zeros'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -531,7 +531,7 @@ class EmbeddingThor(Cell):
     needed for THOR, the detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
 
     Note:
-        When 'use_one_hot' is set to True, the type of the input must be mindspore.int32.
+        When 'use_one_hot' is set to True, the type of the input `x` must be mindspore.int32.
 
     Args:
         vocab_size (int): The size of the dictionary of embeddings.
@@ -539,23 +539,23 @@ class EmbeddingThor(Cell):
         use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: False.
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializes the embedding_table.
             Refer to class `initializer` for the values of string when a string is specified. Default: 'normal'.
-        dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
+        dtype (:class:`mindspore.dtype`): Data type of input `x`. Default: mindspore.float32.
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
                                  will be initialized to zero. Default: None. The feature is inactivated.
     Inputs:
-        - **input** (Tensor) - Tensor of input shape :math:`(\text{batch_size}, \text{input_length})`. The elements of
+        - **x** (Tensor) - Tensor of input shape :math:`(\text{batch_size}, \text{x_length})`. The elements of
           the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
           be zero.
 
     Outputs:
-        Tensor of output shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
+        Tensor of output shape :math:`(\text{batch_size}, \text{x_length}, \text{embedding_size})`.
 
     Examples:
         >>> net = nn.EmbeddingThor(20000, 768,  True)
-        >>> input_data = Tensor(np.ones([8, 128]), mindspore.int32)
+        >>> x = Tensor(np.ones([8, 128]), mindspore.int32)
         >>>
         >>> # Maps the input word IDs to word embedding.
-        >>> output = net(input_data)
+        >>> output = net(x)
         >>> output.shape
         (8, 128, 768)
     """

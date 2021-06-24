@@ -42,12 +42,12 @@ class Conv2dBnAct(Cell):
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
         stride (int): Specifies stride for all spatial dimensions with the same value. The value of stride must be
-            greater than or equal to 1 and lower than any one of the height and width of the input. Default: 1.
+            greater than or equal to 1 and lower than any one of the height and width of the `x`. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (int): Implicit paddings on both sides of the `x`. Default: 0.
         dilation (int): Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than
-            or equal to 1 and lower than any one of the height and width of the input. Default: 1.
+            or equal to 1 and lower than any one of the height and width of the `x`. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -71,10 +71,10 @@ class Conv2dBnAct(Cell):
         after_fake(bool): Determine whether there must be a fake quantization operation after Cond2dBnAct.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`. The data type is float32.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`. The data type is float32.
 
     Raises:
         TypeError: If `in_channels`, `out_channels`, `stride`, `padding` or `dilation` is not an int.
@@ -87,8 +87,8 @@ class Conv2dBnAct(Cell):
 
     Examples:
         >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='relu')
-        >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> result = net(input)
+        >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> result = net(x)
         >>> output = result.shape
         >>> print(output)
         (1, 240, 1024, 640)
@@ -157,9 +157,9 @@ class DenseBnAct(Cell):
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as input. The values of str refer to the function `initializer`. Default: 'normal'.
+            is same as `x`. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as input. The values of str refer to the function `initializer`. Default: 'zeros'.
+            same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         has_bn (bool): Specifies to use batchnorm or not. Default: False.
         momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.9
@@ -172,10 +172,10 @@ class DenseBnAct(Cell):
         after_fake(bool): Determine whether there must be a fake quantization operation after DenseBnAct.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, in\_channels)`. The data type is float32.
 
     Outputs:
-        Tensor of shape :math:`(N, out\_channels)`.
+        Tensor of shape :math:`(N, out\_channels)`. The data type is float32.
 
     Raises:
         TypeError: If `in_channels` or `out_channels` is not an int.
@@ -188,8 +188,8 @@ class DenseBnAct(Cell):
 
     Examples:
         >>> net = nn.DenseBnAct(3, 4)
-        >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
-        >>> result = net(input)
+        >>> x = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
+        >>> result = net(x)
         >>> output = result.shape
         >>> print(output)
         (2, 4)
