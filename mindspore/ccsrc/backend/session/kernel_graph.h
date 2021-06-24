@@ -63,6 +63,7 @@ class KernelGraph : public FuncGraph {
     ref_out_in_map_ = graph.ref_out_in_map_;
     node_output_edges_ = graph.node_output_edges_;
     summary_nodes_ = graph.summary_nodes_;
+    updated_parameters_ = graph.updated_parameters_;
     executable_ = graph.executable_;
     summary_node_exist_ = graph.summary_node_exist_;
     valid_inputs_ = graph.valid_inputs_;
@@ -259,6 +260,12 @@ class KernelGraph : public FuncGraph {
   void SetInputNodes();
   const std::vector<AnfNodePtr> &input_nodes() const { return input_nodes_; }
   bool has_optimizer() const { return has_optimizer_; }
+  bool IsUpdatedParameter(const ParameterPtr &param) {
+    if (updated_parameters_.find(param) != updated_parameters_.end()) {
+      return true;
+    }
+    return false;
+  }
   // handle graph dependency
   void AddPreGraph(const std::shared_ptr<session::KernelGraph> &graph) {
     if (graph != nullptr) {
@@ -373,6 +380,8 @@ class KernelGraph : public FuncGraph {
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
   std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
+  // parameters that will be updated when graph is executed
+  std::unordered_set<ParameterPtr> updated_parameters_;
   // graph needn't execute
   bool executable_{false};
   // exist summary node in graph

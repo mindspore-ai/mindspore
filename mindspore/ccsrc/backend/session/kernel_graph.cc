@@ -1323,15 +1323,19 @@ void KernelGraph::SetOptimizerFlag() {
     auto node_name = AnfAlgo::GetCNodeName(cnode);
     if (kOptOperatorSet.find(node_name) != kOptOperatorSet.end()) {
       has_optimizer_ = true;
-      return;
+    } else if (node_name.find("Assign") == string::npos) {
+      continue;
     }
-    if (node_name.find("Assign") != string::npos) {
-      for (auto &input : cnode->inputs()) {
-        MS_EXCEPTION_IF_NULL(input);
-        if (input->isa<Parameter>() && AnfAlgo::IsParameterWeight(input->cast<ParameterPtr>())) {
-          has_optimizer_ = true;
-          return;
-        }
+    for (auto &input : cnode->inputs()) {
+      MS_EXCEPTION_IF_NULL(input);
+      auto real_node = AnfAlgo::VisitKernel(input, 0).first;
+      if (!real_node->isa<Parameter>()) {
+        continue;
+      }
+      auto param = real_node->cast<ParameterPtr>();
+      if (AnfAlgo::IsParameterWeight(param)) {
+        has_optimizer_ = true;
+        (void)updated_parameters_.insert(param);
       }
     }
   }
