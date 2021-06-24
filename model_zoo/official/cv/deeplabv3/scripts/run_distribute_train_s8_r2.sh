@@ -27,10 +27,10 @@ if [ -d ${train_path} ]; then
 fi
 mkdir -p ${train_path}
 mkdir ${train_path}/ckpt
-'''
-If turn on the verification function while training, need to set `data_root` and `data_lst`.
-Otherwise, it can be empty string with "".
-'''
+
+# If turn on the verification function while training, need to set `data_root` and `data_lst`.
+# Otherwise, it can be empty string with "".
+
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
     export RANK_ID=${i}
@@ -41,6 +41,7 @@ do
     python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
                                                --data_file=/PATH/TO/MINDRECORD_NAME  \
                                                --data_root=/PATH/TO/DATA \
+                                               --run_eval=False \
                                                --val_data=/PATH/TO/DATA_lst.txt  \
                                                --scales=1.0  \
                                                --train_epochs=300  \
