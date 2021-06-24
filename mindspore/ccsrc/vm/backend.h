@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <utility>
 #include <vector>
 
@@ -147,8 +148,8 @@ class MindRTBackend : public Backend {
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.
-  std::unordered_map<GraphId, DeviceContext *> graph_id_to_device_context_;
-  std::unordered_map<GraphInfo, DeviceContext *> graph_info_to_device_context_;
+  std::map<GraphId, DeviceContext *> graph_id_to_device_context_;
+  std::map<GraphInfo, DeviceContext *> graph_info_to_device_context_;
   std::vector<AnfNodePtr> control_nodes_;
 
   std::unordered_map<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
