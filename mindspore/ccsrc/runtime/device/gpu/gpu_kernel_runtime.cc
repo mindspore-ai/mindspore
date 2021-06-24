@@ -753,7 +753,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     if (!mock) {
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);
 
-      if (gpu_kernel && dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
+      if (gpu_kernel != nullptr && dynamic_kernel != nullptr && dynamic_kernel->is_dynamic_shape()) {
         gpu_kernel->PostExecute();
       }
 
@@ -844,7 +844,7 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;
     }
-    if (gpu_kernel && dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
+    if (gpu_kernel != nullptr && dynamic_kernel != nullptr && dynamic_kernel->is_dynamic_shape()) {
       gpu_kernel->PostExecute();
     }
   }
