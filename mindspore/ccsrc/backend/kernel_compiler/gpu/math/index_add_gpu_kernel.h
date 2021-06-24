@@ -35,8 +35,7 @@ class IndexAddGpuKernel : public GpuKernel {
         src_axis_size_(0),
         dst_axis_size_(0),
         inner_size_(0),
-        use_lock_(true),
-        check_index_bound_(true) {}
+        use_lock_(true) {}
   ~IndexAddGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -49,19 +48,6 @@ class IndexAddGpuKernel : public GpuKernel {
     int *index = GetDeviceAddress<int>(inputs, 1);
     T *src = GetDeviceAddress<T>(inputs, 2);
     T *dst_out = GetDeviceAddress<T>(outputs, 0);
-
-    if (check_index_bound_) {
-      IndexAddErrorCode *error_code_addr = GetDeviceAddress<IndexAddErrorCode>(workspace, 0);
-      IndexAddErrorCode error_code = IndexAddErrorCode::kOk;
-      ValidateIndexAddInputValues(index, src_axis_size_, dst_axis_size_, error_code_addr,
-                                  reinterpret_cast<cudaStream_t>(stream_ptr));
-      CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(&error_code, error_code_addr, sizeof(IndexAddErrorCode),
-                                                cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                "Failed to copy error code to host.");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
-      LogExceptionIfNotOk(error_code);
-    }
     CalIndexAdd(dst, index, src, outer_size_, src_axis_size_, dst_axis_size_, inner_size_, use_lock_,
                 reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
@@ -119,22 +105,9 @@ class IndexAddGpuKernel : public GpuKernel {
     input_size_list_.push_back(index_size_);
     input_size_list_.push_back(src_size_);
     output_size_list_.push_back(output_size_);
-    workspace_size_list_.push_back(sizeof(IndexAddErrorCode));
   }
 
  private:
-  void LogExceptionIfNotOk(IndexAddErrorCode error_code) {
-    switch (error_code) {
-      case IndexAddErrorCode::kOk:
-        return;
-      case IndexAddErrorCode::kIndexOutOfRange:
-        MS_LOG(EXCEPTION) << "gpu IndexAdd op error: values of index tensor is out of range";
-        break;
-      default:
-        MS_LOG(EXCEPTION) << "gpu IndexAdd op unknown error";
-    }
-  }
-
   size_t dst_size_;
   size_t index_size_;
   size_t src_size_;
@@ -144,7 +117,6 @@ class IndexAddGpuKernel : public GpuKernel {
   size_t dst_axis_size_;
   size_t inner_size_;
   bool use_lock_;
-  bool check_index_bound_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
