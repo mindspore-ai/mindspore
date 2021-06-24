@@ -68,7 +68,7 @@ YOLOv5作为先进的检测器，它比所有可用的替代检测器更快（FP
 - 硬件 Ascend
     - 使用Ascend处理器准备硬件环境。
 - 框架
-    - [MindSpore](https://cmc-szv.clouddragon.huawei.com/cmcversion/index/search?searchKey=Do-MindSpore%20V100R001C00B622)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 更多关于Mindspore的信息，请查看以下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
     - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)

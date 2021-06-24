@@ -71,7 +71,7 @@ other datasets need to use the same format as MS COCO.
 - Hardware（Ascend）
     - Prepare hardware environment with Ascend processor.
 - Framework
-    - [MindSpore](https://www.mindspore.cn/)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
@@ -380,7 +380,7 @@ YOLOv5 on 118K images(The annotation and data format must be the same as coco201
 | Speed                      | 1p 55 img/s 8p 440 img/s(shape=640)                         |
 | Total time                 | 80h                                                         |
 | Checkpoint for Fine tuning | 58M (.ckpt file)                                            |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/|
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/>|
 
 ### Inference Performance
 
