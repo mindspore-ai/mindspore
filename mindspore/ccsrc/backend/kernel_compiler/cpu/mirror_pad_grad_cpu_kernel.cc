@@ -113,7 +113,7 @@ bool MirrorPadGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
   } else if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, workspace, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << "is not support.";
+    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
   }
 
   return true;
