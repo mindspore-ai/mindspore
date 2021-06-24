@@ -430,6 +430,13 @@ echo 'run x86 codegen parallel logs: ' > ${run_x86_codegen_parallel_log_file}
 backend=${backend:-"all"}
 isFailed=0
 
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; then
+    # Run on x86-avx
+    echo "start Run x86 avx ..."
+    Run_x86_avx &
+    Run_x86_avx_PID=$!
+    sleep 1
+fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
     # Run on x86
     echo "start Run x86 ..."
@@ -442,13 +449,6 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; th
     echo "start Run x86 sse ..."
     Run_x86_sse &
     Run_x86_sse_PID=$!
-    sleep 1
-fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; then
-    # Run on x86-avx
-    echo "start Run x86 avx ..."
-    Run_x86_avx &
-    Run_x86_avx_PID=$!
     sleep 1
 fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; then
@@ -474,16 +474,6 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-codegen-par
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; then
-    wait ${Run_x86_sse_PID}
-    Run_x86_sse_status=$?
-
-    if [[ ${Run_x86_sse_status} != 0 ]];then
-        echo "Run_x86 sse failed"
-        cat ${run_x86_sse_log_file}
-        isFailed=1
-    fi
-fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; then
     wait ${Run_x86_avx_PID}
     Run_x86_avx_status=$?
@@ -491,6 +481,16 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; th
     if [[ ${Run_x86_avx_status} != 0 ]];then
         echo "Run_x86 avx failed"
         cat ${run_x86_avx_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; then
+    wait ${Run_x86_sse_PID}
+    Run_x86_sse_status=$?
+
+    if [[ ${Run_x86_sse_status} != 0 ]];then
+        echo "Run_x86 sse failed"
+        cat ${run_x86_sse_log_file}
         isFailed=1
     fi
 fi
