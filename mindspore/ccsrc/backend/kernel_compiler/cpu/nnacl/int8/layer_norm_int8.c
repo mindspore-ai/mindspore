@@ -17,7 +17,7 @@
 #include "nnacl/int8/layer_norm_int8.h"
 
 void LayerNormGammaAndBetaInt8(int8_t *dst, const int8_t *src, const float *gamma_data, const float *beta_data,
-                               LayerNormQuantArg *quant, int num, const float mean, const float deno) {
+                               const LayerNormQuantArg *quant, int num, const float mean, const float deno) {
   for (int i = 0; i < num; i++) {
     float fp32_src = (src[i] - quant->in_zp_) * quant->in_scale_;
     float fp32_dst = (fp32_src - mean) * deno;
@@ -33,7 +33,7 @@ void LayerNormGammaAndBetaInt8(int8_t *dst, const int8_t *src, const float *gamm
  *
  * */
 int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *beta_data, int8_t *dst_data,
-                  LayerNormParameter *param, LayerNormQuantArg *quant, int task_id) {
+                  const LayerNormParameter *param, const LayerNormQuantArg *quant, int task_id) {
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
   }

@@ -154,8 +154,8 @@ void ConvDw3x3Int8InitBuffer(int8_t *buffer, const int8_t *input, const ConvPara
 
 void ConvDw3x3Int8Window(int8_t *output, const int8_t *buffer, const int16_t *weight, const int32_t *bias, int col_size,
                          int row_size, int channel, int output_h, int output_w, int8_t in_zp, int32_t out_zp,
-                         int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift, int32_t acc_min,
-                         int32_t acc_max, int stride, bool per_channel) {
+                         const int32_t *out_multiplier, const int32_t *left_shift, const int32_t *right_shift,
+                         int32_t acc_min, int32_t acc_max, int stride, bool per_channel) {
   for (int w = 0; w < output_w; w++) {
     int tmp_buffer[C8NUM];
     for (int i = 0; i < C8NUM; i++) {
@@ -330,8 +330,8 @@ void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data
 #ifndef ENABLE_ARM32
 void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int channel, int8_t in_zp, int32_t out_zp,
-                              int *out_multiplier, int *left_shift, int *right_shift, int32_t acc_min, int32_t acc_max,
-                              bool per_channel) {
+                              const int *out_multiplier, const int *left_shift, const int *right_shift, int32_t acc_min,
+                              int32_t acc_max, bool per_channel) {
   for (int c = 0; c < channel; c += 8) {
     int tmp_buffer[8];
     for (int i = 0; i < 8; i++) {
@@ -563,8 +563,9 @@ void ConvDwInt8Border(int8_t *dst, const int8_t *src, const int16_t *weight, con
 #ifndef ENABLE_ARM
 void ConvDwInt8Center(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height, int width,
                       int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
-                      int in_kh_step, int in_kw_step, int8_t *in_zp, int32_t *out_zp, int32_t *out_multiplier,
-                      int32_t *left_shift, int32_t *right_shift, int32_t *acc_min, int32_t *acc_max) {
+                      int in_kh_step, int in_kw_step, const int8_t *in_zp, const int32_t *out_zp,
+                      const int32_t *out_multiplier, const int32_t *left_shift, const int32_t *right_shift,
+                      const int32_t *acc_min, const int32_t *acc_max) {
   int tmp_buffer[C8NUM];
   int8_t *dst_h = dst;
   const int8_t *src_h = src;

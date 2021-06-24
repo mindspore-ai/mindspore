@@ -452,7 +452,8 @@ void Conv3x3Int8FilterTransform(const int16_t *weight_data, int16_t *trans_weigh
 }
 
 void Conv3x3Int8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, int8_t *output_data, bool h_not_bound,
-                           bool w_not_bound, int output_w, int real_num, int oc_start, ConvParameter *conv_param) {
+                           bool w_not_bound, int output_w, int real_num, int oc_start,
+                           const ConvParameter *conv_param) {
   int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_;
   int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_;
   int32_t *quant_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
@@ -745,7 +746,7 @@ void Conv3x3Int8OutputUnit(const int32_t *gemm_out, const int32_t *bias_data, in
 }
 
 void Conv3x3Int8OutputTransform(const int32_t *gemm_out, int8_t *out_data, const int32_t *bias_data, int start_index,
-                                int real_cal_num, int out_w_block, ConvParameter *conv_param) {
+                                int real_cal_num, int out_w_block, const ConvParameter *conv_param) {
   int output_channel = conv_param->output_channel_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;
@@ -778,7 +779,7 @@ void Conv3x3Int8OutputTransform(const int32_t *gemm_out, int8_t *out_data, const
 }
 
 void Conv3x3Int8InputTransform(const int16_t *input_data, int16_t *trans_input, int16_t *tmp_data, int start_index,
-                               int real_cal_num, int out_w_block, ConvParameter *conv_param) {
+                               int real_cal_num, int out_w_block, const ConvParameter *conv_param) {
   // input data format : nhwc
   int input_channel = conv_param->input_channel_;
   int input_width = conv_param->input_w_;
@@ -868,7 +869,7 @@ void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, in
 // int8 convolution 3x3
 void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,
                  int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer, int8_t *tmp_out,
-                 int task_id, ConvParameter *conv_param) {
+                 int task_id, const ConvParameter *conv_param) {
   int ic8 = UP_DIV(conv_param->input_channel_, C8NUM);
   int out_w_block = UP_DIV(conv_param->output_w_, OUPUT_UNIT);
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);

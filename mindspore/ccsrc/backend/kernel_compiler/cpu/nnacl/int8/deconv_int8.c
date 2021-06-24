@@ -18,7 +18,7 @@
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/int8/common_func_int8.h"
 int DeConvPostInt8C4(const int32_t *src, const int32_t *bias, int32_t *tmp, int8_t *out, int output_channel,
-                     ConvParameter *conv_param) {
+                     const ConvParameter *conv_param) {
   /* row4x4-major(ih*iw x oc*kh*kw)  ->  row4-major(oh*ow x oc) */
   size_t input_plane = conv_param->input_w_ * conv_param->input_h_;
   size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
@@ -107,8 +107,8 @@ void DeConvWeightTransInt8(const int8_t *src, int8_t *dst, int input_channel, in
   return;
 }
 
-void DeConvPackWeightSum(int8_t *weight, int32_t *weight_sum, int32_t input_zp, int32_t filter_zp, int deep, int col4,
-                         bool suppport_opt) {
+void DeConvPackWeightSum(const int8_t *weight, int32_t *weight_sum, int32_t input_zp, int32_t filter_zp, int deep,
+                         int col4, bool suppport_opt) {
   int deep16 = UP_ROUND(deep, C16NUM);
   for (int c = 0; c < col4; c++) {
     int c4div = c / C4NUM, c4mod = c % C4NUM;
