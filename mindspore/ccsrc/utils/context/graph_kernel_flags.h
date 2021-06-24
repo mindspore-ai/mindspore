@@ -68,9 +68,9 @@ class GraphKernelFlags {
   bool enable_stitch_fusion;
 
   /**
-   * Enable recompute fusion in graph kernel fusion strategy.
+   * Enable recompute fusion in graph kernel fusion strategy, enabled when op_level>=2.
    */
-  bool enable_recompute_fusion{true};
+  bool enable_recompute_fusion;
 
   /**
    * Enable parallel fusion in graph kernel fusion strategy.

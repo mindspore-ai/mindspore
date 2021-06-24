@@ -181,7 +181,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   // Boolean flags
   reg.AddFlag("dump_as_text", &dump_as_text);
   reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, opt_level == OptLevel_3);
-  reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level == OptLevel_2);
+  reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level >= OptLevel_2);
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
 
   // Integer flags
