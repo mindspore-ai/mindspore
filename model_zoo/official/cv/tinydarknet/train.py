@@ -121,9 +121,9 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     if config.dataset_name == "imagenet":
-        dataset = create_dataset_imagenet(config.data_path, 1)
+        dataset = create_dataset_imagenet(config.train_data_dir, 1)
     elif config.dataset_name == "cifar10":
-        dataset = create_dataset_cifar(dataset_path=config.data_path,
+        dataset = create_dataset_cifar(dataset_path=config.train_data_dir,
                                        do_train=True,
                                        repeat_num=1,
                                        batch_size=config.batch_size,

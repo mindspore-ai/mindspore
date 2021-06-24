@@ -53,5 +53,5 @@ cp ./*.yaml ./train_cpu
 echo "start training for device CPU"
 cd ./train_cpu || exit
 env > env.log
-python train.py --device_target=CPU --data_path=$PATH1 --dataset_name=$2 --config_path=$CONFIG_FILE --lr_init=0.01> ./train.log 2>&1 &
+python train.py --device_target=CPU --train_data_dir=$PATH1 --dataset_name=$2 --config_path=$CONFIG_FILE> ./train.log 2>&1 &
 cd ..
