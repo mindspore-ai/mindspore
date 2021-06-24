@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_TENSOR_H_
 #define MINDSPORE_LITE_SRC_TENSOR_H_
 
+#include <math.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -216,7 +217,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_scale(float scale) { this->scale_ = scale; }
 
-  bool IsScale() const { return (std::abs(this->scale_ - 1.0f) > 1.0e-05); }
+  bool IsScale() const { return (std::fabs(this->scale_ - 1.0f) > 1.0e-05); }
 
  private:
   template <typename T>

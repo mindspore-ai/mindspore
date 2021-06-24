@@ -30,7 +30,7 @@ void ActorWorker::CreateThread(ActorThreadPool *pool, ThreadPolicy policy) {
 
 void ActorWorker::RunWithSpin() {
 #ifndef __APPLE__
-  static std::atomic_int index = 0;
+  static std::atomic_int index = {0};
   pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
 #endif
   while (alive_) {
@@ -48,7 +48,7 @@ void ActorWorker::RunWithSpin() {
 
 void ActorWorker::RunWithWait() {
 #ifndef __APPLE__
-  static std::atomic_int index = 0;
+  static std::atomic_int index = {0};
   pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
 #endif
   while (alive_) {

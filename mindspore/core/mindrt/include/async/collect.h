@@ -89,7 +89,7 @@ class Collected {
 template <typename T>
 inline Future<std::list<T>> Collect(const std::list<Future<T>> &futures) {
   if (futures.empty()) {
-    return Future(std::list<T>());
+    return Future<std::list<T>>(std::list<T>());
   }
 
   Promise<std::list<T>> *promise = new (std::nothrow) Promise<std::list<T>>();

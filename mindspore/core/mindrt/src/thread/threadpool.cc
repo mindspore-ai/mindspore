@@ -33,7 +33,7 @@ void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
 
 void Worker::Run() {
 #ifndef __APPLE__
-  static std::atomic_int index = 0;
+  static std::atomic_int index = {0};
   pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
 #endif
   while (alive_) {
@@ -128,7 +128,7 @@ int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) 
   // distribute task to the KernelThread and the idle ActorThread,
   // if the task num is greater than the KernelThread num
   THREAD_INFO("launch: %d", task_num);
-  Task task = Task(func, content);
+  Task task = {func, content};
 
   DistributeTask(&task, task_num);
   // synchronization
