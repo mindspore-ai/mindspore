@@ -28,7 +28,8 @@ class LiteMindRtTest : public mindspore::CommonTest {
 };
 
 TEST_F(LiteMindRtTest, HQueueTest) {
-  HQueue<int> hq(10000);
+  HQueue<int *> hq;
+  hq.Init();
   std::vector<int *> v1(2000);
   int d1 = 1;
   for (size_t s = 0; s < v1.size(); s++) {
@@ -42,12 +43,12 @@ TEST_F(LiteMindRtTest, HQueueTest) {
 
   std::thread t1([&]() {
     for (size_t s = 0; s < v1.size(); s++) {
-      ASSERT_EQ(hq.Enqueue(v1[s]), true);
+      hq.Enqueue(v1[s]);
     }
   });
   std::thread t2([&]() {
     for (size_t s = 0; s < v2.size(); s++) {
-      ASSERT_EQ(hq.Enqueue(v2[s]), true);
+      hq.Enqueue(v2[s]);
     }
   });
 
@@ -57,7 +58,8 @@ TEST_F(LiteMindRtTest, HQueueTest) {
   std::thread t3([&]() {
     size_t loop = v1.size() + v2.size();
     while (loop) {
-      int *val = hq.Dequeue();
+      int *val = nullptr;
+      hq.Dequeue(&val);
       if (val == nullptr) {
         continue;
       }
@@ -79,7 +81,8 @@ TEST_F(LiteMindRtTest, HQueueTest) {
 
   ASSERT_EQ(c1, v1.size());
   ASSERT_EQ(c2, v2.size());
-  ASSERT_EQ(hq.Dequeue(), nullptr);
+  int *tmp = nullptr;
+  ASSERT_EQ(hq.Dequeue(&tmp), false);
 
   for (size_t s = 0; s < v1.size(); s++) {
     delete v1[s];
@@ -89,4 +92,69 @@ TEST_F(LiteMindRtTest, HQueueTest) {
     delete v2[s];
   }
 }
+
+class TestActor : public ActorBase {
+ public:
+  explicit TestActor(const std::string &nm, ActorThreadPool *pool, const int i) : ActorBase(nm, pool), data(i) {}
+  int Fn1(int *val) {
+    if (val) {
+      (*val)++;
+    }
+    return 0;
+  }
+  int Fn2(int *val) { return data + (*val); }
+
+ public:
+  int data = 0;
+};
+
+TEST_F(LiteMindRtTest, ActorThreadPoolTest) {
+  Initialize("", "", "", "", 4);
+  auto pool = ActorThreadPool::CreateThreadPool(4, KThreadSpin);
+  AID t1 = Spawn(ActorReference(new TestActor("t1", pool, 1)));
+  AID t2 = Spawn(ActorReference(new TestActor("t2", pool, 2)));
+  AID t3 = Spawn(ActorReference(new TestActor("t3", pool, 3)));
+  AID t4 = Spawn(ActorReference(new TestActor("t4", pool, 4)));
+  AID t5 = Spawn(ActorReference(new TestActor("t5", pool, 5)));
+  AID t6 = Spawn(ActorReference(new TestActor("t6", pool, 6)));
+
+  std::vector<int *> vv;
+  std::vector<Future<int>> fv;
+  size_t sz = 2000;
+
+  for (size_t i = 0; i < sz; i++) {
+    vv.emplace_back(new int(i));
+  }
+
+  for (size_t i = 0; i < sz; i++) {
+    int *val = vv[i];
+    Future<int> ret;
+    ret = Async(t1, &TestActor::Fn1, val)                 // (*vv[i])++;
+            .Then(Defer(t2, &TestActor::Fn2, val), ret)   // t2.data += (*vv[i]);
+            .Then(Defer(t3, &TestActor::Fn1, val), ret)   // (*vv[i])++;
+            .Then(Defer(t4, &TestActor::Fn2, val), ret)   // t4.data += (*vv[i]);
+            .Then(Defer(t5, &TestActor::Fn1, val), ret)   // (*vv[i])++;
+            .Then(Defer(t6, &TestActor::Fn2, val), ret);  // t6.data += (*vv[i]);
+    fv.emplace_back(ret);
+  }
+
+  for (size_t i = 0; i < vv.size(); i++) {
+    int val = static_cast<int>(i);
+    int expected = 0;
+
+    val += 3;      // t1.Fn1
+    expected = 6;  // t6.data
+    expected += val;
+
+    ASSERT_EQ(fv[i].Get(), expected);
+    ASSERT_EQ(*vv[i], val);
+  }
+
+  Finalize();
+
+  for (size_t i = 0; i < vv.size(); i++) {
+    delete vv[i];
+  }
+}
+
 }  // namespace mindspore

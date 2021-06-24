@@ -59,6 +59,7 @@ class ActorBase {
   }
 
   explicit ActorBase(const std::string &name);
+  explicit ActorBase(const std::string &name, ActorThreadPool *pool);
   virtual ~ActorBase();
 
   // send  MessageBase message to the  actor.
@@ -198,7 +199,6 @@ class ActorBase {
   void SetRunningStatus(bool start);
 
   std::unique_ptr<ActorPolicy> actorPolicy;
-  ActorThreadPool *pool_{nullptr};
 
   AID id;
   std::map<std::string, ActorFunction> actionFunctions;
@@ -206,6 +206,8 @@ class ActorBase {
 
   std::string msgRecords[MAX_ACTOR_RECORD_SIZE];
   uint32_t recordNextPoint = 0;
+
+  ActorThreadPool *pool_{nullptr};
 };
 
 };  // namespace mindspore

@@ -154,7 +154,6 @@ if(ENABLE_MINDRT)
             ${CORE_DIR}/mindrt/src/actor/actormgr.cc
             ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
             ${CORE_DIR}/mindrt/src/actor/aid.cc
-            ${CORE_DIR}/mindrt/src/async/async.cc
             ${CORE_DIR}/mindrt/src/async/future.cc
             ${CORE_DIR}/mindrt/src/async/uuid_base.cc
             ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
@@ -304,6 +303,7 @@ set(TEST_SRC
         ${TEST_DIR}/common/common_test.cc
         ${TEST_DIR}/ut/src/infer_test.cc
         ${TEST_DIR}/ut/src/utils_test.cc
+        ${TEST_DIR}/ut/src/lite_mindrt_test.cc
         ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
         ${TEST_DIR}/ut/src/lite_mindrt_test.cc

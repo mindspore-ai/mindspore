@@ -21,57 +21,110 @@
 
 namespace mindspore {
 // implement a lock-free queue
-template <class T>
+// refer to https://www.cs.rochester.edu/u/scott/papers/1996_PODC_queues.pdf
+
+template <typename T>
+struct HQNode {
+  HQNode() {}
+  HQNode(const T &t_, HQNode<T> *n) : t(t_), next(n) {}
+  T t;
+  std::atomic<HQNode<T> *> next = nullptr;
+};
+
+template <typename T>
 class HQueue {
  public:
   HQueue(const HQueue &) = delete;
   HQueue &operator=(const HQueue &) = delete;
-  explicit HQueue(size_t queue_size) : freeHead(0), usedHead(0) { cache.resize(queue_size); }
+  HQueue() {}
   virtual ~HQueue() {
-    freeHead = 0;
-    usedHead = 0;
+    // delete dummy head
+    HQNode<T> *node = this->qhead;
+    delete node;
   }
 
-  bool Enqueue(T *t) {
-    size_t curPos = freeHead.load(std::memory_order_relaxed);
-    size_t nextPos = curPos + 1;
-    if (nextPos == cache.size()) {
-      nextPos = 0;
+  bool Init() {
+    HQNode<T> *dummyHead = new HQNode<T>();
+    if (!dummyHead) {
+      return false;
     }
-
-    size_t usedIndex = usedHead.load(std::memory_order_acquire);
-    if (nextPos != usedIndex) {
-      cache[curPos] = t;
-      // move free head to new position
-      freeHead.store(nextPos, std::memory_order_release);
-      return true;
-    }
-
-    // cache is full
-    return false;
+    qhead = dummyHead;
+    qtail = dummyHead;
+    return true;
   }
 
-  T *Dequeue() {
-    size_t usedIndex = usedHead.load(std::memory_order_relaxed);
-    size_t freeIndex = freeHead.load(std::memory_order_acquire);
-
-    if (freeIndex == usedHead) {  // empty
-      return nullptr;
+  bool Enqueue(const T &data) {
+    HQNode<T> *node = new HQNode<T>(data, nullptr);
+    if (!node) {
+      return false;
     }
 
-    T *ret = cache[usedIndex];
-    usedIndex++;
-    if (usedIndex == cache.size()) {
-      usedIndex = 0;
+    HQNode<T> *tail = nullptr;
+    HQNode<T> *next = nullptr;
+    while (true) {
+      tail = this->qtail;
+      next = tail->next;
+
+      if (tail != this->qtail) {
+        continue;
+      }
+
+      if (next == nullptr) {
+        if (tail->next.compare_exchange_strong(next, node)) {
+          break;
+        }
+      } else {
+        this->qtail.compare_exchange_strong(tail, next);
+      }
     }
-    usedHead.store(usedIndex, std::memory_order_release);
-    return ret;
+    this->qtail.compare_exchange_weak(tail, node);
+    return true;
+  }
+
+  bool Dequeue(T *data) {
+    HQNode<T> *head = nullptr;
+    HQNode<T> *tail = nullptr;
+    HQNode<T> *next = nullptr;
+    while (true) {
+      head = this->qhead;
+      tail = this->qtail;
+      next = head->next;
+      if (head != this->qhead) {
+        continue;
+      }
+
+      if (head == tail) {
+        if (next == nullptr) {
+          return false;
+        }
+        this->qtail.compare_exchange_strong(tail, next);
+      } else {
+        *data = next->t;
+        if (this->qhead.compare_exchange_strong(head, next)) {
+          break;
+        }
+      }
+    }
+
+    delete head;
+    return true;
+  }
+
+  bool Empty() {
+    HQNode<T> *head = this->qhead;
+    HQNode<T> *tail = this->qtail;
+    HQNode<T> *next = head->next;
+
+    if (head == this->qhead && head == tail && next == nullptr) {
+      return false;
+    }
+
+    return true;
   }
 
  private:
-  std::vector<T *> cache;
-  std::atomic<size_t> freeHead;
-  std::atomic<size_t> usedHead;
+  std::atomic<HQNode<T> *> qhead;
+  std::atomic<HQNode<T> *> qtail;
 };
 
 }  // namespace mindspore

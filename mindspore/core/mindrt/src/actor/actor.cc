@@ -24,6 +24,9 @@ namespace mindspore {
 ActorBase::ActorBase(const std::string &name)
     : actorPolicy(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
 
+ActorBase::ActorBase(const std::string &name, ActorThreadPool *pool)
+    : actorPolicy(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions(), pool_(pool) {}
+
 ActorBase::~ActorBase() {}
 
 void ActorBase::Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> thread) {
