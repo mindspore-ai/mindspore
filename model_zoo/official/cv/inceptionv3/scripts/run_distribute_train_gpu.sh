@@ -20,5 +20,5 @@ BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
 CONFIG_FILE="${BASE_PATH}/../default_config_gpu.yaml"
 
 mpirun --allow-run-as-root -n 8 --output-filename log_output --merge-stderr-to-stdout \
-  python ./train.py --config_path=$CONFIG_FILE --is_distributed --platform 'GPU' \
+  python ./train.py --config_path=$CONFIG_FILE --is_distributed=True --platform 'GPU' \
   --dataset_path $DATA_DIR --ckpt_path=$CKPT_PATH > train.log 2>&1 &

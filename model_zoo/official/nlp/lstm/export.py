@@ -33,7 +33,6 @@ def modelarts_process():
 @moxing_wrapper(pre_process=modelarts_process)
 def export_lstm():
     """ export lstm """
-    config.preprocess_path = os.path.join(config.glove_path, config.preprocess_path)
     context.set_context(
         mode=context.GRAPH_MODE,
         save_graphs=False,

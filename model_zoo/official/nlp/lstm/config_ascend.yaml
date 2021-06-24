@@ -35,7 +35,7 @@ global_step: 0
 preprocess: 'false'
 aclimdb_path: "/cache/data/aclImdb"
 glove_path: "/cache/data"
-preprocess_path: "./preprocess"
+preprocess_path: "/cache/train/preprocess"
 ckpt_path: './ckpt_lstm/'
 pre_trained: '' # None
 device_num: 1
@@ -76,7 +76,6 @@ enable_graph_kernel: 'Accelerate by graph kernel, default is true.'
 
 ---
 device_target: ['Ascend', 'GPU', 'CPU']
-distribute: ['true', 'false']
 distribute: ['true', 'false']
 enable_graph_kernel: ['true', 'false']
 file_format: ['AIR', 'ONNX', 'MINDIR']

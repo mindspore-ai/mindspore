@@ -33,7 +33,6 @@ def modelarts_process():
 def eval_lstm():
     """ eval lstm """
     print('\neval.py config: \n', config)
-    config.preprocess_path = os.path.join(config.glove_path, config.preprocess_path)
 
     context.set_context(
         mode=context.GRAPH_MODE,

@@ -39,5 +39,5 @@ python ../train.py  \
     --device_target="GPU" \
     --aclimdb_path=$ACLIMDB_DIR \
     --glove_path=$GLOVE_DIR \
-    --preprocess=false  \
+    --preprocess=true  \
     --preprocess_path=./preprocess > log.txt 2>&1 &

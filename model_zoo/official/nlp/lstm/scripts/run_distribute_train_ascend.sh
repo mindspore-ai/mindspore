@@ -48,6 +48,6 @@ do
         --distribute=true \
         --device_num=$RANK_SIZE \
         --device_id=$i --rank_id=$i \
-        --preprocess=false  \
+        --preprocess=true  \
         --preprocess_path=./preprocess > log.txt 2>&1 &
 done
