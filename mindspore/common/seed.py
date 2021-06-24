@@ -157,7 +157,10 @@ def set_seed(seed):
 
 def get_seed():
     """
-    Get global random seed.
+    Get global seed.
+
+    Returns:
+        Integer. The global seed.
     """
     return _GLOBAL_SEED
 
@@ -168,8 +171,11 @@ def _truncate_seed(seed):
 
     Args:
         seed (int): The seed to be truncated.
+
+    Returns:
+        Integer. The seed with MAXINT32.
     """
-    return seed % _MAXINT32  # Truncate to fit into 32-bit integer
+    return seed % _MAXINT32
 
 
 def _update_seeds(op_seed, kernel_name):
