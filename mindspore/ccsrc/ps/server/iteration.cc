@@ -207,7 +207,7 @@ void Iteration::HandleSyncIterationRequest(const std::shared_ptr<core::MessageHa
 
 bool Iteration::IsMoveToNextIterRequestReentrant(uint64_t iteration_num) {
   std::unique_lock<std::mutex> lock(pinned_mtx_);
-  if (pinned_iter_num_ == iteration_num) {
+  if (pinned_iter_num_ >= iteration_num) {
     MS_LOG(WARNING) << "MoveToNextIteration is not reentrant. Ignore this call.";
     return true;
   }
@@ -286,7 +286,9 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
 
   // Retry sending to offline servers to notify them to prepare.
   std::for_each(offline_servers.begin(), offline_servers.end(), [&](uint32_t rank) {
-    while (!communicator_->SendPbRequest(prepare_next_iter_req, rank, core::TcpUserCommand::kPrepareForNextIter)) {
+    // Should avoid endless loop if the server communicator is stopped.
+    while (communicator_->running() &&
+           !communicator_->SendPbRequest(prepare_next_iter_req, rank, core::TcpUserCommand::kPrepareForNextIter)) {
       MS_LOG(WARNING) << "Retry sending prepare for next iteration request to server " << rank
                       << " failed. The server has not recovered yet.";
       std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationForPrepareForNextIter));

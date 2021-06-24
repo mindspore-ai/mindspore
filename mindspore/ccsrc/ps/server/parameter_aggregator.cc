@@ -85,7 +85,7 @@ bool ParameterAggregator::LaunchAggregators() {
     bool ret = aggr_kernel->Launch(params.inputs, params.workspace, params.outputs);
     if (!ret) {
       MS_LOG(ERROR) << "Launching aggregation kernel " << typeid(aggr_kernel.get()).name() << " failed.";
-      continue;
+      return false;
     }
   }
   return true;

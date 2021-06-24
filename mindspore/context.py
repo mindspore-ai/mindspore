@@ -824,14 +824,14 @@ def set_fl_context(**kwargs):
     Args:
         enable_fl (bool): Whether to enable federated learning training mode.
                           Default: False.
-        server_mode (string): Describe the server mode, which must one of 'FEDERATED_LEARNING' and 'HYBRID_TRAINING'.
+        server_mode (str): Describe the server mode, which must one of 'FEDERATED_LEARNING' and 'HYBRID_TRAINING'.
                               Default: 'FEDERATED_LEARNING'.
-        ms_role (string): The process's role in the federated learning mode,
+        ms_role (str): The process's role in the federated learning mode,
                           which must be one of 'MS_SERVER', 'MS_WORKER' and 'MS_SCHED'.
                           Default: 'MS_SERVER'.
         worker_num (int): The number of workers. For current version, this must be set to 1 or 0.
         server_num (int): The number of federated learning servers. Default: 0.
-        scheduler_ip (string): The scheduler IP. Default: '0.0.0.0'.
+        scheduler_ip (str): The scheduler IP. Default: '0.0.0.0'.
         scheduler_port (int): The scheduler port. Default: 6667.
         fl_server_port (int): The http port of the federated learning server.
                               Normally for each server this should be set to the same value. Default: 6668.
@@ -842,7 +842,7 @@ def set_fl_context(**kwargs):
                                     which will be multiplied by start_fl_job_threshold.
                                     Must be between 0 and 1.0.Default: 1.0.
         update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 3000.
-        fl_name (string): The federated learning job name. Default: ''.
+        fl_name (str): The federated learning job name. Default: ''.
         fl_iteration_num (int): Iteration number of federeated learning,
                                 which is the number of interactions between client and server. Default: 20.
         client_epoch_num (int): Client training epoch number. Default: 25.

@@ -89,14 +89,10 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
     feature_maps = ModelStore::GetInstance().GetModelByIterNum(get_model_iter);
   }
 
-  // If the iteration of this model is invalid, return ResponseCode_OutOfTime to the clients could startFLJob according
-  // to next_req_time.
-  bool last_iter_valid = Iteration::GetInstance().is_last_iteration_valid();
-  MS_LOG(INFO) << "GetModel last iteration is valid or not: " << last_iter_valid << ", next request time is "
-               << next_req_time << ", current iteration is " << current_iter;
-  auto response_code = last_iter_valid ? schema::ResponseCode_SUCCEED : schema::ResponseCode_OutOfTime;
-  BuildGetModelRsp(fbb, response_code, "Get model for iteration " + std::to_string(get_model_iter), current_iter,
-                   feature_maps, std::to_string(next_req_time));
+  MS_LOG(INFO) << "GetModel last iteration is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
+               << ", next request time is " << next_req_time << ", current iteration is " << current_iter;
+  BuildGetModelRsp(fbb, schema::ResponseCode_SUCCEED, "Get model for iteration " + std::to_string(get_model_iter),
+                   current_iter, feature_maps, std::to_string(next_req_time));
   return;
 }
 

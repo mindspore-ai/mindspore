@@ -104,12 +104,12 @@ class TcpCommunicator : public CommunicatorBase {
 
     if (output != nullptr) {
       if (!server_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command), output)) {
-        MS_LOG(ERROR) << "Query leader server whether count is enough failed.";
+        MS_LOG(ERROR) << "Sending protobuffer message to server " << rank_id << " failed.";
         return false;
       }
     } else {
       if (!server_node_->Send(NodeRole::SERVER, rank_id, msg, msg_str.size(), static_cast<int>(command))) {
-        MS_LOG(ERROR) << "Query leader server whether count is enough failed.";
+        MS_LOG(ERROR) << "Sending protobuffer message to server " << rank_id << " failed.";
         return false;
       }
     }

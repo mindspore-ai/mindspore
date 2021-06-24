@@ -28,6 +28,8 @@
 
 namespace mindspore {
 namespace kernel {
+// The duration between two uploading requests when return code is ResponseCode_SucNotReady.
+constexpr int kRetryDurationOfPushWeights = 200;
 template <typename T>
 class FusedPushWeightKernel : public CPUKernel {
  public:
@@ -66,22 +68,41 @@ class FusedPushWeightKernel : public CPUKernel {
     // The server number may change after scaling in/out.
     for (uint32_t i = 0; i < ps::worker::FLWorker::GetInstance().server_num(); i++) {
       std::shared_ptr<std::vector<unsigned char>> push_weight_rsp_msg = nullptr;
-      if (!ps::worker::FLWorker::GetInstance().SendToServer(
-            i, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPushWeight, &push_weight_rsp_msg)) {
-        MS_LOG(ERROR) << "Sending request for FusedPushWeight to server " << i << " failed.";
-        continue;
-      }
-      MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
+      const schema::ResponsePushWeight *push_weight_rsp = nullptr;
+      int retcode = schema::ResponseCode_SucNotReady;
+      while (retcode == schema::ResponseCode_SucNotReady) {
+        if (!ps::worker::FLWorker::GetInstance().SendToServer(i, fbb->GetBufferPointer(), fbb->GetSize(),
+                                                              ps::core::TcpUserCommand::kPushWeight,
+                                                              &push_weight_rsp_msg)) {
+          MS_LOG(WARNING) << "Sending request for FusedPushWeight to server " << i
+                          << " failed. This iteration is dropped.";
+          ps::worker::FLWorker::GetInstance().SetIterationCompleted();
+          return true;
+        }
+        MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
 
-      const schema::ResponsePushWeight *push_weight_rsp =
-        flatbuffers::GetRoot<schema::ResponsePushWeight>(push_weight_rsp_msg->data());
-      auto retcode = push_weight_rsp->retcode();
-      if (retcode != schema::ResponseCode_SUCCEED) {
-        MS_LOG(EXCEPTION) << "FusedPushWeight failed. Server return code: " << push_weight_rsp->retcode()
-                          << ", reason: " << push_weight_rsp->reason()->str();
-        return false;
+        push_weight_rsp = flatbuffers::GetRoot<schema::ResponsePushWeight>(push_weight_rsp_msg->data());
+        retcode = push_weight_rsp->retcode();
+        if (retcode == schema::ResponseCode_SucNotReady) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPushWeights));
+          fl_iteration_ = push_weight_rsp->iteration();
+          MS_LOG(DEBUG) << "Server is not ready for pushing weight yet. Reason: " << push_weight_rsp->reason()->str()
+                        << ". Retry later.";
+          if (!BuildPushWeightReq(fbb, inputs)) {
+            MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
+            return false;
+          }
+          continue;
+        } else if (retcode != schema::ResponseCode_SUCCEED) {
+          MS_LOG(EXCEPTION) << "FusedPushWeight failed. Server return code: " << push_weight_rsp->retcode()
+                            << ", reason: " << push_weight_rsp->reason()->str();
+          return false;
+        } else {
+          MS_LOG(DEBUG) << "FusedPushWeight succeed.";
+        }
       }
     }
+
     MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
     ps::worker::FLWorker::GetInstance().SetIterationCompleted();
     return true;

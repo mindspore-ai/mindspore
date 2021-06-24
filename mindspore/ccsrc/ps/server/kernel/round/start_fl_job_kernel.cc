@@ -59,13 +59,23 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     return false;
   }
 
-  if (ReachThresholdForStartFLJob(fbb)) {
+  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  if (!verifier.VerifyBuffer<schema::RequestFLJob>()) {
+    std::string reason = "The schema of startFLJob is invalid.";
+    BuildStartFLJobRsp(fbb, schema::ResponseCode_RequestError, reason, false, "");
+    MS_LOG(ERROR) << reason;
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
   const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
+
+  if (ReachThresholdForStartFLJob(fbb)) {
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+
   if (!ReadyForStartFLJob(fbb, device_meta)) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
@@ -140,7 +150,7 @@ bool StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
 bool StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                           const schema::RequestFLJob *start_fl_job_req) {
   if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str())) {
-    std::string reason = "startFLJob counting failed.";
+    std::string reason = "Counting start fl job request failed. Please retry later.";
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));

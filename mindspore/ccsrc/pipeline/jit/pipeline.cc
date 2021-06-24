@@ -60,6 +60,7 @@
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/worker.h"
+#include "ps/worker/fl_worker.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/server/server.h"
@@ -1254,8 +1255,13 @@ void ClearResAtexit() {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();
     }
-    MS_LOG(INFO) << "ps::worker.Finalize";
-    ps::Worker::GetInstance().Finalize();
+    MS_LOG(INFO) << "Start finalizing worker.";
+    const std::string &server_mode = ps::PSContext::instance()->server_mode();
+    if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid)) {
+      ps::worker::FLWorker::GetInstance().Finalize();
+    } else {
+      ps::Worker::GetInstance().Finalize();
+    }
   }
 #endif
   ad::g_k_prims.clear();
