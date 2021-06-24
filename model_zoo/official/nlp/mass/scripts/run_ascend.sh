@@ -32,7 +32,6 @@ echo_help()
   echo "        -n --device_num          training with N devices"
   echo "        -i --device_id           training with device i"
   echo "        -j --hccl_json           set the rank table file"
-  echo "        -c --config              set the configuration file"
   echo "        -o --output              set the output file of inference"
   echo "        -v --vocab               set the vocabulary"
   echo "        -m --metric              set the metric"
@@ -104,11 +103,6 @@ do
     export DEVICE_ID=$2
     shift 2
     ;;
-  -c|--config)
-    echo "config";
-    configurations=$2
-    shift 2
-    ;;
   -o|--output)
     echo "output";
     output=$2
@@ -153,7 +147,8 @@ do
 
   cp train.py ./${task}_mass_$DEVICE_ID
   cp eval.py ./${task}_mass_$DEVICE_ID
-  cp $configurations ./${task}_mass_$DEVICE_ID
+  cp -r ./src ./${task}_mass_$DEVICE_ID
+  cp -r ./*.yaml ./${task}_mass_$DEVICE_ID
 
   if [ $vocab ]
   then
@@ -165,10 +160,10 @@ do
   echo $task
   if [ "$task" == "train" ]
   then
-    python train.py --config ${configurations##*/} --platform Ascend >>log.log 2>&1 &
+    python train.py --device_target Ascend --output_path './output' >>log.log 2>&1 &
   elif [ "$task" == "infer" ]
   then
-    python eval.py --config ${configurations##*/} --output ${output} --vocab ${vocab##*/} --metric ${metric} --platform Ascend >>log_infer.log 2>&1 &
+    python eval.py --output ${output} --vocab ${vocab##*/} --metric ${metric} --device_target Ascend >>log_infer.log 2>&1 &
   fi
   cd ../
 done

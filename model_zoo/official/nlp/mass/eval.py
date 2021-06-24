@@ -14,60 +14,52 @@
 # ============================================================================
 """Evaluation api."""
 import os
-import argparse
 import pickle
 
-from mindspore.common import dtype as mstype
 from mindspore import context
-
-from config import TransformerConfig
+from mindspore.common import dtype as mstype
 from src.transformer import infer, infer_ppl
 from src.utils import Dictionary
 from src.utils import get_score
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description='Evaluation MASS.')
-parser.add_argument("--config", type=str, required=True,
-                    help="Model config json file path.")
-parser.add_argument("--vocab", type=str, required=True,
-                    help="Vocabulary to use.")
-parser.add_argument("--output", type=str, required=True,
-                    help="Result file path.")
-parser.add_argument("--metric", type=str, default='rouge',
-                    help='Set eval method.')
-parser.add_argument("--platform", type=str, required=True,
-                    help="model working platform.")
+def get_config():
+    if config.compute_type == "float16":
+        config.compute_type = mstype.float16
+    if config.compute_type == "float32":
+        config.compute_type = mstype.float32
+    if config.dtype == "float16":
+        config.dtype = mstype.float16
+    if config.dtype == "float32":
+        config.dtype = mstype.float32
 
-
-def get_config(config):
-    config = TransformerConfig.from_json_file(config)
-    config.compute_type = mstype.float16
-    config.dtype = mstype.float32
-    return config
-
-
-if __name__ == '__main__':
-    args, _ = parser.parse_known_args()
-    vocab = Dictionary.load_from_persisted_dict(args.vocab)
-    _config = get_config(args.config)
-
+@moxing_wrapper()
+def eval_net():
+    """eval_net"""
+    vocab = Dictionary.load_from_persisted_dict(config.vocab)
+    get_config()
     device_id = os.getenv('DEVICE_ID', None)
     if device_id is None:
         device_id = 0
     device_id = int(device_id)
     context.set_context(
         mode=context.GRAPH_MODE,
-        device_target=args.platform,
+        device_target=config.device_target,
         reserve_class_name_in_scope=False,
         device_id=device_id)
 
-    if args.metric == 'rouge':
-        result = infer(_config)
+    if config.metric == 'rouge':
+        result = infer(config)
     else:
-        result = infer_ppl(_config)
+        result = infer_ppl(config)
 
-    with open(args.output, "wb") as f:
+    with open(config.output, "wb") as f:
         pickle.dump(result, f, 1)
 
     # get score by given metric
-    score = get_score(result, vocab, metric=args.metric)
+    score = get_score(result, vocab, metric=config.metric)
     print(score)
+
+if __name__ == '__main__':
+    eval_net()

@@ -80,6 +80,40 @@ MASS设计联合预训练编码器和解码器，来完成语言生成任务。
 其次，通过预测解码器的连续标记，可以建立比仅预测离散标记更好的语言建模能力。
 第三，通过进一步屏蔽编码器中未屏蔽的解码器的输入标记，鼓励解码器从编码器侧提取更有用的信息，而不是使用前一个标记中的丰富信息。
 
+如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
+开始进行模型的训练和推理，具体操作如下：
+
+```python
+# 在modelarts上使用分布式训练的示例：
+# (1) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          在yaml文件上设置网络所需的参数。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置网络所需的参数。
+# (2)设置训练任务"task=train"
+# (3) 在modelarts的界面上设置代码的路径 "/path/mass"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a.  设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件.
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+# (3) 设置训练任务"task=infer"和vocab的路径
+# (4) 在modelarts的界面上设置代码的路径 "/path/mass"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
+```
+
 ## 脚本说明
 
 MASS脚本及代码结构如下：
@@ -88,8 +122,13 @@ MASS脚本及代码结构如下：
 ├── mass
   ├── README.md                              // MASS模型介绍
   ├── config
-  │   ├──config.py                           // 配置实例定义
-  │   ├──config.json                         // 配置文件
+  │   ├──config.py                           // 参数配置
+  ├── src
+      │   ├──model_utils
+      │   ├──config.py                       // 参数配置
+      │   ├──device_adapter.py               // 设备配置
+      │   ├──local_adapter.py                // 本地设备配置
+      │   ├──moxing_adapter.py               // modelarts设备配置
   ├──src
   │   ├──dataset
   │      ├──bi_data_loader.py                // 数据集加载器，用于微调或推理
@@ -133,6 +172,7 @@ MASS脚本及代码结构如下：
   ├── requirements.txt                       // 第三方包需求
   ├── train.py                               // 训练API入口
   ├── eval.py                                // 推理API入口
+  ├── default_config.yaml                    // 参数配置
   ├── tokenize_corpus.py                     // 语料标记化
   ├── apply_bpe_encoding.py                  // 应用BPE进行编码
   ├── weights_average.py                     // 将各模型检查点平均转换到NPZ格式
@@ -333,7 +373,7 @@ python cornell_dialog.py --src_folder /{path}/cornell_dialog \
 
 `config/`目录下的JSON文件为模板配置文件，
 便于为大多数选项及参数赋值，包括训练平台、数据集和模型的配置、优化器参数等。还可以通过设置相应选项，获得诸如损失放大和检查点等可选特性。
-有关属性的详细信息，参见`config/config.py`文件。
+有关属性的详细信息，参见`default_config.yaml`文件。
 
 ## 训练&评估过程
 
@@ -357,8 +397,7 @@ sh run_gpu.sh [--options]
 ```text
 Usage: run_ascend.sh [-h, --help] [-t, --task <CHAR>] [-n, --device_num <N>]
                      [-i, --device_id <N>] [-j, --hccl_json <FILE>]
-                     [-c, --config <FILE>] [-o, --output <FILE>]
-                     [-v, --vocab <FILE>]
+                     [-o, --output <FILE>] [-v, --vocab <FILE>]
 
 options:
     -h, --help               show usage
@@ -366,7 +405,6 @@ options:
     -n, --device_num         device number used for training: N, default is 1.
     -i, --device_id          device id used for training with single device: N, 0<=N<=7, default is 0.
     -j, --hccl_json          rank table file used for training with multiple devices: FILE.
-    -c, --config             configuration file as shown in the path 'mass/config': FILE.
     -o, --output             assign output file of inference: FILE.
     -v, --vocab              set the vocabulary.
     -m, --metric             set the metric.
@@ -378,15 +416,13 @@ options:
 
 ```text
 Usage: run_gpu.sh [-h, --help] [-t, --task <CHAR>] [-n, --device_num <N>]
-                     [-i, --device_id <N>] [-c, --config <FILE>]
-                     [-o, --output <FILE>] [-v, --vocab <FILE>]
+                     [-i, --device_id <N>] [-o, --output <FILE>] [-v, --vocab <FILE>]
 
 options:
     -h, --help               show usage
     -t, --task               select task: CHAR, 't' for train and 'i' for inference".
     -n, --device_num         device number used for training: N, default is 1.
     -i, --device_id          device id used for training with single device: N, 0<=N<=7, default is 0.
-    -c, --config             configuration file as shown in the path 'mass/config': FILE.
     -o, --output             assign output file of inference: FILE.
     -v, --vocab              set the vocabulary.
     -m, --metric             set the metric.
@@ -396,7 +432,7 @@ options:
 Ascend处理器：
 
 ```ascend
-sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json --config /{path}/config.json
+sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json
 ```
 
 注：`run_ascend.sh`暂不支持不连续设备ID，`rank_table.json`中的设备ID必须从0开始。
@@ -404,20 +440,20 @@ sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json --c
 GPU处理器：
 
 ```gpu
-sh run_gpu.sh --task t --device_num 2 --config /{path}/config.json
+sh run_gpu.sh --task t --device_num 2
 ```
 
 运行如下命令进行单卡训练：
 Ascend处理器：
 
 ```ascend
-sh run_ascend.sh --task t --device_num 1 --device_id 0 --config /{path}/config.json
+sh run_ascend.sh --task t --device_num 1 --device_id 0
 ```
 
 GPU处理器：
 
 ```gpu
-sh run_gpu.sh --task t --device_num 1 --device_id 0 --config /{path}/config.json
+sh run_gpu.sh --task t --device_num 1 --device_id 0
 ```
 
 ## 权重平均值
@@ -426,16 +462,14 @@ sh run_gpu.sh --task t --device_num 1 --device_id 0 --config /{path}/config.json
 python weights_average.py --input_files your_checkpoint_list --output_file model.npz
 ```
 
-`input_files`为检查点文件清单。如需使用`model.npz`作为权重文件，请在“existed_ckpt”的`config.json`文件中添加`model.npz`的路径。
+`input_files`为检查点文件清单。如需使用`model.npz`作为权重文件，请在“checkpoint_file_path”的`default_config.yaml`文件中添加`model.npz`的路径。
 
-```json
+```default_config.yaml
 {
   ...
-  "checkpoint_options": {
-    "existed_ckpt": "/xxx/xxx/model.npz",
+    "checkpoint_file_path": "/xxx/xxx/model.npz",
     "save_ckpt_steps": 1000,
     ...
-  },
   ...
 }
 ```
@@ -451,10 +485,9 @@ python weights_average.py --input_files your_checkpoint_list --output_file model
 
 多项式衰减调度器配置文件示例如下：
 
-```json
+```default_config.yaml
 {
   ...
-  "learn_rate_config": {
     "optimizer": "adam",
     "lr": 1e-4,
     "lr_scheduler": "poly",
@@ -462,24 +495,21 @@ python weights_average.py --input_files your_checkpoint_list --output_file model
     "decay_steps": 10000,
     "warmup_steps": 2000,
     "min_lr": 1e-6
-  },
   ...
 }
 ```
 
 逆平方根调度器配置文件示例如下：
 
-```json
+```default_config.yaml
 {
   ...
-  "learn_rate_config": {
     "optimizer": "adam",
     "lr": 1e-4,
     "lr_scheduler": "isr",
     "decay_start_step": 12000,
     "warmup_steps": 2000,
     "min_lr": 1e-6
-  },
   ...
 }
 ```
@@ -515,79 +545,78 @@ MASS通过预测输入序列中被屏蔽的片段来预训练序列到序列模�
 这里提供了一个练习示例来演示应用MASS，对模型进行预训练、微调的基本用法，以及推理过程。操作步骤如下：
 
 1. 下载并处理数据集。
-2. 修改`config.json`文件，配置网络。
+2. 修改`default_config.yaml`文件，配置网络。
 3. 运行预训练和微调任务。
 4. 进行推理验证。
 
 ## 预训练
 
-预训练模型时，首先配置`config.json`中的选项：
+预训练模型时，首先配置`default_config.yaml`中的选项：
 
 - 将`dataset_config`节点下的`pre_train_dataset`配置为数据集路径。
 - 选择优化器（可采用'momentum/adam/lamb’）。
-- 在`checkpoint_path`下，指定'ckpt_prefix'和'ckpt_path'来保存模型文件。
+- 在`checkpoint_path`下，指定'ckpt_prefix'和'checkpoint_file_path'来保存模型文件。
 - 配置其他参数，包括数据集配置和网络配置。
-- 如果已经有训练好的模型，请将`existed_ckpt`配置为该检查点文件。
+- 如果已经有训练好的模型，请将`checkpoint_file_path`配置为该检查点文件。
 
 如使用Ascend芯片，执行`run_ascend.sh`这个shell脚本：
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1 -c /mass/config/config.json
+sh run_ascend.sh -t t -n 1 -i 1
 ```
 
 如使用GPU处理器，执行`run_gpu.sh`这个shell脚本：
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1 -c /mass/config/config.json
+sh run_gpu.sh -t t -n 1 -i 1
 ```
 
-日志和输出文件可以在`./train_mass_*/`路径下获取，模型文件可以在`config/config.json`配置文件中指定的路径下获取。
+日志和输出文件可以在`./train_mass_*/`路径下获取，模型文件可以在`default_config.yaml`配置文件中指定的路径下获取。
 
 ## 微调
 
-预训练模型时，首先配置`config.json`中的选项：
+预训练模型时，首先配置`default_yaml.yaml`中的选项：
 
-- 将`dataset_config`节点下的`fine_tune_dataset`配置为数据集路径。
-- 将`checkpoint_path`节点下的`existed_ckpt`赋值给预训练生成的已有模型文件。
+- 将`default_config.yaml`下的`data_path`配置为数据集路径。
+- 将`default_config.yaml`下的`checkpoint_file_path`赋值给预训练生成的已有模型文件。
 - 选择优化器（可采用'momentum/adam/lamb’）。
-- 在`checkpoint_path`下，指定'ckpt_prefix'和'ckpt_path'来保存模型文件。
+- 在`default_config.yaml`下，指定'ckpt_prefix'和'checkpoint_path'来保存模型文件。
 - 配置其他参数，包括数据集配置和网络配置。
 
 如使用Ascend芯片，执行`run_ascend.sh`这个shell脚本：
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1 -c config/config.json
+sh run_ascend.sh -t t -n 1 -i 1
 ```
 
 如使用GPU处理器，执行`run_gpu.sh`这个shell脚本：
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1 -c config/config.json
+sh run_gpu.sh -t t -n 1 -i 1
 ```
 
-日志和输出文件可以在`./train_mass_*/`路径下获取，模型文件可以在`config/config.json`配置文件中指定的路径下获取。
+日志和输出文件可以在`./train_mass_*/`路径下获取，模型文件可以在`default_config.yaml`配置文件中指定的路径下获取。
 
 ## 推理
 
 如果您需要使用此训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考此[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。
 推理时，请先配置`config.json`中的选项：
 
-- 将`dataset_config`节点下的`test_dataset`配置为数据集路径。
-- 将`dataset_config`节点下的`test_dataset`配置为数据集路径。
+- 将`default_config.yaml`节点下的`data_path`配置为数据集路径。
 - 选择优化器（可采用'momentum/adam/lamb’）。
-- 在`checkpoint_path`下，指定'ckpt_prefix'和'ckpt_path'来保存模型文件。
+- 指定'ckpt_prefix'和'ckpt_path'来保存模型文件。
 - 配置其他参数，包括数据集配置和网络配置。
 
 如使用Ascend芯片，执行`run_ascend.sh`这个shell脚本：
 
 ```bash
-sh run_ascend.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
+sh run_ascend.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 如使用GPU处理器，执行`run_gpu.sh`这个shell脚本：
 
 ```gpu
-sh run_gpu.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
+sh run_gpu.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 ## Mindir推理
@@ -595,10 +624,10 @@ sh run_gpu.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
 ### [导出模型](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
-参数ckpt_file为必填项，
+参数checkpoint_file_path为必填项，
 `EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
 
 ### 在Ascend310执行推理
@@ -674,7 +703,7 @@ bash run_infer_310.sh [MINDIR_PATH] [CONFIG] [VOCAB] [OUTPUT] [NEED_PREPROCESS] 
 
 # 随机情况说明
 
-MASS模型涉及随机失活（dropout）操作，如需禁用此功能，请在`config/config.json`中将dropout_rate设置为0。
+MASS模型涉及随机失活（dropout）操作，如需禁用此功能，请在`default_config.yaml`中将dropout_rate设置为0。
 
 # 其他
 

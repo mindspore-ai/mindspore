@@ -67,6 +67,10 @@ filter_weight: False
 freeze_layer: None
 save_best_ckpt: True
 
+result_path: ""
+img_path: ""
+drop: False
+
 # `mindrecord_dir` and `coco_root` are better to use absolute path.
 feature_extractor_base_param: ""
 checkpoint_filter_list: ['multi_loc_layers', 'multi_cls_layers']
