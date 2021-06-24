@@ -26,7 +26,7 @@ public class AdTrainBert extends AdBert {
     private static volatile AdTrainBert adTrainBert;
 
     public static AdTrainBert getInstance() {
-        AdTrainBert localRef = adInferBert;
+        AdTrainBert localRef = adTrainBert;
         if (localRef == null) {
             synchronized (AdTrainBert.class) {
                 localRef = adTrainBert;

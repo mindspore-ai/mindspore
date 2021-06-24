@@ -42,6 +42,7 @@ public class SecureProtocol {
     private static double deltaError = 1e-6;
     private static Map<String, float[]> modelMap;
     private ArrayList<String> encryptFeatureName = new ArrayList<String>();
+    private int retCode;
 
     public FLClientStatus getStatus() {
         return status;
@@ -49,6 +50,10 @@ public class SecureProtocol {
 
     public float[] getFeatureMask() {
         return featureMask;
+    }
+
+    public int getRetCode() {
+        return retCode;
     }
 
     public SecureProtocol() {
@@ -91,6 +96,7 @@ public class SecureProtocol {
         LOGGER.info("[PairWiseMask] ==============request flID: " + localFLParameter.getFlID() + "==============");
         // round 0
         status = cipher.exchangeKeys();
+        retCode = cipher.getRetCode();
         LOGGER.info("[PairWiseMask] ============= RequestExchangeKeys+GetExchangeKeys response: " + status + "============");
         if (status != FLClientStatus.SUCCESS) {
             return status;
@@ -98,6 +104,7 @@ public class SecureProtocol {
         // round 1
         try {
             status = cipher.shareSecrets();
+            retCode = cipher.getRetCode();
             LOGGER.info("[Encrypt] =============RequestShareSecrets+GetShareSecrets response: " + status + "=============");
         } catch (Exception e) {
             LOGGER.severe("[PairWiseMask] catch Exception in pwCreateMask");
@@ -109,6 +116,7 @@ public class SecureProtocol {
         // round2
         try {
             featureMask = cipher.doubleMaskingWeight();
+            retCode = cipher.getRetCode();
             LOGGER.info("[Encrypt] =============Create double feature mask: SUCCESS=============");
         } catch (Exception e) {
             LOGGER.severe("[PairWiseMask] catch Exception in pwCreateMask");
@@ -151,6 +159,7 @@ public class SecureProtocol {
 
     public FLClientStatus pwUnmasking() {
         status = cipher.reconstructSecrets();   // round3
+        retCode = cipher.getRetCode();
         LOGGER.info("[Encrypt] =============GetClientList+SendReconstructSecret: " + status + "=============");
         return status;
     }

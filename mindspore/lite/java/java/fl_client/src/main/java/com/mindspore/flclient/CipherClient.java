@@ -83,6 +83,7 @@ public class CipherClient {
     private Random random = new Random();
     private ClientListReq clientListReq = new ClientListReq();
     private ReconstructSecretReq reconstructSecretReq = new ReconstructSecretReq();
+    private int retCode;
 
     public CipherClient(int iter, int minSecretNum, byte[] prime, int featureSize) {
         flCommunication = FLCommunication.getInstance();
@@ -108,6 +109,10 @@ public class CipherClient {
 
     public String getNextRequestTime() {
         return nextRequestTime;
+    }
+
+    public int getRetCode() {
+        return retCode;
     }
 
     public void genDHKeyPairs() {
@@ -282,13 +287,13 @@ public class CipherClient {
     }
 
     public FLClientStatus judgeRequestExchangeKeys(ResponseExchangeKeys bufData) {
-        int retcode = bufData.retcode();
+        retCode = bufData.retcode();
         LOGGER.info(Common.addTag("[PairWiseMask] **************the response of RequestExchangeKeys**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retcode));
+        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
         LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
         LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
         LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
-        switch (retcode) {
+        switch (retCode) {
             case (ResponseCode.SUCCEED):
                 LOGGER.info(Common.addTag("[PairWiseMask] RequestExchangeKeys success"));
                 return FLClientStatus.SUCCESS;
@@ -301,7 +306,7 @@ public class CipherClient {
                 LOGGER.info(Common.addTag("[PairWiseMask] catch RequestError or SystemError in RequestExchangeKeys"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retcode> from server in ResponseExchangeKeys is invalid: " + retcode));
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ResponseExchangeKeys is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }
@@ -329,12 +334,12 @@ public class CipherClient {
     }
 
     public FLClientStatus judgeGetExchangeKeys(ReturnExchangeKeys bufData) {
-        int retcode = bufData.retcode();
+        retCode = bufData.retcode();
         LOGGER.info(Common.addTag("[PairWiseMask] **************the response of GetExchangeKeys**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retcode));
+        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
         LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
         LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
-        switch (retcode) {
+        switch (retCode) {
             case (ResponseCode.SUCCEED):
                 LOGGER.info(Common.addTag("[PairWiseMask] GetExchangeKeys success"));
                 clientPublicKeyList.clear();
@@ -366,7 +371,7 @@ public class CipherClient {
                 LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetExchangeKeys"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retcode> from server in ReturnExchangeKeys is invalid: " + retcode));
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnExchangeKeys is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }
@@ -417,13 +422,13 @@ public class CipherClient {
     }
 
     public FLClientStatus judgeRequestShareSecrets(ResponseShareSecrets bufData) {
-        int retcode = bufData.retcode();
+        retCode = bufData.retcode();
         LOGGER.info(Common.addTag("[PairWiseMask] **************the response of RequestShareSecrets**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retcode));
+        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
         LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
         LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
         LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
-        switch (retcode) {
+        switch (retCode) {
             case (ResponseCode.SUCCEED):
                 LOGGER.info(Common.addTag("[PairWiseMask] RequestShareSecrets success"));
                 return FLClientStatus.SUCCESS;
@@ -436,7 +441,7 @@ public class CipherClient {
                 LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in RequestShareSecrets"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retcode> from server in ResponseShareSecrets is invalid: " + retcode));
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ResponseShareSecrets is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }
@@ -464,13 +469,13 @@ public class CipherClient {
     }
 
     public FLClientStatus judgeGetShareSecrets(ReturnShareSecrets bufData) {
-        int retcode = bufData.retcode();
+        retCode = bufData.retcode();
         LOGGER.info(Common.addTag("[PairWiseMask] **************the response of GetShareSecrets**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retcode));
+        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
         LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
         LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
         LOGGER.info(Common.addTag("[PairWiseMask] the size of encrypted shares: " + bufData.encryptedSharesLength()));
-        switch (retcode) {
+        switch (retCode) {
             case (ResponseCode.SUCCEED):
                 LOGGER.info(Common.addTag("[PairWiseMask] GetShareSecrets success"));
                 returnShareList.clear();
@@ -499,7 +504,7 @@ public class CipherClient {
                 LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetShareSecrets"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retcode> from server in ReturnShareSecrets is invalid: " + retcode));
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnShareSecrets is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }
@@ -563,6 +568,7 @@ public class CipherClient {
         if (curStatus != FLClientStatus.SUCCESS) {
             return curStatus;
         }
+        retCode = clientListReq.getRetCode();
 
         // SendReconstructSecret
         curStatus = reconstructSecretReq.sendReconstructSecret(decryptShareSecretsList, u3ClientList, iteration);
@@ -573,6 +579,7 @@ public class CipherClient {
         if (curStatus == FLClientStatus.RESTART) {
             nextRequestTime = reconstructSecretReq.getNextRequestTime();
         }
+        retCode = reconstructSecretReq.getRetCode();
         return curStatus;
     }
 }

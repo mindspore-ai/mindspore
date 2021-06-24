@@ -48,7 +48,7 @@ public class FLCommunication implements IFLCommunication {
     private static final Logger LOGGER = Logger.getLogger(FLCommunication.class.toString());
     private OkHttpClient client;
 
-    private static FLCommunication communication;
+    private static volatile FLCommunication communication;
 
     private FLCommunication() {
         if (flParameter.getTimeOut() != 0) {
@@ -109,14 +109,16 @@ public class FLCommunication implements IFLCommunication {
     }
 
     public static FLCommunication getInstance() {
-        if (communication == null) {
+        FLCommunication localRef = communication;
+        if (localRef == null) {
             synchronized (FLCommunication.class) {
-                if (communication == null) {
-                    communication = new FLCommunication();
+                localRef = communication;
+                if (localRef == null) {
+                    communication = localRef = new FLCommunication();
                 }
             }
         }
-        return communication;
+        return localRef;
     }
 
     @Override
