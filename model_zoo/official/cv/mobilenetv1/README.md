@@ -79,8 +79,10 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ├── MobileNetV1
   ├── README.md              # descriptions about MobileNetV1
   ├── scripts
-  │   ├──run_distribute_train.sh    # shell script for distribute train
-  │   ├──run_standalone_train.sh    # shell script for standalone train
+  │   ├──run_distribute_train.sh        # shell script for distribute train
+  │   ├──run_distribute_train_gpu.sh    # shell script for gpu distribute train
+  │   ├──run_standalone_train.sh        # shell script for standalone train
+  │   ├──run_standalone_train_gpu.sh    # shell script for gpu standalone train
   │   ├──run_eval.sh                # shell script for evaluation
   ├── src
   │   ├──dataset.py                 # creating dataset
@@ -92,8 +94,9 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   │      ├──device_adapter.py       # Get cloud ID
   │      ├──local_adapter.py        # Get local ID
   │      └──moxing_adapter.py       # Parameter processing
-  ├── default_config.yaml           # Training parameter profile(cifar10)
-  ├── default_config_imagenet.yaml  # Training parameter profile(imagenet)
+  ├── default_config.yaml               # Training parameter profile(cifar10)
+  ├── default_config_imagenet.yaml      # Training parameter profile(imagenet)
+  ├── default_config_gpu_imagenet.yaml  # Training parameter profile of GPU(imagenet)
   ├── train.py                      # training script
   ├── eval.py                       # evaluation script
 ```
@@ -106,8 +109,10 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 - Ascend: sh run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
 - CPU: sh run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
+- GPU(single device)：sh run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+- GPU(distribute training): sh run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
-For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+For distributed training with Ascend, a hccl configuration file with JSON format needs to be created in advance.
 
 Please follow the instructions in the link [hccn_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
@@ -118,10 +123,17 @@ Please follow the instructions in the link [hccn_tools](https://gitee.com/mindsp
   python:
       Ascend: python train.py --device_target Ascend --dataset_path [TRAIN_DATASET_PATH]
       CPU: python train.py --device_target CPU --dataset_path [TRAIN_DATASET_PATH]
+      GPU(single device): python train.py --device_target GPU --dateset [DATASET] --dataset_path [TRAIN_DATASET_PATH] --config_path [CONFIG_PATH]
+      GPU(distribute training):
+      mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
+        python train.py --config_path=$2 --dataset=$1 --run_distribute=True \
+        --device_num=$DEVICE_NUM --dataset_path=$PATH1 &> log.txt &
 
   shell:
      Ascend: sh run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
      CPU: sh run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     GPU(single device): sh run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     GPU(distribute training): sh run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 ### Result
@@ -133,6 +145,15 @@ epoch: 89 step: 1251, loss is 2.1829057
 Epoch time: 146826.802, per step time: 117.368
 epoch: 90 step: 1251, loss is 2.3499017
 Epoch time: 150950.623, per step time: 120.664
+```
+
+Training result will be stored in the example path. Checkpoints will be stored at `ckpt_*` by default, and training log  will be wrote to `./train_parallel/log.txt` with the platform GPU when distribute training .
+
+```shell
+epoch: 89 step: 1251, loss is 2.44095
+Epoch time: 322114.519, per step time: 257.486
+epoch: 90 step: 1251, loss is 2.2521682
+Epoch time: 320744.265, per step time: 256.390
 ```
 
 ## [Evaluation process](#contents)
@@ -151,6 +172,7 @@ You can start training using python or shell scripts.If the train method is trai
   python:
       Ascend: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH]
       CPU: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH] --device_target CPU
+      GPU: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH] --config_path [CONFIG_PATH] --device_target GPU
 
   shell:
       Ascend: sh run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
@@ -164,7 +186,13 @@ You can start training using python or shell scripts.If the train method is trai
 Inference result will be stored in the example path, you can find result like the followings in `eval/log`.
 
 ```shell
+Ascend
 result: {'top_5_accuracy': 0.9010016025641026, 'top_1_accuracy': 0.7128004807692307} ckpt=./train_parallel0/ckpt_0/mobilenetv1-90_1251.ckpt
+```
+
+```shell
+GPU
+result: {'top_5_accuracy': 0.9011217948717949, 'top_1_accuracy': 0.7129206730769231} ckpt=./ckpt_1/mobilenetv1-90_1251.ckpt
 ```
 
 ## Inference Process
@@ -207,23 +235,23 @@ Inference result is saved in current path, you can find result like this in acc.
 
 #### Training Performance
 
-| Parameters                 | MobilenetV1                                                                                 |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| Model Version              | V1                                                                                          |
-| Resource                   | Ascend 910 * 4; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8                                           |
-| uploaded Date              | 11/28/2020                                                                                  |
-| MindSpore Version          | 1.0.0                                                                                       |
-| Dataset                    | ImageNet2012                                                                                |
-| Training Parameters        | src/config.py                                                                               |
-| Optimizer                  | Momentum                                                                                    |
-| Loss Function              | SoftmaxCrossEntropy                                                                         |
-| outputs                    | probability                                                                                 |
-| Loss                       | 2.3499017                                                                                   |
-| Accuracy                   | ACC1[71.28%]                                                                                |
-| Total time                 | 225 min                                                                                     |
-| Params (M)                 | 3.3 M                                                                                       |
-| Checkpoint for Fine tuning | 27.3 M                                                                                      |
-| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv1) |
+| Parameters                 | MobilenetV1                                                      | MobilenetV1                                |
+| -------------------------- | -----------------------------------------------------------------| -------------------------------------------|
+| Model Version              | V1                                                               | V1                                         |
+| Resource                   | Ascend 910 * 4; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8  | GPU NV SMX2 V100-32G                       |
+| uploaded Date              | 11/28/2020                                                       | 06/26/2021                                 |
+| MindSpore Version          | 1.0.0                                                            | 1.2.0                                      |
+| Dataset                    | ImageNet2012                                                     | ImageNet2012                               |
+| Training Parameters        | src/config.py                                                    | default_config_gpu_imagenet.yaml           |
+| Optimizer                  | Momentum                                                         | Momentum                                   |
+| Loss Function              | SoftmaxCrossEntropy                                              | SoftmaxCrossEntropy                        |
+| outputs                    | probability                                                      | probability                                |
+| Loss                       | 2.3499017                                                        | 2.2521682                                  |
+| Accuracy                   | ACC1[71.28%]                                                     | ACC1[71.29%]                               |
+| Total time                 | 225 min                                                          | --                                         |
+| Params (M)                 | 3.3 M                                                            | --                                         |
+| Checkpoint for Fine tuning | 27.3 M                                                           | --                                         |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv1)
 
 ## [Description of Random Situation](#contents)
 

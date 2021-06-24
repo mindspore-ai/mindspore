@@ -127,8 +127,8 @@ def train_mobilenetv1():
         ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
 
     # create dataset
-    dataset = create_dataset(dataset_path=config.dataset_path, do_train=True, repeat_num=1,
-                             batch_size=config.batch_size, target=target)
+    dataset = create_dataset(dataset_path=config.dataset_path, do_train=True, device_num=config.device_num,
+                             repeat_num=1, batch_size=config.batch_size, target=target)
     step_size = dataset.get_dataset_size()
 
     # define net
@@ -172,8 +172,8 @@ def train_mobilenetv1():
                         {'order_params': net.trainable_params()}]
         opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
     else:
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay,
-                       config.loss_scale)
+        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
+                       config.weight_decay)
     # define loss, model
     if config.dataset == "imagenet2012":
         if not config.use_label_smooth:
@@ -183,11 +183,11 @@ def train_mobilenetv1():
     else:
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-    if target != "CPU":
+    if target == "Ascend":
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
                       amp_level="O2", keep_batchnorm_fp32=False)
     else:
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)
