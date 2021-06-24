@@ -317,9 +317,9 @@ void DumpJsonParser::ParseDumpPath(const nlohmann::json &content) {
 void DumpJsonParser::ParseNetName(const nlohmann::json &content) {
   CheckJsonStringType(content, kNetName);
   net_name_ = content;
-  if (!std::all_of(net_name_.begin(), net_name_.end(),
-                   [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_'; })) {
-    MS_LOG(EXCEPTION) << "Dump path only support alphabets, digit or {'-', '_'}, but got:" << net_name_;
+  if (net_name_.empty() || !std::all_of(net_name_.begin(), net_name_.end(),
+                                        [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_'; })) {
+    MS_LOG(EXCEPTION) << "net_name only supports alphabetic, digit, or {'-', '_'}, but got: " << net_name_;
   }
 }
 
@@ -327,8 +327,10 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
   CheckJsonStringType(content, kIteration);
   if (e2e_dump_enabled_ || async_dump_enabled_) {
     iteration_ = content;
-    if (iteration_.empty()) {
-      MS_LOG(EXCEPTION) << "In async dump settings json file, iteration is empty";
+    if (iteration_.empty() || (!std::all_of(iteration_.begin(), iteration_.end(), [](char c) {
+          return ::isdigit(c) || c == '-' || c == '|';
+        }) && iteration_ != "all")) {
+      MS_LOG(EXCEPTION) << "iteration only supports digits, {'-', '|'}, or just \"all\" but got: " << iteration_;
     }
   } else {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. Async or E2E should be enabled. ";
