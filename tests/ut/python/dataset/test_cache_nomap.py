@@ -2355,6 +2355,76 @@ def test_cache_nomap_all_rows_cached():
     logger.info("test_cache_nomap_all_rows_cached Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_dataset_size1():
+    """
+    Test get_dataset_size() when cache is injected directly after a non-mappable leaf
+
+       Cache
+         |
+      TFRecord
+    """
+
+    logger.info("Test cache nomap dataset size 1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 3 records in it only
+    ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_shards=2, shard_id=0, cache=some_cache)
+
+    dataset_size = ds1.get_dataset_size()
+    assert dataset_size == 2
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == dataset_size
+    logger.info("test_cache_nomap_dataset_size1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_dataset_size2():
+    """
+    Test get_dataset_size() when cache is injected after map
+
+       Cache
+         |
+    Map(decode)
+         |
+     TFRecord
+    """
+
+    logger.info("Test cache nomap dataset size 2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 3 records in it only
+    ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_shards=2, shard_id=0)
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
+
+    dataset_size = ds1.get_dataset_size()
+    assert dataset_size == 2
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == dataset_size
+    logger.info("test_cache_nomap_dataset_size2 Ended.\n")
+
+
 if __name__ == '__main__':
     # This is just a list of tests, don't try to run these tests with 'python test_cache_nomap.py'
     # since cache server is required to be brought up first
@@ -2414,3 +2484,5 @@ if __name__ == '__main__':
     test_cache_nomap_pyfunc_lambda()
     test_cache_nomap_pyfunc_builtin()
     test_cache_nomap_pyfunc_function()
+    test_cache_nomap_dataset_size1()
+    test_cache_nomap_dataset_size2()

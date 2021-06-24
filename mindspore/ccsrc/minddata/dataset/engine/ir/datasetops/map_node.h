@@ -93,6 +93,15 @@ class MapNode : public DatasetNode {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
+  /// \brief Base-class override for GetDatasetSize
+  /// \param[in] size_getter Shared pointer to DatasetSizeGetter
+  /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
+  ///     dataset size at the expense of accuracy.
+  /// \param[out] dataset_size the size of the dataset
+  /// \return Status of the function
+  Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                        int64_t *dataset_size) override;
+
  private:
   std::vector<std::shared_ptr<TensorOperation>> operations_;
   std::vector<std::string> input_columns_;

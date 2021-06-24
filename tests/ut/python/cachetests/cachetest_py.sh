@@ -130,6 +130,9 @@ HandleRcExit $? 0 0
 PytestCmd "test_cache_map.py" "test_cache_map_nested_repeat"
 HandleRcExit $? 0 0
 
+PytestCmd "test_cache_map.py" "test_cache_map_dataset_size" 1
+HandleRcExit $? 0 0
+
 GetSession
 HandleRcExit $? 1 1
 export SESSION_ID=$session_id
@@ -332,6 +335,9 @@ PytestCmd "test_cache_nomap.py" "test_cache_nomap_failure" 1
 HandleRcExit $? 0 0
 
 PytestCmd "test_cache_nomap.py" "test_cache_nomap_pyfunc" 1
+HandleRcExit $? 0 0
+
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_dataset_size" 1
 HandleRcExit $? 0 0
 
 GetSession

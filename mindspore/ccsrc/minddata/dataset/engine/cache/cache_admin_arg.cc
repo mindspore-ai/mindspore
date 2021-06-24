@@ -589,16 +589,14 @@ Status CacheAdminArgHandler::StartServer() {
     (void)dup2(fd[0], STDIN_FILENO);
     close(fd[0]);
     std::string msg;
+    std::string buf;
     const uint32_t buf_sz = 1024;
-    msg.resize(buf_sz);
-    auto n = read(0, msg.data(), buf_sz);
+    buf.resize(buf_sz);
+    auto n = read(0, buf.data(), buf_sz);
     // keep reading until we drain the pipe
     while (n > 0) {
-      msg.resize(n);
-      // Not an error, some info message goes to stdout
-      std::cout << msg;
-      msg.resize(buf_sz);
-      n = read(0, msg.data(), buf_sz);
+      msg += buf.substr(0, n);
+      n = read(0, buf.data(), buf_sz);
     }
     if (n < 0) {
       std::string err_msg = "Failed to read from pipeline " + std::to_string(errno);
@@ -613,6 +611,9 @@ Status CacheAdminArgHandler::StartServer() {
       auto exit_status = WEXITSTATUS(status);
       if (exit_status) {
         return Status(StatusCode::kMDUnexpectedError, msg);
+      } else {
+        // Not an error, some info message goes to stdout
+        std::cout << msg;
       }
     }
     return Status::OK();

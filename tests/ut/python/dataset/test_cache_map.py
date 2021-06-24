@@ -2227,6 +2227,76 @@ def test_cache_map_interrupt_and_rerun():
     logger.info("test_cache_map_interrupt_and_rerun Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_dataset_size1():
+    """
+    Test get_dataset_size() when cache is injected directly after a mappable leaf
+
+       Cache
+         |
+      CelebA
+    """
+
+    logger.info("Test cache map dataset size 1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 4 records
+    ds1 = ds.CelebADataset(CELEBA_DATA_DIR, num_shards=3, shard_id=0, cache=some_cache)
+
+    dataset_size = ds1.get_dataset_size()
+    assert dataset_size == 2
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == dataset_size
+    logger.info("test_cache_map_dataset_size1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_dataset_size2():
+    """
+    Test get_dataset_size() when cache is injected after map
+
+       Cache
+         |
+    Map(resize)
+         |
+     CelebA
+    """
+
+    logger.info("Test cache map dataset size 2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 4 records
+    ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True, num_shards=3, shard_id=0)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(operations=resize_op, input_columns=["image"], cache=some_cache)
+
+    dataset_size = ds1.get_dataset_size()
+    assert dataset_size == 2
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+
+    logger.info("Number of data in ds1: {} ".format(num_iter))
+    assert num_iter == dataset_size
+    logger.info("test_cache_map_dataset_size2 Ended.\n")
+
+
 if __name__ == '__main__':
     # This is just a list of tests, don't try to run these tests with 'python test_cache_map.py'
     # since cache server is required to be brought up first
@@ -2285,3 +2355,5 @@ if __name__ == '__main__':
     test_cache_map_python_sampler1()
     test_cache_map_python_sampler2()
     test_cache_map_nested_repeat()
+    test_cache_map_dataset_size1()
+    test_cache_map_dataset_size2()

@@ -176,5 +176,28 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+// Gets the dataset size
+Status MapNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                               int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  // If cache is injected after a MapNode, it is possible that the pipeline needs to handle different numbers of rows
+  // compared to a non-cached pipeline. This is mostly true for TFRecord dataset, since it uses row-based sharding
+  // with cache but file-based sharding without cache. However, MapNode couldn't tell whether the leaf below is
+  // TFRecord or not, therefore it doesn't rely on its child here but simply run through the tree.
+  if (!IsSizeDefined() || IsCached()) {
+    RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), dataset_size));
+    dataset_size_ = *dataset_size;
+    return Status::OK();
+  }
+  if (children_.size() == 1) {
+    return children_.front()->GetDatasetSize(size_getter, estimate, dataset_size);
+  } else {
+    RETURN_STATUS_UNEXPECTED("Trying to get dataset size from leaf node, missing override");
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore
