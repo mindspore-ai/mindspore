@@ -281,7 +281,6 @@ class Lamb(Optimizer):
         if not self.dynamic_lr:
             self.global_step = Parameter(initializer(0, [1]), name='global_step')
             self.assignadd = P.AssignAdd()
-        self.hyper_map = C.HyperMap()
         self.device_ascend = context.get_context("device_target") == "Ascend"
 
     def construct(self, gradients):
@@ -290,20 +289,20 @@ class Lamb(Optimizer):
         gradients = self.gradients_centralization(gradients)
         if self.is_group:
             if self.is_group_lr:
-                optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
-                                                        self.global_step),
-                                              lr, self.weight_decay, self.params, self.moments1, self.moments2,
-                                              gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map_reverse(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
+                                                                self.global_step),
+                                                      lr, self.weight_decay, self.params, self.moments1, self.moments2,
+                                                      gradients, self.decay_flags, self.optim_filter)
             else:
-                optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
-                                                        self.global_step, lr),
-                                              self.weight_decay, self.params, self.moments1, self.moments2,
-                                              gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map_reverse(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
+                                                                self.global_step, lr),
+                                                      self.weight_decay, self.params, self.moments1, self.moments2,
+                                                      gradients, self.decay_flags, self.optim_filter)
         else:
-            optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
-                                                    self.global_step, lr, self.weight_decay),
-                                          self.params, self.moments1, self.moments2, gradients,
-                                          self.decay_flags, self.optim_filter)
+            optim_result = self.hyper_map_reverse(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
+                                                            self.global_step, lr, self.weight_decay),
+                                                  self.params, self.moments1, self.moments2, gradients,
+                                                  self.decay_flags, self.optim_filter)
 
         if self.use_parallel:
             optim_result = F.depend(optim_result, self.broadcast_params(optim_result))

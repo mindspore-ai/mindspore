@@ -33,21 +33,28 @@ using ArgsPairList = std::vector<std::pair<AnfNodePtr, TypePtr>>;
 
 class Map : public MetaFuncGraph {
  public:
-  explicit Map(const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
+  explicit Map(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
       : MetaFuncGraph("map"),
         fn_leaf_(fn_leaf),
+        reverse_(reverse),
         broadcast_(false),
         nonleaf_({kObjectTypeList, kObjectTypeTuple, kObjectTypeClass}) {
     Init();
   }
-  Map(const Map &h) : MetaFuncGraph("map"), fn_leaf_(h.fn_leaf_), broadcast_(h.broadcast_), nonleaf_(h.nonleaf_) {
+  Map(const Map &map)
+      : MetaFuncGraph("map"),
+        fn_leaf_(map.fn_leaf_),
+        reverse_(map.reverse_),
+        broadcast_(map.broadcast_),
+        nonleaf_(map.nonleaf_) {
     Init();
   }
-  Map &operator=(const Map &h) {
-    if (this != &h) {
-      fn_leaf_ = h.fn_leaf_;
-      broadcast_ = h.broadcast_;
-      nonleaf_ = h.nonleaf_;
+  Map &operator=(const Map &map) {
+    if (this != &map) {
+      fn_leaf_ = map.fn_leaf_;
+      reverse_ = map.reverse_;
+      broadcast_ = map.broadcast_;
+      nonleaf_ = map.nonleaf_;
       if (fn_leaf_) {
         name_ = "map[" + fn_leaf_->name() + "]";
       }
@@ -81,13 +88,15 @@ class Map : public MetaFuncGraph {
   }
 
   MultitypeFuncGraphPtr fn_leaf_;
+  bool reverse_;
   bool broadcast_;
   std::set<TypeId> nonleaf_;
 };
 using MapPtr = std::shared_ptr<Map>;
 class MapPy : public Map {
  public:
-  explicit MapPy(const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr) : Map(fn_leaf) {}
+  explicit MapPy(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
+      : Map(reverse, fn_leaf) {}
   ~MapPy() override = default;
   MS_DECLARE_PARENT(MapPy, Map)
 };

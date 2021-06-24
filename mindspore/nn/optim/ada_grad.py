@@ -149,7 +149,6 @@ class Adagrad(Optimizer):
         super(Adagrad, self).__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(accum, update_slots, self.cls_name)
         self.accum = self.parameters.clone(prefix="accum", init=accum)
-        self.hyper_map = C.HyperMap()
         self.update_slots = update_slots
         self.opt = P.ApplyAdagrad(update_slots=update_slots)
 
@@ -161,9 +160,9 @@ class Adagrad(Optimizer):
         grads = self.scale_grad(grads)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.map_(F.partial(_ada_grad_opt, self.opt), lr, params, accum,
-                                grads)
+            success = self.map_reverse(F.partial(_ada_grad_opt, self.opt), lr, params, accum,
+                                       grads)
         else:
-            success = self.map_(F.partial(_ada_grad_opt, self.opt, lr), params, accum,
-                                grads)
+            success = self.map_reverse(F.partial(_ada_grad_opt, self.opt, lr), params, accum,
+                                       grads)
         return success

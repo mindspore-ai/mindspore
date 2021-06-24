@@ -197,6 +197,9 @@ class Optimizer(Cell):
         self.global_step_increase_tensor = Tensor(1, mstype.int32)
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
+        self.map_reverse = C.Map(None, True)
+        self.hyper_map = C.HyperMap()
+        self.hyper_map_reverse = C.HyperMap(None, True)
         self._use_parallel_optimizer()
 
     def _use_parallel_optimizer(self):

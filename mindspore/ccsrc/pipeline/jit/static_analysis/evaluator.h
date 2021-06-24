@@ -40,9 +40,9 @@ using EvaluatorAttrCachePtr = std::shared_ptr<EvaluatorAttrCache>;
 class Evaluator : public Base {
  public:
   explicit Evaluator(const std::string &id)
-      : evaluator_cache_mgr_(std::make_shared<EvaluatorCacheMgr>()),
-        attr_cache_(std::make_shared<EvaluatorAttrCache>()),
-        identifier_(id) {}
+      : identifier_(id),
+        evaluator_cache_mgr_(std::make_shared<EvaluatorCacheMgr>()),
+        attr_cache_(std::make_shared<EvaluatorAttrCache>()) {}
   ~Evaluator() override = default;
   MS_DECLARE_PARENT(Evaluator, Base);
 
@@ -92,13 +92,16 @@ class Evaluator : public Base {
   EvaluatorCacheMgrPtr evaluator_cache_mgr() const { return evaluator_cache_mgr_; }
   EvaluatorAttrCachePtr attr_cache() const { return attr_cache_; }
 
-  EvaluatorCacheMgrPtr evaluator_cache_mgr_;
-  EvaluatorAttrCachePtr attr_cache_;
+  std::recursive_timed_mutex &eval_lock() { return eval_lock_; }
 
+ protected:
   std::string identifier_;
-
   AnfNodeWeakPtr bound_node_;
-  std::recursive_timed_mutex eval_loc_;
+  EvaluatorCacheMgrPtr evaluator_cache_mgr_;
+  std::recursive_timed_mutex eval_lock_;
+
+ private:
+  EvaluatorAttrCachePtr attr_cache_;
 };
 
 class PrimEvaluator : public Evaluator {

@@ -205,7 +205,6 @@ class FTRL(Optimizer):
         self.lr_power = lr_power
         if not self.is_group:
             self.decay_flags = tuple((lambda: True)() for x in self.parameters)
-        self.hyper_map = C.HyperMap()
         self.opt = P.ApplyFtrl(use_locking=use_locking)
         self.use_locking = use_locking
         self.sparse_opt = P.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
@@ -227,9 +226,9 @@ class FTRL(Optimizer):
         grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
 
-        success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                      self.l1, self.l2, self.lr_power, lr),
-                            linear, grads, params, moments, self.ps_parameters, self.cache_enable)
+        success = self.map_reverse(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                             self.l1, self.l2, self.lr_power, lr),
+                                   linear, grads, params, moments, self.ps_parameters, self.cache_enable)
         return success
 
     @Optimizer.target.setter

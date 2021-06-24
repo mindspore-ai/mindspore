@@ -115,7 +115,6 @@ class LARS(Optimizer):
         self.decay_flags = optimizer.decay_flags
         self.reciprocal_scale = optimizer.reciprocal_scale
         self.need_scale = optimizer.need_scale
-        self.hyper_map = C.HyperMap()
         self.lars = P.LARSUpdate(epsilon, coefficient, use_clip)
         self.cast = P.Cast()
 

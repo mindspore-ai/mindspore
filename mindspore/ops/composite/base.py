@@ -483,6 +483,7 @@ class HyperMap(HyperMap_):
     Args:
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance.
+        reverse (bool): `reverse` is the flag to decide if apply the operation reversely. Only supported in graph mode.
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be sequences with the same length.
@@ -517,20 +518,20 @@ class HyperMap(HyperMap_):
         >>> print(output)
         ((Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4)),
         (Tensor(shape=[], dtype=Float32, value= 9), Tensor(shape=[], dtype=Float32, value= 16)))
-        >>> square_map = HyperMap(square)
+        >>> square_map = HyperMap(square, False)
         >>> output = square_map(nest_tensor_list)
         >>> print(output)
         ((Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4)),
         (Tensor(shape=[], dtype=Float32, value= 9), Tensor(shape=[], dtype=Float32, value= 16)))
     """
 
-    def __init__(self, ops=None):
+    def __init__(self, ops=None, reverse=False):
         """Initialize HyperMap."""
         self.ops = ops
         if ops:
-            HyperMap_.__init__(self, ops)
+            HyperMap_.__init__(self, reverse, ops)
         else:
-            HyperMap_.__init__(self)
+            HyperMap_.__init__(self, reverse)
 
     def __call__(self, *args):
         func = self.ops
@@ -555,6 +556,7 @@ class Map(Map_):
     Args:
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance. Default: None
+        reverse (bool): `reverse` is the flag to decide if apply the operation reversely. Only supported in graph mode.
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
@@ -581,20 +583,20 @@ class Map(Map_):
         >>> print(output)
         (Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4),
         Tensor(shape=[], dtype=Float32, value= 9))
-        >>> square_map = Map(square)
+        >>> square_map = Map(square, False)
         >>> output = square_map(tensor_list)
         >>> print(output)
         (Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4),
         Tensor(shape=[], dtype=Float32, value= 9))
     """
 
-    def __init__(self, ops=None):
+    def __init__(self, ops=None, reverse=False):
         """Initialize Map."""
         self.ops = ops
         if ops:
-            Map_.__init__(self, ops)
+            Map_.__init__(self, reverse, ops)
         else:
-            Map_.__init__(self)
+            Map_.__init__(self, reverse)
 
     def __call__(self, *args):
         func = self.ops

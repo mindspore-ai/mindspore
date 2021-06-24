@@ -127,22 +127,13 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
                       << ", res_base: " << res_base->ToString();
         break;
       }
-
-      // Overwrite the result if func graph is stub.
-      if (current_stack_frame->func_graph()->stub()) {
-        eval_result = std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
-      }
-      // Save func graph eval result for specialize.
-      auto evaluator = current_stack_frame->evaluator();
-      MS_EXCEPTION_IF_NULL(evaluator);
-      evaluator->evaluator_cache_mgr()->SetValue(current_stack_frame->args_abs_list(), eval_result);
-
       // Leave current func graph.
       LeaveStackFrame(engine, current_stack_frame);
       // Switch the stack frame.
+      auto last_stack_frame = current_stack_frame;
       current_stack_frame = stack_frames.top();
       MS_LOG(DEBUG) << "[" << this << "/StackFrame] Back to func graph, " << current_stack_frame;
-      current_stack_frame->Back(engine, eval_result);
+      current_stack_frame->Back(engine, last_stack_frame, eval_result);
       continue;
     }
 
@@ -223,7 +214,6 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                   << parent_context_->func_graph()->ToString() << "()->" << AnalysisResultCacheMgr::GetThreadid() << ":"
                   << fg->ToString() << "();";
   }
-
   context_ = parent_context_->NewFuncGraphContext(fg, args_abs_list);
   const auto &parameters = fg->parameters();
   for (size_t i = 0; i < nargs; i++) {
@@ -399,8 +389,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
 
 EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                              const AnfNodeConfigPtr &out_conf) {
-  const string evaluator_name = ToString();
-  std::unique_lock<std::recursive_timed_mutex> eval_lock(eval_loc_, std::try_to_lock);
+  std::unique_lock<std::recursive_timed_mutex> eval_lock(eval_lock_, std::try_to_lock);
   if (!eval_lock.owns_lock()) {
     auto py_tstate = PyEval_SaveThread();
     eval_lock.try_lock_for(std::chrono::seconds(kInferTimeout));
@@ -420,26 +409,26 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
   args_spec_list = BroadenUndeterminedArgs(args_spec_list);
   trace::TraceGraphEvalEnter(shared_from_base<Evaluator>(), out_conf);
   MS_LOG(DEBUG) << EvalEntryLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
+  const std::string &evaluator_name = ToString();
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
   auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
   if (eval_result == nullptr) {
     MS_LOG(DEBUG) << evaluator_name << " cache miss, call Eval().";
-    EvalResultPtr res = Eval(engine, args_spec_list);
-    if (res->abstract() == nullptr) {
+    eval_result = Eval(engine, args_spec_list);
+    MS_EXCEPTION_IF_NULL(eval_result);
+    if (eval_result->abstract() == nullptr) {
       EvalFailLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
       MS_LOG(EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
     }
-    MS_LOG(DEBUG) << evaluator_name << " set cache. return: " << res->abstract()->ToString() << ".";
-    evaluator_cache_mgr_->SetValue(args_spec_list, res);
-    trace::TraceGraphEvalLeave(shared_from_base<Evaluator>());
-    return res;
+    MS_LOG(DEBUG) << evaluator_name << " set cache. return: " << eval_result->abstract()->ToString() << ".";
+    evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
   } else {
     MS_EXCEPTION_IF_NULL(eval_result);
     MS_EXCEPTION_IF_NULL(eval_result->abstract());
     MS_LOG(DEBUG) << evaluator_name << " cache hit. return: " << eval_result->abstract()->ToString() << ".";
-    trace::TraceGraphEvalLeave(shared_from_base<Evaluator>());
-    return eval_result;
   }
+  trace::TraceGraphEvalLeave(shared_from_base<Evaluator>());
+  return eval_result;
 }
 
 EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
