@@ -8,6 +8,39 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM32)
     add_compile_definitions(PLATFORM_ARM)
 endif()
 
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDebug -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDebug -g")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
+else()
+    ## enable for binscope for release
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+    -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+    if(TARGET_HIMIX200)
+        set(CMAKE_CXX_FLAGS "-Wno-error=maybe-uninitialized ${CMAKE_CXX_FLAGS}")
+    endif()
+    if(NOT WIN32)
+        set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_SHARED_LINKER_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack ${CMAKE_EXE_LINKER_FLAGS}")
+    endif()
+endif()
+
+if(PLATFORM_ARM32 OR PLATFORM_ARM64)
+    #for performance
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+        if(TARGET_HIMIX200)
+            string(REPLACE "-fno-rtti " "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+        endif()
+    endif()
+endif()
+
 set(MS_VERSION_MAJOR ${MS_VERSION_MAJOR})
 set(MS_VERSION_MINOR ${MS_VERSION_MINOR})
 set(MS_VERSION_REVISION ${MS_VERSION_REVISION})
@@ -78,5 +111,17 @@ if(SUPPORT_TRAIN)
   else()
     target_link_libraries(mindspore-lite-train-jni ${LITE_TRAIN_SO_NAME})
   endif()
+endif()
+
+set(NDK_STRIP
+        "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if(PLATFORM_ARM64 OR PLATFORM_ARM32)
+        add_custom_command(TARGET mindspore-lite-jni POST_BUILD COMMAND ${NDK_STRIP}
+                ${CMAKE_BINARY_DIR}/libmindspore-lite*.so)
+    elseif(NOT WIN32)
+        add_custom_command(TARGET mindspore-lite-jni POST_BUILD COMMAND strip
+                ${CMAKE_BINARY_DIR}/libmindspore-lite*.so)
+    endif()
 endif()
 
