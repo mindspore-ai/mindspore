@@ -37,8 +37,6 @@ struct OneStepStartEndInfo {
   std::string iter_start_op_name;
   std::string fp_start_op_name;
   std::string iter_end_op_name;
-  uint64_t fp_start_timestamp = 0l;
-  uint64_t iter_end_timestamp = 0l;
 };
 
 struct OpInfo {
@@ -54,6 +52,20 @@ struct OpInfo {
   uint32_t pid;
 };
 
+class ProfilerManager {
+ public:
+  static std::shared_ptr<ProfilerManager> &GetInstance();
+  ProfilerManager() = default;
+  ~ProfilerManager() = default;
+  ProfilerManager(const ProfilerManager &) = delete;
+  ProfilerManager &operator=(const ProfilerManager &) = delete;
+  bool GetEnableRecorderActorFlag();
+  void RecordOneStepStartEndInfo();
+
+ private:
+  static std::shared_ptr<ProfilerManager> profiler_manager_inst_;
+};
+
 class Profiler {
  public:
   Profiler() = default;
@@ -63,8 +75,10 @@ class Profiler {
   virtual void Stop() = 0;
   virtual void StepProfilingEnable(const bool enable_flag) = 0;
   virtual void OpDataProducerEnd() = 0;
+  void RecordOneStepStartEndInfo();
   bool GetEnableFlag() const { return enable_flag_; }
   std::string ProfileDataPath() const { return profile_data_path_; }
+  void RecordOneStepStartEndInfo(std::string op_name);
 
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
@@ -77,6 +91,7 @@ class Profiler {
   std::unordered_map<std::string, OpInfo> op_info_map_;
   OneStepStartEndInfo step_start_end_info_;
   std::vector<OneStepStartEndInfo> all_step_start_end_info_;
+  std::mutex record_mutex_;
 };
 }  // namespace profiler
 }  // namespace mindspore

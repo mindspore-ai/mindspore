@@ -23,6 +23,7 @@
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace profiler {
@@ -62,13 +63,24 @@ void CPUProfiler::OpDataProducerBegin(const std::string op_name, const uint32_t 
   op_time_start_ = GetHostMonoTimeStamp();
   op_time_mono_start_ = GetHostMonoTimeStamp();
   SetRunTimeData(op_name, pid);
+
+#if ENABLE_GPU
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    // For heterogeneous scene, record op name to gpu_profiler_inst.
+    auto gpu_profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+    // For cpu network, no gpu profiler, do not to raise exception.
+    if (gpu_profiler_inst && gpu_profiler_inst->GetEnableFlag()) {
+      gpu_profiler_inst->RecordOneStepStartEndInfo(op_name);
+    }
+  }
+#endif
 }
 
 void CPUProfiler::OpDataProducerEnd() {
   float op_time_elapsed = 0;
   op_time_stop_ = GetHostMonoTimeStamp();
   op_time_elapsed = (op_time_stop_ - op_time_start_) / kNanosecondToMillisecond;
-  MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
+  MS_LOG(DEBUG) << "Host Time Elapsed(ms)," << op_name_ << "," << op_time_elapsed;
   Profiler::SetRunTimeData(op_name_, op_time_elapsed);
   Profiler::SetRunTimeData(op_name_, op_time_mono_start_, op_time_elapsed);
 }
@@ -83,9 +95,10 @@ void CPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
     MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
   } else {
-    CpuDataSaver dataSaver;
-    dataSaver.ParseOpInfo(op_info_map_);
-    dataSaver.WriteFile(profile_data_path_);
+    auto cpu_data_saver_inst = profiler::cpu::CpuDataSaver::GetInstance();
+    MS_EXCEPTION_IF_NULL(cpu_data_saver_inst);
+    cpu_data_saver_inst->ParseOpInfo(op_info_map_);
+    cpu_data_saver_inst->WriteFile(profile_data_path_);
   }
 }
 

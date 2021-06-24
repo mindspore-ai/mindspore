@@ -105,6 +105,22 @@ void GpuDataSaver::AddKernelEventToDevice(const Event &event, DeviceActivityInfo
   }
 }
 
+void GpuDataSaver::CpuProfilingTimeSynchronizedToGpu(const BaseTime &start_time) {
+  auto cpu_data_saver_inst = profiler::cpu::CpuDataSaver::GetInstance();
+  MS_EXCEPTION_IF_NULL(cpu_data_saver_inst);
+  auto &cpu_op_timestamps_map = cpu_data_saver_inst->GetOpTimeStampInfo();
+  auto cpu_op_iter = cpu_op_timestamps_map.begin();
+  while (cpu_op_iter != cpu_op_timestamps_map.end()) {
+    for (auto &time_iter : cpu_op_iter->second) {
+      time_iter.start_timestamp =
+        time_iter.start_timestamp - start_time.host_start_monotonic_raw_time + start_time.gpu_start_time;
+      // time unit from ms to us.
+      time_iter.duration *= kTimeUnit;
+    }
+    cpu_op_iter++;
+  }
+}
+
 void GpuDataSaver::WriteFile(std::string out_path_dir, const BaseTime &start_time) {
   if (out_path_dir.empty()) {
     MS_LOG(WARNING) << "Output directory. Ignore the writing data.";
@@ -122,6 +138,7 @@ void GpuDataSaver::WriteFile(std::string out_path_dir, const BaseTime &start_tim
   WriteActivity(out_path_dir);
   WriteOpTimestamp(out_path_dir);
   WriteStartTime(out_path_dir, start_time);
+  CpuProfilingTimeSynchronizedToGpu(start_time);
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     WriteStepTraceAsyncLaunchKernel(out_path_dir);
   } else {
@@ -176,6 +193,11 @@ void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base
     return;
   }
 
+  // cpu profiler information.
+  auto cpu_data_saver_inst = profiler::cpu::CpuDataSaver::GetInstance();
+  MS_EXCEPTION_IF_NULL(cpu_data_saver_inst);
+  auto &cpu_op_timestamps_map = cpu_data_saver_inst->GetOpTimeStampInfo();
+
   // write step trace time info into file
   uint32_t step = 0;
   uint64_t duration;
@@ -188,17 +210,32 @@ void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base
     auto bp_end_op_timestamp = op_timestamps_map_.find(step_trace_op_name_.trace_bp_end);
     auto iter_end_op_timestamp = op_timestamps_map_.find(iter_end_op_name);
 
-    if (iter_end_op_name == "Default/InitDataSetQueue-op0") continue;
+    // if iter_start/fp_start/iter_end op is executed on cpu, update it.
+    if (iter_start_op_timestamp == op_timestamps_map_.end()) {
+      iter_start_op_timestamp = cpu_op_timestamps_map.find(iter_start_op_name);
+    }
+    if (fp_op_timestamp == op_timestamps_map_.end()) {
+      fp_op_timestamp = cpu_op_timestamps_map.find(fp_op_name);
+    }
+    if (iter_end_op_timestamp == op_timestamps_map_.end()) {
+      iter_end_op_timestamp = cpu_op_timestamps_map.find(iter_end_op_name);
+    }
+
+    if (iter_end_op_name == "Default/InitDataSetQueue-op0") {
+      continue;
+    }
 
     if (iter_start_op_timestamp == op_timestamps_map_.end() || fp_op_timestamp == op_timestamps_map_.end() ||
         iter_end_op_timestamp == op_timestamps_map_.end() || bp_end_op_timestamp == op_timestamps_map_.end()) {
-      MS_LOG(ERROR) << "[profiling step trace] failed, do not find " << fp_op_name << " or " << iter_end_op_name << "or"
-                    << step_trace_op_name_.trace_bp_end;
+      MS_LOG(ERROR) << "[profiling step trace] failed, do not find \"" << fp_op_name << "\" or \"" << iter_end_op_name
+                    << "\" or \"" << step_trace_op_name_.trace_bp_end << "\"";
+      ofs.close();
       return;
     }
     if (iter_start_op_timestamp->second.size() <= step || fp_op_timestamp->second.size() <= step ||
         iter_end_op_timestamp->second.size() <= step || bp_end_op_timestamp->second.size() <= step) {
       MS_LOG(ERROR) << "[profiling step trace] the number of fp/bp/iter_end timestamp not enough";
+      ofs.close();
       return;
     }
 
@@ -215,13 +252,15 @@ void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base
         // convert the time unit from 1ns to 10ns (keep the same with ascend)
         auto iter_op_timestamp = op_timestamps_map_.find(op_name);
         if (iter_op_timestamp == op_timestamps_map_.end()) {
-          MS_LOG(ERROR) << "[profiling step trace] failed, do not find " << fp_op_name << " or " << iter_end_op_name
-                        << "or" << step_trace_op_name_.trace_bp_end;
+          MS_LOG(ERROR) << "[profiling step trace] failed, do not find \"" << fp_op_name << "\" or " << iter_end_op_name
+                        << "\" or \"" << step_trace_op_name_.trace_bp_end << "\"";
+          ofs.close();
           return;
         }
 
         if (iter_op_timestamp->second.size() <= step) {
           MS_LOG(ERROR) << "[profiling step trace] the number of communication op timestamp not enough";
+          ofs.close();
           return;
         }
 
@@ -278,6 +317,7 @@ void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {
         ofs << std::endl;
       } catch (const std::exception &e) {
         MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
+        ofs.close();
       }
     }
   }
@@ -302,6 +342,7 @@ void GpuDataSaver::WriteStartTime(const std::string &saver_base_dir, const BaseT
     ofs << "gpu_start_time(ns): " << start_time.gpu_start_time << std::endl;
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
+    ofs.close();
   }
 
   ofs.close();

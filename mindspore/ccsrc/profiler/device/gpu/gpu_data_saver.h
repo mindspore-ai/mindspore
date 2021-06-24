@@ -23,6 +23,7 @@
 #include <string>
 #include <memory>
 #include "profiler/device/gpu/gpu_profiling.h"
+#include "profiler/device/cpu/cpu_data_saver.h"
 #include "profiler/device/data_saver.h"
 namespace mindspore {
 namespace profiler {
@@ -92,6 +93,8 @@ class GpuDataSaver : public DataSaver {
   void WriteStepTraceAsyncLaunchKernel(const std::string &saver_base_dir);
 
   void WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time);
+
+  void CpuProfilingTimeSynchronizedToGpu(const BaseTime &start_time);
 
   AllActivityInfos activity_infos_;
   ProfilingTraceInfo step_trace_op_name_from_graph_;

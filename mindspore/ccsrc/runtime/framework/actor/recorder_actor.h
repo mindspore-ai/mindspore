@@ -22,9 +22,7 @@
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
-#if ENABLE_GPU
-#include "profiler/device/gpu/gpu_profiling.h"
-#endif
+#include "profiler/device/profiling.h"
 
 namespace mindspore {
 namespace runtime {
