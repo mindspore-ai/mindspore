@@ -74,7 +74,7 @@ def run_predict(args_opt):
         device_num = 1
 
     # Set model property
-    model_parallel_num = args_opt.tensor_model_parallel_num
+    model_parallel_num = args_opt.op_level_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
     per_batch_size = args_opt.per_batch_size
     batch_size = per_batch_size * data_parallel_num

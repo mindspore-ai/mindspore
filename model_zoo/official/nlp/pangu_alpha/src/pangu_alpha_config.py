@@ -95,7 +95,7 @@ def set_parse(args_opt):
             args_opt.optimizer_shard = 0
             args_opt.stage_num = 16
             args_opt.micro_size = 32
-            args_opt.tensor_model_parallel_num = 16
+            args_opt.op_level_model_parallel_num = 16
         elif args_opt.run_type == "predict":
             args_opt.stage_num = 4
             args_opt.micro_size = 1
@@ -103,7 +103,7 @@ def set_parse(args_opt):
         args_opt.embedding_size = 5120
         args_opt.num_layers = 40
         args_opt.num_heads = 40
-        args_opt.tensor_model_parallel_num = 8
+        args_opt.op_level_model_parallel_num = 8
         if args_opt.run_type == "train":
             args_opt.start_lr = 5e-5
             args_opt.end_lr = 1e-6
@@ -117,7 +117,7 @@ def set_parse(args_opt):
         args_opt.embedding_size = 2560
         args_opt.num_layers = 32
         args_opt.num_heads = 32
-        args_opt.tensor_model_parallel_num = 8
+        args_opt.op_level_model_parallel_num = 8
         if args_opt.run_type == "train":
             args_opt.start_lr = 1e-4
             args_opt.end_lr = 1e-6

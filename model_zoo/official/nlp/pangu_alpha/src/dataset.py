@@ -39,7 +39,7 @@ def get_input_data_batch_slice_map(input_ids, eod_id, rank, dis, eod_reset):
         attention_mask: the attention mask considering eod reset
     """
     rank = int(rank)
-    input_ids = input_ids[rank*dis: (rank+1)*dis]
+    input_ids = input_ids[rank * dis: (rank + 1) * dis]
     if not eod_reset:
         return input_ids
     seq_length = input_ids.shape[1] - 1
@@ -60,8 +60,8 @@ def get_input_data_batch_slice_map(input_ids, eod_id, rank, dis, eod_reset):
         for i in range(eod_index.size):
             # Reset position_ids and attention_mask considering EOD
             index = eod_index[i]
-            batch_attention_mask[bs_i, (index+1):, :(index+1)] = 0
-            batch_position_ids[bs_i, (index+1):] -= (index + 1 - prev_index)
+            batch_attention_mask[bs_i, (index + 1):, :(index + 1)] = 0
+            batch_position_ids[bs_i, (index + 1):] -= (index + 1 - prev_index)
             prev_index = index + 1
     return batch_input_ids, batch_position_ids, batch_attention_mask
 
@@ -106,9 +106,10 @@ def create_dataset(batch_size, data_path, device_num=1, rank=0, drop=True, full_
     else:
         # Each card slice a small batch from the full batch
         dis = int(batch_size / device_num)
-        if dis <= 0:
+        if batch_size % device_num != 0:
             raise ValueError(
-                "batch size {} should be a multiple of device number {}.".format(batch_size, device_num))
+                f"batch size {batch_size} should be a multiple of device number {device_num}."
+                " You should change the args: per_batch_size.")
 
     map_func = (lambda input_ids: get_input_data_batch_slice_map(input_ids, eod_id, rank, dis, eod_reset))
     # If eod_reset enabled, another two inputs will be generated through input_ids
