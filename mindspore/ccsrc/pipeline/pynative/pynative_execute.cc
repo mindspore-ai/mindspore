@@ -163,8 +163,14 @@ std::string GetId(const py::object &obj) {
     return prefix;
   }
 
-  py::object ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
-  return py::cast<std::string>(ret);
+  if (py::isinstance<Cell>(obj)) {
+    auto cell = py::cast<CellPtr>(obj);
+    MS_EXCEPTION_IF_NULL(cell);
+    return std::to_string(reinterpret_cast<size_t>(cell.get()));
+  } else {
+    py::object ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
+    return py::cast<std::string>(ret);
+  }
 }
 
 std::map<SignatureEnumDType, std::vector<size_t>> GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes) {
