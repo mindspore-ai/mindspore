@@ -175,8 +175,11 @@ Major parameters in linear_eval.py as follows:
   ```
 
   The model checkpoint will be saved in the outputs directory.
+
 ### [Evaluation Process](#contents)
+
 #### Evaluation
+
 Before running the command below, please check the checkpoint path used for evaluation.
 
 - running on Ascend
@@ -191,6 +194,34 @@ Before running the command below, please check the checkpoint path used for eval
   # grep "Average accuracy: " eval_log
   'Accuracy': 0.84505
   ```
+
+## [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_simclr_encoder [SIMCLR_CKPT_PATH] --ckpt_linear_classifier [CLASSIFIER_CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The parameters ckpt_simclr_encoder and ckpt_linear_classifier are required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the mindir file must be exported by export.py. Input files must be in bin format.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [SIMCLR_CLASSIFIER_MINDIR_PATH] [DATA_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+`DATA_PATH` is the path to the cifar10 evaluation dataset
+`NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'
+`DEVICE_ID` is optional, default value is 0.
+
+#### result
+
+Inference result is saved in current path, you can find result in acc.log file.
 
 ## [Model Description](#contents)
 
