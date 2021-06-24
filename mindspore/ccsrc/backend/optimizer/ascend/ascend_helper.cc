@@ -222,6 +222,7 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                         const bool need_padding, const std::string &op_name, const std::vector<int64_t> &perm) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(kernel_select);
   CNodePtr trans_node = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(op_name)), input});
   MS_EXCEPTION_IF_NULL(trans_node);
   if (need_padding) {
@@ -243,12 +244,10 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   if (op_name == prim::kPrimTranspose->name()) {
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), trans_node);
   }
-  MS_EXCEPTION_IF_NULL(kernel_select);
-  kernel_select->SelectKernel(trans_node);
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), trans_node);
   AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), trans_node);
-  MS_EXCEPTION_IF_NULL(trans_node);
   trans_node->set_scope(input->scope());
+  kernel_select->SelectKernel(trans_node);
   return trans_node;
 }
 
