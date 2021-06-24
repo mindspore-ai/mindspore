@@ -23,6 +23,7 @@ _proximal_ada_grad_opt = C.MultitypeFuncGraph("proximal_ada_grad_opt")
 
 @_proximal_ada_grad_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor",
                                  "Tensor")
+
 def _tensor_run_opt_with_sparse(opt, sparse_opt, l1, l2, learning_rate, gradient, weight, accum):
     """Apply sparse proximal_ada_grad optimizer to the weight parameter."""
     success = True
@@ -31,6 +32,7 @@ def _tensor_run_opt_with_sparse(opt, sparse_opt, l1, l2, learning_rate, gradient
 
 
 @_proximal_ada_grad_opt.register("Function", "Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+
 def _tensor_run_opt(opt, sparse_opt, l1, l2, learning_rate, gradient, weight, accum):
     """Apply proximal_ada_grad optimizer to the weight parameter."""
     success = True
