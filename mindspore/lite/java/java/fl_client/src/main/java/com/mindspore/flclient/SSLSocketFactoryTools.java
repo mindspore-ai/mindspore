@@ -1,12 +1,12 @@
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,18 @@
  */
 package com.mindspore.flclient;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -32,11 +40,12 @@ public class SSLSocketFactoryTools {
     private SSLContext sslContext;
     private MyTrustManager myTrustManager;
     private static SSLSocketFactoryTools instance;
+
     private SSLSocketFactoryTools() {
         initSslSocketFactory();
     }
 
-    private  void initSslSocketFactory(){
+    private void initSslSocketFactory() {
         try {
             sslContext = SSLContext.getInstance("TLS");
             x509Certificate = readCert(flParameter.getCertPath());
@@ -51,16 +60,14 @@ public class SSLSocketFactoryTools {
         }
     }
 
-
     public static SSLSocketFactoryTools getInstance() {
         if (instance == null) {
-            instance=new SSLSocketFactoryTools();
+            instance = new SSLSocketFactoryTools();
         }
         return instance;
     }
 
-
-    public  X509Certificate readCert(String assetName) {
+    public X509Certificate readCert(String assetName) {
         InputStream inputStream = null;
         try {
             inputStream = new FileInputStream(assetName);
@@ -110,7 +117,6 @@ public class SSLSocketFactoryTools {
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
         }
 
-
         @Override
         public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             for (X509Certificate cert : chain) {
@@ -130,6 +136,7 @@ public class SSLSocketFactoryTools {
                 } catch (SignatureException e) {
                     logger.severe(Common.addTag("[SSLSocketFactoryTools] catch SignatureException in checkServerTrusted: " + e.getMessage()));
                 }
+                logger.info(Common.addTag("checkServerTrusted success!"));
             }
         }
 
