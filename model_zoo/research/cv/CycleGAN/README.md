@@ -45,7 +45,7 @@ Download CycleGAN datasets and create your own datasets. We provide data/downloa
 ## [Dependences](#contents)
 
 - Python==3.7.5
-- Mindspore==1.1
+- Mindspore==1.2.0
 
 # [Script Description](#contents)
 
@@ -60,7 +60,8 @@ The entire code structure is as following:
   └─download_cyclegan_dataset.sh.py    # download dataset
 ├── scripts
   └─run_train_ascend.sh                # launch ascend training(1 pcs)
-  └─run_train_gpu.sh                   # launch gpu training(1 pcs)
+  └─run_train_standalone_gpu.sh        # launch gpu training(1 pcs)
+  └─run_train_distributed_gpu.sh       # launch gpu training(8 pcs)
   └─run_eval_ascend.sh                 # launch ascend eval
   └─run_eval_gpu.sh                    # launch gpu eval
 ├─ imgs
@@ -126,7 +127,13 @@ sh ./scripts/run_train_ascend.sh
 - running on GPU with default parameters
 
 ```bash
-sh ./scripts/run_train_gpu.sh
+sh ./scripts/run_train_standalone_gpu.sh
+```
+
+- running on 8 GPUs with default parameters
+
+```bash
+sh ./scripts/run_train_distributed_gpu.sh
 ```
 
 ## [Evaluation](#contents)
@@ -143,19 +150,21 @@ python eval.py --platform [PLATFORM] --dataroot [DATA_PATH] --G_A_ckpt [G_A_CKPT
 
 ### Training Performance
 
-| Parameters                 | single Ascend/GPU                                           |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | CycleGAN                                                    |
-| Resource                   | Ascend 910/NV SMX2 V100-32G                                 |
-| MindSpore Version          | 1.1                                                         |
-| Dataset                    | horse2zebra                                                 |
-| Training Parameters        | epoch=200, steps=1334, batch_size=1, lr=0.002               |
-| Optimizer                  | Adam                                                        |
-| Loss Function              | Mean Sqare Loss & L1 Loss                                   |
-| outputs                    | probability                                                 |
-| Speed                      | 1pc(Ascend): 123 ms/step; 1pc(GPU): 264 ms/step             |
-| Total time                 | 1pc(Ascend): 9.6h; 1pc(GPU): 19.1h;                         |
-| Checkpoint for Fine tuning | 44M (.ckpt file)                                            |
+We use Depth Resnet Generator on Ascend and Resnet Generator on GPU.
+
+| Parameters                 | single Ascend/GPU                                           | 8 GPUs                                                      |
+| -------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| Model Version              | CycleGAN                                                    | CycleGAN                                                    |
+| Resource                   | Ascend 910/NV SMX2 V100-32G                                 | NV SMX2 V100-32G x 8                                        |
+| MindSpore Version          | 1.2                                                         | 1.2                                                         |
+| Dataset                    | horse2zebra                                                 | horse2zebra                                                 |
+| Training Parameters        | epoch=200, steps=1334, batch_size=1, lr=0.0002              | epoch=600, steps=166, batch_size=8, lr=0.0002               |
+| Optimizer                  | Adam                                                        | Adam                                                        |
+| Loss Function              | Mean Sqare Loss & L1 Loss                                   | Mean Sqare Loss & L1 Loss                                   |
+| outputs                    | probability                                                 | probability                                                 |
+| Speed                      | 1pc(Ascend): 123 ms/step; 1pc(GPU): 190 ms/step             | 190 ms/step                                                 |
+| Total time                 | 1pc(Ascend): 9.6h; 1pc(GPU): 14.9h;                         | 5.7h                                                        |
+| Checkpoint for Fine tuning | 44M (.ckpt file)                                            | 44M (.ckpt file)                                            |
 
 ### Evaluation Performance
 
@@ -163,10 +172,10 @@ python eval.py --platform [PLATFORM] --dataroot [DATA_PATH] --G_A_ckpt [G_A_CKPT
 | ------------------- | --------------------------- |
 | Model Version       | CycleGAN                    |
 | Resource            | Ascend 910/NV SMX2 V100-32G |
-| MindSpore Version   | 1.1                         |
+| MindSpore Version   | 1.2                         |
 | Dataset             | horse2zebra                 |
 | batch_size          | 1                           |
-| outputs             | probability                 |
+| outputs             | transferred images          |
 
 # [ModelZoo Homepage](#contents)
 

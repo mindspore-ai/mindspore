@@ -13,5 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-python eval.py --platform GPU --device_id 0 --model ResNet --G_A_ckpt ./outputs/ckpt/G_A_200.ckpt \
-               --G_B_ckpt ./outputs/ckpt/G_B_200.ckpt > output.eval.log 2>&1 &
+mpirun -n 8 --output-filename log_output --merge-stderr-to-stdout --allow-run-as-root python train.py --platform GPU \
+   --model ResNet --max_epoch 600 --n_epochs 300 --device_num 8 --dataroot ./data/horse2zebra/  \
+   --outputs_dir ./outputs > output.train.log 2>&1 &
