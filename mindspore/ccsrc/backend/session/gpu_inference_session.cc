@@ -36,8 +36,8 @@ void GpuInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &kern
   size_t no_weight_input = 0;
   for (size_t i = 0; i < input_nodes.size(); ++i) {
     tensor::TensorPtr tensor = nullptr;
-    if (!input_nodes[i]->isa<Parameter>()) {
-      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter";
+    if (!input_nodes[i]->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
+      MS_LOG(INFO) << "Kernel graph inputs is not Parameter or without user.";
       continue;
     }
     auto pk_node = input_nodes[i]->cast<ParameterPtr>();
@@ -62,8 +62,8 @@ GraphId GpuInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) 
   // load weight data to device
   auto input_nodes = kernel_graph->inputs();
   for (size_t i = 0; i < input_nodes.size(); ++i) {
-    if (!input_nodes[i]->isa<Parameter>()) {
-      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter";
+    if (!input_nodes[i]->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
+      MS_LOG(INFO) << "Kernel graph inputs is not Parameter or without user.";
       continue;
     }
     auto pk_node = input_nodes[i]->cast<ParameterPtr>();

@@ -36,8 +36,8 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
   size_t no_weight_input = 0;
   for (size_t i = 0; i < input_nodes.size(); ++i) {
     tensor::TensorPtr tensor = nullptr;
-    if (!input_nodes[i]->isa<Parameter>()) {
-      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter";
+    if (!input_nodes[i]->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
+      MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
       continue;
     }
     auto pk_node = input_nodes[i]->cast<ParameterPtr>();
@@ -63,14 +63,14 @@ GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_grap
   auto input_nodes = kernel_graph->inputs();
   for (size_t i = 0; i < input_nodes.size(); ++i) {
     if (!input_nodes[i]->isa<Parameter>()) {
-      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter";
+      MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
       continue;
     }
     auto pk_node = input_nodes[i]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
-    if (AnfAlgo::IsParameterWeight(pk_node)) {
+    if (AnfAlgo::IsParameterWeight(pk_node) || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
       const auto &param_value = pk_node->default_param();
       MS_EXCEPTION_IF_NULL(param_value);
       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_value);

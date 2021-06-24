@@ -77,14 +77,14 @@ class MatMulGpuKernel : public GpuKernel {
           cublasGemmEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha,
                        input2_addr, dtype_b_, ldb, input1_addr, dtype_a_, lda, &beta, output_addr, dtype_c_, ldc,
                        compute_type, algo_),
-          "cublasGemmEx failed");
+          "cublasGemmEx failed. Possible reasons: the GPU is occupied by other processes.");
       } else {
         CHECK_CUBLAS_RET_WITH_EXCEPT(
           kernel_node_,
           cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_),
                                      &alpha, input2_addr, dtype_b_, ldb, stride_b, input1_addr, dtype_a_, lda, stride_a,
                                      &beta, output_addr, dtype_c_, ldc, stride_c, batch_, compute_type, algo_),
-          "cublasGemmStridedBatchedEx failed");
+          "cublasGemmStridedBatchedEx failed. Possible reasons: the GPU is occupied by other processes.");
       }
     } catch (const std::exception &e) {
       MS_LOG(EXCEPTION) << "Encountered an exception: " << e.what() << " when invoke cublas "
