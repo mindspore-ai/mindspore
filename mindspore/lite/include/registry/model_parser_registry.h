@@ -16,11 +16,12 @@
 
 #ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H
 #define MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H
-#include <string>
 #include <memory>
 #include <unordered_map>
 #include "include/lite_utils.h"
+#include "include/registry/framework.h"
 
+using mindspore::lite::converter::FmkType;
 namespace mindspore::lite {
 /// \brief ModelParser defined a model parser
 class MS_API ModelParser;
@@ -47,15 +48,15 @@ class MS_API ModelParserRegistry {
   /// \param[in] fmk Define identification of a certain framework.
   ///
   /// \return Pointer of ModelParser.
-  ModelParser *GetModelParser(const std::string &fmk);
+  ModelParser *GetModelParser(const FmkType fmk);
 
   /// \brief Method to register model parser.
   ///
   /// \param[in] fmk Define identification of a certain framework.
   /// \param[in] creator Define function pointer of creating ModelParser.
-  void RegParser(const std::string &fmk, ModelParserCreator creator);
+  int RegParser(const FmkType fmk, ModelParserCreator creator);
 
-  std::unordered_map<std::string, ModelParserCreator> parsers_;
+  std::unordered_map<FmkType, ModelParserCreator> parsers_;
 };
 
 /// \brief ModelRegistrar defined registration class of ModelParser.
@@ -65,7 +66,7 @@ class MS_API ModelRegistrar {
   ///
   /// \param[in] fmk Define identification of a certain framework.
   /// \param[in] creator Define function pointer of creating ModelParser.
-  ModelRegistrar(const std::string &fmk, ModelParserCreator creator) {
+  ModelRegistrar(const FmkType fmk, ModelParserCreator creator) {
     ModelParserRegistry::GetInstance()->RegParser(fmk, creator);
   }
 
@@ -77,7 +78,7 @@ class MS_API ModelRegistrar {
 ///
 /// \param[in] fmk Define identification of a certain framework.
 /// \param[in] parserCreator Define function pointer of creating ModelParser.
-#define REG_MODEL_PARSER(fmk, parserCreator) static ModelRegistrar g_##type##fmk##ModelParserReg(#fmk, parserCreator);
+#define REG_MODEL_PARSER(fmk, parserCreator) static ModelRegistrar g_##type##fmk##ModelParserReg(fmk, parserCreator);
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H

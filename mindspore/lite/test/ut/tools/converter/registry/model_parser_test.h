@@ -40,6 +40,8 @@ class ModelParserTest : public lite::ModelParser {
   std::map<std::string, std::vector<std::string>> model_layers_info_;
   std::vector<std::string> model_structure_;
 };
+
+lite::ModelParser *TestModelParserCreator();
 }  // namespace mindspore
 
 #endif  // LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_MODEL_PARSER_TEST_H

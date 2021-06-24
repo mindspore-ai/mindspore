@@ -36,6 +36,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "ops/transpose.h"
 
+using mindspore::lite::converter::FmkType_ONNX;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -248,11 +249,7 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
   }
   OnnxNodeParser::set_opset_version(onnx_model_.opset_import().Get(0).version());
   onnx_root_graph_ = onnx_model_.graph();
-  if (OnnxNodeParser::opset_version() > 15) {
-    res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
-  } else {
-    res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX_LOW_VERSION)));
-  }
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   return RET_OK;
 }
 STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
@@ -1353,6 +1350,6 @@ int OnnxModelParser::Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graph
   return RET_OK;
 }
 
-REG_MODEL_PARSER(ONNX, LiteModelParserCreator<OnnxModelParser>)
+REG_MODEL_PARSER(FmkType_ONNX, LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite
 }  // namespace mindspore

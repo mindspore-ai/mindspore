@@ -31,6 +31,7 @@
 #include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 
+using mindspore::lite::converter::FmkType_TFLITE;
 namespace mindspore::lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
@@ -628,5 +629,5 @@ int TfliteModelParser::Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_g
   return RET_OK;
 }
 
-REG_MODEL_PARSER(TFLITE, LiteModelParserCreator<TfliteModelParser>)
+REG_MODEL_PARSER(FmkType_TFLITE, LiteModelParserCreator<TfliteModelParser>)
 }  // namespace mindspore::lite

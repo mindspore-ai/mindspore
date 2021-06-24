@@ -27,14 +27,18 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/model_parser.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "ut/tools/converter/registry/model_parser_test.h"
 
+using mindspore::lite::ModelRegistrar;
 using mindspore::lite::converter::Flags;
+using mindspore::lite::converter::FmkType_CAFFE;
 namespace mindspore {
 class PassRegistryTest : public mindspore::CommonTest {
  public:
   PassRegistryTest() = default;
   void SetUp() override {
-    auto model_parser = lite::ModelParserRegistry::GetInstance()->GetModelParser("TEST");
+    REG_MODEL_PARSER(FmkType_CAFFE, TestModelParserCreator);
+    auto model_parser = lite::ModelParserRegistry::GetInstance()->GetModelParser(FmkType_CAFFE);
     if (model_parser == nullptr) {
       return;
     }
