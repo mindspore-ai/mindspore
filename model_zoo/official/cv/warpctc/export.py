@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into air models"""
+import os
 import math as m
 import numpy as np
 
@@ -21,15 +22,23 @@ from mindspore import Tensor, context, load_checkpoint, load_param_into_net, exp
 from src.warpctc import StackedRNN, StackedRNNForGPU, StackedRNNForCPU
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
-if config.device_target == "Ascend":
-    context.set_context(device_id=get_device_id())
 
-if config.file_format == "AIR" and config.device_target != "Ascend":
-    raise ValueError("Export AIR must on Ascend")
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+    config.ckpt_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.ckpt_file)
 
-if __name__ == "__main__":
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+    if config.device_target == "Ascend":
+        context.set_context(device_id=get_device_id())
+
+    if config.file_format == "AIR" and config.device_target != "Ascend":
+        raise ValueError("Export AIR must on Ascend")
     input_size = m.ceil(config.captcha_height / 64) * 64 * 3
     captcha_width = config.captcha_width
     captcha_height = config.captcha_height
@@ -47,3 +56,7 @@ if __name__ == "__main__":
     load_param_into_net(net, param_dict)
     net.set_train(False)
     export(net, image, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == "__main__":
+    run_export()

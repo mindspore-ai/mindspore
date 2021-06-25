@@ -150,11 +150,11 @@ The dataset is self-generated using a third-party library called [captcha](https
           # (3) Set the code directory to "/{path}/warpctc" on the website UI interface.
           # (4) Set the startup file to /{path}/warpctc/eval.py" on the website UI interface.
           # (5) Perform a or b.
-          #     a. 在 /path/warpctc 下的default_config.yaml 文件中设置参数
+          #     a. setting parameters in /{path}/warpctc/default_config.yaml.
           #         1. Set ”enable_modelarts=True“
           #         2. Set “checkpoint_path={checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
           #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
-          #     b. 在 网页上设置
+          #     b. adding on the website UI interface.
           #         1. Set ”enable_modelarts=True“
           #         2. Set “checkpoint_path={checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
           #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
@@ -282,9 +282,36 @@ bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 
 ### Export MindIR
 
-```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
-```
+- Export on local
+
+  ```shell
+  python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+  ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+  ```python
+  # (1) Upload the code folder to S3 bucket.
+  # (2) Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/warpctc" on the website UI interface.
+  # (4) Set the startup file to /{path}/warpctc/export.py" on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in /{path}/warpctc/default_config.yaml.
+  #         1. Set ”enable_modelarts: True“
+  #         2. Set “ckpt_file: ./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Set ”file_name: warpctc“
+  #         4. Set ”file_format：MINDIR“
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts=True“
+  #         2. Add “ckpt_file=./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Add ”file_name=warpctc“
+  #         4. Add ”file_format=MINDIR“
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (This step is useless, but necessary.).
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of a single card.
+  # (10) Create your job.
+  # You will see warpctc.mindir under {Output file path}.
+  ```
 
 The ckpt_file parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]

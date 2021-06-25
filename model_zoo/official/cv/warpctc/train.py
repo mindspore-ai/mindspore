@@ -89,6 +89,7 @@ def modelarts_pre_process():
 
         print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
     config.save_checkpoint_path = os.path.join(config.output_path, config.save_checkpoint_path)
+    config.train_data_dir = config.data_path
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
@@ -125,10 +126,7 @@ def train():
     max_captcha_digits = config.max_captcha_digits
     input_size = m.ceil(config.captcha_height / 64) * 64 * 3
     # create dataset
-    if config.enable_modelarts:
-        dataset_dir = config.data_path
-    else:
-        dataset_dir = config.train_data_dir
+    dataset_dir = config.train_data_dir
     dataset = create_dataset(dataset_path=dataset_dir, batch_size=config.batch_size,
                              num_shards=device_num, shard_id=rank, device_target=config.device_target)
     step_size = dataset.get_dataset_size()
