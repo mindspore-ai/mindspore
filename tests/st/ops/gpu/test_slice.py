@@ -70,6 +70,30 @@ def test_slice_4d():
     assert (output_ms.asnumpy() == output_np).all()
 
 
+class Slice5DNet(nn.Cell):
+    def __init__(self):
+        super(Slice5DNet, self).__init__()
+        self.slice = P.Slice()
+
+    def construct(self, x):
+        return self.slice(x, (0, 11, 1, 2, 3), (32, 7, 14, 10, 221))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_slice_5d():
+    x_np = np.random.randn(32, 32, 24, 224, 224).astype(np.float32)
+    output_np = x_np[:, 11:18, 1:15, 2:12, 3:224]
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_ms = Tensor(x_np)
+    net = Slice5DNet()
+    output_ms = net(x_ms)
+
+    assert (output_ms.asnumpy() == output_np).all()
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

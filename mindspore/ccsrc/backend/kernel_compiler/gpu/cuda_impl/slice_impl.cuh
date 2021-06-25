@@ -26,6 +26,10 @@ void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size
                    const size_t l3, const size_t l4, const size_t d1, const size_t d2, const size_t d3, const size_t d4,
                    const T *input, T *output, cudaStream_t stream);
 template <typename T>
+void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t l1,
+                   const size_t l2, const size_t l3, const size_t l4, const size_t l5, const size_t d1, const size_t d2,
+                   const size_t d3, const size_t d4, const size_t d5, const T *input, T *output, cudaStream_t stream);
+template <typename T>
 void CalSlice4DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
                     const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
                     const size_t d3, const size_t d4, const T *dy, T *dx, cudaStream_t stream);
