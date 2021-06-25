@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [NEED_PREPROCESS]
+    echo "Usage: bash run_infer_310.sh [NETWORK] [MINDIR_PATH] [DEVICE_ID] [NEED_PREPROCESS]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero.
     NEED_PREPROCESS means weather need preprocess or not, it's value is 'y' or 'n'."
 exit 1
@@ -28,8 +28,9 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-model=$(get_real_path $1)
-data_path=$(get_real_path $2)
+
+network=$1
+model=$(get_real_path $2)
 if [ $# == 4 ]; then
     device_id=$3
     if [ -z $device_id ]; then
@@ -40,8 +41,8 @@ if [ $# == 4 ]; then
 fi
 need_preprocess=$4
 
+echo "network: " $network
 echo "mindir name: "$model
-echo "dataset path: "$data_path
 echo "device id: "$device_id
 echo "need preprocess or not: "$need_preprocess
 
@@ -65,7 +66,17 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --data_url=$data_path --result_path=./preprocess_Result/
+
+    BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    if [ $network == "unet" ]; then
+        config_path="${BASEPATH}/../unet_simple_config.yaml"
+    elif [ $network == "unet++" ]; then
+        config_path="${BASEPATH}/../unet_nested_cell_config.yaml"
+    else
+        echo "unsupported network"
+        exit 1
+    fi
+    python3.7 ../preprocess.py --config_path=$config_path
 }
 
 function compile_app()
@@ -93,7 +104,13 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --data_url=$data_path --rst_path=./result_Files/ &> acc.log &
+    BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    if [ $network == "unet" ]; then
+        config_path="${BASEPATH}/../unet_simple_config.yaml"
+    elif [ $network == "unet++" ]; then
+        config_path="${BASEPATH}/../unet_nested_cell_config.yaml"
+    fi
+    python3.7 ../postprocess.py --config_path=$config_path &> acc.log &
 }
 
 preprocess_data

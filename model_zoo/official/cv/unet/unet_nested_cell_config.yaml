@@ -45,13 +45,13 @@ eval_resize: False
 checkpoint_path: './checkpoint/'
 checkpoint_file_path: 'ckpt_unet_nested_adam-4-75.ckpt'
 rst_path: './result_Files/'
-result_path: ""
+result_path: "./preprocess_Result"
 
 # Export options
-width: 572
-height: 572
-file_name: "unet"
-file_format: "AIR"
+width: 96
+height: 96
+file_name: "unetplusplus"
+file_format: "MINDIR"
 
 ---
 # Help description for each configuration

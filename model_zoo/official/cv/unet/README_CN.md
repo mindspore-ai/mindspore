@@ -471,18 +471,17 @@ python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkp
 
 导出mindir模型
 
+在执行导出前需要修改配置文件中的checkpoint_file_path和batch_size参数。checkpoint_file_path为ckpt文件路径，batch_size设置为1。
+
 ```shell
-python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path=[CONFIG_PATH]
 ```
 
-参数`checkpoint_file_path` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
-
 在执行推理前，MINDIR文件必须在910上通过export.py文件导出。
-目前仅可处理batch_Size为1。
 
 ```shell
 # Ascend310 推理
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [NETWORK] [MINDIR_PATH] [DEVICE_ID] [NEED_PREPROCESS]
 ```
 
 `DEVICE_ID` 可选，默认值为 0。

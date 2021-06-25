@@ -77,7 +77,7 @@ if __name__ == '__main__':
     rst_path = config.rst_path
     metrics = dice_coeff()
 
-    if config.dataset == "Cell_nuclei":
+    if hasattr(config, "dataset") and config.dataset == "Cell_nuclei":
         img_size = tuple(config.image_size)
         for i, bin_name in enumerate(os.listdir('./preprocess_Result/')):
             f = bin_name.replace(".png", "")
