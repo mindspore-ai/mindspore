@@ -71,8 +71,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend/GPU）
-    - Prepare hardware environment with Ascend or GPU processor.
+- Hardware（Ascend/GPU/CPU）
+    - Prepare hardware environment with Ascend/GPU/CPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -123,6 +123,16 @@ After installing MindSpore via the official website, you can start training and 
   python eval.py --checkpoint_path=[CHECKPOINT_PATH] > eval.log 2>&1 &  
   OR
   sh run_eval_gpu.sh [CHECKPOINT_PATH]
+  ```
+
+- running on CPU
+
+  ```python
+  # run training example
+  nohup python train.py --config_path=cifar10_config_cpu.yaml --dataset_name=cifar10 > train.log 2>&1 &
+
+  # run evaluation example
+  nohup python eval.py --checkpoint_path=[CHECKPOINT_PATH] > eval.log 2>&1 &  
   ```
 
 We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the scripts so that select different datasets. For more details, please refer the specify script.
@@ -232,9 +242,11 @@ We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the sc
         ├── scripts
         │   ├──run_train.sh             // shell script for distributed on Ascend
         │   ├──run_train_gpu.sh         // shell script for distributed on GPU
+        │   ├──run_train_cpu.sh         // shell script for training on CPU
         │   ├──run_eval.sh              // shell script for evaluation on Ascend
         │   ├──run_infer_310.sh         // shell script for 310 inference
         │   ├──run_eval_gpu.sh          // shell script for evaluation on GPU
+        │   ├──run_eval_cpu.sh          // shell script for evaluation on CPU
         ├── src
         │   ├──dataset.py             // creating dataset
         │   ├──googlenet.py          // googlenet architecture
@@ -337,6 +349,16 @@ For more configuration details, please refer the script `config.py`.
   The python command above will run in the background, you can view the results through the file `train.log`.
 
   After training, you'll get some checkpoint files under the folder `./ckpt_0/` by default.
+
+- running on CPU
+
+  ```python
+  nohup python train.py --config_path=cifar10_config_cpu.yaml --dataset_name=cifar10 > train.log 2>&1 &
+  ```
+
+  The python command above will run in the background, you can view the results through the file `train.log`.
+
+  After training, you'll get some checkpoint files under the folder defined in config.yaml.
 
 ### Distributed Training
 

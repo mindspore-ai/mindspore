@@ -184,8 +184,6 @@ def run_train():
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
-    else:
-        raise ValueError("Unsupported platform.")
 
     if cfg.dataset_name == "cifar10":
         dataset = create_dataset_cifar10(cfg.train_data_path, 1, cifar_cfg=cfg)
