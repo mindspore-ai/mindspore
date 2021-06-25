@@ -580,6 +580,8 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
 }
 
 void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator) {
+  static std::mutex fg_lock;
+  std::lock_guard<std::mutex> infer_lock(fg_lock);
   auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
   if (fg_eval == nullptr) {
     return;
