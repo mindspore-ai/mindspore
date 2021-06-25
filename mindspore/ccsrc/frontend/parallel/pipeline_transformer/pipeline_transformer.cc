@@ -87,6 +87,9 @@ ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micr
 }
 
 void PipelineTransformer::LabelMicroBatch() {
+  if (!root_->has_flag(TRAINING)) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(main_graph_);
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
@@ -516,7 +519,11 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
   std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
   auto depend = main_graph_->NewCNode(depend_input);
   auto abstract = parameter->abstract();
+  if (care_node) {
+    abstract = care_node->abstract();
+  }
   depend->set_abstract(abstract);
+  send->set_abstract(abstract);
   SendAttr send_out = {shape_type_pair.first, shape_type_pair.second, depend};
   return send_out;
 }
@@ -630,7 +637,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   std::vector<AnfNodePtr> send_ops;
   auto all_nodes = graph->nodes();
   auto stage_num = g_device_manager->stage_num();
-  if (stage_num > micro_size_) {
+  if (root_->has_flag(TRAINING) && (stage_num > micro_size_)) {
     MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
   }
   for (auto &node : all_nodes) {
@@ -777,21 +784,7 @@ void PipelineTransformer::ElimParameter() {
   std::vector<AnfNodePtr> parameter_list;
   for (auto &parameter : parameters) {
     if (!manager_->node_users()[parameter].empty()) {
-      if (!root_->has_flag(TRAINING)) {
-        for (auto &node_pair : manager_->node_users()[parameter]) {
-          auto user_node = node_pair.first;
-          if (!IsPrimitiveCNode(user_node, prim::kPrimReceive)) {
-            parameter_list.push_back(parameter);
-            break;
-          }
-          // remove_receive_inputs
-          auto cnode = user_node->cast<CNodePtr>();
-          std::vector<AnfNodePtr> new_inputs = {cnode->input(0)};
-          cnode->set_inputs(new_inputs);
-        }
-      } else {
-        parameter_list.push_back(parameter);
-      }
+      parameter_list.push_back(parameter);
     }
   }
   auto del_num = parameters.size() - parameter_list.size();
