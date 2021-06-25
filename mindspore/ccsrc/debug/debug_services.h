@@ -259,6 +259,8 @@ class DebugServices {
                               std::vector<std::shared_ptr<TensorData>> *tensor_list);
 
   std::string GetStrippedFilename(const std::string &file_name);
+
+  std::string IterationString(unsigned int iteration);
 #endif
   void ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
