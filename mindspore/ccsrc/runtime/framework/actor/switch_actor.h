@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <stack>
 #include <unordered_map>
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
@@ -103,17 +104,34 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // The position of the branch output in the input_nodes_.
   std::vector<std::vector<size_t>> branch_inputs_pos_;
 
+  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_data_;
+
+  std::unordered_map<uuids::uuid *, std::unordered_map<AID *, size_t>> input_controls_;
+
+  // Branch ids is used to record the id corresponding to the switch output branch.
+  // In control flow, sub funcgraph may be called in multiple places, and the output must be return to different
+  // places. Therefore, the output of each subgraph will be connected to a switch actor, and the caller will send
+  // its branch id to the gather of the subgraph. Then branch id will be sent by the gather actor to the switch
+  // actor connected to the output.
+  // In a recursive scenario, the switch will sequentially receive the branch ids sent by the caller, and the switch
+  // actor needs to store the branch ids in the stack, and pop up in turn when returning.
+  std::unordered_map<uuids::uuid *, std::stack<int>> input_branch_ids_;
+
   // Control arrows of different branches.
   std::vector<std::vector<AID>> output_branch_control_arrows_;
+  // Branch id arrows of different branches.
+  std::vector<std::vector<AID>> output_branch_branch_arrows_;
   // Result arrows of different branches.
   std::vector<std::vector<DataArrowPtr>> output_branch_result_arrows_;
 
   // When the output is a value node from switch actor, the actor needs to send the anfnode to the output actor,
   // so all the nodes that may send the device tensor to switch actor are recorded.
   std::vector<std::vector<KernelWithIndex>> front_to_backend_parameter_;
-
+  std::vector<std::vector<KernelWithIndex>> backend_parameters_;
   std::vector<std::vector<AnfNodePtr>> branch_total_inputs_;
   std::vector<FuncGraphPtr> branch_func_graph_;
+
+  std::unordered_map<int, size_t> branch_id_to_index_;
 
   // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
   std::vector<std::pair<size_t, AnfNode *>> device_tensor_store_keys_;
@@ -130,6 +148,8 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // The dependent input controls number.
   size_t input_controls_num_{0};
   CNodePtr node_;
+  int local_branch_id_;
+  size_t input_branch_id_num_;
 
   //  The output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_;
