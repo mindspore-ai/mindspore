@@ -21,11 +21,15 @@ import numpy as np
 import cv2
 
 from mindspore import Tensor, context
+from mindspore.common import set_seed
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.config import cfg_res50
 from src.network import RetinaFace, resnet50
 from src.utils import decode_bbox, prior_box
+
+
+set_seed(1)
 
 class Timer():
     def __init__(self):
