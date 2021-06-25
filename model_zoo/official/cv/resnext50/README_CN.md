@@ -68,6 +68,38 @@ ResNeXt整体网络架构如下：
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
+如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
+开始进行模型的训练和推理，具体操作如下：
+
+```python
+# 在modelarts上使用分布式训练的示例：
+# (1) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          在yaml文件上设置网络所需的参数。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置网络所需的参数。
+# (2) 在modelarts的界面上设置代码的路径 "/path/resnext50"。
+# (3) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (4) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (5) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a.  设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件.
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+# (3) 在modelarts的界面上设置代码的路径 "/path/resnext50"。
+# (4) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的推理。
+```
+
 # 脚本说明
 
 ## 脚本及样例代码
@@ -102,9 +134,14 @@ ResNeXt整体网络架构如下：
     ├─linear_warmup.py                # 线性热身学习率
     ├─warmup_cosine_annealing.py      # 每次迭代的学习率
     ├─warmup_step_lr.py               # 热身迭代学习率
-  ├─eval.py                           # 评估网络
+  ├─model_utils
+    ├──config.py                      # 参数配置
+    ├──device_adapter.py              # 设备配置
+    ├──local_adapter.py               # 本地设备配置
+    ├──moxing_adapter.py              # modelarts设备配置
+  ├──eval.py                          # 评估网络
   ├──train.py                         # 训练网络
-  ├──mindspore_hub_conf.py            #  MindSpore Hub接口
+  ├──mindspore_hub_conf.py            # MindSpore Hub接口
 ```
 
 ## 脚本参数
@@ -144,7 +181,7 @@ ResNeXt整体网络架构如下：
 您可以通过python脚本开始训练：
 
 ```shell
-python train.py --data_dir ~/imagenet/train/ --platform Ascend --is_distributed 0
+python train.py --data_path ~/imagenet/train/ --device_target Ascend --run_distribute 0
 ```
 
 或通过shell脚本开始训练：
@@ -185,17 +222,17 @@ sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 您可以通过python脚本开始训练：
 
 ```shell
-python eval.py --data_dir ~/imagenet/val/ --platform Ascend --pretrained resnext.ckpt
+python eval.py --data_path ~/imagenet/val/ --device_target Ascend --checkpoint_file_path resnext.ckpt
 ```
 
 或通过shell脚本开始训练：
 
 ```shell
 # 评估
-sh run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
+sh run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH PLATFORM
 ```
 
-PLATFORM is Ascend or GPU, default is Ascend.
+DEVICE_TARGET is Ascend or GPU, default is Ascend.
 
 #### 样例
 
@@ -216,7 +253,7 @@ acc=93.88%(TOP5)
 ## 模型导出
 
 ```shell
-python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
+python export.py --device_target [PLATFORM] --checkpoint_file_path [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
 `ckpt_file` 参数为必填项。

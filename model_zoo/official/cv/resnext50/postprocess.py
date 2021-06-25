@@ -15,16 +15,10 @@
 """post process for 310 inference"""
 import os
 import json
-import argparse
 import numpy as np
-from src.config import config
+from src.model_utils.config import config
 
 batch_size = 1
-parser = argparse.ArgumentParser(description="resnet inference")
-parser.add_argument("--result_path", type=str, required=True, help="result files path.")
-parser.add_argument("--label_path", type=str, required=True, help="image file path.")
-args = parser.parse_args()
-
 
 def get_result(result_path, label_path):
     files = os.listdir(result_path)
@@ -48,4 +42,4 @@ def get_result(result_path, label_path):
 
 
 if __name__ == '__main__':
-    get_result(args.result_path, args.label_path)
+    get_result(config.result_path, config.label_path)

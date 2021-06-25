@@ -15,7 +15,6 @@
 """Eval"""
 import os
 import time
-import argparse
 import datetime
 import glob
 import numpy as np
@@ -33,7 +32,8 @@ from src.utils.auto_mixed_precision import auto_mixed_precision
 from src.utils.var_init import load_pretrain_model
 from src.image_classification import get_network
 from src.dataset import classification_dataset
-from src.config import config
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 class ParameterReduce(nn.Cell):
@@ -50,52 +50,24 @@ class ParameterReduce(nn.Cell):
         return ret
 
 
-def parse_args(cloud_args=None):
-    """parse_args"""
-    parser = argparse.ArgumentParser('mindspore classification test')
-    parser.add_argument('--platform', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='run platform')
-
-    # dataset related
-    parser.add_argument('--data_dir', type=str, default='/opt/npu/datasets/classification/val', help='eval data dir')
-    parser.add_argument('--per_batch_size', default=32, type=int, help='batch size for per npu')
-    # network related
-    parser.add_argument('--graph_ckpt', type=int, default=1, help='graph ckpt or feed ckpt')
-    parser.add_argument('--pretrained', default='', type=str, help='fully path of pretrained model to load. '
-                        'If it is a direction, it will test all ckpt')
-
-    # logging related
-    parser.add_argument('--log_path', type=str, default='outputs/', help='path to save log')
-    parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
-
-    # roma obs
-    parser.add_argument('--train_url', type=str, default="", help='train url')
-
-    args, _ = parser.parse_known_args()
-    args = merge_args(args, cloud_args)
-    args.image_size = config.image_size
-    args.num_classes = config.num_classes
-    args.rank = config.rank
-    args.group_size = config.group_size
-
-    args.image_size = list(map(int, args.image_size.split(',')))
-
-    # init distributed
-    if args.is_distributed:
-        if args.platform == "Ascend":
+def set_parameters():
+    """set_parameters"""
+    if config.run_distribute:
+        if config.device_target == "Ascend":
             init()
-        elif args.platform == "GPU":
+        elif config.device_target == "GPU":
             init("nccl")
-        args.rank = get_rank()
-        args.group_size = get_group_size()
+        config.rank = get_rank()
+        config.group_size = get_group_size()
     else:
-        args.rank = 0
-        args.group_size = 1
+        config.rank = 0
+        config.group_size = 1
 
-    args.outputs_dir = os.path.join(args.log_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    config.outputs_dir = os.path.join(config.log_path,
+                                      datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
 
-    args.logger = get_logger(args.outputs_dir, args.rank)
-    return args
+    config.logger = get_logger(config.outputs_dir, config.rank)
+    return config
 
 
 def get_top5_acc(top5_arg, gt_class):
@@ -105,38 +77,25 @@ def get_top5_acc(top5_arg, gt_class):
             sub_count += 1
     return sub_count
 
-def merge_args(args, cloud_args):
-    """merge_args"""
-    args_dict = vars(args)
-    if isinstance(cloud_args, dict):
-        for key in cloud_args.keys():
-            val = cloud_args[key]
-            if key in args_dict and val:
-                arg_type = type(args_dict[key])
-                if arg_type is not type(None):
-                    val = arg_type(val)
-                args_dict[key] = val
-    return args
 
-
-def get_result(args, model, top1_correct, top5_correct, img_tot):
+def get_result(model, top1_correct, top5_correct, img_tot):
     """calculate top1 and top5 value."""
     results = [[top1_correct], [top5_correct], [img_tot]]
-    args.logger.info('before results={}'.format(results))
-    if args.is_distributed:
+    config.logger.info('before results=%s', results)
+    if config.run_distribute:
         model_md5 = model.replace('/', '')
         tmp_dir = '/cache'
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
-        top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(args.rank, model_md5)
-        top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(args.rank, model_md5)
-        img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(args.rank, model_md5)
+        top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(config.rank, model_md5)
+        top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(config.rank, model_md5)
+        img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(config.rank, model_md5)
         np.save(top1_correct_npy, top1_correct)
         np.save(top5_correct_npy, top5_correct)
         np.save(img_tot_npy, img_tot)
         while True:
             rank_ok = True
-            for other_rank in range(args.group_size):
+            for other_rank in range(config.group_size):
                 top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
                 top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
                 img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
@@ -149,7 +108,7 @@ def get_result(args, model, top1_correct, top5_correct, img_tot):
         top1_correct_all = 0
         top5_correct_all = 0
         img_tot_all = 0
-        for other_rank in range(args.group_size):
+        for other_rank in range(config.group_size):
             top1_correct_npy = '/cache/top1_rank_{}_{}.npy'.format(other_rank, model_md5)
             top5_correct_npy = '/cache/top5_rank_{}_{}.npy'.format(other_rank, model_md5)
             img_tot_npy = '/cache/img_tot_rank_{}_{}.npy'.format(other_rank, model_md5)
@@ -161,53 +120,53 @@ def get_result(args, model, top1_correct, top5_correct, img_tot):
     else:
         results = np.array(results)
 
-    args.logger.info('after results={}'.format(results))
+    config.logger.info('after results=%s', results)
     return results
 
-
+@moxing_wrapper()
 def test(cloud_args=None):
     """test"""
-    args = parse_args(cloud_args)
+    set_parameters()
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=args.platform, save_graphs=False)
+                        device_target=config.device_target, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
     # init distributed
-    if args.is_distributed:
+    if config.run_distribute:
         parallel_mode = ParallelMode.DATA_PARALLEL
-        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=config.group_size,
                                           gradients_mean=True)
 
-    args.logger.save_args(args)
+    config.logger.save_args(config)
 
     # network
-    args.logger.important_info('start create network')
-    if os.path.isdir(args.pretrained):
-        models = list(glob.glob(os.path.join(args.pretrained, '*.ckpt')))
+    config.logger.important_info('start create network')
+    if os.path.isdir(config.pretrained):
+        models = list(glob.glob(os.path.join(config.pretrained, '*.ckpt')))
         print(models)
-        if args.graph_ckpt:
+        if config.graph_ckpt:
             f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('-')[-1].split('_')[0])
         else:
             f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('_')[-1])
-        args.models = sorted(models, key=f)
+        config.models = sorted(models, key=f)
     else:
-        args.models = [args.pretrained,]
+        config.models = [config.checkpoint_file_path,]
 
-    for model in args.models:
-        de_dataset = classification_dataset(args.data_dir, image_size=args.image_size,
-                                            per_batch_size=args.per_batch_size,
-                                            max_epoch=1, rank=args.rank, group_size=args.group_size,
+    for model in config.models:
+        de_dataset = classification_dataset(config.data_path, image_size=config.image_size,
+                                            per_batch_size=config.per_batch_size,
+                                            max_epoch=1, rank=config.rank, group_size=config.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator(output_numpy=True, num_epochs=1)
-        network = get_network(num_classes=args.num_classes, platform=args.platform)
+        network = get_network(num_classes=config.num_classes, platform=config.device_target)
 
-        load_pretrain_model(model, network, args)
+        load_pretrain_model(model, network, config)
 
         img_tot = 0
         top1_correct = 0
         top5_correct = 0
-        if args.platform == "Ascend":
+        if config.device_target == "Ascend":
             network.to_float(mstype.float16)
         else:
             auto_mixed_precision(network)
@@ -224,26 +183,26 @@ def test(cloud_args=None):
             t1_correct = np.equal(top1_output, gt_classes).sum()
             top1_correct += t1_correct
             top5_correct += get_top5_acc(top5_output, gt_classes)
-            img_tot += args.per_batch_size
+            img_tot += config.per_batch_size
 
-            if args.rank == 0 and it == 0:
+            if config.rank == 0 and it == 0:
                 t_end = time.time()
                 it = 1
-        if args.rank == 0:
+        if config.rank == 0:
             time_used = time.time() - t_end
-            fps = (img_tot - args.per_batch_size) * args.group_size / time_used
-            args.logger.info('Inference Performance: {:.2f} img/sec'.format(fps))
-        results = get_result(args, model, top1_correct, top5_correct, img_tot)
+            fps = (img_tot - config.per_batch_size) * config.group_size / time_used
+            config.logger.info('Inference Performance: {:.2f} img/sec'.format(fps))
+        results = get_result(model, top1_correct, top5_correct, img_tot)
         top1_correct = results[0, 0]
         top5_correct = results[1, 0]
         img_tot = results[2, 0]
         acc1 = 100.0 * top1_correct / img_tot
         acc5 = 100.0 * top5_correct / img_tot
-        args.logger.info('after allreduce eval: top1_correct={}, tot={},'
-                         'acc={:.2f}%(TOP1)'.format(top1_correct, img_tot, acc1))
-        args.logger.info('after allreduce eval: top5_correct={}, tot={},'
-                         'acc={:.2f}%(TOP5)'.format(top5_correct, img_tot, acc5))
-    if args.is_distributed:
+        config.logger.info('after allreduce eval: top1_correct={}, tot={},'
+                           'acc={:.2f}%(TOP1)'.format(top1_correct, img_tot, acc1))
+        config.logger.info('after allreduce eval: top5_correct={}, tot={},'
+                           'acc={:.2f}%(TOP5)'.format(top5_correct, img_tot, acc5))
+    if config.run_distribute:
         release()
 
 
