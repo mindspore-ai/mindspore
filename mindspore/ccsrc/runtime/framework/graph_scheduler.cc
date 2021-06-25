@@ -321,6 +321,11 @@ void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size
     }
   }
 }
+
+inline bool IsSingleOpActorSet(const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  return actor_set->kernel_actors_.size() == 1;
+}
 }  // namespace
 
 void GraphScheduler::Clear() {
@@ -611,7 +616,7 @@ bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strat
   }
 
   // Trigger kernel actor running in the step execution strategy.
-  if (strategy == GraphExecutionStrategy::kStep) {
+  if (strategy == GraphExecutionStrategy::kStep && IsSingleOpActorSet(actor_set)) {
     MS_EXCEPTION_IF_NULL(input_tensors);
     for (auto &kernel_actor : actor_set->kernel_actors_) {
       MS_EXCEPTION_IF_NULL(kernel_actor);
@@ -730,7 +735,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
 
         KernelWithIndex from_kernel_with_output_idx = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
         KernelWithIndex to_kernel_with_input_idx = std::make_pair(kernel, i);
-        const auto &tensor = FetchInputTensor(graph_compiler_info, index, i);
+        TensorPtr tensor = IsSingleOpActorSet(actor_set) ? FetchInputTensor(graph_compiler_info, index, i) : nullptr;
         // The gather of linking data arrows of kernel by the different from kernel type.
         LinkDataArrow(kernel_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx,
                       tensor);
@@ -959,7 +964,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorS
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     // Framework will trigger kernel actor running in the step execution strategy.
-    if (strategy == GraphExecutionStrategy::kStep) {
+    if (strategy == GraphExecutionStrategy::kStep && IsSingleOpActorSet(actor_set)) {
       kernel_actor->input_controls_num_++;
       continue;
     }

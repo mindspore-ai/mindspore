@@ -53,11 +53,17 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, con
                         const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
-    // There is device address in tensor, indicating the input tensor is certain kernel's output,
-    // so it's unnecessary to put the input node to host queue data source actor.
-    if (strategy == GraphExecutionStrategy::kStep && tensor != nullptr &&
-        std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
-      return false;
+    if (strategy == GraphExecutionStrategy::kStep) {
+      // In step mode, if the number of kernel actor in actor set is greater than one, the actor set need be drived
+      // to run by data source actor.
+      if (graph != nullptr && graph->execution_order().size() > 1) {
+        return true;
+      }
+      // There is device address in tensor, indicating the input tensor is certain kernel's output,
+      // so it's unnecessary to put the input node to host queue data source actor.
+      if (tensor != nullptr && std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
+        return false;
+      }
     }
 
     if (graph == nullptr) {
