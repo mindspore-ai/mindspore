@@ -34,7 +34,7 @@ parser.add_argument('--log_path', type=str, default='outputs/', help='checkpoint
 
 # detect_related
 parser.add_argument('--nms_thresh', type=float, default=0.5, help='threshold for NMS')
-parser.add_argument('--ann_file', type=str, default='', help='path to annotation')
+parser.add_argument('--ann_val_file', type=str, default='', help='path to annotation')
 parser.add_argument('--eval_ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
 
 parser.add_argument('--img_id_file_path', type=str, default='', help='path of image dataset')
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # init detection engine
     detection = DetectionEngine(args)
 
-    coco = COCO(args.ann_file)
+    coco = COCO(args.ann_val_file)
     result_path = args.result_files
 
     files = os.listdir(args.img_id_file_path)
@@ -91,8 +91,9 @@ if __name__ == "__main__":
     detection.do_nms_for_results()
     result_file_path = detection.write_result()
     args.logger.info('result file path: {}'.format(result_file_path))
+    args.logger.info('\n=============coco eval reulst=========\n')
     eval_result = detection.get_eval_result()
-
+    for item in eval_result:
+        print(item)
     cost_time = time.time() - start_time
-    args.logger.info('\n=============coco eval reulst=========\n' + eval_result)
     args.logger.info('testing cost time {:.2f}h'.format(cost_time / 3600.))

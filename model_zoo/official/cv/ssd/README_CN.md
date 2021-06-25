@@ -111,6 +111,11 @@ sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_
 ```
 
 ```shell script
+# Ascend单卡训练
+bash run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET]
+```
+
+```shell script
 # Ascend处理器环境运行eval
 sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
