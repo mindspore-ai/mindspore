@@ -26,44 +26,67 @@ using mindspore::schema::PrimitiveType_SplitWithOverlap;
 
 namespace mindspore::kernel {
 
-void SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const SplitWithOverlapParameter *param,
-                                                           const std::vector<int> &shape) {
+void SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int> &shape) {
   int total_block_count = 0;
-  for (auto i = 0; i < param->num_split_; i++) {
-    total_block_count += param->ratio_[i];
+  for (auto i = 0; i < param_->num_split_; i++) {
+    total_block_count += param_->ratio_[i];
   }
 
-  auto split_dim_size = shape[param->split_dim_];
+  auto split_dim_size = shape[param_->split_dim_];
 
   std::vector<int> borders;
   borders.emplace_back(0);
   int visited_block = 0;
-  for (auto i = 0; i < param->num_split_ - 1; i++) {
-    visited_block += param->ratio_[i];
+  for (auto i = 0; i < param_->num_split_ - 1; i++) {
+    visited_block += param_->ratio_[i];
     auto cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
-    if (param->split_stride_ != 0) {
+    if (param_->split_stride_ != 0) {
       // make sure border align with stride
-      cur_border = UP_ROUND(cur_border + param->pad_top_, param->split_stride_);
-      borders.emplace_back(cur_border - param->pad_top_);
+      cur_border = UP_ROUND(cur_border + param_->pad_top_, param_->split_stride_);
+      borders.emplace_back(cur_border - param_->pad_top_);
     } else {
       borders.emplace_back(cur_border);
     }
   }
   borders.emplace_back(split_dim_size);
 
-  for (auto i = 0; i < param->num_split_; i++) {
+  for (auto i = 0; i < param_->num_split_; i++) {
     start_indices_.emplace_back(borders[i]);
     end_indices_.emplace_back(borders[i + 1]);
 
     // overlap: calibrate start_indices and end_indices by adding extends
-    start_indices_[i] -= param->extend_top_[i];
-    end_indices_[i] += param->extend_bottom_[i];
+    start_indices_[i] -= param_->extend_top_[i];
+    end_indices_[i] += param_->extend_bottom_[i];
   }
 }
 
-int SplitWithOverlapBaseCPUKernel::Init() { return RET_OK; }
+int SplitWithOverlapBaseCPUKernel::Init() {
+  MS_ASSERT(param_->num_split_ > 1);
+  return ReSize();
+}
 
-int SplitWithOverlapBaseCPUKernel::ReSize() { return RET_OK; }
+int SplitWithOverlapBaseCPUKernel::ReSize() {
+  auto in_tensor = in_tensors_.front();
+  auto input_shape = in_tensor->shape();
+
+  start_indices_.clear();
+  end_indices_.clear();
+
+  CalculateSplitedShapes(input_shape);
+
+  element_bytes_ = static_cast<int>(lite::DataTypeSize(in_tensor->data_type()));
+
+  outer_total_dim_ = 1;
+  inner_stride_ = 1;
+
+  for (int i = 0; i < static_cast<int>(input_shape.size()); i++) {
+    if (i < param_->split_dim_) outer_total_dim_ *= input_shape[i];
+    if (i == param_->split_dim_) split_dim_size_ = input_shape[param_->split_dim_];
+    if (i > param_->split_dim_) inner_stride_ *= input_shape[i];
+  }
+
+  return RET_OK;
+}
 
 int SplitWithOverlapBaseCPUKernel::Split(int task_id) {
   DoSplitWithOverlapParallel(input_ptr_, output_ptr_.data(), task_id, split_dim_size_, element_bytes_, outer_total_dim_,
@@ -84,37 +107,10 @@ int SplitWithOverlapRun(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int SplitWithOverlapBaseCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail! ret: " << prepare_ret;
-    return prepare_ret;
-  }
-
-  auto in_tensor = in_tensors_.front();
-  input_ptr_ = reinterpret_cast<char *>(in_tensor->data_c());
-  auto input_shape = in_tensor->shape();
-
-  start_indices_.clear();
-  end_indices_.clear();
+  input_ptr_ = reinterpret_cast<char *>(in_tensors_.front()->data_c());
   output_ptr_.clear();
-
   for (int i = 0; i < param_->num_split_; i++) {
     output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data_c()));
-  }
-
-  CalculateSplitedShapes(param_, input_shape);
-
-  outer_total_dim_ = 1;
-  inner_stride_ = 1;
-  split_dim_size_ = input_shape[param_->split_dim_];
-  element_bytes_ = static_cast<int>(lite::DataTypeSize(in_tensor->data_type()));
-
-  for (auto i = 0; i < param_->split_dim_; i++) {
-    outer_total_dim_ *= input_shape[i];
-  }
-
-  for (int i = static_cast<int>(input_shape.size()) - 1; i > param_->split_dim_; i--) {
-    inner_stride_ *= input_shape[i];
   }
 
   auto ret = ParallelLaunch(this->context_, SplitWithOverlapRun, this, param_->num_split_);
@@ -128,5 +124,4 @@ int SplitWithOverlapBaseCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SplitWithOverlap, LiteKernelCreator<SplitWithOverlapBaseCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SplitWithOverlap, LiteKernelCreator<SplitWithOverlapBaseCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SplitWithOverlap, LiteKernelCreator<SplitWithOverlapBaseCPUKernel>)
 }  // namespace mindspore::kernel
