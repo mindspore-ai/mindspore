@@ -360,9 +360,15 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
   if (real_input_node->isa<CNode>() || AnfAlgo::OutputAddrExist(real_input_node, 0)) {
     return;
   }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool need_convert = context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK);
+  if (need_convert) {
+    need_convert =
+      trans::kTransFormatMapOfHostToDevice.find(output_format[0]) != trans::kTransFormatMapOfHostToDevice.end();
+  }
   // if not find in host convert format map means the host has not registered the convert function of this format
-  if (real_input_node->isa<Parameter>() && output_format[0] != kOpFormat_DEFAULT &&
-      trans::kTransFormatMapOfHostToDevice.find(output_format[0]) == trans::kTransFormatMapOfHostToDevice.end()) {
+  if (real_input_node->isa<Parameter>() && output_format[0] != kOpFormat_DEFAULT && !need_convert) {
     output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
   }
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -414,8 +420,6 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
 }
 }  // namespace
 void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
@@ -434,12 +438,6 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
     }
     auto refresh_format = selected_kernel_info->GetInputFormat(input_index);
     std::vector<std::string> output_format = {refresh_format};
-    // if not find in host convert format map means the host has not registered the convert function of this format
-    if ((trans::kTransFormatMapOfHostToDevice.find(refresh_format) == trans::kTransFormatMapOfHostToDevice.end() ||
-         !context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) &&
-        refresh_format != kOpFormat_DEFAULT) {
-      output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
-    }
     SetWeightFormat(real_input_node, output_format, kernel_node, input_index);
   }
 }
