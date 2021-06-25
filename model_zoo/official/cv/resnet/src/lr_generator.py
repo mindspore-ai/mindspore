@@ -238,20 +238,3 @@ def get_thor_damping(global_step, damping_init, decay_rate, total_epochs, steps_
     damping_each_step = np.array(damping_each_step).astype(np.float32)
     damping_now = damping_each_step[current_step:]
     return damping_now
-
-def get_resnet34_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch):
-
-    total_steps = steps_per_epoch * total_epochs
-    warmup_steps = steps_per_epoch * warmup_epochs
-
-    lr_each_step = []
-    for i in range(total_steps):
-        if i < warmup_steps:
-            lr = lr_init + (lr_max - lr_init) * i / warmup_steps
-        else:
-            lr = lr_max - (lr_max - lr_end) * (i - warmup_steps) / (total_steps - warmup_steps)
-        lr_each_step.append(lr)
-
-    lr_each_step = np.array(lr_each_step).astype(np.float32)
-
-    return lr_each_step

@@ -32,7 +32,7 @@ from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 import mindspore.log as logger
-from src.lr_generator import get_lr, warmup_cosine_annealing_lr, get_resnet34_lr
+from src.lr_generator import get_lr, warmup_cosine_annealing_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.config import cfg
 from src.eval_callback import EvalCallBack
@@ -69,9 +69,11 @@ args_opt = parser.parse_args()
 
 set_seed(1)
 
-if args_opt.net in ("resnet18", "resnet50"):
+if args_opt.net in ("resnet18", "resnet34", "resnet50"):
     if args_opt.net == "resnet18":
         from src.resnet import resnet18 as resnet
+    if args_opt.net == "resnet34":
+        from src.resnet import resnet34 as resnet
     if args_opt.net == "resnet50":
         from src.resnet import resnet50 as resnet
     if args_opt.dataset == "cifar10":
@@ -83,10 +85,6 @@ if args_opt.net in ("resnet18", "resnet50"):
             from src.dataset import create_dataset2 as create_dataset
         else:
             from src.dataset import create_dataset_pynative as create_dataset
-elif args_opt.net == "resnet34":
-    from src.resnet import resnet34 as resnet
-    from src.config import config_resnet34 as config
-    from src.dataset import create_dataset2 as create_dataset
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config
@@ -199,13 +197,6 @@ if __name__ == '__main__':
         else:
             lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size,
                                             config.pretrain_epoch_size * step_size)
-    if args_opt.net == "resnet34":
-        lr = get_resnet34_lr(lr_init=config.lr_init,
-                             lr_end=config.lr_end,
-                             lr_max=config.lr_max,
-                             warmup_epochs=config.warmup_epochs,
-                             total_epochs=config.epoch_size,
-                             steps_per_epoch=step_size)
     lr = Tensor(lr)
 
     # define opt
@@ -233,7 +224,7 @@ if __name__ == '__main__':
     metrics = {"acc"}
     if args_opt.run_distribute:
         metrics = {'acc': DistAccuracy(batch_size=config.batch_size, device_num=args_opt.device_num)}
-    if (args_opt.net not in ("resnet18", "resnet50", "resnet101", "se-resnet50")) or \
+    if (args_opt.net not in ("resnet18", "resnet34", "resnet50", "resnet101", "se-resnet50")) or \
         args_opt.parameter_server or target == "CPU":
         ## fp32 training
         model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics, eval_network=dist_eval_network)
