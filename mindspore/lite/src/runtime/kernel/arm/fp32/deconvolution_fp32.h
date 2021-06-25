@@ -54,12 +54,14 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int output_plane_ = 0;
   int thread_count_ = 1;
   int thread_stride_ = 0;
+  int row_tile_ = 0;
   float *weight_ptr_ = nullptr;
   float *pack_input_ = nullptr;
   float *pack_output_ = nullptr;
   float *tmp_buffer_ = nullptr;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;
+  float *bias_ptr = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_H_

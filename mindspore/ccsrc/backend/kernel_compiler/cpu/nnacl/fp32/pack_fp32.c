@@ -293,7 +293,26 @@ void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int 
       }
     }
   }
-  return;
+}
+
+void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, int channel) {
+  // pack weight NHWC to C24HWN24 (Priority 24)=>C16HWN16 (Not satisfied 24)=>C8HWN8 (Not satisfied 16)
+  int oc_block = 0;
+  int oc_block_num = UP_DIV(channel, C8NUM);
+  for (int i = 0; i < oc_block_num; i += oc_block) {
+    oc_block = MSMIN(C3NUM, oc_block_num - i);  // max_tile = 4
+    int oc_remainder = MSMIN(C8NUM * oc_block, channel - i * C8NUM);
+    for (int p = 0; p < plane; ++p) {
+      int index_plane = i * C8NUM + p * channel;
+      for (int b = 0; b < batch; ++b) {
+        int index_batch = index_plane + b * plane * channel;
+        for (int oc = 0; oc < oc_remainder; ++oc) {
+          dst[oc] = src[index_batch + oc];
+        }
+        dst += oc_block * C8NUM;
+      }
+    }
+  }
 }
 
 void PackDepthwiseIndirectWeightC4Fp32(const void *src, void *dst, int height, int width, int channel) {
