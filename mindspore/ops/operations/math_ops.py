@@ -4167,11 +4167,11 @@ class Atanh(PrimitiveWithInfer):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
+        >>> x = Tensor(np.array([0, -0.5]), mindspore.float32)
         >>> atanh = ops.Atanh()
         >>> output = atanh(x)
         >>> print(output)
-        [1.8869909 1.058268 ]
+        [0. -0.54930614]
     """
 
     @prim_attr_register
@@ -4526,7 +4526,7 @@ class Eps(PrimitiveWithInfer):
         Tensor, has the same type and shape as `x`, but filled with `x` dtype minimum val.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([4, 1, 2, 3], mindspore.float32)
