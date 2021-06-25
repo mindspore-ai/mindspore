@@ -302,6 +302,32 @@ class EmbeddingLookup(nn.Cell):
         return output, self.embedding_table
 
 
+class EmbeddingLookupPipeline(nn.Cell):
+    """
+    The embedding lookup table for vocabulary
+    Args:
+        config(PanguAlphaConfig): the config of network
+    Inputs:
+        input_ids: the tokenized inputs with datatype int32
+    Returns:
+        output: Tensor, the embedding vector for the input with shape (batch_size, seq_length, embedding_size)
+        self.embedding_table: Tensor, the embedding table for the vocabulary
+    """
+    def __init__(self, config):
+        super(EmbeddingLookupPipeline, self).__init__()
+        self.vocab_size = config.vocab_size
+        self.embedding_size = config.embedding_size
+        if config.word_emb_dp:
+            self.gather = P.GatherV2().shard(((1, 1), (config.dp, 1)))
+        else:
+            self.gather = P.GatherV2().shard(((config.mp, 1), (1, 1)))
+        self.gather.add_prim_attr("parameter_start", 0)
+        self.shape = (-1, config.seq_length, config.embedding_size)
+
+    def construct(self, input_ids, table):
+        output = self.gather(table, input_ids, 0)
+        return output
+
 class Attention(nn.Cell):
     """
     Self-Attention module for each layer
@@ -593,6 +619,44 @@ class Block(nn.Cell):
             output = self.add(x, mlp_logit)
         return output, layer_present
 
+class PanguAlpha_EmbeddingPipeLine(nn.Cell):
+    """
+    PanguAlpha_EmbeddingPipeLine
+    """
+    def __init__(self, config):
+        super(PanguAlpha_EmbeddingPipeLine, self).__init__()
+        self.word_embedding = EmbeddingLookupPipeline(config)
+        self.position_embedding = nn.Embedding(config.seq_length,
+                                               config.embedding_size,
+                                               embedding_table=Normal(0.02))
+        self.position_embedding.gather.shard(((1, 1), (config.dp,)))
+        self.position_embedding.expand.shard(((config.dp, 1),))
+        self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
+        self.dropout = Dropout(1 - config.dropout_rate)
+        self.dropout.dropout_gen_mask.shard(((config.dp, 1, 1),))
+        self.dropout.dropout_do_mask.shard(((config.dp, 1, 1),))
+
+    def construct(self, input_ids, table, input_position):
+        input_embedding = self.word_embedding(input_ids, table)
+        position_embedding = self.position_embedding(input_position)
+        hidden_states = self.add(input_embedding, position_embedding)
+        hidden_states = self.dropout(hidden_states)
+        hidden_states = P.Cast()(hidden_states, mstype.float16)
+        return hidden_states
+
+
+class PanguAlpha_Mask(nn.Cell):
+    """
+    PanguAlpha_Mask
+    """
+    def __init__(self, config):
+        super(PanguAlpha_Mask, self).__init__()
+        self.get_attention_mask = AttentionMask(config)
+        self.dtype = config.compute_dtype
+        self.expand_dims = P.ExpandDims().shard(((config.dp, 1, 1),))
+    def construct(self, input_mask, attention_mask):
+        attention_mask = self.expand_dims(attention_mask, 1)
+        return attention_mask
 
 class QueryLayerAttention(Attention):
     r"""
@@ -828,6 +892,74 @@ class PanguAlpha_Model(nn.Cell):
             present_layer = present_layer + (present,)
         return output_state, present_layer, embedding_table
 
+class PanguAlpha_ModelPipeline(nn.Cell):
+    """
+    The backbone of PanguAlpha network
+    Args:
+        config(PanguAlphaConfig): the config of network
+    Inputs:
+        input_ids: the tokenized inputs with datatype int32
+        input_mask: the mask indicating whether each position is a valid input
+        layer_past: the previous feature map
+    Returns:
+        output_state: Tensor, the output logit of backbone
+        present_layer: Tensor, the current feature map
+        embedding_table: Tensor, the embedding table for the vocabulary
+    """
+    def __init__(self, config):
+        super(PanguAlpha_ModelPipeline, self).__init__()
+        self.pangu_alpha_embedding = PanguAlpha_EmbeddingPipeLine(config).set_comm_fusion(1)
+        self.pangu_alpha_embedding.pipeline_stage = 0
+        self.pangu_alpha_mask = PanguAlpha_Mask(config)
+        self.blocks = nn.CellList()
+        self.top_query_embedding = nn.Embedding(config.seq_length, config.embedding_size,
+                                                embedding_table=TruncatedNormal(0.02))
+        self.top_query_embedding.gather.shard(((1, 1), (config.dp,)))
+        self.top_query_embedding.expand.shard(((config.dp, 1),))
+        for i in range(config.num_layers):
+            if i == config.num_layers - 1:
+                self.top_query_embedding.set_comm_fusion(2)
+                self.top_query_embedding.pipeline_stage = i * config.stage_num // config.num_layers
+                per_block = QueryLayer(config).set_comm_fusion(2)
+            else:
+                per_block = Block(config, i + 1).set_comm_fusion(2)
+            per_block.pipeline_stage = i * config.stage_num // config.num_layers
+            per_block.recompute()
+            self.blocks.append(per_block)
+
+        if config.self_layernorm:
+            self.layernorm = LayerNorm((config.embedding_size,), config.dp).to_float(mstype.float32)
+        else:
+            self.layernorm = nn.LayerNorm(
+                (config.embedding_size,)).to_float(mstype.float32)
+            self.layernorm.layer_norm.shard(((config.dp, 1, 1), (1,), (1,)))
+        self.layernorm.set_comm_fusion(2)
+        self.layernorm.pipeline_stage = config.stage_num - 1
+        self.use_past = config.use_past
+        self.past = tuple([None] * config.num_layers)
+        self.dtype = config.compute_dtype
+        self.num_layers = config.num_layers
+
+    def construct(self, input_ids, input_mask, table, input_position, attention_mask, layer_past=None):
+        """PanguAlpha model"""
+        if not self.use_past:
+            layer_past = self.past
+
+        hidden_states = self.pangu_alpha_embedding(input_ids, table, input_position)
+        attention_mask = self.pangu_alpha_mask(input_mask, attention_mask)
+
+        present_layer = ()
+        for i in range(self.num_layers-1):
+            hidden_states, present = self.blocks[i](hidden_states,
+                                                    attention_mask, layer_past)
+            present_layer = present_layer + (present,)
+        top_query_hidden_states = self.top_query_embedding(input_position)
+        hidden_states, present = self.blocks[self.num_layers-1](hidden_states, top_query_hidden_states,
+                                                                attention_mask, layer_past)
+        present_layer = present_layer + (present,)
+        output_state = self.layernorm(hidden_states)
+        output_state = F.cast(output_state, self.dtype)
+        return output_state, present_layer
 
 class PanguAlpha_Head(nn.Cell):
     """
@@ -883,6 +1015,35 @@ class PanguAlpha(nn.Cell):
         logits = self.head(output_states, embedding_table)
         return logits
 
+class PanguAlphaPipeline(nn.Cell):
+    """
+    The PanguAlpha network consisting of two parts the backbone and the head
+    Args:
+        config(PanguAlphaConfig): the config of network
+    Inputs:
+        input_ids: the tokenized inputs
+        input_mask: the mask indicating whether each position is a valid input
+        past: the previous feature map
+    Returns:
+        logits: Tensor: the logits of the corresponding inputs with shape (batch_size, seq_length, vocab_size)
+    """
+    def __init__(self, config):
+        super(PanguAlphaPipeline, self).__init__()
+        self.backbone = PanguAlpha_ModelPipeline(config)
+        self.head = PanguAlpha_Head(config)
+        self.head.pipeline_stage = config.stage_num - 1
+        self.vocab_size = config.vocab_size
+        self.embedding_size = config.embedding_size
+        self.embedding_table = Parameter(initializer(Normal(0.02), [self.vocab_size, self.embedding_size]),
+                                         name="embedding_table")
+        self.embedding_table.add_pipeline_stage(self.backbone.blocks[0].pipeline_stage)
+        self.embedding_table.add_pipeline_stage(self.head.pipeline_stage)
+
+    def construct(self, input_ids, input_mask, input_position, attention_mask, past=None):
+        output_states, _ = self.backbone(input_ids, input_mask, self.embedding_table,
+                                         input_position, attention_mask, past)
+        logits = self.head(output_states, self.embedding_table)
+        return logits
 
 class CrossEntropyLoss(nn.Cell):
     """
@@ -1010,6 +1171,38 @@ class PanguAlphaWithLoss(nn.Cell):
         output = self.loss(logits, labels, input_mask)
         return output
 
+class PanguAlphaWithLossPipeline(nn.Cell):
+    """
+    PanguAlpha training loss
+    Args:
+        network: backbone network of PanguAlpha
+        loss: loss function, e.g., crossentropy
+        eos_token: the end_of_sentence token
+    Inputs:
+        input_ids: the tokenized inputs
+        past: the previous feature map
+    Returns:
+        output: Tensor, the loss of the network
+    """
+    def __init__(self, config, network, loss, eos_token=6):
+        super(PanguAlphaWithLossPipeline, self).__init__(auto_prefix=False)
+        self.network = network
+        self.loss = loss
+        self.eos_token = eos_token
+        self.slice = P.StridedSlice().shard(((config.dp, 1),))
+        self.not_equal = P.NotEqual().shard(((config.dp, 1), ()))
+        self.batch_size = config.batch_size
+        self.len = config.seq_length
+        self.micro_batch_step = config.micro_size
+
+    def construct(self, input_ids, input_position, attention_mask):
+        tokens = self.slice(input_ids, (0, 0), (self.batch_size // self.micro_batch_step, -1), (1, 1))
+        input_mask = F.cast(self.not_equal(tokens, self.eos_token), mstype.float32)
+        logits = self.network(tokens, input_mask, input_position, attention_mask)
+        labels = self.slice(input_ids, (0, 1), (self.batch_size // self.micro_batch_step,
+                                                self.len + 1), (1, 1))
+        output = self.loss(logits, labels, input_mask)
+        return output
 
 class EvalNet(nn.Cell):
     """
