@@ -22,13 +22,8 @@
 #include "utils/crypto.h"
 
 namespace mindspore {
-static Buffer ReadFile(const std::string &file) {
-  Buffer buffer;
-  if (file.empty()) {
-    MS_LOG(ERROR) << "Pointer file is nullptr";
-    return buffer;
-  }
-
+static Status RealPath(const std::string &file, std::string *realpath_str) {
+  MS_EXCEPTION_IF_NULL(realpath_str);
   char real_path_mem[PATH_MAX] = {0};
   char *real_path_ret = nullptr;
 #if defined(_WIN32) || defined(_WIN64)
@@ -37,19 +32,34 @@ static Buffer ReadFile(const std::string &file) {
   real_path_ret = realpath(common::SafeCStr(file), real_path_mem);
 #endif
   if (real_path_ret == nullptr) {
-    MS_LOG(ERROR) << "File: " << file << " is not exist.";
+    return Status(kMEInvalidInput, "File: " + file + " does not exist.");
+  }
+  *realpath_str = real_path_mem;
+  return kSuccess;
+}
+
+static Buffer ReadFile(const std::string &file) {
+  Buffer buffer;
+  if (file.empty()) {
+    MS_LOG(ERROR) << "Pointer file is nullptr";
     return buffer;
   }
 
-  std::string real_path(real_path_mem);
+  std::string real_path;
+  auto status = RealPath(file, &real_path);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << status.GetErrDescription();
+    return buffer;
+  }
+
   std::ifstream ifs(real_path);
   if (!ifs.good()) {
-    MS_LOG(ERROR) << "File: " << real_path << " is not exist";
+    MS_LOG(ERROR) << "File: " << real_path << " does not exist";
     return buffer;
   }
 
   if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "File: " << real_path << "open failed";
+    MS_LOG(ERROR) << "File: " << real_path << " open failed";
     return buffer;
   }
 
@@ -139,7 +149,13 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     return Status(kMEInvalidInput, err_msg.str());
   }
 
-  std::string file_path = CharToString(file);
+  std::string file_path;
+  auto status = RealPath(CharToString(file), &file_path);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << status.GetErrDescription();
+    return status;
+  }
+
   if (model_type == kMindIR) {
     FuncGraphPtr anf_graph;
     if (dec_key.len > dec_key.max_key_len) {
@@ -193,7 +209,17 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
     return ret;
   }
 
-  std::vector<std::string> files_path = VectorCharToString(files);
+  std::vector<std::string> files_path;
+  for (const auto &file : files) {
+    std::string file_path;
+    auto status = RealPath(CharToString(file), &file_path);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << status.GetErrDescription();
+      return status;
+    }
+    files_path.emplace_back(std::move(file_path));
+  }
+
   if (model_type == kMindIR) {
     if (dec_key.len > dec_key.max_key_len) {
       err_msg << "The key length exceeds maximum length: " << dec_key.max_key_len;

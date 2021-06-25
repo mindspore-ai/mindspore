@@ -129,6 +129,10 @@ MSTensor Model::GetOutputByTensorName(const std::vector<char> &tensor_name) {
   return MSTensor(nullptr);
 }
 
+std::vector<MSTensor> Model::GetOutputsByNodeName(const std::vector<char> &node_name) {
+  return std::vector<MSTensor>{GetOutputByTensorName(node_name)};
+}
+
 Model::Model() : impl_(nullptr) {}
 Model::~Model() {}
 
