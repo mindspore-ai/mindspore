@@ -369,32 +369,6 @@ std::vector<size_t> NcdhwDeviceShape(const std::vector<size_t> &shape) {
   return shape;
 }
 
-std::vector<size_t> PaddingShapeTo4dByDefault(const std::vector<size_t> &shape) {
-  std::vector<size_t> shape_4d(kNchwDims, 1);
-  switch (shape.size()) {
-    case kN:
-      return shape_4d;
-    case kC:
-      shape_4d[kC] = shape[kN];
-      break;
-    case kH:
-      shape_4d[kC] = shape[kN];
-      shape_4d[kH] = shape[kC];
-      break;
-    case kW:
-      shape_4d[kC] = shape[kN];
-      shape_4d[kH] = shape[kC];
-      shape_4d[kW] = shape[kH];
-      break;
-    case kNchwDims:
-      std::copy(shape.begin(), shape.end(), shape_4d.begin());
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
-  }
-  return shape_4d;
-}
-
 std::vector<size_t> FracZDeviceShapeWithGroups(const std::vector<size_t> &shape, const int64_t groups = 1) {
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
@@ -568,7 +542,7 @@ std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std
   std::vector<Axis> padding_axis;
   StringToAxisVector4D(padding_str, &padding_axis);
   if (padding_axis.empty() || shape.size() != padding_axis.size()) {
-    return PaddingShapeTo4dByDefault(shape);
+    return PaddingShapeTo4dDefault(shape);
   }
   std::vector<size_t> shape_4d(kNchwDims, 1);
   for (size_t index = 0; index < padding_axis.size(); index++) {
@@ -607,6 +581,32 @@ std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape) {
       MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
   }
   return shape_5d;
+}
+
+std::vector<size_t> PaddingShapeTo4dDefault(const std::vector<size_t> &shape) {
+  std::vector<size_t> shape_4d(kNchwDims, 1);
+  switch (shape.size()) {
+    case 0:
+      return shape_4d;
+    case 1:
+      shape_4d[kC] = shape[kN];
+      break;
+    case 2:
+      shape_4d[kC] = shape[kN];
+      shape_4d[kH] = shape[kC];
+      break;
+    case 3:
+      shape_4d[kC] = shape[kN];
+      shape_4d[kH] = shape[kC];
+      shape_4d[kW] = shape[kH];
+      break;
+    case 4:
+      std::copy(shape.begin(), shape.end(), shape_4d.begin());
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
+  }
+  return shape_4d;
 }
 
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
@@ -663,7 +663,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
   }
   if (shape.size() < kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(WARNING) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
-    temp_shape = PaddingShapeTo4dByDefault(shape);
+    temp_shape = PaddingShapeTo4dDefault(shape);
   }
   if (shape.size() != kNcdhw && k3DFormatSet.find(format) != k3DFormatSet.end()) {
     temp_shape = PaddingShapeTo5dDefault(shape);
