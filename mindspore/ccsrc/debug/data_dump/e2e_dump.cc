@@ -253,9 +253,8 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
     } else if (starting_graph_id == graph_id) {
       dump_json_parser.UpdateDumpIter();
     }
+    MS_LOG(DEBUG) << "sink_mode = " << sink_mode;
   }
-
-  MS_LOG(INFO) << "sink_mode = " << sink_mode;
 
   if (dump_json_parser.async_dump_enabled() && dump_json_parser.IsDumpIter(cur_iter) && !sink_mode) {
     auto zero_dir_dump_path =
@@ -299,8 +298,6 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t graph_id = graph->graph_id();
   bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
-
-  MS_LOG(INFO) << "sink_mode = " << sink_mode;
 
   if (dump_json_parser.GetIterDumpFlag()) {
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
