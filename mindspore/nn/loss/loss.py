@@ -333,7 +333,7 @@ class MAELoss(Loss):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        # Case 1: logits.shape = labels.shape = (3,)
+        >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.MAELoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)

@@ -250,7 +250,7 @@ class CellList(_CellListBase, Cell):
         args (list, optional): List of subclass of Cell.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> conv = nn.Conv2d(100, 20, 3)

@@ -1260,7 +1260,7 @@ class GraphKernel(Cell):
         flags (dict) : Set graph flags. Default: None.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Relu(nn.GraphKernel):

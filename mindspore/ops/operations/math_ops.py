@@ -1165,7 +1165,7 @@ class Neg(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-            :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as input.
@@ -1581,7 +1581,7 @@ class Sqrt(PrimitiveWithCheck):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-         :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
 
     Outputs:
         Tensor, has the same shape and data type as the `x`.
@@ -2345,7 +2345,7 @@ class FloorDiv(_MathBinaryOp):
 
     .. math::
 
-        out_{i} = \text{floor}( \frac{x_i}{y_i})
+        out_{i} = \\text{floor}( \\frac{x_i}{y_i})
 
     where the :math:`floor` indicates the operator that converts the input data into the floor data type.
 
@@ -3294,11 +3294,11 @@ class LogicalNot(PrimitiveWithInfer):
 
     .. math::
 
-        out_{i} = \neg x_{i}
+        out_{i} = \\neg x_{i}
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is bool.
-            :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Outputs:
         Tensor, the shape is the same as the `x`, and the dtype is bool.
@@ -3399,7 +3399,7 @@ class LogicalOr(_LogicBinaryOp):
 
     .. math::
 
-        out_{i} = x_{i} \vee y_{i}
+        out_{i} = x_{i} \\vee y_{i}
 
     Inputs:
         - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.

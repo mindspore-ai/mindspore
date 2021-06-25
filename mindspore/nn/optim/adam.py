@@ -287,7 +287,7 @@ class Adam(Optimizer):
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
         >>> net = Net()
@@ -430,7 +430,7 @@ class AdamWeightDecay(Optimizer):
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = Net()
