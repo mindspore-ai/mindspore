@@ -104,10 +104,6 @@ if __name__ == '__main__':
     parser.add_argument("--output_path", type=str, required=False,
                         default="./output/test.mindrecord",
                         help="mindrecord dataset output path.")
-
-    parser.add_argument("--num_partitions", type=int, required=False,
-                        default=4, help="the number of mindrecord partitions.")
-
     args = parser.parse_args()
 
     # get the tokenizer
@@ -124,7 +120,7 @@ if __name__ == '__main__':
                    "labels": {"type": "int64", "shape": [-1]},
                    "size": {"type": "int64"}}
 
-    writer = FileWriter(file_name=args.output_path, shard_num=args.num_partitions)
+    writer = FileWriter(file_name=args.output_path)
     writer.add_schema(chid_schema, "preprocessed chid dataset")
     data = []
     for i in tqdm(range(len(chidDataset))):

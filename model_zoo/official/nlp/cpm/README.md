@@ -31,7 +31,7 @@
 
 # CPM CPM-Description
 
-This is the fine-tune code warehouse of CPM model, which can be used for multi-machine and multi-card training/testing of model finetune. CPM[Project Home Page](https://cpm.baai.ac.cn/) was proposed in 2020 and  a large-scale model based on Chinese processing. CPM is mainly used in the field of Chinese natural language processing (NLP) and generating tasks, such as machine translation, word selection and text summarization.
+This is the code warehouse of CPM model, which can be used for multi-card training/testing of model finetune. CPM[Project Home Page](https://cpm.baai.ac.cn/) was proposed in 2020 and  a large-scale model based on Chinese processing. CPM is mainly used in the field of Chinese natural language processing (NLP) and generating tasks, such as machine translation, word selection and text summarization.
 
 [Paper](https://arxiv.org/abs/2012.00413): Zhang Z, Han X, Zhou H, et al. CPM: A Large-scale Generative Chinese Pre-trained Language Model[J]. arXiv preprint arXiv:2012.00413, 2020.
 
@@ -57,7 +57,7 @@ CPM is implemented by GPT, which includes multi-layer decoder module.
 
 # Quick Start
 
-After dataset preparation, you can start zero-shot inference and finetune, evaluation as follows:
+After dataset preparation, you can start zero-shot inference, finetune and evaluation as follows:
 
 ```bash
 # run zero-shot inference example
@@ -72,9 +72,9 @@ sh run_distribute_train_ascend_single_machine.sh /path/train.mindrecord /path/cp
 cd scripts
 bash run_eval_distribute_ascend.sh /path/finetune_test.mindrecord /path/test.json /path/ckpt_dictionary/ 8 /path/rank_table_2p.json
 
-# Selects the best model on the dev dataset, and then tests the example on the test dataset
+# Selects the best model on the dev dataset
 cd scripts
-bash run_test_distribute_ascend.sh /path/finetune_dev.mindrecord /path/dev.json /path/finetune_test.mindrecord /path/test.json /path/ckpt_dictionary/ 8 /path/rank_table_2p.json
+bash run_test_standalone_ascend.sh /path/finetune_dev.mindrecord /path/dev.json /path/finetune_test.mindrecord /path/test.json /path/ckpt_dictionary/ 8 0
 ```
 
 # Script Description
@@ -90,6 +90,7 @@ bash run_test_distribute_ascend.sh /path/finetune_dev.mindrecord /path/dev.json 
     ├─run_zero-shot_inference_distribute_ascend.sh    // Shell script for distributed zero-shot on ascend.
     ├─run_distribute_train_ascend_single_machine.sh   // Shell script for distributed finetune on ascend with single machine.
     ├─run_distribute_train_ascend_multi_machine.sh    // Shell script for distributed finetune on ascend with multi-machine.
+    ├─run_test_standalone_ascend.sh                   // Shell script for standalone evaluation and test on ascend.
     ├─run_test_distribute_ascend.sh                   // Shell script for distributed evaluation and test on ascend.
     └─run_eval_distribute_ascend.sh                   // Shell script for distributed evaluation on ascend.
   ├─data_process
@@ -109,11 +110,12 @@ bash run_test_distribute_ascend.sh /path/finetune_dev.mindrecord /path/dev.json 
     ├─util.py                                // User interface.
     └─weight_init.py                         // Weight init.
   ├─gpt_ckpt_2_mindspore.py                  // Transform the model that MindSpore can load.
-  ├─requirements.txt                       // Requirements of third party package.
+  ├─requirements.txt                         // Requirements of third party package.
   ├─zero-shot.py                             // Zero-shot api entry.
   ├─export.py                                // Export model.
+  ├─sort.py                                  // Sort the accuracy on dev dataset.
   ├─train.py                                 // Train api entry.
-  ├─test.py                                  // Evaluation and test api entry.
+  ├─test.py                                  // Examples of evaluation and test.
   └─eval.py                                  // Infer api entry.
 
 ```
@@ -145,12 +147,12 @@ Parameters for dataset and network (Training/Evaluation):
 
 ### Pre-training Model Download
 
-- The CPM network pre training model can be downloaded here: [Model Download](https://cpm.baai.ac.cn/download.html).
+- The pre-trained model of CPM network may be downloaded from here: [Model Download](https://cpm.baai.ac.cn/download.html).
   Suppose you have the following documents:
     - CPM-large/latest_checkpointed_iteration.txt
     - CPM-large/80000/mp_rank_00_model_states.pt
     - CPM-large/80000/mp_rank_01_model_states.pt
-  Next, the model integration script[change_mp.py](https://github.com/TsinghuaAI/CPM-Generate/blob/main/change_mp.py) is used to synthesize the above two fragment models into a complete single model.
+  Next, you may use the model integration linked script [change_mp.py](https://github.com/TsinghuaAI/CPM-Generate/blob/main/change_mp.py) to synthesize the above two fragment models into a complete single model.
 
 ```[bash]
    python change_mp.py /path/to/CPM 1
@@ -159,10 +161,10 @@ Parameters for dataset and network (Training/Evaluation):
   The complete single model is as follows:
     - CPM-large_MP1/latest_checkpointed_iteration.txt
     - CPM-large_MP1/iter_0080000/mp_rank_01_model_states.pt
-  Then run the file`gpt_ckpt_2_mindspore.py` in the warehouse to convert the model into the model that can be loaded directly by Mindstore in the warehouse. Pay attention to modify the input and output file address in the file.
-  We get the model that mindpool can load, such as:`cpm_mindspore_1p_fp32.ckpt`.
+  Then run the file `gpt_ckpt_2_mindspore.py` in the warehouse to convert the model into the model that can be loaded directly by Mindstore. Pay attention to modify the input and output file address in the file.
+  We get the model that mindspore can load, such as:`cpm_mindspore_1p_fp32.ckpt`.
 
-- Word segmentation Download: [Model Download](https://github.com/TsinghuaAI/CPM-Finetune/tree/main/bpe_3w_new).
+- Word segmentation may be downloaded from here: [Model Download](https://github.com/TsinghuaAI/CPM-Finetune/tree/main/bpe_3w_new).
   Suppose you have the following documents:
     - bpe_3w_new/chinese_vocab.model
     - bpe_3w_new/chinese_vocab.vocab
@@ -179,7 +181,7 @@ Parameters for dataset and network (Training/Evaluation):
     - chid_json/test.json
     - chid_json/test_answer.json
 
-- Data preprocessing: you may use [preprocess_chid_zeroshot.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_zeroshot.py)to process the original data into the corresponding JSON format.
+- Data preprocessing: you may use this linked file [preprocess_chid_zeroshot.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_zeroshot.py) to process the original data into the corresponding JSON format.
 
 ```[bash]
    python preprocess_chid_zeroshot.py --data_dir ${PATH_TO_DATA_DIR} --tokenizer_path ${PATH_TO_TOKENIZER VOCAB} --output_dir ${PATH_TO_OUTPUT_JSON}
@@ -255,7 +257,7 @@ After reasoning, the accuracy rate will be generated. Please refer to the`zero-s
 
 ## Finetune
 
-In addition to zero shot reasoning, the pre training model can also be trained by finetune.
+In addition to zero shot inference, the pre-trained model can also be trained by finetune.
 
 ### Dataset Preparation
 
@@ -268,7 +270,7 @@ In addition to zero shot reasoning, the pre training model can also be trained b
     - chid_json/test.json
     - chid_json/test_answer.json
 
-- Data preprocessing: you may use [preprocess_chid_finetune.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_finetune.py) scripts process the original data into the corresponding JSON format.
+- Data preprocessing: you may use this linked [preprocess_chid_finetune.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_finetune.py) script process the original data into the corresponding JSON format.
 
 ```[bash]
    python preprocess_chid_finetune.py --data_dir ${PATH_TO_DATA_DIR} --tokenizer_path ${PATH_TO_TOKENIZER VOCAB} --output_dir ${PATH_TO_OUTPUT_JSON}
@@ -278,7 +280,7 @@ Mainly, `data_dir` is the address of the json data, such as `/home/dataset/chid_
        `tokenizer_path` is the address folder for the dictionary, such as `/home/vocab/`.
        `output_dir` is the preprocessing output address, such as `/home/dataset/finetune_dataset`.
 
-The template is defined and implemented in `process_sample` function of the `preprocess_chid_finetune.py` file. Finally,  the data format generated by the file is as follows:
+The template is defined and implemented in `process_sample` function of the `preprocess_chid_finetune.py` file. Finally, the data format generated by the file is as follows:
 
 ```[python]
 [
@@ -290,20 +292,20 @@ The template is defined and implemented in `process_sample` function of the `pre
 ]
 ```
 
-After processing, three files, namely `train.json`, `valid.json` and `test.json` will be generated in the output directory `--output_dir`.
+After processing, three files, namely `train.json`, `dev.json` and `test.json` will be generated in the output directory `--output_dir`.
 
-- After data preprocessing, the JSON data is transformed into mindrecord data set.
+- After data preprocessing, the JSON data is transformed into mindrecord dataset.
 
 ```[bash]
    cd ./data_process/
-   python3 make_finetune_mindrecord.py --data_file ${PATH_TO_OUTPUT_JSON} --vocab_path ${PATH_TO_TOKENIZER VOCAB} --output_path ${PATH_TO_OUTPUT FILE} --num_patitions ${NUMBER_OF_MINDRECORD_PARTITIONS}
+   python3 make_finetune_mindrecord.py --data_file ${PATH_TO_OUTPUT_JSON} --vocab_path ${PATH_TO_TOKENIZER VOCAB} --output_path ${PATH_TO_OUTPUT FILE}
 ```
 
 Mainly, `data_file` is the JSON data address, such as`/home/dataset/finetune_dataset/train.json` and `/home/dataset/finetune_dataset/test.json`.
        `vocab_path` is the address folder directory of the dictionary, its definition is the same as before.
        `output_path` is the preprocessing output address, such as`/home/dataset/finetune_dataset/`.
 
-After processing, the mindrecord file of training and reasoning is generated in the specified directory `--output_path`, such as`train.mindrecord` and`test.mindrecord`.
+After processing, the mindrecord file of training and reasoning is generated in the specified directory `--output_path`, such as `train.mindrecord`, `dev.mindrecord` and `test.mindrecord`.
 
 ### Finetune Training Process
 
@@ -320,13 +322,14 @@ After processing, the mindrecord file of training and reasoning is generated in 
 
 ``` bash
     cd scripts
-    bash run_distribute_train_ascend_multi_machine.sh Dataset_addr PreTrain_ckpt_addr Rank_table_addr SERVER_ID
+    bash run_distribute_train_ascend_multi_machine.sh Dataset_addr PreTrain_ckpt_addr Rank_table_addr SERVER_ID RANK_SIZE_ALL
 ```
 
 Mainly, `Dataset_addr` is the address of the dataset, such as `/home/dataset/finetune_dataset/train.mindrecord`.
        `PreTrain_ckpt_addr` is the address for the pre training model, such as `/home/cpm_mindspore_1p_fp32.ckpt`.
-       `Rank_table_addr` is a rank address for distributed training, such as `/home/rank_table_8p.json`.
+       `Rank_table_addr` is a rank address for distributed training, such as `/home/rank_table_32p.json`.
        `SERVER_ID` is the sequence of the machine numbers from 0 in the multi machine process, such as: 0.
+       `RANK_SIZE_ALL` 'is the total number of cards used, that is, the total number in `Rank_table_addr`, such as: 32.
 
 **Attention**：Because the CPM model is too large to train on one card, distributed training is needed, including model parallel and data parallel.
     In distributed parallel training, the device of the machine is the device of the device_ ID is numbered from 1 and incremented by 1.
@@ -343,11 +346,11 @@ Mainly, `Dataset_addr` is the address of the dataset, such as `/home/dataset/fin
    bash run_eval_distribute_ascend.sh  Test_MindRecord_addr  Test_json_addr  Model_addr   Model_patition_number   Rank_table_addr
 ```
 
-In general, we select the model with the highest accuracy on the dev dataset, then infer on the test dataset, and finally generate the accuracy on the test dataset. Model selection can refer to the `run_test_distribute_ascend.sh` and `test.py` files for details.
+In general, we select the model with the highest accuracy on the dev dataset, then infer on the test dataset, and finally generate the accuracy on the test dataset. Model selection can refer to the `run_test_standalone_ascend.sh` files for details.
 
 ```bash
    cd scripts
-   bash run_test_distribute_ascend.sh Dev_MindRecord_addr  Dev_json_addr  Test_MindRecord_addr   Test_json_addr   Model_addr   Model_patition_number   Rank_table_addr
+   bash run_test_standalone_ascend.sh Dev_MindRecord_addr  Dev_json_addr  Test_MindRecord_addr   Test_json_addr   Model_addr   Model_patition_number   DEVICEID
 ```
 
 Mainly, `Test_MindRecord_addr` is the address of the test dataset, such as `/home/dataset/finetune_dataset/test.mindrecord`.
@@ -356,7 +359,7 @@ Mainly, `Test_MindRecord_addr` is the address of the test dataset, such as `/hom
         `Dev_json_addr` is the dev JSON file after data preprocessing, such as `/home/dataset/finetune_dataset/dev.json`.
         `Model_addr` is used to infer the partition model of the folder, such as `/home/finetune_model/`.
         `Model_patition_number`is the number of fragmentation models，excluding policy file`train_strategy.ckpt`. For example, after 8-card training, the number of partitioned models is 8.
-        `Rank_table_addr` is a rank address for distributed evaluation, such as `/home/rank_table_2p.json`.
+        `DEVICEID` is the number of card for standalone evaluation, such as 0.
 
 **Attention**: the dataset preprocessing methods of zero-shot and finetuene are different.
 
@@ -372,7 +375,7 @@ The inference performance and accuracy of zero-shot single machine and dual card
 | MindSpore Version           | 1.3.0                       |
 | Dataset                     | ChID            |
 | Number of parallel models  | 2                           |
-| Speed                | 152ms/step (2pcs)                  |
+| Speed                | 140ms/step (2pcs)                  |
 | batch_size          | 2                           |
 | Output              | Accuracy                  |
 | Accuracy            | accuracy=67.94%                   |

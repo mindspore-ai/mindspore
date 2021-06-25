@@ -34,7 +34,6 @@ context.set_context(mode=context.GRAPH_MODE,
                     device_id=device_id)
 
 
-
 def set_parallel_env():
     r"""
     Parallel environment.
@@ -63,8 +62,12 @@ if __name__ == '__main__':
                         help='Whether distributed evaluation with model parallel.')
     parser.add_argument("--has_train_strategy", type=ast.literal_eval, default=True,
                         help='Whether the loaded checkpoints have distributed training strategy.')
-
+    parser.add_argument("--result_path", type=str, default="/home/result.txt",
+                        help='Text save address.')
+    parser.add_argument("--ckpt_epoch", type=int, default=4,
+                        help='The number of checkpoint epochs.')
     args_eval = parser.parse_args()
+
     if args_eval.distribute:
         set_parallel_env()
         print("Start validation on 2 devices.")
@@ -80,29 +83,22 @@ if __name__ == '__main__':
             strategy_ckpt_load_file=train_strategy_list[0]
         )
     # start run in dev dataset.
-    result_dev = []
-    for i in range(4, 11):
-        ckpt_file_list_dev = None
-        if args_eval.has_train_strategy:
-            # Get the checkpoint slice.
-            ckpt_file_list_dev = create_ckpt_file_list(args_eval, i)
-            print("++++ Get sliced checkpoint file, lists: ", ckpt_file_list_dev, flush=True)
-        result_i = 0.0
-        if args_eval.distribute:
-            result_i = run_eval(args_eval, finetune_dev_distrubute, ckpt_file_list_dev)
-        else:
-            result_i = run_eval(args_eval, finetune_dev_standalone, ckpt_file_list_dev)
-        print("+++++ i=", i, ", dev_dataset Accuracy: ", result_i)
-        result_dev.append(result_i)
-
-    print("++++ The accuracy of each checkpoint on the validation dataset is:", result_dev)
-    print("++++ Then we take the model with the highest accuracy ")
-    print("     on the validation dataset to predict on the test dataset.")
-    index_max_dev = result_dev.index(max(result_dev)) + 4
+    ckpt_file_list_dev = None
+    if args_eval.has_train_strategy:
+        # Get the checkpoint slice.
+        ckpt_file_list_dev = create_ckpt_file_list(args_eval, args_eval.ckpt_epoch)
+        print("++++ Get sliced checkpoint file, lists: ", ckpt_file_list_dev, flush=True)
+    result_i = 0.0
+    if args_eval.distribute:
+        result_i = run_eval(args_eval, finetune_dev_distrubute, ckpt_file_list_dev)
+    else:
+        result_i = run_eval(args_eval, finetune_dev_standalone, ckpt_file_list_dev)
+    print("+++++ ckpt_epoch=", args_eval.ckpt_epoch, ", dev_dataset Accuracy: ", result_i)
+    print("++++ Then we take the model to predict on the test dataset.")
     ckpt_file_list_test = None
     if args_eval.has_train_strategy:
         # Get the best precision checkpoint slice.
-        ckpt_file_list_test = create_ckpt_file_list(args_eval, index_max_dev)
+        ckpt_file_list_test = create_ckpt_file_list(args_eval, args_eval.ckpt_epoch)
 
     args_eval.dataset = args_eval.test_dataset
     args_eval.data_path = args_eval.test_data_path
@@ -113,3 +109,12 @@ if __name__ == '__main__':
     else:
         result_last = run_eval(args_eval, finetune_test_standalone, ckpt_file_list_test)
     print("++++ Accuracy on test dataset is: ", result_last)
+
+    # write to file.
+    result_path = args_eval.result_path
+    if not os.path.exists(result_path):
+        with open(result_path, "w") as file:
+            file.write("CkptEpcoh  Accuracy_dev  Accuracy_test\n")
+
+    with open(result_path, "a") as file:
+        file.write(str(args_eval.ckpt_epoch) + " " + str(result_i) + " " + str(result_last) + "\n")

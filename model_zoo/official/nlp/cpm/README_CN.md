@@ -73,9 +73,9 @@ sh run_distribute_train_ascend_single_machine.sh /path/train.mindrecord /path/cp
 cd scripts
 bash run_eval_distribute_ascend.sh /path/finetune_test.mindrecord /path/test.json /path/ckpt_dictionary/ 8 /path/rank_table_2p.json
 
-# Finetune模型在dev数据集上选最优再在test数据集上测试示例
+# Finetune模型在dev数据集上选最优checkpoint测试示例
 cd scripts
-bash run_test_distribute_ascend.sh /path/finetune_dev.mindrecord /path/dev.json /path/finetune_test.mindrecord /path/test.json /path/ckpt_dictionary/ 8 /path/rank_table_2p.json
+bash run_test_standalone_ascend.sh /path/finetune_dev.mindrecord /path/dev.json /path/finetune_test.mindrecord /path/test.json /path/ckpt_dictionary/ 8 0
 ```
 
 # 脚本说明
@@ -91,6 +91,7 @@ bash run_test_distribute_ascend.sh /path/finetune_dev.mindrecord /path/dev.json 
     ├─run_zero-shot_inference_distribute_ascend.sh    // Shell script for distributed zero-shot on ascend.
     ├─run_distribute_train_ascend_single_machine.sh   // Shell script for distributed finetune on ascend with single machine.
     ├─run_distribute_train_ascend_multi_machine.sh    // Shell script for distributed finetune on ascend with multi-machine.
+    ├─run_test_standalone_ascend.sh                   // Shell script for standalone evaluation and test on ascend.
     ├─run_test_distribute_ascend.sh                   // Shell script for distributed evaluation and test on ascend.
     └─run_eval_distribute_ascend.sh                   // Shell script for distributed evaluation on ascend.
   ├─data_process
@@ -113,6 +114,7 @@ bash run_test_distribute_ascend.sh /path/finetune_dev.mindrecord /path/dev.json 
   ├─requirements.txt                        // Requirements of third party package.
   ├─zero-shot.py                             // Zero-shot api entry.
   ├─export.py                                // Export model.
+  ├─sort.py                                  // Sort the accuracy on dev dataset.
   ├─train.py                                 // Train api entry.
   ├─test.py                                  // Evaluation and test api entry.
   └─eval.py                                  // Infer api entry.
@@ -151,7 +153,7 @@ Parameters for dataset and network (Training/Evaluation):
     - CPM-large/latest_checkpointed_iteration.txt
     - CPM-large/80000/mp_rank_00_model_states.pt
     - CPM-large/80000/mp_rank_01_model_states.pt
-  接下来，您可能会使用模型合并脚本[change_mp.py](https://github.com/TsinghuaAI/CPM-Generate/blob/main/change_mp.py)将上述两个分片模型合成完整的单个模型：
+  接下来，您可能会使用模型合并脚本链接[change_mp.py](https://github.com/TsinghuaAI/CPM-Generate/blob/main/change_mp.py)将上述两个分片模型合成完整的单个模型：
 
 ```[bash]
    python change_mp.py /path/to/CPM 1
@@ -171,7 +173,7 @@ Parameters for dataset and network (Training/Evaluation):
 
 ### Zero-shot准备数据集
 
-- 原始数据集下载地址[ChiD-Dataset](https://drive.google.com/drive/folders/1gL01xbFBcrgP0TmgOhJ_uplkeG-BCwvM)，可参考[ChiD-Dataset说明](https://github.com/chujiezheng/ChID-Dataset)。
+- 原始数据集下载地址为[ChiD-Dataset](https://drive.google.com/drive/folders/1gL01xbFBcrgP0TmgOhJ_uplkeG-BCwvM)，可参考[ChiD-Dataset说明](https://github.com/chujiezheng/ChID-Dataset)。
   假设您已获得下列文件：
     - chid_json/train.json
     - chid_json/train_answer.json
@@ -180,7 +182,7 @@ Parameters for dataset and network (Training/Evaluation):
     - chid_json/test.json
     - chid_json/test_answer.json
 
-- 数据预处理：您可能会使用脚本[preprocess_chid_zeroshot.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_zeroshot.py)将原始数据处理成相应的json格式。
+- 数据预处理：您可能会使用脚本链接[preprocess_chid_zeroshot.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_zeroshot.py)（点击该链接）将原始数据处理成相应的json格式。
 
 ```[bash]
    python preprocess_chid_zeroshot.py --data_dir ${PATH_TO_DATA_DIR} --tokenizer_path ${PATH_TO_TOKENIZER VOCAB} --output_dir ${PATH_TO_OUTPUT_JSON}
@@ -226,7 +228,7 @@ Parameters for dataset and network (Training/Evaluation):
 
 预处理完成后，在上述指定的`--output_dir`输出目录下会生成`test.json`文件。
 
-- 将上一步得到的`--output_dir`路径下产生的json数据转换为MindRecord数据格式：
+- 在本工程下将上一步得到的`--output_dir`路径下产生的json数据转换为MindRecord数据格式：
 
 ```[bash]
    python make_zero_shot_mindrecord.py --data_file ${PATH_TO_DATA_FILE} --vocab_path ${PATH_TO_TOKENIZER VOCAB} --output_path ${PATH_TO_OUTPUT FILE}
@@ -270,7 +272,7 @@ Parameters for dataset and network (Training/Evaluation):
     - chid_json/test.json
     - chid_json/test_answer.json
 
-- 数据预处理：您可能会使用脚本[preprocess_chid_finetune.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_finetune.py)将原始数据处理成相应的json格式。
+- 数据预处理：您可能会使用脚本链接[preprocess_chid_finetune.py](https://github.com/TsinghuaAI/CPM-Finetune/blob/main/preprocess_chid_finetune.py)将原始数据处理成相应的json格式。
 
 ```[bash]
    python preprocess_chid_finetune.py --data_dir ${PATH_TO_DATA_DIR} --tokenizer_path ${PATH_TO_TOKENIZER VOCAB} --output_dir ${PATH_TO_OUTPUT_JSON}
@@ -291,19 +293,19 @@ Parameters for dataset and network (Training/Evaluation):
 ]
 ```
 
-处理完成后，在上述指定的`--output_dir`输出目录下会生成 `train.json`, `valid.json`, `test.json` 三个文件。
+处理完成后，在上述指定的`--output_dir`输出目录下会生成 `train.json`, `dev.json`, `test.json` 三个文件。
 
-- 将上一步得到的`--output_dir`路径下产生的json数据转换为MindRecord数据格式进行训练：
+- 在本工程里将上一步得到的`--output_dir`路径下产生的json数据转换为MindRecord数据格式进行训练：
 
 ```[bash]
    cd ./data_process/
-   python3 make_finetune_mindrecord.py --data_file ${PATH_TO_OUTPUT_JSON} --vocab_path ${PATH_TO_TOKENIZER VOCAB} --output_path ${PATH_TO_OUTPUT FILE} --num_patitions ${NUMBER_OF_MINDRECORD_PARTITIONS}
+   python3 make_finetune_mindrecord.py --data_file ${PATH_TO_OUTPUT_JSON} --vocab_path ${PATH_TO_TOKENIZER VOCAB} --output_path ${PATH_TO_OUTPUT FILE}
 ```
 
 主要地，`--data_file`是数据地址，如`/home/dataset/finetune_dataset/train.json`；`--vocab_path`为字典的地址文件夹目录，同上；
        `--output_path`为生成的mindrecord的输出结果文件夹目录,如`/home/dataset/finetune_dataset/`；
 
-处理完成后，指定的`--output_path`目录下生成训练和推理的mindrecord文件，如`train.mindrecord`和`test.mindrecord`。
+处理完成后，指定的`--output_path`目录下生成训练和推理的mindrecord文件，如`train.mindrecord`、`dev.mindrecord`和`test.mindrecord`。
 
 ### Finetune训练过程
 
@@ -320,13 +322,14 @@ Parameters for dataset and network (Training/Evaluation):
 
 ``` bash
     cd scripts
-    bash run_distribute_train_ascend_multi_machine.sh Dataset_addr PreTrain_ckpt_addr Rank_table_addr SERVER_ID
+    bash run_distribute_train_ascend_multi_machine.sh Dataset_addr PreTrain_ckpt_addr Rank_table_addr SERVER_ID RANK_SIZE_ALL
 ```
 
 主要地，`Dataset_addr` 是数据地址，如`/home/dataset/finetune_dataset/train.mindrecord`；
        `PreTrain_ckpt_addr` 为预训练模型的地址，如`/home/cpm_mindspore_1p_fp32.ckpt`；
        `Rank_table_addr` 为Rank_table的地址,如`/home/rank_table_8p.json`；
-       `SERVER_ID` 为多机过程中，机器从0开始编号的的依次顺序，如：0。
+       `SERVER_ID` 为多机过程中，机器从0开始编号的的依次顺序，如：0；
+       `RANK_SIZE_ALL`为使用的卡的总数，即Rank_table_addr里的卡的数量。
 
 **注意**：由于本CPM模型较大，无法在一张卡上训练，需要进行分布式训练，包括：模型并行和数据并行。
        分布式并行训练时，机器的device的device_id从1开始编号，依次递增1。
@@ -344,11 +347,11 @@ Parameters for dataset and network (Training/Evaluation):
    bash run_eval_distribute_ascend.sh  Test_MindRecord_addr  Test_json_addr  Model_addr   Model_patition_number   Rank_table_addr
 ```
 
-通常我们会选择在dev数据集上精度最高的模型，再在test数据集上进行推理，最后会生成测试集上的准确率，模型选择可参考`run_test_distribute_ascend.sh`或`test.py`文件。
+通常我们会选择在dev数据集上精度最高的模型，再在test数据集上进行推理，最后会生成测试集上的准确率，模型选择可参考`run_test_standalone_ascend.sh`。
 
 ```bash
    cd scripts
-   bash run_test_distribute_ascend.sh Dev_MindRecord_addr  Dev_json_addr  Test_MindRecord_addr   Test_json_addr   Model_addr   Model_patition_number   Rank_table_addr
+   bash run_test_standalone_ascend.sh Dev_MindRecord_addr  Dev_json_addr  Test_MindRecord_addr   Test_json_addr   Model_addr   Model_patition_number   DEVICEID
 ```
 
 主要地， `Test_MindRecord_addr`为test数据集mindrecord，如`/home/dataset/finetune_dataset/test.mindrecord`；
@@ -357,7 +360,7 @@ Parameters for dataset and network (Training/Evaluation):
         `Dev_json_addr`为预处理后的dev数据集的json文件，如`/home/dataset/finetune_dataset/dev.json`；
         `Model_addr`为Finetune得到的模型文件夹，如`/home/finetune_model/`；
         `Model_patition_number`为Finetune得到的模型的分片数量，不包括策略文件`train_strategy.ckpt`, 如单机8卡得到的为8；
-        `Rank_table_addr`为进行推理的时候的分布式推理的rank_table地址，如`/home/rank_table_2p.json`。
+        `DEVICEID`为进行推理的卡，如0。
 
 注意：Finetune的推理的数据集预处理和zero-shot的数据集预处理方式不一样。
 
@@ -373,7 +376,7 @@ Zero-shot单机双卡推理性能和精度如下：
 | MindSpore版本     | 1.3.0                       |
 | 数据集             | ChID数据集            |
 | 模型并行数           | 2                           |
-| 速度                | 152毫秒/步                   |
+| 速度                | 140毫秒/步                   |
 | Ascend芯片使用数量  | 2                           |
 | batch_size          | 2                           |
 | 输出              | 准确率                  |

@@ -87,7 +87,7 @@ finetune_test_distrubute = ed({
     "num_attention_heads": 32
 })
 
-config_train_8p = ed({
+config_train_single_machine = ed({
     "dp": 4,
     "mp": 2,
     "epoch": 10,
@@ -109,7 +109,7 @@ config_train_8p = ed({
     "sink_size": 1
 })
 
-config_train_32p = ed({
+config_train_multi_machine = ed({
     "dp": 16,
     "mp": 2,
     "epoch": 10,
