@@ -903,11 +903,7 @@ bool GPUKernelRuntime::AddMemorySwapTask(const AnfNodePtr &kernel, bool mock, bo
         device_address->set_status(DeviceAddressStatus::kInDevice);
       } else if (status == DeviceAddressStatus::kInHost) {
         if (!device_address->ptr_ && !AttemptMallocMem(device_address, device_address->size_, mock)) {
-          auto context_ptr = MsContext::GetInstance();
-          MS_EXCEPTION_IF_NULL(context_ptr);
-          auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-          MS_LOG(EXCEPTION) << "Device(id:" << device_id
-                            << ") memory isn't enough and alloc failed, alloc size:" << device_address->size_;
+          return false;
         }
         float cost_time = 0;
         mem_swap_manager_->AddMemSwapTask(SwapKind::kHostToDevice, device_address, host_address, mock, profiling,
@@ -1011,6 +1007,12 @@ bool GPUKernelRuntime::AttemptMallocMem(const DeviceAddressPtr &device_address, 
 
     ret = mem_manager_->MallocMemFromMemPool(device_address, size);
     if (!ret) {
+      if (!mock) {
+        auto context_ptr = MsContext::GetInstance();
+        MS_EXCEPTION_IF_NULL(context_ptr);
+        auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+        MS_LOG(EXCEPTION) << "Device(id:" << device_id << ") memory isn't enough and alloc failed, alloc size:" << size;
+      }
       return false;
     }
   }
@@ -1085,11 +1087,7 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
     auto device_address = GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, output_sizes[i], mock)) {
-      auto context_ptr = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context_ptr);
-      auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-      MS_LOG(EXCEPTION) << "Device(id:" << device_id
-                        << ") memory isn't enough and alloc failed, alloc size:" << output_sizes[i];
+      return false;
     }
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(output);
@@ -1113,11 +1111,7 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
     }
     auto device_address = AnfAlgo::GetMutableWorkspaceAddr(kernel, i);
     if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, workspace_sizes[i], mock)) {
-      auto context_ptr = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context_ptr);
-      auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-      MS_LOG(EXCEPTION) << "Device(id:" << device_id
-                        << ") memory isn't enough and alloc failed, alloc size:" << workspace_sizes[i];
+      return false;
     }
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(workspace);
