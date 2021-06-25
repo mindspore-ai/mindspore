@@ -66,11 +66,18 @@ class StaticAnalysisException {
     return instance;
   }
 
-  void ClearException() { exception_ptr_ = nullptr; }
+  void ClearException() {
+    std::lock_guard<std::mutex> lock(lock_);
+    exception_ptr_ = nullptr;
+  }
 
-  bool HasException() { return exception_ptr_ != nullptr; }
+  bool HasException() {
+    std::lock_guard<std::mutex> lock(lock_);
+    return exception_ptr_ != nullptr;
+  }
 
   void SetException() {
+    std::lock_guard<std::mutex> lock(lock_);
     if (exception_ptr_ != nullptr) {
       return;
     }
@@ -78,11 +85,13 @@ class StaticAnalysisException {
   }
 
   void SetAndRethrowException() {
+    std::lock_guard<std::mutex> lock(lock_);
     SetException();
     std::rethrow_exception(std::current_exception());
   }
 
   void CheckException() {
+    std::lock_guard<std::mutex> lock(lock_);
     if (exception_ptr_ != nullptr) {
       auto tmp_exception_ptr = exception_ptr_;
       exception_ptr_ = nullptr;
@@ -96,6 +105,7 @@ class StaticAnalysisException {
   DISABLE_COPY_AND_ASSIGN(StaticAnalysisException)
 
   std::exception_ptr exception_ptr_{nullptr};
+  std::mutex lock_;
 };
 }  // namespace mindspore
 

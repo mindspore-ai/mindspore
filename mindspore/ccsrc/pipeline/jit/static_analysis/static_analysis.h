@@ -289,13 +289,13 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   size_t stack_frame_max_depth() const { return stack_frame_max_depth_; }
   void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
   bool enable_recursive_eval() const { return enable_recursive_eval_; }
+  static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 
  private:
   void SetUndeterminedFlag(const EvaluatorPtr &evaluator);
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
                                      bool *continue_flag);
-  EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;

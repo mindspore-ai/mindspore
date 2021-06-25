@@ -97,10 +97,8 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   result.inferred = output_conf->ObtainEvalResult();
   result.context = root_context;
 
-  StaticAnalysisException::Instance().CheckException();
   pybind11::gil_scoped_release release;
   AnalysisResultCacheMgr::GetInstance().Wait();
-  StaticAnalysisException::Instance().CheckException();
   return result;
 }
 
@@ -732,25 +730,27 @@ bool NeedWaitForTwoBranches(const AbstractBasePtr &abstract) {
   return false;
 }
 
-EvalResultPtr ExecEvaluetor(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList args_conf_list,
-                            AnfNodeConfigPtr out_conf, std::string caller, AsyncEvalResultPtr async_result_branch,
-                            AsyncEvalResultPtr async_result_main) {
-  // TiggerToken_scoped_acquire tigger_token_acquire;
-  py::gil_scoped_acquire pyGuard;
-
-  EvalResultPtr result = nullptr;
+void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList args_conf_list, AnfNodeConfigPtr out_conf,
+                   std::string caller, AsyncAbstractResultPtr async_result_branch,
+                   AsyncAbstractResultPtr async_result_main) {
+  AnalysisResultCacheMgr::UpdateCaller(caller);
   try {
-    AnalysisResultCacheMgr::UpdateCaller(caller);
-    result = eval->Run(engine, args_conf_list, out_conf);
+    // only one GIL
+    py::gil_scoped_acquire pyGuard;
+    auto result = eval->Run(engine, args_conf_list, out_conf);
     MS_EXCEPTION_IF_NULL(result);
-    async_result_branch->JoinResult(result);
-    async_result_main->JoinResult(result);
+    MS_EXCEPTION_IF_NULL(result->abstract());
+
+    // broaden the result of switch(c,t,f)()
+    auto broadAbstract = result->abstract()->Broaden();
+    // let main thread to continue.
+    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf,
+                                                         std::make_shared<EvalResult>(broadAbstract, nullptr));
+    async_result_branch->JoinResult(broadAbstract);
+    async_result_main->JoinResult(broadAbstract);
     MS_LOG(DEBUG) << GetInferThread() << "async :" << eval->ToString()
                   << " asyncResult address = " << async_result_branch.get()
-                  << " value = " << async_result_branch->TryGetResult()->abstract()->ToString();
-    auto broadAbstract = result->abstract()->Broaden();
-    auto broadEvalResult = std::make_shared<EvalResult>(broadAbstract, nullptr);
-    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, broadEvalResult);
+                  << " value = " << async_result_branch->TryGetResult()->ToString();
   } catch (const std::exception &e) {
     std::ostringstream oss;
     trace::GetEvalStackInfo(oss);
@@ -758,10 +758,11 @@ EvalResultPtr ExecEvaluetor(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigP
       MS_LOG(ERROR) << oss.str();
     }
     auto abstractErrPtr = std::make_shared<AbstractError>(std::make_shared<StringImm>(oss.str()), out_conf->node());
-    async_result_main->JoinResult(std::make_shared<EvalResult>(abstractErrPtr, nullptr));
+    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf,
+                                                         std::make_shared<EvalResult>(abstractErrPtr, nullptr));
+    async_result_main->JoinResult(abstractErrPtr);
     StaticAnalysisException::Instance().SetException();
   }
-  return result;
 }
 
 EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::vector<EvaluatorPtr> &evaluators,
@@ -769,34 +770,40 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
                                                                    const ConfigPtrList &args_conf_list) {
   // TiggerToken_scoped_release tigger_token_release;
   pybind11::gil_scoped_release release;
+
   // Wait for the switch node to finish.
   MS_LOG(DEBUG) << GetInferThread() << "async : entry switch  " << out_conf->ToString();
   auto eval_result = AnalysisResultCacheMgr::GetInstance().GetSwitchValue(out_conf);
   if (eval_result == nullptr) {
-    MS_LOG(DEBUG) << GetInferThread() << "async : Init switch  " << out_conf->ToString();
+    MS_LOG(INFO) << GetInferThread() << "async : Init switch  " << out_conf->node()->ToString();
     AnalysisResultCacheMgr::GetInstance().InitSwitchValue(out_conf);
   } else {
-    if (eval_result->isa<AbstractTimeOut>()) {
+    if (eval_result->abstract()->isa<AbstractTimeOut>()) {
       MS_LOG(EXCEPTION) << "Eval " << out_conf->node()->ToString() << " time out."
-                        << "please check the code if there are recursive functions.";
+                        << " Please check the code if there are recursive functions.";
+    }
+    if (eval_result->abstract()->isa<AbstractError>()) {
+      MS_LOG(ERROR) << "Eval " << out_conf->node()->ToString() << " threw exception.";
+      StaticAnalysisException::Instance().CheckException();
     }
     return eval_result;
   }
 
   // Eval result of the branches and main.
-  AsyncEvalResultPtr asyncResult0 = std::make_shared<AsyncEvalResult>();
-  AsyncEvalResultPtr asyncResult1 = std::make_shared<AsyncEvalResult>();
-  AsyncEvalResultPtr asyncResult_main = std::make_shared<AsyncEvalResult>();
+  AsyncAbstractResultPtr asyncResult_main = std::make_shared<AsyncAbstractResult>();
+  AsyncAbstractResultPtr asyncResult0 = std::make_shared<AsyncAbstractResult>();
+  AsyncAbstractResultPtr asyncResult1 = std::make_shared<AsyncAbstractResult>();
+
   SetUndeterminedFlag(evaluators[0]);
   SetUndeterminedFlag(evaluators[1]);
   std::string threadId = AnalysisResultCacheMgr::GetThreadid();
 
   MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluators[0]->ToString();
-  auto future0 = std::async(std::launch::async, ExecEvaluetor, evaluators[0], shared_from_this(), args_conf_list,
+  auto future0 = std::async(std::launch::async, ExecEvaluator, evaluators[0], shared_from_this(), args_conf_list,
                             out_conf, threadId, asyncResult0, asyncResult_main);
 
   MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluators[1]->ToString();
-  auto future1 = std::async(std::launch::async, ExecEvaluetor, evaluators[1], shared_from_this(), args_conf_list,
+  auto future1 = std::async(std::launch::async, ExecEvaluator, evaluators[1], shared_from_this(), args_conf_list,
                             out_conf, threadId, asyncResult1, asyncResult_main);
 
   // Wait for async threads to finish.
@@ -807,43 +814,42 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   auto branchResult = asyncResult_main->GetResult();
   if (branchResult == nullptr || branchResult->isa<AbstractTimeOut>()) {
     MS_LOG(EXCEPTION) << "Can't finish " << evaluators[0]->ToString() << " or " << evaluators[1]->ToString()
-                      << "please check the code if there are recursive functions.";
+                      << " Please check the code if there are recursive functions.";
   }
   if (branchResult->isa<AbstractError>()) {
-    MS_LOG(EXCEPTION) << "async " << out_conf->node()->ToString() << " threw exception.";
+    MS_LOG(ERROR) << "async " << out_conf->node()->ToString() << " threw exception.";
+    StaticAnalysisException::Instance().CheckException();
   }
 
   AbstractBasePtrList out_specs;
-  if (NeedWaitForTwoBranches(branchResult->abstract())) {
-    MS_LOG(DEBUG) << GetInferThread() << "async . waiting for " << evaluators[0]->ToString();
+  if (NeedWaitForTwoBranches(branchResult)) {
+    MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[0]->ToString();
     auto result0 = asyncResult0->GetResult();
-    if (result0->isa<AbstractTimeOut>()) {
-      MS_LOG(EXCEPTION) << "Eval " << evaluators[0]->ToString() << "is time out."
+    if (result0 == nullptr || result0->isa<AbstractTimeOut>()) {
+      MS_LOG(EXCEPTION) << "Eval " << evaluators[0]->ToString() << " is time out."
                         << " Please check the code if there is recursive function.";
     }
-    out_specs.push_back(result0->abstract());
+    out_specs.push_back(result0);
 
-    MS_LOG(DEBUG) << GetInferThread() << "async . waiting for " << evaluators[1]->ToString();
+    MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[1]->ToString();
     auto result1 = asyncResult1->GetResult();
-    if (result1->isa<AbstractTimeOut>()) {
-      MS_LOG(EXCEPTION) << "Eval " << evaluators[1]->ToString() << "is time out."
+    if (result1 == nullptr || result1->isa<AbstractTimeOut>()) {
+      MS_LOG(EXCEPTION) << "Eval " << evaluators[1]->ToString() << " is time out."
                         << " Please check the code if there is recursive function.";
     }
-    out_specs.push_back(result1->abstract());
+    out_specs.push_back(result1);
   } else {
     if (asyncResult0->TryGetResult()) {
-      MS_LOG(DEBUG) << GetInferThread() << "async . waiting for " << evaluators[0]->ToString()
-                    << " value0=" << asyncResult0->GetResult()->abstract()->ToString();
-      out_specs.push_back(asyncResult0->GetResult()->abstract());
+      MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[0]->ToString()
+                    << " value0=" << asyncResult0->GetResult()->ToString();
+      out_specs.push_back(asyncResult0->GetResult());
     }
-
     if (asyncResult1->TryGetResult()) {
-      MS_LOG(DEBUG) << GetInferThread() << "async . waiting for " << evaluators[1]->ToString()
-                    << " value1=" << asyncResult1->GetResult()->abstract()->ToString();
-      out_specs.push_back(asyncResult1->GetResult()->abstract());
+      MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[1]->ToString()
+                    << " value1=" << asyncResult1->GetResult()->ToString();
+      out_specs.push_back(asyncResult1->GetResult());
     }
   }
-
   return ProcessEvalResults(out_specs, out_conf->node());
 }
 

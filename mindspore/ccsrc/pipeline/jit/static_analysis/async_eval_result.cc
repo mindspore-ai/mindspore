@@ -24,11 +24,13 @@
 
 namespace mindspore {
 namespace abstract {
+std::mutex AnalysisResultCacheMgr::tiggerToken_;
+
 EvalResultPtr AsyncEvalResult::TryGetResult(int ms) {
-  if (result_ != nullptr || ms == 0) {
+  std::unique_lock<std::mutex> lock(lock_);
+  if (ms == 0) {
     return result_;
   }
-  std::unique_lock<std::mutex> lock(lock_);
   auto time = std::chrono::microseconds(ms);
   // Wait for ms.
   (void)condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
@@ -36,13 +38,18 @@ EvalResultPtr AsyncEvalResult::TryGetResult(int ms) {
 }
 
 EvalResultPtr AsyncEvalResult::GetResult() {
+  std::unique_lock<std::mutex> lock(lock_);
   if (result_ != nullptr) {
     return result_;
   }
-  std::unique_lock<std::mutex> lock(lock_);
   auto time = std::chrono::seconds(kInferTimeout);
-  (void)condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
-  return result_;
+  auto cond = condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
+  if (cond) {
+    return result_;
+  } else {
+    MS_LOG(ERROR) << "Timeout!";
+    return std::make_shared<EvalResult>(std::make_shared<AbstractTimeOut>(), nullptr);
+  }
 }
 
 std::string AsyncEvalResult::ToString() {
@@ -62,6 +69,7 @@ void AsyncEvalResult::JoinResult(const EvalResultPtr &result) {
 }
 
 void AnalysisResultCacheMgr::Clear() {
+  std::lock_guard<std::mutex> lock(lock_);
   cache_.clear();
   switch_cache_.clear();
   todo_.clear();
@@ -74,7 +82,6 @@ AnalysisResultCacheMgr &AnalysisResultCacheMgr::GetInstance() {
 
 void AnalysisResultCacheMgr::DumpCache(const std::string &filename) {
   auto path = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".cache"));
-
   auto realpath = Common::GetRealPath(path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << path;
@@ -98,23 +105,22 @@ void AnalysisResultCacheMgr::UpdateCaller(const std::string &caller) {
   buffer << caller << "." << std::this_thread::get_id();
   local_threadid = buffer.str();
 }
-std::mutex AnalysisResultCacheMgr::tiggerToken_;
+
 std::string &AnalysisResultCacheMgr::GetThreadid() { return local_threadid; }
 
-void AnalysisResultCacheMgr::PushTowait(const std::shared_future<EvalResultPtr> &future0,
-                                        const std::shared_future<EvalResultPtr> &future1) {
-  std::lock_guard<std::recursive_mutex> lock(lock_);
-  waiting_.push_back(future0);
-  waiting_.push_back(future1);
+void AnalysisResultCacheMgr::PushTowait(std::future<void> &&future0, std::future<void> &&future1) {
+  std::lock_guard<std::mutex> lock(lock_);
+  waiting_.emplace_back(std::move(future0));
+  waiting_.emplace_back(std::move(future1));
 }
 
 void AnalysisResultCacheMgr::PushTodo(const AnfNodeConfigPtr &conf) {
-  std::lock_guard<std::recursive_mutex> lock(lock_);
+  std::lock_guard<std::mutex> lock(todo_lock_);
   todo_.push_back(conf);
 }
 
 void AnalysisResultCacheMgr::InitSwitchValue(const AnfNodeConfigPtr &conf) {
-  std::lock_guard<std::recursive_mutex> lock(lock_);
+  std::lock_guard<std::mutex> lock(lock_);
   AsyncEvalResultPtr async_eval_result = switch_cache_.get(conf);
   if (async_eval_result == nullptr) {
     async_eval_result = std::make_shared<AsyncEvalResult>();
@@ -123,6 +129,7 @@ void AnalysisResultCacheMgr::InitSwitchValue(const AnfNodeConfigPtr &conf) {
 }
 
 EvalResultPtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &conf) {
+  // don't call lock_.lock(). switch_cache is protected. and it waits for result.
   AsyncEvalResultPtr async_eval_result = switch_cache_.get(conf);
   // Conf has been visited and set value.
   if (async_eval_result != nullptr) {
@@ -130,7 +137,8 @@ EvalResultPtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &con
     auto result = async_eval_result->GetResult();
     if (result == nullptr) {
       result = std::make_shared<EvalResult>(std::make_shared<AbstractTimeOut>(), nullptr);
-      MS_LOG(ERROR) << "AsyncEvalResult for NodeConfig " << conf->ToString() << " is nullptr, maybe timeout.";
+      MS_LOG(ERROR) << "AsyncEvalResult for NodeConfig " << conf->node()->ToString() << " is nullptr, maybe timeout.";
+      MS_LOG(ERROR) << "detail:" << conf->ToString();
     }
     return result;
   }
@@ -140,12 +148,11 @@ EvalResultPtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &con
 void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const EvalResultPtr arg) {
   MS_EXCEPTION_IF_NULL(conf);
   if (arg == nullptr || arg->abstract() == nullptr) {
-    MS_LOG(WARNING) << conf->ToString() << " value is nullptr";
+    MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr";
   }
-  std::lock_guard<std::recursive_mutex> lock(lock_);
+  std::lock_guard<std::mutex> lock(lock_);
   AsyncEvalResultPtr async_eval_result = switch_cache_.get(conf);
   if (async_eval_result == nullptr) {
-    MS_LOG(EXCEPTION) << conf->ToString() << " Not key.";
     async_eval_result = std::make_shared<AsyncEvalResult>();
     async_eval_result->JoinResult(arg);
     switch_cache_.set(conf, async_eval_result);
@@ -156,12 +163,9 @@ void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const 
       absList.push_back(arg->abstract());
       absList.push_back(ab1->abstract());
       // Join two branches's result
-      auto joined_spec = AbstractJoin(absList);
-      MS_EXCEPTION_IF_NULL(joined_spec);
-      MS_LOG(DEBUG) << "Multiple evaluators joined: " << joined_spec->ToString();
-      auto joined_result = std::make_shared<EvalResult>(joined_spec, std::make_shared<AttrValueMap>());
+      auto joined_result = AnalysisEngine::ProcessEvalResults(absList, conf->node());
       async_eval_result->JoinResult(joined_result);
-      if (joined_result != ab1) {
+      if (!(*joined_result == *ab1)) {
         PushTodo(conf);
       }
     } else {
@@ -171,17 +175,10 @@ void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const 
 }
 
 void AnalysisResultCacheMgr::Todo() {
-  while (true) {
-    AnfNodeConfigPtr conf;
-    lock_.lock();
-    if (!todo_.empty()) {
-      conf = todo_.front();
-    } else {
-      lock_.unlock();
-      break;
-    }
+  std::lock_guard<std::mutex> lock(todo_lock_);
+  while (!todo_.empty()) {
+    AnfNodeConfigPtr conf = todo_.front();
     todo_.pop_front();
-    lock_.unlock();
     if (!(*GetValue(conf)->abstract() == *GetSwitchValue(conf)->abstract())) {
       MS_LOG(WARNING) << " Switch Value is not eq. "
                       << " switchCache: " << GetSwitchValue(conf)->abstract()->ToString()
@@ -192,17 +189,17 @@ void AnalysisResultCacheMgr::Todo() {
 
 void AnalysisResultCacheMgr::Wait() {
   while (true) {
-    std::shared_future<EvalResultPtr> future;
+    StaticAnalysisException::Instance().CheckException();
     lock_.lock();
-    if (!waiting_.empty()) {
-      future = std::move(waiting_.front());
-    } else {
+    if (waiting_.empty()) {
       lock_.unlock();
       break;
     }
-
+    auto future = std::move(waiting_.front());
     waiting_.pop_front();
     lock_.unlock();
+
+    // must be unlock
     future.wait();
   }
   if (IS_OUTPUT_ON(DEBUG)) {

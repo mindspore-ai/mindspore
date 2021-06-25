@@ -247,7 +247,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                 << "), leave, function call depth: " << engine->function_call_depth() << " - "
                 << engine->stack_frame_depth();
   auto res = std::make_shared<EvalResult>(res_base, nullptr);
-  evaluator_cache_mgr_->SetValue(args_abs_list, res);
+  // evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
 }
 
@@ -389,11 +389,12 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
 
 EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                              const AnfNodeConfigPtr &out_conf) {
+  // The evaluator can't reenter at sametime.
   std::unique_lock<std::recursive_timed_mutex> eval_lock(eval_lock_, std::try_to_lock);
   if (!eval_lock.owns_lock()) {
-    auto py_tstate = PyEval_SaveThread();
+    auto py_tstate = PyEval_SaveThread();  // release GIL
     eval_lock.try_lock_for(std::chrono::seconds(kInferTimeout));
-    PyEval_RestoreThread(py_tstate);
+    PyEval_RestoreThread(py_tstate);  // acquire GIL
     if (!eval_lock.owns_lock()) {
       MS_LOG(EXCEPTION) << "It is timeout to run " << ToString();
     }
@@ -405,6 +406,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
+
   args_spec_list = NormalizeArgs(args_spec_list);
   args_spec_list = BroadenUndeterminedArgs(args_spec_list);
   trace::TraceGraphEvalEnter(shared_from_base<Evaluator>(), out_conf);
@@ -570,11 +572,8 @@ EvalResultPtr Evaluator::SingleRun(AnalysisEnginePtr engine, const ConfigPtrList
                                    const AnfNodeConfigPtr &out_conf) {
   auto result = this->Run(engine, args_conf_list, out_conf);
 
-  StaticAnalysisException::Instance().CheckException();
   pybind11::gil_scoped_release release;
   AnalysisResultCacheMgr::GetInstance().Wait();
-  StaticAnalysisException::Instance().CheckException();
-
   return result;
 }
 }  // namespace abstract
