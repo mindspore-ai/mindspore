@@ -96,6 +96,12 @@
 | 2020年9月1日|支持[MindSpore v0.7.0-beta](https://www.mindspore.cn/news/newschildren/en?id=246) |
 | 2020年7月31日|支持[MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren/en?id=237) |
 
+## 关联站点
+
+这里是MindSpore框架提供的可以运行于包括Ascend/GPU/CPU/移动设备等多种设备的模型库。
+
+相应的专属于Ascend平台的多框架模型可以参考[昇腾ModelZoo](https://hiascend.com/software/modelzoo)以及对应的[代码仓](https://gitee.com/ascend/modelzoo)。
+
 ## 免责声明
 
 MindSpore仅提供下载和预处理公共数据集的脚本。我们不拥有这些数据集，也不对它们的质量负责或维护。请确保您具有在数据集许可下使用该数据集的权限。在这些数据集上训练的模型仅用于非商业研究和教学目的。
