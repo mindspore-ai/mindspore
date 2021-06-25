@@ -40,6 +40,28 @@ using mindspore::kernel::AddressPtr;
 
 namespace mindspore {
 namespace device {
+namespace {
+std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto graph_inputs = graph->inputs();
+  std::vector<AnfNodePtr> result(graph_inputs.begin(), graph_inputs.end());
+  std::set<AnfNodePtr> inputs_set(graph_inputs.begin(), graph_inputs.end());
+  auto kernels = graph->execution_order();
+  for (auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    auto input_num = AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t i = 0; i < input_num; ++i) {
+      auto input_node = kernel->input(i + 1);
+      auto input_real_node = AnfAlgo::VisitKernelWithReturnType(input_node, 0).first;
+      if (input_real_node->isa<Parameter>() && inputs_set.find(input_real_node) == inputs_set.end()) {
+        (void)inputs_set.insert(input_real_node);
+        (void)result.emplace_back(input_real_node);
+      }
+    }
+  }
+  return result;
+}
+}  // namespace
 constexpr size_t kMinInputSize = 2;
 
 KernelRuntime::~KernelRuntime() {}
@@ -277,15 +299,19 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph->graph_id();
-  auto graph_inputs = graph->inputs();
+  auto graph_inputs = GetGraphInputs(graph);
   auto graph_valid_input = graph->valid_inputs();
   graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
-  auto add_need_alloc_nodes = [&need_alloc_nodes, this](const AnfNodePtr &node) {
+  auto add_need_alloc_nodes = [&need_alloc_nodes, graph, this](const AnfNodePtr &node) {
     if (!node->isa<Parameter>()) {
       return;
     }
     if (NodeOutputDeviceAddressExist(node, 0)) {
+      return;
+    }
+    auto input_param = node->cast<ParameterPtr>();
+    if (!input_param->IsUsedByRealKernelInGraph(graph->graph_id())) {
       return;
     }
     need_alloc_nodes.push_back(node);

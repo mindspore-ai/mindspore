@@ -362,8 +362,11 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
         MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
       }
       if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
-          AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>())) {
+          AnfAlgo::IsParameterWeight(input_param)) {
         tensor->set_device_address(device_address);
+      }
+      if (kernel_graph->IsUpdatedParameter(input_param)) {
+        tensor->SetIsUpdateByDevice();
       }
     }
     tensor->set_sync_status(kNoNeedSync);

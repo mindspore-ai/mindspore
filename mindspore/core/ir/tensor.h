@@ -356,6 +356,8 @@ class Tensor : public MetaTensor {
 
   bool IsGraphOutput() { return graph_output_; }
   void SetIsGraphOutput() { graph_output_ = true; }
+  bool IsUpdatedByDevice() { return updated_by_device_; }
+  void SetIsUpdateByDevice() { updated_by_device_ = true; }
 
  private:
   bool init_flag_{false};
@@ -364,6 +366,7 @@ class Tensor : public MetaTensor {
   mutable std::shared_ptr<WaitEvent> event_{nullptr};
   mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   bool graph_output_{false};
+  bool updated_by_device_{false};
   DeviceSyncPtr device_sync_{nullptr};
   bool cache_enable_{false};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
