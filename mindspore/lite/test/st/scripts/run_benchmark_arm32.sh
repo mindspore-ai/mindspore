@@ -32,7 +32,7 @@ function Run_arm32() {
 # Run on armv8.2-a32-fp16 platform:
 function Run_armv82_a32_fp16() {
     Push_Files $arm32_path "aarch32" $version $benchmark_test_path "adb_push_log.txt" $device_id
-    local arm32_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config" "$models_multiple_inputs_fp16_config")
+    local arm32_cfg_file_list=("$models_arm32_fp16_config")
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${arm32_cfg_file_list[*]}" . '/data/local/tmp' $run_armv82_a32_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id
 }
