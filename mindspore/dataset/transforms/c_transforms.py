@@ -85,7 +85,7 @@ class Fill(TensorOperation):
     The output tensor will have the same shape and type as the input tensor.
 
     Args:
-        fill_value (Union[str, bytes, int, float, bool])) : scalar value
+        fill_value (Union[str, bytes, int, float, bool]) : scalar value
             to fill the tensor with.
 
     Examples:
@@ -432,7 +432,7 @@ class RandomApply(TensorOperation):
 
     Args:
         transforms (list): List of transformations to be applied.
-        prob (float, optional): The probability to apply the transformation list (default=0.5)
+        prob (float, optional): The probability to apply the transformation list (default=0.5).
 
     Examples:
         >>> rand_apply = c_transforms.RandomApply([c_vision.RandomCrop(512)])

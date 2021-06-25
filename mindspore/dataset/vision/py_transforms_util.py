@@ -580,7 +580,10 @@ def to_type(img, output_type):
     if not is_numpy(img):
         raise TypeError("img should be NumPy image. Got {}.".format(type(img)))
 
-    return img.astype(output_type)
+    try:
+        return img.astype(output_type)
+    except:
+        raise RuntimeError("output_type: " + str(output_type) + " is not a valid datatype.")
 
 
 def rotate(img, angle, resample, expand, center, fill_value):

@@ -22,6 +22,7 @@ high performance and parse data precisely. It also provides the following
 operations for users to preprocess data: shuffle, batch, repeat, map, and zip.
 """
 
+from ..callback import DSCallback, WaitedDSCallback
 from ..core import config
 from .cache_client import DatasetCache
 from .datasets import *
@@ -35,4 +36,5 @@ __all__ = ["CelebADataset", "Cifar100Dataset", "Cifar10Dataset", "CLUEDataset", 
            "NumpySlicesDataset", "PaddedDataset", "TextFileDataset", "TFRecordDataset", "VOCDataset",
            "DistributedSampler", "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler",
            "WeightedRandomSampler", "SubsetSampler",
-           "config", "DatasetCache", "Schema", "zip"]
+           "DatasetCache", "DSCallback", "Schema", "WaitedDSCallback", "compare", "deserialize",
+           "serialize", "show", "zip"]
