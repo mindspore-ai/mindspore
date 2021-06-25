@@ -45,7 +45,7 @@ PYBIND11_MODULE(_mindspore_offline_debug, m) {
     .def("get_watchpoint_id", &watchpoint_hit_t::get_watchpoint_id)
     .def("get_parameters", &watchpoint_hit_t::get_parameters)
     .def("get_error_code", &watchpoint_hit_t::get_error_code)
-    .def("get_device_id", &watchpoint_hit_t::get_device_id)
+    .def("get_rank_id", &watchpoint_hit_t::get_rank_id)
     .def("get_root_graph_id", &watchpoint_hit_t::get_root_graph_id);
 
   py::class_<tensor_info_t>(m, "tensor_info")
@@ -53,9 +53,9 @@ PYBIND11_MODULE(_mindspore_offline_debug, m) {
     .def("get_node_name", &tensor_info_t::get_node_name)
     .def("get_slot", &tensor_info_t::get_slot)
     .def("get_iteration", &tensor_info_t::get_iteration)
-    .def("get_device_id", &tensor_info_t::get_device_id)
+    .def("get_rank_id", &tensor_info_t::get_rank_id)
     .def("get_root_graph_id", &tensor_info_t::get_root_graph_id)
-    .def("get_is_parameter", &tensor_info_t::get_is_parameter);
+    .def("get_is_output", &tensor_info_t::get_is_output);
 
   py::class_<tensor_data_t>(m, "tensor_data")
     .def(py::init<char *, uint64_t, int, std::vector<int64_t>>())

@@ -222,15 +222,17 @@ class DebugServices {
 
 #ifdef OFFLINE_DBG_MODE
   void AddToTensorData(const std::string &backend_name, const std::size_t slot, const unsigned int iteration,
-                       const unsigned int device_id, const unsigned int root_graph_id, const std::size_t data_size,
-                       const std::string &type_name, const std::vector<int64_t> &shape, std::vector<char> *buffer,
-                       std::vector<std::shared_ptr<TensorData>> *result_list);
+                       const unsigned int device_id, const unsigned int root_graph_id, const bool is_output,
+                       const std::size_t data_size, const std::string &type_name, const std::vector<int64_t> &shape,
+                       std::vector<char> *buffer, std::vector<std::shared_ptr<TensorData>> *result_list);
 
-  void SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *dump_style_kernel_name, size_t slot);
+  void SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *dump_style_kernel_name, size_t slot,
+                        bool is_output);
 
   void ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                         std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
-                        std::vector<unsigned int> root_graph_id, const std::vector<std::string> &async_file_pool,
+                        std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
+                        const std::vector<std::string> &async_file_pool,
                         std::vector<std::shared_ptr<TensorData>> *result_list);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,

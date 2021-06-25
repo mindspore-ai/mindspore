@@ -67,13 +67,13 @@ def check_add_watchpoint(method):
             type_check(node_info, (dict,), "node_info")
             for info_name, info_param in node_info.items():
                 type_check(info_name, (str,), "node parameter name")
-                if info_name in ["device_id"]:
+                if info_name in ["rank_id"]:
                     if isinstance(info_param, str):
                         if info_param not in ["*"]:
                             raise ValueError("Node parameter {} only accepts '*' as string.".format(info_name))
                     else:
                         for param in info_param:
-                            check_uint32(param, "device_id")
+                            check_uint32(param, "rank_id")
                 elif info_name in ["root_graph_id"]:
                     if isinstance(info_param, str):
                         if info_param not in ["*"]:
@@ -81,8 +81,8 @@ def check_add_watchpoint(method):
                     else:
                         for param in info_param:
                             check_uint32(param, "root_graph_id")
-                elif info_name in ["is_parameter"]:
-                    type_check(info_param, (bool,), "is_parameter")
+                elif info_name in ["is_output"]:
+                    type_check(info_param, (bool,), "is_output")
                 else:
                     raise ValueError("Node parameter {} is not defined.".format(info_name))
         param_names = ["param_{0}".format(i) for i in range(len(parameter_list))]
@@ -154,15 +154,15 @@ def check_tensor_info_init(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [node_name, slot, iteration, device_id, root_graph_id,
-         is_parameter], _ = parse_user_args(method, *args, **kwargs)
+        [node_name, slot, iteration, rank_id, root_graph_id,
+         is_output], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(node_name, (str,), "node_name")
         check_uint32(slot, "slot")
         check_iteration(iteration, "iteration")
-        check_uint32(device_id, "device_id")
+        check_uint32(rank_id, "rank_id")
         check_uint32(root_graph_id, "root_graph_id")
-        type_check(is_parameter, (bool,), "is_parameter")
+        type_check(is_output, (bool,), "is_output")
 
         return method(self, *args, **kwargs)
 
@@ -196,7 +196,7 @@ def check_watchpoint_hit_init(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [name, slot, condition, watchpoint_id,
-         parameters, error_code, device_id, root_graph_id], _ = parse_user_args(method, *args, **kwargs)
+         parameters, error_code, rank_id, root_graph_id], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(name, (str,), "name")
         check_uint32(slot, "slot")
@@ -205,7 +205,7 @@ def check_watchpoint_hit_init(method):
         param_names = ["param_{0}".format(i) for i in range(len(parameters))]
         type_check_list(parameters, (cds.Parameter,), param_names)
         type_check(error_code, (int,), "error_code")
-        check_uint32(device_id, "device_id")
+        check_uint32(rank_id, "rank_id")
         check_uint32(root_graph_id, "root_graph_id")
 
         return method(self, *args, **kwargs)

@@ -226,6 +226,10 @@ class TensorData {
 
   void SetType(std::string type_name) { ConvertStringToDbgType(type_name); }
 
+  bool GetIsOutput() { return is_output; }
+
+  void SetIsOutput(bool is_output) { this->is_output = is_output; }
+
   void ConvertMsToDbgType(uint32_t type) {
     switch (type) {
       case MsTypeId::kNumberTypeBool:
@@ -411,6 +415,7 @@ class TensorData {
   unsigned int iteration;
   unsigned int device_id;
   unsigned int root_graph_id;
+  bool is_output;
   int execution_order;
 #ifdef ONLINE_DBG_MODE
   mindspore::tensor::TensorPtr tensor_ptr;
