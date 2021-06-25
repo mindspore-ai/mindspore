@@ -70,7 +70,7 @@ echo "File PATH: $FILE_PATH"
 
 cd $FILE_PATH
 
-MD_LIB_FILENAME="libminddata-lite_static.a"
+MD_LIB_FILENAME="libminddata-lite.a"
 
 # locate original MindData lite library
 MD_LIB_PATH=`find $MINDSPORE_PATH -name "${MD_LIB_FILENAME}" | head -n 1`
