@@ -194,6 +194,9 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   if (parameters_indexs.empty()) {
     return false;
   }
+  if (AnfAlgo::IsDynamicShape(kernel_node)) {
+    parameters_indexs.pop_back();
+  }
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
@@ -201,9 +204,6 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   size_t total_num = input_num + workspace_num + output_num;
   size_t pad_index = param_num;
 
-  if (AnfAlgo::IsDynamicShape(kernel_node)) {
-    parameters_indexs.pop_back();
-  }
   for (; pad_index < total_num; ++pad_index) {
     parameters_indexs.emplace_back(0);
   }
