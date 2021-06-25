@@ -1129,9 +1129,6 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
     AnfAlgo::VisitKernelWithReturnType(front_node_with_index.first, front_node_with_index.second, false);
   auto front_output_node = front_output_with_index.first;
   MS_EXCEPTION_IF_NULL(front_output_node);
-  MS_LOG(INFO) << "Link data arrow for internal parameter:" << internal_parameter->fullname_with_scope()
-               << ", corresponding front node:" << front_output_node->fullname_with_scope()
-               << " with output index:" << front_output_with_index.second;
   if (IsPersistentDeviceTensor(front_output_node)) {
     to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_output_node.get());
     return;
@@ -1141,6 +1138,11 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
                       << ", internal parameter:" << internal_parameter->fullname_with_scope();
   }
   auto actor_pair = graph_output_to_actor_[front_output_with_index];
+  MS_LOG(INFO) << "Graph " << graph->graph_id() << " internal parameter:" << internal_parameter->DebugString()
+               << ", corresponding front node:" << front_output_node->fullname_with_scope()
+               << " with index:" << front_output_with_index.second
+               << ", from actor:" << actor_pair.first->GetAID().Name() << " with index:" << actor_pair.second
+               << ", to actor:" << to_actor->GetAID().Name() << " with index:" << to_kernel_with_input_idx.second;
 
   if (IsDeviceQueueDSActor(front_output_node)) {
     auto from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(actor_pair.first);
@@ -1688,19 +1690,24 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
       MS_EXCEPTION_IF_NULL(another_device_context);
       copy_actor->output_device_context_ = another_device_context;
 
-      // LInk from copy actor to kernel actor users.
-      if (kernel_actor->output_control_arrows_.size() == 0) {
-        MS_LOG(INFO) << "The kernel actor has no control arrow:" << kernel_actor->GetAID().Name();
-      }
+      MS_LOG(INFO) << "The kernel actor: " << kernel_actor->GetAID().Name()
+                   << "has control arrows number:" << kernel_actor->output_control_arrows_.size();
+      // Link from copy actor to kernel actor users.
       for (auto &output_contorl : kernel_actor->output_control_arrows_) {
         copy_actor->output_control_arrows_.emplace_back(output_contorl);
         auto to_actor = FetchActor(output_contorl.Name());
         MS_EXCEPTION_IF_NULL(to_actor);
         if (output_contorl.Name().find("_LoopCountActor") != string::npos) {
           auto real_to_actor = dynamic_cast<LoopCountActor *>(to_actor);
+          MS_EXCEPTION_IF_NULL(real_to_actor);
           real_to_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
+        } else if (output_contorl.Name().find("copy_from") != string::npos) {
+          auto real_to_actor = dynamic_cast<CopyActor *>(to_actor);
+          MS_EXCEPTION_IF_NULL(real_to_actor);
+          real_to_actor->input_controls_num_++;
         } else {
           auto real_to_actor = dynamic_cast<KernelActor *>(to_actor);
+          MS_EXCEPTION_IF_NULL(real_to_actor);
           real_to_actor->input_controls_num_++;
         }
       }

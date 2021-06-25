@@ -579,24 +579,22 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);
-
-// PreExecuteGraph
+// Debugger pre-execute graph.
 #ifdef ENABLE_DEBUGGER
-  auto debugger = Debugger::GetInstance();
-  if (debugger) {
-    debugger->Debugger::PreExecuteGraphDebugger(graph_compiler_info.graphs_);
+  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
+    Debugger::GetInstance()->PreExecuteGraphDebugger(graph_compiler_info.graphs_);
   }
 #endif
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
-
-// PostExecuteGraph
+// Debugger post-execute graph.
 #ifdef ENABLE_DEBUGGER
-  if (debugger) {
-    debugger->Debugger::PostExecuteGraphDebugger(graph_compiler_info.graphs_);
+  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
+    Debugger::GetInstance()->PostExecuteGraphDebugger(graph_compiler_info.graphs_);
   }
 #endif
+
   // Sync device stream.
   const auto &first_device_context = graph_compiler_info.device_contexts_[0];
   MS_EXCEPTION_IF_NULL(first_device_context);
