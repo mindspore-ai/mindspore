@@ -228,11 +228,11 @@ class GraphSplitByPattern:
         self.reach_tab = self.ReachTable(len(graph.ops) + 1 if self.enable_recompute else len(graph.ops))
         self.area_map = {}
         _, outputs = graph.deduce_parameters()
-        self.idx = 0
+        idx = 0
         for op in graph.ops:
             is_output = op.output in outputs
-            a = self.Area(op, is_output, self.idx, self.reach_tab)
-            self.idx += 1
+            a = self.Area(op, is_output, idx, self.reach_tab)
+            idx += 1
             self.set_default_mode(a)
             self.areas.append(a)
             self.set_area_map([op], a)
@@ -241,7 +241,7 @@ class GraphSplitByPattern:
         for i in range(len(self.areas)-1, -1, -1):
             self.areas[i].link_output()
         if self.enable_recompute:
-            self.recom_area = self.Area(None, False, self.idx, self.reach_tab)
+            self.recom_area = self.Area(None, False, idx, self.reach_tab)
             self.recom_area.is_recompute = True
             self.recom_pre = None
             self.recom_user = None
@@ -508,7 +508,7 @@ class GraphSplitByPattern:
             user_areas = []
             for user_op in tail_tensor.to_ops:
                 user_area = self.area_map[user_op]
-                if len(user_area.ops) == 1 and user_area.pattern == PrimLib.RESHAPE:
+                if user_area.pattern == PrimLib.RESHAPE:
                     continue
                 edge_num = _get_edge_num(self.area_map[tail_tensor.op], user_area)
                 if edge_num == 1 and not user_area in user_areas:
