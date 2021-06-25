@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameStridedSlice = "StridedSlice";
+constexpr auto kNameStridedSlice = prim::kStridedSlice;
 class StridedSlice : public PrimitiveC {
  public:
-  StridedSlice() : PrimitiveC(kNameStridedSlice) { InitIOName({"x", "begin", "end", "strides"}, {"output"}); }
+  StridedSlice() : PrimitiveC(prim::kPrimStridedSlice->name()) {
+    InitIOName({"x", "begin", "end", "strides"}, {"output"});
+  }
   ~StridedSlice() = default;
   MS_DECLARE_PARENT(StridedSlice, PrimitiveC);
   void Init(const int64_t begin_mask = 0, const int64_t end_mask = 0, const int64_t ellipsis_mask = 0,
@@ -45,8 +47,10 @@ class StridedSlice : public PrimitiveC {
   int64_t get_new_axis_mask() const;
   int64_t get_shrink_axis_mask() const;
   std::vector<int64_t> TenToTwo(int64_t num);
-  int64_t compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, std::vector<int64_t> x_shape,
-                                 int64_t i);
+  int64_t compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) const;
+};
+struct ComputeHasEllipsis {
+  bool has_ellipsis;
 };
 AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);
