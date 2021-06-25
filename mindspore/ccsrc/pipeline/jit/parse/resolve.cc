@@ -67,13 +67,13 @@ bool SymbolResolver::Resolve() {
 }
 
 namespace {
-// if any mixed precision flag add a cast node after the parameter node.
+// If any mixed precision flag add a cast node after the parameter node.
 // argument obj should be python Parameter object
 // it will be converted to Parameter node here
 AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj) {
   MS_EXCEPTION_IF_NULL(func_graph);
 
-  // parameter object should not be none
+  // Parameter object should not be none
   if (py::isinstance<py::none>(obj)) {
     MS_LOG(EXCEPTION) << "Resolve class Parameter error because obj is null.";
   }
@@ -82,33 +82,38 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     MS_LOG(EXCEPTION) << "Resolve class Parameter error: cannot find name attr for obj";
   }
 
-  // get the parameter name from parameter object
+  // Get the parameter name from parameter object
   auto name_attr = python_adapter::GetPyObjAttr(obj, "name");
   if (py::isinstance<py::none>(name_attr)) {
     MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
   }
 
   auto param_name = py::cast<std::string>(name_attr);
-  auto top_graph = Parser::GetTopFuncGraph();
-  // if the parameter node has been created , return it
+  auto top_func_graph = Parser::GetTopFuncGraph();
+  // If the parameter node has been created , return it.
   AnfNodePtr para_node = nullptr;
-  for (auto const &param : top_graph->parameters()) {
+  for (auto const &param : top_func_graph->parameters()) {
     auto param_node = dyn_cast<Parameter>(param);
     if (param_node != nullptr && param_node->name() == param_name) {
       para_node = param;
+      MS_LOG(DEBUG) << "Found existing parameter for " << func_graph->ToString()
+                    << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
       break;
     }
   }
   if (para_node == nullptr) {
-    auto node = top_graph->AddWeightParameter(param_name);
+    auto node = top_func_graph->AddWeightParameter(param_name);
     auto value = py::cast<tensor::MetaTensorPtr>(obj);
     node->set_default_param(value);
-    // set_abstract for parameter
+    // Set abstract for parameter
     auto abs = value->ToAbstract();
     node->set_abstract(abs);
     para_node = node;
+    MS_LOG(DEBUG) << "Created a new weight parameter for " << func_graph->ToString()
+                  << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
   }
-  func_graph->add_used_global_parameters(para_node);
+  func_graph->add_parameter_obj_node(para_node);
+
   return para_node;
 }
 
@@ -141,9 +146,9 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(param_ptr);
     if (param_ptr->has_default()) {
       param_ptr->set_func_graph(top_graph);
-      func_graph->add_used_global_parameters(param_ptr);
+      func_graph->add_parameter_obj_node(param_ptr);
 
-      // update top_graph
+      // Update top_graph
       top_graph->add_parameter(param_ptr);
       size_t hyper_param_count = top_graph->hyper_param_count();
       top_graph->set_hyper_param_count(hyper_param_count + 1);
@@ -164,7 +169,6 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
       return false;
     }
     MS_LOG(DEBUG) << "Add param graph:" << func_graph->ToString() << ", " << param->DebugString();
-
     output = param;
   } else if (py::hasattr(obj, "__parameter_tuple__")) {
     auto tuple = obj.cast<py::tuple>();
@@ -335,7 +339,7 @@ opt::OptPassGroupMap GetOptResolvePasses(const opt::irpass::ResolveIRPassLib &ir
   opt::OptPassGroupMap map({
     {"resolve",
      {
-       // for resolve and getattr primitive;
+       // For resolve and getattr primitive;
        irpass.resolver_resolve_and_getattr_,
      }},
   });
@@ -371,7 +375,7 @@ bool ResolveAll(const FuncGraphManagerPtr &manager) {
          "called from root graph, so it's not necessary to pass all graphs as roots. "
          "Please ensure your usage.";
   }
-  // should not use pipeline::Resource as Resource::Clean will clean some
+  // Should not use pipeline::Resource as Resource::Clean will clean some
   // global variable such as ScopeManager, it will cause JExpandedGraphs::GetBprop
   // fail as valid scope has been cleaned.
   auto res = std::make_shared<pipeline::ResourceBase>();

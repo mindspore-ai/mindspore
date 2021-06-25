@@ -280,11 +280,11 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     auto base_graph = cloner->cloned_func_graph()[fg];
     MS_LOG(DEBUG) << "Basegraph:" << base_graph->ToString();
 
-    if (fg->used_global_parameters().empty() || graphs.size() <= 1 || fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    if (fg->paramter_obj_nodes().empty() || graphs.size() <= 1 || fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
       continue;
     }
     auto &cloned_nodes = *cloner->cloned_node();
-    for (auto &fv : fg->used_global_parameters()) {
+    for (auto &fv : fg->paramter_obj_nodes()) {
       TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
       auto &node_users = res->manager()->node_users()[fv];
@@ -298,10 +298,10 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
         repl_n->set_input(IntToSize(n.second), param);
       }
     }
-    MS_LOG(DEBUG) << "Fg0 used_global_parameters size :" << fg->used_global_parameters().size();
+    MS_LOG(DEBUG) << "Fg0 paramter_obj_nodes size :" << fg->paramter_obj_nodes().size();
 
     for (auto &g : graphs) {
-      auto &fvs = g->used_global_parameters();
+      auto &fvs = g->paramter_obj_nodes();
       std::vector<AnfNodePtr> new_node_inputs;
       new_node_inputs.push_back(NewValueNode(base_graph));
       for (auto &p : g->parameters()) {

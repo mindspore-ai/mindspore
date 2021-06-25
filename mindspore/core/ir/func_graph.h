@@ -350,8 +350,8 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
                             const std::vector<AnfNodePtr> &specialized_parameter_list,
                             std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
-  const std::vector<AnfNodePtr> &used_global_parameters() const { return used_global_parameters_; }
-  void add_used_global_parameters(const AnfNodePtr &p) { used_global_parameters_.push_back(p); }
+  const std::vector<AnfNodePtr> &paramter_obj_nodes() const { return paramter_obj_nodes_; }
+  void add_parameter_obj_node(const AnfNodePtr &p) { paramter_obj_nodes_.push_back(p); }
 
   std::unordered_map<std::string, ValuePtr> attrs_;
   std::vector<BaseShapePtr> joined_shapes_;
@@ -428,9 +428,7 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   // Parameters of this function.
   std::vector<AnfNodePtr> parameters_;
-
-  // Global parameters used by this function.
-  std::vector<AnfNodePtr> used_global_parameters_;
+  std::vector<AnfNodePtr> paramter_obj_nodes_;
 
   // Whether there is a *args and **kwargs, and count kwonlyargs'number.
   bool has_vararg_;
