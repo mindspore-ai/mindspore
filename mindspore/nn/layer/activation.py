@@ -124,7 +124,7 @@ class LogSoftmax(Cell):
         ValueError: If `axis` is not in range [-len(x), len(x)).
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)

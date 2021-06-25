@@ -47,7 +47,7 @@ class OcclusionSensitivity(Metric):
                           Default: None.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Example:
         >>> import numpy as np
