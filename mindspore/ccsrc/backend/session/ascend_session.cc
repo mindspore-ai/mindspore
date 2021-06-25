@@ -389,8 +389,8 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   for (const auto &graph : all_graphs) {
     graph->set_root_graph_id(root_graph->graph_id());
-    UnifyMindIR(graph);
   }
+  UnifyMindIR(root_graph);
   // Update Graph Dynamic Shape Attr
   UpdateAllGraphDynamicShapeAttr(all_graphs);
   opt::BackendCommonOptimization(root_graph);
