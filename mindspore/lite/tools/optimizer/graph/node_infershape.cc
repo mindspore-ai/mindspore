@@ -25,6 +25,7 @@
 #include "src/ops/ops_utils.h"
 #include "src/runtime/infer_manager.h"
 #include "src/tensorlist.h"
+#include "src/registry/kernel_interface_registry.h"
 
 namespace mindspore {
 namespace opt {
@@ -82,6 +83,9 @@ tensor::TensorPtr NewTensorInfo(lite::Tensor *tensor) {
 
 bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
+  if (CheckPrimitiveType(cnode, prim::kPrimCustom)) {
+    return true;
+  }
   auto prim_t = lite::GetPrimitiveT(cnode->input(0));
   if (prim_t == nullptr) {
     return false;
@@ -153,27 +157,25 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     }
     RectifyFormat(cnode, inputs, fmk_type_);
     ret = KernelInferShape(inputs, outputs, parameter);
-    if (ret == lite::RET_OK) {
-      anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
-    }
-    if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
-      auto set_status = SetCNodeAbstract(cnode, outputs, ret);
-      if (set_status != lite::RET_OK) {
-        MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
-        FreeTensors(&inputs);
-        FreeTensors(&outputs);
-        free(parameter);
-        fbb.Clear();
-        return set_status;
-      }
-    } else {
-      MS_LOG(ERROR) << "infer shape failed.";
-    }
-    FreeTensors(&inputs);
-    FreeTensors(&outputs);
     free(parameter);
   }
   fbb.Clear();
+  if (ret == lite::RET_OK) {
+    anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
+  }
+  if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
+    auto set_status = SetCNodeAbstract(cnode, outputs, ret);
+    if (set_status != lite::RET_OK) {
+      MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
+      FreeTensors(&inputs);
+      FreeTensors(&outputs);
+      return set_status;
+    }
+  } else {
+    MS_LOG(ERROR) << "infer shape failed.";
+  }
+  FreeTensors(&inputs);
+  FreeTensors(&outputs);
   return ret;
 }
 

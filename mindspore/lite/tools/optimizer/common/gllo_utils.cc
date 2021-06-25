@@ -1082,7 +1082,7 @@ void TransFilterDataNHWC(kTransFilterType type, int32_t filterK, int32_t filterC
     for (int h = 0; h < filterH; ++h) {
       for (int w = 0; w < filterW; ++w) {
         for (int c = 0; c < filterC; ++c) {
-          p1Buff = weightData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (k * filterC) + (c));
+          p1Buff = weightData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
           if (type == kNHWC2HWCK) {
             p2Buff = buf.get() + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
           } else if (type == kNHWC2CKHW) {
