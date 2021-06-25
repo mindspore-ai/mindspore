@@ -16,7 +16,10 @@
 
 #include "include/registry/model_parser_registry.h"
 #include <string>
+#include <set>
 #include <unordered_map>
+#include "include/errorcode.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
@@ -25,7 +28,7 @@ ModelParserRegistry *ModelParserRegistry::GetInstance() {
   return &instance;
 }
 
-ModelParser *ModelParserRegistry::GetModelParser(const std::string &fmk) {
+ModelParser *ModelParserRegistry::GetModelParser(const FmkType fmk) {
   auto it = parsers_.find(fmk);
   if (it != parsers_.end()) {
     auto creator = it->second;
@@ -34,9 +37,14 @@ ModelParser *ModelParserRegistry::GetModelParser(const std::string &fmk) {
   return nullptr;
 }
 
-void ModelParserRegistry::RegParser(const std::string &fmk, ModelParserCreator creator) {
+int ModelParserRegistry::RegParser(const FmkType fmk, ModelParserCreator creator) {
+  if (fmk < converter::FmkType_TF || fmk > converter::FmkType_TFLITE) {
+    MS_LOG(ERROR) << "ILLEGAL FMK: fmk must be in FmkType.";
+    return RET_ERROR;
+  }
   auto instance = ModelParserRegistry::GetInstance();
   instance->parsers_[fmk] = creator;
+  return RET_OK;
 }
 
 }  // namespace lite

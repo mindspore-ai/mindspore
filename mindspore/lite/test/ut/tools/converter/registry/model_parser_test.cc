@@ -20,7 +20,6 @@
 #include "include/errorcode.h"
 #include "include/registry/model_parser_registry.h"
 
-using mindspore::lite::ModelRegistrar;
 namespace mindspore {
 FuncGraphPtr ModelParserTest::Parse(const lite::converter::Flags &flag) {
   // construct funcgraph
@@ -169,5 +168,4 @@ lite::ModelParser *TestModelParserCreator() {
   }
   return model_parser;
 }
-REG_MODEL_PARSER(TEST, TestModelParserCreator);
 }  // namespace mindspore

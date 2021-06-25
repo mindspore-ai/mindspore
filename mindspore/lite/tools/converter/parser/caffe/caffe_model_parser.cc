@@ -32,6 +32,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
+using mindspore::lite::converter::FmkType_CAFFE;
 namespace mindspore::lite {
 namespace {
 namespace {
@@ -603,5 +604,5 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
   }
   return layer.name();
 }
-REG_MODEL_PARSER(CAFFE, LiteModelParserCreator<CaffeModelParser>)
+REG_MODEL_PARSER(FmkType_CAFFE, LiteModelParserCreator<CaffeModelParser>)
 }  // namespace mindspore::lite

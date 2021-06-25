@@ -40,7 +40,7 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
       return nullptr;
     }
   } else {
-    model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmkIn);
+    model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmk);
     if (model_parser_ == nullptr) {
       return nullptr;
     }

@@ -33,6 +33,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/common/tensor_util.h"
 
+using mindspore::lite::converter::FmkType_TF;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -1239,6 +1240,6 @@ int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   return RET_OK;
 }
 
-REG_MODEL_PARSER(TF, LiteModelParserCreator<TFModelParser>)
+REG_MODEL_PARSER(FmkType_TF, LiteModelParserCreator<TFModelParser>)
 }  // namespace lite
 }  // namespace mindspore
