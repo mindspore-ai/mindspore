@@ -33,7 +33,7 @@ void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
   for (size_t x : input_shape) {
     num_count_ *= x;
   }
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   keep_prob_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
   if (keep_prob_ == 0) {
     MS_LOG(EXCEPTION) << "The keep_prob is zero.";

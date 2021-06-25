@@ -31,8 +31,8 @@ void UnsortedSegmentSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but UnsortedSegmentSum needs 1 output.";
   }
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-  segment_ids_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 1);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  segment_ids_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto segment_ids_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);

@@ -24,8 +24,8 @@ void UpdateCacheCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
 
-  input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-  indices_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 1);
+  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  indices_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
 
   if (input_x_dtype_ == kNumberTypeFloat32 || input_x_dtype_ == kNumberTypeInt32) {
     input_x_dtype_size_ = 4;

@@ -32,7 +32,7 @@ void IsFiniteCPUKernel::InitKernel(const CNodePtr &kernelNode) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but IsFiniteCPUKernel needs 1 output.";
   }
 
-  input_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernelNode, 0);
+  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernelNode, 0);
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "Unsupported input type found.";
   }

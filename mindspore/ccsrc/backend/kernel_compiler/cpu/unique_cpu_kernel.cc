@@ -25,7 +25,7 @@ void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_size_ = input_shape[0];
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
     sorted_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, SORTED);
   }
@@ -60,7 +60,7 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     std::vector<TypeId> dtypes;
     size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
     for (size_t i = 0; i < output_num; i++) {
-      dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
+      dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
     }
     AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, AnfAlgo::GetOutputInferShape(node_, 1)}, node_.get());
   }

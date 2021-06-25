@@ -26,7 +26,7 @@ void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   size_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];

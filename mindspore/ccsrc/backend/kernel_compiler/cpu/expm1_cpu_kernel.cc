@@ -31,7 +31,7 @@ void Expm1CPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but Expm1CPUKernel needs 1 output.";
   }
 
-  input_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat) {
     MS_LOG(EXCEPTION) << "Unsupported input type found.";
   }

@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 void DynamicAssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
-  input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   input_x_dtype_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
 }
 

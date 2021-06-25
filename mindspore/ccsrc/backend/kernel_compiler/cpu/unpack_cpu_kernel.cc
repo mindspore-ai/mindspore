@@ -43,7 +43,7 @@ void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       unstack_param_.axis_dim_ = input_shape[i];
     }
   }
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
 template <typename T>

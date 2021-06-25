@@ -24,7 +24,7 @@ void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   probs_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indice_dims_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   labels_dims_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   if (probs_shape_.size() != 3) {
     MS_LOG(EXCEPTION) << "Probs dims: " << probs_shape_.size() << " not support.";

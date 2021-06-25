@@ -33,7 +33,7 @@ void DropoutCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "Keep_prob greater than one but DropoutCPUKernel needs smaller or equal to one";
   }
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   for (const uint64_t &d : input_shape_) {
     tensor_size_ *= d;
   }

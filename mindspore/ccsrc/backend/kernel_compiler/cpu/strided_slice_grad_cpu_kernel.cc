@@ -26,7 +26,7 @@ void StridedSliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   //  CheckParam(kernel_node);
   param_ = (struct StridedSliceParameter *)malloc(sizeof(struct StridedSliceParameter));
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   switch (dtype_) {
     case kNumberTypeFloat32:
       param_->data_type = kDataTypeFloat;

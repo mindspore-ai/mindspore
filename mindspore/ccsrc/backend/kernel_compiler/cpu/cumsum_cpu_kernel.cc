@@ -22,7 +22,7 @@ namespace kernel {
 void CumSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   axis_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
   dst_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   exclusive_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "exclusive");

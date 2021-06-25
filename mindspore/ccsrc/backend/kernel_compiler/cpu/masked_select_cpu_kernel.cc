@@ -73,7 +73,7 @@ bool MaskedSelectCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
     std::vector<TypeId> dtypes;
     size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
     for (size_t i = 0; i < output_num; i++) {
-      dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
+      dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
     }
     AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
   }

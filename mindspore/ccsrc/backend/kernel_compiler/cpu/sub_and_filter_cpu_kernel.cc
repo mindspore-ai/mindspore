@@ -23,7 +23,7 @@ namespace kernel {
 void SubAndFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
-  input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
 bool SubAndFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -75,7 +75,7 @@ void SubAndFilterCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   std::vector<TypeId> dtypes;
   size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
   for (size_t i = 0; i < output_num; i++) {
-    dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
+    dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
   }
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, out_shape}, node_.get());
 }
