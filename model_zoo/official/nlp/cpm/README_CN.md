@@ -415,7 +415,7 @@ Zero-shot单机双卡推理性能和精度如下：
 | 优化器                 | Adam                                             |
 | 准确率                 | 81.4%                                         |
 | 速度                  | 2740毫秒/步(32卡)                                      |
-| 损失                  | 0.08                                                |
+| 损失                  | 0.03                                                |
 | 参数 (M)             | 2597.1                                                |
 | 推理检查点   | 57G （.ckpt文件）                                            |
 | 脚本                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/cpm> |

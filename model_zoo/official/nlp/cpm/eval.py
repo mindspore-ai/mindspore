@@ -273,6 +273,8 @@ if __name__ == '__main__':
     parser.add_argument("--has_train_strategy", type=ast.literal_eval, default=True,
                         help='Model has distributed training strategy.')
     args_eval = parser.parse_args()
+    if args_eval.distribute:
+        set_parallel_env()
 
     ckpt_file_list_test = None
     if args_eval.has_train_strategy:
@@ -286,7 +288,6 @@ if __name__ == '__main__':
 
     result_accuracy = 0.0
     if args_eval.distribute:
-        set_parallel_env()
         print("Start validation on 2 devices with model parallel.")
         result_accuracy = run_eval(args_eval, finetune_test_distrubute, ckpt_file_list_test)
     else:

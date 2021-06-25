@@ -18,7 +18,7 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Accuracy sort.")
-    parser.add_argument("--result_path", type=str, default="scripts/result.txt",
+    parser.add_argument("--result_path", type=str, default="/home/result.txt",
                         help='Text save address.')
 
     args_eval = parser.parse_args()

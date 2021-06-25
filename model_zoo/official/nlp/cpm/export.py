@@ -57,7 +57,7 @@ if __name__ == '__main__':
     cpm_model = CPM_LAYER(config_eval)
 
     if not args.has_train_strategy:
-        weights = load_checkpoint(args.ckpt_path)
+        weights = load_checkpoint(args.ckpt_path_doc)
         can_be_loaded = {}
         print("+++++++loading weights+++++")
         for name, _ in weights.items():
