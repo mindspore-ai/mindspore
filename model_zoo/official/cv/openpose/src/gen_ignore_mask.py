@@ -13,13 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import os
-import argparse
 import cv2
 import numpy as np
 from tqdm import tqdm
 from pycocotools.coco import COCO as ReadJson
+from model_utils.config import config
 
-from config import params
 
 class DataLoader():
     def __init__(self, train_, dir_name, mode_='train'):
@@ -42,7 +41,7 @@ class DataLoader():
                 intxn = mask_all_1 & mask
                 mask_miss_1 = np.bitwise_or(mask_miss_1.astype(int), np.subtract(mask, intxn, dtype=np.int32))
                 mask_all_1 = np.bitwise_or(mask_all_1.astype(int), mask.astype(int))
-            elif ann['num_keypoints'] < params['min_keypoints'] or ann['area'] <= params['min_area']:
+            elif ann['num_keypoints'] < config.min_keypoints or ann['area'] <= config.min_area:
                 mask_all_1 = np.bitwise_or(mask_all_1.astype(int), mask.astype(int))
                 mask_miss_1 = np.bitwise_or(mask_miss_1.astype(int), mask.astype(int))
             else:
@@ -90,25 +89,18 @@ class DataLoader():
         anno_ids = self.train.getAnnIds(imgIds=[img_id_])
         annotations_ = self.train.loadAnns(anno_ids)
 
-        img_file = os.path.join(params['data_dir'], self.dir_name, self.train.loadImgs([img_id_])[0]['file_name'])
+        img_file = os.path.join(self.dir_name, self.train.loadImgs([img_id_])[0]['file_name'])
         image_ = cv2.imread(img_file)
         return image_, annotations_, img_id_
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--vis', action='store_true', help='visualize annotations and ignore masks')
-    parser.add_argument('--train_ann', type=str, help='train annotations json')
-    parser.add_argument('--val_ann', type=str, help='val annotations json')
-    parser.add_argument('--train_dir', type=str, help='name of train dir')
-    parser.add_argument('--val_dir', type=str, help='name of val dir')
-    args = parser.parse_args()
-    path_list = [args.train_ann, args.val_ann, args.train_dir, args.val_dir]
+    path_list = [config.train_ann, config.val_ann, config.train_dir, config.val_dir]
     for index, mode in enumerate(['train', 'val']):
         train = ReadJson(path_list[index])
         data_loader = DataLoader(train, path_list[index+2], mode_=mode)
 
-        save_dir = os.path.join(params['data_dir'], 'ignore_mask_{}'.format(mode))
+        save_dir = os.path.join(os.path.dirname(path_list[index+2]), 'ignore_mask_{}'.format(mode))
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
@@ -116,7 +108,7 @@ if __name__ == '__main__':
             img, annotations, img_id = data_loader.get_img_annotation(ind=i)
             mask_all, mask_miss = data_loader.gen_masks(img, annotations)
 
-            if args.vis:
+            if config.vis:
                 ann_img = data_loader.draw_masks_and_keypoints(img, annotations)
                 msk_img = data_loader.dwaw_gen_masks(img, mask_miss)
                 cv2.imshow('image', np.hstack((ann_img, msk_img)))
@@ -126,7 +118,7 @@ if __name__ == '__main__':
                 elif k == ord('s'):
                     cv2.imwrite('aaa.png', np.hstack((ann_img, msk_img)))
 
-            if np.any(mask_miss) and not args.vis:
+            if np.any(mask_miss) and not config.vis:
                 mask_miss = mask_miss.astype(np.uint8) * 255
                 save_path = os.path.join(save_dir, '{:012d}.png'.format(img_id))
                 cv2.imwrite(save_path, mask_miss)

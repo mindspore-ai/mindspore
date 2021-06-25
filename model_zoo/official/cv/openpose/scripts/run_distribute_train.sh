@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 4 ]
+if [ $# != 5 ]
 then
-    echo "Usage: sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [IAMGEPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN]"
+    echo "Usage: sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [IAMGEPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN] [VGG_PATH]"
 exit 1
 fi
 
@@ -56,6 +56,7 @@ do
     python train.py \
         --imgpath_train=$2 \
         --jsonpath_train=$3 \
-        --maskpath_train=$4 > log.txt 2>&1 &
+        --maskpath_train=$4  \
+        --vgg_path=$5 > log.txt 2>&1 &
     cd ..
 done

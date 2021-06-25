@@ -14,14 +14,14 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 3 ]
+if [ $# != 4 ]
 then
-    echo "Usage: sh scripts/run_standalone_train.sh [IAMGEPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN]"
+    echo "Usage: sh scripts/run_standalone_train.sh [IAMGEPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN] [VGG_PATH]"
 exit 1
 fi
 
 export DEVICE_ID=0
-export DEVICE_NUM=1
+export RANK_SIZE=1
 export RANK_ID=0
 rm -rf train
 mkdir train
@@ -29,5 +29,6 @@ cp -r ./src ./train
 cp -r ./scripts ./train
 cp ./*.py ./train
 cp ./*yaml ./train
-cd ./train
-python train.py --imgpath_train=$1 --jsonpath_train=$2 --maskpath_train=$3 > train.log 2>&1 &
+cd ./train || exit
+python train.py --imgpath_train=$1 --jsonpath_train=$2 --maskpath_train=$3 --vgg_path=$4 > train.log 2>&1 &
+cd ..
