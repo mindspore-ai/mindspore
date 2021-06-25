@@ -47,7 +47,7 @@ class RandomOpGpuKernel : public GpuKernel {
  public:
   RandomOpGpuKernel()
       : random_op_type_(RANDOM_OP_INVALID_TYPE),
-        input_size_0_(sizeof(0)),
+        input_size_0_(sizeof(int32_t)),
         input_size_1_(sizeof(T)),
         input_size_2_(sizeof(T)),
         output_size_(sizeof(T)),
@@ -137,7 +137,7 @@ class RandomOpGpuKernel : public GpuKernel {
     }
     auto input_shape_0 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < input_shape_0.size(); i++) {
-      input_size_0_ += input_shape_0[i];
+      input_size_0_ *= input_shape_0[i];
     }
     input_size_0_ *= sizeof(int);
     if (random_op_type_ == RANDOM_OP_UNIFORM_INT) {
