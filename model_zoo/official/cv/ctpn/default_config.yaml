@@ -149,7 +149,10 @@ file_format: "MINDIR"
 ckpt_file: ""
 
 # ======================================================================================
-# 310 infer
+# postprocess
+export_dataset_path: ""
+result_path: ""
+label_path: ""
 
 ---
 # Help description for each configuration
