@@ -73,7 +73,7 @@ class OperatorInfo {
 
   virtual AnfNodePtr CreateOutputsOfSplit(const CNodePtr &input_node, size_t input_index,
                                           std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
-                                          const std::vector<int64_t> &splits, bool trans_format) = 0;
+                                          const std::vector<int64_t> &splits) = 0;
   virtual int InferReplaceOp() = 0;
   virtual int InferParallelCNodes() = 0;
   virtual int CheckStrategy(const SplitStrategy &strategy) = 0;

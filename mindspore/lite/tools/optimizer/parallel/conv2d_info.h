@@ -42,8 +42,7 @@ class Conv2DInfo : public OperatorInfo {
                                     const std::vector<AnfNodePtr> &kernel_split_outputs,
                                     const std::vector<AnfNodePtr> &bias_split_outputs);
   AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
-                                  size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
-                                  bool trans_format) override;
+                                  size_t split_dim, size_t split_num, const std::vector<int64_t> &splits) override;
 
  protected:
   SplitMode split_mode_ = NoSplit;

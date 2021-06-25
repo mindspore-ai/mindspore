@@ -36,25 +36,27 @@ OpParameter *PopulateSplitWithOverlapParameter(const void *prim) {
   memset(param, 0, sizeof(SplitWithOverlapParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
-  auto ratio = value->ratio();
-  if (ratio == nullptr) {
-    MS_LOG(ERROR) << "ratio is nullptr";
-    free(param);
-    return nullptr;
-  }
-  if (ratio->size() > SPLIT_MAX_SLICE_NUM) {
-    MS_LOG(ERROR) << "SplitWithOverlap do not support splitting tensor into more than " << SPLIT_MAX_SLICE_NUM
-                  << " slices";
-    free(param);
-    return nullptr;
-  }
-  param->num_split_ = static_cast<int>(ratio->size());
+  param->num_split_ = value->number_split();
   param->split_dim_ = value->split_dim();
 
+  if (param->num_split_ > SPLIT_MAX_SLICE_NUM) {
+    MS_LOG(ERROR) << "SplitWithOverlap num_split_ error.";
+    free(param);
+    return nullptr;
+  }
+
+  auto ratio = value->ratio();
   auto extend_top = value->extend_top();
   auto extend_bottom = value->extend_bottom();
-  if (extend_top->size() != ratio->size() || (extend_bottom != nullptr && extend_bottom->size() != ratio->size())) {
-    MS_LOG(ERROR) << "The sizes of ratio, extend_top and extend_bottom are not identical";
+  if (ratio == nullptr || extend_top == nullptr || extend_bottom == nullptr) {
+    MS_LOG(ERROR) << "SplitWithOverlap parameter is nullptr.";
+    free(param);
+    return nullptr;
+  }
+  if (static_cast<int>(ratio->size()) != param->num_split_ ||
+      static_cast<int>(extend_top->size()) != param->num_split_ ||
+      static_cast<int>(extend_bottom->size()) != param->num_split_) {
+    MS_LOG(ERROR) << "SplitWithOverlap parameter size error.";
     free(param);
     return nullptr;
   }
@@ -64,9 +66,6 @@ OpParameter *PopulateSplitWithOverlapParameter(const void *prim) {
     param->extend_top_[i] = (*extend_top)[i];
     param->extend_bottom_[i] = (*extend_bottom)[i];
   }
-
-  param->split_stride_ = value->split_stride();
-  param->pad_top_ = value->pad_top();
 
   return reinterpret_cast<OpParameter *>(param);
 }

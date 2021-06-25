@@ -311,12 +311,10 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
   auto pad_list = GetSplitPadList(depth_wise_conv_prim, input_h, input_w);
   depth_wise_conv_prim->set_pad_list(pad_list);
   depth_wise_conv_prim->set_pad_mode(PAD);
+
   // prim of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
-  split_prim->set_split_dim(split_dim_);
-  split_prim->set_number_split(split_num);
-  split_prim->set_ratio(splits);
-  split_prim->set_trans_format(false);
+  std::vector<int64_t> new_splits = splits;
   if (split_mode_ == SplitH) {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     auto extend_bottom =
@@ -324,14 +322,17 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
     bottom_vector[split_num - 1] = 0;
     split_prim->set_extend_bottom(bottom_vector);
-    split_prim->set_split_stride(depth_wise_conv_prim->get_stride().at(kIndexH));
-    split_prim->set_pad_top(depth_wise_conv_prim->get_pad_list().at(kPadUp));
+    UpdateRatioWithPadStride(new_splits.data(), split_num, input_shape[split_dim_],
+                             depth_wise_conv_prim->get_pad_list().at(kPadUp),
+                             depth_wise_conv_prim->get_stride().at(kIndexH));
   } else {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     split_prim->set_extend_bottom(std::vector<int64_t>(split_num, 0));
-    split_prim->set_split_stride(0);
-    split_prim->set_pad_top(0);
   }
+  split_prim->set_split_dim(split_dim_);
+  split_prim->set_number_split(split_num);
+  split_prim->set_ratio(new_splits);
+
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
   // ori_conv_node must only have one feature input
   split_inputs.push_back(ori_node->input(input_index + 1));

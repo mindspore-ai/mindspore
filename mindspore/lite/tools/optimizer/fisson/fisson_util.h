@@ -66,6 +66,7 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
 void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_cnode,
                                      std::vector<AnfNodePtr> *split_outputs, SplitInfo *split_info,
                                      const std::string &node_name);
+void UpdateRatioWithPadStride(int64_t *ratio, size_t split_size, int split_dim_size, int pad, int stride);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_FISSON_UTIL_H_
