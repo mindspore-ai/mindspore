@@ -39,7 +39,6 @@ def modelarts_pre_process():
 def train_lstm():
     """ train lstm """
     print('\ntrain.py config: \n', config)
-    config.preprocess_path = os.path.join(config.glove_path, config.preprocess_path)
 
     _enable_graph_kernel = config.enable_graph_kernel == "true" and config.device_target == "GPU"
     context.set_context(
@@ -60,6 +59,9 @@ def train_lstm():
             device_num=device_num)
 
     if config.preprocess == "true":
+        import shutil
+        if os.path.exists(config.preprocess_path):
+            shutil.rmtree(config.preprocess_path)
         print("============== Starting Data Pre-processing ==============")
         convert_to_mindrecord(config.embed_size, config.aclimdb_path, config.preprocess_path, config.glove_path)
 

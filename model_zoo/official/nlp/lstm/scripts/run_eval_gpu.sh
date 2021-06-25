@@ -40,6 +40,6 @@ python ../eval.py  \
     --device_target="GPU" \
     --aclimdb_path=$ACLIMDB_DIR \
     --glove_path=$GLOVE_DIR \
-    --preprocess=false  \
+    --preprocess=true  \
     --preprocess_path=./preprocess \
     --ckpt_file=$CKPT_FILE > log.txt 2>&1 &

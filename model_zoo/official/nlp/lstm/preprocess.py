@@ -23,7 +23,6 @@ from src.model_utils.config import config
 
 
 if __name__ == '__main__':
-    config.preprocess_path = os.path.join(config.glove_path, config.preprocess_path)
     dataset = lstm_create_dataset(config.preprocess_path, config.batch_size, training=False)
     img_path = os.path.join(config.result_path, "00_data")
     os.makedirs(img_path)
