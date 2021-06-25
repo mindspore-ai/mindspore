@@ -81,7 +81,8 @@ def ssd_model_build():
 def set_graph_kernel_context(device_target, model):
     if device_target == "GPU" and model == "ssd300":
         # Enable graph kernel for default model ssd300 on GPU back-end.
-        context.set_context(enable_graph_kernel=True, graph_kernel_flags="--enable_parallel_fusion")
+        context.set_context(enable_graph_kernel=True,
+                            graph_kernel_flags="--enable_parallel_fusion --enable_expand_ops=Conv2D")
 
 def set_parameter(model_name):
     if model_name == "ssd_resnet50_fpn":
