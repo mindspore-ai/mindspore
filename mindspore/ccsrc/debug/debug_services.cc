@@ -529,7 +529,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
     std::string prefix_dump_file_name = dump_style_kernel_name;
 
     std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
-                                    std::to_string(root_graph_id[i]) + "/" + std::to_string(iteration[i]);
+                                    std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
     DIR *d;
@@ -702,7 +702,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     SetPrefixToCheck(&prefix_dump_file_name, &dump_style_kernel_name, slot[i], is_output[i]);
 
     std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
-                                    std::to_string(root_graph_id[i]) + "/" + std::to_string(iteration[i]);
+                                    std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
     std::vector<char> *buffer = NULL;
@@ -741,6 +741,8 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
                           type_name, shape, buffer, result_list);
         }
       } else {
+        AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i], 0,
+                        type_name, shape, buffer, result_list);
         MS_LOG(INFO) << "directory does not exist!";
       }
       closedir(d);
@@ -821,7 +823,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     std::vector<std::tuple<std::string, std::string>> proto_to_dump;
 
     std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id) + "/" + net_name + "/" +
-                                    std::to_string(root_graph_id) + "/" + std::to_string(iteration);
+                                    std::to_string(root_graph_id) + "/" + IterationString(iteration);
 
     // convert node names to dump style
     for (auto node : wp_nodes) {
@@ -889,6 +891,17 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
   }
 
   return tensor_list;
+}
+
+std::string DebugServices::IterationString(unsigned int iteration) {
+  std::string iteration_string;
+  bool init_dbg_suspend = (iteration == UINT_MAX);
+  if (init_dbg_suspend) {
+    iteration_string = "init";
+  } else {
+    iteration_string = std::to_string(iteration);
+  }
+  return iteration_string;
 }
 #endif
 

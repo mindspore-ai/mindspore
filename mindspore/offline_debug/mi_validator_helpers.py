@@ -126,3 +126,7 @@ def type_check_list(args, types, arg_names):
         arg_names = ["{0}[{1}]".format(arg_names, i) for i in range(len(args))]
     for arg, arg_name in zip(args, arg_names):
         type_check(arg, types, arg_name)
+
+def replace_minus_one(value):
+    """ replace -1 with a default value """
+    return value if value != -1 else UINT32_MAX

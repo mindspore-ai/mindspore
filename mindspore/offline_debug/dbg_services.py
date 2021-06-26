@@ -18,6 +18,7 @@ The module DbgServices provides offline debugger APIs.
 
 import mindspore._mindspore_offline_debug as cds
 from mindspore.offline_debug.mi_validators import check_init, check_initialize, check_add_watchpoint, check_remove_watchpoint, check_check_watchpoints, check_read_tensors, check_initialize_done, check_tensor_info_init, check_tensor_data_init, check_watchpoint_hit_init, check_parameter_init
+from mindspore.offline_debug.mi_validator_helpers import replace_minus_one
 
 
 def get_version():
@@ -212,6 +213,7 @@ class DbgServices():
         """
 
         log("in Python CheckWatchpoints iteration ", iteration)
+        iteration = replace_minus_one(iteration)
         watchpoint_list = self.dbg_instance.CheckWatchpoints(iteration)
         watchpoint_hit_list = []
         for watchpoint in watchpoint_list:
@@ -298,6 +300,7 @@ class TensorInfo():
 
     @check_tensor_info_init
     def __init__(self, node_name, slot, iteration, rank_id, root_graph_id, is_output=True):
+        iteration = replace_minus_one(iteration)
         self.instance = cds.tensor_info(node_name, slot, iteration, rank_id, root_graph_id, is_output)
 
     @property
