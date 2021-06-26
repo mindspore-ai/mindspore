@@ -104,7 +104,7 @@ def get_bprop_conv3d_transpose(self):
     def bprop(x, w, out, dout):
         dx = input_grad(dout, w)
         dw = filter_grad(dout, x, F.shape(w))
-        return dx, dw, zeros_like(out)
+        return dx, dw
 
     return bprop
 
