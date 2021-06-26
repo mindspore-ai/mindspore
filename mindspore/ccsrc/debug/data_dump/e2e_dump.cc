@@ -177,7 +177,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
                                 bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
+  if ((!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) || IsValueNode<StringImm>(anf_node)) {
     return;
   }
   std::string node_name = anf_node->fullname_with_scope();
