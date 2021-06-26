@@ -205,26 +205,44 @@ bool PipelineTransformer::IsPipelineCareNode(const CNodePtr &cnode) {
   return true;
 }
 
-OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode) {
+CNodePtr PipelineTransformer::GraphOutNode(const AnfNodePtr &node, int tuple_index) {
+  auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!IsPipelineCareNode(cnode)) {
-    MS_LOG(EXCEPTION) << "Node: " << cnode->ToString() << " is not a Pipeline Care Node.";
+  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    return GraphOutNode(cnode->input(1), tuple_index);
   }
-  if (IsPrimitiveCNode(cnode, prim::kPrimVirtualDataset)) {
-    SetVirtualDatasetStrategy(cnode);
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    return cnode->input(IntToSize(tuple_index) + 1)->cast<CNodePtr>();
   }
-  auto shape_list = ExtractShape(cnode);
+  return cnode;
+}
+
+OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode, int tuple_index = 0) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto temp_node = cnode;
+  if (IsValueNode<FuncGraph>(cnode->input(0))) {
+    auto output = GetValueNode<FuncGraphPtr>(cnode->input(0))->output();
+    MS_EXCEPTION_IF_NULL(output);
+    temp_node = GraphOutNode(output, tuple_index);
+  }
+  if (!IsPipelineCareNode(temp_node)) {
+    MS_LOG(EXCEPTION) << "Node: " << temp_node->DebugString() << " is not a Pipeline Care Node.";
+  }
+  if (IsPrimitiveCNode(temp_node, prim::kPrimVirtualDataset)) {
+    SetVirtualDatasetStrategy(temp_node);
+  }
+  auto shape_list = ExtractShape(temp_node);
   if (shape_list.empty()) {
-    MS_LOG(EXCEPTION) << "Node: " << cnode->ToString() << " failed to extract shape.";
+    MS_LOG(EXCEPTION) << "Node: " << temp_node->DebugString() << " failed to extract shape.";
   }
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  auto prim = GetValueNode<PrimitivePtr>(temp_node->input(0));
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->name() == RESHAPE) {
-    MS_LOG(EXCEPTION) << "Reshape op can't be a border. node:" << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Reshape op can't be a border. node:" << temp_node->DebugString();
   }
   auto attrs = prim->attrs();
   auto op_info = OperatorInstance(prim, attrs, shape_list);
-  auto &inputs = cnode->inputs();
+  auto &inputs = temp_node->inputs();
   std::vector<ValuePtr> input_value;
   for (size_t index = 1; index < inputs.size(); ++index) {
     if (inputs[index]->isa<ValueNode>()) {
@@ -234,8 +252,8 @@ OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode) {
     }
   }
   op_info->set_input_value(input_value);
-  op_info->set_outputs_dtype(cnode->Type());
-  op_info->set_cnode(cnode);
+  op_info->set_outputs_dtype(temp_node->Type());
+  op_info->set_cnode(temp_node);
   StrategyPtr strategy = nullptr;
   if (!StrategyFound(attrs)) {
     strategy = GenerateBatchParallelStrategy(op_info, prim);
@@ -267,7 +285,7 @@ std::pair<OperatorInfoPtr, int> PipelineTransformer::GetOpInfo(const AnfNodePtr 
     }
     // Create OperatorInfo to get slice_shape for send/recv
     MS_EXCEPTION_IF_NULL(cnode);
-    op_info = CreateOpInfo(cnode);
+    op_info = CreateOpInfo(cnode, tensor_info_index);
   }
   return std::make_pair(op_info, tensor_info_index);
 }
