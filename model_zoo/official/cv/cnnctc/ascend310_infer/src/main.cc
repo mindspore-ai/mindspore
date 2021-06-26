@@ -140,19 +140,17 @@ int main(int argc, char **argv) {
     composeTranspose(imgPad, &img);
     if (NewWidth < FLAGS_image_width) {
       int img_size = FLAGS_image_width * FLAGS_image_height * 3;
-      void *netOutput;
-      float *address;
-      netOutput = img.MutableData();
-      address = static_cast<float *>(netOutput);
-      for (int j = 0; j <= img_size; j += FLAGS_image_width) {
+      float *netOutput;
+      netOutput = static_cast<float *>(img.MutableData());
+      for (int j = 0; j < img_size; j += FLAGS_image_width) {
         float temp = 0;
-        address = address + NewWidth - 1;
-        temp = *address;
+        netOutput = netOutput + NewWidth - 1;
+        temp = *netOutput;
         int n = NewWidth;
-        address++;
+        netOutput++;
         while (n < FLAGS_image_width) {
-          *address = temp;
-          address++;
+          *netOutput = temp;
+          netOutput++;
           n++;
         }
       }
