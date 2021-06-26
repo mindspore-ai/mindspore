@@ -247,7 +247,6 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                 << "), leave, function call depth: " << engine->function_call_depth() << " - "
                 << engine->stack_frame_depth();
   auto res = std::make_shared<EvalResult>(res_base, nullptr);
-  // evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
 }
 
@@ -392,12 +391,11 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
   // The evaluator can't reenter at sametime.
   std::unique_lock<std::recursive_timed_mutex> eval_lock(eval_lock_, std::try_to_lock);
   if (!eval_lock.owns_lock()) {
-    auto py_tstate = PyEval_SaveThread();  // release GIL
-    eval_lock.try_lock_for(std::chrono::seconds(kInferTimeout));
-    PyEval_RestoreThread(py_tstate);  // acquire GIL
-    if (!eval_lock.owns_lock()) {
-      MS_LOG(EXCEPTION) << "It is timeout to run " << ToString();
-    }
+    // Release GIL
+    pybind11::gil_scoped_release infer_gil_release;
+    // Check if enter endless loop
+    HealthPointScopedDrop health_point_check;
+    eval_lock.lock();
   }
 
   AbstractBasePtrList args_spec_list;
@@ -572,7 +570,6 @@ EvalResultPtr Evaluator::SingleRun(AnalysisEnginePtr engine, const ConfigPtrList
                                    const AnfNodeConfigPtr &out_conf) {
   auto result = this->Run(engine, args_conf_list, out_conf);
 
-  pybind11::gil_scoped_release release;
   AnalysisResultCacheMgr::GetInstance().Wait();
   return result;
 }

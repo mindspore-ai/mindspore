@@ -97,7 +97,6 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   result.inferred = output_conf->ObtainEvalResult();
   result.context = root_context;
 
-  pybind11::gil_scoped_release release;
   AnalysisResultCacheMgr::GetInstance().Wait();
   return result;
 }
@@ -737,15 +736,15 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
                    AsyncAbstractResultPtr async_result_main) {
   AnalysisResultCacheMgr::UpdateCaller(caller);
   try {
-    // only one GIL
+    // Acquire GIL
     py::gil_scoped_acquire pyGuard;
     auto result = eval->Run(engine, args_conf_list, out_conf);
     MS_EXCEPTION_IF_NULL(result);
     MS_EXCEPTION_IF_NULL(result->abstract());
 
-    // broaden the result of switch(c,t,f)()
+    // Broaden the result of switch(c,t,f)()
     auto broadAbstract = result->abstract()->Broaden();
-    // let main thread to continue.
+    // Let main thread to continue.
     AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf,
                                                          std::make_shared<EvalResult>(broadAbstract, nullptr));
     async_result_branch->JoinResult(broadAbstract);
@@ -765,13 +764,15 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     async_result_main->JoinResult(abstractErrPtr);
     StaticAnalysisException::Instance().SetException();
   }
+  // Decrease infer thread.
+  HealthPointMgr::GetInstance().DropPoint();
 }
 
 EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::vector<EvaluatorPtr> &evaluators,
                                                                    const AnfNodeConfigPtr &out_conf,
                                                                    const ConfigPtrList &args_conf_list) {
-  // TiggerToken_scoped_release tigger_token_release;
-  pybind11::gil_scoped_release release;
+  // Release GIL;
+  pybind11::gil_scoped_release infer_gil_release;
 
   // Wait for the switch node to finish.
   MS_LOG(DEBUG) << GetInferThread() << "async : entry switch  " << out_conf->ToString();
@@ -801,10 +802,14 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   std::string threadId = AnalysisResultCacheMgr::GetThreadid();
 
   MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluators[0]->ToString();
+  // Add point to infer thread
+  HealthPointMgr::GetInstance().AddPoint();
   auto future0 = std::async(std::launch::async, ExecEvaluator, evaluators[0], shared_from_this(), args_conf_list,
                             out_conf, threadId, asyncResult0, asyncResult_main);
 
   MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluators[1]->ToString();
+  // Add point to infer thread
+  HealthPointMgr::GetInstance().AddPoint();
   auto future1 = std::async(std::launch::async, ExecEvaluator, evaluators[1], shared_from_this(), args_conf_list,
                             out_conf, threadId, asyncResult1, asyncResult_main);
 
@@ -822,6 +827,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     MS_LOG(ERROR) << "async " << out_conf->node()->ToString() << " threw exception.";
     StaticAnalysisException::Instance().CheckException();
   }
+  MS_LOG(DEBUG) << GetInferThread() << "async main thread result of " << out_conf->node()->ToString() << " = "
+                << branchResult->ToString();
 
   AbstractBasePtrList out_specs;
   if (NeedWaitForTwoBranches(branchResult)) {
