@@ -32,10 +32,7 @@ using KernelRuntimeCreator = std::function<std::shared_ptr<KernelRuntime>()>;
 
 class KernelRuntimeManager {
  public:
-  static KernelRuntimeManager &Instance() {
-    static KernelRuntimeManager instance;
-    return instance;
-  }
+  static KernelRuntimeManager &Instance();
   void Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator);
   KernelRuntime *GetKernelRuntime(const std::string &device_name, uint32_t device_id);
   KernelRuntime *GetCurrentKernelRuntime();
