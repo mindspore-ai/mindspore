@@ -64,7 +64,7 @@ public class ClientListReq {
     }
 
     public FLClientStatus getClientList(int iteration, List<String> u3ClientList, List<DecryptShareSecrets> decryptSecretsList, List<EncryptShare> returnShareList, Map<String, byte[]> cuvKeys) {
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[PairWiseMask] ==============getClientList url: " + url + "=============="));
         FlatBufferBuilder builder = new FlatBufferBuilder();
         int id = builder.createString(localFLParameter.getFlID());

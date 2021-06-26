@@ -260,7 +260,7 @@ public class CipherClient {
 
     public FLClientStatus requestExchangeKeys() {
         LOGGER.info(Common.addTag("[PairWiseMask] ==============request flID: " + localFLParameter.getFlID() + "=============="));
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[PairWiseMask] ==============requestExchangeKeys url: " + url + "=============="));
         genDHKeyPairs();
         byte[] cPK = cKey.get(0);
@@ -312,7 +312,7 @@ public class CipherClient {
     }
 
     public FLClientStatus getExchangeKeys() {
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[PairWiseMask] ==============getExchangeKeys url: " + url + "=============="));
         FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
         int id = fbBuilder.createString(localFLParameter.getFlID());
@@ -377,7 +377,7 @@ public class CipherClient {
     }
 
     public FLClientStatus requestShareSecrets() throws Exception {
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[PairWiseMask] ==============requestShareSecrets url: " + url + "=============="));
         genIndividualSecret();
         genEncryptExchangedKeys();
@@ -447,7 +447,7 @@ public class CipherClient {
     }
 
     public FLClientStatus getShareSecrets() {
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[PairWiseMask] ==============getShareSecrets url: " + url + "=============="));
         FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
         int id = fbBuilder.createString(localFLParameter.getFlID());

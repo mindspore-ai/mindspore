@@ -538,6 +538,21 @@ build_lite_x86_64_jni_and_jar()
     gradle build
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/linux_x86/libs/
 
+    # build java fl_client
+    if [[ "X$is_train" = "Xon" ]]; then
+      cd ${LITE_JAVA_PATH}/java/fl_client
+      gradle clean
+      echo "--------------------building createFlatBuffers for fl_client------------------------"
+      gradle createFlatBuffers
+      echo "--------------------create FlatBuffers for fl_client success--------------------"
+      gradle build
+      gradle clearJar
+      echo "--------------------building flReleaseJar for fl_client------------------------"
+      gradle flReleaseJarX86 --rerun-tasks
+      echo "--------------------build jar for fl_client success ------------------------"
+      cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+    fi
+
     # build jar
     cd ${LITE_JAVA_PATH}/java/linux_x86/
     gradle clean
@@ -778,6 +793,27 @@ build_aar() {
     build_lite_arm32_and_jni
     export MSLITE_ENABLE_NPU=${npu_bak}
 
+    # build java fl_client
+    local is_train=on
+    local train_so=${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/libmindspore-lite-train-jni.so
+    if [ ! -f "$train_so" ]; then
+      echo "not exist"
+      is_train=off
+    fi
+    if [[ "X$is_train" = "Xon" ]]; then
+      cd ${LITE_JAVA_PATH}/java/fl_client
+      gradle clean
+      echo "--------------------building createFlatBuffers for fl_client------------------------"
+      gradle createFlatBuffers
+      echo "--------------------create FlatBuffers for fl_client success--------------------"
+      gradle build
+      gradle clearJar
+      echo "--------------------building flReleaseJar for fl_client------------------------"
+      gradle flReleaseJarAAR --rerun-tasks
+      echo "--------------------build jar for fl_client success ------------------------"
+      cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarAAR/mindspore-lite-java-flclient.jar ${LITE_JAVA_PATH}/java/app/libs
+    fi
+    
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/app/libs
     cd ${LITE_JAVA_PATH}/java/app
     gradle clean

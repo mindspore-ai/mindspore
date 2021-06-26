@@ -27,6 +27,7 @@ import okhttp3.Response;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
@@ -43,6 +44,9 @@ import static com.mindspore.flclient.FLParameter.TIME_OUT;
 public class FLCommunication implements IFLCommunication {
     private static int timeOut;
     private static boolean ssl = false;
+    private static String env;
+    private static SSLSocketFactory sslSocketFactory;
+    private static X509TrustManager x509TrustManager;
     private FLParameter flParameter = FLParameter.getInstance();
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("applicatiom/json;charset=utf-8");
     private static final Logger LOGGER = Logger.getLogger(FLCommunication.class.toString());
@@ -57,10 +61,10 @@ public class FLCommunication implements IFLCommunication {
             timeOut = TIME_OUT;
         }
         ssl = flParameter.isUseSSL();
-        client = getUnsafeOkHttpClient();
+        client = getOkHttpClient();
     }
 
-    private static OkHttpClient getUnsafeOkHttpClient() {
+    private static OkHttpClient getOkHttpClient() {
         X509TrustManager trustManager = new X509TrustManager() {
 
             @Override

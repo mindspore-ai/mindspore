@@ -22,13 +22,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Common {
     public static final String LOG_TITLE = "<FLClient> ";
     private static final Logger LOGGER = Logger.getLogger(Common.class.toString());
     private static List<String> flNameTrustList = new ArrayList<>(Arrays.asList("lenet", "adbert"));
 
-    public static String generateUrl(boolean useElb, String ip, int port, int serverNum) {
+    public static String generateUrl(boolean useHttps, boolean useElb, String ip, int port, int serverNum) {
+        if (useHttps) {
+            ip = "https://" + ip + ":";
+        } else {
+            ip = "http://" + ip + ":";
+        }
         String url;
         if (useElb) {
             Random rand = new Random();
@@ -120,7 +127,7 @@ public class Common {
 
     public static boolean checkPath(String path) {
         boolean tag = true;
-        String [] paths = path.split(",");
+        String[] paths = path.split(",");
         for (int i = 0; i < paths.length; i++) {
             LOGGER.info(addTag("[check path]:" + paths[i]));
             File file = new File(paths[i]);
@@ -129,5 +136,16 @@ public class Common {
             }
         }
         return tag;
+    }
+
+    public static boolean checkIP(String ip) {
+        String regex = "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(ip);
+        return matcher.matches();
+    }
+
+    public static boolean checkPort(int port) {
+        return port > 0 && port <= 65535;
     }
 }

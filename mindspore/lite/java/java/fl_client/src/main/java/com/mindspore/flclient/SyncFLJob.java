@@ -202,7 +202,7 @@ public class SyncFLJob {
             }
             flParameter.setUseSSL(useSSL);
             FLCommunication flCommunication = FLCommunication.getInstance();
-            String url = Common.generateUrl(useElb, ip, port, serverNum);
+            String url = Common.generateUrl(flParameter.isUseHttps(), useElb, ip, port, serverNum);
             LOGGER.info(Common.addTag("[getModel] ===========getModel url: " + url + "=============="));
             GetModel getModelBuf = GetModel.getInstance();
             byte[] buffer = getModelBuf.getRequestGetModel(flName, 0);
