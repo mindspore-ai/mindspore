@@ -1194,6 +1194,21 @@ class Tensor(Tensor_):
             shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter. Default: None.
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
                 to get one shard of a parameter's slice. Default: None.
+
+        Returns:
+            Initialized Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import mindspore.common.initializer as init
+            >>> x = init.initializer(init.Constant(1), [2, 2], ms.float32)
+            >>> out = x.init_data()
+            >>> print(out)
+            [[1. 1.]
+             [1. 1.]]
         """
         if self.init is None:
             raise TypeError("init_data must be set Tensor.init, init can't be None")
@@ -1254,6 +1269,21 @@ class Tensor(Tensor_):
             shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter. Default: None.
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
                 to get one shard of a parameter's slice. Default: None.
+
+        Returns:
+            Initialized Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import mindspore.common.initializer as init
+            >>> x = init.initializer(init.Constant(1), [2, 2], ms.float32)
+            >>> out = x.to_tensor()
+            >>> print(out)
+            [[1. 1.]
+             [1. 1.]]
         """
         logger.warning("WARN_DEPRECATED: The usage of to_tensor is deprecated."
                        " Please use init_data")
