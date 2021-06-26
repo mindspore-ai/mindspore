@@ -2870,18 +2870,29 @@ class ApplyRMSProp(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> apply_rms = ops.ApplyRMSProp()
-        >>> input_x = Tensor(1., mindspore.float32)
-        >>> mean_square = Tensor(2., mindspore.float32)
-        >>> moment = Tensor(1., mindspore.float32)
-        >>> grad = Tensor(2., mindspore.float32)
-        >>> learning_rate = Tensor(0.9, mindspore.float32)
-        >>> decay = 0.0
-        >>> momentum = 1e-10
-        >>> epsilon = 0.001
-        >>> output = apply_rms(input_x, mean_square, moment, learning_rate, grad, decay, momentum, epsilon)
-        >>> output
-        Tensor(shape=[], dtype=Float32, value= 0.100112)
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_rms_prop = ops.ApplyRMSProp()
+        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
+        ...
+        ...     def construct(self, mean_square, moment, grad, decay, momentum, epsilon, lr):
+        ...         out = self.apply_rms_prop(self.var, mean_square, moment, lr, grad, decay, momentum, epsilon)
+        ...         return out
+        ...
+        >>> net = Net()
+        >>> mean_square = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> moment = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> grad = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> output = net(mean_square, moment, grad, 0.0, 1e-10, 0.001, 0.01)
+        >>> print(net.var.asnumpy())
+        [[0.990005  0.990005]
+         [0.990005  0.990005]]
     """
 
     @prim_attr_register
@@ -2971,24 +2982,29 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> centered_rms_prop = ops.ApplyCenteredRMSProp()
-        >>> input_x = Tensor(np.arange(-2, 2).astype(np.float32).reshape(2, 2), mstype.float32)
-        >>> mean_grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mstype.float32)
-        >>> mean_square = Tensor(np.arange(-3, 1).astype(np.float32).reshape(2, 2), mstype.float32)
-        >>> moment = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mstype.float32)
-        >>> grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mstype.float32)
-        >>> learning_rate = Tensor(0.9, mstype.float32)
-        >>> decay = 0.0
-        >>> momentum = 1e-10
-        >>> epsilon = 0.05
-        >>> output = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
-        ...                            learning_rate, decay, momentum, epsilon)
-        >>> output
-        Tensor(shape=[2, 2], dtype=Float32, value=
-        [[-2.00000000e+00, -5.02492237e+00],
-         [-8.04984474e+00, -1.10747662e+01]])
+        >>> from mindspore import Parameter
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_centerd_rms_prop = ops.ApplyCenteredRMSProp()
+        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
+        ...
+        ...     def construct(self, mean_grad, mean_square, moment, grad, decay, momentum, epsilon, lr):
+        ...         out = self.apply_centerd_rms_prop(self.var, mean_grad, mean_square, moment, grad,
+        ...                                           lr, decay, momentum, epsilon)
+        ...         return out
+        ...
+        >>> net = Net()
+        >>> mean_grad = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> mean_square = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> moment = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> grad = Tensor(np.ones([2, 2]).astype(np.float32))
+        >>> output = net(mean_grad, mean_square, moment, grad, 0.0, 1e-10, 0.001, 0.01)
+        >>> print(net.var.asnumpy())
+        [[0.68377227  0.68377227]
+         [0.68377227  0.68377227]]
     """
 
     @prim_attr_register
