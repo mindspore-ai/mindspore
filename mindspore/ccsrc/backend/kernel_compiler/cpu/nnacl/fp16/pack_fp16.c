@@ -640,6 +640,109 @@ inline void Transpose12x8A32Fp16(const float16_t *src_c, float16_t *dst_c, size_
 #endif
 
 #ifdef ENABLE_ARM64
+void Transpose12x8ARM64Fp16(const float16_t *src_ptr, float16_t *dst_ptr, size_t src_stride, size_t dst_stride) {
+#ifdef ENABLE_DEBUG
+  for (int tr = 0; tr < C12NUM; tr++) {
+    for (int tc = 0; tc < C8NUM; tc++) {
+      dst_ptr[tc * C12NUM + tr] = src_ptr[tr * col + tc];
+    }
+  }
+#else
+  asm volatile(
+    "mov x10, %[src_ptr]\n"
+    "mov x11, %[dst_ptr]\n"
+
+    "ld1 {v0.8h}, [x10], %[src_stride]\n"
+    "ld1 {v1.8h}, [x10], %[src_stride]\n"
+    "ld1 {v2.8h}, [x10], %[src_stride]\n"
+    "ld1 {v3.8h}, [x10], %[src_stride]\n"
+    "ld1 {v4.8h}, [x10], %[src_stride]\n"
+    "ld1 {v5.8h}, [x10], %[src_stride]\n"
+    "ld1 {v6.8h}, [x10], %[src_stride]\n"
+    "ld1 {v7.8h}, [x10], %[src_stride]\n"
+
+    "zip1 v16.8h, v0.8h, v1.8h\n"
+    "zip1 v17.8h, v2.8h, v3.8h\n"
+    "zip1 v18.8h, v4.8h, v5.8h\n"
+    "zip1 v19.8h, v6.8h, v7.8h\n"
+
+    "ld1 {v8.8h}, [x10], %[src_stride]\n"
+    "ld1 {v9.8h}, [x10], %[src_stride]\n"
+    "ld1 {v10.8h}, [x10], %[src_stride]\n"
+    "ld1 {v11.8h}, [x10], %[src_stride]\n"
+
+    "trn1 v20.4s, v16.4s, v17.4s\n"
+    "trn2 v21.4s, v16.4s, v17.4s\n"
+    "trn1 v22.4s, v18.4s, v19.4s\n"
+    "trn2 v23.4s, v18.4s, v19.4s\n"
+
+    "trn1 v24.2d, v20.2d, v22.2d\n"
+    "trn2 v25.2d, v20.2d, v22.2d\n"
+    "trn1 v26.2d, v21.2d, v23.2d\n"
+    "trn2 v27.2d, v21.2d, v23.2d\n"
+
+    "zip1 v16.8h, v8.8h, v9.8h\n"
+    "zip1 v17.8h, v10.8h, v11.8h\n"
+
+    "trn1 v20.4s, v16.4s, v17.4s\n"
+    "trn2 v21.4s, v16.4s, v17.4s\n"
+
+    "trn1 v28.2d, v20.2d, v20.2d\n"
+    "trn2 v29.2d, v20.2d, v20.2d\n"
+    "trn1 v30.2d, v21.2d, v21.2d\n"
+    "trn2 v31.2d, v21.2d, v21.2d\n"
+
+    "add x10, x11, #16\n"
+    "st1 {v24.8h}, [x11], %[dst_stride]\n"
+    "st1 {v28.4h}, [x10], %[dst_stride]\n"
+    "st1 {v26.8h}, [x11], %[dst_stride]\n"
+    "st1 {v30.4h}, [x10], %[dst_stride]\n"
+    "st1 {v25.8h}, [x11], %[dst_stride]\n"
+    "st1 {v29.4h}, [x10], %[dst_stride]\n"
+    "st1 {v27.8h}, [x11], %[dst_stride]\n"
+    "st1 {v31.4h}, [x10], %[dst_stride]\n"
+
+    "zip2 v16.8h, v0.8h, v1.8h\n"
+    "zip2 v17.8h, v2.8h, v3.8h\n"
+    "zip2 v18.8h, v4.8h, v5.8h\n"
+    "zip2 v19.8h, v6.8h, v7.8h\n"
+
+    "trn1 v20.4s, v16.4s, v17.4s\n"
+    "trn2 v21.4s, v16.4s, v17.4s\n"
+    "trn1 v22.4s, v18.4s, v19.4s\n"
+    "trn2 v23.4s, v18.4s, v19.4s\n"
+
+    "trn1 v24.2d, v20.2d, v22.2d\n"
+    "trn2 v25.2d, v20.2d, v22.2d\n"
+    "trn1 v26.2d, v21.2d, v23.2d\n"
+    "trn2 v27.2d, v21.2d, v23.2d\n"
+
+    "zip2 v16.8h, v8.8h, v9.8h\n"
+    "zip2 v17.8h, v10.8h, v11.8h\n"
+
+    "trn1 v20.4s, v16.4s, v17.4s\n"
+    "trn2 v21.4s, v16.4s, v17.4s\n"
+
+    "trn1 v28.2d, v20.2d, v20.2d\n"
+    "trn2 v29.2d, v20.2d, v20.2d\n"
+    "trn1 v30.2d, v21.2d, v21.2d\n"
+    "trn2 v31.2d, v21.2d, v21.2d\n"
+
+    "st1 {v24.8h}, [x11], %[dst_stride]\n"
+    "st1 {v28.4h}, [x10], %[dst_stride]\n"
+    "st1 {v26.8h}, [x11], %[dst_stride]\n"
+    "st1 {v30.4h}, [x10], %[dst_stride]\n"
+    "st1 {v25.8h}, [x11], %[dst_stride]\n"
+    "st1 {v29.4h}, [x10], %[dst_stride]\n"
+    "st1 {v27.8h}, [x11], %[dst_stride]\n"
+    "st1 {v31.4h}, [x10], %[dst_stride]\n"
+    :
+    : [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ src_stride ] "r"(src_stride), [ dst_stride ] "r"(dst_stride)
+    : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v16", "v17", "v18",
+      "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31");
+#endif
+}
+
 inline void Transpose16x8ARM64Fp16(const float16_t *src_ptr, float16_t *dst_ptr, size_t src_stride, size_t dst_stride) {
   asm volatile(
     "mov x10, %[src_ptr]\n"

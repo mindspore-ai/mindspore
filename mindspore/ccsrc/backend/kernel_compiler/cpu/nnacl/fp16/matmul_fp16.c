@@ -350,6 +350,29 @@ void MatMul12x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, cons
   }
 }
 
+#ifdef ENABLE_DEBUG
+void MatMul12x16Fp16(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
+                     int deep, int row, int col, size_t stride, size_t out_type) {
+  for (int r = 0; r < row; r++) {
+    for (int c = 0; c < col; c++) {
+      int r12div = r / C12NUM, r12mod = r % C12NUM;
+      int c16div = c / C16NUM, c16mod = c % C16NUM;
+      size_t index = r * stride + c;
+      float16_t value = 0;
+      for (int d = 0; d < deep; d++) {
+        size_t ai = r12div * deep * C12NUM + d * C12NUM + r12mod;
+        size_t bi = c16div * deep * C16NUM + d * C16NUM + c16mod;
+        value = value + a[ai] * b[bi];
+      }
+      ADD_BIAS(value, bias, c)
+      DO_RELU(value, act_type)
+      DO_RELU6(value, act_type)
+      dst[index] = value;
+    }
+  }
+}
+#endif
+
 void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, ActType act_type,
                 int depth, int row, int col, int stride, int out_type) {
   if (out_type == OutType_C8) {
@@ -567,7 +590,9 @@ void RowMajor2Col12MajorFp16Opt(const float16_t *src_ptr, float16_t *dst_ptr, si
     for (; ci < col8; ci += C8NUM) {
       const float16_t *src_c = src_r + ci;
       float16_t *dst_c = dst_r + ci * C12NUM;
-#ifdef ENABLE_ARM82_A32
+#ifdef ENABLE_ARM64
+      Transpose12x8ARM64Fp16(src_c, dst_c, col * sizeof(float16_t), 24);
+#elif ENABLE_ARM82_A32
       Transpose12x8A32Fp16(src_c, dst_c, col * sizeof(float16_t), 24);
 #else
       for (int tr = 0; tr < C12NUM; tr++) {
