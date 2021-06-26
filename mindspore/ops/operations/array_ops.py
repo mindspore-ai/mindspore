@@ -3671,7 +3671,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         ValueError: If the value of `input_x` are not match with input `indices`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -4656,7 +4656,7 @@ class SpaceToDepth(PrimitiveWithInfer):
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
@@ -4725,7 +4725,7 @@ class DepthToSpace(PrimitiveWithInfer):
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 12, 1, 1), mindspore.float32)
