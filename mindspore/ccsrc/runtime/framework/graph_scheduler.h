@@ -235,8 +235,11 @@ class GraphScheduler {
   void LinkDataArrowForSwitchActor(SwitchActor *from_actor, KernelActor *to_actor, const size_t to_index);
   void LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors, LoopCountActor *to_actor,
                                       const std::vector<KernelGraphPtr> &graphs);
+  void LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> *switch_actors, LoopCountActor *to_actor,
+                                      const KernelMapPosition &origin_outputs_order);
   // In control flow, there are scenarios where there are multi-branch outputs, and the gather actor needs to
   // send the branch id to the loop count actor.
+  void LinkBranchArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void LinkOutputResultArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
@@ -277,6 +280,8 @@ class GraphScheduler {
   void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const;
   void DumpOutputActor(const OutputActor *actor, std::ofstream &ofs) const;
   void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) const;
+  void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) const;
+  void DumpSwitchActor(const SwitchActor *actor, std::ofstream &ofs) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
 
   // The global maps, only be cleared in the deconstruction.
