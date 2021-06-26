@@ -70,13 +70,19 @@ In `deepmodeling/deepmd-kit/source`:
 
 ```shell
 ├── md
-    ├── README.md               # descriptions about MD
+    ├── README.md                   # descriptions about MD
     ├── script
-    │   ├── eval.sh             # evaluation script
+    │   ├── eval.sh                 # evaluation script
     ├── src
-    │   ├── descriptor.py       # descriptor function
-    │   └── network.py          # MD simulation architecture
-    └── eval.py                 # evaluation interface
+    │   ├── src
+    │       ├── config.py           # Parameter config
+    │       ├── moxing_adapter.py   # modelarts device configuration
+    │       ├── device_adapter.py   # Device Config
+    │       ├── local_adapter.py    # local device config
+    │   ├── descriptor.py           # descriptor function
+    │   └── network.py              # MD simulation architecture
+    └── eval.py                     # evaluation interface
+    └── default_config.yaml         # config file
 ```
 
 ### Training Process
@@ -88,7 +94,7 @@ To Be Done
 After installing MindSpore via the official website, you can start evaluation as follows:
 
 ```shell
-python eval.py --dataset_path [DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH]
+python eval.py --dataset_path [DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH] --baseline_path [BASELINE_PATH]
 ```
 
 > checkpoint can be trained by using DeePMD-kit, and convert into the ckpt of MindSpore.
@@ -100,6 +106,39 @@ The infer result：
 ```text
 energy: -29944.03
 atom_energy: -94.38766   -94.294426  -94.39194   -94.70758   -94.51311   -94.457954 ...
+```
+
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
+
+```python
+#  Example of using distributed training dpn on modelarts :
+#  Data set storage method
+
+#  ├── molecular_dynamics_dataset                               # dataset dir
+#    ├──baseline.npz                                            # baseline dataset
+#    ├──input_tensor.npz                                        # infer input dataset
+#    ├──water_md.ckpt                                           # checkpoint
+
+# Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#        a.set "enable_modelarts=True"
+#          set "checkpoint_path=/cache/data/water_md.ckpt"
+#          set "dataset_path=/cache/data/input_tensor.npz"
+#          set "baseline_path=/cache/data/baseline.npz"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (4) Set the code path on the modelarts interface "/path/molecular_dynamics"。
+# (5) Set the model's startup file on the modelarts interface "eval.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../molecular_dynamics"(choices molecular_dynamics Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
 ```
 
 ## ModelZoo Homepage
