@@ -232,12 +232,15 @@ function Run_x86_avx() {
 
 # Run on x86 java platform:
 function Run_x86_java() {
-    cd ${x86_java_path} || exit 1
+    cd ${x86_path} || exit 1
+    mkdir java || exit 1
+    cp ${x86_path}/avx/mindspore-lite-${version}-linux-x64.tar.gz ./java/ || exit 1
+    cd ./java || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib
     # compile benchmark
-    echo "javac -cp ${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
-    javac -cp ${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
+    echo "javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
+    javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
 
     count=0
     # Run tflite converted models:
@@ -252,8 +255,8 @@ function Run_x86_java() {
           continue
         fi
         echo ${model_name} >> "${run_x86_java_log_file}"
-        echo "java -classpath .:${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
-        java -classpath .:${x86_java_path}/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1
+        echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1
         if [ $? = 0 ]; then
             run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -454,7 +457,6 @@ fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; then
     # Run on x86-java
     echo "start Run x86 java ..."
-    x86_java_path=${release_path}/ubuntu_x86/avx
     Run_x86_java &
     Run_x86_java_PID=$!
     sleep 1
