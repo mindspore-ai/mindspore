@@ -20,8 +20,8 @@ endif()
 
 # Options that can be configured through environment variables or manually
 set(MSLITE_GPU_BACKEND "" CACHE STRING "enable gpu backend, \
-only arm64 support opencl, only x86_64 support tensorrt, opencl/vulkan/cuda/tensorrt/off")
-option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" on)
+    only arm64 support opencl, only x86_64 support tensorrt, opencl/vulkan/cuda/tensorrt/off")
+option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
 option(MSLITE_ENABLE_SSE "enable SSE instruction set, only x86_64 support" off)
 option(MSLITE_ENABLE_AVX "enable AVX instruction set, only x86_64 support" off)
@@ -86,7 +86,6 @@ if(PLATFORM_ARM64)
 elseif(PLATFORM_ARM32 OR WIN32)
     set(MSLITE_GPU_BACKEND "off")
 else()
-# x86_64
     if(MSLITE_GPU_BACKEND STREQUAL "")
         set(MSLITE_GPU_BACKEND "off")
     endif()
@@ -143,7 +142,6 @@ if(ENABLE_ASAN)
     endif()
     add_link_options(-fsanitize=address)
 endif()
-
 
 set(PKG_NAME_PREFIX mindspore-lite-${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")

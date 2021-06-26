@@ -402,13 +402,13 @@ then
 fi
 echo $train_io_path
 
-arm64_path=${release_path}/android_aarch64
+arm64_path=${release_path}/android_aarch64/npu
 file=$(ls ${arm64_path}/*android-aarch64.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version_arm64=${file_name_array[2]}
 
-arm32_path=${release_path}/android_aarch32
+arm32_path=${release_path}/android_aarch32/npu
 file=$(ls ${arm32_path}/*android-aarch32.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"

@@ -167,7 +167,7 @@ isFailed=0
 
 if [[ $backend == "all" || $backend == "gpu" ]]; then
     # Run on gpu
-    arm64_path=${release_path}/android_aarch64
+    arm64_path=${release_path}/android_aarch64/npu
     # mv ${arm64_path}/*train-android-aarch64* ./train
     file_name=$(ls ${arm64_path}/*android-aarch64.tar.gz)
     IFS="-" read -r -a file_name_array <<< "$file_name"
