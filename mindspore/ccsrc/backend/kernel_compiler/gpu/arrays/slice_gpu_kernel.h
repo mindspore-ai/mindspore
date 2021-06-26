@@ -29,7 +29,8 @@ namespace kernel {
 template <typename T>
 class SliceGpuFwdKernel : public GpuKernel {
  public:
-  SliceGpuFwdKernel() : is_null_input_(false), input_size_(0), output_size_(0), workspace_size_(0) {}
+  SliceGpuFwdKernel()
+      : is_null_input_(false), is_1d_to_4d_input_(false), input_size_(0), output_size_(0), workspace_size_(0) {}
   ~SliceGpuFwdKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -42,9 +43,15 @@ class SliceGpuFwdKernel : public GpuKernel {
     }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    Slice5DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], size_[0], size_[1], size_[2], size_[3],
-                  size_[4], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4], input,
-                  output, reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (is_1d_to_4d_input_) {
+      Slice4DKernel(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
+                    input_shape_[1], input_shape_[2], input_shape_[3], input, output,
+                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      Slice5DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], size_[0], size_[1], size_[2], size_[3],
+                    size_[4], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4],
+                    input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -53,23 +60,32 @@ class SliceGpuFwdKernel : public GpuKernel {
     }
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    ShapeNdTo5d(input_shape, &input_shape_);
+    is_1d_to_4d_input_ = input_shape.size() <= 4;
+    if (is_1d_to_4d_input_) {
+      ShapeNdTo4d(input_shape, &input_shape_);
+    } else {
+      ShapeNdTo5d(input_shape, &input_shape_);
+    }
 
-    for (auto i = begin_.size(); i < 5; i++) {
+    for (auto i = begin_.size(); i < input_shape_.size(); i++) {
       (void)begin_.insert(begin_.begin(), 0);
     }
-    for (size_t i = size_.size(); i < 5; i++) {
+    for (size_t i = size_.size(); i < input_shape_.size(); i++) {
       (void)size_.insert(size_.begin(), 1);
     }
 
-    input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] * sizeof(T);
+    if (is_1d_to_4d_input_) {
+      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
+    } else {
+      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] * sizeof(T);
+    }
     auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
     output_size_ = sizeof(T);
     for (size_t x : out_shape) {
       output_size_ = output_size_ * x;
     }
-    // transpose begin and size for NHWC and NDHWC data
+    // transpose begin and size for NHWC data
     if (data_format == "NHWC") {
       std::swap(begin_[1], begin_[3]);
       std::swap(begin_[1], begin_[2]);
@@ -146,6 +162,7 @@ class SliceGpuFwdKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
 
   bool is_null_input_;
+  bool is_1d_to_4d_input_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
