@@ -51,7 +51,6 @@ class ConvolutionDepthwiseSWCPUKernelX86 : public ConvolutionBaseCPUKernel {
   float *origin_weight_ = nullptr;
   bool input_need_align_ = false;
   bool output_need_align_ = false;
-  size_t alignment = C32NUM;
 };
 }  // namespace mindspore::kernel
 

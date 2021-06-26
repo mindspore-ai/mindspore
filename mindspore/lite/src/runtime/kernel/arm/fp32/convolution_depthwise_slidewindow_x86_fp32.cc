@@ -28,8 +28,14 @@ ConvolutionDepthwiseSWCPUKernelX86::~ConvolutionDepthwiseSWCPUKernelX86() {
     delete sliding_;
     sliding_ = nullptr;
   }
-  FreeAlignedData(reinterpret_cast<void **>(&packed_weight_));
-  FreeAlignedData(reinterpret_cast<void **>(&packed_bias_));
+  if (packed_weight_ != nullptr) {
+    free(packed_weight_);
+    packed_weight_ = nullptr;
+  }
+  if (packed_bias_ != nullptr) {
+    free(packed_bias_);
+    packed_bias_ = nullptr;
+  }
 }
 
 int ConvolutionDepthwiseSWCPUKernelX86::InitWeightBias() {
@@ -39,7 +45,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitWeightBias() {
   MS_ASSERT(origin_weight_ != nullptr);
   int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
   int pack_weight_size = oc_algin * oc_tile_ * weight_tensor->Height() * weight_tensor->Width();
-  packed_weight_ = reinterpret_cast<float *>(MallocAlignedData(alignment, pack_weight_size * sizeof(float)));
+  packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc packed_weight_ is failed!";
     return RET_NULL_PTR;
@@ -50,7 +56,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitWeightBias() {
     auto bias_size = oc_algin * oc_tile_;
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     auto ori_bias = reinterpret_cast<float *>(bias_tensor->data_c());
-    packed_bias_ = reinterpret_cast<float *>(MallocAlignedData(alignment, bias_size * sizeof(float)));
+    packed_bias_ = reinterpret_cast<float *>(malloc(bias_size * sizeof(float)));
     if (packed_bias_ == nullptr) {
       MS_LOG(ERROR) << "Malloc bias_data buffer failed.";
       return RET_NULL_PTR;
