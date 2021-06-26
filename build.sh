@@ -575,7 +575,6 @@ build_lite()
 
     if [[ "${local_lite_platform}" == "arm32" ]]; then
       if [[ "${TOOLCHAIN_FILE}" && "${TOOLCHAIN_NAME}" ]]; then
-        RUN_TESTCASES="off"
         COMPILE_MINDDATA_LITE="off"
         CMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
         CMAKE_TOOLCHAIN_NAME=${TOOLCHAIN_NAME}
