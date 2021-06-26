@@ -16,6 +16,7 @@
 import numpy as np
 
 from mindspore._checkparam import Validator
+from mindspore.common.tensor import Tensor
 from ..dpn import VAE
 from ..infer import ELBO, SVI
 from ...optim import Adam
@@ -71,6 +72,8 @@ class VAEAnomalyDetection:
         Returns:
             float, the predicted outlier score of the sample.
         """
+        if not isinstance(sample_x, Tensor):
+            raise TypeError("The sample_x should be Tensor type.")
         reconstructed_sample = self.vae.reconstruct_sample(sample_x)
         return self._calculate_euclidean_distance(sample_x.asnumpy(), reconstructed_sample.asnumpy())
 
