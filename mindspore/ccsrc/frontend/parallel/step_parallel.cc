@@ -1621,7 +1621,8 @@ std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &node, int3
     MS_EXCEPTION_IF_NULL(prim_node_anf);
     PrimitivePtr node_prim = prim_node_anf->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(node_prim);
-    if ((node_prim->name() == DEPEND && node_pair.second != 1) || IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
+    if ((node_prim->name() == DEPEND && node_pair.second != 1) || IsPrimitiveCNode(cnode, prim::kPrimReceive) ||
+        IsPrimitiveCNode(cnode, prim::kPrimSend)) {
       continue;
     }
     if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {

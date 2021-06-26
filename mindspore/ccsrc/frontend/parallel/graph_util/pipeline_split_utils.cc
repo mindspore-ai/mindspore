@@ -349,10 +349,14 @@ PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncG
   auto manager = root->manager();
   for (int64_t i = 0; i <= micro_max; ++i) {
     temp_vec.clear();
-    for (auto &node : node_vector) {
-      auto node_micro = GetMicroBatch(node);
-      if (node_micro == i) {
-        temp_vec.push_back(node);
+    if (!root->has_flag(TRAINING)) {
+      temp_vec = node_vector;
+    } else {
+      for (auto &node : node_vector) {
+        auto node_micro = GetMicroBatch(node);
+        if (node_micro == i) {
+          temp_vec.push_back(node);
+        }
       }
     }
     if (temp_vec.size() <= 1) {
@@ -568,10 +572,13 @@ void Reorder(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   std::vector<AnfNodePtr> allreduce_params;
   GetBorderNode(&forward_start, &forward_end, &backward_start, &backward_end, &forward_params, &backward_params,
                 &allreduce_params, root);
-  auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
-  auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
-  MS_EXCEPTION_IF_NULL(micro_size);
-  auto micro_max = GetValue<int64_t>(micro_size);
+  int64_t micro_max = 0;
+  if (root->has_flag(TRAINING)) {
+    auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
+    auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
+    MS_EXCEPTION_IF_NULL(micro_size);
+    micro_max = GetValue<int64_t>(micro_size);
+  }
   auto backward_start_pair = Deduplicate(backward_start, root, micro_max);
   auto backward_end_pair = Deduplicate(backward_end, root, micro_max);
   auto forward_start_pair = Deduplicate(forward_start, root, micro_max);
