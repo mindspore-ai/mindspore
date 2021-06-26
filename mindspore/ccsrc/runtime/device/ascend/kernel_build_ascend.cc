@@ -195,30 +195,23 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
     return false;
   }
   if (AnfAlgo::IsDynamicShape(kernel_node)) {
-    parameters_indexs.pop_back();
+    if (parameters_indexs.at(0) == 1) {
+      (void)parameters_indexs.erase(parameters_indexs.begin());
+    } else {
+      parameters_indexs.pop_back();
+    }
   }
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
   size_t param_num = parameters_indexs.size();
-  size_t total_num = input_num + workspace_num + output_num;
+  size_t total_num = input_num + output_num + workspace_num;
   size_t pad_index = param_num;
 
   for (; pad_index < total_num; ++pad_index) {
     parameters_indexs.emplace_back(0);
   }
-  // process input
-  auto op_info = kernel::OpLib::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel::OpImplyType::kTBE,
-                                       AnfAlgo::IsDynamicShape(kernel_node));
-  if (op_info != nullptr) {
-    const auto &ref_infos = op_info->ref_infos();
-    for (auto [out, in] : ref_infos) {
-      if (parameters_indexs[in] == 1) {
-        parameters_indexs[in] = 0;
-        parameters_indexs[input_num + workspace_num + out] = 1;
-      }
-    }
-  }
+
   for (size_t j = 0; j < input_num; ++j) {
     if (parameters_indexs.at(j) == 1) {
       MS_LOG(EXCEPTION) << "Atomic addr clean doesn't support clean input address, input index: " << j;
@@ -231,7 +224,7 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   }
 
   for (size_t i = 0; i < output_num; ++i) {
-    auto param_output = parameters_indexs.at(input_num + workspace_num + i);
+    auto param_output = parameters_indexs.at(input_num + i);
     if (param_output == 1) {
       output_indexs.emplace_back(i);
       MS_LOG(INFO) << "Atomic clear output index: " << i;
@@ -246,7 +239,7 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   // process workspace
   std::vector<size_t> workspace_indexs = {};
   for (size_t k = 0; k < workspace_num; ++k) {
-    auto param_workspace = parameters_indexs.at(input_num + k);
+    auto param_workspace = parameters_indexs.at(input_num + output_num + k);
     if (param_workspace == 1) {
       workspace_indexs.emplace_back(k);
       MS_LOG(INFO) << "Atomic clear workspace index: " << k;
