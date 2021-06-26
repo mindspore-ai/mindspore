@@ -25,7 +25,7 @@ function android_release_package()
     rm -rf ${pkg_name}
     tar -xzf ${input_path}/android_${arch}/${device}/${pkg_name}.tar.gz
     # Copy java runtime to Android package
-    cp ${input_path}/aar/avx/mindspore-lite-*maven*.zip ${pkg_name}
+    cp ${input_path}/aar/mindspore-lite-*maven*.zip ${pkg_name}
 
     mkdir -p ${output_path}/release/android/${device}/
     tar -czf ${output_path}/release/android/${device}/${pkg_name}.tar.gz ${pkg_name}
@@ -36,9 +36,9 @@ function android_release_package()
 
 function ios_release_package()
 {
-    arch=$1
     mkdir -p ${output_path}/release/ios/
-    cp ${input_path}/ios_${arch}/*.tar.gz* ${output_path}/release/ios/
+    cp ${input_path}/ios_aarch64/*.tar.gz* ${output_path}/release/ios/
+    cp ${input_path}/ios_aarch32/*.tar.gz* ${output_path}/release/ios/
 }
 
 function linux_release_package()
@@ -51,6 +51,7 @@ function windows_release_package()
 {
     mkdir -p ${output_path}/release/windows/
     cp ${input_path}/windows_x64/avx/*.zip* ${output_path}/release/windows/
+    cp ${input_path}/windows_x32/sse/*.zip* ${output_path}/release/windows/
 }
 
 echo "============================== begin =============================="
@@ -58,13 +59,14 @@ echo "Usage: bash lite_release_package.sh input_path output_path"
 
 input_path=$1
 output_path=$2
-version=`ls ${input_path}/android_aarch64/mindspore-lite-*-*.tar.gz | awk -F'/' '{print $NF}' | cut -d"-" -f3`
+version=`ls ${input_path}/android_aarch64/npu/mindspore-lite-*-*.tar.gz | awk -F'/' '{print $NF}' | cut -d"-" -f3`
 
-android_release_package aarch32
-android_release_package aarch64
+android_release_package aarch32 npu
+android_release_package aarch32 cpu
+android_release_package aarch64 npu
 android_release_package aarch64 gpu
-ios_release_package aarch32
-ios_release_package aarch64
+
+ios_release_package
 linux_release_package
 windows_release_package
 
