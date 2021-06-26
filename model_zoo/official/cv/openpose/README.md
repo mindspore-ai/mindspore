@@ -49,7 +49,7 @@ In the currently provided training script, the coco2017 data set is used as an e
     Run python gen_ignore_mask.py
 
 ````python
-    python gen_ignore_mask.py --train_ann ../dataset/annotations/person_keypoints_train2017.json --val_ann ../dataset/annotations/person_keypoints_val2017.json --train_dir train2017 --val_dir val2017
+    python gen_ignore_mask.py --train_ann ../dataset/annotations/person_keypoints_train2017.json --val_ann ../dataset/annotations/person_keypoints_val2017.json --train_dir ../dataset/train2017 --val_dir ../dataset/val2017
 ````
 
 - The dataset folder is generated in the root directory and contains the following files:
@@ -90,10 +90,10 @@ After installing MindSpore via the official website, you can start training and 
 
   ```python
   # run training example
-  python train.py --imgpath_train ./train2017 --jsonpath_train ./person_keypoints_train2017.json --maskpath_train ./ignore_mask_train2017 > train.log 2>&1 &
+  python train.py --imgpath_train ./train2017 --jsonpath_train ./person_keypoints_train2017.json --maskpath_train ./ignore_mask_train2017 --vgg_path ./vgg19-0-97_5004.ckpt > train.log 2>&1 &
 
   # run distributed training example
-  bash run_distribute_train.sh [RANK_TABLE_FILE] [IMGPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN]
+  bash run_distribute_train.sh [RANK_TABLE_FILE] [IMGPATH_TRAIN] [JSONPATH_TRAIN] [MASKPATH_TRAIN] [VGG_PATH]
 
   # run evaluation example
   python eval.py --model_path path_to_eval_model.ckpt --imgpath_val ./dataset/val2017 --ann ./dataset/annotations/person_keypoints_val2017.json > eval.log 2>&1 &
@@ -165,7 +165,7 @@ For more configuration details, please refer the script `default_config.yaml`.
 - running on Ascend
 
   ```python
-  python train.py --imgpath_train ./train2017 --jsonpath_train ./person_keypoints_train2017.json --maskpath_train ./ignore_mask_train2017 > train.log 2>&1 &
+  python train.py --imgpath_train ./train2017 --jsonpath_train ./person_keypoints_train2017.json --maskpath_train ./ignore_mask_train2017 --vgg_path ./vgg19-0-97_5004.ckpt > train.log 2>&1 &
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`.

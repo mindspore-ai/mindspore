@@ -15,6 +15,7 @@
 
 """Evaluation for CTPN"""
 import os
+from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 from src.ctpn import CTPN
@@ -22,12 +23,13 @@ from src.dataset import create_ctpn_dataset
 from src.eval_utils import eval_for_ctpn
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
 
 set_seed(1)
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
 
 
 def modelarts_pre_process():

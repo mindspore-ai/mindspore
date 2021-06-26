@@ -21,7 +21,7 @@ exit 1
 fi
 
 export DEVICE_ID=0
-export DEVICE_NUM=1
+export RANK_SIZE=1
 export RANK_ID=0
 python eval.py \
   --model_path=$1 \

@@ -10,8 +10,14 @@ output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
 device_target: "Ascend"
 enable_profiling: False
-checkpoint_path: "./checkpoint/"
-checkpoint_file: "./checkpoint/.ckpt"
+
+# ======================================================================================
+# create ignore mask options
+train_dir: ""
+val_dir: ""
+train_ann: ""
+val_ann: ""
+vis: False
 
 # ======================================================================================
 # Training options
@@ -144,9 +150,12 @@ export_batch_size: "batch size"
 file_name: "output file name"
 file_format: "file format choices[AIR, MINDIR, ONNX]"
 ckpt_file: "Checkpoint file path."
-train_dir: "train data dir"
-train_ann: "train annotations json"
 model_path: "path of testing model"
 imgpath_val: "path of testing imgs"
 ann: "path of annotations"
 output_img_path: "path of testing imgs"
+vis: "visualize annotations and ignore masks"
+val_ann: "val annotations json"
+train_ann: "train annotations json"
+train_dir: "name of train dir"
+val_dir: "name of val dir"
