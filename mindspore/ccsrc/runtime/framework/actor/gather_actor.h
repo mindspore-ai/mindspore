@@ -56,10 +56,7 @@ class GatherActor : public OpActor<DeviceTensor> {
   friend class GraphScheduler;
 
   // Collect the inputs of gather actor.
-  void FetchBackendInputNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &origin_parameters_order,
-                             const FrontToBackendNodeWithContext &front_to_backend_parameters,
-                             const FuncGraphToParameter &func_graph_to_parameters,
-                             const std::unordered_map<AnfNodePtr, AnfNodePtr> &front_to_backend_kernel);
+  void FetchBackendInputNode(const FuncGraphPtr &func_graph, const ControlNodeParserPtr &parser);
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
   // Check whether satisfy the condition for launch.
   bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;

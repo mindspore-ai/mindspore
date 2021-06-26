@@ -1062,10 +1062,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
 
       auto gather_actor =
         std::make_shared<GatherActor>(actor_name, parameters, loop_count_actor->GetAID(), output_actor->GetAID());
-      gather_actor->FetchBackendInputNode(func_graph, graph_compiler_info.origin_parameters_order_,
-                                          graph_compiler_info.control_node_parser_->front_to_backend_parameters_,
-                                          graph_compiler_info.control_node_parser_->func_graph_to_parameters_,
-                                          front_to_backend_kernel);
+      gather_actor->FetchBackendInputNode(func_graph, graph_compiler_info.control_node_parser_);
       InsertActor(gather_actor.get());
       gather_actors.emplace_back(gather_actor);
     }
