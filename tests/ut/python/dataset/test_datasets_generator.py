@@ -36,6 +36,8 @@ class DatasetGenerator:
 
     def __len__(self):
         return 10
+
+
 class DatasetGeneratorLarge:
     def __init__(self):
         self.data = np.array(range(4000))
@@ -485,6 +487,7 @@ def test_generator_17():
         np.testing.assert_array_equal(item["col1"], golden)
         i = i + 1
 
+
 def test_generator_18():
     """
     Test multiprocessing flag (same as test 13 with python_multiprocessing=True flag)
@@ -512,6 +515,7 @@ def test_generator_18():
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item["out0"], golden)
 
+
 def test_generator_19():
     """
     Test multiprocessing flag with 2 different large columns
@@ -530,6 +534,64 @@ def test_generator_19():
         golden = np.array(range(4000)) * 10
         np.testing.assert_array_equal(item[1], golden)
         i = i + 1
+
+
+class RandomAccessDataset:
+    def __init__(self):
+        self.__data = np.random.sample((5, 1))
+
+    def __getitem__(self, item):
+        return self.__data[item]
+
+    def __len__(self):
+        return 5
+
+
+class RandomAccessDatasetWithoutLen:
+    def __init__(self):
+        self.__data = np.random.sample((5, 1))
+
+    def __getitem__(self, item):
+        return self.__data[item]
+
+
+class IterableDataset:
+    def __init__(self):
+        self.count = 0
+        self.max = 10
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.count >= self.max:
+            raise StopIteration
+        self.count += 1
+        return (np.array(self.count),)
+
+
+def test_generator_20():
+    """
+    Test mappable and unmappable dataset as source for GeneratorDataset.
+    """
+    logger.info("Test mappable and unmappable dataset as source for GeneratorDataset.")
+
+    # Mappable dataset
+    data1 = ds.GeneratorDataset(RandomAccessDataset(), ["col0"])
+    dataset_size1 = data1.get_dataset_size()
+    assert dataset_size1 == 5
+
+    # Mappable dataset without __len__
+    data2 = ds.GeneratorDataset(RandomAccessDatasetWithoutLen(), ["col0"])
+    try:
+        data2.get_dataset_size()
+    except RuntimeError as e:
+        assert "'__len__' method is required" in str(e)
+
+    # Unmappable dataset
+    data3 = ds.GeneratorDataset(IterableDataset(), ["col0"])
+    dataset_size3 = data3.get_dataset_size()
+    assert dataset_size3 == 10
 
 
 def test_generator_error_1():

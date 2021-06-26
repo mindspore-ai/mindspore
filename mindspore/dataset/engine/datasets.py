@@ -3978,6 +3978,8 @@ class GeneratorDataset(MappableDataset):
         if new_op.sampler is not None and hasattr(self.source, "__getitem__"):
             # The reason why there is a try catch here is because when the new op is being constructed with shared
             # memory enabled, there will be an exception thrown if there is not enough shared memory available
+            if self.source_len == -1:
+                raise RuntimeError("Attempt to construct a random access dataset, '__len__' method is required!")
             try:
                 if new_op.num_parallel_workers > 1:
                     sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
