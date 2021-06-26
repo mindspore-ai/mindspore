@@ -34,7 +34,7 @@ class TfliteModelParser : public ModelParser {
 
   ~TfliteModelParser() override = default;
 
-  FuncGraphPtr Parse(const converter::Flags &flag) override;
+  FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
   static int Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 

@@ -67,10 +67,10 @@ CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
 
-FuncGraphPtr CaffeModelParser::Parse(const converter::Flags &flag) {
-  auto model_file = flag.modelFile;
-  auto weight_file = flag.weightFile;
-  quant_type_ = flag.quantType;
+FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag) {
+  auto model_file = flag.model_file_;
+  auto weight_file = flag.weight_file_;
+  quant_type_ = flag.quant_type_;
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

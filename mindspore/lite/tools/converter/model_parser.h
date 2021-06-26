@@ -22,9 +22,8 @@
 #include "schema/inner/model_generated.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "tools/converter/converter_context.h"
-#include "tools/converter/converter_flags.h"
-#include "tools/converter/quant_param_holder.h"
+#include "include/registry/model_parser_registry.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::lite {
 using namespace schema;
@@ -34,7 +33,7 @@ class ModelParser {
 
   virtual ~ModelParser() = default;
 
-  virtual FuncGraphPtr Parse(const converter::Flags &flag) { return this->res_graph_; }
+  virtual FuncGraphPtr Parse(const converter::ConverterParameters &flags) { return this->res_graph_; }
 
  protected:
   FuncGraphPtr res_graph_ = nullptr;

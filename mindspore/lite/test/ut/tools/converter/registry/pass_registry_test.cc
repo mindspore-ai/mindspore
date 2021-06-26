@@ -24,13 +24,12 @@
 #include "ops/fusion/add_fusion.h"
 #include "ops/addn.h"
 #include "ops/custom.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/converter/model_parser.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/model_parser_test.h"
 
 using mindspore::lite::ModelRegistrar;
-using mindspore::lite::converter::Flags;
+using mindspore::lite::converter::ConverterParameters;
 using mindspore::lite::converter::FmkType_CAFFE;
 namespace mindspore {
 class PassRegistryTest : public mindspore::CommonTest {
@@ -42,8 +41,8 @@ class PassRegistryTest : public mindspore::CommonTest {
     if (model_parser == nullptr) {
       return;
     }
-    Flags flags;
-    func_graph_ = model_parser->Parse(flags);
+    ConverterParameters converter_parameters;
+    func_graph_ = model_parser->Parse(converter_parameters);
   }
   FuncGraphPtr func_graph_ = nullptr;
 };

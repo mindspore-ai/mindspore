@@ -22,6 +22,7 @@
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
+#include "tools/converter/converter_context.h"
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/ops/ops_def.h"
@@ -478,9 +479,9 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
   return RET_OK;
 }
 
-FuncGraphPtr TFModelParser::Parse(const converter::Flags &flag) {
-  auto modelFile = flag.modelFile;
-  quant_type_ = flag.quantType;
+FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
+  auto modelFile = flag.model_file_;
+  quant_type_ = flag.quant_type_;
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {

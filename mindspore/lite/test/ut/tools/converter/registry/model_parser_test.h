@@ -23,13 +23,12 @@
 #include "include/registry/model_parser_registry.h"
 #include "ut/tools/converter/registry/node_parser_test.h"
 #include "tools/converter/model_parser.h"
-#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 class ModelParserTest : public lite::ModelParser {
  public:
   ModelParserTest() = default;
-  FuncGraphPtr Parse(const lite::converter::Flags &flag) override;
+  FuncGraphPtr Parse(const lite::converter::ConverterParameters &flag) override;
 
  private:
   int InitOriginModelStructure();
