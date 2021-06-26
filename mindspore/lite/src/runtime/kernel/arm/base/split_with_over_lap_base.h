@@ -33,22 +33,25 @@ class SplitWithOverlapBaseCPUKernel : public InnerKernel {
     param_ = reinterpret_cast<SplitWithOverlapParameter *>(op_parameter_);
   }
   ~SplitWithOverlapBaseCPUKernel() override = default;
-  void CalculateSplitedShapes(const SplitWithOverlapParameter *param, const std::vector<int> &shape);
   int Init() override;
   int ReSize() override;
   int Run() override;
   int Split(int task_id);
 
- protected:
+ private:
+  void CalculateSplitedShapes(const std::vector<int> &shape);
+
+ private:
   // range: [start, end)
   std::vector<int> start_indices_;
   std::vector<int> end_indices_;
+
+  SplitWithOverlapParameter *param_ = nullptr;
 
   int outer_total_dim_{0};
   int inner_stride_{0};
   int element_bytes_{0};
   int split_dim_size_{0};
-  SplitWithOverlapParameter *param_ = nullptr;
   char *input_ptr_{nullptr};
   std::vector<char *> output_ptr_;
 };

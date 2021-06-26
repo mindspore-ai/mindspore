@@ -33,6 +33,7 @@ namespace mindspore::lite {
 constexpr int kDefaultDeviceType = -1;
 constexpr int kDefalutSubGraphSize = 2;
 constexpr int kDefaultInputs = 1;
+constexpr int kMaxSubGraphCount = 20;
 class SearchSubGraph {
   enum TensorType { NORMAL, CONST, INPUT };
 
@@ -84,12 +85,12 @@ class SearchSubGraph {
  public:
   void SubGraphSplit();
 
- private:
+ private: /* split by output */
   void SubGraphSplitByOutput();
   void InitSearchSubGraphByOutput();
   void InsertNode(uint32_t index, Subgraph *subgraph);
 
- private:
+ private: /* split by middle */
   void SubGraphSplitByMiddle();
   void InitSearchSubGraphByMiddle();
   void SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes);
@@ -97,35 +98,35 @@ class SearchSubGraph {
   void InsertNodeByMid(uint32_t node_index, Subgraph *subgraph);
   void InsertHeadNode(uint32_t index, Subgraph *subgraph);
   void OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint32_t root_node_index);
-  std::unordered_map<uint32_t, std::vector<Subgraph>> node_sub_map_;
 
- private:
+ private: /* split by offline */
   void SubGraphSplitByOffLineParallel();
+  void UpdateOfflineParallelFlag();
+  bool CheckIsParallelSubGraph(const std::vector<Subgraph> &subgraphs);
 
- private:
+ private: /* public graph func  */
   void RemoveConstNode(std::vector<uint32_t> *nodes);
   void InitSearchTensor();
-  void InitSearchParallelSubGraph();
   void InitMainGraphDevice(DeviceType dt = DT_CPU);
 
   void InitSubgraphRuntimeInfo(std::vector<Subgraph> *sub_graphs);
   void SubgraphFusion(std::vector<Subgraph> *sub_graphs);
   void CalculateCostModel(std::vector<Subgraph> *sub_graphs);
   void ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs);
+  bool ValidInParallel();
+  void CheckSubHeadEnd(Subgraph *sub);
 
- private:
+ private: /* public schema func  */
   void InsertParallelNode(uint32_t index, Subgraph *subgraph);
   bool IsNodeSubGraphHead(uint32_t node_index, const std::vector<uint32_t> &ready_nodes);
   bool IsNodeSubGraphHeadWithRoot(uint32_t node_index, const std::vector<uint32_t> &ready_nodes,
                                   uint32_t root_node_index);
   const schema::Primitive *CreatePartialPrimitive(int64_t subgraph_index);
 
- private:
+ private: /* public cost-model func  */
   CostModel CalculateConv2DFusion(Model::Node *node);
   void dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
            std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs);
-  void UpdateOfflineParallelFlag();
-  bool CheckIsParallelSubGraph(const std::vector<Subgraph> &subgraphs);
 
  private:
   std::vector<size_t> *output_nodes_ = nullptr;
@@ -135,6 +136,7 @@ class SearchSubGraph {
   LiteModel *model_ = nullptr;
   std::vector<Tensor> tensors_;
   std::vector<Subgraph> sub_graphs_;
+  std::unordered_map<uint32_t, std::vector<Subgraph>> node_sub_map_;
   std::vector<Model::Node *> node_list_;
   DeviceType major_dt_;
   DeviceType minor_dt_;

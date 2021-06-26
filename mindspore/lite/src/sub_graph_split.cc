@@ -159,7 +159,7 @@ SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(Model::Node *nod
     } else {
       int out_unit;
       if (CheckIfUseWinograd(&out_unit, param)) {
-        size_t winograd_conv_cost = WinogradConvMul();
+        size_t winograd_conv_cost = CommConvMul(weight_shape, output_shape);
         cost.mul_cost_ += winograd_conv_cost;
       } else {
         size_t comm_conv_mul_cost = CommConvMul(weight_shape, output_shape);
@@ -170,7 +170,7 @@ SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(Model::Node *nod
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
     if (CheckConvDw1DWinograd(param, context_->thread_num_)) {
       /* ConvolutionDepthwise3x3CPUKernel */
-      size_t winograd_convdw_cost = WinogradConvDwMul();
+      size_t winograd_convdw_cost = CommConvdwMul(weight_shape, output_shape);
       cost.mul_cost_ += winograd_convdw_cost;
     } else {
       /* ConvolutionDepthwiseIndirectCPUKernel */
@@ -450,18 +450,7 @@ void SearchSubGraph::OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint
       VectorErase(&sub.heads_, head_index);
     }
 
-    /* double check head-end node */
-    /* head-end node may error after subgraph fusion  */
-    for (uint32_t head_node : sub.heads_) {
-      if (std::find(sub.nodes_.begin(), sub.nodes_.end(), head_node) == sub.nodes_.end()) {
-        VectorErase(&sub.nodes_, head_node);
-      }
-    }
-    for (uint32_t end_node : sub.ends_) {
-      if (std::find(sub.nodes_.begin(), sub.nodes_.end(), end_node) == sub.nodes_.end()) {
-        VectorErase(&sub.ends_, end_node);
-      }
-    }
+    CheckSubHeadEnd(&sub);
 
     /* sort node index  */
     std::sort(sub.nodes_.begin(), sub.nodes_.end());
@@ -579,9 +568,11 @@ void SearchSubGraph::InitMiddleSubgraph(std::vector<uint32_t> *multy_in_nodes) {
     Model::Node *node = node_list_[node_index];
     for (uint32_t input_tensor_index : node->input_indices_) {
       Tensor *tensor = &tensors_[input_tensor_index];
-      if (tensor->type_ == CONST) continue;
+      if (tensor->type_ == CONST || tensor->type_ == INPUT) continue;
 
       std::vector<uint32_t> input_nodes = tensor->out_nodes_;
+      if (input_nodes.empty()) continue;
+
       Subgraph sub;
       sub.ends_.push_back(input_nodes[0]);
       InsertNodeByMid(input_nodes[0], &sub);
@@ -602,6 +593,9 @@ void SearchSubGraph::InitSearchSubGraphByMiddle() {
 
   InitMiddleSubgraph(&multy_in_nodes);
 
+  if (node_sub_map_.size() > kMaxSubGraphCount) {
+    node_sub_map_.clear();
+  }
   return;
 }
 
@@ -763,6 +757,9 @@ void SearchSubGraph::SubGraphSplitByOutput() {
   CalculateCostModel(&sub_graphs_);
   InitSubgraphRuntimeInfo(&sub_graphs_);
   SubgraphFusion(&sub_graphs_);
+  for (Subgraph &sub : sub_graphs_) {
+    CheckSubHeadEnd(&sub);
+  }
   ConvertSubGraphToModel(&sub_graphs_);
 }
 
@@ -770,6 +767,9 @@ void SearchSubGraph::SubGraphSplitByMiddle() {
   InitSearchSubGraphByMiddle();
   for (auto map : node_sub_map_) {
     std::vector<Subgraph> &subgraphs = map.second;
+    if (subgraphs.size() < kDefalutSubGraphSize) {
+      continue;
+    }
 
     CalculateCostModel(&subgraphs);
     InitSubgraphRuntimeInfo(&subgraphs);
@@ -935,17 +935,63 @@ void SearchSubGraph::InsertParallelNode(uint32_t index, Subgraph *subgraph) {
     }
   }
 }
+void SearchSubGraph::CheckSubHeadEnd(Subgraph *sub) {
+  /* head-end node may error after subgraph fusion  */
+  /* sub head node check */
+  std::vector<uint32_t> delete_head;
+  for (uint32_t head_node : sub->heads_) {
+    if (std::find(sub->nodes_.begin(), sub->nodes_.end(), head_node) == sub->nodes_.end()) {
+      delete_head.push_back(head_node);
+      continue;
+    }
+    Model::Node *node = model_->all_nodes_.at(head_node);
+    std::vector<uint32_t> in_tensors = node->input_indices_;
+    std::vector<uint32_t> in_nodes;
+    for (uint32_t in_t : in_tensors) {
+      in_nodes.insert(in_nodes.begin(), tensors_.at(in_t).out_nodes_.begin(), tensors_.at(in_t).out_nodes_.end());
+    }
 
-void SearchSubGraph::InitSearchParallelSubGraph() {
-  // for every graph output, find a parallel subgraph
-  for (uint32_t output : *output_nodes_) {
-    Subgraph subgraph;
-    InsertParallelNode(output, &subgraph);
-    sub_graphs_.push_back(std::move(subgraph));
+    bool erase_head = true;
+    for (uint32_t in_n : in_nodes) {
+      if (std::find(sub->nodes_.begin(), sub->nodes_.end(), in_n) == sub->nodes_.end()) {
+        erase_head = false;
+        break;
+      }
+    }
+    if (erase_head) {
+      delete_head.push_back(head_node);
+    }
   }
+  for (uint32_t head : delete_head) {
+    VectorErase(&sub->heads_, head);
+  }
+
+  /* sub end node check */
+  std::vector<uint32_t> delete_end;
+  for (uint32_t end_node : sub->ends_) {
+    if (std::find(sub->nodes_.begin(), sub->nodes_.end(), end_node) == sub->nodes_.end()) {
+      delete_end.push_back(end_node);
+    }
+  }
+  for (uint32_t end : delete_end) {
+    VectorErase(&sub->ends_, end);
+  }
+  return;
+}
+
+bool SearchSubGraph::ValidInParallel() {
+  Model::Node *front_node = model_->all_nodes_.at(0);
+  if (front_node->quant_type_ != schema::QuantType_QUANT_NONE) {
+    return false;
+  }
+  return true;
 }
 
 void SearchSubGraph::SubGraphSplit() {
+  if (!ValidInParallel()) {
+    return;
+  }
+
   UpdateOfflineParallelFlag();
   if (offline_parallel_enable_) {
     SubGraphSplitByOffLineParallel();
