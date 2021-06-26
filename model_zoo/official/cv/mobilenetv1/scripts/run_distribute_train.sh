@@ -82,8 +82,15 @@ else
   CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
 fi
 
+cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
+avg=`expr $cpus \/ $DEVICE_NUM`
+gap=`expr $avg \- 1`
+
 for((i=0; i<${DEVICE_NUM}; i++))
 do
+    start=`expr $i \* $avg`
+    end=`expr $start \+ $gap`
+    cmdopt=$start"-"$end
     export DEVICE_ID=${i}
     export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
@@ -97,12 +104,12 @@ do
     env > env.log
     if [ $# == 3 ]
     then    
-        python train.py --config_path=$CONFIG_FILE --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log.txt &
+        taskset -c $cmdopt python train.py --config_path=$CONFIG_FILE --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log.txt &
     fi
     
     if [ $# == 4 ]
     then
-        python train.py --config_path=$CONFIG_FILE --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log.txt &
+        taskset -c $cmdopt python train.py --config_path=$CONFIG_FILE --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log.txt &
     fi
 
     cd ..

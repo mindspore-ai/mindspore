@@ -66,8 +66,14 @@ run_ascend()
     fi
     mkdir ../train
     cd ../train || exit
+    cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
+    avg=`expr $cpus \/ $RANK_SIZE`
+    gap=`expr $avg \- 1`
     for((i=0; i<${RANK_SIZE}; i++))
     do
+        start=`expr $i \* $avg`
+        end=`expr $start \+ $gap`
+        cmdopt=$start"-"$end
         export DEVICE_ID=${CANDIDATE_DEVICE[i]}
         export RANK_ID=$i
         rm -rf ./rank$i
@@ -78,7 +84,7 @@ run_ascend()
         cd ./rank$i || exit
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
-        python train.py \
+        taskset -c $cmdopt python train.py \
             --config_path=$CONFIG_FILE \
             --platform=$1 \
             --dataset_path=$5 \
