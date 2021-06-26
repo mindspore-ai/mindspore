@@ -283,9 +283,14 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
     MS_LOG(ERROR) << "fetch information from default param failed.";
     return RET_ERROR;
   }
-
-  // attr weightFormat is only used by conv-like ops' second input
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim->GetAttr(ops::kFormat) != nullptr) {
+    auto value = prim->GetAttr(ops::kFormat);
+    if (value->isa<mindspore::Int64Imm>()) {
+      data_info->format_ = GetValue<int64_t>(value);
+    }
+  }
+  // attr weightFormat is only used by conv-like ops' second input
   if ((opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
        opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) ||
        opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) &&

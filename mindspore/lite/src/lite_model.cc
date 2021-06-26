@@ -24,6 +24,7 @@
 #include <memory>
 #include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
+#include "src/common/file_utils.h"
 #ifdef ENABLE_V0
 #include "src/ops/compat/compat_register.h"
 #endif
@@ -416,56 +417,15 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   return model;
 }
 
-std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size) {
-  std::ifstream ifs(filename, std::ifstream::in | std::ifstream::binary);
-  if (!ifs.good()) {
-    MS_LOG(ERROR) << "File: " << filename << " does not exist";
-    return std::unique_ptr<char[]>(nullptr);
-  }
-
-  if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "File: " << filename << " open failed";
-    return std::unique_ptr<char[]>(nullptr);
-  }
-
-  ifs.seekg(0, std::ios::end);
-  auto tellg_ret = ifs.tellg();
-  if (tellg_ret <= 0) {
-    MS_LOG(ERROR) << "Could not read file " << filename;
-    return std::unique_ptr<char[]>(nullptr);
-  }
-  size_t fsize = static_cast<size_t>(tellg_ret);
-
-  std::unique_ptr<char[]> buf(new (std::nothrow) char[fsize]);
-  if (buf == nullptr) {
-    MS_LOG(ERROR) << "malloc buf failed, file: " << filename;
-    ifs.close();
-    return std::unique_ptr<char[]>(nullptr);
-  }
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(buf.get(), fsize);
-  if (!ifs) {
-    MS_LOG(ERROR) << "only read " << ifs.gcount() << "bytes in " << filename;
-    ifs.close();
-    return std::unique_ptr<char[]>(nullptr);
-  }
-  ifs.close();
-  if (size != nullptr) {
-    *size = fsize;
-  }
-  return buf;
-}
-
 Model *Model::Import(const char *model_buf, size_t size) { return ImportFromBuffer(model_buf, size, false); }
 
 Model *Model::Import(const char *filename) {
   size_t size = -1;
-  auto buf = ReadFileToBuf(filename, &size);
+  auto buf = ReadFile(filename, &size);
   if (buf == nullptr) {
     return nullptr;
   }
-  return ImportFromBuffer(buf.get(), size, false);
+  return ImportFromBuffer(buf, size, false);
 }
 
 int Model::Export(Model *model, char *buffer, size_t *len) {

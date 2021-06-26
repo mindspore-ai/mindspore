@@ -123,8 +123,8 @@ int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format
   return lite::RET_OK;
 }
 
-int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t format, const ParameterPtr &weight_node,
-                                    std::vector<int> perm) {
+int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t dst_format, int64_t format,
+                                    const ParameterPtr &weight_node, std::vector<int> perm) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(weight_node != nullptr);
   auto node_list = TopoSort(graph->get_return());
@@ -158,6 +158,7 @@ int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t format, c
   auto perm_node = opt::BuildIntVecParameterNode(graph, perm, weight_node->fullname_with_scope() + "_sharing_perm");
   auto prim = std::make_shared<ops::Transpose>();
   prim->AddAttr("quant_params", std::make_shared<QuantParamHolder>(1, 1));
+  prim->AddAttr(ops::kFormat, MakeValue<int64_t>(dst_format));
   auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
   if (!weight_node->has_default()) {
     MS_LOG(DEBUG) << "Weight parameter should has default parameter.";
@@ -198,7 +199,7 @@ int HandleWeightSharing(const FuncGraphPtr &graph, int64_t format, const Paramet
     MS_LOG(ERROR) << "get perm failed.";
     return status;
   }
-  status = TransposeInsertForWeightSharing(graph, format, weight_node, perm);
+  status = TransposeInsertForWeightSharing(graph, dst_format, format, weight_node, perm);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "transpose insert failed.";
   }

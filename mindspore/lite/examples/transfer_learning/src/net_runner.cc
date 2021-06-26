@@ -16,9 +16,11 @@
 
 #include "src/net_runner.h"
 #include <getopt.h>
+#include <malloc.h>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include "include/context.h"
@@ -183,6 +185,7 @@ int NetRunner::TrainLoop() {
   session_->Train();
   float min_loss = 1000.;
   float max_acc = 0.;
+  auto start_time = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < cycles_; i++) {
     FillInputData(ds_.train_data());
     session_->RunGraph(nullptr, verbose_ ? after_callback : nullptr);
@@ -205,6 +208,13 @@ int NetRunner::TrainLoop() {
       if (acc > kThreshold) return 0;
     }
   }
+  auto end_time = std::chrono::high_resolution_clock::now();
+  auto time_cost = std::chrono::duration<double, std::milli>(end_time - start_time);
+  if (cycles_ > 0) {
+    std::cout << "AvgRunTime: " << time_cost.count() / cycles_ << " ms" << std::endl;
+  }
+  struct mallinfo info = mallinfo();
+  std::cout << "Total allocation: " << info.arena + info.hblkhd << std::endl;
   return 0;
 }
 

@@ -24,6 +24,7 @@
 #include <memory>
 #include "include/errorcode.h"
 #include "src/common/utils.h"
+#include "src/common/file_utils.h"
 #include "src/tensor.h"
 #include "src/train/loss_kernel.h"
 #include "src/train/optimizer_kernel.h"
@@ -300,15 +301,15 @@ session::LiteSession *session::LiteSession::CreateTransferSession(const std::str
                                                                   const lite::TrainCfg *cfg) {
   size_t size_head = 0;
   size_t size_backbone = 0;
-  auto buf_head = lite::ReadFileToBuf(filename_head, &size_head);
+  auto buf_head = lite::ReadFile(filename_head.c_str(), &size_head);
   if (buf_head == nullptr) {
     return nullptr;
   }
-  auto buf_backbone = lite::ReadFileToBuf(filename_backbone, &size_backbone);
+  auto buf_backbone = lite::ReadFile(filename_backbone.c_str(), &size_backbone);
   if (buf_backbone == nullptr) {
     return nullptr;
   }
-  return CreateTransferSessionInt(buf_backbone.get(), size_backbone, buf_head.get(), size_head, ctxt, train_mode, cfg);
+  return CreateTransferSessionInt(buf_backbone, size_backbone, buf_head, size_head, ctxt, train_mode, cfg);
 }
 
 }  // namespace mindspore
