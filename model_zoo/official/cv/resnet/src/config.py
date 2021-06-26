@@ -153,24 +153,3 @@ config_thor_gpu = ed({
     "damping_decay": 0.5467,
     "frequency": 834,
 })
-
-# config for resnet34, imagenet2012, Ascend
-config_resnet34 = ed({
-    "class_num": 1001,
-    "batch_size": 256,
-    "loss_scale": 1024,
-    "momentum": 0.9,
-    "weight_decay": 1e-4,
-    "epoch_size": 90,
-    "pretrain_epoch_size": 0,
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 5,
-    "keep_checkpoint_max": 1,
-    "save_checkpoint_path": "./",
-    "warmup_epochs": 0,
-    "optimizer": 'Momentum',
-    "use_label_smooth": True,
-    "label_smooth_factor": 0.1,
-    "lr_init": 0.0,
-    "lr_max": 1.0,
-    "lr_end": 0.0})

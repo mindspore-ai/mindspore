@@ -35,9 +35,11 @@ args_opt = parser.parse_args()
 
 set_seed(1)
 
-if args_opt.net in ("resnet18", "resnet50"):
+if args_opt.net in ("resnet18", "resnet34", "resnet50"):
     if args_opt.net == "resnet18":
         from src.resnet import resnet18 as resnet
+    if args_opt.net == "resnet34":
+        from src.resnet import resnet34 as resnet
     if args_opt.net == "resnet50":
         from src.resnet import resnet50 as resnet
     if args_opt.dataset == "cifar10":
@@ -46,10 +48,6 @@ if args_opt.net in ("resnet18", "resnet50"):
     else:
         from src.config import config2 as config
         from src.dataset import create_dataset2 as create_dataset
-elif args_opt.net == "resnet34":
-    from src.resnet import resnet34 as resnet
-    from src.config import config_resnet34 as config
-    from src.dataset import create_dataset2 as create_dataset
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config
