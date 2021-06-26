@@ -24,8 +24,6 @@
 
 namespace mindspore {
 namespace abstract {
-std::mutex AnalysisResultCacheMgr::tiggerToken_;
-
 EvalResultPtr AsyncEvalResult::TryGetResult(int ms) {
   std::unique_lock<std::mutex> lock(lock_);
   if (ms == 0) {
@@ -42,6 +40,8 @@ EvalResultPtr AsyncEvalResult::GetResult() {
   if (result_ != nullptr) {
     return result_;
   }
+  // Check if enter endless loop
+  HealthPointScopedDrop health_point_check;
   auto time = std::chrono::seconds(kInferTimeout);
   auto cond = condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
   if (cond) {
@@ -188,6 +188,7 @@ void AnalysisResultCacheMgr::Todo() {
 }
 
 void AnalysisResultCacheMgr::Wait() {
+  pybind11::gil_scoped_release infer_gil_release;
   while (true) {
     StaticAnalysisException::Instance().CheckException();
     lock_.lock();
@@ -199,12 +200,17 @@ void AnalysisResultCacheMgr::Wait() {
     waiting_.pop_front();
     lock_.unlock();
 
-    // must be unlock
+    // Must be unlock
     future.wait();
   }
   if (IS_OUTPUT_ON(DEBUG)) {
     Todo();
   }
+}
+
+HealthPointMgr &HealthPointMgr::GetInstance() {
+  static HealthPointMgr instance;
+  return instance;
 }
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list) {

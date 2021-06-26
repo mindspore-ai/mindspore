@@ -35,6 +35,45 @@ namespace mindspore {
 namespace abstract {
 constexpr size_t kInferTimeout = 1800;  // 60*30 30min, next pr will change the solution of endless.
 
+class HealthPointMgr {
+ public:
+  ~HealthPointMgr() = default;
+  HealthPointMgr(const HealthPointMgr &) = delete;
+  HealthPointMgr &operator=(const HealthPointMgr &) = delete;
+  static HealthPointMgr &GetInstance();
+
+  void DropPoint() {
+    std::unique_lock<std::mutex> lock(lock_);
+    auto time = std::chrono::microseconds(1);
+    auto cond = condition_var_.wait_for(lock, time, [this] { return point_ > 1; });
+    if (cond) {
+      --point_;
+    } else {
+      MS_LOG(EXCEPTION) << "Enter endless loop. Please check the code. ";
+    }
+  }
+
+  void AddPoint() {
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      ++point_;
+    }
+    condition_var_.notify_all();
+  }
+
+ private:
+  HealthPointMgr() = default;
+  int point_{1};
+  std::mutex lock_;
+  std::condition_variable condition_var_;
+};
+
+class HealthPointScopedDrop {
+ public:
+  HealthPointScopedDrop() { HealthPointMgr::GetInstance().DropPoint(); }
+  ~HealthPointScopedDrop() { HealthPointMgr::GetInstance().AddPoint(); }
+};
+
 template <typename KeyType, typename ValueType, typename CacheType>
 class MultiThreadCache {
  public:
@@ -140,9 +179,9 @@ class AsyncEvalResult {
  public:
   AsyncEvalResult() = default;
   ~AsyncEvalResult() = default;
-  // wait
+  // Wait
   EvalResultPtr GetResult();
-  // not wait
+  // Not wait
   EvalResultPtr TryGetResult(int ms = 0);
   void JoinResult(const EvalResultPtr &result);
   std::string ToString();
@@ -158,13 +197,15 @@ class AsyncResult {
  public:
   AsyncResult() = default;
   ~AsyncResult() = default;
-  // wait
+  // Wait
   Type GetResult() {
     std::unique_lock<std::mutex> lock(lock_);
     if (result_ != nullptr) {
       return result_;
     }
     auto time = std::chrono::seconds(kInferTimeout);
+    // Check if enter endless loop
+    HealthPointScopedDrop health_point_check;
     auto cond = condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
     if (cond) {
       return result_;
@@ -173,12 +214,14 @@ class AsyncResult {
       return nullptr;
     }
   }
-  // not wait
+  // Not wait
   Type TryGetResult(int ms = 0) {
     std::unique_lock<std::mutex> lock(lock_);
     if (ms == 0) {
       return result_;
     }
+    // Check if enter endless loop
+    HealthPointScopedDrop health_point_check;
     auto time = std::chrono::microseconds(ms);
     // Wait for ms.
     (void)condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
@@ -230,7 +273,6 @@ class AnalysisResultCacheMgr {
   AnalysisResultCacheMgr(const AnalysisResultCacheMgr &) = delete;
   AnalysisResultCacheMgr &operator=(const AnalysisResultCacheMgr &) = delete;
   static AnalysisResultCacheMgr &GetInstance();
-  static std::mutex &tiggerToken() { return tiggerToken_; }
   void Clear();
 
   using AnalysisConfigAsyncResultMap =
@@ -261,27 +303,14 @@ class AnalysisResultCacheMgr {
 
  private:
   AnalysisResultCacheMgr() = default;
-
-  static std::mutex tiggerToken_;
   std::mutex lock_;
   std::list<std::future<void>> waiting_;
   std::mutex todo_lock_;
   std::list<AnfNodeConfigPtr> todo_;
-
   AnalysisConfigResultCache cache_;
   AnalysisConfigAsyncResultCache switch_cache_;
 };
 
-class TiggerToken_scoped_release {
- public:
-  TiggerToken_scoped_release() { AnalysisResultCacheMgr::tiggerToken().unlock(); }
-  ~TiggerToken_scoped_release() { AnalysisResultCacheMgr::tiggerToken().lock(); }
-};
-class TiggerToken_scoped_acquire {
- public:
-  TiggerToken_scoped_acquire() { AnalysisResultCacheMgr::tiggerToken().lock(); }
-  ~TiggerToken_scoped_acquire() { AnalysisResultCacheMgr::tiggerToken().unlock(); }
-};
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list);
 
 inline std::string GetInferThread() { return std::string(" INFER:") + AnalysisResultCacheMgr::GetThreadid() + ":"; }
