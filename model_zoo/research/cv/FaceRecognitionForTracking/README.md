@@ -69,11 +69,17 @@ The directory structure is as follows:
 
 The entire code structure is as following:
 
-```python
+```text
 .
 └─ Face Recognition For Tracking
   ├─ README.md
   ├─ ascend310_infer                        # application for 310 inference
+  ├── model_utils
+  │   ├──__init__.py                        # module init file
+  │   ├──config.py                          # Parse arguments
+  │   ├──device_adapter.py                  # Device adapter for ModelArts
+  │   ├──local_adapter.py                   # Local adapter
+  │   ├──moxing_adapter.py                  # Moxing adapter for ModelArts
   ├─ scripts
     ├─ run_standalone_train.sh              # launch standalone training(1p) in ascend
     ├─ run_distribute_train.sh              # launch distributed training(8p) in ascend
@@ -88,13 +94,16 @@ The entire code structure is as following:
     ├─ run_infer_310.sh                     # launch inference on Ascend310
     └─ run_export_cpu.sh                    # launch exporting mindir model in cpu
   ├─ src
-    ├─ config.py                            # parameter configuration
     ├─ dataset.py                           # dataset loading and preprocessing for training
     ├─ reid.py                              # network backbone
     ├─ log.py                               # log function
     ├─ loss.py                              # loss function
     ├─ lr_generator.py                      # generate learning rate
     └─ me_init.py                           # network initialization
+  ├─ reid_1p_ascend_config.yaml             # Configurations for train 1p with ascned
+  ├─ reid_1p_config.yaml                    # Default Configurations
+  ├─ reid_8p_ascend_config.yaml             # Configurations for train 8p with ascned
+  ├─ reid_1p_gpu_config.yaml                # Configurations for train 8p with GPU
   ├─ train.py                               # training scripts
   ├─ eval.py                                # evaluation scripts
   ├─ postprocess.py                         # postprocess script
@@ -212,6 +221,102 @@ epoch[179], iter[14910], loss:1.532123, 12669.85 imgs/sec, lr=0.0250000003725290
 epoch[179], iter[14920], loss:1.760322, 13457.81 imgs/sec, lr=0.02500000037252903
 epoch[179], iter[14930], loss:1.694281, 13417.38 imgs/sec, lr=0.02500000037252903
 ```
+
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    ```bash
+    # Train 8p on ModelArts with Ascend
+    # (1) Add "config_path='/path_to_code/reid_8p_ascend_config.yaml'" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on reid_8p_ascend_config.yaml file.
+    #          Set "is_distributed=1" on reid_8p_ascend_config.yaml file.
+    #          Set "data_dir='/cache/data/face_recognitionTrack_dataset/train'" on reid_8p_ascend_config.yaml file.
+    #          Set "ckpt_path='./output'" on reid_8p_ascend_config.yaml file.
+    #          (option) Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on reid_8p_ascend_config.yaml file if load pretrain.
+    #          (option) Set "pretrained='/cache/checkpoint_path/model.ckpt'" on reid_8p_ascend_config.yaml file if load pretrain.
+    #          Set other parameters on reid_8p_ascend_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "is_distributed=1" on the website UI interface.
+    #          Add "data_dir=/cache/data/face_recognitionTrack_dataset/train" on the website UI interface.
+    #          Add "ckpt_path='./output'" on the website UI interface.
+    #          (option) Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface if load pretrain.
+    #          (option) Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface if load pretrain.
+    #          Add other parameters on the website UI interface.
+    # (3) (option) Upload or copy your pretrained model to S3 bucket if load pretrain.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceRecognitionForTracking" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p on ModelArts with Ascend
+    # (1) Add "config_path='/path_to_code/reid_1p_ascend_config.yaml'" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on reid_1p_ascend_config.yaml file.
+    #          Set "is_distributed=0" on reid_1p_ascend_config.yaml file.
+    #          Set "data_dir='/cache/data/face_recognitionTrack_dataset/train'" on reid_1p_ascend_config.yaml file.
+    #          Set "ckpt_path='./output'" on reid_1p_ascend_config.yaml file.
+    #          (option) Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on reid_1p_ascend_config.yaml file if load pretrain.
+    #          (option) Set "pretrained='/cache/checkpoint_path/model.ckpt'" on reid_1p_ascend_config.yaml file if load pretrain.
+    #          Set other parameters on reid_1p_ascend_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "is_distributed=0" on the website UI interface.
+    #          Add "data_dir=/cache/data/face_recognitionTrack_dataset/train" on the website UI interface.
+    #          Add "ckpt_path='./output'" on the website UI interface.
+    #          (option) Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface if load pretrain.
+    #          (option) Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface if load pretrain.
+    #          Add other parameters on the website UI interface.
+    # (3) (option) Upload or copy your pretrained model to S3 bucket if load pretrain.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceRecognitionForTracking" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval on ModelArts with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on reid_1p_config.yaml file.
+    #          Set "eval_dir='/cache/data/face_recognitionTrack_dataset/test'" on reid_1p_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on reid_1p_config.yaml file.
+    #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on reid_1p_config.yaml file.
+    #          Set other parameters on reid_1p_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "eval_dir=/cache/data/face_recognitionTrack_dataset/test" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/FaceRecognitionForTracking" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # Export on ModelArts
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on reid_1p_config.yaml file.
+    #          Set "batch_size=1" on reid_1p_config.yaml file.
+    #          Set "file_format='AIR'" on reid_1p_config.yaml file.
+    #          Set "file_name='FaceRecognitionForTracking'" on reid_1p_config.yaml file.
+    #          Set "device_target='Ascend'" on reid_1p_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on reid_1p_config.yaml file.
+    #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on reid_1p_config.yaml file.
+    #          Set other parameters on reid_1p_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "batch_size=1" on the website UI interface.
+    #          Add "file_format='AIR'" on the website UI interface.
+    #          Add "file_name='FaceRecognitionForTracking'" on the website UI interface.
+    #          Add "device_target='Ascend'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+    #          Add "pretrained='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/FaceRecognitionForTracking" on the website UI interface.
+    # (5) Set the startup file to "export.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
 
 ### Evaluation
 

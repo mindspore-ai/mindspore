@@ -70,6 +70,9 @@ echo $PRETRAINED_BACKBONE
 export RANK_TABLE_FILE=$RANK_TABLE
 export RANK_SIZE=8
 
+config_path="${dirname_path}/reid_8p_ascend_config.yaml"
+echo "config path is : ${config_path}"
+
 echo 'start training'
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
@@ -80,6 +83,7 @@ do
     dev=`expr $i + 0`
     export DEVICE_ID=$dev
     python ${dirname_path}/${SCRIPT_NAME} \
+        --config_path=$config_path \
         --is_distributed=1 \
         --data_dir=$DATA_DIR \
         --pretrained=$PRETRAINED_BACKBONE > train.log  2>&1 &

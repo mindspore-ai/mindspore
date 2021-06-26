@@ -75,7 +75,12 @@ mkdir ${current_exec_path}/device$USE_DEVICE_ID
 cd ${current_exec_path}/device$USE_DEVICE_ID  || exit
 dev=`expr $USE_DEVICE_ID + 0`
 export DEVICE_ID=$dev
+
+config_path="${dirname_path}/reid_1p_ascend_config.yaml"
+echo "config path is : ${config_path}"
+
 python ${dirname_path}/${SCRIPT_NAME} \
+    --config_path=$config_path \
     --is_distributed=0 \
     --data_dir=$DATA_DIR \
     --pretrained=$PRETRAINED_BACKBONE > train.log  2>&1 &

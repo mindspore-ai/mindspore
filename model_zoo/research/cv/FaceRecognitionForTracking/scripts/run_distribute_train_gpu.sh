@@ -46,7 +46,10 @@ if [ $4 ] # pretrained ckpt
 then
   if [ $1 -gt 1 ]
   then
+    config_path="${BASEPATH}/../reid_8p_gpu_config.yaml"
+    echo "config path 8p is : ${config_path}"
     mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../train.py \
+                                                  --config_path=$config_path \
                                                   --data_dir=$3 \
                                                   --is_distributed=1 \
                                                   --device_target='GPU' \
@@ -61,7 +64,10 @@ then
 else
   if [ $1 -gt 1 ]
   then
+    config_path="${BASEPATH}/../reid_8p_gpu_config.yaml"
+    echo "config path 8p is : ${config_path}"
     mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../train.py \
+                                                  --config_path=$config_path \
                                                   --data_dir=$3 \
                                                   --is_distributed=1 \
                                                   --device_target='GPU'
