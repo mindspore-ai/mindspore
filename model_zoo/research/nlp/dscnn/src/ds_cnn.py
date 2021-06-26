@@ -23,9 +23,9 @@ class DSCNN(nn.Cell):
     def __init__(self, model_settings, model_size_info):
         super(DSCNN, self).__init__()
         # N C H W
-        label_count = model_settings['label_count']
-        input_frequency_size = model_settings['dct_coefficient_count']
-        input_time_size = model_settings['spectrogram_length']
+        label_count = model_settings.model_setting_label_count
+        input_frequency_size = model_settings.model_setting_dct_coefficient_count
+        input_time_size = model_settings.model_setting_spectrogram_length
         t_dim = input_time_size
         f_dim = input_frequency_size
         num_layers = model_size_info[0]
@@ -71,7 +71,7 @@ class DSCNN(nn.Cell):
             f_dim = math.ceil(f_dim / float(conv_sf[layer_no]))
         seq_cell.append(nn.AvgPool2d(kernel_size=(t_dim, f_dim)))  # to fix ?
         seq_cell.append(nn.Flatten())
-        seq_cell.append(nn.Dropout(model_settings['dropout1']))
+        seq_cell.append(nn.Dropout(model_settings.model_setting_dropout1))
         seq_cell.append(nn.Dense(in_channel, label_count))
         self.model = nn.SequentialCell(seq_cell)
 

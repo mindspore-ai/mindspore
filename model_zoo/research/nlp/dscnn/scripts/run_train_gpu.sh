@@ -13,13 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===========================================================================
-export DEVICE_NUM=$1
+
 export RANK_SIZE=$1
 export CUDA_VISIBLE_DEVICES="$2"
+
+if [ $# != 3 ]
+then
+    echo "run as scripts/run_train_gpu.sh [DEVICE_NUM] [CUDA_VISIBLE_DEVICES] [TRAIN_FEAT_DIR]"
+    exit 1
+fi
+
+rm -rf train_gpu
+mkdir train_gpu
+cp -r ./src ./train_gpu
+cp -r ./scripts ./train_gpu
+cp ./*.py ./train_gpu
+cp ./*yaml ./train_gpu
+cd ./train_gpu || exit
 if [ $1 -gt 1 ]
 then
+    echo "start distributed trainning network"
     mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-    python train.py --is_distributed --amp_level $3 --device_target="GPU" > train.log 2>&1 &
+    python train.py --is_distributed=1 --device_target="GPU" --train_feat_dir=$3 > train.log 2>&1 &
 else
-    python train.py --amp_level $3 --device_target='GPU' > train.log 2>&1 &
+    echo "start trainning network"
+    python train.py --train_feat_dir=$3 --device_target='GPU' > train.log 2>&1 &
 fi
+cd ..

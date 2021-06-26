@@ -22,16 +22,14 @@ import sys
 import tarfile
 from glob import glob
 import logging
-import argparse
 from six.moves import urllib
-
 import numpy as np
 import soundfile as sf
 from python_speech_features import mfcc
 from tqdm import tqdm
-
-from config import train_config, prepare_model_settings
 from utils import prepare_words_list
+from src.model_utils.config import config, prepare_model_settings
+
 
 FLAGS = None
 MAX_NUM_WAVS_PER_CLASS = 2 ** 27 - 1  # ~134M
@@ -195,20 +193,20 @@ class AudioProcessor():
         sliced_foreground = padded_foreground[time_shift_offset: time_shift_offset + desired_samples]
         background_add = background_data[0] * background_volume + sliced_foreground
         background_clamp = np.clip(background_add, -1.0, 1.0)
-        feature = mfcc(background_clamp, samplerate=FLAGS.sample_rate, winlen=FLAGS.window_size_ms / 1000,
-                       winstep=FLAGS.window_stride_ms / 1000,
-                       numcep=FLAGS.dct_coefficient_count, nfilt=40, nfft=1024, lowfreq=20, highfreq=7000).flatten()
+        feature = mfcc(background_clamp, samplerate=config.sample_rate, winlen=config.window_size_ms / 1000,
+                       winstep=config.window_stride_ms / 1000,
+                       numcep=config.dct_coefficient_count, nfilt=40, nfft=1024, lowfreq=20, highfreq=7000).flatten()
         return feature
 
     def prepare_data(self, model_settings):
         '''Prepare data.'''
         # Pick one of the partitions to choose samples from.
-        time_shift = int((FLAGS.time_shift_ms * FLAGS.sample_rate) / 1000)
-        background_frequency = FLAGS.background_frequency
-        background_volume_range = FLAGS.background_volume
+        time_shift = int((config.time_shift_ms * config.sample_rate) / 1000)
+        background_frequency = config.background_frequency
+        background_volume_range = config.background_volume
         desired_samples = model_settings['desired_samples']
-        if not os.path.exists(FLAGS.feat_dir):
-            os.makedirs(FLAGS.feat_dir, exist_ok=True)
+        if not os.path.exists(config.download_feat_dir):
+            os.makedirs(config.download_feat_dir, exist_ok=True)
         for mode in ['training', 'validation', 'testing']:
             candidates = self.data_index[mode]
             sample_count = len(candidates)
@@ -255,21 +253,18 @@ class AudioProcessor():
                                                         background_reshaped, background_volume)
                 label_index = self.word_to_index[sample['label']]
                 labels[i] = label_index
-            np.save(os.path.join(FLAGS.feat_dir, '{}_data.npy'.format(mode)), data)
-            np.save(os.path.join(FLAGS.feat_dir, '{}_label.npy'.format(mode)), labels)
+            np.save(os.path.join(config.download_feat_dir, '{}_data.npy'.format(mode)), data)
+            np.save(os.path.join(config.download_feat_dir, '{}_label.npy'.format(mode)), labels)
 
 
 if __name__ == '__main__':
     print('start download_process')
-    parser = argparse.ArgumentParser()
-    train_config(parser)
-    FLAGS, unparsed = parser.parse_known_args()
     model_settings_1 = prepare_model_settings(
-        len(prepare_words_list(FLAGS.wanted_words.split(','))),
-        FLAGS.sample_rate, FLAGS.clip_duration_ms, FLAGS.window_size_ms,
-        FLAGS.window_stride_ms, FLAGS.dct_coefficient_count)
+        len(prepare_words_list(config.wanted_words.split(','))),
+        config.sample_rate, config.clip_duration_ms, config.window_size_ms,
+        config.window_stride_ms, config.dct_coefficient_count)
     audio_processor = AudioProcessor(
-        FLAGS.data_url, FLAGS.data_dir, FLAGS.silence_percentage,
-        FLAGS.unknown_percentage,
-        FLAGS.wanted_words.split(','), FLAGS.validation_percentage,
-        FLAGS.testing_percentage, model_settings_1)
+        config.download_data_url, config.data_dir, config.silence_percentage,
+        config.unknown_percentage,
+        config.wanted_words.split(','), config.validation_percentage,
+        config.testing_percentage, model_settings_1)

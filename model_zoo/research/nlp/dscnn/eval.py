@@ -16,18 +16,18 @@
 import os
 import datetime
 import glob
-import argparse
-
 import numpy as np
 from mindspore import context
 from mindspore import Tensor, Model
 from mindspore.common import dtype as mstype
-
-from src.config import eval_config
 from src.log import get_logger
 from src.dataset import audio_dataset
 from src.ds_cnn import DSCNN
 from src.models import load_ckpt
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
+
 
 def get_top5_acc(top5_arg, gt_class):
     sub_count = 0
@@ -70,44 +70,42 @@ def val(args, model, test_de):
                      .format(top1_correct, top5_correct, img_tot, acc1, acc5))
 
 
-
+@moxing_wrapper(pre_process=None)
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--device_id', type=int, default=1, help='which device the model will be trained on')
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU', 'CPU'])
-    args, model_settings = eval_config(parser)
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
 
     # Logger
-    args.outputs_dir = os.path.join(args.log_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-    args.logger = get_logger(args.outputs_dir)
+    config.outputs_dir = os.path.join(config.log_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    config.logger = get_logger(config.outputs_dir)
     # show args
-    args.logger.save_args(args)
+    config.logger.save_args(config)
+
     # find model path
-    if os.path.isdir(args.model_dir):
-        models = list(glob.glob(os.path.join(args.model_dir, '*.ckpt')))
+    if os.path.isdir(config.model_dir):
+        models = list(glob.glob(os.path.join(config.model_dir, '*.ckpt')))
         print(models)
         f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('-')[0].split('epoch')[-1])
-        args.models = sorted(models, key=f)
+        config.models = sorted(models, key=f)
     else:
-        args.models = [args.model_dir]
+        config.models = [config.model_dir]
 
-    args.best_acc = 0
-    args.index = 0
-    args.best_index = 0
-    for model_path in args.models:
-        test_de = audio_dataset(args.feat_dir, 'testing', model_settings['spectrogram_length'],
-                                model_settings['dct_coefficient_count'], args.per_batch_size)
-        network = DSCNN(model_settings, args.model_size_info)
+    config.best_acc = 0
+    config.index = 0
+    config.best_index = 0
+    for model_path in config.models:
+        test_de = audio_dataset(config.eval_feat_dir, 'testing', config.model_setting_spectrogram_length,
+                                config.model_setting_dct_coefficient_count, config.per_batch_size)
+        network = DSCNN(config, config.model_size_info)
 
         load_ckpt(network, model_path, False)
         network.set_train(False)
         model = Model(network)
-        args.logger.info('load model {} success'.format(model_path))
-        val(args, model, test_de)
-        args.index += 1
+        config.logger.info('load model %s success', model_path)
+        val(config, model, test_de)
+        config.index += 1
 
-    args.logger.info('Best model:{} acc:{:.2f}%'.format(args.models[args.best_index], args.best_acc))
+    config.logger.info('Best model:{} acc:{:.2f}%'.format(config.models[config.best_index], config.best_acc))
+
 
 if __name__ == "__main__":
     main()

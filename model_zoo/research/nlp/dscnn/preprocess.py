@@ -14,35 +14,31 @@
 # ===========================================================================
 """preprocess."""
 import os
-import argparse
 import numpy as np
-
-from src.config import eval_config
 from src.dataset import audio_dataset
+from src.model_utils.config import config
+
 
 def get_bin():
     ''' generate bin files.'''
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--pre_result_path', type=str, default="preprocess_Result", help='preprocess result path')
-    args, model_settings = eval_config(parser)
-
-    test_de = audio_dataset(args.feat_dir, 'testing', model_settings['spectrogram_length'],
-                            model_settings['dct_coefficient_count'], args.per_batch_size)
+    test_de = audio_dataset(config.pre_feat_dir, 'testing', config.model_setting_spectrogram_length,
+                            config.model_setting_dct_coefficient_count, config.per_batch_size)
 
     eval_dataloader = test_de.create_tuple_iterator(output_numpy=True)
-    data_path = os.path.join(args.pre_result_path, "00_data")
+    data_path = os.path.join(config.pre_result_path, "00_data")
     os.makedirs(data_path)
     gt_classes_list = []
     i = 0
 
     for data, gt_classes in eval_dataloader:
-        file_name = "dscnn+_bs" + str(args.per_batch_size) + "_" + str(i) + ".bin"
+        file_name = "dscnn+_bs" + str(config.per_batch_size) + "_" + str(i) + ".bin"
         file_path = os.path.join(data_path, file_name)
         data.tofile(file_path)
         gt_classes_list.append(gt_classes)
         i = i + 1
-    np.save(os.path.join(args.pre_result_path, "gt_classes.npy"), gt_classes_list)
+    np.save(os.path.join(config.pre_result_path, "gt_classes.npy"), gt_classes_list)
     print("=" * 20, "export bin files finished", "=" * 20)
+
 
 if __name__ == "__main__":
     get_bin()
