@@ -26,6 +26,8 @@
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/trace_base.h"
+#include "runtime/device/ascend/lic_manager.h"
+
 namespace mindspore {
 namespace opt {
 namespace {
@@ -97,6 +99,11 @@ const BaseRef SquareSumFusion::DefinePattern() const {
 const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::SquareSumFusion)) {
+    return node;
+  }
+
   CNodePtr sum = nullptr;
   AnfNodePtr square_anf = nullptr;
   CNodePtr square = nullptr;

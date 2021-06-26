@@ -25,15 +25,15 @@ string(REPLACE " -Wall" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/protobuf_source/repository/archive/v3.8.0.tar.gz")
-    set(MD5 "eba86ae9f07ba5cfbaf8af3bc4e84236")
+    set(REQ_URL "https://gitee.com/mirrors/protobuf_source/repository/archive/v3.13.0.tar.gz")
+    set(MD5 "f4489cb88922ad9c58cb3308d59cee5")
 else()
-    set(REQ_URL "https://github.com/protocolbuffers/protobuf/archive/v3.8.0.tar.gz")
-    set(MD5 "3d9e32700639618a4d2d342c99d4507a")
+    set(REQ_URL "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.tar.gz")
+    set(MD5 "1a6274bc4a65b55a6fa70e264d796490")
 endif()
 
 mindspore_add_pkg(protobuf
-        VER 3.8.0
+        VER 3.13.0
         LIBS protobuf
         EXE protoc
         URL ${REQ_URL}

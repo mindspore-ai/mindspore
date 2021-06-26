@@ -19,6 +19,7 @@
 #include <string>
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -52,6 +53,11 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MomentumLossscaleFusion)) {
+    return node;
+  }
+
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, kApplyMomentumInputTensorNum);

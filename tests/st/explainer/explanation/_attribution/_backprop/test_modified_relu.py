@@ -51,7 +51,7 @@ class TestModifiedReLU:
         self.abs_ = P.Abs()
         self.reshape = P.Reshape()
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
