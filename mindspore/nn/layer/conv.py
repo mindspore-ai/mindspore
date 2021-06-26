@@ -266,7 +266,7 @@ class Conv2d(_Conv):
     def extend_repr(self):
         s = 'input_channels={}, output_channels={}, kernel_size={},' \
             'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}' \
+            'group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}, format={}'.format(
                 self.in_channels,
                 self.out_channels,
