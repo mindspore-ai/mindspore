@@ -45,6 +45,7 @@ public class ClientListReq {
     private String nextRequestTime;
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
+    private int retCode;
 
     public ClientListReq() {
         flCommunication = FLCommunication.getInstance();
@@ -56,6 +57,10 @@ public class ClientListReq {
 
     public void setNextRequestTime(String nextRequestTime) {
         this.nextRequestTime = nextRequestTime;
+    }
+
+    public int getRetCode() {
+        return retCode;
     }
 
     public FLClientStatus getClientList(int iteration, List<String> u3ClientList, List<DecryptShareSecrets> decryptSecretsList, List<EncryptShare> returnShareList, Map<String, byte[]> cuvKeys) {
@@ -81,15 +86,15 @@ public class ClientListReq {
     }
 
     public FLClientStatus judgeGetClientList(ReturnClientList bufData, List<String> u3ClientList, List<DecryptShareSecrets> decryptSecretsList, List<EncryptShare> returnShareList, Map<String, byte[]> cuvKeys) {
-        int retcode = bufData.retcode();
+        retCode = bufData.retcode();
         LOGGER.info(Common.addTag("[PairWiseMask] ************** the response of GetClientList **************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retcode));
+        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
         LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
         LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
         LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
         LOGGER.info(Common.addTag("[PairWiseMask] the size of clients: " + bufData.clientsLength()));
         FLClientStatus status;
-        switch (retcode) {
+        switch (retCode) {
             case (ResponseCode.SUCCEED):
                 LOGGER.info(Common.addTag("[PairWiseMask] GetClientList success"));
                 u3ClientList.clear();
@@ -117,7 +122,7 @@ public class ClientListReq {
                 LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetClientList"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retcode> from server in ReturnClientList is invalid: " + retcode));
+                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnClientList is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }

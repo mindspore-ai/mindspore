@@ -88,7 +88,7 @@ public class Common {
         Date date = new Date();
         long currentTime = date.getTime();
         long waitTime = 0;
-        if (!nextRequestTime.equals("")) {
+        if (!("").equals(nextRequestTime)) {
             waitTime = Math.max(0, Long.valueOf(nextRequestTime) - currentTime);
         }
         LOGGER.info(addTag("[getWaitTime] next request time stamp: " + nextRequestTime + " current time stamp: " + currentTime));
@@ -114,12 +114,20 @@ public class Common {
         return LOG_TITLE + message;
     }
 
-    public static boolean isAutoscaling(byte[] message, String autoscalingTag) {
-        return (new String(message)).contains(autoscalingTag);
+    public static boolean isSafeMod(byte[] message, String safeModTag) {
+        return (new String(message)).contains(safeModTag);
     }
 
     public static boolean checkPath(String path) {
-        File file = new File(path);
-        return file.exists();
+        boolean tag = true;
+        String [] paths = path.split(",");
+        for (int i = 0; i < paths.length; i++) {
+            LOGGER.info(addTag("[check path]:" + paths[i]));
+            File file = new File(paths[i]);
+            if (!file.exists()) {
+                tag = false;
+            }
+        }
+        return tag;
     }
 }
