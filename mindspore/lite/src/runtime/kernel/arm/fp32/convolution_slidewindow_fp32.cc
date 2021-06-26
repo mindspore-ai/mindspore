@@ -39,18 +39,18 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
   int kernel_plane = kernel_h * kernel_w;
   int oc_block_num = UP_DIV(output_channel, oc_tile_);
   int pack_weight_size = oc_block_num * oc_tile_ * input_channel * kernel_plane;
-  packed_weight_ = reinterpret_cast<float *>(MallocAlignedData(alignment, pack_weight_size * sizeof(float)));
+  packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "MallocAlignedData packed weight failed.";
+    MS_LOG(ERROR) << "malloc packed weight failed.";
     return RET_NULL_PTR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   PackNHWCTo1HWCNXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel, packed_weight_,
                        ori_weight_data_);
   if (in_tensors_.size() == kInputSize2) {
-    packed_bias_ = reinterpret_cast<float *>(MallocAlignedData(alignment, oc_block_num * oc_tile_ * sizeof(float)));
+    packed_bias_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_tile_ * sizeof(float)));
     if (packed_bias_ == nullptr) {
-      MS_LOG(ERROR) << "MallocAlignedData bias failed.";
+      MS_LOG(ERROR) << "malloc bias failed.";
       return RET_NULL_PTR;
     }
     memset(packed_bias_, 0, oc_block_num * oc_tile_ * sizeof(float));

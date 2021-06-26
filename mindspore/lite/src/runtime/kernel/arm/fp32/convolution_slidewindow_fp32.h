@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_SLIDEWINDOW_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_SLIDEWINDOW_H_
 #ifdef ENABLE_AVX
-
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
@@ -34,10 +33,12 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
 
   ~ConvolutionSWCPUKernel() override {
     if (packed_weight_ != nullptr) {
-      FreeAlignedData(reinterpret_cast<void **>(&packed_weight_));
+      free(packed_weight_);
+      packed_weight_ = nullptr;
     }
     if (packed_bias_ != nullptr) {
-      FreeAlignedData(reinterpret_cast<void **>(&packed_bias_));
+      free(packed_bias_);
+      packed_bias_ = nullptr;
     }
     if (slidingWindow_param_ != nullptr) {
       delete slidingWindow_param_;
@@ -73,7 +74,6 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   float *packed_bias_ = nullptr;
   float *output_data_ = nullptr;
   float *input_data_ = nullptr;
-  int alignment = C32NUM;
   SlidingWindowParam *slidingWindow_param_ = nullptr;
 };
 }  // namespace mindspore::kernel

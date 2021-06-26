@@ -1193,18 +1193,18 @@ void DepthwiseSW3x32Kernel(float *dst, const float *src, const float *weight, co
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
-    "vmovaps 0x40(%2), %%ymm2\n"
-    "vmovaps 0x60(%2), %%ymm3\n"
-    "vmovaps (%2), %%ymm4\n"
-    "vmovaps 0x20(%2), %%ymm5\n"
-    "vmovaps 0x40(%2), %%ymm6\n"
-    "vmovaps 0x60(%2), %%ymm7\n"
-    "vmovaps (%2), %%ymm8\n"
-    "vmovaps 0x20(%2), %%ymm9\n"
-    "vmovaps 0x40(%2), %%ymm10\n"
-    "vmovaps 0x60(%2), %%ymm11\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    "vmovups 0x60(%2), %%ymm3\n"
+    "vmovups (%2), %%ymm4\n"
+    "vmovups 0x20(%2), %%ymm5\n"
+    "vmovups 0x40(%2), %%ymm6\n"
+    "vmovups 0x60(%2), %%ymm7\n"
+    "vmovups (%2), %%ymm8\n"
+    "vmovups 0x20(%2), %%ymm9\n"
+    "vmovups 0x40(%2), %%ymm10\n"
+    "vmovups 0x60(%2), %%ymm11\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1224,34 +1224,34 @@ void DepthwiseSW3x32Kernel(float *dst, const float *src, const float *weight, co
     "movq %0, %%rcx\n"  // src_h
     "2:\n"              // LoopW
 
-    "vmovaps (%1), %%ymm12\n"
-    "vmovaps (%%rcx), %%ymm13\n"
-    "vmovaps (%%rcx, %7), %%ymm14\n"
-    "vmovaps (%%rcx, %7, 2), %%ymm15\n"
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rcx), %%ymm13\n"
+    "vmovups (%%rcx, %7), %%ymm14\n"
+    "vmovups (%%rcx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
 
-    "vmovaps 0x20(%1), %%ymm12\n"
-    "vmovaps 0x20(%%rcx), %%ymm13\n"
-    "vmovaps 0x20(%%rcx, %7), %%ymm14\n"
-    "vmovaps 0x20(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x20(%1), %%ymm12\n"
+    "vmovups 0x20(%%rcx), %%ymm13\n"
+    "vmovups 0x20(%%rcx, %7), %%ymm14\n"
+    "vmovups 0x20(%%rcx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
 
-    "vmovaps 0x40(%1), %%ymm12\n"
-    "vmovaps 0x40(%%rcx), %%ymm13\n"
-    "vmovaps 0x40(%%rcx, %7), %%ymm14\n"
-    "vmovaps 0x40(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x40(%1), %%ymm12\n"
+    "vmovups 0x40(%%rcx), %%ymm13\n"
+    "vmovups 0x40(%%rcx, %7), %%ymm14\n"
+    "vmovups 0x40(%%rcx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
 
-    "vmovaps 0x60(%1), %%ymm12\n"
-    "vmovaps 0x60(%%rcx), %%ymm13\n"
-    "vmovaps 0x60(%%rcx, %7), %%ymm14\n"
-    "vmovaps 0x60(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x60(%1), %%ymm12\n"
+    "vmovups 0x60(%%rcx), %%ymm13\n"
+    "vmovups 0x60(%%rcx, %7), %%ymm14\n"
+    "vmovups 0x60(%%rcx, %7, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
@@ -1309,18 +1309,18 @@ void DepthwiseSW3x32Kernel(float *dst, const float *src, const float *weight, co
     "vminps %%ymm14, %%ymm11, %%ymm11\n"
 
     "0:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
-    "vmovaps %%ymm1, 0x20(%2)\n"
-    "vmovaps %%ymm2, 0x40(%2)\n"
-    "vmovaps %%ymm3, 0x60(%2)\n"
-    "vmovaps %%ymm4, (%2, %1, 1)\n"
-    "vmovaps %%ymm5, 0x20(%2, %1, 1)\n"
-    "vmovaps %%ymm6, 0x40(%2, %1, 1)\n"
-    "vmovaps %%ymm7, 0x60(%2, %1, 1)\n"
-    "vmovaps %%ymm8, (%2, %1, 2)\n"
-    "vmovaps %%ymm9, 0x20(%2, %1, 2)\n"
-    "vmovaps %%ymm10, 0x40(%2, %1, 2)\n"
-    "vmovaps %%ymm11, 0x60(%2, %1, 2)\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm3, 0x60(%2)\n"
+    "vmovups %%ymm4, (%2, %1, 1)\n"
+    "vmovups %%ymm5, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm6, 0x40(%2, %1, 1)\n"
+    "vmovups %%ymm7, 0x60(%2, %1, 1)\n"
+    "vmovups %%ymm8, (%2, %1, 2)\n"
+    "vmovups %%ymm9, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm10, 0x40(%2, %1, 2)\n"
+    "vmovups %%ymm11, 0x60(%2, %1, 2)\n"
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
@@ -1337,10 +1337,10 @@ void DepthwiseSW1x32Kernel(float *dst, const float *src, const float *weight, co
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
-    "vmovaps 0x40(%2), %%ymm2\n"
-    "vmovaps 0x60(%2), %%ymm3\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    "vmovups 0x60(%2), %%ymm3\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1351,10 +1351,10 @@ void DepthwiseSW1x32Kernel(float *dst, const float *src, const float *weight, co
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
     "2:\n"              // Loopw
-    "vmovaps (%%rcx), %%ymm4\n"
-    "vmovaps 0x20(%%rcx), %%ymm5\n"
-    "vmovaps 0x40(%%rcx), %%ymm6\n"
-    "vmovaps 0x60(%%rcx), %%ymm7\n"
+    "vmovups (%%rcx), %%ymm4\n"
+    "vmovups 0x20(%%rcx), %%ymm5\n"
+    "vmovups 0x40(%%rcx), %%ymm6\n"
+    "vmovups 0x60(%%rcx), %%ymm7\n"
     // Weight data is loaded directly from memory instead of into registers for calculation.
     "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
     "vfmadd231ps 0x20(%1), %%ymm5, %%ymm1\n"
@@ -1397,10 +1397,10 @@ void DepthwiseSW1x32Kernel(float *dst, const float *src, const float *weight, co
     "vminps %%ymm14, %%ymm3, %%ymm3\n"
 
     "0:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
-    "vmovaps %%ymm1, 0x20(%2)\n"
-    "vmovaps %%ymm2, 0x40(%2)\n"
-    "vmovaps %%ymm3, 0x60(%2)\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm3, 0x60(%2)\n"
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm12", "%ymm14");
@@ -1419,19 +1419,19 @@ void DepthwiseSW4x24Kernel(float *dst, const float *src, const float *weight, co
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
-    "vmovaps 0x40(%2), %%ymm2\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
     // We need to copy ymm0 to ymm3 to reduce IO time, but unfortunately I didn't find the corresponding instruction.
-    "vmovaps (%2), %%ymm3\n"
-    "vmovaps 0x20(%2), %%ymm4\n"
-    "vmovaps 0x40(%2), %%ymm5\n"
-    "vmovaps (%2), %%ymm6\n"
-    "vmovaps 0x20(%2), %%ymm7\n"
-    "vmovaps 0x40(%2), %%ymm8\n"
-    "vmovaps (%2), %%ymm9\n"
-    "vmovaps 0x20(%2), %%ymm10\n"
-    "vmovaps 0x40(%2), %%ymm11\n"
+    "vmovups (%2), %%ymm3\n"
+    "vmovups 0x20(%2), %%ymm4\n"
+    "vmovups 0x40(%2), %%ymm5\n"
+    "vmovups (%2), %%ymm6\n"
+    "vmovups 0x20(%2), %%ymm7\n"
+    "vmovups 0x40(%2), %%ymm8\n"
+    "vmovups (%2), %%ymm9\n"
+    "vmovups 0x20(%2), %%ymm10\n"
+    "vmovups 0x40(%2), %%ymm11\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1450,33 +1450,33 @@ void DepthwiseSW4x24Kernel(float *dst, const float *src, const float *weight, co
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
     "2:\n"              // LoopW
-    "vmovaps (%1), %%ymm12\n"
-    "vmovaps (%%rcx), %%ymm13\n"
-    "vmovaps (%%rcx, %7, 1), %%ymm14\n"
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rcx), %%ymm13\n"
+    "vmovups (%%rcx, %7, 1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm3\n"
-    "vmovaps (%%rcx, %7, 2), %%ymm15\n"
-    "vmovaps (%%rcx, %9), %%ymm13\n"
+    "vmovups (%%rcx, %7, 2), %%ymm15\n"
+    "vmovups (%%rcx, %9), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm9\n"
 
-    "vmovaps 0x20(%1), %%ymm12\n"
-    "vmovaps 0x20(%%rcx), %%ymm13\n"
-    "vmovaps 0x20(%%rcx, %7, 1), %%ymm14\n"
+    "vmovups 0x20(%1), %%ymm12\n"
+    "vmovups 0x20(%%rcx), %%ymm13\n"
+    "vmovups 0x20(%%rcx, %7, 1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
-    "vmovaps 0x20(%%rcx, %7, 2), %%ymm15\n"
-    "vmovaps 0x20(%%rcx, %9), %%ymm13\n"
+    "vmovups 0x20(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x20(%%rcx, %9), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm7\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm10\n"
 
-    "vmovaps 0x40(%1), %%ymm12\n"
-    "vmovaps 0x40(%%rcx), %%ymm13\n"
-    "vmovaps 0x40(%%rcx, %7, 1), %%ymm14\n"
+    "vmovups 0x40(%1), %%ymm12\n"
+    "vmovups 0x40(%%rcx), %%ymm13\n"
+    "vmovups 0x40(%%rcx, %7, 1), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
-    "vmovaps 0x40(%%rcx, %7, 2), %%ymm15\n"
-    "vmovaps 0x40(%%rcx, %9), %%ymm13\n"
+    "vmovups 0x40(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x40(%%rcx, %9), %%ymm13\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm11\n"
 
@@ -1533,18 +1533,18 @@ void DepthwiseSW4x24Kernel(float *dst, const float *src, const float *weight, co
     "vminps %%ymm14, %%ymm11, %%ymm11\n"
 
     "0:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
-    "vmovaps %%ymm1, 0x20(%2)\n"
-    "vmovaps %%ymm2, 0x40(%2)\n"
-    "vmovaps %%ymm3, (%2, %1, 1)\n"
-    "vmovaps %%ymm4, 0x20(%2, %1, 1)\n"
-    "vmovaps %%ymm5, 0x40(%2, %1, 1)\n"
-    "vmovaps %%ymm6, (%2, %1, 2)\n"
-    "vmovaps %%ymm7, 0x20(%2, %1, 2)\n"
-    "vmovaps %%ymm8, 0x40(%2, %1, 2)\n"
-    "vmovaps %%ymm9, (%3)\n"  // dst+3
-    "vmovaps %%ymm10, 0x20(%3)\n"
-    "vmovaps %%ymm11, 0x40(%3)\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm3, (%2, %1, 1)\n"
+    "vmovups %%ymm4, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm5, 0x40(%2, %1, 1)\n"
+    "vmovups %%ymm6, (%2, %1, 2)\n"
+    "vmovups %%ymm7, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm8, 0x40(%2, %1, 2)\n"
+    "vmovups %%ymm9, (%3)\n"  // dst+3
+    "vmovups %%ymm10, 0x20(%3)\n"
+    "vmovups %%ymm11, 0x40(%3)\n"
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
@@ -1561,9 +1561,9 @@ void DepthwiseSW1x24Kernel(float *dst, const float *src, const float *weight, co
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
-    "vmovaps 0x40(%2), %%ymm2\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1573,9 +1573,9 @@ void DepthwiseSW1x24Kernel(float *dst, const float *src, const float *weight, co
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
     "2:\n"              // Loopw
-    "vmovaps (%%rcx), %%ymm4\n"
-    "vmovaps 0x20(%%rcx), %%ymm5\n"
-    "vmovaps 0x40(%%rcx), %%ymm6\n"
+    "vmovups (%%rcx), %%ymm4\n"
+    "vmovups 0x20(%%rcx), %%ymm5\n"
+    "vmovups 0x40(%%rcx), %%ymm6\n"
     // Weight data is loaded directly from memory instead of into registers for calculation.
     "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
     "vfmadd231ps 0x20(%1), %%ymm5, %%ymm1\n"
@@ -1615,9 +1615,9 @@ void DepthwiseSW1x24Kernel(float *dst, const float *src, const float *weight, co
     "vminps %%ymm14, %%ymm2, %%ymm2\n"
 
     "0:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
-    "vmovaps %%ymm1, 0x20(%2)\n"
-    "vmovaps %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm12", "%ymm14");
@@ -1636,15 +1636,15 @@ void DepthwiseSW4x16Kernel(float *dst, const float *src, const float *weight, co
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
     // We need to copy ymm0 to ymm3 to reduce IO time, but unfortunately I didn't find the corresponding instruction.
-    "vmovaps (%2), %%ymm3\n"
-    "vmovaps 0x20(%2), %%ymm4\n"
-    "vmovaps (%2), %%ymm6\n"
-    "vmovaps 0x20(%2), %%ymm7\n"
-    "vmovaps (%2), %%ymm9\n"
-    "vmovaps 0x20(%2), %%ymm10\n"
+    "vmovups (%2), %%ymm3\n"
+    "vmovups 0x20(%2), %%ymm4\n"
+    "vmovups (%2), %%ymm6\n"
+    "vmovups 0x20(%2), %%ymm7\n"
+    "vmovups (%2), %%ymm9\n"
+    "vmovups 0x20(%2), %%ymm10\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1659,21 +1659,21 @@ void DepthwiseSW4x16Kernel(float *dst, const float *src, const float *weight, co
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
     "2:\n"              // LoopW
-    "vmovaps (%1), %%ymm12\n"
-    "vmovaps (%%rcx), %%ymm13\n"
-    "vmovaps (%%rcx, %7, 1), %%ymm14\n"
-    "vmovaps (%%rcx, %7, 2), %%ymm15\n"
-    "vmovaps (%%rcx, %9), %%ymm2\n"
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rcx), %%ymm13\n"
+    "vmovups (%%rcx, %7, 1), %%ymm14\n"
+    "vmovups (%%rcx, %7, 2), %%ymm15\n"
+    "vmovups (%%rcx, %9), %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm2, %%ymm9\n"
 
-    "vmovaps 0x20(%1), %%ymm12\n"
-    "vmovaps 0x20(%%rcx), %%ymm13\n"
-    "vmovaps 0x20(%%rcx, %7, 1), %%ymm14\n"
-    "vmovaps 0x20(%%rcx, %7, 2), %%ymm15\n"
-    "vmovaps 0x20(%%rcx, %9), %%ymm2\n"
+    "vmovups 0x20(%1), %%ymm12\n"
+    "vmovups 0x20(%%rcx), %%ymm13\n"
+    "vmovups 0x20(%%rcx, %7, 1), %%ymm14\n"
+    "vmovups 0x20(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x20(%%rcx, %9), %%ymm2\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm7\n"
@@ -1724,14 +1724,14 @@ void DepthwiseSW4x16Kernel(float *dst, const float *src, const float *weight, co
     "vminps %%ymm14, %%ymm10, %%ymm10\n"
 
     "0:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
-    "vmovaps %%ymm1, 0x20(%2)\n"
-    "vmovaps %%ymm3, (%2, %1, 1)\n"
-    "vmovaps %%ymm4, 0x20(%2, %1, 1)\n"
-    "vmovaps %%ymm6, (%2, %1, 2)\n"
-    "vmovaps %%ymm7, 0x20(%2, %1, 2)\n"
-    "vmovaps %%ymm9, (%3)\n"  // dst+3
-    "vmovaps %%ymm10, 0x20(%3)\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm3, (%2, %1, 1)\n"
+    "vmovups %%ymm4, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm6, (%2, %1, 2)\n"
+    "vmovups %%ymm7, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm9, (%3)\n"  // dst+3
+    "vmovups %%ymm10, 0x20(%3)\n"
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3)
     : "%ecx", "%ymm0", "%ymm1", "%ymm3", "%ymm4", "%ymm6", "%ymm7", "%ymm9", "%ymm10", "%ymm12", "%ymm14");
@@ -1747,8 +1747,8 @@ void DepthwiseSW1x16Kernel(float *dst, const float *src, const float *weight, co
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
-    "vmovaps 0x20(%2), %%ymm1\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1757,8 +1757,8 @@ void DepthwiseSW1x16Kernel(float *dst, const float *src, const float *weight, co
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
     "2:\n"              // Loopw
-    "vmovaps (%%rcx), %%ymm4\n"
-    "vmovaps 0x20(%%rcx), %%ymm5\n"
+    "vmovups (%%rcx), %%ymm4\n"
+    "vmovups 0x20(%%rcx), %%ymm5\n"
     // Weight data is loaded directly from memory instead of into registers for calculation.
     "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
     "vfmadd231ps 0x20(%1), %%ymm5, %%ymm1\n"
@@ -1795,8 +1795,8 @@ void DepthwiseSW1x16Kernel(float *dst, const float *src, const float *weight, co
     "vminps %%ymm14, %%ymm1, %%ymm1\n"
 
     "0:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
-    "vmovaps %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst)
     : "%ecx", "%ymm0", "%ymm1", "%ymm12", "%ymm14");
@@ -1816,14 +1816,14 @@ void DepthwiseSW8x8Kernel(float *dst, const float *src, const float *weight, con
   asm volatile(
     "cmpq $0, %0\n"
     "je 0f\n"
-    "vmovaps (%0), %%ymm0\n"
-    "vmovaps (%0), %%ymm1\n"
-    "vmovaps (%0), %%ymm2\n"
-    "vmovaps (%0), %%ymm3\n"
-    "vmovaps (%0), %%ymm4\n"
-    "vmovaps (%0), %%ymm5\n"
-    "vmovaps (%0), %%ymm6\n"
-    "vmovaps (%0), %%ymm7\n"
+    "vmovups (%0), %%ymm0\n"
+    "vmovups (%0), %%ymm1\n"
+    "vmovups (%0), %%ymm2\n"
+    "vmovups (%0), %%ymm3\n"
+    "vmovups (%0), %%ymm4\n"
+    "vmovups (%0), %%ymm5\n"
+    "vmovups (%0), %%ymm6\n"
+    "vmovups (%0), %%ymm7\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1845,23 +1845,23 @@ void DepthwiseSW8x8Kernel(float *dst, const float *src, const float *weight, con
     "movq %0, %%rcx\n"  // src_h
     "LoopW:\n"
     "movq %%rcx, %%rax\n"
-    "vmovaps (%1), %%ymm12\n"
-    "vmovaps (%%rax), %%ymm13\n"
-    "vmovaps (%%rax, %6), %%ymm14\n"
-    "vmovaps (%%rax, %6, 2), %%ymm15\n"
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rax), %%ymm13\n"
+    "vmovups (%%rax, %6), %%ymm14\n"
+    "vmovups (%%rax, %6, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm2\n"
     "addq %7, %%rax\n"
-    "vmovaps (%%rax), %%ymm13\n"
-    "vmovaps (%%rax, %6), %%ymm14\n"
-    "vmovaps (%%rax, %6, 2), %%ymm15\n"
+    "vmovups (%%rax), %%ymm13\n"
+    "vmovups (%%rax, %6), %%ymm14\n"
+    "vmovups (%%rax, %6, 2), %%ymm15\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
     "vfmadd231ps %%ymm12, %%ymm15, %%ymm5\n"
     "addq %7, %%rax\n"
-    "vmovaps (%%rax), %%ymm13\n"
-    "vmovaps (%%rax, %6), %%ymm14\n"
+    "vmovups (%%rax), %%ymm13\n"
+    "vmovups (%%rax, %6), %%ymm14\n"
     "vfmadd231ps %%ymm12, %%ymm13, %%ymm6\n"
     "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
 
@@ -1910,14 +1910,14 @@ void DepthwiseSW8x8Kernel(float *dst, const float *src, const float *weight, con
     "vminps %%ymm14, %%ymm7, %%ymm7\n"
 
     "Write:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
-    "vmovaps %%ymm1, (%2, %1)\n"
-    "vmovaps %%ymm2, (%2, %1, 2)\n"
-    "vmovaps %%ymm3, (%3)\n"  // dst_3
-    "vmovaps %%ymm4, (%2, %1, 4)\n"
-    "vmovaps %%ymm5, (%4)\n"  // dst_5
-    "vmovaps %%ymm6, (%4, %1, 1)\n"
-    "vmovaps %%ymm7, (%4, %1, 2)\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, (%2, %1)\n"
+    "vmovups %%ymm2, (%2, %1, 2)\n"
+    "vmovups %%ymm3, (%3)\n"  // dst_3
+    "vmovups %%ymm4, (%2, %1, 4)\n"
+    "vmovups %%ymm5, (%4)\n"  // dst_5
+    "vmovups %%ymm6, (%4, %1, 1)\n"
+    "vmovups %%ymm7, (%4, %1, 2)\n"
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3), "r"(dst_5)
     : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm12", "%ymm14");
@@ -1933,7 +1933,7 @@ void DepthwiseSW1x8Kernel(float *dst, const float *src, const float *weight, con
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
-    "vmovaps (%2), %%ymm0\n"
+    "vmovups (%2), %%ymm0\n"
     "jmp 1f\n"
     "0:\n"
     "vxorps %%ymm0, %%ymm0, %%ymm0\n"
@@ -1941,7 +1941,7 @@ void DepthwiseSW1x8Kernel(float *dst, const float *src, const float *weight, con
     "movq %4, %%rsi\n"  // width
     "movq %0, %%rcx\n"  // src_h
     "2:\n"              // Loopw
-    "vmovaps (%%rcx), %%ymm4\n"
+    "vmovups (%%rcx), %%ymm4\n"
     // Weight data is loaded directly from memory instead of into registers for calculation.
     "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
     "addq $32, %1\n"
@@ -1975,7 +1975,7 @@ void DepthwiseSW1x8Kernel(float *dst, const float *src, const float *weight, con
     "vminps %%ymm14, %%ymm0, %%ymm0\n"
 
     "0:\n"
-    "vmovaps %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm0, (%2)\n"  // dst_0
     :
     : "a"(act_flag), "r"(oc_algin), "r"(dst)
     : "%ecx", "%ymm0", "%ymm12", "%ymm14");
