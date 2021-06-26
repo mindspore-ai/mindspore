@@ -56,6 +56,10 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(context);
   MS_LOG(DEBUG) << "Specialize topmost function graph: " << context->func_graph()->ToString();
+  if (top_context_ == nullptr) {
+    top_context_ = context;
+    MS_LOG(INFO) << "Specialize set top func graph context: " << context->ToString();
+  }
   return SpecializeFuncGraph(fg, context);
 }
 
@@ -108,16 +112,11 @@ FuncGraphSpecializer::FuncGraphSpecializer(ProgramSpecializer *const s, const Fu
 
 AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  FuncGraphPtr fg = node->func_graph();
-
   if (node->isa<ValueNode>()) {
     return node;
   }
-  std::shared_ptr<FuncGraphSpecializer> specializer = shared_from_this();
-  while (fg != nullptr && fg != specializer->func_graph_) {
-    specializer = specializer->parent_;
-    MS_EXCEPTION_IF_NULL(specializer);
-  }
+  std::shared_ptr<FuncGraphSpecializer> specializer = GetTopSpecializer(node);
+
   // If had replicated, just return that.
   auto iter = specializer->repl_node_->find(node);
   if (iter != specializer->repl_node_->end()) {
@@ -169,20 +168,47 @@ void FuncGraphSpecializer::UpdateNewCNodeInputs(const AnfNodePtr &node, const An
 }
 
 AnfNodePtr FuncGraphSpecializer::GetReplicatedNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  FuncGraphPtr fg = node->func_graph();
-
-  std::shared_ptr<FuncGraphSpecializer> specializer = shared_from_this();
-  while (fg != nullptr && fg != specializer->func_graph_) {
-    specializer = specializer->parent_;
-  }
-
+  std::shared_ptr<FuncGraphSpecializer> specializer = GetTopSpecializer(node);
   MS_EXCEPTION_IF_NULL(specializer->repl_node_);
   auto iter = specializer->repl_node_->find(node);
   if (iter != specializer->repl_node_->end()) {
     return iter->second;
   }
   return node;
+}
+
+// Return itself if node's ValueNode as top,
+// return the top func graph specializer as top if node's forward Parameter,
+// or, return the top parent specializer as top.
+std::shared_ptr<FuncGraphSpecializer> FuncGraphSpecializer::GetTopSpecializer(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  FuncGraphPtr fg = node->func_graph();
+  if (fg == nullptr) {  // If ValueNode, return current specializer.
+    MS_LOG(DEBUG) << "Node's a ValueNode, node: " << node->DebugString();
+    return shared_from_this();
+  }
+  std::shared_ptr<FuncGraphSpecializer> specializer = shared_from_this();
+  while (fg != specializer->func_graph_) {
+    if (specializer->parent_ == nullptr && node->isa<Parameter>()) {
+      // If `parent_` is null and forwarded `node` is a Parameter, we'll try to use top func graph as parent.
+      MS_EXCEPTION_IF_NULL(specializer_->top_context());
+      if (specializer_->top_context()->func_graph() == fg) {  // `fg` is top func graph.
+        specializer = specializer_->GetFuncGraphSpecializer(specializer_->top_context());
+        MS_LOG(INFO) << "Used top func graph specializer as parent for " << func_graph_->ToString()
+                     << ", node: " << node->DebugString() << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+        MS_EXCEPTION_IF_NULL(specializer);
+        break;
+      }
+    } else {
+      specializer = specializer->parent_;
+    }
+    if (specializer == nullptr) {
+      MS_LOG(EXCEPTION) << "`specializer` should not be null, node: " << node->DebugString()
+                        << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info()) << ".\n"
+                        << func_graph_->ToString() << " has no parent context? At least not " << fg->ToString();
+    }
+  }
+  return specializer;
 }
 
 void FuncGraphSpecializer::Run() {
@@ -205,14 +231,24 @@ void FuncGraphSpecializer::FirstPass() {
       continue;
     }
     if (node->func_graph() != func_graph_) {
-      if (parent_ == nullptr) {
-        MS_LOG(EXCEPTION) << "Parent must not null NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+      std::shared_ptr<FuncGraphSpecializer> parent = nullptr;
+      if (parent_ != nullptr) {
+        parent = parent_;
+      } else if (specializer_->top_context()->func_graph() == node->func_graph() && node->isa<Parameter>()) {
+        // If `parent_` is null and forwarded `node` is a Parameter, we'll try to use top func graph as parent.
+        parent = specializer_->GetFuncGraphSpecializer(specializer_->top_context());
+        MS_LOG(INFO) << "Used top func graph specializer as parent for " << func_graph_->ToString()
+                     << ", node: " << node->DebugString() << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
       }
-      parent_->AddTodoItem(node);
-      parent_->FirstPass();
-      AnfNodePtr new_node = parent_->GetReplicatedNode(node);
+      if (parent == nullptr) {
+        MS_LOG(EXCEPTION) << "Parent must not null, node: " << node->DebugString()
+                          << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+      }
+      parent->AddTodoItem(node);
+      parent->FirstPass();
+      AnfNodePtr new_node = parent->GetReplicatedNode(node);
       if (node->isa<CNode>()) {
-        parent_->ProcessCNode(new_node->cast<CNodePtr>());
+        parent->ProcessCNode(new_node->cast<CNodePtr>());
       }
       continue;
     }

@@ -1043,7 +1043,9 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
 
     std::string name = refkey->tag();
     MS_EXCEPTION_IF_NULL(node_conf->node());
-    MS_EXCEPTION_IF_NULL(node_conf->node()->func_graph());
+    if (node_conf->node()->func_graph() == nullptr) {
+      MS_LOG(EXCEPTION) << "Should not evaluate a ValueNode, node: " << node_conf->node()->DebugString();
+    }
     const auto &manager = node_conf->node()->func_graph()->manager();
     auto node = FindParameterNodeByString(manager, name);
     if (node == nullptr) {

@@ -45,7 +45,7 @@ class FuncGraphSpecializer;
 // Specialize a func graph using analyzed abstract values.
 class ProgramSpecializer {
  public:
-  explicit ProgramSpecializer(const std::shared_ptr<AnalysisEngine> &engine) : engine_(engine) {
+  explicit ProgramSpecializer(const std::shared_ptr<AnalysisEngine> &engine) : engine_(engine), top_context_(nullptr) {
     mng_ = engine_->func_graph_manager();
   }
   ~ProgramSpecializer() = default;
@@ -60,12 +60,15 @@ class ProgramSpecializer {
 
   std::shared_ptr<AnalysisEngine> engine() { return engine_; }
 
+  AnalysisContextPtr top_context() { return top_context_; }
+
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   std::unordered_set<AnfNodePtr> seen_;
   FuncGraphManagerPtr mng_;
   std::unordered_map<AnalysisContextPtr, std::shared_ptr<FuncGraphSpecializer>, ContextHasher, ContextEqual>
     specializations_;
+  AnalysisContextPtr top_context_;
 };
 
 class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecializer> {
@@ -77,6 +80,8 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   }
   void Run();
   FuncGraphPtr specialized_func_graph() { return specialized_func_graph_; }
+
+  std::shared_ptr<FuncGraphSpecializer> GetTopSpecializer(const AnfNodePtr &node);
 
  private:
   ProgramSpecializer *specializer_;
