@@ -419,8 +419,9 @@ const BaseRef GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::DefinePattern(
   VarPtr x1 = std::make_shared<Var>();
   VarPtr x2 = std::make_shared<Var>();
   VarPtr x3 = std::make_shared<Var>();
+  VarPtr x4 = std::make_shared<Var>();
   VectorRef sparse_softmax_cross_entropy_with_logits_grad({prim::kPrimSparseSoftmaxCrossEntropyWithLogits, x1, x2});
-  VectorRef sparse_softmax_cross_entropy_with_logits({prim::kPrimSparseSoftmaxCrossEntropyWithLogits, x1, x2});
+  VectorRef sparse_softmax_cross_entropy_with_logits({prim::kPrimSparseSoftmaxCrossEntropyWithLogits, x1, x4});
   VectorRef depend(
     {prim::kPrimDepend, sparse_softmax_cross_entropy_with_logits_grad, sparse_softmax_cross_entropy_with_logits});
   return VectorRef({prim::kPrimMul, depend, x3});
@@ -518,19 +519,21 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
-  if (AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse_softmax_node) &&
-      AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad)) {
-    return nullptr;
-  }
-
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node, true);
   softmax_node = CreateSoftmaxCrossEntropyWithLogits(graph, sparse_softmax_node, one_hot_node);
 
   std::vector<AnfNodePtr> softmax_node_outputs;
   CreateMultipleOutputsOfAnfNode(graph, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
-  auto reduce_node = CreateReduceMean(graph, sparse_softmax_node, softmax_node_outputs[0], true);
-  return reduce_node;
+  // Both of the forward loss function and the backward loss function from cangjie will match this pattern,
+  // the true branch is for the backward loss function, and the false branch is for the other one.
+  if (AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse_softmax_node) &&
+      AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad)) {
+    return softmax_node_outputs[1];
+  } else {
+    auto reduce_node = CreateReduceMean(graph, sparse_softmax_node, softmax_node_outputs[0], true);
+    return reduce_node;
+  }
 }
 
 const BaseRef PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::DefinePattern() const {
