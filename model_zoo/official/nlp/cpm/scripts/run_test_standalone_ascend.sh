@@ -71,7 +71,7 @@ do
   env > env.log
   python ../../test.py  --dev_dataset $DEV_DATASET --dev_data_path $DEV_LABEL \
        --test_dataset $TEST_DATASET --test_data_path $TEST_LABEL \
-       --ckpt_path $MODEL_CKPT  --ckpt_partition $CKPT_NUMBER \
+       --ckpt_path_doc $MODEL_CKPT  --ckpt_partition $CKPT_NUMBER \
        --ckpt_epoch $ckptepoch --result_path $result_path \
        --distribute False --has_train_strategy True> log_cpm.log 2>&1
 

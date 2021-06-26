@@ -59,7 +59,7 @@ do
     export DEVICE_ID=$i
     echo "start eval for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python ../../eval.py  --dataset $DATASET --data_path $LABEL --ckpt_path $MODEL_CKPT  --ckpt_partition $CKPT_NUMBER --distribute True --has_train_strategy True> log_cpm.log 2>&1 &
+    python ../../eval.py  --dataset $DATASET --data_path $LABEL --ckpt_path_doc $MODEL_CKPT  --ckpt_partition $CKPT_NUMBER --distribute True --has_train_strategy True> log_cpm.log 2>&1 &
     cd ${current_exec_path}
 done
 cd ${current_exec_path}

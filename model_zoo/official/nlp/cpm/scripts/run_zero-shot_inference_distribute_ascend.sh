@@ -58,7 +58,7 @@ do
     export DEVICE_ID=$i
     echo "start eval for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python ../../zero-shot.py  --dataset $DATASET --truth_labels_path $LABEL --ckpt_path $MODEL_CKPT  --distribute True --has_train_strategy False> log_cpm.log 2>&1 &
+    python ../../zero-shot.py  --dataset $DATASET --truth_labels_path $LABEL --ckpt_path_doc $MODEL_CKPT  --distribute True --has_train_strategy False> log_cpm.log 2>&1 &
     cd ${current_exec_path}
 done
 cd ${current_exec_path}

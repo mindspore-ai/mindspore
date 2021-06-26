@@ -262,8 +262,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.multi_machine:
-        print("Training on multiple machines")
+        print("Training on multiple machines.")
         train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_multi_machine)
     else:
-        print("Training on single machine and using 8 cards.")
+        print("Training on single machine.")
         train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_single_machine)

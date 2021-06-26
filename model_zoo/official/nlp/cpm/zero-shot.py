@@ -271,6 +271,9 @@ if __name__ == '__main__':
                         help='Whether the loaded checkpoints have distributed training strategy.')
     parser.add_argument('--ckpt_partition', type=int, default=1, help="Number of checkpoint partition.")
     args_parse = parser.parse_args()
+    if args_parse.distribute:
+        set_parallel_env()
+
     ckpt_file_list_test = None
     if args_parse.has_train_strategy:
         # Get the checkpoint with train strategy.
@@ -281,7 +284,6 @@ if __name__ == '__main__':
         ckpt_file_list_test = create_ckpt_file_list(args_parse)
         print("Get checkpoint file lists++++", ckpt_file_list_test, flush=True)
     if args_parse.distribute:
-        set_parallel_env()
         print("Staring evaluating on 2 devices with model parallel.")
         run_eval(args_parse, config_zero_shot_distrubute, ckpt_file_list_test)
     else:
