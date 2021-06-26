@@ -140,13 +140,13 @@ class Compose:
     @staticmethod
     def reduce(operations):
         """
-        Wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations
+        Wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations.
 
         Args:
-            operations (list): list of tensor operations
+            operations (list): list of tensor operations.
 
         Returns:
-            list, the reduced list of operations
+            list, the reduced list of operations.
         """
         if len(operations) == 1:
             if str(operations).find("c_transform") >= 0 or isinstance(operations[0], TensorOperation):

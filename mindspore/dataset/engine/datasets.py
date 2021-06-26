@@ -658,7 +658,7 @@ class Dataset:
                 option could be beneficial if the Python operation is computational heavy (default=False).
             cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
                 (default=None, which means no cache is used).
-            callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
+            callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
 
 
         Returns:
@@ -2566,7 +2566,7 @@ class MapDataset(Dataset):
             option could be beneficial if the Python operation is computational heavy (default=False).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
-        callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None)
+        callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None)
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True (default 16 MB).
 

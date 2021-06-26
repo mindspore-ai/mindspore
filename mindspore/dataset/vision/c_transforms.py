@@ -231,7 +231,7 @@ class CutMixBatch(ImageTensorOperation):
 
     Args:
         image_batch_format (Image Batch Format): The method of padding. Can be any of
-            [ImageBatchFormat.NHWC, ImageBatchFormat.NCHW]
+            [ImageBatchFormat.NHWC, ImageBatchFormat.NCHW].
         alpha (float, optional): hyperparameter of beta distribution (default = 1.0).
         prob (float, optional): The probability by which CutMix is applied to each image (default = 1.0).
 
@@ -591,7 +591,7 @@ class RandomAffine(ImageTensorOperation):
         TypeError: If degrees is not a number or a list or a tuple.
             If degrees is a list or tuple, its length is not 2.
         TypeError: If translate is specified but is not list or a tuple of length 2 or 4.
-        TypeError: If scale is not a list or tuple of length 2.''
+        TypeError: If scale is not a list or tuple of length 2.
         TypeError: If shear is not a list or tuple of length 2 or 4.
         TypeError: If fill_value is not a single integer or a 3-tuple.
 
