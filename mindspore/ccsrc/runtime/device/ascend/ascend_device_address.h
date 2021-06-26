@@ -39,8 +39,8 @@ class AscendDeviceAddress : public DeviceAddress {
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id)
       : DeviceAddress(ptr, size, format, type_id) {}
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
-                               const AnfNodePtr &node, size_t out_index)
-      : DeviceAddress(ptr, size, format, type_id, node, out_index) {}
+                               const KernelWithIndex &node_index)
+      : DeviceAddress(ptr, size, format, type_id, node_index) {}
   ~AscendDeviceAddress() override;
   bool SyncDeviceToHost(size_t size, void *host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;

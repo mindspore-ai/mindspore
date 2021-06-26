@@ -31,9 +31,8 @@ class CPUDeviceAddress : public DeviceAddress {
   CPUDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : DeviceAddress(ptr, size, format, type_id) {}
 
-  CPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const AnfNodePtr &node,
-                   size_t out_index)
-      : DeviceAddress(ptr, size, format, type_id, node, out_index) {}
+  CPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const KernelWithIndex &node_index)
+      : DeviceAddress(ptr, size, format, type_id, node_index) {}
 
   ~CPUDeviceAddress() override = default;
 

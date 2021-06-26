@@ -34,9 +34,8 @@ class GPUDeviceAddress : public DeviceAddress {
   GPUDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
   GPUDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : DeviceAddress(ptr, size, format, type_id) {}
-  GPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const AnfNodePtr &node,
-                   size_t out_index)
-      : DeviceAddress(ptr, size, format, type_id, node, out_index) {}
+  GPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const KernelWithIndex &node_index)
+      : DeviceAddress(ptr, size, format, type_id, node_index) {}
   ~GPUDeviceAddress() override;
 
   bool SyncDeviceToHost(size_t size, void *host_ptr) const override;

@@ -66,9 +66,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   explicit DeviceAddress(void *ptr, size_t size) : ptr_(ptr), size_(size) {}
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
       : ptr_(ptr), size_(size), format_(format), type_id_(type_id) {}
-  explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const AnfNodePtr &node,
-                         size_t out_index)
-      : ptr_(ptr), size_(size), format_(format), type_id_(type_id), node_index_({node, out_index}) {}
+  explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
+                         const KernelWithIndex &node_index)
+      : ptr_(ptr), size_(size), format_(format), type_id_(type_id), node_index_(node_index) {}
   virtual ~DeviceAddress() { ptr_ = nullptr; }
   const void *GetPtr() const { return ptr_; }
   size_t GetSize() const { return size_; }
