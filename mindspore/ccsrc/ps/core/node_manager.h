@@ -108,6 +108,9 @@ class NodeManager {
   // will re-register.
   void ResetMetadata();
 
+  // Recovery currently does not support worker or server0 node downtime.
+  bool IsWorkerOrServer0();
+
  private:
   std::mutex node_mutex_;
   std::mutex cluster_mutex_;

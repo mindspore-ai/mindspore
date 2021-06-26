@@ -135,7 +135,10 @@ bool HttpServer::Start(bool is_detach) {
   MS_LOG(INFO) << "Start http server!";
   for (size_t i = 0; i < thread_num_; i++) {
     auto http_request_handler = std::make_shared<HttpRequestHandler>();
-    http_request_handler->Initialize(fd_, request_handlers_);
+    if (!http_request_handler->Initialize(fd_, request_handlers_)) {
+      MS_LOG(ERROR) << "Http initialize failed.";
+      return false;
+    }
     http_request_handlers.push_back(http_request_handler);
     auto thread = std::make_shared<std::thread>(&HttpRequestHandler::Run, http_request_handler);
     if (is_detach) {
@@ -147,7 +150,7 @@ bool HttpServer::Start(bool is_detach) {
 }
 
 bool HttpServer::Wait() {
-  for (size_t i = 0; i < thread_num_; i++) {
+  for (size_t i = 0; i < worker_threads_.size(); i++) {
     worker_threads_[i]->join();
     worker_threads_[i].reset();
   }
@@ -159,7 +162,7 @@ bool HttpServer::Stop() {
   bool result = true;
 
   if (!is_stop_.load()) {
-    for (size_t i = 0; i < thread_num_; i++) {
+    for (size_t i = 0; i < http_request_handlers.size(); i++) {
       bool res = http_request_handlers[i]->Stop();
       if (res == false) {
         result = false;

@@ -57,7 +57,7 @@ TaskExecutor::TaskExecutor(size_t thread_num, size_t max_task_num, size_t submit
   }
   notify_thread_ = std::thread([this]() {
     // If there is no idle thread, wait until the working thread is available.
-    while (true) {
+    while (running_) {
       {
         std::unique_lock<std::mutex> lock(mtx_);
         if (idle_thread_num_ > 0 && task_num_ > 0) {
@@ -70,7 +70,6 @@ TaskExecutor::TaskExecutor(size_t thread_num, size_t max_task_num, size_t submit
       std::this_thread::sleep_for(std::chrono::milliseconds(kSubmitTaskIntervalInMs));
     }
   });
-  notify_thread_.detach();
 }
 
 TaskExecutor::~TaskExecutor() {
@@ -82,6 +81,7 @@ TaskExecutor::~TaskExecutor() {
   for (auto &t : working_threads_) {
     t.join();
   }
+  notify_thread_.join();
 }
 }  // namespace core
 }  // namespace ps

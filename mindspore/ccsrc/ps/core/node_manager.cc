@@ -244,6 +244,22 @@ void NodeManager::ResetMetadata() {
   next_server_rank_id_ = -1;
 }
 
+bool NodeManager::IsWorkerOrServer0() {
+  bool res = std::any_of(registered_nodes_info_.begin(), registered_nodes_info_.end(), [](auto item) {
+    if (item.second.node_role_ == NodeRole::WORKER && item.second.is_alive == false) {
+      return true;
+    }
+
+    if (item.second.node_role_ == NodeRole::SERVER && item.second.is_alive == false && item.second.rank_id_ == 0) {
+      return true;
+    }
+
+    return false;
+  });
+
+  return res;
+}
+
 void NodeManager::set_total_node_num(const int32_t &node_num) { total_node_num_ = node_num; }
 
 const int32_t &NodeManager::total_node_num() { return total_node_num_; }

@@ -37,10 +37,19 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
         --num;
         if (header_index_ == kHeaderLen - 1) {
           message_header_.message_proto_ = *reinterpret_cast<const Protos *>(header_);
+          if (message_header_.message_proto_ != Protos::RAW && message_header_.message_proto_ != Protos::FLATBUFFERS &&
+              message_header_.message_proto_ != Protos::PROTOBUF) {
+            MS_LOG(WARNING) << "The proto:" << message_header_.message_proto_ << " is illegal!";
+            return;
+          }
           message_header_.message_meta_length_ =
             *reinterpret_cast<const uint32_t *>(header_ + sizeof(message_header_.message_proto_));
           message_header_.message_length_ = *reinterpret_cast<const size_t *>(
             header_ + sizeof(message_header_.message_proto_) + sizeof(message_header_.message_meta_length_));
+          if (message_header_.message_length_ >= UINT32_MAX) {
+            MS_LOG(WARNING) << "The message len:" << message_header_.message_length_ << " is too long.";
+            return;
+          }
           remaining_length_ = message_header_.message_length_;
           message_buffer_ = std::make_unique<unsigned char[]>(remaining_length_);
           buffer_data += (i + 1);
