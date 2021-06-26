@@ -172,7 +172,8 @@ else()
     install(FILES ${TOP_DIR}/mindspore/lite/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
 endif()
-
+install(DIRECTORY ${flatbuffers_INC} DESTINATION ${RUNTIME_INC_DIR}/third_party/
+        COMPONENT ${RUNTIME_COMPONENT_NAME})
 if(PLATFORM_ARM64)
     if(SUPPORT_NPU)
         install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
@@ -193,6 +194,12 @@ if(PLATFORM_ARM64)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE
                 PATTERN "*registry.h" EXCLUDE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/schema/model_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_types_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -240,6 +247,12 @@ elseif(PLATFORM_ARM32)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE
                 PATTERN "*registry.h" EXCLUDE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/schema/model_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_types_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -298,8 +311,6 @@ elseif(WIN32)
         endif()
     endif()
     install(FILES ${LIB_LIST} DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(DIRECTORY ${flatbuffers_INC} DESTINATION ${RUNTIME_INC_DIR}/third_party/
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "*registry.h" EXCLUDE)
