@@ -625,13 +625,26 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         node_id_map_[key] = meta_graphT->allTensors.size();
         meta_graphT->allTensors.emplace_back(ms_tensor);
       } else {
-        if (elements.size() == 1) {
-          key = std::make_pair(cnode, 0);
-          node_id_map_[key] = meta_graphT->allTensors.size();
-          ms_tensor->name = cnode_name;
+        auto val_ptr = cnode->GetAttr("outputs_names");
+        if (val_ptr != nullptr) {
+          auto outputs_names = GetValue<std::vector<std::string>>(val_ptr);
+          if (elements.size() == 1) {
+            key = std::make_pair(cnode, 0);
+            node_id_map_[key] = meta_graphT->allTensors.size();
+            ms_tensor->name = outputs_names[0];
+          } else {
+            node_id_map_[key] = meta_graphT->allTensors.size();
+            ms_tensor->name = outputs_names[i];
+          }
         } else {
-          node_id_map_[key] = meta_graphT->allTensors.size();
-          ms_tensor->name = cnode_name + "_o:" + std::to_string(i);
+          if (elements.size() == 1) {
+            key = std::make_pair(cnode, 0);
+            node_id_map_[key] = meta_graphT->allTensors.size();
+            ms_tensor->name = cnode_name;
+          } else {
+            node_id_map_[key] = meta_graphT->allTensors.size();
+            ms_tensor->name = cnode_name + "_o:" + std::to_string(i);
+          }
         }
 
         if (!utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
@@ -663,7 +676,13 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
     }
     ms_tensor->dataType = type;
     ms_tensor->nodeType = NodeType_CNode;
-    ms_tensor->name = cnode_name;
+    auto val_ptr = cnode->GetAttr("outputs_names");
+    if (val_ptr != nullptr) {
+      auto outputs_names = GetValue<std::vector<std::string>>(val_ptr);
+      ms_tensor->name = outputs_names[0];
+    } else {
+      ms_tensor->name = cnode_name;
+    }
     fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
 
     auto key = std::make_pair(cnode, 0);
