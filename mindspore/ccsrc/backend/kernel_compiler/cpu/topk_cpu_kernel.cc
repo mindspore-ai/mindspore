@@ -71,7 +71,7 @@ void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   inner_size_ = x_shape_[x_shape_.size() - 1];
   sorted_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "sorted");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
 bool TopKCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,

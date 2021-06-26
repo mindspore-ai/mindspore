@@ -49,7 +49,7 @@ void UpdateShape(size_t miss_count, const CNodePtr &node_) {
   std::vector<TypeId> dtypes;
   size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
   for (size_t i = 0; i < output_num; i++) {
-    dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
+    dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
   }
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetOutputInferShape(node_, 0), out_shape, out_shape, out_shape},
                                       node_.get());
@@ -63,7 +63,7 @@ void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Dimension of HashMap must be 2, (n, 4)";
   }
   hashmap_length_ = hashmap_shape[0];
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
 bool MapCacheIdxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   paddings_ = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
   shape_size_ = input_shape.size();

@@ -26,7 +26,7 @@ void ResizeNearestNeighborCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   std::vector<int64_t> output_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   batch_size_ = input_shape[0];
   channel_ = input_shape[1];
   in_height_ = input_shape[2];

@@ -47,11 +47,7 @@ void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
   std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
   (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  dtype_ = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
-  if (dtype_ == kTypeUnknown) {
-    dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-  }
-
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t ones = multiples_.size() - x_shape_.size();
   if (ones > 0) {
     for (size_t i = 0; i < ones; ++i) {

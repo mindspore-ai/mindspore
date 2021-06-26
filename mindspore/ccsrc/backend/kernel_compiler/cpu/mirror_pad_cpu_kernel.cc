@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (mode == "REFLECT") {
     mode_ = 0;
   } else if (mode == "SYMMETRIC") {

@@ -274,7 +274,7 @@ void ArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   if (dtype_ != AnfAlgo::GetInputDeviceDataType(kernel_node, 1)) {
     MS_LOG(EXCEPTION) << "Input0 and input1 must has the same data type";
   }
-  target_dtype_ = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
+  target_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
 }
 
 template <typename T>

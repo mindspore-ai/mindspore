@@ -38,7 +38,7 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     }
     batch_size_ *= input_x_shape[i];
   }
-  input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_x_dtype_size_map.find(input_x_dtype_) == input_x_dtype_size_map.end()) {
     MS_LOG(EXCEPTION) << "Unsupported input_x dtype!";
   }

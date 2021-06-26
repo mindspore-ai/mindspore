@@ -23,7 +23,7 @@ namespace kernel {
 void PadAndShiftCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
-  input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   type_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   batch_size_ = 1;
@@ -83,7 +83,7 @@ void PadAndShiftCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   auto output_nums = AnfAlgo::GetOutputTensorNum(node_);
   for (size_t i = 0; i < output_nums; i++) {
-    dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
+    dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
   }
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
 }
