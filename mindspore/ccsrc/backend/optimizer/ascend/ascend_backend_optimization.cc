@@ -204,6 +204,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
 }
 }  // namespace
+
 void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
@@ -342,6 +343,20 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   if (save_graphs) {
     DumpIR("hwopt_d_ir_fusion_after.ir", kernel_graph);
   }
+}
+
+void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  // data layout optimization
+  AscendDataLayout(kernel_graph);
+  // mixed precision optimization
+  AscendMixPrecision(kernel_graph);
+  // other optimization
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto other_pm = std::make_shared<PassManager>("other_pm");
+  other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
+  optimizer->AddPassManager(other_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
 }
 
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {

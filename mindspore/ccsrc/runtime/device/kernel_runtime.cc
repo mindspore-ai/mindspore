@@ -18,6 +18,7 @@
 #include <functional>
 #include <utility>
 #include <vector>
+#include <set>
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
@@ -187,7 +188,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       }
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
       auto device_address =
-        CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, item, index);
+        CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
       MS_EXCEPTION_IF_NULL(device_address);
       MS_EXCEPTION_IF_NULL(mem_manager_);
       auto ret = mem_manager_->MallocMemFromMemPool(device_address, tensor_size);
@@ -220,7 +221,7 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
     }
     std::string output_format = AnfAlgo::GetOutputFormat(kernel, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
-    auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type, kernel, i);
+    auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type, {kernel, i});
     device_address->set_host_shape(trans::GetRuntimePaddingShape(kernel, i));
     MS_EXCEPTION_IF_NULL(device_address);
     auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
@@ -358,14 +359,14 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
         const auto &address = ps::ps_cache_instance.QueryHashTableAddr(param_name);
         MS_EXCEPTION_IF_NULL(address.addr);
         device_address = CreateDeviceAddress(address.addr, address.size, AnfAlgo::GetOutputFormat(item, index),
-                                             output_type_id, item, index);
+                                             output_type_id, {item, index});
         AnfAlgo::SetOutputAddr(device_address, index, item.get());
         continue;
       }
 #endif
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
       device_address =
-        CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, item, index);
+        CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
       MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
                    << " node:" << item->fullname_with_scope() << " index: " << index;
       if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph->graph_id()) == nullptr) {
@@ -536,7 +537,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
   for (size_t j = 0; j < align_size_list.size(); ++j) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, j);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, j);
-    auto address = CreateDeviceAddress(nullptr, output_sizes[j], output_format, output_type, node, j);
+    auto address = CreateDeviceAddress(nullptr, output_sizes[j], output_format, output_type, {node, j});
     MS_EXCEPTION_IF_NULL(address);
     if (output_ptr == nullptr) {
       output_ptr = mem_manager_->MallocOutputMem(node, 0, type, total_size, address, true);
@@ -572,7 +573,7 @@ DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node,
   }
   std::string output_format = AnfAlgo::GetOutputFormat(anf_node, index);
   auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, index);
-  auto address = CreateDeviceAddress(nullptr, output_sizes[index], output_format, output_type, anf_node, index);
+  auto address = CreateDeviceAddress(nullptr, output_sizes[index], output_format, output_type, {anf_node, index});
   AnfAlgo::SetOutputAddr(address, index, anf_node.get());
   return address;
 }
@@ -665,7 +666,7 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
     }
     std::string output_format = AnfAlgo::GetOutputFormat(node, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
-    auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type, node, i);
+    auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type, {node, i});
     MS_EXCEPTION_IF_NULL(device_address);
     uint8_t *ptr = mem_manager_->MallocOutputMem(node, i, type, output_sizes[i], device_address, false);
     MS_EXCEPTION_IF_NULL(ptr);
@@ -706,7 +707,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     }
     auto output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
     DeviceAddressPtr address =
-      CreateDeviceAddress(nullptr, node_size, output_format, output_type_id, value_node, output_idx);
+      CreateDeviceAddress(nullptr, node_size, output_format, output_type_id, {value_node, output_idx});
     MS_EXCEPTION_IF_NULL(address);
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
         !mem_manager_->MallocMemFromMemPool(address, node_size)) {

@@ -614,12 +614,9 @@ void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_
 void AscendSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) { Execute(kernel_graph, true); }
 
 void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start";
-  // data layout optimization
-  opt::AscendDataLayout(kernel_graph);
-  // mixed precision optimization
-  opt::AscendMixPrecision(kernel_graph);
-  MS_LOG(INFO) << "Finish";
+  MS_LOG(INFO) << "HardwareOptimize Start";
+  opt::RunOpAscendBackendOptimization(kernel_graph);
+  MS_LOG(INFO) << "HardwareOptimize Finish";
 }
 
 bool AscendSession::GraphCacheExist(const GraphInfo &graph_info) const {

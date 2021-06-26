@@ -212,8 +212,8 @@ DeviceAddressPtr GPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
 }
 
 DeviceAddressPtr GPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                                       TypeId type_id, const AnfNodePtr &node, size_t out_index) {
-  return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id, node, out_index);
+                                                       TypeId type_id, const KernelWithIndex &node_index) {
+  return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id, node_index);
 }
 
 bool GPUKernelRuntime::InitDevice() {

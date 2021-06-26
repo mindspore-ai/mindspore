@@ -115,7 +115,7 @@ class KernelRuntime {
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) = 0;
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const AnfNodePtr &node, size_t out_index) = 0;
+                                               TypeId type_id, const KernelWithIndex &node_index) = 0;
   virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
   virtual bool KernelMemNotReuse(const AnfNodePtr &node);
 
