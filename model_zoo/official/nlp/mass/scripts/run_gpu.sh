@@ -18,7 +18,7 @@ export DEVICE_ID=0
 export RANK_ID=0
 export RANK_SIZE=1
 
-options=`getopt -u -o ht:n:i::o:v:m: -l help,task:,device_num:,device_id:,config:,output:,vocab:,metric: -- "$@"`
+options=`getopt -u -o ht:n:i::o:v:m: -l help,task:,device_num:,device_id:,output:,vocab:,metric: -- "$@"`
 eval set -- "$options"
 echo $options
 

@@ -45,7 +45,7 @@ do
     mkdir ./LOG$i
     cp  *.py ./LOG$i
     cp  *.yaml ./LOG$i
-    cp  ./src ./LOG$i
+    cp -r ./src ./LOG$i
     cd ./LOG$i || exit
     echo "start training for rank $i, device $DEVICE_ID"
 

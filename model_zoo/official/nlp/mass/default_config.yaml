@@ -71,8 +71,8 @@ file_name: "mass"
 file_format: "AIR"
 vocab_file: ""
 result_path: "./preprocess_Result/"
-source_id_folder: ""
-target_id_folder: ""
+source_id_folder: "./preprocess_Result/00_source_eos_ids"
+target_id_folder: "./preprocess_Result/target_eos_ids"
 result_dir: "./result_Files"
 
 ---

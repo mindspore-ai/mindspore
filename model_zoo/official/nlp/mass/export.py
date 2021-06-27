@@ -26,12 +26,17 @@ from src.model_utils.config import config
 from src.transformer.transformer_for_infer import TransformerInferModel
 
 
+def get_config():
+    config.compute_type = mstype.float16 if config.compute_type == "float16" else mstype.float32
+    config.dtype = mstype.float16 if config.dtype == "float16" else mstype.float32
+
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
 if __name__ == '__main__':
     vocab = Dictionary.load_from_persisted_dict(config.vocab_file)
+    get_config()
     dec_len = config.max_decode_length
 
     tfm_model = TransformerInferModel(config=config, use_one_hot_embeddings=False)
