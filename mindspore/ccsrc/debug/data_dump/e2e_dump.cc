@@ -76,6 +76,21 @@ void E2eDump::DumpOutput(const session::KernelGraph *graph, const std::string &d
   }
 }
 
+void E2eDump::DumpOutputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger) {
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!dump_json_parser.OutputNeedDump()) {
+    return;
+  }
+  bool trans_flag = dump_json_parser.trans_flag();
+  MS_EXCEPTION_IF_NULL(node);
+  std::string kernel_name = node->fullname_with_scope();
+  if (!dump_json_parser.NeedDump(kernel_name)) {
+    return;
+  }
+  DumpJsonParser::GetInstance().MatchKernel(kernel_name);
+  DumpOutputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
+}
+
 void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                              std::string *kernel_name, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(node);
@@ -126,6 +141,21 @@ void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &du
     DumpJsonParser::GetInstance().MatchKernel(kernel_name);
     DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
   }
+}
+
+void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger) {
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!dump_json_parser.InputNeedDump()) {
+    return;
+  }
+  bool trans_flag = dump_json_parser.trans_flag();
+  MS_EXCEPTION_IF_NULL(node);
+  std::string kernel_name = node->fullname_with_scope();
+  if (!dump_json_parser.NeedDump(kernel_name)) {
+    return;
+  }
+  DumpJsonParser::GetInstance().MatchKernel(kernel_name);
+  DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
 }
 
 void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
@@ -372,6 +402,32 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   return success;
 }
 
+bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger) {
+  bool success = false;
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (dump_json_parser.GetIterDumpFlag()) {
+    std::string dump_path = GenerateDumpPath(graph_id, rank_id);
+    DumpInputSingleNode(node, dump_path, debugger);
+    DumpOutputSingleNode(node, dump_path, debugger);
+    success = true;
+  }
+  return success;
+}
+
+bool E2eDump::DumpParametersAndConstData(const session::KernelGraph *graph, uint32_t rank_id,
+                                         const Debugger *debugger) {
+  bool success = false;
+  uint32_t graph_id = graph->graph_id();
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (dump_json_parser.GetIterDumpFlag()) {
+    MS_LOG(INFO) << "DumpParametersAndConst. Current iteration is " << dump_json_parser.cur_dump_iter();
+    MS_LOG(INFO) << "Current graph id is " << graph_id;
+    std::string dump_path = GenerateDumpPath(graph_id, rank_id);
+    DumpParametersAndConst(graph, dump_path, debugger);
+    success = true;
+  }
+  return success;
+}
 bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
   // check if there is GetNext or InitDataSetQueue node
   const auto &nodes = graph->execution_order();
