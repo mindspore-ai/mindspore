@@ -436,7 +436,7 @@ class Receive(PrimitiveWithInfer):
     receive tensors from src_rank.
 
     Note:
-        Send and Recveive must be used in combination and have same sr_tag.
+        Send and Receive must be used in combination and have same sr_tag.
         Receive must be used between servers.
 
     Args:

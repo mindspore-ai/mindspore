@@ -205,7 +205,7 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
     r"""
     Updates gradients by LAMB optimizer algorithm. Get the compute ratio.
 
-    The Lamb optimzier is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
+    The Lamb optimizer is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
     <https://arxiv.org/abs/1904.00962>`_.
 
     The updating formulas are as follows,
@@ -280,7 +280,7 @@ class LambApplyWeightAssign(PrimitiveWithInfer):
     r"""
     Updates gradients by LAMB optimizer algorithm. The weight update part.
 
-    The Lamb optimzier is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
+    The Lamb optimizer is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
     <https://arxiv.org/abs/1904.00962>`_.
 
     The updating formulas are as follows,

@@ -22,7 +22,7 @@ from .. import signature as sig
 class UpdateCache(PrimitiveWithCheck):
     """
     Update the value fo input_x, similar to ScatterNdUpdate.
-    The diffirent is that UpdateCache will not update when indices < 0 or indices >= max_num.
+    The difference is that UpdateCache will not update when indices < 0 or indices >= max_num.
 
     Inputs:
         - **input_x** (Parameter) - Parameter which is going to be updated.
