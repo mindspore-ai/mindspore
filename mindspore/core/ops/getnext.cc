@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ops/getnext.h"
 
 #include <set>
 #include <string>
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "ops/getnext.h"
+
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"

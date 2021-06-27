@@ -67,23 +67,39 @@ class FixedLossScaleManager(LossScaleManager):
         self._drop_overflow_update = drop_overflow_update
 
     def get_loss_scale(self):
-        """Get loss scale value."""
+        """
+        Get loss scale value.
+
+        Returns:
+            bool, `loss_scale` value.
+        """
         return self._loss_scale
 
     def get_drop_overflow_update(self):
-        """Get the flag whether to drop optimizer update when there is an overflow."""
+        """
+        Get the flag whether to drop optimizer update when there is an overflow.
+
+        Returns:
+            bool, `drop_overflow_update` value.
+        """
         return self._drop_overflow_update
 
     def update_loss_scale(self, overflow):
         """
-        Update loss scale value.
+        Update loss scale value. The interface at `FixedLossScaleManager` will do nothing.
 
         Args:
             overflow (bool): Whether it overflows.
         """
 
     def get_update_cell(self):
-        "Returns the cell for `TrainOneStepWithLossScaleCell`"
+        """
+        Returns the update cell for `TrainOneStepWithLossScaleCell`.
+
+        Returns:
+            None or Cell. Cell object, used to update `loss_scale`, when `drop_overflow_update` is True. None when
+            `drop_overflow_update` is False.
+        """
         if not self._drop_overflow_update:
             return None
         return nn.FixedLossScaleUpdateCell(self._loss_scale)
@@ -127,7 +143,12 @@ class DynamicLossScaleManager(LossScaleManager):
         self.bad_step = 0
 
     def get_loss_scale(self):
-        """Get loss scale value."""
+        """
+        Get loss scale value.
+
+        Returns:
+            bool, `loss_scale` value.
+        """
         return self.loss_scale
 
     def update_loss_scale(self, overflow):
@@ -152,9 +173,19 @@ class DynamicLossScaleManager(LossScaleManager):
         self.cur_iter += 1
 
     def get_drop_overflow_update(self):
-        """Get the flag whether to drop optimizer update when there is an overflow."""
+        """
+        Get the flag whether to drop optimizer update when there is an overflow.
+
+        Returns:
+            bool, always return True at `DynamicLossScaleManager`.
+        """
         return True
 
     def get_update_cell(self):
-        "Returns the cell for `TrainOneStepWithLossScaleCell`"
+        """
+        Returns the update cell for `TrainOneStepWithLossScaleCell`.
+
+        Returns:
+            Cell, cell object used to update `loss_scale`.
+        """
         return nn.DynamicLossScaleUpdateCell(self.loss_scale, self.scale_factor, self.scale_window)

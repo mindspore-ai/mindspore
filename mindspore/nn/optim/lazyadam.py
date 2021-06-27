@@ -114,17 +114,16 @@ class LazyAdam(Optimizer):
 
     .. math::
         \begin{array}{ll} \\
-            m = \beta_1 * m + (1 - \beta_1) * g \\
-            v = \beta_2 * v + (1 - \beta_2) * g * g \\
+            m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
+            v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
             l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
-            w = w - l * \frac{m}{\sqrt{v} + \epsilon}
+            w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \eps}
         \end{array}
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
-    :math:`g` represents `gradients`, :math:`l` represents scaling factor `lr`, :math:`\beta_1, \beta_2` represent
+    :math:`g` represents `gradients`, :math:`l` represents scaling factor, :math:`\beta_1, \beta_2` represent
     `beta1` and `beta2`, :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent
-    `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `params`,
-    :math:`\epsilon` represents `eps`.
+    `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `params`.
 
     Note:
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the

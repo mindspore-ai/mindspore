@@ -37,7 +37,10 @@ class LearningRateSchedule(Cell):
             The output must be a Tensor of scalar.
 
         Inputs:
-            Tensor. The current step number.
+            - **global_step** (Tensor) - The current step number.
+
+        Inputs:
+            Tensor. Learning rate at current step with shape :math:`()`.
         """
         raise NotImplementedError
 
@@ -77,10 +80,10 @@ class ExponentialDecayLR(LearningRateSchedule):
         is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
-        Tensor. The current step number.
+        - **global_step** (Tensor) - The current step number.
 
     Outputs:
-        Tensor. The learning rate value for the current step.
+        Tensor. The learning rate value for the current step with shape :math:`()`.
 
     Raises:
         TypeError: If `learning_rate` or `decay_rate` is not a float.
@@ -144,10 +147,10 @@ class NaturalExpDecayLR(LearningRateSchedule):
         is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
-        Tensor. The current step number.
+        - **global_step** (Tensor) - The current step number.
 
     Outputs:
-        Tensor. The learning rate value for the current step.
+        Tensor. The learning rate value for the current step with shape :math:`()`.
 
     Raises:
         TypeError: If `learning_rate` or `decay_rate` is not a float.
@@ -212,10 +215,10 @@ class InverseDecayLR(LearningRateSchedule):
         is_stair (bool): If true, learning rate decay once every `decay_steps` times. Default: False.
 
     Inputs:
-        Tensor. The current step number.
+        - **global_step** (Tensor) - The current step number.
 
     Outputs:
-        Tensor. The learning rate value for the current step.
+        Tensor. The learning rate value for the current step with shape :math:`()`.
 
     Raises:
         TypeError: If `learning_rate` or `decay_rate` is not a float.
@@ -269,10 +272,10 @@ class CosineDecayLR(LearningRateSchedule):
         decay_steps (int): A value used to calculate decayed learning rate.
 
     Inputs:
-        Tensor. The current step number.
+        - **global_step** (Tensor) - The current step number.
 
     Outputs:
-        Tensor. The learning rate value for the current step.
+        Tensor. The learning rate value for the current step with shape :math:`()`.
 
     Raises:
         TypeError: If `min_lr` or `max_lr` is not a float.
@@ -345,10 +348,10 @@ class PolynomialDecayLR(LearningRateSchedule):
         update_decay_steps (bool): If true, learning rate is decayed once every `decay_steps` time. Default: False.
 
     Inputs:
-        Tensor. The current step number.
+        - **global_step** (Tensor) - The current step number.
 
     Outputs:
-        Tensor. The learning rate value for the current step.
+        Tensor. The learning rate value for the current step with shape :math:`()`.
 
     Raises:
         TypeError: If `learning_rate`, `end_learning_rate` or `power` is not a float.
@@ -424,10 +427,10 @@ class WarmUpLR(LearningRateSchedule):
         warmup_steps (int): The warm up steps of learning rate.
 
     Inputs:
-        Tensor. The current step number.
+        - **global_step** (Tensor) - The current step number.
 
     Outputs:
-        Tensor. The learning rate value for the current step.
+        Tensor. The learning rate value for the current step with shape :math:`()`.
 
     Raises:
         TypeError: If `learning_rate` is not a float.
