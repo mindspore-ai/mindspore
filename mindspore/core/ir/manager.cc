@@ -845,7 +845,7 @@ void FVTotalComputer::RealRecompute() {
         continue;
       }
       auto curr = fg;
-      while (curr != p) {
+      while (curr != nullptr && curr != p) {
         fv_total_analysis_[curr][iter.first] = iter.second;
         curr = manager->parent(curr);
       }
