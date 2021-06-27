@@ -14,24 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ]
+if [ $# != 3 ]
 then
-    echo "Usage: bash run_eval.sh [resnet18|resnet50|resnet101|se-resnet50] [imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]"
 exit 1
 fi
-
-if [ $1 != "resnet18" ] && [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
-then
-    echo "error: the selected net is neither resnet50 nor resnet101 nor se-resnet50"
-exit 1
-fi
-
-if [ $2 != "imagenet2012" ]
-then
-    echo "error: only support imagenet2012"
-exit 1
-fi
-
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -41,8 +28,9 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $3)
-PATH2=$(get_real_path $4)
+PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
+CONFIG_FILE=$3
 
 
 if [ ! -d $PATH1 ]
@@ -68,11 +56,12 @@ then
     rm -rf ./infer
 fi
 mkdir ./infer
+cp ../*.yaml ./infer
 cp ../*.py ./infer
 cp *.sh ./infer
 cp -r ../src ./infer
 cd ./infer || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python infer.py --net=$1 --dataset=$2 --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
+python infer.py --data_path=$PATH1 --checkpoint_file_path=$PATH2 --config_path=$CONFIG_FILE &> log &
 cd ..

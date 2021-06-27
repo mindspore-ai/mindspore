@@ -104,27 +104,60 @@ ResNet的总体网络架构如下：
 
 ```text
 # 分布式训练
-用法：bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
-[PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_standalone_train.sh [DATASET_PATH]  [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 运行评估示例
-用法：bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 ```
 
 - GPU处理器环境运行
 
 ```text
 # 分布式训练示例
-bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+bash run_distribute_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练示例
-bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+bash run_standalone_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 推理示例
-bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
+```
+
+如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
+开始进行模型的训练和推理，具体操作如下：
+
+```python
+# 在modelarts上使用分布式训练的示例：
+# (1) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          在yaml文件上设置网络所需的参数。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置网络所需的参数。
+# (2) 在modelarts的界面上设置配置文件的路径"config_path=/The path of config in S3/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/resnet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件.
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+# (2) 在modelarts的界面上设置配置文件的路径"config_path=/The path of config in S3/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/resnet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的推理。
 ```
 
 # 脚本说明
@@ -146,19 +179,33 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
     ├── run_standalone_train_gpu.sh        # 启动GPU单机训练（单卡）
     └── cache_util.sh                      # 使用单节点緩存的帮助函数
   ├── src
-    ├── config.py                          # 参数配置
     ├── dataset.py                         # 数据预处理
-    ├─  eval_callback.py                   # 训练时推理回调函数
+    ├── eval_callback.py                   # 训练时推理回调函数
     ├── CrossEntropySmooth.py              # ImageNet2012数据集的损失定义
     ├── lr_generator.py                    # 生成每个步骤的学习率
     └── resnet.py                          # ResNet骨干网络，包括ResNet50、ResNet101和SE-ResNet50
+    ├── model_utils
+       ├── config.py                       # 参数配置
+       ├── device_adapter.py               # 设备配置
+       ├── local_adapter.py                # 本地设备配置
+       └── moxing_adapter.py               # modelarts设备配置
+  ├── resnet18_cifar10_config.yaml         # 参数配置
+  ├── resnet18_imagenet2012_config.yaml    # 参数配置
+  ├── resnet34_imagenet2012_config.yaml    # 参数配置
+  ├── resnet50_cifar10_config.yaml         # 参数配置
+  ├── resnet50_imagenet2012_Ascend_config.yaml # 参数配置
+  ├── resnet50_imagenet2012_config.yaml    # 参数配置
+  ├── resnet50_imagenet2012_GPU_config.yaml # 参数配置
+  ├── resnet101_imagenet2012_config.yaml   # 参数配置
+  ├── se-resnet50_imagenet2012_config.yaml # 参数配置
+  ├── eval.py                              # 评估网络
   ├── eval.py                              # 评估网络
   └── train.py                             # 训练网络
 ```
 
 ## 脚本参数
 
-在config.py中可以同时配置训练参数和评估参数。
+在配置文件中可以同时配置训练参数和评估参数。
 
 - 配置ResNet18、ResNet50和CIFAR-10数据集。
 
@@ -173,7 +220,6 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 "save_checkpoint":True,          # 是否保存检查点
 "save_checkpoint_epochs":5,      # 两个检查点之间的周期间隔；默认情况下，最后一个检查点将在最后一步完成后保存
 "keep_checkpoint_max":10,        # 只保留最后一个keep_checkpoint_max检查点
-"save_checkpoint_path":"./",     # 检查点保存路径
 "warmup_epochs":5,               # 热身周期数
 "lr_decay_mode":"poly”           # 衰减模式可为步骤、策略和默认
 "lr_init":0.01,                  # 初始学习率
@@ -194,7 +240,6 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 "save_checkpoint":True,          # 是否保存检查点
 "save_checkpoint_epochs":5,      # 两个检查点之间的周期间隔；默认情况下，最后一个检查点将在最后一个周期完成后保存
 "keep_checkpoint_max":10,        # 只保存最后一个keep_checkpoint_max检查点
-"save_checkpoint_path":"./",     # 检查点相对于执行路径的保存路径
 "warmup_epochs":0,               # 热身周期数
 "lr_decay_mode":"Linear",        # 用于生成学习率的衰减模式
 "use_label_smooth":True,         # 标签平滑
@@ -217,7 +262,6 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 "save_checkpoint":True,          # 是否保存检查点
 "save_checkpoint_epochs":5,      # 两个检查点之间的周期间隔；默认情况下，最后一个检查点将在最后一个周期完成后保存
 "keep_checkpoint_max":1,         # 只保存最后一个keep_checkpoint_max检查点
-"save_checkpoint_path":"./",     # 检查点相对于执行路径的保存路径
 "warmup_epochs":0,               # 热身周期数
 "optimizer":"Momentum",          # 优化器
 "use_label_smooth":True,         # 标签平滑
@@ -240,7 +284,6 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 "save_checkpoint":True,          # 是否保存检查点
 "save_checkpoint_epochs":5,      # 两个检查点之间的周期间隔；默认情况下，最后一个检查点将在最后一个周期完成后保存
 "keep_checkpoint_max":10,        # 只保存最后一个keep_checkpoint_max检查点
-"save_checkpoint_path":"./",     # 检查点相对于执行路径的保存路径
 "warmup_epochs":0,               # 热身周期数
 "lr_decay_mode":"cosine”         # 用于生成学习率的衰减模式
 "use_label_smooth":True,         # 标签平滑
@@ -262,7 +305,6 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 "save_checkpoint":True,          # 是否保存检查点
 "save_checkpoint_epochs":4,      # 两个检查点之间的周期间隔；默认情况下，最后一个检查点将在最后一个周期完成后保存
 "keep_checkpoint_max":10,        # 只保存最后一个keep_checkpoint_max检查点
-"save_checkpoint_path":"./",     # checkpoint相对于执行路径的保存路径
 "warmup_epochs":3,               # 热身周期数
 "lr_decay_mode":"cosine”         # 用于生成学习率的衰减模式
 "use_label_smooth":True,         # 标签平滑
@@ -280,14 +322,13 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 
 ```text
 # 分布式训练
-用法：bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
-[PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_standalone_train.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 运行评估示例
-用法：bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 
 ```
 
@@ -303,13 +344,13 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 
 ```text
 # 分布式训练示例
-bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+bash run_distribute_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练示例
-bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+bash run_standalone_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 推理示例
-bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 ```
 
 #### 运行参数服务器模式训练
@@ -317,29 +358,29 @@ bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] 
 - Ascend参数服务器训练示例
 
 ```text
-bash run_parameter_server_train.sh [resnet18|resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+bash run_parameter_server_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 ```
 
 - GPU参数服务器训练示例
 
 ```text
-bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+bash run_parameter_server_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]（可选）
 ```
 
 #### 训练时推理
 
 ```bash
 # Ascend 分布式训练时推理示例:
-bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # Ascend 单机训练时推理示例:
-bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_standalone_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # GPU 分布式训练时推理示例:
-bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_distribute_train_gpu.sh [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # GPU 单机训练时推理示例:
-bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_standalone_train_gpu.sh [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 ```
 
 训练时推理需要在设置`RUN_EVAL`为True，与此同时还需要设置`EVAL_DATASET_PATH`。此外，当设置`RUN_EVAL`为True时还可为python脚本设置`save_best_ckpt`, `eval_start_epoch`, `eval_interval`等参数。
@@ -446,12 +487,12 @@ epoch:5 step:5004, loss is 3.3501816
 
 ```bash
 # 评估
-Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 ```
 
 ```bash
 # 评估示例
-bash run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
+bash run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt --config_path /*.yaml
 ```
 
 > 训练过程中可以生成检查点。
@@ -459,7 +500,7 @@ bash run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/tra
 #### GPU处理器环境运行
 
 ```bash
-bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 ```
 
 ### 结果
@@ -513,12 +554,36 @@ result:{'top_5_accuracy':0.9342589628681178, 'top_1_accuracy':0.768065781049936}
 
 ### [导出MindIR](#contents)
 
+导出mindir模型
+
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --config_path [CONFIG_PATH]
 ```
 
-参数ckpt_file为必填项，
+参数checkpoint_file_path为必填项，
 `EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+ModelArts导出mindir
+
+```python
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件。
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件。
+#          设置 "file_name='./resnet'"参数在yaml文件。
+#          设置 "file_format='AIR'" 参数在yaml文件。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+#          设置 "file_name='./resnet'"参数在modearts的界面上。
+#          设置 "file_format='AIR'" 参数在modearts的界面上。
+# (3) 设置网络配置文件的路径 "config_path=/The path of config in S3/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/resnet"。
+# (5) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始导出mindir。
+```
 
 ### 在Ascend310执行推理
 

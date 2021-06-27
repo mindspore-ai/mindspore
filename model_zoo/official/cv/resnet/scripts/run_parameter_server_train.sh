@@ -14,30 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ] && [ $# != 5 ]
+if [ $# != 3 ] && [ $# != 4 ]
 then 
-    echo "Usage: bash run_distribute_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)"
     exit 1
 fi
-
-if [ $1 != "resnet50" ] && [ $1 != "resnet101" ]
-then 
-    echo "error: the selected net is neither resnet50 nor resnet101"
-    exit 1
-fi
-
-if [ $2 != "cifar10" ] && [ $2 != "imagenet2012" ]
-then 
-    echo "error: the selected dataset is neither cifar10 nor imagenet2012"
-    exit 1
-fi
-
-if [ $1 == "resnet101" ] && [ $2 == "cifar10" ]
-then 
-    echo "error: training resnet101 with cifar10 dataset is unsupported now!"
-    exit 1
-fi
-
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -47,12 +28,13 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $3)
-PATH2=$(get_real_path $4)
+PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
+CONFIG_FILE=$3
 
-if [ $# == 5 ]
+if [ $# == 4 ]
 then 
-    PATH3=$(get_real_path $5)
+    PATH3=$(get_real_path $4)
 fi
 
 if [ ! -f $PATH1 ]
@@ -67,7 +49,7 @@ then
     exit 1
 fi 
 
-if [ $# == 5 ] && [ ! -f $PATH3 ]
+if [ $# == 4 ] && [ ! -f $PATH3 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH3 is not a file"
     exit 1
@@ -89,19 +71,22 @@ export DEVICE_ID=0
 export RANK_ID=0
 rm -rf ./sched
 mkdir ./sched
+cp ../*.yaml ./sched
 cp ../*.py ./sched
 cp *.sh ./sched
 cp -r ../src ./sched
 cd ./sched || exit
 echo "start scheduler"
-if [ $# == 4 ]
+if [ $# == 3 ]
 then
-    python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=1 --dataset_path=$PATH2 --parameter_server=True &> sched.log &
+    python train.py --run_distribute=True --device_num=1 --data_path=$PATH2 --parameter_server=True \
+    --config_path=$CONFIG_FILE --output_path './output' &> sched.log &
 fi
 
-if [ $# == 5 ]
+if [ $# == 4 ]
 then
-    python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=1 --dataset_path=$PATH2 --parameter_server=True --pre_trained=$PATH3 &> sched.log &
+    python train.py --run_distribute=True --device_num=1 --data_path=$PATH2 --parameter_server=True --pre_trained=$PATH3 \
+    --config_path=$CONFIG_FILE --output_path './output' &> sched.log &
 fi
 cd ..
 
@@ -112,19 +97,22 @@ do
     export RANK_ID=$i
     rm -rf ./server_$i
     mkdir ./server_$i
+    cp ../*.yaml ./server_$i
     cp ../*.py ./server_$i
     cp *.sh ./server_$i
     cp -r ../src ./server_$i
     cd ./server_$i || exit
     echo "start server"
-    if [ $# == 4 ]
+    if [ $# == 3 ]
     then
-        python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=1 --dataset_path=$PATH2 --parameter_server=True &> server_$i.log &
+        python train.py --run_distribute=True --device_num=1 --data_path=$PATH2 --parameter_server=True \
+        --config_path=$CONFIG_FILE --output_path './output' &> server_$i.log &
     fi
     
-    if [ $# == 5 ]
+    if [ $# == 4 ]
     then
-        python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=1 --dataset_path=$PATH2 --parameter_server=True --pre_trained=$PATH3 &> server_$i.log &
+        python train.py --run_distribute=True --device_num=1 --data_path=$PATH2 --parameter_server=True --pre_trained=$PATH3 \
+        --config_path=$CONFIG_FILE --output_path './output' &> server_$i.log &
     fi
 
     cd ..
@@ -137,20 +125,23 @@ do
     export RANK_ID=$i
     rm -rf ./worker_$i
     mkdir ./worker_$i
+    cp ../*.yaml ./worker_$i
     cp ../*.py ./worker_$i
     cp *.sh ./worker_$i
     cp -r ../src ./worker_$i
     cd ./worker_$i || exit
     echo "start training for worker rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    if [ $# == 4 ]
+    if [ $# == 3 ]
     then
-        python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --parameter_server=True &> worker_$i.log &
+        python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 --parameter_server=True \
+        --config_path=$CONFIG_FILE --output_path './output' &> worker_$i.log &
     fi
     
-    if [ $# == 5 ]
+    if [ $# == 4 ]
     then
-        python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --parameter_server=True --pre_trained=$PATH3 &> worker_$i.log &
+        python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 --parameter_server=True --pre_trained=$PATH3 \
+        --config_path=$CONFIG_FILE --output_path './output' &> worker_$i.log &
     fi
 
     cd ..

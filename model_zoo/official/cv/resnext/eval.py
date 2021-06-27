@@ -147,8 +147,8 @@ def test(cloud_args=None):
 
     # network
     config.logger.important_info('start create network')
-    if os.path.isdir(config.pretrained):
-        models = list(glob.glob(os.path.join(config.pretrained, '*.ckpt')))
+    if os.path.isdir(config.checkpoint_file_path):
+        models = list(glob.glob(os.path.join(config.checkpoint_file_path, '*.ckpt')))
         print(models)
         if config.graph_ckpt:
             f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('-')[-1].split('_')[0])

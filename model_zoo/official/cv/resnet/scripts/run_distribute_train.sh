@@ -17,35 +17,11 @@
 CURPATH="$(dirname "$0")"
 . ${CURPATH}/cache_util.sh
 
-if [ $# != 4 ] && [ $# != 5 ] && [ $# != 6 ]
+if [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
 then
-  echo "Usage: bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
-  echo "       bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
+  echo "Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)"
+  echo "       bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
   exit 1
-fi
-
-if [ $1 != "resnet18" ] && [ $1 != "resnet34" ] && [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
-then 
-  echo "error: the selected net is neither resnet50 nor resnet101 and se-resnet50"
-exit 1
-fi
-
-if [ $2 != "cifar10" ] && [ $2 != "imagenet2012" ]
-then 
-    echo "error: the selected dataset is neither cifar10 nor imagenet2012"
-exit 1
-fi
-
-if [ $1 == "resnet101" ] && [ $2 == "cifar10" ]
-then 
-    echo "error: training resnet101 with cifar10 dataset is unsupported now!"
-exit 1
-fi
-
-if [ $1 == "se-resnet50" ] && [ $2 == "cifar10" ]
-then
-    echo "error: evaluating se-resnet50 with cifar10 dataset is unsupported now!"
-exit 1
 fi
 
 get_real_path(){
@@ -56,18 +32,19 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $3)
-PATH2=$(get_real_path $4)
+PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
+CONFIG_FILE=$3
 
-if [ $# == 5 ]
+if [ $# == 4 ]
 then 
-    PATH3=$(get_real_path $5)
+    PATH3=$(get_real_path $4)
 fi
 
-if [ $# == 6 ]
+if [ $# == 5 ]
 then
-  RUN_EVAL=$5
-  EVAL_DATASET_PATH=$(get_real_path $6)
+  RUN_EVAL=$4
+  EVAL_DATASET_PATH=$(get_real_path $5)
 fi
 
 if [ ! -f $PATH1 ]
@@ -82,7 +59,7 @@ then
 exit 1
 fi 
 
-if [ $# == 5 ] && [ ! -f $PATH3 ]
+if [ $# == 4 ] && [ ! -f $PATH3 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH3 is not a file"
 exit 1
@@ -123,24 +100,28 @@ do
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
     cp *.sh ./train_parallel$i
+    cp -r ../*.yaml ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    if [ $# == 4 ]
+    if [ $# == 3 ]
     then    
-        taskset -c $cmdopt python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
+        taskset -c $cmdopt python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 \
+        --config_path=$CONFIG_FILE --output_path './output' &> log &
     fi
     
-    if [ $# == 5 ]
+    if [ $# == 4 ]
     then
-        taskset -c $cmdopt python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log &
+        taskset -c $cmdopt python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 --pre_trained=$PATH3 \
+        --config_path=$CONFIG_FILE --output_path './output' &> log &
     fi
 
-    if [ $# == 6 ]
+    if [ $# == 5 ]
     then
-      taskset -c $cmdopt python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 \
-      --run_eval=$RUN_EVAL --eval_dataset_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID &> log &
+      taskset -c $cmdopt python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 \
+      --run_eval=$RUN_EVAL --eval_data_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID \
+      --config_path=$CONFIG_FILE --output_path './output' &> log &
       if [ "x${RUN_EVAL}" == "xTrue" ]
       then
         echo -e "\nWhen training run is done, remember to shut down the cache server via \"cache_admin --stop\""

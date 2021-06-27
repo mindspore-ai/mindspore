@@ -21,6 +21,8 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 from mindspore.communication.management import init, get_rank, get_group_size
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_num, get_rank_id
 
 
 def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False,
@@ -406,11 +408,19 @@ def _get_rank_info():
     """
     rank_size = int(os.environ.get("RANK_SIZE", 1))
 
-    if rank_size > 1:
-        rank_size = get_group_size()
-        rank_id = get_rank()
+    if config.device_target == "Ascend":
+        if rank_size > 1:
+            rank_size = get_device_num()
+            rank_id = get_rank_id()
+        else:
+            rank_size = 1
+            rank_id = 0
     else:
-        rank_size = 1
-        rank_id = 0
+        if rank_size > 1:
+            rank_size = get_group_size()
+            rank_id = get_rank()
+        else:
+            rank_size = 1
+            rank_id = 0
 
     return rank_size, rank_id
