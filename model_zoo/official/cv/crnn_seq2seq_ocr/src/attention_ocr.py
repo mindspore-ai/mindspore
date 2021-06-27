@@ -60,14 +60,23 @@ class AttentionOCRInfer(nn.Cell):
                                max_length=max_length,
                                dropout_p=dropout_p)
 
+        self.max_length = max_length
+
     def construct(self, img, decoder_input, decoder_hidden):
         '''
         get token output
         '''
         encoder_outputs = self.encoder(img)
-        decoder_output, decoder_hidden, decoder_attention = self.decoder(
-            decoder_input, decoder_hidden, encoder_outputs)
-        return decoder_output, decoder_hidden, decoder_attention
+        batch_decoded_label = []
+
+        for _ in range(self.max_length):
+            decoder_output, decoder_hidden, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+            topi = P.Argmax()(decoder_output)
+            ni = P.ExpandDims()(topi, 1)
+            decoder_input = ni
+            batch_decoded_label.append(topi)
+
+        return batch_decoded_label
 
 
 class AttentionOCR(nn.Cell):
