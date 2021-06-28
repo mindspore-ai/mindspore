@@ -1006,8 +1006,17 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
 }
 
 // get output device addr of anf_node
-bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_idx) {
+bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node) {
   MS_EXCEPTION_IF_NULL(node);
+  if (opt::IsNopNode(node) && visit_nop_node) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->inputs().size() > 1) {
+      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(cnode, 0);
+      return OutputAddrExist(kernel_with_index.first, kernel_with_index.second);
+    }
+    return false;
+  }
   // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
   auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);

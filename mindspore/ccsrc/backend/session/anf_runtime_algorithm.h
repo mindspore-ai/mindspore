@@ -174,7 +174,7 @@ class AnfRuntimeAlgorithm {
   // get mutable output device addr of anf_node
   static DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = true);
   // check whether output addr is exist or not
-  static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx);
+  static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool visit_nop_node = false);
   // check whether workspace addr is exist or not
   static bool WorkspaceAddrExist(const AnfNodePtr &node, size_t output_idx);
   // get address from prev node,input_index is the input index of current node related to prev node
