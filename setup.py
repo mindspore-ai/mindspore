@@ -112,7 +112,6 @@ required_package = [
     'asttokens >= 1.1.13',
     'pillow >= 6.2.0',
     'scipy >= 1.5.2',
-    'sympy >= 1.4',
     'cffi >= 1.12.3',
     'wheel >= 0.32.0',
     'decorator >= 4.4.0',
