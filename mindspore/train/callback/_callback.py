@@ -80,6 +80,7 @@ class Callback:
     Callback function will execute some operations in the current step or epoch.
 
     Examples:
+        >>> from mindspore.train._callback import Callback
         >>> class Print_info(Callback):
         >>>     def step_end(self, run_context):
         >>>         cb_params = run_context.original_args()
@@ -87,7 +88,6 @@ class Callback:
         >>>         print(cb_params.cur_step_num)
         >>>
         >>> print_cb = Print_info()
-        >>> model.train(epoch, dataset, callbacks=print_cb)
     """
 
     def __enter__(self):
@@ -123,7 +123,7 @@ class Callback:
 
     def step_begin(self, run_context):
         """
-        Called before each epoch beginning.
+        Called before each step beginning.
 
         Args:
             run_context (RunContext): Include some information of the model.

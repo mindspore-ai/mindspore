@@ -75,7 +75,7 @@ class CheckpointConfig:
         save_checkpoint_seconds (int): Seconds to save checkpoint.
             Can't be used with save_checkpoint_steps at the same time. Default: 0.
         keep_checkpoint_max (int): Maximum number of checkpoint files can be saved. Default: 5.
-        keep_checkpoint_per_n_minutes (int): Keep one checkpoint every n minutes.
+        keep_checkpoint_per_n_minutes (int): Save the checkpoint file every `keep_checkpoint_per_n_minutes` minutes.
             Can't be used with keep_checkpoint_max at the same time. Default: 0.
         integrated_save (bool): Whether to perform integrated save function in automatic model parallel scene.
             Integrated save function is only supported in automatic parallel scene, not supported
@@ -83,7 +83,7 @@ class CheckpointConfig:
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: None.
-        append_info (List): The information save to checkpoint file. Support "epoch_num"、"step_num"、and dict.
+        append_info (list): The information save to checkpoint file. Support "epoch_num"、"step_num"、and dict.
             The key of dict must be str, the value of dict must be one of int float and bool. Default: None.
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
@@ -94,6 +94,9 @@ class CheckpointConfig:
         ValueError: If input parameter is not the correct type.
 
     Examples:
+        >>> from mindspore import Model, nn
+        >>> from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
+        >>>
         >>> class LeNet5(nn.Cell):
         >>>     def __init__(self, num_class=10, num_channel=1):
         >>>         super(LeNet5, self).__init__()
@@ -277,7 +280,8 @@ class ModelCheckpoint(Callback):
 
     Args:
         prefix (str): The prefix name of checkpoint files. Default: "CKP".
-        directory (str): The path of the folder which will be saved in the checkpoint file. Default: None.
+        directory (str): The path of the folder which will be saved in the checkpoint file.
+            By default, the file is saved in the current directory. Default: None.
         config (CheckpointConfig): Checkpoint strategy configuration. Default: None.
 
     Raises:
