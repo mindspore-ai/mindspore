@@ -16,11 +16,12 @@
 ##############export checkpoint file into air, onnx, mindir models#################
 python export.py
 """
+import os
 import numpy as np
-
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
 from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 from src.textcnn import TextCNN
 from src.dataset import MovieReview, SST2, Subjectivity
 
@@ -28,8 +29,13 @@ context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
-if __name__ == '__main__':
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """run export."""
     if config.dataset == 'MR':
         instance = MovieReview(root_dir=config.data_path, maxlen=config.word_len, split=0.9)
     elif config.dataset == 'SUBJ':
@@ -47,3 +53,6 @@ if __name__ == '__main__':
 
     input_arr = Tensor(np.ones([config.batch_size, config.word_len], np.int32))
     export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    run_export()

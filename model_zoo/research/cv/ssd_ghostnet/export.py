@@ -14,6 +14,7 @@
 # ============================================================================
 """export"""
 
+import os
 import numpy as np
 from mindspore import Tensor
 from mindspore import context
@@ -21,10 +22,17 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net, 
 
 from src.ssd_ghostnet import SSD300, ssd_ghostnet
 from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=config.device_id)
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """run export."""
     context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     # define net
     net = SSD300(ssd_ghostnet(), is_training=False)
@@ -35,3 +43,6 @@ if __name__ == "__main__":
     input_shape = config.img_shape
     inputs = np.ones([config.batch_size, 3, input_shape[0], input_shape[1]]).astype(np.float32)
     export(net, Tensor(inputs), file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    run_export()

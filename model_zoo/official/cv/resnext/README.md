@@ -244,12 +244,38 @@ acc=93.88%(TOP5)
 
 ## [Model Export](#contents)
 
+Export MindIR on local
+
 ```shell
 python export.py --device_target [PLATFORM] --checkpoint_file_path [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
-The `ckpt_file` parameter is required.
+The `checkpoint_file_path` parameter is required.
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
+
+Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# Export on ModelArts
+# (1) Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+#          Set "file_name='./resnext50'" on default_config.yaml file.
+#          Set "file_format='AIR'" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+#          Add "file_name='./resnext50'" on the website UI interface.
+#          Add "file_format='AIR'" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the config_path="/path/yaml file" on the website UI interface.
+# (3) Set the code directory to "/path/resnext50" on the website UI interface.
+# (4) Set the startup file to "export.py" on the website UI interface.
+# (5) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+```
 
 ## [Inference Process](#contents)
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import numpy as np
 
 from mindspore import Tensor, export, load_checkpoint, load_param_into_net, context
@@ -22,13 +23,20 @@ from src.unet_nested import NestedUNet, UNet
 from src.utils import UnetEval
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
     context.set_context(device_id=get_device_id())
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """run export."""
     if config.model_name == 'unet_medical':
         net = UNetMedical(n_channels=config.num_channels, n_classes=config.num_classes)
     elif config.model_name == 'unet_nested':
@@ -46,3 +54,6 @@ if __name__ == "__main__":
     input_data = Tensor(np.ones([config.batch_size, config.num_channels, config.height, \
         config.width]).astype(np.float32))
     export(net, input_data, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    run_export()

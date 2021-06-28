@@ -14,15 +14,16 @@
 # ============================================================================
 """export checkpoint file into air models"""
 
+import os
 import numpy as np
 
 from mindspore import Tensor, context
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import export
 
-from src.utils import Dictionary
 from src.utils.load_weights import load_infer_weights
 from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 from src.transformer.transformer_for_infer import TransformerInferModel
 
 
@@ -34,10 +35,14 @@ context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
-if __name__ == '__main__':
-    vocab = Dictionary.load_from_persisted_dict(config.vocab_file)
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """run export."""
     get_config()
-    dec_len = config.max_decode_length
 
     tfm_model = TransformerInferModel(config=config, use_one_hot_embeddings=False)
     tfm_model.init_parameters_data()
@@ -72,3 +77,6 @@ if __name__ == '__main__':
     source_mask = Tensor(np.ones((1, config.seq_length)).astype(np.int32))
 
     export(tfm_model, source_ids, source_mask, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    run_export()
