@@ -145,6 +145,8 @@ def train_and_eval(config):
 if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=cfg.device_target)
+    if cfg.device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
     init()

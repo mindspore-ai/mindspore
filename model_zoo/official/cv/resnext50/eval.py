@@ -123,6 +123,10 @@ def get_result(model, top1_correct, top5_correct, img_tot):
     config.logger.info('after results=%s', results)
     return results
 
+def set_graph_kernel_context(device_target):
+    if device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
+
 @moxing_wrapper()
 def test(cloud_args=None):
     """test"""
@@ -131,6 +135,7 @@ def test(cloud_args=None):
                         device_target=config.device_target, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    set_graph_kernel_context(config.device_target)
 
     # init distributed
     if config.run_distribute:

@@ -119,7 +119,8 @@ def apply_eval(eval_param):
 
 def set_graph_kernel_context(run_platform, net_name):
     if run_platform == "GPU" and net_name == "resnet101":
-        context.set_context(enable_graph_kernel=True, graph_kernel_flags="--enable_parallel_fusion")
+        context.set_context(enable_graph_kernel=True)
+        context.set_context(graph_kernel_flags="--enable_parallel_fusion --enable_expand_ops=Conv2D")
 
 if __name__ == '__main__':
     target = args_opt.device_target
