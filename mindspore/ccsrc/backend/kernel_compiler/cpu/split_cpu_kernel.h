@@ -52,8 +52,7 @@ class SplitCPUKernel : public CPUKernel {
   size_t dims_current_after_axis_;
 
   std::vector<std::vector<size_t>> output_shape_list_;
-  std::vector<size_t> input_shape_;
-  std::vector<int> input_shape_int_;
+  std::vector<int> input_shape_;
   TypeId dtype_{kTypeUnknown};
 };
 
