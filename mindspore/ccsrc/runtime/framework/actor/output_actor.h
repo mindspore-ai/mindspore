@@ -45,13 +45,18 @@ class OutputActor : public OpActor<DeviceTensor> {
         current_count_(0),
         outputs_num_(outputs_num),
         current_outputs_num_(0),
-        need_loop_count_(need_loop_count) {
+        need_loop_count_(need_loop_count),
+        branch_id_(kMainBranchID),
+        running_dependent_msg_num_(1) {
     outputs_.resize(outputs_num);
     output_nodes_.resize(outputs_num);
     device_contexts_.resize(outputs_num);
     device_tensor_store_keys_[kMainBranchID] = std::vector<std::pair<size_t, AnfNodePtr>>();
   }
   ~OutputActor() override = default;
+
+  void Init() override;
+  bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
   // The output actor collects loop count when receive the input control of loop count actor.
   void CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *context);
@@ -83,7 +88,10 @@ class OutputActor : public OpActor<DeviceTensor> {
   size_t outputs_num_;
   size_t current_outputs_num_;
   bool need_loop_count_;
-  int branch_id_{kMainBranchID};
+  int branch_id_;
+
+  // The dependent messages number of actor running.
+  int running_dependent_msg_num_;
 
   // Pair<branch_id, <index, node>> points to the dependent device tensor store, branch_id is the output branch id.
   // In general, the branch id is 0, which means there is only one output branch in the actor set. When there are

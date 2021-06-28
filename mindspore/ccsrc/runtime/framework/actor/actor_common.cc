@@ -17,6 +17,7 @@
 #include "runtime/framework/actor/actor_common.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/framework/device_tensor_store.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace runtime {
@@ -25,17 +26,24 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
   MS_EXCEPTION_IF_NULL(OMP_thread_num);
   size_t cpu_core_num = std::thread::hardware_concurrency();
 
-  const size_t kActorThreadMaxNum = 8;
+  const size_t kActorThreadMaxNum = 5;
   // The MemoryManagerActor binds single thread, and the other actors share one thread at least, so the min num is 2.
   const size_t kActorThreadMinNum = 2;
-  *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
-  *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  // The pyNative mode is the step execution strategy, so only need the kActorThreadMinNum.
+  if (context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) == kPynativeMode) {
+    *actor_thread_num = kActorThreadMinNum;
+  } else {
+    *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
+    *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
+  }
 
   const size_t kOMPThreadNumThreshold = 16;
   if (cpu_core_num <= kOMPThreadNumThreshold) {
     *OMP_thread_num = cpu_core_num;
   } else {
-    *OMP_thread_num = cpu_core_num / (*actor_thread_num);
+    *OMP_thread_num = cpu_core_num / (*actor_thread_num - 1);
   }
 }
 

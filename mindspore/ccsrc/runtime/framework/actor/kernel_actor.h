@@ -55,10 +55,12 @@ class KernelActor : public DebugAwareActor {
         recorder_aid_(recorder_aid),
         input_datas_num_(0),
         input_controls_num_(0),
-        real_input_num_(0) {}
+        real_input_num_(0),
+        running_dependent_msg_num_(1) {}
   ~KernelActor() override = default;
 
   void Init() override;
+  bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
   // The kernel actor run when receive the input data.
   void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
@@ -121,6 +123,8 @@ class KernelActor : public DebugAwareActor {
   size_t input_controls_num_;
   // The real input number of kernel launch.
   size_t real_input_num_;
+  // The dependent messages number of actor running.
+  int running_dependent_msg_num_;
 
   // The dependent input actors.
   std::vector<AID> input_data_arrow_aids_;
