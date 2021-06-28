@@ -50,6 +50,8 @@ class Conv2DInfo : public OperatorInfo {
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferRankBias();
+  Status InferOverlapSize();
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
   int64_t out_channel_ = 1;
@@ -63,6 +65,11 @@ class Conv2DInfo : public OperatorInfo {
   std::string format_;
   bool out_channel_shard_ = false;
   int64_t new_out_channel_ = 1;
+  bool need_exchange_overlap_ = false;
+  int64_t rank_bias_ = 0;
+  int64_t overlap_left_size_ = 0;
+  int64_t overlap_right_size_ = 0;
+  int64_t w_dimension_shard_num_ = 1;
 
  private:
   Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
