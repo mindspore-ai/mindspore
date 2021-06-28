@@ -108,8 +108,15 @@ export RANK_TABLE_FILE=$PATH1
 export SERVER_ID=0
 rank_start=$((DEVICE_NUM * SERVER_ID))
 
+cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
+avg=`expr $cpus \/ $DEVICE_NUM`
+gap=`expr $avg \- 1`
+
 for((i=0; i<${DEVICE_NUM}; i++))
 do
+    start=`expr $i \* $avg`
+    end=`expr $start \+ $gap`
+    cmdopt=$start"-"$end
     export DEVICE_ID=${i}
     export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
@@ -122,17 +129,17 @@ do
     env > env.log
     if [ $# == 4 ]
     then    
-        python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
+        taskset -c $cmdopt python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
     fi
     
     if [ $# == 5 ]
     then
-        python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log &
+        taskset -c $cmdopt python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 --pre_trained=$PATH3 &> log &
     fi
 
     if [ $# == 6 ]
     then
-      python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 \
+      taskset -c $cmdopt python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 \
       --run_eval=$RUN_EVAL --eval_dataset_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID &> log &
       if [ "x${RUN_EVAL}" == "xTrue" ]
       then
