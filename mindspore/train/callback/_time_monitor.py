@@ -24,7 +24,9 @@ class TimeMonitor(Callback):
     Monitor the time in training.
 
     Args:
-        data_size (int): How many steps to return time information default is dataset size. Default: None.
+        data_size (int): How many steps are the intervals between print information each time.
+            if the program get `batch_num` during training, `data_size` will be set to `batch_num`,
+            otherwise `data_size` will be used. Default: None.
 
     Raises:
         ValueError: If data_size is not positive int.
