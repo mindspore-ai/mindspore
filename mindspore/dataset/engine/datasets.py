@@ -1258,13 +1258,11 @@ class Dataset:
         return dataset
 
     @check_device_send
-    def device_que(self, prefetch_size=None, send_epoch_end=True, create_data_info_queue=False):
+    def device_que(self, send_epoch_end=True, create_data_info_queue=False):
         """
         Return a transferred Dataset that transfers data through a device.
 
         Args:
-            prefetch_size (int, optional): Prefetch number of records ahead of the
-                user's request (default=None).
             send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
             create_data_info_queue (bool, optional): Whether to create queue which stores
                 types and shapes of data or not(default=False).
@@ -2442,7 +2440,6 @@ def _pyfunc_worker_exec(index, qid, *args):
     except Exception:
         result = ExceptionHandler(where="in map(or batch) worker and execute python function")
     return result
-
 
 
 # PythonCallable wrapper for multiprocess pyfunc

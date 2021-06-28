@@ -742,14 +742,9 @@ def check_device_send(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        param, param_dict = parse_user_args(method, *args, **kwargs)
-        para_list = list(param_dict.keys())
-        if "prefetch_size" in para_list:
-            if param[0] is not None:
-                check_pos_int32(param[0], "prefetch_size")
-            type_check(param[1], (bool,), "send_epoch_end")
-        else:
-            type_check(param[0], (bool,), "send_epoch_end")
+        [send_epoch_end, create_data_info_queue], _ = parse_user_args(method, *args, **kwargs)
+        type_check(send_epoch_end, (bool,), "send_epoch_end")
+        type_check(create_data_info_queue, (bool,), "create_data_info_queue")
 
         return method(self, *args, **kwargs)
 
