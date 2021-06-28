@@ -43,19 +43,7 @@ set(INSTALL_PY_DIR ".")
 set(INSTALL_BASE_DIR ".")
 set(INSTALL_BIN_DIR "bin")
 set(INSTALL_CFG_DIR "config")
-
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    set(INSTALL_LIB_DIR ".")
-    set(onednn_LIBPATH ${onednn_LIBPATH}/../bin/)
-    set(glog_LIBPATH ${glog_LIBPATH}/../bin/)
-    set(opencv_LIBPATH ${opencv_LIBPATH}/../bin/)
-    set(jpeg_turbo_LIBPATH ${jpeg_turbo_LIBPATH}/../bin/)
-    set(sqlite_LIBPATH ${sqlite_LIBPATH}/../bin/)
-    set(tinyxml2_LIBPATH ${tinyxml2_LIBPATH}/../bin/)
-else()
-    set(INSTALL_LIB_DIR "lib")
-endif()
-
+set(INSTALL_LIB_DIR "lib")
 # set package files
 install(
     TARGETS _c_expression
@@ -63,15 +51,11 @@ install(
     COMPONENT mindspore
 )
 
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    message("offline debugger does not support windows system temporarily")
-else()
-    install(
-        TARGETS _mindspore_offline_debug
-        DESTINATION ${INSTALL_BASE_DIR}
-        COMPONENT mindspore
-    )
-endif()
+install(
+    TARGETS _mindspore_offline_debug
+    DESTINATION ${INSTALL_BASE_DIR}
+    COMPONENT mindspore
+)
 
 install(
     TARGETS mindspore_shared_lib
@@ -86,24 +70,20 @@ install(
 )
 
 if(USE_GLOG)
-    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
-    install(
-        FILES ${GLOG_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
+    install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.so.0 COMPONENT mindspore)
 endif()
 
-file(GLOB_RECURSE LIBEVENT_LIB_LIST
-        ${libevent_LIBPATH}/libevent*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-        ${libevent_LIBPATH}/libevent_pthreads*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-        )
-
-install(
-        FILES ${LIBEVENT_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-)
+install(FILES ${libevent_LIBPATH}/libevent-2.1.so.7.0.1
+  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent-2.1.so.7 COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_core-2.1.so.7.0.1
+  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_core-2.1.so.7 COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_extra-2.1.so.7.0.1
+  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_extra-2.1.so.7 COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_openssl-2.1.so.7.0.1
+  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_openssl-2.1.so.7 COMPONENT mindspore)
+install(FILES ${libevent_LIBPATH}/libevent_pthreads-2.1.so.7.0.1
+  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_pthreads-2.1.so.7 COMPONENT mindspore)
 
 if(ENABLE_MINDDATA)
     install(
@@ -119,51 +99,36 @@ if(ENABLE_MINDDATA)
             COMPONENT mindspore
         )
     endif()
-    file(GLOB_RECURSE OPENCV_LIB_LIST
-            ${opencv_LIBPATH}/libopencv_core*
-            ${opencv_LIBPATH}/libopencv_imgcodecs*
-            ${opencv_LIBPATH}/libopencv_imgproc*
-    )
-    install(
-        FILES ${OPENCV_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-    file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2*)
-    install(
-        FILES ${TINYXML2_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-    if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-        message("icu4c does not support windows system temporarily")
-    else()
-        file(GLOB_RECURSE ICU4C_LIB_LIST
-            ${icu4c_LIBPATH}/libicuuc*
-            ${icu4c_LIBPATH}/libicudata*
-            ${icu4c_LIBPATH}/libicui18n*
-        )
-        install(
-            FILES ${ICU4C_LIB_LIST}
-            DESTINATION ${INSTALL_LIB_DIR}
-            COMPONENT mindspore
-        )
-    endif()
+    install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.2.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.so.4.2 COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.2.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.so.4.2 COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.2.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.so.4.2 COMPONENT mindspore)
+
+    install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.8.0.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.so.8 COMPONENT mindspore)
+
+    install(FILES ${icu4c_LIBPATH}/libicuuc.so.67.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libicuuc.so.67 COMPONENT mindspore)
+    install(FILES ${icu4c_LIBPATH}/libicudata.so.67.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.so.67 COMPONENT mindspore)
+    install(FILES ${icu4c_LIBPATH}/libicui18n.so.67.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.so.67 COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/libdnnl${CMAKE_SHARED_LIBRARY_SUFFIX}*)
+        install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2
+          DESTINATION ${INSTALL_LIB_DIR} RENAME libdnnl.so.2 COMPONENT mindspore)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/libdnnl*${CMAKE_SHARED_LIBRARY_SUFFIX}*)
-    elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-        file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/dnnl.dll)
+        install(
+            FILES ${DNNL_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+        )
     endif()
-    install(
-        FILES ${DNNL_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
     install(
         TARGETS nnacl
         DESTINATION ${INSTALL_LIB_DIR}
@@ -211,13 +176,6 @@ if(ENABLE_CPU AND NOT WIN32)
     )
 endif()
 
-if(ENABLE_TESTCASES)
-    file(GLOB_RECURSE LIBEVENT_LIB_LIST
-            ${libevent_LIBPATH}/libevent*
-            ${libevent_LIBPATH}/libevent_pthreads*
-    )
-endif()
-
 if(NOT ENABLE_GE)
     if(ENABLE_D OR ENABLE_ACL)
         if(DEFINED ENV{ASCEND_CUSTOM_PATH})
@@ -245,7 +203,6 @@ if(NOT ENABLE_GE)
             FILES
                 ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
                 ${CMAKE_SOURCE_DIR}/build/graphengine/c_sec/lib/libc_sec.so
-                ${LIBEVENT_LIB_LIST}
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
