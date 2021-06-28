@@ -25,6 +25,7 @@ batch_size = 1
 parser = argparse.ArgumentParser(description="ssd acc calculation")
 parser.add_argument("--result_path", type=str, required=True, help="result files path.")
 parser.add_argument("--img_path", type=str, required=True, help="image file path.")
+parser.add_argument("--anno_file", type=str, required=True, help="annotation file.")
 parser.add_argument("--drop", action="store_true", help="drop iscrowd images or not.")
 args = parser.parse_args()
 
@@ -34,15 +35,13 @@ def get_imgSize(file_name):
 
 def get_result(result_path, img_id_file_path):
     """print the mAP"""
-    anno_json = os.path.join(config.coco_root, config.instances_set.format(config.val_data_type))
-
     if args.drop:
         from pycocotools.coco import COCO
         train_cls = config.classes
         train_cls_dict = {}
         for i, cls in enumerate(train_cls):
             train_cls_dict[cls] = i
-        coco = COCO(anno_json)
+        coco = COCO(args.anno_file)
         classs_dict = {}
         cat_ids = coco.loadCats(coco.getCatIds())
         for cat in cat_ids:
@@ -83,7 +82,7 @@ def get_result(result_path, img_id_file_path):
             "img_id": img_id,
             "image_shape": image_shape
         })
-    mAP = metrics(pred_data, anno_json)
+    mAP = metrics(pred_data, args.anno_file)
     print(f" mAP:{mAP}")
 
 if __name__ == '__main__':

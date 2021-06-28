@@ -300,7 +300,7 @@ Current batch_ Size can only be set to 1.
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP]  [ANNO_FILE]  [DEVICE_ID]
 ```
 
 Inference result will be stored in the example path, you can find result like the followings in acc.log.
