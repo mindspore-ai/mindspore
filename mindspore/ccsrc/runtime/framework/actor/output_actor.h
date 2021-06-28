@@ -46,12 +46,10 @@ class OutputActor : public OpActor<DeviceTensor> {
         outputs_num_(outputs_num),
         current_outputs_num_(0),
         need_loop_count_(need_loop_count),
-        branch_id_(kMainBranchID),
         running_dependent_msg_num_(1) {
     outputs_.resize(outputs_num);
     output_nodes_.resize(outputs_num);
     device_contexts_.resize(outputs_num);
-    device_tensor_store_keys_[kMainBranchID] = std::vector<std::pair<size_t, AnfNodePtr>>();
   }
   ~OutputActor() override = default;
 
@@ -64,8 +62,6 @@ class OutputActor : public OpActor<DeviceTensor> {
   // The output actor collects output result when receive the data of actor.
   void CollectOutput(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
                      OpContext<DeviceTensor> *context);
-
-  void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context);
 
   // The graph output need be set new device address every step or loop, to avoid that the device address
   // context of tensor be rewritten in the next step or next loop.
@@ -88,16 +84,11 @@ class OutputActor : public OpActor<DeviceTensor> {
   size_t outputs_num_;
   size_t current_outputs_num_;
   bool need_loop_count_;
-  int branch_id_;
 
   // The dependent messages number of actor running.
   int running_dependent_msg_num_;
 
-  // Pair<branch_id, <index, node>> points to the dependent device tensor store, branch_id is the output branch id.
-  // In general, the branch id is 0, which means there is only one output branch in the actor set. When there are
-  // multiple possible output branches in the actor set, different branch ids correspond to their own related nodes.
-  // The index is the position of node in the output, node is the key of the device tensor store.
-  std::unordered_map<size_t, std::vector<std::pair<size_t, AnfNodePtr>>> device_tensor_store_keys_;
+  std::vector<std::pair<size_t, AnfNodePtr>> device_tensor_store_keys_;
 };
 
 using OutputActorPtr = std::shared_ptr<OutputActor>;

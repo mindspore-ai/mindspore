@@ -86,16 +86,6 @@ void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *c
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
-
-  if (CheckLoopCountIncreaseCondition(context)) {
-    IncreaseLoopCount(context);
-  }
-}
-
-void LoopCountActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context) {
-  MS_EXCEPTION_IF_NULL(context);
-  branch_id_ = branch_id;
-
   if (CheckLoopCountIncreaseCondition(context)) {
     IncreaseLoopCount(context);
   }
@@ -138,7 +128,6 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *context) {
   if (recorder_aid_ != nullptr) {
     Async(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);
   }
-
   SendMemoryAllocReq(context);
 }
 
@@ -180,14 +169,8 @@ void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
 bool LoopCountActor::CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
-  if (branch_id_ == kInvalidBranchID) {
-    return false;
-  }
 
-  if (branch_id_ >= SizeToInt(branch_id_to_input_controls_num_.size())) {
-    MS_LOG(ERROR) << "Branch id is invalid, id:" << branch_id_;
-  }
-  return input_op_controls_[sequential_num].size() == branch_id_to_input_controls_num_[branch_id_];
+  return input_op_controls_[sequential_num].size() == input_controls_num_;
 }
 }  // namespace runtime
 }  // namespace mindspore

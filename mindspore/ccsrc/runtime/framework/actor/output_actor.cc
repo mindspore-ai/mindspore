@@ -44,28 +44,25 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index,
 
 void OutputActor::Init() {
   // Set the number of actor running dependent messages.
-  if ((!need_loop_count_) && (device_tensor_store_keys_.size() == 1)) {
-    running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_[kMainBranchID].size());
+  if ((!need_loop_count_)) {
+    running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_.size());
   }
 }
 
 void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  if (branch_id_ == kInvalidBranchID) {
-    MS_LOG(EXCEPTION) << "Invalid branch id for output actor.";
-  }
+
   current_count_ = loop_count;
   if (loop_count_ == current_count_) {
-    if (current_outputs_num_ + device_tensor_store_keys_[branch_id_].size() != outputs_num_) {
-      std::string error_info =
-        "The outputs num is wrong, the total outputs num: " + std::to_string(outputs_num_) +
-        ", the current outputs num: " + std::to_string(current_outputs_num_) +
-        ", the device tensor store num: " + std::to_string(device_tensor_store_keys_[branch_id_].size());
+    if (current_outputs_num_ + device_tensor_store_keys_.size() != outputs_num_) {
+      std::string error_info = "The outputs num is wrong, the total outputs num: " + std::to_string(outputs_num_) +
+                               ", the current outputs num: " + std::to_string(current_outputs_num_) +
+                               ", the device tensor store num: " + std::to_string(device_tensor_store_keys_.size());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
     // Because device tensor store can't send data, so fetch the output result of device tensor store in running end.
-    for (const auto &device_tensor_store_key : device_tensor_store_keys_[branch_id_]) {
+    for (const auto &device_tensor_store_key : device_tensor_store_keys_) {
       if (device_tensor_store_key.first >= outputs_.size()) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
       }
@@ -108,16 +105,10 @@ void OutputActor::UpdateOutputDeviceAddress() {
   output_nodes_.resize(outputs_num_);
 }
 
-void OutputActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context) {
-  MS_EXCEPTION_IF_NULL(context);
-  branch_id_ = branch_id;
-}
-
 void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
                                 OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(context);
-
   // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".
   if (loop_count_ - current_count_ != 1) {
     return;
@@ -132,7 +123,7 @@ void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_ind
   // Save the output nodes to clear the device tensor in the running end.
   output_nodes_[output_position] = KernelWithIndex(output_node, output_index);
   // There is no loop count actor in step mode, need trigger call CollectLoopCount to replace old output device tensors.
-  if (!need_loop_count_ && (current_outputs_num_ + device_tensor_store_keys_[branch_id_].size() == outputs_num_)) {
+  if (!need_loop_count_ && (current_outputs_num_ + device_tensor_store_keys_.size() == outputs_num_)) {
     CollectLoopCount(++current_count_, context);
   }
 }

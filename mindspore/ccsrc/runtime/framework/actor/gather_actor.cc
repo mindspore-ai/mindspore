@@ -16,6 +16,7 @@
 
 #include "runtime/framework/actor/gather_actor.h"
 #include "runtime/framework/actor/output_actor.h"
+#include "runtime/framework/actor/switch_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/loop_count_actor.h"
 #include "mindrt/include/async/async.h"
@@ -44,7 +45,7 @@ void GatherActor::Init() {
 size_t GatherActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
   const auto &iter = find(data_nodes_.begin(), data_nodes_.end(), data_node);
   if (iter == data_nodes_.end()) {
-    MS_LOG(EXCEPTION) << "Data node: " << data_node->fullname_with_scope()
+    MS_LOG(EXCEPTION) << "Data node: " << AnfAlgo::GetNodeDebugString(data_node)
                       << " is not exist in gather actor:" << GetAID();
   }
   return iter - data_nodes_.begin();
@@ -52,10 +53,32 @@ size_t GatherActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
 
 void GatherActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-
   auto sequential_num = context->sequential_num_;
-  input_op_datas_[sequential_num].emplace_back(input_data);
+  input_data_[sequential_num][input_data->index_].push(input_data->data_);
 
+  if (CheckLaunchCondition(context)) {
+    FetchInputDeviceTensor(context);
+    EraseInput(context);
+    SendOutput(context);
+  }
+}
+
+void GatherActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  auto &sequential_num = context->sequential_num_;
+  input_op_controls_[sequential_num].emplace_back(input_control);
+
+  if (CheckLaunchCondition(context)) {
+    FetchInputDeviceTensor(context);
+    EraseInput(context);
+    SendOutput(context);
+  }
+}
+
+void GatherActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  auto &sequential_num = context->sequential_num_;
+  input_branch_ids_[sequential_num] = branch_id;
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
     EraseInput(context);
@@ -76,20 +99,20 @@ void GatherActor::FetchBackendInputNode(const FuncGraphPtr &func_graph, const Co
 
 void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
-
-  // Branch arrow and result arrow must be executed before the data arrow and control arrow, otherwise the output
-  // actor may receive the loop count message first and cause the output to be abnormal.
-  if (branch_id_ > kInvalidBranchID) {
-    Async(loop_count_aid_, &LoopCountActor::CollectBranchId, branch_id_, context);
-    Async(output_aid_, &OutputActor::CollectBranchId, branch_id_, context);
+  // Send output branch id.
+  if (find(output_branch_arrows_.begin(), output_branch_arrows_.end(), switch_aid_) != output_branch_arrows_.end()) {
+    int branch_id = input_branch_id_;
+    Async(switch_aid_, &SwitchActor::CollectBranchId, branch_id, context);
+  }
+  if (find(output_branch_arrows_.begin(), output_branch_arrows_.end(), gather_aid_) != output_branch_arrows_.end()) {
+    Async(gather_aid_, &GatherActor::CollectBranchId, local_branch_id_, context);
   }
 
-  // Send graph output result.
+  // Send output result.
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     size_t from_index = result_arrow->from_output_index_;
     const auto &front_node = data_nodes_[from_index];
-
     for (const auto &backend_node : front_to_backend_parameter_.at(front_node)) {
       if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second).get() ==
           input_device_tensors_[from_index]) {
@@ -115,13 +138,26 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
 
 void GatherActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-
-  auto data_iter = input_op_datas_.find(context->sequential_num_);
-  if (data_iter != input_op_datas_.end()) {
+  auto data_iter = input_data_.find(context->sequential_num_);
+  if (data_iter != input_data_.end()) {
     for (auto &input_data : data_iter->second) {
-      MS_EXCEPTION_IF_NULL(input_data);
-      input_device_tensors_[input_data->index_] = input_data->data_;
+      input_device_tensors_[input_data.first] = input_data.second.top();
+      input_data.second.pop();
     }
+  }
+
+  for (const auto &device_tensor_store_key : device_tensor_store_keys_) {
+    const auto &device_context = device_contexts_[device_tensor_store_key.first];
+    MS_EXCEPTION_IF_NULL(device_context);
+    auto device_tensor =
+      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context->GetDeviceAddressType());
+    if (device_tensor == nullptr) {
+      std::string error_info =
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+        ", device type:" + std::to_string(static_cast<int>(device_context->GetDeviceAddressType()));
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    input_device_tensors_[device_tensor_store_key.first] = device_tensor;
   }
 
   for (size_t i = 0; i < output_data_by_output_index_.size(); ++i) {
@@ -131,20 +167,31 @@ void GatherActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
       output_data->data_ = data;
     }
   }
+
+  if (need_branch_id_input_) {
+    input_branch_id_ = input_branch_ids_[context->sequential_num_];
+  }
 }
 
 bool GatherActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
+
+  // Fetch input data.
   if (input_datas_num_ != 0) {
-    auto data_iter = input_op_datas_.find(context->sequential_num_);
-    if (data_iter == input_op_datas_.end()) {
+    auto data_iter = input_data_.find(context->sequential_num_);
+    if (data_iter == input_data_.end()) {
       return false;
     }
-    if (data_iter->second.size() != input_datas_num_) {
+    if (data_iter->second.size() + device_tensor_store_keys_.size() != input_datas_num_) {
+      return false;
+    }
+    if (std::any_of(data_iter->second.begin(), data_iter->second.end(),
+                    [](const auto &input_stack) { return input_stack.second.empty(); })) {
       return false;
     }
   }
 
+  // Fetch input control.
   if (input_controls_num_ != 0) {
     auto control_iter = input_op_controls_.find(context->sequential_num_);
     if (control_iter == input_op_controls_.end()) {
@@ -154,23 +201,45 @@ bool GatherActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
       return false;
     }
   }
+
+  // Fetch input branch id.
+  if (need_branch_id_input_) {
+    auto branch_id_iter = input_branch_ids_.find(context->sequential_num_);
+    if (branch_id_iter == input_branch_ids_.end()) {
+      return false;
+    }
+  }
   return true;
 }
 
 void GatherActor::EraseInput(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  if (input_datas_num_ != 0) {
-    auto ret = input_op_datas_.erase(context->sequential_num_);
+
+  // Erase input data.
+  auto data_iter = input_data_.find(context->sequential_num_);
+  if (data_iter != input_data_.end() && std::all_of(data_iter->second.begin(), data_iter->second.end(),
+                                                    [](const auto &input_data) { return input_data.second.empty(); })) {
+    auto ret = input_data_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input data failed: " + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   }
 
+  // Erase input control.
   if (input_controls_num_ != 0) {
     auto ret = input_op_controls_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input controls failed: " + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+  }
+
+  // Erase input branch id.
+  if (need_branch_id_input_) {
+    auto ret = input_branch_ids_.erase(context->sequential_num_);
+    if (ret == 0) {
+      std::string error_info = "Erase input branch id failed: " + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   }

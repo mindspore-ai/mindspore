@@ -58,16 +58,25 @@ constexpr size_t kMakeTupleInputStartPos = 1;
 // 5. Free Memory
 class SwitchActor : public SwitchActorBase<DeviceTensor> {
  public:
-  SwitchActor(const std::string &name, DeviceContext *device_context, const CNodePtr &node)
-      : SwitchActorBase(name), device_context_(device_context), node_(node) {}
+  SwitchActor(const std::string &name, DeviceContext *device_context, const CNodePtr &node, const int branch_id,
+              const bool need_branch_id_input)
+      : SwitchActorBase(name),
+        device_context_(device_context),
+        node_(node),
+        local_branch_id_(branch_id),
+        need_branch_id_input_(need_branch_id_input) {}
   ~SwitchActor() override = default;
 
   void Init() override;
 
   // The switch actor run when receive the input data.
   void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context);
+  // The switch actor run when receive the input control.
+  void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context);
+  // The switch actor run when receive the input branch id.
+  void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context);
   // Initialize the input and output information of the switch actor According to node_.
-  void Initialize();
+  void Initialize(const ControlNodeParserPtr &parser);
   // Add input for all branches.
   void AddCommonInput(const AnfNodePtr &node);
   // Fetch the input position of the data node.
@@ -79,11 +88,16 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   void InitPartial(const AnfNodePtr &node, const size_t branch_id);
   void InitSwitch();
   void InitSwitchLayer();
-
+  // In control flow, the output of each subgraph is connected to a switch actor, and the switch actor is
+  // initialized with the return node of the subgraph.
+  void InitReturn(const ControlNodeParserPtr &parser);
+  // Initialize the size of the vector members.
+  void InitVectorSize(const size_t num);
   // Get index from DeviceTensor.
-  size_t GetIndex();
+  size_t GetIndex(OpContext<DeviceTensor> *context);
   // Add input for the branch.
   void AddInput(const AnfNodePtr &node, size_t branch);
+  void AddInput(const KernelWithIndex node_with_index, const size_t branch);
 
   // Check whether satisfy the condition for send outputs.
   bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
@@ -95,12 +109,10 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   void SendMemoryFreeReq(OpContext<DeviceTensor> *context);
 
   // Collect all the backend inputs of switch actor.
-  void FetchInputNode(const std::vector<AnfNodePtr> &origin_parameters_order,
-                      const FrontToBackendNodeWithContext &front_to_backend_parameters,
-                      const std::unordered_map<AnfNodePtr, AnfNodePtr> &front_to_backend_kernel);
-  // All inputs of the switch actor, excluding weight and tensor.
+  void FetchInputNode(const ControlNodeParserPtr &parser);
+  // All inputs of the switch actor, include weight and tensor.
   // Used to receive input data, the first input is the condition of switch.
-  std::vector<AnfNodePtr> input_nodes_;
+  std::vector<KernelWithIndex> input_nodes_;
   // The position of the branch output in the input_nodes_.
   std::vector<std::vector<size_t>> branch_inputs_pos_;
 
@@ -126,9 +138,9 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
 
   // When the output is a value node from switch actor, the actor needs to send the anfnode to the output actor,
   // so all the nodes that may send the device tensor to switch actor are recorded.
-  std::vector<std::vector<KernelWithIndex>> front_to_backend_parameter_;
   std::vector<std::vector<KernelWithIndex>> backend_parameters_;
   std::vector<std::vector<AnfNodePtr>> branch_total_inputs_;
+
   std::vector<FuncGraphPtr> branch_func_graph_;
 
   std::unordered_map<int, size_t> branch_id_to_index_;
@@ -148,8 +160,12 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // The dependent input controls number.
   size_t input_controls_num_{0};
   CNodePtr node_;
+
+  // The branch id corresponding to the funcgraph to which the gather actor belongs.
   int local_branch_id_;
-  size_t input_branch_id_num_;
+  // Whether it needs to accept the branch id. When the switch actor is the output of the subgraph, it needs to receive
+  // branch id sent by the gather actor of subgraph, which will be true at this time.
+  bool need_branch_id_input_;
 
   //  The output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_;
