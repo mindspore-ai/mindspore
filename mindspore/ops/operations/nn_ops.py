@@ -139,7 +139,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
 
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
-            ouput_size can be a tulpe, or a single H for H x H, and H x W can be int or None
+            ouput_size can be a tuple, or a single H for H x H, and H x W can be int or None
             which means the output size is the same as the input.
 
     Inputs:
@@ -1941,7 +1941,7 @@ class Conv2DBackpropInput(Primitive):
         - **dout** (Tensor) - the gradients write respect to the output of the convolution. The shape conforms
           to the default data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(\text{ks_w}, \text{ks_h})`, where :math:`\text{ks_w}`
-          and :math:`\text{ks_h}` are the height and width of the convolution kerenel, then the shape is
+          and :math:`\text{ks_h}` are the height and width of the convolution kernel, then the shape is
           :math:`(C_{out}, C_{in}, \text{ks_w}, \text{ks_h})`.
         - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
           :math:`(N, C_{in}, H_{in}, W_{in})`.

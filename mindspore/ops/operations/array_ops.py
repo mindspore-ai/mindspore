@@ -3114,7 +3114,7 @@ class StridedSlice(PrimitiveWithInfer):
         >>> # ]
         >>> # The final output after finishing is:
         [[[3], [5]]]
-        >>> # anothor example like :
+        >>> # another example like :
         >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
         >>> print(output)
         [[[3. 3. 3.]]]
@@ -3929,7 +3929,7 @@ class ScatterMax(_ScatterOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape + x_shape[1:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -3982,7 +3982,7 @@ class ScatterMin(_ScatterOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape + x_shape[1:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4037,7 +4037,7 @@ class ScatterAdd(_ScatterOpDynamic):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape + x_shape[1:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4146,7 +4146,7 @@ class ScatterSub(_ScatterOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape + x_shape[1:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4248,7 +4248,7 @@ class ScatterMul(_ScatterOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape + x_shape[1:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4350,7 +4350,7 @@ class ScatterDiv(_ScatterOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape + x_shape[1:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4459,7 +4459,7 @@ class ScatterNdAdd(_ScatterNdOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Supported Platforms:
         ``Ascend``
@@ -4536,7 +4536,7 @@ class ScatterNdSub(_ScatterNdOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Supported Platforms:
         ``Ascend``
@@ -4599,7 +4599,7 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
     Raises:
         TypeError: If dtype of `indices` is not int32.
         TypeError: If dtype of `input_x` is not one of float16, float32, int32.
-        ValueError: If the shape of `updates` is note euqal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Supported Platforms:
         ``Ascend``
