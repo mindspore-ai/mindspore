@@ -132,18 +132,18 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             O2 is recommended on GPU, O3 is recommended on Ascend.Property of `keep_batchnorm_fp32` , `cast_model_type`
             and `loss_scale_manager` determined by `level` setting may be overwritten by settings in `kwargs` .
 
-        cast_model_type (:class: `mindspore.dtype` ): Supports `mstype.float16` or `mstype.float32` .If set, the network
-            will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted to the
-            type determined by `level` setting.
-        keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to `float16` .
-            If set, the `level` setting will take no effect on this property.
+        cast_model_type (:class: `mindspore.dtype` ): Supports `mstype.float16` or `mstype.float32` . If set, the
+            network will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted
+            to the type determined by `level` setting.
+        keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to `float16` . If
+            set, the `level` setting will take no effect on this property.
         loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, otherwise scale the loss by
-        `LossScaleManager` . If set, the `level` setting will take no effect on this property.
+            `LossScaleManager` . If set, the `level` setting will take no effect on this property.
     Raises:
-        1.Auto mixed precision only supported on device GPU and Ascend.If device is CPU, a `ValueError` exception
-            will be raised.
-        2.If device is CPU, property `loss_scale_manager` only can be set as `None` or `FixedLossScaleManager` (with
-            property `drop_overflow_update=False` ), or a `ValueError` exception will be raised.
+        ValueError: Auto mixed precision only supported on device GPU and Ascend. If device is CPU, a `ValueError`
+            exception will be raised.
+        ValueError: If device is CPU, property `loss_scale_manager` only can be set as `None` or `FixedLossScaleManager`
+            (with property `drop_overflow_update=False` ), or a `ValueError` exception will be raised.
     """
     validator.check_value_type('network', network, nn.Cell)
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, acc.FreezeOpt))
