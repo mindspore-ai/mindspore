@@ -120,7 +120,7 @@ bool KernelAdjust::ExistIndependent(const std::shared_ptr<session::KernelGraph> 
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const auto &exe_orders = kernel_graph_ptr->execution_order();
   for (const auto &node : exe_orders) {
-    if (AnfAlgo::IsIndependentNode(node)) {
+    if (AnfAlgo::IsIndependentNode(node) && AnfAlgo::GetGraphId(node.get()) == kernel_graph_ptr->graph_id()) {
       MS_LOG(INFO) << "graph exit independent node";
       return true;
     }
