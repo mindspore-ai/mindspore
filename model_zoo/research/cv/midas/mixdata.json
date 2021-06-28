@@ -1,0 +1,10 @@
+{
+    "img":
+    {
+      "RW":"/ReDWeb_V1/Imgs/*"
+    },
+    "depth":
+    {
+       "RW":"/ReDWeb_V1/RDs/*"
+    }
+}
