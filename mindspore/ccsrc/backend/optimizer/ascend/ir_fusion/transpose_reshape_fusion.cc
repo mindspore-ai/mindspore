@@ -20,6 +20,7 @@
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "base/core_ops.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -48,6 +49,11 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
                                                  const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::TransposeReshapeFusion)) {
+    return node;
+  }
+
   auto reshape_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kBackendReshapeInputTensorNum);
   MS_EXCEPTION_IF_NULL(reshape_cnode);
   auto transpose_cnode = CheckAnfNodeIfCNodeAndInputSize(reshape_cnode->input(1), kBackendReshapeInputTensorNum);

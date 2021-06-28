@@ -124,6 +124,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_device_address.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_pool.cc"
+        "../../../mindspore/ccsrc/runtime/device/ascend/lic_manager.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/cpu_kernel.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/cpu_kernel_factory.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/sparse_apply_adam_cpu_kernel.cc"

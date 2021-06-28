@@ -21,6 +21,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -44,6 +45,11 @@ const AnfNodePtr ClipByNormNoDivSquareSumFusion::Process(const FuncGraphPtr &gra
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::ClipByNormNoDivSquareSumFusion)) {
+    return node;
+  }
+
   BaseRef &input_gnode = (*equiv)[input_];
   BaseRef &constant_select_gnode = (*equiv)[constant_select_];
   BaseRef &constant_greater_gnode = (*equiv)[constant_greater_];

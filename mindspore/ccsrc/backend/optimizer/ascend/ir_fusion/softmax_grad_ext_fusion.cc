@@ -19,6 +19,7 @@
 #include "ir/primitive.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -54,6 +55,11 @@ const AnfNodePtr SoftmaxGradExtFusion::Process(const FuncGraphPtr &graph, const 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(equiv);
   MS_EXCEPTION_IF_NULL(node);
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::SoftmaxGradExtFusion)) {
+    return node;
+  }
+
   auto input0 = GetAnfNodeByVar(equiv, input0_);
   auto input1 = GetAnfNodeByVar(equiv, input1_);
   auto input2 = GetAnfNodeByVar(equiv, input2_);

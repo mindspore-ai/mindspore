@@ -20,6 +20,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "utils/trace_base.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -193,6 +194,11 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
   MS_EXCEPTION_IF_NULL(node);
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::FusedBatchNormFusion)) {
+    return node;
+  }
+
   AnfNodePtr bn_training_reduce = CreateBNTrainingReduce(func_graph, node, equiv);
   std::vector<AnfNodePtr> bn_training_reduce_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, bn_training_reduce, kBNTrainingReduceOutputNum,

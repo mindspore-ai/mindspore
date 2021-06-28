@@ -26,6 +26,7 @@
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/kernel_graph.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {

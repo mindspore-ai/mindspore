@@ -22,6 +22,7 @@
 #include "utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -105,6 +106,11 @@ const BaseRef DereluFusion::DefinePattern() const {
 const AnfNodePtr DereluFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::DereluFusion)) {
+    return node;
+  }
+
   auto relu_grad = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(relu_grad);
   auto relu = GetRelu(relu_grad);

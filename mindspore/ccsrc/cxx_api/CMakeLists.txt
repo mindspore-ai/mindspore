@@ -51,14 +51,15 @@ set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-            -Wl,-force_load mindspore -Wl,-noall_load proto_input mindspore_gvar mindspore::protobuf)
+            -Wl,-force_load mindspore -Wl,-noall_load mindspore_core proto_input mindspore_gvar mindspore::protobuf)
 else()
     if(ENABLE_D OR ENABLE_GPU)
         target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-            -Wl,--whole-archive mindspore -Wl,--no-whole-archive proto_input mindspore_gvar mindspore::protobuf)
+            -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore_gvar
+            mindspore::protobuf)
     else()
         target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-          mindspore proto_input mindspore_gvar mindspore::protobuf)
+          mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
     endif()
 endif()
 
