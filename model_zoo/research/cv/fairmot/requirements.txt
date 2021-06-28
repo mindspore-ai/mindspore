@@ -1,0 +1,12 @@
+yacs
+opencv-python
+cython
+scipy
+numba
+progress
+motmetrics
+matplotlib
+lap
+openpyxl
+Pillow
+tensorboardX
