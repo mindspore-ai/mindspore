@@ -43,6 +43,12 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" |
       echo "Run arm64 train failed"
       exit 1
     fi
+    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend -c ${cur_path}/../config/models_ms_transfer.cfg
+    arm64_status=$?
+    if [[ $arm64_status -ne 0 ]]; then
+      echo "Run arm64 transferLearning failed"
+      exit 1
+    fi
 fi
 
 if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" || $backend == "arm32_fp16" || \
@@ -58,6 +64,12 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" |
     arm32_status=$?
     if [[ $arm32_status -ne 0 ]]; then
       echo "Run arm32 train failed"
+      exit 1
+    fi
+    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend -c ${cur_path}/../config/models_ms_transfer.cfg
+    arm32_status=$?
+    if [[ $arm32_status -ne 0 ]]; then
+      echo "Run arm32 transferLearning failed"
       exit 1
     fi
 fi
@@ -93,6 +105,12 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backen
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
       echo "Run x86 train failed"
+      exit 1
+    fi
+    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -e $backend -c ${cur_path}/../config/models_ms_transfer.cfg
+    x86_status=$?
+    if [[ $x86_status -ne 0 ]]; then
+      echo "Run x86 transferLearning failed"
       exit 1
     fi
 fi

@@ -186,11 +186,6 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
     return RET_ERROR;
   }
 
-  if (quant_type != QT_DEFAULT) {
-    MS_LOG(ERROR) << "Currently only QuantType default is supported";
-    return RET_ERROR;
-  }
-
   if (model_type == MT_TRAIN) {
     return TrainSession::Export(filename, model_type, quant_type, format);
   }
@@ -301,11 +296,21 @@ session::LiteSession *session::LiteSession::CreateTransferSession(const std::str
                                                                   const lite::TrainCfg *cfg) {
   size_t size_head = 0;
   size_t size_backbone = 0;
-  auto buf_head = lite::ReadFile(filename_head.c_str(), &size_head);
+  std::string filename = filename_head;
+  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
+    filename = filename + ".ms";
+  }
+
+  auto buf_head = lite::ReadFile(filename.c_str(), &size_head);
   if (buf_head == nullptr) {
     return nullptr;
   }
-  auto buf_backbone = lite::ReadFile(filename_backbone.c_str(), &size_backbone);
+  filename = filename_backbone;
+  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
+    filename = filename + ".ms";
+  }
+
+  auto buf_backbone = lite::ReadFile(filename.c_str(), &size_backbone);
   if (buf_backbone == nullptr) {
     return nullptr;
   }

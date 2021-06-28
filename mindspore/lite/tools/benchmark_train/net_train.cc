@@ -318,7 +318,8 @@ static CpuBindMode FlagToBindMode(int flag) {
   return NO_BIND;
 }
 
-int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session, int epochs, bool check_accuracy) {
+int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, int train_session,
+                                  int epochs, bool check_accuracy) {
   auto start_prepare_time = GetTimeUs();
   std::string model_name = filename.substr(filename.find_last_of(DELIM_SLASH) + 1);
   Context context;
@@ -333,14 +334,27 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
   }
   std::unique_ptr<session::LiteSession> session;
   if (train_session) {
-    MS_LOG(INFO) << "CreateTrainSession from model file" << filename.c_str();
-    std::cout << "CreateTrainSession from model file " << filename.c_str() << std::endl;
-    session = std::unique_ptr<session::LiteSession>(
-      session::LiteSession::CreateTrainSession(filename, &context, true, &train_cfg));
-    if (session == nullptr) {
-      MS_LOG(ERROR) << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str();
-      std::cout << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str() << std::endl;
-      return RET_ERROR;
+    if (!bb_filename.empty()) {
+      MS_LOG(INFO) << "CreateTransferSession from models files" << filename << " and " << bb_filename;
+      std::cout << "CreateTranferSession from model file " << filename << " and " << bb_filename << std::endl;
+      session = std::unique_ptr<session::LiteSession>(
+        session::LiteSession::CreateTransferSession(bb_filename, filename, &context, true, &train_cfg));
+      if (session == nullptr) {
+        MS_LOG(ERROR) << "RunNetTrain CreateTranferSession failed while running " << model_name.c_str();
+        std::cout << "RunNetTrain CreateTranferSession failed while running " << model_name.c_str() << std::endl;
+        return RET_ERROR;
+      }
+
+    } else {
+      MS_LOG(INFO) << "CreateTrainSession from model file" << filename.c_str();
+      std::cout << "CreateTrainSession from model file " << filename.c_str() << std::endl;
+      session = std::unique_ptr<session::LiteSession>(
+        session::LiteSession::CreateTrainSession(filename, &context, true, &train_cfg));
+      if (session == nullptr) {
+        MS_LOG(ERROR) << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str();
+        std::cout << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str() << std::endl;
+        return RET_ERROR;
+      }
     }
     if (epochs > 0) {
       if (flags_->virtual_batch_) {
@@ -411,7 +425,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
 }
 
 int NetTrain::RunNetTrain() {
-  auto status = CreateAndRunNetwork(flags_->model_file_, true, flags_->epochs_);
+  auto status = CreateAndRunNetwork(flags_->model_file_, flags_->bb_model_file_, true, flags_->epochs_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CreateAndRunNetwork failed for model " << flags_->model_file_ << ". Status is " << status;
     std::cout << "CreateAndRunNetwork failed for model " << flags_->model_file_ << ". Status is " << status
@@ -430,13 +444,15 @@ int NetTrain::RunNetTrain() {
 
 int NetTrain::SaveModels(const std::unique_ptr<session::LiteSession> &session) {
   if (!flags_->export_file_.empty()) {
-    auto status = session->Export(flags_->export_file_ + "_qt", lite::MT_TRAIN, lite::QT_WEIGHT);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Export quantized model error " << flags_->export_file_ + "_qt";
-      std::cout << "Export quantized model error " << flags_->export_file_ + "_qt" << std::endl;
-      return RET_ERROR;
+    if (flags_->bb_model_file_.empty()) {
+      auto status = session->Export(flags_->export_file_ + "_qt", lite::MT_TRAIN, lite::QT_WEIGHT);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Export quantized model error " << flags_->export_file_ + "_qt";
+        std::cout << "Export quantized model error " << flags_->export_file_ + "_qt" << std::endl;
+        return RET_ERROR;
+      }
     }
-    status = session->Export(flags_->export_file_, lite::MT_TRAIN, lite::QT_NONE);
+    auto status = session->Export(flags_->export_file_, lite::MT_TRAIN, lite::QT_NONE);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Export non quantized model error " << flags_->export_file_;
       std::cout << "Export non quantized model error " << flags_->export_file_ << std::endl;
@@ -466,27 +482,29 @@ int NetTrain::SaveModels(const std::unique_ptr<session::LiteSession> &session) {
 int NetTrain::CheckExecutionOfSavedModels() {
   int status = RET_OK;
   if (!flags_->export_file_.empty()) {
-    status = NetTrain::CreateAndRunNetwork(flags_->export_file_, true, 0);
+    status = NetTrain::CreateAndRunNetwork(flags_->export_file_, flags_->bb_model_file_, true, 0);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run Exported model " << flags_->export_file_ << " error: " << status;
       std::cout << "Run Exported model " << flags_->export_file_ << " error: " << status << std::endl;
       return status;
     }
-    status = NetTrain::CreateAndRunNetwork(flags_->export_file_ + "_qt", true, 0, false);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run Exported model " << flags_->export_file_ << "_qt.ms error: " << status;
-      std::cout << "Run Exported model " << flags_->export_file_ << "_qt.ms error: " << status << std::endl;
-      return status;
+    if (flags_->bb_model_file_.empty()) {
+      status = NetTrain::CreateAndRunNetwork(flags_->export_file_ + "_qt", "", true, 0, false);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Run Exported model " << flags_->export_file_ << "_qt.ms error: " << status;
+        std::cout << "Run Exported model " << flags_->export_file_ << "_qt.ms error: " << status << std::endl;
+        return status;
+      }
     }
   }
   if (!flags_->inference_file_.empty()) {
-    status = NetTrain::CreateAndRunNetwork(flags_->inference_file_, false, 0);
+    status = NetTrain::CreateAndRunNetwork(flags_->inference_file_, "", false, 0);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Running saved model " << flags_->inference_file_ << ".ms error: " << status;
       std::cout << "Running saved model " << flags_->inference_file_ << ".ms error: " << status << std::endl;
       return status;
     }
-    status = NetTrain::CreateAndRunNetwork(flags_->inference_file_ + "_qt", false, 0, false);
+    status = NetTrain::CreateAndRunNetwork(flags_->inference_file_ + "_qt", "", false, 0, false);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Running saved model " << flags_->inference_file_ << "_qt.ms error: " << status;
       std::cout << "Running saved model " << flags_->inference_file_ << "_qt.ms error: " << status << std::endl;
