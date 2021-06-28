@@ -116,13 +116,14 @@ void TraceGraphEval() {
   auto &infer_stack = GetCurrenGraphEvalStack();
   std::ostringstream oss;
   if (infer_stack.empty()) {
+    MS_LOG(ERROR) << "Length of analysis graph stack is empty.";
     return;
   }
-  MS_LOG(INFO) << "\n*******************************graph evaluate stack**********************************";
+  MS_LOG(ERROR) << "\n*******************************graph evaluate stack**********************************";
   oss << std::endl;
   DumpInferStack(oss);
-  MS_LOG(INFO) << oss.str();
-  MS_LOG(INFO) << "\n*************************************************************************************";
+  MS_LOG(ERROR) << oss.str();
+  MS_LOG(ERROR) << "\n*************************************************************************************";
 }
 
 class AnalyzedFuncGraphExporter : public AnfExporter {
@@ -501,7 +502,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   MS_LOG(INFO) << "Get graph analysis information begin";
   auto stack = GetCNodeDebugStack();
   if (stack.empty()) {
-    MS_LOG(INFO) << "Length of analysis information stack is empty.";
+    MS_LOG(ERROR) << "Length of analysis information stack is empty.";
     return;
   }
 
