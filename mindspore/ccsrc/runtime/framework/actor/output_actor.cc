@@ -66,36 +66,39 @@ void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *c
         CreateOutputTensor(device_tensor_store_key.second, 0, device_tensor_store_key.first);
     }
 
-    // In the running end, when the device tensor of graph output node is set into host tensor, the graph output node
-    // need be set new device tensor, to avoid that the device tensor context of host tensor be rewritten in the next
-    // step or next loop. But the graph output nodes corresponding to device tensor store need to be skipped, because
-    // they are fixed addresses and persistent.
-    for (size_t i = 0; i < output_nodes_.size(); ++i) {
-      auto &output_node = output_nodes_[i].first;
-      auto output_index = output_nodes_[i].second;
-      if ((output_node != nullptr) && (!IsPersistentDeviceTensor(output_node))) {
-        const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-        // The outputs may have the same output node, so need skip when the node has been set to new device tensor.
-        if ((device_tensor == nullptr) || (device_tensor->GetPtr() == nullptr)) {
-          continue;
-        }
-        const auto &device_context = device_contexts_[i];
-        MS_EXCEPTION_IF_NULL(device_context);
-        auto new_device_tensor = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
-                                                                     device_tensor->format(), device_tensor->type_id());
-        MS_EXCEPTION_IF_NULL(new_device_tensor);
-        new_device_tensor->set_original_ref_count(device_tensor->original_ref_count());
-        new_device_tensor->ResetRefCount();
-        AnfAlgo::SetOutputAddr(new_device_tensor, output_index, output_node.get());
-      }
-    }
-
-    output_nodes_.clear();
-    output_nodes_.resize(outputs_num_);
     current_outputs_num_ = 0;
     current_count_ = 0;
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
+}
+
+void OutputActor::UpdateOutputDeviceAddress() {
+  // In the running end, when the device tensor of graph output node is set into host tensor, the graph output node
+  // need be set new device tensor, to avoid that the device tensor context of host tensor be rewritten in the next
+  // step or next loop. But the graph output nodes corresponding to device tensor store need to be skipped, because
+  // they are fixed addresses and persistent.
+  for (size_t i = 0; i < output_nodes_.size(); ++i) {
+    auto &output_node = output_nodes_[i].first;
+    auto output_index = output_nodes_[i].second;
+    if ((output_node != nullptr) && (!IsPersistentDeviceTensor(output_node))) {
+      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+      // The outputs may have the same output node, so need skip when the node has been set to new device tensor.
+      if ((device_tensor == nullptr) || (device_tensor->GetPtr() == nullptr)) {
+        continue;
+      }
+      const auto &device_context = device_contexts_[i];
+      MS_EXCEPTION_IF_NULL(device_context);
+      auto new_device_tensor = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
+                                                                   device_tensor->format(), device_tensor->type_id());
+      MS_EXCEPTION_IF_NULL(new_device_tensor);
+      new_device_tensor->set_original_ref_count(device_tensor->original_ref_count());
+      new_device_tensor->ResetRefCount();
+      AnfAlgo::SetOutputAddr(new_device_tensor, output_index, output_node.get());
+    }
+  }
+
+  output_nodes_.clear();
+  output_nodes_.resize(outputs_num_);
 }
 
 void OutputActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context) {

@@ -310,7 +310,8 @@ void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size
     UpdateRefCount(node_device_address.get(), true);
 
     MS_EXCEPTION_IF_NULL(device_context);
-    if (!device_context->AllocateMemory(node_device_address.get(), node_device_address->GetSize())) {
+    if (node_device_address->GetPtr() == nullptr &&
+        !device_context->AllocateMemory(node_device_address.get(), node_device_address->GetSize())) {
       MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope();
     }
 
@@ -415,7 +416,7 @@ void GraphScheduler::Initialize() {
 #endif
 }
 
-ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy) {
+ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info) {
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor begin.";
   if (graph_compiler_info.graphs_.size() == 0) {
     MS_LOG(EXCEPTION) << "The number of graphs is zero.";
@@ -425,9 +426,10 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   }
 
   PersistDeviceTensor(graph_compiler_info);
-  const auto &actor_set = Build(graph_compiler_info, strategy);
+  auto strategy = graph_compiler_info.strategy_;
+  const auto &actor_set = Build(graph_compiler_info);
   CacheGraphOutputToActor(graph_compiler_info);
-  Link(actor_set.get(), graph_compiler_info, strategy);
+  Link(actor_set.get(), graph_compiler_info);
   // The copy actors are built in the link, so need push into the actor set after link.
   actor_set->copy_actors_ = copy_actors_;
 
@@ -483,8 +485,7 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 }
 
 void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info,
-                                const std::vector<std::vector<TensorPtr>> &input_tensors,
-                                GraphExecutionStrategy strategy) {
+                                const std::vector<std::vector<TensorPtr>> &input_tensors) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<TensorPtr> host_tensors;
   std::string actor_name = actor_set->name_ + "_HostDSActor";
@@ -517,10 +518,10 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
         const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
         PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context);
       } else if (IsHostQueueDSActor(input_node, graph, input_tensor, graph_compiler_info.origin_parameters_order_,
-                                    strategy)) {
+                                    graph_compiler_info.strategy_)) {
         MS_EXCEPTION_IF_NULL(host_data_source_actor);
         PrepareDataForHostDataSourceActor(host_data_source_actor->data_node_position_map_, input_node, input_tensor,
-                                          &host_tensors, device_context, strategy);
+                                          &host_tensors, device_context, graph_compiler_info.strategy_);
       }
     }
   }
@@ -648,7 +649,7 @@ ActorSet *GraphScheduler::Fetch(const ActorInfo &actor_info) const {
   }
 }
 
-ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy) {
+ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) {
   auto actor_set = std::make_shared<ActorSet>(graph_compiler_info.name_);
   MS_EXCEPTION_IF_NULL(actor_set);
 
@@ -656,8 +657,8 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info, 
   actor_to_host_queue_.emplace(actor_set->name_, host_queue);
   actor_set->data_source_actors_ = BuildDataSourceActor(graph_compiler_info, host_queue);
   actor_set->kernel_actors_ = BuildKernelActor(graph_compiler_info);
-  actor_set->loop_count_actor_ = BuildLoopCountActor(graph_compiler_info, strategy);
-  actor_set->output_actor_ = BuildOutputActor(graph_compiler_info, strategy);
+  actor_set->loop_count_actor_ = BuildLoopCountActor(graph_compiler_info);
+  actor_set->output_actor_ = BuildOutputActor(graph_compiler_info);
   actor_set->switch_actors_ = BuildSwitchActor(graph_compiler_info);
   actor_set->gather_actors_ = BuildGatherActor(graph_compiler_info);
 
@@ -683,7 +684,8 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       } else if (IsDeviceQueueDSActor(output_kernel)) {
         std::string actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
         actor = FetchActor(actor_name);
-      } else if (IsHostQueueDSActor(output_kernel, graph, nullptr, graph_compiler_info.origin_parameters_order_)) {
+      } else if (IsHostQueueDSActor(output_kernel, graph, nullptr, graph_compiler_info.origin_parameters_order_,
+                                    graph_compiler_info.strategy_)) {
         actor = FetchActor(graph_compiler_info.name_ + "_HostDSActor");
         const auto &host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
         MS_EXCEPTION_IF_NULL(host_ds_actor);
@@ -707,8 +709,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
   }
 }
 
-void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info,
-                          GraphExecutionStrategy strategy) {
+void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<KernelActor *> auto_monad_actors;
   const std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> auto_monad_prims = {
@@ -758,7 +759,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
 
   // BuildNoInputKernelActor depends on whether kernel actors have input, so must be behind the link of kernel actors.
-  actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set, strategy);
+  actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set, graph_compiler_info.strategy_);
 
   // Link the control arrows of loop count actor, which depends on the no input kernel actors.
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set);
@@ -801,7 +802,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       if (input_tensors != nullptr && j < input_tensors->size()) {
         tensor = input_tensors->at(j);
       }
-      if (IsHostQueueDSActor(input_node, graph, tensor, graph_compiler_info.origin_parameters_order_)) {
+      if (IsHostQueueDSActor(input_node, graph, tensor, graph_compiler_info.origin_parameters_order_,
+                             graph_compiler_info.strategy_)) {
         if (host_queue_ds_actor == nullptr) {
           auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
           MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
@@ -905,9 +907,8 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
   return kernel_actors;
 }
 
-LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info,
-                                                      GraphExecutionStrategy strategy) {
-  if (strategy == GraphExecutionStrategy::kStep) {
+LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info) {
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
     return nullptr;
   }
 
@@ -946,11 +947,10 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
   return loop_count_actor;
 }
 
-OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_compiler_info,
-                                                GraphExecutionStrategy strategy) {
+OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_compiler_info) {
   auto loop_count = ConfigManager::GetInstance().iter_num();
   auto actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
-  bool need_loop_count = (strategy == GraphExecutionStrategy::kPipeline) ? true : false;
+  bool need_loop_count = (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) ? true : false;
 
   auto output_actor =
     std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_, need_loop_count);
@@ -1093,7 +1093,8 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
     auto actor_name = func_graph->ToString();
     const auto &from_actor = dynamic_cast<GatherActor *>(FetchActor(actor_name));
     LinkDataArrowForGatherActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsHostQueueDSActor(from_kernel, graph, tensor, graph_compiler_info.origin_parameters_order_)) {
+  } else if (IsHostQueueDSActor(from_kernel, graph, tensor, graph_compiler_info.origin_parameters_order_,
+                                graph_compiler_info.strategy_)) {
     // Link the data arrows of host queue data source actor.
     std::string actor_name = graph_compiler_info.name_ + "_HostDSActor";
     const auto &from_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
@@ -1592,7 +1593,8 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         std::string actor_name;
         DataSourceActor *from_actor = nullptr;
         size_t from_actor_output_index = 0;
-        if (IsHostQueueDSActor(output_with_index.first, graph, nullptr, graph_compiler_info.origin_parameters_order_)) {
+        if (IsHostQueueDSActor(output_with_index.first, graph, nullptr, graph_compiler_info.origin_parameters_order_,
+                               graph_compiler_info.strategy_)) {
           actor_name = graph_compiler_info.name_ + "_HostDSActor";
           const auto &host_queue_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
           from_actor_output_index = host_queue_ds_actor->FetchDataNodePosition(output_with_index.first);
@@ -2380,6 +2382,52 @@ OpActor<DeviceTensor> *GraphScheduler::FetchActor(const std::string &actor_name)
     return nullptr;
   }
   return iter->second;
+}
+
+bool GraphScheduler::IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor,
+                                        const std::vector<AnfNodePtr> &host_parameters,
+                                        GraphExecutionStrategy strategy) {
+  MS_EXCEPTION_IF_NULL(node);
+
+  bool is_parameter_data = node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()));
+  if (!is_parameter_data) {
+    return false;
+  }
+
+  if (strategy == GraphExecutionStrategy::kStep) {
+    if (is_host_queue_node_.find(node.get()) != is_host_queue_node_.end()) {
+      return true;
+    }
+
+    if (graph != nullptr && graph->execution_order().size() > 1) {
+      is_host_queue_node_.try_emplace(node.get(), true);
+      return true;
+    }
+    // There is device address in tensor, indicating the input tensor is certain kernel's output,
+    // so it's unnecessary to put the input node to host queue data source actor.
+    if (tensor != nullptr && std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
+      return false;
+    }
+    is_host_queue_node_.try_emplace(node.get(), true);
+    return true;
+  }
+
+  if (graph == nullptr) {
+    return true;
+  }
+
+  // In control flow, only the parameters of the root funcgraph are in the host data source.
+  const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
+  bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
+                  find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
+
+  //  Judge whether node is internal parameter.
+  const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(node);
+  if (internal_front_node.first == nullptr && is_host) {
+    return true;
+  }
+
+  return false;
 }
 
 void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const {

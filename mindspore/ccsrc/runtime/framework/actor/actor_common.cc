@@ -49,41 +49,6 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
 
 bool IsSwitchActor(const AnfNodePtr &node) { return AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch); }
 
-bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor,
-                        const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
-    if (strategy == GraphExecutionStrategy::kStep) {
-      // In step mode, if the number of kernel actor in actor set is greater than one, the actor set need be drived
-      // to run by data source actor.
-      if (graph != nullptr && graph->execution_order().size() > 1) {
-        return true;
-      }
-      // There is device address in tensor, indicating the input tensor is certain kernel's output,
-      // so it's unnecessary to put the input node to host queue data source actor.
-      if (tensor != nullptr && std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
-        return false;
-      }
-    }
-
-    if (graph == nullptr) {
-      return true;
-    }
-
-    // In control flow, only the parameters of the root funcgraph are in the host data source.
-    const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
-    bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
-                    find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
-
-    //  Judge whether node is internal parameter.
-    const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(node);
-    if (internal_front_node.first == nullptr && is_host) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
