@@ -74,7 +74,8 @@ class PipelineTransformer {
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, int> GetOpInfo(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, int> GetParameterPair(const AnfNodePtr &node);
-  OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode);
+  OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode, int tuple_index);
+  CNodePtr GraphOutNode(const AnfNodePtr &node, int tuple_index);
   bool IsPipelineCareNode(const CNodePtr &cnode);
   std::pair<CNodePtr, FuncGraphPtr> FindSensNode();
   FuncGraphManagerPtr manager_;
