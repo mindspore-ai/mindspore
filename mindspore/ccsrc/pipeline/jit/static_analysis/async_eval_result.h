@@ -34,6 +34,7 @@
 namespace mindspore {
 namespace abstract {
 constexpr size_t kInferTimeout = 1800;  // 60*30 30min, next pr will change the solution of endless.
+constexpr size_t kInferTryTimeout = 3;  // 3 microsecond.
 
 class HealthPointMgr {
  public:
@@ -44,7 +45,7 @@ class HealthPointMgr {
 
   void DropPoint() {
     std::unique_lock<std::mutex> lock(lock_);
-    auto time = std::chrono::microseconds(1);
+    auto time = std::chrono::microseconds(kInferTryTimeout);
     auto cond = condition_var_.wait_for(lock, time, [this] { return point_ > 1; });
     if (cond) {
       --point_;
@@ -60,6 +61,8 @@ class HealthPointMgr {
     }
     condition_var_.notify_all();
   }
+
+  int point() { return point_; }
 
  private:
   HealthPointMgr() = default;
@@ -220,8 +223,6 @@ class AsyncResult {
     if (ms == 0) {
       return result_;
     }
-    // Check if enter endless loop
-    HealthPointScopedDrop health_point_check;
     auto time = std::chrono::microseconds(ms);
     // Wait for ms.
     (void)condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
