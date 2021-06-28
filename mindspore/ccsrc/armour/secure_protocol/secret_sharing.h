@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_SECRET_SHARING_H
 #define MINDSPORE_SECRET_SHARING_H
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <assert.h>
+#ifndef _WIN32
 #include <gmp.h>
-#include <vector>
-#include <iostream>
 #include "openssl/rand.h"
+#endif
+#include <string>
+#include <vector>
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace armour {
@@ -36,6 +36,7 @@ struct Share {
   ~Share();
 };
 
+#ifndef _WIN32
 void secure_zero(void *s, size_t);
 int GetRandInteger(mpz_t x, mpz_t prim);
 int GetRandomPrime(mpz_t prim);
@@ -67,6 +68,8 @@ class SecretSharing {
   // convert secret sharing from Share type to mpz_t type
   void GetShare(mpz_t x, mpz_t share, Share *s_share);
 };
+#endif
+
 }  // namespace armour
 }  // namespace mindspore
 #endif  // MINDSPORE_SECRET_SHARING_H

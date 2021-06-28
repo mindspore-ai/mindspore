@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "armour/secure_protocol/secret_sharing.h"
-#include <string>
+
 namespace mindspore {
 namespace armour {
 void secure_zero(unsigned char *s, size_t n) {
@@ -23,12 +24,13 @@ void secure_zero(unsigned char *s, size_t n) {
     while (n--) *p++ = '\0';
 }
 
+#ifndef _WIN32
 int GetRandInteger(mpz_t x, mpz_t prim) {
   size_t bytes_len = (mpz_sizeinbase(prim, 2) + 8 - 1) / 8;
   unsigned char buf[bytes_len];
   while (true) {
     if (!RAND_bytes(buf, bytes_len)) {
-      std::cout << "Get Rand Integer failed!" << std::endl;
+      MS_LOG(WARNING) << "Get Rand Integer failed!";
       continue;
     }
     mpz_import(x, bytes_len, 1, 1, 0, 0, buf);
@@ -45,7 +47,7 @@ int GetRandomPrime(mpz_t prim) {
   const int max_prime_len = SECRET_MAX_LEN + 1;
   unsigned char buf[max_prime_len];
   if (!RAND_bytes(buf, max_prime_len)) {
-    std::cout << "Get Rand Integer failed!" << std::endl;
+    MS_LOG(ERROR) << "Get Rand Integer failed!";
     return -1;
   }
   mpz_import(rand, max_prime_len, 1, 1, 0, 0, buf);
@@ -58,7 +60,7 @@ int GetRandomPrime(mpz_t prim) {
 void PrintBigInteger(mpz_t x) {
   char *tmp = mpz_get_str(NULL, 16, x);
   std::string Str = tmp;
-  std::cout << "*************************" << Str << std::endl;
+  MS_LOG(INFO) << Str;
   void (*freefunc)(void *, size_t);
   mp_get_memory_functions(NULL, NULL, &freefunc);
   freefunc(tmp, strlen(tmp) + 1);
@@ -68,7 +70,7 @@ void PrintBigInteger(mpz_t x, int hex) {
   char *tmp = mpz_get_str(NULL, hex, x);
   std::string Str = tmp;
 
-  std::cout << Str << std::endl;
+  MS_LOG(INFO) << Str;
   void (*freefunc)(void *, size_t);
   mp_get_memory_functions(NULL, NULL, &freefunc);
   freefunc(tmp, strlen(tmp) + 1);
@@ -118,10 +120,10 @@ int SecretSharing::CalculateShares(const mpz_t coeff[], int k, int n, const std:
     shares[i]->data = (unsigned char *)malloc(share_len + 1);
     mpz_export(shares[i]->data, &(shares[i]->len), 1, 1, 0, 0, y);
     if (shares[i]->len != share_len) {
-      std::cout << "share_len is not equal" << std::endl;
+      MS_LOG(ERROR) << "share_len is not equal";
       return -1;
     }
-    std::cout << "share_" << i + 1 << ": ";
+    MS_LOG(INFO) << "share_" << i + 1 << ": ";
     PrintBigInteger(y);
   }
   mpz_clear(x);
@@ -132,11 +134,11 @@ int SecretSharing::CalculateShares(const mpz_t coeff[], int k, int n, const std:
 int SecretSharing::Split(int n, const int k, const char *secret, const size_t length,
                          const std::vector<Share *> &shares) {
   if (k <= 1 || k > n) {
-    std::cout << "invalid parameters" << std::endl;
+    MS_LOG(ERROR) << "invalid parameters";
     return -1;
   }
   if (static_cast<int>(shares.size()) != n) {
-    std::cout << "the size of shares must be equal to nq" << std::endl;
+    MS_LOG(ERROR) << "the size of shares must be equal to n";
     return -1;
   }
   this->degree_ = length * 8;
@@ -150,10 +152,15 @@ int SecretSharing::Split(int n, const int k, const char *secret, const size_t le
   for (; i < k && ret == 0; i++) {
     mpz_init(coeff[i]);
     ret = GetRandInteger(coeff[i], this->prim_);
-    std::cout << "coeff_" << i << ":";
+    if (ret != 0) {
+      break;
+    }
+    MS_LOG(INFO) << "coeff_" << i << ":";
     PrintBigInteger(coeff[i]);
   }
-  if (ret == 0) ret = CalculateShares(coeff, k, n, shares);
+  if (ret == 0) {
+    ret = CalculateShares(coeff, k, n, shares);
+  }
   for (i = 0; i < k; i++) mpz_clear(coeff[i]);
   return ret;
 }
@@ -174,10 +181,10 @@ int SecretSharing::Combine(int k, const std::vector<Share *> &shares, char *secr
     mpz_init(denses[i]);
     mpz_init(nums[i]);
     GetShare(x[i], y[i], shares[i]);
-    std::cout << "combine -- share_" << mpz_get_str(NULL, 10, x[i]) << ": ";
+    MS_LOG(INFO) << "combine -- share_" << mpz_get_str(NULL, 10, x[i]) << ": ";
     PrintBigInteger(y[i]);
-    printf("index is : %u\n", shares[i]->index);
-    printf("len is %zu.\n", shares[i]->len);
+    MS_LOG(INFO) << "index is : " << shares[i]->index;
+    MS_LOG(INFO) << "len is %zu " << shares[i]->len;
   }
 
   mpz_t sum;
@@ -215,6 +222,6 @@ int SecretSharing::Combine(int k, const std::vector<Share *> &shares, char *secr
   }
   return ret;
 }
-
+#endif
 }  // namespace armour
 }  // namespace mindspore

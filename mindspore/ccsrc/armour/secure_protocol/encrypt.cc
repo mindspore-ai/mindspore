@@ -15,6 +15,7 @@
  */
 
 #include "armour/secure_protocol/encrypt.h"
+
 namespace mindspore {
 namespace armour {
 
@@ -32,17 +33,32 @@ AESEncrypt::AESEncrypt(const unsigned char *key, int key_len, unsigned char *ive
 
 AESEncrypt::~AESEncrypt() {}
 
+#if defined(_WIN32)
+int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned char *encrypt_data, int *encrypt_len) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return -1;
+}
+
+int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt_len, unsigned char *data, int *len) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return -1;
+}
+
+#else
 int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned char *encrypt_data, int *encrypt_len) {
   int ret;
   if (privKeyLen != KEY_STEP_MIN && privKeyLen != KEY_STEP_MAX) {
-    std::cout << "key length must be 16 or 32!" << std::endl;
+    MS_LOG(ERROR) << "key length must be 16 or 32!";
     return -1;
   }
-  assert(iVecLen == INIT_VEC_SIZE);
+  if (iVecLen != INIT_VEC_SIZE) {
+    MS_LOG(ERROR) << "initial vector size must be 16!";
+    return -1;
+  }
   if (aesMode == AES_CBC || aesMode == AES_CTR) {
     ret = evp_aes_encrypt(data, len, privKey, iVec, encrypt_data, encrypt_len);
   } else {
-    std::cout << "Please use CBC mode or CTR mode, the other modes are not supported!\n" << std::endl;
+    MS_LOG(ERROR) << "Please use CBC mode or CTR mode, the other modes are not supported!";
     ret = -1;
   }
   if (ret != 0) {
@@ -54,14 +70,17 @@ int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned c
 int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt_len, unsigned char *data, int *len) {
   int ret = 0;
   if (privKeyLen != KEY_STEP_MIN && privKeyLen != KEY_STEP_MAX) {
-    std::cout << "key length must be 16 or 32!" << std::endl;
+    MS_LOG(ERROR) << "key length must be 16 or 32!";
     return -1;
   }
-  assert(iVecLen == INIT_VEC_SIZE);
+  if (iVecLen != INIT_VEC_SIZE) {
+    MS_LOG(ERROR) << "initial vector size must be 16!";
+    return -1;
+  }
   if (aesMode == AES_CBC || aesMode == AES_CTR) {
     ret = evp_aes_decrypt(encrypt_data, encrypt_len, privKey, iVec, data, len);
   } else {
-    std::cout << "Please use CBC mode or CTR mode, the other modes are not supported!" << std::endl;
+    MS_LOG(ERROR) << "Please use CBC mode or CTR mode, the other modes are not supported!";
   }
   if (ret != 1) {
     return -1;
@@ -83,11 +102,11 @@ int AESEncrypt::evp_aes_encrypt(const unsigned char *data, const int len, const 
         ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, ivec);
         break;
       default:
-        std::cout << "key length is incorrect!" << std::endl;
+        MS_LOG(ERROR) << "key length is incorrect!";
         ret = -1;
     }
     if (ret != 1) {
-      std::cout << "EVP_EncryptInit_ex CBC fail!" << std::endl;
+      MS_LOG(ERROR) << "EVP_EncryptInit_ex CBC fail!";
       return -1;
     }
     EVP_CIPHER_CTX_set_key_length(ctx, EVP_MAX_KEY_LENGTH);
@@ -101,26 +120,26 @@ int AESEncrypt::evp_aes_encrypt(const unsigned char *data, const int len, const 
         ret = EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, ivec);
         break;
       default:
-        std::cout << "key length is incorrect!" << std::endl;
+        MS_LOG(ERROR) << "key length is incorrect!";
         ret = -1;
     }
     if (ret != 1) {
-      std::cout << "EVP_EncryptInit_ex CTR fail!" << std::endl;
+      MS_LOG(ERROR) << "EVP_EncryptInit_ex CTR fail!";
       return -1;
     }
   } else {
-    std::cout << "Unsupported AES mode" << std::endl;
+    MS_LOG(ERROR) << "Unsupported AES mode";
     return -1;
   }
   ret = EVP_EncryptUpdate(ctx, encrypt_data, &out_len, data, len);
   if (ret != 1) {
-    std::cout << "EVP_EncryptUpdate fail!" << std::endl;
+    MS_LOG(ERROR) << "EVP_EncryptUpdate fail!";
     return -1;
   }
   *encrypt_len = out_len;
   ret = EVP_EncryptFinal_ex(ctx, encrypt_data + *encrypt_len, &out_len);
   if (ret != 1) {
-    std::cout << "EVP_EncryptFinal_ex fail!" << std::endl;
+    MS_LOG(ERROR) << "EVP_EncryptFinal_ex fail!";
     return -1;
   }
   *encrypt_len += out_len;
@@ -142,7 +161,7 @@ int AESEncrypt::evp_aes_decrypt(const unsigned char *encrypt_data, const int len
         ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, ivec);
         break;
       default:
-        std::cout << "key length is incorrect!" << std::endl;
+        MS_LOG(ERROR) << "key length is incorrect!";
         ret = -1;
     }
     if (ret != 1) {
@@ -158,7 +177,7 @@ int AESEncrypt::evp_aes_decrypt(const unsigned char *encrypt_data, const int len
         ret = EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, ivec);
         break;
       default:
-        std::cout << "key length is incorrect!" << std::endl;
+        MS_LOG(ERROR) << "key length is incorrect!";
         ret = -1;
     }
   } else {
@@ -182,5 +201,7 @@ int AESEncrypt::evp_aes_decrypt(const unsigned char *encrypt_data, const int len
 
   return 0;
 }
+#endif
+
 }  // namespace armour
 }  // namespace mindspore

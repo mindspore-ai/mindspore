@@ -17,16 +17,23 @@
 #ifndef MINDSPORE_KEY_AGREEMENT_H
 #define MINDSPORE_KEY_AGREEMENT_H
 
+#ifndef _WIN32
 #include <openssl/dh.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
-#include <iostream>
+#endif
+#include "utils/log_adapter.h"
 
 #define KEK_KEY_LEN 32
 #define ITERATION 10000
 
 namespace mindspore {
 namespace armour {
+
+#ifdef _WIN32
+class PublicKey {};
+class PrivateKey {};
+#else
 class PublicKey {
  public:
   explicit PublicKey(EVP_PKEY *evpKey);
@@ -44,6 +51,7 @@ class PrivateKey {
   int GetPublicBytes(size_t *len, unsigned char *pubKeyBytes);
   EVP_PKEY *evpPrivKey;
 };
+#endif
 
 class KeyAgreement {
  public:

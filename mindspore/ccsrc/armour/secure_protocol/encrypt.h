@@ -17,9 +17,10 @@
 #ifndef MINDSPORE_ARMOUR_ENCRYPT_H
 #define MINDSPORE_ARMOUR_ENCRYPT_H
 
+#ifndef _WIN32
 #include <openssl/evp.h>
-#include <assert.h>
-#include <iostream>
+#endif
+#include "utils/log_adapter.h"
 
 #define INIT_VEC_SIZE 16
 
@@ -33,8 +34,6 @@ enum AES_MODE {
 class SymmetricEncrypt : Encrypt {};
 
 class AESEncrypt : SymmetricEncrypt {
-  // use openssl EVP_aes_256_cbc/EVP_aes_128_ctr
-  // hash input key to fixed-length (128/256 bits) using md5/SHA-256
  public:
   AESEncrypt(const unsigned char *key, int key_len, unsigned char *ivec, int ivec_len, AES_MODE mode);
   ~AESEncrypt();
@@ -47,9 +46,6 @@ class AESEncrypt : SymmetricEncrypt {
   unsigned char *iVec;
   int iVecLen;
   AES_MODE aesMode;
-  // int evp_aes_cbc_encrypt(const unsigned char* data, const int len, const unsigned char* key, unsigned char* ivec,
-  // unsigned char* encrypt_data, int& encrypt_len); int evp_aes_cbc_decrypt(const unsigned char* encrypt_data, const
-  // int len, const unsigned char* key, unsigned char* ivec, unsigned char* decrypt_data, int& decrypt_len);
   int evp_aes_encrypt(const unsigned char *data, const int len, const unsigned char *key, unsigned char *ivec,
                       unsigned char *encrypt_data, int *encrypt_len);
   int evp_aes_decrypt(const unsigned char *encrypt_data, const int len, const unsigned char *key, unsigned char *ivec,
