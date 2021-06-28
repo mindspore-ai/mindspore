@@ -414,7 +414,7 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
 
     auto output_sizes = kernel_mod->GetOutputSizeList();
     if (output_sizes.empty()) {
-      MS_LOG(INFO) << "This kernel has no output size.";
+      MS_LOG(DEBUG) << "This kernel has no output size.";
       continue;
     }
     for (size_t i = 0; i < output_sizes.size(); ++i) {
@@ -922,7 +922,7 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
       input->size = device_address->size_;
       kernel_inputs->emplace_back(input);
     }
-    MS_LOG(INFO) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
+    MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
   }
   // set clean workspace address
   if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {

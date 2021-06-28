@@ -1477,7 +1477,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
     auto find = spec_node_list.find(node_name);
     if (find != spec_node_list.end()) {
       ret = find->second[cur_index];
-      MS_LOG(INFO) << "Real input index change to" << ret << ", node name:" << node_name;
+      MS_LOG(DEBUG) << "Real input index change to" << ret << ", node name:" << node_name;
     }
   }
   return ret;

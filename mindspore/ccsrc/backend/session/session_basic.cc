@@ -185,7 +185,6 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
   int output_index = SizeToInt(node_output_pair.second);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Create tensor for output[" << node->DebugString() << "] index[" << output_index << "]";
   auto tensor_from_input = GetNodeOutputTensorFromInputs(node_output_pair, graph, input_tensors);
   if (tensor_from_input != nullptr) {
     return tensor_from_input;
@@ -1220,7 +1219,6 @@ void SessionBasic::CreateOutputPlaceholder(
   size_t index = 0;
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
-    MS_LOG(INFO) << "Create node output placeholder[" << item->DebugString() << "]";
     std::vector<size_t> indexes{index++};
     outputs->emplace_back(CreateNodeOutputPlaceholder(item, kernel_graph, input_tensors, indexes, output_indexes));
   }

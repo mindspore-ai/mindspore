@@ -278,8 +278,6 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   runtime_.CreateOutputTensors(kernel_graph.get(), *input_tensors, outputs, &tensor_to_node);
   runtime_.BindInputOutput(kernel_graph.get(), *input_tensors, outputs);
 
-  MS_LOG(INFO) << "Run Op start";
-
   bool ret = runtime_.Run(kernel_graph.get(), false);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run Op failed";
@@ -291,7 +289,6 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   }
   SetOutputFlags(*outputs);
   runtime_.RunOpClearMemory(kernel_graph.get());
-  MS_LOG(INFO) << "Run Op end";
 }
 
 void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {

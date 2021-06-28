@@ -277,12 +277,12 @@ nlohmann::json ConstructTransDataKernelJson(const std::vector<size_t> &host_shap
 }
 
 void AscendDeviceAddress::SyncStream() const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(DEBUG) << "Start!";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       !ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-    MS_LOG(INFO) << "Finish!";
+    MS_LOG(DEBUG) << "Finish!";
     return;
   }
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -292,7 +292,7 @@ void AscendDeviceAddress::SyncStream() const {
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync stream error!";
   }
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(DEBUG) << "Finish!";
 }
 
 bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {

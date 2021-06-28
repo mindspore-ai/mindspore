@@ -194,7 +194,7 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
 
 size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Load kInputCtrlTensors";
+  MS_LOG(DEBUG) << "Load kInputCtrlTensors";
   auto inputs_params = graph->input_ctrl_tensors();
   if (inputs_params == nullptr) {
     return 0;
@@ -231,7 +231,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   *epoch_val = graph->current_epoch();
   epoch_tensor->set_sync_status(kNeedSyncHostToDevice);
   inputs->push_back(epoch_tensor);
-  MS_LOG(INFO) << "Load epoch_val:" << *epoch_val;
+  MS_LOG(DEBUG) << "Load epoch_val:" << *epoch_val;
   graph->set_current_epoch(graph->current_epoch() + 1);
   return inputs_params->size();
 }
@@ -626,9 +626,7 @@ bool AscendSession::GraphCacheExist(const GraphInfo &graph_info) const {
 void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                                 const std::vector<tensor::TensorPtr> &input_tensors,
                                 const std::vector<int64_t> &tensors_mask) {
-  MS_LOG(INFO) << "Build op " << op_run_info.op_name << " start !";
   if (GraphCacheExist(graph_info)) {
-    MS_LOG(INFO) << "Build op " << op_run_info.op_name << " graph cache has existed !";
     return;
   }
 
@@ -640,7 +638,6 @@ void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &g
   RunOpAdjustKernel(graph);
   BuildKernel(graph);
   run_op_graphs_[graph_info] = graph;
-  MS_LOG(INFO) << "Build op " << op_run_info.op_name << " finish !";
 }
 
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
@@ -660,7 +657,6 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   // Run op
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Run op " << op_run_info->op_name << " start!";
   // malloc mem
   RunOpRemoveNopNode(graph);
   RunOpMemoryAlloc(*input_tensors, graph.get());
@@ -680,7 +676,6 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
     UpdateOutputAbstract(graph, op_run_info);
   }
   RunOpMemoryClear(graph.get());
-  MS_LOG(INFO) << "Run op " << op_run_info->op_name << " finish!";
 }
 
 KernelGraphPtr AscendSession::PreBuildOp(const OpRunInfo &op_run_info,
@@ -928,7 +923,7 @@ void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) const {
 }
 
 void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   const auto &kernels = kernel_graph->execution_order();
   auto iter = std::find_if(kernels.begin(), kernels.end(), [](const CNodePtr &kernel) {
@@ -942,7 +937,7 @@ void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kerne
   if (!runtime_instance->GenDynamicKernel(kernel_graph.get())) {
     MS_LOG(DEBUG) << "Graph:" << kernel_graph->graph_id() << " failed to generate dynamic kernel!";
   }
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(DEBUG) << "Finish!";
 }
 
 static CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
@@ -1086,12 +1081,10 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
 
 void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors,
                                      KernelGraph *kernel_graph) const {
-  MS_LOG(INFO) << "Start memory alloc!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
-  MS_LOG(INFO) << "Finish!";
 }
 
 void AscendSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
@@ -1124,7 +1117,7 @@ void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const
 }
 
 void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bool is_task) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(DEBUG) << "Start!";
   bool is_task_sink = false;
   if (is_task) {
     auto context_ptr = MsContext::GetInstance();
@@ -1142,21 +1135,21 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 #endif
     MS_LOG(EXCEPTION) << "run task error!";
   }
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(DEBUG) << "Finish!";
 }
 
 void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   E2eDump::DumpSetup(kernel_graph.get(), rank_id_);
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(DEBUG) << "Finish!";
 }
 
 void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   E2eDump::DumpData(kernel_graph.get(), rank_id_);
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(DEBUG) << "Finish!";
 }
 
 void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) {

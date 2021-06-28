@@ -36,7 +36,7 @@ void SignalGuard::RegisterHandlers() {
   struct sigaction old_int_action;
   (void)sigaction(SIGINT, nullptr, &old_int_action);
   if (old_int_action.sa_sigaction != nullptr) {
-    MS_LOG(INFO) << "The signal has been registered";
+    MS_LOG(DEBUG) << "The signal has been registered";
     old_handler = old_int_action.sa_sigaction;
   }
   int_action.sa_sigaction = &IntHandler;

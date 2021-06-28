@@ -588,28 +588,30 @@ bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_si
   SignalGuard sg;
   MS_EXCEPTION_IF_NULL(graph);
   bool ret = false;
-#if defined(_WIN32) || defined(_WIN64)
-  auto start_time = std::chrono::steady_clock::now();
-#else
-  struct timeval start_time {};
-  struct timeval end_time {};
-  (void)gettimeofday(&start_time, nullptr);
-#endif
+
   if (is_task_sink) {
+#if defined(_WIN32) || defined(_WIN64)
+    auto start_time = std::chrono::steady_clock::now();
+#else
+    struct timeval start_time {};
+    struct timeval end_time {};
+    (void)gettimeofday(&start_time, nullptr);
+#endif
     ret = RunTask(graph);
+#if defined(_WIN32) || defined(_WIN64)
+    auto end_time = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
+    MS_LOG(INFO) << "Call MS Run Success in " << cost.count() << " us";
+#else
+    (void)gettimeofday(&end_time, nullptr);
+    uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+    cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+    MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
+#endif
   } else {
     ret = LaunchKernel(graph);
   }
-#if defined(_WIN32) || defined(_WIN64)
-  auto end_time = std::chrono::steady_clock::now();
-  std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
-  MS_LOG(INFO) << "Call MS Run Success in " << cost.count() << " us";
-#else
-  (void)gettimeofday(&end_time, nullptr);
-  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
-#endif
+
   return ret;
 }
 
