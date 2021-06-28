@@ -15,6 +15,7 @@ enable_profiling: False
 # Eval options
 checkpoint_path: ""
 dataset_path: ""
+baseline_path: ""
 
 ---
 # Help description for each configuration

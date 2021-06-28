@@ -59,6 +59,14 @@ def model_eval():
     print('energy:', energy)
     print('atom_energy:', atom_ener)
 
+    baseline = np.load(config.baseline_path)
+    ae = baseline['e']
+
+    if not np.mean((ae - atom_ener.asnumpy().reshape(-1,)) ** 2) < 3e-7:
+        raise ValueError("Failed to varify atom_ener")
+
+    print('successful')
+
 
 if __name__ == '__main__':
     model_eval()
