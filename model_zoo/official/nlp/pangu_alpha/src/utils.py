@@ -16,6 +16,8 @@
 network config setting, gradient clip function and dynamic learning rate function
 """
 import argparse
+import os
+import time
 import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
@@ -24,7 +26,6 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR, CosineDecayLR
-
 from mindspore.parallel._utils import _get_global_rank
 from mindspore.communication.management import get_group_size
 from mindspore.nn import AdamWeightDecay
@@ -67,6 +68,7 @@ class FP32StateAdamWeightDecay(AdamWeightDecay):
             new.append(new_state)
         return ParameterTuple(new)
 
+
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 
 
@@ -92,6 +94,7 @@ class GlobalNorm(nn.Cell):
     Calculate the global norm value of given tensors
 
     """
+
     def __init__(self, params):
         super(GlobalNorm, self).__init__()
         self.norm = nn.Norm()
@@ -106,8 +109,9 @@ class GlobalNorm(nn.Cell):
             if item:
                 self.values.append(Tensor([1.0], mstype.float32))
             else:
-                self.values.append(Tensor([self.group_size*1.0], mstype.float32))
+                self.values.append(Tensor([self.group_size * 1.0], mstype.float32))
         self.values = tuple(self.values)
+
     def construct(self, grads):
         # Square sum of gradients for current rank
         square_sum_dp = self.hyper_map(get_square_sum, grads, self.values)
@@ -122,6 +126,7 @@ class ClipByGlobalNorm(nn.Cell):
     Clip grads by global norm
 
     """
+
     def __init__(self, params, clip_norm=1.0):
         super(ClipByGlobalNorm, self).__init__()
         self.global_norm = GlobalNorm(params)
@@ -143,11 +148,11 @@ def _get_model_parallel_group(dp, mp):
     return [x + index * mp for x in group]
 
 
-
 class LearningRate(LearningRateSchedule):
     """
     Warmup-decay learning rate for PanguAlpha network.
     """
+
     def __init__(self,
                  learning_rate,
                  end_learning_rate,
@@ -186,6 +191,7 @@ class LearningRate(LearningRateSchedule):
             lr = decay_lr
         return lr
 
+
 def add_inference_params(opt):
     """Add inference params"""
     opt.add_argument("--frequency_penalty",
@@ -212,6 +218,7 @@ def add_inference_params(opt):
                      type=int,
                      default=9,
                      help="the token id for <end of document>")
+
 
 def add_training_params(opt):
     """Add training params"""
@@ -269,8 +276,8 @@ def add_training_params(opt):
                      default=2,
                      help="The sink size of the training")
     opt.add_argument("--full_batch",
-                     default=0,
-                     help="Import the full size of a batch for each card, default is 0")
+                     default=1,
+                     help="Import the full size of a batch for each card, default is 1")
     opt.add_argument("--optimizer_shard",
                      type=int,
                      default=1,
@@ -279,6 +286,18 @@ def add_training_params(opt):
                      type=int,
                      default=6,
                      help="The batch size for each data parallel way. default 32")
+    opt.add_argument("--start_lr",
+                     type=float,
+                     default=5e-5,
+                     help="The start learning rate. default 1e-5")
+    opt.add_argument("--end_lr",
+                     type=float,
+                     default=1e-6,
+                     help="The end learning rate. default 1e-6")
+    opt.add_argument("--op_level_model_parallel_num",
+                     type=int,
+                     default=8,
+                     help="The model parallel way. default 8")
 
 
 def get_args(inference=False):
@@ -335,10 +354,41 @@ def get_args(inference=False):
                         type=str,
                         default="fp32",
                         help="The initialization type for parameters. Default fp32.")
-
+    parser.add_argument("--offline",
+                        type=int,
+                        default=1,
+                        help="Running on cloud of not. Default 1.")
     add_training_params(parser)
     if inference:
         add_inference_params(parser)
     args_opt = parser.parse_args()
 
     return args_opt
+
+
+def download_data(src_data_url, tgt_data_path, rank):
+    """
+        Download the dataset from the obs.
+        src_data_url (Str): should be the dataset path in the obs
+        tgt_data_path (Str): the local dataset path
+        rank (Int): the current rank id
+
+    """
+    cache_url = tgt_data_path
+    EXEC_PATH = '/tmp'
+    if rank % 8 == 0:
+        import moxing as mox
+        print("Modify the time out from 300 to 30000")
+        print("begin download dataset", flush=True)
+
+        if not os.path.exists(cache_url):
+            os.makedirs(cache_url, exist_ok=True)
+        mox.file.copy_parallel(src_url=src_data_url,
+                               dst_url=cache_url)
+        print("Dataset download succeed!", flush=True)
+
+        f = open("%s/install.txt" % (EXEC_PATH), 'w')
+        f.close()
+    # stop
+    while not os.path.exists("%s/install.txt" % (EXEC_PATH)):
+        time.sleep(1)

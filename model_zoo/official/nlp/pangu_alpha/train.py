@@ -29,11 +29,13 @@ from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 import mindspore.common.dtype as mstype
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
+
 from src.dataset import create_dataset
 from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
 from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, VirtualDatasetOneInputCell
 from src.pangu_alpha_config import PANGUALPHAConfig, set_parse
 from src.utils import LearningRate, get_args, FP32StateAdamWeightDecay
+from src.utils import download_data
 
 
 class LossCallBack(Callback):
@@ -41,6 +43,7 @@ class LossCallBack(Callback):
     Monitor the loss in training.
     If the loss in NAN or INF terminating training.
     """
+
     def __init__(self, dataset_size=-1, local_rank=0, has_trained_epoch=0, has_trained_step=0):
         super(LossCallBack, self).__init__()
         self._dataset_size = dataset_size
@@ -103,8 +106,14 @@ def run_train(args_opt):
         rank = 0
         device_num = 1
 
+    # copy data from the cloud to the /cache/Data
+    cache_url = '/cache/Data/'
+    if args_opt.offline:
+        cache_url = args_opt.data_url
+    else:
+        download_data(src_data_url=args_opt.data_url, tgt_data_path=cache_url, rank=rank)
     # Set model property
-    model_parallel_num = args_opt.tensor_model_parallel_num
+    model_parallel_num = args_opt.op_level_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
     batch_size = args_opt.per_batch_size * data_parallel_num
     config = PANGUALPHAConfig(
@@ -162,7 +171,7 @@ def run_train(args_opt):
     loss_scale_value = math.pow(2, 32)
     epoch_num = args_opt.epoch_size
     # Dataset loading mindrecord files
-    ds = create_dataset(config.batch_size, data_path=args_opt.data_url,
+    ds = create_dataset(config.batch_size, data_path=cache_url,
                         data_start_index=0, eod_reset=config.eod_reset, full_batch=bool(args_opt.full_batch),
                         eod_id=args_opt.eod_id, device_num=device_num, rank=rank, epoch=epoch_num)
     step_per_epoch = ds.get_dataset_size()
