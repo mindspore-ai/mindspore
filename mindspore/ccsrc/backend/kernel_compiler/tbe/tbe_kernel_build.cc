@@ -236,7 +236,7 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
   input_desc_json[kJValid] = value;
   input_desc_json[kJAddrType] = 0;
   input_desc_json[kJParamType] = input_ptr->param_type();
-  input_desc_json[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index);
+  input_desc_json[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format);
   input_list->emplace_back(input_desc_json);
 }
 
@@ -467,7 +467,7 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
     output_obj[kJValid] = true;
     output_obj[kJAddrType] = 0;
     output_obj[kJParamType] = output_ptr->param_type();
-    output_obj[kJRange] = tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(anf_node, *output_idx);
+    output_obj[kJRange] = tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(anf_node, *output_idx, format);
     output_list->emplace_back(output_obj);
     (*output_idx)++;
   }
