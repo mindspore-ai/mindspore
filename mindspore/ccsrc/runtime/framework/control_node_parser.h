@@ -41,6 +41,7 @@ using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<A
 using FuncGraphToParameter = std::unordered_map<FuncGraphPtr, std::vector<std::vector<AnfNodePtr>>>;
 using HostParameterToWeight = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
 using NodeWithDeviceContext = std::vector<std::pair<AnfNodePtr, DeviceContext *>>;
+using RealToFormalNode = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
 
 // Check whether node is a call node, there are two types of call nodes:
 // 1. First input of node is a cnode.
@@ -89,7 +90,7 @@ class ControlNodeParser {
 
   // Get all possible input nodes of the output node. When the switch actor is the output, it need to send the node
   // which device address belongs, so switch actor need to get all the possible nodes.
-  std::vector<KernelWithIndex> FetchBackendInputNodeByFrontNode(const AnfNodePtr &front_output);
+  std::set<KernelWithIndex> FetchBackendInputNodeByFrontNode(const AnfNodePtr &front_output);
 
   // Get the device context corresponding to the value node.
   DeviceContext *GetFrontValueNodeDeviceContext(const AnfNodePtr &value_node);
@@ -135,39 +136,50 @@ class ControlNodeParser {
   // 2. The parameter from control nodes.
   void FetchFrontToBackendParameter(const std::vector<KernelGraphPtr> &graphs,
                                     const std::vector<DeviceContext *> &device_contexts,
-                                    const std::vector<AnfNodePtr> &control_nodes);
+                                    const std::vector<AnfNodePtr> &control_nodes,
+                                    const RealToFormalNode &real_to_formal_front_parameters,
+                                    const RealToFormalNode &formal_to_real_front_parameters);
   // Get the relationship between the front and backend of the executable kernel in all kernel graphs.
   void FetchFrontToBackendKernel(const std::vector<KernelGraphPtr> &graphs,
                                  const std::vector<DeviceContext *> &device_contexts);
   // Get inputs of control node which come from the host actor. These inputs generally come from the partial
   // nodes and call nodes of the root funcgraph.
-  std::vector<AnfNodePtr> FetchControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes);
+  std::vector<AnfNodePtr> FetchControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes,
+                                                    DeviceContext *device_context);
   // Get all the input parameters of funcgraph. The call of funcgraph is realized through the call node,
   // and the input of the call node is the input parameter of the corresponding funcgraph.
   void FetchFuncGraphToParameter(const std::vector<AnfNodePtr> &control_nodes);
   // Get all the front weight parameters related to the weight in the host parameter.
-  void FetchHostParameterToWeight(const std::vector<AnfNodePtr> &control_nodes);
+  void FetchHostParameterToWeight(const RealToFormalNode &real_to_formal_front_parameters);
   // The relationship between front parameters indicates that the parameter is directly used as the input of the
   // funcgraph. There are two situations:
   // 1. The parameter is used as the input of the call node,
   // 2. The parameter is used as the input of the partial and will be input to the funcgraph of the partial in the
   //    subsequent call node.
-  void FetchFrontToFrontParameterMap(const std::vector<AnfNodePtr> &control_nodes,
-                                     std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> *front_to_front_parameter);
+  void FetchFrontToFrontParameter(const std::vector<AnfNodePtr> &control_nodes,
+                                  std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> *front_to_front_parameter);
   // Get the number of calls to all subgraphs in the whole funcgraph.
   void FetchFuncGraphCallNum(const std::vector<AnfNodePtr> &control_nodes);
   // Get all the kernel graphs where the input node has a call node.
   void FetchCallInputKernelGraph(const std::vector<KernelGraphPtr> &graphs,
                                  const std::vector<DeviceContext *> &device_contexts);
+  // Get the relationship of all real and formal nodes in the whole funcgraph.
+  void FetchBackendInputNode(const std::vector<KernelGraphPtr> &graphs,
+                             const std::vector<DeviceContext *> &device_contexts,
+                             const RealToFormalNode &real_to_formal_front_parameters,
+                             const RealToFormalNode &formal_to_real_front_parameters);
   // Get the relationship of all real and formal parameters in the whole funcgraph.
-  void FetchBackendInputNode();
-
+  void FetchBackendParameterNode(const std::vector<KernelGraphPtr> &graphs,
+                                 const std::vector<DeviceContext *> &device_contexts,
+                                 const RealToFormalNode &real_to_formal_front_parameters,
+                                 const RealToFormalNode &formal_to_real_front_parameters,
+                                 FrontToBackendNodeWithContext *front_to_backend_parameters);
   // Get all possible input node of real parameter.
-  void FetchBackendInputNodebyFrontNode(const AnfNodePtr &real_parameter, const AnfNodePtr &formal_parameter);
+  void FetchBackendInputNodebyFrontNode(const AnfNodePtr &real_parameter, const AnfNodePtr &formal_parameter,
+                                        const FrontToBackendNodeWithContext &front_to_backend_parameters);
   // Recursive interface, get all Backend node by front_output.
-  std::vector<KernelWithIndex> FetchBackendOutputByFrontOutput(const AnfNodePtr &front_output,
-                                                               std::set<AnfNodePtr> *call_nodes,
-                                                               std::set<AnfNodePtr> *switch_nodes);
+  void FetchBackendOutputByFrontOutput(const AnfNodePtr &front_output, std::set<AnfNodePtr> *call_nodes,
+                                       std::set<AnfNodePtr> *switch_nodes, std::set<KernelWithIndex> *results);
 
   // The front to backend parameters is used to build and link the host data source actor in the control flow scenario.
   FrontToBackendNodeWithContext front_to_backend_parameters_;
@@ -195,11 +207,14 @@ class ControlNodeParser {
   // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
   // When initializing the weights, all related weights need to be recorded as the same device tensor.
   HostParameterToWeight host_parameter_to_weights_;
+
   // The front value node saves all value nodes that are not in the kernel graph. These nodes are generally the
   // input of the control node.
   NodeWithDeviceContext front_value_nodes_;
-  // The front output_node is used to link the output actor in multi-branch output scenario.
-  std::vector<AnfNodePtr> front_output_nodes_;
+  // The front value node saves all parameters that are not in the kernel graph. These nodes are generally the
+  // output of subgraph, or the switch condition node.
+  NodeWithDeviceContext front_parameters_;
+
   // Parameters of control node which come from the host actor.
   std::vector<AnfNodePtr> control_node_parameters_;
   // The number of calls to func_graph.
