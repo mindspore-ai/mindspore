@@ -52,6 +52,7 @@ class Conv2DInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferRankBias();
   Status InferOverlapSize();
+  void InferNewOperatorAttrs();
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
   int64_t out_channel_ = 1;
@@ -65,14 +66,39 @@ class Conv2DInfo : public OperatorInfo {
   std::string format_;
   bool out_channel_shard_ = false;
   int64_t new_out_channel_ = 1;
+  std::vector<int64_t> new_pad_list_;
+
   bool need_exchange_overlap_ = false;
   int64_t rank_bias_ = 0;
+  int64_t left_rank_bias_ = -1;
+  int64_t right_rank_bias_ = -1;
   int64_t overlap_left_size_ = 0;
   int64_t overlap_right_size_ = 0;
+  int64_t left_rank_overlap_left_size_ = 0;
+  int64_t left_rank_overlap_right_size_ = 0;
+  int64_t right_rank_overlap_left_size_ = 0;
+  int64_t right_rank_overlap_right_size_ = 0;
   int64_t w_dimension_shard_num_ = 1;
+  Shape input_slice_shape_;
+
+  bool left_need_send_ = false;
+  bool left_need_recv_ = false;
+  bool right_need_send_ = false;
+  bool right_need_recv_ = false;
+  Shape left_strided_slice_begin_;
+  Shape left_strided_slice_end_;
+  Shape left_strided_slice_strides_;
+  Shape right_strided_slice_begin_;
+  Shape right_strided_slice_end_;
+  Shape right_strided_slice_strides_;
+
+  std::vector<int64_t> exchange_rank_ids_;
+  Shapes recv_shapes_;
 
  private:
   Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
+  int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
+  int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
 };
 
 class Conv2DBackpropInputInfo : public Conv2DInfo {
