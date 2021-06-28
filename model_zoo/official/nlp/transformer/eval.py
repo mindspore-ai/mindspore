@@ -14,7 +14,7 @@
 # ============================================================================
 """Transformer evaluation script."""
 
-import argparse
+import os
 import numpy as np
 
 import mindspore.nn as nn
@@ -28,8 +28,15 @@ import mindspore.dataset.transforms.c_transforms as deC
 from mindspore import context
 
 from src.transformer_model import TransformerModel
-from src.eval_config import cfg, transformer_net_cfg
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
+config.dtype = mstype.float32
+config.compute_type = mstype.float16
+config.batch_size = config.batch_size_ev
+config.hidden_dropout_prob = config.hidden_dropout_prob_ev
+config.attention_probs_dropout_prob = config.attention_probs_dropout_prob_ev
 
 def load_test_data(batch_size=1, data_file=None):
     """
@@ -57,7 +64,6 @@ class TransformerInferCell(nn.Cell):
     """
     Encapsulation class of transformer network infer.
     """
-
     def __init__(self, network):
         super(TransformerInferCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -98,23 +104,22 @@ def load_weights(model_path):
     return parameter_dict
 
 
+def modelarts_pre_process():
+    config.output_file = os.path.join(config.output_path, config.output_file)
+    config.data_file = os.path.join(config.data_file, 'ende-l128-mindrecord_128_00')
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_transformer_eval():
     """
     Transformer evaluation.
     """
-    parser = argparse.ArgumentParser(description='tranformer')
-    parser.add_argument("--device_target", type=str, default="Ascend",
-                        help="device where the code will be implemented, default is Ascend")
-    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend, default is 0')
-    args = parser.parse_args()
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, reserve_class_name_in_scope=False,
+                        device_id=get_device_id())
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, reserve_class_name_in_scope=False,
-                        device_id=args.device_id)
+    dataset = load_test_data(batch_size=config.batch_size, data_file=config.data_file)
+    tfm_model = TransformerModel(config=config, is_training=False, use_one_hot_embeddings=False)
 
-    dataset = load_test_data(batch_size=transformer_net_cfg.batch_size, data_file=cfg.data_file)
-    tfm_model = TransformerModel(config=transformer_net_cfg, is_training=False, use_one_hot_embeddings=False)
-
-    parameter_dict = load_weights(cfg.model_file)
+    parameter_dict = load_weights(config.model_file)
     load_param_into_net(tfm_model, parameter_dict)
 
     tfm_infer = TransformerInferCell(tfm_model)
@@ -132,9 +137,9 @@ def run_transformer_eval():
         predictions.append(predicted_ids.asnumpy())
 
     # decode and write to file
-    f = open(cfg.output_file, 'w')
+    f = open(config.output_file, 'w')
     for batch_out in predictions:
-        for i in range(transformer_net_cfg.batch_size):
+        for i in range(config.batch_size):
             if batch_out.ndim == 3:
                 batch_out = batch_out[:, 0]
             token_ids = [str(x) for x in batch_out[i].tolist()]

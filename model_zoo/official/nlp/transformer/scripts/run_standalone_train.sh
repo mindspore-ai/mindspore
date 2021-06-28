@@ -25,7 +25,7 @@ fi
 
 rm -rf run_standalone_train
 mkdir run_standalone_train
-cp -rf ./src/ train.py ./run_standalone_train
+cp -rf ./src/ train.py ./*.yaml ./run_standalone_train
 cd run_standalone_train || exit
 
 export DEVICE_TARGET=$1
@@ -36,6 +36,7 @@ DATA_PATH=$5
 
 if [ $DEVICE_TARGET == 'Ascend' ];then
     python train.py  \
+        --config_path="./default_config_large.yaml" \
         --distribute="false" \
         --epoch_size=$EPOCH_SIZE \
         --accumulation_steps=$GRADIENT_ACCUMULATE_STEP \
@@ -53,6 +54,7 @@ elif [ $DEVICE_TARGET == 'GPU' ];then
     export CUDA_VISIBLE_DEVICES="$2"
 
     python train.py  \
+        --config_path="./default_config_large_gpu.yaml" \
         --distribute="false" \
         --epoch_size=$EPOCH_SIZE \
         --device_target=$DEVICE_TARGET \

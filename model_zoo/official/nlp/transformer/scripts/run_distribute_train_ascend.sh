@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 4 ] ; then
+if [ $# != 5 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE"
-echo "for example: sh run_distribute_pretrain.sh 8 52 /path/ende-l128-mindrecord00 /path/hccl.json"
+echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH"
+echo "for example: sh run_distribute_pretrain.sh 8 52 /path/ende-l128-mindrecord00 /path/hccl.json ./default_config_large.yaml"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 exit 1;
@@ -32,6 +32,7 @@ DATA_PATH=$3
 
 export HCCL_CONNECT_TIMEOUT=600
 export RANK_TABLE_FILE=$4
+export CONFIG_PATH=$5
 export RANK_SIZE=$1
 export HCCL_FLAG=1
 export DEPLOY_MODE=0
@@ -43,11 +44,12 @@ do
     export GE_USE_STATIC_MEMORY=1
 
     mkdir helper$i
-    cp -rf ../src/ ../train.py ./helper$i
+    cp -rf ../src/ ../train.py ../*.yaml ./helper$i
     cd ./helper$i || exit
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
     python train.py  \
+    --config_path=$CONFIG_PATH \
     --distribute="true" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
@@ -58,8 +60,7 @@ do
     --checkpoint_path="" \
     --save_checkpoint_steps=2500 \
     --save_checkpoint_num=30 \
-    --data_path=$DATA_PATH \
-    --bucket_boundaries=[16,32,48,64,128] > log.txt 2>&1 &
+    --data_path=$DATA_PATH > log.txt 2>&1 &
     cd ../
 done
 cd ..

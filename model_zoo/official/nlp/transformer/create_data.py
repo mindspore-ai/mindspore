@@ -18,12 +18,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
-import ast
 import collections
 import logging
 import numpy as np
 import src.tokenization as tokenization
+from src.model_utils.config import config
 from mindspore.mindrecord import FileWriter
 
 class SampleInstance():
@@ -121,33 +120,17 @@ def create_training_instance(source_words, target_words, max_seq_length, clip_to
     return instance
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input_file", type=str, required=True,
-                        help='Input raw text file (or comma-separated list of files).')
-    parser.add_argument("--output_file", type=str, required=True, help='Output MindRecord file.')
-    parser.add_argument("--num_splits", type=int, default=16,
-                        help='The MindRecord file will be split into the number of partition.')
-    parser.add_argument("--vocab_file", type=str, required=True,
-                        help='The vocabulary file that the Transformer model was trained on.')
-    parser.add_argument("--clip_to_max_len", type=bool, default=False,
-                        help='clip sequences to maximum sequence length.')
-    parser.add_argument("--max_seq_length", type=int, default=128, help='Maximum sequence length.')
-    parser.add_argument("--bucket", type=ast.literal_eval, default=[16, 32, 48, 64, 128],
-                        help='bucket sequence length')
-
-    args = parser.parse_args()
-
-    tokenizer = tokenization.WhiteSpaceTokenizer(vocab_file=args.vocab_file)
+    tokenizer = tokenization.WhiteSpaceTokenizer(vocab_file=config.vocab_file)
 
     input_files = []
-    for input_pattern in args.input_file.split(","):
+    for input_pattern in config.input_file.split(","):
         input_files.append(input_pattern)
 
     logging.info("*** Read from input files ***")
     for input_file in input_files:
         logging.info("  %s", input_file)
 
-    output_file = args.output_file
+    output_file = config.output_file
     logging.info("*** Write to output files ***")
     logging.info("  %s", output_file)
 
@@ -155,7 +138,7 @@ def main():
     total_read = 0
 
     feature_dict = {}
-    for i in args.bucket:
+    for i in config.bucket:
         feature_dict[i] = []
 
     for input_file in input_files:
@@ -174,17 +157,17 @@ def main():
                 source_tokens = tokenizer.tokenize(source_line)
                 target_tokens = tokenizer.tokenize(target_line)
 
-                if len(source_tokens) >= args.max_seq_length or len(target_tokens) >= args.max_seq_length:
+                if len(source_tokens) >= config.max_seq_length or len(target_tokens) >= config.max_seq_length:
                     logging.info("ignore long sentence!")
                     continue
 
-                instance = create_training_instance(source_tokens, target_tokens, args.max_seq_length,
-                                                    clip_to_max_len=args.clip_to_max_len)
+                instance = create_training_instance(source_tokens, target_tokens, config.max_seq_length,
+                                                    clip_to_max_len=config.clip_to_max_len)
                 if instance is None:
                     continue
 
-                features, seq_max_bucket_length = get_instance_features(instance, tokenizer, args.max_seq_length,
-                                                                        args.bucket)
+                features, seq_max_bucket_length = get_instance_features(instance, tokenizer, config.max_seq_length,
+                                                                        config.bucket)
                 for key in feature_dict:
                     if key == seq_max_bucket_length:
                         feature_dict[key].append(features)
@@ -200,12 +183,12 @@ def main():
                         feature = features[feature_name]
                         logging.info("%s: %s", feature_name, feature)
 
-    for i in args.bucket:
-        if args.num_splits == 1:
+    for i in config.bucket:
+        if config.num_splits == 1:
             output_file_name = output_file
         else:
             output_file_name = output_file + '_' + str(i) + '_'
-        writer = FileWriter(output_file_name, args.num_splits)
+        writer = FileWriter(output_file_name, config.num_splits)
         data_schema = {"source_sos_ids": {"type": "int64", "shape": [-1]},
                        "source_sos_mask": {"type": "int64", "shape": [-1]},
                        "source_eos_ids": {"type": "int64", "shape": [-1]},

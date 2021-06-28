@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 5 ] ; then
+if [ $# != 6 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train_ascend_multi_machines.sh DEVICE_NUM SERVER_ID EPOCH_SIZE DATA_PATH RANK_TABLE_FILE"
-echo "for example: sh run_distribute_train_ascend_multi_machines.sh 32 0 52 /path/ende-l128-mindrecord00 /path/hccl.json"
+echo "sh run_distribute_train_ascend_multi_machines.sh DEVICE_NUM SERVER_ID EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH"
+echo "for example: sh run_distribute_train_ascend_multi_machines.sh 32 0 52 /path/ende-l128-mindrecord00 /path/hccl.json ./default_config_large.yaml"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 exit 1;
@@ -32,6 +32,7 @@ DATA_PATH=$4
 
 export HCCL_CONNECT_TIMEOUT=600
 export RANK_TABLE_FILE=$5
+export CONFIG_PATH=$6
 export RANK_SIZE=$1
 export SERVER_ID=$2
 export DEVICE_NUM=8
@@ -47,11 +48,12 @@ do
     export GE_USE_STATIC_MEMORY=1
 
     mkdir helper$i
-    cp -rf ../src/ ../train.py ./helper$i
+    cp -rf ../src/ ../train.py ../*.yaml ./helper$i
     cd ./helper$i || exit
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
     python train.py  \
+    --config_path=$CONFIG_PATH \
     --distribute="true" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \

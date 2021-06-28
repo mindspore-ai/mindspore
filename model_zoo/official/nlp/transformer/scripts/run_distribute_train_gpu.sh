@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 3 ] ; then
+if [ $# != 4 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_PATH"
-echo "for example: sh run_distribute_pretrain.sh 8 55 /path/ende-l128-mindrecord00"
+echo "sh run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_PATH CONFIG_PATH"
+echo "for example: sh run_distribute_pretrain.sh 8 55 /path/ende-l128-mindrecord00 ./default_config_large_gpu.yaml"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 exit 1;
@@ -25,16 +25,18 @@ fi
 
 rm -rf run_distribute_train
 mkdir run_distribute_train
-cp -rf ./src/ train.py ./run_distribute_train
+cp -rf ./src/ train.py ./*.yaml ./run_distribute_train
 cd run_distribute_train || exit
 
 export RANK_SIZE=$1
+export CONFIG_PATH=$4
 EPOCH_SIZE=$2
 DATA_PATH=$3
 echo $RANK_SIZE
 
 mpirun -n $RANK_SIZE \
     python train.py  \
+    --config_path=$CONFIG_PATH \
     --distribute="true" \
     --device_target="GPU" \
     --epoch_size=$EPOCH_SIZE \
