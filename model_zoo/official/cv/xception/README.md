@@ -86,11 +86,17 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─run_infer_310.sh             # shell script for 310 inference
     └─run_eval_gpu.sh              # launch evaluating with gpu platform
   ├─src
-    ├─config.py                    # parameter configuration
+    ├─model_utils
+        ├─config.py                # parsing parameter configuration file of "*.yaml"
+        ├─device_adapter.py        # local or ModelArts training
+        ├─local_adapter.py         # get related environment variables on local
+        └─moxing_adapter.py        # get related environment variables abd transfer data on ModelArts
     ├─dataset.py                   # data preprocessing
     ├─Xception.py                  # network definition
     ├─loss.py                      # Customized CrossEntropy loss function
     └─lr_generator.py              # learning rate generator
+  ├─default_config.yaml            # parameter configuration
+  ├─mindspore_hub_conf.py          # mindspore hub interface
   ├─train.py                       # train net
   ├─postprogress.py                # post process for 310 inference
   ├─export.py                      # export net
@@ -100,7 +106,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py.
+Parameters for both training and evaluation can be set in `default_config.yaml`.
 
 - Config on ascend
 
@@ -234,6 +240,33 @@ epoch: 2 step: 20018, loss is 5.179064
 epoch time: 5628609.779 ms, per step time: 281.177 ms
 ```
 
+### Training with 8 cards on ModelArts
+
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+  ```python
+  # (1) Upload the code folder to S3 bucket.
+  # (2) Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/xception" on the website UI interface.
+  # (4) Set the startup file to /{path}/xception/train.py" on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in /{path}/xception/default_config.yaml.
+  #         1. Set ”enable_modelarts: True“
+  #         2. Set “is_distributed: True”
+  #         3. Set “modelarts_dataset_unzip_name: {folder_name}", if the data is uploaded in the form of zip package.
+  #         4. Set “folder_name_under_zip_file: {path}”, (dateset path under the unzip folder, such as './ImageNet_Original/train')
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts=True“
+  #         2. Add “is_distributed: True”
+  #         3. Add “modelarts_dataset_unzip_name: {folder_name}", if the data is uploaded in the form of zip package.
+  #         4. Add “folder_name_under_zip_file: {path}”, (dateset path under the unzip folder, such as './ImageNet_Original/train')
+  # (6) Upload the mindrecdrd dataset to S3 bucket.
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of 8 cards..
+  # (10) Create your job.
+  ```
+
 ## [Eval process](#contents)
 
 ### Usage
@@ -283,13 +316,67 @@ result: {'Loss': 1.7797744848789312, 'Top_1_Acc': 0.7985777243589743, 'Top_5_Acc
 result: {'Loss': 1.7846775874590903, 'Top_1_Acc': 0.798735595390525, 'Top_5_Acc': 0.9498439500640204}
 ```
 
+### Evaluating with single card on ModelArts
+
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+  ```python
+  # (1) Upload the code folder 'xception' to S3 bucket.
+  # (2) Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/xception" on the website UI interface.
+  # (4) Set the startup file to /{path}/xception/eval.py" on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in /{path}/xception/default_config.yaml.
+  #         1. Set ”enable_modelarts: True“
+  #         2. Set “checkpoint_path: ./{path}/*.ckpt”('load_checkpoint_path' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+  #         3. Set “modelarts_dataset_unzip_name: {folder_name}", if the data is uploaded in the form of zip package.
+  #         4. Set “folder_name_under_zip_file: {path}”, (dateset path under the unzip folder, such as './ImageNet_Original/validation_preprocess')
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts: True“
+  #         2. Add “checkpoint_path: ./{path}/*.ckpt”('load_checkpoint_path' indicates the path of the weight file to be evaluated relative to the file `eval.py`, and the weight file must be included in the code directory.)
+  #         3. Add “modelarts_dataset_unzip_name: {folder_name}", if the data is uploaded in the form of zip package.
+  #         4. Add “folder_name_under_zip_file: {path}”, (dateset path under the unzip folder, such as './ImageNet_Original/validation_preprocess')
+  # (6) Upload the dataset(not mindrecord format) to S3 bucket.
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of a single card.
+  # (10) Create your job.
+  ```
+
 ## [Export process](#contents)
 
-```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --batch_size [BATCH_SIZE]
-```
+- Export on local
+
+  ```shell
+  python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --batch_size [BATCH_SIZE]
+  ```
 
 `EXPORT_FORMAT` should be in ["AIR",  "MINDIR"]
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+  ```python
+  # (1) Upload the code folder to S3 bucket.
+  # (2) Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/xception" on the website UI interface.
+  # (4) Set the startup file to /{path}/xception/export.py" on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in /{path}/xception/default_config.yaml.
+  #         1. Set ”enable_modelarts: True“
+  #         2. Set “ckpt_file: ./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Set ”file_name: xception“
+  #         4. Set ”file_format：MINDIR“
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts=True“
+  #         2. Add “ckpt_file=./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+  #         3. Add ”file_name=xception“
+  #         4. Add ”file_format=MINDIR“
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (This step is useless, but necessary.).
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of a single card.
+  # (10) Create your job.
+  # You will see xception.mindir under {Output file path}.
+  ```
 
 ## [Inference process](#contents)
 

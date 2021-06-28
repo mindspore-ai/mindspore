@@ -27,6 +27,5 @@ python ../eval.py  \
     --device_target=GPU \
     --device_id=$DEVICE_ID \
     --checkpoint_path=$PATH_CHECKPOINT \
-    --dataset_path=$DATA_DIR 
-    #--dataset_path=$DATA_DIR > eval_gpu.log 2>&1 &
+    --test_data_dir=$DATA_DIR > eval_gpu.log 2>&1 &
 cd ../

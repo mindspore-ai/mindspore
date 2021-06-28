@@ -13,38 +13,34 @@
 # limitations under the License.
 # ============================================================================
 """eval Xception."""
-import argparse
+import os
 import numpy as np
 
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
 from src.Xception import xception
-from src.config import config_ascend, config_gpu
+from src.model_utils.config import config as args, config_gpu, config_ascend
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description="Image classification")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="xception ckpt file.")
-parser.add_argument("--width", type=int, default=299, help="input width")
-parser.add_argument("--height", type=int, default=299, help="input height")
-parser.add_argument("--file_name", type=str, default="xception", help="xception output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
 
-args = parser.parse_args()
-if args.device_target == "Ascend":
-    config = config_ascend
-elif args.device_target == "GPU":
-    config = config_gpu
-else:
-    raise ValueError("Unsupported device_target.")
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    args.ckpt_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.ckpt_file)
+    args.file_name = os.path.join(args.output_path, args.file_name)
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-context.set_context(device_id=args.device_id)
 
-if __name__ == "__main__":
-    # define net
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''export function'''
+    if args.device_target == "Ascend":
+        config = config_ascend
+    elif args.device_target == "GPU":
+        config = config_gpu
+    else:
+        raise ValueError("Unsupported device_target.")
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+    context.set_context(device_id=args.device_id)
     net = xception(class_num=config.class_num)
 
     # load checkpoint
@@ -54,3 +50,7 @@ if __name__ == "__main__":
 
     image = Tensor(np.zeros([args.batch_size, 3, args.height, args.width], np.float32))
     export(net, image, file_name=args.file_name, file_format=args.file_format)
+
+
+if __name__ == "__main__":
+    run_export()

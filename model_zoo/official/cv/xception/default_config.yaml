@@ -1,0 +1,101 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+# Url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+# Path for local
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+device_target: "Ascend"
+enable_profiling: False
+
+modelarts_dataset_unzip_name: ''
+folder_name_under_zip_file: './'
+# ==============================================================================
+device_id: 0
+# train related
+is_distributed: False
+train_data_dir: ''
+is_fp32: False
+resume: ''
+# eval related
+checkpoint_path: ''
+test_data_dir: ''
+# export related
+batch_size: 1
+ckpt_file: ''
+width: 299
+height: 299
+file_name: "xception"
+file_format: "MINDIR"
+# config on GPU for Xception, imagenet2012.
+config_gpu:
+    class_num: 1000
+    batch_size: 64
+    loss_scale: 1024
+    momentum: 0.9
+    weight_decay: 0.0001  # 1e-4
+    epoch_size: 250
+    save_checkpoint: True
+    save_checkpoint_epochs: 1
+    keep_checkpoint_max: 5
+    save_checkpoint_path: "./gpu-ckpt"
+    warmup_epochs: 1
+    lr_decay_mode: "linear"
+    use_label_smooth: True
+    finish_epoch: 0
+    label_smooth_factor: 0.1
+    lr_init: 0.00004
+    lr_max: 0.4
+    lr_end: 0.00004
+# config on Ascend for Xception, imagenet2012.
+config_ascend:
+    class_num: 1000
+    batch_size: 128
+    loss_scale: 1024
+    momentum: 0.9
+    weight_decay: 0.0001  # 1e-4
+    epoch_size: 250
+    save_checkpoint: True
+    save_checkpoint_epochs: 1
+    keep_checkpoint_max: 5
+    save_checkpoint_path: "./"
+    warmup_epochs: 1
+    lr_decay_mode: "liner"
+    use_label_smooth: True
+    finish_epoch: 0
+    label_smooth_factor: 0.1
+    lr_init: 0.00004
+    lr_max: 0.4
+    lr_end: 0.00004
+---
+# Help description for ModelArts configuration
+enable_modelarts: "Whether training on modelarts, default: False"
+data_url: "Url for modelarts"
+train_url: "Url for modelarts"
+data_path: "The location of the input data."
+output_path: "The location of the output file."
+device_target: "Running platform, choose from Ascend GPU or CPU(only for export), and default is Ascend."
+enable_profiling: 'Whether enable profiling while training, default: False'
+# Help description for train configuration
+is_distributed: 'distributed training'
+train_data_dir: 'train dataset dir'
+is_fp32: 'fp32 training'
+resume: ''
+# Help description for eval configuration
+device_id: 'Device id'
+checkpoint_path: 'Checkpoint file path'
+test_data_dir: 'test Dataset dir'
+# Help description for export configuration
+batch_size: "batch size"
+ckpt_file: "xception ckpt file."
+width: "input width"
+height: "input height"
+file_name: "xception output file name."
+file_format: "file format"
+#
+---
+file_format: ["AIR", "MINDIR"]
+device_target: ["Ascend", "GPU", "CPU"]

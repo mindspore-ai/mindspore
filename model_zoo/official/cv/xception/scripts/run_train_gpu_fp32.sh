@@ -35,10 +35,10 @@ then
       --output-filename gpu_fp32_dist_log  \
       --merge-stderr-to-stdout  \
       ${PYTHON_EXEC} ../train.py  \
-      --is_distributed  \
+      --is_distributed=True  \
       --device_target=GPU  \
-      --is_fp32  \
-      --dataset_path=$DATA_DIR > gpu_fp32_dist_log.txt 2>&1 &
+      --is_fp32=True  \
+      --train_data_dir=$DATA_DIR > gpu_fp32_dist_log.txt 2>&1 &
 else
     PATH_TRAIN="./train_standalone_gpu_fp32"$(date "+%Y%m%d%H%M%S")
     if [ -d $PATH_TRAIN ];
@@ -52,7 +52,7 @@ else
     #${PYTHON_EXEC} ../train.py  \ --dataset_path=/gdata/ImageNet2012/train/ 
     ${PYTHON_EXEC} ../train.py  \
       --device_target=GPU  \
-      --is_fp32  \
-      --dataset_path=$DATA_DIR > gpu_fp32_standard_log.txt 2>&1 &
+      --is_fp32=True  \
+      --train_data_dir=$DATA_DIR > gpu_fp32_standard_log.txt 2>&1 &
 fi
 cd ../
