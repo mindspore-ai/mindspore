@@ -23,7 +23,7 @@ from mindspore.train.serialization import export, load_checkpoint, load_param_in
 
 from src.backbone.resnet import get_backbone
 
-devid = int(os.getenv('DEVICE_ID'))
+devid = 0
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
 
 
@@ -52,8 +52,8 @@ def main(args):
     input_data = np.random.uniform(low=0, high=1.0, size=(args.batch_size, 3, 112, 112)).astype(np.float32)
     tensor_input_data = Tensor(input_data)
 
-    file_path = ckpt_path.replace('.ckpt', '_' + str(args.batch_size) + 'b.air')
-    export(network, tensor_input_data, file_name=file_path, file_format='AIR')
+    file_path = ckpt_path
+    export(network, tensor_input_data, file_name=args.file_name, file_format=args.file_format)
     print('-----------------------export model success, save file:{}-----------------------'.format(file_path))
 
 
@@ -70,6 +70,8 @@ def parse_args():
     parser.add_argument('--backbone', type=str, default='r100', help='backbone network')
     parser.add_argument('--head', type=str, default='0', help='head type, default is 0')
     parser.add_argument('--use_drop', type=int, default=0, help='whether use dropout in network')
+    parser.add_argument('--file_name', type=str, default='fr.midnir', help='file name')
+    parser.add_argument('--file_format', type=str, default='MINDIR', choices=['MINDIR', 'AIR'], help='file format')
 
     args = parser.parse_args()
 

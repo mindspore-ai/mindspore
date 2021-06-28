@@ -301,12 +301,33 @@ cd ./scripts
 sh run_export.sh [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 ```
 
+- `BATCH_SIZE`  should be 0.
+- `PRETRAINED_BACKBONE` is mandatory, and must specify MINDIR path including file name.
+- `USE_DEVICE_ID` is mandatory, default value is 0.
+
 for example:
 
 ```bash
 cd ./scripts
-sh run_export.sh 16 0 ./0-1_1.ckpt
+sh run_export.sh 1 0 ./0-1_1.ckpt
 ```
+
+### Inference
+
+```bash
+cd ./scripts
+sh run_infer_310.sh [MINDIR_PATH] [USE_DEVICE_ID]
+```
+
+for example:
+
+```bash
+cd ./scripts
+sh run_infer_310.sh ../facerecognition.mindir 0
+```
+
+You will get the result as following in "./scripts/acc.log" if 'dis_dataset' ranges from folder '68680' to '68725':
+[test_dataset]: zj2jk=0.9863, jk2zj=0.9851, avg=0.9857
 
 # [Model Description](#contents)
 
