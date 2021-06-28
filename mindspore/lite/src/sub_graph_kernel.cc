@@ -155,7 +155,7 @@ int CustomSubGraph::Prepare() {
   }
   auto provider = nodes_[0]->desc().provider;
   auto context = this->Context();
-  AllocatorPtr allocator = nullptr;
+  AllocatorPtr allocator = context->allocator;
   auto iter = std::find_if(context->device_list_.begin(), context->device_list_.end(),
                            [&provider](const auto &dev) { return dev.provider_ == provider; });
   if (iter != context->device_list_.end()) {
@@ -173,7 +173,7 @@ int CustomSubGraph::Prepare() {
   auto node = nodes_[nodes_.size() - 1];
   for (auto tensor : node->out_tensors()) {
     MS_ASSERT(tensor != nullptr);
-    tensor->set_allocator(this->Context()->allocator);
+    tensor->set_allocator(context->allocator);
   }
   return RET_OK;
 }
