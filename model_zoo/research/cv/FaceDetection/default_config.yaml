@@ -58,6 +58,15 @@ anchors_mask: [[8, 9, 10, 11], [4, 5, 6, 7], [0, 1, 2, 3]]
 conf_thresh: 0.1
 nms_thresh: 0.45
 
+#export
+file_name: "FaceDetection"
+file_format: "AIR"
+
+#310 infer
+preprocess_path: ""
+save_output_path: ""
+data_dir: ""
+
 ---
 
 # Help description for each configuration

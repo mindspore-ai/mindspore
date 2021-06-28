@@ -87,6 +87,7 @@ The entire code structure is as following:
 .
 └─ Face Detection
   ├─ README.md
+  ├─ ascend310_infer                        # application for 310 inference
   ├─ model_utils
     ├─ __init__.py                          # init file
     ├─ config.py                            # Parse arguments
@@ -97,6 +98,7 @@ The entire code structure is as following:
     ├─ run_standalone_train.sh              # launch standalone training(1p) in ascend
     ├─ run_distribute_train.sh              # launch distributed training(8p) in ascend
     ├─ run_eval.sh                          # launch evaluating in ascend
+    ├─ run_infer_310.sh                     # launch inference on Ascend310
     └─ run_export.sh                        # launch exporting air model
   ├─ src
     ├─ FaceDetection
@@ -115,6 +117,9 @@ The entire code structure is as following:
   ├─ default_config.yaml                    # default configurations
   ├─ train.py                               # training scripts
   ├─ eval.py                                # evaluation scripts
+  ├─ postprocess.py                         # postprocess script
+  ├─ preprocess.py                          # preprocess script
+  ├─ bin.py                                 # bin script
   └─ export.py                              # export air model
 ```
 
@@ -266,13 +271,39 @@ Saving ../../results/0-2441_61000/.._.._results_0-2441_61000_face_AP_0.760.png
 
 And the detect result and P-R graph will also be saved in "./results/[MODEL_NAME]/"
 
-### Convert model
+### Inference process
 
-If you want to infer the network on Ascend 310, you should convert the model to AIR:
+#### Convert model
+
+If you want to infer the network on Ascend 310, you should convert the model to MINDIR or AIR:
+
+```shell
+# Ascend310 inference
+python export.py --pretrained [PRETRAIN] --batch_size [BATCH_SIZE] --file_format [EXPORT_FORMAT]
+```
+
+The pretrained parameter is required.
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+Current batch_size can only be set to 1.
+
+#### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [MINDRECORD_PATH] [DEVICE_ID]
+```
+
+- `DEVICE_ID` is optional, default value is 0.
+
+#### result
+
+Inference result is saved in current path, you can find result like this in map.log file.
 
 ```bash
-cd ./scripts
-bash run_export.sh [PLATFORM] [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
+calculate [recall | persicion | ap]...
+Saving ../../results/0-2441_61000/.._.._results_0-2441_61000_face_AP_0.7575.png
 ```
 
 # [Model Description](#contents)
@@ -309,6 +340,20 @@ bash run_export.sh [PLATFORM] [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 | outputs             | mAP                         |
 | Accuracy            | 8pcs: 76.0%                 |
 | Model for inference | 37M (.ckpt file)            |
+
+### Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | Face Detection              |
+| Resource            | Ascend 310; Euler2.8        |
+| Uploaded Date       | 19/06/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | 3K images                   |
+| batch_size          | 1                           |
+| outputs             | mAP                         |
+| mAP                 | mAP=75.75%                  |
+| Model for inference | 37M(.ckpt file)             |
 
 # [ModelZoo Homepage](#contents)
 
