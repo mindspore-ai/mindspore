@@ -22,7 +22,7 @@ cfg = edict({
     'gpt2_network': 'large',
     'optimizer': 'Lamb',
     'AdamWeightDecay': edict({
-        'learning_rate': 1e-5,
+        'learning_rate': 5e-5,
         'end_learning_rate': 1e-7,
         'power': 1.0,
         'weight_decay': 0.01,
@@ -30,7 +30,7 @@ cfg = edict({
         'eps': 1e-6,
     }),
     'Lamb': edict({
-        'learning_rate': 1e-5,
+        'learning_rate': 2e-5,
         'end_learning_rate': 1e-7,
         'power': 1.0,
         'weight_decay': 0.01,
@@ -47,7 +47,7 @@ three kinds of GPT2 model version
 """
 if cfg.gpt2_network == 'small':
     gpt2_net_cfg = GPT2Config(
-        batch_size=8,
+        batch_size=1,
         seq_length=1024,
         vocab_size=50257,
         d_model=768,
@@ -66,7 +66,7 @@ if cfg.gpt2_network == 'small':
     )
 if cfg.gpt2_network == 'medium':
     gpt2_net_cfg = GPT2Config(
-        batch_size=8,
+        batch_size=1,
         seq_length=1024,
         vocab_size=50257,
         d_model=1024,
@@ -85,7 +85,7 @@ if cfg.gpt2_network == 'medium':
     )
 if cfg.gpt2_network == 'large':
     gpt2_net_cfg = GPT2Config(
-        batch_size=6,
+        batch_size=4,
         seq_length=1024,
         vocab_size=50257,
         d_model=1280,

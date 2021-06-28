@@ -117,7 +117,7 @@ def eval_result_print(metric="BLEU", callback=None):
 
 
 def do_eval(dataset=None, network=None, metric=None, load_checkpoint_path="", eval_type=None, tokenizer_file_path="",
-            generate_length=1, top_k=1, top_p=1.0, temperature=1.0):
+            generate_length=100, top_k=1, top_p=1.0, temperature=1.0):
     """
     Do evaluation on Translation
     Args:
@@ -158,7 +158,7 @@ def do_eval(dataset=None, network=None, metric=None, load_checkpoint_path="", ev
         translation_generator = GenerateForTranslation(decoder=model,
                                                        config=gpt2_net_cfg,
                                                        tokenizer=tokenizer,
-                                                       generate_length=1,
+                                                       generate_length=generate_length,
                                                        use_hint=True,
                                                        select_first_sentence=True,
                                                        topk_num=top_k,

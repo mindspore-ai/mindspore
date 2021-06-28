@@ -46,7 +46,7 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_summarization.py  \
     --device_target="Ascend" \
-    --device_id=0 \
+    --device_id=1 \
     --do_train="false" \
     --do_eval="true" \
     --metric_method="Rouge" \
@@ -57,7 +57,7 @@ python ${PROJECT_DIR}/../run_summarization.py  \
     --top_p="1.0" \
     --generate_length=100 \
     --temperature="1.0" \
-    --eval_type="finetuned" \
+    --eval_type="zero-shot" \
     --save_finetune_ckpt_path=$save_finetune_ckpt_path \
     --load_pretrain_ckpt_path=$load_pretrain_ckpt_path \
     --load_finetune_ckpt_path=$load_eval_ckpt_path \

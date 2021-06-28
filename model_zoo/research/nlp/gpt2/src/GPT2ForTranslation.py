@@ -45,7 +45,8 @@ class GPT2TranslationModel(nn.Cell):
         self.dense1 = nn.Dense(config.d_model,
                                config.vocab_size,
                                weight_init=TruncatedNormal(config.initializer_range),
-                               has_bias=True).to_float(config.compute_type)
+                               has_bias=False).to_float(config.compute_type)
+        self.log_softmax = P.LogSoftmax(axis=-1)
         self.dropout = nn.Dropout(1 - config.hidden_dropout)
 
     def construct(self, input_ids, input_mask):
@@ -53,7 +54,7 @@ class GPT2TranslationModel(nn.Cell):
         Construct network.
 
         Args:
-            input_ids (Tensor): input sentences shape with [batch_size, seq_len]
+            input_ids (Tensor): shape with [batch_size, seq_len]
             input_mask (Tensor): shape with [batch_size, seq_len] 0 indicates padding mask
 
         Returns:
@@ -68,6 +69,7 @@ class GPT2TranslationModel(nn.Cell):
         output_reshape = P.Reshape()(output, (-1, d_model)) # [batch_size * seq_len, d_model]
         logits = self.dense1(output_reshape)
         logits = self.cast(logits, self.dtype)
+        logits = self.log_softmax(logits)
         translation_logits = P.Reshape()(logits, (batch_size, seq_length, self.vocab_size))
 
         return translation_logits

@@ -135,8 +135,6 @@ class Sample():
         min_tokens_to_keep (int): guarantee for there is at least min_tokens_to_keep token(s) generated. Default:1
         early_stop (bool): whether stop when the model generates <EOS> token.
                            It is functioned when batch_size is 1. Default: False
-        demo_mode(bool): True if input_str is a str not a List of str.
-                         self.batch_size should be 1 if it is True. Default: False
         return_ids (bool): whether return ids generated from Sample. Default: False
         return_last_token_logits (bool): whether return logits of last token for each time step during generation.
                                          Default: False
@@ -155,7 +153,6 @@ class Sample():
                  temperature=1.0,
                  min_tokens_to_keep=1,
                  early_stop=False,
-                 demo_mode=False,
                  return_ids=False,
                  return_last_token_logits=False,
                  append_eos=False,
@@ -172,7 +169,6 @@ class Sample():
         self.temperature = temperature
         self.min_tokens_to_keep = min_tokens_to_keep
         self.early_stop = early_stop
-        self.demo_mode = demo_mode
         self.return_ids = return_ids
         self.return_last_token_logits = return_last_token_logits
         self.append_eos = append_eos
@@ -206,10 +202,6 @@ class Sample():
         else:
             self.eos_text = "<|endoftext|>"
 
-        if self.demo_mode is True:
-            assert self.batch_size == 1, 'Demo mode requires batchsize euqals to 1, but get batch_size={}'.format(
-                self.batch_size)
-
     def _extract_string_from_tensor(self, input_ids, mode="pair"):
         """
         Args:
@@ -225,22 +217,18 @@ class Sample():
             target_list (list): the list of target_text or second part of text.
             If self.batch_size is 1, it will return the first sentence of list, that is to say, the string.
 
-            Example:
-                for pair mode, if self.demo_mode is True, it will return source_list[0], target_list[0]
         """
         assert self.tokenizer is not None, 'There is no tokenizer'
         source_list = [""] * self.batch_size
         target_list = [""] * self.batch_size
         eos_text = self.tokenizer.eos_token
         len_eos_text = len(eos_text)
-        input_ids_np = input_ids.asnumpy()
-        input_ids_np = input_ids_np.reshape((self.batch_size, self.seq_length))
-        # input_ids = self.reshape(input_ids, (self.batch_size, self.seq_length))
+        input_ids = self.reshape(input_ids, (self.batch_size, self.seq_length))
 
         if mode == "pair":
             for batch_idx in range(self.batch_size):
-                sentence_tensor = input_ids_np[batch_idx]
-                sentence_list = sentence_tensor.tolist()[1:]
+                sentence_tensor = input_ids[batch_idx]
+                sentence_list = sentence_tensor.asnumpy().tolist()[1:]
 
                 sentence = self.tokenizer.decode(sentence_list)
                 source_start = 0
@@ -250,21 +238,17 @@ class Sample():
                 source_list[batch_idx] = sentence[source_start:source_end]
                 target_list[batch_idx] = sentence[target_start:target_end]
 
-            if self.batch_size == 1 and self.demo_mode is True:
-                return source_list[0], target_list[0]
             return source_list, target_list
 
         if mode == "single":
             for batch_idx in range(self.batch_size):
-                sentence_tensor = input_ids_np[batch_idx]
-                sentence_list = sentence_tensor.tolist()[1:]
+                sentence_tensor = input_ids[batch_idx]
+                sentence_list = sentence_tensor.asnumpy().tolist()[1:]
 
                 sentence = self.tokenizer.decode(sentence_list)
                 source_start = 0
                 source_end = sentence.find(eos_text, 0)
                 source_list[batch_idx] = sentence[source_start:source_end]
-            if self.batch_size == 1 and self.demo_mode is True:
-                return source_list[0]
         else:
             raise ValueError('mode:{} not supported, only support [pair, single].'.format(mode))
 
@@ -305,28 +289,16 @@ class Sample():
             input_ids_list = return_dict['input_ids']
             input_mask_list = return_dict['attention_mask']
 
-            input_ids_np = np.array(input_ids_list, dtype=int)
-            input_mask_np = np.array(input_mask_list, dtype=int)
-            input_ids_np = input_ids_np.reshape(single_sentence_shape)
-            input_mask_np = input_mask_np.reshape(single_sentence_shape)
-
-            # input_ids_tensor = self.reshape(Tensor(np.array(input_ids_list, dtype=int), dtype=mstype.int32),
-            #                                 single_sentence_shape)
-            # input_mask_tensor = self.reshape(Tensor(np.array(input_mask_list, dtype=int), dtype=mstype.int32),
-            #                                  single_sentence_shape)
+            input_ids_tensor = self.reshape(Tensor(np.array(input_ids_list, dtype=int), dtype=mstype.int32),
+                                            single_sentence_shape)
+            input_mask_tensor = self.reshape(Tensor(np.array(input_mask_list, dtype=int), dtype=mstype.int32),
+                                             single_sentence_shape)
             if batch_idx == 0:
-                # input_ids = input_ids_tensor
-                # input_mask = input_mask_tensor
-                input_ids_np_ = input_ids_np
-                input_mask_np_ = input_mask_np
+                input_ids = input_ids_tensor
+                input_mask = input_mask_tensor
             else:
-                # input_ids = self.concat((input_ids, input_ids_tensor))
-                # input_mask = self.concat((input_mask, input_mask_tensor))
-                input_ids_np_ = np.concatenate((input_ids_np_, input_ids_np), axis=0)
-                input_mask_np_ = np.concatenate((input_mask_np_, input_mask_np), axis=0)
-
-        input_ids = Tensor(input_ids_np_, dtype=mstype.int32)
-        input_mask = Tensor(input_mask_np_, dtype=mstype.int32)
+                input_ids = self.concat((input_ids, input_ids_tensor))
+                input_mask = self.concat((input_mask, input_mask_tensor))
 
         return input_ids, input_mask, src_len_list
 
@@ -382,32 +354,12 @@ class Sample():
 
         return word_index
 
-    def _demo_mode_check(self, input_str):
-        """
-        type check for demo_mode: 1 batch, input_str is not None and initiate full_str as input_str
-        """
-        if self.batch_size == 1 and self.demo_mode is True:
-            assert input_str is not None, "demo mode should have input str"
-            # type check
-            if isinstance(input_str, list):
-                assert isinstance(input_str[0], str), "type of input_str is {}, " \
-                                                      "which should be str instead.".format(type(input_str[0]))
-                if len(input_str) != 1:
-                    print("[WARNING] Sample.generate: length of input_str is larger than 1, "
-                          "choose input_str[0] as input_str.")
-                input_str = input_str[0]
-            assert isinstance(input_str, str), "type of input_str is {}, " \
-                                               "which should be str instead.".format(input_str)
-            input_str = [input_str]
-        return input_str
-
     def _input_check_and_normalize(self, input_str=None, input_ids=None, input_mask=None, generate_length=None):
         """
         input check function
         """
         if input_str is not None:
             assert self.tokenizer is not None, 'if choose to give input_str, a tokenizer is necessary.'
-            input_str = self._demo_mode_check(input_str)
 
         if input_ids is not None:
             assert input_mask is not None, 'if input_ids is given, input_mask is required either.'
@@ -444,12 +396,11 @@ class Sample():
             generate_str: string generated by the GPT-2 model.
             full_str: input_str appended with generate_str.
         """
-
         input_str, input_ids, input_mask, generate_length = self._input_check_and_normalize(input_str,
                                                                                             input_ids,
                                                                                             input_mask,
                                                                                             generate_length)
-        return_ids_list = [[]] * self.batch_size
+        return_ids_list = [[] for i in range(self.batch_size)]
 
         last_token = self.LastTokenPos(input_mask, seq_length=self.seq_length)
 
@@ -495,19 +446,20 @@ class Sample():
             for batch_idx in range(self.batch_size):
                 next_word_index = real_next_word_index_list[batch_idx]
                 # earlystop if the model generates a EOS token.
-                if self.early_stop is True:
-                    if next_word_index == self.eos_id:
+                if next_word_index == self.eos_id:
+                    if self.early_stop:
+                        early_stop_mask[batch_idx] = 1
                         if self.batch_size == 1:
                             break
-                        else:
-                            early_stop_mask[batch_idx] = 1
-                            continue
+                if early_stop_mask[batch_idx] == 1:
+                    append_ids.append(-1)
+                    continue
 
                 return_ids_list[batch_idx].append(next_word_index)
                 append_ids.append(next_word_index)
 
             # check early_stop mask at the end of each loop
-            if 0 not in early_stop_mask:
+            if 0 not in early_stop_mask or append_ids == []:
                 break
             input_ids, input_mask = add_last_token(input_ids,
                                                    input_mask,
@@ -527,12 +479,6 @@ class Sample():
 
         for batch_idx in range(self.batch_size):
             full_str[batch_idx] = input_str[batch_idx] + generate_str[batch_idx]
-
-        # return by several conditions
-        if self.batch_size == 1 and self.demo_mode is True:
-            if self.return_ids:
-                return generate_str[0], input_str[0], return_ids_list[0]
-            return generate_str[0], input_str[0]
 
         if self.return_ids:
             if self.return_last_token_logits:

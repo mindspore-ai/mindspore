@@ -9,40 +9,39 @@
     - [脚本说明](#脚本说明)
     - [模型转换](#模型转换)
     - [准备数据集](#准备数据集)
-        - [Language Modeling 语言建模任务](#Language Modeling语言建模任务)
-        - [Children's Book Test 任务](#Children's Book Test任务)
+        - [Language Modeling 语言建模任务](#language-modeling-语言建模任务)
+        - [Children's Book Test 任务](#cbt-cn--cbt-ne-数据集)
         - [LAMBADA 任务](#LAMBADA任务)
-        - [Reading Comprehension 任务](#Reading Comprehension任务)
+        - [Reading Comprehension 任务](#reading-comprehension-任务)
         - [Summarization 任务](#Summarization任务)
         - [Translation 任务](#Translation任务)
     - [配置](#配置)
-    - [微调&评估过程](#微调&训练评估过程)
-        - [Language Modeling 任务](#Language Modeling任务)
+    - [微调&评估过程](#微调评估过程)
+        - [Language Modeling 任务](#language-modeling-语言建模任务)
             - 微调
             - 评估
-        - [Children's Book Test 任务](#Children's Book Test任务)
+        - [Children's Book Test 任务](#childrens-book-test任务)
             - 评估
-        - [LAMBADA 任务](#LAMBADA任务)
+        - [LAMBADA 任务](#lambada任务)
             - 评估
-        - [Reading Comprehension 任务](#Reading Comprehension任务)
+        - [Reading Comprehension 任务](#reading-comprehension任务)
             - 评估
-        - [Summarization 任务](#Summarization任务)
+        - [Summarization 任务](#summarization任务)
+            - 微调
             - 评估
-        - [Translation 任务](#Translation任务)
+        - [Translation 任务](#translation任务)
             - 评估
 - [环境要求](#环境要求)
     - [平台](#平台)
     - [其他要求](#其他要求)
 - [性能](#性能)
     - [推理性能](#推理性能)
-        - [Language Modeling 任务](#Language Modeling任务)
-        - [Children's Book Test 任务](#Children's Book Test任务)
-        - [LAMBADA 任务](#LAMBADA任务)
-        - [Reading Comprehension 任务](#Reading Comprehension任务)
-        - [Summarization 任务](#Summarization任务)
-        - [Translation 任务](#Translation任务)
-        - [训练性能](#训练性能)
-        - [推理性能](#推理性能)
+        - [Language Modeling 任务](#language-modeling-任务推理性能)
+        - [Children's Book Test 任务](#childrens-book-test-任务推理性能)
+        - [LAMBADA 任务](#lambada-任务推理性能)
+        - [Reading Comprehension 任务](#reading-comprehension-任务推理性能)
+        - [Summarization 任务](#summarization-任务推理性能)
+        - [Translation 任务](#translation-任务推理性能)
 - [其他](#其他)
 - [ModelZoo主页](#modelzoo主页)
 
@@ -142,6 +141,8 @@ GPT-2脚本及代码结构如下：
 
 ```
 
+注：在运行GPT-2 下游任务代码之前，建议将`third_party/gpt2-merges.txt`和`third_party/gpt2-vocab.json`脚本移动到`src/utils/pretrain-data/`目录下，除此之外在运行翻译任务之前请将`third_party/bleu.py`脚本移动到`src/utils/`目录下。
+
 ## 模型转换
 
 - 下载GPT-2的预训练模型 [GPT-2预训练模型下载](https://github.com/openai/gpt-2/blob/master/download_model.py)
@@ -156,7 +157,7 @@ GPT-2脚本及代码结构如下：
 
 ## 准备数据集
 
-### Language Modeling语言建模任务
+### Language Modeling 语言建模任务
 
 #### WikiText2 、WikiText103、PTB、1BW 数据集
 
@@ -231,7 +232,7 @@ python task_dataset_preprocess.py --task "CBT" --input_file /{path}/cbtest_CN_va
 示例代码如下：
 
 ```bash
-python create_cbt_data.py --input_file /{path}/ptb.test.txt --output_file /{path}/ptb-test-mindrecord --num_splits 1 --max_length 1024 --num_choice 10 --vocab_file={path} --merge_file={path}
+python create_cbt_data.py --input_file /{path}/cbt_cn_valid.txt --output_file /{path}/cbt-cn-valid-mindrecord --num_splits 1 --max_length 1024 --num_choice 10 --vocab_file={path} --merge_file={path}
 ```
 
 ### LAMBADA任务
@@ -363,7 +364,7 @@ python create_lm_data.py --input_file /{path}/wmt14.fr_en.txt --output_file /{pa
 
 - PTB数据集
 
-GPT-2 small / GPT-2 medium / GPT-2 large模型需要在PTB训练集上进行微调。微调模型时，只需要使用shell脚本`scripts/run_language_model.sh`即可，脚本中可以设置环境变量，执行`GPT-2`下的`scripts/run_language_model.sh`脚本。
+`GPT-2 small / GPT-2 medium / GPT-2 large`模型需要在`PTB`训练集上进行微调。微调模型时，只需要使用shell脚本`scripts/run_language_model.sh`即可，脚本中可以设置环境变量，执行`GPT-2`下的`scripts/run_language_model.sh`脚本。
 
 微调模型时，首先配置`src/finetune_eval_config.py`中的选项：
 
@@ -384,6 +385,13 @@ sh scripts/run_language_model.sh   --device_target="Ascend"
                                    --load_pretrain_ckpt_path={load_pretrain_ckpt_path}
                                    --train_data_file_path={train_data_file_path}
 ```
+
+`PTB`训练集微调参数：
+| 模型 | dataset | device | epoch | seq_length | batch_size | lr | loss function | optimizer | 卡数 |
+| :--- | :------ | :------ | :------ | :------ | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | PTB  | Ascend 910 | 1 | 150 | 16 | 2e-5 | cross entropy | Lamb | 1p |
+| GPT-2 medium | PTB  | Ascend 910 | 1 | 150 | 12 | 1e-5 | cross entropy | Lamb | 1p |
+| GPT-2 large | PTB  | Ascend 910 | 1 | 150 | 8 | 1e-5 | cross entropy | Lamb | 1p |
 
 日志和输出文件可以在`./ms_log/`路径下获取。
 
@@ -426,6 +434,11 @@ options:
 
 GPT-2 large模型需要在1BW训练集上进行微调。微调模型时，只需要使用shell脚本`run_language_model.sh`即可，脚本中可以设置环境变量，执行`GPT-2`下的`run_language_model.py`脚本。该微调方法与PTB数据集的一致。
 
+`1BW`训练集微调参数：
+| 模型 | dataset | device | epoch | seq_length | batch_size | lr | loss function | optimizer |  卡数 |
+| :--- | :------ | :------ | :------ | :------ | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 large | 1BW  | Ascend 910 | 1 | 150 | 8 | 2e-5 | cross entropy | Lamb | 1p |
+
 #### 评估
 
 GPT-2模型可以在`WikiText2/WikiText103/PTB/1BW`测试集上进行对应的评估，针对以上数据集的评估，其评估方法采用PPL，即设置`--metric_method="PPL"`。
@@ -447,6 +460,23 @@ sh scripts/run_language_model.sh   --device_target="Ascend"
 ```
 
 日志和输出文件可以在`./ms_log/`路径下获取。
+
+该任务在各个测试集上的推理参数：
+
+| 模型 | dataset | device | seq_length | batch_size | metric |
+| :--- | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | wikitext2  | Ascend 910 | 1024 | 16 | PPL |
+| GPT-2 medium | wikitext2  | Ascend 910 | 1024 | 12 | PPL |
+| GPT-2 large | wikitext2  | Ascend 910 | 1024 | 8 | PPL |
+| GPT-2 small | wikitext103  | Ascend 910 | 1024 | 16 | PPL |
+| GPT-2 medium | wikitext103  | Ascend 910 | 1024 | 12 | PPL |
+| GPT-2 large | wikitext103  | Ascend 910 | 1024 | 8 | PPL |
+| GPT-2 small | PTB  | Ascend 910 | 1024 | 12 | PPL |
+| GPT-2 medium | PTB  | Ascend 910 | 1024 | 8 | PPL |
+| GPT-2 large | PTB  | Ascend 910 | 1024 | 4 | PPL |
+| GPT-2 small | 1BW  | Ascend 910 | 1024 | 16 | PPL |
+| GPT-2 medium | 1BW  | Ascend 910 | 1024 | 8 | PPL |
+| GPT-2 large | 1BW  | Ascend 910 | 1024 | 4 | PPL |
 
 ### Children's Book Test任务
 
@@ -470,6 +500,17 @@ sh scripts/run_cbt.sh   --device_target="Ascend"
                         --load_finetune_ckpt_path={load_eval_ckpt_path}
                         --eval_data_file_path={eval_data_file_path}
 ```
+
+该任务在各个测试集上的推理参数：
+
+| 模型 | dataset | device | seq_length | batch_size | metric |
+| :--- | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | CBT-CN  | Ascend 910 | 1024 | 1 | Accuracy |
+| GPT-2 medium | CBT-CN  | Ascend 910 | 1024 | 1 | Accuracy |
+| GPT-2 large | CBT-CN  | Ascend 910 | 1024 | 1 | Accuracy |
+| GPT-2 small | CBT-NE  | Ascend 910 | 1024 | 1 | Accuracy |
+| GPT-2 medium | CBT-NE  | Ascend 910 | 1024 | 1 | Accuracy |
+| GPT-2 large | CBT-NE  | Ascend 910 | 1024 | 1 | Accuracy |
 
 日志和输出文件可以在`./ms_log/`路径下获取。
 
@@ -551,6 +592,17 @@ sh scripts/run_lambada.sh   --device_target="Ascend"
                             --eval_data_file_path={eval_data_file_path}
 ```
 
+该任务在测试集上的推理参数：
+
+| 模型 | dataset | device | seq_length | batch_size | metric |
+| :--- | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | LAMBADA  | Ascend 910 | 1024 | 16 | PPL |
+| GPT-2 medium | LAMBADA  | Ascend 910 | 1024 | 8 | PPL |
+| GPT-2 large | LAMBADA  | Ascend 910 | 1024 | 4 | PPL |
+| GPT-2 small | LAMBADA  | Ascend 910 | 1024 | 1 | Accuracy |
+| GPT-2 medium | LAMBADA  | Ascend 910 | 1024 | 1 | Accuracy |
+| GPT-2 large | LAMBADA  | Ascend 910 | 1024 | 1 | Accuracy |
+
 日志和输出文件可以在`./ms_log/`路径下获取。
 
 ```bash
@@ -623,6 +675,16 @@ sh scripts/run_read_comprehension.sh   --device_target="Ascend"
 
 执行`python eval_rc_addition_answer.py --input_file={path} --addition_file={path}`得到最终的F1值。
 
+该任务在开发集上的推理参数：
+
+| 模型 | dataset | device | seq_length | batch_size | metric |
+| :--- | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | CoQA  | Ascend 910 | 1024 | 8 | F1 |
+| GPT-2 medium | CoQA  | Ascend 910 | 1024 | 4 | F1 |
+| GPT-2 large | CoQA  | Ascend 910 | 1024 | 2 | F1 |
+
+日志和输出文件可以在`./ms_log/`路径下获取。
+
 ```bash
 sh scripts/run_read_comprehension.sh [--options]
 ```
@@ -666,13 +728,54 @@ options:
 
 ### Summarization任务
 
+#### 微调
+
+- 针对`TL;DR:`的情况
+
+`GPT-2 small / GPT-2 medium / GPT-2 large`模型需要在`CoQA`训练集上进行微调。微调模型时，只需要使用shell脚本`scripts/run_summarization.sh`即可，脚本中可以设置环境变量，执行`GPT-2`下的`scripts/run_language_model.sh`脚本。
+
+微调模型时，首先配置`src/finetune_eval_config.py`中的选项：
+
+将`cfg`下的`gpt2_network`设置为相应的GPT-2模型大小`[small/medium/large]`。
+将`cfg`下的`optimizer`设置为`AdamWeightDecay`，进行优化器的选择（可采用'Momentum/AdamWeightDecay/Lamb'）。
+选定了GPT-2模型后需要设置模型的参数，包括`batch_size`和`seq_length`。
+
+而后执行`scripts/run_summarization.sh`这个shell脚本：
+
+```bash
+sh scripts/run_summarization.sh   --device_target="Ascend"
+                                  --do_train="true"
+                                  --do_eval="false"
+                                  --metric_method="Rouge"
+                                  --train_data_shuffle="true"
+                                  --eval_data_shuffle="false"
+                                  --generate_length=100
+                                  --top_k=2
+                                  --top_p="1.0"
+                                  --temperature="1.0"
+                                  --eval_type="finetuned"
+                                  --load_finetune_ckpt_path={load_eval_ckpt_path}
+                                  --eval_data_file_path={eval_data_file_path}
+                                  --tokenizer_file_path={tokenizer_file_path}
+
+```
+
+`TL;DR:`情况下，`CNN_Dailymail`训练集微调参数：
+| 模型 | dataset | device | epoch | seq_length | batch_size | lr | loss function | optimizer | 卡数 |
+| :--- | :------ | :------ | :------ | :------ | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | CNN_Dailymail  | Ascend 910 | 1 | 1024 | 4 | 1e-4 | cross entropy | AdamWeightDecay | 1p |
+| GPT-2 medium | CNN_Dailymail  | Ascend 910 | 1 | 1024 | 4 | 1e-4 | cross entropy | AdamWeightDecay | 1p |
+| GPT-2 large | CNN_Dailymail  | Ascend 910 | 1 | 768 | 2 | 5e-5 | cross entropy | AdamWeightDecay | 1p |
+
+微调结果日志和输出文件可以在`./ms_log/`路径下获取。
+
 #### 评估
 
 GPT-2模型可以在`CNN_Dailymail`开发集上进行对应的评估，针对以上数据集的评估，其评估方法采用F1，即设置`--metric_method="ROUGE"` 。
 
 评估模型时，只需要使用shell脚本`run_summarization.sh`即可，脚本中可以设置环境变量，执行`GPT-2`下的`run_summarization.py`脚本。
 
-评估模型时，首先配置`src/finetune_eval_config.py`，而后执行`scripts/run_summarization.sh`这个shell脚本，且对于`hint`的情况设置`eval_type="finetuned"`，`--load_finetune_ckpt_path`是需要加载微调好的checkpoint文件；而对于`no hint`的情况设置`eval_type="zero-shot"`除此之外`--load_finetune_ckpt_path`是只需加载预训练好的checkpoint文件
+评估模型时，首先配置`src/finetune_eval_config.py`，而后执行`scripts/run_summarization.sh`这个shell脚本，且对于`TL;DR:`的情况设置`eval_type="finetuned"`，`--load_finetune_ckpt_path`是需要加载微调好的checkpoint文件；而对于`no hint`的情况设置`eval_type="zero-shot"`除此之外`--load_finetune_ckpt_path`是只需加载预训练好的checkpoint文件
 
 ```bash
 sh scripts/run_summarization.sh   --device_target="Ascend"
@@ -691,6 +794,17 @@ sh scripts/run_summarization.sh   --device_target="Ascend"
                                   --tokenizer_file_path={tokenizer_file_path}
 
 ```
+
+该任务在测试集上的推理参数：
+
+| 模型 | dataset | device | seq_length | batch_size | metric | condition |
+| :--- | :------ | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | CNN_Dailymail  | Ascend 910 | 1024 | 2 | ROUGE | TL;DR: |
+| GPT-2 medium | CNN_Dailymail  | Ascend 910 | 1024 | 1 | ROUGE | TL;DR: |
+| GPT-2 large | CNN_Dailymail  | Ascend 910 | 768 | 1 | ROUGE | TL;DR: |
+| GPT-2 small | CNN_Dailymail  | Ascend 910 | 1024 | 2 | ROUGE | no hint |
+| GPT-2 medium | CNN_Dailymail  | Ascend 910 | 1024 | 1 | ROUGE | no hint |
+| GPT-2 large | CNN_Dailymail  | Ascend 910 | 1024 | 1 | ROUGE | no hint |
 
 日志和输出文件可以在`./ms_log/`路径下获取。
 
@@ -763,6 +877,19 @@ sh scripts/run_translation.sh   --device_target="Ascend"
                                 --temperature="1.0"
 ```
 
+该任务在测试集上的推理参数：
+
+| 模型 | dataset | device | seq_length | batch_size | metric |
+| :--- | :------ | :------ | :------ | :------ | :------ |
+| GPT-2 small | en-fr  | Ascend 910 | 1024 | 4 | BLEU |
+| GPT-2 medium | en-fr  | Ascend 910 | 1024 | 2 | BLEU |
+| GPT-2 large | en-fr  | Ascend 910 | 768 | 1 | BLEU |
+| GPT-2 small | fr-en  | Ascend 910 | 1024 | 4 | BLEU |
+| GPT-2 medium | fr-en  | Ascend 910 | 1024 | 2 | BLEU |
+| GPT-2 large | fr-en  | Ascend 910 | 1024 | 1 | BLEU |
+
+日志和输出文件可以在`./ms_log/`路径下获取。
+
 ```bash
 sh scripts/run_translation.sh [--options]
 ```
@@ -810,9 +937,9 @@ options:
 ## 平台
 
 - 硬件（Ascend）
-    - 使用Ascend处理器准备硬件环境。
+    - 使用Ascend 910处理器准备硬件环境，单卡内存为32G。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install)
+    - [MindSpore v1.2](https://www.mindspore.cn/install)
 - 更多关于Mindspore的信息，请查看以下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
@@ -835,7 +962,7 @@ tensorflow
 
 ## 推理性能
 
-### Language Modeling任务
+### Language Modeling 任务推理性能
 
 下表展示了GPT-2 small、medium、large三种规模的模型在Language Modeling任务中的PPL得分情况。
 
@@ -854,7 +981,7 @@ tensorflow
 | GPT-2 medium | 1BW  | Ascend  | zero-shot | 50.98 | 55.72 |
 | GPT-2 large | 1BW  | Ascend  | finetune | 29.28 | 44.575 |
 
-### Children's Book Test 任务
+### Children's Book Test 任务推理性能
 
 下表展示了GPT-2 small、medium、large三种规模的模型在Children's Book Test 任务中的Accuracy得分情况。
 
@@ -867,7 +994,7 @@ tensorflow
 | GPT-2 medium | CBT-NE valid  | Ascend  | zero-shot | 87.55 | 87.1 |
 | GPT-2 large | CBT-NE valid  | Ascend  | zero-shot | 89.1 | 88 |
 
-### LAMBADA 任务
+### LAMBADA 任务推理性能
 
 下表展示了GPT-2 small、medium、large三种规模的模型在LAMBADA 任务中的Accuracy和PPL得分情况。
 
@@ -883,7 +1010,7 @@ tensorflow
 | GPT-2 medium | Lambada-test  | Ascend  | zero-shot | 10.69 | 15.6 |
 | GPT-2 large | Lambada-test  | Ascend  | zero-shot | 8.64 | 10.87 |
 
-### Reading Comprehension 任务
+### Reading Comprehension 任务推理性能
 
 下表展示了GPT-2 small、medium、large三种规模的模型在Reading Comprehension任务中的F1得分情况。
 
@@ -893,7 +1020,7 @@ tensorflow
 | GPT-2 medium | CoQA  | Ascend  | zero-shot | 43.69 | 42~43 |
 | GPT-2 large | CoQA  | Ascend  | zero-shot | 49.39 | 49~51 |
 
-### Summarization 任务
+### Summarization 任务推理性能
 
 下表展示了GPT-2 small、medium、large三种规模的模型在Summarization任务中的ROUGE得分情况。
 
@@ -909,7 +1036,7 @@ tensorflow
 | GPT-2 medium | CNN_Dailymail(no hint)  | Ascend  | zero-shot | 12.16 | 15.03(xlarge) |
 | GPT-2 large | CNN_Dailymail(no hint)  | Ascend  | zero-shot | 12.29 | 15.03(xlarge) |
 
-### Translation 任务
+### Translation 任务推理性能
 
 下表展示了GPT-2 small、medium、large三种规模的模型在Translation任务中的BLEU得分情况。
 

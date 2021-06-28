@@ -55,7 +55,7 @@ def get_final_word_label(input_ids, input_length, tokenizer=None):
         input_ids: Tensor(batch_size,seq_length), indices of input text
         config: GPT2Config, config of GPT2 model, if not initiated,
         this function will create a MockConfig by params of input_ids, optional
-        tokenizer: GPT2Tokenizer, if not initiated, it will be created using the default setting in utils. tokenization,
+        tokenizer: GPT2Tokenizer, if not initiated, it will be created using the default setting in utils.tokenization,
         optional
     Returns:
         batch_word_label: [str], lastword str given lambada as label

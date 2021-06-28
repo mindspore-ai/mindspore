@@ -47,7 +47,7 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_translation.py  \
     --device_target="Ascend" \
-    --device_id=4 \
+    --device_id=3 \
     --metric_method="BLEU" \
     --do_train="false" \
     --do_eval="true" \

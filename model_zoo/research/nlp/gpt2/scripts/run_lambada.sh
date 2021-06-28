@@ -50,8 +50,8 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_lambada.py  \
     --device_target="Ascend" \
-    --device_id=1 \
-    --metric_method="PPL" \
+    --device_id=5 \
+    --metric_method="Accuracy" \
     --do_train="false" \
     --do_eval="true" \
     --eval_type="zero-shot" \

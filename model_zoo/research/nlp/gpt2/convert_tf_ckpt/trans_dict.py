@@ -450,7 +450,7 @@ trans_dict_tf = {
     'ln_f.g': 'layer_norm.layer_norm.gamma',
     'wpe': 'gpt2_embedding_postprocess.position_embedding_table',
     'wte': 'gpt2_embedding_lookup.embedding_table'
-}  # transfer dictionary
+} # transfer dictionary
 
 trans_dict_py = {
     'h.0.attn.c_attn.bias': 'gpt2_decoder.layers.0.masked_multi_head_attention.masked_self_attention.c_attn.bias',

@@ -15,8 +15,6 @@
 """
 tensor manipulations
 """
-import numpy as np
-
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
@@ -48,15 +46,13 @@ def extract_string_from_tensor(input_ids, mode="single", config=None, tokenizer=
     reference_list = [""] * batch_size
     eos_text = tokenizer.eos_token
     len_eos_text = len(eos_text)
-    input_ids_np = input_ids.asnumpy()
-    input_ids_np = input_ids_np.reshape((batch_size, seq_length))
-    # input_ids = P.Reshape()(input_ids, (batch_size, seq_length))
+    input_ids = P.Reshape()(input_ids, (batch_size, seq_length))
 
     if mode == "pair":
 
         for batch_idx in range(batch_size):
-            sentence_tensor = input_ids_np[batch_idx]
-            sentence_list = sentence_tensor.tolist()[1:]
+            sentence_tensor = input_ids[batch_idx]
+            sentence_list = sentence_tensor.asnumpy().tolist()[1:]
 
             sentence = tokenizer.decode(sentence_list)
             prompt_start = 0
@@ -72,8 +68,8 @@ def extract_string_from_tensor(input_ids, mode="single", config=None, tokenizer=
     # For single output datasets such as WikiText, etc.
     if mode == "single":
         for batch_idx in range(batch_size):
-            sentence_tensor = input_ids_np[batch_idx]
-            sentence_list = sentence_tensor.tolist()[1:]
+            sentence_tensor = input_ids[batch_idx]
+            sentence_list = sentence_tensor.asnumpy().tolist()[1:]
 
             sentence = tokenizer.decode(sentence_list)
             prompt_start = 0
@@ -97,19 +93,12 @@ def extract_single_token_logits(logits=None, seq_pos=None):
     """
 
     batch_size = logits.shape[0]
-    logits_np = logits.asnumpy()
-    logits_type = P.DType()(logits)
     for i in range(batch_size):
-        # logit = logits[i:i + 1:1, seq_pos[i]:seq_pos[i] + 1:1, ::]
-        logit_np = logits_np[i:i + 1:1, seq_pos[i]:seq_pos[i] + 1:1, ::]
+        logit = logits[i:i + 1:1, seq_pos[i]:seq_pos[i] + 1:1, ::]
         if i == 0:
-            # output_logits = logit
-            output_logits = logit_np
+            output_logits = logit
         else:
-            # output_logits = P.Concat()((output_logits, logit))
-            output_logits = np.concatenate((output_logits, logit_np), axis=0)
-
-    output_logits = Tensor(output_logits, dtype=logits_type)
+            output_logits = P.Concat()((output_logits, logit))
 
     return output_logits
 
@@ -197,6 +186,8 @@ def add_last_token(input_ids: Tensor, input_mask: Tensor, overflow_strategy: str
     batch_size = int(input_mask.shape[0])
 
     for idx in range(batch_size):
+        if append_ids[idx] == -1:
+            continue
         # not overflow
         if pos[idx] < maximum_length:
             input_mask_np[idx][int(pos[idx])] = 1

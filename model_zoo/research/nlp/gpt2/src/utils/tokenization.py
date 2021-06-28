@@ -452,11 +452,14 @@ class CNN_DailyMail_tokenizer(GPT2Tokenizer):
                           max_length=1024,
                           max_summary_length=150,
                           add_special_tokens=True,
-                          padding=None,
+                          padding=True,
                           return_overflowing_tokens=False,
                           return_attention_mask=True):
         len_ids = len(ids)
-        len_pair_ids = len(pair_ids)
+        if pair_ids is None:
+            len_pair_ids = 0
+        else:
+            len_pair_ids = len(pair_ids)
         encoded_inputs = {}
         # Compute the total size of the returned encodings
         total_len = len_ids + len_pair_ids
@@ -470,7 +473,7 @@ class CNN_DailyMail_tokenizer(GPT2Tokenizer):
                                                                             num_tokens_to_remove=num_tokens_to_remove,
                                                                             truncation_strategy="ONLY_FIRST",
                                                                             direction="RIGHT")
-                if len_ids+max_summary_length > max_length-3:
+                if len_ids + max_summary_length > max_length-3:
                     num_tokens_to_remove = (len_ids + max_summary_length) - (max_length - 3)
                     ids, ids_overflowing_tokens = self.truncate_sequences(ids=ids,
                                                                           num_tokens_to_remove=num_tokens_to_remove,
