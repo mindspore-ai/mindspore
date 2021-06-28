@@ -80,6 +80,7 @@ bool UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t
   bool host_error_res = false;
   UniformIntKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>
                (RNG_seed, globalState, input1, input_size_1, input2, input_size_2, output, count);
+  cudaDeviceSynchronize();
   cudaMemcpyFromSymbol(&host_error_res, dev_error_res, sizeof(bool));
   return host_error_res;
 }
