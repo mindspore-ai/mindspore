@@ -197,6 +197,17 @@ class LiteModel : public Model {
       MS_LOG(ERROR) << "convert tensor failed";
       return RET_ERROR;
     }
+
+    // converterInputOutput
+    auto in_count = meta_graph.inputIndex()->size();
+    for (uint32_t i = 0; i < in_count; ++i) {
+      this->input_indices_.push_back(meta_graph.inputIndex()->Get(i));
+    }
+    auto out_count = meta_graph.outputIndex()->size();
+    for (uint32_t i = 0; i < out_count; ++i) {
+      this->output_indices_.push_back(meta_graph.outputIndex()->Get(i));
+    }
+
     if (meta_graph.subGraph() == nullptr) {
       int ret = MetaGraphMappingSubGraph<T>(meta_graph);
       if (ret != RET_OK) {

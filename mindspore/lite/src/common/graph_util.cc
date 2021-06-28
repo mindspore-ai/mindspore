@@ -32,7 +32,7 @@ std::vector<size_t> GetGraphInputNodes(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(!(model->sub_graphs_.empty()));
   std::vector<size_t> ret;
-  for (auto graph_in_index : model->sub_graphs_.front()->input_indices_) {
+  for (auto graph_in_index : model->input_indices_) {
     auto node_size = model->all_nodes_.size();
     for (size_t j = 0; j < node_size; ++j) {
       auto node = model->all_nodes_[j];
@@ -51,7 +51,7 @@ std::vector<size_t> GetGraphInputNodes(const lite::Model *model) {
 std::vector<size_t> GetGraphOutputNodes(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   std::vector<size_t> ret;
-  for (auto graph_out_index : model->sub_graphs_.front()->output_indices_) {
+  for (auto graph_out_index : model->output_indices_) {
     auto node_size = model->all_nodes_.size();
     for (size_t j = 0; j < node_size; ++j) {
       auto node = model->all_nodes_[j];

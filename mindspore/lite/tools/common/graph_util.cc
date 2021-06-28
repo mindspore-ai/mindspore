@@ -71,6 +71,18 @@ std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const siz
   return GetOutputNodeIdx(graphT, *(graphT.nodes.at(nodeIdx).get()), outputIndexIdx);
 }
 
+void ReplaceOutput(const uint32_t &old_index, const uint32_t &new_index, schema::MetaGraphT *graphT) {
+  std::replace_if(
+    std::begin(graphT->outputIndex), std::end(graphT->outputIndex),
+    [&old_index](uint32_t outputIndex) { return outputIndex == old_index; }, new_index);
+
+  for (auto &subGraph : graphT->subGraph) {
+    std::replace_if(
+      std::begin(subGraph->outputIndices), std::end(subGraph->outputIndices),
+      [&old_index](uint32_t outputIndex) { return outputIndex == old_index; }, new_index);
+  }
+}
+
 std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const CNodeT &node, const int outputIndexIdx) {
   std::vector<uint32_t> outputIndexes;
   if (outputIndexIdx == -1) {
@@ -146,13 +158,7 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
   auto outDataTensorIdx = outputTensorIdxes.front();
 
   MS_ASSERT(graphT->allTensors.size() > inDataTensorIdx);
-  auto &gOutTensorIdx = graphT->outputIndex;
-  for (auto iter = gOutTensorIdx.begin(); iter != gOutTensorIdx.end(); iter++) {
-    if (*iter == outDataTensorIdx) {
-      *iter = inDataTensorIdx;
-      break;
-    }
-  }
+  ReplaceOutput(outDataTensorIdx, inDataTensorIdx, graphT);
 
   // find poseNode
   auto postNodeIdxes = GetOutputNodeIdx(*graphT, nodeIdx, 0);
@@ -207,13 +213,8 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
     auto outDataTensorIdx = outputTensorIdxes.front();
     MS_ASSERT(graphT->allTensors.size() > inDataTensorIdx);
     MS_ASSERT(graphT->allTensors.at(inDataTensorIdx) != nullptr);
-    auto &gOutTensorIdx = graphT->outputIndex;
-    for (auto iter = gOutTensorIdx.begin(); iter != gOutTensorIdx.end(); iter++) {
-      if (*iter == outDataTensorIdx) {
-        *iter = inDataTensorIdx;
-        break;
-      }
-    }
+    ReplaceOutput(outDataTensorIdx, inDataTensorIdx, graphT);
+
     // find poseNode
     auto postNodeIdxes = GetOutputNodeIdx(*graphT, nodeIdx, 0);
     for (auto postNodeIdx : postNodeIdxes) {
@@ -605,11 +606,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       toAddNode->name = toAddNodeIn->name + "_" + std::to_string(i);
     }
     if (has_insert_for_graph_out) {
-      for (auto iter = graphT->outputIndex.begin(); iter != graphT->outputIndex.end(); iter++) {
-        if (*iter == postTensorIdx) {
-          *iter = toAddTensorIdx;
-        }
-      }
+      ReplaceOutput(postTensorIdx, toAddTensorIdx, graphT);
       has_insert_for_graph_out = false;
     } else {
       auto &postNode = graphT->nodes.at(postNodeIdxes[is_output_index ? i - 1 : i]);
