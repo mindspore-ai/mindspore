@@ -29,7 +29,15 @@ if __name__ == '__main__':
 
     net = CSPDarknet53(num_classes=config.num_classes)
     param_dict = load_checkpoint(config.ckpt_file)
-    load_param_into_net(net, param_dict)
+    param_dict_new = {}
+    for k, v in param_dict.items():
+        if k.startswith('moments.'):
+            continue
+        elif k.startswith('network.'):
+            param_dict_new[k[8:]] = v
+        else:
+            param_dict_new[k] = v
+    load_param_into_net(net, param_dict_new)
     net.set_train(False)
 
     input_shape = [config.export_batch_size, 3, config.width, config.height]

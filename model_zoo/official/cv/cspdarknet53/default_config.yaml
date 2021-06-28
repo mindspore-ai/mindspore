@@ -46,7 +46,7 @@ log_path: "outputs/"
 export_batch_size: 1
 ckpt_file: ""
 file_name: "cspdarknet53"
-file_format: "AIR"
+file_format: "MINDIR"
 width: 224
 height: 224
 

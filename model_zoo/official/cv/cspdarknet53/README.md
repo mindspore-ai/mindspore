@@ -12,6 +12,10 @@
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Export Process](#Export-process)
+        - [Export](#Export)
+    - [Inference Process](#Inference-process)
+        - [Inference](#Inference)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Evaluation Performance](#evaluation-performance)
@@ -140,6 +144,7 @@ Please follow the instructions in the link below:
 .
 └─cspdarknet53
   ├─README.md
+  ├─ascend310_infer                           # application for 310 inference
   ├── model_utils
     ├─__init__.py                             # init file
     ├─config.py                               # Parse arguments
@@ -149,6 +154,7 @@ Please follow the instructions in the link below:
   ├─scripts
     ├─run_standalone_train.sh                 # launch standalone training with ascend platform(1p)
     ├─run_distribute_train.sh                 # launch distributed training with ascend platform(8p)
+    ├─run_infer_310.sh                        # shell script for 310 inference
     └─run_eval.sh                             # launch evaluating with ascend platform
   ├─src
     ├─utils
@@ -169,7 +175,8 @@ Please follow the instructions in the link below:
   ├─mindspore_hub_conf.py             # mindspore_hub_conf script
   ├─default_config.yaml               # Configurations
   ├─eval.py                           # eval net
-  ├─export.py                         # convert checkpoint
+  ├─postprogress.py                           # post process for 310 inference
+  ├─export.py                                 # export net
   └─train.py                          # train net
 ```
 
@@ -250,13 +257,32 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 Evaluation result will be stored in the example path, you can find result in `eval.log`.
 
-## Model Export
+## [Export Process](#contents)
+
+### [Export](#content)
+
+Before export model, you must modify the config file, default_config.yaml. The config item you should modify is ckpt_file.
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+python export.py
 ```
 
-`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+## [Inference Process](#contents)
+
+### [Inference](#content)
+
+Before performing inference, we need to export model first. Air model can only be exported in Ascend 910 environment, mindir model can be exported in any environment.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```python
+Total data: 50000, top1 accuracy: 0.78458, top5 accuracy: 0.94254
+```
 
 # [Model description](#contents)
 
