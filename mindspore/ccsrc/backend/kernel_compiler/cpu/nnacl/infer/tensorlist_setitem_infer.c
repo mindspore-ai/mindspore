@@ -59,10 +59,6 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   }
 
   int index = ((int *)(get_index->data_))[0];
-  if (index < 0 || (index >= ((int)(input0->element_num_)) && index != 0)) {
-    return NNACL_ERR;
-  }
-
   output0->max_elements_num_ = input0->max_elements_num_;
 
   if (input0->element_num_ == 0 && input0->element_shape_size_ == 0 && index == 0) {

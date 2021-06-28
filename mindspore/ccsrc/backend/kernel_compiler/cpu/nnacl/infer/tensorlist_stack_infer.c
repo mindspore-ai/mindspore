@@ -35,7 +35,7 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return NNACL_INFER_INVALID;
   }
   if (input0->element_num_ == 0) {
-    return NNACL_ERR;
+    return NNACL_INFER_INVALID;
   }
   const TensorC *ele_shape = inputs[1];  // element shape
   if (ele_shape->data_ == NULL) {
