@@ -1612,7 +1612,7 @@ void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
       if (iter != tensor_to_node.end()) {
         const auto &node = iter->second.first;
         const auto &output_index = iter->second.second;
-        if (!AnfAlgo::OutputAddrExist(node, output_index)) {
+        if (!AnfAlgo::OutputAddrExist(node, output_index, true)) {
           continue;
         }
         const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
