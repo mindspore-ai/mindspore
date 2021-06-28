@@ -5,6 +5,14 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/src)
 
+
+set(SERVER_FLATBUFFER_OUTPUT "${CMAKE_BINARY_DIR}/schema")
+set(FBS_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/../schema/cipher.fbs
+        ${CMAKE_CURRENT_SOURCE_DIR}/../schema/fl_job.fbs
+        )
+ms_build_flatbuffers(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}../../schema generated_fbs_files ${SERVER_FLATBUFFER_OUTPUT})
+
 if(ENABLE_CPU)
     if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
         set(PLATFORM_ARM64 "on")
