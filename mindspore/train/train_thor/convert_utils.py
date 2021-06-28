@@ -133,14 +133,15 @@ class ConvertNetUtils():
         This interface is used to convert a network to thor layer network, in order to calculate and store the
         second-order information matrix.
 
-        Notes:
-        This interface is automatically called by the second-order optimizer thor.
+        Note:
+            This interface is automatically called by the second-order optimizer thor.
 
         Args:
-        net (Cell): network to be trained by the second-order optimizer thor.
+            net (Cell): Network to be trained by the second-order optimizer thor.
 
         Examples:
-        >>> ConvertNetUtils().convert_to_thor_net(net)
+            >>> ConvertNetUtils().convert_to_thor_net(net)
+
         """
 
         net.update_cell_prefix()
