@@ -797,7 +797,7 @@ class Gather(Primitive):
           The original Tensor.
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Must be in the range
-          `[0, input_param.shape[axis])`. The data type can be int32 or int64.
+          `[0, input_param.shape[axis])` which are only validated on CPU. The data type can be int32 or int64.
         - **axis** (int) - Specifies the dimension index to gather indices.
 
     Outputs:

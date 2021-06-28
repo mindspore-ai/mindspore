@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <stdio.h>
 #include "nnacl/base/gather_base.h"
 
 int Gather(const void *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
@@ -26,7 +26,9 @@ int Gather(const void *input, int outer_size, int inner_size, int limit, const i
     int8_t *int8_out_m = int8_out + inner_size * m * indices_element_size * data_size;
 
     for (int i = 0; i < indices_element_size; ++i) {
-      if (indices[i] < 0 || indices[i] > limit) {
+      if (indices[i] < 0 || indices[i] >= limit) {
+        printf("[ERROR] [%s:%d] %s] indices[%d]:%d is out of range [%d, %d)\n", __FILE__, __LINE__, __func__, i,
+               indices[i], 0, limit);
         return NNACL_ERR;
       }
       memcpy(int8_out_m + i * inner_size * data_size, int8_in_m + indices[i] * inner_size * data_size,

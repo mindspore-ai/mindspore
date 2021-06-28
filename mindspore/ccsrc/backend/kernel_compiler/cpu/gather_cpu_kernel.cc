@@ -70,7 +70,9 @@ void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, 
     tasks.emplace_back(block);
     thread_index++;
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  if (!common::ThreadPool::GetInstance().SyncRun(tasks)) {
+    MS_LOG(EXCEPTION) << "SyncRun error!";
+  }
 }
 
 template <typename T>
