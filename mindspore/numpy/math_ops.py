@@ -919,7 +919,11 @@ def var(x, axis=None, ddof=0, keepdims=False):
             The default is to compute the variance of the flattened array. Default: `None`.
         ddof (int): Means Delta Degrees of Freedom. Default: 0.
             The divisor used in calculations is :math:`N - ddof`, where :math:`N` represents the number of elements.
-        keepdims (bool): Default: `False`.
+        keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
+            dimensions with size one. With this option, the result will broadcast correctly against the input array.
+            If the default value is passed, then keepdims will not be passed through to the var method of
+            sub-classes of tensor, however any non-default value will be. If the sub-class’ method does not
+            implement keepdims any exceptions will be raised. Default: `False`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -950,7 +954,10 @@ def ptp(x, axis=None, keepdims=False):
         x (Tensor): Input tensor.
         axis (Union[None, int, tuple(int)]): Axis or axes along which the range is computed.
             The default is to compute the variance of the flattened array. Default: None.
-        keepdims (bool): Default is False.
+        keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
+            dimensions with size one. With this option, the result will broadcast correctly against the input tensor.
+            If the default value is passed, then keepdims will not be passed through to the ptp method of
+            sub-classes of tensor, however any non-default value will be. Default is False.
 
     Returns:
         Tensor.
@@ -4020,7 +4027,7 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
             dimensions with size one. With this option, the result will broadcast correctly against the input array.
             If the default value is passed, then keepdims will not be passed through to the sum method of
             sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
-            implement keepdims any exceptions will be raised.
+            implement keepdims any exceptions will be raised. Default: `False`.
         initial (scalar): Starting value for the sum.
 
     Returns:

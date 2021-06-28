@@ -2059,11 +2059,11 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None): # pylint: disable
         range((float, float), optional): The lower and upper range of the bins. If
             not provided, `range` is simply ``(a.min(), a.max())``. Values outside
             the range are ignored. The first element of the range must be less than
-            or equal to the second.
+            or equal to the second. Default is None.
         weights(Union[int, float, bool, list, tuple, Tensor], optional):  An array of weights,
             of the same shape as `a`. Each value in `a` only contributes its associated weight
             towards the bin count (instead of 1). This is currently not used by any of the bin
-            estimators, but may be in the future.
+            estimators, but may be in the future. Default is None.
 
     Returns:
         Tensor, the edges to pass into `histogram`.
