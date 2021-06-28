@@ -249,7 +249,10 @@ void Executor::OnEvent(const ExecutorEvent &event) {
 }
 
 void Executor::OnClear() {
-  WorkerJoin();
+  {
+    mindspore::ScopedLongRunning long_running;
+    WorkerJoin();
+  }
   ClearDoneTasks();
 }
 
