@@ -34,5 +34,6 @@ bool LayerNormFusion::get_elementwise_affine() const {
   auto value_ptr = GetAttr(kElementwiseAffine);
   return GetValue<bool>(value_ptr);
 }
+REGISTER_PRIMITIVE_C(kNameLayerNormFusion, LayerNormFusion);
 }  // namespace ops
 }  // namespace mindspore
