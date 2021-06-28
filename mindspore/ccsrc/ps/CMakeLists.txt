@@ -1,12 +1,5 @@
 file(GLOB_RECURSE _PS_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
-set(SERVER_FLATBUFFER_OUTPUT "${CMAKE_BINARY_DIR}/schema")
-set(FBS_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../schema/cipher.fbs
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../schema/fl_job.fbs
-        )
-ms_build_flatbuffers(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}../../schema generated_fbs_files ${SERVER_FLATBUFFER_OUTPUT})
-
 if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _PS_SRC_FILES "optimizer_info_builder.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "optimizer_info.cc")
@@ -88,5 +81,4 @@ add_subdirectory(ps_cache)
 
 set_property(SOURCE ${_PS_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PS)
 add_library(_mindspore_ps_obj OBJECT ${_PS_SRC_FILES})
-add_dependencies(_mindspore_ps_obj generated_fbs_files)
 target_link_libraries(_mindspore_ps_obj mindspore::flatbuffers)
