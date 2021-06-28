@@ -518,13 +518,21 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
     delta = None
     if num > 1:
         delta = (stop - start) / div
-        # This is similar to how numpy and jax compute linspace
         start_expand = reshape(start, bounds_shape)
-        incremental_expand = reshape(_iota(mstype.float32, num), iota_shape)
-        delta_expand = reshape(delta, bounds_shape)
-        start_expand, incremental_expand, delta_expand = broadcast_arrays(
-            start_expand, incremental_expand, delta_expand)
-        out = start_expand + (incremental_expand * delta_expand)
+        # This is similar to how numpy and jax compute linspace
+        if dtype in (mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                     mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64):
+            incremental_expand = reshape(_iota(mstype.float32, num), iota_shape)
+            delta_expand = reshape(delta, bounds_shape)
+            start_expand, incremental_expand, delta_expand = broadcast_arrays(
+                start_expand, incremental_expand, delta_expand)
+            out = start_expand + (incremental_expand * delta_expand)
+        else:
+            stop_expand = reshape(stop, bounds_shape)
+            step = reshape(_iota(mstype.float32, num), iota_shape) / div
+            start_expand, stop_expand, step = broadcast_arrays(
+                start_expand, stop_expand, step)
+            out = start_expand * (1 - step) + stop_expand * step
     elif num == 1:
         delta = nan if endpoint else stop - start
         out = reshape(start, bounds_shape)
@@ -2098,6 +2106,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None): # pylint: disable
         start = F.reduce_min(a)
         end = F.reduce_max(a)
     else:
+        if not isinstance(range, (list, tuple)) or len(range) != 2:
+            _raise_value_error('`range` should take the form (start, end)')
         start, end = range
         if start > end:
             _raise_value_error('max must be larger than min in range parameter')

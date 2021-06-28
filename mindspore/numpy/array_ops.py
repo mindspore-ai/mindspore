@@ -2095,7 +2095,7 @@ def _get_grid(shape):
 def choose(a, choices, mode='clip'):
     """
     Construct an array from an index array and a list of arrays to choose from.
-    Given an “index” array `a`` of integers and a sequence of n arrays (choices),
+    Given an “index” array `a` of integers and a sequence of n arrays (choices),
     `a` and each choice array are first broadcast, as necessary, to arrays of a
     common shape; calling these `Ba` and `Bchoices[i], i = 0,…,n-1` we have that,
     necessarily, ``Ba.shape == Bchoices[i].shape`` for each `i`. Then, a new array
