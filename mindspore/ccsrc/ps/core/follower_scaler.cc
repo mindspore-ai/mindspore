@@ -20,45 +20,68 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-FollowerScaler::FollowerScaler(AbstractNode *node) : node_(node), scaling_state_(NodeScaleState::kNormal) {
+FollowerScaler::FollowerScaler(AbstractNode *node)
+    : node_(node), scaling_state_(NodeScaleState::kNormal), running_(true) {
   process_before_scale_out_thread_ = std::thread([&]() {
-    while (true) {
+    while (running_.load()) {
       std::unique_lock<std::mutex> lock(scale_out_mtx_);
-      scale_out_cv_.wait(lock, [&]() -> bool { return scaling_state_.load() == NodeScaleState::kPreparing; });
+      scale_out_cv_.wait(
+        lock, [&]() -> bool { return !running_.load() || scaling_state_.load() == NodeScaleState::kPreparing; });
+      if (!running_.load()) {
+        break;
+      }
       ProcessBeforeScaleOut();
     }
   });
-  process_before_scale_out_thread_.detach();
 
   process_before_scale_in_thread_ = std::thread([&]() {
-    while (true) {
+    while (running_.load()) {
       std::unique_lock<std::mutex> lock(scale_in_mtx_);
-      scale_in_cv_.wait(lock, [&]() -> bool { return scaling_state_.load() == NodeScaleState::kPreparing; });
+      scale_in_cv_.wait(
+        lock, [&]() -> bool { return !running_.load() || scaling_state_.load() == NodeScaleState::kPreparing; });
       // In scaling in scenario, abstract node will trigger CLUSTER_SCALE_IN_DONE event in the same thread if this node
       // is the one to be scaled in, so we need to release the lock here to avoid dead lock.
       lock.unlock();
+      if (!running_.load()) {
+        break;
+      }
       ProcessBeforeScaleIn();
     }
   });
-  process_before_scale_in_thread_.detach();
 
   process_after_scale_out_thread_ = std::thread([&]() {
-    while (true) {
+    while (running_.load()) {
       std::unique_lock<std::mutex> lock(scale_out_mtx_);
-      scale_out_cv_.wait(lock, [&]() -> bool { return scaling_state_.load() == NodeScaleState::kScaling; });
+      scale_out_cv_.wait(
+        lock, [&]() -> bool { return !running_.load() || scaling_state_.load() == NodeScaleState::kScaling; });
+      if (!running_.load()) {
+        break;
+      }
       ProcessAfterScaleOut();
     }
   });
-  process_after_scale_out_thread_.detach();
 
   process_after_scale_in_thread_ = std::thread([&]() {
-    while (true) {
+    while (running_.load()) {
       std::unique_lock<std::mutex> lock(scale_in_mtx_);
-      scale_in_cv_.wait(lock, [&]() -> bool { return scaling_state_.load() == NodeScaleState::kScaling; });
+      scale_in_cv_.wait(
+        lock, [&]() -> bool { return !running_.load() || scaling_state_.load() == NodeScaleState::kScaling; });
+      if (!running_.load()) {
+        break;
+      }
       ProcessAfterScaleIn();
     }
   });
-  process_after_scale_in_thread_.detach();
+}
+
+FollowerScaler::~FollowerScaler() {
+  running_ = false;
+  scale_out_cv_.notify_all();
+  scale_in_cv_.notify_all();
+  process_before_scale_out_thread_.join();
+  process_before_scale_in_thread_.join();
+  process_after_scale_out_thread_.join();
+  process_after_scale_in_thread_.join();
 }
 
 void FollowerScaler::RegisterScaleEventCallbacks() {

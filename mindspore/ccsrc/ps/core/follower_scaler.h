@@ -56,7 +56,7 @@ enum class NodeScaleState {
 class FollowerScaler {
  public:
   explicit FollowerScaler(AbstractNode *node);
-  ~FollowerScaler() = default;
+  ~FollowerScaler();
 
   // The methods called after the events READY_FOR_SCALE_OUT/READY_FOR_SCALE_IN are triggered.
   void ProcessBeforeScaleOut();
@@ -82,6 +82,7 @@ class FollowerScaler {
   // Callbacks for scaling events should not be blocked so we notify a thread to call
   // barriers(barriers_before_scale_out_/barriers_before_scale_in_) or
   // handlers(handlers_after_scale_out_/handlers_after_scale_in_).
+  std::atomic_bool running_;
   std::thread process_before_scale_out_thread_;
   std::thread process_before_scale_in_thread_;
   std::thread process_after_scale_out_thread_;

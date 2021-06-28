@@ -116,7 +116,7 @@ class Server {
   // Which protocol should communicators use.
   bool use_tcp_;
   bool use_http_;
-  uint64_t http_port_;
+  uint16_t http_port_;
 
   // The configure of all rounds.
   std::vector<RoundConfig> rounds_config_;

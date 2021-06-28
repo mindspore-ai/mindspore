@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "ps/server/model_store.h"
 #include "ps/server/iteration.h"
 
 namespace mindspore {
@@ -171,7 +172,11 @@ void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const D
     return;
   }
 
-  std::map<std::string, AddressPtr> feature_maps = executor_->GetModel();
+  size_t last_iteration = LocalMetaStore::GetInstance().curr_iter_num() - 1;
+  auto feature_maps = ModelStore::GetInstance().GetModelByIterNum(last_iteration);
+  if (feature_maps.empty()) {
+    MS_LOG(WARNING) << "The feature map for startFLJob is empty.";
+  }
   BuildStartFLJobRsp(fbb, schema::ResponseCode_SUCCEED, "success", true,
                      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
                      feature_maps);

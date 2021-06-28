@@ -53,7 +53,7 @@ void OptimizerInfo::UpdateOptimInputValue(const std::string &optim_type, const s
 
   size_t origin_index = origin_input_map.at(input_name);
   size_t ps_send_index = ps_send_index_map.at(input_name);
-  if (ps_send_index > lens.size() || origin_index > inputs_.size()) {
+  if (ps_send_index >= lens.size() || origin_index >= inputs_.size()) {
     MS_LOG(EXCEPTION) << "Index is out of bound for optimizer " << optim_type << ", origin_index:" << origin_index
                       << ", ps_send_index:" << ps_send_index;
   }
@@ -96,6 +96,7 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
 void DenseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &, size_t n, size_t, size_t) {
   if (n > 1) {
     float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);
+    MS_EXCEPTION_IF_NULL(accum_grad_data);
     size_t size = gradient()->size / sizeof(float);
     for (size_t i = 0; i < size; i++) {
       accum_grad_data[i] /= n;
@@ -136,7 +137,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
-  grads_offset_ += lengths[grad_index];
+  grads_offset_ += IntToSize(lengths[grad_index]);
   gradient()->size += incr_grad_size;
 
   // Append indice data to the end
