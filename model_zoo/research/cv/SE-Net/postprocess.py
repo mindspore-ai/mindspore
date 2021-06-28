@@ -19,7 +19,7 @@ import numpy as np
 
 parser = argparse.ArgumentParser(description='SE_net calcul acc')
 parser.add_argument("--result_path", type=str, required=True, default='', help="result file path")
-parser.add_argument("--label_file", type=str, required=True, default='', help="label file")
+parser.add_argument("--data_path", type=str, required=True, default='', help="data path")
 args = parser.parse_args()
 
 
@@ -31,20 +31,20 @@ def get_top5_acc(top_arg, gt_class):
     return sub_count
 
 
-def read_label(label_file):
-    with open(label_file, 'r') as f:
-        lines = f.readlines()
-    img_dict = {}
-    for line in lines:
-        img_id = line.split(':')[0]
-        label = line.split(':')[1]
-        img_dict[img_id] = label
-    return img_dict
+def get_label(data_path):
+    img_label = {}
+    dirs = os.listdir(data_path)
+    dirs = sorted(dirs)
+    for class_num, dir_ in enumerate(dirs):
+        files = os.listdir(os.path.join(data_path, dir_))
+        for file in files:
+            img_label[file.split('.')[0]] = class_num
+    return img_label
 
 
-def cal_acc_imagenet(result_path, label_file):
+def cal_acc_imagenet(result_path, data_path):
     """ calcul acc """
-    img_label = read_label(label_file)
+    img_label = get_label(data_path)
     img_tot = 0
     top1_correct = 0
     top5_correct = 0
@@ -70,4 +70,4 @@ def cal_acc_imagenet(result_path, label_file):
 
 
 if __name__ == '__main__':
-    cal_acc_imagenet(args.result_path, args.label_file)
+    cal_acc_imagenet(args.result_path, args.data_path)

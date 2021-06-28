@@ -14,8 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 4 || $# -gt 5 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_FILE] [DVPP] [DEVICE_ID]
+if [[ $# -lt 3 || $# -gt 4 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
     DVPP is mandatory, and must choose from [DVPP|CPU], it's case-insensitive,the net only support CPU mode.
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
@@ -30,17 +30,15 @@ get_real_path(){
 }
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
-label_file=$(get_real_path $3)
-DVPP=${4^^}
+DVPP=${3^^}
 
 device_id=0
-if [ $# == 5 ]; then
-    device_id=$5
+if [ $# == 4 ]; then
+    device_id=$4
 fi
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
-echo "label file: "$label_file
 echo "image process mode: "$DVPP
 echo "device id: "$device_id
 
@@ -87,7 +85,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --label_file=$label_file --result_path=./result_Files &> acc.log &
+    python3.7 ../postprocess.py --data_path=$data_path --result_path=./result_Files &> acc.log &
 }
 
 compile_app
