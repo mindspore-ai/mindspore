@@ -62,10 +62,12 @@ class Cell(Cell_):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops as ops
         >>> class MyCell(nn.Cell):
         ...    def __init__(self):
         ...        super(MyCell, self).__init__()
-        ...        self.relu = P.ReLU()
+        ...        self.relu = ops.ReLU()
         ...
         ...    def construct(self, x):
         ...        return self.relu(x)
@@ -607,7 +609,7 @@ class Cell(Cell_):
         Compiles cell.
 
         Args:
-            inputs (tuple): Input parameters.
+            inputs (tuple): Inputs of the Cell object.
         """
         _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
 
@@ -616,7 +618,7 @@ class Cell(Cell_):
         Compiles and runs cell.
 
         Args:
-            inputs (tuple): Input parameters.
+            inputs (tuple): Inputs of the Cell object.
 
         Returns:
             Object, the result of executing.
@@ -682,8 +684,13 @@ class Cell(Cell_):
         """
         Cast parameter according to auto mix precision level in pynative mode.
 
+        This interface is currently used in the case of auto mix precision and usually need not to be used explicitly.
+
         Args:
-            param (Parameter): The parameter to cast.
+            param (Parameter): Parameters, the type of which should be cast.
+
+        Returns:
+            Parameter, the input parameter with type automatically casted.
         """
         if hasattr(self, "_mindspore_flags"):
             if self._mindspore_flags.get('fp32'):
@@ -725,7 +732,11 @@ class Cell(Cell_):
         return None
 
     def remove_redundant_parameters(self):
-        """Remove the redundant parameters"""
+        """
+        Remove the redundant parameters.
+
+        This interface usually need not to be used explicitly.
+        """
         cells = self.cells_and_names()
         for _, cell in cells:
             params = cell._params.items()
@@ -836,7 +847,7 @@ class Cell(Cell_):
         Adds the given prefix to the names of parameters.
 
         Args:
-            prefix (str): The prefix string.
+            prefix (str): The prefix string. Default: ''.
             recurse (bool): Whether contains the parameters of subcells. Default: True.
         """
 
@@ -884,6 +895,9 @@ class Cell(Cell_):
             expand (bool): If true, yields parameters of this cell and all subcells. Otherwise, only yield parameters
                            that are direct members of this cell. Default: True.
 
+        Returns:
+            Iteration, all parameters at the Cell.
+
         Examples:
             >>> net = Net()
             >>> parameters = []
@@ -905,12 +919,15 @@ class Cell(Cell_):
         """
         Returns an iterator over cell parameters.
 
-        Includes the parameter's name  and itself.
+        Includes the parameter's name and itself.
 
         Args:
             name_prefix (str): Namespace. Default: ''.
             expand (bool): If true, yields parameters of this cell and all subcells. Otherwise, only yield parameters
                            that are direct members of this cell. Default: True.
+
+        Returns:
+            Iteration, all the names and corresponding parameters in the cell.
 
         Examples:
             >>> n = Net()
@@ -949,6 +966,9 @@ class Cell(Cell_):
             cells (str): Cells to iterate over. Default: None.
             name_prefix (str): Namespace. Default: ''.
 
+        Returns:
+            Iteration, all the child cells and corresponding names in the cell.
+
         Examples:
             >>> n = Net()
             >>> names = []
@@ -972,7 +992,12 @@ class Cell(Cell_):
                     yield ele
 
     def cells(self):
-        """Returns an iterator over immediate cells."""
+        """
+        Returns an iterator over immediate cells.
+
+        Returns:
+            Iteration, all the child cells in the cell.
+        """
         return self.name_cells().values()
 
     def _set_scope(self, name):
@@ -997,7 +1022,12 @@ class Cell(Cell_):
                 yield key, value
 
     def get_scope(self):
-        """Returns the scope of a cell object in one network."""
+        """
+        Returns the scope of a cell object in one network.
+
+        Returns:
+            String, scope of the cell.
+        """
         return self._scope
 
     def generate_scope(self):
@@ -1010,6 +1040,9 @@ class Cell(Cell_):
         Returns an iterator over all cells in the network.
 
         Include name of the cell and cell itself.
+
+        Returns:
+            Dict[String, Cell], all the child cells and corresponding names in the cell.
         """
         value_set = set()
         cells = OrderedDict()
@@ -1056,6 +1089,9 @@ class Cell(Cell_):
             dst_type (:class:`mindspore.dtype`): Transfer Cell to Run with dst_type.
                 dst_type can be `mindspore.dtype.float16` or `mindspore.dtype.float32`.
 
+        Returns:
+            Cell, the cell itself.
+
         Raises:
             ValueError: If dst_type is not float32 nor float16.
         """
@@ -1080,6 +1116,9 @@ class Cell(Cell_):
         Args:
             acc_type (str): accelerate algorithm.
 
+        Returns:
+            Cell, the cell itself.
+
         Raises:
             ValueError: If acc_type is not in the algorithm library.
         """
@@ -1098,6 +1137,9 @@ class Cell(Cell_):
         Args:
             requires_grad (bool): Specifies if the net need to grad, if it is
                 True, cell will construct backward network in pynative mode. Default: True.
+
+        Returns:
+            Cell, the cell itself.
         """
         self.requires_grad = requires_grad
         return self
@@ -1112,6 +1154,9 @@ class Cell(Cell_):
 
         Args:
             mode (bool): Specifies whether the model is training. Default: True.
+
+        Returns:
+            Cell, the cell itself.
         """
         if mode is False:
             self._phase = 'predict'

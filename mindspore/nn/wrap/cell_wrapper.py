@@ -66,6 +66,7 @@ def _tensors_cast_datatype(datatype, param):
     return F.cast(param, datatype)
 
 
+
 class WithLossCell(Cell):
     r"""
     Cell with loss function.
@@ -82,7 +83,7 @@ class WithLossCell(Cell):
         - **label** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
 
     Outputs:
-        Tensor, a scalar tensor with shape :math:`()`.
+        Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
 
     Raises:
         TypeError: If dtype of `data` or `label` is neither float16 nor float32.
@@ -114,7 +115,7 @@ class WithLossCell(Cell):
     @property
     def backbone_network(self):
         """
-        Returns the backbone network.
+        Get the backbone network.
 
         Returns:
             Cell, the backbone network.
@@ -298,7 +299,7 @@ class TrainOneStepCell(Cell):
         - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
-        Tensor, a scalar Tensor with shape :math:`()`.
+        Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
 
     Raises:
         TypeError: If `sens` is not a number.
@@ -407,6 +408,12 @@ class GetNextSingleOp(Cell):
         queue_name (str): Queue name to fetch the data.
 
     For detailed information, refer to `ops.operations.GetNext`.
+
+    Inputs:
+        No inputs.
+
+    Outputs:
+        tuple[Tensor], the data get from Dataset.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -635,12 +642,18 @@ class WithEvalCell(Cell):
 
 class ParameterUpdate(Cell):
     """
-    Cell that updates parameters.
+    Cell that updates parameter.
 
     With this Cell, one can manually update `param` with the input `Tensor`.
 
     Args:
         param (Parameter): The parameter to be updated manually.
+
+    Inputs:
+        - **x** (Tensor) - A tensor whose shape and type are the same with `param`.
+
+    Outputs:
+        Tensor, the input `x`.
 
     Raises:
         KeyError: If parameter with the specified name does not exist.

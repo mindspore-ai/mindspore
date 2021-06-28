@@ -266,7 +266,7 @@ class DatasetHelper:
         self.iter.release()
 
     def continue_send(self):
-        """continue send data to device at the beginning of epoch."""
+        """Continue send data to device at the beginning of epoch."""
         self.iter.continue_send()
 
     def get_data_info(self):

@@ -52,12 +52,24 @@ def _check_param_value(accum, l1, l2, use_locking, prim_name=None):
 
 
 class ProximalAdagrad(Optimizer):
-    """
+    r"""
     Implements the ProximalAdagrad algorithm with ApplyProximalAdagrad Operator.
 
     ProximalAdagrad is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
+
+    .. math::
+        accum_{t+1} = accum_{t} + grad * grad
+
+    .. math::
+        \text{prox_v} = var_{t} - lr * grad * \frac{1}{\sqrt{accum_{t+1}}}
+
+    .. math::
+        var_{t+1} = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+
+    Here : where grad, lr, var, accum and t denote the gradients, learning_rate, params and accumulation and current
+    step respectively.
 
     Note:
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
