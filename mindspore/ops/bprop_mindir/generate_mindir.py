@@ -105,7 +105,7 @@ if __name__ == "__main__":
     # copy the bprop source files to the installed path.
     backup_suffix = "_generate_bak"
     if copy_flag is True:
-        shutil.rmtree(bprop_installed_dir + backup_suffix)
+        shutil.rmtree(bprop_installed_dir + backup_suffix, ignore_errors=True)
         os.rename(bprop_installed_dir, bprop_installed_dir + backup_suffix)
         os.mkdir(bprop_installed_dir)
         ls = os.listdir(bprop_src_dir)
