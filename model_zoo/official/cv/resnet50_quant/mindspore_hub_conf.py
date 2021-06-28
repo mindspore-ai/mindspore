@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,22 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
-from src.model_utils.config import config as cfg
-from src.wide_and_deep import PredictWithSigmoid, WideDeepModel
+"""hub config"""
+#from models.resnet_quant import resnet50_quant #auto construct quantative network of resnet50
+from models.resnet_quant_manual import resnet50_quant #manually construct quantative network of resnet50
+from src.config import config_quant as config
 
-
-def get_WideDeep_net(config):
-    """
-    Get network of wide&deep model.
-    """
-    WideDeep_net = WideDeepModel(config)
-    eval_net = PredictWithSigmoid(WideDeep_net)
-    return eval_net
+def resnet50_quant_net(*args, **kwargs):
+    return resnet50_quant(*args, **kwargs)
 
 def create_network(name, *args, **kwargs):
-    """create_network about wide_and_deep"""
-    if name == 'wide_and_deep':
-        eval_net = get_WideDeep_net(cfg)
-        return eval_net
+    """create_network about resnet50_quant"""
+    if name == "resnet50_quant":
+        return resnet50_quant_net(class_num=config.class_num, *args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")
