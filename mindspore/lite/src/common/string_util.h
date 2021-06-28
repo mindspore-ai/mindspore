@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace lite {
-typedef struct {
+typedef struct StringPack {
   int len = 0;
   const char *data = nullptr;
 } StringPack;

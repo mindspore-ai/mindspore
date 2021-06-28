@@ -23,18 +23,18 @@
 
 namespace mindspore::lite {
 /// \brief CpuDeviceInfo defined for CPU's configuration information.
-typedef struct {
+typedef struct CpuDeviceInfo {
   bool enable_float16_ = false; /**< prior enable float16 inference */
   CpuBindMode cpu_bind_mode_ = MID_CPU;
 } CpuDeviceInfo;
 
 /// \brief GpuDeviceInfo defined for GPU's configuration information.
-typedef struct {
+typedef struct GpuDeviceInfo {
   bool enable_float16_ = false; /**< prior enable float16 inference */
 } GpuDeviceInfo;
 
 /// \brief NpuDeviceInfo defined for NPU's configuration information.
-typedef struct {
+typedef struct NpuDeviceInfo {
   int frequency_ = 3; /**< npu frequency inference, low 1, medium 2, high 3, extreme 4, other values will be set to 3 */
 } NpuDeviceInfo;
 

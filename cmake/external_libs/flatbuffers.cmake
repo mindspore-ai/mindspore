@@ -12,14 +12,26 @@ else()
     set(MD5 "02c64880acb89dbd57eebacfd67200d8")
 endif()
 
-mindspore_add_pkg(flatbuffers
-        VER 1.11.0
-        LIBS flatbuffers
-        EXE flatc
-        URL ${REQ_URL}
-        MD5 ${MD5}
-        CMAKE_OPTION -DCMAKE_C_COMPILER=${FLATC_GCC_COMPILER} -DCMAKE_CXX_COMPILER=${FLATC_GXX_COMPILER}
-        -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
+if(APPLE)
+    set(FLATBUFFERS_PATCH ${TOP_DIR}/third_party/patch/flatbuffers/flatbuffers.patch001)
+    mindspore_add_pkg(flatbuffers
+            VER 1.11.0
+            LIBS flatbuffers
+            EXE flatc
+            URL ${REQ_URL}
+            MD5 ${MD5}
+            PATCHES ${FLATBUFFERS_PATCH}
+            CMAKE_OPTION -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
+else()
+    mindspore_add_pkg(flatbuffers
+            VER 1.11.0
+            LIBS flatbuffers
+            EXE flatc
+            URL ${REQ_URL}
+            MD5 ${MD5}
+            CMAKE_OPTION -DCMAKE_C_COMPILER=${FLATC_GCC_COMPILER} -DCMAKE_CXX_COMPILER=${FLATC_GXX_COMPILER}
+            -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
+endif()
 
 include_directories(${flatbuffers_INC})
 add_library(mindspore::flatbuffers ALIAS flatbuffers::flatbuffers)
