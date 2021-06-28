@@ -108,6 +108,7 @@ class KernelGraph : public FuncGraph {
   void ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter);
   std::vector<AnfNodePtr> outputs() const;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;
+  CNodePtr NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode = nullptr);
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
   CNodePtr NewCNode(const CNodePtr &cnode);
   void ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const;

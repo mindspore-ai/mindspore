@@ -93,6 +93,8 @@ CNodePtr NewRecomputeNode(const AnfNodePtr &orig_node, std::map<AnfNodePtr, AnfN
   ScopePtr scope = (orig_node->scope() != kDefaultScope) ? orig_node->scope() : kDefaultScope;
   cp_node->set_scope(scope);
   cp_node->set_kernel_info(cnode->kernel_info_ptr());
+  cp_node->set_primal_attrs(cnode->primal_attrs());
+  cp_node->set_primal_debug_infos(cnode->primal_debug_infos());
   (*node_map)[orig_node] = cp_node;
   return cp_node->cast<CNodePtr>();
 }
