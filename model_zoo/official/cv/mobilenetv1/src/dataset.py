@@ -21,12 +21,12 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import get_rank, get_group_size
 
 THREAD_NUM = 12 if cpu_count() >= 12 else 8
 
 
-def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
+def create_dataset1(dataset_path, do_train, device_num=1, repeat_num=1, batch_size=32, target="Ascend"):
     """
     create a train or evaluate cifar10 dataset for mobilenet
     Args:
@@ -39,18 +39,10 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     Returns:
         dataset
     """
-    if target == "Ascend":
-        device_num, rank_id = _get_rank_info()
-    elif target == "GPU":
-        init()
-        rank_id = get_rank()
-        device_num = get_group_size()
-    else:
-        device_num = 1
-
     if device_num == 1:
         data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=THREAD_NUM, shuffle=True)
     else:
+        device_num, rank_id = _get_rank_info()
         data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=THREAD_NUM, shuffle=True,
                                      num_shards=device_num, shard_id=rank_id)
 
@@ -82,7 +74,7 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     return data_set
 
 
-def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
+def create_dataset2(dataset_path, do_train, device_num=1, repeat_num=1, batch_size=32, target="Ascend"):
     """
     create a train or eval imagenet2012 dataset for mobilenet
 
@@ -96,16 +88,11 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
     Returns:
         dataset
     """
-    if target == "Ascend":
-        device_num, rank_id = _get_rank_info()
-    else:
-        init()
-        rank_id = get_rank()
-        device_num = get_group_size()
 
     if device_num == 1:
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=THREAD_NUM, shuffle=True)
     else:
+        device_num, rank_id = _get_rank_info()
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=THREAD_NUM, shuffle=True,
                                          num_shards=device_num, shard_id=rank_id)
 
