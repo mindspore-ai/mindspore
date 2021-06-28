@@ -37,67 +37,6 @@ class MindDataTestCSVOp : public UT::DatasetOpTesting {
 
 };
 
-TEST_F(MindDataTestCSVOp, TestCSVBasic) {
-  // Start with an empty execution tree
-  auto tree = std::make_shared<ExecutionTree>();
-
-  std::string dataset_path;
-  dataset_path = datasets_root_path_ + "/testCSV/1.csv";
-
-  std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_list;
-  column_default_list.push_back(std::make_shared<CsvOp::Record<int>>(CsvOp::INT, 0));
-  column_default_list.push_back(std::make_shared<CsvOp::Record<int>>(CsvOp::INT, 0));
-  column_default_list.push_back(std::make_shared<CsvOp::Record<int>>(CsvOp::INT, 0));
-  column_default_list.push_back(std::make_shared<CsvOp::Record<int>>(CsvOp::INT, 0));
-  std::shared_ptr<CsvOp> op;
-  CsvOp::Builder builder;
-  builder.SetCsvFilesList({dataset_path})
-
-    .SetShuffleFiles(false)
-    .SetOpConnectorSize(2)
-    .SetFieldDelim(',')
-      .SetColumDefault(column_default_list)
-      .SetColumName({"col1", "col2", "col3", "col4"});
-
-  Status rc = builder.Build(&op);
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = tree->AssociateNode(op);
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = tree->AssignRoot(op);
-  ASSERT_TRUE(rc.IsOk());
-
-  MS_LOG(INFO) << "Launching tree and begin iteration.";
-  rc = tree->Prepare();
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = tree->Launch();
-  ASSERT_TRUE(rc.IsOk());
-
-  // Start the loop of reading tensors from our pipeline
-  DatasetIterator di(tree);
-  TensorRow tensor_list;
-  rc = di.FetchNextTensorRow(&tensor_list);
-  ASSERT_TRUE(rc.IsOk());
-
-  int row_count = 0;
-  while (!tensor_list.empty()) {
-    // Display the tensor by calling the printer on it
-    for (int i = 0; i < tensor_list.size(); i++) {
-      std::ostringstream ss;
-      ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
-      MS_LOG(INFO) << "Tensor print: " << ss.str() << ".";
-    }
-
-    rc = di.FetchNextTensorRow(&tensor_list);
-    ASSERT_TRUE(rc.IsOk());
-    row_count++;
-  }
-
-  ASSERT_EQ(row_count, 3);
-}
-
 TEST_F(MindDataTestCSVOp, TestTotalRows) {
   std::string csv_file1 = datasets_root_path_ + "/testCSV/1.csv";
   std::string csv_file2 = datasets_root_path_ + "/testCSV/size.csv";
