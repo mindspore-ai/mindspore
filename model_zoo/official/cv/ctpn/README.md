@@ -221,9 +221,9 @@ ICDAR2013, SCUT-FORU to improve precision and recall, and when doing Finetune, w
 Training result will be stored in the example path. Checkpoints will be stored at `ckpt_path` by default, and training log  will be redirected to `./log`, also the loss will be redirected to `./loss_0.log` like followings.
 
 ```python
-377 epoch: 1 step: 229 ,rpn_loss: 0.00355, rpn_cls_loss: 0.00047, rpn_reg_loss: 0.00103,
-399 epoch: 2 step: 229 ,rpn_loss: 0.00327,rpn_cls_loss: 0.00047, rpn_reg_loss: 0.00093,
-424 epoch: 3 step: 229 ,rpn_loss: 0.00910,  rpn_cls_loss: 0.00385, rpn_reg_loss: 0.00175,
+377 epoch: 1 step: 229 ,rpn_loss: 0.00355
+399 epoch: 2 step: 229 ,rpn_loss: 0.00327
+424 epoch: 3 step: 229 ,rpn_loss: 0.00910
 ```
 
 - running on ModelArts
