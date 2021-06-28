@@ -58,7 +58,7 @@ def set_seed(seed):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.ops as ops
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
         >>> from mindspore.common import set_seed
         >>> from mindspore.common.initializer import initializer

@@ -14,8 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 5 || $# -gt 6 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [CONFIG] [VOCAB] [OUTPUT] [NEED_PREPROCESS] [DEVICE_ID]
+if [[ $# -lt 4 || $# -gt 5 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [VOCAB] [OUTPUT] [NEED_PREPROCESS] [DEVICE_ID]
     NEED_PREPROCESS means weather need preprocess or not, it's value is 'y' or 'n'.
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
@@ -29,24 +29,22 @@ get_real_path(){
     fi
 }
 model=$(get_real_path $1)
-config=$(get_real_path $2)
-vocab=$(get_real_path $3)
-output=$(get_real_path $4)
+vocab=$(get_real_path $2)
+output=$(get_real_path $3)
 
-if [ "$5" == "y" ] || [ "$5" == "n" ];then
-    need_preprocess=$5
+if [ "$4" == "y" ] || [ "$4" == "n" ];then
+    need_preprocess=$4
 else
   echo "weather need preprocess or not, it's value must be in [y, n]"
   exit 1
 fi
 
 device_id=0
-if [ $# == 6 ]; then
-    device_id=$6
+if [ $# == 5 ]; then
+    device_id=$5
 fi
 
 echo "mindir name: "$model
-echo "config: "$config
 echo "vocab: "$vocab
 echo "output: "$output
 echo "need preprocess: "$need_preprocess
@@ -72,7 +70,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --config=$config --result_path=./preprocess_Result/
+    python3.7 ../preprocess.py
 }
 
 function compile_app()
@@ -99,7 +97,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --config=$config --vocab=$vocab --output=$output --source_id_folder=./preprocess_Result/00_source_eos_ids --target_id_folder=./preprocess_Result/target_eos_ids --result_dir=./result_Files &> acc.log
+    python3.7 ../postprocess.py --vocab=$vocab --output=$output &> acc.log
 }
 
 if [ $need_preprocess == "y" ]; then
