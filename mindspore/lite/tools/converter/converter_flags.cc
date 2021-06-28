@@ -50,6 +50,9 @@ Flags::Flags() {
           "Configuration for post-training, offline split op to parallel,"
           "disable op fusion ability and set plugin so path",
           "");
+  AddFlag(&Flags::saveFP16Str, "fp16",
+          "Serialize const tensor in Float16 data type, only effective for const tensor in Float32 data type. on | off",
+          "off");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device. "
           "true | false",
@@ -274,10 +277,10 @@ int Flags::Init(int argc, const char **argv) {
     }
   }
 
-  if (save_fp16_str_ == "on") {
-    save_fp16_ = true;
-  } else if (save_fp16_str_ == "off") {
-    save_fp16_ = false;
+  if (saveFP16Str == "on") {
+    saveFP16 = true;
+  } else if (saveFP16Str == "off") {
+    saveFP16 = false;
   } else {
     std::cerr << "Init save_fp16 failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;

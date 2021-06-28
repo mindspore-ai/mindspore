@@ -73,8 +73,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string weightFile;
   TypeId inputDataType;
   TypeId outputDataType;
-  std::string save_fp16_str_ = "off";
-  bool save_fp16_ = false;
+  std::string saveFP16Str = "off";
+  bool saveFP16 = false;
   // used for quantization
   std::string quantTypeStr;
   schema::QuantType quantType;
