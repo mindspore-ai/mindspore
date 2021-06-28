@@ -57,7 +57,8 @@ public class FLLiteClient {
     private int trainDataSize;
     private double dpEps = 100;
     private double dpDelta = 0.01;
-    private double dpNormClip = 2.0;
+    public double dpNormClipFactor = 1.0;
+    public double dpNormClipAdapt = 0.5;
 
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
@@ -110,10 +111,10 @@ public class FLLiteClient {
             case DP_ENCRYPT:
                 dpEps = cipherPublicParams.dpEps();
                 dpDelta = cipherPublicParams.dpDelta();
-                dpNormClip = cipherPublicParams.dpNormClip();
+                dpNormClipFactor = cipherPublicParams.dpNormClip();
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpEps> from server: " + dpEps));
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpDelta> from server: " + dpDelta));
-                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpNormClip> from server: " + dpNormClip));
+                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpNormClipFactor> from server: " + dpNormClipFactor));
                 break;
             default:
                 LOGGER.info(Common.addTag("[startFLJob] NotEncrypt, do not set parameter for Encrypt"));
@@ -373,7 +374,7 @@ public class FLLiteClient {
                     map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
                 }
                 Map<String, float[]> copyMap = getOldMapCopy(map);
-                curStatus = secureProtocol.setDPParameter(iteration, dpEps, dpDelta, dpNormClip, copyMap);
+                curStatus = secureProtocol.setDPParameter(iteration, dpEps, dpDelta, dpNormClipAdapt, copyMap);
                 retCode = ResponseCode.SUCCEED;
                 if (curStatus != FLClientStatus.SUCCESS) {
                     LOGGER.info(Common.addTag("---Differential privacy init failed---"));
