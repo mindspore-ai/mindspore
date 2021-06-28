@@ -55,7 +55,6 @@ max_epoch_train: 60
 max_epoch_train_NP: 80
 loss_scale: 16384
 
-
 # default param
 batch_size: 10
 min_keypoints: 5
@@ -74,7 +73,6 @@ max_scale: 2.0
 max_rotate_degree: 40
 center_perterb_max: 40
 
-
 # ======================================================================================
 # Eval options
 is_distributed: 0
@@ -83,7 +81,6 @@ model_path: ""
 imgpath_val: ""
 ann: ""
 output_img_path: "./output_imgs/"
-
 
 # inference params
 inference_img_size: 368

@@ -346,7 +346,7 @@ python export.py  --file_name retinanet --file_format MINDIR --checkpoint_path /
 在ModelArts上导出MindIR示例
 # (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
 #       a. 设置 "enable_modelarts=True"
-#          设置 "file_name=/cache/train/cnnctc"
+#          设置 "file_name=retinanet"
 #          设置 "file_format=MINDIR"
 #          设置 "checkpoint_path=/cache/data/checkpoint/checkpoint file name"
 

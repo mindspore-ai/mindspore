@@ -15,6 +15,7 @@
 """export checkpoint file into air, onnx, mindir models
    suggest run as python export.py --filename cnnctc --file_format MINDIR --ckpt_file [ckpt file path]
 """
+import os
 import numpy as np
 from mindspore import Tensor, context, load_checkpoint, export
 import mindspore.common.dtype as mstype
@@ -29,7 +30,7 @@ if config.device_target == "Ascend":
 
 
 def modelarts_pre_process():
-    pass
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)

@@ -10,9 +10,6 @@ output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
 device_target: 'Ascend'
 enable_profiling: False
-checkpoint_path: "./checkpoint/"
-checkpoint_file: "./checkpoint/.ckpt"
-
 
 # ==============================================================================
 # Common options
@@ -21,7 +18,6 @@ dataset: "cifar10"
 is_distributed: 0
 rank: 0
 group_size: 1
-
 
 # ==============================================================================
 # Training options
@@ -50,14 +46,12 @@ ckpt_interval: 3124
 save_ckpt_path: "./"
 is_save_on_master: 1
 
-
 # Eval options
 eval_data_dir: ""
 backbone: "resnet50"
 ckpt_files: ""
 log_path: ""
 eval_url: ""
-
 
 # export options
 device_id: 0

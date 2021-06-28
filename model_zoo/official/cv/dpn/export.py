@@ -15,18 +15,27 @@
 """Export DPN
 suggest run as python export.py --file_name [filename] --file_format [file format] --checkpoint_path [ckpt path]
 """
-
+import os
 import numpy as np
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 from src.dpn import dpns
 from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+
+
+def modelarts_pre_process():
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
 if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
-if __name__ == "__main__":
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def model_export():
     # define net
     backbone = config.backbone
     num_classes = config.num_classes
@@ -39,3 +48,7 @@ if __name__ == "__main__":
 
     image = Tensor(np.zeros([config.batch_size, 3, config.height, config.width], np.float32))
     export(net, image, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()

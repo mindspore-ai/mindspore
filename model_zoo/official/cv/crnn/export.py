@@ -14,6 +14,7 @@
 # ============================================================================
 
 """ export model for CRNN """
+import os
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context, load_checkpoint, export
@@ -24,7 +25,7 @@ from src.model_utils.device_adapter import get_device_id
 
 
 def modelarts_pre_process():
-    pass
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)

@@ -338,7 +338,7 @@ Export MindIR example on ModelArts
 Data storage method is the same as training
 # (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters)。
 #       a. set "enable_modelarts=True"
-#          set "file_name=/cache/train/cnnctc"
+#          set "file_name=ctpn"
 #          set "file_format=MINDIR"
 #          set "ckpt_file=/cache/data/checkpoint file name"
 

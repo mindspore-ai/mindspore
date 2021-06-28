@@ -164,7 +164,6 @@ The entire code structure is as following:
     |---src
         |---__init__.py    // init file
         |---cnn_ctc.py    // cnn_ctc network
-        |---config.py    // total config
         |---callback.py    // loss callback file
         |---dataset.py    // process dataset
         |---util.py    // routine operation
@@ -291,7 +290,7 @@ epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.2184
 
 # (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
 # (3) Set the code path on the modelarts interface "/path/cnnctc"。
-# (4) Set the model's startup file on the modelarts interface "export.py" 。
+# (4) Set the model's startup file on the modelarts interface "train.py" 。
 # (5) Set the data path of the model on the modelarts interface ".../CNNCTC_Data/train"(choices CNNCTC_Data/train Folder path) ,
 # The output path of the model "Output file path" and the log path of the model "Job log path" 。
 # (6) start trainning the model。
@@ -309,7 +308,7 @@ epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.2184
 
 # (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
 # (4) Set the code path on the modelarts interface "/path/cnnctc"。
-# (5) Set the model's startup file on the modelarts interface "export.py" 。
+# (5) Set the model's startup file on the modelarts interface "train.py" 。
 # (6) Set the data path of the model on the modelarts interface ".../CNNCTC_Data/train"(choices CNNCTC_Data/train Folder path) ,
 # The output path of the model "Output file path" and the log path of the model "Job log path"  。
 # (7) Start model inference。
@@ -346,7 +345,7 @@ Export MindIR example on ModelArts
 Data storage method is the same as training
 # (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters)。
 #       a. set "enable_modelarts=True"
-#          set "file_name=/cache/train/cnnctc"
+#          set "file_name=cnnctc"
 #          set "file_format=MINDIR"
 #          set "ckpt_file=/cache/data/checkpoint file name"
 

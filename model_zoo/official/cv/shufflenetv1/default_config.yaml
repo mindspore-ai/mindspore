@@ -10,8 +10,7 @@ output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
 device_target: "Ascend"
 enable_profiling: False
-checkpoint_path: "./checkpoint/"
-checkpoint_file: "./checkpoint/.ckpt"
+
 # ======================================================================================
 # common options
 num_classes: 1000
@@ -46,12 +45,10 @@ loss_scale: 1024
 weight_decay: 0.00004
 momentum: 0.9
 
-
 # ======================================================================================
 # Eval options
 ckpt_path: ""
 eval_dataset_path: ""
-
 
 # ======================================================================================
 # export options

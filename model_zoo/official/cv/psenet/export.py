@@ -15,7 +15,7 @@
 """
 ##############export checkpoint file into air models#################
 """
-
+import os
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
@@ -25,11 +25,17 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+
+
+def modelarts_pre_process():
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
 if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
 
-@moxing_wrapper(pre_process=None)
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def model_export():
     net = ETSNet(config)
     param_dict = load_checkpoint(config.ckpt)

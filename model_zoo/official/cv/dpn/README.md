@@ -337,6 +337,27 @@ python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name
 The ckpt_file parameter is required,
 `FILE_FORMAT` should be in ["AIR", "MINDIR"]
 
+- Export MindIR on Modelarts
+
+```Modelarts
+Export MindIR example on ModelArts
+Data storage method is the same as training
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters)。
+#       a. set "enable_modelarts=True"
+#          set "file_name=dpn"
+#          set "file_format=MINDIR"
+#          set "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+# (2)Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/dpn"。
+# (4) Set the model's startup file on the modelarts interface "export.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ImageNet_Original/eval/checkpoint"(choices ImageNet_Original/eval/checkpoint Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+```
+
 ### [Infer on Ascend310](#contents)
 
 Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """export for retinanet"""
+import os
 import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor
@@ -24,7 +25,7 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 def modelarts_pre_process():
-    pass
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)

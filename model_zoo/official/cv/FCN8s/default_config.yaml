@@ -10,8 +10,7 @@ output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
 device_target: "Ascend"
 enable_profiling: False
-checkpoint_path: "./checkpoint/"
-checkpoint_file: "./checkpoint/.ckpt"
+
 # ======================================================================================
 # common options
 
