@@ -564,10 +564,10 @@ class _Executor:
             return
 
         obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
-        if _get_pipeline_stages() > 1:
-            obj.parallel_parameter_name_list = self._executor.get_parallel_parameter_name_list(phase)
-            obj.remove_redundant_parameters()
+        obj.parallel_parameter_name_list = self._executor.get_parallel_parameter_name_list(phase)
         replace = obj.init_parameters_data(auto_parallel_mode=True)
+        if _get_pipeline_stages() > 1 and (not hasattr(obj, "is_first_iteration") or not obj.is_first_iteration):
+            obj.remove_redundant_parameters()
         if not context.get_context("enable_debug_runtime") or context.get_context("enable_ge"):
             obj.load_parameter_slice(None)
 
