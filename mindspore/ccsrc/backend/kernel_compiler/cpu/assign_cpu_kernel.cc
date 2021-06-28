@@ -46,7 +46,7 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                             const std::vector<AddressPtr> &) {
+                             const std::vector<AddressPtr> &outputs) {
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
@@ -65,6 +65,7 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
   size_t thread_index = 0;
   auto input0_addr = reinterpret_cast<int8_t *>(inputs[0]->addr);
   auto input1_addr = reinterpret_cast<int8_t *>(inputs[1]->addr);
+  auto output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
   size_t length = stride;
   while (thread_index < thread_num) {
     auto thread_stride = stride * thread_index;
@@ -74,8 +75,14 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
     }
     int8_t *input0 = input0_addr + thread_stride;
     int8_t *input1 = input1_addr + thread_stride;
-    auto block = [input0, input1, max_length, length]() {
+    int8_t *output = output_addr + thread_stride;
+    auto block = [input0, input1, output, max_length, length]() {
       int ret = memcpy_s(input0, max_length, input1, length);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "memcpy_s error, error no " << ret;
+        return common::FAIL;
+      }
+      ret = memcpy_s(output, max_length, input1, length);
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, error no " << ret;
         return common::FAIL;
