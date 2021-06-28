@@ -51,21 +51,12 @@ kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where,
   return *it;
 }
 
-float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
-  if ((input->shape().size() != 1) || (input->data_type() != kNumberTypeInt32) || (output->shape().size() != 2)) {
-    MS_LOG(WARNING) << "SparseClassification got a " << input->shape() << "-D input tensor, " << output->shape()
-                    << "-D output tensor";
-    return 0.0;
-  }
-
-  int batch_size = input->shape().at(0);
-  int num_of_classes = output->shape().at(1);
-  auto labels = reinterpret_cast<int *>(input->MutableData());
-  auto predictions = reinterpret_cast<float *>(output->MutableData());
+template <typename T>
+float CalcSparseClassificationAccuracy(T *predictions, int *labels, int batch_size, int num_of_classes) {
   float accuracy = 0.0;
   for (int b = 0; b < batch_size; b++) {
     int max_idx = 0;
-    float max_score = predictions[num_of_classes * b];
+    T max_score = predictions[num_of_classes * b];
     for (int c = 1; c < num_of_classes; c++) {
       if (predictions[num_of_classes * b + c] > max_score) {
         max_score = predictions[num_of_classes * b + c];
@@ -77,23 +68,35 @@ float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *o
   return accuracy / (static_cast<float>(batch_size));
 }
 
-float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
-  if ((input->shape().size() != 2) || (output->shape().size() != 2)) {
-    MS_LOG(WARNING) << "OneHotClassification got a " << input->shape() << "-D input tensor, " << output->shape()
+float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
+  if ((input->shape().size() != 1) || (input->data_type() != kNumberTypeInt32) || (output->shape().size() != 2)) {
+    MS_LOG(WARNING) << "SparseClassification got a " << input->shape() << "-D input tensor, " << output->shape()
                     << "-D output tensor";
     return 0.0;
   }
 
-  int batch_size = input->shape().at(0);
-  int num_of_classes = input->shape().at(1);
-  auto labels = reinterpret_cast<float *>(input->MutableData());
-  auto predictions = reinterpret_cast<float *>(output->MutableData());
+  int batch = input->shape().at(0);
+  int num_classes = output->shape().at(1);
+  auto labels = reinterpret_cast<int *>(input->data());
+  float acc = 0.0f;
+  if (output->data_type() == kNumberTypeFloat32) {
+    acc = CalcSparseClassificationAccuracy(reinterpret_cast<float *>(output->data()), labels, batch, num_classes);
+#ifdef ENABLE_FP16
+  } else if (output->data_type() == kNumberTypeFloat16) {
+    acc = CalcSparseClassificationAccuracy(reinterpret_cast<float16_t *>(output->data()), labels, batch, num_classes);
+#endif
+  }
+  return acc;
+}
+
+template <typename T>
+float CalcOneHotClassificationAccuracy(T *predictions, float *labels, int batch_size, int num_of_classes) {
   float accuracy = 0.0;
   for (int b = 0; b < batch_size; b++) {
     int label = 0;
     int max_idx = 0;
     float max_label_score = labels[num_of_classes * b];
-    float max_score = predictions[num_of_classes * b];
+    T max_score = predictions[num_of_classes * b];
     for (int c = 1; c < num_of_classes; c++) {
       if (predictions[num_of_classes * b + c] > max_score) {
         max_score = predictions[num_of_classes * b + c];
@@ -107,6 +110,27 @@ float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *o
     if (label == max_idx) accuracy += 1.0;
   }
   return accuracy / (static_cast<float>(batch_size));
+}
+
+float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
+  if ((input->shape().size() != 2) || (output->shape().size() != 2)) {
+    MS_LOG(WARNING) << "OneHotClassification got a " << input->shape() << "-D input tensor, " << output->shape()
+                    << "-D output tensor";
+    return 0.0;
+  }
+
+  int batch = input->shape().at(0);
+  int num_classes = input->shape().at(1);
+  auto labels = reinterpret_cast<float *>(input->data());
+  float acc = 0.0f;
+  if (output->data_type() == kNumberTypeFloat32) {
+    acc = CalcOneHotClassificationAccuracy(reinterpret_cast<float *>(output->data()), labels, batch, num_classes);
+#ifdef ENABLE_FP16
+  } else if (output->data_type() == kNumberTypeFloat16) {
+    acc = CalcOneHotClassificationAccuracy(reinterpret_cast<float16_t *>(output->data()), labels, batch, num_classes);
+#endif
+  }
+  return acc;
 }
 
 Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type) {
