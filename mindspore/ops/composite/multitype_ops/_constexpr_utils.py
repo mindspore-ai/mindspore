@@ -825,3 +825,12 @@ def infer_out_shape(*shapes):
             raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
         shape_out.appendleft(max_size)
     return tuple(shape_out)
+
+
+@constexpr
+def use_copy_slice(tuple_index):
+    if tuple_index is not None and len(tuple_index) >= 2:
+        return (isinstance(tuple_index[0], int) and
+                isinstance(tuple_index[1], slice) and tuple_index[1].step in (1, None) and
+                all(x == slice(None, None, None) for x in tuple_index[2:]))
+    return False
