@@ -68,3 +68,6 @@ echo 'run train ut tests'
 ## ./lite-test --gtest_filter="NetworkTest.lenetnet"
 echo 'run inference ut tests'
 ./lite-test --gtest_filter="ControlFlowTest.TestMergeWhileModel"
+
+echo 'run mindrt parallel ut test'
+./lite-test --gtest_filter="MindrtParallelTest.offline1"
