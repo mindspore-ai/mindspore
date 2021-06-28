@@ -38,15 +38,20 @@ def parse_args():
                                         " config file")
     parser.add_argument("--device_num", type=str, default="[0,8)",
                         help="The number of the Ascend accelerators used. please note that the Ascend accelerators"
-                             "used must be continuous, such [0,4) means to use four chips "
-                             "0，1，2，3; [0,1) means to use chip 0; The first four chips are"
-                             "a group, and the last four chips are a group. In addition to"
-                             "the [0,8) chips are allowed, other cross-group such as [3,6)"
+                             "used must be continuous, such [0,4) means using four chips "
+                             "0，1，2，3; [0,1) means using chip 0; In the most Ascend system, "
+                             "the first four chips belong to one group, and the last four chips belong to another one."
+                             "Only full chips are allowed to cross-group such as [0,8), other cross-group such as [3,6)"
                              "are prohibited.")
     parser.add_argument("--visible_devices", type=str, default="0,1,2,3,4,5,6,7",
-                        help="will use the visible devices sequentially")
+                        help="The visible devices according to the software system. "
+                             "Usually used in the virtual system or docker container "
+                             "that makes the device_id dismatch logic_id. --device_num uses logic_id. "
+                             "For example \"4,5,6,7\" means the system has 4 logic chips "
+                             "which are actually the last 4 chips in hardware "
+                             "while `--device_num` could only be set to \"[0, 4)\" instead of \"[4, 8)\"")
     parser.add_argument("--server_ip", type=str, default="",
-                        help="server ip")
+                        help="Set the server_ip manually, to avoid errors in auto detection.")
     args = parser.parse_args()
     return args
 
@@ -92,12 +97,11 @@ def main():
     if first_num > last_num:
         raise ValueError("First num {} of device num {} must less than last num {} !".format(first_num, args.device_num,
                                                                                              last_num))
-    if first_num < 4:
-        if last_num > 4:
-            if first_num == 0 and last_num == 8:
-                pass
-            else:
-                raise ValueError("device num {} must be in the same group of [0,4] or [4,8] !".format(args.device_num))
+    if first_num < 4 < last_num:
+        if first_num == 0 and last_num == 8:
+            pass
+        else:
+            raise ValueError("device num {} must be in the same group of [0,4] or [4,8] !".format(args.device_num))
 
     device_num_list = list(range(first_num, last_num))
     print("device_num_list:", device_num_list)
