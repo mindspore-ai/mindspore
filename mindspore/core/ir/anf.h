@@ -642,6 +642,7 @@ void reset_id();
 using TaggedNodeMap = std::unordered_map<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 std::string GetCNodeTarget(const AnfNodePtr &node);
+std::string GetOriginNodeTarget(const AnfNodePtr &node);
 bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes);
 struct GraphSegment {
   GraphSegment(const std::vector<AnfNodePtr> &nodes, bool is_cut) : nodes_(nodes), is_cut_(is_cut) {}
