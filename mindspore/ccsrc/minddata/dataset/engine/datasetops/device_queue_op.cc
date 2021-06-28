@@ -70,7 +70,7 @@ DeviceQueueOp::~DeviceQueueOp() {
 #ifdef ENABLE_DUMP_IR
   std::string rdr_msg = md_channel_info_->ToString();
   if (!send_finished_ && !rdr_msg.empty()) {
-    MS_LOG(INFO) << rdr_msg;
+    MS_LOG(WARNING) << rdr_msg;
   }
 #endif
 }
@@ -241,7 +241,7 @@ Status DeviceQueueOp::SendDataToAscend() {
                       " stage, check error raised by Network used operator or environment configuration. 2) if"
                       " interrupt in middle process of training, may check whether dataset sending num and network"
                       " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
-                      " try find ascend host log or checking info log etc.");
+                      " try find ascend host log or checking info log etc or search this in mindspore's FAQ.");
       }
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
       stop_send_ = true;
@@ -259,9 +259,11 @@ Status DeviceQueueOp::SendDataToAscend() {
     send_finished_ = true;
   }
   tree_->SetFinished();
+  MS_LOG(INFO) << "Device queue send " << send_batch << " batch.";
 
   return Status::OK();
 }
+
 void DeviceQueueOp::WaitContinueSignal() const {
   while (stop_send_ && ascend_keep_waiting_) {
     MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
