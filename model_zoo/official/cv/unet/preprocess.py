@@ -29,7 +29,7 @@ def preprocess_dataset(data_dir, result_path, cross_valid_ind=1):
     labels_list = []
     for i, data in enumerate(valid_dataset):
         file_name = "ISBI_test_bs_1_" + str(i) + ".bin"
-        file_path = result_path + file_name
+        file_path = os.path.join(result_path, file_name)
         data[0].asnumpy().tofile(file_path)
 
         labels_list.append(data[1].asnumpy())

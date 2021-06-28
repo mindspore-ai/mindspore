@@ -474,19 +474,20 @@ the steps below, this is a simple example:
 
 Export MindIR
 
+Before exporting, you need to modify the parameter in the configuration — checkpoint_file_path and batch_ Size . checkpoint_ file_ Path is the CKPT file path, batch_ Size is set to 1.
+
 ```shell
-python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path=[CONFIG_PATH]
 ```
 
 The checkpoint_file_path parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 Before performing inference, the MINDIR file must be exported by export script on the 910 environment.
-Current batch_size can only be set to 1.
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [NETWORK] [MINDIR_PATH] [DEVICE_ID] [NEED_PREPROCESS]
 ```
 
 `DEVICE_ID` is optional, default value is 0.
