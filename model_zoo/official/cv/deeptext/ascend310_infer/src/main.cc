@@ -46,18 +46,19 @@ using mindspore::ModelType;
 using mindspore::GraphCell;
 using mindspore::kSuccess;
 using mindspore::Graph;
-using mindspore::dataset::vision::DvppDecodeResizeJpeg;
+using mindspore::dataset::Execute;
+using mindspore::dataset::TensorTransform;
+using mindspore::dataset::vision::Decode;
+using mindspore::dataset::vision::Resize;
+using mindspore::dataset::vision::Normalize;
+using mindspore::dataset::vision::HWC2CHW;
 
 DEFINE_string(model_path, "", "model path");
 DEFINE_string(dataset_path, ".", "dataset path");
 DEFINE_int32(input_width, 960, "input width");
 DEFINE_int32(input_height, 576, "inputheight");
 DEFINE_int32(device_id, 0, "device id");
-DEFINE_string(precision_mode, "allow_fp32_to_fp16", "precision mode");
-DEFINE_string(op_select_impl_mode, "", "op select impl mode");
-DEFINE_string(aipp_path, "./aipp.cfg", "aipp path");
-DEFINE_string(dump_config_file, "./acl.json", "dump config file");
-DEFINE_string(device_target, "Ascend310", "device target");
+
 
 int main(int argc, char **argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -65,15 +66,10 @@ int main(int argc, char **argv) {
         std::cout << "Invalid mindir" << std::endl;
         return 1;
     }
-    if (RealPath(FLAGS_aipp_path).empty()) {
-        std::cout << "Invalid aipp path" << std::endl;
-        return 1;
-    }
 
     auto context = std::make_shared<Context>();
     auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
     ascend310_info->SetDeviceID(FLAGS_device_id);
-    ascend310_info->SetInsertOpConfigPath(FLAGS_aipp_path);
     context->MutableDeviceInfo().push_back(ascend310_info);
 
     Graph graph;
@@ -101,8 +97,12 @@ int main(int argc, char **argv) {
     std::map<double, double> costTime_map;
     size_t size = all_files.size();
 
-    auto dvppDecodeResizeJpeg = DvppDecodeResizeJpeg({576, 960});
-    Execute transform(dvppDecodeResizeJpeg);
+    auto decode = Decode();
+    auto resize = Resize({576, 960});
+    auto normalize = Normalize({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375});
+    auto hwc2chw = HWC2CHW();
+
+    Execute transform({decode, resize, normalize, hwc2chw});
 
     for (size_t i = 0; i < size; ++i) {
         struct timeval start;
