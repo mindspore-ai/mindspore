@@ -25,8 +25,10 @@ def get_WideDeep_net(config):
     return eval_net
 
 def create_network(name, *args, **kwargs):
+    """create_network about wide_and_deep"""
     if name == 'wide_and_deep':
         wide_deep_config = WideDeepConfig()
+        wide_deep_config.sparse = True
         eval_net = get_WideDeep_net(wide_deep_config)
         return eval_net
     raise NotImplementedError(f"{name} is not implemented in the repo")

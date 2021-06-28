@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
-from src.yolo import YOLOV4CspDarkNet53
+"""hub config"""
+from src import CenterNetMultiPoseEval
+from src.config import net_config, eval_config
+
+def centernet_net(*args, **kwargs):
+    return CenterNetMultiPoseEval(*args, **kwargs)
 
 def create_network(name, *args, **kwargs):
-    """create yolov4 network."""
-    if name == "yolov4_cspdarknet53":
-        yolov4_cspdarknet53_net = YOLOV4CspDarkNet53()
-        yolov4_cspdarknet53_net.set_train(False)
-        return yolov4_cspdarknet53_net
-    if name == "yolov4_shape416":
-        yolov4_shape416 = YOLOV4CspDarkNet53()
-        yolov4_shape416.set_train(False)
-        return yolov4_shape416
+    """create_network about centernet"""
+    if name == "centernet":
+        # True, if device is Ascend
+        enable_nms_fp16 = True
+        return centernet_net(net_config, eval_config, enable_nms_fp16, *args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")

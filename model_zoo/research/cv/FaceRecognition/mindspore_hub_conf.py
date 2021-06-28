@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
-from src.yolo import YOLOV4CspDarkNet53
+"""hub config"""
+from src.config import config_inference
+from src.backbone.resnet import get_backbone
+
+def facerecognition_net(*args, **kwargs):
+    return get_backbone(*args, **kwargs)
 
 def create_network(name, *args, **kwargs):
-    """create yolov4 network."""
-    if name == "yolov4_cspdarknet53":
-        yolov4_cspdarknet53_net = YOLOV4CspDarkNet53()
-        yolov4_cspdarknet53_net.set_train(False)
-        return yolov4_cspdarknet53_net
-    if name == "yolov4_shape416":
-        yolov4_shape416 = YOLOV4CspDarkNet53()
-        yolov4_shape416.set_train(False)
-        return yolov4_shape416
+    """create_network about facerecognition"""
+    if name == "facerecognition":
+        arg = config_inference
+        return facerecognition_net(arg, *args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")

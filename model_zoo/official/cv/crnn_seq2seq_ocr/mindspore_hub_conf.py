@@ -13,25 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """hub config"""
-from src.ncf import NCFModel
-from src.config import cfg
+from src.attention_ocr import AttentionOCRInfer
+from src.config import config
 
-def ncf_net(*args, **kwargs):
-    return NCFModel(*args, **kwargs)
-
+def crnnseq2seqocr_net(*args, **kwargs):
+    return AttentionOCRInfer(*args, **kwargs)
 
 def create_network(name, *args, **kwargs):
-    """create_network about ncf"""
-    if name == "ncf":
-        layers = cfg.layers
-        num_factors = cfg.num_factors
-        num_users = 6040
-        num_items = 3706
-        return ncf_net(num_users=num_users,
-                       num_items=num_items,
-                       num_factors=num_factors,
-                       model_layers=layers,
-                       mf_regularization=0,
-                       mlp_reg_layers=[0.0, 0.0, 0.0, 0.0],
-                       mf_dim=16)
+    """create_network about crnn_seq2seq_ocr"""
+    if name == "crnn_seq2seq_ocr":
+        return crnnseq2seqocr_net(config.batch_size,
+                                  int(config.img_width / 4),
+                                  config.encoder_hidden_size,
+                                  config.decoder_hidden_size,
+                                  config.decoder_output_size,
+                                  config.max_length,
+                                  config.dropout_p,
+                                  *args,
+                                  **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")
