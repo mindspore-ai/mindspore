@@ -337,11 +337,8 @@ def query_quant_layers(network):
     quantization layers are queried before graph compile optimization in the graph mode, thus may be appear some
     redundant quantized layers, which are not exist in practical execution.
 
-    Input:
+    Args:
         network (Cell): input network
-
-    Returns:
-        None
     """
     network = Validator.check_isinstance("network", network, nn.Cell)
     tplt = "{0:60}\t{1:10}"
@@ -359,7 +356,8 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
     Args:
         quant_model(Cell): Quantization model.
         params_dict(dict): Parameter dict that stores fp32 parameters.
-        quant_new_params(list): Parameters that exist in quantization network but not in non-quantization network.
+        quant_new_params(list): Parameters that exist in quantization network but not in non-quantization
+            network. Default: None.
 
     Raises:
         TypeError: If `quant_new_params` is not None and is not list.

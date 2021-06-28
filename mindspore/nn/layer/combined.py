@@ -61,7 +61,7 @@ class Conv2dBnAct(Cell):
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
         has_bn (bool): Specifies to used batchnorm or not. Default: False.
-        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.9
+        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.997
         eps (float): Term added to the denominator to improve numerical stability for batchnorm, should be greater
             than 0. Default: 1e-5.
         activation (Union[str, Cell, Primitive]): Specifies activation type. The optional values are as following:
@@ -69,6 +69,7 @@ class Conv2dBnAct(Cell):
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
         alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: 0.2.
         after_fake(bool): Determine whether there must be a fake quantization operation after Cond2dBnAct.
+            Default: True.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`. The data type is float32.
@@ -170,6 +171,7 @@ class DenseBnAct(Cell):
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
         alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: 0.2.
         after_fake(bool): Determine whether there must be a fake quantization operation after DenseBnAct.
+            Default: True.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, in\_channels)`. The data type is float32.
