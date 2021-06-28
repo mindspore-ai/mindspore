@@ -42,7 +42,7 @@ class OnnxModelParser : public ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  FuncGraphPtr Parse(const converter::Flags &flag) override;
+  FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
   static int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 

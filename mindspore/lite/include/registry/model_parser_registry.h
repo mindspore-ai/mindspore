@@ -16,13 +16,27 @@
 
 #ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H
 #define MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H
+
+#include <map>
 #include <memory>
-#include <unordered_map>
+#include <string>
 #include "include/lite_utils.h"
 #include "include/registry/framework.h"
+#include "schema/inner/model_generated.h"
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore::lite {
+namespace converter {
+/// \brief ConverterParameters defined read-only converter parameters used by users in ModelParser.
+struct MS_API ConverterParameters {
+  FmkType fmk_;
+  schema::QuantType quant_type_;
+  std::string model_file_;
+  std::string weight_file_;
+  std::map<std::string, std::string> attrs_;
+};
+}  // namespace converter
+
 /// \brief ModelParser defined a model parser
 class MS_API ModelParser;
 
@@ -56,7 +70,7 @@ class MS_API ModelParserRegistry {
   /// \param[in] creator Define function pointer of creating ModelParser.
   int RegParser(const FmkType fmk, ModelParserCreator creator);
 
-  std::unordered_map<FmkType, ModelParserCreator> parsers_;
+  std::map<FmkType, ModelParserCreator> parsers_;
 };
 
 /// \brief ModelRegistrar defined registration class of ModelParser.

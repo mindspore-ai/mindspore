@@ -21,7 +21,7 @@
 #include "include/registry/model_parser_registry.h"
 
 namespace mindspore {
-FuncGraphPtr ModelParserTest::Parse(const lite::converter::Flags &flag) {
+FuncGraphPtr ModelParserTest::Parse(const lite::converter::ConverterParameters &flag) {
   // construct funcgraph
   res_graph_ = std::make_shared<FuncGraph>();
   auto ret = InitOriginModelStructure();

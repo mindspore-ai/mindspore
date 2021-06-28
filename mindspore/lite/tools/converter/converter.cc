@@ -31,6 +31,15 @@
 #include "tools/converter/import/mindspore_importer.h"
 namespace mindspore {
 namespace lite {
+namespace {
+void InitConverterParameters(const converter::Flags &flag, converter::ConverterParameters *converter_parameters) {
+  converter_parameters->fmk_ = flag.fmk;
+  converter_parameters->quant_type_ = flag.quantType;
+  converter_parameters->model_file_ = flag.modelFile;
+  converter_parameters->weight_file_ = flag.weightFile;
+}
+}  // namespace
+
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   FuncGraphPtr func_graph = nullptr;
   if (flag.fmk == converter::FmkType::FmkType_MS) {
@@ -45,7 +54,9 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
     if (model_parser_ == nullptr) {
       return nullptr;
     }
-    func_graph = model_parser_->Parse(flag);
+    converter::ConverterParameters converter_parameters;
+    InitConverterParameters(flag, &converter_parameters);
+    func_graph = model_parser_->Parse(converter_parameters);
   }
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Get funcGraph failed for fmk: " << flag.fmkIn;
