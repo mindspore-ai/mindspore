@@ -73,11 +73,14 @@ void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float 
 void MatmulFloatNeon32Opt12x4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                               int row, int col, int stride, int write_mode);
 #elif ENABLE_SSE
-void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                      int col, int stride, size_t writeNhwc, size_t WriteWino);
+void DeconvMatmulFloatSse(const float *a, const float *b, float *c, int depth, int row, int col);
 void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                          int col, int stride, int write_mode);
 #ifdef ENABLE_AVX
+typedef void (*DeconvAvxKernel)(const float *src, const float *weight, float *dst, int col, int row, int depth,
+                                int stride);
+void DeconvMatmulFloatAvx(const float *a, const float *b, float *c, int depth, int row, int col, int kernel_plane);
+void DeconvAvxColXRowKernel(const float *src, const float *weight, float *dst, int col, int row, int depth, int stride);
 void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, size_t act_type, size_t depth,
                        size_t row, size_t col, size_t stride, size_t write_mode);
 typedef void (*MatVecMulKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,

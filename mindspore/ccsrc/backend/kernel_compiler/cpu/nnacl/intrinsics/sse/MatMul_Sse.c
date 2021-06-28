@@ -16,6 +16,7 @@
 
 #ifdef ENABLE_SSE
 #include <x86intrin.h>
+#include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/intrinsics/sse/sse_common.h"
@@ -204,9 +205,7 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
   }
 }
 
-void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                      int col, int stride, size_t writeNhwc, size_t WriteWino) {
-  size_t DstWinoSteps = stride * C8NUM, WriteWinoSteps = stride * col;
+void DeconvMatmulFloatSse(const float *a, const float *b, float *c, int depth, int row, int col) {
   for (int col_tmp = col; col_tmp > 0; col_tmp -= C8NUM) {
     const float *srca_d = a;
     float *dst = c;
@@ -231,63 +230,181 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
         dst7 = _mm_add_ps(dst7, tmp3), dst8 = _mm_add_ps(dst8, tmp4);
         srcb_d += C8NUM, srca_d += C4NUM;
       }
-
-      if (bias != NULL) {
-        DoBiasBlock8(bias, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8);
-      }
-
-      ActBlock8(&dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, act_type);
-
-      if (WriteWino != 0) {  // WriteWino
-        _mm_storeu_ps(dst, dst1), _mm_storeu_ps(dst + 4, dst2);
-        dst += WriteWinoSteps;
-        _mm_storeu_ps(dst, dst3), _mm_storeu_ps(dst + 4, dst4);
-        dst += WriteWinoSteps;
-        _mm_storeu_ps(dst, dst5), _mm_storeu_ps(dst + 4, dst6);
-        dst += WriteWinoSteps;
-        _mm_storeu_ps(dst, dst7), _mm_storeu_ps(dst + 4, dst8);
-        dst += WriteWinoSteps;
-      } else if (writeNhwc == 0) {  // WriteC8
-        _mm_storeu_ps(dst, dst1), _mm_storeu_ps(dst + 4, dst2);
-        _mm_storeu_ps(dst + 8, dst3), _mm_storeu_ps(dst + 12, dst4);
-        _mm_storeu_ps(dst + 16, dst5), _mm_storeu_ps(dst + 20, dst6);
-        _mm_storeu_ps(dst + 24, dst7), _mm_storeu_ps(dst + 28, dst8);
-        dst += 32;
-        c = dst;
-      } else {
-        switch (col) {
-          case 1:  // write1
-            WriteCol1(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, 0, r);
-          case 2:  // write2
-            WriteCol2(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, r);
-          case 3:  // write3
-            WriteCol3(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, 0, r);
-          case 4:  // write4
-            WriteCol4(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, 0, r);
-          case 5:  // // write
-            WriteCol5(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, 0, r);
-          case 6:  // write6
-            WriteCol6(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, 0, r);
-          case 7:  // write7
-            WriteCol7(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, 0, r);
-          default:  // write8
-            WriteCol8(&dst, &dst1, &dst2, &dst3, &dst4, &dst5, &dst6, &dst7, &dst8, stride, 0, r);
-        }
-      }
-      if (r <= C4NUM) {  // WriteEnd
-        break;
-      }
+      _mm_storeu_ps(dst, dst1), _mm_storeu_ps(dst + 4, dst2);
+      _mm_storeu_ps(dst + 8, dst3), _mm_storeu_ps(dst + 12, dst4);
+      _mm_storeu_ps(dst + 16, dst5), _mm_storeu_ps(dst + 20, dst6);
+      _mm_storeu_ps(dst + 24, dst7), _mm_storeu_ps(dst + 28, dst8);
+      dst += 32;
+      c = dst;
     }
     b += depth * C8NUM;
-    bias += (bias != NULL) ? C8NUM : 0;
-    if (WriteWino != 0) {
-      c += DstWinoSteps;
-    } else if (writeNhwc != 0) {
-      c += C8NUM;
-    }
-    if (col_tmp <= C8NUM) {
-      break;
+  }
+}
+
+#ifdef ENABLE_AVX
+void DeconvAvx4X8Kernel(const float *src, const float *weight, float *dst, int col, int row, int depth, int stride) {
+  __m256 res1 = _mm256_setzero_ps();
+  __m256 res4 = _mm256_setzero_ps();
+  __m256 res7 = _mm256_setzero_ps();
+  __m256 res10 = _mm256_setzero_ps();
+
+  for (int d = 0; d < depth; ++d) {
+    __m256 w0 = _mm256_loadu_ps(weight);
+    __m256 tmp = _mm256_set1_ps(*src);
+    res1 = _mm256_fmadd_ps(tmp, w0, res1);
+    tmp = _mm256_set1_ps(*(src + 1));
+    res4 = _mm256_fmadd_ps(tmp, w0, res4);
+    tmp = _mm256_set1_ps(*(src + 2));
+    res7 = _mm256_fmadd_ps(tmp, w0, res7);
+    tmp = _mm256_set1_ps(*(src + 3));
+    res10 = _mm256_fmadd_ps(tmp, w0, res10);
+    weight += C8NUM;
+    src += C4NUM;
+  }
+  // write
+  _mm256_storeu_ps(dst, res1);
+  _mm256_storeu_ps(dst + C8NUM, res4);
+  _mm256_storeu_ps(dst + C16NUM, res7);
+  _mm256_storeu_ps(dst + C24NUM, res10);
+}
+
+void DeconvAvx4X16Kernel(const float *src, const float *weight, float *dst, int col, int row, int depth, int stride) {
+  __m256 res1 = _mm256_setzero_ps();
+  __m256 res2 = _mm256_setzero_ps();
+  __m256 res4 = _mm256_setzero_ps();
+  __m256 res5 = _mm256_setzero_ps();
+  __m256 res7 = _mm256_setzero_ps();
+  __m256 res8 = _mm256_setzero_ps();
+  __m256 res10 = _mm256_setzero_ps();
+  __m256 res11 = _mm256_setzero_ps();
+
+  for (int d = 0; d < depth; ++d) {
+    __m256 w0 = _mm256_loadu_ps(weight);
+    __m256 w1 = _mm256_loadu_ps(weight + C8NUM);
+    weight += C16NUM;
+    __m256 tmp = _mm256_set1_ps(*src);
+    res1 = _mm256_fmadd_ps(tmp, w0, res1);
+    res2 = _mm256_fmadd_ps(tmp, w1, res2);
+    tmp = _mm256_set1_ps(*(src + 1));
+    res4 = _mm256_fmadd_ps(tmp, w0, res4);
+    res5 = _mm256_fmadd_ps(tmp, w1, res5);
+    tmp = _mm256_set1_ps(*(src + 2));
+    res7 = _mm256_fmadd_ps(tmp, w0, res7);
+    res8 = _mm256_fmadd_ps(tmp, w1, res8);
+    tmp = _mm256_set1_ps(*(src + 3));
+    res10 = _mm256_fmadd_ps(tmp, w0, res10);
+    res11 = _mm256_fmadd_ps(tmp, w1, res11);
+    src += C4NUM;
+  }
+  // write
+  _mm256_storeu_ps(dst, res1);
+  _mm256_storeu_ps(dst + C8NUM, res4);
+  _mm256_storeu_ps(dst + C16NUM, res7);
+  _mm256_storeu_ps(dst + C24NUM, res10);
+
+  _mm256_storeu_ps(dst + stride, res2);
+  _mm256_storeu_ps(dst + stride + C8NUM, res5);
+  _mm256_storeu_ps(dst + stride + C16NUM, res8);
+  _mm256_storeu_ps(dst + stride + C24NUM, res11);
+}
+
+void DeconvAvx4X24Kernel(const float *src, const float *weight, float *dst, int col, int row, int depth, int stride) {
+  __m256 res1 = _mm256_setzero_ps();
+  __m256 res2 = _mm256_setzero_ps();
+  __m256 res3 = _mm256_setzero_ps();
+  __m256 res4 = _mm256_setzero_ps();
+  __m256 res5 = _mm256_setzero_ps();
+  __m256 res6 = _mm256_setzero_ps();
+  __m256 res7 = _mm256_setzero_ps();
+  __m256 res8 = _mm256_setzero_ps();
+  __m256 res9 = _mm256_setzero_ps();
+  __m256 res10 = _mm256_setzero_ps();
+  __m256 res11 = _mm256_setzero_ps();
+  __m256 res12 = _mm256_setzero_ps();
+
+  for (int d = 0; d < depth; ++d) {
+    __m256 w0 = _mm256_loadu_ps(weight);
+    __m256 w1 = _mm256_loadu_ps(weight + C8NUM);
+    __m256 w2 = _mm256_loadu_ps(weight + C16NUM);
+    __m256 tmp = _mm256_set1_ps(*src);
+    res1 = _mm256_fmadd_ps(tmp, w0, res1);
+    res2 = _mm256_fmadd_ps(tmp, w1, res2);
+    res3 = _mm256_fmadd_ps(tmp, w2, res3);
+    tmp = _mm256_set1_ps(*(src + 1));
+    res4 = _mm256_fmadd_ps(tmp, w0, res4);
+    res5 = _mm256_fmadd_ps(tmp, w1, res5);
+    res6 = _mm256_fmadd_ps(tmp, w2, res6);
+    tmp = _mm256_set1_ps(*(src + 2));
+    res7 = _mm256_fmadd_ps(tmp, w0, res7);
+    res8 = _mm256_fmadd_ps(tmp, w1, res8);
+    res9 = _mm256_fmadd_ps(tmp, w2, res9);
+    tmp = _mm256_set1_ps(*(src + 3));
+    res10 = _mm256_fmadd_ps(tmp, w0, res10);
+    res11 = _mm256_fmadd_ps(tmp, w1, res11);
+    res12 = _mm256_fmadd_ps(tmp, w2, res12);
+    weight += C24NUM;
+    src += C4NUM;
+  }
+  // write
+  _mm256_storeu_ps(dst, res1);
+  _mm256_storeu_ps(dst + C8NUM, res4);
+  _mm256_storeu_ps(dst + C16NUM, res7);
+  _mm256_storeu_ps(dst + C24NUM, res10);
+
+  _mm256_storeu_ps(dst + stride, res2);
+  _mm256_storeu_ps(dst + stride + C8NUM, res5);
+  _mm256_storeu_ps(dst + stride + C16NUM, res8);
+  _mm256_storeu_ps(dst + stride + C24NUM, res11);
+
+  _mm256_storeu_ps(dst + 2 * stride, res3);
+  _mm256_storeu_ps(dst + 2 * stride + C8NUM, res6);
+  _mm256_storeu_ps(dst + 2 * stride + C16NUM, res9);
+  _mm256_storeu_ps(dst + 2 * stride + C24NUM, res12);
+}
+
+void DeconvMatmulFloatAvx(const float *a, const float *b, float *c, int depth, int row, int col, int plane) {
+  int col_num = 0;
+  int col_block = UP_DIV(col / plane, C8NUM);
+  DeconvAvxKernel kernel[3] = {DeconvAvx4X8Kernel, DeconvAvx4X16Kernel, DeconvAvx4X24Kernel};
+  for (int col_tmp = 0; col_tmp < col_block; col_tmp += col_num) {
+    col_num = MSMIN(C3NUM, col_block - col_tmp);
+    for (int p = 0; p < plane; ++p) {
+      for (int r = 0; r < row; r += C4NUM) {
+        kernel[col_num - 1](a + r * depth, b + (col_tmp * plane + p * col_num) * C8NUM * depth,
+                            c + (col_tmp * plane + p) * C8NUM * row + r * C8NUM, col_num, C4NUM, depth,
+                            row * C8NUM * plane);
+      }
     }
   }
 }
+
+void DeconvAvxRowXColKernel(const float *src, const float *weight, float *dst, int col, int row, int depth,
+                            int stride) {
+  __m256 res[C12NUM];
+  __m256 w[C3NUM];
+  for (int i = 0; i < C12NUM; ++i) {
+    res[i] = _mm256_setzero_ps();
+  }
+  for (int d = 0; d < depth; ++d) {
+    for (int c = 0; c < col; ++c) {
+      w[c] = _mm256_loadu_ps(weight + c * C8NUM);
+    }
+    weight += col * C8NUM;
+    for (int r = 0; r < row; ++r) {  // C4NUm
+      __m256 tmp = _mm256_set1_ps(*src);
+      for (int c = 0; c < col; ++c) {  // 3 * C8NUM
+        res[r * col + c] = _mm256_fmadd_ps(tmp, w[c], res[r * col + c]);
+      }
+      src += 1;
+    }
+  }
+  // write
+  for (int i = 0; i < col; ++i) {
+    for (int j = 0; j < row; ++j) {
+      _mm256_storeu_ps(dst + j * C8NUM, res[j * col + i]);
+    }
+    dst += stride;
+  }
+}
+#endif
 #endif

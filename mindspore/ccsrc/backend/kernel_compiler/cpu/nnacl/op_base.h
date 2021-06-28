@@ -26,11 +26,13 @@
 #endif
 
 #define C2NUM 2
+#define C3NUM 3
 #define C4NUM 4
 #define C6NUM 6
 #define C8NUM 8
 #define C12NUM 12
 #define C16NUM 16
+#define C24NUM 24
 #define C32NUM 32
 #define TILE_NUM 8
 

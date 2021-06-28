@@ -960,17 +960,9 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
     MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }
 #elif ENABLE_AVX
-  if (out_type == OutType_C8) {
-    MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
-  } else {
-    MatmulFloatAvxOpt(a, b, c, bias, (size_t)act_type, deep, row, col, stride, (size_t)(out_type));
-  }
+  MatmulFloatAvxOpt(a, b, c, bias, (size_t)act_type, deep, row, col, stride, (size_t)(out_type));
 #elif ENABLE_SSE
-  if (out_type == OutType_C8) {
-    MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
-  } else {
-    MatmulFloatSse64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
-  }
+  MatmulFloatSse64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
 #else
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #endif
