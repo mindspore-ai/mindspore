@@ -60,6 +60,8 @@ struct InnerContext : public Context {
 
   virtual ~InnerContext();
 
+  bool device_and_pkg_support_fp16() const;
+
  private:
   bool IsAllDeviceTypeValid() const;
 
@@ -71,19 +73,11 @@ struct InnerContext : public Context {
 
   bool IsUserSetNpu() const;
 
-  bool IsSupportFloat16() const;
-
   void SetContextDevice(const Context *context);
 
-  bool fp16_flag_ = false;
+  bool device_and_pkg_support_fp16_ = false;
 
   ActorThreadPool *thread_pool_{nullptr};
-
-#ifdef ENABLE_ARM
-#ifndef MS_COMPILE_IOS
-  CpuInfo *cpu_info_ = nullptr;
-#endif
-#endif
 };
 
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num);

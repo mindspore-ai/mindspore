@@ -133,7 +133,7 @@ float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *o
   return acc;
 }
 
-Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type) {
+Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16) {
 #ifdef ENABLE_FP16
   MS_ASSERT(tensor != nullptr);
   std::vector<TypeId> valid_type = {kNumberTypeFloat32, kNumberTypeFloat16, kNumberTypeFloat};
@@ -167,7 +167,7 @@ Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type) {
       return nullptr;
     }
     MS_LOG(DEBUG) << "Convert tensor to fp16 " << tensor->tensor_name();
-    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
+    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
   } else {
     tensor->set_data(nullptr);
     tensor->set_data_type(kNumberTypeFloat32);
@@ -180,7 +180,7 @@ Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type) {
     auto new_tensor_data = tensor->data_c();
     MS_ASSERT(new_tensor_data != nullptr);
     MS_LOG(DEBUG) << "Convert tensor to fp32 " << tensor->tensor_name();
-    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
+    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
   }
   return restore_tensor;
 #else

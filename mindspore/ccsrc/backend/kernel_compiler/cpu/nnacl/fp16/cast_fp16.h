@@ -17,6 +17,8 @@
 #define MINDSPORE_NNACL_CAST_FP16_H_
 
 #include "nnacl/op_base.h"
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+#include <arm_neon.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,5 +89,6 @@ void Float16ToFloat32(const float16_t *input, float *output, int number);
 
 #ifdef __cplusplus
 }
+#endif
 #endif
 #endif  // MINDSPORE_NNACL_CAST_FP16_H_

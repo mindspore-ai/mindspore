@@ -103,6 +103,9 @@ void CpuInfo::GetArmProcCpuInfo(AndroidCpuInfo *android_cpu_info) {
 }
 
 bool CpuInfo::ArmIsSupportFp16() {
+#ifdef MS_COMPILE_IOS
+  return false;
+#else
 #ifdef ENABLE_ARM32
   GetArmProcCpuInfo(&android_cpu_info_);
   midr_ = MidrSetPart(android_cpu_info_.cpu_part);
@@ -142,6 +145,7 @@ bool CpuInfo::ArmIsSupportFp16() {
   }
 #endif
   return fp16_flag_;
+#endif
 }
 }  // namespace mindspore::lite
 #endif

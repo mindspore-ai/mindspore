@@ -26,6 +26,7 @@
 #include "async/uuid_base.h"
 #include "async/future.h"
 #include "src/sub_graph_kernel.h"
+#include "src/cpu_info.h"
 
 namespace mindspore::lite {
 
@@ -39,6 +40,10 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  public:
   explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {
     inputs_data_.resize(kernel_->in_tensors().size());
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+    CpuInfo cpu_info;
+    support_fp16_ = cpu_info.ArmIsSupportFp16();
+#endif
   }
   ~LiteOpActor() override {
     for (auto map : isolate_input_map_) {
@@ -89,6 +94,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   kernel::LiteKernel *partial_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_; /* <calculate-tensor,  src-input-tensor> */
+  bool support_fp16_ = false;
 };
 
 class LiteSwitchOpActor : public LiteOpActor {

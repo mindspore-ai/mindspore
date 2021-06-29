@@ -600,7 +600,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "CheckInputs failed.";
     return ret;
   }
-  MS_ASSERT(this->context_);
+  MS_ASSERT(this->context_ != nullptr);
   if (before == nullptr && after == nullptr) {
     ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
   } else {

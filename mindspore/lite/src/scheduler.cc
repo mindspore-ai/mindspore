@@ -34,13 +34,11 @@
 #include "src/runtime/infer_manager.h"
 #include "src/sub_graph_split.h"
 #include "src/weight_decoder.h"
+#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #include "nnacl/nnacl_common.h"
 #if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
-#endif
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
-#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
 #include "include/registry/kernel_interface.h"
 
@@ -271,7 +269,9 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
 }
 
 namespace {
-int CastConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origin_tensors, TypeId dst_data_type) {
+// support_fp16: current device and package support float16
+int CastConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_origin_tensors, TypeId dst_data_type,
+                        bool support_fp16) {
   MS_ASSERT(tensor != nullptr);
   MS_ASSERT(tensor->IsConst());
   MS_ASSERT(tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeFloat16);
@@ -294,25 +294,9 @@ int CastConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_o
   auto new_tensor_data = tensor->data_c();
   MS_ASSERT(new_tensor_data != nullptr);
   if (dst_data_type == kNumberTypeFloat32) {
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
-    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
-#else
-    auto src_data = reinterpret_cast<uint16_t *>(origin_data);
-    auto dst_data = reinterpret_cast<float *>(new_tensor_data);
-    for (int i = 0; i < tensor->ElementsNum(); i++) {
-      dst_data[i] = ShortToFloat32(src_data[i]);
-    }
-#endif
+    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
   } else {  // dst_data_type == kNumberTypeFloat16
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
-    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum());
-#else
-    auto src_data = reinterpret_cast<float *>(origin_data);
-    auto dst_data = reinterpret_cast<uint16_t *>(new_tensor_data);
-    for (int i = 0; i < tensor->ElementsNum(); i++) {
-      dst_data[i] = Float32ToShort(src_data[i]);
-    }
-#endif
+    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
   }
   if (restored_origin_tensors->find(tensor) != restored_origin_tensors->end()) {
     MS_LOG(ERROR) << "Tensor " << tensor->tensor_name() << " is already be stored";
@@ -322,8 +306,9 @@ int CastConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *restored_o
   return RET_OK;
 }
 
+// support_fp16: current device and package support float16
 int CastConstTensorsData(const std::vector<Tensor *> &tensors, std::map<Tensor *, Tensor *> *restored_origin_tensors,
-                         TypeId dst_data_type) {
+                         TypeId dst_data_type, bool support_fp16) {
   MS_ASSERT(restored_origin_tensors != nullptr);
   if (dst_data_type != kNumberTypeFloat32 && dst_data_type != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "Only support fp32 or fp16 as dst_data_type.";
@@ -341,13 +326,13 @@ int CastConstTensorsData(const std::vector<Tensor *> &tensors, std::map<Tensor *
       continue;
     }
     if (tensor->data_type() == kNumberTypeFloat32 && dst_data_type == kNumberTypeFloat16) {
-      auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat16);
+      auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat16, support_fp16);
       if (ret != RET_OK) {
         MS_LOG(DEBUG) << "Cast const tensor from fp32 to fp16 failed, tensor name : " << tensor->tensor_name();
         return ret;
       }
     } else if (tensor->data_type() == kNumberTypeFloat16 && dst_data_type == kNumberTypeFloat32) {
-      auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat32);
+      auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat32, support_fp16);
       if (ret != RET_OK) {
         MS_LOG(DEBUG) << "Cast const tensor from fp16 to fp32 failed, tensor name : " << tensor->tensor_name();
         return ret;
@@ -437,7 +422,8 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   }
   std::map<Tensor *, Tensor *> restored_origin_tensors;
 
-  ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type);
+  ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type,
+                             context_->device_and_pkg_support_fp16());
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "CastConstTensorsData failed: " << ret;
     return RET_NOT_SUPPORT;

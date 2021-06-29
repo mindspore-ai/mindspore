@@ -248,7 +248,7 @@ void LiteOpActor::CopyInputData(Tensor *dst_tensor, Tensor *src_tensor) {
 }
 
 int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
-#ifdef ENABLE_FP16
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   if (dst->shape() != src->shape()) {
     MS_LOG(ERROR) << "dst tensor: " << dst->tensor_name() << " shape: " << dst->shape() << " vs "
                   << "src tensor: " << src->tensor_name() << " shape: " << src->shape();
@@ -261,9 +261,9 @@ int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
   auto src_data_type = static_cast<int>(src->data_type());
 
   if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeFloat16) {
-    Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size);
+    Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size, support_fp16_);
   } else if (dst_data_type == kNumberTypeFloat16 && src_data_type == kNumberTypeFloat32) {
-    Float32ToFloat16_fp16_handler(src_data, dst_data, src_nums_size);
+    Float32ToFloat16_fp16_handler(src_data, dst_data, src_nums_size, support_fp16_);
   } else {
     MS_LOG(ERROR) << "not support dst_data_type: " << dst_data_type << " src_data_type: " << src_data_type;
     return RET_NOT_SUPPORT;

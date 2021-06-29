@@ -26,6 +26,7 @@
 #include "src/lite_kernel.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
+#include "src/cpu_info.h"
 #ifdef ENABLE_ARM64
 #include "src/common/utils.h"
 #endif
@@ -152,7 +153,7 @@ class CpuFp32SubGraph : public CpuSubGraph {
   ~CpuFp32SubGraph() override = default;
 };
 
-#ifdef ENABLE_FP16
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 class CpuFp16SubGraph : public CpuSubGraph {
  public:
   CpuFp16SubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
@@ -162,6 +163,9 @@ class CpuFp16SubGraph : public CpuSubGraph {
     static std::atomic_int index = 0;
     this->set_name("CpuFP16SubGraph" + std::to_string(index++));
     desc_.data_type = kNumberTypeFloat16;
+    const auto *context = this->Context();
+    MS_ASSERT(context != nullptr);
+    support_fp16_ = context->device_and_pkg_support_fp16();
   }
 
   ~CpuFp16SubGraph() override = default;
@@ -227,6 +231,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
 
  private:
   std::map<lite::Tensor *, DataStore *> origin_input_data_;
+  bool support_fp16_ = false;
 };
 #endif
 
