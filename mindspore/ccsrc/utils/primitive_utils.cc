@@ -28,7 +28,11 @@ namespace mindspore {
 py::function GetBpropFunctionByObj(py::object obj) {
   static const std::string get_bprop_fn = "get_bprop_fn";
   static const std::string ad_module = "mindspore.ops._grad";
+  static const std::string ad_experimental_module = "mindspore.ops._grad_experimental";
   py::function fn = parse::python_adapter::GetPyFn(ad_module, get_bprop_fn)(obj);
+  if (!fn || py::isinstance<py::none>(fn)) {
+    fn = parse::python_adapter::GetPyFn(ad_experimental_module, get_bprop_fn)(obj);
+  }
   return fn;
 }
 
