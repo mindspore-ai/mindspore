@@ -19,9 +19,10 @@ def create_network(name, *args, **kwargs):
     freeze_bn = True
     num_classes = kwargs["num_classes"]
     if name == 'deeplab_v3_s16':
-        deeplab_v3_s16_network = net_factory.nets_map["deeplab_v3_s16"]('eval', num_classes, 16, freeze_bn)
+        deeplab_v3_s16_network = net_factory.nets_map["deeplab_v3_s16"](num_classes, 16)
         return deeplab_v3_s16_network
     if name == 'deeplab_v3_s8':
-        deeplab_v3_s8_network = net_factory.nets_map["deeplab_v3_s8"]('eval', num_classes, 8, freeze_bn)
+        # deeplab_v3_s8_network = net_factory.nets_map["deeplab_v3_s8"]('eval', num_classes, 8, freeze_bn)
+        deeplab_v3_s8_network = net_factory.nets_map["deeplab_v3_s8"](num_classes, 8)
         return deeplab_v3_s8_network
     raise NotImplementedError(f"{name} is not implemented in the repo")

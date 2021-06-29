@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
+import os
 import mindspore.common.dtype as mstype
 
 from config import GNMTConfig
@@ -29,10 +30,9 @@ def get_config(config):
 def create_network(name, *args, **kwargs):
     """create gnmt network."""
     if name == "gnmt":
-        if "config" in kwargs:
-            config = get_config(kwargs["config"])
-        else:
-            raise NotImplementedError(f"Please make sure the configuration file path is correct")
+        default_config_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "config/config.json")
+        config_path = kwargs.get("config", default_config_path)
+        config = get_config(config_path)
         is_training = kwargs.get("is_training", False)
         if is_training:
             return GNMTNetworkWithLoss(config, is_training=is_training, *args)

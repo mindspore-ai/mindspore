@@ -13,25 +13,28 @@
 # limitations under the License.
 # ============================================================================
 """hub config"""
-from src.ncf import NCFModel
-from src.config import cfg
+from mindspore import dtype
+from src.gpt import GPT
+from src.utils import GPTConfig
 
-def ncf_net(*args, **kwargs):
-    return NCFModel(*args, **kwargs)
-
+def gpt_net(*args, **kwargs):
+    return GPT(*args, **kwargs)
 
 def create_network(name, *args, **kwargs):
-    """create_network about ncf"""
-    if name == "ncf":
-        layers = cfg.layers
-        num_factors = cfg.num_factors
-        num_users = 6040
-        num_items = 3706
-        return ncf_net(num_users=num_users,
-                       num_items=num_items,
-                       num_factors=num_factors,
-                       model_layers=layers,
-                       mf_regularization=0,
-                       mlp_reg_layers=[0.0, 0.0, 0.0, 0.0],
-                       mf_dim=16)
+    """
+    create net work gpt
+    """
+    if name == "gpt":
+        config = GPTConfig(batch_size=16,
+                           seq_length=1024,
+                           vocab_size=50257,
+                           embedding_size=1024,
+                           num_layers=24,
+                           num_heads=16,
+                           expand_ratio=4,
+                           post_layernorm_residual=False,
+                           dropout_rate=0.0,
+                           compute_dtype=dtype.float16,
+                           use_past=False)
+        return gpt_net(config, *args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")

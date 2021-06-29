@@ -16,8 +16,13 @@
 from src.yolo import YOLOV4CspDarkNet53
 
 def create_network(name, *args, **kwargs):
+    """create_network about yolov4"""
     if name == "yolov4_cspdarknet53":
         yolov4_cspdarknet53_net = YOLOV4CspDarkNet53()
         yolov4_cspdarknet53_net.set_train(False)
         return yolov4_cspdarknet53_net
+    if name == "yolov4_shape416":
+        yolov4_shape416 = YOLOV4CspDarkNet53()
+        yolov4_shape416.set_train(False)
+        return yolov4_shape416
     raise NotImplementedError(f"{name} is not implemented in the repo")

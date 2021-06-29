@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,22 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
-from src.model_utils.config import config as cfg
-from src.wide_and_deep import PredictWithSigmoid, WideDeepModel
+"""hub config"""
+from src.nets.FCN8s import FCN8s
 
-
-def get_WideDeep_net(config):
-    """
-    Get network of wide&deep model.
-    """
-    WideDeep_net = WideDeepModel(config)
-    eval_net = PredictWithSigmoid(WideDeep_net)
-    return eval_net
+def fcn8s_net(*args, **kwargs):
+    return FCN8s(*args, **kwargs)
 
 def create_network(name, *args, **kwargs):
-    """create_network about wide_and_deep"""
-    if name == 'wide_and_deep':
-        eval_net = get_WideDeep_net(cfg)
-        return eval_net
+    """create_network about FCN8s"""
+    if name == "fcn8s":
+        num_classes = 21
+        return fcn8s_net(n_class=num_classes, *args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")
