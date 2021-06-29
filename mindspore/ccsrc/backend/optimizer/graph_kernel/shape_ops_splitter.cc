@@ -47,6 +47,8 @@ AnfNodePtr CloneCNode(const AnfNodePtr &anf_node) {
   ScopePtr scope = (anf_node->scope() != kDefaultScope) ? anf_node->scope() : kDefaultScope;
   node->set_scope(scope);
   node->set_kernel_info(cnode->kernel_info_ptr());
+  node->set_primal_attrs(cnode->primal_attrs());
+  node->set_primal_debug_infos(cnode->primal_debug_infos());
   return node;
 }
 

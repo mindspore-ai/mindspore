@@ -425,6 +425,16 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   return cnode;
 }
 
+CNodePtr KernelGraph::NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode) {
+  auto cnode = NewCNode(inputs);
+  if (ori_cnode != nullptr) {
+    cnode->set_attrs(ori_cnode->attrs());
+    cnode->set_primal_attrs(ori_cnode->primal_attrs());
+    cnode->set_primal_debug_infos(ori_cnode->primal_debug_infos());
+  }
+  return cnode;
+}
+
 void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
   auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(cnode);
   MS_EXCEPTION_IF_NULL(func_graph);

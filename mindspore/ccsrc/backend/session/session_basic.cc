@@ -687,7 +687,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
   GetCNodeInfo(cnode, &cnode_inputs);
   GetNewCNodeInputs(cnode, graph, &cnode_inputs, other_graph_cnode);
   TraceGuard trace_guard(std::make_shared<TraceCopy>(cnode->debug_info()));
-  auto new_cnode = graph->NewCNode(cnode_inputs);
+  auto new_cnode = graph->NewCNodeWithInfos(cnode_inputs, cnode);
   return new_cnode;
 }
 
@@ -997,7 +997,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
   // handle inputs of cnode except primitive
   CreateCNodeInputs(cnode, graph, &cnode_inputs);
   TraceGuard trace_guard(std::make_shared<TraceCopy>(cnode->debug_info()));
-  auto new_cnode = graph->NewCNode(cnode_inputs);
+  auto new_cnode = graph->NewCNodeWithInfos(cnode_inputs, cnode);
   // if the cnode is call switch, remove call
   if (new_cnode->inputs().size() > 1) {
     auto first_input = new_cnode->input(kFirstDataInputIndex);
