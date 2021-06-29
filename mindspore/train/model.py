@@ -626,6 +626,25 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
+        self._train_check(train_dataset, dataset_sink_mode, sink_size)
+
+        _device_number_check(self._parallel_mode, self._device_number)
+
+        self._train(epoch,
+                    train_dataset,
+                    callbacks=callbacks,
+                    dataset_sink_mode=dataset_sink_mode,
+                    sink_size=sink_size)
+
+    def _train_check(self, train_dataset, dataset_sink_mode, sink_size):
+        """
+        Check arguments of training.
+
+        Args:
+            train_dataset (Dataset): A training dataset iterator.
+            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
+            sink_size (int): Control the amount of data in each sink.
+        """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode is True:
             raise ValueError("Sink mode is currently not supported when training with a GraphCell.")
@@ -637,14 +656,6 @@ class Model:
             sink_size = dataset_size
         if sink_size < -1 or sink_size == 0:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
-
-        _device_number_check(self._parallel_mode, self._device_number)
-
-        self._train(epoch,
-                    train_dataset,
-                    callbacks=callbacks,
-                    dataset_sink_mode=dataset_sink_mode,
-                    sink_size=sink_size)
 
     def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
         """
@@ -784,7 +795,7 @@ class Model:
         Data could be a single tensor, a list of tensor, or a tuple of tensor.
 
         Note:
-            Batch data should be put together in one tensor.
+            This is a pre-compile function. The arguments should be the same with model.predict() function.
 
         Args:
            predict_data (Tensor): The predict data, can be bool, int, float, str, None, tensor,
@@ -808,6 +819,76 @@ class Model:
 
         check_output_data(result)
         return result
+
+    def infer_train_layout(self, train_dataset, dataset_sink_mode=True, sink_size=-1):
+        """
+        Generate parameter layout for the train network in auto or semi auto parallel mode.
+
+        .. warning::
+            This is an experimental prototype that is subject to change and/or deletion.
+
+        Note:
+            This is a pre-compile function. The arguments should be the same with model.train() function.
+
+        Args:
+            train_dataset (Dataset): A training dataset iterator. If there is no
+                         loss_fn, a tuple with multiple data (data1, data2, data3, ...) should be
+                         returned and passed to the network. Otherwise, a tuple (data, label) should
+                         be returned. The data and label would be passed to the network and loss
+                         function respectively.
+            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
+                                      Configure pynative mode or CPU, the training process will be performed with
+                                      dataset not sink. Default: True.
+            sink_size (int): Control the amount of data in each sink.
+                             If sink_size = -1, sink the complete dataset for each epoch.
+                             If sink_size > 0, sink sink_size data for each epoch.
+                             If dataset_sink_mode is False, set sink_size as invalid.
+                             Default: -1.
+
+        Returns:
+            Dict, Parameter layout dictionary used for load distributed checkpoint
+
+        Examples:
+            >>> # This example should be run with multiple devices. Refer to the tutorial > Distributed Training on
+            >>> # mindspore.cn.
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import Model, context, Tensor, nn
+            >>> from mindspore.context import ParallelMode
+            >>> from mindspore.communication import init
+            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
+            >>>
+            >>> context.set_context(mode=context.GRAPH_MODE)
+            >>> init()
+            >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+            >>>
+            >>> # For details about how to build the dataset, please refer to the tutorial
+            >>> # document on the official website.
+            >>> dataset = create_custom_dataset()
+            >>> net = Net()
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+            >>> loss_scale_manager = FixedLossScaleManager()
+            >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+            >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
+            >>> model.infer_train_layout(dataset)
+        """
+        if context.get_context("mode") != context.GRAPH_MODE:
+            raise RuntimeError('Pre-compile process only supports GRAPH MODE and Ascend target currently.')
+        if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            raise RuntimeError('infer train layout only supports semi auto parallel and auto parallel mode.')
+        self._train_check(train_dataset, dataset_sink_mode, sink_size)
+
+        train_dataset.__no_send__ = True
+        train_dataset_helper, train_network = self._exec_preprocess(is_train=True,
+                                                                    dataset=train_dataset,
+                                                                    dataset_sink_mode=dataset_sink_mode,
+                                                                    sink_size=sink_size)
+        self._train_network = train_network
+        for inputs in train_dataset_helper:
+            self._train_network.compile(*inputs)
+            break
+        train_dataset.__model_hash__ = hash(self)
+        return self._train_network.parameter_layout_dict
 
     def infer_predict_layout(self, *predict_data):
         """
@@ -844,8 +925,7 @@ class Model:
             >>> model.infer_predict_layout(input_data)
         """
         if context.get_context("mode") != context.GRAPH_MODE:
-            raise RuntimeError('infer predict layout only supports GRAPH MODE currently.')
-        # remove this restriction after support inferring repeated strategy
+            raise RuntimeError('Pre-compile process only supports GRAPH MODE currently.')
         if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             raise RuntimeError('infer predict layout only supports semi auto parallel and auto parallel mode.')
         _parallel_predict_check()
