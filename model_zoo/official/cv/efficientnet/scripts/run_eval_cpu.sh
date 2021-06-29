@@ -13,23 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 2 ]
+if [ $# != 3 ]
 then
-    echo "GPU: sh run_eval_for_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage:
+          sh run_eval_cpu.sh [DATASET_TYPE] [DATASET_PATH] [CHECKPOINT_PATH]
+          "
+exit 1
+fi
+
+# check dataset type
+if [[ $1 != "ImageNet" ]] && [[ $1 != "CIFAR10" ]]
+then
+    echo "error: Only supported for ImageNet and CIFAR10, but DATASET_TYPE=$1."
 exit 1
 fi
 
 # check dataset file
-if [ ! -d $1 ]
+if [ ! -d $2 ]
 then
-    echo "error: DATASET_PATH=$1 is not a directory"
+    echo "error: DATASET_PATH=$2 is not a directory."
 exit 1
 fi
 
+
 # check checkpoint file
-if [ ! -f $2 ]
+if [ ! -f $3 ]
 then
-    echo "error: CHECKPOINT_PATH=$2 is not a file"
+    echo "error: CHECKPOINT_PATH=$3 is not a file"
 exit 1
 fi
 
@@ -43,4 +53,4 @@ fi
 mkdir ../eval
 cd ../eval || exit
 
-python ${BASEPATH}/../eval.py --platform 'GPU' --data_path $1 --checkpoint=$2 > ./eval.log 2>&1 &
+python ${BASEPATH}/../eval.py --dataset $1 --data_path $2 --platform CPU --checkpoint=$3 > ./eval.log 2>&1 &

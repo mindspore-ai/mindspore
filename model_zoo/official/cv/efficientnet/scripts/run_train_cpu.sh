@@ -13,29 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 3 ] && [ $# != 4 ]
+if [ $# != 2 ] && [ $# != 3 ]
 then
-    echo "Usage:
-          sh run_distribute_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+    echo "Usage: 
+          sh run_train_cpu.sh [DATASET_TYPE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
           "
 exit 1
 fi
 
-if [ $1 -lt 1 ] && [ $1 -gt 8 ]
+# check dataset type
+if [[ $1 != "ImageNet" ]] && [[ $1 != "CIFAR10" ]]
 then
-    echo "error: DEVICE_NUM=$1 is not in (1-8)"
+    echo "error: Only supported for ImageNet and CIFAR10, but DATASET_TYPE=$1."
 exit 1
 fi
 
 # check dataset file
-if [ ! -d $3 ]
+if [ ! -d $2 ]
 then
-    echo "error: DATASET_PATH=$3 is not a directory"
+    echo "error: DATASET_PATH=$2 is not a directory."
 exit 1
 fi
 
-export DEVICE_NUM=$1
-export RANK_SIZE=$1
+
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
@@ -46,24 +46,13 @@ fi
 mkdir ../train
 cd ../train || exit
 
-export CUDA_VISIBLE_DEVICES="$2"
+
+if [ $# == 2 ]
+then
+    python ${BASEPATH}/../train.py --dataset $1 --data_path $2 --platform CPU > train.log 2>&1 &
+fi
 
 if [ $# == 3 ]
 then
-    mpirun -n $1 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
-    python ${BASEPATH}/../train.py \
-        --GPU \
-        --distributed \
-        --data_path $3 > train.log 2>&1 &
+    python ${BASEPATH}/../train.py --dataset $1 --data_path $2 --platform CPU --resume $3 > train.log 2>&1 &
 fi
-
-if [ $# == 4 ]
-then
-    mpirun -n $1 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
-    python ${BASEPATH}/../train.py \
-        --GPU \
-        --distributed \
-        --data_path $3 \
-        --resume $4 > train.log 2>&1 &
-fi
-
