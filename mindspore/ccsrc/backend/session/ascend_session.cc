@@ -701,16 +701,14 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
                                           InputTensorInfo *input_tensor_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
-  for (size_t i = 1; i < cnode->inputs().size(); i += 1) {
+  const auto input_tensor_num = AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 1; i <= input_tensor_num; i += 1) {
     const auto &input = cnode->input(i);
     auto kernel_with_index = AnfAlgo::VisitKernel(input, 0);
     auto real_input = kernel_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input);
     tensor::TensorPtr tensor = nullptr;
     if (real_input->isa<ValueNode>()) {
-      if (HasAbstractMonad(real_input)) {
-        continue;
-      }
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
       input_tensor_info->input_tensors_mask.emplace_back(kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
