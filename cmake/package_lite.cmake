@@ -391,8 +391,6 @@ else()
     if(NOT SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/schema/ DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    endif()
-    if(NOT SUPPORT_TRAIN AND MSLITE_ENABLE_NNIE)
         install(DIRECTORY ${TOP_DIR}/mindspore/core/abstract/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${TOP_DIR}/mindspore/core/base/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
@@ -403,13 +401,40 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${TOP_DIR}/mindspore/core/utils/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(FILES ${TOP_DIR}/mindspore/ccsrc/backend/optimizer/common/pass.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/model_parser.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/dump_graph.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/ops/ops_def.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/third_party/securec/include/
+                DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/securec
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        file(GLOB PROTOBUF_INCLUDE_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/protobuf_*/include/google)
+        install(DIRECTORY ${PROTOBUF_INCLUDE_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        file(GLOB CYTPO_INCLUDE_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/openssl_*/include/openssl/*.h)
+        install(FILES ${CYPTO_INCLUDE_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/openssl
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        file(GLOB EIGEN_INCLUDE_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/eigen3_*/include/eigen3)
+        install(DIRECTORY ${EIGEN_INCLUDE_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/${MINDSPORE_CORE_LIB_NAME}.a
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.a
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         file(GLOB PROTOBUF_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/protobuf_*/lib/libprotobuf.a)
         install(FILES ${PROTOBUF_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        file(GLOB CYTPO_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/openssl_*/lib/libcypto.a)
+        install(FILES ${CYPTO_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
+    if(NOT SUPPORT_TRAIN AND MSLITE_ENABLE_NNIE)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/converter.cfg
                 DESTINATION ${CONVERTER_ROOT_DIR}/ COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libmslite_nnie_converter.so
@@ -418,10 +443,6 @@ else()
                 DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libnnie_mapper.so
                 DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/ccsrc/backend/optimizer/common/pass.h
-                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/model_parser.h
-                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/opencv-4.2.0/lib/
                 DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D/third_party/opencv-4.2.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.so*")
