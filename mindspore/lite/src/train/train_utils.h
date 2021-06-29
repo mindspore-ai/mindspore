@@ -35,7 +35,7 @@ kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where,
 size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter);
 float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output);
 float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output);
-Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type);
+Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16);
 int ScaleTensor(Tensor *tensor, float scale);
 }  // namespace lite
 }  // namespace mindspore

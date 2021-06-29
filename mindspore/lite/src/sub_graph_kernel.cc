@@ -226,7 +226,7 @@ int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &aft
   }
   return RET_OK;
 }
-#ifdef ENABLE_FP16
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 void CpuFp16SubGraph::FreeOriginInputData() {
   for (auto &iter : this->origin_input_data_) {
     auto *data_store = iter.second;
@@ -269,7 +269,7 @@ int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
     return RET_ERROR;
   }
   MS_ASSERT(tensor->data_c() != nullptr);
-  Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum());
+  Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum(), support_fp16_);
   if (tensor->allocator() != nullptr) {
     tensor->allocator()->SetRefCount(tensor->data_c(), tensor->allocator()->RefCount(float32_data));
   }
@@ -302,7 +302,7 @@ int CpuFp16SubGraph::Float16TensorToFloat32Tensor(lite::Tensor *tensor) {
     return RET_ERROR;
   }
   MS_ASSERT(tensor->data_c() != nullptr);
-  Float16ToFloat32_fp16_handler(float16_data, tensor->data_c(), tensor->ElementsNum());
+  Float16ToFloat32_fp16_handler(float16_data, tensor->data_c(), tensor->ElementsNum(), support_fp16_);
   if (tensor->allocator() != nullptr) {
     tensor->allocator()->SetRefCount(tensor->data_c(), tensor->allocator()->RefCount(float16_data));
     tensor->allocator()->Free(float16_data);

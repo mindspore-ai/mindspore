@@ -276,7 +276,7 @@ int TrainSession::MixPrecisionPreProcess(kernel::LiteKernel *kernel, float scale
     }
     // adjust tensor data type
     if (tensor->data_type() != kernel_type) {
-      auto restore_tensor = CastTensor(tensor, kernel_type);
+      auto restore_tensor = CastTensor(tensor, kernel_type, this->context_->device_and_pkg_support_fp16());
       if (restore_tensor != nullptr) {
         restored_origin_tensors_[tensor] = restore_tensor;
       }
@@ -345,7 +345,7 @@ int TrainSession::MixPrecisionExecKernels(const KernelCallBack &before, const Ke
   if (train_mode_ == false) {
     for (auto t : this->outputs_) {
       if (t->data_type() == kNumberTypeFloat16) {
-        auto restore = CastTensor(t, kNumberTypeFloat32);
+        auto restore = CastTensor(t, kNumberTypeFloat32, this->context_->device_and_pkg_support_fp16());
         delete restore;
       }
     }

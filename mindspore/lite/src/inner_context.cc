@@ -31,11 +31,11 @@ InnerContext::InnerContext(const Context *context) {
   this->thread_num_ = context->thread_num_;
   this->enable_parallel_ = context->enable_parallel_;
   SetContextDevice(context);
-#ifdef ENABLE_ARM
-#ifndef MS_COMPILE_IOS
-  cpu_info_ = new CpuInfo;
-  fp16_flag_ = cpu_info_->ArmIsSupportFp16();
-#endif
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+  CpuInfo cpu_info;
+  device_and_pkg_support_fp16_ = cpu_info.ArmIsSupportFp16();
+#else
+  device_and_pkg_support_fp16_ = false;
 #endif
 }
 
@@ -114,11 +114,6 @@ InnerContext::~InnerContext() {
     delete thread_pool_;
     this->thread_pool_ = nullptr;
   }
-#ifdef ENABLE_ARM
-#ifndef MS_COMPILE_IOS
-  delete cpu_info_;
-#endif
-#endif
 }
 
 int InnerContext::IsValid() const {
@@ -168,7 +163,7 @@ bool InnerContext::IsCpuFloat16Enabled() const {
   if (!IsCpuEnabled()) {
     return false;
   }
-  if (!IsSupportFloat16()) {
+  if (!device_and_pkg_support_fp16_) {
     return false;
   }
   return GetCpuInfo().enable_float16_;
@@ -286,10 +281,9 @@ NpuDeviceInfo InnerContext::GetNpuInfo() const {
   }
 }
 
-// Support CPU backend to judge whether it supports Float16.
-bool InnerContext::IsSupportFloat16() const { return fp16_flag_; }
-
 ActorThreadPool *InnerContext::thread_pool() const { return thread_pool_; }
+
+bool InnerContext::device_and_pkg_support_fp16() const { return this->device_and_pkg_support_fp16_; }
 
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
   ActorThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
