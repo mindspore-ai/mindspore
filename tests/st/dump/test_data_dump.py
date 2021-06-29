@@ -87,10 +87,11 @@ def run_e2e_dump():
     add = Net()
     add(Tensor(x), Tensor(y))
     time.sleep(5)
-    assert len(os.listdir(dump_file_path)) == 5
     if context.get_context("device_target") == "Ascend":
+        assert len(os.listdir(dump_file_path)) == 5
         output_name = "Add.Add-op1.0.0.*.output.0.DefaultFormat.npy"
     else:
+        assert len(os.listdir(dump_file_path)) == 3
         output_name = "Add.Add-op3.0.0.*.output.0.DefaultFormat.npy"
     output_path = glob.glob(dump_file_path + output_name)[0]
     real_path = os.path.realpath(output_path)
@@ -114,6 +115,13 @@ def test_e2e_dump():
 @pytest.mark.env_onecard
 def test_cpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    run_e2e_dump()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gpu_e2e_dump():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_e2e_dump()
 
 class ReluReduceMeanDenseRelu(Cell):

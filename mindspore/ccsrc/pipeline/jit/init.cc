@@ -26,6 +26,7 @@
 #include "utils/summary/event_writer.h"
 #include "utils/config_manager.h"
 #include "utils/mpi/mpi_config.h"
+#include "utils/ms_utils.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/costmodel_context.h"
 #ifdef ENABLE_GPU_COLLECTIVE
@@ -57,6 +58,9 @@ using PSContext = mindspore::ps::PSContext;
 
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {
+  // The OMP_NUM_THREADS has no effect when set in backend, so set it here in advance.
+  mindspore::common::SetOMPThreadNum();
+
   m.doc() = "MindSpore c plugin";
 
   auto fns = mindspore::PybindDefineRegister::AllFuncs();

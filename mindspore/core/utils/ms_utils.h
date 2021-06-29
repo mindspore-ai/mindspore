@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <atomic>
+#include <thread>
 
 #define DISABLE_COPY_AND_ASSIGN(ClassType) \
   ClassType(const ClassType &) = delete;   \
@@ -47,6 +48,19 @@ static inline int SetEnv(const char *envname, const char *envvar, int overwrite 
 #else
   return ::setenv(envname, envvar, overwrite);
 #endif
+}
+
+static inline void SetOMPThreadNum() {
+  size_t cpu_core_num = std::thread::hardware_concurrency();
+  size_t cpu_core_num_half = cpu_core_num / 2;
+  const size_t kOMPThreadMaxNum = 16;
+  const size_t kOMPThreadMinNum = 1;
+
+  size_t OMP_thread_num = cpu_core_num_half < kOMPThreadMinNum ? kOMPThreadMinNum : cpu_core_num_half;
+  OMP_thread_num = OMP_thread_num > kOMPThreadMaxNum ? kOMPThreadMaxNum : OMP_thread_num;
+
+  std::string OMP_env = std::to_string(OMP_thread_num);
+  SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
 }
 }  // namespace common
 }  // namespace mindspore
