@@ -28,6 +28,8 @@ constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionCpuThreadAffinity = "mindspore.option.cpu.thread_affinity";
 constexpr auto kModelOptionMaliGpuEnableFP16 = "mindspore.option.mali_gpu.enable_fp16";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
+constexpr auto kModelOptionProvider = "mindspore.option.provider";
+constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
 
 struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
@@ -37,6 +39,7 @@ struct Context::Data {
 
 struct DeviceInfoContext::Data {
   std::map<std::string, std::any> params;
+  std::shared_ptr<Allocator> allocator = nullptr;
 };
 
 Context::Context() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
@@ -96,6 +99,54 @@ std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
 }
 
 DeviceInfoContext::DeviceInfoContext() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
+
+std::string DeviceInfoContext::GetProvider() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return "";
+  }
+  return GetValue<std::string>(data_, kModelOptionProvider);
+}
+
+void DeviceInfoContext::SetProvider(const std::string &provider) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionProvider] = provider;
+}
+
+std::string DeviceInfoContext::GetProviderDevice() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return "";
+  }
+  return GetValue<std::string>(data_, kModelOptionProviderDevice);
+}
+
+void DeviceInfoContext::SetProviderDevice(const std::string &device) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->params[kModelOptionProviderDevice] = device;
+}
+
+void DeviceInfoContext::SetAllocator(const std::shared_ptr<Allocator> &allocator) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->allocator = allocator;
+}
+
+std::shared_ptr<Allocator> DeviceInfoContext::GetAllocator() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return nullptr;
+  }
+  return data_->allocator;
+}
 
 void CPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   if (data_ == nullptr) {

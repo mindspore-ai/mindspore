@@ -74,6 +74,15 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
     return std::static_pointer_cast<T>(shared_from_this());
   }
 
+  std::string GetProvider() const;
+  void SetProvider(const std::string &provider);
+
+  std::string GetProviderDevice() const;
+  void SetProviderDevice(const std::string &device);
+
+  void SetAllocator(const std::shared_ptr<Allocator> &allocator);
+  std::shared_ptr<Allocator> GetAllocator() const;
+
  protected:
   std::shared_ptr<Data> data_;
 };
