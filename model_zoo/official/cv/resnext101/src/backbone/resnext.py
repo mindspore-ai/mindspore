@@ -214,7 +214,7 @@ class ResNeXt(nn.Cell):
         >>>ResNeXt()
     """
     def __init__(self, block, layers, width_per_group=64, groups=1, use_se=False, platform="Ascend"):
-        super(ResNet, self).__init__()
+        super(ResNeXt, self).__init__()
         self.in_channels = 64
         self.groups = groups
         self.base_width = width_per_group

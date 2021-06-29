@@ -87,9 +87,9 @@ class ResNeXt(ImageClassificationNetwork):
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
         # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         for cell in self.cells_and_names():
-            if isinstance(cell, backbones.resnet.Bottleneck):
+            if isinstance(cell, backbones.resnext.Bottleneck):
                 cell.bn3.gamma.set_data(init.initializer('zeros', cell.bn3.gamma.shape))
-            elif isinstance(cell, backbones.resnet.BasicBlock):
+            elif isinstance(cell, backbones.resnext.BasicBlock):
                 cell.bn2.gamma.set_data(init.initializer('zeros', cell.bn2.gamma.shape))
 
 
