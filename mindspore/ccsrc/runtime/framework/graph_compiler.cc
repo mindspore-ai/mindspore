@@ -304,16 +304,15 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   }
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
-#ifdef ENABLE_DEBUGGER
-  auto debugger = Debugger::GetInstance();
-  debugger->DumpInGraphCompiler(graph);
-#endif
+
   MS_EXCEPTION_IF_NULL(session_);
   session_->InitAllBucket(graph, device_context);
 
   session_->SetSummaryNodes(graph.get());
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  debugger->DumpInGraphCompiler(graph);
   if (debugger && debugger->DebuggerBackendEnabled()) {
     debugger->LoadGraphs(graph);
   }

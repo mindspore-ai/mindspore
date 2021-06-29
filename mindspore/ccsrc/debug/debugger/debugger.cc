@@ -317,7 +317,6 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
 }
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
   // access lock for public method
-
   std::lock_guard<std::mutex> a_lock(access_lock_);
   CheckDatasetSinkMode();
   auto graph_id = graph_ptr->graph_id();
@@ -392,7 +391,7 @@ bool Debugger::DumpDataEnabledIteration() const {
   return false;
 }
 
-void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
+uint32_t Debugger::GetRankID() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -400,23 +399,28 @@ void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
   uint32_t rank_id = device_context->GetRankID();
+  return rank_id;
+}
+void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
+  uint32_t rank_id = GetRankID();
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    E2eDump::DumpData(kernel_graph.get(), rank_id, debugger_.get());
+    E2eDump::DumpParametersAndConstData(kernel_graph.get(), rank_id, debugger_.get());
   } else {
     DumpJsonParser::GetInstance().UpdateDumpIter();
   }
 }
 
+void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
+  if (debugger_->DebuggerBackendEnabled()) {
+    uint32_t rank_id = GetRankID();
+    E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get());
+  }
+}
+
 void Debugger::DumpSetup(const KernelGraphPtr &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-  uint32_t rank_id = device_context->GetRankID();
+  uint32_t rank_id = GetRankID();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   E2eDump::DumpSetup(kernel_graph.get(), rank_id);
   MS_LOG(INFO) << "Finish!";
@@ -425,13 +429,7 @@ void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
   // This function will be called for new GPU runtime using MindRTBackend
   auto &json_parser = DumpJsonParser::GetInstance();
   if (json_parser.e2e_dump_enabled()) {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    const auto &device_context =
-      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-    uint32_t rank_id = device_context->GetRankID();
+    uint32_t rank_id = GetRankID();
     kernel_graph->set_root_graph_id(kernel_graph->graph_id());
     std::string final_graph = "trace_code_graph_" + std::to_string(kernel_graph->graph_id());
     std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
@@ -443,23 +441,32 @@ void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
                       kernel_graph->execution_order());
   }
 }
-void Debugger::PostExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs) {
+
+void Debugger::PostExecuteGraphDebugger() {
   // Only GPU is supported for MindRTBackend
   if (device_target_ != kGPUDevice) {
     return;
   }
-  for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
-    const auto &graph = graphs[graph_index];
-    bool dump_enabled = debugger_->DumpDataEnabledIteration();
-    // debug used for dump
-    if (debugger_ && dump_enabled) {
+  // LoadParametersAndConst for all the graphs
+  for (auto graph : graph_ptr_list_) {
+    debugger_->LoadParametersAndConst(graph);
+  }
+  bool dump_enabled = debugger_->DumpDataEnabledIteration();
+  // debug used for dump
+  if (debugger_ && dump_enabled) {
+    // Dump Parameters and consts
+    for (auto graph : graph_ptr_list_) {
       debugger_->Dump(graph);
-    } else {
-      DumpJsonParser::GetInstance().UpdateDumpIter();
+      if (!debugger_->debugger_enabled()) {
+        debugger_->ClearCurrentData();
+      }
     }
-    if (debugger_) {
-      debugger_->PostExecute();
-    }
+
+  } else {
+    DumpJsonParser::GetInstance().UpdateDumpIter();
+  }
+  if (debugger_) {
+    debugger_->PostExecute();
   }
 }
 
@@ -1334,6 +1341,24 @@ void Debugger::LoadParametersAndConst() {
   // load value nodes
   // get all constant avlues from the graph
   MS_LOG(INFO) << "Start to load value nodes!";
+  const auto value_nodes = graph_ptr_->graph_value_nodes();
+  for (auto &item : value_nodes) {
+    LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);
+  }
+}
+
+void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
+  if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
+  MS_EXCEPTION_IF_NULL(graph);
+  // load parameters
+  MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id();
+  const auto &parameters = graph_ptr_->inputs();
+  for (auto &item : parameters) {
+    LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
+  }
+  // load value nodes
+  // get all constant avlues from the graph
+  MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id();
   const auto value_nodes = graph_ptr_->graph_value_nodes();
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);

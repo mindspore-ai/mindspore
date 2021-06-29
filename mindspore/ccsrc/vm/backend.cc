@@ -606,12 +606,6 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
-// Debugger post-execute graph.
-#ifdef ENABLE_DEBUGGER
-  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
-    Debugger::GetInstance()->PostExecuteGraphDebugger(graph_compiler_info.graphs_);
-  }
-#endif
 
   // Sync device stream.
   const auto &first_device_context = graph_compiler_info.device_contexts_[0];

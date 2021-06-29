@@ -36,6 +36,12 @@ class E2eDump {
   ~E2eDump() = default;
   static void DumpSetup(const session::KernelGraph *graph, uint32_t rank_id);
   static bool DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
+
+  static bool DumpParametersAndConstData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger);
+
+  static bool DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id,
+                                 const Debugger *debugger = nullptr);
+
   static bool isDatasetGraph(const session::KernelGraph *graph);
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
@@ -45,7 +51,12 @@ class E2eDump {
 
  private:
   static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
+
+  static void DumpOutputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger);
+
   static void DumpInput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
+
+  static void DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger);
 
   static void DumpParametersAndConst(const session::KernelGraph *graph, const std::string &dump_path,
                                      const Debugger *debugger);

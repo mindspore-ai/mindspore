@@ -85,13 +85,17 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   bool DumpDataEnabledIteration() const;
 
+  static uint32_t GetRankID();
+
   void Dump(const KernelGraphPtr &kernel_graph) const;
+
+  void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
 
   void DumpSetup(const KernelGraphPtr &kernel_graph) const;
 
   void DumpInGraphCompiler(const KernelGraphPtr &kernel_graph);
 
-  void PostExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs);
+  void PostExecuteGraphDebugger();
 
   bool ReadNodeDataRequired(const CNodePtr &kernel) const;
 
@@ -140,6 +144,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   bool SendMetadata(bool version_check);
 
   void LoadParametersAndConst();
+
+  void LoadParametersAndConst(const KernelGraphPtr &graph);
 
   void UpdateStepNum(const session::KernelGraph *graph);
 
