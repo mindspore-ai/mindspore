@@ -567,9 +567,14 @@ void SetMindRTEnable() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (target != kGPUDevice) {
+  if ((target != kGPUDevice) && (target != kCPUDevice)) {
     return;
   }
+
+#if defined(_WIN32) || defined(_WIN64)
+  return;
+#endif
+
 #if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_ps_mode()) {
     return;
