@@ -64,9 +64,22 @@ dependencies {
 }
 
 import io.netifi.flatbuffers.plugin.tasks.FlatBuffers
+
 flatbuffers {
-    flatcPath = '../../../build/_deps/flatbuffers-src/_build/flatc'
+    String msLib = System.getenv("MSLIBS_CACHE_PATH")
+    FileTree msLibTree = fileTree(dir: msLib, include: ["flatbuffers_*/bin/flatc"])  //flatbuffers_*/bin/flatc
+    String msLibPath = ''
+    msLibTree.each {File file ->
+        msLibPath = file.toString()
+    }
+    if (msLibTree.empty) {
+        flatcPath = '../../../build/_deps/flatbuffers-src/_build/flatc'
+    } else {
+        flatcPath = msLibPath
+    }
+    println("-----------------flatc path: " + flatcPath + "-----------------")
 }
+
 task createFlatBuffers(type: FlatBuffers) {
     println("-----------------executing task: createFlatBuffers-----------------")
     inputDir = file("../../../../schema")

@@ -159,7 +159,7 @@ public class FLLiteClient {
 
     public FLClientStatus startFLJob() {
         LOGGER.info(Common.addTag("[startFLJob] ====================================Verify server===================================="));
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[startFLJob] ==============startFLJob url: " + url + "=============="));
         StartFLJob startFLJob = StartFLJob.getInstance();
         Date date = new Date();
@@ -249,7 +249,7 @@ public class FLLiteClient {
     }
 
     public FLClientStatus updateModel() {
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[updateModel] ==============updateModel url: " + url + "=============="));
         UpdateModel updateModelBuf = UpdateModel.getInstance();
         byte[] updateModelBuffer = updateModelBuf.getRequestUpdateFLJob(iteration, secureProtocol, trainDataSize);
@@ -287,7 +287,7 @@ public class FLLiteClient {
     }
 
     public FLClientStatus getModel() {
-        String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
+        String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
         LOGGER.info(Common.addTag("[getModel] ===========getModel url: " + url + "=============="));
         GetModel getModelBuf = GetModel.getInstance();
         byte[] buffer = getModelBuf.getRequestGetModel(flParameter.getFlName(), iteration);

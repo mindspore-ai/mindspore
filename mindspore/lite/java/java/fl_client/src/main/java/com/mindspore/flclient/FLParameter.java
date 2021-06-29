@@ -22,8 +22,10 @@ public class FLParameter {
 
     public static final int TIME_OUT = 100;
     public static final int SLEEP_TIME = 1000;
+
     private String hostName;
     private String certPath;
+    private boolean useHttps = false;
 
     private String trainDataset;
     private String vocabFile = "null";
@@ -82,6 +84,14 @@ public class FLParameter {
 
     public void setCertPath(String certPath) {
         this.certPath = certPath;
+    }
+
+    public boolean isUseHttps() {
+        return useHttps;
+    }
+
+    public void setUseHttps(boolean useHttps) {
+        this.useHttps = useHttps;
     }
 
     public String getTrainDataset() {
@@ -208,7 +218,12 @@ public class FLParameter {
     }
 
     public void setIp(String ip) {
-        this.ip = ip;
+        if (Common.checkIP(ip)) {
+            this.ip = ip;
+        } else {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <ip> is not valid, please check it before set"));
+            throw new RuntimeException();
+        }
     }
 
     public boolean isUseSSL() {
@@ -228,9 +243,13 @@ public class FLParameter {
     }
 
     public void setPort(int port) {
-        this.port = port;
+        if (Common.checkPort(port)) {
+            this.port = port;
+        } else {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <port> is not valid, please check it before set"));
+            throw new RuntimeException();
+        }
     }
-
 
     public int getTimeOut() {
         return timeOut;
