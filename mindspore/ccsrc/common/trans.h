@@ -94,6 +94,7 @@ std::vector<size_t> PaddingShape(const std::vector<size_t> &shape, const std::st
 std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::string &padding_axis = {""});
 std::vector<size_t> PaddingShapeTo5d(const std::vector<size_t> &shape, const std::string &padding_axis = {""});
 std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape);
+std::vector<size_t> PaddingShapeTo4dDefault(const std::vector<size_t> &shape);
 void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec);
 void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);

@@ -17,6 +17,7 @@
 #include "backend/kernel_compiler/hccl/hccl_kernel_metadata.h"
 #include <memory>
 #include <set>
+#include "common/trans.h"
 #include "utils/utils.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -25,6 +26,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t N_nchw = 0;
+constexpr size_t C_nchw = 1;
 std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   const std::set<std::string> kReduceNoSupportedSet = {kOpFormat_FRAC_Z, kOpFormat_FRACTAL_Z_C04, kOpFormat_C1HWNCoC0};
   auto op_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -40,7 +43,14 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   if (op_name != kReduceScatter && op_name != kAllGatherOpName) {
     return format;
   }
-  if (format == kOpFormat_FRAC_NZ && AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index).size() <= 2) {
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
+  if (op_name == kAllGatherOpName) {
+    auto pad_shape = trans::PaddingShapeTo4dDefault(input_shape);
+    if (pad_shape[N_nchw] % kCubeSize != 0 || pad_shape[C_nchw] % kCubeSize != 0) {
+      return kOpFormat_DEFAULT;
+    }
+  }
+  if (format == kOpFormat_FRAC_NZ && input_shape.size() <= 2) {
     return kOpFormat_DEFAULT;
   }
   if (kReduceNoSupportedSet.find(format) != kReduceNoSupportedSet.end()) {
