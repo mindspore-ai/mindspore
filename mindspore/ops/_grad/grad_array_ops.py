@@ -323,19 +323,30 @@ def get_bprop_concat(self):
     axis = self.axis
 
     def bprop(x, out, dout):
-        dx = ()
-        out_offset = G.ConcatOffset(F.tuple_len(x), axis)(x)
-        input_nums = F.tuple_len(x)
+        out_offset = G.ConcatOffset(len(x), axis)(x)
+        input_nums = len(x)
         input_shapes = ()
         for i in range(input_nums):
             input_shapes = input_shapes + (shape_op(x[i]),)
         is_uniform = _concat_grad_uniform(input_shapes, input_nums)
-        if is_uniform:
-            dx = P.Split(axis, input_nums)(dout)
+        if isinstance(x, list):
+            dx = []
+            if is_uniform:
+                dx_tuple = P.Split(axis, input_nums)(dout)
+                for _, i in enumerate(dx_tuple):
+                    dx = dx + [i,]
+            else:
+                for i in range(input_nums):
+                    slice_out = P.Slice()(dout, out_offset[i], input_shapes[i])
+                    dx = dx + [slice_out,]
         else:
-            for i in range(input_nums):
-                slice_out = P.Slice()(dout, out_offset[i], input_shapes[i])
-                dx = dx + (slice_out,)
+            dx = ()
+            if is_uniform:
+                dx = P.Split(axis, input_nums)(dout)
+            else:
+                for i in range(input_nums):
+                    slice_out = P.Slice()(dout, out_offset[i], input_shapes[i])
+                    dx = dx + (slice_out,)
         return (dx,)
 
     return bprop
