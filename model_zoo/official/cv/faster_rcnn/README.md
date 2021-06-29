@@ -70,7 +70,7 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
         pip install mmcv==0.2.14
         ```
 
-        And change the COCO_ROOT and other settings you need in `config.py`. The directory structure is as follows:
+        And change the COCO_ROOT and other settings you need in `config_50.yaml、config_101.yaml or config_152.yaml`. The directory structure is as follows:
 
         ```path
         .
@@ -90,7 +90,7 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class information of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config.py`.
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class information of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config_50.yaml、config_101.yaml or config_152.yaml`.
 
 # Quick Start
 
@@ -110,13 +110,13 @@ Note:
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # standalone training
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # distributed training
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
 
 # eval
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 
 # inference
 sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
@@ -130,13 +130,13 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # standalone training
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # distributed training
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
 
 # eval
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 
 ```
 
@@ -160,17 +160,17 @@ bash scripts/docker_start.sh fasterrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 ```shell
 # standalone training
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # distributed training
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
 ```
 
 4. Eval
 
 ```shell
 # eval
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 ```
 
 5. Inference
@@ -203,14 +203,19 @@ sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
       ├─anchor_generator.py    // anchor generator
       ├─bbox_assign_sample.py    // first stage sampler
       ├─bbox_assign_sample_stage2.py    // second stage sampler
-      ├─faster_rcnn_r50.py    // fasterrcnn network
+      ├─faster_rcnn_resnet.py    // fasterrcnn network
+      ├─faster_rcnn_resnet50v1.py    //fasterrcnn network for ResNet50v1.0
       ├─fpn_neck.py    //feature pyramid network
       ├─proposal_generator.py    // proposal generator
       ├─rcnn.py    // rcnn network
-      ├─resnet50.py    // backbone network
+      ├─resnet.py    // backbone network
+      ├─resnet50v1.py    // backbone network for ResNet50v1.0
       ├─roi_align.py    // roi align network
       └─rpn.py    //  region proposal network
-    ├─config.py    // total config
+    ├─config.py    // config for yaml parsing
+    ├─config_50.yaml    // config for ResNet50
+    ├─config_101.yaml    // config for ResNet101
+    ├─config_152.yaml    // config for ResNet152
     ├─dataset.py    // create dataset and process dataset
     ├─lr_schedule.py    // learning ratio generator
     ├─network_define.py    // network define for fasterrcnn
@@ -239,10 +244,10 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 ```shell
 # standalone training on gpu
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # distributed training on gpu
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
 ```
 
 Notes:
@@ -274,7 +279,7 @@ Notes:
         load_param_into_net(net, param_dict)
 ```
 
-3. The original dataset path needs to be in the config.py,you can select "coco_root" or "image_dir".
+3. The original dataset path needs to be in the config_50.yaml、config_101.yaml、config_152.yaml,you can select "coco_root" or "image_dir".
 
 ### Result
 
@@ -299,14 +304,14 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 
 ```shell
 # eval on ascend
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 ```
 
 #### on GPU
 
 ```shell
 # eval on GPU
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 ```
 
 > checkpoint can be produced in training process.
@@ -335,7 +340,7 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 ## Model Export
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE]
 ```
 
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]

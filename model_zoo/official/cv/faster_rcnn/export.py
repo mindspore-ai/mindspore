@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 import argparse
 import numpy as np
 
-import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
-
-from src.FasterRcnn.faster_rcnn_r50 import FasterRcnn_Infer
-from src.config import config
+import src.config as cfg
 
 parser = argparse.ArgumentParser(description='fasterrcnn_export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
@@ -30,11 +27,26 @@ parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"]
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
 parser.add_argument('--ckpt_file', type=str, default='', help='fasterrcnn ckpt file.')
+parser.add_argument("--backbone", type=str, required=True, \
+                    help="backbone network name, options:resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152")
 args = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
+
+if args.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
+    from src.FasterRcnn.faster_rcnn_resnet import FasterRcnn_Infer
+    if args.backbone == "resnet_v1.5_50":
+        config = cfg.get_config("./src/config_50.yaml")
+    elif args.backbone == "resnet_v1_101":
+        config = cfg.get_config("./src/config_101.yaml")
+    elif args.backbone == "resnet_v1_152":
+        config = cfg.get_config("./src/config_152.yaml")
+
+elif args.backbone == "resnet_v1_50":
+    config = cfg.get_config("./src/config_50.yaml")
+    from src.FasterRcnn.faster_rcnn_resnet50v1 import FasterRcnn_Infer
 
 if __name__ == '__main__':
     net = FasterRcnn_Infer(config=config)
@@ -51,7 +63,7 @@ if __name__ == '__main__':
     if device_type == "Ascend":
         net.to_float(mstype.float16)
 
-    img = Tensor(np.zeros([config.test_batch_size, 3, config.img_height, config.img_width]), ms.float32)
-    img_metas = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, 4]), ms.float32)
+    img = Tensor(np.zeros([config.test_batch_size, 3, config.img_height, config.img_width]), mstype.float32)
+    img_metas = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, 4]), mstype.float32)
 
     export(net, img, img_metas, file_name=args.file_name, file_format=args.file_format)

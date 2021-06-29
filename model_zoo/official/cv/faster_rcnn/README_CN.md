@@ -71,7 +71,7 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
         pip install mmcv==0.2.14
         ```
 
-        在`config.py`中更改COCO_ROOT和其他您需要的设置。目录结构如下：
+        根据模型运行需要，对应地在`config_50.yaml、config_101.yaml或config_152.yaml`中更改COCO_ROOT和其他需要的设置。目录结构如下：
 
         ```path
         .
@@ -91,7 +91,7 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
-        每行是按空间分割的图像标注，第一列是图像的相对路径，其余为[xmin,ymin,xmax,ymax,class]格式的框和类信息。从`IMAGE_DIR`（数据集目录）图像路径以及`ANNO_PATH`（TXT文件路径）的相对路径中读取图像。`IMAGE_DIR`和`ANNO_PATH`可在`config.py`中设置。
+        每行是按空间分割的图像标注，第一列是图像的相对路径，其余为[xmin,ymin,xmax,ymax,class]格式的框和类信息。从`IMAGE_DIR`（数据集目录）图像路径以及`ANNO_PATH`（TXT文件路径）的相对路径中读取图像。`IMAGE_DIR`和`ANNO_PATH`可在`config_50.yaml、config_101.yaml或config_152.yaml`中设置。
 
 # 快速入门
 
@@ -111,13 +111,13 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # 单机训练
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # 分布式训练
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
 
 # 评估
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 
 #推理
 sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
@@ -131,13 +131,13 @@ sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # 单机训练
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # 分布式训练
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
 
 # 评估
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 
 ```
 
@@ -161,17 +161,17 @@ bash scripts/docker_start.sh fasterrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 ```shell
 # 单机训练
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # 分布式训练
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
 ```
 
 4. 评估
 
 ```shell
 # 评估
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 ```
 
 5. 推理
@@ -204,14 +204,19 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
       ├─anchor_generator.py    // 锚点生成器
       ├─bbox_assign_sample.py    // 第一阶段采样器
       ├─bbox_assign_sample_stage2.py    // 第二阶段采样器
-      ├─faster_rcnn_r50.py    // Faster R-CNN网络
+      ├─faster_rcnn_resnet.py    // Faster R-CNN网络
+      ├─faster_rcnn_resnet50v1.py    //以Resnet50v1.0作为backbone的Faster R-CNN网络
       ├─fpn_neck.py    // 特征金字塔网络
       ├─proposal_generator.py    // 候选生成器
       ├─rcnn.py    // R-CNN网络
-      ├─resnet50.py    // 骨干网络
+      ├─resnet.py    // 骨干网络
+      ├─resnet50v1.py    // Resnet50v1.0骨干网络
       ├─roi_align.py    // ROI对齐网络
       └─rpn.py    //  区域候选网络
-    ├─config.py    // 总配置
+    ├─config.py    // 读取yaml配置的config类
+    ├─config_50.yaml    // Resnet50相关配置
+    ├─config_101.yaml    // Resnet101相关配置
+    ├─config_152.yaml    // Resnet152相关配置
     ├─dataset.py    // 创建并处理数据集
     ├─lr_schedule.py    // 学习率生成器
     ├─network_define.py    // Faster R-CNN网络定义
@@ -230,20 +235,20 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 
 ```shell
 # Ascend单机训练
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # Ascend分布式训练
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
 ```
 
 #### 在GPU上运行
 
 ```shell
 # GPU单机训练
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
 
 # GPU分布式训练
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
 ```
 
 Notes:
@@ -275,7 +280,7 @@ Notes:
         load_param_into_net(net, param_dict)
 ```
 
-3. config.py中包含原数据集路径，可以选择“coco_root”或“image_dir”。
+3. config_50.yaml、config_101.yaml、config_152.yaml中包含原数据集路径，可以选择“coco_root”或“image_dir”。
 
 ### 结果
 
@@ -300,14 +305,14 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 
 ```shell
 # Ascend评估
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 ```
 
 #### 在GPU上运行
 
 ```shell
 # GPU评估
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 ```
 
 > 在训练过程中生成检查点。
@@ -336,7 +341,7 @@ sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ## 模型导出
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE]
 ```
 
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]

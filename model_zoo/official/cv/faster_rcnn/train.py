@@ -31,11 +31,10 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn import SGD
 from mindspore.common import set_seed
 
-from src.FasterRcnn.faster_rcnn_r50 import Faster_Rcnn_Resnet50
 from src.network_define import LossCallBack, WithLossCell, TrainOneStepCell, LossNet
-from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_fasterrcnn_dataset
 from src.lr_schedule import dynamic_lr
+import src.config as cfg
 
 set_seed(1)
 
@@ -48,9 +47,24 @@ parser.add_argument("--device_target", type=str, default="Ascend",
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default: 0.")
 parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default: 1.")
 parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default: 0.")
+parser.add_argument("--backbone", type=str, required=True, \
+                    help="backbone network name, options:resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152")
 args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
+
+if args_opt.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
+    from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
+    if args_opt.backbone == "resnet_v1.5_50":
+        config = cfg.get_config("./src/config_50.yaml")
+    elif args_opt.backbone == "resnet_v1_101":
+        config = cfg.get_config("./src/config_101.yaml")
+    elif args_opt.backbone == "resnet_v1_152":
+        config = cfg.get_config("./src/config_152.yaml")
+
+elif args_opt.backbone == "resnet_v1_50":
+    config = cfg.get_config("./src/config_50.yaml")
+    from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
 
 if __name__ == '__main__':
     if args_opt.device_target == "GPU":
@@ -91,7 +105,7 @@ if __name__ == '__main__':
                     print("Please make sure config:coco_root is valid.")
                     raise ValueError(config.coco_root)
                 print("Create Mindrecord. It may take some time.")
-                data_to_mindrecord_byte_image("coco", True, prefix)
+                data_to_mindrecord_byte_image(config, "coco", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("coco_root not exits.")
@@ -101,7 +115,7 @@ if __name__ == '__main__':
                     print("Please make sure config:image_dir is valid.")
                     raise ValueError(config.image_dir)
                 print("Create Mindrecord. It may take some time.")
-                data_to_mindrecord_byte_image("other", True, prefix)
+                data_to_mindrecord_byte_image(config, "other", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("image_dir or anno_path not exits.")
@@ -114,7 +128,7 @@ if __name__ == '__main__':
     loss_scale = float(config.loss_scale)
 
     # When create MindDataset, using the fitst mindrecord file, such as FasterRcnn.mindrecord0.
-    dataset = create_fasterrcnn_dataset(mindrecord_file, batch_size=config.batch_size,
+    dataset = create_fasterrcnn_dataset(config, mindrecord_file, batch_size=config.batch_size,
                                         device_num=device_num, rank_id=rank,
                                         num_parallel_workers=config.num_parallel_workers,
                                         python_multiprocessing=config.python_multiprocessing)
@@ -122,7 +136,7 @@ if __name__ == '__main__':
     dataset_size = dataset.get_dataset_size()
     print("Create dataset done!")
 
-    net = Faster_Rcnn_Resnet50(config=config)
+    net = Faster_Rcnn_Resnet(config=config)
     net = net.set_train()
 
     load_path = args_opt.pre_trained

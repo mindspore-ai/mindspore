@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,15 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 2 ]
+if [ $# -ne 3 ]
 then 
-    echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_PATH]"
+    echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_PATH] [BACKBONE]"
+exit 1
+fi
+
+if [ $3 != "resnet_v1_50" ] && [ $3 != "resnet_v1.5_50" ] && [ $3 != "resnet_v1_101" ] && [ $3 != "resnet_v1_152" ]
+then 
+  echo "error: the selected backbone must be resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152"
 exit 1
 fi
 
@@ -63,6 +69,6 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 &> log &
+    python train.py --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 --backbone=$3 &> log &
     cd ..
 done

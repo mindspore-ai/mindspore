@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,15 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 3 ]
 then 
-    echo "Usage: sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]"
+exit 1
+fi
+
+if [ $3 != "resnet_v1_50" ] && [ $3 != "resnet_v1.5_50" ] && [ $3 != "resnet_v1_101" ] && [ $3 != "resnet_v1_152" ]
+then 
+  echo "error: the selected backbone must be resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152"
 exit 1
 fi
 
@@ -42,7 +48,7 @@ if [ ! -f $PATH2 ]
 then 
     echo "error: CHECKPOINT_PATH=$PATH2 is not a file"
 exit 1
-fi 
+fi
 
 export DEVICE_NUM=1
 export RANK_SIZE=$DEVICE_NUM
@@ -60,5 +66,5 @@ cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start eval for device $DEVICE_ID"
-python eval.py --device_target="GPU" --device_id=$DEVICE_ID --ann_file=$PATH1 --checkpoint_path=$PATH2 &> log &
+python eval.py --device_target="GPU" --device_id=$DEVICE_ID --ann_file=$PATH1 --checkpoint_path=$PATH2 --backbone=$3 &> log &
 cd ..

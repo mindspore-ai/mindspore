@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """
-convert resnet50 pretrain model to faster_rcnn backbone pretrain model
+convert resnet pretrain model to faster_rcnn backbone pretrain model
 """
 import argparse
 from mindspore.train.serialization import load_checkpoint, save_checkpoint
@@ -26,10 +26,10 @@ parser.add_argument('--ckpt_file', type=str, default='', help='ckpt file path')
 args_opt = parser.parse_args()
 def load_weights(model_path, use_fp16_weight):
     """
-    load resnet50 pretrain checkpoint file.
+    load resnet pretrain checkpoint file.
 
     Args:
-        model_path (str): resnet50 pretrain checkpoint file .
+        model_path (str): resnet pretrain checkpoint file .
         use_fp16_weight(bool): whether save weight into float16.
 
     Returns:
@@ -61,4 +61,4 @@ def load_weights(model_path, use_fp16_weight):
 
 if __name__ == "__main__":
     parameter_list = load_weights(args_opt.ckpt_file, use_fp16_weight=False)
-    save_checkpoint(parameter_list, "resnet50_backbone.ckpt")
+    save_checkpoint(parameter_list, "resnet_backbone.ckpt")

@@ -24,10 +24,9 @@ from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed, Parameter
 
-from src.FasterRcnn.faster_rcnn_r50 import Faster_Rcnn_Resnet50
-from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_fasterrcnn_dataset
 from src.util import coco_eval, bbox2result_1image, results2json
+import src.config as cfg
 
 set_seed(1)
 
@@ -38,14 +37,29 @@ parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoi
 parser.add_argument("--device_target", type=str, default="Ascend",
                     help="device where the code will be implemented, default is Ascend")
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
+parser.add_argument("--backbone", type=str, required=True, \
+                    help="backbone network name, options:resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152")
 args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
 
+if args_opt.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
+    from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
+    if args_opt.backbone == "resnet_v1.5_50":
+        config = cfg.get_config("./src/config_50.yaml")
+    elif args_opt.backbone == "resnet_v1_101":
+        config = cfg.get_config("./src/config_101.yaml")
+    elif args_opt.backbone == "resnet_v1_152":
+        config = cfg.get_config("./src/config_152.yaml")
+
+elif args_opt.backbone == "resnet_v1_50":
+    config = cfg.get_config("./src/config_50.yaml")
+    from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
+
 def fasterrcnn_eval(dataset_path, ckpt_path, ann_file):
     """FasterRcnn evaluation."""
-    ds = create_fasterrcnn_dataset(dataset_path, batch_size=config.test_batch_size, is_training=False)
-    net = Faster_Rcnn_Resnet50(config)
+    ds = create_fasterrcnn_dataset(config, dataset_path, batch_size=config.test_batch_size, is_training=False)
+    net = Faster_Rcnn_Resnet(config)
     param_dict = load_checkpoint(ckpt_path)
     if args_opt.device_target == "GPU":
         for key, value in param_dict.items():
@@ -123,14 +137,14 @@ if __name__ == '__main__':
         if args_opt.dataset == "coco":
             if os.path.isdir(config.coco_root):
                 print("Create Mindrecord. It may take some time.")
-                data_to_mindrecord_byte_image("coco", False, prefix, file_num=1)
+                data_to_mindrecord_byte_image(config, "coco", False, prefix, file_num=1)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("coco_root not exits.")
         else:
             if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
                 print("Create Mindrecord. It may take some time.")
-                data_to_mindrecord_byte_image("other", False, prefix, file_num=1)
+                data_to_mindrecord_byte_image(config, "other", False, prefix, file_num=1)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
                 print("IMAGE_DIR or ANNO_PATH not exits.")
