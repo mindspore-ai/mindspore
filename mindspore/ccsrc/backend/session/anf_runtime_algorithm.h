@@ -288,9 +288,6 @@ class AnfRuntimeAlgorithm {
   // Calc tensor size in byte.
   template <typename T>
   static size_t TensorSizeInByte(const std::vector<size_t> &shape) {
-    if (shape.size() == 0) {
-      return 0;
-    }
     size_t result = sizeof(T);
     for (size_t i = 0; i < shape.size(); i++) {
       result *= shape[i];

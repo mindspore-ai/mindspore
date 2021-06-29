@@ -98,9 +98,6 @@ class GatherGradGpuKernel : public GpuKernel {
     return;
   }
   size_t GetSize(const std::vector<size_t> &shape, const bool flag = true) const {
-    if (shape.size() == 0) {
-      return 0;
-    }
     size_t result = flag ? sizeof(T) : sizeof(S);
     for (size_t i = 0; i < shape.size(); i++) {
       result *= shape[i];
