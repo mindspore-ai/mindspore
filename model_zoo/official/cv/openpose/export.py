@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """export"""
-
+import os
 import numpy as np
 from mindspore import Tensor
 from mindspore import context
@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target,
 
 
 def modelarts_pre_process():
-    pass
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
 
 @moxing_wrapper(pre_process=None)

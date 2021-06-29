@@ -13,24 +13,38 @@
 # limitations under the License.
 # ============================================================================
 """export script"""
-
+import os
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context, load_checkpoint, export
 from src.cnn_direction_model import CNNDirectionModel
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+
+
+def modelarts_pre_process():
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
 device_id = get_device_id()
 context.set_context(device_id=device_id)
 
-if __name__ == '__main__':
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def model_export():
     net = CNNDirectionModel([3, 64, 48, 48, 64], [64, 48, 48, 64, 64], [256, 64], [64, 512])
 
-    param_dict = load_checkpoint(config.ckpt_file, net=net)
+    load_checkpoint(config.ckpt_file, net=net)
     net.set_train(False)
 
     input_data = Tensor(np.zeros([1, 3, config.im_size_h, config.im_size_w]), ms.float32)
 
     export(net, input_data, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    model_export()

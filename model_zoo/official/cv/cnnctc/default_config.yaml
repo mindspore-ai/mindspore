@@ -12,10 +12,6 @@ device_target: "Ascend"
 enable_profiling: False
 
 # ======================================================================================
-# common options
-
-
-# ======================================================================================
 # Training options
 CHARACTER: "0123456789abcdefghijklmnopqrstuvwxyz"
 
@@ -73,4 +69,3 @@ enable_profiling: "Whether enable profiling while training default: False"
 file_name: "CNN&CTC output air name"
 file_format: "choices [AIR, MINDIR]"
 ckpt_file: "CNN&CTC ckpt file"
-

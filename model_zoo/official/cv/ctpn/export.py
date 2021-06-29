@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into air, onnx, mindir models"""
+import os
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
@@ -29,7 +30,7 @@ if config.device_target == "Ascend":
 
 
 def modelarts_pre_process():
-    pass
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)

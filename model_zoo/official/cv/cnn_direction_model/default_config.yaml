@@ -17,7 +17,6 @@ modelarts_dataset_unzip_name: "FSNS"
 # common options
 run_distribute: False
 
-
 # ======================================================================================
 # Training options
 
@@ -77,5 +76,3 @@ data_path: "The location of input data"
 output_pah: "The location of the output file"
 device_target: "device id of GPU or Ascend. (Default: None)"
 enable_profiling: "Whether enable profiling while training default: False"
-
-

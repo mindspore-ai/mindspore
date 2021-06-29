@@ -269,7 +269,7 @@ python export.py --ckpt [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_
 数据集存放方式同Modelart训练
 # (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
 #       a. 设置 "enable_modelarts=True"
-#          设置 "file_name=/cache/train/psenet"
+#          设置 "file_name=psenet"
 #          设置 "file_format=MINDIR"
 #          设置 "ckpt_file=/cache/data/checkpoint file name"
 

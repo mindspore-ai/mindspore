@@ -13,6 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """DSCNN export."""
+import os
 import numpy as np
 from mindspore import Tensor
 from mindspore.train.serialization import export
@@ -23,7 +24,7 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 def modelarts_pre_process():
-    pass
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
 
 @moxing_wrapper(pre_process=None)

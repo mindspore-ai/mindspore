@@ -398,6 +398,27 @@ python export.py --net [NET_NAME] --ckpt_file [CKPT_PATH] --device_target [DEVIC
 
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
 
+- 在modelarts上导出MindIR
+
+```Modelarts
+在ModelArts上导出MindIR示例
+数据集存放方式同Modelart训练
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "file_name=densenet121"
+#          设置 "file_format=MINDIR"
+#          设置 "ckpt_file=/cache/data/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in densenet121_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/densenet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../ImageNet_Original/eval/checkpoint"(选择ImageNet_Original/eval/checkpoint文件夹路径) ,
+# MindIR的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+```
+
 ## 推理过程
 
 ### 推理
