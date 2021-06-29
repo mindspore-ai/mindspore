@@ -42,6 +42,7 @@ if(ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/proto_exporter.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/tensor_summary.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/debugger/debugger_utils.cc"
         )
 endif()
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")

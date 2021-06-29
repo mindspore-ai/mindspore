@@ -236,9 +236,6 @@ bool Debugger::CheckDebuggerDumpEnabled() const {
   // see if dump is enabled
   if (device_target_ == kGPUDevice) {
     return device::KernelRuntime::DumpDataEnabled();
-  } else if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    auto &dump_json_parser = DumpJsonParser::GetInstance();
-    return dump_json_parser.e2e_dump_enabled();
   }
   return false;
 }
