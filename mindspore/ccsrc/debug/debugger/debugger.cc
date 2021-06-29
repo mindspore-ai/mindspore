@@ -35,7 +35,6 @@
 #include "utils/config_manager.h"
 #include "debug/env_config_parser.h"
 #include "utils/comm_manager.h"
-#include "runtime/framework/actor/actor_common.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "debug/anf_ir_dump.h"
 #ifdef ENABLE_DEBUGGER
@@ -237,7 +236,7 @@ bool Debugger::CheckDebuggerDumpEnabled() const {
   // see if dump is enabled
   if (device_target_ == kGPUDevice) {
     return device::KernelRuntime::DumpDataEnabled();
-  } else if (IsMindRTUsed()) {
+  } else if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     auto &dump_json_parser = DumpJsonParser::GetInstance();
     return dump_json_parser.e2e_dump_enabled();
   }
@@ -1292,7 +1291,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
     return;
   }
   // When MindRT is used, only ValueNodes and ParameterWeights can be loaded from device to host
-  if (IsMindRTUsed() && (device_target_ == kGPUDevice)) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) && (device_target_ == kGPUDevice)) {
     if (!anf_node->isa<ValueNode>() &&
         !(anf_node->isa<Parameter>() && AnfAlgo::IsParameterWeight(anf_node->cast<ParameterPtr>()))) {
       return;

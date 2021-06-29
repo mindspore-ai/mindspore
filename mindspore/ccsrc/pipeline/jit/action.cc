@@ -44,7 +44,6 @@
 #include "vm/transform.h"
 #include "parse/python_adapter.h"
 #include "frontend/optimizer/py_pass_manager.h"
-#include "runtime/framework/actor/actor_common.h"
 #if (ENABLE_CPU && !_WIN32)
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
@@ -565,7 +564,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
   }
 
   // The graph compiling of mindRT.
-  if ((backend == kMsConvert) && IsMindRTUsed()) {
+  if ((backend == kMsConvert) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     TaskEmitActionForMindRT(res);
     return true;
   }
@@ -595,7 +594,7 @@ bool ExecuteAction(const ResourcePtr &res) {
   std::string backend = MsContext::GetInstance()->backend_policy();
 
   // The graph running of mindRT.
-  if ((backend == kMsConvert) && IsMindRTUsed()) {
+  if ((backend == kMsConvert) && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     ExecuteActionForMindRT(res);
     return true;
   }

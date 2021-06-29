@@ -25,7 +25,7 @@
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
-#include "runtime/framework/actor/actor_common.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace profiler {
@@ -434,7 +434,7 @@ void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
   }
   SetRunTimeData(op_name, stream);
 
-  if (IsMindRTUsed()) RecordOneStepStartEndInfo(op_name);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) RecordOneStepStartEndInfo(op_name);
 }
 
 void GPUProfiler::OpDataProducerEnd() {

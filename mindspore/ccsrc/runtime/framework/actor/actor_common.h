@@ -70,9 +70,6 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node);
 bool IsGatherActor(const AnfNodePtr &front_node,
                    const std::unordered_map<std::string, OpActor<DeviceTensor> *> &actor_name_to_actor);
 }  // namespace runtime
-
-// Judge whether to use mindRT. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
-bool IsMindRTUsed();
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ACTOR_COMMON_H_

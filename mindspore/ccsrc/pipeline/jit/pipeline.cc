@@ -53,7 +53,6 @@
 #include "load_mindir/load_model.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "runtime/framework/actor/actor_common.h"
 #include "utils/crypto.h"
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -168,7 +167,7 @@ void SetGpuLoopSink(const ResourcePtr &resource) {
     auto manager = func_graph->manager();
     size_t graph_nums = manager->func_graphs().size();
     int64_t sinksize = ConfigManager::GetInstance().iter_num();
-    if (graph_nums == 1 || IsMindRTUsed()) {
+    if (graph_nums == 1 || MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
       resource->set_gpu_loopsink(true, sinksize);
     } else {
       resource->set_gpu_loopsink(false, sinksize);
@@ -633,7 +632,8 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 #endif
 
   if (use_vm && backend != "ge" && !is_air) {
-    // Create backend and session
+    compile::SetMindRTEnable();
+    // Create backend.
     auto backend_ptr = compile::CreateBackend();
     // Connect session to debugger
     backend_ptr->SetDebugger();
@@ -1115,10 +1115,11 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // Before the graph compiling, need reset the iter num.
   ConfigManager::GetInstance().ResetIterNum();
 
+  compile::SetMindRTEnable();
   auto backend = compile::CreateBackend();
   MS_EXCEPTION_IF_NULL(backend);
   // The data set graph compiling and running of mindRT.
-  if (IsMindRTUsed()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
     auto &actor_info = mindrt_backend->CompileGraphs(func_graph);

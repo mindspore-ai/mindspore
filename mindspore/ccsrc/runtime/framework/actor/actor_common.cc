@@ -109,8 +109,4 @@ bool IsGatherActor(const AnfNodePtr &front_node,
   return false;
 }
 }  // namespace runtime
-
-// Judge whether to use mindRT. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
-// Return false in the transitional stage.
-bool IsMindRTUsed() { return false; }
 }  // namespace mindspore

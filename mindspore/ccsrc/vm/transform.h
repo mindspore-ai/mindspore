@@ -134,6 +134,9 @@ class CompileGraphs {
 
 BackendPtr CreateBackend();
 
+// Set mindRT whether enable. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
+void SetMindRTEnable();
+
 }  // namespace compile
 }  // namespace mindspore
 
