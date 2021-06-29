@@ -7601,198 +7601,171 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Software: Pillow 7.1.2
+Software: Pillow 8.2.0
 Copyright notice:
-Copyright (c) 2014 Coriolis Systems Limited
-Copyright (c) Fredrik Lundh 1996.
-Copyright (c) 1994-1998 Sun Microsystems, Inc.
-Copyright (c) 1995-2002 by Fredrik Lundh.
-Copyright (c) 1997-2006 by Secret Labs AB
-Copyright (c) 2016 by Mickael Bonfill.
-Copyright (c) Eric Soroos 2016.
-COMMENT  Portions Copyright 1988 Digital Equipment Corporation COMMENT COMMENT  Adobe is a registered trademark of Adobe Systems, Inc.  Permission COMMENT  to use these trademarks is hereby granted only in association with the COMMENT  images described in this file.
-Copyright (c) 2009 Fredrik Lundh Updated to LCMS2
-Copyright (c) Secret Labs AB 1997-98.
-Copyright (c) 1995-2001 by Fredrik Lundh
-Copyright (c) 2004 by Fredrik Lundh.
-Copyright © 2016 Khaled Hosny <khaledhosny@eglug.org>
-Copyright (c) 1997-2006 by Secret Labs AB.
-Copyright (c) Secret Labs AB 1998
-Copyright (c) 1997-1998 by Fredrik Lundh
-Copyright (c) 2014 by Alastair Houghton
-Copyright (c) 2008 by Karsten Hiddemann.
-Copyright (c) 1997-2009 by Secret Labs AB.  All rights reserved.
-Copyright (C) 2002-2003 Kevin Cazabon\n\
-COMMENT  Copyright 1984, 1987 Adobe Systems, Inc.
-Copyright (c) 1995-1996 by Fredrik Lundh
-Copyright (c) 1997-2000 by Secret Labs AB
-Copyright (c) 2014 Alastair Houghton
-Copyright (c) 1996-1997 by Fredrik Lundh
-Copyright (c) 2012 by Brian Crowell
-Copyright (c) 1998-2007 by Secret Labs AB
-"productcopyright", "Copyright International Color Consortium, 2009"
-Copyright (c) Secret Labs AB 1997-2002.  All rights reserved.
 Copyright (c) 2001-2004 by Fredrik Lundh
-Copyright (c) 1998-2003 by Secret Labs AB.
-Copyright (c) Fredrik Lundh 1999.
-Copyright (c) 1998 by Secret Labs AB
-Copyright (c) 1997 by Secret Labs AB.
-If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-Copyright (c) 1997-2002 by Secret Labs AB.
-Copyright (c) Secret Labs AB 1997.
-Copyright (c) 1998-2004 by Secret Labs AB.  All rights reserved.
-Copyright (c) 2013 by Eric Soroos
-Copyright (c) Secret Labs AB 1999.
-Copyright (c) Eric Soroos 2017.
-Copyright (c) 1997-2004 by Secret Labs AB
-Copyright (c) 2006 by Secret Labs AB
-Copyright (c) Mickael Bonfill 2017.
-Copyright (c) 2002 by Secret Labs AB
-assert p.copyright == "Copyright International Color Consortium, 2009"
-Copyright (c) 1995-2001 by Fredrik Lundh.
-Copyright (c) 1993-1996 Lucent Technologies.
-Copyright (c) 1995-1997 by Fredrik Lundh.
-Copyright (c) 2009 by Fredrik Lundh
-Copyright (c) 1997 by Fredrik Lundh.
-Copyright (c) 1996-2006 by Fredrik Lundh
-Copyright (c) Secret Labs AB 2008.
+Copyright (c) 1997-2001 by Secret Labs AB
+Copyright (c) Fredrik Lundh 1996-2003.
 Copyright (c) 2004 by Secret Labs.
-Copyright (c) 1998-2000 Secret Labs AB
-Copyright (c) 2006 by Secret Labs AB.
+Copyright (c) Fredrik Lundh 1999.
+Copyright (c) 2016 Marcin Kurczewski <rr-@sakuya.pl>
+Copyright (c) Secret Labs AB 1997-2004.  All rights reserved.
+Copyright (c) 1997-99 by Secret Labs AB.
 Copyright (c) 2014 by Coriolis Systems Limited
-Copyright (c) 1998-2003 by Fredrik Lundh
-Copyright (c) 1995 by Fredrik Lundh.
-Copyright (c) Fredrik Lundh 1994.
-Copyright (c) 2010 Oliver Tonnhofer <olt@bogosoft.com>, Omniscale
-Copyright (c) 1995-2003 by Fredrik Lundh
-Copyright (c) 1997-2005 by Fredrik Lundh
-Copyright (c) Secret Labs AB 1997-2003.
-copyright = "1995-2011 Fredrik Lundh, 2010-2020 Alex Clark and Contributors"
-Copyright (c) 1996-2004 by Fredrik Lundh.
+Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc.
+Copyright (c) 2001-2002 by Secret Labs AB
+Copyright (c) 1995-2004 by Fredrik Lundh.
+Copyright (c) 1996 by Fredrik Lundh.
+Copyright (c) Secret Labs AB 1997-2005.  All rights reserved.
+Copyright (c) Fredrik Lundh 1995.
 COPYRIGHT "Copyright (c) 1987 Adobe Systems, Inc., Portions Copyright 1988 Digital Equipment Corp."
+Copyright (c) 1997-2006 by Secret Labs AB.
+Copyright (c) 1997-2004 by Secret Labs AB.  All rights reserved.
+Copyright (c) 1996-1997 by Fredrik Lundh.
+Copyright (c) 1997-2005 by Secret Labs AB
+Copyright (c) Secret Labs AB 1997-98.
+Copyright (c) 1996-2000 Fredrik Lundh
+Copyright (c) 2008 by Karsten Hiddemann.
+Copyright (c) 1995-2003 by Fredrik Lundh
+Copyright (c) 1996-2006 by Fredrik Lundh
+Copyright (c) Fredrik Lundh 1997-2004.
+Copyright (C) 2002-2003 Kevin Cazabon
+Copyright (c) 1997-2003 by Secret Labs AB.
+Copyright (c) 1998-2005 by Secret Labs AB
+Copyright (c) 2014 Coriolis Systems Limited
+Copyright (c) 1995 by Fredrik Lundh.
+Copyright (c) 1997 by Fredrik Lundh.
+Copyright (c) 2002 by Secret Labs AB
+Copyright (c) 1997-2009 by Secret Labs AB.  All rights reserved.
+== "Copyright International Color Consortium, 2009"
+Copyright 2020 Google LLC
+Copyright (c) Fredrik Lundh 1995-97.
+Copyright (c) Secret Labs AB 1997-2002.  All rights reserved.
+Copyright (c) 1997-2002 by Secret Labs AB.
+Copyright (c) 1993-1996 Lucent Technologies.
+Copyright (c) Secret Labs AB 1997-2001.
+Copyright (c) 2004 by Fredrik Lundh.
+Copyright (c) 1995-2001 by Secret Labs AB
+Copyright (c) 2003-2005 by Secret Labs AB
+Copyright (c) Fredrik Lundh 2009.
+Copyright (C) 2020 Free Software Foundation, Inc.
+Copyright (c) 1997-2003 by Secret Labs AB
+Copyright (c) Fredrik Lundh 1997.
+Copyright (c) 2014 by Alastair Houghton
+Copyright (C) 2002-2003 Kevin Cazabon\n\
+Copyright (c) 2002-2004 by Fredrik Lundh
+Copyright (c) 1997-98 by Secret Labs AB.
+Copyright (c) 1996-1997 by Fredrik Lundh
+Copyright (c) Secret Labs AB 2002-2004.  All rights reserved.
+Copyright (c) 1995-2009 by Fredrik Lundh.
+Copyright © 2015 Information Technology Authority (ITA) <foss@ita.gov.om>
+Copyright (c) 1997-2001 by Secret Labs AB.
+Copyright © 1995-2011 by Fredrik Lundh
+==51890== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+Copyright (c) 1998-2000 by Scriptics Corporation.
+Copyright (c) 2002 by Kevin B. Kenny.  All rights reserved.
+Copyright (c) 2004 by Health Research Inc. (HRI) RENSSELAER, NY 12144.
+"Copyright International Color Consortium, 2009",
+Copyright © 1997-2011 by Secret Labs AB
+Copyright (c) 1998-2004 by Secret Labs AB.  All rights reserved.
+Copyright (c) 2004 by Bob Ippolito.
+Copyright (c) 1998 by Secret Labs AB
+Copyright © 2016 Khaled Hosny <khaledhosny@eglug.org>
+Copyright (c) 1995-2002 by Fredrik Lundh.
+Copyright (c) 2006 by Fredrik Lundh
+Copyright (c) 1997-1998 by Secret Labs AB
+Copyright (c) 2003-2005 by Fredrik Lundh
+Copyright (c) 1997-2005 by Secret Labs AB.
+Copyright (c) 1995-1997 by Fredrik Lundh
+Copyright (c) 2005 by Fredrik Lundh
+Copyright (c) 2003 by Fredrik Lundh.
+Copyright (c) 1995-2003 by Fredrik Lundh.
+Copyright (c) 1995-2006 by Fredrik Lundh
+Copyright (c) Eric Soroos 2017.
+Copyright (c) 2013 Eric Soroos
+Copyright (c) Mickael Bonfill 2017.
+Copyright (c) 1997-1998 by Fredrik Lundh
+Copyright (c) 1996 by Fredrik Lundh
+Copyright (c) 2006 by Secret Labs AB.
+Copyright (c) 1998 by Toby J Sergeant
+Copyright (c) 1995-2001 by Fredrik Lundh.
+Copyright (c) Secret Labs AB 2002.  All rights reserved.
+Copyright © 2010-2021 by Alex Clark and contributors
+Copyright (c) 1998-2000 Secret Labs AB
+Copyright (c) 1997-2004 by Secret Labs AB.
+Copyright (c) 2003 by Secret Labs AB
+Copyright (c) 1999 by Secret Labs AB.
+Copyright (c) 1997-2004 by Secret Labs AB
+Copyright (c) 1995-1997 by Fredrik Lundh.
+Copyright (c) 2000-2003 by Fredrik Lundh
+Copyright (c) 2012 by Brian Crowell
+Copyright (c) 1999-2005 by Secret Labs AB
+Copyright (c) Fredrik Lundh 1995-2003.
+Copyright (c) 1997 by Secret Labs AB.
+Copyright (c) 1995-2005 by Fredrik Lundh
+Copyright © 2011  Google, Inc.
+Copyright (c) Secret Labs AB 1999.
+Copyright (c) Eric Soroos 2016.
+Copyright (c) 2001-2004 by Secret Labs AB
+Copyright (c) 1995-1996 by Fredrik Lundh
+Copyright (c) 1995-1996 by Fredrik Lundh.
+Copyright (c) Secret Labs AB 1997-99.
+Copyright (C) 2002-2003 Kevin Cazabon kevin@cazabon.com Adapted/reworked for PIL by Fredrik Lundh
+Copyright (c) Secret Labs AB 1998
+Copyright (c) 1997-2005 by Fredrik Lundh
+Copyright (c) Fredrik Lundh 1995-1997.
+assert p.copyright == "Copyright International Color Consortium, 2009"
+Copyright (c) 1998-2003 by Fredrik Lundh
+Copyright (c) 1995-2001 by Fredrik Lundh
+Copyright (c) Secret Labs AB 1997-2002.
+Copyright (c) Fredrik Lundh 1994.
+Copyright (c) 1995-96 by Fredrik Lundh.
+Copyright (c) 1996-2004 by Fredrik Lundh.
+Copyright (c) 1997-2006 by Secret Labs AB
+Copyright (c) 1987-1994 The Regents of the University of California.
+Copyright (c) 1994-1998 Sun Microsystems, Inc.
+Copyright (c) 1997-2009 by Secret Labs AB
+Copyright (c) 2002 by Fredrik Lundh
+Copyright (c) 2009 Fredrik Lundh Updated to LCMS2
+Copyright (c) 2006 by Secret Labs AB
+Copyright (c) 1997-2005 by Secret Labs AB.  All rights reserved.
+Copyright (c) Secret Labs AB 1997.
+Copyright (c) 1996-2003 by Fredrik Lundh
+Copyright (c) Fredrik Lundh 1996.
+Copyright (c) 1997-2003 by Fredrik Lundh.
+Copyright (c) 2014 Alastair Houghton
+Copyright (c) 1998-2003 by Secret Labs AB.
+Copyright (c) 2004 by William Baxter.
+Copyright (c) 1997-2000 by Secret Labs AB
+Copyright (c) 2001-2002 by Fredrik Lundh
+Copyright (c) 1996-2000 by Fredrik Lundh
+Copyright (c) 2016 by Mickael Bonfill.
+Copyright (c) 2006 by Fredrik Lundh.
+Copyright (c) 2009 by Fredrik Lundh
+Copyright (c) Secret Labs AB 1997-98.  All rights reserved.
+COMMENT  Copyright 1984, 1987 Adobe Systems, Inc.
+Copyright (c) 2013 by Eric Soroos
+Copyright (c) 1997-1999 by Secret Labs AB
+Copyright (c) Secret Labs AB 2008.
+By Kevin Cazabon, copyright 2003 kevincazabon@hotmail.com kevin@cazabon.com /
 Copyright (c) 2014 by Alastair Houghton.
 Copyright (c) 2002-2004 by Secret Labs AB
-Copyright (c) 1996-2000 by Fredrik Lundh
-Copyright (c) 2006 by Fredrik Lundh
-Copyright (c) Secret Labs AB 1997-2002.
-Copyright (c) 1996-1997 by Fredrik Lundh.
-Copyright (c) 1997-2005 by Secret Labs AB.  All rights reserved.
-Copyright (c) 2001-2002 by Secret Labs AB
-Copyright (c) 1998-2000 by Scriptics Corporation.
-Copyright (c) Secret Labs AB 2002-2004.  All rights reserved.
-Copyright (c) 2001-2004 by Secret Labs AB
-Copyright (c) 2002-2004 by Fredrik Lundh
-Copyright (c) Fredrik Lundh 1995-96.
-Copyright (c) 1997-2003 by Secret Labs AB.
-Copyright © 1997-2011 by Secret Labs AB
-Copyright © 2010-2020 by Alex Clark and contributors
-Copyright (c) Fredrik Lundh 1997.
-Copyright (c) 2005 by Fredrik Lundh
-Copyright (c) 2000-2003 by Fredrik Lundh
-Copyright © 2015 Information Technology Authority (ITA) <foss@ita.gov.om>
-Copyright (C) 2002-2003 Kevin Cazabon kevin@cazabon.com http:www.cazabon.com
-Copyright (C) 2002-2003 Kevin Cazabon
-Copyright (c) 2016 Marcin Kurczewski <rr-@sakuya.pl>
-Copyright (c) 2013 Eric Soroos
-Copyright (c) 1998 by Toby J Sergeant
-Copyright (c) 1995-2009 by Fredrik Lundh.
-Copyright (c) 1995-96 by Fredrik Lundh.
-Copyright (c) 1995-2005 by Fredrik Lundh
-Copyright (c) 1995-2004 by Fredrik Lundh
-Copyright (c) 1997-2004 by Secret Labs AB.  All rights reserved.
-Copyright (C) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
-Copyright (c) 1996 by Fredrik Lundh
-Copyright (c) 1997-2003 by Secret Labs AB
-Copyright (c) 2001-2002 by Fredrik Lundh
-Copyright (c) 1997-2009 by Secret Labs AB
-Copyright (c) 1997-2005 by Secret Labs AB.
-By Kevin Cazabon, copyright 2003 kevincazabon@hotmail.com kevin@cazabon.com /
-Copyright (c) 1996-2000 Fredrik Lundh
-Copyright (c) 1997-1999 by Secret Labs AB
-Copyright (c) 2004 by William Baxter.
-Copyright (c) 2004 by Bob Ippolito.
-Copyright (c) Fredrik Lundh 2009.
-Copyright (c) 1999 by Secret Labs AB.
-Copyright (c) 1995-2006 by Fredrik Lundh
-"Copyright International Color Consortium, 2009",
-Copyright (c) Secret Labs AB 1997-98.  All rights reserved.
-Copyright (c) 1997-2006 by Secret Labs AB.  All rights reserved.
-Copyright (c) 2003 by Fredrik Lundh.
-Copyright (c) 1995-1997 by Fredrik Lundh
-Copyright (c) Fredrik Lundh 1995-2003.
-Copyright (c) 1995-2001 by Secret Labs AB
-Copyright (c) Secret Labs AB 1997-2004.  All rights reserved.
 Copyright (c) Fredrik Lundh 1996-2001.
-Copyright (c) Fredrik Lundh 1995-97.
-Copyright (c) 2002 by Fredrik Lundh
-Copyright (c) 2004 by Secret Labs AB.
-Copyright (c) 1997-2005 by Secret Labs AB
-Copyright (c) 1997-2004 by Secret Labs AB.
-Copyright (c) 1999-2005 by Secret Labs AB
-Copyright (C) 2002-2003 Kevin Cazabon kevin@cazabon.com Adapted/reworked for PIL by Fredrik Lundh
-Copyright (c) Fredrik Lundh 1997-2004.
-Copyright (c) Secret Labs AB 1997-2005.  All rights reserved.
-Copyright (c) 2003 by Secret Labs AB
-Copyright (c) 1995-1996 by Fredrik Lundh.
-Copyright (c) Fredrik Lundh 1996-2003.
-Copyright (c) Secret Labs AB 1997-2001.
-Copyright (c) 1997-1998 by Secret Labs AB
-Copyright (c) 1997-2001 by Secret Labs AB
-Copyright (c) 1995-2004 by Fredrik Lundh.
-Copyright (c) 1997-2003 by Fredrik Lundh.
-Copyright (c) 2003-2005 by Secret Labs AB
-== "Copyright International Color Consortium, 2009"
-Copyright (c) Fredrik Lundh 1995.
-Copyright (c) 2003-2005 by Fredrik Lundh
-Copyright (c) 1998-2005 by Secret Labs AB
-Copyright (c) Fredrik Lundh 1996-97.
-Copyright (c) 1997-98 by Secret Labs AB.
-Copyright © 1995-2011 by Fredrik Lundh
-Copyright (c) Fredrik Lundh 1995-1997.
-Copyright (c) 2002 by Kevin B. Kenny.  All rights reserved.
-Copyright (c) 1997-2001 by Secret Labs AB.
-Copyright (c) 1995-2003 by Fredrik Lundh.
-Copyright (c) 1997-99 by Secret Labs AB.
-Copyright (c) 1987-1994 The Regents of the University of California.
-Copyright (c) Secret Labs AB 1997-99.
-Copyright (c) 2006 by Fredrik Lundh.
 Copyright (c) 1995 by Fredrik Lundh
-Copyright (c) Secret Labs AB 2002.  All rights reserved.
-Copyright (c) 2004 by Health Research Inc. (HRI) RENSSELAER, NY 12144.
-Copyright (c) 1996 by Fredrik Lundh.
+Copyright (c) Secret Labs AB 1997-2003.
+Copyright (c) 2006 by Tavmjong Bah. All Rights Reserved.
+Copyright (c) 1995-2004 by Fredrik Lundh
+Copyright (C) 2002-2003 Kevin Cazabon kevin@cazabon.com http:www.cazabon.com
 Copyright (c) 2014 Dov Grobgeld <dov.grobgeld@gmail.com>
-Copyright (c) 1996-2003 by Fredrik Lundh
-
-The Python Imaging Library (PIL) is
-
-    Copyright © 1997-2011 by Secret Labs AB
-    Copyright © 1995-2011 by Fredrik Lundh
-
-Pillow is the friendly PIL fork. It is
-
-    Copyright © 2010-2020 by Alex Clark and contributors
-
-Like PIL, Pillow is licensed under the open source PIL Software License:
-
-By obtaining, using, and/or copying this software and/or its associated
-documentation, you agree that you have read, understood, and will comply
-with the following terms and conditions:
-
-Permission to use, copy, modify, and distribute this software and its
-associated documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appears in all copies, and that
-both that copyright notice and this permission notice appear in supporting
-documentation, and that the name of Secret Labs AB or the author not be
-used in advertising or publicity pertaining to distribution of the software
-without specific, written prior permission.
-
-SECRET LABS AB AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
-IN NO EVENT SHALL SECRET LABS AB OR THE AUTHOR BE LIABLE FOR ANY SPECIAL,
-INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
+Copyright (c) 1998-2007 by Secret Labs AB
+Copyright (c) Fredrik Lundh 1995-96.
+Copyright (c) Fredrik Lundh 1996-97.
+Copyright (c) 2010 Oliver Tonnhofer <olt@bogosoft.com>, Omniscale
+Copyright (c) 1997-2006 by Secret Labs AB.  All rights reserved.
+copyright = "1995-2011 Fredrik Lundh, 2010-2021 Alex Clark and Contributors"
+Copyright (c) 2004 by Secret Labs AB.
+COMMENT  Portions Copyright 1988 Digital Equipment Corporation COMMENT COMMENT  Adobe is a registered trademark of Adobe Systems, Inc.  Permission COMMENT  to use these trademarks is hereby granted only in association with the COMMENT  images described in this file.
+If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 
 Software: Python 3.7.5
 Copyright notice:
