@@ -18,6 +18,9 @@
 #ifdef ENABLE_SSE
 #include <x86intrin.h>
 #endif
+#ifdef ENABLE_ARM64
+#include <arm_neon.h>
+#endif
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; ++r) {
     for (int c = 0; c < col; ++c) {
@@ -881,6 +884,100 @@ void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, 
   }
 }
 #endif
+
+#ifdef ENABLE_ARM64
+// 4x8
+void MatVecMulFp32Neon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col,
+                         int align_col) {
+  int ci = 0;
+  for (; ci < align_col - C8NUM + 1; ci += C8NUM) {
+    float32x4_t acc_0;
+    float32x4_t acc_1;
+    if (bias != NULL) {
+      acc_0 = vld1q_f32(bias + ci);
+      acc_1 = vld1q_f32(bias + ci + C4NUM);
+    } else {
+      acc_0 = vdupq_n_f32(0.0f);
+      acc_1 = vdupq_n_f32(0.0f);
+    }
+    const float *bv_base = b + ci * depth;
+    int di = 0;
+    for (; di < depth - C4NUM + 1; di += C4NUM) {
+      float32x4_t av = vld1q_f32(a + di);
+      float32x4_t bv_00 = vld1q_f32(bv_base);
+      float32x4_t bv_10 = vld1q_f32(bv_base + C4NUM);
+      bv_base += C8NUM;
+      float32x4_t bv_01 = vld1q_f32(bv_base);
+      float32x4_t bv_11 = vld1q_f32(bv_base + C4NUM);
+      bv_base += C8NUM;
+      float32x4_t bv_02 = vld1q_f32(bv_base);
+      float32x4_t bv_12 = vld1q_f32(bv_base + C4NUM);
+      bv_base += C8NUM;
+      float32x4_t bv_03 = vld1q_f32(bv_base);
+      float32x4_t bv_13 = vld1q_f32(bv_base + C4NUM);
+      bv_base += C8NUM;
+      acc_0 = vmlaq_n_f32(acc_0, bv_00, av[0]);
+      acc_1 = vmlaq_n_f32(acc_1, bv_10, av[0]);
+      acc_0 = vmlaq_n_f32(acc_0, bv_01, av[1]);
+      acc_1 = vmlaq_n_f32(acc_1, bv_11, av[1]);
+      acc_0 = vmlaq_n_f32(acc_0, bv_02, av[2]);
+      acc_1 = vmlaq_n_f32(acc_1, bv_12, av[2]);
+      acc_0 = vmlaq_n_f32(acc_0, bv_03, av[3]);
+      acc_1 = vmlaq_n_f32(acc_1, bv_13, av[3]);
+    }
+    if (di < depth) {
+      for (; di < depth; ++di) {
+        float ai = a[di];
+        float32x4_t bv0 = vld1q_f32(bv_base);
+        float32x4_t bv1 = vld1q_f32(bv_base + C4NUM);
+        acc_0 = vmlaq_n_f32(acc_0, bv0, ai);
+        acc_1 = vmlaq_n_f32(acc_1, bv1, ai);
+        bv_base += C8NUM;
+      }
+    }  // only save actual col num data
+    if (ci + C4NUM - 1 >= col) {
+      int c_remain = col - ci;
+      for (int i = 0; i < c_remain; ++i) {
+        if (act_type == ActType_Relu) {
+          c[i] = MSMAX(acc_0[i], 0.0f);
+        } else if (act_type == ActType_Relu6) {
+          c[i] = MSMIN(MSMAX(acc_0[i], 0.0f), 6.0f);
+        } else {
+          c[i] = acc_0[i];
+        }
+      }
+      return;
+    }
+    if (act_type == ActType_Relu) {
+      acc_0 = vmaxq_f32(acc_0, vdupq_n_f32(0.0f));
+    } else if (act_type == ActType_Relu6) {
+      acc_0 = vminq_f32(vmaxq_f32(acc_0, vdupq_n_f32(0.0f)), vdupq_n_f32(6.0f));
+    }
+    vst1q_f32(c, acc_0);
+    if (ci + C8NUM - 1 >= col) {
+      int c_remain = col - ci;
+      for (int i = 0; i < c_remain; ++i) {
+        if (act_type == ActType_Relu) {
+          c[C4NUM + i] = MSMAX(acc_1[i], 0.0f);
+        } else if (act_type == ActType_Relu6) {
+          c[C4NUM + i] = MSMIN(MSMAX(acc_1[i], 0.0f), 6.0f);
+        } else {
+          c[C4NUM + i] = acc_1[i];
+        }
+      }
+      return;
+    }
+    if (act_type == ActType_Relu) {
+      acc_1 = vmaxq_f32(acc_1, vdupq_n_f32(0.0f));
+    } else if (act_type == ActType_Relu6) {
+      acc_1 = vminq_f32(vmaxq_f32(acc_1, vdupq_n_f32(0.0f)), vdupq_n_f32(6.0f));
+    }
+    vst1q_f32(c + C4NUM, acc_1);
+    c += C8NUM;
+  }
+}
+#endif
+
 void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
                 int col, int stride, int out_type) {
   if (out_type == OutType_Nhwc) {

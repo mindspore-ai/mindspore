@@ -53,12 +53,17 @@ void MatmulFp32BaseCPUKernel::ResizeParameter() {
 #ifdef ENABLE_AVX
     // vector matmul col is aligned to C8NUM in avx
     col_tile_ = C8NUM;
+#elif defined(ENABLE_ARM64)
+    col_tile_ = C8NUM;
 #endif
     row_tile_ = 1;
   }
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
 #ifdef ENABLE_AVX
   // avx is aligned to col_tile_
+  params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
+#elif defined(ENABLE_ARM64)
+  // no matter vec_matmul_ or not, use col_tile_ to get col_align_
   params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
 #else
   params_->col_align_ = vec_matmul_ ? params_->col_ : UP_ROUND(params_->col_, col_tile_);
@@ -170,12 +175,16 @@ int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
       if (params_->b_transpose_) {
 #ifdef ENABLE_AVX
         RowMajor2Col32Major(src_data, dst, params_->deep_, params_->col_);
+#elif defined(ENABLE_ARM64)
+        RowMajor2Col8Major(src_data, dst, params_->col_, params_->deep_);
 #else
         memcpy(dst, src_data, params_->col_ * params_->deep_ * sizeof(float));
 #endif
       } else {
 #ifdef ENABLE_AVX
         RowMajor2Row32Major(src_data, dst, params_->col_, params_->deep_);
+#elif defined(ENABLE_ARM64)
+        RowMajor2Row8Major(src_data, dst, params_->deep_, params_->col_);
 #else
         RowMajor2ColMajor(src_data, dst, params_->deep_, params_->col_);
 #endif
@@ -248,6 +257,8 @@ int MatmulFp32BaseCPUKernel::FloatRun(int task_id) {
   if (vec_matmul_) {
 #ifdef ENABLE_AVX
     MatVecMulAvxFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
+#elif defined(ENABLE_ARM64)
+    MatVecMulFp32Neon64(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
 #else
     MatVecMulFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
 #endif

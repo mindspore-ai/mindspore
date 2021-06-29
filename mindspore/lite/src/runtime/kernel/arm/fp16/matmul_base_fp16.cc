@@ -100,9 +100,18 @@ int MatmulBaseFP16CPUKernel::ReSize() {
     free(src_b_);
     src_b_ = nullptr;
   }
-
-  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C8NUM));
-  thread_stride_ = UP_DIV(UP_DIV(params_->col_, C8NUM), thread_count_) * C8NUM;
+  if (vec_matmul_) {
+#ifdef ENABLE_ARM64
+    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C16NUM));
+    thread_stride_ = UP_DIV(UP_DIV(params_->col_, C16NUM), thread_count_) * C16NUM;
+#else
+    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C8NUM));
+    thread_stride_ = UP_DIV(UP_DIV(params_->col_, C8NUM), thread_count_) * C8NUM;
+#endif
+  } else {
+    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C8NUM));
+    thread_stride_ = UP_DIV(UP_DIV(params_->col_, C8NUM), thread_count_) * C8NUM;
+  }
   return RET_OK;
 }
 
@@ -113,7 +122,11 @@ void MatmulBaseFP16CPUKernel::ResizeParameter() {
 
   if (vec_matmul_) {
     params_->row_align_ = 1;
+#ifdef ENABLE_ARM64
+    params_->col_align_ = UP_ROUND(params_->col_, C16NUM);
+#else
     params_->col_align_ = params_->col_;
+#endif
   } else {
     params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
     params_->col_align_ = UP_ROUND(params_->col_, C8NUM);
@@ -188,13 +201,27 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(void *src_ptr, TypeId src_data_type) {
         Float32ToFloat16(reinterpret_cast<float *>(src_ptr), b_pack_ptr_,
                          params_->batch * params_->col_ * params_->deep_);
       } else {
+#ifdef ENABLE_ARM64
+        for (auto i = 0; i < params_->batch; ++i) {
+          const auto *b_src = reinterpret_cast<float16_t *>(src_ptr) + i * params_->col_align_ * params_->deep_;
+          auto *dst = b_pack_ptr_ + i * params_->col_align_ * params_->deep_;
+          RowMajor2Col16MajorFp16Opt(b_src, dst, params_->col_align_, params_->deep_);
+        }
+#else
         memcpy(b_pack_ptr_, src_ptr, params_->batch * params_->col_ * params_->deep_ * sizeof(float16_t));
+#endif
       }
     } else {
       for (int i = 0; i < params_->batch; i++) {
+#ifdef ENABLE_ARM64
+        const auto *b_src = reinterpret_cast<float16_t *>(src_ptr) + i * params_->col_align_ * params_->deep_;
+        auto *dst = b_pack_ptr_ + i * params_->col_align_ * params_->deep_;
+        RowMajor2Row16MajorFp16Opt(b_src, dst, params_->deep_, params_->col_);
+#else
         const int8_t *batch_src = int8_src + i * params_->deep_ * params_->col_ * lite::DataTypeSize(src_data_type);
         float16_t *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_;
         RowMajor2ColMajorFp16(batch_src, dst, params_->deep_, params_->col_, src_data_type == kNumberTypeFloat32);
+#endif
       }
     }
     return;
@@ -210,7 +237,7 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(void *src_ptr, TypeId src_data_type) {
     }
   }
   return;
-}
+}  // namespace mindspore::kernel
 
 int MatmulBaseFP16CPUKernel::Init() {
   ResizeParameter();
@@ -259,7 +286,11 @@ int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {
   auto c = batch_c_ptr_ + task_id * thread_stride_;
 
   if (vec_matmul_) {
+#ifdef ENABLE_ARM64
+    VecMatmulFp16(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
+#else
     MatVecMulFp16(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
+#endif
   } else {
     MatMulFp16(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, params_->row_, cur_oc, params_->col_,
                OutType_Nhwc);
@@ -288,7 +319,11 @@ int MatmulBaseFP16CPUKernel::Run() {
   for (int i = 0; i < params_->batch; ++i) {
     if (vec_matmul_) {
       batch_a_ptr_ = a_pack_ptr_ + i * params_->deep_;
+#ifdef ENABLE_ARM64
+      batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
+#else
       batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_;
+#endif
       batch_c_ptr_ = c_ptr + i * params_->row_ * params_->col_;
     } else {
       batch_a_ptr_ = a_pack_ptr_ + i * params_->row_align_ * params_->deep_;
