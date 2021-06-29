@@ -26,4 +26,9 @@ if(ENABLE_GE OR ENABLE_D)
     list(APPEND _PIPELINE_SRC_FILES ${_PIPELINE_GE_SRC_FILES})
 endif()
 
+if("${ENABLE_HIDDEN}" STREQUAL "OFF")
+    string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+
 add_library(_mindspore_pipeline_jit_obj OBJECT ${_PIPELINE_SRC_FILES})
