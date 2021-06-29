@@ -31,6 +31,7 @@
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "ir/anf.h"
+#include "ir/graph_utils.h"
 #include "base/core_ops.h"
 #include "utils/comm_manager.h"
 #include "utils/ms_context.h"
@@ -86,11 +87,47 @@ ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micr
   return MakeValue(micro);
 }
 
+bool PipelineTransformer::NeedGrad(const CNodePtr &cnode) {
+  for (auto &input : cnode->inputs()) {
+    if (input->isa<Parameter>() && ParameterRequireGrad(input)) {
+      return true;
+    }
+    if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
+      auto load = input->cast<CNodePtr>();
+      if (load->input(1)->isa<Parameter>() && ParameterRequireGrad(load->input(1))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph) {
+  auto orders = graph->GetOrderedCnodes();
+  for (auto &node : orders) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (IsValueNode<FuncGraph>(cnode->input(0))) {
+      auto sub_graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+      return LabelParameterStart(sub_graph);
+    }
+    if (!IsPipelineCareNode(cnode)) {
+      continue;
+    }
+    if (NeedGrad(cnode)) {
+      auto prim = GetCNodePrimitive(cnode);
+      prim->AddAttr(PARAMETER_START, MakeValue(0));
+      return;
+    }
+  }
+}
+
 void PipelineTransformer::LabelMicroBatch() {
   if (!root_->has_flag(TRAINING)) {
     return;
   }
   MS_EXCEPTION_IF_NULL(main_graph_);
+  LabelParameterStart(main_graph_);
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
   auto node_users = node_user_map[virtual_dataset_];

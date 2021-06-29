@@ -442,6 +442,21 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
   }
 }
 
+ValuePtr Micro(const CNodePtr &cnode, NodeUsersMap *node_users_map) {
+  if (cnode->HasPrimalAttr(MICRO)) {
+    return cnode->GetPrimalAttr(MICRO);
+  }
+  auto node_users = (*node_users_map)[cnode];
+  for (auto &node_pair : node_users) {
+    auto user_node = node_pair.first->cast<CNodePtr>();
+    auto micro = Micro(user_node, node_users_map);
+    if (micro) {
+      return micro;
+    }
+  }
+  return nullptr;
+}
+
 void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager) {
   auto node_users_map = manager->node_users();
   for (auto &node : all_nodes) {
@@ -449,18 +464,16 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (!cnode->HasPrimalAttr(MICRO)) {
-      continue;
-    }
-    auto micro = cnode->GetPrimalAttr(MICRO);
     auto prim = GetCNodePrimitive(node);
     if (prim && prim->HasAttr(PARAMETER_START)) {
+      auto micro = Micro(cnode, &node_users_map);
       OperatorAttrs attrs_;
       auto op = CreatOpInstance(attrs_, prim->name(), "");
       auto value_node = NewValueNode(op);
       auto new_prim = GetValueNode(value_node)->cast<PrimitivePtr>();
       new_prim->SetAttrs(prim->attrs());
       manager->SetEdge(cnode, 0, value_node);
+      cnode->AddPrimalAttr(MICRO, micro);
       cnode->AddPrimalAttr(PARAMETER_START, micro);
     }
   }
