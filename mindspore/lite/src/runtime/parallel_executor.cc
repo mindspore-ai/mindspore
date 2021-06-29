@@ -23,7 +23,7 @@ ParallelExecutor::~ParallelExecutor() { delete thread_pool_; }
 int ParallelExecutor::Prepare(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
                               const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
                               const lite::InnerContext *ctx) {
-  thread_pool_ = ActorThreadPool::CreateThreadPool(1, max_thread_num_, KThreadSpin);
+  thread_pool_ = ActorThreadPool::CreateThreadPool(1, max_thread_num_, kThreadSpin);
   if (thread_pool_ == nullptr) {
     MS_LOG(ERROR) << "Memory error: fail to new ThreadPool";
     return RET_ERROR;
