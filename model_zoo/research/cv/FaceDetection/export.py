@@ -22,8 +22,16 @@ from mindspore.train.serialization import export, load_checkpoint, load_param_in
 from src.network_define import BuildTestNetwork
 from src.FaceDetection.yolov3 import HwYolov3 as backbone_HwYolov3
 from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 
-def save_air():
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
     '''save air or mindir'''
     anchors = config.anchors
     reduction_0 = 64.0
@@ -62,4 +70,4 @@ def save_air():
 
 
 if __name__ == "__main__":
-    save_air()
+    run_export()

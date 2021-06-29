@@ -129,6 +129,22 @@ If you want to run in modelarts, please check the official documentation of [mod
 # (4) Set the startup file to "eval.py" on the website UI interface.
 # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
 # (6) Create your job.
+
+# run export on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "file_name='ncf'" on default_config.yaml file.
+#          Set "file_format='MINDIR'" on default_config.yaml file.
+#          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on default_config.yaml file.
+#       b. Add "file_name='ncf'" on the website UI interface.
+#          Add "file_format='MINDIR'" on the website UI interface.
+#          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the code directory to "/path/ncf" on the website UI interface.
+# (4) Set the startup file to "export.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
 ```
 
 # [Script Description](#contents)

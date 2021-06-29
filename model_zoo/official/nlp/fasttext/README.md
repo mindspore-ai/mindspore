@@ -116,10 +116,28 @@ After dataset preparation, you can start training and evaluation as follows:
     #          Add "model_ckpt='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
     #          (option)Set "device_target='GPU'" on the website UI interface if run with GPU.
     #          (option)Set other parameters on the website UI interface.
-    # (3) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload or copy your trained model to S3 bucket.
     # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
     # (5) Set the code directory to "/path/fasttext" on the website UI interface.
-    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # run export example
+    # (1) Add "config_path='/path_to_code/[DATASET_NAME]_config.yaml'" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on [DATASET_NAME]_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on [DATASET_NAME]_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on [DATASET_NAME]_config.yaml file.
+    #          Set other parameters on [DATASET_NAME]_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+    #          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/fasttext" on the website UI interface.
+    # (6) Set the startup file to "export.py" on the website UI interface.
     # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
     # (8) Create your job.
     ```

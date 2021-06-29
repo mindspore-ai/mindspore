@@ -170,6 +170,31 @@ After installing MindSpore via the official website and Dataset is correctly gen
       # (7) Create your job.
       ```
 
+    - Export 1p on ModelArts Ascend/GPU
+
+      ```python
+      # (1) Perform a or b.
+      #       a. Set "enable_modelarts=True" on default_config.yaml file.
+      #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+      #          Set "checkpoint_url='s3://dir_to_your_trained_ckpt/'" on default_config.yaml file.
+      #          Set "file_name='bgcf'" on default_config.yaml file.
+      #          Set "file_format='AIR'" on default_config.yaml file.
+      #          (options)Set "device_target='GPU'" on default_config.yaml file if run on GPU.
+      #          Set other parameters on default_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "ckpt_file=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+      #          Add "checkpoint_url=s3://dir_to_your_trained_ckpt/" on the website UI interface.
+      #          Add "file_name=bgcf" on the website UI interface.
+      #          Add "file_format=AIR" on the website UI interface.
+      #          (options)Add "device_target=GPU" on the website UI interface if run on GPU.
+      #          Add other parameters on the website UI interface.
+      # (2) Upload or copy your trained model to S3 bucket.
+      # (3) Set the code directory to "/path/bgcf" on the website UI interface.
+      # (4) Set the startup file to "export.py" on the website UI interface.
+      # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (6) Create your job.
+      ```
+
 ## [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)

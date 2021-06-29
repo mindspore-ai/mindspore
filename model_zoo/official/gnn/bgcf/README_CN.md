@@ -149,7 +149,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
       #          在网页上设置 其他参数
       # (2) 在本地准备转换好的数据集并将其压缩为一个文件，如："amazon_beauty.zip" (数据集转换代码可以参考上面的Dataset章节)
       # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
-      # (4) 在网页上设置你的代码路径为 "/path/googlenet"
+      # (4) 在网页上设置你的代码路径为 "/path/bgcf"
       # (5) 在网页上设置启动文件为 "train.py"
       # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
       # (7) 创建训练作业
@@ -175,10 +175,35 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
       #          在网页上设置 其他参数
       # (2) 在本地准备转换好的数据集并将其压缩为一个文件，如："amazon_beauty.zip" (数据集转换代码可以参考上面的Dataset章节)
       # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
-      # (4) 在网页上设置你的代码路径为 "/path/googlenet"
+      # (4) 在网页上设置你的代码路径为 "/path/bgcf"
       # (5) 在网页上设置启动文件为 "eval.py"
       # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
       # (7) 创建训练作业
+      ```
+
+    - 在 ModelArts 上使用单卡导出（GPU or Ascend）
+
+      ```python
+      # (1) 执行a或者b
+      #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+      #          在 default_config.yaml 文件中设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
+      #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_ckpt/'"
+      #          在 default_config.yaml 文件中设置 "file_name='bgcf'"
+      #          在 default_config.yaml 文件中设置 "file_format='AIR'"
+      #          (可选)在 default_config.yaml 文件中设置 "device_target='GPU'"
+      #          在 default_config.yaml 文件中设置 其他参数
+      #       b. 在网页上设置 "enable_modelarts=True"
+      #          在网页上设置 "ckpt_file=/cache/checkpoint_path/model.ckpt"
+      #          在网页上设置 "checkpoint_url=s3://dir_to_your_trained_ckpt/"
+      #          在网页上设置 "file_name=bgcf"
+      #          在网页上设置 "file_format=AIR"
+      #          (可选)Add "device_target=GPU"
+      #          在网页上设置 其他参数
+      # (2) 上传你的预训练模型到 S3 桶上
+      # (3) 在网页上设置你的代码路径为 "/path/bgcf"
+      # (4) 在网页上设置启动文件为 "export.py"
+      # (5) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+      # (6) 创建训练作业
       ```
 
 ## 脚本说明

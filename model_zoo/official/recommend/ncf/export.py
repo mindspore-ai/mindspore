@@ -13,19 +13,29 @@
 # limitations under the License.
 # ============================================================================
 """ncf export file"""
+import os
 import numpy as np
 
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
 import src.constants as rconst
 from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 from ncf import NCFModel, PredictWithSigmoid
 
-context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
-if config.device_target == "Ascend":
-    context.set_context(device_id=config.device_id)
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''run export.'''
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+    if config.device_target == "Ascend":
+        context.set_context(device_id=config.device_id)
+
     topk = rconst.TOP_K
     num_eval_neg = rconst.NUM_EVAL_NEGATIVES
 
@@ -57,3 +67,7 @@ if __name__ == "__main__":
 
     input_data = [users, items, masks]
     export(network, *input_data, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == "__main__":
+    run_export()

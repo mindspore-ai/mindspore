@@ -57,6 +57,15 @@ flip: False
 ckpt_path: ""
 input_format: "NCHW" # ["NCHW", "NHWC"]
 
+# export param
+device_id: 0
+export_batch_size: 1
+input_size: 513
+ckpt_file: ""
+file_name: "deeplabv3"
+file_format: "AIR"
+export_model: "deeplab_v3_s8"
+
 ---
 
 # Help description for each configuration
@@ -98,3 +107,12 @@ scales: "scales of evaluation"
 flip: "perform left-right flip"
 ckpt_path: "model to evaluat"
 input_format: "NCHW or NHWC"
+
+# export param
+device_id: "Device id"
+export_batch_size: "batch size for export"
+input_size: "input_size"
+ckpt_file: "Checkpoint file path."
+file_name: "output file name."
+file_format: "file format, choices in ['AIR', 'MINDIR']"
+export_model: "Select model structure (Default: deeplab_v3_s8), choices in ['deeplab_v3_s16', 'deeplab_v3_s8']"

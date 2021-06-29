@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into air, mindir models"""
+import os
 import numpy as np
 
 import mindspore as ms
@@ -22,14 +23,23 @@ from mindspore import Tensor, load_checkpoint, load_param_into_net, export, cont
 from src.Deeptext.deeptext_vgg16 import Deeptext_VGG16_Infer
 
 from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id
 
 
-config.test_batch_size = config.export_batch_size
-context.set_context(mode=context.GRAPH_MODE, device_target=config.export_device_target)
-context.set_context(device_id=get_device_id())
 
-if __name__ == '__main__':
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''run export.'''
+    config.test_batch_size = config.export_batch_size
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.export_device_target)
+    context.set_context(device_id=get_device_id())
+
     net = Deeptext_VGG16_Infer(config=config)
     net.set_train(False)
 
@@ -48,3 +58,7 @@ if __name__ == '__main__':
     img_data = Tensor(np.zeros([config.test_batch_size, 3, config.img_height, config.img_width]), ms.float32)
 
     export(net, img_data, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    run_export()

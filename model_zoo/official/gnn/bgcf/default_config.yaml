@@ -35,6 +35,13 @@ gnew_neighs: 20
 embedded_dimension: 64
 dist_reg: 0.003
 
+# export option
+device_id: 0
+ckpt_file: ""
+file_name: "bgcf"
+file_format: "AIR"
+row_neighs: 40
+
 ---
 
 # Help description for each configuration
@@ -59,3 +66,10 @@ gnew_neighs: "num of sampling neighbors in sample graph"
 embedded_dimension: "output embedding dim"
 dist_reg: "distance loss coefficient"
 device_target: "device target, choices in ['Ascend', GPU]"
+
+# export option
+device_id: "Device id"
+ckpt_file: "Checkpoint file path."
+file_name: "output file name."
+file_format: "file format, choices in ['AIR', 'ONNX', 'MINDIR']"
+row_neighs: "num of sampling neighbors in raw graph"

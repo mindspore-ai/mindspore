@@ -211,6 +211,25 @@ sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARS
 # (5) Set the startup file to "eval.py" on the website UI interface.
 # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
 # (7) Create your job.
+#
+# Export 1p on ModelArts
+# (1) Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_trained_model/'" on default_config.yaml file.
+#          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "device_target='Ascend'" on default_config.yaml file.
+#          Set "file_format='MINDIR'" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_url='s3://dir_to_trained_model/'" on the website UI interface.
+#          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "device_target='Ascend'" on the website UI interface.
+#          Add "file_format='MINDIR'" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the code directory to "/path/deeptext" on the website UI interface.
+# (3) Set the startup file to "export.py" on the website UI interface.
+# (4) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (5) Create your job.
 ```
 
 ### Launch
