@@ -199,7 +199,8 @@ void SwitchActor::AddInput(const KernelWithIndex node_with_index, const size_t b
   const auto &node = node_with_index.first;
 
   // Add weight and value node.
-  if ((AnfAlgo::CheckPrimitiveType(node_, prim::kPrimReturn) && HasAbstractRef(node)) || node->isa<ValueNode>()) {
+  if ((AnfAlgo::CheckPrimitiveType(node_, prim::kPrimReturn) && node->isa<Parameter>() && HasAbstractRef(node)) ||
+      node->isa<ValueNode>()) {
     const auto iter = find(input_nodes_.begin(), input_nodes_.end(), node_with_index);
     if (iter != input_nodes_.end()) {
       branch_inputs_pos_[branch].push_back(iter - input_nodes_.begin());
@@ -212,7 +213,7 @@ void SwitchActor::AddInput(const KernelWithIndex node_with_index, const size_t b
   }
 
   // Output of updatestate node is U, need to be skipped.
-  if (HasAbstractRef(node)) {
+  if (node->isa<Parameter>() && HasAbstractRef(node)) {
     return;
   }
 
@@ -447,7 +448,7 @@ void SwitchActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
 void SwitchActor::FetchInputNode(const ControlNodeParserPtr &parser) {
   for (size_t i = 0; i < input_nodes_.size(); ++i) {
     const auto &input_node = input_nodes_[i].first;
-    if (!HasAbstractRef(input_node)) {
+    if (!(input_node->isa<Parameter>() && HasAbstractRef(input_node))) {
       backend_parameters_[i] = parser->FetchBackendInputNodeByFrontNode(input_node);
       continue;
     }
@@ -456,7 +457,7 @@ void SwitchActor::FetchInputNode(const ControlNodeParserPtr &parser) {
     if (backend_weight == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for weight node:" << AnfAlgo::GetNodeDebugString(input_node);
     }
-    backend_parameters_[i].push_back({backend_weight, 0});
+    backend_parameters_[i].insert({backend_weight, 0});
   }
 }
 }  // namespace runtime

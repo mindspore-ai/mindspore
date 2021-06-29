@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <set>
 #include <memory>
 #include <utility>
 #include <stack>
@@ -138,7 +139,7 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
 
   // When the output is a value node from switch actor, the actor needs to send the anfnode to the output actor,
   // so all the nodes that may send the device tensor to switch actor are recorded.
-  std::vector<std::vector<KernelWithIndex>> backend_parameters_;
+  std::vector<std::set<KernelWithIndex>> backend_parameters_;
   std::vector<std::vector<AnfNodePtr>> branch_total_inputs_;
 
   std::vector<FuncGraphPtr> branch_func_graph_;

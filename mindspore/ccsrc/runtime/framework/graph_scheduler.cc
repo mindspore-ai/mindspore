@@ -1107,7 +1107,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
       // Collect the parameters.
       std::vector<AnfNodePtr> parameters;
       for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
-        if (HasAbstractMonad(inputs[i]) || HasAbstractRef(inputs[i])) {
+        if (HasAbstractMonad(inputs[i]) || (inputs[i]->isa<Parameter>() && HasAbstractRef(inputs[i]))) {
           continue;
         }
         parameters.emplace_back(inputs[i]);
@@ -2115,8 +2115,9 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
     const auto &backend_node = backend_iter->second.first;
     auto iter = from_actor->data_node_position_map_.find(input_node);
     if (iter == from_actor->data_node_position_map_.end()) {
-      MS_LOG(EXCEPTION) << "Cannot find data node in data source actor, node:"
-                        << AnfAlgo::GetNodeDebugString(backend_node);
+      MS_LOG(EXCEPTION) << "Cannot find data node in data source actor, backend node:"
+                        << AnfAlgo::GetNodeDebugString(backend_node)
+                        << " front node:" << AnfAlgo::GetNodeDebugString(input_node);
     }
 
     auto op_arrow = std::make_shared<DataArrow>(iter->second, to_actor->GetAID(), to_index);
@@ -2133,7 +2134,7 @@ void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_
   const auto &inputs = actor->input_nodes_;
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto input = inputs[i];
-    if (input.first->isa<ValueNode>() || HasAbstractRef(input.first)) {
+    if (input.first->isa<ValueNode>() || (input.first->isa<Parameter>() && HasAbstractRef(input.first))) {
       continue;
     }
 
