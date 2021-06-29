@@ -444,11 +444,11 @@ class PSNR(Cell):
 
     Examples:
         >>> net = nn.PSNR()
-        >>> img1 = Tensor(np.random.random((1, 3, 16, 16)))
-        >>> img2 = Tensor(np.random.random((1, 3, 16, 16)))
+        >>> img1 = Tensor([[[[1, 2, 3, 4], [1, 2, 3, 4]]]])
+        >>> img2 = Tensor([[[[3, 4, 5, 6], [3, 4, 5, 6]]]])
         >>> output = net(img1, img2)
         >>> print(output)
-        [7.915369]
+        [-6.0206]
     """
     def __init__(self, max_val=1.0):
         super(PSNR, self).__init__()

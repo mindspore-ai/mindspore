@@ -23,6 +23,7 @@ flatten_op_info = TBERegOp("Flatten") \
     .compute_cost(10) \
     .kernel_name("flatten") \
     .partial_flag(True) \
+    .attr("axis", "optional", "int", "all", "1") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.I8_Default, DataType.I8_Default) \
