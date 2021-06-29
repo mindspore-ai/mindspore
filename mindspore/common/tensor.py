@@ -1803,7 +1803,7 @@ class Tensor(Tensor_):
 
         input_x = self.astype(mstype.int32) if self.dtype == mstype.bool_ else self
         if 0 in self.shape:
-            input_x = Tensor([0], self.dtype)
+            input_x = tensor_operator_registry.get('make_tensor')([0], self.dtype)
         res = tensor_operator_registry.get('sum')(bool(keepdims))(input_x, axis)
         if initial is not None:
             res += initial

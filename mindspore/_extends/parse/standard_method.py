@@ -1324,7 +1324,7 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None): # pylint: disab
     if x.dtype == mstype.bool_:
         x = x.astype("int32")
     if 0 in x.shape:
-        x = Tensor([0], x.dtype)
+        x = const_utils.make_tensor([0], x.dtype)
     if keepdims:
         res = _reduce_sum_keepdims(x, axis)
     else:
