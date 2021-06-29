@@ -57,11 +57,14 @@ class TrainExport {
   std::vector<size_t> out_idx_;
   std::map<size_t, size_t> remap_;
   std::unordered_map<size_t, size_t> connect_;  // connection map (backbone tenor id-> head tensor id)
+  void PrepareRemap(int offset);
   Model::Node *FindNode(const mindspore::kernel::LiteKernel *kernel, const Model *model);
   std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::LiteKernel *kernel,
                                               std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex,
                                               const Model *model);
+  int CreateAndAddCNode(const mindspore::kernel::LiteKernel *kernel, std::vector<uint32_t> inputIndex,
+                        std::vector<uint32_t> outputIndex, const Model *model);
   std::unique_ptr<schema::CNodeT> CreateTransformNode(std::vector<uint32_t> inputIndex,
                                                       std::vector<uint32_t> outputIndex, size_t id);
   std::unique_ptr<schema::TensorT> CreateTransformTensor(size_t id);

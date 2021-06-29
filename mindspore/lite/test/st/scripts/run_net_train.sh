@@ -135,7 +135,7 @@ function Run_x86() {
             bb_model_file="${ms_models_path}/${model_name}_bb.ms"
             suffix_print="_transfer"
             export_file="${ms_models_path}/${model_name}_tod_head"
-            inference_file=""
+            inference_file="${ms_models_path}/${model_name}_infer"
         fi
         if [ ! -z "$inference_file" ]; then                
             rm -f ${inference_file}"*"
@@ -267,8 +267,8 @@ function Run_arm() {
             model_file="${model_name}_head.ms"
             bb_model_file="${model_name}_bb.ms"
             suffix_print="_transfer"
-            export_file="${tmp_dir}/${model_name}_tod_head.ms"
-            inference_file=""
+            export_file="${tmp_dir}/${model_name}_tod_head"
+            inference_file="${tmp_dir}/${model_name}_infer"
         fi
         # run benchmark_train test without clib data
         echo ${model_name} >> "${run_arm_log_file}"
