@@ -23,7 +23,7 @@ stack_op_info = TBERegOp("Stack") \
     .compute_cost(10) \
     .kernel_name("pack") \
     .partial_flag(True) \
-    .need_check_supported(True) \
+    .need_check_supported(False) \
     .attr("axis", "optional", "int", "all") \
     .input(0, "x", False, "dynamic", "all") \
     .output(0, "y", False, "required", "all") \
