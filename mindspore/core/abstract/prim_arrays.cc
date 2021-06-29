@@ -1214,5 +1214,14 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   return std::make_shared<AbstractTensor>(infer_type,
                                           std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape));
 }
+
+AbstractBasePtr InferImplTensorCopySlices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_spec_list) {
+  auto &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 5);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  return std::make_shared<AbstractTensor>(input->element(), input->shape());
+}
+
 }  // namespace abstract
 }  // namespace mindspore
