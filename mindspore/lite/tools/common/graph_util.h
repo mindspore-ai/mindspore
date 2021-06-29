@@ -60,6 +60,8 @@ std::vector<size_t> GetLinkedPreIdx(const schema::MetaGraphT &graphT, const size
 
 std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
 
+void ReplaceOutput(const uint32_t &old_index, const uint32_t &new_index, schema::MetaGraphT *graphT);
+
 STATUS IsolateNode(schema::MetaGraphT *subGraph, schema::CNodeT *node);
 
 STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool removeTensor = true);

@@ -40,6 +40,8 @@ struct MS_API Model {
   using SubGraphPtrVector = Vector<SubGraph *>;
   String name_;
   String version_;
+  Uint32Vector input_indices_;
+  Uint32Vector output_indices_;
   TensorPtrVector all_tensors_;
   NodePtrVector all_nodes_;
   char *buf = nullptr;

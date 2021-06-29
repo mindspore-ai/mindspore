@@ -76,7 +76,6 @@ STATUS SubgraphTensorPass::RemoveUselessTensors(schema::MetaGraphT *graph) {
 STATUS SubgraphTensorPass::SyncMainGraphInputAndOutput(schema::MetaGraphT *graph) {
   MS_ASSERT(graph->subGraph.size() > 0);
   graph->subGraph[0]->inputIndices.assign(graph->inputIndex.begin(), graph->inputIndex.end());
-  graph->subGraph[0]->outputIndices.assign(graph->outputIndex.begin(), graph->outputIndex.end());
   return RET_OK;
 }
 
