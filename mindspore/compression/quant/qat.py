@@ -47,8 +47,9 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
     Config the observer type of weights and data flow with quant params.
 
     Args:
-        quant_observer (Union[Observer, list, tuple]): The observer type to do quantization. The first element
-            represents weights and second element represents data flow.
+        quant_observer (Union[Observer, list, tuple]): The types of observer for quantization. The first element
+            applies to weights and second applies to data flow. Currently, only
+            :class:`FakeQuantWithMinMaxObserver` supported.
             Default: (nn.FakeQuantWithMinMaxObserver, nn.FakeQuantWithMinMaxObserver).
         quant_delay (Union[int, list, tuple]): Number of steps after which weights and activations are quantized
             during train and eval. The first element represents weights and second element represents data flow.
@@ -66,7 +67,7 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
         narrow_range (Union[bool, list, tuple]): Whether the quantization algorithm uses narrow range or not.
             The first element represents weights and the second element represents data flow.
             Default: (False, False).
-        mode (String): Optional quantization mode, currently only `DEFAULT`(QAT) and `LEARNED_SCALE` are supported.
+        mode (str): Optional quantization mode, currently only `DEFAULT`(QAT) and `LEARNED_SCALE` are supported.
             Default: ("DEFAULT").
 
     Returns:
@@ -545,7 +546,7 @@ class QuantizationAwareTraining(Quantizer):
             min_init = [-x for x in max_init]
         return min_init, max_init
 
-    def set_mixed_bits(self, network, strategy):
+    def _set_mixed_bits(self, network, strategy):
         r"""
         Set network's quantization strategy, this function is currently only valid for `LEARNED_SCALE`
         optimize_option.
@@ -563,7 +564,7 @@ class QuantizationAwareTraining(Quantizer):
             ValueError: If `OptimizeOption.LEARNED_SCALE` is not in `self.optimize_option`.
         """
         if OptimizeOption.LEARNED_SCALE not in self.optimize_option:
-            raise ValueError("The `set_mixed_bits` function is currently only valid for `LEARNED_SCALE` "
+            raise ValueError("The `_set_mixed_bits` function is currently only valid for `LEARNED_SCALE` "
                              "optimize_option.")
 
         self.quantizable_idx = []
