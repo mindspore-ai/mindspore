@@ -71,8 +71,8 @@ FuncGraphPtr GetFuncgraphByBackendNode(const AnfNodePtr &backend_node);
 // Find all funcgraphs that the call node will call.
 std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const AnfNodePtr &node);
 
-// Recursive interface, get all input of make tuple node.
-std::vector<AnfNodePtr> FetchInputsByMakeTuple(const AnfNodePtr &node);
+// Get parameters in kernel graph.
+std::vector<AnfNodePtr> FetchParameterbyKernelGraph(const KernelGraphPtr &graph);
 
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
@@ -106,6 +106,15 @@ class ControlNodeParser {
 
   // Check whether there is a call node in the front input nodes of the kernel graph.
   bool IsCallInputKernelGraph(const KernelGraphPtr &graph);
+
+  // Check whether the kernel actor belongs to the root graph.
+  // In general, all no output nodes belong to the root funcgraph, and the corresponding switch actor for output should
+  // be empty. In control flow, the control arrow of the no output node in the sub funcgraph should be sent to the
+  // output switch actor.
+  bool IsKernelInRootFuncGraph(const AnfNodePtr &kernel);
+
+  // Get the backend node corresponding to the weight node in the subgraph.
+  AnfNodePtr FetchBackendNodebyWeightNode(const AnfNodePtr &node);
 
  private:
   friend class GraphScheduler;
@@ -195,10 +204,12 @@ class ControlNodeParser {
   std::vector<AnfNodePtr> control_node_parameters_;
   // The number of calls to func_graph.
   std::unordered_map<FuncGraphPtr, size_t> func_graph_to_call_num_;
-  // The kernel graph of call exists in the front-end input node.
-  std::unordered_map<KernelGraphPtr, DeviceContext *> call_input_kernel_graphs_;
+  // The kernel graph of call exists in the front input node.
   // In the scene of funcgrarph recursive call, general input and call input are passed recursively, so a gather actor
   // is created for kernel graph which has a call input.
+  std::unordered_map<KernelGraphPtr, DeviceContext *> call_input_kernel_graphs_;
+  // Root funcgraph and its parameters.
+  FuncGraphPtr root_func_graph_;
   std::vector<AnfNodePtr> root_graph_parameters_;
 };
 

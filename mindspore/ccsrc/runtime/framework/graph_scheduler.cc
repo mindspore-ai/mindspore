@@ -762,7 +762,8 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set, graph_compiler_info.strategy_);
 
   // Link the control arrows of loop count actor, which depends on the no input kernel actors.
-  LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set);
+  LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
+                                    graph_compiler_info.control_node_parser_);
 
   // Link the output result arrows for output actors.
   LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
@@ -1000,27 +1001,57 @@ std::vector<SwitchActorPtr> GraphScheduler::BuildSwitchActor(const GraphCompiler
     front_to_backend_kernel[pair.first] = pair.second->kernel_;
   }
 
+  // Build switch actor by switch node and switchlayer node.
   for (const auto &control_node : graph_compiler_info.control_nodes_) {
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
         AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
-      auto actor_name = control_node->fullname_with_scope();
+      const auto func_graph = control_node->func_graph();
+      const auto branch_id = graph_compiler_info.control_node_parser_->GetBranchIDByFuncGraph(func_graph);
+      const auto &actor_name = control_node->DebugString();
       auto switch_actor = std::make_shared<SwitchActor>(actor_name, graph_compiler_info.device_contexts_[0],
-                                                        control_node->cast<CNodePtr>());
-      switch_actor->Initialize();
+                                                        control_node->cast<CNodePtr>(), branch_id, false);
+      switch_actor->Initialize(graph_compiler_info.control_node_parser_);
 
       // Fetch all the input nodes of switch actor.
-      switch_actor->FetchInputNode(graph_compiler_info.origin_parameters_order_,
-                                   graph_compiler_info.control_node_parser_->front_to_backend_parameters_,
-                                   front_to_backend_kernel);
+      switch_actor->FetchInputNode(graph_compiler_info.control_node_parser_);
       InsertActor(switch_actor.get());
       switch_actors.emplace_back(switch_actor);
     }
   }
+
+  // Build switch actor by return node.
+  const auto func_graphs_to_call_num = graph_compiler_info.control_node_parser_->func_graph_to_call_num_;
+  for (const auto &func_graph_to_call_num : func_graphs_to_call_num) {
+    const auto &return_node = func_graph_to_call_num.first->get_return();
+    MS_EXCEPTION_IF_NULL(return_node);
+    const auto &actor_name = return_node->DebugString();
+    auto switch_actor = std::make_shared<SwitchActor>(actor_name, graph_compiler_info.device_contexts_[0],
+                                                      return_node->cast<CNodePtr>(), kInvalidBranchID, true);
+    switch_actor->Initialize(graph_compiler_info.control_node_parser_);
+
+    // Fetch all the input nodes of switch actor.
+    switch_actor->FetchInputNode(graph_compiler_info.control_node_parser_);
+    InsertActor(switch_actor.get());
+    switch_actors.emplace_back(switch_actor);
+  }
+
   return switch_actors;
 }
 
 std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<GatherActorPtr> gather_actors;
+
+  const auto &loop_count_actor_name = graph_compiler_info.name_ + "_LoopCountActor";
+  const auto &loop_count_actor = FetchActor(loop_count_actor_name);
+  if (loop_count_actor == nullptr) {
+    return gather_actors;
+  }
+
+  const auto &output_actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
+  const auto &output_actor = FetchActor(output_actor_name);
+  MS_EXCEPTION_IF_NULL(output_actor);
+
+  const auto parser = graph_compiler_info.control_node_parser_;
 
   bool is_main_return = true;
   // Each funcgraph has a return node, get the funcgraph from the return node, and create a gather actor.
@@ -1030,42 +1061,82 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
   }
 
   for (const auto &control_node : graph_compiler_info.control_nodes_) {
-    // Root funcgraph does not need to create a gather actor.
+    const auto &func_graph = control_node->func_graph();
+    const auto &cnode = control_node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    const auto &return_node = func_graph->get_return();
+    const auto &output_switch_aid = FetchActor(return_node->DebugString())->GetAID();
+
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
+      // Root funcgraph does not need to create a gather actor.
       if (is_main_return) {
         is_main_return = false;
         continue;
       }
 
-      const auto &cnode = control_node->cast<CNodePtr>();
-      const auto inputs = cnode->inputs();
       // If the output of funcgraph is a value node, no need to create gather actor.
       if (inputs[kReturnInputPos]->isa<ValueNode>()) {
         continue;
       }
 
-      auto func_graph = control_node->func_graph();
       auto actor_name = func_graph->ToString();
       std::vector<AnfNodePtr> parameters;
       for (const auto &parameter : func_graph->get_inputs()) {
-        if (!HasAbstractMonad(parameter)) {
-          parameters.emplace_back(parameter);
+        if (HasAbstractMonad(parameter) || HasAbstractRef(parameter)) {
+          continue;
         }
+        parameters.emplace_back(parameter);
       }
 
-      const auto &loop_count_actor_name = graph_compiler_info.name_ + "_LoopCountActor";
-      const auto &loop_count_actor = FetchActor(loop_count_actor_name);
-      MS_EXCEPTION_IF_NULL(loop_count_actor);
-      const auto &output_actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
-      const auto &output_actor = FetchActor(output_actor_name);
-      MS_EXCEPTION_IF_NULL(output_actor);
+      const auto branch_id = parser->GetBranchIDByFuncGraph(func_graph);
 
       auto gather_actor =
-        std::make_shared<GatherActor>(actor_name, parameters, loop_count_actor->GetAID(), output_actor->GetAID());
+        std::make_shared<GatherActor>(actor_name, parameters, true, output_switch_aid, AID(), branch_id);
       gather_actor->FetchBackendInputNode(func_graph, graph_compiler_info.control_node_parser_);
       InsertActor(gather_actor.get());
       gather_actors.emplace_back(gather_actor);
     }
+  }
+
+  // Create gather actor for call node which input0 of call node is a funcgraph.
+  for (const auto &control_node : graph_compiler_info.control_nodes_) {
+    const auto &cnode = control_node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+
+    if (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0])) {
+      // Collect the parameters.
+      std::vector<AnfNodePtr> parameters;
+      for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
+        if (HasAbstractMonad(inputs[i]) || HasAbstractRef(inputs[i])) {
+          continue;
+        }
+        parameters.emplace_back(inputs[i]);
+      }
+
+      auto func_graph = control_node->func_graph();
+      auto actor_name = control_node->DebugString();
+      const auto branch_id = parser->GetBranchIDByFuncGraph(func_graph);
+      const auto &to_func_graph = GetValueNode<FuncGraphPtr>(inputs[0]);
+      const auto &to_actor = FetchActor(to_func_graph->ToString());
+      auto gather_actor =
+        std::make_shared<GatherActor>(actor_name, parameters, false, AID(), to_actor->GetAID(), branch_id);
+      gather_actor->FetchBackendInputNode(func_graph, graph_compiler_info.control_node_parser_);
+
+      InsertActor(gather_actor.get());
+      gather_actors.emplace_back(gather_actor);
+    }
+  }
+
+  // Create gather actor for kernel graph which has a call input.
+  const auto &graph_with_device_contexts = graph_compiler_info.control_node_parser_->call_input_kernel_graphs_;
+  for (const auto &graph_with_device_context : graph_with_device_contexts) {
+    const auto &graph = graph_with_device_context.first;
+    const auto &parameters = FetchParameterbyKernelGraph(graph);
+
+    auto actor_name = graph->ToString();
+    auto gather_actor = std::make_shared<GatherActor>(actor_name, parameters, false, AID(), AID(), kInvalidBranchID);
+    InsertActor(gather_actor.get());
+    gather_actors.emplace_back(gather_actor);
   }
 
   return gather_actors;
@@ -1079,6 +1150,18 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
 
   auto from_kernel = from_kernel_with_output_idx.first;
   auto front_node = GetFrontNodeByBackendNode(from_kernel);
+
+  if (from_kernel->isa<Parameter>() && graph_compiler_info.control_node_parser_->IsCallInputKernelGraph(graph)) {
+    // When there is a call input in the kernel graph, all the inputs of the kernel graph needs to be sent by gather.
+    const auto actor_name = graph->ToString();
+    auto actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    const auto &real_front_node = GetFrontNodeByKernelGraph(from_kernel, graph);
+    LinkDataArrowForGatherActor(dynamic_cast<GatherActor *>(actor), real_front_node, to_actor,
+                                to_kernel_with_input_idx.second);
+    return;
+  }
+
   if (IsDeviceQueueDSActor(from_kernel)) {
     // Link the data arrows of device queue data source actor.
     std::string actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
@@ -1092,7 +1175,12 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
     }
     auto actor_name = func_graph->ToString();
     const auto &from_actor = dynamic_cast<GatherActor *>(FetchActor(actor_name));
-    LinkDataArrowForGatherActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
+    if (HasAbstractRef(from_kernel)) {
+      to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_node.get());
+      return;
+    }
+
+    LinkDataArrowForGatherActor(from_actor, front_node, to_actor, to_kernel_with_input_idx.second);
   } else if (IsHostQueueDSActor(from_kernel, graph, tensor, graph_compiler_info.origin_parameters_order_,
                                 graph_compiler_info.strategy_)) {
     // Link the data arrows of host queue data source actor.
@@ -1135,9 +1223,10 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
     to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_output_node.get());
     return;
   }
+
   if (graph_output_to_actor_.count(front_output_with_index) == 0 && (!IsSwitchActor(front_output_node))) {
-    MS_LOG(EXCEPTION) << "Can't find actor by front node:" << front_output_node->fullname_with_scope()
-                      << ", internal parameter:" << internal_parameter->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "Can't find actor by front node:" << AnfAlgo::GetNodeDebugString(front_output_node)
+                      << ", internal parameter:" << AnfAlgo::GetNodeDebugString(internal_parameter);
   }
   auto actor_pair = graph_output_to_actor_[front_output_with_index];
   MS_LOG(INFO) << "Graph " << graph->graph_id() << " internal parameter:" << internal_parameter->DebugString()
@@ -1151,11 +1240,12 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
     auto from_kernel_with_output_idx = KernelWithIndex(from_actor->data_kernel_, actor_pair.second);
     LinkDataArrowForDeviceDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else if (IsSwitchActor(front_output_node)) {
-    const auto &actor_name = front_output_node->fullname_with_scope();
+    const auto &actor_name = front_output_node->DebugString();
     const auto &actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     auto switch_actor = dynamic_cast<SwitchActor *>(actor);
-    LinkDataArrowForSwitchActor(switch_actor, to_actor, to_kernel_with_input_idx.second);
+    LinkDataArrowForSwitchActor(switch_actor, 0, to_actor, to_kernel_with_input_idx.second);
+    to_actor->input_datas_num_++;
   } else if (IsKernelActor(front_output_node)) {
     auto from_actor = dynamic_cast<KernelActor *>(actor_pair.first);
     auto from_kernel_with_output_idx = KernelWithIndex(from_actor->kernel_, actor_pair.second);
@@ -1494,7 +1584,8 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const KernelGraphPtr &g
   }
 }
 
-void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set) {
+void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
+                                                       const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(actor_set);
   // There is no loop count actor in step mode.
   if (loop_count_actor == nullptr) {
@@ -1504,7 +1595,9 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   // Collect the actors which have no output.
   std::vector<MemoryAwareActor *> no_output_actors;
   for (auto &kernel_actor : actor_set->kernel_actors_) {
-    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
+    // The no output kernel control side in subgraph needs to be connected to the corresponding output switch actor.
+    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0) &&
+        parser->IsKernelInRootFuncGraph(kernel_actor->kernel_)) {
       MS_EXCEPTION_IF_NULL(kernel_actor->kernel_);
       MS_LOG(INFO) << kernel_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
       no_output_actors.emplace_back(kernel_actor.get());
@@ -1523,7 +1616,7 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   // No output actor --> loop count actor.
   for (auto &no_output_actor : no_output_actors) {
     no_output_actor->output_control_arrows_.emplace_back(loop_count_actor->GetAID());
-    loop_count_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
+    loop_count_actor->input_controls_num_++;
   }
 
   // Loop count actor --> data source actor.
@@ -1553,7 +1646,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
     MS_EXCEPTION_IF_NULL(graph);
     ++number;
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
-    std::set<std::pair<int, std::vector<size_t>>> unique_output_positions;
+    std::set<std::vector<size_t>> unique_output_positions;
     std::set<KernelWithIndex> unique_outputs;
     for (const auto &output : outputs) {
       unique_outputs.insert(output);
@@ -1571,15 +1664,14 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         continue;
       }
       unique_output_positions.insert(iter->second);
-      for (auto &output_position : iter->second.second) {
+      for (auto &output_position : iter->second) {
         to_actor->device_contexts_[output_position] = graph_compiler_info.device_contexts_[number - 1];
         // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
         UpdateRefCount(output_with_index.first, output_with_index.second, true);
 
         // The graph output is from device tensor store.
         if (IsPersistentDeviceTensor(output_with_index.first)) {
-          to_actor->device_tensor_store_keys_[iter->second.first].emplace_back(output_position,
-                                                                               output_with_index.first);
+          to_actor->device_tensor_store_keys_.emplace_back(output_position, output_with_index.first);
           continue;
         }
 
@@ -1631,11 +1723,45 @@ void GraphScheduler::LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo
                                                          const ActorSet *actor_set) {
   const auto &to_actor = actor_set->output_actor_;
   const auto &loop_count_actor = actor_set->loop_count_actor_;
-  const auto &switch_actors = actor_set->switch_actors_;
   if (to_actor == nullptr || loop_count_actor == nullptr) {
     return;
   }
 
+  // When there is a call node in the output, the output will be sent to the output actor by the switch actor of
+  // the funcgraph called by the call node.
+  const auto &outputs = graph_compiler_info.origin_outputs_order_;
+  for (const auto &output : outputs) {
+    const auto &output_node = output.first.first;
+    const auto &output_index = output.first.second;
+    const auto output_poses = output.second;
+
+    if (IsCallNode(output_node)) {
+      const auto &func_graphs = FetchFuncGraphbyCallNode(output_node);
+      for (const auto func_graph : func_graphs) {
+        const auto &actor_name = func_graph->get_return()->DebugString();
+        auto actor = FetchActor(actor_name);
+        MS_EXCEPTION_IF_NULL(actor);
+        auto switch_actor = dynamic_cast<SwitchActor *>(actor);
+
+        // Set branch index into switch actor.
+        size_t branch_index = switch_actor->branch_id_to_index_.size();
+        if (switch_actor->branch_id_to_index_.find(kMainBranchID) != switch_actor->branch_id_to_index_.end()) {
+          branch_index = switch_actor->branch_id_to_index_[kMainBranchID];
+        } else {
+          switch_actor->branch_id_to_index_[kMainBranchID] = branch_index;
+        }
+
+        // Link output result arrow.
+        for (const auto output_pos : output_poses) {
+          auto op_arrow = std::make_shared<DataArrow>(output_index, to_actor->GetAID(), output_pos);
+          to_actor->device_contexts_[output_pos] = switch_actor->device_context_;
+          switch_actor->output_branch_result_arrows_[branch_index].emplace_back(op_arrow);
+        }
+      }
+    }
+  }
+
+  const auto &switch_actors = actor_set->switch_actors_;
   for (const auto &from_actor : switch_actors) {
     MS_EXCEPTION_IF_NULL(from_actor);
     auto origin_output_with_index = KernelWithIndex(from_actor->node_, 0);
@@ -1646,7 +1772,7 @@ void GraphScheduler::LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo
 
     // If the switch actor is in the output list, the output of switch actor should be sent to the output actor.
     // And need to link a control arrow to the loop count actor.
-    for (const auto pos : iter->second.second) {
+    for (const auto pos : iter->second) {
       to_actor->device_contexts_[pos] = from_actor->device_context_;
     }
 
@@ -1656,14 +1782,14 @@ void GraphScheduler::LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo
         MS_LOG(EXCEPTION) << "Invalid input num in switch actor:" << from_actor->GetAID();
       }
 
-      for (const auto pos : iter->second.second) {
+      for (const auto pos : iter->second) {
         auto op_arrow = std::make_shared<DataArrow>(input_pos[0], to_actor->GetAID(), pos);
         from_actor->output_branch_result_arrows_[i].emplace_back(op_arrow);
       }
 
       from_actor->output_branch_control_arrows_[i].emplace_back(loop_count_actor->GetAID());
     }
-    loop_count_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
+    loop_count_actor->input_controls_num_++;
   }
 }
 
@@ -1709,7 +1835,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
         if (output_contorl.Name().find("_LoopCountActor") != string::npos) {
           auto real_to_actor = dynamic_cast<LoopCountActor *>(to_actor);
           MS_EXCEPTION_IF_NULL(real_to_actor);
-          real_to_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
+          real_to_actor->input_controls_num_++;
         } else if (output_contorl.Name().find("copy_from") != string::npos) {
           auto real_to_actor = dynamic_cast<CopyActor *>(to_actor);
           MS_EXCEPTION_IF_NULL(real_to_actor);
@@ -1730,188 +1856,247 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
 void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set) {
   for (const auto &node : graph_compiler_info.control_nodes_) {
     CNodePtr cnode = node->cast<CNodePtr>();
+    const auto &from_func_graph = node->func_graph();
+    auto inputs = cnode->inputs();
+
+    // Before link data arrow, parameters of the call node in switch-call need to be add to the switch actor.
+    if (inputs[0]->isa<CNode>()) {
+      auto actor = FetchActor(inputs[0]->DebugString());
+      MS_EXCEPTION_IF_NULL(actor);
+      auto switch_actor = dynamic_cast<SwitchActor *>(actor);
+      for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
+        if (HasAbstractMonad(inputs[i])) {
+          continue;
+        }
+        switch_actor->AddCommonInput(inputs[i]);
+      }
+    }
+  }
+
+  for (const auto &node : graph_compiler_info.control_nodes_) {
+    CNodePtr cnode = node->cast<CNodePtr>();
+    const auto &from_func_graph = node->func_graph();
     auto inputs = cnode->inputs();
     // Link data arrow for switch node.
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitchLayer)) {
-      auto actor = actor_name_to_actor_[node->fullname_with_scope()];
+      auto actor = actor_name_to_actor_[node->DebugString()];
       LinkDataArrowForSwitchActor(graph_compiler_info, dynamic_cast<SwitchActor *>(actor));
     } else if (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0])) {
       // Link the data arrow for the input of the call node.
-      auto func_graph = GetValueNode<FuncGraphPtr>(inputs[0]);
-      auto actor = actor_name_to_actor_[func_graph->ToString()];
-      for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
-        LinkDataArrowByControlNode(graph_compiler_info, inputs[i], actor, i - kCallInputStartPos);
-      }
-    } else if (inputs[0]->isa<CNode>()) {
-      // Link switch inputs which is on the call node.
-      if ((!AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitch)) &&
-          (!AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer))) {
-        MS_LOG(EXCEPTION) << "First input node of call node is not switch, node:"
-                          << AnfAlgo::GetNodeDebugString(inputs[0]);
-      }
+      const auto &actor_name = node->DebugString();
+      auto actor = FetchActor(actor_name);
+      MS_EXCEPTION_IF_NULL(actor);
+      auto gather_actor = dynamic_cast<GatherActor *>(actor);
 
-      auto switch_op_actor = FetchActor(inputs[0]->fullname_with_scope());
-      if (switch_op_actor == nullptr) {
-        MS_LOG(EXCEPTION) << "Cannot find actor of switch node:" << AnfAlgo::GetNodeDebugString(inputs[0]);
-      }
-      auto switch_actor = dynamic_cast<SwitchActor *>(switch_op_actor);
+      const auto &func_graph = GetValueNode<FuncGraphPtr>(inputs[0]);
+      MS_EXCEPTION_IF_NULL(func_graph);
+      const auto &to_actor = FetchActor(func_graph->ToString());
+      MS_EXCEPTION_IF_NULL(to_actor);
+
+      size_t persist_input_num = 0;
       for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
-        switch_actor->AddCommonInput(inputs[i]);
-        auto pos = switch_actor->FetchDataNodePosition(inputs[i]);
-        LinkDataArrowByControlNode(graph_compiler_info, inputs[i], switch_actor, pos - kCallInputStartPos);
+        MS_EXCEPTION_IF_NULL(actor);
+        if (inputs[i]->isa<ValueNode>()) {
+          const auto &node_value = inputs[i]->cast<ValueNodePtr>()->value();
+          if (!node_value->isa<tensor::Tensor>()) {
+            persist_input_num++;
+            continue;
+          }
+
+          gather_actor->device_tensor_store_keys_.push_back(
+            {i - kCallInputStartPos - persist_input_num, inputs[i].get()});
+          gather_actor->device_contexts_[i - kCallInputStartPos - persist_input_num] =
+            graph_compiler_info.control_node_parser_->GetFrontValueNodeDeviceContext(inputs[i]);
+        } else if ((inputs[i]->isa<Parameter>() && HasAbstractRef(inputs[i]->cast<ParameterPtr>())) ||
+                   AnfAlgo::CheckPrimitiveType(inputs[i], prim::kPrimUpdateState) || HasAbstractMonad(inputs[i])) {
+          persist_input_num++;
+          continue;
+        } else {
+          const auto &input_with_index = AnfAlgo::VisitKernelWithReturnType(inputs[i], 0);
+          LinkDataArrowByControlNode(graph_compiler_info, input_with_index, from_func_graph, actor,
+                                     i - kCallInputStartPos - persist_input_num);
+        }
+
+        auto op_arrow = std::make_shared<DataArrow>(i - kCallInputStartPos - persist_input_num, to_actor->GetAID(),
+                                                    i - kCallInputStartPos - persist_input_num);
+        gather_actor->output_data_arrows_.emplace_back(op_arrow);
       }
     }
   }
 
+  // Link arrow for switch actor of subgraph output.
+  for (const auto &func_graph_with_call_num : graph_compiler_info.control_node_parser_->func_graph_to_call_num_) {
+    const auto &func_graph = func_graph_with_call_num.first;
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto actor = FetchActor(func_graph->get_return()->DebugString());
+    MS_EXCEPTION_IF_NULL(actor);
+    LinkDataArrowForSwitchActor(graph_compiler_info, dynamic_cast<SwitchActor *>(actor));
+  }
+
+  // Link arrow for gather actor for call input kernel graph.
+  for (const auto &call_input_kernel_graph : graph_compiler_info.control_node_parser_->call_input_kernel_graphs_) {
+    const auto &kernel_graph = call_input_kernel_graph.first;
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto actor = FetchActor(kernel_graph->ToString());
+    MS_EXCEPTION_IF_NULL(actor);
+    auto gather_actor = dynamic_cast<GatherActor *>(actor);
+
+    for (const auto &input_node : gather_actor->data_nodes_) {
+      const auto &from_func_graph = kernel_graph->GetFuncGraph();
+      const auto &input_with_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0);
+      LinkDataArrowByControlNode(graph_compiler_info, input_with_index, from_func_graph, gather_actor,
+                                 gather_actor->FetchDataNodePosition(input_node));
+    }
+  }
+  LinkBranchArrowForSwitchActor(graph_compiler_info, actor_set);
+
   LinkBranchArrowForGatherActor(graph_compiler_info, actor_set);
 
-  LinkControlArrowForGatherActor(&(actor_set->gather_actors_), actor_set->loop_count_actor_.get(),
-                                 graph_compiler_info.graphs_);
+  LinkControlArrowForGatherActor(&(actor_set->gather_actors_), &(actor_set->kernel_actors_),
+                                 actor_set->loop_count_actor_.get(), graph_compiler_info.graphs_,
+                                 graph_compiler_info.control_node_parser_);
 
-  LinkOutputResultArrowForGatherActor(graph_compiler_info, actor_set);
+  LinkControlArrowForSwitchActor(&(actor_set->switch_actors_), actor_set->loop_count_actor_.get(),
+                                 graph_compiler_info.origin_outputs_order_);
 
   LinkOutputResultArrowForSwitchActor(graph_compiler_info, actor_set);
 }
 
-void GraphScheduler::LinkDataArrowForGatherActor(GatherActor *from_actor, KernelActor *to_actor,
-                                                 KernelWithIndex from_kernel_with_output_idx,
-                                                 KernelWithIndex to_kernel_with_input_idx) {
+void GraphScheduler::LinkDataArrowForGatherActor(GatherActor *from_actor, const AnfNodePtr &front_node,
+                                                 KernelActor *to_actor, const size_t to_index) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
-
-  auto from_kernel = from_kernel_with_output_idx.first;
-  MS_EXCEPTION_IF_NULL(from_kernel);
-  auto to_input_index = to_kernel_with_input_idx.second;
-
-  auto front_node = GetFrontNodeByBackendNode(from_kernel);
-  if (front_node == nullptr) {
-    MS_LOG(EXCEPTION) << "Cannot find front node of node:" << AnfAlgo::GetNodeDebugString(from_kernel);
-  }
+  MS_EXCEPTION_IF_NULL(front_node);
 
   auto position = from_actor->FetchDataNodePosition(front_node);
 
-  auto to_aid = to_actor->GetAID();
-  auto op_arrow = std::make_shared<DataArrow>(position, to_aid, to_input_index);
+  auto op_arrow = std::make_shared<DataArrow>(position, to_actor->GetAID(), to_index);
   from_actor->output_data_arrows_.emplace_back(op_arrow);
   to_actor->input_datas_num_++;
 }
 
-void GraphScheduler::LinkDataArrowByCallInput(const GraphCompilerInfo &graph_compiler_info, const AnfNodePtr &call_node,
+void GraphScheduler::LinkDataArrowByCallInput(const KernelWithIndex &call_node_with_index,
+                                              const ControlNodeParserPtr &parser, const FuncGraphPtr &from_func_graph,
                                               OpActor<DeviceTensor> *to_actor, const size_t to_index) {
   // Fetch all the funcgraph that call node would call.
-  const auto cnode = call_node->cast<CNodePtr>();
+  const auto cnode = call_node_with_index.first->cast<CNodePtr>();
   std::vector<FuncGraphPtr> func_graphs = FetchFuncGraphbyCallNode(cnode);
 
   // Collect the output of each funcgraph.
   for (const auto &func_graph : func_graphs) {
-    // The output of funcgraph can only have one.
-    auto outputs = AnfAlgo::GetAllOutputWithIndex(func_graph->output());
-    if (outputs.size() != 1) {
-      MS_LOG(EXCEPTION) << "Output of func graph is more than one, func graph:" << func_graph->ToString();
-    }
-
-    auto output_with_index = outputs[0];
-    if (IsKernelActor(output_with_index.first)) {
-      // Input is a kernel actor.
-      const auto &iter = front_node_to_actor_.find(output_with_index.first);
-      if (iter == front_node_to_actor_.end()) {
-        MS_LOG(EXCEPTION) << "Cannot find kernel actor of front node:"
-                          << AnfAlgo::GetNodeDebugString(output_with_index.first);
-      }
-      auto from_actor = iter->second;
-      auto op_arrow = std::make_shared<DataArrow>(output_with_index.second, to_actor->GetAID(), to_index);
-      from_actor->output_data_arrows_.emplace_back(op_arrow);
-      auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_actor->kernel_, output_with_index.second, false);
-      UpdateRefCount(device_tensor.get(), true);
-    } else if (output_with_index.first->isa<Parameter>()) {
-      // Input is a parameter from gather actor.
-      const auto &actor_name = func_graph->ToString();
-      auto actor = FetchActor(actor_name);
-      MS_EXCEPTION_IF_NULL(actor);
-      auto gather_actor = dynamic_cast<GatherActor *>(actor);
-      MS_EXCEPTION_IF_NULL(gather_actor);
-
-      const auto &iter =
-        find(gather_actor->data_nodes_.begin(), gather_actor->data_nodes_.end(), output_with_index.first);
-      if (iter == gather_actor->data_nodes_.end()) {
-        MS_LOG(EXCEPTION) << "Cannot find parameter:" << AnfAlgo::GetNodeDebugString(output_with_index.first)
-                          << " in funcgraph";
-      }
-      const size_t pos = iter - gather_actor->data_nodes_.begin();
-      auto op_arrow = std::make_shared<DataArrow>(pos, to_actor->GetAID(), to_index);
-      gather_actor->output_data_arrows_.emplace_back(op_arrow);
-    } else if (output_with_index.first->isa<ValueNode>()) {
-      // If the output is a value node, then the value node needs to be sent by the switch actor.
+    if (func_graph->output()->isa<ValueNode>()) {
       const auto &call_inputs = cnode->inputs();
       if (AnfAlgo::CheckPrimitiveType(call_inputs[0], prim::kPrimSwitch)) {
-        const auto &actor_name = call_inputs[0]->fullname_with_scope();
+        const auto &actor_name = call_inputs[0]->DebugString();
         const auto &actor = FetchActor(actor_name);
         MS_EXCEPTION_IF_NULL(actor);
         auto switch_actor = dynamic_cast<SwitchActor *>(actor);
         MS_EXCEPTION_IF_NULL(switch_actor);
 
+        const auto &output_with_index = KernelWithIndex(func_graph->output(), 0);
+        const auto &iter =
+          find(switch_actor->input_nodes_.begin(), switch_actor->input_nodes_.end(), output_with_index);
+        if (iter == switch_actor->input_nodes_.end()) {
+          MS_LOG(EXCEPTION) << "Invalid input node for switch actor:" << switch_actor->GetAID()
+                            << " node:" << AnfAlgo::GetNodeDebugString(func_graph->output());
+        }
+        size_t pos = iter - switch_actor->input_nodes_.begin();
         // Add output for each branch of switch.
         for (size_t i = 0; i < switch_actor->branch_inputs_pos_.size(); ++i) {
-          if (switch_actor->branch_inputs_pos_[i].empty()) {
-            MS_LOG(EXCEPTION) << "No input for switch actor:" << actor_name << " branch:" << i;
+          const auto poses = switch_actor->branch_inputs_pos_[i];
+          if (find(poses.begin(), poses.end(), pos) == poses.end()) {
+            continue;
           }
 
-          const auto from_index = switch_actor->branch_inputs_pos_[i][0];
-          auto op_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
+          auto op_arrow = std::make_shared<DataArrow>(pos, to_actor->GetAID(), to_index);
           switch_actor->output_branch_arrows_[i].emplace_back(op_arrow);
         }
       } else {
-        MS_LOG(EXCEPTION) << "Invalid input for call node:" << AnfAlgo::GetNodeDebugString(call_node);
+        MS_LOG(EXCEPTION) << "Invalid funcgraph:" << func_graph->ToString();
       }
-    } else {
-      MS_LOG(EXCEPTION) << "Output of func graph is not a parameter or kernel, func graph:" << func_graph->ToString()
-                        << " output node:" << AnfAlgo::GetNodeDebugString(output_with_index.first);
+      continue;
     }
+
+    const auto actor_name = func_graph->get_return()->DebugString();
+    auto actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    auto switch_actor = dynamic_cast<SwitchActor *>(actor);
+    MS_EXCEPTION_IF_NULL(switch_actor);
+    const size_t branch_index = switch_actor->branch_id_to_index_.size();
+
+    const auto &func_graph_to_branch_id = parser->func_graph_to_branch_id_;
+    const auto &iter = func_graph_to_branch_id.find(from_func_graph);
+
+    int branch_id = kMainBranchID;
+    if (iter != func_graph_to_branch_id.end()) {
+      branch_id = iter->second;
+    }
+    if (switch_actor->branch_id_to_index_.find(branch_id) != switch_actor->branch_id_to_index_.end()) {
+      LinkDataArrowForSwitchActor(switch_actor, call_node_with_index.second, to_actor, to_index,
+                                  switch_actor->branch_id_to_index_[branch_id]);
+      continue;
+    }
+    LinkDataArrowForSwitchActor(switch_actor, call_node_with_index.second, to_actor, to_index, branch_index);
+    switch_actor->branch_id_to_index_[branch_id] = branch_index;
   }
 }
 
-void GraphScheduler::LinkDataArrowForSwitchActor(SwitchActor *from_actor, KernelActor *to_actor,
-                                                 const size_t to_index) {
+void GraphScheduler::LinkDataArrowForSwitchActor(SwitchActor *from_actor, const size_t from_index,
+                                                 OpActor<DeviceTensor> *to_actor, const size_t to_index,
+                                                 const size_t branch_index) {
   MS_EXCEPTION_IF_NULL(from_actor);
-
-  for (size_t i = 0; i < from_actor->output_branch_arrows_.size(); ++i) {
-    if (from_actor->branch_inputs_pos_[i].empty()) {
+  MS_EXCEPTION_IF_NULL(to_actor);
+  size_t start_branch = 0;
+  size_t max_branch = from_actor->output_branch_arrows_.size();
+  if (branch_index != SIZE_MAX) {
+    start_branch = branch_index;
+    max_branch = branch_index + 1;
+  }
+  for (size_t i = start_branch; i < max_branch; ++i) {
+    if (from_actor->branch_inputs_pos_[i].size() <= from_index) {
       MS_LOG(EXCEPTION) << "No input for switch actor:" << from_actor->GetAID() << " branch:" << i;
     }
-    const auto from_index = from_actor->branch_inputs_pos_[i][0];
-    auto op_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
+    auto op_arrow =
+      std::make_shared<DataArrow>(from_actor->branch_inputs_pos_[i][from_index], to_actor->GetAID(), to_index);
     from_actor->output_branch_arrows_[i].emplace_back(op_arrow);
   }
-  to_actor->input_datas_num_++;
 }
 
 void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_compiler_info,
-                                                const AnfNodePtr &input_node, OpActor<DeviceTensor> *to_actor,
+                                                const KernelWithIndex &input_with_index,
+                                                const FuncGraphPtr &from_func_graph, OpActor<DeviceTensor> *to_actor,
                                                 const size_t to_index) {
   const auto &parameters = graph_compiler_info.origin_parameters_order_;
   const auto &front_to_backend_parameter = graph_compiler_info.control_node_parser_->front_to_backend_parameters_;
+  const auto &input_node = input_with_index.first;
 
   if (IsCallNode(input_node)) {
     // The actor input is a call node.
-    LinkDataArrowByCallInput(graph_compiler_info, input_node, to_actor, to_index);
+    LinkDataArrowByCallInput(input_with_index, graph_compiler_info.control_node_parser_, from_func_graph, to_actor,
+                             to_index);
   } else if (IsGatherActor(input_node, actor_name_to_actor_)) {
     // The actor input is a parameter in gather actor.
     auto from_actor = dynamic_cast<GatherActor *>(actor_name_to_actor_[input_node->func_graph()->ToString()]);
     auto position = from_actor->FetchDataNodePosition(input_node);
     auto op_arrow = std::make_shared<DataArrow>(position, to_actor->GetAID(), to_index);
     from_actor->output_data_arrows_.emplace_back(op_arrow);
+  } else if (IsSwitchActor(input_node)) {
+    const auto &actor_name = input_node->DebugString();
+    auto actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    LinkDataArrowForSwitchActor(dynamic_cast<SwitchActor *>(actor), 0, to_actor, to_index);
   } else if (IsKernelActor(input_node)) {
     // The actor input is a cnode.
-    auto input_witch_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0);
-    if (front_node_to_actor_.find(input_witch_index.first) == front_node_to_actor_.end()) {
-      MS_LOG(EXCEPTION) << "Cannot find switch actor input_node:" << AnfAlgo::GetNodeDebugString(input_node);
+    if (front_node_to_actor_.find(input_node) == front_node_to_actor_.end()) {
+      MS_LOG(EXCEPTION) << "Cannot find actor:" << to_actor->GetAID()
+                        << " input_node:" << AnfAlgo::GetNodeDebugString(input_node);
     }
 
-    auto op_arrow = std::make_shared<DataArrow>(input_witch_index.second, to_actor->GetAID(), to_index);
-    auto from_actor = front_node_to_actor_[input_witch_index.first];
+    auto op_arrow = std::make_shared<DataArrow>(input_with_index.second, to_actor->GetAID(), to_index);
+    auto from_actor = front_node_to_actor_[input_node];
     from_actor->output_data_arrows_.emplace_back(op_arrow);
-    auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_actor->kernel_, input_witch_index.second, false);
+    auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_actor->kernel_, input_with_index.second, false);
     UpdateRefCount(device_tensor.get(), true);
   } else if (find(parameters.begin(), parameters.end(), input_node) != parameters.end()) {
     // The actor input is a parameter in host data source actor.
@@ -1948,10 +2133,12 @@ void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_
   const auto &inputs = actor->input_nodes_;
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto input = inputs[i];
-    if (input->isa<ValueNode>()) {
+    if (input.first->isa<ValueNode>() || HasAbstractRef(input.first)) {
       continue;
     }
-    LinkDataArrowByControlNode(graph_compiler_info, input, actor, i);
+
+    const FuncGraphPtr from_func_graph = actor->node_->func_graph();
+    LinkDataArrowByControlNode(graph_compiler_info, input, from_func_graph, actor, i);
   }
 
   // Link switch output.
@@ -1975,8 +2162,10 @@ void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_
   }
 }
 
-void GraphScheduler::LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors, LoopCountActor *to_actor,
-                                                    const std::vector<KernelGraphPtr> &graphs) {
+void GraphScheduler::LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors,
+                                                    std::vector<KernelActorPtr> *kernel_actors,
+                                                    LoopCountActor *to_actor, const std::vector<KernelGraphPtr> &graphs,
+                                                    const ControlNodeParserPtr &parser) {
   if (from_actors == nullptr || to_actor == nullptr) {
     return;
   }
@@ -2010,15 +2199,30 @@ void GraphScheduler::LinkControlArrowForGatherActor(std::vector<GatherActorPtr> 
     }
   }
 
-  // link control arrow to loop count actor.
-  for (auto &from_actor : *from_actors) {
-    MS_EXCEPTION_IF_NULL(from_actor);
+  for (auto &kernel_actor : *kernel_actors) {
+    MS_EXCEPTION_IF_NULL(kernel_actor);
 
-    // If the gather actor has no output, then adds the output control to loop count actor.
-    if (from_actor->output_data_arrows_.size() == 0 && from_actor->output_control_arrows_.size() == 0) {
-      auto to_aid = to_actor->GetAID();
-      from_actor->output_control_arrows_.emplace_back(to_aid);
-      to_actor->branch_id_to_input_controls_num_[kMainBranchID]++;
+    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0) &&
+        !parser->IsKernelInRootFuncGraph(kernel_actor->kernel_)) {
+      // Check whether the kernel actor belongs to the root graph.
+      // In general, all no output nodes belong to the root funcgraph, and the corresponding switch actor for output
+      // should be empty. In control flow, the control arrow of the no output node in the sub funcgraph should be
+      // sent to the output switch actor.
+      const auto &graph = kernel_actor->kernel_->func_graph();
+      OpActor<DeviceTensor> *actor = nullptr;
+
+      if (graph != nullptr) {
+        const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
+        const auto func_graph = kernel_graph->GetFuncGraph();
+        if (func_graph != nullptr) {
+          actor = FetchActor(func_graph->get_return()->DebugString());
+          if (actor != nullptr) {
+            auto switch_actor = dynamic_cast<SwitchActor *>(actor);
+            kernel_actor->output_control_arrows_.emplace_back(switch_actor->GetAID());
+            switch_actor->input_controls_num_++;
+          }
+        }
+      }
     }
   }
 }
@@ -2030,6 +2234,8 @@ void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> 
     return;
   }
 
+  // If there is no output from the switch actor branch, it means that the subgraph has no input,
+  // and need to connect a control arrow to the corresponding gather actor.
   for (auto &switch_actor : (*switch_actors)) {
     for (size_t i = 0; i < switch_actor->output_branch_arrows_.size(); ++i) {
       const auto &arrows = switch_actor->output_branch_arrows_[i];
@@ -2045,17 +2251,18 @@ void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> 
     }
   }
 
+  // Collect all the call node in outputs.
   std::set<AnfNodePtr> call_nodes;
   for (const auto &output : origin_outputs_order) {
     if (IsCallNode(output.first.first)) {
       call_nodes.insert(output.first.first);
     }
   }
+  to_actor->input_controls_num_ += call_nodes.size();
 
-  to_actor->branch_id_to_input_controls_num_[kMainBranchID] += call_nodes.size();
-
+  // Link the output switch actor of the subgraph to the output actor.
   for (const auto &call_node : call_nodes) {
-    const auto &func_graphs = FetchFuncGraphbyCallNode(call_node->cast<CNodePtr>());
+    const auto &func_graphs = FetchFuncGraphbyCallNode(call_node);
     for (const auto func_graph : func_graphs) {
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->get_return()->DebugString();
@@ -2104,87 +2311,26 @@ void GraphScheduler::LinkBranchArrowForGatherActor(const GraphCompilerInfo &grap
     return;
   }
 
-  const auto func_graph = graph_compiler_info.control_nodes_[0]->func_graph();
-  const auto &loop_count_actor = actor_set->loop_count_actor_.get();
-  const auto &output_actor = actor_set->output_actor_.get();
-
-  // If there is only one branch output, set the branch id of the loop count to 0, no need to send the branch id.
-  auto outputs = graph_compiler_info.control_node_parser_->front_output_nodes_;
-  if (outputs.size() == 1) {
-    return;
+  // Link branch arrow from gather actor to gather actor.
+  for (const auto &control_node : graph_compiler_info.control_nodes_) {
+    const auto &cnode = control_node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    if (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0])) {
+      const auto &actor_name = control_node->DebugString();
+      auto actor = FetchActor(actor_name);
+      MS_EXCEPTION_IF_NULL(actor);
+      auto gather_actor = dynamic_cast<GatherActor *>(actor);
+      gather_actor->output_branch_arrows_.emplace_back(gather_actor->gather_aid_);
+    }
   }
 
-  loop_count_actor->branch_id_ = kInvalidBranchID;
-  output_actor->branch_id_ = kInvalidBranchID;
-
-  std::vector<FuncGraphPtr> output_func_graphs;
-  for_each(outputs.begin(), outputs.end(),
-           [&output_func_graphs](const AnfNodePtr &output) { output_func_graphs.push_back(output->func_graph()); });
-  int func_graph_num = SizeToInt(output_func_graphs.size());
-  std::unordered_map<FuncGraphPtr, size_t> graph_to_control_num;
-
-  // Count the control arrow num of gather actor.
-  for (int i = 0; i < func_graph_num; ++i) {
-    auto output_func_graph = output_func_graphs[i];
-    auto actor_name = output_func_graph->ToString();
+  // Link branch arrow from gather actor to switch actor.
+  for (const auto &func_graph_with_call_num : graph_compiler_info.control_node_parser_->func_graph_to_call_num_) {
+    const auto &actor_name = func_graph_with_call_num.first->ToString();
     auto actor = FetchActor(actor_name);
-    if (actor == nullptr) {
-      continue;
-    }
-    const auto &from_actor = dynamic_cast<GatherActor *>(actor);
-    MS_EXCEPTION_IF_NULL(from_actor);
-
-    from_actor->branch_id_ = i;
-    graph_to_control_num[output_func_graph] = 0;
-    if ((from_actor->output_data_arrows_.size() == 0) && (from_actor->output_control_arrows_.size() == 0)) {
-      graph_to_control_num[output_func_graph]++;
-    }
-  }
-
-  // Count the control arrow num of kernel actor.
-  for (const auto &kernel_actor : actor_set->kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(kernel_actor);
-    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
-      MS_EXCEPTION_IF_NULL(kernel_actor->kernel_);
-      const auto &sub_func_graph = FetchFuncGraphByNode(kernel_actor->kernel_);
-      if (sub_func_graph == nullptr) {
-        MS_LOG(EXCEPTION) << "Cannot get funcgraph from kernel:" << kernel_actor->kernel_->fullname_with_scope();
-      }
-
-      if (graph_to_control_num.find(sub_func_graph) != graph_to_control_num.end()) {
-        graph_to_control_num[sub_func_graph]++;
-      } else {
-        for (auto &pair : graph_to_control_num) {
-          pair.second++;
-        }
-      }
-    }
-  }
-
-  for (size_t i = 0; i < graph_to_control_num.size(); ++i) {
-    // Branch id starts from 1.
-    auto branch_id = SizeToInt(i) + kSubBranchStartID;
-    auto sub_func_graph = output_func_graphs[i];
-    auto gather_actor_name = sub_func_graph->ToString();
-    auto actor = FetchActor(gather_actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     auto gather_actor = dynamic_cast<GatherActor *>(actor);
-    MS_EXCEPTION_IF_NULL(gather_actor);
-
-    gather_actor->branch_id_ = branch_id;
-    loop_count_actor->branch_id_to_input_controls_num_[branch_id] = graph_to_control_num[sub_func_graph];
-  }
-
-  // If the switch actor is linked to the output actor, it will link a control arrow to the loop count actor,
-  // and this should be recorded.
-  for (const auto &from_actor : actor_set->switch_actors_) {
-    MS_EXCEPTION_IF_NULL(from_actor);
-    auto origin_output_with_index = KernelWithIndex(from_actor->node_, 0);
-    const auto &iter = graph_compiler_info.origin_outputs_order_.find(origin_output_with_index);
-    if (iter == graph_compiler_info.origin_outputs_order_.end()) {
-      continue;
-    }
-    loop_count_actor->branch_id_to_input_controls_num_[iter->second.first]++;
+    gather_actor->output_branch_arrows_.emplace_back(gather_actor->switch_aid_);
   }
 }
 
@@ -2194,8 +2340,15 @@ void GraphScheduler::LinkOutputResultArrowForGatherActor(const GraphCompilerInfo
   OutputActor *to_actor = actor_set->output_actor_.get();
   MS_EXCEPTION_IF_NULL(to_actor);
 
-  for (const auto gather_actor : actor_set->gather_actors_) {
-    MS_EXCEPTION_IF_NULL(gather_actor);
+  for (const auto &func_graph_to_branch_id : graph_compiler_info.control_node_parser_->func_graph_to_branch_id_) {
+    if (func_graph_to_branch_id.second == kMainBranchID) {
+      continue;
+    }
+
+    const auto &func_graph = func_graph_to_branch_id.first;
+    auto actor = FetchActor(func_graph->ToString());
+    MS_EXCEPTION_IF_NULL(actor);
+    auto gather_actor = dynamic_cast<GatherActor *>(actor);
 
     for (size_t i = 0; i < gather_actor->data_nodes_.size(); ++i) {
       const auto front_node = gather_actor->data_nodes_[i];
@@ -2205,11 +2358,7 @@ void GraphScheduler::LinkOutputResultArrowForGatherActor(const GraphCompilerInfo
         continue;
       }
 
-      for (auto &output_position : iter->second.second) {
-        MS_LOG(INFO) << "Link output node:" << AnfAlgo::GetNodeDebugString(origin_output_with_index.first)
-                     << " branch id:" << iter->second.first << " index:" << output_position
-                     << " for gather actor:" << gather_actor->GetAID();
-
+      for (auto &output_position : iter->second) {
         auto op_arrow = std::make_shared<DataArrow>(i, to_actor->GetAID(), output_position);
         gather_actor->output_result_arrows_.emplace_back(op_arrow);
         const auto &backend_nodes = gather_actor->front_to_backend_parameter_[front_node];
@@ -2220,9 +2369,9 @@ void GraphScheduler::LinkOutputResultArrowForGatherActor(const GraphCompilerInfo
         const auto &backend_node = backend_nodes[0].first;
         if (backend_node->isa<Parameter>()) {
           std::string actor_name = graph_compiler_info.name_ + "_HostDSActor";
-          auto actor = FetchActor(actor_name);
-          MS_EXCEPTION_IF_NULL(actor);
-          auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
+          auto ds_op_actor = FetchActor(actor_name);
+          MS_EXCEPTION_IF_NULL(ds_op_actor);
+          auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(ds_op_actor);
           MS_EXCEPTION_IF_NULL(host_ds_actor);
 
           const auto &data_nodes = host_ds_actor->data_nodes_;
@@ -2271,7 +2420,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
     auto input_data_num = kernel_actor->input_datas_num_;
     auto device_tensor_store_num = kernel_actor->device_tensor_store_keys_.size();
     if (input_data_num + device_tensor_store_num != input_num) {
-      MS_LOG(ERROR) << "The input building of " << kernel_actor->GetAID().Name()
+      MS_LOG(ERROR) << "The input building of " << AnfAlgo::GetNodeDebugString(kernel_actor->kernel_)
                     << " is wrong, input data num: " << input_data_num
                     << ", device tensor store num: " << device_tensor_store_num << ", total input num: " << input_num;
       return false;
@@ -2302,7 +2451,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
   const auto &loop_count_actor = actor_set->loop_count_actor_;
   if ((loop_count_actor != nullptr) &&
       (actor_set->data_source_actors_.size() + actor_set->kernel_actors_.size() + actor_set->copy_actors_.size() > 0)) {
-    if (loop_count_actor->branch_id_to_input_controls_num_[kMainBranchID] == 0) {
+    if (loop_count_actor->input_controls_num_ == 0) {
       MS_LOG(ERROR) << loop_count_actor->GetAID().Name() << " has no source.";
       return false;
     }
@@ -2477,6 +2626,16 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
     DumpCopyActor(copy_actor.get(), ofs);
   }
 
+  ofs << "\n\n[Gather actors]\n";
+  for (const auto &gather_actor : actor_set->gather_actors_) {
+    DumpGatherActor(gather_actor.get(), ofs);
+  }
+
+  ofs << "\n\n[Switch actors]\n";
+  for (const auto &switch_actor : actor_set->switch_actors_) {
+    DumpSwitchActor(switch_actor.get(), ofs);
+  }
+
   ofs << "\n\n[Loop count actor]\n";
   const auto &loop_count_actor = actor_set->loop_count_actor_;
   if (loop_count_actor != nullptr) {
@@ -2562,7 +2721,7 @@ void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &of
 void GraphScheduler::DumpLoopCountActor(const LoopCountActor *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count_
-      << "\tinput_controls_num:" << actor->branch_id_to_input_controls_num_.at(kMainBranchID) << "\n";
+      << "\tinput_controls_num:" << actor->input_controls_num_ << "\n";
 
   ofs << "\t\toutput_control_arrows:" << (actor->data_source_aids_.size() + actor->no_input_kernel_aids_.size() + 1)
       << "\n ";
@@ -2625,8 +2784,8 @@ void GraphScheduler::DumpOutputActor(const OutputActor *actor, std::ofstream &of
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count_
       << "\toutputs_num:" << actor->outputs_num_ << "\n";
 
-  ofs << "\t\tdevice_tensor_store_keys:" << actor->device_tensor_store_keys_.at(kMainBranchID).size() << "\n ";
-  for (const auto &device_tensor_store_key : actor->device_tensor_store_keys_.at(kMainBranchID)) {
+  ofs << "\t\tdevice_tensor_store_keys:" << actor->device_tensor_store_keys_.size() << "\n ";
+  for (const auto &device_tensor_store_key : actor->device_tensor_store_keys_) {
     MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
     ofs << "\t\t\toutput_node_position:" << device_tensor_store_key.first
         << "\toutput_node_name:" << device_tensor_store_key.second->fullname_with_scope() << "\n";
@@ -2745,7 +2904,7 @@ void GraphScheduler::DumpSwitchActor(const SwitchActor *actor, std::ofstream &of
 
   ofs << "\t\tactor input num:" << actor->input_nodes_.size() << "\n";
   for (const auto &node : actor->input_nodes_) {
-    ofs << "\t\t\t" << AnfAlgo::GetNodeDebugString(node) << '\n';
+    ofs << "\t\t\t" << AnfAlgo::GetNodeDebugString(node.first) << '\t' << node.second << '\n';
   }
 
   ofs << "\t\tactor input pos:\n";

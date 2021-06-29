@@ -547,6 +547,8 @@ FuncGraphPtr GetFuncgraphByBackendNode(const AnfNodePtr &backend_node) {
 
 void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
                               const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph) {
+  root_func_graph_ = root_graph;
+
   root_graph_parameters_ = root_graph->parameters();
 
   CreateBranchIDForFuncGraph(control_nodes);
@@ -598,6 +600,27 @@ bool ControlNodeParser::IsCallInputKernelGraph(const KernelGraphPtr &graph) {
   return true;
 }
 
+bool ControlNodeParser::IsKernelInRootFuncGraph(const AnfNodePtr &kernel) {
+  if (kernel == nullptr) {
+    return true;
+  }
+
+  const auto &graph = kernel->func_graph();
+  if (kernel != nullptr && graph != nullptr) {
+    const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
+    if (kernel_graph == nullptr) {
+      return true;
+    }
+
+    const auto func_graph = kernel_graph->GetFuncGraph();
+    if (func_graph != nullptr && func_graph != root_func_graph_) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 size_t ControlNodeParser::GetCallNumByFuncGraph(const FuncGraphPtr &func_graph) {
   if (func_graph_to_call_num_.find(func_graph) == func_graph_to_call_num_.end()) {
     MS_LOG(EXCEPTION) << "Invalid funcgraph:" << func_graph->ToString();
@@ -619,6 +642,21 @@ DeviceContext *ControlNodeParser::GetFrontValueNodeDeviceContext(const AnfNodePt
   if (iter != front_value_nodes_.end()) {
     return iter->second;
   }
+  return nullptr;
+}
+
+AnfNodePtr ControlNodeParser::FetchBackendNodebyWeightNode(const AnfNodePtr &node) {
+  for (const auto &host_parameter_to_weight : host_parameter_to_weights_) {
+    for (const auto &front_weight : host_parameter_to_weight.second) {
+      if (front_weight == node) {
+        const auto &iter = front_to_backend_parameters_.find(front_weight);
+        if (iter != front_to_backend_parameters_.end()) {
+          return iter->second.first;
+        }
+      }
+    }
+  }
+
   return nullptr;
 }
 
@@ -928,6 +966,40 @@ std::vector<AnfNodePtr> FetchInputParameterbyControlNode(const AnfNodePtr &node,
   return parameters;
 }
 
+std::vector<AnfNodePtr> FetchParameterbyKernelGraph(const KernelGraphPtr &graph) {
+  std::vector<AnfNodePtr> parameters;
+  const auto &graph_parameters = graph->input_nodes();
+
+  for (const auto &graph_parameter : graph_parameters) {
+    const auto &front_node = graph->GetFrontAnfByBackendAnf(graph_parameter);
+    if (front_node != nullptr) {
+      parameters.emplace_back(front_node);
+      continue;
+    }
+    const auto &front_node_with_index = graph->GetFrontNodeByInternalParameter(graph_parameter);
+    if (front_node_with_index.first == nullptr) {
+      MS_LOG(WARNING) << "Invalid parameter of kernel graph, parameter :"
+                      << AnfAlgo::GetNodeDebugString(graph_parameter);
+      continue;
+    }
+
+    if (HasAbstractRef(AnfAlgo::VisitKernelWithReturnType(front_node_with_index.first, 0).first) ||
+        HasAbstractMonad(front_node_with_index.first)) {
+      continue;
+    }
+
+    if (AnfAlgo::CheckPrimitiveType(front_node_with_index.first, prim::kPrimMakeTuple)) {
+      const auto &sub_parameters = FetchInputsByMakeTuple(front_node_with_index.first);
+      parameters.insert(parameters.end(), sub_parameters.begin(), sub_parameters.end());
+      continue;
+    }
+
+    parameters.emplace_back(front_node_with_index.first);
+  }
+
+  return parameters;
+}
+
 void ControlNodeParser::FetchFrontToBackendParameter(const std::vector<KernelGraphPtr> &graphs,
                                                      const std::vector<DeviceContext *> &device_contexts,
                                                      const std::vector<AnfNodePtr> &control_nodes) {
@@ -939,7 +1011,7 @@ void ControlNodeParser::FetchFrontToBackendParameter(const std::vector<KernelGra
   for (size_t i = 0; i < graphs.size(); ++i) {
     const auto &graph = graphs[i];
     auto device_context = device_contexts[i];
-    for (const auto &parameter : graph->parameters()) {
+    for (const auto &parameter : graph->input_nodes()) {
       auto front_node = graph->GetFrontAnfByBackendAnf(parameter);
 
       if (front_node != nullptr && front_node->isa<Parameter>() &&

@@ -712,26 +712,25 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   auto parser = std::make_shared<ControlNodeParser>();
   parser->Parse(control_nodes_, graphs, device_contexts, root_graph);
 
-  // Get all the outputs. In control flow, there may be multiple branch output.
   runtime::KernelMapPosition outputs_order;
   size_t outputs_num = 0;
-  const auto &all_branch_output = parser->FetchAllBranchOutputs(root_graph);
-  for (int j = 0; j < SizeToInt(all_branch_output.size()); ++j) {
-    // In general, there is only one output branch, and the branch id is 0 at this time. In the control flow,
-    // there are multi-branch output scenarios. Different branches may have different weight nodes. When output
-    // actor run, the corresponding weight node needs to be obtained according to different branches. Therefore,
-    // the branch of the output nodes needs to be recorded.
-    const int branch_id = ((all_branch_output.size() == 1 ? runtime::kMainBranchID : (j + runtime::kSubBranchStartID)));
-    const auto &branch_output = all_branch_output[j];
-    size_t position = 0;
-    auto outputs = AnfAlgo::GetAllOutputWithIndex(branch_output);
-    outputs_num = outputs.size();
-    for (const auto &output : outputs) {
-      if (outputs_order.count(output) == 0) {
-        outputs_order[output] = {branch_id, {position++}};
-      } else {
-        outputs_order[output].second.emplace_back(position++);
-      }
+  const auto &root_output =
+    AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0, false, {prim::kPrimTupleGetItem}).first;
+  size_t position = 0;
+  auto outputs = AnfAlgo::GetAllOutputWithIndex(root_output);
+  if (runtime::IsCallNode(root_output)) {
+    std::vector<AnfNodePtr> call_nodes;
+    size_t call_output_num = runtime::FetchOutputSizebyCallNode(root_output, &call_nodes);
+    for (size_t i = 0; i < call_output_num; ++i) {
+      outputs.push_back({root_output, i});
+    }
+  }
+  outputs_num = outputs.size();
+  for (const auto &output : outputs) {
+    if (outputs_order.count(output) == 0) {
+      outputs_order[output] = {position++};
+    } else {
+      outputs_order[output].emplace_back(position++);
     }
   }
 
@@ -759,9 +758,9 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
     for (const auto &output : outputs) {
       if (outputs_order.count(output) == 0) {
-        outputs_order[output] = {runtime::kMainBranchID, {position++}};
+        outputs_order[output] = {position++};
       } else {
-        outputs_order[output].second.emplace_back(position++);
+        outputs_order[output].emplace_back(position++);
       }
     }
   }
