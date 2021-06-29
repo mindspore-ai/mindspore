@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """
-ResNext
+ResNet based ResNext
 """
 import mindspore.nn as nn
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add, Split, Concat
 from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
 
 from src.utils.cunstom_op import SEBlock, GroupConv
 
 
-__all__ = ['resnext50', 'resnext101']
+__all__ = ['ResNet', 'resnext50', 'resnext101']
 
 
 def weight_variable(shape, factor=0.1):
@@ -60,11 +60,9 @@ class _DownSample(nn.Cell):
     Examples:
         >>>DownSample(32, 64, 2)
     """
-
     def __init__(self, in_channels, out_channels, stride):
         super(_DownSample, self).__init__()
-        self.conv = conv1x1(in_channels, out_channels,
-                            stride=stride, padding=0)
+        self.conv = conv1x1(in_channels, out_channels, stride=stride, padding=0)
         self.bn = nn.BatchNorm2d(out_channels)
 
     def construct(self, x):
@@ -72,10 +70,9 @@ class _DownSample(nn.Cell):
         out = self.bn(out)
         return out
 
-
 class BasicBlock(nn.Cell):
     """
-    ResNeXt basic block definition.
+    ResNet basic block definition.
 
     Args:
         in_channels (int): Input channels.
@@ -108,7 +105,7 @@ class BasicBlock(nn.Cell):
             self.down_sample = down_sample
             self.down_sample_flag = True
 
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         identity = x
@@ -128,10 +125,9 @@ class BasicBlock(nn.Cell):
         out = self.relu(out)
         return out
 
-
 class Bottleneck(nn.Cell):
     """
-    ResNeXt Bottleneck block definition.
+    ResNet Bottleneck block definition.
 
     Args:
         in_channels (int): Input channels.
@@ -159,11 +155,12 @@ class Bottleneck(nn.Cell):
         self.conv3x3s = nn.CellList()
 
         if platform == "GPU":
-            self.conv2 = nn.Conv2d(
-                width, width, 3, stride, pad_mode='pad', padding=1, group=groups)
+            self.conv2 = nn.Conv2d(width, width, 3, stride, pad_mode='pad', padding=1, group=groups)
         else:
-            self.conv2 = GroupConv(
-                width, width, 3, stride, pad=1, groups=groups)
+            self.conv2 = GroupConv(width, width, 3, stride, pad=1, groups=groups)
+
+        self.op_split = Split(axis=1, output_num=self.groups)
+        self.op_concat = Concat(axis=1)
 
         self.bn2 = nn.BatchNorm2d(width)
         self.conv3 = conv1x1(width, out_channels * self.expansion, stride=1)
@@ -179,7 +176,7 @@ class Bottleneck(nn.Cell):
             self.down_sample_flag = True
 
         self.cast = P.Cast()
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         identity = x
@@ -203,10 +200,9 @@ class Bottleneck(nn.Cell):
         out = self.relu(out)
         return out
 
-
-class ResNeXt(nn.Cell):
+class ResNet(nn.Cell):
     """
-    ResNeXt architecture.
+    ResNet architecture.
 
     Args:
         block (cell): Block for network.
@@ -218,11 +214,10 @@ class ResNeXt(nn.Cell):
         Tuple, output tensor tuple.
 
     Examples:
-        >>>ResNeXt()
+        >>>ResNet()
     """
-
     def __init__(self, block, layers, width_per_group=64, groups=1, use_se=False, platform="Ascend"):
-        super(ResNeXt, self).__init__()
+        super(ResNet, self).__init__()
         self.in_channels = 64
         self.groups = groups
         self.base_width = width_per_group
@@ -232,14 +227,10 @@ class ResNeXt(nn.Cell):
         self.relu = P.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
 
-        self.layer1 = self._make_layer(
-            block, 64, layers[0], use_se=use_se, platform=platform)
-        self.layer2 = self._make_layer(
-            block, 128, layers[1], stride=2, use_se=use_se, platform=platform)
-        self.layer3 = self._make_layer(
-            block, 256, layers[2], stride=2, use_se=use_se, platform=platform)
-        self.layer4 = self._make_layer(
-            block, 512, layers[3], stride=2, use_se=use_se, platform=platform)
+        self.layer1 = self._make_layer(block, 64, layers[0], use_se=use_se, platform=platform)
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, use_se=use_se, platform=platform)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2, use_se=use_se, platform=platform)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, use_se=use_se, platform=platform)
 
         self.out_channels = 512 * block.expansion
         self.cast = P.Cast()
@@ -285,8 +276,7 @@ class ResNeXt(nn.Cell):
 
 
 def resnext50(platform="Ascend"):
-    return ResNeXt(Bottleneck, [3, 4, 6, 3], width_per_group=4, groups=32, platform=platform)
-
+    return ResNet(Bottleneck, [3, 4, 6, 3], width_per_group=4, groups=32, platform=platform)
 
 def resnext101(platform="Ascend"):
-    return ResNeXt(Bottleneck, [3, 4, 23, 3], width_per_group=4, groups=64, platform=platform)
+    return ResNet(Bottleneck, [3, 4, 23, 3], width_per_group=4, groups=32, platform=platform)

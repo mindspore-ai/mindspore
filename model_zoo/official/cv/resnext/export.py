@@ -28,7 +28,7 @@ if config.device_target == "Ascend":
     context.set_context(device_id=config.device_id)
 
 if __name__ == '__main__':
-    network = get_network(num_classes=config.num_classes, platform=config.device_target)
+    network = get_network(network=config.network, num_classes=config.num_classes, platform=config.device_target)
 
     param_dict = load_checkpoint(config.checkpoint_file_path)
     load_param_into_net(network, param_dict)

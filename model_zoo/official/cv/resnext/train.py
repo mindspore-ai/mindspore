@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -134,12 +134,17 @@ def set_parameters():
     config.logger = get_logger(config.outputs_dir, config.rank)
     return config
 
+def set_graph_kernel_context(device_target):
+    if device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
+
 @moxing_wrapper()
 def train():
     """training process"""
     set_parameters()
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    set_graph_kernel_context(config.device_target)
 
     # init distributed
     if config.run_distribute:
@@ -158,7 +163,7 @@ def train():
     # network
     config.logger.important_info('start create network')
     # get network and init
-    network = get_network(num_classes=config.num_classes, platform=config.device_target)
+    network = get_network(network=config.network, num_classes=config.num_classes, platform=config.device_target)
 
     load_pretrain_model(config.checkpoint_file_path, network, config)
 

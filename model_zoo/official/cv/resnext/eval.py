@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ class ParameterReduce(nn.Cell):
 
 def set_parameters():
     """set_parameters"""
-    # init distributed
     if config.run_distribute:
         if config.device_target == "Ascend":
             init()
@@ -124,14 +123,19 @@ def get_result(model, top1_correct, top5_correct, img_tot):
     config.logger.info('after results=%s', results)
     return results
 
+def set_graph_kernel_context(device_target):
+    if device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
+
 @moxing_wrapper()
-def test():
+def test(cloud_args=None):
     """test"""
     set_parameters()
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
                         device_target=config.device_target, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    set_graph_kernel_context(config.device_target)
 
     # init distributed
     if config.run_distribute:
@@ -143,8 +147,8 @@ def test():
 
     # network
     config.logger.important_info('start create network')
-    if os.path.isdir(config.checkpoint_file_path):
-        models = list(glob.glob(os.path.join(config.checkpoint_file_path, '*.ckpt')))
+    if os.path.isdir(config.pretrained):
+        models = list(glob.glob(os.path.join(config.pretrained, '*.ckpt')))
         print(models)
         if config.graph_ckpt:
             f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('-')[-1].split('_')[0])
@@ -160,7 +164,7 @@ def test():
                                             max_epoch=1, rank=config.rank, group_size=config.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator(output_numpy=True, num_epochs=1)
-        network = get_network(num_classes=config.num_classes, platform=config.device_target)
+        network = get_network(network=config.network, num_classes=config.num_classes, platform=config.device_target)
 
         load_pretrain_model(model, network, config)
 

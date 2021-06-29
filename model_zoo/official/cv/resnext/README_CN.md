@@ -1,7 +1,7 @@
 # 目录
 
 - [目录](#目录)
-- [ResNeXt50说明](#resnext50说明)
+- [ResNeXt说明](#resnext说明)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [特性](#特性)
@@ -28,7 +28,7 @@
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
-# ResNeXt50说明
+# ResNeXt说明
 
 ResNeXt是一个简单、高度模块化的图像分类网络架构。ResNeXt的设计为统一的、多分支的架构，该架构仅需设置几个超参数。此策略提供了一个新维度，我们将其称为“基数”（转换集的大小），它是深度和宽度维度之外的一个重要因素。
 
@@ -73,12 +73,12 @@ ResNeXt整体网络架构如下：
 
 ```python
 # 在modelarts上使用分布式训练的示例：
-# (1) 选址a或者b其中一种方式。
+# (1) 选择a或者b其中一种方式。
 #       a. 设置 "enable_modelarts=True" 。
 #          在yaml文件上设置网络所需的参数。
 #       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
 #          在modelarts的界面上设置网络所需的参数。
-# (2) 在modelarts的界面上设置代码的路径 "/path/resnext50"。
+# (2) 在modelarts的界面上设置代码的路径 "/path/ResNeXt"。
 # (3) 在modelarts的界面上设置模型的启动文件 "train.py" 。
 # (4) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
 # 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
@@ -93,7 +93,7 @@ ResNeXt整体网络架构如下：
 #       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
 #          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
 #          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
-# (3) 在modelarts的界面上设置代码的路径 "/path/resnext50"。
+# (3) 在modelarts的界面上设置代码的路径 "/path/ResNeXt"。
 # (4) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
 # (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
 # 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
@@ -106,7 +106,7 @@ ResNeXt整体网络架构如下：
 
 ```path
 .
-└─resnext50
+└─ResNeXt
   ├─README.md
   ├─scripts
     ├─run_standalone_train.sh         # 启动Ascend单机训练（单卡）
@@ -117,7 +117,7 @@ ResNeXt整体网络架构如下：
   ├─src
     ├─backbone
       ├─_init_.py                     # 初始化
-      ├─resnet.py                     # ResNeXt50骨干
+      ├─resnet.py                     # ResNeXt骨干
     ├─utils
       ├─_init_.py                     # 初始化
       ├─cunstom_op.py                 # 网络操作
@@ -159,7 +159,7 @@ ResNeXt整体网络架构如下：
 "eta_min": 0,                             # cosine_annealing调度器中的eta_min
 "T_max": 150,                             # cosine_annealing调度器中的T-max
 "max_epoch": 150,                         # 训练模型的最大轮次数量
-"backbone": 'resnext50',                  # 骨干网络
+"backbone": 'ResNeXt',                  # 骨干网络
 "warmup_epochs" : 1,                      # 热身轮次
 "weight_decay": 0.0001,                   # 权重衰减
 "momentum": 0.9,                          # 动量
@@ -238,16 +238,21 @@ DEVICE_TARGET is Ascend or GPU, default is Ascend.
 
 ```shell
 # 检查点评估
-sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext50_100.ckpt Ascend
+sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /ResNeXt_100.ckpt Ascend
 ```
 
 #### 结果
 
 评估结果保存在脚本路径下。您可以在日志中找到类似以下的结果。
 
-```log
+```resnext50
 acc=78.16%(TOP1)
 acc=93.88%(TOP5)
+```
+
+```resnext101
+acc=79.86%(TOP1)
+acc=94.72%(TOP5)
 ```
 
 ## 模型导出
@@ -277,8 +282,12 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
 
 推理结果保存在当前路径，可在acc.log中看到最终精度结果。
 
-```log
+```resnext50
 Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
+```
+
+```resnext101
+Total data:50000, top1 accuracy:0.79858, top5 accuracy:0.94716
 ```
 
 # 模型描述
@@ -303,7 +312,7 @@ Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
 
 #### 推理性能
 
-| 参数                 |                               |                           |                      |
+| 参数                 |ResNeXt50                            |                           |                      |
 | -------------------------- | ----------------------------- | ------------------------- | -------------------- |
 | 资源                   | Ascend 910；系统 Euler2.8                    | NV SMX2 V100-32G          | Ascend 310           |
 | 上传日期              | 2020-6-30                                           | 2020-7-23   | 2020-7-23      |
@@ -312,6 +321,16 @@ Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
 | batch_size                 | 1                             | 1                         | 1                    |
 | 输出 | 概率 | 概率 | 概率 |
 | 准确率 | acc=78.16%(TOP1)              | acc=78.05%(TOP1)          |                      |
+
+| 参数                | ResNeXt101                      |
+| ------------------- | --------------------------- |
+| 资源            | Ascend 310; OS Euler2.8     |
+| 上传日期        | 22/06/2021 (month/day/year) |
+| MindSpore版本   | 1.2.0                       |
+| 数据集             | ImageNet                    |
+| batch_size          | 1                           |
+| 输出             | 概率                    |
+| 准确率            | TOP1: 79.85%, TOP5: 94.71%  |
 
 # 随机情况说明
 
