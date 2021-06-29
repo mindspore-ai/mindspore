@@ -14,7 +14,7 @@
 # ============================================================================
 """train Xception."""
 import os
-import argparse
+import time
 
 from mindspore import context
 from mindspore import Tensor
@@ -22,29 +22,80 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common import dtype as mstype
 from mindspore.common import set_seed
 
 from src.lr_generator import get_lr
 from src.Xception import xception
-from src.config import config_gpu, config_ascend
 from src.dataset import create_dataset
 from src.loss import CrossEntropySmooth
-
+from src.model_utils.config import config as args_opt, config_gpu, config_ascend
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_rank_id, get_device_num
 set_seed(1)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='image classification training')
-    parser.add_argument('--is_distributed', action='store_true', default=False, help='distributed training')
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
-                        help='run platform, (Default: Ascend)')
-    parser.add_argument('--dataset_path', type=str, default=None, help='dataset path')
-    parser.add_argument("--is_fp32", action='store_true', default=False, help='fp32 training, add --is_fp32')
-    parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
 
-    args_opt = parser.parse_args()
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, args_opt.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("Unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("Unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("Cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if args_opt.modelarts_dataset_unzip_name:
+        zip_file_1 = os.path.join(args_opt.data_path, args_opt.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(args_opt.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+    args_opt.train_data_dir = args_opt.data_path
+    if args_opt.modelarts_dataset_unzip_name:
+        args_opt.train_data_dir = os.path.join(args_opt.train_data_dir, args_opt.folder_name_under_zip_file)
+    config_gpu.save_checkpoint_path = os.path.join(args_opt.output_path, config_gpu.save_checkpoint_path)
+    config_ascend.save_checkpoint_path = os.path.join(args_opt.output_path, config_ascend.save_checkpoint_path)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
     if args_opt.device_target == "Ascend":
         config = config_ascend
     elif args_opt.device_target == "GPU":
@@ -54,20 +105,19 @@ if __name__ == '__main__':
 
     # init distributed
     if args_opt.is_distributed:
-        if os.getenv('DEVICE_ID', "not_set").isdigit():
-            context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+        context.set_context(device_id=get_device_id(), mode=context.GRAPH_MODE, device_target=args_opt.device_target,
+                            save_graphs=False)
         init()
-        rank = get_rank()
-        group_size = get_group_size()
+        rank = get_rank_id()
+        group_size = get_device_num()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=group_size, gradients_mean=True)
     else:
         rank = 0
         group_size = 1
-        device_id = int(os.getenv('DEVICE_ID', '0'))
-        context.set_context(device_id=device_id)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, save_graphs=False)
+        device_id = get_device_id()
+        context.set_context(device_id=device_id, mode=context.GRAPH_MODE, device_target=args_opt.device_target,
+                            save_graphs=False)
     # define network
     net = xception(class_num=config.class_num)
     if args_opt.device_target == "Ascend":
@@ -79,7 +129,7 @@ if __name__ == '__main__':
     loss = CrossEntropySmooth(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
 
     # define dataset
-    dataset = create_dataset(args_opt.dataset_path, do_train=True, batch_size=config.batch_size,
+    dataset = create_dataset(args_opt.train_data_dir, do_train=True, batch_size=config.batch_size,
                              device_num=group_size, rank=rank)
     step_size = dataset.get_dataset_size()
 
@@ -137,3 +187,7 @@ if __name__ == '__main__':
         cb += [ckpt_cb]
         model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=True)
     print("train success")
+
+
+if __name__ == '__main__':
+    run_train()

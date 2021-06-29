@@ -35,9 +35,9 @@ then
       --output-filename gpu_fp16_dist_log  \
       --merge-stderr-to-stdout  \
       ${PYTHON_EXEC} ../train.py  \
-      --is_distributed  \
+      --is_distributed=True  \
       --device_target=GPU  \
-      --dataset_path=$DATA_DIR > gpu_fp16_dist_log.txt 2>&1 &
+      --train_data_dir=$DATA_DIR > gpu_fp16_dist_log.txt 2>&1 &
 else
     PATH_TRAIN="./train_standalone_gpu_fp16"$(date "+%Y%m%d%H%M%S")
     if [ -d $PATH_TRAIN ];
@@ -50,6 +50,6 @@ else
     
     ${PYTHON_EXEC} ../train.py  \
       --device_target=GPU  \
-      --dataset_path=$DATA_DIR > gpu_fp16_standard_log.txt 2>&1 &
+      --train_data_dir=$DATA_DIR > gpu_fp16_standard_log.txt 2>&1 &
 fi
 cd ../

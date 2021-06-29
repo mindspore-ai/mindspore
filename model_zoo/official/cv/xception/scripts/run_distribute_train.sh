@@ -40,8 +40,8 @@ do
 
     env > env.log
     python ../train.py  \
-    --is_distributed \
+    --is_distributed=True \
     --device_target=Ascend \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
+    --train_data_dir=$DATA_DIR > log.txt 2>&1 &
     cd ../
 done
