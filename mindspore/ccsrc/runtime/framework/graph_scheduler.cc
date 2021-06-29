@@ -1352,22 +1352,26 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
     return;
   }
 
+  const std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
+    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   // Get the real depend input by monad node which needs to link the control arrow.
   std::vector<AnfNodePtr> real_depend_inputs;
-  if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimDepend)) {
+  if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimDepend) ||
+      AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimLoad)) {
     real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
+    // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input node
+    // in this scene.
+    if (AnfAlgo::IsOneOfPrimitiveCNode(input_cnode->input(kRealInputIndexInDepend), recursion_prims)) {
+      real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
+    }
   } else if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimUpdateState)) {
     for (size_t i = kUpdateStateRealInput; i < input_cnode->inputs().size(); ++i) {
       real_depend_inputs.push_back(input_cnode->input(i));
     }
-  } else if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimLoad)) {
-    real_depend_inputs.push_back(input_cnode->input(kLoadStateInput));
   } else {
     real_depend_inputs.push_back(input_cnode);
   }
 
-  const std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
-    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   for (const auto &real_depend_input : real_depend_inputs) {
     auto real_depend_input_with_idx = AnfAlgo::VisitKernelWithReturnType(real_depend_input, 0, false, return_types);
     auto real_depend_kernel = real_depend_input_with_idx.first;
