@@ -38,6 +38,8 @@ class TransformToBNN:
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> from mindspore.nn.probability import bnn_layers
+        >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -57,9 +59,9 @@ class TransformToBNN:
         >>>
         >>> net = Net()
         >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-        >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> net_with_loss = WithLossCell(net, criterion)
-        >>> train_network = TrainOneStepCell(net_with_loss, optim)
+        >>> optim = nn.AdamWeightDecay(params=net.trainable_params(), learning_rate=0.0001)
+        >>> net_with_loss = nn.WithLossCell(net, criterion)
+        >>> train_network = nn.TrainOneStepCell(net_with_loss, optim)
         >>> bnn_transformer = TransformToBNN(train_network, 60000, 0.0001)
     """
 
@@ -111,14 +113,14 @@ class TransformToBNN:
             Cell, a trainable BNN model wrapped by TrainOneStepCell.
 
         Supported Platforms:
-        ``Ascend`` ``GPU``
+            ``Ascend`` ``GPU``
 
         Examples:
             >>> net = Net()
             >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-            >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> net_with_loss = WithLossCell(net, criterion)
-            >>> train_network = TrainOneStepCell(net_with_loss, optim)
+            >>> optim = nn.AdamWeightDecay(params=net.trainable_params(), learning_rate=0.0001)
+            >>> net_with_loss = nn.WithLossCell(net, criterion)
+            >>> train_network = nn.TrainOneStepCell(net_with_loss, optim)
             >>> bnn_transformer = TransformToBNN(train_network, 60000, 0.1)
             >>> train_bnn_network = bnn_transformer.transform_to_bnn_model()
         """
@@ -156,16 +158,16 @@ class TransformToBNN:
             corresponding bayesian layer.
 
         Supported Platforms:
-        ``Ascend`` ``GPU``
+            ``Ascend`` ``GPU``
 
         Examples:
             >>> net = Net()
             >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-            >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> net_with_loss = WithLossCell(net, criterion)
-            >>> train_network = TrainOneStepCell(net_with_loss, optim)
+            >>> optim = nn.AdamWeightDecay(params=net.trainable_params(), learning_rate=0.0001)
+            >>> net_with_loss = nn.WithLossCell(net, criterion)
+            >>> train_network = nn.TrainOneStepCell(net_with_loss, optim)
             >>> bnn_transformer = TransformToBNN(train_network, 60000, 0.1)
-            >>> train_bnn_network = bnn_transformer.transform_to_bnn_layer(Dense, DenseReparam)
+            >>> train_bnn_network = bnn_transformer.transform_to_bnn_layer(nn.Dense, bnn_layers.DenseReparam)
         """
         if dnn_layer_type.__name__ not in ["Dense", "Conv2d"]:
             raise ValueError(' \'dnn_layer\'' + str(dnn_layer_type) +
