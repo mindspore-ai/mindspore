@@ -13,8 +13,20 @@
 # limitations under the License.
 # ============================================================================
 
-"""grad experimental impl."""
-from .._grad.grad_base import get_bprop_fn
-from . import grad_inner_ops
+"""inner_ops"""
 
-__all__ = ['get_bprop_fn']
+from .._grad.grad_base import bprop_getters
+from ..operations import _inner_ops as inner
+from .. import functional as F
+
+@bprop_getters.register(inner.TensorCopySlices)
+def get_bprop_tensor_copy_slices(self):
+    """Generate bprop for TensorCopySlices"""
+    tensor_copy_slices = inner.TensorCopySlices()
+
+    def bprop(x, update, begin, end, stride, out, dout):
+        x_grad = tensor_copy_slices(dout, F.zeros_like(update))
+        update_grad = F.strided_slice(dout, begin, end, stride)
+        return x_grad, update_grad, F.zeros_like(begin), F.zeros_like(end), F.zeros_like(stride)
+
+    return bprop

@@ -154,10 +154,10 @@ device::DynamicKernelPtr MemCpyAsyncKernel::GenDynamicKernel(const CNodePtr &cno
                                                   kernel_inputs[0]->size);
 }
 
-const std::vector<TypeId> data_type_list{kNumberTypeInt,     kNumberTypeInt8,    kNumberTypeInt16, kNumberTypeInt32,
-                                         kNumberTypeInt64,   kNumberTypeUInt,    kNumberTypeUInt8, kNumberTypeUInt16,
-                                         kNumberTypeUInt32,  kNumberTypeUInt64,  kNumberTypeFloat, kNumberTypeFloat16,
-                                         kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeBool};
+const std::vector<TypeId> data_type_list = {
+  kNumberTypeInt,   kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,   kNumberTypeInt64,
+  kNumberTypeUInt,  kNumberTypeUInt8,   kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,
+  kNumberTypeFloat, kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeBool};
 const std::vector<std::string> format_list = {kOpFormat_DEFAULT,  kOpFormat_NCHW,   kOpFormat_NHWC,
                                               kOpFormat_NC1HWC0,  kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0,
                                               kOpFormat_C1HWNCoC0};

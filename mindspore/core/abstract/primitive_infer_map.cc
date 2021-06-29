@@ -107,6 +107,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSequenceMask, {InferImplSequenceMask, nullptr, true}},
     {prim::kPrimSort, {InferImplSort, nullptr, true}},
     {prim::kPrimMaskedSelect, {InferImplMaskedSelect, nullptr, true}},
+    {prim::kPrimTensorCopySlices, {InferImplTensorCopySlices, nullptr, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, nullptr, true}},
     {prim::kPrimMakeList, {InferImplMakeList, nullptr, true}},
