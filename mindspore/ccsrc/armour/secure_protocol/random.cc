@@ -15,17 +15,12 @@
  */
 
 #include "armour/secure_protocol/random.h"
-#include <vector>
+
 namespace mindspore {
 namespace armour {
 Random::Random(size_t init_seed) { generator.seed(init_seed); }
 
 Random::~Random() {}
-
-int Random::GetRandomBytes(unsigned char *secret, int num_bytes) {
-  int retval = RAND_priv_bytes(secret, RANDOM_LEN);
-  return retval;
-}
 
 void Random::RandUniform(float *array, int size) {
   std::uniform_real_distribution<double> rand(0, 1);
@@ -39,6 +34,23 @@ void Random::RandNorminal(float *array, int size) {
   for (int i = 0; i < size; i++) {
     *(reinterpret_cast<float *>(array) + i) = randn(generator);
   }
+}
+
+#ifdef _WIN32
+int Random::GetRandomBytes(unsigned char *secret, int num_bytes) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return -1;
+}
+
+int Random::RandomAESCTR(std::vector<float> *noise, int noise_len, const unsigned char *seed, int seed_len) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return -1;
+}
+
+#else
+int Random::GetRandomBytes(unsigned char *secret, int num_bytes) {
+  int retval = RAND_priv_bytes(secret, RANDOM_LEN);
+  return retval;
 }
 
 int Random::RandomAESCTR(std::vector<float> *noise, int noise_len, const unsigned char *seed, int seed_len) {
@@ -70,5 +82,7 @@ int Random::RandomAESCTR(std::vector<float> *noise, int noise_len, const unsigne
   }
   return 0;
 }
+#endif
+
 }  // namespace armour
 }  // namespace mindspore

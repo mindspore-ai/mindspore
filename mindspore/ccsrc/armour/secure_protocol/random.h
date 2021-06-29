@@ -16,10 +16,12 @@
 
 #ifndef MINDSPORE_ARMOUR_RANDOM_H
 #define MINDSPORE_ARMOUR_RANDOM_H
-#include <openssl/rand.h>
+
 #include <random>
-#include <iostream>
 #include <vector>
+#ifndef _WIN32
+#include <openssl/rand.h>
+#endif
 #include "armour/secure_protocol/encrypt.h"
 namespace mindspore {
 namespace armour {

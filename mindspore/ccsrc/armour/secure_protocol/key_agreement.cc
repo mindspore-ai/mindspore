@@ -15,10 +15,37 @@
  */
 
 #include "armour/secure_protocol/key_agreement.h"
-#include <openssl/evp.h>
 
 namespace mindspore {
 namespace armour {
+#ifdef _WIN32
+PrivateKey *KeyAgreement::GeneratePrivKey() {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return NULL;
+}
+
+PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return NULL;
+}
+
+PrivateKey *KeyAgreement::FromPrivateBytes(unsigned char *data, int len) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return NULL;
+}
+
+PublicKey *KeyAgreement::FromPublicBytes(unsigned char *data, int len) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return NULL;
+}
+
+int KeyAgreement::ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey, int key_len,
+                                   const unsigned char *salt, int salt_len, unsigned char *exchangeKey) {
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  return -1;
+}
+
+#else
 PublicKey::PublicKey(EVP_PKEY *evpKey) { evpPubKey = evpKey; }
 
 PublicKey::~PublicKey() { EVP_PKEY_free(evpPubKey); }
@@ -47,31 +74,31 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
   size_t len = 0;
   ctx = EVP_PKEY_CTX_new(evpPrivKey, NULL);
   if (!ctx) {
-    std::cout << "EVP_PKEY_CTX_new failed!" << std::endl;
+    MS_LOG(ERROR) << "EVP_PKEY_CTX_new failed!";
     return -1;
   }
   if (EVP_PKEY_derive_init(ctx) <= 0) {
-    std::cout << "EVP_PKEY_derive_init failed!" << std::endl;
+    MS_LOG(ERROR) << "EVP_PKEY_derive_init failed!";
     return -1;
   }
   if (EVP_PKEY_derive_set_peer(ctx, peerPublicKey->evpPubKey) <= 0) {
-    std::cout << "EVP_PKEY_derive_set_peer failed!" << std::endl;
+    MS_LOG(ERROR) << "EVP_PKEY_derive_set_peer failed!";
     return -1;
   }
   unsigned char *secret;
   if (EVP_PKEY_derive(ctx, NULL, &len) <= 0) {
-    std::cout << "get derive key size failed!" << std::endl;
+    MS_LOG(ERROR) << "get derive key size failed!";
     return -1;
   }
 
   secret = (unsigned char *)OPENSSL_malloc(len);
   if (!secret) {
-    std::cout << "malloc secret memory failed!" << std::endl;
+    MS_LOG(ERROR) << "malloc secret memory failed!";
     return -1;
   }
 
   if (EVP_PKEY_derive(ctx, secret, &len) <= 0) {
-    std::cout << "derive key failed!" << std::endl;
+    MS_LOG(ERROR) << "derive key failed!";
     return -1;
   }
 
@@ -97,7 +124,6 @@ PrivateKey *KeyAgreement::GeneratePrivKey() {
     return NULL;
   }
   EVP_PKEY_CTX_free(pctx);
-  // PEM_write_PrivateKey(stdout, evpKey, NULL, NULL, 0, NULL, NULL);
   PrivateKey *privKey = new PrivateKey(evpKey);
   return privKey;
 }
@@ -130,7 +156,7 @@ PrivateKey *KeyAgreement::FromPrivateBytes(unsigned char *data, int len) {
 PublicKey *KeyAgreement::FromPublicBytes(unsigned char *data, int len) {
   EVP_PKEY *evp_pubKey = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, data, len);
   if (evp_pubKey == NULL) {
-    std::cout << "create evp_pubKey from raw bytes fail" << std::endl;
+    MS_LOG(ERROR) << "create evp_pubKey from raw bytes fail";
     return NULL;
   }
   PublicKey *pubKey = new PublicKey(evp_pubKey);
@@ -141,6 +167,7 @@ int KeyAgreement::ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey
                                    const unsigned char *salt, int salt_len, unsigned char *exchangeKey) {
   return privKey->Exchange(peerPublicKey, key_len, salt, salt_len, exchangeKey);
 }
+#endif
 
 }  // namespace armour
 }  // namespace mindspore

@@ -1,5 +1,14 @@
 file(GLOB_RECURSE ARMOUR_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
+if(NOT ENABLE_CPU OR WIN32)
+    list(REMOVE_ITEM ARMOUR_FILES "cipher/cipher_init.cc")
+    list(REMOVE_ITEM ARMOUR_FILES "cipher/cipher_keys.cc")
+    list(REMOVE_ITEM ARMOUR_FILES "cipher/cipher_meta_storage.cc")
+    list(REMOVE_ITEM ARMOUR_FILES "cipher/cipher_reconstruct.cc")
+    list(REMOVE_ITEM ARMOUR_FILES "cipher/cipher_shares.cc")
+    list(REMOVE_ITEM ARMOUR_FILES "cipher/cipher_unmask.cc")
+endif()
+
 set(SERVER_FLATBUFFER_OUTPUT "${CMAKE_BINARY_DIR}/schema")
 set(FBS_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/../../schema/cipher.fbs
