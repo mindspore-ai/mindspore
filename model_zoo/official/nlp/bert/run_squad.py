@@ -116,7 +116,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
 
     """ callbacks """
     if distributed:
-        rank = rank = D.get_rank()
+        rank = D.get_rank()
         summary_path = "./summary_{}".format(rank)
     else:
         summary_path = "./summary"

@@ -26,7 +26,8 @@ from mindspore import context
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
+from mindspore.train.callback import (ModelCheckpoint, CheckpointConfig,
+        TimeMonitor, SummaryCollector)
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.train_thor import ConvertModelUtils
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay, THOR
@@ -245,6 +246,14 @@ def run_pretrain():
         ckpoint_cb = ModelCheckpoint(prefix='checkpoint_bert',
                                      directory=None if ckpt_save_dir == "" else ckpt_save_dir, config=config_ck)
         callback.append(ckpoint_cb)
+
+    """ callbacks """
+    if args_opt.distribute == "true":
+        rank = D.get_rank()
+        summary_path = "./summary_{}".format(rank)
+    else:
+        summary_path = "./summary"
+    callback.append(SummaryCollector(summary_path))
 
     if args_opt.load_checkpoint_path:
         param_dict = load_checkpoint(args_opt.load_checkpoint_path)

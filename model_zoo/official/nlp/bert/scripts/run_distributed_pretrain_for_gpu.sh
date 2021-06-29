@@ -33,7 +33,7 @@ echo  `date +"%Y-%m-%d %T"`
 
 /home/marcel/.local/bin/mpirun --allow-run-as-root \
     -n $RANK_SIZE \
-    --output-filename log_output \
+    --output-filename mpirunlog \
     python run_pretrain.py        \
         --device_target="GPU"      \
         --distribute="true"        \

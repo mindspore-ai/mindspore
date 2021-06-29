@@ -71,7 +71,7 @@ large: BERT-NEZHA(a Chinese pretrained language model developed by Huawei, which
        Functional Relative Posetional Encoding as an effective positional encoding scheme).
 '''
 if cfg.bert_network == 'base':
-    cfg.batch_size = 64
+    cfg.batch_size = 16
     bert_net_cfg = BertConfig(
         seq_length=128,
         vocab_size=30522,
