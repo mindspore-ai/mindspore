@@ -181,6 +181,8 @@ class ControlNodeParser {
   void FetchBackendOutputByFrontOutput(const AnfNodePtr &front_output, std::set<AnfNodePtr> *call_nodes,
                                        std::set<AnfNodePtr> *switch_nodes, std::set<KernelWithIndex> *results);
 
+  // Get the dependency between kernel and call node in auto monad.
+  void FetchAutoMonadNode(const std::vector<AnfNodePtr> &control_nodes);
   // The front to backend parameters is used to build and link the host data source actor in the control flow scenario.
   FrontToBackendNodeWithContext front_to_backend_parameters_;
 
@@ -226,6 +228,9 @@ class ControlNodeParser {
   // Root funcgraph and its parameters.
   FuncGraphPtr root_func_graph_;
   std::vector<AnfNodePtr> root_graph_parameters_;
+
+  // The dependency between kernel and call node in auto monad.
+  std::unordered_map<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
 };
 
 using ControlNodeParserPtr = std::shared_ptr<ControlNodeParser>;

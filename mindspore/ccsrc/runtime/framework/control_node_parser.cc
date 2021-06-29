@@ -396,6 +396,20 @@ std::vector<AnfNodePtr> FetchOutputBySwitchNode(const AnfNodePtr &switch_node, s
 
   return outputs;
 }
+
+// Recursive interface, get the real kernel that UpdateState node depends on.
+AnfNodePtr FetchSourceNodeByAutoMonad(const AnfNodePtr &node) {
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    if (inputs.size() <= kUpdateStateRealInput) {
+      MS_LOG(EXCEPTION) << "Invalid updatestate node:" << AnfAlgo::GetNodeDebugString(node);
+    }
+
+    return FetchSourceNodeByAutoMonad(inputs[kUpdateStateRealInput]);
+  }
+  return node;
+}
 }  // namespace
 
 // Return true if the node has Ref abstract.
@@ -615,6 +629,8 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   FetchCallInputKernelGraph(graphs, device_contexts);
 
   FetchBackendInputNode(graphs, device_contexts, real_to_formal_front_parameters, formal_to_real_front_parameters);
+
+  FetchAutoMonadNode(control_nodes);
 }
 
 std::vector<KernelWithIndex> ControlNodeParser::GetBackendInputByParameter(const AnfNodePtr &parameter) {
@@ -1368,6 +1384,28 @@ void ControlNodeParser::FetchBackendInputNode(const std::vector<KernelGraphPtr> 
   }
   for (const auto parameter_pair : front_to_backend_parameters_) {
     formal_to_real_parameters_[parameter_pair.first].push_back({parameter_pair.second.first, 0});
+  }
+}
+
+void ControlNodeParser::FetchAutoMonadNode(const std::vector<AnfNodePtr> &control_nodes) {
+  for (const auto &control_node : control_nodes) {
+    const auto &cnode = control_node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    if (inputs.empty()) {
+      MS_LOG(EXCEPTION) << "Invalid control node:" << AnfAlgo::GetNodeDebugString(control_node);
+    }
+
+    if (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0])) {
+      for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
+        if (AnfAlgo::CheckPrimitiveType(inputs[i], prim::kPrimUpdateState)) {
+          const auto &node = FetchSourceNodeByAutoMonad(inputs[i]);
+          const auto &iter = front_to_backend_kernels_.find(node);
+          if (iter != front_to_backend_kernels_.end()) {
+            kernel_to_call_nodes_[iter->second.first] = control_node;
+          }
+        }
+      }
+    }
   }
 }
 }  // namespace runtime
