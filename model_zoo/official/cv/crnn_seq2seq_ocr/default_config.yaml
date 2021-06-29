@@ -1,4 +1,4 @@
-# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+﻿# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
 enable_modelarts: False
 # Url for modelarts
 data_url: ""
@@ -59,7 +59,13 @@ adam_beta1: 0.5
 adam_beta2: 0.999
 loss_scale: 1024
 
+#export-related
+file_name: "crnn-seq2seq-ocr"
+file_format: "MINDIR"
 
+#310 infer-related
+pre_result_path: './preprocess_Result'
+post_result_path: './result_Files'
 
 ---
 
