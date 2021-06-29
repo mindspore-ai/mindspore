@@ -30,12 +30,12 @@ class DSCallback:
         step_size (int, optional): The number of steps before the step_begin and step_end are called (Default=1).
 
     Examples:
-    >>> class PrintInfo(DSCallback):
-    >>>     def ds_epoch_end(self, ds_run_context):
-    >>>         print(cb_params.cur_epoch_num)
-    >>>         print(cb_params.cur_step_num)
-    >>>
-    >>> data = data.map(operations=op, callbacks=PrintInfo())
+        >>> class PrintInfo(DSCallback):
+        >>>     def ds_epoch_end(self, ds_run_context):
+        >>>         print(cb_params.cur_epoch_num)
+        >>>         print(cb_params.cur_step_num)
+        >>>
+        >>> data = data.map(operations=op, callbacks=PrintInfo())
     """
 
     @check_callback
@@ -122,17 +122,15 @@ class WaitedDSCallback(Callback, DSCallback):
     This class can be used to execute a user defined logic right after the previous step or epoch.
     For example, one augmentation needs the loss from the previous trained epoch to update some of its parameters.
 
-    Examples:
-    >>> my_cb = MyWaitedCallback(32)
-    >>> data = data.map(operations=AugOp(), callbacks=my_cb)
-    >>> data = data.batch(32)
-    >>> # define the model
-    >>> model.train(epochs, data, callbacks=[my_cb])
-
-
     Args:
-       step_size: the number of rows in each step.
-       Usually the step size will be equal to the batch size (Default=1)
+       step_size: the number of rows in each step. Usually the step size will be equal to the batch size (Default=1).
+
+    Examples:
+        >>> my_cb = MyWaitedCallback(32)
+        >>> data = data.map(operations=AugOp(), callbacks=my_cb)
+        >>> data = data.batch(32)
+        >>> # define the model
+        >>> model.train(epochs, data, callbacks=[my_cb])
     """
 
     def __init__(self, step_size=1):

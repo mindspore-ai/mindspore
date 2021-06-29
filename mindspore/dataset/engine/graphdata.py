@@ -203,7 +203,7 @@ class GraphData:
         """
         Get `neighbor_type` neighbors of the nodes in `node_list`.
         We try to use the following example to illustrate the definition of these formats. 1 represents connected
-            between two nodes, and 0 represents not connected.
+        between two nodes, and 0 represents not connected.
 
         .. list-table:: Adjacent Matrix
            :widths: 20 20 20 20 20

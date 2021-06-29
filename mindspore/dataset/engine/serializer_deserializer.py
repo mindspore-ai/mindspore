@@ -68,7 +68,7 @@ def deserialize(input_dict=None, json_filepath=None):
         de.Dataset or None if error occurs.
 
     Raises:
-        OSError cannot open a file.
+        OSError: Can not open the json file.
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
