@@ -57,6 +57,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   NetTrainFlags() {
     // common
     AddFlag(&NetTrainFlags::model_file_, "modelFile", "Input model file", "");
+    AddFlag(&NetTrainFlags::bb_model_file_, "bbModelFile", "Backboine model for transfer session", "");
     AddFlag(&NetTrainFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
     // MarkPerformance
     AddFlag(&NetTrainFlags::warm_up_loop_count_, "warmUpLoopCount", "Run warm up loop", 0);
@@ -80,6 +81,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   // common
   std::string model_file_;
   std::string in_data_file_;
+  std::string bb_model_file_;
   std::vector<std::string> input_data_list_;
   DataType in_data_type_;
   std::string in_data_type_in_ = "bin";
@@ -122,7 +124,8 @@ class MS_API NetTrain {
   int GenerateRandomData(size_t size, void *data);
 
   int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
-  int CreateAndRunNetwork(const std::string &filename, int train_session, int epochs, bool check_accuracy = true);
+  int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, int train_session, int epochs,
+                          bool check_accuracy = true);
 
   int InitCallbackParameter();
 

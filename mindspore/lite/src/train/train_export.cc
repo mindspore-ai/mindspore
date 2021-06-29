@@ -175,6 +175,9 @@ int TrainExport::LoadModel(void *buf, size_t buf_size) {
   }
   meta_graph_ = schema::GetMetaGraph(buf)->UnPack();
   meta_graph_->outputIndex.clear();
+  if (!meta_graph_->subGraph.empty()) {
+    meta_graph_->subGraph[0]->outputIndices.clear();
+  }
   return RET_OK;
 }
 
@@ -353,6 +356,9 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
     // find output tensor
     if (std::find(output_names.begin(), output_names.end(), tensor->tensor_name()) != output_names.end()) {
       meta_graph_->outputIndex.push_back(remap_[id]);
+      if (!meta_graph_->subGraph.empty()) {
+        meta_graph_->subGraph[0]->outputIndices.push_back(remap_[id]);
+      }
     }
     meta_graph_->allTensors.emplace_back(std::move(tensorT));
   }

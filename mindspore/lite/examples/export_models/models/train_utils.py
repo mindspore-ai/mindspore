@@ -71,3 +71,38 @@ def save_inout(name, x, l, net, net_train, sparse=False, epoch=1):
     else:
         y_name = name + "_output1.bin"
         save_t(y, y_name)
+
+def save_inout_transfer(name, x, l, net_bb, net, net_train, sparse=False, epoch=1):
+    """save_inout"""
+    x_name = name + "_input1.bin"
+    if sparse:
+        x_name = name + "_input2.bin"
+    save_t(Tensor(x.asnumpy().transpose(0, 2, 3, 1)), x_name)
+
+    l_name = name + "_input2.bin"
+    if sparse:
+        l_name = name + "_input1.bin"
+    save_t(l, l_name)
+
+    net_bb.set_train(False)
+    net.set_train(False)
+    x1 = net_bb(x)
+    y = net(x1)
+
+    #train network
+    net.set_train(True)
+    for i in range(epoch):
+        net_train(x1, l)
+
+    net.set_train(False)
+    y = net(x1)
+    if isinstance(y, tuple):
+        i = 1
+        for t in y:
+            with os.fdopen(name + "_output" + str(i) + ".bin", 'w') as f:
+                for j in t.asnumpy().flatten():
+                    f.write(str(j)+' ')
+            i = i + 1
+    else:
+        y_name = name + "_output1.bin"
+        save_t(y, y_name)

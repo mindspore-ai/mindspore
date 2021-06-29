@@ -30,7 +30,7 @@ function Run_Export(){
         else
             export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}
         fi
-    done < ${modes_ms_train_config}
+    done < ${models_ms_train_config}
 }
 
 # Run converter on x86 platform:
@@ -49,8 +49,13 @@ function Run_Converter() {
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
         WEIGHT_QUANT=""
-        model_prefix=${line_array[0]}'_train'
-        model_name=${line_array[0]}'_train'
+        if [[ $enable_transfer == 1 ]]; then
+            model_prefix=${line_array[0]}'_head'
+            model_name=${line_array[0]}'_head'
+        else
+            model_prefix=${line_array[0]}'_train'
+            model_name=${line_array[0]}'_train'
+        fi
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -75,7 +80,22 @@ function Run_Converter() {
             converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
             fail=1
         fi
-    done < ${modes_ms_train_config}
+        # If Transfer sesstion  convert backbone model
+        if [[ $enable_transfer == 1 ]]; then
+            model_prefix=${line_array[0]}'_bb'
+            model_name=${line_array[0]}'_bb'
+            echo ${model_name} >> "${run_converter_log_file}"
+            echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name} ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+            ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} ${WEIGHT_QUANT}
+            if [ $? = 0 ]; then
+                converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+            else
+                converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+                fail=1
+            fi
+        fi
+
+    done < ${models_ms_train_config}
     return ${fail}
 }
 
@@ -105,24 +125,46 @@ function Run_x86() {
         elif [[ "${line_array[1]}" != "" ]]; then
             continue
         fi
+        model_file="${ms_models_path}/${model_name}.ms"
+        bb_model_file=""
         export_file="${ms_models_path}/${model_name}_tod"
         inference_file="${ms_models_path}/${model_name}_infer"
-        rm -f ${inference_file}"*"
-        rm -f ${export_file}"*"
+        if [[ $enable_transfer == 1 ]]; then
+            model_name=${line_array[0]}
+            model_file="${ms_models_path}/${model_name}_head.ms"
+            bb_model_file="${ms_models_path}/${model_name}_bb.ms"
+            suffix_print="_transfer"
+            export_file="${ms_models_path}/${model_name}_tod_head"
+            inference_file=""
+        fi
+        if [ ! -z "$inference_file" ]; then                
+            rm -f ${inference_file}"*"
+        fi
+        if [ ! -z "$export_file" ]; then        
+            rm -f ${export_file}"*"
+        fi
         echo ${model_name} >> "${run_x86_log_file}"
-        ${run_valgrind}./tools/benchmark_train/benchmark_train \
-        --modelFile=${ms_models_path}/${model_name}.ms \
-        --inDataFile=${train_io_path}/${model_prefix}_input \
-        --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
-        --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
-        --exportFile=${export_file} --virtualBatch=${virtual_batch} >> "${run_x86_log_file}"
+        echo "${run_valgrind} ./tools/benchmark_train/benchmark_train \
+            --modelFile=${model_file} \
+            --bbModelFile=${bb_model_file} \
+            --inDataFile=${train_io_path}/${model_prefix}_input \
+            --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
+            --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
+            --exportFile=${export_file} --virtualBatch=${virtual_batch}" >> "${run_x86_log_file}"
+        ${run_valgrind} ./tools/benchmark_train/benchmark_train \
+            --modelFile=${model_file} \
+            --bbModelFile=${bb_model_file} \
+            --inDataFile=${train_io_path}/${model_prefix}_input \
+            --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
+            --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
+            --exportFile=${export_file} --virtualBatch=${virtual_batch} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_train: '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
             run_result='x86_train: '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
             fail=1
         fi
-    done < ${modes_ms_train_config}
+    done < ${models_ms_train_config}
     return ${fail}
 }
 
@@ -218,7 +260,16 @@ function Run_arm() {
 
         export_file="${tmp_dir}/${model_name}_tod"
         inference_file="${tmp_dir}/${model_name}_infer"
-
+        model_file="${model_name}.ms"
+        bb_model_file=""
+        if [[ $enable_transfer == 1 ]]; then
+            model_name=${line_array[0]}
+            model_file="${model_name}_head.ms"
+            bb_model_file="${model_name}_bb.ms"
+            suffix_print="_transfer"
+            export_file="${tmp_dir}/${model_name}_tod_head.ms"
+            inference_file=""
+        fi
         # run benchmark_train test without clib data
         echo ${model_name} >> "${run_arm_log_file}"
         adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
@@ -230,13 +281,22 @@ function Run_arm() {
             echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
         fi 
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
-        echo "rm -f ${export_file}* ${inference_file}*" >> ${run_arm_log_file}
-        echo "rm -f ${export_file}* ${inference_file}*" >> ${adb_cmd_run_file}
+        echo "$export_file"    
+        if [ ! -z "$export_file" ]; then
+            echo "rm -f ${export_file}*" >> ${run_arm_log_file}
+            echo "rm -f ${export_file}*" >> ${adb_cmd_run_file}            
+        fi
+        if [ ! -z "$inference_file" ]; then
+
+            echo "rm -f ${inference_file}*" >> ${run_arm_log_file}
+            echo "rm -f ${inference_file}*" >> ${adb_cmd_run_file}            
+        fi
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
         adb_cmd=$(cat <<-ENDM
         export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
         --epochs=${epoch_num} \
-        --modelFile=${model_name}.ms \
+        --modelFile=${model_file} \
+        --bbModelFile=${bb_model_file} \
         --inDataFile=${tmp_dir}/${model_prefix}_input \
         --expectedDataFile=${tmp_dir}/${model_prefix}_output \
         --numThreads=${threads} \
@@ -258,7 +318,7 @@ ENDM
             fail=1
         fi
         
-    done < ${modes_ms_train_config}
+    done < ${models_ms_train_config}
     return ${fail}
 }
 
@@ -272,17 +332,17 @@ function Print_Result() {
 }
 
 basepath=$(pwd)
-echo ${basepath}
+echo "base path is: ${basepath}"
 
 # Set default models config filepath
-modes_ms_train_config=${basepath}/../config/models_ms_train.cfg
+models_ms_train_config=${basepath}/../config/models_ms_train.cfg
 
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
 threads=2
 train_io_path=""
-while getopts "r:c:m:d:i:e:v:t:q:D:" opt; do
+while getopts "r:c:m:d:i:e:vt:q:D:T" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
@@ -293,8 +353,12 @@ while getopts "r:c:m:d:i:e:v:t:q:D:" opt; do
             echo "models_path is ${OPTARG}"
             ;;
         c)
-            modes_ms_train_config=${OPTARG}
-            echo "modes_ms_train_config is ${modes_ms_train_config}"
+            models_ms_train_config=${OPTARG}
+            echo  "models_ms_train_config is ${models_ms_train_config}"
+            ;;
+        T)
+            enable_transfer=1
+            echo "enable transfer =1"
             ;;
         i)
             train_io_path=${OPTARG}
