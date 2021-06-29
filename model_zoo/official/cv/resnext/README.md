@@ -1,6 +1,6 @@
 # Contents
 
-- [ResNeXt50 Description](#resnext50-description)
+- [ResNeXt Description](#resnext-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
@@ -21,7 +21,7 @@
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-# [ResNeXt50 Description](#contents)
+# [ResNeXt Description](#contents)
 
 ResNeXt is a simple, highly modularized network architecture for image classification. It designs results in a homogeneous, multi-branch architecture that has only a few hyper-parameters to set in ResNeXt. This strategy exposes a new dimension, which we call “cardinality” (the size of the set of transformations), as an essential factor in addition to the dimensions of depth and width.
 
@@ -70,7 +70,7 @@ If you want to run in modelarts, please check the official documentation of [mod
 #          Set other parameters on yaml file you need.
 #       b. Add "enable_modelarts=True" on the website UI interface.
 #          Add other parameters on the website UI interface.
-# (2) Set the code directory to "/path/resnext50" on the website UI interface.
+# (2) Set the code directory to "/path/resnext" on the website UI interface.
 # (3) Set the startup file to "train.py" on the website UI interface.
 # (4) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
 # (5) Create your job.
@@ -84,7 +84,7 @@ If you want to run in modelarts, please check the official documentation of [mod
 #       b. Add "enable_modelarts=True" on the website UI interface.
 #          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
 #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
-# (3) Set the code directory to "/path/resnext50" on the website UI interface.
+# (3) Set the code directory to "/path/resnext" on the website UI interface.
 # (4) Set the startup file to "eval.py" on the website UI interface.
 # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
 # (6) Create your job.
@@ -96,7 +96,7 @@ If you want to run in modelarts, please check the official documentation of [mod
 
 ```python
 .
-└─resnext50
+└─resnext
   ├─README.md
   ├─scripts
     ├─run_standalone_train.sh         # launch standalone training for ascend(1p)
@@ -107,7 +107,7 @@ If you want to run in modelarts, please check the official documentation of [mod
   ├─src
     ├─backbone
       ├─_init_.py                     # initialize
-      ├─resnet.py                     # resnext50 backbone
+      ├─resnet.py                     # resnext backbone
     ├─utils
       ├─_init_.py                     # initialize
       ├─cunstom_op.py                 # network operation
@@ -230,7 +230,7 @@ PLATFORM is Ascend or GPU, default is Ascend.
 
 ```bash
 # Evaluation with checkpoint
-sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext50_100.ckpt Ascend
+sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext_100.ckpt Ascend
 ```
 
 #### Result
@@ -268,8 +268,12 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
 
 Inference result is saved in current path, you can find result in acc.log file.
 
-```log
+```resnext50
 Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
+```
+
+```resnext101
+Total data:50000, top1 accuracy:0.79858, top5 accuracy:0.94716
 ```
 
 # [Model description](#contents)
@@ -284,7 +288,7 @@ Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
 | uploaded Date              | 06/30/2020                                                 | 07/23/2020                |
 | MindSpore Version          | 0.5.0                                                      | 0.6.0                     |
 | Dataset                    | ImageNet                                                   | ImageNet                  |
-| Training Parameters        | src/config.py                                              | src/config.py             |
+| Training Parameters        | default_config.yaml                                        | default_config.yaml             |
 | Optimizer                  | Momentum                                                   | Momentum                  |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
 | Loss                       | 1.76592                                                    | 1.8965                    |
@@ -292,9 +296,21 @@ Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
 | Total time                 | 7.8 h 8ps                                                  | 21.5 h 8ps                |
 | Checkpoint for Fine tuning | 192 M(.ckpt file)                                          | 192 M(.ckpt file)         |
 
+| Parameters                 | ResNeXt101                                                |                           |
+| -------------------------- | ---------------------------------------------------------- |
+| Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8|
+| uploaded Date              | 22/06/2021 (month/day/year)                                                 |
+| MindSpore Version          | 1.2.0                                                      |
+| Dataset                    | ImageNet                                                   |
+| Training Parameters        | default_config.yaml                                              |
+| Optimizer                  | Momentum                                                   |
+| Loss Function              | SoftmaxCrossEntropy                                        |
+| Accuracy                   | 79.56%%(TOP1)                                                  |
+| train performance          | 196.33image/sec 1ps                                                  |
+
 #### Inference Performance
 
-| Parameters                 |                               |                           |                      |
+| Parameters                 | ResNeXt50                     |                           |                      |
 | -------------------------- | ----------------------------- | ------------------------- | -------------------- |
 | Resource                   | Ascend 910; OS Euler2.8                    | NV SMX2 V100-32G          | Ascend 310           |
 | uploaded Date              | 06/30/2020                    | 07/23/2020                | 07/23/2020           |
@@ -303,6 +319,17 @@ Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
 | batch_size                 | 1                             | 1                         | 1                    |
 | outputs                    | probability                   | probability               | probability          |
 | Accuracy                   | acc=78.16%(TOP1)              | acc=78.05%(TOP1)          |                      |
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | ResNeXt101                  |
+| Resource            | Ascend 310; OS Euler2.8     |
+| Uploaded Date       | 22/06/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | ImageNet                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | TOP1: 79.85%                |
 
 # [Description of Random Situation](#contents)
 

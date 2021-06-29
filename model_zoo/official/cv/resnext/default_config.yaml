@@ -1,5 +1,6 @@
 # Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
 enable_modelarts: False
+network: "resnext50"
 # Url for modelarts
 data_url: ""
 train_url: ""
@@ -48,13 +49,14 @@ log_path: './output_log'
 device_id: 0
 width: 224
 height: 224
-file_name: "resnext101"
+file_name: "resnext50"
 file_format: "AIR"
 result_path: ""
 label_path: ""
 
 ---
 # Help description for each configuration
+network: "Candidate networks: [resnext50, resnext101], default: resnext50"
 enable_modelarts: 'Whether training on modelarts, default: False'
 data_url: 'Dataset url for obs'
 train_url: 'Training output url for obs'

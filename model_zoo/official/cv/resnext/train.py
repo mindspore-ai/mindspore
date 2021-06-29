@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ def train():
     # network
     config.logger.important_info('start create network')
     # get network and init
-    network = get_network(num_classes=config.num_classes, platform=config.device_target)
+    network = get_network(network=config.network, num_classes=config.num_classes, platform=config.device_target)
 
     load_pretrain_model(config.checkpoint_file_path, network, config)
 

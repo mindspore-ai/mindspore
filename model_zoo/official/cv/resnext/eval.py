@@ -159,7 +159,7 @@ def test(cloud_args=None):
                                             max_epoch=1, rank=config.rank, group_size=config.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator(output_numpy=True, num_epochs=1)
-        network = get_network(num_classes=config.num_classes, platform=config.device_target)
+        network = get_network(network=config.network, num_classes=config.num_classes, platform=config.device_target)
 
         load_pretrain_model(model, network, config)
 
