@@ -19,7 +19,7 @@
 #include "sys/stat.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "runtime/framework/actor/actor_common.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace profiler {
@@ -122,10 +122,11 @@ void GpuDataSaver::WriteFile(std::string out_path_dir, const BaseTime &start_tim
   WriteActivity(out_path_dir);
   WriteOpTimestamp(out_path_dir);
   WriteStartTime(out_path_dir, start_time);
-  if (IsMindRTUsed())
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     WriteStepTraceAsyncLaunchKernel(out_path_dir);
-  else
+  } else {
     WriteStepTrace(out_path_dir);
+  }
 }
 
 void GpuDataSaver::WriteActivity(const std::string &saver_base_dir) {

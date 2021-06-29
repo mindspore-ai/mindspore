@@ -86,6 +86,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, false);
   set_param<bool>(MS_CTX_SAVE_COMPILE_CACHE, false);
   set_param<bool>(MS_CTX_LOAD_COMPILE_CACHE, false);
+  set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
 
   backend_policy_ = policy_map_[policy];
 }

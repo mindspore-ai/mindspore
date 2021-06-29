@@ -32,7 +32,9 @@
 #include "utils/ms_context.h"
 #include "debug/trace.h"
 #include "debug/anf_ir_dump.h"
-#include "runtime/framework/actor/actor_common.h"
+#if (ENABLE_CPU && !_WIN32)
+#include "ps/ps_context.h"
+#endif
 
 namespace mindspore {
 namespace compile {
@@ -540,13 +542,13 @@ BackendPtr CreateBackend() {
     uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     BackendPtr backend = nullptr;
     // Create MindRTBackend or MsBackend according to whether mindrt is used.
-    if (IsMindRTUsed()) {
+    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
       backend = std::make_shared<MindRTBackend>(name, target, device_id);
     } else {
       backend = std::make_shared<MsBackend>(name, target, device_id);
     }
-    std::string device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    if (device_target == kAscendDevice) {
+
+    if (target == kAscendDevice) {
       if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
         backend->set_is_multi_graph_sink(false);
         context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
@@ -560,5 +562,23 @@ BackendPtr CreateBackend() {
 
   return std::make_shared<Backend>(name);
 }
+
+void SetMindRTEnable() {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (target != kGPUDevice) {
+    return;
+  }
+#if (ENABLE_CPU && !_WIN32)
+  if (ps::PSContext::instance()->is_ps_mode()) {
+    return;
+  }
+#endif
+
+  MS_LOG(INFO) << "Enable mindRT.";
+  context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
+}
+
 }  // namespace compile
 }  // namespace mindspore

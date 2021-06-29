@@ -65,7 +65,6 @@
 #endif
 
 #include "debug/anf_ir_dump.h"
-#include "runtime/framework/actor/actor_common.h"
 #include "runtime/hardware/device_context_manager.h"
 
 using mindspore::tensor::TensorPy;
@@ -1691,8 +1690,9 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
   MS_LOG(DEBUG) << "Start run op [" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
+  compile::SetMindRTEnable();
 
-  if (kSession == nullptr && !IsMindRTUsed()) {
+  if (kSession == nullptr && !ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     kSession = session::SessionFactory::Get().Create(device_target);
     MS_EXCEPTION_IF_NULL(kSession);
@@ -1723,7 +1723,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     op_exec_info->next_input_index};
 #endif
   VectorRef outputs;
-  if (!IsMindRTUsed()) {
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     kSession->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
   } else {
     if (mind_rt_backend == nullptr) {
@@ -2834,17 +2834,17 @@ void PynativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::obj
 }
 
 void PynativeExecutor::Sync() {
-  if (!IsMindRTUsed()) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     if (kSession == nullptr) {
       MS_EXCEPTION(NotExistsError) << "No session has been created!";
     }
     kSession->SyncStream();
   } else {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
     std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-
     const auto &device_context =
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
     MS_EXCEPTION_IF_NULL(device_context);

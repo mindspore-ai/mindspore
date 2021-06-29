@@ -20,7 +20,6 @@
 #include <utility>
 #if !defined(NO_DLIB) || defined(ENABLE_GPU)
 #include "backend/session/executor_manager.h"
-#include "runtime/framework/actor/actor_common.h"
 #else
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 #endif
@@ -74,7 +73,7 @@ GroupManager::GroupManager() { groups_.clear(); }
 #if !defined(NO_DLIB) || defined(ENABLE_GPU)
 bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
                                          const std::vector<uint32_t> ranks, int device_id) {
-  if (IsMindRTUsed()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     return CommManager::GetInstance().CreateGroupSync(group_name, ranks);
   } else {
     auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
@@ -85,7 +84,7 @@ bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const s
 
 bool GroupManager::DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name,
                                           int device_id) {
-  if (IsMindRTUsed()) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     return CommManager::GetInstance().DestroyGroup(group_name);
   } else {
     auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
@@ -104,7 +103,7 @@ Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_
   MS_EXCEPTION_IF_NULL(executor);
   for (auto &group : group_info) {
     bool ret = true;
-    if (IsMindRTUsed()) {
+    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
       ret = CommManager::GetInstance().CreateGroupSync(group.first, group.second);
     } else {
       ret = executor->CreateCommGroup(group.first, group.second);
