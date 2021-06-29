@@ -964,7 +964,17 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   std::ostringstream buf;
   buf << "[" << shape << "]";
   MS_LOG(INFO) << "input shape is " << buf.str() << ", type is " << me_type;
-  auto desc = TransformUtil::GetGeTensorDesc(shape, me_type, "NCHW");
+  std::string format = "NCHW";
+  if (it->isa<Parameter>()) {
+    auto param = it->cast<ParameterPtr>();
+    std::string param_name = param->DebugString();
+    auto param_format = param_format_.find(param_name);
+    if (param_format != param_format_.end()) {
+      format = param_format->second;
+      MS_LOG(DEBUG) << "parameter: " << param_name << ", format is " << format;
+    }
+  }
+  auto desc = TransformUtil::GetGeTensorDesc(shape, me_type, format);
   if (desc == nullptr) {
     MS_LOG(ERROR) << "Update data op descriptor failed! TensorDesc is null.";
   } else {
@@ -1660,6 +1670,7 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
 }
 
 OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
+  SaveParamFormat(node);
   std::string name = GetCNodeTargetFuncName(node);
   if (!CheckCNode(name, node)) {
     return nullptr;
@@ -1705,6 +1716,27 @@ OperatorPtr DfGraphConvertor::ConvertParameter(const AnfNodePtr node) {
   op_draw_name_[node.get()] = ss.str();
   compute_sout_ << ss.str() << "[shape=octagon, label=\"" << name << "\"]" << endl;
   return op_cache_[node.get()];
+}
+
+void DfGraphConvertor::SaveParamFormat(const CNodePtr node) {
+  AnfNodePtr op = node->input(0);
+  if (IsValueNode<Primitive>(op)) {
+    auto prim = GetValueNode<PrimitivePtr>(op);
+    for (auto attr : prim->attrs()) {
+      if (attr.first == "format" && attr.second->ToString() == "NCDHW") {
+        std::string format = attr.second->ToString();
+        auto inputs_size = node->size();
+        for (size_t i = 1; i < inputs_size; i++) {
+          auto input = node->input(i);
+          if (input->isa<Parameter>()) {
+            param_format_[input->DebugString()] = format;
+            MS_LOG(DEBUG) << "Save Param " << input->DebugString() << " format: " << format;
+          }
+        }
+        continue;
+      }
+    }
+  }
 }
 
 Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node) {

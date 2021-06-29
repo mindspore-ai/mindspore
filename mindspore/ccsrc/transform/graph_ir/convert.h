@@ -135,6 +135,7 @@ class DfGraphConvertor {
   std::ostringstream checkpoint_sout_;
   std::ostringstream restore_checkpoint_sout_;
   std::unordered_map<AnfNode *, std::string> op_draw_name_;
+  std::map<std::string, std::string> param_format_;
 
   AnfNodePtr TraceTupleGetItem(const CNodePtr &node, uint64_t *index);
   AnfNodePtr TraceMakeTuple(const CNodePtr &node, uint64_t index);
@@ -148,6 +149,7 @@ class DfGraphConvertor {
   OperatorPtr ConvertParameter(AnfNodePtr node);
   Status TryConvertValueNodeToMultiConst(const ValueNodePtr node);
   OperatorPtr ConvertValueNode(ValueNodePtr node);
+  void SaveParamFormat(CNodePtr node);
   void GetCaseNodeInput(const CNodePtr node, const CNodePtr input_node);
   void ConvertTupleGetItem(const CNodePtr node);
   void ConvertMakeTuple(const CNodePtr node);
