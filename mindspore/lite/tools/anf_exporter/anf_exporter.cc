@@ -155,7 +155,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   // convert input quant param
   for (size_t i = 0; i < dst_node->inputIndex.size(); i++) {
     if (i >= input_quant_params.size()) {
-      MS_LOG(INFO) << "node: " << dst_node->name << " has " << dst_node->inputIndex.size() << ", but only has"
+      MS_LOG(INFO) << "node: " << dst_node->name << " has " << dst_node->inputIndex.size() << " input, but only has "
                    << input_quant_params.size() << " quant params";
       break;
     }
@@ -176,11 +176,15 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     }
   }
 
-  // output
-  int output_idx = 0;
-  for (const auto &output_quant_param : output_quant_params) {
-    auto output_tensor = meta_graph->allTensors[dst_node->outputIndex[output_idx]].get();
-    output_idx++;
+  // output_quant_params
+  for (size_t index = 0; index < dst_node->outputIndex.size(); ++index) {
+    if (index >= output_quant_params.size()) {
+      MS_LOG(INFO) << "node: " << dst_node->name << " has " << dst_node->outputIndex.size() << " output, but only has"
+                   << output_quant_params.size() << " quant params";
+      break;
+    }
+    auto output_tensor = meta_graph->allTensors[dst_node->outputIndex[index]].get();
+    auto &output_quant_param = output_quant_params[index];
     for (const auto &channel_quant_param : output_quant_param) {
       if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
         std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
@@ -191,6 +195,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       }
     }
   }
+
   return RET_OK;
 }
 
