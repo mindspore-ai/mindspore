@@ -27,7 +27,7 @@
 
 namespace mindspore {
 enum ThreadPolicy {
-  KThreadSpin = 0,  // thread run in spin
+  kThreadSpin = 0,  // thread run in spin
   kThreadWait = 1   // synchronous and wait
 };
 
@@ -56,6 +56,7 @@ class ActorThreadPool : public ThreadPool {
 
   void PushActorToQueue(const ActorReference &actor);
   ActorReference PopActorFromQueue();
+  void WaitUntilNotify();
 
  private:
   ActorThreadPool() {}
@@ -63,7 +64,9 @@ class ActorThreadPool : public ThreadPool {
 
   size_t actor_thread_num_{0};
 
+  bool exit_{false};
   std::mutex actor_mutex_;
+  std::condition_variable actor_cond_;
   std::queue<ActorReference> actor_queue_;
 };
 }  // namespace mindspore

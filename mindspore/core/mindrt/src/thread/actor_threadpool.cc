@@ -21,7 +21,7 @@ namespace mindspore {
 void ActorWorker::CreateThread(ActorThreadPool *pool, ThreadPolicy policy) {
   THREAD_RETURN_IF_NULL(pool);
   pool_ = pool;
-  if (policy == KThreadSpin) {
+  if (policy == kThreadSpin) {
     thread_ = std::thread(&ActorWorker::RunWithSpin, this);
   } else if (policy == kThreadWait) {
     thread_ = std::thread(&ActorWorker::RunWithWait, this);
@@ -52,13 +52,11 @@ void ActorWorker::RunWithWait() {
   pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
 #endif
   while (alive_) {
-    // only run either local KernelTask or PoolQueue ActorTask
-    bool busy = RunLocalKernelTask() || RunQueueActorTask();
-    if (!busy) {
-      // wait until enqueue ActorTask or distribute KernelTask
-      std::unique_lock<std::mutex> _l(mutex_);
-      status_ = kThreadIdle;
-      cond_var_.wait(_l, [&] { return status_ == kThreadBusy || !alive_; });
+    // only run PoolQueue ActorTask
+    bool success = RunQueueActorTask();
+    if (!success) {
+      // wait until enqueue ActorTask
+      pool_->WaitUntilNotify();
     }
   }
 }
@@ -97,11 +95,18 @@ ActorThreadPool::~ActorThreadPool() {
       std::this_thread::yield();
     }
   } while (!terminate);
+  exit_ = true;
+  actor_cond_.notify_all();
   for (auto &worker : workers_) {
     delete worker;
     worker = nullptr;
   }
   workers_.clear();
+}
+
+void ActorThreadPool::WaitUntilNotify() {
+  std::unique_lock<std::mutex> _l(actor_mutex_);
+  actor_cond_.wait(_l, [this] { return !actor_queue_.empty() || exit_; });
 }
 
 ActorReference ActorThreadPool::PopActorFromQueue() {
@@ -119,6 +124,7 @@ void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
     std::lock_guard<std::mutex> _l(actor_mutex_);
     actor_queue_.push(actor);
   }
+  actor_cond_.notify_one();
   THREAD_INFO("actor[%s] enqueue success", actor->GetAID().Name().c_str());
   // active one idle actor thread if exist
   for (size_t i = 0; i < actor_thread_num_; ++i) {

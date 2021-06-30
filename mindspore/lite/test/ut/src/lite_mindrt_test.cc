@@ -110,7 +110,7 @@ class TestActor : public ActorBase {
 
 TEST_F(LiteMindRtTest, ActorThreadPoolTest) {
   Initialize("", "", "", "", 4);
-  auto pool = ActorThreadPool::CreateThreadPool(4, KThreadSpin);
+  auto pool = ActorThreadPool::CreateThreadPool(4, kThreadSpin);
   AID t1 = Spawn(ActorReference(new TestActor("t1", pool, 1)));
   AID t2 = Spawn(ActorReference(new TestActor("t2", pool, 2)));
   AID t3 = Spawn(ActorReference(new TestActor("t3", pool, 3)));
