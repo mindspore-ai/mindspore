@@ -145,6 +145,15 @@ if(ENABLE_MINDRT)
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
+elseif(TARGET_HIMIX200)
+    file(GLOB MINDRT_ACTOR ${CORE_DIR}/mindrt/src/actor/*.cc)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${MINDRT_ACTOR}
+        ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
+        ${CORE_DIR}/mindrt/src/thread/actor_threadpool.cc
+        ${CORE_DIR}/mindrt/src/thread/threadpool.cc
+        )
 endif()
 
 add_subdirectory(ops)

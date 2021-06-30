@@ -365,6 +365,8 @@ else()
     if(MSLITE_ENABLE_CONVERTER)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/registry/ DESTINATION ${CONVERTER_ROOT_DIR}/include/registry
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/glog
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
@@ -430,8 +432,8 @@ else()
         file(GLOB PROTOBUF_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/protobuf_*/lib/libprotobuf.a)
         install(FILES ${PROTOBUF_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        file(GLOB CYTPO_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/openssl_*/lib/libcypto.a)
-        install(FILES ${CYPTO_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
+        file(GLOB CRYPTO_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/openssl_*/lib/libcrypto.a)
+        install(FILES ${CRYPTO_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(NOT SUPPORT_TRAIN AND MSLITE_ENABLE_NNIE)
