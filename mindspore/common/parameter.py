@@ -573,7 +573,8 @@ class Parameter(Tensor_):
         return obj
 
     def __del__(self):
-        self.param_info = None
+        if context.get_context("mode") == context.GRAPH_MODE:
+            self.param_info = None
 
 
 class ParameterTuple(tuple):
