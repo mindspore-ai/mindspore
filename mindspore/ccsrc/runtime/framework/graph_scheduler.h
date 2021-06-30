@@ -242,8 +242,8 @@ class GraphScheduler {
                                 const size_t to_index);
   void LinkDataArrowForSwitchActor(SwitchActor *from_actor, const size_t from_index, OpActor<DeviceTensor> *to_actor,
                                    const size_t to_index, const size_t branch_index = SIZE_MAX);
-  void LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors,
-                                      std::vector<KernelActorPtr> *kernel_actors, LoopCountActor *to_actor,
+
+  void LinkControlArrowForGatherActor(std::vector<KernelActorPtr> *kernel_actors,
                                       const std::vector<KernelGraphPtr> &graphs, const ControlNodeParserPtr &parser);
 
   void LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> *switch_actors, LoopCountActor *to_actor,

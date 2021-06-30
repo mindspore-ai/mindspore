@@ -1953,8 +1953,7 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
 
   LinkBranchArrowForGatherActor(graph_compiler_info, actor_set);
 
-  LinkControlArrowForGatherActor(&(actor_set->gather_actors_), &(actor_set->kernel_actors_),
-                                 actor_set->loop_count_actor_.get(), graph_compiler_info.graphs_,
+  LinkControlArrowForGatherActor(&(actor_set->kernel_actors_), graph_compiler_info.graphs_,
                                  graph_compiler_info.control_node_parser_);
 
   LinkControlArrowForSwitchActor(&(actor_set->switch_actors_), actor_set->loop_count_actor_.get(),
@@ -2163,14 +2162,9 @@ void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_
   }
 }
 
-void GraphScheduler::LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors,
-                                                    std::vector<KernelActorPtr> *kernel_actors,
-                                                    LoopCountActor *to_actor, const std::vector<KernelGraphPtr> &graphs,
+void GraphScheduler::LinkControlArrowForGatherActor(std::vector<KernelActorPtr> *kernel_actors,
+                                                    const std::vector<KernelGraphPtr> &graphs,
                                                     const ControlNodeParserPtr &parser) {
-  if (from_actors == nullptr || to_actor == nullptr) {
-    return;
-  }
-
   // Link control arrow to kernel actor.
   for (size_t i = 0; i < graphs.size(); ++i) {
     const auto &kernel_graph = graphs[i];
@@ -2225,6 +2219,22 @@ void GraphScheduler::LinkControlArrowForGatherActor(std::vector<GatherActorPtr> 
         }
       }
     }
+  }
+
+  // Link input auto monad control arrow from kernel actor to gather actor.
+  const auto &monad_nodes = parser->kernel_to_call_nodes_;
+  for (const auto node_pair : monad_nodes) {
+    const auto &kernel_actor_name = node_pair.first->fullname_with_scope();
+    const auto &gather_actor_name = node_pair.second->DebugString();
+    auto kernel_op_actor = FetchActor(kernel_actor_name);
+    auto gather_op_actor = FetchActor(gather_actor_name);
+    if (kernel_op_actor == nullptr || gather_op_actor == nullptr) {
+      continue;
+    }
+    auto kernel_actor = dynamic_cast<KernelActor *>(kernel_op_actor);
+    auto gather_actor = dynamic_cast<GatherActor *>(gather_op_actor);
+    kernel_actor->output_control_arrows_.emplace_back(gather_actor->GetAID());
+    gather_actor->input_controls_num_++;
   }
 }
 
