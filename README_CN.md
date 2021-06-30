@@ -150,7 +150,6 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 | GPU    | `mindspore/mindspore-gpu` | `x.y.z`                  | 已经预安装MindSpore `x.y.z` GPU版本的生产环境。       |
 |        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`GPU CUDA10.1`后端）。安装详情请参考<https://www.mindspore.cn/install> 。 |
 |        |                           | `runtime`                | 提供运行时环境安装MindSpore二进制包（`GPU CUDA10.1`后端）。 |
-| Ascend | <center>&mdash;</center>  | <center>&mdash;</center> | 即将推出，敬请期待。                               |
 
 > **注意：** 不建议从源头构建GPU `devel` Docker镜像后直接安装whl包。我们强烈建议您在GPU `runtime` Docker镜像中传输并安装whl包。
 
