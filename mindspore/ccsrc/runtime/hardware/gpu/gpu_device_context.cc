@@ -92,9 +92,10 @@ bool GPUDeviceContext::Initialize() {
     (*init_nccl_comm_funcptr)();
   }
 
+  // Dump json config file if dump is enabled.
   auto rank_id = GetRankID();
   auto &json_parser = DumpJsonParser::GetInstance();
-  // Dump json config file if dump is enabled
+  json_parser.Parse();
   json_parser.CopyJsonToDir(rank_id);
   json_parser.CopyMSCfgJsonToDir(rank_id);
 

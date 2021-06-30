@@ -39,6 +39,8 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
+#include "debug/data_dump/dump_json_parser.h"
+
 namespace mindspore {
 namespace compile {
 bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
@@ -602,6 +604,23 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
   }
   return false;
 }
+
+void PrepareForDebuggr(const GraphCompilerInfo &graph_compiler_info) {
+#ifdef ENABLE_DEBUGGER
+  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
+    Debugger::GetInstance()->PreExecuteGraphDebugger(graph_compiler_info.graphs_);
+  }
+#endif
+
+  if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
+    DumpJsonParser::GetInstance().ClearGraph();
+    for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+      if (graph_compiler_info.device_contexts_[i]->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
+        DumpJsonParser::GetInstance().SaveGraph(graph_compiler_info.graphs_[i].get());
+      }
+    }
+  }
+}
 }  // namespace
 
 void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
@@ -719,12 +738,8 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);
-// Debugger pre-execute graph.
-#ifdef ENABLE_DEBUGGER
-  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
-    Debugger::GetInstance()->PreExecuteGraphDebugger(graph_compiler_info.graphs_);
-  }
-#endif
+  // Debugger pre-execute graph.
+  PrepareForDebuggr(graph_compiler_info);
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }

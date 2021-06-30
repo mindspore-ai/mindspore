@@ -28,12 +28,14 @@
 #include "utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "common/trans.h"
+#include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/recorder_manager.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
+
 namespace mindspore {
 namespace runtime {
 namespace {
@@ -480,10 +482,14 @@ void GraphScheduler::Initialize() {
     (void)actorMgr->Spawn(base_recorder_actor, true);
   }
 #endif
-// Create and schedule debug actor.
+  // Create and schedule debug actor.
+  bool debugger_actor_need = DumpJsonParser::GetInstance().e2e_dump_enabled();
 #ifdef ENABLE_DEBUGGER
-  auto debugger = mindspore::Debugger::GetInstance();
-  if (debugger->DebuggerBackendEnabled()) {
+  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
+    debugger_actor_need = true;
+  }
+#endif
+  if (debugger_actor_need) {
     auto debug_actor = std::make_shared<DebugActor>();
     MS_EXCEPTION_IF_NULL(debug_actor);
     debug_aid_ = &(debug_actor->GetAID());
@@ -491,7 +497,6 @@ void GraphScheduler::Initialize() {
     base_debug_actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(base_debug_actor, true);
   }
-#endif
 }
 
 ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info) {
@@ -1343,7 +1348,8 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
     const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(from_kernel->fullname_with_scope()));
     LinkDataArrowForKernelActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else if (IsInternalParameter(from_kernel, graph)) {
-    // Link data arrow for internal parameter, convert internal parameter to actor by internal parameter cache to link.
+    // Link data arrow for internal parameter, convert internal parameter to actor by internal parameter cache to
+    // link.
     LinkDataArrowForInternalParameter(from_kernel, graph_compiler_info.origin_parameters_order_, graph, to_actor,
                                       to_kernel_with_input_idx);
   } else if (IsPersistentDeviceTensor(from_kernel)) {
@@ -1602,8 +1608,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
   if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimDepend) ||
       AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimLoad)) {
     real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
-    // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input node
-    // in this scene.
+    // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
+    // node in this scene.
     if (AnfAlgo::IsOneOfPrimitiveCNode(input_cnode->input(kRealInputIndexInDepend), recursion_prims)) {
       real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
     }
@@ -1707,8 +1713,8 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       output_actor->input_controls_num_++;
     }
 
-    // In the scene of allreduce op and computing op parallel multi stream, the input memory of allreduce can be reused
-    // only when the recv node runs finished, which is expressed by the reference count increased.
+    // In the scene of allreduce op and computing op parallel multi stream, the input memory of allreduce can be
+    // reused only when the recv node runs finished, which is expressed by the reference count increased.
     for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(from_allreduce_node); ++i) {
       auto device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(from_allreduce_node, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);

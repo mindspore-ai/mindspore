@@ -26,6 +26,9 @@ const size_t kKBToByte = 1024;
 const size_t kLineMaxSize = 1024;
 
 size_t GetSystemMemorySize(const std::string &key) {
+#if defined(_WIN32) || defined(_WIN64)
+  return SIZE_MAX;
+#else
   FILE *file = fopen("/proc/meminfo", "r");
   if (file == nullptr) {
     MS_LOG(EXCEPTION) << "Get system meminfo failed.";
@@ -53,6 +56,7 @@ size_t GetSystemMemorySize(const std::string &key) {
 
   fclose(file);
   return mem_size * kKBToByte;
+#endif
 }
 }  // namespace
 

@@ -21,6 +21,7 @@
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "debug/data_dump/cpu_e2e_dump.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #include "debug/debugger/debugger_utils.h"
@@ -35,10 +36,22 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
-  // todo debug.
+
+  if (!node->isa<CNode>()) {
+    // Call back to the from actor to process after debug finished.
+    Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
+    return;
+  }
+
+  const auto &cnode = node->cast<CNodePtr>();
+  if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
+    if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
+      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      CPUE2eDump::DumpCNodeData(cnode, kernel_graph->graph_id());
+    }
+  } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kGPU) {
 #ifdef ENABLE_DEBUGGER
-  if (node->isa<CNode>()) {
-    const auto &cnode = node->cast<CNodePtr>();
     auto debugger = Debugger::GetInstance();
     if (debugger) {
       std::string kernel_name = cnode->fullname_with_scope();
@@ -49,8 +62,9 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       }
     }
     exec_order_ += 1;
-  }
 #endif
+  }
+
   // Call back to the from actor to process after debug finished.
   Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
@@ -58,7 +72,11 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
-  // todo debug.
+
+  if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
+    CPUE2eDump::DumpParametersAndConst();
+  }
+
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
   if (debugger) {
@@ -67,7 +85,10 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *op_context, const AID *
     exec_order_ = 0;
     debugger->Debugger::PostExecuteGraphDebugger();
   }
+#else
+  DumpJsonParser::GetInstance().UpdateDumpIter();
 #endif
+
   // Call back to the from actor to process after debug finished.
   Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }

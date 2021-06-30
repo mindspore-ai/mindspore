@@ -21,6 +21,7 @@
 #include <map>
 #include <set>
 #include <mutex>
+#include <vector>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 #include "backend/session/kernel_graph.h"
@@ -62,6 +63,10 @@ class DumpJsonParser {
   std::string GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const;
   void UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph);
 
+  void ClearGraph() { graphs_.clear(); }
+  void SaveGraph(session::KernelGraph *graph) { graphs_.emplace_back(graph); }
+  std::vector<session::KernelGraph *> &graphs() { return graphs_; }
+
  private:
   DumpJsonParser() = default;
   ~DumpJsonParser() = default;
@@ -81,6 +86,9 @@ class DumpJsonParser {
   bool trans_flag_{false};
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
+
+  // Save graphs for dump.
+  std::vector<session::KernelGraph *> graphs_;
 
   void ParseCommonDumpSetting(const nlohmann::json &content);
   void ParseE2eDumpSetting(const nlohmann::json &content);
