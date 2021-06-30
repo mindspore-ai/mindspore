@@ -55,27 +55,28 @@ device_id=0
 ckpt="0-125_24750.ckpt" # the model saved for epoch=125
 ground_truth_path=$root/dataset/centerface/ground_truth
 
-if [ $# == 1 ]
+if [ $# -ge 1 ]
 then
     model_path=$(get_real_path $1)
-    if [ ! -f $model_path ]
+#    if [ ! -f $model_path ]
+    if [ ! -d $model_path ]
     then
-        echo "error: model_path=$model_path is not a file"
+        echo "error: model_path=$model_path is not a dir"
     exit 1
     fi
 fi
 
-if [ $# == 2 ]
+if [ $# -ge 2 ]
 then
     dataset_path=$(get_real_path $2)
-    if [ ! -f $dataset_path ]
+    if [ ! -d $dataset_path ]
     then
-        echo "error: dataset_path=$dataset_path is not a file"
+        echo "error: dataset_path=$dataset_path is not a dir"
     exit 1
     fi
 fi
 
-if [ $# == 3 ]
+if [ $# -ge 3 ]
 then
     ground_truth_mat=$(get_real_path $3)
     if [ ! -f $ground_truth_mat ]
@@ -85,27 +86,27 @@ then
     fi
 fi
 
-if [ $# == 4 ]
+if [ $# -ge 4 ]
 then
     save_path=$(get_real_path $4)
-    if [ ! -f $save_path ]
+    if [ ! -d $save_path ]
     then
-        echo "error: save_path=$save_path is not a file"
+        echo "error: save_path=$save_path is not a dir"
     exit 1
     fi
 fi
 
-if [ $# == 5 ]
+if [ $# -ge 5 ]
 then
     device_id=$5
 fi
 
-if [ $# == 6 ]
+if [ $# -ge 6 ]
 then
     ckpt=$6
 fi
 
-if [ $# == 7 ]
+if [ $# -ge 7 ]
 then
     ground_truth_path=$(get_real_path $7)
     if [ ! -f $ground_truth_path ]

@@ -16,11 +16,11 @@
 
 root=$PWD
 save_path=$root/output/centerface/
-ground_truth_path=$root/dataset/centerface/ground_truth
+ground_truth_path=$1
 #for i in $(seq start_epoch end_epoch+1)
 for i in $(seq 89 200)
 do
-    python ../dependency/evaluate/eval.py --pred=$save_path$i --gt=$ground_truth_path &
+    python ../dependency/evaluate/eval.py --pred=$save_path$i --gt=$ground_truth_path >> log_eval_all.txt 2>&1 &
     sleep 10
 done
 wait

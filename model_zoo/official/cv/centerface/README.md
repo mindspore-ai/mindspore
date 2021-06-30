@@ -175,7 +175,7 @@ step6: eval
 # cd ../dependency/evaluate;
 # python setup.py install;
 # cd -; #cd ../../scripts;
-sh eval_all.sh
+sh eval_all.sh [ground_truth_path]
 ```
 
 # [Script Description](#contents)
@@ -192,6 +192,7 @@ sh eval_all.sh
         ├── postprocess.py               // 310infer postprocess scripts
         ├── README.md                    // descriptions about CenterFace
         ├── ascend310_infer              // application for 310 inference
+        ├─default_config.yaml            // Training parameter profile
         ├── scripts
         │   ├──run_infer_310.sh          // shell script for infer on ascend310
         │   ├──eval.sh                   // evaluate a single testing result
@@ -205,7 +206,6 @@ sh eval_all.sh
         │   ├──__init__.py
         │   ├──centerface.py             // centerface networks, training entry
         │   ├──dataset.py                // generate dataloader and data processing entry
-        │   ├──config.py                 // centerface unique configs
         │   ├──losses.py                 // losses for centerface
         │   ├──lr_scheduler.py           // learning rate scheduler
         │   ├──mobile_v2.py              // modified mobilenet_v2 backbone
@@ -213,6 +213,11 @@ sh eval_all.sh
         │   ├──var_init.py               // weight initialization
         │   ├──convert_weight_mobilenetv2.py   // convert pretrained backbone to mindspore
         │   ├──convert_weight.py               // CenterFace model convert to mindspore
+        |   └──model_utils
+        |      ├──config.py          // Processing configuration parameters
+        |      ├──device_adapter.py  // Get cloud ID
+        |      ├──local_adapter.py   // Get local ID
+        |     └ ──moxing_adapter.py  // Parameter processing
         └── dependency                   // third party codes: MIT License
             ├──extd                      // training dependency: data augmentation
             │   ├──utils
@@ -451,7 +456,7 @@ cd ../../../scripts;
     ```python
     # you need to change the parameter in eval.sh
     # default eval the ckpt saved in ./scripts/output/centerface/999
-    sh eval.sh
+    sh eval.sh [ground_truth_path]
     ```
 
 2. eval many testing output for user to choose the best one
@@ -459,7 +464,7 @@ cd ../../../scripts;
     ```python
     # you need to change the parameter in eval_all.sh
     # default eval the ckpt saved in ./scripts/output/centerface/[89-140]
-    sh eval_all.sh
+    sh eval_all.sh [ground_truth_path]
     ```
 
 3. test+eval
@@ -475,7 +480,7 @@ sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [CKPT]
 you can see the MAP below by eval.sh
 
 ```log
-(ci3.7) [root@bms-aiserver scripts]# ./eval.sh
+(ci3.7) [root@bms-aiserver scripts]# ./eval.sh ./ground_truth_path
 start eval
 ==================== Results = ==================== ./scripts/output/centerface/999
 Easy   Val AP: 0.923914407045363
@@ -488,7 +493,7 @@ end eval
 you can see the MAP below by eval_all.sh
 
 ```log
-(ci3.7) [root@bms-aiserver scripts]# ./eval_all.sh
+(ci3.7) [root@bms-aiserver scripts]# ./eval_all.sh ./ground_truth_path
 ==================== Results = ==================== ./scripts/output/centerface/89
 Easy   Val AP: 0.8884892849068273
 Medium Val AP: 0.8928813452811216

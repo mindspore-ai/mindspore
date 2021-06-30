@@ -50,38 +50,28 @@ annot_path=$dataset_path/annotations/train.json
 img_dir=$dataset_path/images/train/images
 use_device_id=0
 
-if [ $# == 1 ]
+if [ $# -ge 1 ]
 then
     use_device_id=$1
 fi
 
-if [ $# == 2 ]
+if [ $# -ge 2 ]
 then
-    use_device_id=$1
     pretrained_backbone=$(get_real_path $2)
 fi
 
-if [ $# == 3 ]
+if [ $# -ge 3 ]
 then
-    use_device_id=$1
-    pretrained_backbone=$(get_real_path $2)
     dataset_path=$(get_real_path $3)
 fi
 
-if [ $# == 4 ]
+if [ $# -ge 4 ]
 then
-    use_device_id=$1
-    pretrained_backbone=$(get_real_path $2)
-    dataset_path=$(get_real_path $3)
     annot_path=$(get_real_path $4)
 fi
 
-if [ $# == 5 ]
+if [ $# -ge 5 ]
 then
-    use_device_id=$1
-    pretrained_backbone=$(get_real_path $2)
-    dataset_path=$(get_real_path $3)
-    annot_path=$(get_real_path $4)
     img_dir=$(get_real_path $5)
 fi
 

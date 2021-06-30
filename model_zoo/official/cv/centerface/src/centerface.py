@@ -14,7 +14,8 @@
 # ============================================================================
 """centerface networks"""
 
-from src.config import ConfigCenterface
+# from src.config import ConfigCenterface
+from src.model_utils.config import config
 from src.mobile_v2 import mobilenet_v2
 from src.losses import FocalLoss, SmoothL1LossNew, SmoothL1LossNewCMask
 
@@ -132,7 +133,7 @@ class CenterfaceMobilev2(nn.Cell):
 
     def __init__(self):
         super(CenterfaceMobilev2, self).__init__()
-        self.config = ConfigCenterface()
+        self.config = config
 
         self.base = mobilenet_v2()
         channels = self.base.feat_channel
@@ -199,7 +200,7 @@ class CenterFaceWithLossCell(nn.Cell):
     def __init__(self, network):
         super(CenterFaceWithLossCell, self).__init__()
         self.centerface_network = network
-        self.config = ConfigCenterface()
+        self.config = config
         self.loss = CenterFaceLoss(self.config.wh_weight, self.config.reg_offset, self.config.off_weight,
                                    self.config.hm_weight, self.config.lm_weight)
         self.reduce_sum = P.ReduceSum()
@@ -295,7 +296,7 @@ class CenterFaceWithNms(nn.Cell):
     def __init__(self, network):
         super(CenterFaceWithNms, self).__init__()
         self.centerface_network = network
-        self.config = ConfigCenterface()
+        self.config = config
         # two type of maxpool self.maxpool2d = nn.MaxPool2d(kernel_size=3, stride=1, pad_mode='same')
         self.maxpool2d = P.MaxPoolWithArgmax(kernel_size=3, strides=1, pad_mode='same')
         self.topk = P.TopK(sorted=True)

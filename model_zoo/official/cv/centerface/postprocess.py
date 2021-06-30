@@ -14,9 +14,9 @@
 # ============================================================================
 """post process for 310 inference"""
 import os
-import argparse
 import numpy as np
-from src.config import ConfigCenterface
+from src.model_utils.config import config
+
 from dependency.centernet.src.lib.detectors.base_detector import CenterFaceDetector
 from dependency.evaluate.eval import evaluation
 
@@ -36,16 +36,8 @@ dct_map = {'16': '16--Award_Ceremony', '26': '26--Soldier_Drilling', '29': '29--
            '14': '14--Traffic', '41': '41--Swimming', '46': '46--Jockey', '10': '10--People_Marching',
            '54': '54--Rescue', '57': '57--Angler', '31': '31--Waiter_Waitress', '27': '27--Spa', '21': '21--Festival'}
 
-parser = argparse.ArgumentParser(description='centerface calcul AP')
-parser.add_argument("--result_path", type=str, required=True, default='', help="result file path")
-parser.add_argument("--label_file", type=str, required=True, default='', help="label file")
-parser.add_argument("--meta_file", type=str, required=True, default='', help="label file")
-parser.add_argument("--save_path", type=str, required=True, default='', help="label file")
-args = parser.parse_args()
-
 
 def cal_acc(result_path, label_file, meta_file, save_path):
-    config = ConfigCenterface()
     detector = CenterFaceDetector(config, None)
     if not os.path.exists(save_path):
         for im_dir in dct_map.values():
@@ -87,4 +79,4 @@ def cal_acc(result_path, label_file, meta_file, save_path):
 
 
 if __name__ == '__main__':
-    cal_acc(args.result_path, args.label_file, args.meta_file, args.save_path)
+    cal_acc(config.result_path, config.label_file, config.meta_file, config.save_path)

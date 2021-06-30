@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into air, onnx, mindir models"""
-import argparse
 import numpy as np
 
 import mindspore
@@ -21,27 +20,22 @@ from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
 from src.centerface import CenterfaceMobilev2, CenterFaceWithNms
-from src.config import ConfigCenterface
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-parser = argparse.ArgumentParser(description='centerface export')
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="centerface", help="output file name.")
-parser.add_argument('--file_format', type=str, choices=["AIR", "MINDIR"], default='AIR', help='file format')
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=get_device_id())
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+def modelarts_process():
+    pass
 
-if __name__ == '__main__':
-    config = ConfigCenterface()
+@moxing_wrapper(pre_process=modelarts_process)
+def export_centerface():
     net = CenterfaceMobilev2()
 
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     param_dict_new = {}
     for key, values in param_dict.items():
         if key.startswith('moments.') or key.startswith('moment1.') or key.startswith('moment2.'):
@@ -55,5 +49,8 @@ if __name__ == '__main__':
     net = CenterFaceWithNms(net)
     net.set_train(False)
 
-    input_data = Tensor(np.zeros([args.batch_size, 3, config.input_h, config.input_w]), mindspore.float32)
-    export(net, input_data, file_name=args.file_name, file_format=args.file_format)
+    input_data = Tensor(np.zeros([config.batch_size, 3, config.input_h, config.input_w]), mindspore.float32)
+    export(net, input_data, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_centerface()

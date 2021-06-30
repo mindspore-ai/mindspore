@@ -16,20 +16,14 @@
 Mobilenet model transform: torch => mindspore
 """
 import os
-import argparse
 import torch
 from mindspore.train.serialization import load_checkpoint, save_checkpoint
 from mindspore import Tensor
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('--ckpt_fn', type=str, default='/model_path/mobilenet_v2_key.ckpt',
-                    help='ckpt for user to get cell/module name')
-parser.add_argument('--pt_fn', type=str, default='/model_path/mobilenet_v2-b0353104.pth',
-                    help='checkpoint filename to convert')
-parser.add_argument('--out_ckpt_fn', type=str, default='/model_path/mobilenet_v2-b0353104.ckpt',
-                    help='convert output ckpt path')
 
-args = parser.parse_args()
+config.ckpt_fn = config.ckpt_fn_v2
+config.pt_fn = config.pt_fn_v2
 
 def load_model(model_path):
     """
@@ -129,4 +123,4 @@ def pt_to_ckpt(pt, ckpt, out_ckpt):
 
 if __name__ == "__main__":
     # beta <=> bias, gamma <=> weight
-    pt_to_ckpt(args.pt_fn, args.ckpt_fn, args.out_ckpt_fn)
+    pt_to_ckpt(config.pt_fn, config.ckpt_fn, config.out_ckpt_fn)
