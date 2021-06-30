@@ -326,7 +326,9 @@ public class SyncFLJob {
         int timeWindow = Integer.parseInt(args[11]);
         boolean useElb = Boolean.parseBoolean(args[12]);
         int serverNum = Integer.parseInt(args[13]);
-        String task = args[14];
+        boolean useHttps = Boolean.parseBoolean(args[14]);
+        String task = args[15];
+
         FLParameter flParameter = FLParameter.getInstance();
         LOGGER.info(Common.addTag("[args] trainDataset: " + trainDataset));
         LOGGER.info(Common.addTag("[args] vocabFile: " + vocabFile));
@@ -342,9 +344,11 @@ public class SyncFLJob {
         LOGGER.info(Common.addTag("[args] timeWindow: " + timeWindow));
         LOGGER.info(Common.addTag("[args] useElb: " + useElb));
         LOGGER.info(Common.addTag("[args] serverNum: " + serverNum));
+        LOGGER.info(Common.addTag("[args] useHttps: " + useHttps));
         LOGGER.info(Common.addTag("[args] task: " + task));
 
         flParameter.setClientID(clientID);
+        flParameter.setUseHttps(useHttps);
         SyncFLJob syncFLJob = new SyncFLJob();
         if (task.equals("train")) {
             flParameter.setTrainDataset(trainDataset);
