@@ -29,7 +29,7 @@ class Server;
 void Iteration::RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
-  communicator_->RegisterMsgCallBack("syncIteraion",
+  communicator_->RegisterMsgCallBack("syncIteration",
                                      std::bind(&Iteration::HandleSyncIterationRequest, this, std::placeholders::_1));
   communicator_->RegisterMsgCallBack(
     "notifyLeaderToNextIter",
@@ -114,7 +114,6 @@ void Iteration::MoveToNextIteration(bool is_last_iter_valid, const std::string &
 
 void Iteration::SetIterationRunning() {
   MS_LOG(INFO) << "Iteration " << iteration_num_ << " start running.";
-  iteration_state_ = IterationState::kRunning;
   if (server_node_ == nullptr) {
     MS_LOG(ERROR) << "Server node is empty.";
     return;
@@ -123,11 +122,11 @@ void Iteration::SetIterationRunning() {
     // This event helps worker/server to be consistent in iteration state.
     server_node_->BroadcastEvent(static_cast<uint32_t>(CustomEvent::kIterationRunning));
   }
+  iteration_state_ = IterationState::kRunning;
 }
 
 void Iteration::SetIterationCompleted() {
   MS_LOG(INFO) << "Iteration " << iteration_num_ << " completes.";
-  iteration_state_ = IterationState::kCompleted;
   if (server_node_ == nullptr) {
     MS_LOG(ERROR) << "Server node is empty.";
     return;
@@ -136,6 +135,7 @@ void Iteration::SetIterationCompleted() {
     // This event helps worker/server to be consistent in iteration state.
     server_node_->BroadcastEvent(static_cast<uint32_t>(CustomEvent::kIterationCompleted));
   }
+  iteration_state_ = IterationState::kCompleted;
 }
 
 void Iteration::ScalingBarrier() {
@@ -147,15 +147,15 @@ void Iteration::ScalingBarrier() {
 }
 
 bool Iteration::ReInitForScaling(uint32_t server_num, uint32_t server_rank) {
-  if (server_rank != kLeaderServerRank) {
-    if (!SyncIteration(server_rank)) {
-      MS_LOG(ERROR) << "Synchronizing iteration failed.";
-      return false;
-    }
-  }
   for (auto &round : rounds_) {
     if (!round->ReInitForScaling(server_num)) {
       MS_LOG(WARNING) << "Reinitializing round " << round->name() << " for scaling failed.";
+      return false;
+    }
+  }
+  if (server_rank != kLeaderServerRank) {
+    if (!SyncIteration(server_rank)) {
+      MS_LOG(ERROR) << "Synchronizing iteration failed.";
       return false;
     }
   }
@@ -171,8 +171,8 @@ bool Iteration::SyncIteration(uint32_t rank) {
   sync_iter_req.set_rank(rank);
 
   std::shared_ptr<std::vector<unsigned char>> sync_iter_rsp_msg = nullptr;
-  if (communicator_->SendPbRequest(sync_iter_req, kLeaderServerRank, core::TcpUserCommand::kSyncIteration,
-                                   &sync_iter_rsp_msg)) {
+  if (!communicator_->SendPbRequest(sync_iter_req, kLeaderServerRank, core::TcpUserCommand::kSyncIteration,
+                                    &sync_iter_rsp_msg)) {
     MS_LOG(ERROR) << "Sending synchronizing iteration message to leader server failed.";
     return false;
   }
@@ -183,6 +183,7 @@ bool Iteration::SyncIteration(uint32_t rank) {
 
   SyncIterationResponse sync_iter_rsp;
   sync_iter_rsp.ParseFromArray(sync_iter_rsp_msg->data(), sync_iter_rsp_msg->size());
+  iteration_num_ = sync_iter_rsp.iteration();
   MS_LOG(INFO) << "After synchronizing, server " << rank << " current iteration number is "
                << sync_iter_rsp.iteration();
   return true;
@@ -207,7 +208,7 @@ void Iteration::HandleSyncIterationRequest(const std::shared_ptr<core::MessageHa
 
 bool Iteration::IsMoveToNextIterRequestReentrant(uint64_t iteration_num) {
   std::unique_lock<std::mutex> lock(pinned_mtx_);
-  if (pinned_iter_num_ >= iteration_num) {
+  if (pinned_iter_num_ == iteration_num) {
     MS_LOG(WARNING) << "MoveToNextIteration is not reentrant. Ignore this call.";
     return true;
   }
@@ -241,7 +242,7 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<co
                               notify_leader_to_next_iter_rsp.SerializeAsString().size(), message);
 
   NotifyLeaderMoveToNextIterRequest notify_leader_to_next_iter_req;
-  notify_leader_to_next_iter_req.ParseFromArray(message->data(), message->len());
+  notify_leader_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &rank = notify_leader_to_next_iter_req.rank();
   const auto &is_last_iter_valid = notify_leader_to_next_iter_req.is_last_iter_valid();
   const auto &iter_num = notify_leader_to_next_iter_req.iter_num();
@@ -349,7 +350,7 @@ void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<core::MessageH
                               proceed_to_next_iter_rsp.SerializeAsString().size(), message);
 
   MoveToNextIterRequest proceed_to_next_iter_req;
-  proceed_to_next_iter_req.ParseFromArray(message->data(), message->len());
+  proceed_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &is_last_iter_valid = proceed_to_next_iter_req.is_last_iter_valid();
   const auto &last_iter_num = proceed_to_next_iter_req.last_iter_num();
   const auto &reason = proceed_to_next_iter_req.reason();
@@ -403,7 +404,7 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<core::MessageHand
   }
 
   EndLastIterRequest end_last_iter_req;
-  end_last_iter_req.ParseFromArray(message->data(), message->len());
+  end_last_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &last_iter_num = end_last_iter_req.last_iter_num();
   // If the iteration number is not matched, return error.
   if (last_iter_num != iteration_num_) {

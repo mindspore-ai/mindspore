@@ -36,7 +36,6 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
   }
 
   uint32_t rank_size = server_num_;
-  uint32_t local_rank_ = server_node_->rank_id();
   size_t chunk_size = count / rank_size;
   size_t remainder_size = count % rank_size;
   std::vector<size_t> chunk_sizes(rank_size, chunk_size);
@@ -129,7 +128,6 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
 template <typename T>
 bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *recvbuff, size_t count) {
   uint32_t rank_size = server_num_;
-  uint32_t local_rank_ = server_node_->rank_id();
   MS_LOG(DEBUG) << "Reduce Broadcast AllReduce rank_size:" << rank_size << ", local_rank_:" << local_rank_
                 << ", count:" << count;
   int ret = memcpy_s(recvbuff, count * sizeof(T), sendbuff, count * sizeof(T));

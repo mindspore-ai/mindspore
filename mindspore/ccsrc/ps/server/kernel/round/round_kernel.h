@@ -47,7 +47,7 @@ namespace kernel {
 class RoundKernel : virtual public CPUKernel {
  public:
   RoundKernel();
-  virtual ~RoundKernel() = default;
+  virtual ~RoundKernel();
 
   // RoundKernel doesn't use InitKernel method of base class CPUKernel to initialize. So implementation of this
   // inherited method is empty.
@@ -112,6 +112,7 @@ class RoundKernel : virtual public CPUKernel {
 
   // To ensure the performance, we use another thread to release data on the heap. So the operation on the data should
   // be threadsafe.
+  std::atomic_bool running_;
   std::thread release_thread_;
 
   // Data needs to be released and its mutex;

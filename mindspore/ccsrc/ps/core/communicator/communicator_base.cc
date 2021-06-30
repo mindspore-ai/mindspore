@@ -35,7 +35,7 @@ bool CommunicatorBase::SendResponse(const void *rsp_data, size_t rsp_len, std::s
 }
 void CommunicatorBase::Join() {
   if (!running_thread_.joinable()) {
-    MS_LOG(WARNING) << "The running thread of communicator is not joinable.";
+    MS_LOG(INFO) << "The running thread of communicator is already joined.";
     return;
   }
   running_thread_.join();

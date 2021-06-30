@@ -178,6 +178,7 @@ void PSContext::set_server_mode(const std::string &server_mode) {
                       << " or " << kServerModeHybrid;
     return;
   }
+  MS_LOG(INFO) << "Server mode: " << server_mode_ << " is used for Server and Worker. Scheduler will ignore it.";
   server_mode_ = server_mode;
 }
 
@@ -198,7 +199,11 @@ void PSContext::set_ms_role(const std::string &role) {
 void PSContext::set_worker_num(uint32_t worker_num) {
   // Hybrid training mode only supports one worker for now.
   if (server_mode_ == kServerModeHybrid && worker_num != 1) {
-    MS_LOG(EXCEPTION) << "The worker number should be set to 1 for now in hybrid training mode.";
+    MS_LOG(EXCEPTION) << "The worker number should be set to 1 in hybrid training mode.";
+    return;
+  }
+  if (server_mode_ == kServerModeFL && worker_num != 0) {
+    MS_LOG(EXCEPTION) << "The worker number should be 0 in federated learning mode.";
     return;
   }
   worker_num_ = worker_num;

@@ -135,7 +135,7 @@ void ServerNode::ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, 
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
 }
 
-std::shared_ptr<CommunicatorBase> ServerNode::GetOrCreateHttpComm(const std::string &ip, std::int16_t port,
+std::shared_ptr<CommunicatorBase> ServerNode::GetOrCreateHttpComm(const std::string &ip, uint16_t port,
                                                                   const std::shared_ptr<TaskExecutor> &task_executor) {
   std::lock_guard<std::mutex> lock(communicator_mutex_);
   if (!communicators_.count(kHttpCommunicator)) {

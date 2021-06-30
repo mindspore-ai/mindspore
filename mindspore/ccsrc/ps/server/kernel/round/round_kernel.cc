@@ -27,9 +27,9 @@ namespace mindspore {
 namespace ps {
 namespace server {
 namespace kernel {
-RoundKernel::RoundKernel() : name_(""), current_count_(0), required_count_(0), error_reason_("") {
+RoundKernel::RoundKernel() : name_(""), current_count_(0), required_count_(0), error_reason_(""), running_(true) {
   release_thread_ = std::thread([&]() {
-    while (true) {
+    while (running_.load()) {
       std::unique_lock<std::mutex> release_lock(release_mtx_);
       // Detect whether there's any data needs to be released every 100 milliseconds.
       if (heap_data_to_release_.empty()) {
@@ -52,7 +52,13 @@ RoundKernel::RoundKernel() : name_(""), current_count_(0), required_count_(0), e
       heap_data_.erase(heap_data_.find(addr_ptr));
     }
   });
-  release_thread_.detach();
+}
+
+RoundKernel::~RoundKernel() {
+  running_ = false;
+  if (release_thread_.joinable()) {
+    release_thread_.join();
+  }
 }
 
 void RoundKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message) { return; }

@@ -32,8 +32,7 @@ namespace ps {
 namespace core {
 class HttpCommunicator : public CommunicatorBase {
  public:
-  explicit HttpCommunicator(const std::string &ip, std::int16_t port,
-                            const std::shared_ptr<TaskExecutor> &task_executor)
+  explicit HttpCommunicator(const std::string &ip, uint16_t port, const std::shared_ptr<TaskExecutor> &task_executor)
       : task_executor_(task_executor), http_server_(nullptr), ip_(ip), port_(port) {
     http_server_ = std::make_shared<HttpServer>(ip_, port_, kThreadNum);
   }
@@ -50,7 +49,7 @@ class HttpCommunicator : public CommunicatorBase {
   std::unordered_map<std::string, HttpMsgCallback> http_msg_callbacks_;
 
   std::string ip_;
-  std::int16_t port_;
+  uint16_t port_;
 };
 }  // namespace core
 }  // namespace ps
