@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <utility>
+#include <functional>
 #include <map>
 #include <set>
 #include "schema/inner/model_generated.h"
@@ -375,7 +376,7 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
       return RET_ERROR;
     }
     if (out_set.find(remap_[id]) == out_set.end()) {
-      if ((tensorT->nodeType == NodeType_ValueNode) && (tensorT->data.size() == 0)) {
+      if (IsInputTensor(*tensorT)) {
         meta_graph_->inputIndex.push_back(remap_[id]);
         if (!meta_graph_->subGraph.empty()) {
           meta_graph_->subGraph[0]->inputIndices.push_back(remap_[id]);
@@ -412,6 +413,11 @@ int TrainExport::ExportInit(const std::string model_name, std::string version) {
 }
 
 int TrainExport::SaveToFile() { return Storage::Save(*meta_graph_, file_name_); }
+
+int TrainExport::IsInputTensor(const schema::TensorT &t) {
+  int total_dims = std::accumulate(t.dims.begin(), t.dims.end(), 1, std::multiplies<int>());
+  return ((t.nodeType == NodeType_ValueNode) && (t.data.size() == 0) && (total_dims != 0));
+}
 
 TrainExport::~TrainExport() { delete meta_graph_; }
 
