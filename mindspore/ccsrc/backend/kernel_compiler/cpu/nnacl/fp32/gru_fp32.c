@@ -19,6 +19,13 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
+void GruMatMul(float *c, const float *a, const float *b, const float *bias, int row, int deep, int col, bool is_vec) {
+  if (is_vec) {
+    MatVecMulFp32(a, b, c, bias, ActType_No, deep, col);
+  } else {
+    MatMulOpt(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
+  }
+}
 
 void GruStepUnit(float *output, float *update_gate, float *reset_gate, float *hidden_buffer, const float *state_weight,
                  const float *state_bias, float *hidden_state, float *buffer[4], const GruParameter *gru_param) {
@@ -38,16 +45,16 @@ void GruStepUnit(float *output, float *update_gate, float *reset_gate, float *hi
 
   // state * weight
   if (is_vec) {
-    LstmMatMul(state_reset_gate, hidden_state, state_reset_weight, state_reset_bias, gru_param->batch_,
-               gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
-    LstmMatMul(state_update_gate, hidden_state, state_update_weight, state_update_bias, gru_param->batch_,
-               gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
+    GruMatMul(state_reset_gate, hidden_state, state_reset_weight, state_reset_bias, gru_param->batch_,
+              gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
+    GruMatMul(state_update_gate, hidden_state, state_update_weight, state_update_bias, gru_param->batch_,
+              gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   } else {
     PackLstmInput(hidden_state, packed_state, gru_param->batch_, gru_param->hidden_size_);
-    LstmMatMul(state_reset_gate, packed_state, state_reset_weight, state_reset_bias, gru_param->batch_,
-               gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
-    LstmMatMul(state_update_gate, packed_state, state_update_weight, state_update_bias, gru_param->batch_,
-               gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
+    GruMatMul(state_reset_gate, packed_state, state_reset_weight, state_reset_bias, gru_param->batch_,
+              gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
+    GruMatMul(state_update_gate, packed_state, state_update_weight, state_update_bias, gru_param->batch_,
+              gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   }
   ElementAdd(update_gate, state_update_gate, update_gate, gru_param->batch_ * gru_param->hidden_size_);
   ElementAdd(reset_gate, state_update_gate + gru_param->batch_ * gru_param->hidden_size_, reset_gate,
@@ -60,12 +67,12 @@ void GruStepUnit(float *output, float *update_gate, float *reset_gate, float *hi
 
   ElementMul(hidden_state, reset_gate, reset_gate, gru_param->batch_ * gru_param->hidden_size_);
   if (is_vec) {
-    LstmMatMul(state_hidden_buffer, reset_gate, state_hidden_weight, state_hidden_bias, gru_param->batch_,
-               gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
+    GruMatMul(state_hidden_buffer, reset_gate, state_hidden_weight, state_hidden_bias, gru_param->batch_,
+              gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   } else {
     PackLstmInput(reset_gate, packed_state, gru_param->batch_, gru_param->hidden_size_);
-    LstmMatMul(state_hidden_buffer, packed_state, state_hidden_weight, state_hidden_bias, gru_param->batch_,
-               gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
+    GruMatMul(state_hidden_buffer, packed_state, state_hidden_weight, state_hidden_bias, gru_param->batch_,
+              gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   }
   ElementAdd(hidden_buffer, state_hidden_buffer, hidden_buffer, gru_param->batch_ * gru_param->hidden_size_);
 

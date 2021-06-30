@@ -36,6 +36,8 @@ class LstmCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
 
+  int InputWeightMatMul(int task_id);
+
  private:
   void FreeTmpBuffer();
   void FreeRunBuffer();
@@ -44,15 +46,27 @@ class LstmCPUKernel : public InnerKernel {
   int InitInputWeightBias();
   int InitStateWeightBias();
 
+  int LstmUnidirectional(float *output, const float *weight_i, const float *weight_h, const float *input_bias,
+                         const float *state_bias, float *hidden_state, float *cell_state, bool is_backward);
+  int InnerExecute(float *output, const float *input, float *hidden_state, float *cell_state);
+  const float *weight_loop_;
+  const float *bias_loop_;
+  float *gate_loop_;
+  int input_thread_count_ = 0;
+  int input_thread_stride_ = 0;
+
   float *weight_i_ptr_ = nullptr;
   float *weight_h_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
-  float *buffer_[6];
+  float *buffer_[7];
   int row_tile_ = 0;
   int col_tile_ = 0;
+  int state_row_tile_ = 0;
+  int state_col_tile_ = 0;
   int weight_batch_ = 0;
-  bool is_vec_ = false;
+  bool state_is_vec_ = false;
+  bool output_need_packed_ = false;
   LstmParameter *lstm_param_ = nullptr;
 };
 }  // namespace mindspore::kernel

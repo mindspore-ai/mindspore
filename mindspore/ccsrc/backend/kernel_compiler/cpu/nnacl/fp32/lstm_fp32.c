@@ -20,6 +20,7 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
+#include "nnacl/fp32/pack_fp32.h"
 
 void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align) {
   for (int i = 0; i < batch; i++) {
@@ -63,9 +64,21 @@ void PackLstmInput(const float *src, float *dst, int row, int deep) {
 #endif
 }
 
-void LstmMatMul(float *c, const float *a, const float *b, const float *bias, int row, int deep, int col, bool is_vec) {
+void LstmMatMul(float *c, const float *a, const float *b, const float *bias, int row, int deep, int col, int col_align,
+                bool is_vec, float *packed_ptr) {
   if (is_vec) {
+#ifdef ENABLE_AVX
+    bool need_packed = col % C8NUM;
+    if (!need_packed) {
+      packed_ptr = c;
+    }
+    MatVecMulAvxFp32(a, b, packed_ptr, bias, ActType_No, deep, col, col_align);
+    if (need_packed) {
+      PackNHWCXToNHWCFp32(packed_ptr, c, 1, row, col, C8NUM);
+    }
+#else
     MatVecMulFp32(a, b, c, bias, ActType_No, deep, col);
+#endif
   } else {
     MatMulOpt(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
   }
@@ -140,32 +153,42 @@ void UpdataOutput(const float *cell_state, const float *output_gate, float *hidd
 }
 
 void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight, const float *bias, int row, int deep,
-                    int col, int col_align, bool is_vec) {
+                    int col, int col_align, bool is_vec, float *packed_ptr) {
   for (int i = 0; i < 4; i++) {
-    const float *weight_i = weight + deep * col * i;
+    const float *weight_i;
+#ifdef ENABLE_AVX
+    if (is_vec) {
+      weight_i = weight + deep * col_align * i;
+    } else {
+      weight_i = weight + deep * col * i;
+    }
+#else
+    weight_i = weight + deep * col * i;
+#endif
     const float *bias_i = bias + col_align * i;
     float *gate = gate_buffer + row * col * i;
-    LstmMatMul(gate, input, weight_i, bias_i, row, deep, col, is_vec);
+    LstmMatMul(gate, input, weight_i, bias_i, row, deep, col, col_align, is_vec, packed_ptr);
   }
 }
 
 void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *cell_gate, float *output_gate,
                   const float *state_weight, const float *state_bias, float *hidden_state, float *cell_state,
-                  float *buffer[6], const LstmParameter *lstm_param) {
+                  float *buffer[7], const LstmParameter *lstm_param) {
   float *packed_state = buffer[2];
   float *state_gate = buffer[3];
   float *cell_buffer = buffer[4];
   float *hidden_buffer = buffer[5];
+  float *packed_output = buffer[6];
   bool is_vec = lstm_param->batch_ == 1;
   // state * weight
   if (is_vec) {
     UpdateLstmGate(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
-                   lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec);
+                   lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec, packed_output);
   } else {
     // pack state for matmul
     PackLstmInput(hidden_state, packed_state, lstm_param->batch_, lstm_param->hidden_size_);
     UpdateLstmGate(state_gate, packed_state, state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
-                   lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec);
+                   lstm_param->hidden_size_, lstm_param->state_col_align_, is_vec, packed_output);
   }
   ElementAdd(input_gate, state_gate, input_gate, lstm_param->batch_ * lstm_param->hidden_size_);
   ElementAdd(forget_gate, state_gate + lstm_param->batch_ * lstm_param->hidden_size_ * 2, forget_gate,
