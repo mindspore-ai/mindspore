@@ -509,3 +509,10 @@ def _in(x, y):
 def _callable_const(x):
     """Returns true if x is a function in graph mode."""
     return isinstance(x, typing.Function)
+
+
+@constexpr
+def _check_is_inf(x, negative=False):
+    if not negative:
+        return x == float('inf')
+    return x == float('-inf')

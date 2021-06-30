@@ -41,7 +41,7 @@ from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
     _make_tensor, _promote_for_trigonometric, _raise_runtime_error, _max, _type_convert, \
-    _raise_unimplemented_error, _abs, _in, _tuple_slice
+    _raise_unimplemented_error, _abs, _in, _tuple_slice, _check_is_inf
 from .utils import _expand, _broadcast_to, _broadcast_to_shape, _check_input_tensor, \
     _to_tensor, _to_tensor_origin_dtype, _isnan
 
@@ -2163,6 +2163,8 @@ def lcm(x1, x2, dtype=None):
         q1 = F.tensor_div(x1, common_divisor)
         q2 = F.tensor_div(x2, common_divisor)
         res = F.tensor_mul(F.tensor_mul(q1, q2), common_divisor)
+        has_zero = F.equal(multiply(x1, x2), ZERO_TENSOR)
+        res = where_(has_zero, ZERO_TENSOR, res)
         return F.absolute(res).astype(dtype)
 
     return _apply_tensor_op(_lcm, x1, x2, dtype=dtype)
@@ -5508,13 +5510,13 @@ def _matrix_norm(x, ord, axis, keepdims): # pylint: disable=redefined-builtin
     else:
         axis0, axis1 = axis
         if not keepdims:
-            if _abs(ord) == inf and axis0 > axis1:
+            if _check_is_inf(_abs(ord)) and axis0 > axis1:
                 axis0 -= 1
             elif _abs(ord) == 1 and axis1 > axis0:
                 axis1 -= 1
-        if ord == inf:
+        if _check_is_inf(ord):
             res = P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
-        elif ord == -inf:
+        elif _check_is_inf(ord, True):
             res = P.ReduceMin(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis1), axis0)
         elif ord == 1:
             res = P.ReduceMax(keepdims)(P.ReduceSum(keepdims)(absolute(x), axis0), axis1)
