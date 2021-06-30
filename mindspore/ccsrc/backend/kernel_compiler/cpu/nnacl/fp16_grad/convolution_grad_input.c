@@ -57,11 +57,45 @@ static int ConvDwInputGrad16(const float16_t *dy, const float16_t *w, float16_t 
         if (((unsigned)(input_row) < (unsigned)(in_h)) && ((unsigned)(input_col) < (unsigned)(in_w))) {
           int offset = (input_row * in_w + input_col) * in_ch;
 #ifdef ENABLE_ARM
+#ifdef ENABLE_ARM64
           float16x8_t mat_b0 = {mat_b[0][k], mat_b[1][k], mat_b[2][k], mat_b[3][k],
                                 mat_b[4][k], mat_b[5][k], mat_b[6][k], mat_b[7][k]};
           float16x8_t mat_b1 = {mat_b[8][k],  mat_b[9][k],  mat_b[10][k], mat_b[11][k],
                                 mat_b[12][k], mat_b[13][k], mat_b[14][k], mat_b[15][k]};
-
+#else
+          float16x4_t mat_b00;
+          float16x4_t mat_b01;
+          float16x4_t mat_b10;
+          float16x4_t mat_b11;
+          asm volatile(
+            "vld1.16 %0[0], [%2]\n"
+            "vld1.16 %0[1], [%3]\n"
+            "vld1.16 %0[2], [%4]\n"
+            "vld1.16 %0[3], [%5]\n"
+            "vld1.16 %1[0], [%6]\n"
+            "vld1.16 %1[1], [%7]\n"
+            "vld1.16 %1[2], [%8]\n"
+            "vld1.16 %1[3], [%9]\n"
+            : "=w"(mat_b00), "=w"(mat_b01)
+            : "r"(mat_b[0] + k), "r"(mat_b[1] + k), "r"(mat_b[2] + k), "r"(mat_b[3] + k), "r"(mat_b[4] + k),
+              "r"(mat_b[5] + k), "r"(mat_b[6] + k), "r"(mat_b[7] + k)
+            :);
+          asm volatile(
+            "vld1.16 %0[0], [%2]\n"
+            "vld1.16 %0[1], [%3]\n"
+            "vld1.16 %0[2], [%4]\n"
+            "vld1.16 %0[3], [%5]\n"
+            "vld1.16 %1[0], [%6]\n"
+            "vld1.16 %1[1], [%7]\n"
+            "vld1.16 %1[2], [%8]\n"
+            "vld1.16 %1[3], [%9]\n"
+            : "=w"(mat_b10), "=w"(mat_b11)
+            : "r"(mat_b[8] + k), "r"(mat_b[9] + k), "r"(mat_b[10] + k), "r"(mat_b[11] + k), "r"(mat_b[12] + k),
+              "r"(mat_b[13] + k), "r"(mat_b[14] + k), "r"(mat_b[15] + k)
+            :);
+          float16x8_t mat_b0 = vcombine_f16(mat_b00, mat_b01);
+          float16x8_t mat_b1 = vcombine_f16(mat_b10, mat_b11);
+#endif
           for (int b = 0; b < batch; b++) {
             int dx_offset = b * in_size + offset;
             int dy_offset = b * out_size;
@@ -129,8 +163,27 @@ static int ConvDwInputGrad8(const float16_t *dy, const float16_t *w, float16_t *
         if (((unsigned)(input_row) < (unsigned)(in_h)) && ((unsigned)(input_col) < (unsigned)(in_w))) {
           int offset = (input_row * in_w + input_col) * in_ch;
 #ifdef ENABLE_ARM
+#ifdef ENABLE_ARM64
           float16x8_t mat_b0 = {mat_b[0][k], mat_b[1][k], mat_b[2][k], mat_b[3][k],
                                 mat_b[4][k], mat_b[5][k], mat_b[6][k], mat_b[7][k]};
+#else
+          float16x4_t mat_b00;
+          float16x4_t mat_b01;
+          asm volatile(
+            "vld1.16 %0[0], [%2]\n"
+            "vld1.16 %0[1], [%3]\n"
+            "vld1.16 %0[2], [%4]\n"
+            "vld1.16 %0[3], [%5]\n"
+            "vld1.16 %1[0], [%6]\n"
+            "vld1.16 %1[1], [%7]\n"
+            "vld1.16 %1[2], [%8]\n"
+            "vld1.16 %1[3], [%9]\n"
+            : "=w"(mat_b00), "=w"(mat_b01)
+            : "r"(mat_b[0] + k), "r"(mat_b[1] + k), "r"(mat_b[2] + k), "r"(mat_b[3] + k), "r"(mat_b[4] + k),
+              "r"(mat_b[5] + k), "r"(mat_b[6] + k), "r"(mat_b[7] + k)
+            :);
+          float16x8_t mat_b0 = vcombine_f16(mat_b00, mat_b01);
+#endif
           for (int b = 0; b < batch; b++) {
             int dx_offset = b * in_size + offset;
             int dy_offset = b * out_size;
@@ -193,7 +246,19 @@ static int ConvDwInputGrad4(const float16_t *dy, const float16_t *w, float16_t *
         if (((unsigned)(input_row) < (unsigned)(in_h)) && ((unsigned)(input_col) < (unsigned)(in_w))) {
           int offset = (input_row * in_w + input_col) * in_ch;
 #ifdef ENABLE_ARM
+#ifdef ENABLE_ARM64
           float16x4_t mat_b = {mat_b_0[k], mat_b_1[k], mat_b_2[k], mat_b_3[k]};
+#else
+          float16x4_t mat_b;
+          asm volatile(
+            "vld1.16 %0[0], [%1]\n"
+            "vld1.16 %0[1], [%2]\n"
+            "vld1.16 %0[2], [%3]\n"
+            "vld1.16 %0[3], [%4]\n"
+            : "=w"(mat_b)
+            : "r"(mat_b_0 + k), "r"(mat_b_1 + k), "r"(mat_b_2 + k), "r"(mat_b_3 + k)
+            :);
+#endif
           for (int b = 0; b < batch; b++) {
             int dx_offset = b * in_size + offset;
             int dy_offset = b * out_size;
