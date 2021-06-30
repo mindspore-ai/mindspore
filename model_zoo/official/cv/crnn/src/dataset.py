@@ -28,6 +28,21 @@ from src.svt_dataset import SVTDataset
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
+def check_image_is_valid(image):
+    if image is None:
+        return False
+
+    h, w, c = image.shape
+    if h * w * c == 0:
+        return False
+
+    return True
+
+letters = [letter for letter in config1.label_dict]
+
+def text_to_labels(text):
+    return list(map(lambda x: letters.index(x.lower()), text))
+
 class CaptchaDataset:
     """
     create train or evaluation dataset for crnn
@@ -61,24 +76,37 @@ class CaptchaDataset:
         self.max_text_length = config.max_text_length
         self.blank = config.blank
         self.class_num = config.class_num
+        self.sample_num = len(self.img_names)
+        self.batch_size = config.batch_size
+        print("There are totally {} samples".format(self.sample_num))
 
     def __len__(self):
-        return len(self.img_names)
+        return self.sample_num
 
     def __getitem__(self, item):
         img_name = self.img_list[item]
-        im = Image.open(os.path.join(self.img_root_dir, img_name))
+        try:
+            im = Image.open(os.path.join(self.img_root_dir, img_name))
+        except IOError:
+            print("%s is a corrupted image" % img_name)
+            return self[item + 1]
         im = im.convert("RGB")
         r, g, b = im.split()
         im = Image.merge("RGB", (b, g, r))
         image = np.array(im)
-        label_str = self.img_names[img_name]
-        label = []
-        for c in label_str:
-            if c in config.label_dict:
-                label.append(config.label_dict.index(c))
-        label.extend([int(self.blank)] * (self.max_text_length - len(label)))
-        label = np.array(label)
+        if not check_image_is_valid(image):
+            print("%s is a corrupted image" % img_name)
+            return self[item + 1]
+
+        text = self.img_names[img_name]
+        label_unexpanded = text_to_labels(text)
+        label = np.full(self.max_text_length, self.blank)
+        if self.max_text_length < len(label_unexpanded):
+            label_len = self.max_text_length
+        else:
+            label_len = len(label_unexpanded)
+        for j in range(label_len):
+            label[j] = label_unexpanded[j]
         return image, label
 
 

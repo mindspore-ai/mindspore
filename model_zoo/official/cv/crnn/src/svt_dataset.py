@@ -46,6 +46,7 @@ class SVTDataset:
         self.max_text_length = config.max_text_length
         self.blank = config.blank
         self.class_num = config.class_num
+        self.label_dict = config.label_dict
 
     def __len__(self):
         return len(self.img_names)
@@ -60,8 +61,8 @@ class SVTDataset:
         label_str = self.img_names[img_name]
         label = []
         for c in label_str:
-            if c in config.label_dict:
-                label.append(config.label_dict.index(c))
+            if c in self.label_dict:
+                label.append(self.label_dict.index(c))
         label.extend([int(self.blank)] * (self.max_text_length - len(label)))
         label = np.array(label)
         return image, label

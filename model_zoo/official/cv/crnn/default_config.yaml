@@ -8,7 +8,7 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-device_target: "Ascend"
+device_target: "GPU"
 enable_profiling: False
 
 # ======================================================================================
@@ -32,6 +32,7 @@ nesterov: True
 save_checkpoint: True
 save_checkpoint_steps: 1000
 keep_checkpoint_max: 30
+per_print_time: 100
 save_checkpoint_path: "./"
 class_num: 37
 input_size: 512
@@ -42,9 +43,10 @@ train_dataset_path: ""
 train_eval_dataset: "svt"
 train_eval_dataset_path: ""
 run_eval: False
+eval_all_saved_ckpts: False
 save_best_ckpt: True
 eval_start_epoch: 5
-eval_interval: 5
+eval_interval: 1
 
 # ======================================================================================
 # Eval options

@@ -57,8 +57,8 @@ We provide `convert_ic03.py`, `convert_iiit5k.py`, `convert_svt.py` as exmples f
 
 ## [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor.
+- Hardware
+    - Prepare hardware environment with Ascend processor or GPU.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
@@ -73,17 +73,30 @@ We provide `convert_ic03.py`, `convert_iiit5k.py`, `convert_svt.py` as exmples f
 
     ```shell
     # distribute training example in Ascend
-    $ bash run_distribute_train.sh [DATASET_NAME] [RANK_TABLE_FILE] [DATASET_PATH]
+    $ bash scripts/run_distribute_train.sh [DATASET_NAME] [DATASET_PATH] Ascend [RANK_TABLE_FILE]
 
     # evaluation example in Ascend
-    $ bash run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
+    $ bash scripts/run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] Ascend
 
     # standalone training example in Ascend
-    $ bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
+    $ bash scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] Ascend
 
     # offline inference on Ascend310
-    $ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DATASET] [DEVICE_ID]
+    $ bash scripts/run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DATASET] [DEVICE_ID]
 
+    ```
+
+    - Running on GPU
+
+    ```shell
+    # distribute training example in GPU
+    $ bash scripts/run_distribute_train.sh [DATASET_NAME] [DATASET_PATH] GPU
+
+    # evaluation example in GPU
+    $ bash scripts/run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] GPU
+
+    # standalone training example in GPU
+    $ bash scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] GPU
     ```
 
     DATASET_NAME is one of `ic03`, `ic13`, `svt`, `iiit5k`, `synth`.
@@ -123,25 +136,25 @@ crnn
 ├── convert_svt.py                              # Convert the original SVT dataset
 ├── requirements.txt                            # Requirements for this dataset
 ├── scripts
-│   ├── run_distribute_train.sh                 # Launch distributed training in Ascend(8 pcs)
-│   ├── run_eval.sh                             # Launch evaluation
-│   └── run_standalone_train.sh                 # Launch standalone training(1 pcs)
+│   ├── run_distribute_train.sh                 # Launch distributed training in Ascend(8 pcs)
+│   ├── run_eval.sh                             # Launch evaluation
+│   └── run_standalone_train.sh                 # Launch standalone training(1 pcs)
 ├── src
 │   ├── model_utils
-│       ├── config.py                           # Parameter config
-│       ├── moxing_adapter.py                   # modelarts device configuration
-│       └── device_adapter.py                   # Device Config
-│       └── local_adapter.py                    # local device config
-│   ├── crnn.py                                 # crnn network definition
-│   ├── crnn_for_train.py                       # crnn network with grad, loss and gradient clip
-│   ├── dataset.py                              # Data preprocessing for training and evaluation
-│   ├── eval_callback.py  
-│   ├── ic03_dataset.py                         # Data preprocessing for IC03
-│   ├── ic13_dataset.py                         # Data preprocessing for IC13
-│   ├── iiit5k_dataset.py                       # Data preprocessing for IIIT5K
-│   ├── loss.py                                 # Ctcloss definition
-│   ├── metric.py                               # accuracy metric for crnn network
-│   └── svt_dataset.py                          # Data preprocessing for SVT
+│       ├── config.py                           # Parameter config
+│       ├── moxing_adapter.py                   # modelarts device configuration
+│       └── device_adapter.py                   # Device Config
+│       └── local_adapter.py                    # local device config
+│   ├── crnn.py                                 # crnn network definition
+│   ├── crnn_for_train.py                       # crnn network with grad, loss and gradient clip
+│   ├── dataset.py                              # Data preprocessing for training and evaluation
+│   ├── eval_callback.py  
+│   ├── ic03_dataset.py                         # Data preprocessing for IC03
+│   ├── ic13_dataset.py                         # Data preprocessing for IC13
+│   ├── iiit5k_dataset.py                       # Data preprocessing for IIIT5K
+│   ├── loss.py                                 # Ctcloss definition
+│   ├── metric.py                               # accuracy metric for crnn network
+│   └── svt_dataset.py                          # Data preprocessing for SVT
 └── train.py                                    # Training script
 ├── eval.py                                     # Evaluation Script
 ├── default_config.yaml                         # config file
@@ -153,11 +166,11 @@ crnn
 #### Training Script Parameters
 
 ```shell
-# distributed training in Ascend
-Usage: bash run_distribute_train.sh [DATASET_NAME] [RANK_TABLE_FILE] [DATASET_PATH]
+# distributed training
+Usage: bash scripts/run_distribute_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM] [RANK_TABLE_FILE](if Ascend)
 
 # standalone training
-Usage: bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
+Usage: bash scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
 ```
 
 #### Parameters Configuration
@@ -195,18 +208,18 @@ max_text_length": 23,                     # max number of digits in each
 
 ### [Training](#contents)
 
-- Run `run_standalone_train.sh` for non-distributed training of CRNN model, only support Ascend now.
+- Run `run_standalone_train.sh` for non-distributed training of CRNN model, support Ascend and GPU now.
 
 ``` bash
-bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM](optional)
+bash scripts/run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM](optional)
 ```
 
 #### [Distributed Training](#contents)
 
-- Run `run_distribute_train.sh` for distributed training of CRNN model on Ascend.
+- Run `run_distribute_train.sh` for distributed training of CRNN model on Ascend or GPU
 
 ``` bash
-bash run_distribute_train.sh [DATASET_NAME] [RANK_TABLE_FILE] [DATASET_PATH]
+bash scripts/run_distribute_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM] [RANK_TABLE_FILE](if Ascend)
 ```
 
 Check the `train_parallel0/log.txt` and you will get outputs as following:
@@ -276,7 +289,7 @@ Epoch time: 2743.688s, per step time: 0.097s
 - Run `run_eval.sh` for evaluation.
 
 ``` bash
-bash run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM](optional)
+bash scripts/run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM](optional)
 ```
 
 Check the `eval/log.txt` and you will get outputs as following:
@@ -352,37 +365,37 @@ result CRNNAccuracy is: 0.806666666666
 
 #### [Training Performance](#contents)
 
-| Parameters                 | Ascend 910                                        |
-| -------------------------- | --------------------------------------------------|
-| Model Version              | v1.0                                              |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8     |
-| uploaded Date              | 12/15/2020 (month/day/year)                       |
-| MindSpore Version          | 1.0.1                                             |
-| Dataset                    | Synth                                             |
-| Training Parameters        | epoch=10, steps per epoch=14110, batch_size = 64  |
-| Optimizer                  | SGD                                               |
-| Loss Function              | CTCLoss                                           |
-| outputs                    | probability                                       |
-| Loss                       | 0.0029097411                                      |
-| Speed                      | 118ms/step(8pcs)                                  |
-| Total time                 | 557 mins                                          |
-| Parameters (M)             | 83M (.ckpt file)                                  |
-| Checkpoint for Fine tuning | 20.3M (.ckpt file)                                |
+| Parameters                 | Ascend 910                                        | Tesla V100                                        |
+| -------------------------- | --------------------------------------------------|---------------------------------------------------|
+| Model Version              | v1.0                                              | v2.0                                              |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8     |  Tesla V100; CPU 2.60GHz, 72cores; Memory 256G; OS Ubuntu 18.04.3 |
+| uploaded Date              | 12/15/2020 (month/day/year)                       | 6/11/2021 (month/day/year)                        |
+| MindSpore Version          | 1.0.1                                             | 1.2.0                                             |
+| Dataset                    | Synth                                             | Synth                                             |
+| Training Parameters        | epoch=10, steps per epoch=14110, batch_size = 64  | epoch=10, steps per epoch=14110, batch_size = 64  |
+| Optimizer                  | SGD                                               | SGD                                               |
+| Loss Function              | CTCLoss                                           | CTCLoss                                           |
+| outputs                    | probability                                       | probability                                       |
+| Loss                       | 0.0029097411                                      | 0.0029097411                                      |
+| Speed                      | 118ms/step(8pcs)                                  | 36ms/step(8pcs)                                   |
+| Total time                 | 557 mins                                          | 189 mins                                          |
+| Parameters (M)             | 83M (.ckpt file)                                  | 96M                                               |
+| Checkpoint for Fine tuning | 20.3M (.ckpt file)                                |                                                   |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/crnn) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/crnn) |
 
 #### [Evaluation Performance](#contents)
 
-| Parameters          | SVT                         | IIIT5K                      |
-| ------------------- | --------------------------- | --------------------------- |
-| Model Version       | V1.0                        | V1.0                        |
-| Resource            | Ascend 910; OS Euler2.8                  | Ascend 910                  |
-| Uploaded Date       | 12/15/2020 (month/day/year) | 12/15/2020 (month/day/year) |
-| MindSpore Version   | 1.0.1                       | 1.0.1                       |
-| Dataset             | SVT                         | IIIT5K                      |
-| batch_size          | 1                           | 1                           |
-| outputs             | ACC                         | ACC                         |
-| Accuracy            | 80.8%                       | 79.7%                       |
-| Model for inference | 83M (.ckpt file)            | 83M (.ckpt file)            |
+| Parameters          | SVT                         | IIIT5K                      | SVT                         | IIIT5K                      |
+| ------------------- | --------------------------- | --------------------------- | --------------------------- | --------------------------- |
+| Model Version       | V1.0                        | V1.0                        | V2.0                        | V2.0                        |
+| Resource            | Ascend 910; OS Euler2.8     | Ascend 910                  | Tesla V100                  | Tesla V100                  |
+| Uploaded Date       | 12/15/2020 (month/day/year) | 12/15/2020 (month/day/year) | 6/11/2021 (month/day/year)  | 6/11/2021 (month/day/year)  |
+| MindSpore Version   | 1.0.1                       | 1.0.1                       | 1.2.0                       | 1.2.0                       |
+| Dataset             | SVT                         | IIIT5K                      | SVT                         | IIIT5K                      |
+| batch_size          | 1                           | 1                           | 1                           | 1                           |
+| outputs             | ACC                         | ACC                         | ACC                         | ACC                         |
+| Accuracy            | 80.8%                       | 79.7%                       | 81.92%                      | 80.2%                       |
+| Model for inference | 83M (.ckpt file)            | 83M (.ckpt file)            | 96M (.ckpt file)            | 96M (.ckpt file)            |
 
 ## [Description of Random Situation](#contents)
 

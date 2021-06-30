@@ -16,10 +16,9 @@
 
 import numpy as np
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter
+from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 from mindspore.common.initializer import TruncatedNormal
 
 def _bn(channel):
@@ -71,6 +70,27 @@ class VGG(nn.Cell):
         return x
 
 
+class BidirectionalLSTM(nn.Cell):
+
+    def __init__(self, nIn, nHidden, nOut, batch_size):
+        super(BidirectionalLSTM, self).__init__()
+
+        self.rnn = nn.LSTM(nIn, nHidden, bidirectional=True)
+        self.embedding = nn.Dense(in_channels=nHidden * 2, out_channels=nOut)
+        self.h0 = Tensor(np.zeros([1 * 2, batch_size, nHidden]).astype(np.float32))
+        self.c0 = Tensor(np.zeros([1 * 2, batch_size, nHidden]).astype(np.float32))
+
+    def construct(self, x):
+        recurrent, _ = self.rnn(x, (self.h0, self.c0))
+        T, b, h = P.Shape()(recurrent)
+        t_rec = P.Reshape()(recurrent, (T * b, h,))
+
+        out = self.embedding(t_rec)  # [T * b, nOut]
+        out = P.Reshape()(out, (T, b, -1,))
+
+        return out
+
+
 class CRNN(nn.Cell):
     """
      Define a CRNN network which contains Bidirectional LSTM layers and vgg layer.
@@ -88,86 +108,21 @@ class CRNN(nn.Cell):
         self.hidden_size = config.hidden_size
         self.num_classes = config.class_num
         self.reshape = P.Reshape()
-        self.cast = P.Cast()
-        k = (1 / self.hidden_size) ** 0.5
-        self.rnn1 = P.DynamicRNN(forget_bias=0.0)
-        self.rnn1_bw = P.DynamicRNN(forget_bias=0.0)
-        self.rnn2 = P.DynamicRNN(forget_bias=0.0)
-        self.rnn2_bw = P.DynamicRNN(forget_bias=0.0)
-
-        w1 = np.random.uniform(-k, k, (self.input_size + self.hidden_size, 4 * self.hidden_size))
-        self.w1 = Parameter(w1.astype(np.float32), name="w1")
-        w2 = np.random.uniform(-k, k, (2 * self.hidden_size + self.hidden_size, 4 * self.hidden_size))
-        self.w2 = Parameter(w2.astype(np.float32), name="w2")
-        w1_bw = np.random.uniform(-k, k, (self.input_size + self.hidden_size, 4 * self.hidden_size))
-        self.w1_bw = Parameter(w1_bw.astype(np.float32), name="w1_bw")
-        w2_bw = np.random.uniform(-k, k, (2 * self.hidden_size + self.hidden_size, 4 * self.hidden_size))
-        self.w2_bw = Parameter(w2_bw.astype(np.float32), name="w2_bw")
-
-        self.b1 = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b1")
-        self.b2 = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b2")
-        self.b1_bw = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b1_bw")
-        self.b2_bw = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b2_bw")
-
-        self.h1 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-        self.h2 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-        self.h1_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-        self.h2_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-
-        self.c1 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-        self.c2 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-        self.c1_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-        self.c2_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
-
-        self.fc_weight = np.random.random((self.num_classes, self.hidden_size)).astype(np.float32)
-        self.fc_bias = np.random.random((self.num_classes)).astype(np.float32)
-
-        self.fc = nn.Dense(in_channels=self.hidden_size, out_channels=self.num_classes,
-                           weight_init=Tensor(self.fc_weight), bias_init=Tensor(self.fc_bias))
-        self.fc.to_float(mstype.float32)
-        self.expand_dims = P.ExpandDims()
-        self.concat = P.Concat()
         self.transpose = P.Transpose()
-        self.squeeze = P.Squeeze(axis=0)
         self.vgg = VGG()
-        self.reverse_seq1 = P.ReverseSequence(batch_dim=1, seq_dim=0)
-        self.reverse_seq2 = P.ReverseSequence(batch_dim=1, seq_dim=0)
-        self.reverse_seq3 = P.ReverseSequence(batch_dim=1, seq_dim=0)
-        self.reverse_seq4 = P.ReverseSequence(batch_dim=1, seq_dim=0)
-        self.seq_length = Tensor(np.ones((self.batch_size), np.int32) * config.num_step, mstype.int32)
-        self.concat1 = P.Concat(axis=2)
-        self.dropout = nn.Dropout(0.5)
-        self.rnn_dropout = nn.Dropout(0.9)
-        self.use_dropout = config.use_dropout
+        self.rnn = nn.SequentialCell([
+            BidirectionalLSTM(self.input_size, self.hidden_size, self.hidden_size, self.batch_size),
+            BidirectionalLSTM(self.hidden_size, self.hidden_size, self.num_classes, self.batch_size)])
 
     def construct(self, x):
         x = self.vgg(x)
 
         x = self.reshape(x, (self.batch_size, self.input_size, -1))
         x = self.transpose(x, (2, 0, 1))
-        bw_x = self.reverse_seq1(x, self.seq_length)
-        y1, _, _, _, _, _, _, _ = self.rnn1(x, self.w1, self.b1, None, self.h1, self.c1)
-        y1_bw, _, _, _, _, _, _, _ = self.rnn1_bw(bw_x, self.w1_bw, self.b1_bw, None, self.h1_bw, self.c1_bw)
-        y1_bw = self.reverse_seq2(y1_bw, self.seq_length)
-        y1_out = self.concat1((y1, y1_bw))
-        if self.use_dropout:
-            y1_out = self.rnn_dropout(y1_out)
 
-        y2, _, _, _, _, _, _, _ = self.rnn2(y1_out, self.w2, self.b2, None, self.h2, self.c2)
-        bw_y = self.reverse_seq3(y1_out, self.seq_length)
-        y2_bw, _, _, _, _, _, _, _ = self.rnn2(bw_y, self.w2_bw, self.b2_bw, None, self.h2_bw, self.c2_bw)
-        y2_bw = self.reverse_seq4(y2_bw, self.seq_length)
-        y2_out = self.concat1((y2, y2_bw))
-        if self.use_dropout:
-            y2_out = self.dropout(y2_out)
+        x = self.rnn(x)
 
-        output = ()
-        for i in range(F.shape(y2_out)[0]):
-            y2_after_fc = self.fc(self.squeeze(y2[i:i+1:1]))
-            y2_after_fc = self.expand_dims(y2_after_fc, 0)
-            output += (y2_after_fc,)
-        output = self.concat(output)
-        return output
+        return x
 
 
 def crnn(config, full_precision=False):

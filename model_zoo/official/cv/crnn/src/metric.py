@@ -22,12 +22,13 @@ class CRNNAccuracy(nn.Metric):
     Define accuracy metric for warpctc network.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, print_flag=True):
         super(CRNNAccuracy).__init__()
         self.config = config
         self._correct_num = 0
         self._total_num = 0
         self.blank = config.blank
+        self.print_flag = print_flag
 
     def clear(self):
         self._correct_num = 0
@@ -45,7 +46,8 @@ class CRNNAccuracy(nn.Metric):
             str_label = self._convert_labels(y)
 
         for pred, label in zip(str_pred, str_label):
-            print(pred, " :: ", label)
+            if self.print_flag:
+                print(pred, " :: ", label)
             edit_distance = Levenshtein.distance(pred, label)
             self._total_num += 1
             if edit_distance == 0:
