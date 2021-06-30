@@ -257,9 +257,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  bool initialized_ps_cache_{false};
-#endif
 };
 
 using SessionPtr = std::shared_ptr<session::SessionBasic>;

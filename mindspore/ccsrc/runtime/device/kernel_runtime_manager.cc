@@ -51,6 +51,11 @@ void KernelRuntimeManager::ClearGraphResource(uint32_t graph_id, const std::vect
   }
 }
 
+KernelRuntimeManager &KernelRuntimeManager::Instance() {
+  static KernelRuntimeManager instance{};
+  return instance;
+}
+
 void KernelRuntimeManager::Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator) {
   if (runtime_creators_.find(device_name) == runtime_creators_.end()) {
     (void)runtime_creators_.emplace(device_name, runtime_creator);
