@@ -14,9 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 3 || $# -gt 4 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+if [[ $# -lt 4 || $# -gt 5 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [ANNO_FILE] [DEVICE_ID]
     DVPP is mandatory, and must choose from [DVPP|CPU], it's case-insensitive
+    ANNO_PATH is mandatory, and should specify annotation file path of your data including file name.
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
@@ -31,15 +32,17 @@ get_real_path(){
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
 DVPP=${3^^}
+anno=$(get_real_path $4)
 
 device_id=0
-if [ $# == 4 ]; then
-    device_id=$4
+if [ $# == 5 ]; then
+    device_id=$5
 fi
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
 echo "image process mode: "$DVPP
+echo "anno file: "$anno
 echo "device id: "$device_id
 
 export ASCEND_HOME=/usr/local/Ascend/
@@ -85,7 +88,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --result_path=./result_Files --img_path=$data_path --drop &> acc.log &
+    python3.7 ../postprocess.py --result_path=./result_Files --img_path=$data_path --anno_file=$anno --drop &> acc.log &
 }
 
 compile_app
