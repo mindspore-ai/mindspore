@@ -62,7 +62,7 @@ GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_grap
   // load weight data to device
   auto input_nodes = kernel_graph->inputs();
   for (size_t i = 0; i < input_nodes.size(); ++i) {
-    if (!input_nodes[i]->isa<Parameter>()) {
+    if (!input_nodes[i]->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
       MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
       continue;
     }
@@ -70,7 +70,7 @@ GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_grap
     MS_EXCEPTION_IF_NULL(pk_node);
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
-    if (AnfAlgo::IsParameterWeight(pk_node) || !AnfAlgo::OutputAddrExist(input_nodes[i], 0)) {
+    if (AnfAlgo::IsParameterWeight(pk_node)) {
       const auto &param_value = pk_node->default_param();
       MS_EXCEPTION_IF_NULL(param_value);
       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_value);
