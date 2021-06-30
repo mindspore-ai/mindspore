@@ -120,7 +120,7 @@ class MindRTBackend : public Backend {
   void RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info, const std::vector<int64_t> *tensors_mask,
                 const std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs);
 #ifdef ENABLE_DEBUGGER
-  void SetDebugger() override;
+  void SetDebuggerInit();
 #endif
 
  private:

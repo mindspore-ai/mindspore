@@ -285,7 +285,9 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
   device_context->Initialize();
   device_id_ = device_context->device_context_key().device_id_;
-
+#ifdef ENABLE_DEBUGGER
+  SetDebuggerInit();
+#endif
   runtime::GraphScheduler::GetInstance().Initialize();
 }
 
@@ -688,7 +690,7 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
 }
 
 #ifdef ENABLE_DEBUGGER
-void MindRTBackend::SetDebugger() {
+void MindRTBackend::SetDebuggerInit() {
   auto debugger_ = Debugger::GetInstance();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
