@@ -448,13 +448,9 @@ class Dataset:
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (Union[str, list[str]], optional): List of all the desired columns to propagate to
-                the child node. This list must be a permutation of all the columns in the dataset after
-                all operations are applied. The order of the columns in each row propagated to the
-                child node follow the order they appear in this list. The parameter is mandatory
-                if the len(input_columns) != len(output_columns). (default=None, all columns
-                will be propagated to the child node, the order of the columns will remain the
-                same).
+            column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in the whole
+                dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
+                is not just the columns specified in parameter input_columns and output_columns.
             pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
                 would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
             python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with multi-processing.
@@ -645,13 +641,9 @@ class Dataset:
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (list[str], optional): List of all the desired columns to propagate to the
-                child node. This list must be a subset of all the columns in the dataset after
-                all operations are applied. The order of the columns in each row propagated to the
-                child node follow the order they appear in this list. The parameter is mandatory
-                if the len(input_columns) != len(output_columns). (default=None, all columns
-                will be propagated to the child node, the order of the columns will remain the
-                same).
+            column_order (list[str], optional): Specifies the list of all the columns you need in the whole
+                dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
+                is not just the columns specified in parameter input_columns and output_columns.
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
                 parallel (default=None, the value from the configuration will be used).
             python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes. This
@@ -782,7 +774,7 @@ class Dataset:
     @check_repeat
     def repeat(self, count=None):
         """
-        Repeat this dataset N times where N = count. Repeat stochastically if the count is None or -1.
+        Repeat this dataset N times where N = count. Repeat infinitely if the count is None or -1.
 
         Note:
             The order of using repeat and batch reflects the number of batches. It is recommended that
@@ -2069,13 +2061,9 @@ class BatchDataset(Dataset):
             len(output_columns). The size of this list must match the number of output
             columns of the last operation. (default=None, output columns will have the same
             name as the input columns, i.e., the columns will be replaced).
-        column_order (Union[str, list[str]], optional): List of all the desired columns to propagate to the
-            child node. This list must be a subset of all the columns in the dataset after
-            all operations are applied. The order of the columns in each row propagated to the
-            child node follow the order they appear in this list. The parameter is mandatory
-            if the len(input_columns) != len(output_columns). (default=None, all columns
-            will be propagated to the child node, the order of the columns will remain the
-            same).
+        column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in the whole
+                dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
+                is not just the columns specified in parameter input_columns and output_columns.
         pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
             will pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
@@ -2558,8 +2546,9 @@ class MapDataset(Dataset):
             The size of the list should match the number of outputs of the last operator
             (default=None, output columns will be the input columns, i.e., the columns will
             be replaced).
-        column_order (list[str], optional): List of all the desired columns of the dataset (default=None).
-            The argument is mandatory if len(input_columns) != len(output_columns).
+        column_order (list[str], optional): Specifies the list of all the columns you need in the whole
+            dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
+            is not just the columns specified in parameter input_columns and output_columns.
         num_parallel_workers (int, optional): Number of workers to process the dataset
             in parallel (default=None).
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This

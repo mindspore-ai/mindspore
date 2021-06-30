@@ -39,7 +39,7 @@ namespace vision {
 class DvppDecodeResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] resize A vector of int value for each dimension, with respect to H,W order.
+  /// \param[in] resize Parameter vector of two integers for each dimension, with respect to H,W order.
   explicit DvppDecodeResizeJpeg(std::vector<uint32_t> resize);
 
   /// \brief Destructor.
@@ -62,8 +62,8 @@ class DvppDecodeResizeJpeg final : public TensorTransform {
 class DvppDecodeResizeCropJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] crop A vector of int value for each dimension after final cropping, with respect to H,W order.
-  /// \param[in] resize A vector of int value for each dimension after resizing, with respect to H,W order.
+  /// \param[in] crop Parameter vector of two integers for each dimension after final crop, with respect to H,W order.
+  /// \param[in] resize Parameter vector of two integers for each dimension after resize, with respect to H,W order.
   explicit DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize);
 
   /// \brief Destructor.

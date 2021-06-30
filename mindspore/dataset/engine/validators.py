@@ -682,7 +682,7 @@ def check_repeat(method):
         type_check(count, (int, type(None)), "repeat")
         if isinstance(count, int):
             if (count <= 0 and count != -1) or count > INT32_MAX:
-                raise ValueError("count should be either -1 or positive integer.")
+                raise ValueError("count should be either -1 or positive integer, range[1, INT32_MAX].")
         return method(self, *args, **kwargs)
 
     return new_method
