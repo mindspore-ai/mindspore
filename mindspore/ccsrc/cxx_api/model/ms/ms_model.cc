@@ -172,6 +172,17 @@ uint32_t MsModel::GetDeviceID() const {
 }
 
 bool MsModel::CheckModelSupport(enum ModelType model_type) {
+#if ENABLE_D
+  const char *soc_name_c = aclrtGetSocName();
+  if (soc_name_c == nullptr) {
+    return false;
+  }
+  std::string soc_name(soc_name_c);
+  if (soc_name.find("910") == std::string::npos) {
+    return false;
+  }
+#endif
+
   static const std::set<ModelType> kSupportedModelMap = {kMindIR};
   auto iter = kSupportedModelMap.find(model_type);
   if (iter == kSupportedModelMap.end()) {
