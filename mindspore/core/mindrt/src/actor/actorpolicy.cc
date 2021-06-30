@@ -91,7 +91,7 @@ int ShardedThread::EnqueMessage(std::unique_ptr<MessageBase> &&msg) {
   ++msgCount;
 
   // true : The actor is running. else  the actor will  be  ready to run.
-  if (start && (ready == false) && (terminated == false) && actor->IsActive(msgCount)) {
+  if (start && (ready == false) && (terminated == false)) {
     ActorMgr::GetActorMgrRef()->SetActorReady(actor);
     ready = true;
   }
