@@ -23,10 +23,16 @@ from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 from src.musictagger import MusicTaggerCNN
 
 
-if __name__ == "__main__":
+def modelarts_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_process)
+def export_fcn4():
+    """ export_fcn4 """
     network = MusicTaggerCNN(in_classes=[1, 128, 384, 768, 2048],
                              kernel_size=[3, 3, 3, 3, 3],
                              padding=[0] * 5,
@@ -36,3 +42,6 @@ if __name__ == "__main__":
     load_param_into_net(network, param_dict)
     input_data = np.random.uniform(0.0, 1.0, size=[config.batch_size, 1, 96, 1366]).astype(np.float32)
     export(network, Tensor(input_data), file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_fcn4()

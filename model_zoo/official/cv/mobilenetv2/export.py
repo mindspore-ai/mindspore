@@ -21,13 +21,13 @@ from src.models import define_net, load_ckpt
 from src.utils import set_context
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 config.device_id = get_device_id()
 config.rank_id = get_rank_id()
 config.rank_size = get_device_num()
 config.run_distribute = config.rank_size > 1.
-
 config.batch_size = config.batch_size_export
 config.is_training = config.is_training_export
 
@@ -35,7 +35,12 @@ context.set_context(mode=context.GRAPH_MODE, device_target=config.platform)
 if config.platform == "Ascend":
     context.set_context(device_id=get_device_id())
 
-if __name__ == '__main__':
+def modelarts_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_process)
+def export_mobilenetv2():
+    """ export_mobilenetv2 """
     print('\nconfig: \n', config)
     set_context(config)
     _, _, net = define_net(config, config.is_training)
@@ -44,3 +49,6 @@ if __name__ == '__main__':
     input_shp = [config.batch_size, 3, config.image_height, config.image_width]
     input_array = Tensor(np.random.uniform(-1.0, 1.0, size=input_shp).astype(np.float32))
     export(net, input_array, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_mobilenetv2()

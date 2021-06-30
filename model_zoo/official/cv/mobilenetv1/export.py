@@ -21,17 +21,26 @@ from mindspore.train.serialization import export, load_checkpoint
 from src.mobilenet_v1 import mobilenet_v1 as mobilenet
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 
-if __name__ == "__main__":
+def modelarts_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_process)
+def export_mobilenetv1():
+    """ export_mobilenetv1 """
     target = config.device_target
     if target != "GPU":
         context.set_context(device_id=get_device_id())
 
     network = mobilenet(class_num=config.class_num)
-    param_dict = load_checkpoint(config.ckpt_file, net=network)
+    load_checkpoint(config.ckpt_file, net=network)
     network.set_train(False)
     input_data = Tensor(np.zeros([config.batch_size, 3, config.height, config.width]).astype(np.float32))
     export(network, input_data, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_mobilenetv1()

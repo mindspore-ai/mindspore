@@ -3,7 +3,7 @@ enable_modelarts: False
 data_url: ""
 train_url: ""
 checkpoint_url: ""
-data_path: "/store4/ImageNet_Original/"
+data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
 checkpoint_file: './checkpoint/mobilenetv1-90_625.ckpt'
@@ -38,12 +38,12 @@ lr_end: 0.0
 dataset: 'imagenet2012'
 run_distribute: False
 device_num: 4
-dataset_path: "/cache/data"    #change to your own dataset path
+dataset_path: "/cache/data"
 pre_trained: ''
 parameter_server: False
 
 # Image classification - eval
-checkpoint_path: "./ckpt_0/mobilenetv1-90_1251.ckpt"    #change to your own ckpt path
+checkpoint_path: "./ckpt_0/mobilenetv1-90_1251.ckpt"
 
 # mobilenetv1 export
 device_id: 0
@@ -88,6 +88,8 @@ device_id: 'Device id, default is 0.'
 device_num: 'Use device nums, default is 1.'
 rank_id: 'Rank id, default is 0.'
 file_format: 'file format' 
+dataset_path: "Change to your own dataset path."
+checkpoint_path: "Change to your own ckpt path."
 
 ---
 device_target: ['Ascend', 'GPU', 'CPU']

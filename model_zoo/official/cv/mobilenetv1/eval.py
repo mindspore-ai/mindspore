@@ -94,7 +94,9 @@ def modelarts_process():
 
 @moxing_wrapper(pre_process=modelarts_process)
 def eval_mobilenetv1():
-    config.dataset_path = os.path.join(config.dataset_path, 'validation_preprocess')
+    """ eval_mobilenetv1 """
+    if config.dataset == 'imagenet2012':
+        config.dataset_path = os.path.join(config.dataset_path, 'validation_preprocess')
     print('\nconfig:\n', config)
     target = config.device_target
 

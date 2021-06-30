@@ -21,15 +21,19 @@ from mindspore.train.serialization import export, load_checkpoint
 from src.deepfm import ModelBuilder
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
-
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
     context.set_context(device_id=get_device_id())
 
-if __name__ == "__main__":
+def modelarts_process():
+    pass
 
+@moxing_wrapper(pre_process=modelarts_process)
+def export_deepfm():
+    """ export_deepfm """
     model_builder = ModelBuilder(config, config)
     _, network = model_builder.get_train_eval_net()
     network.set_train(False)
@@ -42,3 +46,6 @@ if __name__ == "__main__":
 
     input_data = [batch_ids, batch_wts, labels]
     export(network, *input_data, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_deepfm()
