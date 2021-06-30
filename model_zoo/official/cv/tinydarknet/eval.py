@@ -98,11 +98,11 @@ def run_eval():
     if config.dataset_name == "imagenet":
         if not cfg.use_label_smooth:
             cfg.label_smooth_factor = 0.0
-        dataset = create_dataset_imagenet(cfg.data_path, 1, False)
+        dataset = create_dataset_imagenet(cfg.val_data_dir, 1, False)
         loss = CrossEntropySmooth(sparse=True, reduction="mean",
                                   smooth_factor=cfg.label_smooth_factor, num_classes=cfg.num_classes)
     elif config.dataset_name == "cifar10":
-        dataset = create_dataset_cifar(dataset_path=config.data_path,
+        dataset = create_dataset_cifar(dataset_path=config.val_data_dir,
                                        do_train=True,
                                        repeat_num=1,
                                        batch_size=config.batch_size,
