@@ -80,14 +80,21 @@ class Callback:
     Callback function will execute some operations in the current step or epoch.
 
     Examples:
-        >>> from mindspore.train._callback import Callback
+        >>> from mindspore import Model, nn
+        >>> from mindspore.train.callback._callback import Callback
         >>> class Print_info(Callback):
         >>>     def step_end(self, run_context):
         >>>         cb_params = run_context.original_args()
-        >>>         print(cb_params.cur_epoch_num)
-        >>>         print(cb_params.cur_step_num)
+        >>>         print("step_num: ", cb_params.cur_step_num)
         >>>
         >>> print_cb = Print_info()
+        >>> dataset = create_custom_dataset()
+        >>> net = Net()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model.train(1, dataset, callbacks=print_cb)
+        step_num: 1
     """
 
     def __enter__(self):
