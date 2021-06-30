@@ -530,6 +530,7 @@ class Parameter(Tensor_):
         Raises:
             RuntimeError: If it is from Initializer, and parallel mode has changed after the Initializer created.
             ValueError: If the length of the layout is less than 3.
+            TypeError: If `layout` is not tuple.
 
         Returns:
             Parameter, the `Parameter` after initializing data. If current `Parameter` was already initialized before,
@@ -612,6 +613,9 @@ class ParameterTuple(tuple):
                 The definition of `init` is the same as in `Parameter` API. If `init` is 'same', the
                 parameters in the new parameter tuple are the same as those in the original parameter tuple.
                 Default: 'same'.
+
+        Raises:
+            RuntimeError: If parameter's name is not end with embedding_table.
 
         Returns:
             Tuple, the new Parameter tuple.
