@@ -144,8 +144,7 @@ endif()
 
 
 ## make protobuf files
-file(COPY "${ms_onnx_INC}/onnx/onnx.proto" DESTINATION ${CMAKE_BINARY_DIR}/proto)
-file(GLOB ONNX_PROTO "" ${CMAKE_BINARY_DIR}/proto/onnx.proto)
+file(GLOB ONNX_PROTO "" ${CMAKE_SOURCE_DIR}/third_party/proto/onnx/onnx.proto)
 message("onnx proto path is :" ${ONNX_PROTO})
 ms_protobuf_generate(ONNX_PROTO_SRCS ONNX_PROTO_HDRS ${ONNX_PROTO})
 list(APPEND MINDSPORE_PROTO_LIST ${ONNX_PROTO_SRCS})
