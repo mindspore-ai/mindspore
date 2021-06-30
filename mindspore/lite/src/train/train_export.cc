@@ -51,12 +51,14 @@ schema::QuantType TrainExport::GetNodeQuantType(const kernel::LiteKernel *kernel
 }
 
 void TrainExport::TagQuantizedNodes() {
-  for (auto &node : meta_graph_->nodes) {
-    if (node->quantType != schema::QuantType_QUANT_WEIGHT) {
-      for (auto t_idx : node->inputIndex) {
-        if ((meta_graph_->allTensors.at(t_idx)->nodeType == NodeType_ValueNode) &&
-            (meta_graph_->allTensors.at(t_idx)->quantParams.size() > 0)) {
-          node->quantType = schema::QuantType_QUANT_WEIGHT;
+  if (quant_type_ == QT_WEIGHT) {
+    for (auto &node : meta_graph_->nodes) {
+      if (node->quantType != schema::QuantType_QUANT_WEIGHT) {
+        for (auto t_idx : node->inputIndex) {
+          if ((meta_graph_->allTensors.at(t_idx)->nodeType == NodeType_ValueNode) &&
+              (meta_graph_->allTensors.at(t_idx)->quantParams.size() > 0)) {
+            node->quantType = schema::QuantType_QUANT_WEIGHT;
+          }
         }
       }
     }
@@ -142,6 +144,20 @@ Model::Node *TrainExport::FindNode(const mindspore::kernel::LiteKernel *kernel, 
     return nullptr;
   }
   return *it;
+}
+
+int TrainExport::CreateAndAddCNode(const mindspore::kernel::LiteKernel *kernel, std::vector<uint32_t> inputIndex,
+                                   std::vector<uint32_t> outputIndex, const Model *model) {
+  auto cnode = CreateCNode(kernel, inputIndex, outputIndex, model);
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "failed to create cnode";
+    return RET_ERROR;
+  }
+  meta_graph_->nodes.emplace_back(std::move(cnode));
+  if (!meta_graph_->subGraph.empty()) {
+    meta_graph_->subGraph[0]->nodeIndices.push_back(meta_graph_->nodes.size() - 1);
+  }
+  return RET_OK;
 }
 
 std::unique_ptr<schema::CNodeT> TrainExport::CreateCNode(const mindspore::kernel::LiteKernel *kernel,
@@ -255,12 +271,18 @@ int TrainExport::AddTransformNode() {
       return RET_ERROR;
     }
     meta_graph_->allTensors.emplace_back(std::move(tensorConst));  // last_id
+    if (!meta_graph_->subGraph.empty()) {
+      meta_graph_->subGraph[0]->tensorIndices.push_back(meta_graph_->allTensors.size() - 1);
+    }
     auto tensorT = CreateTransformTensor(it.second);
     if (tensorT == nullptr) {
       MS_LOG(ERROR) << "error in create tensor";
       return RET_ERROR;
     }
     meta_graph_->allTensors.emplace_back(std::move(tensorT));  // last_id + 1
+    if (!meta_graph_->subGraph.empty()) {
+      meta_graph_->subGraph[0]->tensorIndices.push_back(meta_graph_->allTensors.size() - 1);
+    }
     std::vector<uint32_t> in_idx = {static_cast<uint32_t>(it.second), static_cast<uint32_t>(last_id)};
     std::vector<uint32_t> out_idx = {static_cast<uint32_t>(last_id + 1)};
     reconnect[it.first] = last_id + 1;
@@ -270,9 +292,18 @@ int TrainExport::AddTransformNode() {
       return RET_ERROR;
     }
     meta_graph_->nodes.emplace_back(std::move(cnode));
+    if (!meta_graph_->subGraph.empty()) {
+      meta_graph_->subGraph[0]->nodeIndices.push_back(meta_graph_->nodes.size() - 1);
+    }
   }
   connect_ = reconnect;
   return RET_OK;
+}
+
+void TrainExport::PrepareRemap(int offset) {
+  for (auto it : connect_) {
+    remap_[it.first + offset] = it.second;
+  }
 }
 
 int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
@@ -284,17 +315,13 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
   int offset = meta_graph_->allTensors.size();
   int tensor_idx = offset;
   quant_type_ = quant_type;
-
   if (meta_graph_ == nullptr) {
     int status = ExportInit(model->name_, model->version_);
     if (status != RET_OK) {
       return status;
     }
   }
-  // prepare mapping for connection
-  for (auto it : connect_) {
-    remap_[it.first + offset] = it.second;
-  }
+  PrepareRemap(offset);
 
   for (const auto kernel : kernels) {
     std::vector<uint32_t> in_idx, out_idx;
@@ -332,12 +359,11 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
         out_set.insert(it->second);
       }
     }
-    auto cnode = CreateCNode(kernel, in_idx, out_idx, model);
-    if (cnode == nullptr) {
+    auto ret = CreateAndAddCNode(kernel, in_idx, out_idx, model);
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "failed to create cnode";
-      return RET_ERROR;
+      return ret;
     }
-    meta_graph_->nodes.emplace_back(std::move(cnode));
   }
   for (auto id : map_index) {
     size_t pid = id - offset;
@@ -351,6 +377,9 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
     if (out_set.find(remap_[id]) == out_set.end()) {
       if ((tensorT->nodeType == NodeType_ValueNode) && (tensorT->data.size() == 0)) {
         meta_graph_->inputIndex.push_back(remap_[id]);
+        if (!meta_graph_->subGraph.empty()) {
+          meta_graph_->subGraph[0]->inputIndices.push_back(remap_[id]);
+        }
       }
     }
     // find output tensor
@@ -361,11 +390,12 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
       }
     }
     meta_graph_->allTensors.emplace_back(std::move(tensorT));
+    if (!meta_graph_->subGraph.empty()) {
+      meta_graph_->subGraph[0]->tensorIndices.push_back(meta_graph_->allTensors.size() - 1);
+    }
   }
+  TagQuantizedNodes();  // do another loop to mark QUANT_WEIGHT_NODES
 
-  if (quant_type_ == QT_WEIGHT) {  // do another loop to mark QUANT_WEIGHT_NODES
-    TagQuantizedNodes();
-  }
   return RET_OK;
 }
 
