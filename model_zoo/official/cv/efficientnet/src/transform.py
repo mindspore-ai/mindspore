@@ -19,16 +19,17 @@ import numpy as np
 import mindspore.dataset.vision.py_transforms as P
 from src import transform_utils
 
-IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
-IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
 
 class RandAugment:
+    # img_info have property： mean、std
     # config_str belongs to str
     # hparams belongs to dict
-    def __init__(self, config_str="rand-m9-mstd0.5", hparams=None):
+    def __init__(self, img_info, config_str="rand-m9-mstd0.5", hparams=None):
         hparams = hparams if hparams is not None else {}
         self.config_str = config_str
         self.hparams = hparams
+        self.mean = img_info.mean
+        self.std = img_info.std
 
     def __call__(self, imgs, labels, batchInfo):
         # assert the imgs object are pil_images
@@ -36,7 +37,7 @@ class RandAugment:
         ret_labels = []
         py_to_pil_op = P.ToPIL()
         to_tensor = P.ToTensor()
-        normalize_op = P.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)
+        normalize_op = P.Normalize(self.mean, self.std)
         rand_augment_ops = transform_utils.rand_augment_transform(self.config_str, self.hparams)
         for i, image in enumerate(imgs):
             img_pil = py_to_pil_op(image)

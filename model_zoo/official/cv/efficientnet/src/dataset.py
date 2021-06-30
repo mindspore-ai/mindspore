@@ -25,21 +25,16 @@ import mindspore.dataset.vision.c_transforms as C
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.dataset.vision import Inter
 
-from src.config import efficientnet_b0_config_gpu as cfg
+from src.config import basic_config, dataset_config, resize_value
 from src.transform import RandAugment
 
-ds.config.set_seed(cfg.random_seed)
+ds.config.set_seed(basic_config.random_seed)
 
 
-IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
-IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
-
-img_size = (224, 224)
 crop_pct = 0.875
 rescale = 1.0 / 255.0
 shift = 0.0
 inter_method = 'bilinear'
-resize_value = 224    # img_size
 scale = (0.08, 1.0)
 ratio = (3./4., 4./3.)
 inter_str = 'bicubic'
@@ -51,9 +46,10 @@ def str2MsInter(method):
         return Inter.NEAREST
     return Inter.BILINEAR
 
-def create_dataset(batch_size, train_data_url='', workers=8, distributed=False):
+def create_dataset(datatype_type, train_data_url, batch_size, workers=8, distributed=False):
     if not os.path.exists(train_data_url):
         raise ValueError('Path not exists')
+
     interpolation = str2MsInter(inter_str)
 
     c_decode_op = C.Decode()
@@ -61,19 +57,31 @@ def create_dataset(batch_size, train_data_url='', workers=8, distributed=False):
     random_resize_crop_op = C.RandomResizedCrop(size=(resize_value, resize_value), scale=scale, ratio=ratio,
                                                 interpolation=interpolation)
     random_horizontal_flip_op = C.RandomHorizontalFlip(0.5)
+    efficient_rand_augment = RandAugment(dataset_config[datatype_type])
 
-    efficient_rand_augment = RandAugment()
-
-    image_ops = [c_decode_op, random_resize_crop_op, random_horizontal_flip_op]
-
+    # load dataset
     rank_id = get_rank() if distributed else 0
     rank_size = get_group_size() if distributed else 1
 
-    dataset_train = ds.ImageFolderDataset(train_data_url,
+    if datatype_type.lower() == 'imagenet':
+        dataset_train = ds.ImageFolderDataset(train_data_url,
+                                              num_parallel_workers=workers,
+                                              shuffle=True,
+                                              num_shards=rank_size,
+                                              shard_id=rank_id)
+        image_ops = [c_decode_op, random_resize_crop_op, random_horizontal_flip_op]
+    elif datatype_type.lower() == 'cifar10':
+        dataset_train = ds.Cifar10Dataset(train_data_url,
+                                          usage="train",
                                           num_parallel_workers=workers,
                                           shuffle=True,
                                           num_shards=rank_size,
                                           shard_id=rank_id)
+        image_ops = [random_resize_crop_op, random_horizontal_flip_op]
+    else:
+        raise NotImplementedError("Only supported for ImageNet or CIFAR10 dataset")
+
+    # build dataset
     dataset_train = dataset_train.map(input_columns=["image"],
                                       operations=image_ops,
                                       num_parallel_workers=workers)
@@ -83,21 +91,18 @@ def create_dataset(batch_size, train_data_url='', workers=8, distributed=False):
     ds_train = dataset_train.batch(batch_size,
                                    per_batch_map=efficient_rand_augment,
                                    input_columns=["image", "label"],
-                                   num_parallel_workers=2,
+                                   num_parallel_workers=workers,
                                    drop_remainder=True)
     return ds_train
 
 
-def create_dataset_val(batch_size=128, val_data_url='', workers=8, distributed=False):
+def create_dataset_val(datatype_type, val_data_url, batch_size=128, workers=8, distributed=False):
     if not os.path.exists(val_data_url):
         raise ValueError('Path not exists')
-    rank_id = get_rank() if distributed else 0
-    rank_size = get_group_size() if distributed else 1
-    dataset = ds.ImageFolderDataset(val_data_url, num_parallel_workers=workers,
-                                    num_shards=rank_size, shard_id=rank_id, shuffle=False)
-    scale_size = None
+
     interpolation = str2MsInter(inter_method)
 
+    img_size = resize_value
     if isinstance(img_size, tuple):
         assert len(img_size) == 2
         if img_size[-1] == img_size[-2]:
@@ -110,12 +115,25 @@ def create_dataset_val(batch_size=128, val_data_url='', workers=8, distributed=F
     type_cast_op = C2.TypeCast(mstype.int32)
     decode_op = C.Decode()
     resize_op = C.Resize(size=scale_size, interpolation=interpolation)
-    center_crop = C.CenterCrop(size=224)
+    center_crop = C.CenterCrop(size=resize_value)
     rescale_op = C.Rescale(rescale, shift)
-    normalize_op = C.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)
+    normalize_op = C.Normalize(dataset_config[datatype_type].mean, dataset_config[datatype_type].std)
     changeswap_op = C.HWC2CHW()
 
-    ctrans = [decode_op, resize_op, center_crop, rescale_op, normalize_op, changeswap_op]
+    # load dataset
+    rank_id = get_rank() if distributed else 0
+    rank_size = get_group_size() if distributed else 1
+
+    if datatype_type.lower() == 'imagenet':
+        dataset = ds.ImageFolderDataset(val_data_url, num_parallel_workers=workers,
+                                        num_shards=rank_size, shard_id=rank_id, shuffle=False)
+        ctrans = [decode_op, resize_op, center_crop, rescale_op, normalize_op, changeswap_op]
+    elif datatype_type.lower() == 'cifar10':
+        dataset = ds.Cifar10Dataset(val_data_url, usage="test", num_parallel_workers=workers,
+                                    num_shards=rank_size, shard_id=rank_id, shuffle=False)
+        ctrans = [resize_op, center_crop, rescale_op, normalize_op, changeswap_op]
+    else:
+        raise NotImplementedError("Only supported for ImageNet or CIFAR10 dataset")
 
     dataset = dataset.map(input_columns=["label"], operations=type_cast_op, num_parallel_workers=workers)
     dataset = dataset.map(input_columns=["image"], operations=ctrans, num_parallel_workers=workers)

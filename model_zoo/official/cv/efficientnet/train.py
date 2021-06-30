@@ -15,7 +15,6 @@
 """train imagenet."""
 import argparse
 import math
-import os
 import random
 
 import numpy as np
@@ -28,14 +27,14 @@ from mindspore.train.callback import (CheckpointConfig, LossMonitor,
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from src.config import efficientnet_b0_config_gpu as cfg
+from src.config import basic_config, dataset_config
 from src.dataset import create_dataset
 from src.efficientnet import efficientnet_b0
 from src.loss import LabelSmoothingCrossEntropy
 
-mindspore.common.set_seed(cfg.random_seed)
-random.seed(cfg.random_seed)
-np.random.seed(cfg.random_seed)
+mindspore.common.set_seed(basic_config.random_seed)
+random.seed(basic_config.random_seed)
+np.random.seed(basic_config.random_seed)
 
 
 def get_lr(base_lr, total_epochs, steps_per_epoch, decay_steps=1,
@@ -60,60 +59,48 @@ def get_lr(base_lr, total_epochs, steps_per_epoch, decay_steps=1,
     return lr_each_step
 
 
-def get_outdir(path, *paths, inc=False):
-    outdir = os.path.join(path, *paths)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
-    elif inc:
-        count = 1
-        outdir_inc = outdir + '-' + str(count)
-        while os.path.exists(outdir_inc):
-            count = count + 1
-            outdir_inc = outdir + '-' + str(count)
-            assert count < 100
-        outdir = outdir_inc
-        os.makedirs(outdir)
-    return outdir
-
-
-parser = argparse.ArgumentParser(
-    description='Training configuration', add_help=False)
-parser.add_argument('--data_path', type=str, default='/home/dataset/imagenet_jpeg/', metavar='DIR',
-                    help='path to dataset')
+parser = argparse.ArgumentParser(description='Training configuration', add_help=False)
+parser.add_argument('--data_path', type=str, metavar='DIR', required=True, help='path to dataset')
+parser.add_argument('--dataset', type=str, default='ImageNet', choices=['ImageNet', 'CIFAR10'],
+                    help='ImageNet or CIFAR10')
 parser.add_argument('--distributed', action='store_true', default=False)
-parser.add_argument('--GPU', action='store_true', default=False,
-                    help='Use GPU for training (default: False)')
-parser.add_argument('--cur_time', type=str,
-                    default='19701010-000000', help='current time')
+parser.add_argument('--platform', type=str, default='GPU', choices=('GPU', 'CPU'), help='run platform')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='Resume full model and optimizer state from checkpoint (default: none)')
 
 
 def main():
     args, _ = parser.parse_known_args()
-    rank_id, rank_size = 0, 1
+    print(args)
 
+    rank_id, rank_size = 0, 1
     context.set_context(mode=context.GRAPH_MODE)
 
+    if args.platform == "GPU":
+        dataset_sink_mode = True
+        context.set_context(device_target='GPU', enable_graph_kernel=True)
+    elif args.platform == "CPU":
+        dataset_sink_mode = False
+        context.set_context(device_target='CPU')
+    else:
+        raise NotImplementedError("Training only supported for CPU and GPU.")
+
     if args.distributed:
-        if args.GPU:
+        if args.platform == "GPU":
             init("nccl")
-            context.set_context(device_target='GPU')
         else:
-            raise ValueError("Only supported GPU training.")
+            raise NotImplementedError("Distributed Training only supported for GPU.")
         context.reset_auto_parallel_context()
         rank_id = get_rank()
         rank_size = get_group_size()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True, device_num=rank_size)
-    else:
-        if args.GPU:
-            context.set_context(device_target='GPU')
-        else:
-            raise ValueError("Only supported GPU training.")
+
+    dataset_type = args.dataset.lower()
+    cfg = dataset_config[dataset_type].cfg
 
     net = efficientnet_b0(num_classes=cfg.num_classes,
+                          cfg=dataset_config[dataset_type],
                           drop_rate=cfg.drop,
                           drop_connect_rate=cfg.drop_connect,
                           global_pool=cfg.gp,
@@ -122,11 +109,12 @@ def main():
 
     train_data_url = args.data_path
     train_dataset = create_dataset(
-        cfg.batch_size, train_data_url, workers=cfg.workers, distributed=args.distributed)
+        dataset_type, train_data_url, cfg.batch_size, workers=cfg.workers, distributed=args.distributed)
     batches_per_epoch = train_dataset.get_dataset_size()
+    print("Batches_per_epoch: ", batches_per_epoch)
 
-    loss_cb = LossMonitor(per_print_times=batches_per_epoch)
-    loss = LabelSmoothingCrossEntropy(smooth_factor=cfg.smoothing)
+    loss_cb = LossMonitor(per_print_times=1 if args.platform == "CPU" else batches_per_epoch)
+    loss = LabelSmoothingCrossEntropy(smooth_factor=cfg.smoothing, num_classes=cfg.num_classes)
     time_cb = TimeMonitor(data_size=batches_per_epoch)
     loss_scale_manager = FixedLossScaleManager(
         cfg.loss_scale, drop_overflow_update=False)
@@ -165,18 +153,13 @@ def main():
                   amp_level=cfg.amp_level
                   )
 
-    if args.GPU:
-        context.set_context(enable_graph_kernel=True)
-
-#    callbacks = callbacks if is_master else []
-
     if args.resume:
         real_epoch = cfg.epochs - cfg.resume_start_epoch
         model.train(real_epoch, train_dataset,
-                    callbacks=callbacks, dataset_sink_mode=True)
+                    callbacks=callbacks, dataset_sink_mode=dataset_sink_mode)
     else:
         model.train(cfg.epochs, train_dataset,
-                    callbacks=callbacks, dataset_sink_mode=True)
+                    callbacks=callbacks, dataset_sink_mode=dataset_sink_mode)
 
 
 if __name__ == '__main__':

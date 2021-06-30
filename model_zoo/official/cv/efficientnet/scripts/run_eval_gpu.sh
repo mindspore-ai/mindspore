@@ -13,38 +13,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# != 2 ] && [ $# != 3 ]
+if [ $# != 3 ]
 then
-    echo "Usage: 
-          sh run_standalone_train_for_gpu.sh [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional) 
-          "
+    echo "Usage:
+      sh run_eval_gpu.sh [DATASET_TYPE] [DATASET_PATH] [CHECKPOINT_PATH]
+      "
+exit 1
+fi
+
+# check dataset type
+if [[ $1 != "ImageNet" ]] && [[ $1 != "CIFAR10" ]]
+then
+    echo "error: Only supported for ImageNet and CIFAR10, but DATASET_TYPE=$1."
 exit 1
 fi
 
 # check dataset file
 if [ ! -d $2 ]
 then
-    echo "error: DATASET_PATH=$2 is not a directory"    
+    echo "error: DATASET_PATH=$2 is not a directory."
+exit 1
+fi
+
+
+# check checkpoint file
+if [ ! -f $3 ]
+then
+    echo "error: CHECKPOINT_PATH=$3 is not a file"
 exit 1
 fi
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-if [ -d "../train" ];
-then
-    rm -rf ../train
-fi
-mkdir ../train
-cd ../train || exit
 
-export CUDA_VISIBLE_DEVICES=$1
-
-if [ $# == 2 ]
+if [ -d "../eval" ];
 then
-    python ${BASEPATH}/../train.py --GPU --data_path $2 > train.log 2>&1 &
+    rm -rf ../eval
 fi
+mkdir ../eval
+cd ../eval || exit
 
-if [ $# == 3 ]
-then
-    python ${BASEPATH}/../train.py --GPU --data_path $2 --resume $3 > train.log 2>&1 &
-fi
+python ${BASEPATH}/../eval.py --dataset $1 --data_path $2 --platform GPU --checkpoint=$3 > ./eval.log 2>&1 &

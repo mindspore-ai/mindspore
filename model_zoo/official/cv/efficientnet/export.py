@@ -18,27 +18,30 @@ import numpy as np
 
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 from src.efficientnet import efficientnet_b0
-from src.config import efficientnet_b0_config_gpu as cfg
+from src.config import dataset_config
 
 parser = argparse.ArgumentParser(description="efficientnet export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--width", type=int, default=224, help="input width")
 parser.add_argument("--height", type=int, default=224, help="input height")
+parser.add_argument('--dataset', type=str, default='ImageNet', choices=['ImageNet', 'CIFAR10'],
+                    help='ImageNet or CIFAR10')
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="efficientnet", help="output file name.")
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"],
                     default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="GPU",
+parser.add_argument("--device_target", type=str, choices=["GPU", "CPU"], default="GPU",
                     help="device target")
 args = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+
 
 if __name__ == "__main__":
-    if args.device_target != "GPU":
-        raise ValueError("Only supported GPU now.")
+    if args.device_target not in ("GPU", "CPU"):
+        raise ValueError("Only supported CPU and GPU now.")
+
+    dataset_type = args.dataset.lower()
+    cfg = dataset_config[dataset_type].cfg
 
     net = efficientnet_b0(num_classes=cfg.num_classes,
                           drop_rate=cfg.drop,
