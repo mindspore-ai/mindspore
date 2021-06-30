@@ -40,13 +40,31 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
       double square_mean = 0.0f;
 
       int index = 0;
-#ifdef ENABLE_NEON
+#if defined(ENABLE_AVX)
+      for (; index <= param->inner_size_ - C8NUM; index += C8NUM) {
+        __m256 srcv = _mm256_loadu_ps(src + index);
+        __m256 squarev = _mm256_mul_ps(srcv, srcv);
+        __m128 src128 = _mm_add_ps(_mm256_extractf128_ps(srcv, 0), _mm256_extractf128_ps(srcv, 1));
+        __m128 square128 = _mm_add_ps(_mm256_extractf128_ps(squarev, 0), _mm256_extractf128_ps(squarev, 1));
+        for (int i = 0; i < C4NUM; ++i) {
+          mean += src128[i];
+          square_mean += square128[i];
+        }
+      }
+#endif
+
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
       for (; index <= param->inner_size_ - C4NUM; index += C4NUM) {
-        float32x4_t srcv = vld1q_f32(src + index);
-        float32x4_t squarev = vmulq_f32(srcv, srcv);
+        MS_FLOAT32X4 srcv = MS_LDQ_F32(src + index);
+        MS_FLOAT32X4 squarev = MS_MULQ_F32(srcv, srcv);
 #ifdef ENABLE_ARM64
         mean += vaddvq_f32(srcv);
         square_mean += vaddvq_f32(squarev);
+#elif defined(ENABLE_SSE)
+        for (int i = 0; i < C4NUM; ++i) {
+          mean += srcv[i];
+          square_mean += squarev[i];
+        }
 #else
         float32x2_t src_add2 = vadd_f32(vget_low_f32(srcv), vget_high_f32(srcv));
         float32x2_t src_add4 = vpadd_f32(src_add2, src_add2);
@@ -67,6 +85,27 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
       const double deno = gamma_data[c] / sqrt(square_mean - mean * mean + param->epsilon_);
 
       index = 0;
+#if defined(ENABLE_AVX)
+      MS_FLOAT32X8 meanv8 = MS_MOV256_F32(mean);
+      MS_FLOAT32X8 denov8 = MS_MOV256_F32(deno);
+      for (; index <= param->inner_size_ - C8NUM; index += C8NUM) {
+        MS_FLOAT32X8 srcv8 = MS_LD256_F32(src + index);
+        MS_FLOAT32X8 dstv8 =
+          MS_ADD256_F32(MS_MUL256_F32(MS_SUB256_F32(srcv8, meanv8), denov8), MS_MOV256_F32(*(beta_data + c)));
+        MS_ST256_F32(dst + index, dstv8);
+      }
+#endif
+
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+      MS_FLOAT32X4 meanv4 = MS_MOVQ_F32(mean);
+      MS_FLOAT32X4 denov4 = MS_MOVQ_F32(deno);
+      for (; index <= param->inner_size_ - C4NUM; index += C4NUM) {
+        MS_FLOAT32X4 srcv4 = MS_LDQ_F32(src + index);
+        MS_FLOAT32X4 dstv4 =
+          MS_ADDQ_F32(MS_MULQ_F32(MS_SUBQ_F32(srcv4, meanv4), denov4), MS_MOVQ_F32(*(beta_data + c)));
+        MS_STQ_F32(dst + index, dstv4);
+      }
+#endif
       for (; index < param->inner_size_; index++) {
         dst[index] = (src[index] - mean) * deno + beta_data[c];
       }
