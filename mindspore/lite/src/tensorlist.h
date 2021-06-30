@@ -118,7 +118,15 @@ class TensorList : public Tensor {
         tensor->set_ref_count(ref_count);
       }
     }
-    return;
+  }
+
+  void ResetRefCount() override {
+    set_ref_count(this->init_ref_count_);
+    for (auto tensor : tensors_) {
+      if (tensor != nullptr) {
+        tensor->set_ref_count(this->init_ref_count_);
+      }
+    }
   }
 
   void IncRefCount() override {
@@ -138,6 +146,24 @@ class TensorList : public Tensor {
     for (auto tensor : tensors_) {
       if (tensor != nullptr) {
         tensor->DecRefCount();
+      }
+    }
+  }
+
+  void set_allocator(AllocatorPtr allocator) override {
+    allocator_ = allocator;
+    for (auto tensor : tensors_) {
+      if (tensor != nullptr) {
+        tensor->set_allocator(allocator);
+      }
+    }
+  }
+
+  void set_own_data(bool own_data) override {
+    this->own_data_ = own_data;
+    for (auto tensor : tensors_) {
+      if (tensor != nullptr) {
+        tensor->set_own_data(own_data);
       }
     }
   }

@@ -107,6 +107,11 @@ int TensorList::MallocTensorListData(TypeId dtype, const std::vector<std::vector
       MS_LOG(ERROR) << "new tensors_[" << i << "] is failed!";
       return RET_ERROR;
     }
+    if (!this->allocator()) {
+      tensor_ptr->set_allocator(this->allocator());
+    }
+    tensor_ptr->set_init_ref_count(this->init_ref_count());
+    tensor_ptr->set_ref_count(this->ref_count());
     this->tensors_.push_back(tensor_ptr);
   }
   return RET_OK;
@@ -139,6 +144,9 @@ int TensorList::MallocData(const AllocatorPtr allocator) {
 }
 
 void TensorList::FreeData() {
+  if (this->IsConst() || this->IsGraphInput()) {
+    return;
+  }
   // free data buf of each tensor in tensors_
   for (auto tensor : tensors_) {
     if (tensor == nullptr) {
@@ -153,7 +161,7 @@ int TensorList::FreeTensorListData() {
   if (this->tensors_.empty()) {
     return RET_OK;
   }
-  for (int i = 0; i < this->ElementsNum(); ++i) {
+  for (size_t i = 0; i < this->tensors_.size(); ++i) {
     if (this->tensors_[i] != nullptr) {
       delete this->tensors_[i];
       this->tensors_[i] = nullptr;
@@ -276,9 +284,15 @@ STATUS TensorList::Decode(const int *data) {
     element_shape_.push_back(data[2 + j]);
   }
   int tensors_num = data[2 + data[1]];
+  if (tensors_num < 0) {
+    MS_LOG(WARNING) << "not able to create tensors, need infer shape.";
+    return RET_OK;
+  }
+
   if (this->ElementsNum() != tensors_num) {
     MS_LOG(WARNING) << "Input tensorlist data is invalid: shape size(" << this->ElementsNum() << ") != tensors_num("
                     << tensors_num << ").";
+    MS_LOG(WARNING) << "tensor name: " << this->tensor_name_;
   }
   tensors_.reserve(tensors_num);
   int tensor_index = 2 + data[1] + 1;

@@ -99,8 +99,12 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
-  auto cnodes = func_graph->GetOrderedCnodes();
-  for (auto &cnode : cnodes) {
+  auto nodes = func_graph->nodes();
+  for (auto &node : nodes) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2D) &&
         !opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
       continue;

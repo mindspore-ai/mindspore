@@ -489,7 +489,18 @@ STATUS OnnxModelParser::ConvertIfOnnxNode(const onnx::NodeProto &onnx_node,
   auto root_if_node = control_nodes_map_.at(if_node_name)->at(if_node_name)->cast<CNodePtr>();
   auto if_new_inputs = root_if_node->inputs();
   if_new_inputs.insert(if_new_inputs.begin() + 1, {then_value_node, else_value_node});
-  root_if_node->set_inputs(if_new_inputs);
+
+  std::vector<AnfNodePtr> if_new_input_not_same{};
+  std::set<AnfNodePtr> if_set{};
+  for (auto &input : if_new_inputs) {
+    if (if_set.find(input) != if_set.end()) {
+      continue;
+    }
+    if_new_input_not_same.push_back(input);
+    if_set.insert(input);
+  }
+
+  root_if_node->set_inputs(if_new_input_not_same);
   return RET_OK;
 }
 
@@ -683,6 +694,12 @@ STATUS OnnxModelParser::BuildOpOutputs(const onnx::NodeProto &onnx_node, const F
         return RET_ERROR;
       }
       get_item_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_getitem_" + std::to_string(op_idx));
+      auto get_item_abstract = CreateTensorAbstract({}, kNumberTypeFloat32);
+      if (get_item_abstract == nullptr) {
+        MS_LOG(ERROR) << "Create tensor abstarct failed";
+        return RET_ERROR;
+      }
+      get_item_cnode->set_abstract(get_item_abstract);
       anf_nodes_map->emplace(output_name, get_item_cnode);
       op_idx++;
     }
@@ -981,7 +998,7 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
   root_while_node->add_input(root_item_index_parameter);
   // fake parameter need pass by root while node input
   auto item_index_parameter = anf_graph->add_parameter();
-  item_index_parameter->set_name(loop_node_name + "_item_index");
+  item_index_parameter->set_name(loop_node_name + "_item_index_2");
   item_index_parameter->set_abstract(root_item_index_parameter->abstract());
   body_graph_inputs->emplace_back(item_index_parameter);
   // item index++ edge
@@ -1006,7 +1023,12 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
   for (int i = 0; i < act_output_num; i++) {
     // tensor_array need as root while input
     auto while_tensor_array_input = anf_root_graph->add_parameter();
-    auto tensor_info = CreateTensorInfo(nullptr, 0, {}, kObjectTypeTensorType);
+    std::vector<int> tensor_list_data(3);
+    tensor_list_data[0] = kTypeUnknown;
+    tensor_list_data[1] = 0;
+    tensor_list_data[2] = -1;
+    auto tensor_info = CreateTensorInfo(tensor_list_data.data(), tensor_list_data.size() * sizeof(int),
+                                        {static_cast<int64_t>(tensor_list_data.size())}, kObjectTypeTensorType);
     if (tensor_info == nullptr) {
       MS_LOG(ERROR) << "Create tensor info failed";
       return RET_ERROR;
@@ -1018,11 +1040,11 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
     }
     while_tensor_array_input->set_abstract(abstract_tensor);
     while_tensor_array_input->set_default_param(tensor_info);
-    while_tensor_array_input->set_name(loop_node_name + "_scan_outputs_tensorarray");
+    while_tensor_array_input->set_name(loop_node_name + "_scan_outputs_tensorarray_while_input");
     root_while_node->add_input(while_tensor_array_input);
 
     auto subgraph_tensor_array_input = anf_graph->add_parameter();
-    subgraph_tensor_array_input->set_name(loop_node_name + "_scan_outputs_tensorarray");
+    subgraph_tensor_array_input->set_name(loop_node_name + "_scan_outputs_tensorarray_body_fg_input");
     subgraph_tensor_array_input->set_abstract(abstract_tensor);
     body_graph_inputs->emplace_back(subgraph_tensor_array_input);
     // skip trip_count ,cond_out,loop_var,no_loop_var,place_holder, output

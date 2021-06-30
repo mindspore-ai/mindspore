@@ -63,7 +63,7 @@ int InnerKernel::PreProcess() {
     }
 
     if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
-      MS_LOG(ERROR) << "The size of output tensor is too big";
+      MS_LOG(ERROR) << "The size of output tensor is too big, output size: " << output->ElementsNum();
       return RET_ERROR;
     }
     auto ret = output->MallocData();

@@ -73,7 +73,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   static int CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor);
 
-  static Tensor *CopyTensor(const Tensor &src_tensor, bool copy_data = false);
+  static Tensor *CopyTensor(const Tensor &src_tensor, bool copy_data = false, AllocatorPtr allocator = nullptr);
 
   virtual bool operator==(const Tensor &tensor);
 
@@ -154,7 +154,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_init_ref_count(int ref_count) { this->init_ref_count_ = ref_count; }
 
-  void ResetRefCount() { set_ref_count(this->init_ref_count_); }
+  virtual void ResetRefCount() { set_ref_count(this->init_ref_count_); }
 
   virtual void IncRefCount();
 
@@ -196,7 +196,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   bool own_data() const { return this->own_data_; }
 
-  void set_own_data(bool own_data) { this->own_data_ = own_data; }
+  virtual void set_own_data(bool own_data) { this->own_data_ = own_data; }
 
   template <typename T>
   int Scale(float scale) {
