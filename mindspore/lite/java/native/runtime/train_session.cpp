@@ -20,10 +20,8 @@
 #include "include/train/train_cfg.h"
 #include "include/errorcode.h"
 
-extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createTrainSession(JNIEnv *env, jobject thiz,
-                                                                                          jstring file_name,
-                                                                                          jlong ms_context_ptr,
-                                                                                          jboolean train_mode) {
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createTrainSession(
+  JNIEnv *env, jobject thiz, jstring file_name, jlong ms_context_ptr, jboolean train_mode, jlong train_config_ptr) {
   auto *pointer = reinterpret_cast<void *>(ms_context_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Context pointer from java is nullptr");
@@ -39,5 +37,3 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createTra
   }
   return jlong(session);
 }
-
-

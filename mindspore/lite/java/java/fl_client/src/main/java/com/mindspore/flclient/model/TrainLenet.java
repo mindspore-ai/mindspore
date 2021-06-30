@@ -108,6 +108,8 @@ public class TrainLenet extends TrainModel {
                 labelArray[j * NUM_OF_CLASS + labelByteArray[i]] = 1;
                 j++;
             }
+        } else {
+            labelArray = null;  // labelArray may be initialized from train
         }
 
         return trainSampleSize;
