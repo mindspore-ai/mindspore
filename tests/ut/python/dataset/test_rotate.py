@@ -101,7 +101,7 @@ def test_rotate_exception():
         _ = c_vision.Rotate("60")
     except TypeError as e:
         logger.info("Got an exception in Rotate: {}".format(str(e)))
-        assert "not of type [<class 'numbers.Number'>]" in str(e)
+        assert "not of type [<class 'float'>, <class 'int'>]" in str(e)
     try:
         _ = c_vision.Rotate(30, Inter.BICUBIC, False, (0, 0, 0))
     except ValueError as e:

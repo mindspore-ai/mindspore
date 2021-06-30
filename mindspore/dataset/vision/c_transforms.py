@@ -1201,13 +1201,20 @@ class RandomRotation(ImageTensorOperation):
 
     @check_random_rotation
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
-        if isinstance(degrees, numbers.Number):
+        if isinstance(degrees, (int, float)):
             degrees = degrees % 360
-        if isinstance(degrees, (list, tuple)):
-            degrees = [degrees[0] % 360, degrees[1] % 360]
-            if degrees[0] > degrees[1]:
-                degrees[1] += 360
-
+            degrees = [-degrees, degrees]
+        elif isinstance(degrees, (list, tuple)):
+            if degrees[1] - degrees[0] >= 360:
+                degrees = [-180, 180]
+            else:
+                degrees = [degrees[0] % 360, degrees[1] % 360]
+                if degrees[0] > degrees[1]:
+                    degrees[1] += 360
+        if center is None:
+            center = (-1, -1)
+        if isinstance(fill_value, int):
+            fill_value = tuple([fill_value] * 3)
         self.degrees = degrees
         self.resample = resample
         self.expand = expand
@@ -1215,14 +1222,8 @@ class RandomRotation(ImageTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
-        # pylint false positive
-        # pylint: disable=E1130
-        degrees = (-self.degrees, self.degrees) if isinstance(self.degrees, numbers.Number) else self.degrees
-        interpolation = DE_C_INTER_MODE[self.resample]
-        expand = self.expand
-        center = (-1, -1) if self.center is None else self.center
-        fill_value = tuple([self.fill_value] * 3) if isinstance(self.fill_value, int) else self.fill_value
-        return cde.RandomRotationOperation(degrees, interpolation, expand, center, fill_value)
+        return cde.RandomRotationOperation(self.degrees, DE_C_INTER_MODE[self.resample], self.expand, self.center,
+                                           self.fill_value)
 
 
 class RandomSelectSubpolicy(ImageTensorOperation):
@@ -1521,9 +1522,12 @@ class Rotate(ImageTensorOperation):
 
     @check_rotate
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
-        if isinstance(degrees, numbers.Number):
+        if isinstance(degrees, (int, float)):
             degrees = degrees % 360
-
+        if center is None:
+            center = (-1, -1)
+        if isinstance(fill_value, int):
+            fill_value = tuple([fill_value] * 3)
         self.degrees = degrees
         self.resample = resample
         self.expand = expand
@@ -1531,14 +1535,8 @@ class Rotate(ImageTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
-        # pylint false positive
-        # pylint: disable=E1130
-        degrees = self.degrees
-        interpolation = DE_C_INTER_MODE[self.resample]
-        expand = self.expand
-        center = (-1, -1) if self.center is None else self.center
-        fill_value = tuple([self.fill_value] * 3) if isinstance(self.fill_value, int) else self.fill_value
-        return cde.RotateOperation(degrees, interpolation, expand, center, fill_value)
+        return cde.RotateOperation(self.degrees, DE_C_INTER_MODE[self.resample], self.expand, self.center,
+                                   self.fill_value)
 
 
 class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):

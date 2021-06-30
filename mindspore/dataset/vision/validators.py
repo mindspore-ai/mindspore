@@ -140,12 +140,12 @@ def check_padding(padding):
 
 def check_degrees(degrees):
     """Check if the degrees is legal."""
-    type_check(degrees, (numbers.Number, list, tuple), "degrees")
-    if isinstance(degrees, numbers.Number):
+    type_check(degrees, (int, float, list, tuple), "degrees")
+    if isinstance(degrees, (int, float)):
         check_pos_float32(degrees, "degrees")
     elif isinstance(degrees, (list, tuple)):
         if len(degrees) == 2:
-            type_check_list(degrees, (numbers.Number,), "degrees")
+            type_check_list(degrees, (int, float), "degrees")
             for value in degrees:
                 check_float32(value, "degrees")
             if degrees[0] > degrees[1]:
@@ -420,6 +420,17 @@ def check_random_color_adjust(method):
     return new_method
 
 
+def check_resample_expand_center_fill_value_params(resample, expand, center, fill_value):
+    type_check(resample, (Inter,), "resample")
+    type_check(expand, (bool,), "expand")
+    if center is not None:
+        check_2tuple(center, "center")
+        for value in center:
+            type_check(value, (int, float), "center")
+            check_value(value, [-1, INT32_MAX], "center")
+    check_fill_value(fill_value)
+
+
 def check_random_rotation(method):
     """Wrapper method to check the parameters of random rotation."""
 
@@ -427,15 +438,7 @@ def check_random_rotation(method):
     def new_method(self, *args, **kwargs):
         [degrees, resample, expand, center, fill_value], _ = parse_user_args(method, *args, **kwargs)
         check_degrees(degrees)
-
-        if resample is not None:
-            type_check(resample, (Inter,), "resample")
-        if expand is not None:
-            type_check(expand, (bool,), "expand")
-        if center is not None:
-            check_2tuple(center, "center")
-        if fill_value is not None:
-            check_fill_value(fill_value)
+        check_resample_expand_center_fill_value_params(resample, expand, center, fill_value)
 
         return method(self, *args, **kwargs)
 
@@ -448,18 +451,9 @@ def check_rotate(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [degrees, resample, expand, center, fill_value], _ = parse_user_args(method, *args, **kwargs)
-
-        type_check(degrees, (numbers.Number,), "degrees")
+        type_check(degrees, (float, int), "degrees")
         check_float32(degrees, "degrees")
-
-        if resample is not None:
-            type_check(resample, (Inter,), "resample")
-        if expand is not None:
-            type_check(expand, (bool,), "expand")
-        if center is not None:
-            check_2tuple(center, "center")
-        if fill_value is not None:
-            check_fill_value(fill_value)
+        check_resample_expand_center_fill_value_params(resample, expand, center, fill_value)
 
         return method(self, *args, **kwargs)
 
@@ -555,6 +549,7 @@ def check_rgb_to_bgr(method):
         [is_hwc], _ = parse_user_args(method, *args, **kwargs)
         type_check(is_hwc, (bool,), "is_hwc")
         return method(self, *args, **kwargs)
+
     return new_method
 
 
