@@ -108,6 +108,8 @@ def run_train():
         config.use_loss_scale = False
         config.world_size = 1
         config.local_rank = 0
+    if config.run_platform == "GPU":
+        config.use_loss_scale = False
     if config.world_size != 8:
         config.lr_steps = [i * 8 // config.world_size for i in config.lr_steps]
     config.weight_decay = config.weight_decay if config.world_size != 1 else 0.
