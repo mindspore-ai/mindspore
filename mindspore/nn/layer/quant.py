@@ -1351,7 +1351,7 @@ class DenseQuant(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-           The input dimension is preferably 2D or 4D.
+          The input dimension is preferably 2D or 4D.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
