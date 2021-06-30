@@ -85,6 +85,8 @@ def create_dataset(batch_size, data_path, device_num=1, rank=0, drop=True, full_
         dataset_restore: the dataset for training or evaluating
     """
     ds.config.set_seed(1)
+    # Control the size of data queue in the consideration of the memory
+    ds.config.set_prefetch_size(1)
 
     # Get path for source data files
     home_path = os.path.join(os.getcwd(), data_path)
