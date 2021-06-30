@@ -26,8 +26,8 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR, CosineDecayLR
-from mindspore.parallel._utils import _get_global_rank
-from mindspore.communication.management import get_group_size
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.communication.management import get_rank, get_group_size, create_group
 from mindspore.nn import AdamWeightDecay
 from mindspore.common import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
@@ -71,13 +71,11 @@ class FP32StateAdamWeightDecay(AdamWeightDecay):
 
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 
-
-@get_square_sum.register("Tensor", "Tensor")
+@get_square_sum.register("Tensor", "Number")
 def _get_square_sum(grad, value):
-    norm = P.ReduceSum(False)(F.square(grad) / value, ())
+    norm = P.ReduceSum(False)(F.square(grad), ()) / value
     norm = F.expand_dims(F.cast(norm, mstype.float32), 0)
     return norm
-
 
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
 
@@ -87,6 +85,41 @@ def _apply_global_norm(clip_norm, global_norm, grad):
     grad = grad * clip_norm / global_norm
     return grad
 
+def _get_model_parallel_group(mp):
+    """
+
+    Calculate the communication group of model parallel dim in one pipeline stage
+
+    """
+    rank = get_rank()
+    stage_nums = auto_parallel_context().get_pipeline_stages()
+    device_nums = get_group_size()
+    per_stage_device_nums = device_nums // stage_nums
+    stage_id = rank // per_stage_device_nums
+    local_stage_rank_id = rank % per_stage_device_nums
+    index = local_stage_rank_id // mp
+    group = range(0, mp)
+    rank_str_list = [str(x + index * mp + stage_id * per_stage_device_nums)  for x in group]
+    rank_list_str = "-".join(rank_str_list)
+    rank_list = [x + index * mp + stage_id * per_stage_device_nums for x in group]
+    return rank_list, rank_list_str
+
+def _get_pipeline_group():
+    """
+
+    Calculate the communication group between all pipeline stages
+
+    """
+    rank = get_rank()
+    stage_nums = auto_parallel_context().get_pipeline_stages()
+    device_nums = get_group_size()
+    per_stage_device_nums = device_nums // stage_nums
+    local_stage_rank_id = rank % per_stage_device_nums
+    group = range(0, stage_nums)
+    rank_list = [local_stage_rank_id + x * per_stage_device_nums for x in group]
+    rank_str_list = [str(local_stage_rank_id + x * per_stage_device_nums) for x in group]
+    rank_list_str = "-".join(rank_str_list)
+    return rank_list, rank_list_str
 
 class GlobalNorm(nn.Cell):
     """
@@ -107,9 +140,9 @@ class GlobalNorm(nn.Cell):
         self.group_size = get_group_size()
         for item in self.allreduce_filter:
             if item:
-                self.values.append(Tensor([1.0], mstype.float32))
+                self.values.append(1.0)
             else:
-                self.values.append(Tensor([self.group_size * 1.0], mstype.float32))
+                self.values.append(self.group_size * 1.0)
         self.values = tuple(self.values)
 
     def construct(self, grads):
@@ -119,6 +152,37 @@ class GlobalNorm(nn.Cell):
         global_norms = F.sqrt(P.AllReduce()(F.addn(square_sum_dp)))
         return global_norms
 
+class GlobalNormPipline(nn.Cell):
+    """
+    Calculate the global norm value of given tensors
+    """
+    def __init__(self, params, config):
+        super(GlobalNormPipline, self).__init__()
+        self.norm = nn.Norm()
+        self.hyper_map = C.HyperMap()
+        self.allreduce_filter = tuple("projection.bias" not in x.name and "layernorm" not in x.name
+                                      and "position_embedding.embedding_table" not in x.name for x in params)
+        self.allreduce_group_size = ()
+        for item in self.allreduce_filter:
+            if item:
+                self.allreduce_group_size = self.allreduce_group_size + (1.0,)
+            else:
+                self.allreduce_group_size = self.allreduce_group_size + (config.mp * 1.0,)
+        self.length = len(params)
+        group_list, group_name = _get_model_parallel_group(config.mp)
+        create_group(group_name, group_list)
+        self.allreduce = P.AllReduce(group=group_name)
+        pipeline_group_list, pipeline_group_name = _get_pipeline_group()
+        create_group(pipeline_group_name, pipeline_group_list)
+        self.allreduce2 = P.AllReduce(group=pipeline_group_name)
+
+    def construct(self, grads):
+        square_sum = self.hyper_map(get_square_sum, grads, self.allreduce_group_size)
+        square_reduce_sum = F.addn(square_sum)
+        stage_square_reduce_sum = self.allreduce(square_reduce_sum)
+        global_square_reduce_sum = self.allreduce2(stage_square_reduce_sum)
+        global_norms = F.sqrt(global_square_reduce_sum)
+        return global_norms
 
 class ClipByGlobalNorm(nn.Cell):
     """
@@ -126,10 +190,12 @@ class ClipByGlobalNorm(nn.Cell):
     Clip grads by global norm
 
     """
-
-    def __init__(self, params, clip_norm=1.0):
+    def __init__(self, params, config, clip_norm=1.0):
         super(ClipByGlobalNorm, self).__init__()
-        self.global_norm = GlobalNorm(params)
+        if config.stage_num > 1:
+            self.global_norm = GlobalNormPipline(params, config)
+        else:
+            self.global_norm = GlobalNorm(params)
         self.clip_norm = Tensor([clip_norm], mstype.float32)
         self.hyper_map = C.HyperMap()
 
@@ -139,14 +205,6 @@ class ClipByGlobalNorm(nn.Cell):
         global_norm = F.select(cond, global_norm_value, self.clip_norm)
         grads = self.hyper_map(F.partial(apply_global_norm, self.clip_norm, global_norm), grads)
         return grads, global_norm_value
-
-
-def _get_model_parallel_group(dp, mp):
-    rank = _get_global_rank()
-    group = range(0, mp)
-    index = rank // dp
-    return [x + index * mp for x in group]
-
 
 class LearningRate(LearningRateSchedule):
     """
@@ -258,6 +316,10 @@ def add_training_params(opt):
                      type=int,
                      default=2000,
                      help="Warmup step, default is 2000.")
+    opt.add_argument("--decay_steps",
+                     type=int,
+                     default=200000,
+                     help="Decay step, default is 200000.")
     opt.add_argument("--optimizer",
                      type=str,
                      default="adam",
@@ -298,6 +360,11 @@ def add_training_params(opt):
                      type=int,
                      default=8,
                      help="The model parallel way. default 8")
+    opt.add_argument("--word_emb_dp",
+                     type=int,
+                     default=1,
+                     choices=[0, 1],
+                     help="Whether do data parallel in word embedding. default 1")
 
 
 def get_args(inference=False):

@@ -154,6 +154,7 @@ class Parameter(Tensor_):
         self._cast_type = None
         self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
+        self._pipeline_stage_list = []
         if isinstance(default_input, (Tensor_, Tensor)):
             Tensor_.__init__(self, default_input.dtype, default_input.shape)
         elif isinstance(default_input, int):
@@ -451,6 +452,9 @@ class Parameter(Tensor_):
         new_param = Parameter(data, self.name, self.requires_grad)
         new_param.param_info = self.param_info
         return new_param
+
+    def add_pipeline_stage(self, stage):
+        self._pipeline_stage_list.append(stage)
 
     def set_data(self, data, slice_shape=False):
         """

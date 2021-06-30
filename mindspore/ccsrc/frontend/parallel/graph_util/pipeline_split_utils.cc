@@ -225,8 +225,9 @@ bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2) {
     if (rank_tag2 == nullptr) {
       rank_tag2 = prim2->GetAttr(DEST_RANK);
     }
-    MS_EXCEPTION_IF_NULL(rank_tag1);
-    MS_EXCEPTION_IF_NULL(rank_tag2);
+    if (!rank_tag1 || !rank_tag2) {
+      return false;
+    }
     auto rank1_value = GetValue<int64_t>(rank_tag1);
     auto rank2_value = GetValue<int64_t>(rank_tag2);
     if (rank1_value == rank2_value) {

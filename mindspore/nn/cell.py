@@ -231,6 +231,18 @@ class Cell(Cell_):
         self._parallel_parameter_name_list = value
 
     @property
+    def pipeline_stage(self):
+        return self._pipeline_stage
+
+    @pipeline_stage.setter
+    def pipeline_stage(self, value):
+        if not isinstance(value, int):
+            raise TypeError("'pipeline_stage' must be int type.")
+        self._pipeline_stage = value
+        for item in self.trainable_params():
+            item.add_pipeline_stage(value)
+
+    @property
     def parallel_parameter_merge_net_dict(self):
         return self._parallel_parameter_merge_net_dict
 
@@ -1296,6 +1308,41 @@ class Cell(Cell_):
             self.add_flags(output_no_recompute=True)
         for cell in self.cells():
             cell.recompute(mode, True)
+
+    def infer_param_pipeline_stage(self):
+        """
+        Infer pipeline stages of all parameters in the cell.
+
+        Notes:
+            - If a parameter does not belong to any cell which has been set pipeline_stage,
+            the parameter should use add_pipeline_stage to add it's pipeline_stage information.
+            - If a parameter P has been used by two operator in different stages "stageA" and "stageB",
+            the parameter P should use P.add_pipeline_stage(stageA) and P.add_pipeline_stage(stageB)
+             to add it's stage information before use infer_param_pipeline_stage.
+
+        Returns:
+            The params belong to current stage in pipeline parallel.
+
+        Raises:
+            RuntimeError: If there is a parameter does not belong to any stage.
+        """
+        from mindspore.communication import get_group_size, get_rank
+        stage_num = context.get_auto_parallel_context("pipeline_stages")
+        device_num = get_group_size()
+        rank_id = get_rank()
+        per_stage_devices = device_num // stage_num
+        current_stage = rank_id // per_stage_devices
+        params = []
+        for param in self.trainable_params():
+            if not param._pipeline_stage_list:
+                raise RuntimeError("The parameter {} does not belong to any stage, "
+                                   "please check whether the cell where the param locates"
+                                   " has been set pipeline_stage. "
+                                   "Otherwise, the parameter should use add_pipeline_stage "
+                                   "to add its stage information".format(param.name))
+            if current_stage in param._pipeline_stage_list:
+                params.append(param)
+        return params
 
 
 class GraphKernel(Cell):
