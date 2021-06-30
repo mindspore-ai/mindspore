@@ -16,6 +16,7 @@
 ##############export checkpoint file into air, mindir models#################
 python export.py
 """
+import os
 import numpy as np
 
 import mindspore as ms
@@ -24,13 +25,21 @@ from mindspore import Tensor, load_checkpoint, load_param_into_net, export, cont
 from src.googlenet import GoogleNet
 
 from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id
 
-context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
-if config.device_target == "Ascend":
-    context.set_context(device_id=get_device_id())
 
-if __name__ == '__main__':
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+    if config.device_target == "Ascend":
+        context.set_context(device_id=get_device_id())
+
     net = GoogleNet(num_classes=config.num_classes)
 
     assert config.ckpt_file is not None, "config.ckpt_file is None."
@@ -39,3 +48,7 @@ if __name__ == '__main__':
 
     input_arr = Tensor(np.ones([config.batch_size, 3, config.image_height, config.image_width]), ms.float32)
     export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    run_export()

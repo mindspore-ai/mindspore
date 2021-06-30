@@ -14,7 +14,6 @@
 # ============================================================================
 """Convert ckpt to air."""
 import os
-import argparse
 import numpy as np
 
 from mindspore import context
@@ -22,15 +21,32 @@ from mindspore import Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 
 from src.backbone.resnet import get_backbone
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 
-devid = 0
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
 
 
-def main(args):
-    network = get_backbone(args)
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''run export.'''
+    config.pre_bn = config.export_pre_bn
+    config.inference = config.export_inference
+    config.use_se = config.export_use_se
+    config.emb_size = config.export_emb_size
+    config.act_type = config.export_act_type
+    config.backbone = config.export_backbone
+    config.use_drop = config.export_use_drop
 
-    ckpt_path = args.pretrained
+    devid = 0
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
+
+    network = get_backbone(config)
+
+    ckpt_path = config.pretrained
     if os.path.isfile(ckpt_path):
         param_dict = load_checkpoint(ckpt_path)
         param_dict_new = {}
@@ -49,35 +65,14 @@ def main(args):
     network.add_flags_recursive(fp16=True)
     network.set_train(False)
 
-    input_data = np.random.uniform(low=0, high=1.0, size=(args.batch_size, 3, 112, 112)).astype(np.float32)
+    input_data = np.random.uniform(low=0, high=1.0, size=(config.batch_size, 3, 112, 112)).astype(np.float32)
     tensor_input_data = Tensor(input_data)
 
     file_path = ckpt_path
-    export(network, tensor_input_data, file_name=args.file_name, file_format=args.file_format)
+    export(network, tensor_input_data, file_name=config.file_name, file_format=config.file_format)
     print('-----------------------export model success, save file:{}-----------------------'.format(file_path))
 
 
-def parse_args():
-    '''parse_args'''
-    parser = argparse.ArgumentParser(description='Convert ckpt to air')
-    parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--batch_size', type=int, default=16, help='batch size')
-    parser.add_argument('--pre_bn', type=int, default=0, help='1: bn-conv-bn-conv-bn, 0: conv-bn-conv-bn')
-    parser.add_argument('--inference', type=int, default=1, help='use inference backbone')
-    parser.add_argument('--use_se', type=int, default=0, help='use se block or not')
-    parser.add_argument('--emb_size', type=int, default=256, help='embedding size of the network')
-    parser.add_argument('--act_type', type=str, default='relu', help='activation layer type')
-    parser.add_argument('--backbone', type=str, default='r100', help='backbone network')
-    parser.add_argument('--head', type=str, default='0', help='head type, default is 0')
-    parser.add_argument('--use_drop', type=int, default=0, help='whether use dropout in network')
-    parser.add_argument('--file_name', type=str, default='fr.midnir', help='file name')
-    parser.add_argument('--file_format', type=str, default='MINDIR', choices=['MINDIR', 'AIR'], help='file format')
-
-    args = parser.parse_args()
-
-    return args
-
 if __name__ == "__main__":
 
-    arg = parse_args()
-    main(arg)
+    run_export()

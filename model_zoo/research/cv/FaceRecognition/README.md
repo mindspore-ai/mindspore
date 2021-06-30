@@ -312,6 +312,23 @@ cd ./scripts
 sh run_export.sh 1 0 ./0-1_1.ckpt
 ```
 
+```python
+# run export on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Add "config_path='/path_to_code/inference_config.yaml'" on the website UI interface.
+# (3) Perform a or b.
+#       a. Set "pretrained='/cache/checkpoint_path/model.ckpt'" on inference_config.yaml file.
+#          Set "checkpoint_url='/The path of checkpoint in S3/'" on inference_config.yaml file.
+#          Set "batch_size=1" on inference_config.yaml file.
+#       b. Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+#          Add "batch_size=1" on the website UI interface.
+# (4) Set the code directory to "/path/FaceRecognition" on the website UI interface.
+# (5) Set the startup file to "export.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+```
+
 ### Inference
 
 ```bash

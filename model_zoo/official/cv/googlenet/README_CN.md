@@ -236,6 +236,26 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
       # (8) 创建训练作业
       ```
 
+    - 在 ModelArts 上使用单卡导出 cifar10 数据集
+
+      ```python
+      # (1) 在网页上设置 "config_path='/path_to_code/cifar10_config.yaml'"
+      # (2) 执行a或者b
+      #       a. 在 cifar10_config.yaml 文件中设置 "enable_modelarts=True"
+      #          在 cifar10_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_trained_ckpt/'"
+      #          在 cifar10_config.yaml 文件中设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
+      #          在 cifar10_config.yaml 文件中设置 其他参数
+      #       b. 在网页上设置 "enable_modelarts=True"
+      #          在网页上设置 "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+      #          在网页上设置 "ckpt_file=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+      #          在网页上设置 其他参数
+      # (3) 上传你的预训练模型到 S3 桶上
+      # (5) 在网页上设置你的代码路径为 "/path/googlenet"
+      # (6) 在网页上设置启动文件为 "export.py"
+      # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+      # (8) 创建训练作业
+      ```
+
 # 脚本说明
 
 ## 脚本及样例代码

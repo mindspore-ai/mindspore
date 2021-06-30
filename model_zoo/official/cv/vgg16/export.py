@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into models"""
+import os
 import numpy as np
 
 from mindspore import Tensor, context
@@ -22,9 +23,16 @@ from mindspore.train.serialization import load_checkpoint, export
 from src.vgg import vgg16
 
 from model_utils.moxing_adapter import config
+from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id
 
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_export():
     config.image_size = list(map(int, config.image_size.split(',')))
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into models"""
-
+import os
 import numpy as np
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -23,6 +23,7 @@ from mindspore.train.serialization import load_checkpoint, export, load_param_in
 from  src.fasttext_model import FastText
 
 from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
 
 if config.data_name == "ag":
     target_label1 = ['0', '1', '2', '3']
@@ -30,8 +31,6 @@ elif config.data_name == 'dbpedia':
     target_label1 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
 elif config.data_name == 'yelp_p':
     target_label1 = ['0', '1']
-
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=config.device_target)
 
 class FastTextInferExportCell(nn.Cell):
     """
@@ -81,5 +80,18 @@ def run_fasttext_export():
     src_tokens_length = Tensor(np.ones((src_tokens_length_shape)).astype(np.int32))
     export(ft_infer, src_tokens, src_tokens_length, file_name=file_name, file_format=config.file_format)
 
-if __name__ == '__main__':
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    '''run export.'''
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=config.device_target)
+
     run_fasttext_export()
+
+if __name__ == '__main__':
+    run_export()

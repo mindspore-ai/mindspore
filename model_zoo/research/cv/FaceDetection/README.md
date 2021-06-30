@@ -185,7 +185,7 @@ The entire code structure is as following:
 
 - Train on [ModelArts](https://support.huaweicloud.com/modelarts/)
 
-    ```python
+    ```text
     # Train 8p with Ascend
     # (1) Perform a or b.
     #       a. Set "enable_modelarts=True" on base_config.yaml file.
@@ -244,6 +244,29 @@ The entire code structure is as following:
     # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
     # (5) Set the code directory to "/path/FaceDetection" on the website UI interface.
     # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Export 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_pretrain/'" on default_config.yaml file.
+    #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set "batch_size=1" on default_config.yaml file.
+    #          Set "file_format='AIR'" on default_config.yaml file.
+    #          Set "file_name='FaceDetection'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_your_pretrain/" on the website UI interface.
+    #          Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add "batch_size=1" on the website UI interface.
+    #          Add "file_format=AIR" on the website UI interface.
+    #          Add "file_name=FaceDetection" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceDetection" on the website UI interface.
+    # (6) Set the startup file to "export.py" on the website UI interface.
     # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
     # (8) Create your job.
     ```

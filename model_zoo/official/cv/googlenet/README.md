@@ -204,7 +204,7 @@ We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the sc
       # (7) Create your job.
       ```
 
-    - Eval imagenet on ModelArts
+    - Eval cifar10 on ModelArts
 
       ```python
       # (1) Add "config_path='/path_to_code/cifar10_config.yaml'" on the website UI interface.
@@ -227,6 +227,26 @@ We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the sc
       # (6) Set the startup file to "eval.py" on the website UI interface.
       # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
       # (8) Create your job.
+      ```
+
+    - Export on ModelArts
+
+      ```python
+      # (1) Add "config_path='/path_to_code/cifar10_config.yaml'" on the website UI interface.
+      # (2) Perform a or b.
+      #       a. Set "enable_modelarts=True" on cifar10_config.yaml file.
+      #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on cifar10_config.yaml file.
+      #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on cifar10_config.yaml file.
+      #          Set other parameters on cifar10_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+      #          Add "ckpt_file=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+      #          Add other parameters on the website UI interface.
+      # (3) Upload or copy your trained model to S3 bucket.
+      # (4) Set the code directory to "/path/googlenet" on the website UI interface.
+      # (5) Set the startup file to "export.py" on the website UI interface.
+      # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (7) Create your job.
       ```
 
 # [Script Description](#contents)

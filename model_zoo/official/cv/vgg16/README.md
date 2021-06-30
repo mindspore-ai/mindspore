@@ -229,10 +229,32 @@ python eval.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=
 #          Add "checkpoint_url=s3://dir_to_your_trained_model/" on the website UI interface.
 #          Add "pre_trained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
 #          Add other parameters on the website UI interface.
-# (3) Upload or copy your pretrained model to S3 bucket.
+# (3) Upload or copy your trained model to S3 bucket.
 # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
 # (5) Set the code directory to "/path/vgg16" on the website UI interface.
 # (6) Set the startup file to "eval.py" on the website UI interface.
+# (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (8) Create your job.
+#
+# Export 1p on ModelArts
+# (1) Add "config_path=/path_to_code/imagenet2012_config.yaml" on the website UI interface.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on imagenet2012_config.yaml file.
+#          Set "file_name='vgg16'" on imagenet2012_config.yaml file.
+#          Set "file_format='AIR'" on imagenet2012_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on imagenet2012_config.yaml file.
+#          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on imagenet2012_config.yaml file.
+#          Set other parameters on imagenet2012_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "file_name=vgg16" on the website UI interface.
+#          Add "file_format=AIR" on the website UI interface.
+#          Add "checkpoint_url=s3://dir_to_your_trained_model/" on the website UI interface.
+#          Add "ckpt_file=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (3) Upload or copy your trained model to S3 bucket.
+# (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+# (5) Set the code directory to "/path/vgg16" on the website UI interface.
+# (6) Set the startup file to "export.py" on the website UI interface.
 # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
 # (8) Create your job.
 ```

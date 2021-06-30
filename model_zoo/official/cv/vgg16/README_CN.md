@@ -238,6 +238,28 @@ python eval.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=
 # (6) 在网页上设置启动文件为 "eval.py"
 # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
 # (8) 创建训练作业
+#
+# 在 ModelArts 上使用 单卡导出
+# (1) 在网页上设置 "config_path=/path_to_code/imagenet2012_config.yaml"
+# (2) 执行a或者b
+#       a. 在 imagenet2012_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 imagenet2012_config.yaml 文件中设置 "file_name='vgg16'"
+#          在 imagenet2012_config.yaml 文件中设置 "file_format='AIR'"
+#          在 imagenet2012_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+#          在 imagenet2012_config.yaml 文件中设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
+#          在 imagenet2012_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "file_name=vgg16"
+#          在网页上设置 "file_format=AIR"
+#          在网页上设置 "checkpoint_url=s3://dir_to_your_trained_model/"
+#          在网页上设置 "ckpt_file=/cache/checkpoint_path/model.ckpt"
+#          在网页上设置 其他参数
+# (3) 上传你的预训练模型到 S3 桶上
+# (4) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+# (5) 在网页上设置你的代码路径为 "/path/vgg16"
+# (6) 在网页上设置启动文件为 "eval.py"
+# (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (8) 创建训练作业
 ```
 
 ## 脚本说明
