@@ -279,13 +279,16 @@ class KernelGraph : public FuncGraph {
     }
   }
 
-  bool IsPreGraphFinished() { return pre_graphs_.size() == pre_graph_finished_count_; }
-  bool IsPostGraphFinished() {
+  bool IsPreGraphFinished() const { return pre_graphs_.size() == pre_graph_finished_count_; }
+  bool IsPostGraphFinished() const {
     if (first_step_) {
       return true;
     }
     return post_graphs_.size() == post_graph_finished_count_;
   }
+
+  bool HasPostGraph() const { return !post_graphs_.empty(); }
+
   void IncPreGraphFinishedCount() { pre_graph_finished_count_++; }
   void IncPostGraphFinishedCount() { post_graph_finished_count_++; }
   void ResetGraphRunningStatus() {
