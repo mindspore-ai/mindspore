@@ -41,6 +41,8 @@ def read_weight(ckpt_path):
     for name, _ in init_vars:
         array = tf.train.load_variable(ckpt_path, name)
         # By this you can understand the next step easily
+        if len(array.shape) > 1 and array.shape[0] == 1:
+            array = array.squeeze(0)
         name = name[6:].replace(r"/", ".")
         # skip 'model/' and change var names to avoid path mistake
         if name not in trans_dict_tf.keys():
