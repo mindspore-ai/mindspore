@@ -197,6 +197,9 @@ void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel
 int LiteKernelUtil::SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs) { return -1; }
 
 bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
+  if (kernel->desc().delegate != nullptr) {
+    return false;
+  }
   auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;

@@ -38,6 +38,9 @@
 #if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #endif
+#if GPU_TENSORRT
+#include "src/delegate/tensorrt/tensorrt_delegate.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -527,6 +530,7 @@ int LiteSession::CompileGraph(Model *model) {
 #ifdef ENABLE_MINDRT
   }
 #endif
+
   if (executor_ == nullptr) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);
@@ -650,6 +654,9 @@ int LiteSession::Init(const Context *context) {
       return RET_ERROR;
     }
   }
+#endif
+#if GPU_TENSORRT
+  delegate_ = std::shared_ptr<TensorRTDelegate>(new (std::nothrow) TensorRTDelegate());
 #endif
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
