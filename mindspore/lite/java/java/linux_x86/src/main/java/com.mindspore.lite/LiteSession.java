@@ -28,6 +28,7 @@ import com.mindspore.lite.config.MSConfig;
 public class LiteSession {
     static {
         System.loadLibrary("mindspore-lite-jni");
+        System.loadLibrary("mindspore-lite-train-jni");
     }
 
     private long sessionPtr = 0;
