@@ -14,16 +14,39 @@
  * limitations under the License.
  */
 #ifdef ENABLE_ARM
-#ifndef MS_COMPILE_IOS
 #include "src/cpu_info.h"
-#include <sys/auxv.h>
-#include <asm/hwcap.h>
-#include <fstream>
 #include <set>
+#include <fstream>
 #include "src/common/log_adapter.h"
 #include "nnacl/nnacl_utils.h"
-
+#ifndef MS_COMPILE_IOS
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#else
+#include <mach/mach.h>
+#include <mach/machine.h>
+#include <mach/thread_act.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include "TargetConditionals.h"
+#ifndef CPUFAMILY_ARM_HURRICANE
+#define CPUFAMILY_ARM_HURRICANE 0x67ceee93
+#endif
+#ifndef CPUFAMILY_ARM_MONSOON_MISTRAL
+#define CPUFAMILY_ARM_MONSOON_MISTRAL 0xe81e7ef6
+#endif
+#ifndef CPUFAMILY_ARM_VORTEX_TEMPEST
+#define CPUFAMILY_ARM_VORTEX_TEMPEST 0x07d34b9f
+#endif
+#ifndef CPUFAMILY_ARM_LIGHTNING_THUNDER
+#define CPUFAMILY_ARM_LIGHTNING_THUNDER 0x462504d2
+#endif
+#ifndef CPUFAMILY_ARM_FIRESTORM_ICESTORM
+#define CPUFAMILY_ARM_FIRESTORM_ICESTORM 0x1b588bb3
+#endif
+#endif
 namespace mindspore::lite {
+#ifndef MS_COMPILE_IOS
 uint32_t CpuInfo::MidrSetPart(uint32_t part) {
   return ((part << ARM_CPU_PART_OFFSET) & ARM_CPU_PART_MASK) | (midr_ & ~ARM_CPU_PART_MASK);
 }
@@ -101,9 +124,17 @@ void CpuInfo::GetArmProcCpuInfo(AndroidCpuInfo *android_cpu_info) {
   }
   infile.close();
 }
+#endif
 
 bool CpuInfo::ArmIsSupportFp16() {
 #ifdef MS_COMPILE_IOS
+  unsigned int value = 0;
+  size_t len = sizeof(value);
+  sysctlbyname("hw.cpufamily", &value, &len, NULL, 0);
+  if (value == CPUFAMILY_ARM_MONSOON_MISTRAL || value == CPUFAMILY_ARM_VORTEX_TEMPEST ||
+      value == CPUFAMILY_ARM_LIGHTNING_THUNDER || value == CPUFAMILY_ARM_FIRESTORM_ICESTORM) {
+    return true;
+  }
   return false;
 #else
 #ifdef ENABLE_ARM32
@@ -148,5 +179,4 @@ bool CpuInfo::ArmIsSupportFp16() {
 #endif
 }
 }  // namespace mindspore::lite
-#endif
 #endif

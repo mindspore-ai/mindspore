@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #ifdef ENABLE_ARM
-#ifndef MS_COMPILE_IOS
 #include <string>
 #ifndef MINDSPORE_LITE_SRC_CPU_INFO_H
 #define MINDSPORE_LITE_SRC_CPU_INFO_H
 namespace mindspore::lite {
+#ifndef MS_COMPILE_IOS
 #define ARM_CPU_IMPLEMENTER_MASK UINT32_C(0xFF000000)
 #define ARM_CPU_PART_MASK UINT32_C(0x0000FFF0)
 #define ARM_CPU_IMPLEMENTER_OFFSET 24
@@ -28,25 +28,27 @@ typedef struct AndroidCpuInfo {
   uint32_t cpu_part = 0;
   std::string hardware = "";
 } AndroidCpuInfo;
+#endif
 
 class CpuInfo {
  public:
   CpuInfo() = default;
   virtual ~CpuInfo() = default;
-  void GetArmProcCpuInfo(AndroidCpuInfo *android_cpu_info);
-  uint32_t ParseArmCpuImplementer(const std::string &suffix);
-  uint32_t ParseArmCpuPart(const std::string &suffix);
-  uint32_t MidrSetPart(uint32_t part);
-  uint32_t MidrSetImplementer(uint32_t implementer);
   bool ArmIsSupportFp16();
-  uint32_t StringToDigit(const std::string &str);
 
  private:
-  bool fp16_flag_ = false;
+#ifndef MS_COMPILE_IOS
+  uint32_t StringToDigit(const std::string &str);
+  uint32_t ParseArmCpuPart(const std::string &suffix);
+  uint32_t MidrSetImplementer(uint32_t implementer);
+  uint32_t MidrSetPart(uint32_t part);
+  uint32_t ParseArmCpuImplementer(const std::string &suffix);
+  void GetArmProcCpuInfo(AndroidCpuInfo *android_cpu_info);
   uint32_t midr_ = 0;
   AndroidCpuInfo android_cpu_info_;
+#endif
+  bool fp16_flag_ = false;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_CPU_INFO_H
-#endif
 #endif
