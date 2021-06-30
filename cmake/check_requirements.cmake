@@ -18,6 +18,7 @@ endfunction()
 
 ## find python, quit if the found python is static
 set(Python3_USE_STATIC_LIBS FALSE)
+set(Python3_FIND_VIRTUALENV ONLY)
 find_package(Python3 COMPONENTS Interpreter Development)
 if(Python3_FOUND)
     message("Python3 found, version: ${Python3_VERSION}")
