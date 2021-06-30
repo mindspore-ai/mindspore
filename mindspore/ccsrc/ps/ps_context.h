@@ -143,6 +143,9 @@ class PSContext {
   void set_client_learning_rate(float client_learning_rate);
   float client_learning_rate() const;
 
+  void set_worker_step_num_per_iteration(uint64_t worker_step_num_per_iteration);
+  uint64_t worker_step_num_per_iteration() const;
+
   core::ClusterConfig &cluster_config();
 
   void set_scheduler_manage_port(uint16_t sched_port);
@@ -177,6 +180,7 @@ class PSContext {
         client_epoch_num_(25),
         client_batch_size_(32),
         client_learning_rate_(0.001),
+        worker_step_num_per_iteration_(65),
         secure_aggregation_(false),
         cluster_config_(nullptr),
         scheduler_manage_port_(11202),
@@ -233,6 +237,9 @@ class PSContext {
 
   // Client training learning rate. Used in federated learning for now.
   float client_learning_rate_;
+
+  // The worker standalone training step number before communicating with server.
+  uint64_t worker_step_num_per_iteration_;
 
   // Whether to use secure aggregation algorithm. Used in federated learning for now.
   bool secure_aggregation_;

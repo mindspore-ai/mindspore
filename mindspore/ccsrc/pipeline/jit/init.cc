@@ -359,6 +359,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_client_epoch_num", &PSContext::set_client_epoch_num, "Set federated learning client epoch number.")
     .def("set_client_batch_size", &PSContext::set_client_batch_size, "Set federated learning client batch size.")
     .def("set_client_learning_rate", &PSContext::set_client_learning_rate,
+         "Set worker's standalone training step number before communicating with server.")
+    .def("set_worker_step_num_per_iteration", &PSContext::set_worker_step_num_per_iteration,
          "Set federated learning client learning rate.")
     .def("set_scheduler_manage_port", &PSContext::set_scheduler_manage_port,
          "Set scheduler manage port used to scale out/in.")

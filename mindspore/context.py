@@ -848,6 +848,8 @@ def set_fl_context(**kwargs):
         client_epoch_num (int): Client training epoch number. Default: 25.
         client_batch_size (int): Client training data batch size. Default: 32.
         client_learning_rate (float): Client training learning rate. Default: 0.001.
+        worker_step_num_per_iteration (int): The worker's standalone training step number before communicating with
+                                             server. Default: 65.
 
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.

@@ -29,6 +29,7 @@ void FLWorker::Run() {
   server_num_ = PSContext::instance()->server_num();
   scheduler_ip_ = PSContext::instance()->scheduler_ip();
   scheduler_port_ = PSContext::instance()->scheduler_port();
+  worker_step_num_per_iteration_ = PSContext::instance()->worker_step_num_per_iteration();
   PSContext::instance()->cluster_config().scheduler_host = scheduler_ip_;
   PSContext::instance()->cluster_config().scheduler_port = scheduler_port_;
   PSContext::instance()->cluster_config().initial_worker_num = worker_num_;

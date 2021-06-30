@@ -178,7 +178,7 @@ void PSContext::set_server_mode(const std::string &server_mode) {
                       << " or " << kServerModeHybrid;
     return;
   }
-  MS_LOG(INFO) << "Server mode: " << server_mode_ << " is used for Server and Worker. Scheduler will ignore it.";
+  MS_LOG(INFO) << "Server mode: " << server_mode << " is used for Server and Worker. Scheduler will ignore it.";
   server_mode_ = server_mode;
 }
 
@@ -313,6 +313,12 @@ uint64_t PSContext::client_batch_size() const { return client_batch_size_; }
 void PSContext::set_client_learning_rate(float client_learning_rate) { client_learning_rate_ = client_learning_rate; }
 
 float PSContext::client_learning_rate() const { return client_learning_rate_; }
+
+void PSContext::set_worker_step_num_per_iteration(uint64_t worker_step_num_per_iteration) {
+  worker_step_num_per_iteration_ = worker_step_num_per_iteration;
+}
+
+uint64_t PSContext::worker_step_num_per_iteration() const { return worker_step_num_per_iteration_; }
 
 bool PSContext::enable_ssl() const { return enable_ssl_; }
 
