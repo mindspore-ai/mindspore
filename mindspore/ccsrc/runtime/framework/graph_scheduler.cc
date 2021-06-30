@@ -373,7 +373,7 @@ void GraphScheduler::Initialize() {
   size_t actor_thread_num = 0;
   size_t OMP_thread_num = 0;
   ComputeThreadNums(&actor_thread_num, &OMP_thread_num);
-  thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, kThreadWait);
+  thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, kThreadSpin);
   MS_EXCEPTION_IF_NULL(thread_pool_);
   std::string OMP_env = std::to_string(OMP_thread_num);
   common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
