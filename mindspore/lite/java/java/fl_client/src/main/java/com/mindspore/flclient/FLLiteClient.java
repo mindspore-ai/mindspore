@@ -58,7 +58,7 @@ public class FLLiteClient {
     private double dpEps = 100;
     private double dpDelta = 0.01;
     public double dpNormClipFactor = 1.0;
-    public double dpNormClipAdapt = 0.5;
+    public double dpNormClipAdapt = 0.05;
 
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
