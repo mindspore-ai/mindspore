@@ -20,6 +20,6 @@ def efficinetnet(*args, **kwargs):
 
 
 def create_network(name, *args, **kwargs):
-    if name == "efficinetnet":
+    if name == "efficientnet":
         return efficientnet_b0(*args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")
