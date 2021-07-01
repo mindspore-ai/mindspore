@@ -74,9 +74,15 @@ int SplitWithOverlapBaseCPUKernel::ReSize() {
   param_->inner_stride_ = 1;
 
   for (int i = 0; i < static_cast<int>(input_shape.size()); i++) {
-    if (i < param_->split_dim_) param_->outer_total_dim_ *= input_shape[i];
-    if (i == param_->split_dim_) param_->split_dim_size_ = input_shape[param_->split_dim_];
-    if (i > param_->split_dim_) param_->inner_stride_ *= input_shape[i];
+    if (i < param_->split_dim_) {
+      param_->outer_total_dim_ *= input_shape[i];
+    }
+    if (i == param_->split_dim_) {
+      param_->split_dim_size_ = input_shape[param_->split_dim_];
+    }
+    if (i > param_->split_dim_) {
+      param_->inner_stride_ *= input_shape[i];
+    }
   }
 
   thread_count_ = MSMIN(param_->num_split_, op_parameter_->thread_num_);

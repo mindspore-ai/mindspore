@@ -111,13 +111,11 @@ set(TEST_LITE_SRC
 file(GLOB KERNEL_REG_SRC ${LITE_DIR}/src/registry/*.cc)
 set(TEST_LITE_SRC ${TEST_LITE_SRC} ${KERNEL_REG_SRC})
 
-if(ENABLE_TOOLS)
-    set(TEST_LITE_SRC
-            ${TEST_LITE_SRC}
-            ${LITE_DIR}/tools/benchmark/benchmark.cc
-            ${LITE_DIR}/test/st/benchmark_test.cc
-            )
-endif()
+set(TEST_LITE_SRC
+    ${TEST_LITE_SRC}
+    ${LITE_DIR}/tools/benchmark/benchmark.cc
+    ${LITE_DIR}/test/st/benchmark_test.cc
+    )
 
 ### gpu runtime
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
@@ -316,6 +314,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_SRC}
             ${TEST_DIR}/st/converter_test.cc
             ${TEST_DIR}/st/control_flow_test.cc
+            ${TEST_DIR}/st/mindrt_parallel_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/common/import_from_meta_graphT.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
