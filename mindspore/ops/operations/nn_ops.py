@@ -148,14 +148,19 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type as the `input_x`.
+
         Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
+
         If `output_size` contains `None`:
-            `out_shape = input_x_shape[-2] + output_size[1]`: If `output_size` is `(None, w)`
-            `out_shape = output_size[0] + input_x_shape[-1]`: If `output_size` is `(h, None)`
-            `out_shape = input_x_shape[-2:]: If output_size` is `(None, None)`
+
+        - `out_shape = input_x_shape[-2] + output_size[1]`: If `output_size` is `(None, w)`
+        - `out_shape = output_size[0] + input_x_shape[-1]`: If `output_size` is `(h, None)`
+        - `out_shape = input_x_shape[-2:]: If output_size` is `(None, None)`
+
         If `output_size` does not contain `None`:
-            `out_shape = (h, h)`: If `output_size` is `h`
-            `out_shape = (h, w)`: If `output_size` is `(h, w)`
+
+        - `out_shape = (h, h)`: If `output_size` is `h`
+        - `out_shape = (h, w)`: If `output_size` is `(h, w)`
 
     Raises:
         ValueError: If `output_size` is a tuple and if `output_size` length is not 2.
