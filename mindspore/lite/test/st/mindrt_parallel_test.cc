@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,41 @@ TEST_F(MindrtParallelTest, offline1) {
 
   benchmark_ret = session->RunGraph(nullptr, nullptr);
   ASSERT_EQ(benchmark_ret, lite::RET_OK);
+
+  delete session;
+}
+
+TEST_F(MindrtParallelTest, offline2) {
+  const char *benchmark_argv1[] = {"./benchmark",
+                                   "--enableParallel=true",
+                                   "--numThreads=3",
+                                   "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
+                                   "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
+                                   "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
+  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv1);
+  ASSERT_EQ(converter_ret, lite::RET_OK);
+}
+
+TEST_F(MindrtParallelTest, offline3) {
+  const char *benchmark_argv2[] = {"./benchmark",
+                                   "--enableParallel=true",
+                                   "--numThreads=4",
+                                   "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
+                                   "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
+                                   "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
+  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv2);
+  ASSERT_EQ(converter_ret, lite::RET_OK);
+}
+
+TEST_F(MindrtParallelTest, offline4) {
+  const char *benchmark_argv3[] = {"./benchmark",
+                                   "--enableParallel=false",
+                                   "--numThreads=1",
+                                   "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
+                                   "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
+                                   "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
+  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv3);
+  ASSERT_EQ(converter_ret, lite::RET_OK);
 }
 
 TEST_F(MindrtParallelTest, runtime1) {
@@ -161,8 +196,9 @@ TEST_F(MindrtParallelTest, runtime1) {
   for (auto in : inputs) {
     in->MutableData();
   }
-
   benchmark_ret = session->RunGraph(nullptr, nullptr);
   ASSERT_EQ(benchmark_ret, lite::RET_OK);
+
+  delete session;
 }
 }  // namespace mindspore

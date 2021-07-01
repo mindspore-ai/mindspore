@@ -72,6 +72,8 @@ class LiteSession : public session::LiteSession {
 
   void set_model(Model *model) { this->model_ = model; }
 
+  const std::vector<kernel::LiteKernel *> &get_kernels() const { return this->kernels_; }
+
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 
