@@ -373,6 +373,10 @@ else()
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_NNIE)
+            install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         __install_micro_wrapper()
         __install_micro_codegen()
     endif()
@@ -390,7 +394,7 @@ else()
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_npu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
-    if(NOT SUPPORT_TRAIN)
+    if(MSLITE_ENABLE_CONVERTER)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/schema/ DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${TOP_DIR}/mindspore/core/abstract/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract

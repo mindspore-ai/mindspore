@@ -34,8 +34,9 @@ function Run_Converter() {
         model_location=`echo ${nnie_line_info}|awk -F ' ' '{print $1}'`
         model_info=`echo ${nnie_line_info}|awk -F ' ' '{print $2}'`
         model_name=${model_info%%;*}
-        echo 'export NNIE_CONFIG_PATH='${models_path}'/'${model_location}'/'${model_name}'.cfg' >> "${run_converter_log_file}"
-        export NNIE_CONFIG_PATH=${models_path}/${model_location}/${model_name}.cfg
+        cp ${models_path}/${model_location}/${model_name}.cfg ./ || exit 1
+        echo 'export NNIE_CONFIG_PATH=./'${model_name}'.cfg' >> "${run_converter_log_file}"
+        export NNIE_CONFIG_PATH=./${model_name}.cfg
         echo ${model_name} >> "${run_converter_log_file}"
         echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_location}'/model/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_location}'/model/'${model_name}'.caffemodel --configFile='${ms_config_file}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
         ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_location}/model/${model_name}.prototxt --weightFile=${models_path}/${model_location}/model/${model_name}.caffemodel --configFile=${ms_config_file} --outputFile=${ms_models_path}/${model_name}
