@@ -18,6 +18,7 @@ import numpy as np
 from mindspore import Tensor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
+import mindspore.ops as ops
 import mindspore.context as context
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -65,6 +66,7 @@ def test_axis10_int32():
 def test_axis10_bool():
     axis10(np.bool)
 
+
 class ConcatV32(nn.Cell):
     def __init__(self, nptype):
         super(ConcatV32, self).__init__()
@@ -104,6 +106,68 @@ def test_axis32_int32():
 @pytest.mark.env_onecard
 def test_axis32_bool():
     axis32(np.bool)
+
+
+class ConcatWithList(nn.Cell):
+    def __init__(self):
+        super(ConcatWithList, self).__init__()
+        self.concat = P.Concat(axis=2)
+
+    def construct(self, x, y):
+        input_list = [x, y]
+        return self.concat(input_list)
+
+
+class ConcatWithTuple(nn.Cell):
+    def __init__(self):
+        super(ConcatWithTuple, self).__init__()
+        self.concat = P.Concat(axis=2)
+
+    def construct(self, x, y):
+        input_list = (x, y)
+        return self.concat(input_list)
+
+
+class GradConcat(nn.Cell):
+    def __init__(self, network):
+        super(GradConcat, self).__init__()
+        self.grad = ops.GradOperation()
+        self.network = network
+
+    def construct(self, x, y):
+        gout = self.grad(self.network)(x, y)
+        return gout
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_list_grad():
+    x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1).astype(np.float32))
+    x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2).astype(np.float32))
+    concat = ConcatWithList()
+    output = GradConcat(concat)(x1, x2)
+    expect = np.array([[[1.],
+                        [1.]],
+                       [[1.],
+                        [1.]]]).astype(np.float32)
+    print(output)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_tuple_grad():
+    x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1).astype(np.float32))
+    x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2).astype(np.float32))
+    concat = ConcatWithTuple()
+    output = GradConcat(concat)(x1, x2)
+    expect = np.array([[[1.],
+                        [1.]],
+                       [[1.],
+                        [1.]]]).astype(np.float32)
+    print(output)
+    assert (output.asnumpy() == expect).all()
 
 
 class ConcatV43(nn.Cell):
