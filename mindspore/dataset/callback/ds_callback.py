@@ -27,7 +27,7 @@ class DSCallback:
     Abstract base class used to build a dataset callback class.
 
     Args:
-        step_size (int, optional): The number of steps before the step_begin and step_end are called (Default=1).
+        step_size (int, optional): The number of steps between the step_begin and step_end are called (Default=1).
 
     Examples:
         >>> class PrintInfo(DSCallback):
@@ -123,7 +123,8 @@ class WaitedDSCallback(Callback, DSCallback):
     For example, one augmentation needs the loss from the previous trained epoch to update some of its parameters.
 
     Args:
-       step_size: the number of rows in each step. Usually the step size will be equal to the batch size (Default=1).
+       step_size (int, optional): The number of rows in each step. Usually the step size
+           will be equal to the batch size (Default=1).
 
     Examples:
         >>> my_cb = MyWaitedCallback(32)

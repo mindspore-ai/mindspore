@@ -143,7 +143,7 @@ class JiebaTokenizer(TextTensorOperation):
     @check_jieba_add_word
     def add_word(self, word, freq=None):
         """
-        Add user defined word to JiebaTokenizer's dictionary.
+        Add a user defined word to JiebaTokenizer's dictionary.
 
         Args:
             word (str): The word to be added to the JiebaTokenizer instance.
@@ -172,7 +172,7 @@ class JiebaTokenizer(TextTensorOperation):
     @check_jieba_add_dict
     def add_dict(self, user_dict):
         """
-        Add user defined word to JiebaTokenizer's dictionary.
+        Add a user defined word to JiebaTokenizer's dictionary.
 
         Args:
             user_dict (Union[str, dict]): One of the two loading methods is file path(str) loading
@@ -259,9 +259,11 @@ class Lookup(TextTensorOperation):
 
     Args:
         vocab (Vocab): A vocabulary object.
-        unknown_token (str, optional): Word used for lookup if the word being looked up is out-of-vocabulary (OOV).
-            If unknown_token is OOV, a runtime error will be thrown (default=None).
-        data_type (mindspore.dtype, optional): mindspore.dtype that lookup maps string to (default=mindspore.int32)
+        unknown_token (str, optional): Word is used for lookup. In case of the word is out of vocabulary (OOV),
+            the result of lookup will be replaced with unknown_token. If the unknown_token is not specified or
+            it is OOV, runtime error will be thrown (default={}, means no unknown_token is specified).
+        data_type (mindspore.dtype, optional): The data type that lookup operation maps
+            string to(default=mindspore.int32).
 
     Examples:
         >>> # Load vocabulary from list
@@ -587,7 +589,7 @@ if platform.system().lower() != 'windows':
             ...                                    preserve_unused_token=True,
             ...                                    with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
@@ -630,14 +632,15 @@ if platform.system().lower() != 'windows':
         Args:
             vocab (Vocab): A vocabulary object.
             suffix_indicator (str, optional): Used to show that the subword is the last part of a word (default='##').
-            max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split (default=100).
+            max_bytes_per_token (int, optional): If Tokens exceeding this length, it will not be further
+                split (default=100).
             unknown_token (str, optional): When an unknown token is found, return the token directly if `unknown_token`
                 is an empty string, else return `unknown_token` instead (default='[UNK]').
             lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8 with `NFD` mode, RegexReplace operation
                 on input text to fold the text to lower case and strip accented characters. If False, only apply
                 NormalizeUTF8 operation with the specified mode on input text (default=False).
             keep_whitespace (bool, optional): If True, the whitespace will be kept in out tokens (default=False).
-            normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode,
+            normalization_form (NormalizeForm, optional): This parameter is used to specify a specific normalize mode,
                 only effective when `lower_case` is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
             preserve_unused_token (bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
@@ -658,7 +661,7 @@ if platform.system().lower() != 'windows':
             ...                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             ...                                   with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
@@ -721,9 +724,9 @@ if platform.system().lower() != 'windows':
             NormalizeUTF8 is not supported on Windows platform yet.
 
         Args:
-            normalize_form (NormalizeForm, optional): Valid values can be any of [NormalizeForm.NONE,
-                NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD,
-                NormalizeForm.NFKD](default=NormalizeForm.NFKC).
+            normalize_form (NormalizeForm, optional): Valid values can be [NormalizeForm.NONE, NormalizeForm.NFC,
+                NormalizeForm.NFKC, NormalizeForm.NFD, NormalizeForm.NFKD] any of the four unicode
+                normalized forms(default=NormalizeForm.NFKC).
                 See http://unicode.org/reports/tr15/ for details.
 
                 - NormalizeForm.NONE, do nothing for input string tensor.
