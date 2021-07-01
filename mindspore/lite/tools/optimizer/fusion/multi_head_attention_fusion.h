@@ -19,31 +19,40 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include <unordered_map>
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "utils/utils.h"
 #include "include/errorcode.h"
-#include "tools/converter/ops/attention.h"
+#include "ops/attention.h"
 
 namespace mindspore {
 namespace opt {
-class TfMultiHeadAttentionFusion : public PatternProcessPass {
+class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
  public:
-  explicit TfMultiHeadAttentionFusion(const std::string &name = "tflite_multi_head_attention_fusion",
-                                      bool multigraph = true);
-  ~TfMultiHeadAttentionFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  explicit MultiHeadAttentionFusion(const std::string &name = "multi_head_attention_fusion", bool multigraph = true);
+
+  ~MultiHeadAttentionFusion() override = default;
+
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
 
  protected:
-  const VectorRef DefineDensePattern(const BaseRef &input, const BaseRef &weight, const BaseRef &bias) const;
-  virtual const VectorRef DefineProcessInputPattern(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
-                                                    const BaseRef &reshape_shape, bool transpose = false) const;
-  virtual const VectorRef DefineProcessOutputPattern(const BaseRef &input, const BaseRef &weight,
-                                                     const BaseRef &bias) const;
-
+  // define patterns
+  VectorRef DefineMPWithMaskPattern() const;
+  VectorRef DefineMPWithoutMaskPattern() const;
+  // create multi-head-attention without mask
+  virtual std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const;
   CNodePtr CreateMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                         const std::string &base_name, int var_offset) const;
-  virtual std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const;
+  // create masked-multi-head-attention
+  CNodePtr CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
+                                              const std::string &base_name, int var_offset) const;
+
+ protected:
+  const std::string kMPAWithoutMaskPatternName = "MPAWithoutMaskPattern";
+  const std::string kMPAWithMaskPatternName = "MPAWithMaskPattern";
 
   VarPtr input_q_;
   VarPtr input_k_;
@@ -57,6 +66,8 @@ class TfMultiHeadAttentionFusion : public PatternProcessPass {
   VarPtr bias_k_;
   VarPtr bias_v_;
   VarPtr bias_o_;
+
+  VarPtr mask_;
 
   VarPtr reshape_k_;
   VarPtr reshape_v_;

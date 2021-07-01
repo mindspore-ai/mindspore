@@ -218,6 +218,7 @@ union PrimitiveType {
     TensorArrayRead,
     TensorArrayWrite,
     Affine,
+    Attention,
 }
 
 table Abs {
@@ -1193,4 +1194,7 @@ table Affine {
     activation_type: ActivationType = 0;
     transpose_a: bool = false;
     transpose_b: bool = false;
+}
+
+table Attention {
 }

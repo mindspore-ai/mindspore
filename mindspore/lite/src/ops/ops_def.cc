@@ -218,6 +218,7 @@ OP_TYPE(TensorArrayRead)
 OP_TYPE(TensorArrayWrite)
 // kaldi affine op
 OP_TYPE(Affine)
+OP_TYPE(Attention)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1194,3 +1195,6 @@ OP_ATTR_ENUM_WITH_VALUE(activation_type, ActivationType, 0)
 OP_ATTR_WITH_VALUE(transpose_a, bool, false)
 OP_ATTR_WITH_VALUE(transpose_b, bool, false)
 OP_SCHEMA_DEF_END(Affine)
+
+OP_SCHEMA_DEF(Attention)
+OP_SCHEMA_DEF_END(Attention)

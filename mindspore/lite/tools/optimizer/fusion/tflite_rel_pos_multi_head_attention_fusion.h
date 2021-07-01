@@ -19,22 +19,24 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "backend/optimizer/common/optimizer.h"
 #include "utils/utils.h"
 #include "include/errorcode.h"
-#include "tools/optimizer/fusion/tf_multi_head_attention_fusion.h"
+#include "tools/optimizer/fusion/multi_head_attention_fusion.h"
 
 namespace mindspore::opt {
-class TfliteRelPosMultiHeadAttentionFusion : public TfMultiHeadAttentionFusion {
+class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
  public:
   explicit TfliteRelPosMultiHeadAttentionFusion(const std::string &name = "tflite_rel_pos_multi_head_attention_fusion",
                                                 bool multigraph = true);
   ~TfliteRelPosMultiHeadAttentionFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
 
  protected:
-  std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const;
+  std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const override;
 
   const VectorRef DefineProcessInputPattern(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
                                             const std::vector<VarPtr> &stack_params, const VarPtr &full_connect_prim,
@@ -45,6 +47,8 @@ class TfliteRelPosMultiHeadAttentionFusion : public TfMultiHeadAttentionFusion {
                                               const std::string &base_name) const;
   const VectorRef DefineRelativeShiftPattern(const BaseRef &input) const;
 
+ private:
+  const std::string kRPMHAttentionPatternName = "RPMHAttentionPattern";
   VarPtr query_u_;
   VarPtr query_v_;
   VarPtr query_prim_;
