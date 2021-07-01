@@ -62,6 +62,7 @@ _set_ps_context_func_map = {
     "client_epoch_num": ps_context().set_client_epoch_num,
     "client_batch_size": ps_context().set_client_batch_size,
     "client_learning_rate": ps_context().set_client_learning_rate,
+    "worker_step_num_per_iteration": ps_context().set_worker_step_num_per_iteration,
     "enable_ps_ssl": ps_context().set_enable_ssl,
     "scheduler_manage_port": ps_context().set_scheduler_manage_port,
     "config_file_path": ps_context().set_config_file_path

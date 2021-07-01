@@ -155,6 +155,9 @@ void FollowerScaler::ProcessAfterScaleIn() {
     handler.second();
   }
   scaling_state_ = NodeScaleState::kNormal;
+  if (node_->rank_id() == UINT32_MAX) {
+    return;
+  }
   // Notify scheduler that scaling out of this node is done.
   node_->set_scale_in_done();
 }
