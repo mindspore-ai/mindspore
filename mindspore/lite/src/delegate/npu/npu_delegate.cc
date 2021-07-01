@@ -77,11 +77,13 @@ int NPUDelegate::Init() {
   if (!npu_manager_->IsSupportNPU()) {
     MS_LOG(DEBUG) << "Checking that npu is unsupported.";
     free(npu_manager_);
+    npu_manager_ = nullptr;
     return RET_NOT_SUPPORT;
   }
   pass_manager_ = new (std::nothrow) NPUPassManager();
   if (pass_manager_ == nullptr) {
     free(npu_manager_);
+    npu_manager_ = nullptr;
     MS_LOG(ERROR) << "New npu pass manager failed.";
     return RET_ERROR;
   }
