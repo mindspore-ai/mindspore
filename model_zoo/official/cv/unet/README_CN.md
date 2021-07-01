@@ -473,8 +473,32 @@ python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkp
 
 在执行导出前需要修改配置文件中的checkpoint_file_path和batch_size参数。checkpoint_file_path为ckpt文件路径，batch_size设置为1。
 
+本地导出mindir
+
 ```shell
 python export.py --config_path=[CONFIG_PATH]
+```
+
+ModelArts导出mindir
+
+```python
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a.  设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件。
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件。
+#          设置 "file_name='./unet'"参数在yaml文件。
+#          设置 "file_format='AIR'" 参数在yaml文件。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+#          设置 "file_name='./unet'"参数在modearts的界面上。
+#          设置 "file_format='AIR'" 参数在modearts的界面上。
+# (3) 设置网络配置文件的路径 "config_path=/The path of config in S3/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/unet"。
+# (5) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始导出mindir。
 ```
 
 在执行推理前，MINDIR文件必须在910上通过export.py文件导出。

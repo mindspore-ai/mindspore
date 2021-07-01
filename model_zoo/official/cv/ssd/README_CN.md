@@ -395,12 +395,36 @@ mAP: 0.2244936111705981
 
 ### [导出MindIR](#contents)
 
+本地导出mindir
+
 ```shell
 python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --config_path [CONFIG_PATH]
 ```
 
 参数ckpt_file为必填项，
 `EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+ModelArts导出mindir
+
+```python
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a.  设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件。
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件。
+#          设置 "file_name='./ssd'"参数在yaml文件。
+#          设置 "file_format='AIR'" 参数在yaml文件。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+#          设置 "file_name='./ssd'"参数在modearts的界面上。
+#          设置 "file_format='AIR'" 参数在modearts的界面上。
+# (3) 设置网络配置文件的路径 "config_path=/The path of config in S3/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/ssd"。
+# (5) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始导出mindir。
+```
 
 ### 在Ascend310执行推理
 

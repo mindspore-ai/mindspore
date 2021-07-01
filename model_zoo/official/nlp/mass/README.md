@@ -619,8 +619,33 @@ sh run_gpu.sh -t i -n 1 -i 1 -o {outputfile}
 
 ### [Export MindIR](#contents)
 
+Export MindIR on local
+
 ```shell
 python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# Export on ModelArts
+# (1) Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+#          Set "file_name='./mass'" on default_config.yaml file.
+#          Set "file_format='AIR'" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+#          Add "file_name='./mass'" on the website UI interface.
+#          Add "file_format='AIR'" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the code directory to "/path/mass" on the website UI interface.
+# (3) Set the startup file to "export.py" on the website UI interface.
+# (4) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (5) Create your job.
 ```
 
 The ckpt_file parameter is required,

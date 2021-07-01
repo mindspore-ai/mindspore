@@ -78,10 +78,11 @@ If you want to run in modelarts, please check the official documentation of [mod
 #          Set other parameters on yaml file you need.
 #       b. Add "enable_modelarts=True" on the website UI interface.
 #          Add other parameters on the website UI interface.
-# (2) Set the code directory to "/path/textcnn" on the website UI interface.
-# (3) Set the startup file to "train.py" on the website UI interface.
-# (4) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
-# (5) Create your job.
+# (2) Set the config_path="/path/yaml" on the website UI interface.
+# (3) Set the code directory to "/path/textcnn" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
 
 # run evaluation on modelarts example
 # (1) Copy or upload your trained model to S3 bucket.
@@ -92,10 +93,11 @@ If you want to run in modelarts, please check the official documentation of [mod
 #       b. Add "enable_modelarts=True" on the website UI interface.
 #          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
 #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
-# (3) Set the code directory to "/path/textcnn" on the website UI interface.
-# (4) Set the startup file to "eval.py" on the website UI interface.
-# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
-# (6) Create your job.
+# (3) Set the config_path="/path/yaml" on the website UI interface
+# (4) Set the code directory to "/path/textcnn" on the website UI interface.
+# (5) Set the startup file to "eval.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
 ```
 
 # [Script Description](#contents)
@@ -184,7 +186,7 @@ For more configuration details, please refer the script `*.yaml`.
   Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/textcnn/ckpt/train_textcnn.ckpt".
 
   ```python
-  # need set config_path in config.py file and set data_path, checkpoint_file_path in yaml file
+  # need set config_path and set data_path in yaml file, checkpoint_file_path in yaml file
   python eval.py > eval.log 2>&1 &
   OR
   sh scripts/run_eval.sh checkpoint_file_path dataset
@@ -199,12 +201,40 @@ For more configuration details, please refer the script `*.yaml`.
 
 ## [Export MindIR](#contents)
 
+Export on local
+
 ```shell
-python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --config_path [CONFIG_FILE]
 ```
 
-The ckpt_file parameter is required,
+The checkpoint_file_path parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# Export on ModelArts
+# (1) Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set "data_path='/cache/data/' " on default_config.yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+#          Set "file_name='./textcnn'" on default_config.yaml file.
+#          Set "file_format='AIR'" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_path='/cache/data/' " on default_config.yaml file.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+#          Add "file_name='./textcnn'" on the website UI interface.
+#          Add "file_format='AIR'" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the config_path="/path/yaml file" on the website UI interface.
+# (3) Set the code directory to "/path/textcnn" on the website UI interface.
+# (4) Set the startup file to "export.py" on the website UI interface.
+# (5) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+```
 
 ## [Inference Process](#contents)
 
