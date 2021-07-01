@@ -734,8 +734,22 @@ AnfNodePtr SimplifyReduce3(const AnfNodePtr &node) {
   return nullptr;
 }
 
+AnfNodePtr SimplifyReshape(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimReshape)) {
+    return nullptr;
+  }
+  PConstant<AnfNodePtr> any_const(node);
+  auto reshape_const = [&node, &any_const]() -> AnfNodePtr {
+    auto new_node = NewCNodeWithInfo({NewValueNode(prim::kPrimBroadcastTo->Clone()), any_const.GetNode(node)}, node);
+    AnfAlgo::CopyNodeAttr("shape", node, new_node);
+    return new_node;
+  };
+  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimReshape, any_const), reshape_const);
+  return nullptr;
+}
+
 AnfNodePtr TrySimplify(const AnfNodePtr &node) {
-  std::list<std::function<AnfNodePtr(const AnfNodePtr &)>> SimplifyFuncList = {SimplifyReduce2};
+  std::list<std::function<AnfNodePtr(const AnfNodePtr &)>> SimplifyFuncList = {SimplifyReduce2, SimplifyReshape};
   for (auto f : SimplifyFuncList) {
     auto ret = f(node);
     if (ret != nullptr) {
