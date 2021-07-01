@@ -423,7 +423,7 @@ public class FLLiteClient {
     public FLClientStatus evaluateModel() {
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
-        LOGGER.info(Common.addTag("===================================test combine model from server==================================="));
+        LOGGER.info(Common.addTag("===================================evaluate model after getting model from server==================================="));
         if (flParameter.getFlName().equals(ADBERT)) {
             AdInferBert adInferBert = AdInferBert.getInstance();
             int dataSize = adInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile(), true);
