@@ -132,7 +132,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             O2 is recommended on GPU, O3 is recommended on Ascend.Property of `keep_batchnorm_fp32` , `cast_model_type`
             and `loss_scale_manager` determined by `level` setting may be overwritten by settings in `kwargs` .
 
-        cast_model_type (:class: `mindspore.dtype` ): Supports `mstype.float16` or `mstype.float32` . If set, the
+        cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32` . If set, the
             network will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted
             to the type determined by `level` setting.
         keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to `float16` . If
