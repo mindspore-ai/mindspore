@@ -259,7 +259,7 @@ if(WIN32)
     add_compile_definitions(BUILDING_DLL)
 endif()
 
-if(ENABLE_MINDRT)
+if(ENABLE_MINDRT OR TARGET_HIMIX200)
     include_directories(${CORE_DIR}/mindrt/include)
     include_directories(${CORE_DIR}/mindrt/src)
 endif()
