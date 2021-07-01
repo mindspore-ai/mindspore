@@ -116,7 +116,14 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
   }
 
   // It's FuncGraph Call or MetaFuncGraph Call. `maybe_func` is definitely a AbstractFunction.
-  return DoJump(engine, cnode, dyn_cast<AbstractFunction>(maybe_func));
+  AnfNodeConfigPtr call_node_conf = engine->MakeConfig(cnode, current_context_);
+  // Enter the call CNode.
+  trace::TraceEvalCNodeEnter(call_node_conf);
+  auto res = DoJump(engine, cnode, dyn_cast<AbstractFunction>(maybe_func));
+  if (res == nullptr) {
+    trace::TraceEvalCNodeLeave();
+  }
+  return res;
 }
 
 // Run one step in current func graph.
@@ -150,6 +157,9 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
                 << ", current_context_: " << current_context_->ToString();
   AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_);
   engine->SaveEvalResultInCache(node_conf, result);
+
+  // Leave the call CNode.
+  trace::TraceEvalCNodeLeave();
 }
 }  // namespace abstract
 }  // namespace mindspore
