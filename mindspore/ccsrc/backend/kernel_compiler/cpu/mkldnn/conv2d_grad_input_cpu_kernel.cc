@@ -34,7 +34,7 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
   size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
-  if (group != 1) {
+  if (group > 1) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << "Conv2d channels should be divided by group!";
     }
