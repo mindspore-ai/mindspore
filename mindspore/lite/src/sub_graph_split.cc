@@ -348,11 +348,18 @@ void SearchSubGraph::SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes) {
 }
 
 void SearchSubGraph::RemoveConstNode(std::vector<uint32_t> *nodes) {
-  for (int i = nodes->size() - 1; i >= 0; i--) {
-    if (tensors_[nodes->at(i)].type_ == CONST) {
-      VectorErase(nodes, nodes->at(i));
+  bool stop_search = false;
+  while (!stop_search) {
+    stop_search = true;
+    for (size_t i = 0; i < nodes->size(); i++) {
+      if (tensors_[nodes->at(i)].type_ == CONST) {
+        VectorErase(nodes, nodes->at(i));
+        stop_search = false;
+        break;
+      }
     }
   }
+
   return;
 }
 
@@ -598,6 +605,11 @@ void SearchSubGraph::InitSearchSubGraphByMiddle() {
 
   SearchMultyInNodes(&multy_in_nodes);
 
+  if (multy_in_nodes.size() > kMaxMultyInNode) {
+    node_sub_map_.clear();
+    return;
+  }
+
   InitMiddleSubgraph(&multy_in_nodes);
 
   if (node_sub_map_.size() > kMaxSubGraphCount) {
@@ -790,11 +802,15 @@ void SearchSubGraph::SubGraphSplitByMiddle() {
     }
 
     CalculateCostModel(&subgraphs);
+    if (total_cost_ < kMinSubgraphCost) {
+      continue;
+    }
+
     InitSubgraphRuntimeInfo(&subgraphs);
     SubgraphFusion(&subgraphs);
 
     MS_ASSERT(subgraphs.size() == kDefalutSubGraphSize);
-    if (std::any_of(subgraphs.begin(), subgraphs.end(), [&](Subgraph &sub) { return sub.nodes_.empty(); })) {
+    if (subgraphs.at(kDefalutFirstSubgraph).nodes_.empty() || subgraphs.at(kDefalutSecondSubgraph).nodes_.empty()) {
       continue;
     }
 
@@ -1004,6 +1020,9 @@ bool SearchSubGraph::ValidInParallel() {
     return false;
   }
   if (major_dt_ == DT_NPU) {
+    return false;
+  }
+  if (model_->sub_graphs_.size() > 1) {
     return false;
   }
   return true;
