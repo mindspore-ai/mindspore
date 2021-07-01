@@ -122,11 +122,12 @@ function Run_Benchmark() {
         continue
       fi
       model_info=`echo ${line_info}|awk -F ' ' '{print $1}'`
-      first_acc_limit=`echo ${line_info}|awk -F ' ' '{print $2}'`
+      spec_acc_limit=`echo ${line_info}|awk -F ' ' '{print $2}'`
       model_name=`echo ${model_info}|awk -F ';' '{print $1}'`
       input_num=`echo ${model_info} | awk -F ';' '{print $2}'`
       input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
-      extra_info=`echo ${model_info} | awk -F ';' '{print $4}'`
+      spec_threads=`echo ${model_info} | awk -F ';' '{print $4}'`
+      extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
       if [[ ${model_name##*.} == "caffemodel" ]]; then
         model_name=${model_name%.*}
       fi
@@ -150,7 +151,7 @@ function Run_Benchmark() {
         model_name=${model_name}"_posttraining"
       elif [[ ${cfg_file} =~ "_process_only" ]]; then
         benchmark_mode="loop"
-      elif [[ ${cfg_file} =~ "_compatibility" && ${first_acc_limit} == "" ]]; then
+      elif [[ ${cfg_file} =~ "_compatibility" && ${spec_acc_limit} == "" ]]; then
         benchmark_mode="loop"
       fi
       model_file=$2"/${model_name}${infix}.ms"
@@ -166,13 +167,18 @@ function Run_Benchmark() {
         done
       fi
       output_file=${data_path}'output/'${model_name}'.ms.out'
+      # adjust threads
+      threads="2"
+      if [[ ${spec_threads} != "" ]]; then
+        threads="${spec_threads}"
+      fi
       # set accuracy limitation
       acc_limit="0.5"
       if [[ ${cfg_file} =~ "_train" ]]; then
         acc_limit="1.5"
       fi
-      if [[ ${first_acc_limit} != "" ]]; then
-        acc_limit=${first_acc_limit}
+      if [[ ${spec_acc_limit} != "" ]]; then
+        acc_limit="${spec_acc_limit}"
       elif [[ $7 == "GPU" ]] && [[ ${mode} == "fp16" || ${cfg_file} =~ "_weightquant" ]]; then
         acc_limit="5"
       fi
@@ -187,13 +193,13 @@ function Run_Benchmark() {
         if [[ $6 == "arm64" || $6 == "arm32" ]]; then
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7 >> adb_run_cmd.txt
-          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7 >> $4
+          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads} >> adb_run_cmd.txt
+          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads}>> $4
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
-          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit} >> "$4"
-          ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} >> "$4"
+          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --numThreads='${threads} >> "$4"
+          ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --numThreads=${threads} >> "$4"
         fi
         if [ $? = 0 ]; then
           run_result="$6_$7_${mode}: ${model_name} pass"; echo ${run_result} >> $5
@@ -210,13 +216,13 @@ function Run_Benchmark() {
         if [[ $6 == "arm64" || $6 == "arm32" ]]; then
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-          echo './benchmark --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7 >> adb_run_cmd.txt
-          echo './benchmark --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7 >> $4
+          echo './benchmark --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7' --numThreads='${threads} >> adb_run_cmd.txt
+          echo './benchmark --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7' --numThreads='${threads} >> $4
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
-          echo './benchmark --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes} ' --warmUpLoopCount=1 --loopCount=2' >> "$4"
-          ./benchmark --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 >> "$4"
+          echo './benchmark --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2 --numThreads='${threads} >> "$4"
+          ./benchmark --inDataFile=${input_files} --modelFile=${model_file} --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --numThreads=${threads} >> "$4"
         fi
         if [ $? = 0 ]; then
             run_result="$6_$7_${mode}_loop: ${model_name} pass"; echo ${run_result} >> $5
