@@ -31,11 +31,13 @@
 #include "utils/trace_base.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_utils.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace kernel {
 using mindspore::kernel::tbe::TbeAdapter;
 using mindspore::kernel::tbe::TbeUtils;
+namespace {
 constexpr auto kFusionOpList = "op_list";
 constexpr auto kFusionKernelNamePrfix = "te_fusion";
 constexpr auto kOptional = "optional_";
@@ -102,6 +104,11 @@ constexpr auto kJIsDynamicShape = "is_dynamic_shape";
 constexpr auto kJDynamicIndex = "dynamic_index";
 constexpr auto kJSocInfo = "SocInfo";
 constexpr auto kNCHWShapeSize = 4;
+constexpr auto kJRlTuneSwitch = "rl_tune_switch";
+constexpr auto kJRlTuneList = "rl_tune_list";
+constexpr auto kJOpTuneSwitch = "op_tune_switch";
+constexpr auto kJOpTuneList = "op_tune_list";
+constexpr auto kJPassList = "pass_list";
 
 const auto kPyPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe";
 
@@ -114,6 +121,15 @@ bool IsNeedChangeDefaultFormat(const CNodePtr &cnode) {
   return false;
 }
 
+void SetLicInfo(nlohmann::json *op_info_json) {
+  MS_EXCEPTION_IF_NULL(op_info_json);
+  (*op_info_json)[kJRlTuneSwitch] = LicManager::GetInstance().GetRlTuneSwitch();
+  (*op_info_json)[kJRlTuneList] = LicManager::GetInstance().GetRlTuneList();
+  (*op_info_json)[kJOpTuneSwitch] = LicManager::GetInstance().GetOpTuneSwitch();
+  (*op_info_json)[kJOpTuneList] = LicManager::GetInstance().GetOpTuneList();
+  (*op_info_json)[kJPassList] = LicManager::GetInstance().GetPassSwitch();
+}
+}  // namespace
 bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspore::AnfNode> &anf_node,
                                                   nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -124,6 +140,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   (*kernel_json)[kPlatform] = kPlatTBE;
   (*kernel_json)[kImplPath] = op_info_ptr->impl_path();
   nlohmann::json op_info_json;
+  SetLicInfo(&op_info_json);
   op_info_json[kJIsDynamicShape] = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node->cast<CNodePtr>());
   auto func_name = op_info_ptr->kernel_name();
   op_info_json[kJName] = func_name;
@@ -829,6 +846,7 @@ bool TbeKernelBuild::GenFusionScopeJson(const std::vector<mindspore::AnfNodePtr>
                                         nlohmann::json *fusion_json, std::string *fusion_kernel_name) {
   MS_EXCEPTION_IF_NULL(fusion_json);
   MS_EXCEPTION_IF_NULL(fusion_kernel_name);
+  SetLicInfo(fusion_json);
   // get input layer info
   std::vector<std::vector<mindspore::AnfNodePtr>> input_layers;
   std::map<const AnfNodePtr, FusionDataType> spec_data_input;

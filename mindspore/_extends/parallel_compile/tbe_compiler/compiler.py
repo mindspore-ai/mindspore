@@ -17,7 +17,7 @@ import json
 import os
 import sys
 from te.platform.cce_conf import te_set_version
-from te.platform.fusion_util import fusion_op
+from te_fusion.fusion_util import fusion_op
 import tbe.common.context.op_info as operator_info
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # pylint: disable=wrong-import-position
@@ -69,6 +69,8 @@ def build_op(build_type, json_str, tune_mode=None):
     te_set_version(kernel_info["op_info"]["socVersion"])
     op_name = kernel_info['op_info']['name']
     op_type = kernel_info['op_info']['Type']
+    rl_tune_switch = kernel_info['op_info']['rl_tune_switch']
+    rl_tune_list = kernel_info['op_info']['rl_tune_list']
 
     try:
         custom_flag = False
@@ -139,7 +141,9 @@ def build_op(build_type, json_str, tune_mode=None):
                                                  auto_tiling_mode=None,
                                                  device_id=None,
                                                  fuzz_build_info=None,
-                                                 reset_op_info=None)
+                                                 reset_op_info=None,
+                                                 switch_str=rl_tune_switch,
+                                                 lic_opt_list=rl_tune_list)
             if tune_mode is not None:
                 return None, (inputs_args, outputs_args, attrs_args), op_module_name
             return res
@@ -166,7 +170,9 @@ def compile_fusion_op(json_str):
         raise ValueError("Json string Errors, key:fusion_op not found.")
     args['fusion_op']['SocInfo'] = args['SocInfo']
     fusion_op_arg = args['fusion_op']
-    return fusion_op(json.dumps(fusion_op_arg))
+    rl_tune_switch = args['fusion_op']['rl_tune_switch']
+    rl_tune_list = args['fusion_op']['rl_tune_list']
+    return fusion_op(json.dumps(fusion_op_arg), switch_str=rl_tune_switch, lic_opt_list=rl_tune_list)
 
 
 def compile_with_json(json_str):
