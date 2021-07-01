@@ -264,8 +264,8 @@ class Conv2d(_Conv):
         return output
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' \
-            'stride={},  pad_mode={}, padding={}, dilation={}, ' \
+        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
+            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
             'group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}, format={}'.format(
                 self.in_channels,
@@ -456,9 +456,9 @@ class Conv1d(_Conv):
         return output
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' \
-            'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={},' \
+        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
+            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
+            'group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}'.format(
                 self.in_channels,
                 self.out_channels,
@@ -639,9 +639,9 @@ class Conv3d(_Conv):
         return output
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' \
-            'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={}' \
+        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
+            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
+            'group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}, format={}'.format(
                 self.in_channels,
                 self.out_channels,
@@ -816,9 +816,9 @@ class Conv3dTranspose(_Conv):
         return output
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' \
-            'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={},' \
+        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
+            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
+            'group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}'.format(self.in_channels,
                                                   self.out_channels,
                                                   self.kernel_size,
@@ -1018,9 +1018,9 @@ class Conv2dTranspose(_Conv):
         return self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' \
-            'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={},' \
+        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
+            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
+            'group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}'.format(self.in_channels,
                                                   self.out_channels,
                                                   self.kernel_size,
@@ -1207,9 +1207,9 @@ class Conv1dTranspose(_Conv):
         return output
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' \
-            'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={},' \
+        s = 'input_channels={}, output_channels={}, kernel_size={}, ' \
+            'stride={}, pad_mode={}, padding={}, dilation={}, ' \
+            'group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}'.format(self.in_channels,
                                                   self.out_channels,
                                                   self.kernel_size,

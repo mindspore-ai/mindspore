@@ -108,7 +108,7 @@ class _ConvVariational(_Conv):
         return outputs
 
     def extend_repr(self):
-        s = 'in_channels={}, out_channels={}, kernel_size={}, stride={},  pad_mode={}, ' \
+        s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, pad_mode={}, ' \
             'padding={}, dilation={}, group={}, weight_mean={}, weight_std={}, has_bias={}' \
             .format(self.in_channels, self.out_channels, self.kernel_size, self.stride, self.pad_mode, self.padding,
                     self.dilation, self.group, self.weight_posterior.mean, self.weight_posterior.untransformed_std,

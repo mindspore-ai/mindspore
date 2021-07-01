@@ -342,7 +342,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         this function again to make modification, and sens needs to be of type Tensor.
 
         Inputs:
-            - **sens**(Tensor) - The new sense whose shape and type are the same with original `scale_sense`.
+            - **sens** (Tensor) - The new sense whose shape and type are the same with original `scale_sense`.
         """
         if self.scale_sense and isinstance(sens, Tensor):
             self.scale_sense.set_data(sens)
@@ -360,11 +360,11 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
         Inputs:
             - **pre_cond** (Tensor) - A precondition for starting overflow detection. It determines the executing order
-                of overflow state clearing and prior processions. It makes sure that the function 'start_overflow'
-                clears status after finishing the process of precondition.
+              of overflow state clearing and prior processions. It makes sure that the function 'start_overflow'
+              clears status after finishing the process of precondition.
             - **compute_input** (object) - The input of subsequent process. Overflow detection should be performed on a
-                certain computation. Set `compute_input` as the input of the computation, to ensure overflow status is
-                cleared before executing the computation.
+              certain computation. Set `compute_input` as the input of the computation, to ensure overflow status is
+              cleared before executing the computation.
 
         Outputs:
             Tuple[object, object], the first value is False for GPU backend, while it is a instance of
@@ -391,8 +391,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         Inputs:
             - **status** (object) - A status instance used to detect the overflow.
             - **compute_output** - Overflow detection should be performed on a certain computation. Set `compute_output`
-                as the output of the computation, to ensure overflow status is acquired before executing the
-                computation.
+              as the output of the computation, to ensure overflow status is acquired before executing the
+              computation.
 
         Outputs:
             bool, whether the overflow occurs or not.

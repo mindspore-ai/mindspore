@@ -512,8 +512,8 @@ class Conv2dThor(_ConvThor):
         return output
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' 'stride={},  ' \
-            'pad_mode={}, padding={}, dilation={}, ' 'group={}, has_bias={},' \
+        s = 'input_channels={}, output_channels={}, kernel_size={}, stride={}, ' \
+            'pad_mode={}, padding={}, dilation={}, group={}, has_bias={}, ' \
             'weight_init={}, bias_init={}'.format(self.in_channels, self.out_channels, self.kernel_size,
                                                   self.stride, self.pad_mode, self.padding, self.dilation,
                                                   self.group, self.has_bias, self.weight_init, self.bias_init)
