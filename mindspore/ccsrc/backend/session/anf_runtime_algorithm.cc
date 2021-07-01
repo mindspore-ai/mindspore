@@ -323,13 +323,17 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
 
   const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimMakeTuple};
   size_t outputs_num = 1;
-  if (IsRealCNodeKernel(node)) {
+  // Value node may be tuple which has multi outputs.
+  if (IsRealCNodeKernel(node) || node->isa<ValueNode>()) {
     outputs_num = AnfAlgo::GetOutputTensorNum(node);
   }
   // The output may be the tuple of node, so need visit all the outputs of node.
   for (size_t i = 0; i < outputs_num; ++i) {
-    const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false, return_types);
+    auto output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false, return_types);
     MS_EXCEPTION_IF_NULL(output_with_index.first);
+    if (node->isa<ValueNode>()) {
+      output_with_index.second = i;
+    }
 
     // The depend and makeTuple node need recurse.
     if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimDepend) ||
