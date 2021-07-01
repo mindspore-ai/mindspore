@@ -815,7 +815,8 @@ void TFModelParser::UpdateMap(const CNodePtr &cnode, const FuncGraphPtr &sub_fun
     } else {
       while_body_map_[cnode] = sub_func_graph;
     }
-  } else {
+  }
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimIf)) {
     if (find(if_then_branch_name_.begin(), if_then_branch_name_.end(), sub_graph_name) != if_then_branch_name_.end()) {
       if_then_map_[cnode] = sub_func_graph;
     } else {
@@ -898,7 +899,8 @@ STATUS TFModelParser::ConvertSubgraph() {
 STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGraphPtr> &first_func_map,
                                                  const std::map<CNodePtr, FuncGraphPtr> &second_func_map) {
   if (first_func_map.size() != second_func_map.size()) {
-    MS_LOG(ERROR) << "while cond body size error";
+    MS_LOG(ERROR) << "first_func_map.size(): " << first_func_map.size()
+                  << " second_func_map.size(): " << second_func_map.size();
     return RET_ERROR;
   }
   static auto root_func_manager = Manage(res_graph_);

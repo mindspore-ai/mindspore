@@ -37,8 +37,8 @@ int Tensor::CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor) {
     return RET_PARAM_INVALID;
   }
   if (src_tensor.data_ == nullptr) {
-    MS_LOG(ERROR) << "data of src tensor is nullptr";
-    return RET_PARAM_INVALID;
+    MS_LOG(INFO) << "data of src tensor is nullptr";
+    return RET_OK;
   }
   size_t data_size = dst_tensor->Size();
   if (data_size != src_tensor.Size()) {
@@ -49,11 +49,12 @@ int Tensor::CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor) {
     MS_LOG(ERROR) << "Malloc memory failed";
     return RET_ERROR;
   }
+  dst_tensor->ResetRefCount();
   memcpy(dst_tensor->data_, src_tensor.data_, data_size);
   return RET_OK;
 }
 
-Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data) {
+Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPtr allocator) {
   auto *result = new (std::nothrow) Tensor;
   if (result == nullptr) {
     MS_LOG(ERROR) << "New tensor failed";
@@ -63,6 +64,7 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data) {
   result->shape_ = src_tensor.shape_;
   result->category_ = src_tensor.category_;
   result->format_ = src_tensor.format_;
+  result->set_allocator(allocator);
   if (copy_data) {
     auto ret = CopyTensorData(src_tensor, result);
     if (ret != RET_OK) {

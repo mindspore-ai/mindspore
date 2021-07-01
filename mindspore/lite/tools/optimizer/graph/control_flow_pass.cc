@@ -494,10 +494,35 @@ int ControlFlowPass::ProcessWhileOp(const FuncGraphPtr &fg, const std::set<AnfNo
     MS_LOG(ERROR) << "after_fg is nullptr.";
     return RET_FAILED;
   }
-
   to_process_q.push_back(cond_fg);
   to_process_q.push_back(after_fg);
+  return RET_SUCCESS;
+}
 
+int ControlFlowPass::CreateIfPartialNodeExternalInputs(const CNodePtr &if_cnode, const FuncGraphPtr &partial_fg,
+                                                       std::vector<AnfNodePtr> *then_partial_cnode_inputs) {
+  auto if_inputs = if_cnode->inputs();
+  auto partial_fg_name = partial_fg->get_attr("graph_name")->ToString();
+  std::vector<AnfNodePtr> if_external_inputs{};
+  if_external_inputs.assign(if_inputs.begin() + kIfMinInputSize, if_inputs.end());
+  auto origin_then_fg_inputs = partial_fg->get_inputs();
+  if (if_external_inputs.size() < origin_then_fg_inputs.size()) {
+    MS_LOG(ERROR) << "graph is not right.";
+    return RET_FAILED;
+  } else if (if_external_inputs.size() == origin_then_fg_inputs.size()) {
+    then_partial_cnode_inputs->insert(then_partial_cnode_inputs->end(), if_external_inputs.begin(),
+                                      if_external_inputs.end());
+    return RET_SUCCESS;
+  } else {
+    for (auto &fg_input : origin_then_fg_inputs) {
+      auto fg_input_name = fg_input->fullname_with_scope();
+      auto pos = partial_fg_name.size() + sizeof("_input_");
+      auto pos2 = fg_input_name.find('_', pos);
+      auto idx_str = fg_input_name.substr(pos - 1, pos2 - pos + 1);
+      auto partial_idx = std::stoi(idx_str);
+      then_partial_cnode_inputs->push_back(if_external_inputs.at(partial_idx));
+    }
+  }
   return RET_SUCCESS;
 }
 
@@ -519,10 +544,10 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
     return RET_FAILED;
   }
   std::vector<AnfNodePtr> then_partial_cnode_inputs{then_partial_anf_primitive, then_vnode};
-  then_partial_cnode_inputs.insert(then_partial_cnode_inputs.end(), (*if_cnode)->inputs().begin() + kIfMinInputSize,
-                                   (*if_cnode)->inputs().end());
-
-  auto if_cond_input = (*if_cnode)->inputs()[kIfCondIndex];
+  if (CreateIfPartialNodeExternalInputs(*if_cnode, then_fg, &then_partial_cnode_inputs) != RET_SUCCESS) {
+    MS_LOG(ERROR) << "CreateIfPartialNodeExternalInputs failed.";
+    return RET_FAILED;
+  }
 
   std::unordered_map<AnfNodePtr, AnfNodePtr> visited_nodes_and_after_partial_inputs_replace_pairs{};
   std::vector<AnfNodePtr> then_nodes_used_by_after_partial{};
@@ -700,7 +725,6 @@ int ControlFlowPass::ProcessIfOp(const FuncGraphPtr &fg, const std::set<AnfNodeP
   fg->set_output(call_node, true);
 
   to_process_q.push_back(after_fg);
-
   return RET_SUCCESS;
 }
 

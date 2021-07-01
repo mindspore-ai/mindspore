@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/runtime/kernel/arm/base/carry_data.h"
 #include "src/tensor.h"
-#include "src/tensorlist.h"
+#include "src/lite_kernel.h"
 
 // this file is going to be removed when move create actor before schedule.
 namespace mindspore::kernel {
@@ -32,6 +32,11 @@ class PartialFusionKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  void SetSubgraph(LiteKernel *subgraph_kernel) { subgraph_kernel_ = subgraph_kernel; }
+  LiteKernel *GetSubgraph() { return subgraph_kernel_; }
+
+ private:
+  LiteKernel *subgraph_kernel_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
