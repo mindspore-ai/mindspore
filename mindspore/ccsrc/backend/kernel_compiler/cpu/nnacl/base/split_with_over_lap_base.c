@@ -15,32 +15,22 @@
  */
 
 #include "nnacl/base/split_with_over_lap_base.h"
-#include "nnacl/split_parameter.h"
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoSplitWithOverlap(char *in_data, char **out_data, int num_split, int split_dim_size, int element_bytes,
-                       int outer_total_dim, int inner_stride, const int *start_indices, const int *end_indices) {
-  int input_stride = split_dim_size * inner_stride * element_bytes;
-  for (int slice_idx = 0; slice_idx < num_split; slice_idx++) {
-    int out_stride = (end_indices[slice_idx] - start_indices[slice_idx]) * inner_stride * element_bytes;
-    char *src_ptr = in_data + start_indices[slice_idx] * inner_stride * element_bytes;
-    for (int out_idx = 0; out_idx < outer_total_dim; out_idx++) {
-      (void)(memcpy(out_data[slice_idx] + out_idx * out_stride, src_ptr, out_stride));
-      src_ptr += input_stride;
-    }
-  }
-  return NNACL_OK;
-}
+int DoSplitWithOverlapParallel(char *in_data, char **out_data, int slice_idx, SplitWithOverlapParameter *param,
+                               const int *start_indices, const int *end_indices) {
+  int start_index = start_indices[slice_idx];
+  int end_index = end_indices[slice_idx];
 
-int DoSplitWithOverlapParallel(char *in_data, char **out_data, int slice_idx, int split_dim_size, int element_bytes,
-                               int outer_total_dim, int inner_stride, const int *start_indices,
-                               const int *end_indices) {
-  int input_stride = split_dim_size * inner_stride * element_bytes;
-  int out_stride = (end_indices[slice_idx] - start_indices[slice_idx]) * inner_stride * element_bytes;
-  char *src_ptr = in_data + start_indices[slice_idx] * inner_stride * element_bytes;
-  for (int i = 0; i < outer_total_dim; i++) {
-    (void)memcpy(out_data[slice_idx] + i * out_stride, src_ptr, out_stride);
+  int input_stride = param->split_dim_size_ * param->inner_stride_ * param->element_bytes_;
+  int out_stride = (end_index - start_index) * param->inner_stride_ * param->element_bytes_;
+
+  char *src_ptr = in_data + start_index * param->inner_stride_ * param->element_bytes_;
+  char *dst_ptr = out_data[slice_idx];
+
+  for (int i = 0; i < param->outer_total_dim_; i++) {
+    (void)memcpy(dst_ptr + i * out_stride, src_ptr, out_stride);
     src_ptr += input_stride;
   }
   return NNACL_OK;

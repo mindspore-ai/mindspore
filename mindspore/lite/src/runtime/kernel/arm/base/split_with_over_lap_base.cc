@@ -40,13 +40,7 @@ void SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int
   for (auto i = 0; i < param_->num_split_ - 1; i++) {
     visited_block += param_->ratio_[i];
     auto cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
-    if (param_->split_stride_ != 0) {
-      // make sure border align with stride
-      cur_border = UP_ROUND(cur_border + param_->pad_top_, param_->split_stride_);
-      borders.emplace_back(cur_border - param_->pad_top_);
-    } else {
-      borders.emplace_back(cur_border);
-    }
+    borders.emplace_back(cur_border);
   }
   borders.emplace_back(split_dim_size);
 
@@ -74,24 +68,26 @@ int SplitWithOverlapBaseCPUKernel::ReSize() {
 
   CalculateSplitedShapes(input_shape);
 
-  element_bytes_ = static_cast<int>(lite::DataTypeSize(in_tensor->data_type()));
+  param_->element_bytes_ = static_cast<int>(lite::DataTypeSize(in_tensor->data_type()));
 
-  outer_total_dim_ = 1;
-  inner_stride_ = 1;
+  param_->outer_total_dim_ = 1;
+  param_->inner_stride_ = 1;
 
   for (int i = 0; i < static_cast<int>(input_shape.size()); i++) {
-    if (i < param_->split_dim_) outer_total_dim_ *= input_shape[i];
-    if (i == param_->split_dim_) split_dim_size_ = input_shape[param_->split_dim_];
-    if (i > param_->split_dim_) inner_stride_ *= input_shape[i];
+    if (i < param_->split_dim_) param_->outer_total_dim_ *= input_shape[i];
+    if (i == param_->split_dim_) param_->split_dim_size_ = input_shape[param_->split_dim_];
+    if (i > param_->split_dim_) param_->inner_stride_ *= input_shape[i];
   }
 
+  thread_count_ = MSMIN(param_->num_split_, op_parameter_->thread_num_);
   return RET_OK;
 }
 
 int SplitWithOverlapBaseCPUKernel::Split(int task_id) {
-  DoSplitWithOverlapParallel(input_ptr_, output_ptr_.data(), task_id, split_dim_size_, element_bytes_, outer_total_dim_,
-                             inner_stride_, start_indices_.data(), end_indices_.data());
-
+  for (int current_slice_task = task_id; current_slice_task < param_->num_split_; current_slice_task += thread_count_) {
+    DoSplitWithOverlapParallel(input_ptr_, output_ptr_.data(), current_slice_task, param_, start_indices_.data(),
+                               end_indices_.data());
+  }
   return RET_OK;
 }
 
@@ -113,7 +109,7 @@ int SplitWithOverlapBaseCPUKernel::Run() {
     output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data_c()));
   }
 
-  auto ret = ParallelLaunch(this->context_, SplitWithOverlapRun, this, param_->num_split_);
+  auto ret = ParallelLaunch(this->context_, SplitWithOverlapRun, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch for SplitWIthOverlapRun run fail. errorcode:[" << ret << "]";
     return RET_ERROR;

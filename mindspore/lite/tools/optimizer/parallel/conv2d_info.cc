@@ -26,6 +26,8 @@
 #include "tools/converter/converter_flags.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/parallel/operator_info_register.h"
+#include "tools/optimizer/parallel/spliter.h"
+#include "tools/optimizer/fisson/fisson_util.h"
 
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
@@ -128,28 +130,37 @@ int Conv2DInfo::CheckIfSplit() {
 
 AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
                                             std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
-                                            const std::vector<int64_t> &splits, bool trans_format) {
+                                            const std::vector<int64_t> &splits) {
+  auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
+  auto ori_node_name = orig_node->fullname_with_scope();
+  auto input_shape_iter = graph_node_input_shapes.find(ori_node_name);
+  if (input_shape_iter == graph_node_input_shapes.end()) {
+    return nullptr;
+  }
+  auto input_shapes = input_shape_iter->second;
+  auto input_shape = input_shapes.front();
+
   auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+
   // prim of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
-  split_prim->set_split_dim(split_dim);
-  split_prim->set_number_split(split_num);
-  split_prim->set_ratio(splits);
-  split_prim->set_trans_format(trans_format);
+  std::vector<int64_t> new_splits = splits;
   if (split_mode_ == SplitH) {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     auto extend_bottom = conv_prim->get_kernel_size().at(kIndexH) - conv_prim->get_stride().at(kIndexH);
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
     bottom_vector[split_num - 1] = 0;
     split_prim->set_extend_bottom(bottom_vector);
-    split_prim->set_split_stride(conv_prim->get_stride().at(kIndexH));
-    split_prim->set_pad_top(conv_prim->get_pad_list().at(kPadUp));
+    UpdateRatioWithPadStride(new_splits.data(), split_num, input_shape[split_dim], conv_prim->get_pad_list().at(kPadUp),
+                             conv_prim->get_stride().at(kIndexH));
   } else {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     split_prim->set_extend_bottom(std::vector<int64_t>(split_num, 0));
-    split_prim->set_split_stride(0);
-    split_prim->set_pad_top(0);
   }
+  split_prim->set_split_dim(split_dim);
+  split_prim->set_number_split(split_num);
+  split_prim->set_ratio(new_splits);
+
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
   // ori_conv_node must only have one input
   split_inputs.push_back(orig_node->input(input_index + 1));
@@ -197,8 +208,7 @@ int Conv2DInfo::InferParallelCNodes() {
     case SplitN:
     case SplitH: {
       name_ = orig_name + "_input";
-      auto feature_split_cnode =
-        CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisH, dev_num, splits_, true);
+      auto feature_split_cnode = CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisH, dev_num, splits_);
       if (CheckSplitResult(feature_split_cnode, feature_split_outputs, dev_num) != RET_OK) {
         return RET_ERROR;
       }

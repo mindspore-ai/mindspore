@@ -29,13 +29,12 @@ int SplitWithOverlapInferShape(const TensorC *const *inputs, size_t inputs_size,
   }
   const TensorC *input = inputs[0];
   SplitWithOverlapParameter *param = (SplitWithOverlapParameter *)parameter;
+
+  int split_dim = param->split_dim_;
   int number_split = param->num_split_;
   if (outputs_size != number_split) {
     return NNACL_ERR;
   }
-  int stride = param->split_stride_;
-  int pad_top = param->pad_top_;
-  int split_dim = param->split_dim_;
 
   int ratio[SPLIT_MAX_SLICE_NUM];
   int extend_top[SPLIT_MAX_SLICE_NUM];
@@ -58,15 +57,8 @@ int SplitWithOverlapInferShape(const TensorC *const *inputs, size_t inputs_size,
   int visited_block = 0;
   for (int i = 0; i < number_split - 1; i++) {
     visited_block += ratio[i];
-
     int cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
-    if (stride != 0) {
-      // make sure border align with stride
-      cur_border = UP_ROUND(cur_border + pad_top, stride);
-      borders[i + 1] = cur_border - pad_top;
-    } else {
-      borders[i + 1] = cur_border;
-    }
+    borders[i + 1] = cur_border;
   }
   borders[number_split] = split_dim_size;
 

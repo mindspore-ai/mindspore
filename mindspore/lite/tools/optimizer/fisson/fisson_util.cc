@@ -306,10 +306,7 @@ void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   split_prim->set_ratio(split_info->size_splits);
   split_prim->set_extend_top(split_info->extend_top);
   split_prim->set_extend_bottom(split_info->extend_bottom);
-  // default to format khwc or nhwc
-  split_prim->set_trans_format(false);
   auto conv_cnode = conv_node->cast<CNodePtr>();
-  split_prim->set_split_stride(0);
 
   // the inputs of split is from the inputs of conv
   std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
@@ -337,5 +334,28 @@ void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   split_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(ptr_list));
 }
 
+void UpdateRatioWithPadStride(int64_t *ratio, size_t split_size, int split_dim_size, int pad, int stride) {
+  if (stride == 0) {
+    return;
+  }
+
+  int total_block_count = 0;
+  for (size_t i = 0; i < split_size; i++) {
+    total_block_count += ratio[i];
+  }
+
+  std::vector<int64_t> new_ratio(split_size);
+  int visited_block = 0;
+  for (size_t i = 0; i < split_size - 1; i++) {
+    visited_block += ratio[i];
+    int cur_border = UP_DIV(split_dim_size * visited_block, total_block_count);
+    new_ratio[i + 1] = cur_border;
+  }
+
+  for (size_t i = 0; i < split_size; i++) {
+    ratio[i] = new_ratio[i];
+  }
+  return;
+}
 }  // namespace opt
 }  // namespace mindspore
