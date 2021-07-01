@@ -37,6 +37,7 @@
 #include "utils/context/context_extends.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils_py.h"
+#include "utils/scoped_long_running.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -1731,6 +1732,8 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
       uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
       mind_rt_backend = std::make_shared<compile::MindRTBackend>("ms", device_target, device_id);
     }
+
+    mindspore::ScopedLongRunning long_running;
     const compile::ActorInfo &actor_info =
       mind_rt_backend->CompileGraph(op_run_info, graph_info, &tensors_mask, &input_tensors);
     mind_rt_backend->RunGraph(actor_info, &op_run_info, &tensors_mask, &input_tensors, &outputs);
@@ -2290,6 +2293,7 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
   // Launch bprop graph to backend
   SaveForwardTensorInfoInBpropGraph(resource);
+  compile::SetMindRTEnable();
   resource->results()[pipeline::kBackend] = compile::CreateBackend();
   MS_LOG(DEBUG) << "Start task emit action";
   TaskEmitAction(resource);
