@@ -45,13 +45,13 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 
     // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.14.4'
-    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.4'
+    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.14.9'
+    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.9'
 
     // https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java
     compile group: 'com.google.flatbuffers', name: 'flatbuffers-java', version: '1.11.0'
 
-    compile(group: 'org.bouncycastle',name: 'bcprov-jdk15on', version: '1.63')
+    compile(group: 'org.bouncycastle',name: 'bcprov-jdk15on', version: '1.68')
     implementation project(':common')
     implementation project(':linux_x86')
 
