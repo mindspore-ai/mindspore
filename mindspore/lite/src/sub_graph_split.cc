@@ -229,24 +229,22 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
       MS_LOG(ERROR) << "New sub graph failed!";
       return;
     }
-    new_sub_graph->name_ = "subgraph-split-" + std::to_string(new_sub_index);
+    new_sub_graph->name_ = "SubSplit" + std::to_string(new_sub_index);
     Model::Node *new_partial_node = new (std::nothrow) Model::Node();
     if (new_partial_node == nullptr) {
       MS_LOG(ERROR) << "New partial node failed!";
       delete new_sub_graph;
       return;
     }
-    new_partial_node->name_ = "Partial-subgraph-split-" + std::to_string(new_sub_index);
+    new_partial_node->name_ = "SubSplitPartial" + std::to_string(new_sub_index);
     if (device_type == DT_CPU) {
-      new_partial_node->name_ = "cpu_" + new_partial_node->name_;
+      new_partial_node->name_ = "Cpu" + new_partial_node->name_;
     } else if (device_type == DT_GPU) {
-      new_partial_node->name_ = "gpu_" + new_partial_node->name_;
-
+      new_partial_node->name_ = "Gpu" + new_partial_node->name_;
     } else if (device_type == DT_NPU) {
-      new_partial_node->name_ = "npu_" + new_partial_node->name_;
-    } else {
-      new_partial_node->name_ = "unknow_" + new_partial_node->name_;
+      new_partial_node->name_ = "Npu" + new_partial_node->name_;
     }
+
     new_partial_node->node_type_ = mindspore::lite::NodeType_ValueNode;
     new_partial_node->primitive_ = CreatePartialPrimitive(new_sub_index);
 

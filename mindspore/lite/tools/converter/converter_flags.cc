@@ -219,11 +219,8 @@ int Flags::InitConfigFile() {
       return RET_INPUT_PARAM_INVALID;
     }
   }
-  if (parallel_split_config_.parallel_split_type_ != SplitNo &&
-      !CheckOfflineParallelConfig(this->configFile, &parallel_split_config_)) {
-    std::cerr << "offline kernel parallel split config set error." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
+
+  (void)CheckOfflineParallelConfig(this->configFile, &parallel_split_config_);
   return RET_OK;
 }
 
@@ -319,17 +316,14 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   std::vector<std::string> config_devices = {"cpu", "gpu", "npu"};
   auto compute_rate_result = GetStrFromConfigFile(file, kComputeRate);
   if (compute_rate_result.empty()) {
-    std::cerr << "config setting error: compute rate should be set." << std::endl;
     return false;
   }
   std::string device0_result = GetStrFromConfigFile(file, kSplitDevice0);
   if (device0_result.empty()) {
-    std::cerr << "config setting error: device0 should be set." << std::endl;
     return false;
   }
   std::string device1_result = GetStrFromConfigFile(file, kSplitDevice1);
   if (device1_result.empty()) {
-    std::cerr << "config setting error: device1 should be set." << std::endl;
     return false;
   }
   bool device0_flag = false;
