@@ -96,9 +96,9 @@ int GluCPUKernel::ReSize() {
   // split_count means the previous dims num before split dim
   // e.g. input dims is [1, 3, 4, 8], split axis is 2, num_split is 2, so split_count_ is 1*3, num_unit_ is 1*3*2
   num_unit_ = split_param_.split_count_ * split_param_.num_split_;
-  thread_n_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
-  if (thread_n_num_ != 0) {
-    thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
+  usable_thread_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
+  if (usable_thread_num_ != 0) {
+    thread_n_stride_ = UP_DIV(num_unit_, usable_thread_num_);
   }
   return RET_OK;
 }
@@ -125,7 +125,7 @@ int GluCPUKernel::Sigmoid(int task_id) {
   auto output_addr = reinterpret_cast<float *>(sigmoid_ptr_);
   auto length = in_tensors_.at(0)->ElementsNum() / 2;
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, op_parameter_->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -139,12 +139,13 @@ int GluCPUKernel::Mul(int task_id) {
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   auto length = in_tensors_.at(0)->ElementsNum() / 2;
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, op_parameter_->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
   }
-  return ElementMul(input_addr0, input_addr1, output_addr, length);
+  int offset = stride * task_id;
+  return ElementMul(input_addr0 + offset, input_addr1 + offset, output_addr + offset, count);
 }
 
 static int SplitRun(void *cdata, int task_id, float, float) {
@@ -169,26 +170,21 @@ int GluCPUKernel::Run() {
     return ret;
   }
 
-  ret = static_cast<const lite::InnerContext *>(this->context_)
-          ->thread_pool()
-          ->ParallelLaunch(SplitRun, this, thread_n_num_);
+  ret = ParallelLaunch(this->context_, SplitRun, this, usable_thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "split error error_code[" << ret << "]";
     FreeTmpBuffer();
     return ret;
   }
 
-  ret = static_cast<const lite::InnerContext *>(this->context_)
-          ->thread_pool()
-          ->ParallelLaunch(SigmoidRun, this, thread_n_num_);
+  ret = ParallelLaunch(this->context_, SigmoidRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "sigmoid error error_code[" << ret << "]";
     FreeTmpBuffer();
     return ret;
   }
 
-  ret =
-    static_cast<const lite::InnerContext *>(this->context_)->thread_pool()->ParallelLaunch(MulRun, this, thread_n_num_);
+  ret = ParallelLaunch(this->context_, MulRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "mul error error_code[" << ret << "]";
     FreeTmpBuffer();

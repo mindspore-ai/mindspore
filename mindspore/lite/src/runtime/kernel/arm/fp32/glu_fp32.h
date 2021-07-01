@@ -34,7 +34,7 @@ class GluCPUKernel : public InnerKernel {
  public:
   GluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     glu_param_ = reinterpret_cast<GluParameter *>(op_parameter_);
     split_ptr_.resize(kSplitNum, nullptr);
   }
@@ -55,9 +55,8 @@ class GluCPUKernel : public InnerKernel {
   void *input_ptr_ = nullptr;
   int8_t *sigmoid_ptr_ = nullptr;
   std::vector<int8_t *> split_ptr_;
-  int thread_count_;
   int thread_n_stride_ = 0;
-  int thread_n_num_ = 0;
+  int usable_thread_num_ = 0;
   int num_unit_ = 0;
 };
 }  // namespace mindspore::kernel
