@@ -121,15 +121,15 @@ class L1Loss(Loss):
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        \ell(x, y) = L = \{l_1,\dots,l_N\}, \quad \text{with } l_n = \left| x_n - y_n \right|,
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
 
     where :math:`N` is the batch size. If `reduction` is not 'none', then:
 
     .. math::
         \ell(x, y) =
         \begin{cases}
-            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     Args:
@@ -191,7 +191,7 @@ class MSELoss(Loss):
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        \ell(x, y) = L = \{l_1,\dots,l_N\}, \quad \text{with} \quad l_n = (x_n - y_n)^2.
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with} \quad l_n = (x_n - y_n)^2.
 
     where :math:`N` is the batch size. If `reduction` is not 'none', then:
 
@@ -253,8 +253,7 @@ class RMSELoss(Loss):
     element-wise, where :math:`x` is the input and :math:`y` is the target.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
-    the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y`
-    is given as:
+    the loss of :math:`x` and :math:`y` is given as:
 
     .. math::
         loss = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{(x_i-y_i)^2}}
@@ -309,7 +308,16 @@ class MAELoss(Loss):
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        MAE = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{|x_i-y_i|}}
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
+
+    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+
+    .. math::
+        \ell(x, y) =
+        \begin{cases}
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
@@ -603,7 +611,7 @@ class MultiClassDiceLoss(Loss):
     obtained through the binary loss of each category, and then the average value.
 
     Args:
-        weights (Union[Tensor, None]): Tensor of shape :math:`(num_classes, dim)`. The weight shape[0] should be
+        weights (Union[Tensor, None]): Tensor of shape :math:`(num\_classes, dim)`. The weight shape[0] should be
             equal to labels shape[1].
         ignore_indiex (Union[int, None]): Class index to ignore.
         activation (Union[str, Cell]): Activate function applied to the output of the fully connected layer, eg. 'ReLU'.
@@ -634,7 +642,7 @@ class MultiClassDiceLoss(Loss):
         >>> labels = Tensor(np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]]), mstype.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
-        0.5918486
+        0.54958105
     """
     def __init__(self, weights=None, ignore_indiex=None, activation="softmax"):
         """Initialize MultiClassDiceLoss."""
@@ -696,12 +704,12 @@ class SampledSoftmaxLoss(Loss):
 
     Inputs:
         - **weights** (Tensor) - Tensor of shape :math:`(C, dim)`.
-        - **bias** (Tensor) - Tensor of shape :math:`(C)`. The class biases.
-        - **labels** (Tensor) - Tensor of shape :math:`(N, num_true)`, type `int64, int32`. The target classes.
+        - **bias** (Tensor) - Tensor of shape :math:`(C,)`. The class biases.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, num\_true)`, type `int64, int32`. The target classes.
         - **logits** (Tensor) - Tensor of shape :math:`(N, dim)`. The forward activations of the input network.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor with shape :math:`(N)`.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor with shape :math:`(N,)`.
         Otherwise, the output is a scalar.
 
     Raises:
@@ -1000,8 +1008,8 @@ class CosineEmbeddingLoss(Loss):
         - **logits_x1** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions.
         - **logits_x2** (Tensor) - Tensor of shape :math:`(N, *)`, same shape and dtype as `logits_x1`.
-        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as logits_x1.shape[:-1].
-          Contains value 1 or -1. .
+        - **labels** (Tensor) - Contains value 1 or -1. Suppose the shape of `logits_x1` is
+          :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `labels` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
 
     Outputs:
         Tensor or Scalar, if `reduction` is "none", its shape is the same as `labels`.
@@ -1022,7 +1030,7 @@ class CosineEmbeddingLoss(Loss):
         >>> cosine_embedding_loss = nn.CosineEmbeddingLoss()
         >>> output = cosine_embedding_loss(logits_x1, logits_x2, labels)
         >>> print(output)
-        0.0003426075
+        0.0003425479
     """
     def __init__(self, margin=0.0, reduction="mean"):
         """Initialize CosineEmbeddingLoss."""
