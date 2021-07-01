@@ -27,9 +27,9 @@ modelarts_dataset_unzip_name: 'ImageNet_Original'
 need_modelarts_dataset_unzip: True
 ckpt_save_dir: './ckpt/'
 
-# fasterrcnn_export
-result_path: '' # "result file path"
-label_file: ''  # "label file"
+# postprocess.py fasterrcnn_export
+result_path: ''
+label_file: ''
 
 # Training options
 is_save_on_master: False
@@ -72,6 +72,8 @@ enable_profiling: 'Whether enable profiling while training, default: False'
 file_name: 'output file name.'
 file_format: 'file format'
 resume: 'resume training with existed checkpoint'
+result_path: "result file path"
+label_file: "label file"
 
 ---
 device_target: ['Ascend', 'GPU', 'CPU']

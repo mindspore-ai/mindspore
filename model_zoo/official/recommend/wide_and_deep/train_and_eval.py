@@ -22,6 +22,7 @@ from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType
 from src.metrics import AUCMetric
 from src.model_utils.config import config as cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 def get_WideDeep_net(config):
@@ -102,7 +103,11 @@ def test_train_eval(config):
                 dataset_sink_mode=(not sparse))
 
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    config.ckpt_path = config.output_path
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_wide_and_deep():
     _enable_graph_kernel = cfg.device_target == "GPU"
     context.set_context(mode=context.GRAPH_MODE,
                         enable_graph_kernel=_enable_graph_kernel, device_target=cfg.device_target)
@@ -110,3 +115,6 @@ if __name__ == "__main__":
         context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
     context.set_context(enable_sparse=cfg.sparse)
     test_train_eval(cfg)
+
+if __name__ == "__main__":
+    train_wide_and_deep()

@@ -14,7 +14,6 @@
 # limitations under the License.
 # ============================================================================
 
-
 #bash run_parameter_server_train_standalone.sh EPOCHS DEVICE_TARGET DATASET SERVER_NUM SCHED_HOST
 #                                              SCHED_PORT DEVICE_ID VOCAB_CACHE_SIZE SPARSE
 execute_path=$(pwd)
@@ -37,7 +36,7 @@ if [[ ! -n "$8" ]]; then
 fi
 
 if [[ ! -n "$9" ]]; then
-  export SPARSE=0
+  export SPARSE=False
 fi
 
 # Set device id
@@ -80,4 +79,4 @@ mkdir ${execute_path}/worker/
 cd ${execute_path}/worker/ || exit
 python -s ${self_path}/../train_and_eval_parameter_server_standalone.py --device_target=$DEVICE_TARGET  \
        --epochs=$EPOCH_SIZE --data_path=$DATASET --parameter_server=1                                   \
-       --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=1 >worker.log 2>&1 &
+       --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=True >worker.log 2>&1 &

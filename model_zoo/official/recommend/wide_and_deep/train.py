@@ -87,8 +87,7 @@ def test_train(configure):
 
 
 def modelarts_pre_process():
-    pass
-    # config.ckpt_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
+    config.ckpt_path = config.output_path
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_wide_and_deep():

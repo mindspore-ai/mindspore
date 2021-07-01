@@ -61,7 +61,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
 
-    ```bash
+    ```python
     # Train 8p with Ascend
     # (1) Perform a or b.
     #       a. Set "enable_modelarts=True" on default_config.yaml file.
@@ -149,6 +149,31 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     # (6) Set the startup file to "eval.py" on the website UI interface.
     # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
     # (8) Create your job.
+    ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start evaluating as follows)
+
+1. Export s8 multiscale and flip with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "file_name='inceptionv4'" on base_config.yaml file.
+    #          Set "file_format='AIR'" on base_config.yaml file.
+    #          Set "checkpoint_url='/The path of checkpoint in S3/'" on beta_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "file_name='inceptionv4'" on the website UI interface.
+    #          Add "file_format='AIR'" on the website UI interface.
+    #          Add "checkpoint_url='/The path of checkpoint in S3/'" on the website UI interface.
+    #          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Set the code directory to "/path/inceptionv4" on the website UI interface.
+    # (4) Set the startup file to "export.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
     ```
 
 # [Script description](#contents)

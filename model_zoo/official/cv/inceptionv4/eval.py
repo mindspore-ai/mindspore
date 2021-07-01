@@ -119,5 +119,6 @@ def inception_v4_eval():
 
 
 if __name__ == '__main__':
-    config.dataset_path = os.path.join(config.dataset_path, 'validation_preprocess')
+    if config.ds_type == 'imagenet':
+        config.dataset_path = os.path.join(config.dataset_path, 'validation_preprocess')
     inception_v4_eval()

@@ -30,5 +30,5 @@ mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-st
         --epochs=$EPOCH_SIZE                                   \
         --vocab_size=$VOCAB_SIZE                               \
         --emb_dim=$EMB_DIM                                     \
-        --dropout_flag=1                                       \
+        --dropout_flag=True                                    \
         --host_device_mix=1 > log.txt 2>&1 &

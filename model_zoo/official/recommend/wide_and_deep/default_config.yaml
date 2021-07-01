@@ -11,7 +11,6 @@ enable_profiling: False
 
 # ==============================================================================
 # argparse_init 'WideDeep'
-#data_path: "./test_raw_data/" # "This should be set to the same directory given to the data_download's data_dir argument")
 epochs: 15
 full_batch: False
 batch_size: 16000
@@ -24,8 +23,7 @@ deep_layer_dim: [1024, 512, 256, 128]
 deep_layer_act: 'relu'
 keep_prob: 1.0
 dropout_flag: False
-#output_path: "./output/"
-ckpt_path: "/cache/train"
+ckpt_path: "./ckpt"
 stra_ckpt: "./checkpoints"
 eval_file_name: "eval.log"
 loss_file_name: "loss.log"
@@ -65,7 +63,6 @@ dataset_path: ''
 
 # src/process_data.py  "Get and Process datasets"
 raw_data_path: "./raw_data"
-#output_path: "./output" # help="The path to save dataset"
 
 # src/preprocess_data.py  "Recommendation dataset"
 dense_dim: 13

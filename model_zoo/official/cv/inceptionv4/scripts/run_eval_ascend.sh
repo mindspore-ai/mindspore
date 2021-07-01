@@ -17,6 +17,7 @@
 export DEVICE_ID=$1
 DATA_DIR=$2
 CHECKPOINT_PATH=$3
+DS_TYPE=$4
 export RANK_SIZE=1
 
 BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
@@ -27,5 +28,6 @@ mkdir ./evaluation_ascend
 cd ./evaluation_ascend || exit
 echo  "start training for device id $DEVICE_ID"
 env > env.log
-python ../eval.py --config_path=$CONFIG_FILE --platform=Ascend --dataset_path=$DATA_DIR --checkpoint_path=$CHECKPOINT_PATH > eval.log 2>&1 &
+python ../eval.py --config_path=$CONFIG_FILE --platform=Ascend --dataset_path=$DATA_DIR \
+--checkpoint_path=$CHECKPOINT_PATH --ds_type=$DS_TYPE > eval.log 2>&1 &
 cd ../

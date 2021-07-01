@@ -17,6 +17,7 @@ import numpy as np
 
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 from src.inceptionv4 import Inceptionv4
 
 import mindspore as ms
@@ -30,10 +31,18 @@ context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
     context.set_context(device_id=get_device_id())
 
-if __name__ == '__main__':
+def modelarts_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_process)
+def export_inceptionv4():
+    """ export_inceptionv4 """
     net = Inceptionv4(classes=config.num_classes)
     param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
 
     input_arr = Tensor(np.ones([config.batch_size, 3, config.width, config.height]), ms.float32)
     export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_inceptionv4()
