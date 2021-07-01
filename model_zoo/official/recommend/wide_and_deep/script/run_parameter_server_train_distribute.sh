@@ -14,7 +14,6 @@
 # limitations under the License.
 # ============================================================================
 
-
 #bash run_parameter_server_train_distribute.sh RANK_SIZE EPOCHS DEVICE_TARGET DATASET 
 #                                              SERVER_NUM SCHED_HOST SCHED_PORT RANK_TABLE_FILE
 #                                              VOCAB_CACHE_SIZE SPARSE
@@ -39,7 +38,7 @@ if [[ ! -n "$9" ]]; then
 fi
 
 if [[ ! -n "${10}" ]]; then
-  export SPARSE=0
+  export SPARSE=False
 fi
 
 export MS_ROLE=MS_SCHED
@@ -69,7 +68,7 @@ if [[ "X$DEVICE_TARGET" == "XGPU" ]]; then
   mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout      \
     python -s ${self_path}/../train_and_eval_parameter_server_distribute.py                           \
       --device_target=$DEVICE_TARGET --data_path=$DATASET --epochs=$EPOCH_SIZE --parameter_server=1   \
-      --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=1 >worker.log 2>&1 &
+      --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=True >worker.log 2>&1 &
 else
   for((i=0;i<$MS_WORKER_NUM;i++));
   do
@@ -80,7 +79,7 @@ else
     export DEVICE_ID=$i
     python -s ${self_path}/../train_and_eval_parameter_server_distribute.py                         \
       --device_target=$DEVICE_TARGET --data_path=$DATASET --epochs=$EPOCH_SIZE --parameter_server=1 \
-      --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=1 >worker_$i.log 2>&1 &
+      --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=True >worker_$i.log 2>&1 &
   done
 fi
 

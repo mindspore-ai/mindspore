@@ -29,6 +29,7 @@ from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType, compute_manual_shape
 from src.metrics import AUCMetric
 from src.model_utils.config import config as cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -142,7 +143,12 @@ def train_and_eval(config):
                 dataset_sink_mode=(not sparse))
 
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    config.ckpt_path = config.output_path
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_wide_and_deep():
+    """ train_wide_and_deep """
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=cfg.device_target)
     if cfg.device_target == "GPU":
@@ -158,3 +164,6 @@ if __name__ == "__main__":
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.AUTO_PARALLEL, gradients_mean=True)
     train_and_eval(cfg)
+
+if __name__ == "__main__":
+    train_wide_and_deep()

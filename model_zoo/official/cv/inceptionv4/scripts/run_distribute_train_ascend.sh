@@ -17,6 +17,7 @@
 export HCCL_CONNECT_TIMEOUT=600
 export RANK_TABLE_FILE=$1
 DATA_DIR=$2
+DS_TYPE=$3
 export RANK_SIZE=8
 
 BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
@@ -49,6 +50,7 @@ do
     env > env.log
     taskset -c $cmdopt python -u ../train.py --config_path=$CONFIG_FILE \
     --device_id $i \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
+    --dataset_path=$DATA_DIR \
+    --ds_type=$DS_TYPE > log.txt 2>&1 &
     cd ../
 done

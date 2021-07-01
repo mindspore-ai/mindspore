@@ -26,6 +26,7 @@ from src.callbacks import LossCallBack, EvalCallBack
 from src.datasets import create_dataset, DataType
 from src.metrics import AUCMetric
 from src.model_utils.config import config as cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -115,7 +116,12 @@ def train_and_eval(config):
                 dataset_sink_mode=(parameter_server and cache_enable))
 
 
-if __name__ == "__main__":
+def modelarts_pre_process():
+    config.ckpt_path = config.output_path
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_wide_and_deep():
+    """ train_wide_and_deep """
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=True)
     cache_enable = cfg.vocab_cache_size > 0
     if not cache_enable:
@@ -128,3 +134,6 @@ if __name__ == "__main__":
     context.set_ps_context(enable_ps=True)
 
     train_and_eval(cfg)
+
+if __name__ == "__main__":
+    train_wide_and_deep()

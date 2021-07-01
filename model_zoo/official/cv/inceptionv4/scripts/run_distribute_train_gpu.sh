@@ -22,6 +22,7 @@ cp -r ./src ./device
 cd ./device || exit
 
 DATA_DIR=$1
+DS_TYPE=$2
 export DEVICE_ID=0
 export RANK_SIZE=8
 
@@ -30,4 +31,5 @@ CONFIG_FILE="${BASE_PATH}/../default_config_gpu.yaml"
 
 echo "start training"
 
-mpirun -n $RANK_SIZE --allow-run-as-root python train.py --config_path=$CONFIG_FILE --dataset_path=$DATA_DIR --platform='GPU' > train.log 2>&1 &
+mpirun -n $RANK_SIZE --allow-run-as-root python train.py --config_path=$CONFIG_FILE --dataset_path=$DATA_DIR \
+--platform='GPU' --ds_type=$DS_TYPE > train.log 2>&1 &

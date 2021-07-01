@@ -233,6 +233,7 @@ def inception_v4_train():
 
 
 if __name__ == '__main__':
-    config.dataset_path = os.path.join(config.dataset_path, 'train')
+    if config.ds_type == 'imagenet':
+        config.dataset_path = os.path.join(config.dataset_path, 'train')
     inception_v4_train()
     print('Inceptionv4 training success!')

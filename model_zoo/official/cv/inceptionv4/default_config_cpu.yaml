@@ -6,7 +6,7 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-device_target: Ascend
+device_target: CPU
 enable_profiling: False
 
 # ==============================================================================
@@ -17,7 +17,7 @@ ckpt_file: '/cache/data/ImageNet_Original/inceptionv4/inceptionv4-train-250_1251
 resume: ''
 is_distributed: False
 device_id: 0
-platform: 'GPU'
+platform: 'CPU'
 file_name: 'inceptionv3'
 file_format: 'AIR'
 width: 299
@@ -27,12 +27,16 @@ modelarts_dataset_unzip_name: 'ImageNet_Original'
 need_modelarts_dataset_unzip: True
 ckpt_save_dir: './ckpt/'
 
+# postprocess.py fasterrcnn_export
+result_path: ''
+label_file: ''
+
 # Training options
 batch_size: 128
 epoch_size: 250
 num_classes: 10
 work_nums: 8
-ds_type: 'cifar10'
+ds_type: 'imagenet'
 ds_sink_mode: False
 
 loss_scale: 1024
@@ -65,6 +69,8 @@ device_target: 'Target device type'
 enable_profiling: 'Whether enable profiling while training, default: False'
 file_name: 'inceptionv3 output air name.'
 file_format: 'file format'
+result_path: "result file path"
+label_file: "label file"
 
 ---
 device_target: ['Ascend', 'GPU', 'CPU']
