@@ -41,7 +41,6 @@ bool WorkerNode::Start(const uint32_t &timeout) {
 }
 
 void WorkerNode::Initialize() {
-  is_already_stopped_ = false;
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   if (!config_->Initialize()) {
     MS_LOG(INFO) << "The config file is empty, then init node by context.";
@@ -61,6 +60,7 @@ void WorkerNode::Initialize() {
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Worker node connect to scheduler timeout!";
   }
+  is_already_stopped_ = false;
   MS_LOG(INFO) << "[Worker start]: 3. Worker node crete tcp client to scheduler successful!";
 }
 
@@ -109,6 +109,12 @@ bool WorkerNode::Finish(const uint32_t &timeout) {
   }
   MS_LOG(INFO) << "[Worker finish]: 1. Begin to finish worker node!";
   is_already_finished_ = true;
+
+  if (is_already_stopped_) {
+    MS_LOG(INFO) << "The node is already stop.";
+    return true;
+  }
+
   bool res = Disconnect(client_to_scheduler_, timeout);
   if (res) {
     MS_LOG(INFO) << "[Worker finish]: 2. Successfully finish worker node!";

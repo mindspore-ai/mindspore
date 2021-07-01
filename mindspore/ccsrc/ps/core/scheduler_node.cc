@@ -63,6 +63,8 @@ void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::sha
 
   *heartbeat_resp_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
+  heartbeat_resp_message.set_is_worker_or_server0(node_manager_.IsWorkerOrServer0());
+
   server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
                       heartbeat_resp_message.ByteSizeLong());
 }
@@ -137,7 +139,8 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
 
   if (node_manager_.IsAllNodesRegistered()) {
     is_ready_ = true;
-    MS_LOG(INFO) << "All nodes is registered, scheduler send meta data to worker/server.";
+    MS_LOG(INFO) << "There are " << node_manager_.worker_num() << " workers and " << node_manager_.server_num()
+                 << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
     if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_IN) {
       auto nodes = node_manager_.nodes_info();
       for (const auto &id : scale_in_node_ids_) {
@@ -152,6 +155,7 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
       auto client = GetOrCreateClient(kvs.second);
       SendMetadata(client, kvs.second.rank_id_);
     }
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     wait_start_cond_.notify_all();
   }
 }
@@ -253,7 +257,7 @@ void SchedulerNode::ProcessSendEvent(std::shared_ptr<TcpServer> server, std::sha
   event_message.ParseFromArray(data, size);
   std::string node_id = event_message.node_id();
   uint32_t event = event_message.event();
-  MS_LOG(INFO) << "The scheduler process a event message from node id:" << node_id;
+  MS_LOG(DEBUG) << "The scheduler process a event message from node id:" << node_id;
 
   server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
 
@@ -354,8 +358,8 @@ void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const ui
     return;
   }
 
-  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is sending event resp to workers and servers!";
+  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << " the node id:" << node_info_.node_id_ << "is sending event resp to workers and servers!";
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {
@@ -415,7 +419,9 @@ bool SchedulerNode::Stop() {
         connected_node.second->Stop();
       }
     }
-    client_thread_->join();
+    if (client_thread_ != nullptr && client_thread_->joinable()) {
+      client_thread_->join();
+    }
     is_ready_ = true;
   }
   if (PSContext::instance()->scheduler_manage_port() != 0) {
@@ -426,7 +432,7 @@ bool SchedulerNode::Stop() {
   return true;
 }
 
-bool SchedulerNode::Finish(const uint32_t &timeout) {
+bool SchedulerNode::Finish(const uint32_t &) {
   MS_LOG(INFO) << "[Scheduler finish]: 1. Begin to finish scheduler node!";
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
   wait_finish_cond_.wait(lock, [&] {
@@ -468,6 +474,9 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
 
   int32_t total_worker_num = scale_worker_num + node_manager_.worker_num();
   int32_t total_server_num = scale_server_num + node_manager_.server_num();
+
+  MS_LOG(INFO) << "After scale out, the total worker num:" << total_worker_num
+               << ", the total server num:" << total_server_num;
 
   node_manager_.set_worker_num(total_worker_num);
   node_manager_.set_server_num(total_server_num);
@@ -704,7 +713,7 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
 void SchedulerNode::StopRestfulServer() {
   MS_LOG(INFO) << "Scheduler stop https server.";
   http_server_->Stop();
-  if (restful_thread_->joinable()) {
+  if (restful_thread_ != nullptr && restful_thread_->joinable()) {
     restful_thread_->join();
   }
 }

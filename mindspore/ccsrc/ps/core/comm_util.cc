@@ -49,7 +49,7 @@ bool CommUtil::CheckIp(const std::string &ip) {
   if (!CheckIpWithRegex(ip)) {
     return false;
   }
-  int64_t uAddr = inet_addr(ip.c_str());
+  uint32_t uAddr = inet_addr(ip.c_str());
   if (INADDR_NONE == uAddr) {
     return false;
   }

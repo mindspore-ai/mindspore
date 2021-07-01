@@ -39,20 +39,17 @@ class SSLWrapper {
   }
   SSL_CTX *GetSSLCtx(bool is_server = true);
 
-  void InitRootCertAndCRL(const std::string rootFirstCaFilePath, const std::string rootSecondCaFilePath,
-                          const std::string crlFirstFilePath, const std::string crlSecondFilePath);
-
   // read certificate from file path
-  X509 *ReadCertFromFile(const std::string &certPath);
+  X509 *ReadCertFromFile(const std::string &certPath) const;
 
   // read Certificate Revocation List from file absolute path
-  X509_CRL *ReadCrlFromFile(const std::string &crlPath);
+  X509_CRL *ReadCrlFromFile(const std::string &crlPath) const;
 
   // read certificate from pem string
   X509 *ReadCertFromPerm(std::string cert);
 
   // verify valid of certificate time
-  bool VerifyCertTime(const X509 *cert);
+  bool VerifyCertTime(const X509 *cert) const;
 
   // verify valid of certificate chain
   bool VerifyCAChain(const std::string &keyAttestation, const std::string &equipCert, const std::string &equipCACert,

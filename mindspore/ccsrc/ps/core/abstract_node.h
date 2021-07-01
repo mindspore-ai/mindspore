@@ -51,7 +51,7 @@ class AbstractNode : public Node {
         node_recovery_(nullptr),
         scheduler_ip_(""),
         scheduler_port_(0) {}
-  ~AbstractNode() override = default;
+  ~AbstractNode() override { is_finish_ = true; }
 
   typedef void (AbstractNode::*ResponseHandler)(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
   typedef void (AbstractNode::*ServerHandler)(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,

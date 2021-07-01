@@ -98,6 +98,7 @@ enum ClusterState {
 message HeartbeatRespMessage {
   ClusterState cluster_state = 1;
   repeated ServersMeta servers_meta = 2;
+  bool is_worker_or_server0 = 3;
 }
 
 message FetchServersMessage {

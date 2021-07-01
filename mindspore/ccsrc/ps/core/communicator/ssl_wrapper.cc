@@ -84,7 +84,7 @@ SSL_CTX *SSLWrapper::GetSSLCtx(bool is_server) {
   }
 }
 
-X509 *SSLWrapper::ReadCertFromFile(const std::string &certPath) {
+X509 *SSLWrapper::ReadCertFromFile(const std::string &certPath) const {
   BIO *bio = BIO_new_file(certPath.c_str(), "r");
   return PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
 }
@@ -94,30 +94,12 @@ X509 *SSLWrapper::ReadCertFromPerm(std::string cert) {
   return PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
 }
 
-X509_CRL *SSLWrapper::ReadCrlFromFile(const std::string &crlPath) {
+X509_CRL *SSLWrapper::ReadCrlFromFile(const std::string &crlPath) const {
   BIO *bio = BIO_new_file(crlPath.c_str(), "r");
   return PEM_read_bio_X509_CRL(bio, nullptr, nullptr, nullptr);
 }
 
-void SSLWrapper::InitRootCertAndCRL(const std::string rootFirstCaFilePath, const std::string rootSecondCaFilePath,
-                                    const std::string crlFirstFilePath, const std::string crlSecondFilePath) {
-  if (rootFirstCaFilePath.empty() || rootSecondCaFilePath.empty() || crlFirstFilePath.empty() ||
-      crlSecondFilePath.empty()) {
-    return;
-  }
-  rootFirstCA_ = SSLWrapper::ReadCertFromFile(rootFirstCaFilePath);
-  rootSecondCA_ = SSLWrapper::ReadCertFromFile(rootSecondCaFilePath);
-  MS_LOG(INFO) << "Root first ca serialNumber: " << X509_get_serialNumber(rootFirstCA_)->data;
-  MS_LOG(INFO) << "Root second ca serialNumber: " << X509_get_serialNumber(rootSecondCA_)->data;
-
-  rootFirstCrl_ = SSLWrapper::ReadCrlFromFile(crlFirstFilePath);
-  rootSecondCrl_ = SSLWrapper::ReadCrlFromFile(crlSecondFilePath);
-
-  MS_LOG(INFO) << "Root first crl version: " << X509_CRL_get_version(rootFirstCrl_);
-  MS_LOG(INFO) << "Root second crl version: " << X509_CRL_get_version(rootSecondCrl_);
-}
-
-bool SSLWrapper::VerifyCertTime(const X509 *cert) {
+bool SSLWrapper::VerifyCertTime(const X509 *cert) const {
   ASN1_TIME *start = X509_getm_notBefore(cert);
   ASN1_TIME *end = X509_getm_notAfter(cert);
 

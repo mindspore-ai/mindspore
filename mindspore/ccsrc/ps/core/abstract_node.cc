@@ -86,6 +86,7 @@ bool AbstractNode::Broadcast(const enum NodeRole &node_role, const DataPtr &mess
 void AbstractNode::set_ready_for_scale_out() {
   MS_LOG(INFO) << "[Scale out]: begin to set ready for scale out.";
   Register(client_to_scheduler_);
+  std::lock_guard<std::mutex> lock(client_mutex_);
   connected_nodes_.clear();
 }
 
@@ -93,6 +94,7 @@ void AbstractNode::set_ready_for_scale_in() {
   MS_LOG(INFO) << "[Scale in]: begin to set ready for scale in.";
   if (!is_current_node_scale_in_) {
     Register(client_to_scheduler_);
+    std::lock_guard<std::mutex> lock(client_mutex_);
     connected_nodes_.clear();
   }
 }
@@ -107,8 +109,9 @@ void AbstractNode::set_scale_out_done() {
 
   if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF,
                        scale_out_done_message.SerializeAsString().data(), scale_out_done_message.ByteSizeLong())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " scale_out_done timeout!";
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " scale_out_done timeout!";
+    return;
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -125,8 +128,9 @@ void AbstractNode::set_scale_in_done() {
 
   if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF,
                        scale_in_done_message.SerializeAsString().data(), scale_in_done_message.ByteSizeLong())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " scale_in_done timeout!";
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " scale_in_done timeout!";
+    return;
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -325,10 +329,15 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
     receive_callbacks_[std::make_pair(rank_id, rank_request_id)] = [=]() mutable {
       receive_callbacks_mutex_.lock();
       auto res = received_data_[std::make_pair(rank_id, rank_request_id)];
-      *output = res;
-      received_data_.erase(std::make_pair(rank_id, rank_request_id));
-      receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
-      MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
+      if (*output != nullptr) {
+        MS_LOG(WARNING) << "The output is not empty.";
+
+      } else {
+        *output = res;
+        received_data_.erase(std::make_pair(rank_id, rank_request_id));
+        receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
+        MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
+      }
       receive_callbacks_mutex_.unlock();
     };
   }
@@ -474,18 +483,22 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
                   << ", the node role:" << CommUtil::NodeRoleToString(info.node_role_) << " is alive:" << info.is_alive;
   }
 
+  bool is_worker_or_server0 = heartbeat_resp_message.is_worker_or_server0();
+
   if (current_cluster_state_ == ClusterState::CLUSTER_READY) {
     is_ready_ = true;
     wait_start_cond_.notify_all();
   }
 
-  if (node_recovery_ == nullptr) {
-    MS_LOG(INFO) << "The recovery is disable.";
+  if (node_recovery_ == nullptr || is_worker_or_server0) {
     if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+      MS_LOG(INFO) << "The recovery is disable.";
       is_ready_ = true;
       wait_start_cond_.notify_all();
       OnEventCallback(ClusterEvent::NODE_TIMEOUT);
     }
+  } else {
+    MS_LOG(INFO) << "The node is support recovery, users can pull up this node to restore the cluster.";
   }
 }
 
@@ -535,7 +548,8 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   node_info_.rank_id_ = send_meta_message.rank_id();
   current_cluster_state_ = send_meta_message.cluster_state();
   MS_LOG(INFO) << "The send metadata worker num:" << worker_num_ << ", server num:" << server_num_
-               << ", cluster state is:" << current_cluster_state_ << ", the rank id:" << node_info_.rank_id_;
+               << ", cluster state is:" << CommUtil::ClusterStateToString(current_cluster_state_)
+               << ", the rank id:" << node_info_.rank_id_;
 
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {
@@ -556,7 +570,9 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
     OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
 
-  MS_LOG(INFO) << "The current cluster state:" << current_cluster_state_;
+  std::lock_guard<std::mutex> lock(client_mutex_);
+  connected_nodes_.clear();
+  MS_LOG(INFO) << "The current cluster state:" << CommUtil::ClusterStateToString(current_cluster_state_);
 }
 
 void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,

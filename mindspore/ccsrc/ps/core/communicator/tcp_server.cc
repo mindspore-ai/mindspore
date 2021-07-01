@@ -359,7 +359,7 @@ void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *data) {
   struct timeval delay = {0, 0};
   MS_LOG(ERROR) << "Caught an interrupt signal; exiting cleanly in 0 seconds.";
   if (event_base_loopexit(base, &delay) == -1) {
-    MS_LOG(EXCEPTION) << "Event base loop exit failed.";
+    MS_LOG(ERROR) << "Event base loop exit failed.";
   }
 }
 
