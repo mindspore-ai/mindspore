@@ -73,19 +73,19 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
 
-  auto ret = InferSubGraphShape(kMainSubGraphIndex);
-  if (ret != RET_OK) {
+  int infershape_ret = InferSubGraphShape(kMainSubGraphIndex);
+  if (infershape_ret != RET_OK && infershape_ret != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "op infer shape failed.";
-    return ret;
+    return infershape_ret;
   }
 
-  if (context_->enable_parallel_) {
+  if (context_->enable_parallel_ && infershape_ret != RET_INFER_INVALID) {
     auto search_sub_graph =
       SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
     search_sub_graph.SubGraphSplit();
   }
 
-  ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, dst_kernels, nullptr, nullptr);
+  int ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, dst_kernels, nullptr, nullptr);
   op_parameters_.clear();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule main subgraph to kernels failed.";
@@ -247,6 +247,7 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
   MS_ASSERT(!src_model_->sub_graphs_.empty());
   MS_ASSERT(src_model_->sub_graphs_.size() > subgraph_index);
   auto subgraph = src_model_->sub_graphs_.at(subgraph_index);
+  int subgraph_infershape_ret = RET_OK;
   for (auto node_index : subgraph->node_indices_) {
     auto node = src_model_->all_nodes_[node_index];
     MS_ASSERT(node != nullptr);
@@ -260,12 +261,13 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape interrupted, name: " << node->name_ << ", type: " << PrimitiveTypeName(type)
                    << ", set infer flag to false.";
+      subgraph_infershape_ret = RET_INFER_INVALID;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, name: " << node->name_ << ", type: " << PrimitiveTypeName(type);
       return RET_INFER_ERR;
     }
   }
-  return RET_OK;
+  return subgraph_infershape_ret;
 }
 
 namespace {
