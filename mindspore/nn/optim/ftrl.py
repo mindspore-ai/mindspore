@@ -226,9 +226,9 @@ class FTRL(Optimizer):
         grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
 
-        success = self.map_reverse(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                             self.l1, self.l2, self.lr_power, lr),
-                                   linear, grads, params, moments, self.ps_parameters, self.cache_enable)
+        success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                      self.l1, self.l2, self.lr_power, lr),
+                            linear, grads, params, moments, self.ps_parameters, self.cache_enable)
         return success
 
     @Optimizer.target.setter
