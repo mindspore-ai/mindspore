@@ -327,9 +327,10 @@ class SentencePieceTokenizer(TextTensorOperation):
     Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
 
     Args:
-        mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string.
-            If the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
-        out_type (SPieceTokenizerOutType): The type of output, the type is int or string
+        mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then its type should be string.
+            If the input parameter is a SentencePieceVocab object, then its type should be SentencePieceVocab.
+        out_type (SPieceTokenizerOutType): The type of output, it can be any of [SPieceTokenizerOutType.STRING,
+            SPieceTokenizerOutType.INT].
 
     Examples:
         >>> from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
@@ -350,7 +351,7 @@ class SentencePieceTokenizer(TextTensorOperation):
 
 class SlidingWindow(TextTensorOperation):
     """
-    TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension axis
+    Construct a tensor from given data (only support 1-D for now), where each element in the dimension axis
     is a slice of data starting at the corresponding position, with a specified width.
 
     Args:
@@ -387,15 +388,13 @@ class ToNumber(TextTensorOperation):
     """
     Tensor operation to convert every element of a string tensor to a number.
 
-    Strings are cast according to the rules specified in the following links:
+    Strings are cast according to the rules specified in the following links, except that any strings which represent
+    negative numbers cannot be cast to an unsigned integer type, rules links are as follows:
     https://en.cppreference.com/w/cpp/string/basic_string/stof,
     https://en.cppreference.com/w/cpp/string/basic_string/stoul,
-    except that any strings which represent negative numbers cannot be cast to an
-    unsigned integer type.
 
     Args:
-        data_type (mindspore.dtype): mindspore.dtype to be cast to. Must be
-            a numeric type.
+        data_type (mindspore.dtype): Type to be cast to. Must be a numeric type in mindspore.dtype.
 
     Raises:
         RuntimeError: If strings are invalid to cast, or are out of range after being cast.
@@ -521,7 +520,7 @@ class WordpieceTokenizer(TextTensorOperation):
 
 class PythonTokenizer:
     """
-    Callable class to be used for user-defined string tokenizer.
+    Class that apply user-defined string tokenizer into input string.
 
     Args:
         tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
@@ -752,9 +751,9 @@ if platform.system().lower() != 'windows':
 
     class RegexReplace(TextTensorOperation):
         """
-        Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
+        Replace a part of UTF-8 string tensor with given text according to regular expressions.
 
-        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
+        See http://userguide.icu-project.org/strings/regexp for supported regex pattern.
 
         Note:
             RegexReplace is not supported on Windows platform yet.
@@ -786,7 +785,7 @@ if platform.system().lower() != 'windows':
         """
         Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
 
-        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
+        See http://userguide.icu-project.org/strings/regexp for supported regex pattern.
 
         Note:
             RegexTokenizer is not supported on Windows platform yet.
@@ -795,16 +794,16 @@ if platform.system().lower() != 'windows':
             delim_pattern (str): The pattern of regex delimiters.
                 The original string will be split by matched elements.
             keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
-                if it can be matched by 'keep_delim_pattern'. The default value is an empty str ('')
+                if it can be matched by 'keep_delim_pattern'. The default value is an empty str
                 which means that delimiters will not be kept as an output token (default='').
-            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+            with_offsets (bool, optional): Whether or not output offsets of tokens(default=False).
 
         Examples:
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> # If with_offsets=False, default output is one column {["text", dtype=str]}
             >>> delim_pattern = r"[ |,]"
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=True)
@@ -827,7 +826,7 @@ if platform.system().lower() != 'windows':
 
     class UnicodeScriptTokenizer(TextTensorOperation):
         """
-        Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
+        Tokenize a scalar tensor of UTF-8 string based on Unicode script boundaries.
 
         Note:
             UnicodeScriptTokenizer is not supported on Windows platform yet.
@@ -840,9 +839,9 @@ if platform.system().lower() != 'windows':
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=False)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
-            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> # If with_offsets=True, then output three columns {["token", dtype=str],
+            >>> #                                                  ["offsets_start", dtype=uint32],
+            >>> #                                                  ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=True)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                           output_columns=["token", "offsets_start", "offsets_limit"],

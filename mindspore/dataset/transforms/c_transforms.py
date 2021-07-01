@@ -169,8 +169,7 @@ class Slice(TensorOperation):
     """
     Slice operation to extract a tensor out using the given n slices.
 
-    The functionality of Slice is similar to NumPy's indexing feature.
-    (Currently only rank-1 tensors are supported).
+    The functionality of Slice is similar to NumPy's indexing feature (Currently only rank-1 tensors are supported).
 
     Args:
         slices (Union[int, list[int], slice, None, Ellipsis]):
@@ -234,10 +233,11 @@ class Mask(TensorOperation):
     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
 
     Args:
-        operator (Relational): One of the relational operators EQ, NE LT, GT, LE or GE
+        operator (Relational): relational operators, it can be any of [Relational.EQ, Relational.NE, Relational.LT,
+            Relational.GT, Relational.LE, Relational.GE], take Relational.EQ as example, EQ refers to equal.
         constant (Union[str, int, float, bool]): Constant to be compared to.
             Constant will be cast to the type of the input tensor.
-        dtype (mindspore.dtype, optional): Type of the generated mask (Default to bool).
+        dtype (mindspore.dtype, optional): Type of the generated mask (Default mstype.bool_).
 
     Examples:
         >>> from mindspore.dataset.transforms.c_transforms import Relational
@@ -268,7 +268,7 @@ class Mask(TensorOperation):
 
 class PadEnd(TensorOperation):
     """
-    Pad input tensor according to pad_shape, need to have same rank.
+    Pad input tensor according to pad_shape, input tensor needs to have same rank.
 
     Args:
         pad_shape (list(int)): List of integers representing the shape needed. Dimensions that set to `None` will
