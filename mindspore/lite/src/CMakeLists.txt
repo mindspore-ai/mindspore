@@ -60,7 +60,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
@@ -118,6 +117,7 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
             )
 endif()
 set(TRAIN_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/transfer_session.cc
@@ -196,6 +196,19 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
 if(ENABLE_MINDRT)
     target_link_libraries(mindspore-lite mindrt_mid)
     target_link_libraries(mindspore-lite_static mindrt_mid)
+endif()
+
+if(SUPPORT_TENSORRT)
+    add_compile_definitions(GPU_TENSORRT)
+    set(TENSORRT_PATH $ENV{TENSORRT_HOME})
+    set(CUDA_PATH $ENV{CUDA_HOME})
+    set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
+    set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
+    include_directories(${TENSORRT_PATH}/include)
+    include_directories(${CUDA_PATH}/include)
+    add_subdirectory(delegate/tensorrt)
+    target_link_libraries(mindspore-lite tensorrt_kernel_mid)
+    target_link_libraries(mindspore-lite_static tensorrt_kernel_mid)
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)

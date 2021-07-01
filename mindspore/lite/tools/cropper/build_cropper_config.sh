@@ -159,8 +159,6 @@ getCommonFile() {
   while IFS='' read -r line; do common_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/common/*.cc)
   runtime_files_cc=()
   while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.cc)
-  runtime_files_c=()
-  while IFS='' read -r line; do runtime_files_c+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.c)
   # sava all assembly files
   assembly_files=()
   while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/assembly/*/*.S)
@@ -173,7 +171,7 @@ getCommonFile() {
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.c
   )
   all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
-    "${runtime_files_c[@]}" "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
+    "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
     "${cxx_api_files[@]}"
   )
   # shellcheck disable=SC2068
