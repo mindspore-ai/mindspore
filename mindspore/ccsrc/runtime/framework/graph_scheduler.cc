@@ -1152,6 +1152,12 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
   auto front_node = GetFrontNodeByBackendNode(from_kernel);
 
   if (from_kernel->isa<Parameter>() && graph_compiler_info.control_node_parser_->IsCallInputKernelGraph(graph)) {
+    if (HasAbstractRef(from_kernel)) {
+      const auto devcie_tensor_store_key = FetchFrontNodeByBackendNode(from_kernel, graph);
+      to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, devcie_tensor_store_key.get());
+      return;
+    }
+
     // When there is a call input in the kernel graph, all the inputs of the kernel graph needs to be sent by gather.
     const auto actor_name = graph->ToString();
     auto actor = FetchActor(actor_name);
