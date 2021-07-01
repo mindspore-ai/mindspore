@@ -18,11 +18,11 @@ import pytest
 
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.nn.loss.loss import L1Loss
 import mindspore.context as context
 
-class WeightedLoss(Loss):
+class WeightedLoss(LossBase):
     def __init__(self, reduction='mean', weights=1.0):
         super(WeightedLoss, self).__init__(reduction)
         self.abs = P.Abs()
@@ -72,7 +72,7 @@ def test_weighted_loss_float32():
 def test_weighted_loss_float64():
     weighted_loss(np.float64)
 
-class CustomLoss(Loss):
+class CustomLoss(LossBase):
     def __init__(self, reduction='mean'):
         super(CustomLoss, self).__init__(reduction)
         self.abs = P.Abs()

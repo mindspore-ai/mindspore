@@ -20,7 +20,7 @@ import numpy as np
 from mindspore.train.callback import Callback
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
@@ -78,7 +78,7 @@ class Monitor(Callback):
             np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
 
 
-class CrossEntropyWithLabelSmooth(Loss):
+class CrossEntropyWithLabelSmooth(LossBase):
     """
     CrossEntropyWith LabelSmooth.
 

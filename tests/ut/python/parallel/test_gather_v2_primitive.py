@@ -22,7 +22,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import ParameterTuple
 from mindspore.communication.management import init
 from mindspore.nn import Dense, Cell
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -64,7 +64,7 @@ class Dataset():
         return self
 
 
-class GatherV2(Loss):
+class GatherV2(LossBase):
     def __init__(self, index_dim, strategy, index_size=16):
         super(GatherV2, self).__init__()
         self.pow = P.Pow()
@@ -195,7 +195,7 @@ def test_strategy3():
     net_trains(criterion, rank)
 
 
-class GatherV2Axis1(Loss):
+class GatherV2Axis1(LossBase):
     def __init__(self, index_dim, strategy, index_size=16):
         super(GatherV2Axis1, self).__init__()
         self.pow = P.Pow()

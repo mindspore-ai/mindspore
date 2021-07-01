@@ -14,14 +14,14 @@
 # ===========================================================================
 """DSCNN loss."""
 import mindspore.nn as nn
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 
 
-class CrossEntropy(Loss):
+class CrossEntropy(LossBase):
     '''Build CrossEntropy Loss.'''
     def __init__(self, smooth_factor=0., num_classes=1000):
         super(CrossEntropy, self).__init__()

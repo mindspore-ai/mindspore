@@ -23,7 +23,7 @@ from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.communication.management import init
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.parallel import _cost_model_context as cost_model_context
@@ -220,7 +220,7 @@ def resnet50(class_num=10):
                   class_num)
 
 
-class SoftmaxCrossEntropyExpand(Loss):
+class SoftmaxCrossEntropyExpand(LossBase):
     def __init__(self, sparse=False):
         super(SoftmaxCrossEntropyExpand, self).__init__()
         self.exp = P.Exp()

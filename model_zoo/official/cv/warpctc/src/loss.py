@@ -14,13 +14,13 @@
 # ============================================================================
 """CTC Loss."""
 import numpy as np
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore import Tensor, Parameter
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 
-class CTCLoss(Loss):
+class CTCLoss(LossBase):
     """
      CTCLoss definition
 

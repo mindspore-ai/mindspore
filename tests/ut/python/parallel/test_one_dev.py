@@ -22,7 +22,7 @@ from mindspore import context
 import mindspore.common.dtype as mstype
 from mindspore.common.api import _executor
 from mindspore.common.parameter import Parameter
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -68,7 +68,7 @@ class AllToAllNet(nn.Cell):
         return x
 
 
-class SoftmaxCrossEntropyWithLogits(Loss):
+class SoftmaxCrossEntropyWithLogits(LossBase):
     def __init__(self,
                  sparse=False,
                  reduction='none'):

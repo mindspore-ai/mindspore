@@ -15,14 +15,14 @@
 """
 define loss function for network.
 """
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 
-class CrossEntropy(Loss):
+class CrossEntropy(LossBase):
     """
     the redefined loss function with SoftmaxCrossEntropyWithLogits.
     """
