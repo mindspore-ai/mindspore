@@ -279,6 +279,9 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
       }
     }
   }
+
+  global_mem_block_list_.clear();
+  global_idle_mem_buf_map_.clear();
 }
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolInfo() {

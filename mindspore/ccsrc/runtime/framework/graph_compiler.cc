@@ -24,6 +24,7 @@
 #include "ir/tensor.h"
 #include "backend/optimizer/common/helper.h"
 #include "base/base_ref_utils.h"
+#include "debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -297,6 +298,14 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
 
+  const auto &ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  bool save_graphs = ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  // Dump .pb graph before graph optimization.
+  if (save_graphs) {
+    DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
+  }
+
   // Execute optimization pass.
   auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
   device_context->OptimizeGraph(graph);
@@ -308,8 +317,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // 'KernelMod' is real executive object of kernel.
   device_context->CreateKernel(graph->execution_order());
 
-  const auto &ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     // Create device address for all anf nodes of graph.
     CreateDeviceAddress(graph, device_context);
@@ -322,6 +329,12 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   session_->SetSummaryNodes(graph.get());
   SetSummaryNodesRefCount(graph.get());
+
+  // Dump .pb graph after graph optimization.
+  if (save_graphs) {
+    DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
+  }
+
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
   debugger->DumpInGraphCompiler(graph);
@@ -329,6 +342,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     debugger->LoadGraphs(graph);
   }
 #endif
+
+  session_->DumpGraph(graph);
   return graph->graph_id();
 }
 

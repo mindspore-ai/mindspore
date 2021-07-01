@@ -32,6 +32,10 @@ ncclUniqueId NCCLWrapper::nccl_unique_id() const {
 }
 
 void NCCLWrapper::InitNCCLComm() {
+  if (comm_init_done_) {
+    return;
+  }
+
   for (auto group : group_info_) {
     std::string group_name = group.first;
     NcclGroupInfo group_info = group.second;
