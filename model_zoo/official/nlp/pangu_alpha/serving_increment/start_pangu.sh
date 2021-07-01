@@ -13,9 +13,9 @@ start_serving_server()
     echo "serving server failed to start."
   fi
 
-  result=`grep -E 'Begin waiting ready of all agents' serving_server.log | wc -l`
+  result=`grep -E 'Master server start success' serving_server.log | wc -l`
   count=0
-  while [[ ${result} -ne 1 && ${count} -lt 100 ]]
+  while [[ ${result} -eq 0 && ${count} -lt 100 ]]
   do
     sleep 1
 
@@ -26,7 +26,7 @@ start_serving_server()
     fi
 
     count=$(($count+1))
-    result=`grep -E 'Begin waiting ready of all agents' serving_server.log | wc -l`
+    result=`grep -E 'Master server start success' serving_server.log | wc -l`
   done
 
   if [ ${count} -eq 100 ]
@@ -38,7 +38,7 @@ start_serving_server()
 
 start_serving_agent()
 {
-  echo "### start serving agent, see serving_agent.log for detail ###"
+  echo "### start serving agent, see and serving_logs/log_pangu_distributed.log for detail ###"
   python3 serving_agent.py > serving_agent.log 2>&1 &
   if [ $? -ne 0 ]
   then
@@ -54,7 +54,7 @@ start_serving_agent()
     if [ $num -eq 0 ]
     then
       bash stop_pangu.sh
-      echo "start serving agent failed, see log serving_agent.log for more detail" && exit 1
+      echo "start serving agent failed, see log and serving_logs/log_pangu_distributed.log for more detail" && exit 1
     fi
 
     count=$(($count+1))
@@ -64,7 +64,7 @@ start_serving_agent()
   if [ ${count} -eq 1800 ]
   then
     bash stop_pangu.sh
-    echo "start serving agent failed, see log serving_agent.log  for more detail" && exit 1
+    echo "start serving agent failed, see log and serving_logs/log_pangu_distributed.log for more detail" && exit 1
   fi
   echo "### start serving agent end ###"
 }
@@ -104,8 +104,37 @@ start_flask()
   cat flask.log
 }
 
+wait_serving_ready()
+{
+  echo "### waiting serving server ready, see and serving_logs/log_pangu_distributed.log for detail ###"
+  result=`grep -E 'gRPC server start success' serving_server.log | wc -l`
+  count=0
+  while [[ ${result} -eq 0 && ${count} -lt 100 ]]
+  do
+    sleep 1
+
+    num=`ps -ef | grep 'serving_server.py' | grep -v grep | wc -l`
+    if [ $num -eq 0 ]
+    then
+      bash stop_pangu.sh
+      echo "waiting serving server ready failed, see log serving_server.log and serving_logs/log_pangu_distributed.log for more detail" && exit 1
+    fi
+
+    count=$(($count+1))
+    result=`grep -E 'gRPC server start success' serving_server.log | wc -l`
+  done
+
+  if [ ${count} -eq 100 ]
+  then
+    bash stop_pangu.sh
+    echo "waiting serving server ready failed, see log serving_server.log and serving_logs/log_pangu_distributed.log for more detail" && exit 1
+  fi
+  echo "### waiting serving server ready end ###"
+}
+
 bash stop_pangu.sh
-rm -f serving_server.log serving_agent.log flask.log
+rm -rf serving_server.log serving_agent.log flask.log serving_logs
 start_serving_server
 start_serving_agent
 start_flask
+wait_serving_ready

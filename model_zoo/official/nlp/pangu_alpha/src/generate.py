@@ -22,6 +22,64 @@ import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 
+def topk_fun(logits, topk=5):
+    """Get topk"""
+    target_column = logits[0].tolist()
+    sorted_array = [(k, v) for k, v in enumerate(target_column)]
+    sorted_array.sort(key=lambda x: x[1], reverse=True)
+    topk_array = sorted_array[:topk]
+    index, value = zip(*topk_array)
+    index = np.array([index])
+    value = np.array([value])
+    return value, index
+
+def sampler(log_probs_revised, top_p, top_k_num, use_pynative=False):
+    """Convert the log_probs to probability"""
+    if use_pynative:
+        logits = P.Pow()(10, Tensor(log_probs_revised, mstype.float32))
+    else:
+        logits = np.power(10, np.array(log_probs_revised, np.float32))
+
+        # If top_p is less than 1.0, use top_p sampling
+    if top_p < 1.0:
+        # Only consider the 5000 largest logits to reduce computation
+        if use_pynative:
+            sorted_logits, index = P.TopK(sorted=True)(logits, 5000)
+            cumsum_logits = P.CumSum()(sorted_logits, 1)
+            cumsum_logits = cumsum_logits.asnumpy()
+            index = index.asnumpy()
+            sorted_logits = sorted_logits.asnumpy()
+        else:
+            sorted_logits, index = topk_fun(logits, 5000)
+            cumsum_logits = np.cumsum(sorted_logits, 1)
+        cumsum_logits = cumsum_logits[0]
+        index = index[0]
+        sorted_logits = sorted_logits[0]
+        top_p_num = sum(cumsum_logits > top_p)
+        # In case the probability is smooth, the sum of 5000 largest probabilities are not large enough
+        if top_p_num == 0:
+            top_p_num = 5000
+        # Get the corresponding probs and indices
+        probs = sorted_logits[:top_p_num]
+        p_args = index[:top_p_num]
+        p = probs / sum(probs)
+        # if top_p is set to 1.0, use top_k sampling
+    else:
+        # Get the corresponding probs and indices
+        if use_pynative:
+            probs, p_args = P.TopK(sorted=True)(logits, top_k_num)
+            probs = probs.asnumpy()
+            p_args = p_args.asnumpy()
+        else:
+            probs, p_args = topk_fun(logits, top_k_num)
+        probs = probs[0]
+        p_args = p_args[0]
+        # Avoid rounding error
+        if sum(probs) == 0:
+            probs = np.array([1 / top_k_num for _ in range(top_k_num)])
+        p = probs / sum(probs)
+    return p, p_args
+
 def generate(model, origin_inputs, config):
     """
     Text generation
@@ -42,6 +100,7 @@ def generate(model, origin_inputs, config):
     max_generate_length = config.max_generate_length
     seq_length = config.seq_length
     end_token = config.end_token
+    use_pynative = config.use_pynative_op
 
     _, valid_length = origin_inputs.shape
     # If target length exceeds seq_length, use seq_length instead
@@ -67,36 +126,7 @@ def generate(model, origin_inputs, config):
         log_probs = log_probs.asnumpy().reshape(1, config.vocab_size)
         log_probs_revised = log_probs - frequency_list * frequency_penalty - (frequency_list > 0) * presence_penalty
 
-        # Convert the log_probs to probability
-        logits = P.Pow()(10, Tensor(log_probs_revised, mstype.float32))
-
-        # If top_p is less than 1.0, use top_p sampling
-        if top_p < 1.0:
-            # Only consider the 5000 largest logits to reduce computation
-            sorted_logits, index = P.TopK(sorted=True)(logits, 5000)
-            cumsum_logits = P.CumSum()(sorted_logits, 1)
-            cumsum_logits = cumsum_logits.asnumpy()[0]
-            index = index.asnumpy()[0]
-            sorted_logits = sorted_logits.asnumpy()[0]
-            top_p_num = sum(cumsum_logits > top_p)
-            # In case the probability is smooth, the sum of 5000 largest probabilities are not large enough
-            if top_p_num == 0:
-                top_p_num = 5000
-            # Get the corresponding probs and indices
-            probs = sorted_logits[:top_p_num]
-            p_args = index[:top_p_num]
-            p = probs / sum(probs)
-        # if top_p is set to 1.0, use top_k sampling
-        else:
-            # Get the corresponding probs and indices
-            probs, p_args = P.TopK(sorted=True)(logits, top_k_num)
-            probs = probs.asnumpy()[0]
-            p_args = p_args.asnumpy()[0]
-            # Avoid rounding error
-            if sum(probs) == 0:
-                probs = np.array([1 / top_k_num for _ in range(top_k_num)])
-            p = probs / sum(probs)
-
+        p, p_args = sampler(log_probs_revised, top_p, top_k_num, use_pynative)
         # Random select a token as final output for this round
         target_index = np.random.choice(len(p), p=p)
         # Stop judgment
@@ -135,6 +165,7 @@ def generate_increment(model, origin_inputs, config):
     max_generate_length = config.max_generate_length
     seq_length = config.seq_length
     end_token = config.end_token
+    use_pynative = config.use_pynative_op
 
     _, valid_length = origin_inputs.shape
     # Init outputs with original inputs
@@ -161,7 +192,7 @@ def generate_increment(model, origin_inputs, config):
     # Claim the first graph
     model.predict_network.add_flags_recursive(is_first_iteration=True)
     # Call a single inference with input size of (bs, seq_length)
-    logits = model.predict(Tensor(input_ids, mstype.int32), init, batch_valid_length, current_index)
+    logits = model.predict(Tensor(input_ids, mstype.int32), current_index, init, batch_valid_length)
 
     # Claim the second graph and set not_init to true
     init = init_true
@@ -171,42 +202,13 @@ def generate_increment(model, origin_inputs, config):
     while valid_length < target_length:
         # Reshape the output logits
         logits = logits.asnumpy()
-        log_probs = logits.reshape(1, vocab_size)
+        log_probs = logits.reshape(1, config.vocab_size)
 
         # Get the revised log_probs considering frequency and presence penalty to eliminate duplicate in generated results
         log_probs = log_probs.asnumpy().reshape(1, config.vocab_size)
         log_probs_revised = log_probs - frequency_list * frequency_penalty - (frequency_list > 0) * presence_penalty
 
-        # Convert the log_probs to probability
-        logits = P.Pow()(10, Tensor(log_probs_revised, mstype.float32))
-
-        # If top_p is less than 1.0, use top_p sampling
-        if top_p < 1.0:
-            # Only consider the 5000 largest logits to reduce computation
-            sorted_logits, index = P.TopK(sorted=True)(logits, 5000)
-            cumsum_logits = P.CumSum()(sorted_logits, 1)
-            cumsum_logits = cumsum_logits.asnumpy()[0]
-            index = index.asnumpy()[0]
-            sorted_logits = sorted_logits.asnumpy()[0]
-            top_p_num = sum(cumsum_logits > top_p)
-            # In case the probability is smooth, the sum of 5000 largest probabilities are not large enough
-            if top_p_num == 0:
-                top_p_num = 5000
-            # Get the corresponding probs and indices
-            probs = sorted_logits[:top_p_num]
-            p_args = index[:top_p_num]
-            p = probs / sum(probs)
-        # if top_p is set to 1.0, use top_k sampling
-        else:
-            # Get the corresponding probs and indices
-            probs, p_args = P.TopK(sorted=True)(logits, top_k_num)
-            probs = probs.asnumpy()[0]
-            p_args = p_args.asnumpy()[0]
-            # Avoid rounding error
-            if sum(probs) == 0:
-                probs = np.array([1 / top_k_num for _ in range(top_k_num)])
-            p = probs / sum(probs)
-
+        p, p_args = sampler(log_probs_revised, top_p, top_k_num, use_pynative)
         # Random select a token as final output for this round
         target_index = np.random.choice(len(p), p=p)
         # Stop judgment

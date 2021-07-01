@@ -138,12 +138,13 @@ ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B fp16
 
 In directory serving:
 
-- Download [PanGu-Alpha tokenizer repository](https://git.openi.org.cn/PCL-Platform.Intelligence/PanGu-Alpha.git) and copy pangu-alpha/tokenizer to directory flask/tokenizer.
+- Use scripts/run_distribute_export.sh to export MindIR models, and copy all device* to serving_increment/models/.
+- Download [PanGu-Alpha tokenizer repository](https://git.openi.org.cn/PCL-Platform.Intelligence/PanGu-Alpha.git) and copy pangu-alpha/tokenizer to directory pangu/tokenizer.
 - Pip install MindSpore and MindSpore Serving 1.2 whl package.
 - Pip install flask, flask-apscheduler, jieba, sentencepiece whl package.
 - Edit server_agent.py and update the path of pangu-alpha models.
 - Run 'bash start_pangu.sh' to start new execution.
-- Wait for serving to start successfully: observe the serving_server.log file until the message "Serving master: wait for Ctrl+C to exit" is output.
+- Wait for serving to start successfully: observe the serving_server.log file until the message "Serving: gRPC server start success, listening on 127.0.0.1:5500" is output.
 - If any error happened, log can be viewed in serving_server.log, serving_agent.log and flask.log.
 - If anything all right, access address {ip}:5000 in one browser.
 - Run 'bash stop_pangu.sh' to stop the existing execution.

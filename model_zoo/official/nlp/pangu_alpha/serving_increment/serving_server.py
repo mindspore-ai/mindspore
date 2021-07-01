@@ -15,19 +15,18 @@
 """Serving server start code, serve service, and manage all agents which load and execute models"""
 
 import os
-from mindspore_serving import master
-from mindspore_serving.worker.distributed import distributed_worker as worker
+from mindspore_serving import server
+from mindspore_serving.server import distributed
 
 
 def start():
     """Start server to serve service, and manage all agents which load and execute models"""
     servable_dir = os.path.abspath(".")
 
-    worker.start_distributed_servable_in_master(servable_dir, "pangu", rank_table_json_file="hccl_8p.json",
-                                                version_number=1, worker_ip="0.0.0.0", worker_port=6200,
-                                                wait_agents_time_in_seconds=0)
+    distributed.start_servable(servable_dir, "pangu", rank_table_json_file="hccl_8p.json",
+                               distributed_address="0.0.0.0:6200")
 
-    master.start_grpc_server("127.0.0.1", 5500)
+    server.start_grpc_server("127.0.0.1:5500")
 
 
 if __name__ == "__main__":

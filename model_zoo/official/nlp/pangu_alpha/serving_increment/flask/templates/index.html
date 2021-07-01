@@ -44,7 +44,7 @@
     }
     document.getElementById('inputId').onkeydown = onTextareaKeydown;
 
-    function get_sentence(resp, sentence, count, session_id) {
+    function get_sentence(resp, sentence, session_id) {
         const payload = new URLSearchParams()
         payload.set("u", sentence)
         fetch('/query?' + payload.toString()).then(resp => resp.json()).then(rv => {
@@ -52,12 +52,9 @@
                 return;
             }
             if (rv.ok) {
-                new_sentence = sentence + rv.rsvp;
+                new_sentence = rv.rsvp;
                 resp.innerHTML = new_sentence
                 $(".output").val(resp.innerHTML);//请求结果放入输出框中
-                if (count > 0 && !rv.end_flag) {
-                    get_sentence(resp, new_sentence, count - 1, session_id)
-                }
             } else {
                 resp.innerHTML = "something is wrong.";
             }
@@ -74,7 +71,7 @@
         }
         newText = input.replace(new RegExp(/(    )/g), "").replace(/\n/g, ' NEWLINE ');
         g_session_id += 1
-        get_sentence(resp, newText, 200, g_session_id)
+        get_sentence(resp, newText, g_session_id)
     }
 </script>
 </body>
