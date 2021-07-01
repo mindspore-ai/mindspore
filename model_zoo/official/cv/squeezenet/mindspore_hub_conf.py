@@ -14,12 +14,24 @@
 # ============================================================================
 """hub config"""
 from src.squeezenet import SqueezeNet
+from src.config import config1, config2, config3, config4
 
-def squeezenet(*args, **kwargs):
+def squeezenet_net(*args, **kwargs):
     return SqueezeNet(*args, **kwargs)
 
 
 def create_network(name, *args, **kwargs):
+    dataset = kwargs.get("dataset", "cifar10")
     if name == "squeezenet":
-        return SqueezeNet(*args, **kwargs)
+        if dataset == "cifar10":
+            config = config1
+        else:
+            config = config2
+        return squeezenet_net(num_classes=config.class_num)
+    if name == "squeezenet_residual":
+        if dataset == "cifar10":
+            config = config3
+        else:
+            config = config4
+        return squeezenet_net(num_classes=config.class_num)
     raise NotImplementedError(f"{name} is not implemented in the repo")
