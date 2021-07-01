@@ -26,6 +26,7 @@ parser.add_argument("--scheduler_port", type=int, default=8113)
 parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--worker_step_num_per_iteration", type=int, default=65)
 parser.add_argument("--local_worker_num", type=int, default=-1)
+parser.add_argument("--config_file_path", type=str, default="")
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -37,6 +38,7 @@ scheduler_port = args.scheduler_port
 fl_iteration_num = args.fl_iteration_num
 worker_step_num_per_iteration = args.worker_step_num_per_iteration
 local_worker_num = args.local_worker_num
+config_file_path = args.config_file_path
 
 if local_worker_num == -1:
     local_worker_num = worker_num
@@ -56,6 +58,7 @@ for i in range(local_worker_num):
     cmd_worker += " --server_num=" + str(server_num)
     cmd_worker += " --scheduler_ip=" + scheduler_ip
     cmd_worker += " --scheduler_port=" + str(scheduler_port)
+    cmd_worker += " --config_file_path=" + str(config_file_path)
     cmd_worker += " --fl_iteration_num=" + str(fl_iteration_num)
     cmd_worker += " --worker_step_num_per_iteration=" + str(worker_step_num_per_iteration)
     cmd_worker += " > worker.log 2>&1 &"
