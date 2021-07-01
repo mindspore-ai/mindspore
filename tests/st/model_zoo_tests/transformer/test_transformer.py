@@ -27,12 +27,10 @@ from mindspore.train.callback import Callback
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 from mindspore import context
-from model_zoo.official.nlp.transformer.src.transformer_model import TransformerConfig
-from model_zoo.official.nlp.transformer.src.transformer_for_train import TransformerNetworkWithLoss, \
-    TransformerTrainOneStepWithLossScaleCell
-from model_zoo.official.nlp.transformer.src.config import cfg, transformer_net_cfg
-from model_zoo.official.nlp.transformer.src.lr_schedule import create_dynamic_lr
-
+from src.transformer_model import TransformerConfig
+from src.transformer_for_train import TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
+from src.config import cfg, transformer_net_cfg
+from src.lr_schedule import create_dynamic_lr
 from tests.st.model_zoo_tests import utils
 
 DATA_DIR = ["/home/workspace/mindspore_dataset/transformer/test-mindrecord"]
@@ -216,14 +214,14 @@ def test_transformer_export_mindir():
     export_file = "transformer80_bs_0"
     ckpt_path = os.path.join(utils.ckpt_root, "transformer/transformer_trained.ckpt")
     print("ckpt_path:", ckpt_path)
-    old_list = ["'model_file': '/your/path/checkpoint_file'"]
-    new_list = ["'model_file': '{}'".format(ckpt_path)]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/eval_config.py"))
-    old_list = ["context.set_context(device_id=args.device_id)"]
+    old_list = ["model_file: './transformer/transformer_trained.ckpt'"]
+    new_list = ["model_file: '{}'".format(ckpt_path)]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "default_config_large.yaml"))
+    old_list = ["context.set_context(device_id=get_device_id())"]
     new_list = ["context.set_context()"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "export.py"))
     exec_export_shell = "cd transformer; python -u export.py --file_name={}" \
-                        " --file_format=MINDIR".format(export_file)
+                        " --file_format=MINDIR --config_path=./default_config_large.yaml".format(export_file)
     os.system(exec_export_shell)
     assert os.path.exists(os.path.join(cur_model_path, "{}.mindir".format(export_file)))
 

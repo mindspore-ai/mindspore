@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 import mindspore.common.dtype as mstype
 import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as deC
-from .model_utils.config import config
-
+from .config import transformer_net_cfg, transformer_net_cfg_gpu
 de.config.set_seed(1)
 def create_transformer_dataset(epoch_count=1, rank_size=1, rank_id=0, do_shuffle="true", dataset_path=None,
                                bucket_boundaries=None, device_target="Ascend"):
@@ -39,8 +38,11 @@ def create_transformer_dataset(epoch_count=1, rank_size=1, rank_id=0, do_shuffle
         ds = ds.map(operations=type_cast_op, input_columns="target_eos_mask")
 
         # apply batch operations
+        if device_target == "Ascend":
+            ds = ds.batch(transformer_net_cfg.batch_size, drop_remainder=True)
+        else:
+            ds = ds.batch(transformer_net_cfg_gpu.batch_size, drop_remainder=True)
 
-        ds = ds.batch(config.batch_size, drop_remainder=True)
         ds = ds.repeat(epoch_count)
         return ds
 

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,18 +18,22 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
+import argparse
 import sys
+
 import tokenization
-from .model_utils.config import config
 
 # Explicitly set the encoding
 sys.stdin = open(sys.stdin.fileno(), mode='r', encoding='utf-8', buffering=True)
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=True)
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="recore nbest with smoothed sentence-level bleu.")
+    parser.add_argument("--vocab_file", type=str, default="", required=True, help="vocab file path.")
+    args = parser.parse_args()
 
-    tokenizer = tokenization.WhiteSpaceTokenizer(vocab_file=config.vocab_file)
+    tokenizer = tokenization.WhiteSpaceTokenizer(vocab_file=args.vocab_file)
 
     for line in sys.stdin:
         token_ids = [int(x) for x in line.strip().split()]

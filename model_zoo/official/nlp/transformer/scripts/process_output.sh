@@ -28,7 +28,7 @@ eval_output=$2
 vocab_file=$3
 
 cat $eval_output \
-  | python src/process_output.py --vocab_file $vocab_file \
+  | python src/process_output.py --config_path="./default_config_large.yaml" --vocab_file $vocab_file \
   | sed 's/@@ //g' > ${eval_output}.processed
 
 perl -ple 's/(\S)-(\S)/$1 #@#-#@# $2/g' < $ref_data | perl ${BASEDIR}/replace-quote.perl > ${ref_data}.forbleu

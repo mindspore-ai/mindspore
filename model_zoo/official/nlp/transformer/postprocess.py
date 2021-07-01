@@ -15,31 +15,25 @@
 """Transformer evaluation script."""
 
 import os
-import argparse
 import numpy as np
+from src.model_utils.config import config
 
-from src.eval_config import cfg, transformer_net_cfg
-
-parser = argparse.ArgumentParser(description='postprocess')
-parser.add_argument("--result_dir", type=str, default="./result_Files",
-                    help="infer result path.")
-args = parser.parse_args()
 
 def generate_output():
     '''
     Generate output.
     '''
     predictions = []
-    file_num = len(os.listdir(args.result_dir))
+    file_num = len(os.listdir(config.result_dir))
     for i in range(file_num):
-        batch = "transformer_bs_" + str(transformer_net_cfg.batch_size) + "_" + str(i) + "_0.bin"
-        pred = np.fromfile(os.path.join(args.result_dir, batch), np.int32)
-        predictions.append(pred.reshape(1, 1, transformer_net_cfg.max_decode_length + 1))
+        batch = "transformer_bs_" + str(config.batch_size) + "_" + str(i) + "_0.bin"
+        pred = np.fromfile(os.path.join(config.result_dir, batch), np.int32)
+        predictions.append(pred.reshape(1, 1, config.max_decode_length + 1))
 
     # decode and write to file
-    f = open(cfg.output_file, 'w')
+    f = open(config.output_file, 'w')
     for batch_out in predictions:
-        for i in range(transformer_net_cfg.batch_size):
+        for i in range(config.batch_size):
             if batch_out.ndim == 3:
                 batch_out = batch_out[:, 0]
             token_ids = [str(x) for x in batch_out[i].tolist()]

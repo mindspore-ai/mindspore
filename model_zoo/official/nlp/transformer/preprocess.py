@@ -15,23 +15,16 @@
 """Transformer evaluation script."""
 
 import os
-import argparse
-
-from src.eval_config import cfg, transformer_net_cfg
+from src.model_utils.config import config
 from eval import load_test_data
-
-parser = argparse.ArgumentParser(description='preprocess')
-parser.add_argument("--result_path", type=str, default="./preprocess_Result/",
-                    help="preprocess result path.")
-args = parser.parse_args()
 
 
 def generate_bin():
     '''
     Generate bin files.
     '''
-    dataset = load_test_data(batch_size=transformer_net_cfg.batch_size, data_file=cfg.data_file)
-    cur_dir = args.result_path
+    dataset = load_test_data(batch_size=config.batch_size, data_file=config.data_file)
+    cur_dir = config.result_path
 
     source_eos_ids_path = os.path.join(cur_dir, "00_source_eos_ids")
     source_eos_mask_path = os.path.join(cur_dir, "01_source_eos_mask")
@@ -41,7 +34,7 @@ def generate_bin():
     if not os.path.isdir(source_eos_mask_path):
         os.makedirs(source_eos_mask_path)
 
-    batch_size = transformer_net_cfg.batch_size
+    batch_size = config.batch_size
 
     for i, data in enumerate(dataset.create_dict_iterator(output_numpy=True, num_epochs=1)):
         file_name = "transformer_bs_" + str(batch_size) + "_" + str(i) + ".bin"

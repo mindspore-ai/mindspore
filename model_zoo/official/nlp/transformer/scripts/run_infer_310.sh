@@ -66,7 +66,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --result_path=./preprocess_Result/
+    python3.7 ../preprocess.py --config_path="./default_config_large.yaml" --result_path=./preprocess_Result/
 }
 
 function compile_app()
@@ -93,7 +93,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --result_dir=./result_Files &> acc.log
+    python3.7 ../postprocess.py --config_path="./default_config_large.yaml" --result_dir=./result_Files &> acc.log
 }
 
 if [ $need_preprocess == "y" ]; then

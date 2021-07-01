@@ -16,9 +16,8 @@
 
 import os
 import time
-import argparse
-import ast
 
+from easydict import EasyDict as edict
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Adam
@@ -36,21 +35,30 @@ from mindspore.common import set_seed
 from src.transformer_for_train import TransformerTrainOneStepCell, TransformerNetworkWithLoss, \
                                       TransformerTrainOneStepWithLossScaleCell, \
                                       TransformerTrainAccumulationAllReducePostWithLossScaleCell
-from src.config import cfg, transformer_net_cfg, transformer_net_cfg_gpu
 from src.dataset import create_transformer_dataset
 from src.lr_schedule import create_dynamic_lr
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
+
 
 set_seed(1)
-
 
 def get_ms_timestamp():
     t = time.time()
     return int(round(t * 1000))
 
-
 time_stamp_init = False
 time_stamp_first = 0
 
+config.dtype = mstype.float32
+config.compute_type = mstype.float16
+config.lr_schedule = edict({
+    'learning_rate': 2.0,
+    'warmup_steps': 8000,
+    'start_decay_step': 16000,
+    'min_lr': 0.0,
+    })
 
 class LossCallBack(Callback):
     """
@@ -82,7 +90,12 @@ class LossCallBack(Callback):
                                                                      cb_params.cur_epoch_num,
                                                                      cb_params.cur_step_num,
                                                                      str(cb_params.net_outputs)))
-        with open("./loss_{}.log".format(self.rank_id), "a+") as f:
+
+        loss_file = "./loss_{}.log"
+        if config.enable_modelarts:
+            loss_file = "/cache/train/loss_{}.log"
+
+        with open(loss_file.format(self.rank_id), "a+") as f:
             f.write("time: {}, epoch: {}, step: {}, loss: {}, overflow: {}, loss_scale: {}".format(
                 time_stamp_current - time_stamp_first,
                 cb_params.cur_epoch_num,
@@ -93,121 +106,90 @@ class LossCallBack(Callback):
             f.write('\n')
 
 
-def argparse_init():
-    """
-    Argparse init.
-    """
-    parser = argparse.ArgumentParser(description='transformer')
-    parser.add_argument("--distribute", type=str, default="false", choices=['true', 'false'],
-                        help="Run distribute, default is false.")
-    parser.add_argument("--epoch_size", type=int, default=52, help="Epoch size, default is 52.")
-    parser.add_argument("--device_target", type=str, default="Ascend",
-                        help="device where the code will be implemented, default is Ascend")
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-    parser.add_argument("--enable_lossscale", type=str, default="true", choices=['true', 'false'],
-                        help="Use lossscale or not, default is true.")
-    parser.add_argument("--do_shuffle", type=str, default="true", choices=['true', 'false'],
-                        help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path")
-    parser.add_argument("--enable_save_ckpt", type=str, default="true", choices=['true', 'false'],
-                        help="Enable save checkpoint, default is true.")
-    parser.add_argument("--save_checkpoint_steps", type=int, default=2500, help="Save checkpoint steps, "
-                                                                                "default is 2500.")
-    parser.add_argument("--save_checkpoint_num", type=int, default=30, help="Save checkpoint numbers, default is 30.")
-    parser.add_argument("--save_checkpoint_path", type=str, default="./", help="Save checkpoint file path")
-    parser.add_argument("--data_path", type=str, default="", help="Data path, it is better to use absolute path")
-    parser.add_argument("--bucket_boundaries", type=ast.literal_eval, default=[16, 32, 48, 64, 128],
-                        help="sequence length for different bucket")
-    parser.add_argument("--accumulation_steps", type=int, default=1, help="Gradient accumulation steps, default is 1.")
+def modelarts_pre_process():
+    config.save_checkpoint_path = config.output_path
+    config.data_path = os.path.join(config.data_path, 'ende-l128-mindrecord')
 
-    return parser
-
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_transformer_train():
     """
     Transformer training.
     """
-    parser = argparse_init()
-    args, _ = parser.parse_known_args()
-    if args.device_target == "Ascend":
-        context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+    if config.device_target == "Ascend":
+        context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+        context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
     context.set_context(reserve_class_name_in_scope=False, enable_auto_mixed_precision=False)
 
-    if args.device_target == "GPU":
+    if config.device_target == "GPU":
         # Enable graph kernel
         context.set_context(enable_graph_kernel=True, graph_kernel_flags="--enable_parallel_fusion")
-    if args.distribute == "true":
-        if args.device_target == "Ascend":
-            device_num = args.device_num
+    if config.distribute == "true":
+        if config.device_target == "Ascend":
+            device_num = config.device_num
             D.init('hccl')
         else:
             D.init('nccl')
             device_num = D.get_group_size()
             rank = get_rank()
-            args.device_id = rank
+            config.device_id = rank
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
-        rank_id = args.device_id % device_num
-        save_ckpt_path = os.path.join(args.save_checkpoint_path, 'ckpt_' + str(get_rank()) + '/')
+        rank_id = config.device_id % device_num
+        save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(get_rank()) + '/')
     else:
         device_num = 1
         rank_id = 0
-        save_ckpt_path = os.path.join(args.save_checkpoint_path, 'ckpt_0/')
+        save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_0/')
     dataset = create_transformer_dataset(epoch_count=1, rank_size=device_num,
-                                         rank_id=rank_id, do_shuffle=args.do_shuffle,
-                                         dataset_path=args.data_path,
-                                         bucket_boundaries=args.bucket_boundaries,
-                                         device_target=args.device_target)
-    if args.device_target == "Ascend":
-        netwithloss = TransformerNetworkWithLoss(transformer_net_cfg, True)
-    else:
-        netwithloss = TransformerNetworkWithLoss(transformer_net_cfg_gpu, True)
+                                         rank_id=rank_id, do_shuffle=config.do_shuffle,
+                                         dataset_path=config.data_path,
+                                         bucket_boundaries=config.bucket_boundaries,
+                                         device_target=config.device_target)
 
-    if args.checkpoint_path:
-        parameter_dict = load_checkpoint(args.checkpoint_path)
+    netwithloss = TransformerNetworkWithLoss(config, True)
+
+    if config.checkpoint_path:
+        parameter_dict = load_checkpoint(config.checkpoint_path)
         load_param_into_net(netwithloss, parameter_dict)
 
-    hidden_size = transformer_net_cfg.hidden_size if args.device_target == "Ascend" \
-        else transformer_net_cfg_gpu.hidden_size
-    learning_rate = cfg.lr_schedule.learning_rate if args.device_target == "Ascend" \
-        else 1.0
+    hidden_size = config.hidden_size
+    learning_rate = config.lr_schedule.learning_rate if config.device_target == "Ascend" else 1.0
     lr = Tensor(create_dynamic_lr(schedule="constant*rsqrt_hidden*linear_warmup*rsqrt_decay",
-                                  training_steps=dataset.get_dataset_size()*args.epoch_size,
+                                  training_steps=dataset.get_dataset_size()*config.epoch_size,
                                   learning_rate=learning_rate,
-                                  warmup_steps=cfg.lr_schedule.warmup_steps,
+                                  warmup_steps=config.lr_schedule.warmup_steps,
                                   hidden_size=hidden_size,
-                                  start_decay_step=cfg.lr_schedule.start_decay_step,
-                                  min_lr=cfg.lr_schedule.min_lr), mstype.float32)
+                                  start_decay_step=config.lr_schedule.start_decay_step,
+                                  min_lr=config.lr_schedule.min_lr), mstype.float32)
 
-    if args.device_target == "GPU" and cfg.transformer_network == "large":
-        optimizer = Adam(netwithloss.trainable_params(), lr, beta2=cfg.optimizer_adam_beta2)
+    if config.device_target == "GPU" and config.transformer_network == "large":
+        optimizer = Adam(netwithloss.trainable_params(), lr, beta2=config.optimizer_adam_beta2)
     else:
         optimizer = Adam(netwithloss.trainable_params(), lr)
 
     callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack(rank_id=rank_id)]
-    if args.enable_save_ckpt == "true":
+    if config.enable_save_ckpt == "true":
         if device_num == 1 or (device_num > 1 and rank_id == 0):
-            if args.device_target == "Ascend":
-                ckpt_config = CheckpointConfig(save_checkpoint_steps=args.save_checkpoint_steps,
-                                               keep_checkpoint_max=args.save_checkpoint_num)
+            if config.device_target == "Ascend":
+                ckpt_config = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
+                                               keep_checkpoint_max=config.save_checkpoint_num)
             else:
                 ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset.get_dataset_size(),
-                                               keep_checkpoint_max=args.save_checkpoint_num)
+                                               keep_checkpoint_max=config.save_checkpoint_num)
             ckpoint_cb = ModelCheckpoint(prefix='transformer', directory=save_ckpt_path, config=ckpt_config)
             callbacks.append(ckpoint_cb)
 
-    if args.enable_lossscale == "true":
-        scale_manager = DynamicLossScaleManager(init_loss_scale=cfg.init_loss_scale_value,
-                                                scale_factor=cfg.scale_factor,
-                                                scale_window=cfg.scale_window)
+    if config.enable_lossscale == "true":
+        scale_manager = DynamicLossScaleManager(init_loss_scale=config.init_loss_scale_value,
+                                                scale_factor=config.scale_factor,
+                                                scale_window=config.scale_window)
         update_cell = scale_manager.get_update_cell()
-        if args.accumulation_steps > 1:
+        if config.accumulation_steps > 1:
             netwithgrads = TransformerTrainAccumulationAllReducePostWithLossScaleCell(netwithloss, optimizer,
                                                                                       update_cell,
-                                                                                      args.accumulation_steps)
+                                                                                      config.accumulation_steps)
         else:
             netwithgrads = TransformerTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,
                                                                     scale_update_cell=update_cell)
@@ -217,7 +199,7 @@ def run_transformer_train():
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
 
-    model.train(args.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=False)
+    model.train(config.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=False)
 
 
 if __name__ == '__main__':
