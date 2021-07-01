@@ -31,6 +31,8 @@ function Run_Hi3516() {
         export TIME_STEP=${env_time_step}
         export MAX_ROI_NUM=${env_max_roi_num}
 
+        chmod +x ./providers/Hi3516D/benchmark
+
         echo './benchmark --modelFile='${basepath}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${basepath}'/../input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_hi3516_log_file}"
         ./benchmark --modelFile=${basepath}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${basepath}/../input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_hi3516_log_file}"
         if [ $? = 0 ]; then
