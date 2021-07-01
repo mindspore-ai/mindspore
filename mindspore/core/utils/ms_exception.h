@@ -94,7 +94,6 @@ class StaticAnalysisException {
     std::lock_guard<std::mutex> lock(lock_);
     if (exception_ptr_ != nullptr) {
       auto tmp_exception_ptr = exception_ptr_;
-      exception_ptr_ = nullptr;
       std::rethrow_exception(tmp_exception_ptr);
     }
   }

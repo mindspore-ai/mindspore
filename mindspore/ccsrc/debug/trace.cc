@@ -504,11 +504,11 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     MS_LOG(INFO) << "Length of analysis information stack is empty.";
     return;
   }
-
-  string file_name = "analyze_fail.dat";
+  static int fileNumber = 0;
+  string file_name = "analyze_fail" + std::to_string(fileNumber++) + ".dat";
   auto ms_om_path = common::GetEnv("MS_OM_PATH");
   if (!ms_om_path.empty()) {
-    auto path = ms_om_path + "/" + "analyze_fail.dat";
+    auto path = ms_om_path + "/" + file_name;
     auto realpath = Common::GetRealPath(path);
     if (!realpath.has_value()) {
       MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
