@@ -8306,6 +8306,100 @@ def _deconv_output_length(input_length, kernel_size, stride_size, dilation_size)
     return length
 
 
+class CTCLossV2(Primitive):
+    """
+    Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
+
+    The CTC algorithm is proposed in `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
+    Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
+
+    Args:
+        blank (int): The blank label. Default: 0.
+        reduction (string): Apply specific reduction method to the output. Currently only support 'none'.
+          Default: "none".
+        zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
+
+    Inputs:
+        - **log_probs** (Tensor) - A tensor of shape (T, N, C), where T is input length, N is batch size and C is number
+            of classes (including blank).
+        - **targets** (Tensor) - A tensor of shape (N, S), where S is max target length, means the target sequences.
+        - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the input.
+        - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the target.
+
+    Outputs:
+        - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.
+        - **log_alpha** (Tensor) - The probability of possible trace of input to target.
+
+    Raises:
+        TypeError: If `zero_infinity` is not a bool, reduction is not string.
+
+    Supported Platforms:
+
+    """
+
+    @prim_attr_register
+    def __init__(self, blank, reduction="none", zero_infinity=False):
+        """Initialize CTCLossV2"""
+        self.init_prim_io_names(inputs=["log_probs", "targets", "input_lengths", "target_lengths"],
+                                outputs=["neg_log_likelihood", "log_alpha"])
+        validator.check_value_type("blank", blank, [int], self.name)
+        self.add_prim_attr("blank", blank)
+        validator.check_value_type("reduction", reduction, [str], self.name)
+        self.reduction = self.reduction.lower()
+        validator.check_string(self.reduction, ['none'], 'reduction', self.name)
+        self.add_prim_attr("reduction", self.reduction)
+        validator.check_value_type("zero_infinity", zero_infinity, [bool], self.name)
+        self.add_prim_attr("zero_infinity", zero_infinity)
+
+
+class CTCLossV2Grad(Primitive):
+    """
+    Calculates the gradient of CTC (Connectionist Temporal Classification) loss.
+
+    The CTC algorithm is proposed in `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
+    Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
+
+    Args:
+        blank (int): The blank label. Default: 0.
+        reduction (string): Apply specific reduction method to the output. Currently only support 'none'.
+          Default: "none".
+        zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
+
+    Inputs:
+        - **grad_out** (Tenosr) - Gradient renewal codfficient, A tensor for shape (N), where N is batch size.
+        - **log_probs** (Tensor) - A tensor of shape (T, N, C), where T is input length, N is batch size and C is number
+            of classes (including blank).
+        - **targets** (Tensor) - A tensor of shape (N, S), where S is max target length, means the target sequences.
+        - **input_lengths** (Union(tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the input.
+        - **target_lengths** (Union(tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the target.
+        - **log_alpha** (Tensor) - The probability of possible trace of input to target.
+        - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.
+
+    Outputs:
+        - **grad** (Tensor) - The grad of Connectionist Temporal Classification Loss
+
+    Raises:
+        TypeError: If `zero_infinity` is not a bool, reduction is not string.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, blank, reduction="none", zero_infinity=False):
+        """Initialize CTCLossV2Grad"""
+        self.init_prim_io_names(inputs=["grad_out", "log_probs", "targets", "input_lengths", "target_lengths",
+                                        "neg_log_likelihood", "log_alpha"],
+                                outputs=["grad"])
+        validator.check_value_type("blank", blank, [int], self.name)
+        self.add_prim_attr("blank", blank)
+        validator.check_value_type("reduction", reduction, [str], self.name)
+        self.add_prim_attr("reduction", reduction)
+        validator.check_value_type("zero_infinity", zero_infinity, [bool], self.name)
+        self.add_prim_attr("zero_infinity", zero_infinity)
+
+
+
 class Conv3DTranspose(PrimitiveWithInfer):
     r"""
     Computes a 3D transposed convolution, which is also known as a deconvolution

@@ -70,7 +70,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      DropoutDoMask, Dropout, Dropout2D, Dropout3D, DropoutGenMask, Flatten,
                      InstanceNorm, BNTrainingReduce, BNTrainingUpdate,
                      GeLU, Gelu, FastGeLU, FastGelu, Elu,
-                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCGreedyDecoder,
+                     GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCLossV2, CTCLossV2Grad, CTCGreedyDecoder,
                      LogSoftmax, MaxPool3D, AvgPool3D,
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
