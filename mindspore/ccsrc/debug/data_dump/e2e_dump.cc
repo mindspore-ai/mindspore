@@ -220,6 +220,11 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
     dump_name = std::string("cst") + std::to_string(iter->second);
   }
 
+  // Some parameter nodes have no name. Take the whole string value as the name when dumpping if it's missing.
+  if (dump_name.empty()) {
+    dump_name = anf_node->ToString();
+  }
+
   if (!dump_json_parser.NeedDump(node_name)) {
     return;
   }

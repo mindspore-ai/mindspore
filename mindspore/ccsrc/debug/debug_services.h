@@ -253,9 +253,9 @@ class DebugServices {
   void ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
                               const std::string &specific_dump_dir, std::vector<std::string> *result_list);
 
-  void GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump, uint32_t iteration,
-                              uint32_t device_id, uint32_t root_graph_id,
-                              const std::vector<std::string> &async_file_pool,
+  void GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
+                              const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,
+                              uint32_t root_graph_id, const std::vector<std::string> &async_file_pool,
                               std::vector<std::shared_ptr<TensorData>> *tensor_list);
 
   std::string GetStrippedFilename(const std::string &file_name);

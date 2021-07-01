@@ -599,8 +599,8 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
 }
 
 void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
-                                           uint32_t iteration, uint32_t device_id, uint32_t root_graph_id,
-                                           const std::vector<std::string> &async_file_pool,
+                                           const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,
+                                           uint32_t root_graph_id, const std::vector<std::string> &async_file_pool,
                                            std::vector<std::shared_ptr<TensorData>> *tensor_list) {
   for (auto &node : proto_dump) {
     std::vector<size_t> slot_list;
@@ -617,7 +617,8 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
       std::size_t found_dot_start = file_name.find(".", found_out);
       std::size_t found_dot_end = file_name.find(".", found_dot_start);
 
-      if (found != std::string::npos && found_out != std::string::npos) {
+      if (file_name.find(specific_dump_dir) != std::string::npos && found != std::string::npos &&
+          found_out != std::string::npos) {
         slot_list.push_back(std::stoul(file_name.substr(found_dot_start + 1, found_dot_end - found_dot_start - 1)));
       }
     }
@@ -751,7 +752,8 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       // if async mode
       for (const std::string &file_path : async_file_pool) {
         std::string stripped_file_name = GetStrippedFilename(file_path);
-        if (stripped_file_name.find(prefix_dump_file_name) != std::string::npos) {
+        if (file_path.find(specific_dump_dir) != std::string::npos &&
+            stripped_file_name.find(prefix_dump_file_name) != std::string::npos) {
           found = true;
           shape.clear();
           ReadTensorFromNpy(file_path, &type_name, &data_size, &shape, &buffer);
@@ -886,7 +888,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
         }
       }
     } else {
-      GetTensorDataInfoAsync(proto_to_dump, iteration, device_id, root_graph_id, *async_file_pool, &tensor_list);
+      GetTensorDataInfoAsync(proto_to_dump, specific_dump_dir, iteration, device_id, root_graph_id, *async_file_pool,
+                             &tensor_list);
     }
   }
 
