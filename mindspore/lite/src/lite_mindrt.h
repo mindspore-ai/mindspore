@@ -94,7 +94,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   kernel::LiteKernel *partial_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_; /* <calculate-tensor,  src-input-tensor> */
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   bool support_fp16_ = false;
+#endif
 };
 
 class LiteSwitchOpActor : public LiteOpActor {
