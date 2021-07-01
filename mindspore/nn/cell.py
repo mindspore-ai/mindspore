@@ -208,6 +208,10 @@ class Cell(Cell_):
 
     @property
     def parameter_layout_dict(self):
+        """
+        `parameter_layout_dict` represents the tensor layout of a parameter, which is inferred by shard strategy and
+        distributed operator information.
+        """
         return self._parameter_layout_dict
 
     @property
