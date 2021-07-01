@@ -76,8 +76,6 @@ class Model:
                              elements, including the positions of loss value, predicted value and label. The loss
                              value would be passed to the `Loss` metric, the predicted value and label would be passed
                              to other metric. Default: None.
-
-        Args:
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network` , level for mixed
             precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
 
