@@ -494,13 +494,18 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph) {
       return;
     }
 
-    subgraph->nodes_.push_back(node_index);
-
     /* include this multy-in-unit in current subgraph */
     std::vector<Subgraph> &subs = subs_iter->second;
-    std::set<uint32_t> subs_head;
+
+    /* insert nodes */
+    subgraph->nodes_.push_back(node_index);
     for (Subgraph &sub : subs) {
       subgraph->nodes_.insert(subgraph->nodes_.end(), sub.nodes_.begin(), sub.nodes_.end());
+    }
+
+    /* insert heads */
+    std::set<uint32_t> subs_head;
+    for (Subgraph &sub : subs) {
       for (uint32_t head : sub.heads_) {
         subs_head.insert(head);
       }
@@ -570,13 +575,17 @@ void SearchSubGraph::InitMiddleSubgraph(std::vector<uint32_t> *multy_in_nodes) {
 
       std::vector<uint32_t> input_nodes = tensor->out_nodes_;
       if (input_nodes.empty()) continue;
+      if (input_nodes.size() != 1) continue;
+      uint32_t input_node = input_nodes[0];
 
       Subgraph sub;
-      sub.ends_.push_back(input_nodes[0]);
-      InsertNodeByMid(input_nodes[0], &sub);
+      sub.ends_.push_back(input_node);
+      InsertNodeByMid(input_node, &sub);
       node_subs.push_back(sub);
     }
-    node_sub_map_.insert(std::make_pair(node_index, node_subs));
+    if (!node_subs.empty()) {
+      node_sub_map_.insert(std::make_pair(node_index, node_subs));
+    }
   }
   return;
 }
@@ -712,6 +721,7 @@ void SearchSubGraph::SubgraphFusion(std::vector<Subgraph> *sub_graphs) {
     new_sub.device_ = sub_graphs->at(sub1_index).device_;
     new_sub.thread_ = sub_graphs->at(sub1_index).thread_;
     new_sub.tid_ = sub_graphs->at(sub1_index).tid_;
+    new_sub.cost_ = sub_graphs->at(sub1_index).cost_ + sub_graphs->at(sub2_index).cost_;
 
     Subgraph &sub1 = sub_graphs->at(sub1_index);
     Subgraph &sub2 = sub_graphs->at(sub2_index);
@@ -751,6 +761,10 @@ void SearchSubGraph::CalculateCostModel(std::vector<Subgraph> *sub_graphs) {
 }
 
 void SearchSubGraph::SubGraphSplitByOutput() {
+  if (output_nodes_->size() < kDefalutSubGraphSize) {
+    return;
+  }
+
   InitSearchSubGraphByOutput();
   CalculateCostModel(&sub_graphs_);
   InitSubgraphRuntimeInfo(&sub_graphs_);
@@ -758,6 +772,12 @@ void SearchSubGraph::SubGraphSplitByOutput() {
   for (Subgraph &sub : sub_graphs_) {
     CheckSubHeadEnd(&sub);
   }
+
+  if (sub_graphs_.at(kDefalutFirstSubgraph).cost_.cost() < kMinSubgraphCost ||
+      sub_graphs_.at(kDefalutSecondSubgraph).cost_.cost() < kMinSubgraphCost) {
+    return;
+  }
+
   ConvertSubGraphToModel(&sub_graphs_);
 }
 
@@ -782,7 +802,8 @@ void SearchSubGraph::SubGraphSplitByMiddle() {
 
     /* redo cost-model and pre-set-info after optimize */
     CalculateCostModel(&subgraphs);
-    if (subgraphs.at(0).cost_.cost() == 0 || subgraphs.at(1).cost_.cost() == 0) {
+    if (subgraphs.at(kDefalutFirstSubgraph).cost_.cost() < kMinSubgraphCost ||
+        subgraphs.at(kDefalutSecondSubgraph).cost_.cost() < kMinSubgraphCost) {
       continue;
     }
 
@@ -980,6 +1001,9 @@ void SearchSubGraph::CheckSubHeadEnd(Subgraph *sub) {
 bool SearchSubGraph::ValidInParallel() {
   Model::Node *front_node = model_->all_nodes_.at(0);
   if (front_node->quant_type_ != schema::QuantType_QUANT_NONE) {
+    return false;
+  }
+  if (major_dt_ == DT_NPU) {
     return false;
   }
   return true;
