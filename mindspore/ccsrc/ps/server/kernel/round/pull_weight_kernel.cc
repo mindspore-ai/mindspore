@@ -69,7 +69,7 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
   if (pull_weight_iter != current_iter) {
     std::string reason = "PullWeight iteration " + std::to_string(pull_weight_iter) +
                          " is invalid. Server current iteration: " + std::to_string(current_iter);
-    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, current_iter, feature_maps);
+    BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
     MS_LOG(WARNING) << reason;
     return;
   }
@@ -83,7 +83,7 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
     retry_count_++;
     std::string reason = "The aggregation for the weights is not done yet.";
     BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
-    if (retry_count_ % 10 == 0) {
+    if (retry_count_ % kPrintPullWeightForEveryRetryTime == 0) {
       MS_LOG(WARNING) << reason << " Retry count is " << retry_count_;
     }
     return;
