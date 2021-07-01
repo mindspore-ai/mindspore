@@ -2287,6 +2287,7 @@ class Concat(PrimitiveWithInfer):
     :math:`i`-th tensor. Then, the shape of the output tensor is
 
     .. math::
+
         (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
 
     Args:
@@ -3383,7 +3384,7 @@ class Eye(PrimitiveWithInfer):
         - **n** (int) - The number of rows of returned tensor. only constant value.
         - **m** (int) - The number of columns of returned tensor. only constant value.
         - **t** (mindspore.dtype) - MindSpore's dtype, The data type of the returned tensor.
-            The data type can be Number.
+          The data type can be Number.
 
     Outputs:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
@@ -3452,12 +3453,12 @@ class ScatterNd(PrimitiveWithInfer):
         - **indices** (Tensor) - The index of scattering in the new tensor with int32 or int64 data type.
           The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The source Tensor to be scattered.
-            It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
+          It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
         - **shape** (tuple[int]) - Define the shape of the output tensor, has the same data type as indices.
-            The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and length of 'shape' is greater than or equal 2.
-            In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
-            And the value of any element in `shape` must be greater than or equal 1.
-            In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
+          The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and length of 'shape' is greater than or equal 2.
+          In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
+          And the value of any element in `shape` must be greater than or equal 1.
+          In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
 
     Outputs:
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
@@ -3599,9 +3600,9 @@ class GatherNd(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor to gather values.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index tensor, with int32 or int64 data type.
-            The dimension of `indices` should be <= the dimension of `input_x`.
+          The dimension of `indices` should be <= the dimension of `input_x`.
 
     Outputs:
         Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
@@ -3655,12 +3656,12 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-            The data type is Number.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The data type is Number.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-            The rank must be at least 2.
+          The rank must be at least 2.
         - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
-            and update.shape = indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and update.shape = indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -3791,11 +3792,11 @@ class ScatterUpdate(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor. With int32 data type.
-            If there are duplicates in indices, the order for updating is undefined.
+          If there are duplicates in indices, the order for updating is undefined.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-            and updates.shape = indices.shape + input_x.shape[1:].
+          and updates.shape = indices.shape + input_x.shape[1:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -3853,10 +3854,10 @@ class ScatterNdUpdate(_ScatterNdOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor, with int32 data type.
         - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
-            The shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+          The shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -3918,10 +3919,10 @@ class ScatterMax(_ScatterOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do max operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor that performs the maximum operation with `input_x`,
-            the data type is the same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is the same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -3971,10 +3972,10 @@ class ScatterMin(_ScatterOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-            the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -4026,10 +4027,10 @@ class ScatterAdd(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-            the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -4135,10 +4136,10 @@ class ScatterSub(_ScatterOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-            the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -4237,10 +4238,10 @@ class ScatterMul(_ScatterOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-            the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -4339,10 +4340,10 @@ class ScatterDiv(_ScatterOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-            the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -4447,11 +4448,11 @@ class ScatterNdAdd(_ScatterNdOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
-            The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
+          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-            the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -4524,11 +4525,11 @@ class ScatterNdSub(_ScatterNdOp):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor, with int32 data type.
-            The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
+          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
-            The shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+          The shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -4648,7 +4649,7 @@ class SpaceToDepth(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the same data type as `x`. It must be a 4-D tensor.Tensor of shape
-         :math:`(N, ( C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})`.
+          :math:`(N, ( C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})`.
 
     Raises:
         TypeError: If `block_size` is not an int.
@@ -4713,7 +4714,7 @@ class DepthToSpace(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The target tensor. It must be a 4-D tensor with shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-            The data type is Number.
+          The data type is Number.
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} / \text{block_size} ^ 2, H_{in} * \text{block_size},
