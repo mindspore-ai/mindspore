@@ -2294,7 +2294,7 @@ std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const 
 
   std::vector<uint32_t> bucket_size_list;
   uint32_t old_index = 0;
-  for (auto &index : split_index) {
+  for (const auto &index : split_index) {
     if (old_index == 0) {
       bucket_size_list.emplace_back(index - old_index + 1);
     } else {
@@ -2307,11 +2307,11 @@ std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const 
 
 void CheckSplitIndexValid(const vector<uint32_t> &split_index) {
   uint32_t last = 0;
-  for (auto &index : split_index) {
-    if (index <= last) {
+  for (size_t i = 0; i < split_index.size(); ++i) {
+    if (split_index[i] <= last && i != 0) {
       MS_LOG(EXCEPTION) << "Invalid split index:" << split_index;
     }
-    last = index;
+    last = split_index[i];
   }
 }
 
@@ -2327,10 +2327,8 @@ void PreProcessOnSplitIndex(const KernelGraphPtr &graph, vector<uint32_t> *split
   // obtain graph output tensor num
   auto grads_count = GetBpropGraphGradsCount(graph);
   if (split_index_num >= grads_count) {
-    MS_LOG(WARNING) << "Invalid all_reduce_fusion_config:" << *split_index << " total grads count:" << grads_count
-                    << ". AllReduces are fused into one AllReduce.";
-    split_index->clear();
-    split_index->push_back(grads_count);
+    MS_LOG(EXCEPTION) << "Invalid all_reduce_fusion_config:" << *split_index
+                      << ". fusion index should be smaller than:" << grads_count;
   } else if (split_index_num < grads_count - 1) {
     split_index->push_back(grads_count - 1);
   }
@@ -2360,8 +2358,8 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::Devi
   PreProcessOnSplitIndex(graph, &split_index);
   auto bucket_size_list = GenerateBucketSizeList(graph, split_index);
   uint32_t bucket_id = 0;
-  for (auto bucket_size : bucket_size_list) {
-    MS_LOG(INFO) << "Create new bucket:" << bucket_id;
+  for (const auto &bucket_size : bucket_size_list) {
+    MS_LOG(INFO) << "Create new bucket:" << bucket_id << " size:" << bucket_size;
     std::shared_ptr<device::Bucket> bucket = nullptr;
     if (device_context != nullptr) {
       bucket = device_context->CreateBucket(bucket_id++, bucket_size);
