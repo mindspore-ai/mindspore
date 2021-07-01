@@ -194,7 +194,7 @@ void FLWorker::ProcessBeforeScalingIn() {
 }
 
 void FLWorker::ProcessAfterScalingOut() {
-  if (worker_node_ = nullptr) {
+  if (worker_node_ == nullptr) {
     return;
   }
 
@@ -208,7 +208,7 @@ void FLWorker::ProcessAfterScalingOut() {
 }
 
 void FLWorker::ProcessAfterScalingIn() {
-  if (worker_node_ = nullptr) {
+  if (worker_node_ == nullptr) {
     return;
   }
 

@@ -76,7 +76,7 @@ bool PushWeightKernel::PushWeight(std::shared_ptr<FBBuilder> fbb, const schema::
   if (iteration != current_iter) {
     std::string reason = "PushWeight iteration number is invalid:" + std::to_string(iteration) +
                          ", current iteration:" + std::to_string(current_iter);
-    BuildPushWeightRsp(fbb, schema::ResponseCode_OutOfTime, reason, current_iter);
+    BuildPushWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter);
     MS_LOG(WARNING) << reason;
     return true;
   }

@@ -38,7 +38,7 @@ class FusedPushWeightKernel : public CPUKernel {
   ~FusedPushWeightKernel() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    MS_LOG(INFO) << "Launch FusedPushWeightKernel.";
+    MS_LOG(DEBUG) << "Launch FusedPushWeightKernel.";
     if (inputs.size() != weight_full_names_.size()) {
       MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but FusedPushWeightKernel needs "
                         << weight_full_names_.size() << " weights as inputs.";
@@ -50,7 +50,8 @@ class FusedPushWeightKernel : public CPUKernel {
 
     total_iteration_++;
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
-    if (total_iteration_ % ps::kWorkerTrainStepNum != ps::kTrainBeginStepNum) {
+    if (total_iteration_ % ps::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
+        ps::kTrainBeginStepNum) {
       return true;
     }
 

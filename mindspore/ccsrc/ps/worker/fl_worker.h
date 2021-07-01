@@ -31,9 +31,7 @@ namespace mindspore {
 namespace ps {
 using FBBuilder = flatbuffers::FlatBufferBuilder;
 
-// The worker standalone training step number(Without communicating with server).
-// This is used in hybrid training mode.
-constexpr uint32_t kWorkerTrainStepNum = 20 * 65;
+// The step number for worker to judge whether to communicate with server.
 constexpr uint32_t kTrainBeginStepNum = 1;
 constexpr uint32_t kTrainEndStepNum = 0;
 
