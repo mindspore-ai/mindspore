@@ -17,8 +17,16 @@
 # eval script
 SRC_NUM=4
 VIEW_NUM=$[${SRC_NUM}+1]
-DATAPATH="./data/blendedmvs/dataset_low_res"
 
-python -u validate.py --root_dir ${DATAPATH} --dataset_name blendedmvs --save_visual --img_wh 768 576 --n_views ${VIEW_NUM} --n_depths 32 16 8 --interval_ratios 4.0 2.0 1.0 --levels 3 --split val --gpu_id 0 > log.txt 2>&1 &
+if [ $# != 2 ]
+then
+    echo "Usage: sh eval.sh [DATA_PATH] [GPU_ID]"
+exit 1
+fi
+
+DATA_PATH=$1
+GPU_ID=$2
+
+python -u validate.py --root_dir "${DATA_PATH}/dataset_low_res" --dataset_name blendedmvs --save_visual --img_wh 768 576 --n_views ${VIEW_NUM} --n_depths 32 16 8 --interval_ratios 4.0 2.0 1.0 --levels 3 --split val --gpu_id ${GPU_ID} > log.txt 2>&1 &
 
 cd ..
