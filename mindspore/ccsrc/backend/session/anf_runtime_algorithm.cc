@@ -1013,7 +1013,7 @@ bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->inputs().size() > 1) {
       auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(cnode, 0);
-      return OutputAddrExist(kernel_with_index.first, kernel_with_index.second);
+      return OutputAddrExist(kernel_with_index.first, kernel_with_index.second, visit_nop_node);
     }
     return false;
   }
