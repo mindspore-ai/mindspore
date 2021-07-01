@@ -174,7 +174,8 @@ def run_train(args_opt):
     # Dataset loading mindrecord files
     ds = create_dataset(config.batch_size, data_path=cache_url,
                         data_start_index=0, eod_reset=config.eod_reset, full_batch=bool(args_opt.full_batch),
-                        eod_id=args_opt.eod_id, device_num=device_num, rank=rank, epoch=epoch_num)
+                        eod_id=args_opt.eod_id, device_num=device_num, rank=rank,
+                        column_name=args_opt.data_column_name, epoch=epoch_num)
     step_per_epoch = ds.get_dataset_size()
     callback_size = args_opt.sink_size
     actual_epoch_num = int(epoch_num * step_per_epoch / callback_size)
@@ -269,7 +270,7 @@ def run_train_pipeline(args_opt):
     else:
         optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, beta1=0.9, beta2=0.95, eps=1e-8)
     ds = create_dataset(config.batch_size, data_path=args_opt.data_url, eod_reset=True,
-                        data_start_index=0, full_batch=True)
+                        data_start_index=0, full_batch=True, column_name=args_opt.data_column_name)
     epoch_num = args_opt.epoch_size
     step_per_epoch = ds.get_dataset_size()
     callback_size = args_opt.sink_size

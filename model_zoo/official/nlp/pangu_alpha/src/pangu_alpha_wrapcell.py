@@ -183,14 +183,11 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         self.get_status = P.NPUGetFloatStatus().add_prim_attr("_side_effect_flag", False)
         self.clear_before_grad = P.NPUClearFloatStatus().add_prim_attr("_side_effect_flag", False)
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        #self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
         self.loss_scale = None
         self.reshape = P.Reshape()
-        #self.control = P.ControlDepend(1)
-        #self.clip_norm = Tensor(1000.0, mstype.float32)
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
@@ -216,7 +213,6 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         # alloc status and clear should be right before gradoperation
         init = self.alloc_status()
         status_clear = self.clear_before_grad(init)
-        #clear_depend = self.control(status_clear, self.weights)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_position,
                                                  attention_mask,
