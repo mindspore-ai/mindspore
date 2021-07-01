@@ -74,6 +74,9 @@ class _SharedQueue(multiprocessing.queues.Queue):
             name_list = []
             count = 0
             start_bytes = 0
+            if not isinstance(data, tuple) and not isinstance(data, np.ndarray):
+                raise TypeError("return value of user defined python function in GeneratorDataset or"
+                                " map should be numpy array or tuple of numpy array.")
             for r in data:
                 if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
                         and start_bytes + r.nbytes < self.seg_size):
