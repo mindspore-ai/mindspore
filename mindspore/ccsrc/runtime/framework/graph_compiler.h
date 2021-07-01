@@ -101,6 +101,8 @@ class GraphCompiler {
   // operator.
   void ClearAllBucket(const GraphId &graph_id);
 
+  const std::vector<KernelWithIndex> &GetGraphOutputNodes(GraphId graph_id) const;
+
   // Register a summary callback function, which is called in the final stages of summary.
   void RegisterSummaryCallBackFunc(const CallBackFunc &callback) const;
   // Execute graph summary.
@@ -118,6 +120,8 @@ class GraphCompiler {
 
   // Single op kernel graph cache for PyNative mode.
   std::unordered_map<GraphInfo, KernelGraphPtr> run_op_graphs_;
+  // Single op kernel graph output nodes cache for PyNative mode.
+  std::unordered_map<GraphId, std::vector<KernelWithIndex>> run_op_graph_output_nodes_;
 
   // The member variable 'session_' will be removed after removing session module.
   // Now all the GraphCompiler share the same 'session_'.

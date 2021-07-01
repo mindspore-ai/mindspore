@@ -180,21 +180,69 @@ void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, OpRunInfo *op_run_
   }
 }
 
-void ClearDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
+  // when infer type is not equal to device type.
+  auto type_id = AnfAlgo::GetOutputInferDataType(output_node, output_index);
+  std::vector<int64_t> temp_shape;
+  const auto &shape = AnfAlgo::GetOutputInferShape(output_node, output_index);
+  (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
+  auto tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
+
+  // Put device tensor into host tensor.
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  tensor->set_device_address(device_tensor);
+
+  return tensor;
+}
+
+void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
+  for (auto &item_with_index : output_nodes) {
+    MS_EXCEPTION_IF_NULL(item_with_index.first);
+    // if is graph return nothing ,the function should return a null anylist
+    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
+      continue;
+    }
+    outputs->emplace_back(CreateOutputTensor(item_with_index.first, item_with_index.second));
+  }
+}
+
+void UpdateOutputDeviceAddress(const std::vector<session::KernelWithIndex> &output_nodes,
+                               const DeviceContext *device_context) {
+  for (auto &item_with_index : output_nodes) {
+    auto &output_node = item_with_index.first;
+    auto output_index = item_with_index.second;
+    if (output_node != nullptr) {
+      if (!AnfAlgo::OutputAddrExist(output_node, output_index, false)) {
+        continue;
+      }
+      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+
+      if ((device_tensor == nullptr) || (device_tensor->GetPtr() == nullptr)) {
+        continue;
+      }
+
+      MS_EXCEPTION_IF_NULL(device_context);
+      auto new_device_tensor = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
+                                                                   device_tensor->format(), device_tensor->type_id());
+      MS_EXCEPTION_IF_NULL(new_device_tensor);
+      new_device_tensor->set_original_ref_count(device_tensor->original_ref_count());
+      new_device_tensor->ResetRefCount();
+      AnfAlgo::SetOutputAddr(new_device_tensor, output_index, output_node.get());
+    }
+  }
+}
+
+void UpdateInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   for (const auto &node : graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
-      auto old_device_address = AnfAlgo::GetMutableOutputAddr(node, 0, false);
-      MS_EXCEPTION_IF_NULL(old_device_address);
-
-      auto new_device_tensor = device_context->CreateDeviceAddress(
-        nullptr, old_device_address->GetSize(), old_device_address->format(), old_device_address->type_id());
-      MS_EXCEPTION_IF_NULL(new_device_tensor);
-      new_device_tensor->set_original_ref_count(old_device_address->original_ref_count());
-      new_device_tensor->ResetRefCount();
-      AnfAlgo::SetOutputAddr(new_device_tensor, 0, node.get());
+      AnfAlgo::SetOutputAddr(nullptr, 0, node.get());
     }
   }
 }
@@ -460,7 +508,6 @@ void RunControlOperator(const KernelGraphPtr &graph, const AnfNodePtr &kernel, s
   if (!front_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "The front node of bprop_cut is not CNode";
   }
-
   CNodePtr cnode = front_node->cast<CNodePtr>();
   const std::vector<AnfNodePtr> &node_inputs = cnode->inputs();
   if (node_inputs.empty()) {
@@ -499,15 +546,16 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
     std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
-
     std::map<AnfNodePtr, size_t> parameter_index;
     GraphOutputInfo graph_output_info;
     graph_output_info.graph_outputs = outputs;
     graph_compiler_->GetParamAndOutputIndex(graph, inputs[graph_index], outputs, &parameter_index,
                                             &graph_output_info.output_indexes);
 
-    std::map<KernelWithIndex, size_t> cnode_ref_count;
-    graph_compiler_->CalculateRefCount(graph, &cnode_ref_count);
+    std::map<KernelWithIndex, size_t> &cnode_ref_count = cnode_ref_counts_[graph->graph_id()];
+    if (cnode_ref_count.empty()) {
+      graph_compiler_->CalculateRefCount(graph, &cnode_ref_count);
+    }
 
     // Clear bucket resources every step
     if (graph->is_bprop()) {
@@ -801,46 +849,44 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
     }
   }
 
-  mindspore::ScopedLongRunning long_running;
-
   for (auto &tensor : tensors_without_value_node) {
     if (tensor->NeedWaitDevice()) {
       tensor->WaitDevice();
     }
   }
 
-  runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, {tensors_without_value_node});
+  runtime::GraphScheduler::GetInstance().PrepareRunOp(actor_set, graph_compiler_info, {tensors_without_value_node});
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set, runtime::GraphExecutionStrategy::kStep, input_tensors)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
 
   // Fetch outputs.
+  const auto &graph = graph_compiler_info.graphs_.front();
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &output_nodes = graph_compiler_->GetGraphOutputNodes(graph->graph_id());
   MS_EXCEPTION_IF_NULL(outputs);
-  MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
-  auto &output_tensors = actor_set->output_actor_->outputs();
-  (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(outputs->elements_),
-                       [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+  UpdateOutput(output_nodes, outputs);
 
   // Update output abstract of dynamic op to op_run_info
   if (op_run_info->is_dynamic_shape) {
-    UpdateOutputAbstract(graph_compiler_info.graphs_.front(), op_run_info);
+    UpdateOutputAbstract(graph, op_run_info);
   }
 
   // Release the kernel resource.
-  const auto &graph = graph_compiler_info.graphs_.front();
-  MS_EXCEPTION_IF_NULL(graph);
-  const auto &kernel = graph->execution_order().front();
-  MS_EXCEPTION_IF_NULL(kernel);
-  if (kOpCacheBlackList.find(AnfAlgo::GetCNodeName(kernel)) != kOpCacheBlackList.end()) {
-    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-    if (kernel_mod) {
-      kernel_mod->ReleaseResource();
+  const auto &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (kOpCacheBlackList.find(AnfAlgo::GetCNodeName(kernel)) != kOpCacheBlackList.end()) {
+      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+      if (kernel_mod) {
+        kernel_mod->ReleaseResource();
+      }
     }
   }
 
-  // Update device address for output node of graph.
-  actor_set->output_actor_->UpdateOutputDeviceAddress();
-  ClearDeviceAddress(graph_compiler_info.graphs_.front(), graph_compiler_info.device_contexts_.front());
+  // Update device address for input and output of graph.
+  UpdateOutputDeviceAddress(output_nodes, graph_compiler_info.device_contexts_.front());
+  UpdateInputDeviceAddress(graph, graph_compiler_info.device_contexts_.front());
 }
 }  // namespace compile
 }  // namespace mindspore

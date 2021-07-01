@@ -124,34 +124,81 @@ void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<Devi
   MS_EXCEPTION_IF_NULL(input_tensors);
   auto &sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
+
   PushInputDeviceTensor(input_tensors);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
-    FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
     if (memory_alloc_list_.size() > 0) {
       SendMemoryAllocReq(context);
-    } else {
-      OnMemoryAllocFinish(context);
+    }
+    OnMemoryAllocFinish(context);
+  }
+}
+
+namespace {
+void AllocateMemory(std::vector<DeviceTensor *> *alloc_list, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(alloc_list);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  for (auto &device_tensor : *alloc_list) {
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    if ((device_tensor->GetPtr() != nullptr) || (device_tensor->GetSize() == 0)) {
+      continue;
+    }
+    // Allocate memory through the device context.
+    if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+      std::string error_info =
+        "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
+        ") memory isn't enough and alloc failed, alloc size: " + std::to_string(device_tensor->GetSize());
+      MS_LOG(EXCEPTION) << error_info;
     }
   }
 }
 
+void FreeMemory(std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(free_list);
+  MS_EXCEPTION_IF_NULL(device_context);
+  for (auto &device_tensor : *free_list) {
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    if (device_tensor->original_ref_count() == SIZE_MAX) {
+      continue;
+    }
+    // The reference count is decremented to zero to free memory, and reset to the original count.
+    device_tensor->DecreaseRefCount();
+    if (device_tensor->ref_count() == 0) {
+      // Free memory through the device context.
+      if (device_tensor->GetPtr() != nullptr) {
+        device_context->FreeMemory(device_tensor);
+      }
+      device_tensor->ResetRefCount();
+    }
+  }
+}
+}  // namespace
+
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
   running_dependent_msg_num_ = 1;
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_context_, context,
-        GetAID());
+  if (strategy_ == GraphExecutionStrategy::kPipeline) {
+    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_context_, context,
+          GetAID());
+  } else {
+    AllocateMemory(&memory_alloc_list_, device_context_);
+  }
 }
 
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_context_, context);
+  if (strategy_ == GraphExecutionStrategy::kPipeline) {
+    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_context_, context);
+  } else {
+    FreeMemory(&memory_free_list_, device_context_);
+  }
 }
 
 void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_);
   MS_EXCEPTION_IF_NULL(device_context_);
-
   PreLaunchKernel(context);
 
   try {
@@ -159,16 +206,16 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
                                              launch_info_.outputs_, is_dynamic_shape_);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + kernel_->ToString();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
     std::string error_info = "Launch kernel exception: " + kernel_->ToString();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
   }
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
-  if (debug_aid_ != nullptr) {
+  if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
     SendDebugReq(context);
     return;
   }
@@ -250,7 +297,7 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
         ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
     if (input_device_tensors_[device_tensor_store_key.first] != device_tensor) {
       input_device_tensors_[device_tensor_store_key.first] = device_tensor;
@@ -324,6 +371,10 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *context) {
 }
 
 void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
+  if (strategy_ == GraphExecutionStrategy::kStep) {
+    return;
+  }
+
   MS_EXCEPTION_IF_NULL(context);
   // Send output data.
   for (auto &output_data : output_data_) {
@@ -365,7 +416,7 @@ void KernelActor::EraseInput(OpContext<DeviceTensor> *context) {
     auto ret = input_op_datas_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input data failed: " + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
   }
 
@@ -373,7 +424,7 @@ void KernelActor::EraseInput(OpContext<DeviceTensor> *context) {
     auto ret = input_op_controls_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input controls failed: " + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
   }
 }
