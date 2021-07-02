@@ -15,7 +15,10 @@
  */
 
 #include "src/delegate/tensorrt/tensorrt_delegate.h"
+#include <cuda_runtime.h>
 #include <vector>
+#include <fstream>
+#include <string>
 #include "src/delegate/delegate_utils.h"
 #include "src/delegate/tensorrt/op/activation_tensorrt.h"
 #include "src/delegate/tensorrt/op/shape_tensorrt.h"
@@ -31,7 +34,20 @@
 #include "src/delegate/tensorrt/op/scale_tensorrt.h"
 
 namespace mindspore::lite {
+bool IsHardwareSupport() {
+  int driver_version = 0;
+  cudaDriverGetVersion(&driver_version);
+  if (driver_version == 0) {
+    MS_LOG(WARNING) << "No nvidia GPU driver.";
+    return false;
+  }
+  return true;
+}
+
 int TensorRTDelegate::Init() {
+  if (!IsHardwareSupport()) {
+    return RET_NOT_SUPPORT;
+  }
   op_func_lists_.clear();
   op_func_lists_ = {
     {schema::PrimitiveType_Activation, GetTensorRTOp<ActivationTensorRT>},
