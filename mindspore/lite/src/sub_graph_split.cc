@@ -986,6 +986,10 @@ void SearchSubGraph::CheckSubHeadEnd(Subgraph *sub) {
       in_nodes.insert(in_nodes.begin(), tensors_.at(in_t).out_nodes_.begin(), tensors_.at(in_t).out_nodes_.end());
     }
 
+    if (in_nodes.empty()) {
+      continue;
+    }
+
     bool erase_head = true;
     for (uint32_t in_n : in_nodes) {
       if (std::find(sub->nodes_.begin(), sub->nodes_.end(), in_n) == sub->nodes_.end()) {
