@@ -115,7 +115,8 @@ void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &nod
 
     // Allocate device memory.
     if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
-      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope()
+      MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
+                        << ") memory isn't enough and alloc failed, node name: " << node->fullname_with_scope()
                         << ", alloc size: " << device_tensor->GetSize();
     }
 
@@ -148,7 +149,8 @@ void PrepareDataForValueNode(const ValueNodePtr &node, const DeviceContext *devi
 
     // Allocate device memory.
     if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
-      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope()
+      MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
+                        << ") memory isn't enough and alloc failed, node name: " << node->fullname_with_scope()
                         << ", alloc size: " << device_tensor->GetSize();
     }
 
@@ -197,8 +199,8 @@ void PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &
 
   // Allocate device memory and copy data from host tensor to device.
   if (!device_context->AllocateMemory(host_tensor_address.get(), host_tensor_address->GetSize())) {
-    MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: "
-                      << backend_node->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
+                      << ") memory isn't enough and alloc failed, node name: " << backend_node->fullname_with_scope();
   }
   if (!host_tensor_address->SyncHostToDevice(trans::GetRuntimePaddingShape(backend_node, 0),
                                              LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
@@ -216,8 +218,8 @@ void PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &
       {device::kDeviceTypeToName.at(another_device_type), device_context->device_context_key().device_id_});
     MS_EXCEPTION_IF_NULL(another_device_context);
     if (!another_device_context->AllocateMemory(another_device_tensor.get(), another_device_tensor->GetSize())) {
-      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: "
-                        << backend_node->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "Device(id:" << another_device_context->device_context_key().device_id_
+                        << ") memory isn't enough and alloc failed, node name: " << backend_node->fullname_with_scope();
     }
     if (!another_device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(backend_node, 0),
                                                  LongToSize(tensor->data().nbytes()), tensor->data_type(),
@@ -339,7 +341,8 @@ void PrepareDataForInputData(HostQueueDataSourceActor *host_data_source_actor, c
   MS_EXCEPTION_IF_NULL(device_context);
   if (node_device_address->GetPtr() == nullptr &&
       !device_context->AllocateMemory(node_device_address.get(), node_device_address->GetSize())) {
-    MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
+                      << ") memory isn't enough and alloc failed, node name: " << node->fullname_with_scope();
   }
 
   if (!node_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0),
