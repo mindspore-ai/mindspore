@@ -46,14 +46,29 @@ enum class OptPassEnum {
 class LicManager {
  public:
   static LicManager &GetInstance();
-  bool GetPassSwitch(OptPassEnum pass);
+  bool GetPassSwitch(OptPassEnum pass) const;
+  const std::string &GetOpTuneSwitch() const { return op_tune_switch_; }
+  const std::string &GetOpTuneList() const { return op_tune_list_; }
+  const std::string &GetRlTuneSwitch() const { return rl_tune_switch_; }
+  const std::string &GetRlTuneList() const { return rl_tune_list_; }
+  const std::string &GetPassSwitch() const { return pass_list_; }
 
  private:
-  void ParseSwitch();
-  void ParseFeSwitch(const std::string &options_str);
+  LicManager();
+  ~LicManager() = default;
 
-  bool init_flag = false;
+  void ParseSwitch();
+  void ParseFeSwitch(const std::map<std::string, std::string> &options_map);
+  void ParseOpTuneSwitch(const std::map<std::string, std::string> &options_map);
+  void ParsePassSwitch(const std::map<std::string, std::string> &options_map);
+  void ParseRlSwitch(const std::map<std::string, std::string> &options_map);
+
   std::map<OptPassEnum, bool> pass_switch_ = {};
+  std::string op_tune_switch_ = "null";
+  std::string op_tune_list_ = {};
+  std::string pass_list_ = "invalid";
+  std::string rl_tune_switch_ = "null";
+  std::string rl_tune_list_ = {};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PASS_SWITCH_MANAGER_H_

@@ -26,6 +26,8 @@ namespace mindspore {
 namespace {
 constexpr auto kFeKey = "opt_module.fe";
 constexpr auto kOpTuneKey = "opt_module.op_tune";
+constexpr auto kPassKey = "opt_module.pass";
+constexpr auto kRlTuneKey = "opt_module.rl_tune";
 constexpr auto kAllOpen = "ALL";
 
 static const std::map<std::string, OptPassEnum> kPassCodeMap = {
@@ -68,15 +70,14 @@ static std::string GetSocVersion() {
 }
 }  // namespace
 
+LicManager::LicManager() { ParseSwitch(); }
+
 LicManager &LicManager::GetInstance() {
   static LicManager lic_manager{};
   return lic_manager;
 }
 
-bool LicManager::GetPassSwitch(OptPassEnum pass) {
-  if (!init_flag) {
-    ParseSwitch();
-  }
+bool LicManager::GetPassSwitch(OptPassEnum pass) const {
   auto iter = pass_switch_.find(pass);
   if (iter == pass_switch_.end()) {
     return true;
@@ -90,19 +91,22 @@ void LicManager::ParseSwitch() {
   auto ret = gelc::GetOptInfo(0, GetSocVersion(), opt_info_map);
   if (ret != 0) {
     MS_LOG(WARNING) << "GetOptInfo failed.";
-    init_flag = true;
     return;
   }
 
-  auto iter = opt_info_map.find(kFeKey);
-  if (iter != opt_info_map.end()) {
-    ParseFeSwitch(iter->second);
-  }
-
-  init_flag = true;
+  ParseFeSwitch(opt_info_map);
+  ParseOpTuneSwitch(opt_info_map);
+  ParsePassSwitch(opt_info_map);
+  ParseRlSwitch(opt_info_map);
 }
 
-void LicManager::ParseFeSwitch(const std::string &options_str) {
+void LicManager::ParseFeSwitch(const std::map<std::string, std::string> &options_map) {
+  auto options_iter = options_map.find(kFeKey);
+  if (options_iter == options_map.end()) {
+    return;
+  }
+
+  const auto &options_str = options_iter->second;
   // invalid options, do nothing.
   if (options_str.empty()) {
     return;
@@ -122,6 +126,52 @@ void LicManager::ParseFeSwitch(const std::string &options_str) {
     if (iter != kPassCodeMap.end()) {
       pass_switch_[iter->second] = true;
     }
+  }
+}
+
+void LicManager::ParseOpTuneSwitch(const std::map<std::string, std::string> &options_map) {
+  auto options_iter = options_map.find(kOpTuneKey);
+  if (options_iter == options_map.end()) {
+    op_tune_switch_ = "null";
+    return;
+  }
+
+  const auto &op_tune_str = options_iter->second;
+  if (op_tune_str.empty()) {
+    op_tune_switch_ = "off";
+    op_tune_list_.clear();
+  } else {
+    op_tune_switch_ = "on";
+    op_tune_list_ = op_tune_str;
+  }
+}
+
+void LicManager::ParsePassSwitch(const std::map<std::string, std::string> &options_map) {
+  auto options_iter = options_map.find(kPassKey);
+  if (options_iter == options_map.end()) {
+    pass_list_ = "invalid";
+    return;
+  }
+
+  const auto &pass_str = options_iter->second;
+  if (!pass_str.empty()) {
+    pass_list_ = pass_str;
+  }
+}
+
+void LicManager::ParseRlSwitch(const std::map<std::string, std::string> &options_map) {
+  auto options_iter = options_map.find(kRlTuneKey);
+  if (options_iter == options_map.end()) {
+    rl_tune_switch_ = "null";
+    return;
+  }
+  const auto &rl_tune_str = options_iter->second;
+  if (rl_tune_str.empty()) {
+    rl_tune_switch_ = "off";
+    rl_tune_list_.clear();
+  } else {
+    rl_tune_switch_ = "on";
+    rl_tune_list_ = rl_tune_str;
   }
 }
 }  // namespace mindspore
