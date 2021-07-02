@@ -123,65 +123,46 @@ def _get_pipeline_group():
 
 class GlobalNorm(nn.Cell):
     """
-
-    Calculate the global norm value of given tensors
-
-    """
-
-    def __init__(self, params):
-        super(GlobalNorm, self).__init__()
-        self.norm = nn.Norm()
-        self.hyper_map = C.HyperMap()
-        self.allreduce_filter = tuple(
-            "projection.bias" not in x.name and "layernorm" not in x.name and "embedding_table"
-            not in x.name for x in params)
-        self.length = len(params)
-        self.values = []
-        self.group_size = get_group_size()
-        for item in self.allreduce_filter:
-            if item:
-                self.values.append(1.0)
-            else:
-                self.values.append(self.group_size * 1.0)
-        self.values = tuple(self.values)
-
-    def construct(self, grads):
-        # Square sum of gradients for current rank
-        square_sum_dp = self.hyper_map(get_square_sum, grads, self.values)
-        # Global square sum of gradients
-        global_norms = F.sqrt(P.AllReduce()(F.addn(square_sum_dp)))
-        return global_norms
-
-class GlobalNormPipline(nn.Cell):
-    """
     Calculate the global norm value of given tensors
     """
     def __init__(self, params, config):
-        super(GlobalNormPipline, self).__init__()
+        super(GlobalNorm, self).__init__()
         self.norm = nn.Norm()
         self.hyper_map = C.HyperMap()
-        self.allreduce_filter = tuple("projection.bias" not in x.name and "layernorm" not in x.name
-                                      and "position_embedding.embedding_table" not in x.name for x in params)
+        self.is_pipeline = (config.stage_num > 1)
+        if self.is_pipeline:
+            group_size = config.mp
+            group_list, group_name = _get_model_parallel_group(config.mp)
+            create_group(group_name, group_list)
+            self.allreduce = P.AllReduce(group=group_name)
+            pipeline_group_list, pipeline_group_name = _get_pipeline_group()
+            create_group(pipeline_group_name, pipeline_group_list)
+            self.allreduce2 = P.AllReduce(group=pipeline_group_name)
+        else:
+            group_size = get_group_size()
+        if config.word_emb_dp:
+            self.allreduce_filter = tuple("projection.bias" not in x.name and "layernorm" not in x.name
+                                          and "embedding_table" not in x.name for x in params)
+        else:
+            self.allreduce_filter = tuple("projection.bias" not in x.name and "layernorm" not in x.name
+                                          and "position_embedding.embedding_table" not in x.name for x in params)
         self.allreduce_group_size = ()
         for item in self.allreduce_filter:
             if item:
                 self.allreduce_group_size = self.allreduce_group_size + (1.0,)
             else:
-                self.allreduce_group_size = self.allreduce_group_size + (config.mp * 1.0,)
-        self.length = len(params)
-        group_list, group_name = _get_model_parallel_group(config.mp)
-        create_group(group_name, group_list)
-        self.allreduce = P.AllReduce(group=group_name)
-        pipeline_group_list, pipeline_group_name = _get_pipeline_group()
-        create_group(pipeline_group_name, pipeline_group_list)
-        self.allreduce2 = P.AllReduce(group=pipeline_group_name)
+                self.allreduce_group_size = self.allreduce_group_size + (group_size * 1.0,)
 
     def construct(self, grads):
+        """Calculate global norm construct"""
         square_sum = self.hyper_map(get_square_sum, grads, self.allreduce_group_size)
         square_reduce_sum = F.addn(square_sum)
-        stage_square_reduce_sum = self.allreduce(square_reduce_sum)
-        global_square_reduce_sum = self.allreduce2(stage_square_reduce_sum)
-        global_norms = F.sqrt(global_square_reduce_sum)
+        if self.is_pipeline:
+            stage_square_reduce_sum = self.allreduce(square_reduce_sum)
+            global_square_reduce_sum = self.allreduce2(stage_square_reduce_sum)
+            global_norms = F.sqrt(global_square_reduce_sum)
+        else:
+            global_norms = F.sqrt(P.AllReduce()(square_reduce_sum))
         return global_norms
 
 class ClipByGlobalNorm(nn.Cell):
@@ -192,14 +173,12 @@ class ClipByGlobalNorm(nn.Cell):
     """
     def __init__(self, params, config, clip_norm=1.0):
         super(ClipByGlobalNorm, self).__init__()
-        if config.stage_num > 1:
-            self.global_norm = GlobalNormPipline(params, config)
-        else:
-            self.global_norm = GlobalNorm(params)
+        self.global_norm = GlobalNorm(params, config)
         self.clip_norm = Tensor([clip_norm], mstype.float32)
         self.hyper_map = C.HyperMap()
 
     def construct(self, grads):
+        """Clip grads by global norm construct"""
         global_norm_value = self.global_norm(grads)
         cond = P.GreaterEqual()(global_norm_value, self.clip_norm)
         global_norm = F.select(cond, global_norm_value, self.clip_norm)
@@ -366,6 +345,10 @@ def add_training_params(opt):
                      default=1,
                      choices=[0, 1],
                      help="Whether do data parallel in word embedding. default 1")
+    opt.add_argument("--data_column_name",
+                     type=str,
+                     default="input_ids",
+                     help="Column name of datasets")
 
 
 def get_args(inference=False):

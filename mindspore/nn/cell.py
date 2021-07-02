@@ -1317,12 +1317,12 @@ class Cell(Cell_):
         """
         Infer pipeline stages of all parameters in the cell.
 
-        Notes:
+        Note:
             - If a parameter does not belong to any cell which has been set pipeline_stage,
-            the parameter should use add_pipeline_stage to add it's pipeline_stage information.
+              the parameter should use add_pipeline_stage to add it's pipeline_stage information.
             - If a parameter P has been used by two operator in different stages "stageA" and "stageB",
-            the parameter P should use P.add_pipeline_stage(stageA) and P.add_pipeline_stage(stageB)
-             to add it's stage information before use infer_param_pipeline_stage.
+              the parameter P should use P.add_pipeline_stage(stageA) and P.add_pipeline_stage(stageB)
+              to add it's stage information before use infer_param_pipeline_stage.
 
         Returns:
             The params belong to current stage in pipeline parallel.

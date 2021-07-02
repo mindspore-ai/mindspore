@@ -80,23 +80,21 @@ class LayerNorm(nn.Cell):
     r"""
         A self-defined layer norm operation using reduce sum and reduce mean
     """
-    def __init__(self, normalized_shape, dp=4, eps=1e-5, scale=1e-3):
+    def __init__(self, normalized_shape, dp=4, eps=1e-5, parallel_optimizer=False):
         super(LayerNorm, self).__init__()
-        self.gamma = Parameter(initializer('ones', normalized_shape), name="gamma")
-        self.beta = Parameter(initializer('zeros', normalized_shape), name="beta")
+        self.gamma = Parameter(initializer('ones', normalized_shape), name="gamma",
+                               parallel_optimizer=parallel_optimizer)
+        self.beta = Parameter(initializer('zeros', normalized_shape), name="beta",
+                              parallel_optimizer=parallel_optimizer)
         self.mean = P.ReduceMean(keep_dims=True).shard(((dp, 1, 1),))
         self.square = P.Square().shard(((dp, 1, 1),))
         self.sqrt = P.Sqrt().shard(((dp, 1, 1),))
         self.sub1 = P.Sub().shard(((dp, 1, 1), (dp, 1, 1)))
-        self.sub2 = P.Sub().shard(((dp, 1, 1), (dp, 1, 1)))
         self.add = P.TensorAdd().shard(((dp, 1, 1), ()))
-        self.eps = eps
         self.mul = P.Mul().shard(((dp, 1, 1), (1,)))
         self.add2 = P.TensorAdd().shard(((dp, 1, 1), (1,)))
         self.real_div = P.RealDiv().shard(((dp, 1, 1), (dp, 1, 1)))
-        self.scale_div = P.RealDiv().shard(((dp, 1, 1), ()))
-        self.scale_mul = P.Mul().shard(((dp, 1, 1), ()))
-        self.scale = scale
+        self.eps = eps
     def construct(self, x):
         mean = self.mean(x, -1)
         diff = self.sub1(x, mean)
@@ -278,53 +276,36 @@ class EmbeddingLookup(nn.Cell):
         super(EmbeddingLookup, self).__init__()
         self.vocab_size = config.vocab_size
         self.embedding_size = config.embedding_size
-        if config.load_ckpt_path:
-            # Loading the embedding table from the ckpt path:
-            embedding_path = os.path.join(config.load_ckpt_path, 'word_embedding.npy')
-            if os.path.exists(embedding_path):
-                e_table = np.load(embedding_path)
-                e_table = Tensor(e_table, mstype.float32)
-                self.embedding_table = Parameter(e_table, name="embedding_table")
-            else:
-                raise ValueError(f"{embedding_path} file not exits, please check whether word_embedding file exist.")
-        else:
-            self.embedding_table = Parameter(initializer(
-                Normal(0.02), [self.vocab_size, self.embedding_size]),
-                                             name="embedding_table")
+
         if config.word_emb_dp:
             self.gather = P.GatherV2().shard(((1, 1), (config.dp, 1)))
         else:
             self.gather = P.GatherV2().shard(((config.mp, 1), (1, 1)))
         self.shape = (-1, config.seq_length, config.embedding_size)
+        if config.stage_num > 1:
+            self.construct = self.construct_pipeline
+            self.gather.add_prim_attr("parameter_start", 0)
+        else:
+            if config.load_ckpt_path:
+                # Loading the embedding table from the ckpt path:
+                embedding_path = os.path.join(config.load_ckpt_path, 'word_embedding.npy')
+                if os.path.exists(embedding_path):
+                    e_table = np.load(embedding_path)
+                    e_table = Tensor(e_table, mstype.float32)
+                    self.embedding_table = Parameter(e_table, name="embedding_table")
+                else:
+                    raise ValueError(f"{embedding_path} file not exits, "
+                                     f"please check whether word_embedding file exist.")
+            else:
+                self.embedding_table = Parameter(initializer(Normal(0.02), [self.vocab_size, self.embedding_size]),
+                                                 name="embedding_table")
+            self.construct = self.construct_no_pipeline
 
-    def construct(self, input_ids):
+    def construct_no_pipeline(self, input_ids):
         output = self.gather(self.embedding_table, input_ids, 0)
         return output, self.embedding_table
 
-
-class EmbeddingLookupPipeline(nn.Cell):
-    """
-    The embedding lookup table for vocabulary
-    Args:
-        config(PanguAlphaConfig): the config of network
-    Inputs:
-        input_ids: the tokenized inputs with datatype int32
-    Returns:
-        output: Tensor, the embedding vector for the input with shape (batch_size, seq_length, embedding_size)
-        self.embedding_table: Tensor, the embedding table for the vocabulary
-    """
-    def __init__(self, config):
-        super(EmbeddingLookupPipeline, self).__init__()
-        self.vocab_size = config.vocab_size
-        self.embedding_size = config.embedding_size
-        if config.word_emb_dp:
-            self.gather = P.GatherV2().shard(((1, 1), (config.dp, 1)))
-        else:
-            self.gather = P.GatherV2().shard(((config.mp, 1), (1, 1)))
-        self.gather.add_prim_attr("parameter_start", 0)
-        self.shape = (-1, config.seq_length, config.embedding_size)
-
-    def construct(self, input_ids, table):
+    def construct_pipeline(self, input_ids, table):
         output = self.gather(table, input_ids, 0)
         return output
 
@@ -653,12 +634,12 @@ class Decoder(nn.Cell):
             self.layernorm1.layer_norm.shard(((config.dp, 1, 1), (1,), (1,)))
             self.layernorm2 = nn.LayerNorm((config.embedding_size,)).to_float(mstype.float32)
             self.layernorm2.layer_norm.shard(((config.dp, 1, 1), (1,), (1,)))
+            self.layernorm1.gamma.parallel_optimizer = False
+            self.layernorm1.beta.parallel_optimizer = False
+            self.layernorm2.gamma.parallel_optimizer = False
+            self.layernorm2.beta.parallel_optimizer = False
 
-        self.layernorm1.gamma.parallel_optimizer = False
-        self.layernorm1.beta.parallel_optimizer = False
         self.attention = Attention(config, scale, layer_idx)
-        self.layernorm2.gamma.parallel_optimizer = False
-        self.layernorm2.beta.parallel_optimizer = False
         # Feed Forward Network, FFN
         self.output = Output(config, scale)
         self.post_layernorm_residual = config.post_layernorm_residual
@@ -740,7 +721,7 @@ class PanguAlpha_EmbeddingPipeLine(nn.Cell):
     """
     def __init__(self, config):
         super(PanguAlpha_EmbeddingPipeLine, self).__init__()
-        self.word_embedding = EmbeddingLookupPipeline(config)
+        self.word_embedding = EmbeddingLookup(config)
         self.position_embedding = nn.Embedding(config.seq_length,
                                                config.embedding_size,
                                                embedding_table=Normal(0.02))
@@ -856,11 +837,7 @@ class QueryLayer(nn.Cell):
         scale = 1 / math.sqrt(2.0 * config.num_layers)
         self.layernorm1 = LayerNorm((config.embedding_size,), config.dp).to_float(mstype.float32)
         self.layernorm2 = LayerNorm((config.embedding_size,), config.dp).to_float(mstype.float32)
-        self.layernorm1.gamma.parallel_optimizer = False
-        self.layernorm1.beta.parallel_optimizer = False
         self.attention = QueryLayerAttention(config, scale)
-        self.layernorm2.gamma.parallel_optimizer = False
-        self.layernorm2.beta.parallel_optimizer = False
         self.output = Output(config, scale)
         self.post_layernorm_residual = config.post_layernorm_residual
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
@@ -1060,8 +1037,8 @@ class PanguAlpha_Model(nn.Cell):
                 mstype.float32).set_comm_fusion(
                     int((num_layers - 1) / fusion_group_size) + 2)
             self.layernorm.layer_norm.shard(((config.dp, 1, 1), (1,), (1,)))
-        self.layernorm.gamma.parallel_optimizer = False
-        self.layernorm.beta.parallel_optimizer = False
+            self.layernorm.gamma.parallel_optimizer = False
+            self.layernorm.beta.parallel_optimizer = False
         self.use_past = config.use_past
         self.past = tuple([None] * config.num_layers)
         self.dtype = config.compute_dtype

@@ -460,6 +460,8 @@ class Parameter(Tensor_):
         return new_param
 
     def add_pipeline_stage(self, stage):
+        if not isinstance(stage, int) or stage < 0:
+            raise TypeError("`stage` must be a positive number of int type")
         self._pipeline_stage_list.append(stage)
 
     def set_data(self, data, slice_shape=False):
