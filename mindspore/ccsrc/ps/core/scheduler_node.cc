@@ -168,9 +168,23 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   auto finish_message = std::make_unique<std::string>(reinterpret_cast<const char *>(data), size);
-  node_manager_.AddFinishNode(*finish_message);
-  MS_LOG(INFO) << "Process finish message from node id:" << *finish_message;
+  std::string node_id = *finish_message;
+  MS_LOG(INFO) << "Process finish message from node id:" << node_id;
   server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+
+  auto iter = std::find_if(scale_in_node_ids_.begin(), scale_in_node_ids_.end(), [node_id](auto item) {
+    if (node_id == item) {
+      MS_LOG(INFO) << "The finish node is a scale in node.";
+      return true;
+    }
+    return false;
+  });
+
+  if (iter != scale_in_node_ids_.end()) {
+    return;
+  }
+
+  node_manager_.AddFinishNode(node_id);
   if (node_manager_.IsAllNodesFinished()) {
     auto node_infos = node_manager_.nodes_info();
     for (const auto &kvs : node_infos) {
@@ -495,7 +509,7 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
   nlohmann::json js;
   js["message"] = "Cluster begin to scale out.";
   resp->AddRespString(js.dump());
-  resp->AddRespHeadParam("Content_Type", "application/json");
+  resp->AddRespHeadParam("Content-Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
@@ -574,7 +588,7 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
   nlohmann::json js;
   js["message"] = "Cluster begin to scale in.";
   resp->AddRespString(js.dump());
-  resp->AddRespHeadParam("Content_Type", "application/json");
+  resp->AddRespHeadParam("Content-Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
@@ -611,7 +625,7 @@ void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp
   }
 
   resp->AddRespString(js.dump());
-  resp->AddRespHeadParam("Content_Type", "application/json");
+  resp->AddRespHeadParam("Content-Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
@@ -631,7 +645,7 @@ void SchedulerNode::ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> r
   js["cluster_state"] = CommUtil::ClusterStateToString(cluster_state);
 
   resp->AddRespString(js.dump());
-  resp->AddRespHeadParam("Content_Type", "application/json");
+  resp->AddRespHeadParam("Content-Type", "application/json");
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();

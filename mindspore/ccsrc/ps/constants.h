@@ -98,7 +98,7 @@ constexpr uint32_t kCheckRegisteredIntervalInMs = 1000;
 // The type of persistent storage, currently only supports file storage.
 constexpr char kStoreType[] = "storge_type";
 // The file used to storage metadata.
-constexpr char kStoreFilePath[] = "storge_file_path";
+constexpr char kStoreFilePath[] = "storage_file_path";
 // 1 indicates that the persistent storage type is file.
 constexpr char kFileStorage[] = "1";
 // The recovery key of json_config.

@@ -28,9 +28,9 @@ void RecoveryBase::Initialize(const std::string &config_json) {
     MS_LOG(ERROR) << "Parse the json:" << config_json;
   }
 
-  MS_LOG(INFO) << "The scheduelr is support recovery.";
+  MS_LOG(INFO) << "The node is support recovery.";
   std::string storage_file_path = "";
-  std::string type = recovery_config.at(kStoreType);
+  std::string type = recovery_config.at(kStoreType).dump();
   if (type == kFileStorage) {
     storage_type_ = StorageType::kFileStorage;
 

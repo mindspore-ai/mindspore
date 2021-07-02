@@ -24,6 +24,7 @@ parser.add_argument("--server_num", type=int, default=2)
 parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
 parser.add_argument("--scheduler_port", type=int, default=8113)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
+parser.add_argument("--config_file_path", type=str, default="")
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -33,6 +34,7 @@ server_num = args.server_num
 scheduler_ip = args.scheduler_ip
 scheduler_port = args.scheduler_port
 scheduler_manage_port = args.scheduler_manage_port
+config_file_path = args.config_file_path
 
 cmd_sched = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && rm -rf ${execute_path}/scheduler/ &&"
 cmd_sched += "mkdir ${execute_path}/scheduler/ &&"
@@ -43,6 +45,7 @@ cmd_sched += " --server_mode=" + server_mode
 cmd_sched += " --ms_role=MS_SCHED"
 cmd_sched += " --worker_num=" + str(worker_num)
 cmd_sched += " --server_num=" + str(server_num)
+cmd_sched += " --config_file_path=" + str(config_file_path)
 cmd_sched += " --scheduler_ip=" + scheduler_ip
 cmd_sched += " --scheduler_port=" + str(scheduler_port)
 cmd_sched += " --scheduler_manage_port=" + str(scheduler_manage_port)

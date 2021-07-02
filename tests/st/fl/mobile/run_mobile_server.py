@@ -37,6 +37,7 @@ parser.add_argument("--client_epoch_num", type=int, default=20)
 parser.add_argument("--client_batch_size", type=int, default=32)
 parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--local_server_num", type=int, default=-1)
+parser.add_argument("--config_file_path", type=str, default="")
 
 if __name__ == "__main__":
     args, _ = parser.parse_known_args()
@@ -60,6 +61,7 @@ if __name__ == "__main__":
     client_batch_size = args.client_batch_size
     client_learning_rate = args.client_learning_rate
     local_server_num = args.local_server_num
+    config_file_path = args.config_file_path
 
     if local_server_num == -1:
         local_server_num = server_num
@@ -89,6 +91,7 @@ if __name__ == "__main__":
         cmd_server += " --reconstruct_secrets_threshhold=" + str(reconstruct_secrets_threshhold)
         cmd_server += " --fl_name=" + fl_name
         cmd_server += " --fl_iteration_num=" + str(fl_iteration_num)
+        cmd_server += " --config_file_path=" + str(config_file_path)
         cmd_server += " --client_epoch_num=" + str(client_epoch_num)
         cmd_server += " --client_batch_size=" + str(client_batch_size)
         cmd_server += " --client_learning_rate=" + str(client_learning_rate)

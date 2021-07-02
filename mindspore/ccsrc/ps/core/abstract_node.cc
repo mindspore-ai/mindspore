@@ -507,15 +507,15 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
     wait_start_cond_.notify_all();
   }
 
-  if (node_recovery_ == nullptr || is_worker_or_server0) {
-    if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+    if (node_recovery_ == nullptr || is_worker_or_server0) {
       MS_LOG(INFO) << "The recovery is disable.";
       is_ready_ = true;
       wait_start_cond_.notify_all();
       OnEventCallback(ClusterEvent::NODE_TIMEOUT);
+    } else {
+      MS_LOG(INFO) << "The node is support recovery, users can pull up this node to restore the cluster.";
     }
-  } else {
-    MS_LOG(INFO) << "The node is support recovery, users can pull up this node to restore the cluster.";
   }
 }
 
