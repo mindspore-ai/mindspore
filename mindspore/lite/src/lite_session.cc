@@ -656,7 +656,13 @@ int LiteSession::Init(const Context *context) {
   }
 #endif
 #if GPU_TENSORRT
-  delegate_ = std::shared_ptr<TensorRTDelegate>(new (std::nothrow) TensorRTDelegate());
+  if (delegate_ == nullptr && context_->IsGpuEnabled()) {
+    delegate_ = std::shared_ptr<TensorRTDelegate>(new (std::nothrow) TensorRTDelegate());
+    if (delegate_ == nullptr) {
+      MS_LOG(ERROR) << "New tensorrt delegate_ failed";
+      return RET_ERROR;
+    }
+  }
 #endif
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();

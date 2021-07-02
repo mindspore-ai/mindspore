@@ -544,7 +544,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   int kernel_thread_count = op_parameter->thread_num_;
   op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
-#ifdef SUPPORT_GPU
+#ifdef GPU_OPENCL
   if (node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType) {
     status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
     if (status == RET_OK) {
