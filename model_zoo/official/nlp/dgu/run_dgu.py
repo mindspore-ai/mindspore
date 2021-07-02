@@ -148,13 +148,13 @@ def run_dgu(args_input):
         netwithloss = BertCLS(net_cfg, True, num_labels=num_class, dropout_prob=0.1)
         train_ds = create_classification_dataset(batch_size=args_input.train_batch_size, repeat_count=1, \
                         data_file_path=args_input.train_data_file_path, \
-                        do_shuffle=(args_input.train_data_shuffle.lower() == "true"))
+                        do_shuffle=(args_input.train_data_shuffle.lower() == "true"), drop_remainder=True)
         do_train(train_ds, netwithloss, load_pretrain_checkpoint_path, save_finetune_checkpoint_path, epoch_num)
 
     if args_input.do_eval.lower() == "true":
         eval_ds = create_classification_dataset(batch_size=args_input.eval_batch_size, repeat_count=1, \
                     data_file_path=args_input.eval_data_file_path, \
-                    do_shuffle=(args_input.eval_data_shuffle.lower() == "true"))
+                    do_shuffle=(args_input.eval_data_shuffle.lower() == "true"), drop_remainder=True)
         if args_input.task_name in ['atis_intent', 'mrda', 'swda']:
             eval_metric = metric_class("classification")
         else:
