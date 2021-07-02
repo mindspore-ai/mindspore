@@ -98,7 +98,6 @@ def load_model(args_opt):
         dropout_rate=0.0,
         compute_dtype=mstype.float16,
         use_past=use_past,
-        self_layernorm=True,
         stage_num=args_opt.stage_num,
         micro_size=args_opt.micro_size,
         eod_reset=False,
