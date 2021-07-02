@@ -99,12 +99,12 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
   return RET_OK;
 }
 
-kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const kernel::KernelDesc &desc,
-                                                            const schema::Primitive *primitive) {
+kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const schema::Primitive *primitive,
+                                                            kernel::KernelDesc *desc) {
   kernel::CreateKernel creator = nullptr;
   std::unique_lock<std::mutex> lock(lock_);
-  if (desc.type == schema::PrimitiveType_Custom) {
-    int data_type_index = static_cast<int>(desc.data_type) - kNumberTypeBegin - 1;
+  if (desc->type == schema::PrimitiveType_Custom) {
+    int data_type_index = static_cast<int>(desc->data_type) - kNumberTypeBegin - 1;
     if (data_type_index < 0) {
       return nullptr;
     }
@@ -117,22 +117,23 @@ kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const kernel::Kernel
         return item.second[custom_type] != nullptr && item.second[custom_type][data_type_index] != nullptr;
       });
       if (archs_iter != archs.end()) {
+        desc->arch = archs_iter->first;
         return archs_iter->second[custom_type][data_type_index];
       }
     }
 
     return nullptr;
   }
-  auto index = GetFuncIndex(desc);
+  auto index = GetFuncIndex(*desc);
   if (index >= kKernelMaxNum || index < 0) {
     return nullptr;
   }
   for (auto &&item : kernel_creators_) {
-    if (item.first != desc.provider) {
+    if (item.first != desc->provider) {
       continue;
     }
     for (auto &&arch_item : item.second) {
-      if (arch_item.first != desc.arch) {
+      if (arch_item.first != desc->arch) {
         continue;
       }
       creator = arch_item.second[index];

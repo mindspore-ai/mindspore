@@ -149,7 +149,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
   } else {
     kernel::KernelDesc desc;
     KernelKeyToKernelDesc(key, &desc);
-    auto creator = kernel::RegisterKernel::GetCreator(desc, static_cast<const schema::Primitive *>(primitive));
+    auto creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
     if (creator == nullptr) {
       return RET_NOT_SUPPORT;
     }
@@ -160,7 +160,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
       if (lite_kernel != nullptr) {
         kernel::KernelKey tmp_key = key;
-        if (tmp_key.provider == kArchCPU) {
+        if (desc.arch == kArchCPU) {
           tmp_key.arch = kernel::kCPU;
         } else {
           tmp_key.arch = kernel::kCustom;

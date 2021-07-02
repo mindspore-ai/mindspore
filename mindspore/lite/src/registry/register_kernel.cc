@@ -30,8 +30,8 @@ int RegisterKernel::RegKernel(const std::string &arch, const std::string &provid
   return lite::RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
 }
 
-CreateKernel RegisterKernel::GetCreator(const kernel::KernelDesc &desc, const schema::Primitive *primitive) {
-  return lite::RegistryKernelImpl::GetInstance()->GetProviderCreator(desc, primitive);
+CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc) {
+  return lite::RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
 }
 }  // namespace kernel
 }  // namespace mindspore

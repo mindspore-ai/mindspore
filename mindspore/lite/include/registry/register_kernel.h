@@ -93,7 +93,7 @@ class MS_API RegisterKernel {
   /// \param[in] primitive Define the attributes of op.
   ///
   /// \return Function pointer to create a kernel.
-  static CreateKernel GetCreator(const kernel::KernelDesc &desc, const schema::Primitive *primitive);
+  static CreateKernel GetCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
 };
 
 /// \brief KernelReg Defined registration class of kernel.
