@@ -6981,7 +6981,7 @@ class Dropout2D(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`. The data type should be int8, int16,
-            int32, int64, float16 or float32
+          int32, int64, float16 or float32
     Outputs:
         - **output** (Tensor) - with the same shape and data type as the `input_x` tensor.
         - **mask** (Tensor[bool]) - with the same shape as the `input_x` tensor.
@@ -7038,7 +7038,7 @@ class Dropout3D(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`. The data type should be int8, int16,
-            int32, int64, float16 or float32
+          int32, int64, float16 or float32
 
     Outputs:
         - **output** (Tensor) - with the same shape and data type as the `input_x` tensor.
@@ -7243,6 +7243,9 @@ class BasicLSTMCell(PrimitiveWithInfer):
     """
     It's similar to operator :class:`DynamicRNN`. BasicLSTMCell will be deprecated in the future.
     Please use DynamicRNN instead.
+
+    Supported Platforms:
+        Deprecated
     """
 
     @prim_attr_register

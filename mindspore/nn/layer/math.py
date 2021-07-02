@@ -919,7 +919,7 @@ class Moments(Cell):
 
     Inputs:
         - **x** (Tensor) - The tensor to be calculated. Only float16 and float32 are supported.
-            :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Outputs:
         - **mean** (Tensor) - The mean of `x`, with the same date type as input `x`.

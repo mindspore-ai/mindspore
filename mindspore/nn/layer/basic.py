@@ -667,7 +667,7 @@ class Pad(Cell):
             - mode = "CONSTANT".
             - paddings = [[1,1], [2,2]].
             - x = [[1,2,3], [4,5,6], [7,8,9]].
-            - The above can be seen: 1st dimension of x is 3, 2nd dimension of x is 3.
+            - The above can be seen: 1st dimension of `x` is 3, 2nd dimension of `x` is 3.
             - Substitute into the formula to get:
             - 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 4.
             - 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
