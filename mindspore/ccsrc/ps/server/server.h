@@ -26,6 +26,9 @@
 #include "ps/server/common.h"
 #include "ps/server/executor.h"
 #include "ps/server/iteration.h"
+#ifdef ENABLE_ARMOUR
+#include "armour/cipher/cipher_init.h"
+#endif
 
 namespace mindspore {
 namespace ps {
@@ -39,7 +42,7 @@ class Server {
   }
 
   void Initialize(bool use_tcp, bool use_http, uint16_t http_port, const std::vector<RoundConfig> &rounds_config,
-                  const FuncGraphPtr &func_graph, size_t executor_threshold);
+                  const CipherConfig &cipher_config, const FuncGraphPtr &func_graph, size_t executor_threshold);
 
   // According to the current MindSpore framework, method Run is a step of the server pipeline. This method will be
   // blocked until the server is finalized.
@@ -92,6 +95,9 @@ class Server {
   // Initialize executor according to the server mode.
   void InitExecutor();
 
+  // Initialize cipher according to the public param.
+  void InitCipher();
+
   // Create round kernels and bind these kernels with corresponding Round.
   void RegisterRoundKernel();
 
@@ -120,6 +126,7 @@ class Server {
 
   // The configure of all rounds.
   std::vector<RoundConfig> rounds_config_;
+  CipherConfig cipher_config_;
 
   // The graph passed by the frontend without backend optimizing.
   FuncGraphPtr func_graph_;
@@ -147,10 +154,25 @@ class Server {
   std::atomic_bool safemode_;
 
   // Variables set by ps context.
+#ifdef ENABLE_ARMOUR
+  armour::CipherInit *cipher_init_;
+#endif
   std::string scheduler_ip_;
   uint16_t scheduler_port_;
   uint32_t server_num_;
   uint32_t worker_num_;
+  uint16_t fl_server_port_;
+  size_t start_fl_job_cnt_;
+  size_t update_model_cnt_;
+  size_t cipher_initial_client_cnt_;
+  size_t cipher_exchange_secrets_cnt_;
+  size_t cipher_share_secrets_cnt_;
+  size_t cipher_get_clientlist_cnt_;
+  size_t cipher_reconstruct_secrets_up_cnt_;
+  size_t cipher_reconstruct_secrets_down_cnt_;
+
+  float percent_for_update_model_;
+  float percent_for_get_model_;
 };
 }  // namespace server
 }  // namespace ps

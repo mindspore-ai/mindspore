@@ -29,6 +29,10 @@ bool CipherReconStruct::CombineMask(
   const std::map<std::string, std::vector<clientshare_str>> &reconstruct_secret_list,
   const std::vector<string> &client_list) {
   bool retcode = true;
+#ifdef _WIN32
+  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  retcode = false;
+#else
   for (auto iter = reconstruct_secret_list.begin(); iter != reconstruct_secret_list.end(); ++iter) {
     // define flag_share: judge we need b or s
     bool flag_share = true;
@@ -45,7 +49,6 @@ bool CipherReconStruct::CombineMask(
     mpz_init(prime);
     auto publicparam_ = CipherInit::GetInstance().GetPublicParams();
     mpz_import(prime, PRIME_MAX_LEN, 1, 1, 0, 0, publicparam_->prime);
-
     if (iter->second.size() >= cipher_init_->secrets_minnums_) {  // combine private key seed.
       MS_LOG(INFO) << "start assign secrets shares to public shares ";
       for (int i = 0; i < static_cast<int>(cipher_init_->secrets_minnums_); ++i) {
@@ -89,7 +92,7 @@ bool CipherReconStruct::CombineMask(
       }
     }
   }
-
+#endif
   return retcode;
 }
 

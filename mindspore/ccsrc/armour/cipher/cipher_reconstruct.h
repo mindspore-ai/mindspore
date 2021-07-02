@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CIPHER_RECONSTRUCT_H
-#define MINDSPORE_CIPHER_RECONSTRUCT_H
+#ifndef MINDSPORE_CCSRC_ARMOUR_CIPHER_RECONSTRUCT_H
+#define MINDSPORE_CCSRC_ARMOUR_CIPHER_RECONSTRUCT_H
 
 #include <vector>
 #include <string>
@@ -84,4 +84,4 @@ class CipherReconStruct {
 }  // namespace armour
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CIPHER_KEYS_H
+#endif  // MINDSPORE_CCSRC_ARMOUR_CIPHER_KEYS_H

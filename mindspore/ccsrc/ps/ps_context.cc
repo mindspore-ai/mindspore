@@ -294,6 +294,20 @@ void PSContext::set_update_model_time_window(uint64_t update_model_time_window) 
 
 uint64_t PSContext::update_model_time_window() const { return update_model_time_window_; }
 
+void PSContext::set_share_secrets_ratio(float share_secrets_ratio) { share_secrets_ratio_ = share_secrets_ratio; }
+
+float PSContext::share_secrets_ratio() const { return share_secrets_ratio_; }
+
+void PSContext::set_get_model_ratio(float get_model_ratio) { get_model_ratio_ = get_model_ratio; }
+
+float PSContext::get_model_ratio() const { return get_model_ratio_; }
+
+void PSContext::set_reconstruct_secrets_threshhold(uint64_t reconstruct_secrets_threshhold) {
+  reconstruct_secrets_threshhold_ = reconstruct_secrets_threshhold;
+}
+
+uint64_t PSContext::reconstruct_secrets_threshhold() const { return reconstruct_secrets_threshhold_; }
+
 void PSContext::set_fl_name(const std::string &fl_name) { fl_name_ = fl_name; }
 
 const std::string &PSContext::fl_name() const { return fl_name_; }

@@ -18,6 +18,9 @@
 #include <memory>
 #include <string>
 #include <csignal>
+#ifdef ENABLE_ARMOUR
+#include "armour/secure_protocol/secret_sharing.h"
+#endif
 #include "ps/server/round.h"
 #include "ps/server/model_store.h"
 #include "ps/server/iteration.h"
@@ -39,7 +42,7 @@ void SignalHandler(int signal) {
 }
 
 void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const std::vector<RoundConfig> &rounds_config,
-                        const FuncGraphPtr &func_graph, size_t executor_threshold) {
+                        const CipherConfig &cipher_config, const FuncGraphPtr &func_graph, size_t executor_threshold) {
   MS_EXCEPTION_IF_NULL(func_graph);
   func_graph_ = func_graph;
 
@@ -48,6 +51,7 @@ void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const s
     return;
   }
   rounds_config_ = rounds_config;
+  cipher_config_ = cipher_config;
 
   use_tcp_ = use_tcp;
   use_http_ = use_http;
@@ -80,6 +84,7 @@ void Server::Run() {
   RegisterCommCallbacks();
   StartCommunicator();
   InitExecutor();
+  InitCipher();
   RegisterRoundKernel();
   MS_LOG(INFO) << "Server started successfully.";
   safemode_ = false;
@@ -177,6 +182,42 @@ void Server::InitIteration() {
     iteration_->AddRound(round);
   }
 
+  cipher_initial_client_cnt_ = rounds_config_[0].threshold_count;
+  cipher_exchange_secrets_cnt_ = cipher_initial_client_cnt_ * 1.0;
+  cipher_share_secrets_cnt_ = cipher_initial_client_cnt_ * cipher_config_.share_secrets_ratio;
+  cipher_get_clientlist_cnt_ = rounds_config_[1].threshold_count;
+  cipher_reconstruct_secrets_up_cnt_ = rounds_config_[1].threshold_count;
+  cipher_reconstruct_secrets_down_cnt_ = cipher_config_.reconstruct_secrets_threshhold;
+
+  MS_LOG(INFO) << "Initializing cipher:";
+  MS_LOG(INFO) << " cipher_initial_client_cnt_: " << cipher_initial_client_cnt_
+               << " cipher_exchange_secrets_cnt_: " << cipher_exchange_secrets_cnt_
+               << " cipher_share_secrets_cnt_: " << cipher_share_secrets_cnt_;
+  MS_LOG(INFO) << " cipher_get_clientlist_cnt_: " << cipher_get_clientlist_cnt_
+               << " cipher_reconstruct_secrets_up_cnt_: " << cipher_reconstruct_secrets_up_cnt_
+               << " cipher_reconstruct_secrets_down_cnt_: " << cipher_reconstruct_secrets_down_cnt_;
+
+#ifdef ENABLE_ARMOUR
+  std::shared_ptr<Round> exchange_keys_round =
+    std::make_shared<Round>("exchangeKeys", false, 3000, true, cipher_exchange_secrets_cnt_);
+  iteration_->AddRound(exchange_keys_round);
+  std::shared_ptr<Round> get_keys_round =
+    std::make_shared<Round>("getKeys", false, 3000, true, cipher_exchange_secrets_cnt_);
+  iteration_->AddRound(get_keys_round);
+  std::shared_ptr<Round> share_secrets_round =
+    std::make_shared<Round>("shareSecrets", false, 3000, true, cipher_share_secrets_cnt_);
+  iteration_->AddRound(share_secrets_round);
+  std::shared_ptr<Round> get_secrets_round =
+    std::make_shared<Round>("getSecrets", false, 3000, true, cipher_share_secrets_cnt_);
+  iteration_->AddRound(get_secrets_round);
+  std::shared_ptr<Round> get_clientlist_round =
+    std::make_shared<Round>("getClientList", false, 3000, true, cipher_get_clientlist_cnt_);
+  iteration_->AddRound(get_clientlist_round);
+  std::shared_ptr<Round> reconstruct_secrets_round =
+    std::make_shared<Round>("reconstructSecrets", false, 3000, true, cipher_reconstruct_secrets_up_cnt_);
+  iteration_->AddRound(reconstruct_secrets_round);
+#endif
+
   // 2.Initialize all the rounds.
   TimeOutCb time_out_cb =
     std::bind(&Iteration::MoveToNextIteration, iteration_, std::placeholders::_1, std::placeholders::_2);
@@ -184,6 +225,37 @@ void Server::InitIteration() {
     std::bind(&Iteration::MoveToNextIteration, iteration_, std::placeholders::_1, std::placeholders::_2);
   iteration_->InitRounds(communicators_with_worker_, time_out_cb, finish_iter_cb);
   return;
+}
+
+void Server::InitCipher() {
+#ifdef ENABLE_ARMOUR
+  cipher_init_ = &armour::CipherInit::GetInstance();
+
+  int cipher_t = cipher_reconstruct_secrets_down_cnt_;
+  unsigned char cipher_p[SECRET_MAX_LEN] = {0};
+  int cipher_g = 1;
+  unsigned char cipher_prime[PRIME_MAX_LEN] = {0};
+
+  mpz_t prim;
+  mpz_init(prim);
+  mindspore::armour::GetRandomPrime(prim);
+  mindspore::armour::PrintBigInteger(prim, 16);
+
+  size_t len_cipher_prime;
+  mpz_export((unsigned char *)cipher_prime, &len_cipher_prime, sizeof(unsigned char), 1, 0, 0, prim);
+  mindspore::armour::CipherPublicPara param;
+  param.g = cipher_g;
+  param.t = cipher_t;
+  memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, SECRET_MAX_LEN);
+  memcpy_s(param.prime, PRIME_MAX_LEN, cipher_prime, PRIME_MAX_LEN);
+  // param.dp_delta = dp_delta;
+  // param.dp_eps = dp_eps;
+  // param.dp_norm_clip = dp_norm_clip;
+  param.encrypt_type = kNotEncryptType;  // PSContext::instance()->encrypt_type;
+  cipher_init_->Init(param, 0, cipher_initial_client_cnt_, cipher_exchange_secrets_cnt_, cipher_share_secrets_cnt_,
+                     cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
+                     cipher_reconstruct_secrets_up_cnt_);
+#endif
 }
 
 void Server::RegisterCommCallbacks() {

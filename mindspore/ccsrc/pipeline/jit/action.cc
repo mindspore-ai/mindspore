@@ -672,14 +672,21 @@ bool StartServerAction(const ResourcePtr &res) {
     {"pullWeight"},
     {"pushWeight", false, 3000, true, server_num, true}};
 
+  float share_secrets_ratio = ps::PSContext::instance()->share_secrets_ratio();
+  float get_model_ratio = ps::PSContext::instance()->get_model_ratio();
+  size_t reconstruct_secrets_threshhold = ps::PSContext::instance()->reconstruct_secrets_threshhold();
+
+  ps::server::CipherConfig cipher_config = {share_secrets_ratio, get_model_ratio, reconstruct_secrets_threshhold};
+
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {
     executor_threshold = update_model_threshold;
-    ps::server::Server::GetInstance().Initialize(true, true, fl_server_port, rounds_config, func_graph,
+    ps::server::Server::GetInstance().Initialize(true, true, fl_server_port, rounds_config, cipher_config, func_graph,
                                                  executor_threshold);
   } else if (server_mode_ == ps::kServerModePS) {
     executor_threshold = worker_num;
-    ps::server::Server::GetInstance().Initialize(true, false, 0, rounds_config, func_graph, executor_threshold);
+    ps::server::Server::GetInstance().Initialize(true, false, 0, rounds_config, cipher_config, func_graph,
+                                                 executor_threshold);
   } else {
     MS_LOG(EXCEPTION) << "Server mode " << server_mode_ << " is not supported.";
     return false;

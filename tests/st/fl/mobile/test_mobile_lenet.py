@@ -36,6 +36,9 @@ parser.add_argument("--start_fl_job_threshold", type=int, default=1)
 parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
 parser.add_argument("--update_model_ratio", type=float, default=1.0)
 parser.add_argument("--update_model_time_window", type=int, default=3000)
+parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
+parser.add_argument("--get_model_ratio", type=float, default=1.0)
+parser.add_argument("--reconstruct_secrets_threshhold", type=int, default=0)
 parser.add_argument("--fl_name", type=str, default="Lenet")
 parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--client_epoch_num", type=int, default=20)
@@ -56,6 +59,9 @@ start_fl_job_threshold = args.start_fl_job_threshold
 start_fl_job_time_window = args.start_fl_job_time_window
 update_model_ratio = args.update_model_ratio
 update_model_time_window = args.update_model_time_window
+share_secrets_ratio = args.share_secrets_ratio
+get_model_ratio = args.get_model_ratio
+reconstruct_secrets_threshhold = args.reconstruct_secrets_threshhold
 fl_name = args.fl_name
 fl_iteration_num = args.fl_iteration_num
 client_epoch_num = args.client_epoch_num
@@ -76,6 +82,9 @@ ctx = {
     "start_fl_job_time_window": start_fl_job_time_window,
     "update_model_ratio": update_model_ratio,
     "update_model_time_window": update_model_time_window,
+    "share_secrets_ratio": share_secrets_ratio,
+    "get_model_ratio": get_model_ratio,
+    "reconstruct_secrets_threshhold": reconstruct_secrets_threshhold,
     "fl_name": fl_name,
     "fl_iteration_num": fl_iteration_num,
     "client_epoch_num": client_epoch_num,

@@ -132,6 +132,7 @@ enum SubModuleId : int {
   SM_PROFILER,           // profiler
   SM_PS,                 // Parameter Server
   SM_LITE,               // LITE
+  SM_ARMOUR,             // ARMOUR
   SM_HCCL_ADPT,          // Hccl Adapter
   SM_MINDQUANTUM,        // MindQuantum
   SM_RUNTIME_FRAMEWORK,  // Runtime framework

@@ -24,7 +24,7 @@ table CipherPublicParams {
   dp_eps:float;
   dp_delta:float;
   dp_norm_clip:float;
-  encrypt_type:int;
+  encrypt_type:string;
 }
 
 table ClientPublicKeys {

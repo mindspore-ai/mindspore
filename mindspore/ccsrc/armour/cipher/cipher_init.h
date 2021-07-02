@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CIPHER_INIT_H
-#define MINDSPORE_CIPHER_INIT_H
+#ifndef MINDSPORE_CCSRC_ARMOUR_CIPHER_INIT_H
+#define MINDSPORE_CCSRC_ARMOUR_CIPHER_INIT_H
 
 #include <vector>
 #include <string>
@@ -74,4 +74,4 @@ class CipherInit {
 }  // namespace armour
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CIPHER_COMMON_H
+#endif  // MINDSPORE_CCSRC_ARMOUR_CIPHER_COMMON_H
