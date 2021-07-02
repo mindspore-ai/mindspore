@@ -34,7 +34,7 @@ class PredLogProbs(nn.Cell):
     Get log probs.
 
     Args:
-        config (GNMTConfig): The config of GNMT.
+        config: The config of GNMT.
 
     Returns:
         Tensor, log softmax output.
@@ -67,7 +67,7 @@ class GNMTTraining(nn.Cell):
     GNMT training network.
 
     Args:
-        config (GNMTConfig): The config of GNMT.
+        config: The config of GNMT.
         is_training (bool): Specifies whether to use the training mode.
         use_one_hot_embeddings (bool): Specifies whether to use one-hot for embeddings.
 
@@ -102,7 +102,7 @@ class LabelSmoothedCrossEntropyCriterion(nn.Cell):
     Label Smoothed Cross-Entropy Criterion.
 
     Args:
-        config (GNMTConfig): The config of GNMT.
+        config: The config of GNMT.
 
     Returns:
         Tensor, final loss.

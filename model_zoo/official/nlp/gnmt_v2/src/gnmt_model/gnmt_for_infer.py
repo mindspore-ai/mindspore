@@ -67,7 +67,7 @@ def gnmt_infer(config, dataset):
     Run infer with GNMT.
 
     Args:
-        config (GNMTConfig): Config.
+        config: Config.
         dataset (Dataset): Dataset.
 
     Returns:
@@ -161,7 +161,7 @@ def infer(config):
     GNMT infer api.
 
     Args:
-        config (GNMTConfig): Config.
+        config: Config.
 
     Returns:
         list, result with

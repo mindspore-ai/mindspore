@@ -74,20 +74,89 @@ The process of GNMTv2 performing the text translation task is as follows:
 
 After dataset preparation, you can start training and evaluation as follows:
 
-```bash
-# run training example
-cd ./scripts
-sh run_standalone_train_ascend.sh PRE_TRAIN_DATASET
+- running on Ascend
 
-# run distributed training example
-cd ./scripts
-sh run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
+    ```bash
+    # run training example
+    cd ./scripts
+    sh run_standalone_train_ascend.sh PRE_TRAIN_DATASET
 
-# run evaluation example
-cd ./scripts
-sh run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
-  VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
-```
+    # run distributed training example
+    cd ./scripts
+    sh run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
+
+    # run evaluation example
+    cd ./scripts
+    sh run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
+      VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
+    ```
+
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    ```bash
+    # Train 1p/8p on ModelArts with Ascend
+    # (1) Add "config_path=/path_to_code/default_config.yaml" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "pre_train_dataset='/cache/data/wmt16_de_en/train.tok.clean.bpe.32000.en.mindrecord'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "pre_train_dataset=/cache/data/wmt16_de_en/train.tok.clean.bpe.32000.en.mindrecord" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset.)
+    # (4) Set the code directory to "/path/gnmt_v2" on the website UI interface.
+    # (5) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # Eval 1p on ModelArts with Ascend
+    # (1) Add "config_path=/path_to_code/default_test_config.yaml" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_test_config.yaml file.
+    #          Set "pre_train_dataset='/cache/data/wmt16_de_en/train.tok.clean.bpe.32000.en.mindrecord'" on default_test_config.yaml file.
+    #          Set "test_dataset='/cache/data/wmt16_de_en/newstest2014.en.mindrecord'" on default_test_config.yaml file.
+    #          Set "vocab='/cache/data/wmt16_de_en/vocab.bpe.32000'" on default_test_config.yaml file.
+    #          Set "bpe_codes='/cache/data/wmt16_de_en/bpe.32000'" on default_test_config.yaml file.
+    #          Set "test_tgt='/cache/data/wmt16_de_en/newstest2014.de'" on default_test_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_test_config.yaml file.
+    #          Set "existed_ckpt='/cache/checkpoint_path/model.ckpt'" on default_test_config.yaml file.
+    #          Set other parameters on default_test_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "pre_train_dataset=/cache/data/wmt16_de_en/train.tok.clean.bpe.32000.en.mindrecord" on the website UI interface.
+    #          Add "test_dataset=/cache/data/wmt16_de_en/newstest2014.en.mindrecord" on the website UI interface.
+    #          Add "vocab=/cache/data/wmt16_de_en/vocab.bpe.32000" on the website UI interface.
+    #          Add "bpe_codes=/cache/data/wmt16_de_en/bpe.32000" on the website UI interface.
+    #          Add "test_tgt=/cache/data/wmt16_de_en/newstest2014.de" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "existed_ckpt=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset.)
+    # (4) Set the code directory to "/path/gnmt_v2" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    #
+    # Export 1p on ModelArts with Ascend
+    # (1) Add "config_path=/path_to_code/default_test_config.yaml" on the website UI interface.
+    # (2) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_test_config.yaml file.
+    #          Set "vocab_file='/cache/data/wmt16_de_en/vocab.bpe.32000'" on default_test_config.yaml file.
+    #          Set "bpe_codes='/cache/data/wmt16_de_en/bpe.32000'" on default_test_config.yaml file.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on default_test_config.yaml file.
+    #          Set "existed_ckpt='/cache/checkpoint_path/model.ckpt'" on default_test_config.yaml file.
+    #          Set other parameters on default_test_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "vocab_file='/cache/data/wmt16_de_en/vocab.bpe.32000'" on the website UI interface.
+    #          Add "bpe_codes='/cache/data/wmt16_de_en/bpe.32000'" on the website UI interface.
+    #          Add "checkpoint_url=s3://dir_to_trained_ckpt/" on the website UI interface.
+    #          Add "existed_ckpt='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset.)
+    # (4) Set the code directory to "/path/gnmt_v2" on the website UI interface.
+    # (5) Set the startup file to "export.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
 
 # [Script Description](#contents)
 
@@ -96,11 +165,12 @@ The GNMT network script and code result are as follows:
 ```text
 ├── gnmt
   ├── README.md                              // Introduction of GNMTv2 model.
-  ├── config
-  │   ├──__init__.py                         // User interface.  
-  │   ├──config.py                           // Configuration instance definition.
-  │   ├──config.json                         // Configuration file for pre-train or finetune.
-  │   ├──config_test.json                    // Configuration file for test.
+  ├── model_utils
+  │   ├──__init__.py                         // module init file
+  │   ├──config.py                           // Parse arguments
+  │   ├──device_adapter.py                   // Device adapter for ModelArts
+  │   ├──local_adapter.py                    // Local adapter
+  │   ├──moxing_adapter.py                   // Moxing adapter for ModelArts
   ├── src
   │   ├──__init__.py                         // User interface.  
   │   ├──dataset
@@ -138,10 +208,13 @@ The GNMT network script and code result are as follows:
   │   ├──run_distributed_train_ascend.sh     // Shell script for distributed train on ascend.
   │   ├──run_standalone_eval_ascend.sh       // Shell script for standalone eval on ascend.
   │   ├──run_standalone_train_ascend.sh      // Shell script for standalone eval on ascend.
+  ├── default_config.yaml                    // Configurations for train
+  ├── default_test_config.yaml               // Configurations for eval
   ├── create_dataset.py                      // Dataset preparation.
   ├── eval.py                                // Infer API entry.
   ├── export.py                              // Export checkpoint file into air models.
   ├── mindspore_hub_conf.py                  // Hub config.
+  ├── pip-requirements.txt                   // Requirements of third party package for modelarts.
   ├── requirements.txt                       // Requirements of third party package.
   ├── train.py                               // Train API entry.
 ```
@@ -165,7 +238,7 @@ You may use this [shell script](https://github.com/NVIDIA/DeepLearningExamples/b
 
 ## Configuration File
 
-The JSON file in the `config/` directory is the template configuration file.
+The YAML file in the `./default_config.yaml` directory is the template configuration file.
 Almost all required options and parameters can be easily assigned, including the training platform, model configuration, and optimizer parameters.
 
 - config for GNMTv2
@@ -185,11 +258,11 @@ Almost all required options and parameters can be easily assigned, including the
   'existed_ckpt': ""        # the absolute full path to save the checkpoint file
   ```
 
-For more configuration details, please refer the script `config/config.py` file.
+For more configuration details, please refer the script `./default_config.yaml` file.
 
 ## Training Process
 
-For a pre-trained model, configure the following options in the `config/config.json` file:
+For a pre-trained model, configure the following options in the `./default_config.yaml` file:
 
 - Select an optimizer ('momentum/adam/lamb' is available).
 - Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
@@ -219,7 +292,7 @@ Currently, inconsecutive device IDs are not supported in `scripts/run_distribute
 ## Inference Process
 
 For inference using a trained model on multiple hardware platforms, such as Ascend 910.
-Set options in `config/config_test.json`.
+Set options in `./default_config.yaml`.
 
 Run the shell script `scripts/run_standalone_eval_ascend.sh` to process the output token ids to get the BLEU scores.
 

@@ -14,7 +14,7 @@
 # ============================================================================
 """Train api."""
 import os
-import argparse
+import time
 import numpy as np
 
 import mindspore.common.dtype as mstype
@@ -30,39 +30,19 @@ from mindspore.communication import management as MultiAscend
 from mindspore.train.serialization import load_checkpoint
 from mindspore.common import set_seed
 
-from config import GNMTConfig
 from src.dataset import load_dataset
 from src.gnmt_model import GNMTNetworkWithLoss, GNMTTrainOneStepWithLossScaleCell
 from src.utils import LossCallBack
 from src.utils import one_weight, weight_variable
 from src.utils.lr_scheduler import square_root_schedule, polynomial_decay_scheduler, Warmup_MultiStepLR_scheduler
 from src.utils.optimizer import Adam
+from src.utils.get_config import get_config
 
-parser = argparse.ArgumentParser(description='GNMT train entry point.')
-parser.add_argument("--config", type=str, required=True, help="model config json file path.")
-parser.add_argument("--pre_train_dataset", type=str, required=True, help="pre-train dataset address.")
+from model_utils.config import config as default_config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
 
-device_id = os.getenv('DEVICE_ID', None)
-if device_id is None:
-    raise RuntimeError("`DEVICE_ID` can not be None.")
-
-device_id = int(device_id)
-context.set_context(
-    mode=context.GRAPH_MODE,
-    save_graphs=False,
-    device_target="Ascend",
-    reserve_class_name_in_scope=True,
-    device_id=device_id)
-
-
-def get_config(config):
-    config = GNMTConfig.from_json_file(config)
-    config.compute_type = mstype.float16
-    config.dtype = mstype.float32
-    return config
-
-
-def _train(model, config: GNMTConfig,
+def _train(model, config,
            pre_training_dataset=None, fine_tune_dataset=None, test_dataset=None,
            callbacks: list = None):
     """
@@ -70,7 +50,7 @@ def _train(model, config: GNMTConfig,
 
     Args:
         model (Model): MindSpore model instance.
-        config (GNMTConfig): Config of mass model.
+        config: Config of mass model.
         pre_training_dataset (Dataset): Pre-training dataset.
         fine_tune_dataset (Dataset): Fine-tune dataset.
         test_dataset (Dataset): Test dataset.
@@ -177,7 +157,7 @@ def _get_optimizer(config, network, lr):
     return optimizer
 
 
-def _build_training_pipeline(config: GNMTConfig,
+def _build_training_pipeline(config,
                              pre_training_dataset=None,
                              fine_tune_dataset=None,
                              test_dataset=None):
@@ -185,7 +165,7 @@ def _build_training_pipeline(config: GNMTConfig,
     Build training pipeline.
 
     Args:
-        config (GNMTConfig): Config of mass model.
+        config: Config of mass model.
         pre_training_dataset (Dataset): Pre-training dataset.
         fine_tune_dataset (Dataset): Fine-tune dataset.
         test_dataset (Dataset): Test dataset.
@@ -259,12 +239,12 @@ def _setup_parallel_env():
     )
 
 
-def train_parallel(config: GNMTConfig):
+def train_parallel(config):
     """
     Train model with multi ascend chips.
 
     Args:
-        config (GNMTConfig): Config for MASS model.
+        config: Config for MASS model.
     """
     _setup_parallel_env()
     print(f" | Starting training on {os.getenv('RANK_SIZE', None)} devices.")
@@ -297,12 +277,12 @@ def train_parallel(config: GNMTConfig):
                              test_dataset=test_dataset)
 
 
-def train_single(config: GNMTConfig):
+def train_single(config):
     """
     Train model on single device.
 
     Args:
-        config (GNMTConfig): Config for model.
+        config: Config for model.
     """
     print(" | Starting training on single device.")
 
@@ -322,22 +302,79 @@ def train_single(config: GNMTConfig):
                              test_dataset=test_dataset)
 
 
-def _check_args(config):
-    if not os.path.exists(config):
-        raise FileNotFoundError("`config` is not existed.")
-    if not isinstance(config, str):
-        raise ValueError("`config` must be type of str.")
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, default_config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if default_config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(default_config.data_path, default_config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(default_config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    default_config.ckpt_path = os.path.join(default_config.output_path, default_config.ckpt_path)
 
 
-if __name__ == '__main__':
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    '''run train.'''
+    device_id = os.getenv('DEVICE_ID', None)
+    if device_id is None:
+        raise RuntimeError("`DEVICE_ID` can not be None.")
+
+    device_id = int(device_id)
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend",
+                        reserve_class_name_in_scope=True, device_id=device_id)
     _rank_size = os.getenv('RANK_SIZE')
 
-    args, _ = parser.parse_known_args()
-    _check_args(args.config)
-    _config = get_config(args.config)
-    _config.pre_train_dataset = args.pre_train_dataset
+    _config = get_config(default_config)
+    _config.pre_train_dataset = default_config.pre_train_dataset
     set_seed(_config.random_seed)
     if _rank_size is not None and int(_rank_size) > 1:
         train_parallel(_config)
     else:
         train_single(_config)
+
+if __name__ == '__main__':
+    run_train()

@@ -20,7 +20,6 @@ from mindspore import nn, Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
-from config.config import GNMTConfig
 from .dynamic_rnn import DynamicRNNNet
 from .create_attention import RecurrentAttention
 
@@ -45,7 +44,7 @@ class GNMTDecoder(nn.Cell):
     """
 
     def __init__(self,
-                 config: GNMTConfig,
+                 config,
                  is_training: bool,
                  use_one_hot_embeddings: bool = False,
                  initializer_range=0.1,

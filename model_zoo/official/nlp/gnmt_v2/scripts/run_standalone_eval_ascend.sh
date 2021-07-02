@@ -46,13 +46,18 @@ then
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp -r ../src ./eval
-cp -r ../config ./eval
+cp -r ../model_utils ./eval
 cd ./eval || exit
 echo "start for evaluation"
 env > env.log
+
+config_path="${current_exec_path}/eval/default_test_config.yaml"
+echo "config path is : ${config_path}"
+
 python eval.py \
-  --config=${current_exec_path}/eval/config/config_test.json \
+  --config_path=$config_path \
   --test_dataset=$TEST_DATASET \
   --existed_ckpt=$EXISTED_CKPT_PATH \
   --vocab=$VOCAB_ADDR \
