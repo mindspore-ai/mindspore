@@ -4,6 +4,13 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         )
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    string(REPLACE "-O3" "-Ofast" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REPLACE "-O3" "-Ofast" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE "-O2" "-Ofast" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    string(REPLACE "-O2" "-Ofast" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_BUILD_TYPE Default)
+endif()
 if(NOT TARGET_HIMIX200)
     add_executable(benchmark
             ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
