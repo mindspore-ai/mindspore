@@ -57,7 +57,7 @@ class RISE(PerturbationAttribution):
 
     Outputs:
         Tensor, a 4D tensor of shape :math:`(N, l, H, W)` when targets is a tensor of shape (N, l), otherwise a tensor
-            of shape (N, 1, H, w), saliency maps.
+        of shape (N, 1, H, w), saliency maps.
 
     Raises:
         TypeError: Be raised for any argument or input type problem.
