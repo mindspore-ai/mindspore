@@ -92,14 +92,14 @@ class SearchSubGraph {
  private: /* split by output */
   void SubGraphSplitByOutput();
   void InitSearchSubGraphByOutput();
-  void InsertNode(uint32_t index, Subgraph *subgraph);
+  void InsertNode(uint32_t index, Subgraph *subgraph, uint32_t last_index);
 
  private: /* split by middle */
   void SubGraphSplitByMiddle();
   void InitSearchSubGraphByMiddle();
   void SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes);
   void InitMiddleSubgraph(std::vector<uint32_t> *multy_in_nodes);
-  void InsertNodeByMid(uint32_t node_index, Subgraph *subgraph);
+  void InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, uint32_t last_index);
   void InsertHeadNode(uint32_t index, Subgraph *subgraph);
   void OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint32_t root_node_index);
 
