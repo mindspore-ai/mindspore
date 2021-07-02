@@ -47,7 +47,7 @@ class RegistryKernelImpl {
   int RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type,
                 kernel::CreateKernel creator);
 
-  virtual kernel::CreateKernel GetProviderCreator(const kernel::KernelDesc &desc, const schema::Primitive *primitive);
+  virtual kernel::CreateKernel GetProviderCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
 
   const std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> &kernel_creators() {
     return kernel_creators_;
