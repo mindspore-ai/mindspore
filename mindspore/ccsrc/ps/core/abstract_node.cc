@@ -166,6 +166,10 @@ void AbstractNode::RegisterCustomEventCallback(const uint32_t &event, const Even
 
 bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
                         int command, const uint32_t &timeout) {
+  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(data);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
@@ -185,6 +189,11 @@ bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id,
 bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
                         const std::vector<DataPtr> &data, const std::vector<size_t> &lens, int command,
                         const uint32_t &timeout) {
+  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
+    return false;
+  }
+
   uint64_t request_id = AddMessageTrack(data.size());
 
   if (rank_ids.size() != data.size() || rank_ids.size() != lens.size()) {
@@ -215,6 +224,10 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
 
 bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len,
                         int command, VectorPtr *output, const uint32_t &timeout) {
+  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(message);
   MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
@@ -248,6 +261,10 @@ bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id,
 bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
                         const std::vector<DataPtr> &data, const std::vector<size_t> &data_lens, int command,
                         std::vector<VectorPtr> *output, const uint32_t &timeout) {
+  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
+    MS_LOG(DEBUG) << "The node is timeout, can not send message.";
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(output);
   uint64_t request_id = AddMessageTrack(data.size());
 

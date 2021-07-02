@@ -38,7 +38,8 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
     return false;
   }
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
-  MS_LOG(INFO) << "[Scheduler start]: 4. Successfully start scheduler!";
+  MS_LOG(INFO) << "[Scheduler start]: 4. Successfully start scheduler, there are " << node_manager_.worker_num()
+               << " workers and " << node_manager_.server_num() << " servers registered.";
 
   return true;
 }
