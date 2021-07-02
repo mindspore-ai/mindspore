@@ -798,7 +798,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
                      << " is device tensor store.";
         continue;
       } else {
-        MS_LOG(WARNING) << "Invalid graph output node:" << output_kernel->fullname_with_scope();
+        MS_LOG(INFO) << "Ignore the internal parameter node:" << output_kernel->DebugString();
         continue;
       }
 
@@ -1777,6 +1777,10 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
     std::set<std::vector<size_t>> unique_output_positions;
     std::set<KernelWithIndex> unique_outputs;
     for (const auto &output : outputs) {
+      if (IsInternalParameter(output.first, graph)) {
+        MS_LOG(INFO) << "Ignore the internal parameter node:" << output.first->DebugString();
+        continue;
+      }
       unique_outputs.insert(output);
     }
     for (const auto &output_with_index : unique_outputs) {
@@ -2915,6 +2919,12 @@ void GraphScheduler::DumpOutputActor(const OutputActor *actor, std::ofstream &of
     MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
     ofs << "\t\t\toutput_node_position:" << device_tensor_store_key.first
         << "\toutput_node_name:" << device_tensor_store_key.second->fullname_with_scope() << "\n";
+  }
+
+  ofs << "\t\tdevice_contexts:" << actor->device_contexts_.size() << "\n ";
+  for (const auto &device_context : actor->device_contexts_) {
+    MS_EXCEPTION_IF_NULL(device_context);
+    ofs << "\t\t\tdevice_context:" << device_context->device_context_key().ToString() << "\n";
   }
 }
 

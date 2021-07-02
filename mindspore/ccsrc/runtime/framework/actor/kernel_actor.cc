@@ -416,7 +416,9 @@ void KernelActor::EraseInput(OpContext<DeviceTensor> *context) {
     auto ret = input_op_datas_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input data failed: " + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+      // The sequential num may be invalid, can't set the promise value of context.
+      MS_LOG(ERROR) << error_info << ", sequential_num: " << context->sequential_num_;
+      return;
     }
   }
 
@@ -424,7 +426,9 @@ void KernelActor::EraseInput(OpContext<DeviceTensor> *context) {
     auto ret = input_op_controls_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input controls failed: " + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+      // The sequential num may be invalid, can't set the promise value of context.
+      MS_LOG(ERROR) << error_info << ", sequential_num: " << context->sequential_num_;
+      return;
     }
   }
 }

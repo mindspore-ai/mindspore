@@ -105,7 +105,7 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
         MS_LOG(INFO) << "Waiting for data...(" << repeat << " / 10)";
         continue;
       } else {
-        MS_LOG(ERROR) << "Get data timeout";
+        MS_LOG(EXCEPTION) << "Get data timeout";
         if (profiling_enable_) {
           uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
           profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
