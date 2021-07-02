@@ -21,6 +21,10 @@ import sys
 import os
 import time
 import json
+import tbe.common.context.op_context as op_context
+from tbe.common.buildcfg import build_config
+import te.platform.vector_random_buff as vector_random_buff
+import te.platform.cube_random_buff as cube_random_buff
 from mindspore import log
 from .tbe_common import check_kernel_info, TBEException
 from .helper import _op_select_format, _check_supported
@@ -127,6 +131,7 @@ class TbeProcess:
         self.__process_num = multiprocessing.cpu_count()
         self.compile_process_num = 24
         self.__pool = None
+        self.__reset_op_info = None
         self.__next_task_id = 1
         self.__running_tasks = []
         self.__all_tune_tasks = []
@@ -261,13 +266,12 @@ class TbeProcess:
             full_name = op_json["op_info"]["full_name"]
         return full_name in self.selected_tune_ops
 
-    def select_tune_mode(self, op_json):
+    def select_tune_mode(self, json_info):
         """
         Select the corresponding tune mode from op json and env info for the op
-        :param op_json: ori json
+        :param json_info: ori json
         :return: NO_TUNE RL_TUNE or GA_TUNE
         """
-        json_info = json.loads(op_json)
         tune_mode = json_info["SocInfo"]["autoTilingMode"]
         kernel_names = self.get_kernel_names(json_info)
         if self.offline_tune:
@@ -300,6 +304,18 @@ class TbeProcess:
             kernel_names.append(json_info['op_info']['name'])
         return kernel_names
 
+
+    def get_reset_op_info(self):
+        """ get reset op info """
+        with op_context.OpContext("static"):
+            context = op_context.get_context()
+            with build_config(kernel_meta_parent_dir=".", compatible=True):
+                vector_random_buff.vector_random_buff()
+                cube_random_buff.cube_random_buff()
+                reset_op_info = context.get_addition("reset_op_info")
+                return reset_op_info
+
+
     def start_compile_op(self, op_json):
         """
         start compile op async.
@@ -315,13 +331,17 @@ class TbeProcess:
         if not self.tune_init:
             return error_id
         self.__next_task_id = self.__next_task_id + 1
-        tune_mode = self.select_tune_mode(op_json)
+        json_info = json.loads(op_json)
+        tune_mode = self.select_tune_mode(json_info)
         self.__task_info[task_id] = op_json
         if tune_mode == NO_TUNE:
             if self.__process_num > self.compile_process_num:
                 self.__process_num = self.compile_process_num
             if self.__pool is None:
                 self.__pool = multiprocessing.Pool(processes=self.__process_num)
+                self.__reset_op_info = self.get_reset_op_info()
+            json_info["reset_op_info"] = self.__reset_op_info
+            op_json = json.dumps(json_info)
             task_future = self.__pool.apply_async(func=run_compiler, args=(op_json,))
             self.__running_tasks.append((task_id, task_future))
         else:

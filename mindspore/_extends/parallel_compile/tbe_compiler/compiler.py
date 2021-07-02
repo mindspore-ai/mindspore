@@ -18,6 +18,7 @@ import os
 import sys
 from te.platform.cce_conf import te_set_version
 from te_fusion.fusion_util import fusion_op
+from te_fusion.fusion_manager import set_context_parameter
 import tbe.common.context.op_info as operator_info
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # pylint: disable=wrong-import-position
@@ -71,6 +72,7 @@ def build_op(build_type, json_str, tune_mode=None):
     op_type = kernel_info['op_info']['Type']
     rl_tune_switch = kernel_info['op_info']['rl_tune_switch']
     rl_tune_list = kernel_info['op_info']['rl_tune_list']
+    reset_op_info = kernel_info["reset_op_info"]
 
     try:
         custom_flag = False
@@ -121,7 +123,9 @@ def build_op(build_type, json_str, tune_mode=None):
             import tbe.common.context.op_context as op_context
             with op_context.OpContext("dynamic"):
                 op_info = operator_info.OpInfo(op_type, op_type)
-                op_context.get_context().add_op_info(op_info)
+                context = op_context.get_context()
+                context.add_op_info(op_info)
+                set_context_parameter(context, None, None, reset_op_info)
                 op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
                 compile_info = op_context.get_context().get_compile_info()
                 if tune_mode is not None:
@@ -141,7 +145,7 @@ def build_op(build_type, json_str, tune_mode=None):
                                                  auto_tiling_mode=None,
                                                  device_id=None,
                                                  fuzz_build_info=None,
-                                                 reset_op_info=None,
+                                                 reset_op_info=reset_op_info,
                                                  switch_str=rl_tune_switch,
                                                  lic_opt_list=rl_tune_list)
             if tune_mode is not None:
@@ -165,6 +169,7 @@ def compile_fusion_op(json_str):
         Exception: If specific keyword is not found.
     """
     args = json.loads(json_str)
+    reset_op_info = args["reset_op_info"]
     te_set_version(args['fusion_op']["socVersion"])
     if 'fusion_op' not in args or not args['fusion_op']:
         raise ValueError("Json string Errors, key:fusion_op not found.")
@@ -172,7 +177,8 @@ def compile_fusion_op(json_str):
     fusion_op_arg = args['fusion_op']
     rl_tune_switch = args['fusion_op']['rl_tune_switch']
     rl_tune_list = args['fusion_op']['rl_tune_list']
-    return fusion_op(json.dumps(fusion_op_arg), switch_str=rl_tune_switch, lic_opt_list=rl_tune_list)
+    return fusion_op(json.dumps(fusion_op_arg), reset_op_info=reset_op_info, switch_str=rl_tune_switch,
+                     lic_opt_list=rl_tune_list)
 
 
 def compile_with_json(json_str):
