@@ -256,15 +256,15 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
             only works when the weight_decay > 0. Default: lambda x: x.name not in []
 
         split_indices (list): Set allreduce fusion strategy by A/G layer indices . Only works when distributed
-        computing. ResNet50 as an example, there are 54 layers of A/G respectively, when split_indices is set
-        to [26, 53], it means A/G is divided into two groups to allreduce,  one is 0~26 layer, and the other
-        is 27~53. Default: None
+            computing. ResNet50 as an example, there are 54 layers of A/G respectively, when split_indices is set
+            to [26, 53], it means A/G is divided into two groups to allreduce,  one is 0~26 layer, and the other
+            is 27~53. Default: None
 
         enable_clip_grad (bool): Whether to clip the gradients. Default: False
 
         frequency(int): The update interval of A/G and $A^{-1}/G^{-1}$. When frequency equals N (N is greater than 1),
-        A/G and $A^{-1}/G^{-1}$ will be updated  every N steps, and other steps will use the stale A/G and
-        $A^{-1}/G^{-1}$ to update weights. Default: 100.
+            A/G and $A^{-1}/G^{-1}$ will be updated  every N steps, and other steps will use the stale A/G and
+            $A^{-1}/G^{-1}$ to update weights. Default: 100.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
