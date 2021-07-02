@@ -13,8 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """train resnet."""
-import argparse
-import ast
+import os
 import time
 import numpy as np
 from mindspore import context
@@ -34,24 +33,10 @@ import mindspore.dataset.vision.c_transforms as C
 from src.resnet_gpu_benchmark import resnet50 as resnet
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.momentum import Momentum as MomentumWeightDecay
-
-parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--batch_size', type=str, default="256", help='Batch_size: default 256.')
-parser.add_argument('--epoch_size', type=str, default="2", help='Epoch_size: default 2')
-parser.add_argument('--print_per_steps', type=str, default="20", help='Print loss and time per steps: default 20')
-parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
-parser.add_argument('--save_ckpt', type=ast.literal_eval, default=False, help='Save ckpt or not: default False')
-parser.add_argument('--eval', type=ast.literal_eval, default=False, help='Eval ckpt : default False')
-parser.add_argument('--dataset_path', type=str, default=None, help='Imagenet dataset path')
-parser.add_argument('--ckpt_path', type=str, default="./", help='The path to save ckpt if save_ckpt is True;\
-                    Or the ckpt model file when eval is True')
-parser.add_argument('--mode', type=str, default="GRAPH", choices=["GRAPH", "PYNATIVE"], help='Execute mode')
-parser.add_argument('--dtype', type=str, choices=["fp32", "fp16", "FP16", "FP32"], default="fp16", \
-                    help='Compute data type fp32 or fp16: default fp16')
-args_opt = parser.parse_args()
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 set_seed(1)
-
 
 class MyTimeMonitor(Callback):
     def __init__(self, batch_size, sink_size, dataset_size, mode):
@@ -95,7 +80,7 @@ class MyTimeMonitor(Callback):
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU", dtype="fp16",
                    device_num=1):
-    if args_opt.mode == "GRAPH":
+    if config.mode_name == "GRAPH":
         ds_num_parallel_worker = 4
         map_num_parallel_worker = 8
         batch_num_parallel_worker = None
@@ -116,7 +101,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     # define map operations
     normalize_op = C.Normalize(mean=mean, std=std)
     if dtype == "fp16":
-        if args_opt.eval:
+        if config.eval:
             x_dtype = "float32"
         else:
             x_dtype = "float16"
@@ -161,25 +146,26 @@ def get_liner_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per
     return lr_each_step
 
 
+@moxing_wrapper()
 def train():
     # set args
     dev = "GPU"
-    epoch_size = int(args_opt.epoch_size)
-    total_batch = int(args_opt.batch_size)
-    print_per_steps = int(args_opt.print_per_steps)
-    compute_type = str(args_opt.dtype).lower()
-    ckpt_save_dir = str(args_opt.ckpt_path)
-    save_ckpt = bool(args_opt.save_ckpt)
+    epoch_size = int(config.epoch_size)
+    total_batch = int(config.batch_size)
+    print_per_steps = int(config.print_per_steps)
+    compute_type = str(config.dtype).lower()
+    save_ckpt = bool(config.save_ckpt)
     device_num = 1
     # init context
-    if args_opt.mode == "GRAPH":
+    if config.mode_name == "GRAPH":
         mode = context.GRAPH_MODE
         all_reduce_fusion_config = [85, 160]
     else:
         mode = context.PYNATIVE_MODE
         all_reduce_fusion_config = [30, 90, 160]
     context.set_context(mode=mode, device_target=dev, save_graphs=False)
-    if args_opt.run_distribute:
+    ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
+    if config.run_distribute:
         init()
         device_num = get_group_size()
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -187,7 +173,7 @@ def train():
         ckpt_save_dir = ckpt_save_dir + "ckpt_" + str(get_rank()) + "/"
 
     # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
+    dataset = create_dataset(dataset_path=config.data_path, do_train=True, repeat_num=1,
                              batch_size=total_batch, target=dev, dtype=compute_type, device_num=device_num)
     step_size = dataset.get_dataset_size()
     if (print_per_steps > step_size or print_per_steps < 1):
@@ -251,21 +237,21 @@ def train():
     else:
         model.train(epoch_size, dataset, callbacks=cb)
 
-
+@moxing_wrapper()
 def eval_():
     # set args
     dev = "GPU"
-    compute_type = str(args_opt.dtype).lower()
-    ckpt_dir = str(args_opt.ckpt_path)
-    total_batch = int(args_opt.batch_size)
+    compute_type = str(config.dtype).lower()
+    ckpt_dir = str(config.checkpoint_file_path)
+    total_batch = int(config.batch_size)
     # init context
-    if args_opt.mode == "GRAPH":
+    if config.mode_name == "GRAPH":
         mode = context.GRAPH_MODE
     else:
         mode = context.PYNATIVE_MODE
     context.set_context(mode=mode, device_target=dev, save_graphs=False)
     # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, repeat_num=1,
+    dataset = create_dataset(dataset_path=config.data_path, do_train=False, repeat_num=1,
                              batch_size=total_batch, target=dev, dtype=compute_type)
     # define net
     net = resnet(class_num=1001, dtype=compute_type)
@@ -284,7 +270,7 @@ def eval_():
 
 
 if __name__ == '__main__':
-    if not args_opt.eval:
+    if not config.eval:
         train()
     else:
         eval_()

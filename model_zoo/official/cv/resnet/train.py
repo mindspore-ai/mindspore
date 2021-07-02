@@ -14,8 +14,6 @@
 # ============================================================================
 """train resnet."""
 import os
-import argparse
-import ast
 from mindspore import context
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum, thor
@@ -26,7 +24,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init
 from mindspore.common import set_seed
 from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
@@ -34,71 +32,34 @@ import mindspore.common.initializer as weight_init
 import mindspore.log as logger
 from src.lr_generator import get_lr, warmup_cosine_annealing_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
-from src.config import cfg
 from src.eval_callback import EvalCallBack
 from src.metric import DistAccuracy, ClassifyCorrectCell
-
-parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--net', type=str, default=None, help='Resnet Model, resnet18, resnet34, resnet50 or resnet101')
-parser.add_argument('--dataset', type=str, default=None, help='Dataset, either cifar10 or imagenet2012')
-parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
-parser.add_argument('--device_num', type=int, default=1, help='Device num.')
-
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--device_target', type=str, default='Ascend', choices=("Ascend", "GPU", "CPU"),
-                    help="Device target, support Ascend, GPU and CPU.")
-parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
-parser.add_argument('--parameter_server', type=ast.literal_eval, default=False, help='Run parameter server train')
-parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
-                    help="Filter head weight parameters, default is False.")
-parser.add_argument("--run_eval", type=ast.literal_eval, default=False,
-                    help="Run evaluation when training, default is False.")
-parser.add_argument('--eval_dataset_path', type=str, default=None, help='Evaluation dataset path when run_eval is True')
-parser.add_argument("--save_best_ckpt", type=ast.literal_eval, default=True,
-                    help="Save best checkpoint when run_eval is True, default is True.")
-parser.add_argument("--eval_start_epoch", type=int, default=40,
-                    help="Evaluation start epoch when run_eval is True, default is 40.")
-parser.add_argument("--eval_interval", type=int, default=1,
-                    help="Evaluation interval when run_eval is True, default is 1.")
-parser.add_argument('--enable_cache', type=ast.literal_eval, default=False,
-                    help='Caching the eval dataset in memory to speedup evaluation, default is False.')
-parser.add_argument('--cache_session_id', type=str, default="", help='The session id for cache service.')
-parser.add_argument('--mode', type=str, default='GRAPH', choices=('GRAPH', 'PYNATIVE'),
-                    help="Graph mode or PyNative mode, default is Graph mode")
-args_opt = parser.parse_args()
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_rank_id, get_device_num
 
 set_seed(1)
 
-if args_opt.net in ("resnet18", "resnet34", "resnet50"):
-    if args_opt.net == "resnet18":
+if config.net_name in ("resnet18", "resnet34", "resnet50"):
+    if config.net_name == "resnet18":
         from src.resnet import resnet18 as resnet
-    if args_opt.net == "resnet34":
+    if config.net_name == "resnet34":
         from src.resnet import resnet34 as resnet
-    if args_opt.net == "resnet50":
+    if config.net_name == "resnet50":
         from src.resnet import resnet50 as resnet
-    if args_opt.dataset == "cifar10":
-        from src.config import config1 as config
+    if config.dataset == "cifar10":
         from src.dataset import create_dataset1 as create_dataset
     else:
-        from src.config import config2 as config
-        if args_opt.mode == "GRAPH":
+        if config.mode_name == "GRAPH":
             from src.dataset import create_dataset2 as create_dataset
         else:
             from src.dataset import create_dataset_pynative as create_dataset
-elif args_opt.net == "resnet101":
+elif config.net_name == "resnet101":
     from src.resnet import resnet101 as resnet
-    from src.config import config3 as config
     from src.dataset import create_dataset3 as create_dataset
 else:
     from src.resnet import se_resnet50 as resnet
-    from src.config import config4 as config
     from src.dataset import create_dataset4 as create_dataset
-
-if cfg.optimizer == "Thor":
-    if args_opt.device_target == "Ascend":
-        from src.config import config_thor_Ascend as config
-    else:
-        from src.config import config_thor_gpu as config
 
 
 def filter_checkpoint_parameter_by_list(origin_dict, param_filter):
@@ -122,56 +83,46 @@ def set_graph_kernel_context(run_platform, net_name):
         context.set_context(enable_graph_kernel=True)
         context.set_context(graph_kernel_flags="--enable_parallel_fusion --enable_expand_ops=Conv2D")
 
-if __name__ == '__main__':
-    target = args_opt.device_target
+def set_parameter():
+    """set_parameter"""
+    target = config.device_target
     if target == "CPU":
-        args_opt.run_distribute = False
-
-    ckpt_save_dir = config.save_checkpoint_path
+        config.run_distribute = False
 
     # init context
-    if args_opt.mode == 'GRAPH':
+    if config.mode_name == 'GRAPH':
         context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
-        set_graph_kernel_context(target, args_opt.net)
+        set_graph_kernel_context(target, config.net_name)
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target=target, save_graphs=False)
-    if args_opt.parameter_server:
+    if config.parameter_server:
         context.set_ps_context(enable_ps=True)
-    if args_opt.run_distribute:
+    if config.run_distribute:
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
-            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+            context.set_auto_parallel_context(device_num=config.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             set_algo_parameters(elementwise_op_strategy_follow=True)
-            if args_opt.net == "resnet50" or args_opt.net == "se-resnet50":
+            if config.net_name == "resnet50" or config.net_name == "se-resnet50":
                 context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
-            elif args_opt.net == "resnet101":
+            elif config.net_name == "resnet101":
                 context.set_auto_parallel_context(all_reduce_fusion_config=[80, 210, 313])
             init()
         # GPU target
         else:
             init()
-            context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
+            context.set_auto_parallel_context(device_num=get_device_num(),
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
-            if args_opt.net == "resnet50":
+            if config.net_name == "resnet50":
                 context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
-        ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
 
-    # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
-                             batch_size=config.batch_size, target=target, distribute=args_opt.run_distribute)
-    step_size = dataset.get_dataset_size()
-
-    # define net
-    net = resnet(class_num=config.class_num)
-    if args_opt.parameter_server:
-        net.set_param_ps()
-
-    # init weight
-    if args_opt.pre_trained:
-        param_dict = load_checkpoint(args_opt.pre_trained)
-        if args_opt.filter_weight:
+def init_weight(net):
+    """init_weight"""
+    if config.pre_trained:
+        param_dict = load_checkpoint(config.pre_trained)
+        if config.filter_weight:
             filter_list = [x.name for x in net.end_point.get_parameters()]
             filter_checkpoint_parameter_by_list(param_dict, filter_list)
         load_param_into_net(net, param_dict)
@@ -186,20 +137,60 @@ if __name__ == '__main__':
                                                              cell.weight.shape,
                                                              cell.weight.dtype))
 
-    # init lr
-    if cfg.optimizer == "Thor":
+def init_lr(step_size):
+    """init lr"""
+    if config.optimizer == "Thor":
         from src.lr_generator import get_thor_lr
         lr = get_thor_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
     else:
-        if args_opt.net in ("resnet18", "resnet34", "resnet50", "se-resnet50"):
+        if config.net_name in ("resnet18", "resnet34", "resnet50", "se-resnet50"):
             lr = get_lr(lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
                         warmup_epochs=config.warmup_epochs, total_epochs=config.epoch_size, steps_per_epoch=step_size,
                         lr_decay_mode=config.lr_decay_mode)
         else:
             lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size,
                                             config.pretrain_epoch_size * step_size)
-    lr = Tensor(lr)
+    return lr
 
+def init_loss_scale():
+    if config.dataset == "imagenet2012":
+        if not config.use_label_smooth:
+            config.label_smooth_factor = 0.0
+        loss = CrossEntropySmooth(sparse=True, reduction="mean",
+                                  smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
+    else:
+        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    return loss
+
+def run_eval(target, model, ckpt_save_dir, cb):
+    """run_eval"""
+    if config.run_eval:
+        if config.eval_dataset_path is None or (not os.path.isdir(config.eval_dataset_path)):
+            raise ValueError("{} is not a existing path.".format(config.eval_dataset_path))
+        eval_dataset = create_dataset(dataset_path=config.eval_dataset_path, do_train=False,
+                                      batch_size=config.batch_size, target=target, enable_cache=config.enable_cache,
+                                      cache_session_id=config.cache_session_id)
+        eval_param_dict = {"model": model, "dataset": eval_dataset, "metrics_name": "acc"}
+        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=config.eval_interval,
+                               eval_start_epoch=config.eval_start_epoch, save_best_ckpt=config.save_best_ckpt,
+                               ckpt_directory=ckpt_save_dir, besk_ckpt_name="best_acc.ckpt",
+                               metrics_name="acc")
+        cb += [eval_cb]
+
+@moxing_wrapper()
+def train_net():
+    """train net"""
+    target = config.device_target
+    set_parameter()
+    dataset = create_dataset(dataset_path=config.data_path, do_train=True, repeat_num=1,
+                             batch_size=config.batch_size, target=target,
+                             distribute=config.run_distribute)
+    step_size = dataset.get_dataset_size()
+    net = resnet(class_num=config.class_num)
+    if config.parameter_server:
+        net.set_param_ps()
+    init_weight(net=net)
+    lr = Tensor(init_lr(step_size=step_size))
     # define opt
     decayed_params = []
     no_decayed_params = []
@@ -213,27 +204,21 @@ if __name__ == '__main__':
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]
     opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
-    if args_opt.dataset == "imagenet2012":
-        if not config.use_label_smooth:
-            config.label_smooth_factor = 0.0
-        loss = CrossEntropySmooth(sparse=True, reduction="mean",
-                                  smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
-    else:
-        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    loss = init_loss_scale()
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-    dist_eval_network = ClassifyCorrectCell(net) if args_opt.run_distribute else None
+    dist_eval_network = ClassifyCorrectCell(net) if config.run_distribute else None
     metrics = {"acc"}
-    if args_opt.run_distribute:
-        metrics = {'acc': DistAccuracy(batch_size=config.batch_size, device_num=args_opt.device_num)}
-    if (args_opt.net not in ("resnet18", "resnet34", "resnet50", "resnet101", "se-resnet50")) or \
-        args_opt.parameter_server or target == "CPU":
+    if config.run_distribute:
+        metrics = {'acc': DistAccuracy(batch_size=config.batch_size, device_num=config.device_num)}
+    if (config.net_name not in ("resnet18", "resnet34", "resnet50", "resnet101", "se-resnet50")) or \
+        config.parameter_server or target == "CPU":
         ## fp32 training
         model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics, eval_network=dist_eval_network)
     else:
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics=metrics,
                       amp_level="O2", keep_batchnorm_fp32=False, eval_network=dist_eval_network)
 
-    if cfg.optimizer == "Thor" and args_opt.dataset == "imagenet2012":
+    if config.optimizer == "Thor" and config.dataset == "imagenet2012":
         from src.lr_generator import get_thor_damping
         damping = get_thor_damping(0, config.damping_init, config.damping_decay, 70, step_size)
         split_indices = [26, 53]
@@ -242,36 +227,30 @@ if __name__ == '__main__':
         model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
                                                           loss_scale_manager=loss_scale, metrics={'acc'},
                                                           amp_level="O2", keep_batchnorm_fp32=False)
-        args_opt.run_eval = False
+        config.run_eval = False
         logger.warning("Thor optimizer not support evaluation while training.")
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)
     loss_cb = LossMonitor()
     cb = [time_cb, loss_cb]
+    ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
+    ckpt_save_dir = ckpt_save_dir + "ckpt_" + str(get_rank_id()) + "/"
     if config.save_checkpoint:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
         cb += [ckpt_cb]
-    if args_opt.run_eval:
-        if args_opt.eval_dataset_path is None or (not os.path.isdir(args_opt.eval_dataset_path)):
-            raise ValueError("{} is not a existing path.".format(args_opt.eval_dataset_path))
-        eval_dataset = create_dataset(dataset_path=args_opt.eval_dataset_path, do_train=False,
-                                      batch_size=config.batch_size, target=target, enable_cache=args_opt.enable_cache,
-                                      cache_session_id=args_opt.cache_session_id)
-        eval_param_dict = {"model": model, "dataset": eval_dataset, "metrics_name": "acc"}
-        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args_opt.eval_interval,
-                               eval_start_epoch=args_opt.eval_start_epoch, save_best_ckpt=args_opt.save_best_ckpt,
-                               ckpt_directory=ckpt_save_dir, besk_ckpt_name="best_acc.ckpt",
-                               metrics_name="acc")
-        cb += [eval_cb]
+    run_eval(target, model, ckpt_save_dir, cb)
     # train model
-    if args_opt.net == "se-resnet50":
+    if config.net_name == "se-resnet50":
         config.epoch_size = config.train_epoch_size
-    dataset_sink_mode = (not args_opt.parameter_server) and target != "CPU"
+    dataset_sink_mode = (not config.parameter_server) and target != "CPU"
     model.train(config.epoch_size - config.pretrain_epoch_size, dataset, callbacks=cb,
                 sink_size=dataset.get_dataset_size(), dataset_sink_mode=dataset_sink_mode)
 
-    if args_opt.run_eval and args_opt.enable_cache:
+    if config.run_eval and config.enable_cache:
         print("Remember to shut down the cache server via \"cache_admin --stop\"")
+
+if __name__ == '__main__':
+    train_net()

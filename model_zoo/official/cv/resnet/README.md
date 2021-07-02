@@ -101,27 +101,26 @@ After installing MindSpore via the official website, you can start training and 
 
 ```bash
 # distributed training
-Usage: bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training
-Usage: bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
-[PRETRAINED_CKPT_PATH](optional)
+Usage: bash run_standalone_train.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # run evaluation example
-Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 ```
 
 - Running on GPU
 
 ```bash
 # distributed training example
-bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_distribute_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training example
-bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_standalone_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # infer example
-bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 
 # gpu benchmark example
 bash run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional) [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)
@@ -131,10 +130,41 @@ bash run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](o
 
 ```bash
 # standalone training example
-python train.py --net=[resnet50|resnet101] --dataset=[cifar10|imagenet2012] --device_target=CPU --dataset_path=[DATASET_PATH] --pre_trained=[CHECKPOINT_PATH](optional)
+python train.py --device_target=CPU --data_path=[DATASET_PATH]  --config_path [CONFIG_PATH] --pre_trained=[CHECKPOINT_PATH](optional)
 
 # infer example
-python eval.py --net=[resnet50|resnet101] --dataset=[cifar10|imagenet2012] --dataset_path=[DATASET_PATH] --checkpoint_path=[CHECKPOINT_PATH] --device_target=CPU
+python eval.py --data_path=[DATASET_PATH] --checkpoint_file_path=[CHECKPOINT_PATH] --config_path [CONFIG_PATH]  --device_target=CPU
+```
+
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the config directory to "config_path=/The path of config in S3/"
+# (3) Set the code directory to "/path/resnet" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the config directory to "config_path=/The path of config in S3/"
+# (4) Set the code directory to "/path/resnet" on the website UI interface.
+# (5) Set the startup file to "eval.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
 ```
 
 # [Script Description](#contents)
@@ -158,13 +188,26 @@ python eval.py --net=[resnet50|resnet101] --dataset=[cifar10|imagenet2012] --dat
     |── run_eval_gpu_resnet_benckmark.sh   # launch gpu benchmark eval for resnet50 with imagenet2012
     └── cache_util.sh                      # a collection of helper functions to manage cache
   ├── src
-    ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
     ├─  eval_callback.py                   # evaluation callback while training
     ├── CrossEntropySmooth.py              # loss definition for ImageNet2012 dataset
     ├── lr_generator.py                    # generate learning rate for each step
     ├── resnet.py                          # resnet backbone, including resnet50 and resnet101 and se-resnet50
     └── resnet_gpu_benchmark.py            # resnet50 for GPU benchmark
+    ├── model_utils
+       ├──config.py                        # parameter configuration
+       ├──device_adapter.py                # device adapter
+       ├──local_adapter.py                 # local adapter
+       ├──moxing_adapter.py                # moxing adapter
+  ├── resnet18_cifar10_config.yaml         # parameter configuration
+  ├── resnet18_imagenet2012_config.yaml    # parameter configuration
+  ├── resnet34_imagenet2012_config.yaml    # parameter configuration
+  ├── resnet50_cifar10_config.yaml         # parameter configuration
+  ├── resnet50_imagenet2012_Ascend_config.yaml # parameter configuration
+  ├── resnet50_imagenet2012_config.yaml    # parameter configuration
+  ├── resnet50_imagenet2012_GPU_config.yaml # parameter configuration
+  ├── resnet101_imagenet2012_config.yaml   # parameter configuration
+  ├── se-resnet50_imagenet2012_config.yaml # parameter configuration
   ├── export.py                            # export model for inference
   ├── mindspore_hub_conf.py                # mindspore hub interface
   ├── eval.py                              # eval net
@@ -174,7 +217,7 @@ python eval.py --net=[resnet50|resnet101] --dataset=[cifar10|imagenet2012] --dat
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py.
+Parameters for both training and evaluation can be set in config file.
 
 - Config for ResNet18 and ResNet50, CIFAR-10 dataset
 
@@ -189,7 +232,6 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last step
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./",     # path to save checkpoint
 "warmup_epochs": 5,               # number of warmup epoch
 "lr_decay_mode": "poly"           # decay mode can be selected in steps, ploy and default
 "lr_init": 0.01,                  # initial learning rate
@@ -210,7 +252,6 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "Linear",        # decay mode for generating learning rate
 "use_label_smooth": True,         # label smooth
@@ -233,7 +274,6 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 1,        # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "optimizer": 'Momentum',          # optimizer
 "use_label_smooth": True,         # label smooth
@@ -256,7 +296,6 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
 "use_label_smooth": True,         # label_smooth
@@ -278,7 +317,6 @@ Parameters for both training and evaluation can be set in config.py.
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 4,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 3,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
 "use_label_smooth": True,         # label_smooth
@@ -296,15 +334,13 @@ Parameters for both training and evaluation can be set in config.py.
 
 ```bash
 # distributed training
-Usage: bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training
-Usage: bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH]
-[PRETRAINED_CKPT_PATH](optional)
+Usage: bash run_standalone_train.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # run evaluation example
-Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
-
+Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 ```
 
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -319,13 +355,14 @@ If you want to change device_id for standalone training, you can set environment
 
 ```bash
 # distributed training example
-bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_distribute_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training example
-bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_standalone_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # infer example
-bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
+[CONFIG_PATH]
 
 # gpu benchmark training example
 bash run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional) [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)
@@ -343,29 +380,29 @@ Please follow the instructions in the link [GPU-Multi-Host](https://www.mindspor
 - Parameter server training Ascend example
 
 ```bash
-bash run_parameter_server_train.sh [resnet18|resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_parameter_server_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 - Parameter server training GPU example
 
 ```bash
-bash run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_parameter_server_train_gpu.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 #### Evaluation while training
 
 ```bash
 # evaluation with distributed training Ascend example:
-bash run_distribute_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # evaluation with standalone training Ascend example:
-bash run_standalone_train.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_standalone_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # evaluation with distributed training GPU example:
-bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_distribute_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 
 # evaluation with standalone training GPU example:
-bash run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
+bash run_standalone_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)
 ```
 
 `RUN_EVAL` and `EVAL_DATASET_PATH` are optional arguments, setting `RUN_EVAL`=True allows you to do evaluation while training. When `RUN_EVAL` is set, `EVAL_DATASET_PATH` must also be set.
@@ -480,12 +517,12 @@ epoch: [0/1] step: [100/5004], loss is 6.814013Epoch time: 3437.154 ms, fps: 148
 
 ```bash
 # evaluation
-Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [DATASET_PATH] [CONFIG_PATH] [CHECKPOINT_PATH]
 ```
 
 ```bash
 # evaluation example
-bash run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
+bash run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt --config_path /.yaml
 ```
 
 > checkpoint can be produced in training process.
@@ -493,7 +530,7 @@ bash run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/tra
 #### Running on GPU
 
 ```bash
-bash run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]
 ```
 
 ### Result
@@ -547,12 +584,38 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 
 ### [Export MindIR](#contents)
 
+Export MindIR on local
+
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --config_path [CONFIG_PATH]
 ```
 
-The ckpt_file parameter is required,
+The checkpoint_file_path parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# Export on ModelArts
+# (1) Perform a or b.
+#       a. Set "enable_modelarts=True" on default_config.yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on default_config.yaml file.
+#          Set "file_name='./resnet'" on default_config.yaml file.
+#          Set "file_format='AIR'" on default_config.yaml file.
+#          Set other parameters on default_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+#          Add "file_name='./resnet'" on the website UI interface.
+#          Add "file_format='AIR'" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the config_path="/path/yaml file" on the website UI interface.
+# (3) Set the code directory to "/path/resnet" on the website UI interface.
+# (4) Set the startup file to "export.py" on the website UI interface.
+# (5) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+```
 
 ### Infer on Ascend310
 

@@ -17,7 +17,6 @@ import os
 import json
 import argparse
 import numpy as np
-from src.config import config2 as config
 
 batch_size = 1
 parser = argparse.ArgumentParser(description="resnet inference")
@@ -63,14 +62,14 @@ def cal_acc_imagenet(result_path, label_path):
     files = os.listdir(result_path)
     with open(label_path, "r") as label:
         labels = json.load(label)
-
+    result_shape = (1, 1001)
     top1 = 0
     top5 = 0
     total_data = len(files)
     for file in files:
         img_ids_name = file.split('_0.')[0]
         data_path = os.path.join(result_path, img_ids_name + "_0.bin")
-        result = np.fromfile(data_path, dtype=np.float32).reshape(batch_size, config.class_num)
+        result = np.fromfile(data_path, dtype=np.float32).reshape(result_shape)
         for batch in range(batch_size):
             predict = np.argsort(-result[batch], axis=-1)
             if labels[img_ids_name+".JPEG"] == predict[0]:

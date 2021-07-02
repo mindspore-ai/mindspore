@@ -14,33 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ]
+if [ $# != 3 ]
 then 
-    echo "Usage: bash run_eval.sh [resnet18|resnet34|resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]"
-exit 1
-fi
-
-if [ $1 != "resnet18" ] && [ $1 != "resnet34" ] && [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
-then 
-    echo "error: the selected net is neither resnet50 nor resnet101 nor se-resnet50"
-exit 1
-fi
-
-if [ $2 != "cifar10" ] && [ $2 != "imagenet2012" ]
-then 
-    echo "error: the selected dataset is neither cifar10 nor imagenet2012"
-exit 1
-fi
-
-if [ $1 == "resnet101" ] && [ $2 == "cifar10" ]
-then
-    echo "error: evaluating resnet101 with cifar10 dataset is unsupported now!"
-exit 1
-fi
-
-if [ $1 == "se-resnet50" ] && [ $2 == "cifar10" ]
-then
-    echo "error: evaluating se-resnet50 with cifar10 dataset is unsupported now!"
+    echo "Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [CONFIG_PATH]"
 exit 1
 fi
 
@@ -52,8 +28,9 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $3)
-PATH2=$(get_real_path $4)
+PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
+CONFIG_FILE=$3
 
 
 if [ ! -d $PATH1 ]
@@ -81,9 +58,10 @@ fi
 mkdir ./eval
 cp ../*.py ./eval
 cp *.sh ./eval
+cp -r ../*.yaml ./eval
 cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python eval.py --net=$1 --dataset=$2 --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
+python eval.py --data_path=$PATH1 --checkpoint_file_path=$PATH2 --config_path=$CONFIG_FILE &> log &
 cd ..

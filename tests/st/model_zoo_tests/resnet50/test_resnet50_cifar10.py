@@ -33,8 +33,9 @@ def test_resnet50_cifar10_ascend():
     new_list = ["total_epochs=10", "10"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
-    exec_network_shell = "cd resnet/scripts; bash run_distribute_train.sh resnet50 cifar10 {} {}"\
-        .format(utils.rank_table_path, dataset_path)
+    config_path = os.path.join(cur_model_path, "resnet50_cifar10_config.yaml")
+    exec_network_shell = "cd resnet/scripts; bash run_distribute_train.sh {} {} {}"\
+        .format(utils.rank_table_path, dataset_path, config_path)
     os.system(exec_network_shell)
     cmd = "ps -ef | grep python | grep train.py | grep -v grep"
     ret = utils.process_check(100, cmd)
@@ -63,7 +64,9 @@ def test_resnet50_cifar10_gpu():
     new_list = ["total_epochs=10", "10"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
-    exec_network_shell = "cd resnet/scripts; sh run_distribute_train_gpu.sh resnet50 cifar10 {}".format(dataset_path)
+    config_path = os.path.join(cur_model_path, "resnet50_cifar10_config.yaml")
+    exec_network_shell = "cd resnet/scripts; sh run_distribute_train_gpu.sh {} {}" \
+        .format(dataset_path, config_path)
     logger.warning("cmd [{}] is running...".format(exec_network_shell))
     os.system(exec_network_shell)
     cmd = "ps -ef | grep python | grep train.py | grep -v grep"

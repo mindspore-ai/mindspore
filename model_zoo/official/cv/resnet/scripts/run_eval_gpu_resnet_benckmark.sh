@@ -14,11 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ] && [ $# != 2 ] && [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
+if [ $# != 2 ] && [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ] && [ $# != 6 ]
 then 
-    echo "Usage: bash run_eval_gpu_resnet_benchmark.sh [DATASET_PATH] [CKPT_PATH] [BATCH_SIZE](optional) \
+    echo "Usage: bash run_eval_gpu_resnet_benchmark.sh [DATASET_PATH] [CKPT_PATH] [CONFIG_PATH] [BATCH_SIZE](optional) \
           [DTYPE](optional)"
-    echo "Example: sh run_eval_gpu_resnet_benchmark.sh /path/imagenet/train /path/ckpt 256 FP16"
+    echo "Example: sh run_eval_gpu_resnet_benchmark.sh /path/imagenet/train /path/ckpt /*.yaml 256 FP16"
     exit 1
 fi
 
@@ -33,19 +33,19 @@ get_real_path(){
 DATAPATH=$(get_real_path $1)
 script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
-if [ $# == 2 ]
-then
-    python ${self_path}/../gpu_resnet_benchmark.py --dataset_path=$DATAPATH --eval=True --ckpt_path=$2
-fi
-
 if [ $# == 3 ]
 then
-    python ${self_path}/../gpu_resnet_benchmark.py --dataset_path=$DATAPATH --eval=True --ckpt_path=$2 \
-     --batch_size=$3
+    python ${self_path}/../gpu_resnet_benchmark.py --data_path=$DATAPATH --eval=True --checkpoint_file_path=$2 --config_path=$3
 fi
 
 if [ $# == 4 ]
 then
-    python ${self_path}/../gpu_resnet_benchmark.py--dataset_path=$DATAPATH --eval=True --ckpt_path=$2 \
-    --batch_size=$3 --dtype=$4
+    python ${self_path}/../gpu_resnet_benchmark.py --data_path=$DATAPATH --eval=True --checkpoint_file_path=$2 \
+    --config_path=$3 --batch_size=$4
+fi
+
+if [ $# == 5 ]
+then
+    python ${self_path}/../gpu_resnet_benchmark.py--data_path=$DATAPATH --eval=True --checkpoint_file_path=$2 \
+    --config_path=$3 --batch_size=$4 --dtype=$5
 fi

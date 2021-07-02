@@ -17,31 +17,12 @@
 CURPATH="$(dirname "$0")"
 . ${CURPATH}/cache_util.sh
 
-if [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
+if [ $# != 2 ] && [ $# != 3 ] && [ $# != 4 ]
 then 
-    echo "Usage: bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
-    echo "       bash run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
+    echo "Usage: bash run_distribute_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "       bash run_distribute_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASET_PATH](optional)"
     exit 1
 fi
-
-if [ $1 != "resnet50" ] && [ $1 != "resnet101" ]
-then 
-    echo "error: the selected net is neither resnet50 nor resnet101"
-    exit 1
-fi
-
-if [ $2 != "cifar10" ] && [ $2 != "imagenet2012" ]
-then 
-    echo "error: the selected dataset is neither cifar10 nor imagenet2012"
-    exit 1
-fi
-
-if [ $1 == "resnet101" ] && [ $2 == "cifar10" ]
-then 
-    echo "error: training resnet101 with cifar10 dataset is unsupported now!"
-    exit 1
-fi
-
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -51,17 +32,18 @@ get_real_path(){
   fi
 }
 
-PATH1=$(get_real_path $3)
+PATH1=$(get_real_path $1)
+CONFIG_FILE=$2
 
-if [ $# == 4 ]
+if [ $# == 3 ]
 then 
-    PATH2=$(get_real_path $4)
+    PATH2=$(get_real_path $3)
 fi
 
-if [ $# == 5 ]
+if [ $# == 4 ]
 then
-  RUN_EVAL=$4
-  EVAL_DATASET_PATH=$(get_real_path $5)
+  RUN_EVAL=$3
+  EVAL_DATASET_PATH=$(get_real_path $4)
 fi
 
 
@@ -71,7 +53,7 @@ then
     exit 1
 fi 
 
-if [ $# == 5 ] && [ ! -f $PATH2 ]
+if [ $# == 4 ] && [ ! -f $PATH2 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH2 is not a file"
     exit 1
@@ -97,29 +79,30 @@ rm -rf ./train_parallel
 mkdir ./train_parallel
 cp ../*.py ./train_parallel
 cp *.sh ./train_parallel
+cp -r ../*.yaml ./train_parallel
 cp -r ../src ./train_parallel
 cd ./train_parallel || exit
 
+if [ $# == 2 ]
+then
+    mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
+           python train.py --config_path=$CONFIG_FILE --run_distribute=True --device_num=$DEVICE_NUM \
+           --device_target="GPU" --data_path=$PATH1 --output_path './output' &> log &
+fi
+    
 if [ $# == 3 ]
 then
     mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-           python train.py --net=$1 --dataset=$2 --run_distribute=True \
-           --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 &> log &
-fi
-    
-if [ $# == 4 ]
-then
-    mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-           python train.py --net=$1 --dataset=$2 --run_distribute=True \
-           --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
+           python train.py  --config_path=$CONFIG_FILE --run_distribute=True --device_num=$DEVICE_NUM \
+           --device_target="GPU" --data_path=$PATH1 --pre_trained=$PATH2 --output_path './output' &> log &
 fi
 
-if [ $# == 5 ]
+if [ $# == 4 ]
 then
   mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-           python train.py --net=$1 --dataset=$2 --run_distribute=True \
-           --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --run_eval=$RUN_EVAL \
-           --eval_dataset_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID &> log &
+           python train.py --config_path=$CONFIG_FILE --run_distribute=True  --device_num=$DEVICE_NUM \
+           --device_target="GPU" --data_path=$PATH1 --run_eval=$RUN_EVAL --eval_data_path=$EVAL_DATASET_PATH \
+           --enable_cache=True --cache_session_id=$CACHE_SESSION_ID --output_path './output' &> log &
   if [ "x${RUN_EVAL}" == "xTrue" ]
   then
     echo -e "\nWhen training run is done, remember to shut down the cache server via \"cache_admin --stop\""

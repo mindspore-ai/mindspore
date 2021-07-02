@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 from mindspore.communication.management import init, get_rank, get_group_size
-from src.config import cfg
+from src.model_utils.config import config
 
 
 class ImgDataset:
@@ -39,7 +39,7 @@ class ImgDataset:
         self.data = []
         self.dir_label_dict = {}
         self.img_format = (".bmp", ".png", ".jpg", ".jpeg")
-        self.dir_label = cfg.infer_label
+        self.dir_label = config.infer_label
         dataset_list = sorted(os.listdir(dataset_path))
         file_exist = dir_exist = False
         for index, data_name in enumerate(dataset_list):
