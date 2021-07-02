@@ -18,9 +18,10 @@ import re
 import numpy as np
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 from src.maskrcnn.mask_rcnn_r50 import MaskRcnn_Infer
-
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
+
 
 lss = [int(re.findall(r'[0-9]+', i)[0]) for i in config.feature_shapes]
 config.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
@@ -38,7 +39,12 @@ context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
     context.set_context(device_id=get_device_id())
 
-if __name__ == '__main__':
+def modelarts_process():
+    pass
+
+@moxing_wrapper(pre_process=modelarts_process)
+def export_maskrcnn():
+    """ export_maskrcnn """
     net = MaskRcnn_Infer(config=config)
     param_dict = load_checkpoint(config.ckpt_file)
 
@@ -49,10 +55,11 @@ if __name__ == '__main__':
     load_param_into_net(net, param_dict_new)
     net.set_train(False)
 
-    bs = config.test_batch_size
-
     img = Tensor(np.zeros([config.batch_size, 3, config.img_height, config.img_width], np.float16))
     img_metas = Tensor(np.zeros([config.batch_size, 4], np.float16))
 
     input_data = [img, img_metas]
     export(net, *input_data, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_maskrcnn()

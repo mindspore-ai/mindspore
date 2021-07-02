@@ -16,16 +16,21 @@
 import numpy as np
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 from src.gat import GAT
 from mindspore import Tensor, context, load_checkpoint, export
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
-    context.set_context(device_id=get_device_id()) # config.device_id
+    context.set_context(device_id=get_device_id())
 
-if __name__ == "__main__":
+def modelarts_process():
+    pass
 
+@moxing_wrapper(pre_process=modelarts_process)
+def export_gat():
+    """ export_gat """
     if config.dataset == "citeseer":
         feature_size = [1, 3312, 3703]
         biases_size = [1, 3312, 3312]
@@ -57,3 +62,6 @@ if __name__ == "__main__":
     gat_net.add_flags_recursive(fp16=True)
 
     export(gat_net, Tensor(feature), Tensor(biases), file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    export_gat()

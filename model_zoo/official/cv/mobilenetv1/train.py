@@ -98,12 +98,13 @@ def modelarts_pre_process():
 
         config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
     config.save_checkpoint_path = config.output_path
-    # config.pre_trained = os.path.join(config.dataset_path, config.pre_trained)
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_mobilenetv1():
-    config.dataset_path = os.path.join(config.dataset_path, 'train')
+    """ train_mobilenetv1 """
+    if config.dataset == 'imagenet2012':
+        config.dataset_path = os.path.join(config.dataset_path, 'train')
     target = config.device_target
     ckpt_save_dir = config.save_checkpoint_path
 

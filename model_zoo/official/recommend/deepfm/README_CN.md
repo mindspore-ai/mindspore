@@ -126,6 +126,109 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
   sh scripts/run_eval.sh 0 GPU /dataset_path /checkpoint_path/deepfm.ckpt
   ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```python
+    # 在 ModelArts 上使用8卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "distribute=True"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "train_epochs: 5"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "distribute=True"
+    #          在网页上设置 "dataset_path=/cache/data"
+    #          在网页上设置 "train_epochs: 5"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/deepfm"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "train_epochs: 5"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "dataset_path='/cache/data'"
+    #          在网页上设置 "train_epochs: 5"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/deepfm"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在 default_config.yaml 文件中设置 "checkpoint='./deepfm/deepfm_trained.ckpt'"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在网页上设置 "checkpoint='./deepfm/deepfm_trained.ckpt'"
+    #          在网页上设置 "dataset_path='/cache/data'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 上传你训练好的模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/deepfm"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    ```
+
+- 在 ModelArts 进行导出 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+1. 使用voc val数据集评估多尺度和翻转s8。评估步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "file_name='deepfm'"
+    #          在 base_config.yaml 文件中设置 "file_format='AIR'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url='/The path of checkpoint in S3/'"
+    #          在 base_config.yaml 文件中设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "file_name='deepfm'"
+    #          在网页上设置 "file_format='AIR'"
+    #          在网页上设置 "checkpoint_url='/The path of checkpoint in S3/'"
+    #          在网页上设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 在网页上设置你的代码路径为 "/path/deepfm"
+    # (4) 在网页上设置启动文件为 "export.py"
+    # (5) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (6) 创建训练作业
+    ```
+
 ## 脚本说明
 
 ## 脚本和样例代码

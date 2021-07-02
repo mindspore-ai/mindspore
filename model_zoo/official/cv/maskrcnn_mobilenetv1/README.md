@@ -38,7 +38,7 @@ It shows top results in all three tracks of the COCO suite of challenges, includ
 # [Model Architecture](#contents)
 
 MaskRCNN is a two-stage target detection network. It extends FasterRCNN by adding a branch for predicting an object mask in parallel with the existing branch for bounding box recognition.This network uses a region proposal network (RPN), which can share the convolution features of the whole image with the detection network, so that the calculation of region proposal is almost cost free. The whole network further combines RPN and mask branch into a network by sharing the convolution features.
-This network uses MobileNetV1 as the backbone of the MaskRCNN network.
+This network uses MobileNetV1 as the backbone of the maskrcnn_mobilenetv1 network.
 
 [Paper](http://cn.arxiv.org/pdf/1703.06870v3): Kaiming He, Georgia Gkioxari, Piotr Dollar and Ross Girshick. "MaskRCNN"
 
@@ -113,7 +113,7 @@ pip install mmcv=0.2.14
     Note:
     1. To speed up data preprocessing, MindSpore provide a data format named MindRecord, hence the first step is to generate MindRecord files based on COCO2017 dataset before training. The process of converting raw COCO2017 dataset to MindRecord format may take about 4 hours.
     2. For distributed training, a [hccl configuration file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) with JSON format needs to be created in advance.
-    3. For large models like MaskRCNN, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
+    3. For large models like maskrcnn_mobilenetv1, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 
 4. Execute eval script.
    After training, you can start evaluation as follows:
@@ -138,6 +138,146 @@ pip install mmcv=0.2.14
    1. MODEL_PATH is a model file, exported by export script file.
    2. ANN_FILE_PATH is a annotation file for inference.
 
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "distribute=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='cocodataset'" on default_config.yaml file.
+    #          Set "base_lr=0.02" on default_config.yaml file.
+    #          Set "mindrecord_dir='./MindRecord_COCO'" on default_config.yaml file.
+    #          Set "data_path='/cache/data'" on default_config.yaml file.
+    #          Set "ann_file='./annotations/instances_val2017.json'" on default_config.yaml file.
+    #          Set "epoch_size=12" on default_config.yaml file.
+    #          Set "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='cocodataset'" on the website UI interface.
+    #          Add "distribute=True" on the website UI interface.
+    #          Add "base_lr=0.02" on the website UI interface.
+    #          Add "mindrecord_dir='./MindRecord_COCO'" on the website UI interface.
+    #          Add "data_path='/cache/data'" on the website UI interface.
+    #          Add "ann_file='./annotations/instances_val2017.json'" on the website UI interface.
+    #          Add "epoch_size=12" on the website UI interface.
+    #          Set "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'" on default_config.yaml file.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, run "train.py" like the following to create MindRecord dataset locally from coco2017.
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --data_path=$DATA_PATH --ann_file=$ANNO_PATH"
+    #          Second, zip MindRecord dataset to one zip file.
+    #          Finally, Upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/maskrcnn" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='cocodataset'" on default_config.yaml file.
+    #          Set "mindrecord_dir='./MindRecord_COCO'" on default_config.yaml file.
+    #          Set "data_path='/cache/data'" on default_config.yaml file.
+    #          Set "ann_file='./annotations/instances_val2017.json'" on default_config.yaml file.
+    #          Set "epoch_size=12" on default_config.yaml file.
+    #          Set "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='cocodataset'" on the website UI interface.
+    #          Add "mindrecord_dir='./MindRecord_COCO'" on the website UI interface.
+    #          Add "data_path='/cache/data'" on the website UI interface.
+    #          Add "ann_file='./annotations/instances_val2017.json'" on the website UI interface.
+    #          Add "epoch_size=12" on the website UI interface.
+    #          Set "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'" on default_config.yaml file.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, run "train.py" like the following to create MindRecord dataset locally from coco2017.
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --data_path=$DATA_PATH --ann_file=$ANNO_PATH"
+    #          Second, zip MindRecord dataset to one zip file.
+    #          Finally, Upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/maskrcnn" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='cocodataset'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on base_config.yaml file.
+    #          Set "checkpoint_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'" on default_config.yaml file.
+    #          Set "mindrecord_file='/cache/data/cocodataset/MindRecord_COCO'" on default_config.yaml file.
+    #          Set "data_path='/cache/data'" on default_config.yaml file.
+    #          Set "ann_file='./annotations/instances_val2017.json'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='cocodataset'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_your_trained_model/'" on the website UI interface.
+    #          Add "checkpoint_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'" on the website UI interface.
+    #          Set "mindrecord_file='/cache/data/cocodataset/MindRecord_COCO'" on default_config.yaml file.
+    #          Add "data_path='/cache/data'" on the website UI interface.
+    #          Set "ann_file='./annotations/instances_val2017.json'" on default_config.yaml file.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, run "eval.py" like the following to create MindRecord dataset locally from coco2017.
+    #             "python eval.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --data_path=$DATA_PATH --ann_file=$ANNO_PATH \
+    #              --checkpoint_path=$CHECKPOINT_PATH"
+    #          Second, zip MindRecord dataset to one zip file.
+    #          Finally, Upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/maskrcnn" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start evaluating as follows)
+
+1. Export s8 multiscale and flip with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "file_name='maskrcnn_mobilenetv1'" on base_config.yaml file.
+    #          Set "file_format='AIR'" on base_config.yaml file.
+    #          Set "checkpoint_url='/The path of checkpoint in S3/'" on beta_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "file_name='maskrcnn_mobilenetv1'" on the website UI interface.
+    #          Add "file_format='AIR'" on the website UI interface.
+    #          Add "checkpoint_url='/The path of checkpoint in S3/'" on the website UI interface.
+    #          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Set the code directory to "/path/maskrcnn_mobilenetv1" on the website UI interface.
+    # (4) Set the startup file to "export.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -158,7 +298,7 @@ pip install mmcv=0.2.14
       ├─anchor_generator.py               # generate base bounding box anchors
       ├─bbox_assign_sample.py             # filter positive and negative bbox for the first stage learning
       ├─bbox_assign_sample_stage2.py      # filter positive and negative bbox for the second stage learning
-      ├─mask_rcnn_mobilenetv1.py          # main network architecture of maskrcnn
+      ├─mask_rcnn_mobilenetv1.py          # main network architecture of maskrcnn_mobilenetv1
       ├─fpn_neck.py                       # fpn network
       ├─proposal_generator.py             # generate proposals based on feature map
       ├─rcnn_cls.py                       # rcnn bounding box regression branch
@@ -169,7 +309,7 @@ pip install mmcv=0.2.14
     ├─config.py                           # network configuration
     ├─dataset.py                          # dataset utils
     ├─lr_schedule.py                      # leanring rate geneatore
-    ├─network_define.py                   # network define for maskrcnn
+    ├─network_define.py                   # network define for maskrcnn_mobilenetv1
     └─util.py                             # routine operation
   ├─mindspore_hub_conf.py                 # mindspore hub interface
   ├─export.py                             #script to export AIR,MINDIR model
@@ -338,7 +478,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 
 ### [Training](#content)
 
-- Run `run_standalone_train.sh` for non-distributed training of MaskRCNN model.
+- Run `run_standalone_train.sh` for non-distributed training of maskrcnn_mobilenetv1 model.
 
 ```bash
 # standalone training

@@ -11,9 +11,6 @@ device_target: Ascend
 enable_profiling: False
 
 # ==============================================================================
-modelarts_dataset_unzip_name: 'cifar10'
-need_modelarts_dataset_unzip: True
-
 # config for mobilenet, cifar10
 class_num: 10
 batch_size: 32
@@ -86,6 +83,8 @@ device_id: 'Device id, default is 0.'
 device_num: 'Use device nums, default is 1.'
 rank_id: 'Rank id, default is 0.'
 file_format: 'file format' 
+dataset_path: "Change to your own dataset path."
+checkpoint_path: "Change to your own ckpt path."
 
 ---
 device_target: ['Ascend', 'GPU', 'CPU']
