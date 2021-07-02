@@ -1962,22 +1962,10 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
       // Link from copy actor to kernel actor users.
       for (auto &output_contorl : kernel_actor->output_control_arrows_) {
         copy_actor->output_control_arrows_.emplace_back(output_contorl);
-        auto to_actor = FetchActor(output_contorl.Name());
-        MS_EXCEPTION_IF_NULL(to_actor);
-        if (output_contorl.Name().find("_LoopCountActor") != string::npos) {
-          auto real_to_actor = dynamic_cast<LoopCountActor *>(to_actor);
-          MS_EXCEPTION_IF_NULL(real_to_actor);
-          real_to_actor->input_controls_num_++;
-        } else if (output_contorl.Name().find("copy_from") != string::npos) {
-          auto real_to_actor = dynamic_cast<CopyActor *>(to_actor);
-          MS_EXCEPTION_IF_NULL(real_to_actor);
-          real_to_actor->input_controls_num_++;
-        } else {
-          auto real_to_actor = dynamic_cast<KernelActor *>(to_actor);
-          MS_EXCEPTION_IF_NULL(real_to_actor);
-          real_to_actor->input_controls_num_++;
-        }
       }
+      // Move the control arrows from kernel actor to kernel actor users.
+      kernel_actor->output_control_arrows_.clear();
+
       // Link from kernel actor to copy actor.
       kernel_actor->output_control_arrows_.emplace_back(copy_actor->GetAID());
       copy_actor->input_controls_num_++;
