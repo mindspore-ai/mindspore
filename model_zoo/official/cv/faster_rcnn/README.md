@@ -70,7 +70,7 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
         pip install mmcv==0.2.14
         ```
 
-        And change the COCO_ROOT and other settings you need in `config_50.yaml、config_101.yaml or config_152.yaml`. The directory structure is as follows:
+        And change the COCO_ROOT and other settings you need in `default_config.yaml、default_config_101.yaml or default_config_152.yaml`. The directory structure is as follows:
 
         ```path
         .
@@ -90,7 +90,7 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class information of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config_50.yaml、config_101.yaml or config_152.yaml`.
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class information of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `default_config_50.yaml、default_config_101.yaml or default_config_152.yaml`.
 
 # Quick Start
 
@@ -110,13 +110,13 @@ Note:
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # standalone training
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # distributed training
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # eval
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # inference
 sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
@@ -130,13 +130,13 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # standalone training
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # distributed training
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # eval
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 ```
 
@@ -160,17 +160,17 @@ bash scripts/docker_start.sh fasterrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 ```shell
 # standalone training
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # distributed training
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 4. Eval
 
 ```shell
 # eval
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 5. Inference
@@ -180,6 +180,109 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "distribute=True" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set "epoch_size: 20" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "distribute=True" on the website UI interface.
+    #          Add "dataset_path=/cache/data" on the website UI interface.
+    #          Add "epoch_size: 20" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/faster_rcnn" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set "epoch_size: 20" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "dataset_path='/cache/data'" on the website UI interface.
+    #          Add "epoch_size: 20" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/faster_rcnn" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on base_config.yaml file.
+    #          Set "checkpoint='./faster_rcnn/faster_rcnn_trained.ckpt'" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_your_trained_model/'" on the website UI interface.
+    #          Add "checkpoint='./faster_rcnn/faster_rcnn_trained.ckpt'" on the website UI interface.
+    #          Add "dataset_path='/cache/data'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/faster_rcnn" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start evaluating as follows)
+
+1. Export s8 multiscale and flip with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "file_name='faster_rcnn'" on base_config.yaml file.
+    #          Set "file_format='AIR'" on base_config.yaml file.
+    #          Set "checkpoint_url='/The path of checkpoint in S3/'" on beta_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "file_name='faster_rcnn'" on the website UI interface.
+    #          Add "file_format='AIR'" on the website UI interface.
+    #          Add "checkpoint_url='/The path of checkpoint in S3/'" on the website UI interface.
+    #          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Set the code directory to "/path/faster_rcnn" on the website UI interface.
+    # (4) Set the startup file to "export.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    ```
+
 # Script Description
 
 ## Script and Sample Code
@@ -187,43 +290,59 @@ sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```shell
 .
 └─faster_rcnn
-  ├─README.md    // descriptions about fasterrcnn
-  ├─ascend310_infer //application for 310 inference
+  ├─README.md                         // descriptions about fasterrcnn
+  ├─ascend310_infer                   //application for 310 inference
   ├─scripts
-    ├─run_standalone_train_ascend.sh    // shell script for standalone on ascend
-    ├─run_standalone_train_gpu.sh    // shell script for standalone on GPU
-    ├─run_distribute_train_ascend.sh    // shell script for distributed on ascend
-    ├─run_distribute_train_gpu.sh    // shell script for distributed on GPU
-    ├─run_infer_310.sh    // shell script for 310 inference
-    └─run_eval_ascend.sh    // shell script for eval on ascend
-    └─run_eval_gpu.sh    // shell script for eval on GPU
+    ├─run_standalone_train_ascend.sh  // shell script for standalone on ascend
+    ├─run_standalone_train_gpu.sh     // shell script for standalone on GPU
+    ├─run_distribute_train_ascend.sh  // shell script for distributed on ascend
+    ├─run_distribute_train_gpu.sh     // shell script for distributed on GPU
+    ├─run_infer_310.sh                // shell script for 310 inference
+    └─run_eval_ascend.sh              // shell script for eval on ascend
+    └─run_eval_gpu.sh                 // shell script for eval on GPU
   ├─src
     ├─FasterRcnn
-      ├─__init__.py    // init file
-      ├─anchor_generator.py    // anchor generator
-      ├─bbox_assign_sample.py    // first stage sampler
-      ├─bbox_assign_sample_stage2.py    // second stage sampler
-      ├─faster_rcnn_resnet.py    // fasterrcnn network
-      ├─faster_rcnn_resnet50v1.py    //fasterrcnn network for ResNet50v1.0
-      ├─fpn_neck.py    //feature pyramid network
-      ├─proposal_generator.py    // proposal generator
-      ├─rcnn.py    // rcnn network
-      ├─resnet.py    // backbone network
-      ├─resnet50v1.py    // backbone network for ResNet50v1.0
-      ├─roi_align.py    // roi align network
-      └─rpn.py    //  region proposal network
-    ├─config.py    // config for yaml parsing
-    ├─config_50.yaml    // config for ResNet50
-    ├─config_101.yaml    // config for ResNet101
-    ├─config_152.yaml    // config for ResNet152
-    ├─dataset.py    // create dataset and process dataset
-    ├─lr_schedule.py    // learning ratio generator
-    ├─network_define.py    // network define for fasterrcnn
-    └─util.py    // routine operation
-  ├─export.py    // script to export AIR,MINDIR,ONNX model
-  ├─eval.py    //eval scripts
-  ├─postprogress.py    // post process for 310 inference
-  └─train.py    // train scripts
+      ├─__init__.py                   // init file
+      ├─anchor_generator.py           // anchor generator
+      ├─bbox_assign_sample.py         // first stage sampler
+      ├─bbox_assign_sample_stage2.py  // second stage sampler
+      ├─faster_rcnn_resnet.py         // fasterrcnn network
+      ├─faster_rcnn_resnet50v1.py     //fasterrcnn network for ResNet50v1.0
+      ├─fpn_neck.py                   //feature pyramid network
+      ├─proposal_generator.py         // proposal generator
+      ├─rcnn.py                       // rcnn network
+      ├─resnet.py                     // backbone network
+      ├─resnet50v1.py                 // backbone network for ResNet50v1.0
+      ├─roi_align.py                  // roi align network
+      └─rpn.py                        //  region proposal network
+    ├─dataset.py                      // create dataset and process dataset
+    ├─lr_schedule.py                  // learning ratio generator
+    ├─network_define.py               // network define for fasterrcnn
+    ├─util.py                         // routine operation
+    └─model_utils
+      ├─config.py                     // Processing configuration parameters
+      ├─device_adapter.py             // Get cloud ID
+      ├─local_adapter.py              // Get local ID
+      └─moxing_adapter.py             // Parameter processing
+  ├─default_config.yaml               // config for ResNet50
+  ├─default_config_101.yaml           // config for ResNet101
+  ├─default_config_152.yaml           // config for ResNet152
+  ├─export.py                         // script to export AIR,MINDIR,ONNX model
+  ├─eval.py                           //eval scripts
+  ├─postprogress.py                   // post process for 310 inference
+  └─train.py                          // train scripts
+```
+
+```bash
+if backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
+    from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
+    "resnet_v1.5_50" -> "./src/config_50.yaml"
+    "resnet_v1_101"  -> "./src/config_101.yaml"
+    "resnet_v1_152"  -> "./src/config_152.yaml"
+
+elif backbone == "resnet_v1_50":
+    from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
+    "resnet_v1_50" -> "./src/config_50.yaml"
 ```
 
 ## Training Process
@@ -234,20 +353,20 @@ sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 
 ```shell
 # standalone training on ascend
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # distributed training on ascend
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 #### on GPU
 
 ```shell
 # standalone training on gpu
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # distributed training on gpu
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 Notes:
@@ -279,7 +398,7 @@ Notes:
         load_param_into_net(net, param_dict)
 ```
 
-3. The original dataset path needs to be in the config_50.yaml、config_101.yaml、config_152.yaml,you can select "coco_root" or "image_dir".
+3. The original dataset path needs to be in the default_config_50.yaml、default_config_101.yaml、default_config_152.yaml,you can select "coco_root" or "image_dir".
 
 ### Result
 
@@ -304,14 +423,14 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 
 ```shell
 # eval on ascend
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 #### on GPU
 
 ```shell
 # eval on GPU
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 > checkpoint can be produced in training process.
@@ -340,7 +459,7 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 ## Model Export
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE]
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE] --coco_root [COCO_ROOT] --mindrecord_dir [MINDRECORD_DIR](option)
 ```
 
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]

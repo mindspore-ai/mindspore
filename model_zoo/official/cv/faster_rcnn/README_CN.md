@@ -111,13 +111,13 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # 单机训练
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # 分布式训练
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # 评估
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 #推理
 sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
@@ -131,13 +131,13 @@ sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
 
 # 单机训练
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # 分布式训练
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # 评估
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 ```
 
@@ -161,17 +161,17 @@ bash scripts/docker_start.sh fasterrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 ```shell
 # 单机训练
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # 分布式训练
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 4. 评估
 
 ```shell
 # 评估
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 5. 推理
@@ -181,6 +181,109 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```python
+    # 在 ModelArts 上使用8卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "distribute=True"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "epoch_size: 20"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "distribute=True"
+    #          在网页上设置 "dataset_path=/cache/data"
+    #          在网页上设置 "epoch_size: 20"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/faster_rcnn"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "epoch_size: 20"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "dataset_path='/cache/data'"
+    #          在网页上设置 "epoch_size: 20"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/faster_rcnn"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在 default_config.yaml 文件中设置 "checkpoint='./faster_rcnn/faster_rcnn_trained.ckpt'"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在网页上设置 "checkpoint='./faster_rcnn/faster_rcnn_trained.ckpt'"
+    #          在网页上设置 "dataset_path='/cache/data'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 上传你训练好的模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/faster_rcnn"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    ```
+
+- 在 ModelArts 进行导出 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+1. 使用voc val数据集评估多尺度和翻转s8。评估步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "file_name='faster_rcnn'"
+    #          在 base_config.yaml 文件中设置 "file_format='AIR'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url='/The path of checkpoint in S3/'"
+    #          在 base_config.yaml 文件中设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "file_name='faster_rcnn'"
+    #          在网页上设置 "file_format='AIR'"
+    #          在网页上设置 "checkpoint_url='/The path of checkpoint in S3/'"
+    #          在网页上设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 在网页上设置你的代码路径为 "/path/faster_rcnn"
+    # (4) 在网页上设置启动文件为 "export.py"
+    # (5) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (6) 创建训练作业
+    ```
+
 # 脚本说明
 
 ## 脚本及样例代码
@@ -188,43 +291,47 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 ```shell
 .
 └─faster_rcnn
-  ├─README.md    // Faster R-CNN相关说明
-  ├─ascend310_infer  //实现310推理源代码
+  ├─README.md                        // Faster R-CNN相关说明
+  ├─ascend310_infer                  // 实现310推理源代码
   ├─scripts
-    ├─run_standalone_train_ascend.sh    // Ascend单机shell脚本
+    ├─run_standalone_train_ascend.sh // Ascend单机shell脚本
     ├─run_standalone_train_gpu.sh    // GPU单机shell脚本
-    ├─run_distribute_train_ascend.sh    // Ascend分布式shell脚本
+    ├─run_distribute_train_ascend.sh // Ascend分布式shell脚本
     ├─run_distribute_train_gpu.sh    // GPU分布式shell脚本
-    ├─run_infer_310.sh    // Ascend推理shell脚本
-    └─run_eval_ascend.sh    // Ascend评估shell脚本
-    └─run_eval_gpu.sh    // GPU评估shell脚本
+    ├─run_infer_310.sh               // Ascend推理shell脚本
+    └─run_eval_ascend.sh             // Ascend评估shell脚本
+    └─run_eval_gpu.sh                // GPU评估shell脚本
   ├─src
     ├─FasterRcnn
-      ├─__init__.py    // init文件
-      ├─anchor_generator.py    // 锚点生成器
-      ├─bbox_assign_sample.py    // 第一阶段采样器
-      ├─bbox_assign_sample_stage2.py    // 第二阶段采样器
-      ├─faster_rcnn_resnet.py    // Faster R-CNN网络
-      ├─faster_rcnn_resnet50v1.py    //以Resnet50v1.0作为backbone的Faster R-CNN网络
-      ├─fpn_neck.py    // 特征金字塔网络
-      ├─proposal_generator.py    // 候选生成器
-      ├─rcnn.py    // R-CNN网络
-      ├─resnet.py    // 骨干网络
-      ├─resnet50v1.py    // Resnet50v1.0骨干网络
-      ├─roi_align.py    // ROI对齐网络
-      └─rpn.py    //  区域候选网络
-    ├─config.py    // 读取yaml配置的config类
-    ├─config_50.yaml    // Resnet50相关配置
-    ├─config_101.yaml    // Resnet101相关配置
-    ├─config_152.yaml    // Resnet152相关配置
-    ├─dataset.py    // 创建并处理数据集
-    ├─lr_schedule.py    // 学习率生成器
-    ├─network_define.py    // Faster R-CNN网络定义
-    └─util.py    // 例行操作
-  ├─export.py    // 导出 AIR,MINDIR模型的脚本
-  ├─eval.py    // 评估脚本
-  ├─postprogress.py    // 310推理后处理脚本
-  └─train.py    // 训练脚本
+      ├─__init__.py                  // init文件
+      ├─anchor_generator.py          // 锚点生成器
+      ├─bbox_assign_sample.py        // 第一阶段采样器
+      ├─bbox_assign_sample_stage2.py // 第二阶段采样器
+      ├─faster_rcnn_resnet.py        // Faster R-CNN网络
+      ├─faster_rcnn_resnet50v1.py    // 以Resnet50v1.0作为backbone的Faster R-CNN网络
+      ├─fpn_neck.py                  // 特征金字塔网络
+      ├─proposal_generator.py        // 候选生成器
+      ├─rcnn.py                      // R-CNN网络
+      ├─resnet.py                    // 骨干网络
+      ├─resnet50v1.py                // Resnet50v1.0骨干网络
+      ├─roi_align.py                 // ROI对齐网络
+      └─rpn.py                       // 区域候选网络
+    ├─dataset.py                     // 创建并处理数据集
+    ├─lr_schedule.py                 // 学习率生成器
+    ├─network_define.py              // Faster R-CNN网络定义
+    ├─util.py                        // 例行操作
+    └─model_utils
+      ├─config.py                    // 获取.yaml配置参数
+      ├─device_adapter.py            // 获取云上id
+      ├─local_adapter.py             // 获取本地id
+      └─moxing_adapter.py            // 云上数据准备
+  ├─default_config.yaml              // Resnet50相关配置
+  ├─default_config_101.yaml          // Resnet101相关配置
+  ├─default_config_152.yaml          // Resnet152相关配置
+  ├─export.py                        // 导出 AIR,MINDIR模型的脚本
+  ├─eval.py                          // 评估脚本
+  ├─postprogress.py                  // 310推理后处理脚本
+  └─train.py                         // 训练脚本
 ```
 
 ## 训练过程
@@ -235,20 +342,20 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 
 ```shell
 # Ascend单机训练
-sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # Ascend分布式训练
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 #### 在GPU上运行
 
 ```shell
 # GPU单机训练
-sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE]
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 
 # GPU分布式训练
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 Notes:
@@ -305,14 +412,14 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 
 ```shell
 # Ascend评估
-sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 #### 在GPU上运行
 
 ```shell
 # GPU评估
-sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)
 ```
 
 > 在训练过程中生成检查点。
@@ -341,7 +448,7 @@ sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE]
 ## 模型导出
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE]
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE] --coco_root [COCO_ROOT] --mindrecord_dir [MINDRECORD_DIR](option)
 ```
 
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]

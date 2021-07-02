@@ -14,22 +14,21 @@
 # ============================================================================
 """post process for 310 inference"""
 import os
-import argparse
 import numpy as np
 from pycocotools.coco import COCO
 
 from src.util import coco_eval, bbox2result_1image, results2json
-import src.config as cfg
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+
 
 dst_width = 1280
 dst_height = 768
 
-parser = argparse.ArgumentParser(description="FasterRcnn inference")
-parser.add_argument("--ann_file", type=str, required=True, help="ann file.")
-parser.add_argument("--result_path", type=str, required=True, help="result file path.")
-args = parser.parse_args()
-config = cfg.get_config("./src/config_50.yaml")
+def modelarts_pre_process():
+    pass
 
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def get_eval_result(ann_file, result_path):
     """ get evaluation result of faster rcnn"""
     max_num = 128
@@ -72,4 +71,4 @@ def get_eval_result(ann_file, result_path):
     coco_eval(result_files, eval_types, dataset_coco, single_result=False)
 
 if __name__ == '__main__':
-    get_eval_result(args.ann_file, args.result_path)
+    get_eval_result(config.ann_file, config.result_path)

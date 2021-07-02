@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 3 ]
+if [ $# -le 3 ]
 then 
-    echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_PATH] [BACKBONE]"
+    echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)"
 exit 1
 fi
 
@@ -35,7 +35,11 @@ get_real_path(){
 }
 
 PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
+PATH3=$(get_real_path $4)
 echo $PATH1
+echo $PATH2
+echo $PATH3
 
 if [ ! -f $PATH1 ]
 then 
@@ -43,12 +47,46 @@ then
 exit 1
 fi 
 
-PATH2=$(get_real_path $2)
-echo $PATH2
 if [ ! -f $PATH2 ]
 then 
     echo "error: PRETRAINED_PATH=$PATH2 is not a file"
 exit 1
+fi
+
+if [ ! -d $PATH3 ]
+then
+    echo "error: COCO_ROOT=$PATH3 is not a dir"
+exit 1
+fi
+
+mindrecord_dir=$PATH3/MindRecord_COCO_TRAIN/
+if [ $# -eq 5 ]
+then
+    mindrecord_dir=$(get_real_path $5)
+    if [ ! -d $mindrecord_dir ]
+    then
+        echo "error: mindrecord_dir=$mindrecord_dir is not a dir"
+    exit 1
+    fi
+fi
+echo $mindrecord_dir
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+if [ $# -ge 1 ]; then
+  if [ $3 == 'resnet_v1.5_50' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  elif [ $3 == 'resnet_v1_101' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_101.yaml"
+  elif [ $3 == 'resnet_v1_152' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_152.yaml"
+  elif [ $3 == 'resnet_v1_50' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
 fi
 
 ulimit -u unlimited
@@ -64,11 +102,13 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
+    cp ../*.yaml ./train_parallel$i
     cp *.sh ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 --backbone=$3 &> log &
+    python train.py --config_path=$CONFIG_FILE --coco_root=$PATH3 --mindrecord_dir=$mindrecord_dir --device_id=$i \
+    --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM --pre_trained=$PATH2 --backbone=$3 &> log &
     cd ..
 done

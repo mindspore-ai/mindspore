@@ -105,7 +105,7 @@ step1: prepare pretrained model: train a mobilenet_v2 model by mindspore or use 
 #        The key/cell/module name must as follow, otherwise you need to modify "name_map" function:
 #            --mindspore: as the same as mobilenet_v2_key.ckpt
 #            --pytorch: same as official pytorch model(e.g., official mobilenet_v2-b0353104.pth)
-python convert_weight_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
+python convert_weight_centerface.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
 ```
 
 step2: prepare dataset  
@@ -178,6 +178,109 @@ step6: eval
 sh eval_all.sh [ground_truth_path]
 ```
 
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "distribute=True" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set "lr: 0.004" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "distribute=True" on the website UI interface.
+    #          Add "dataset_path=/cache/data" on the website UI interface.
+    #          Add "lr: 0.004" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/centerface" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set "lr: 0.004" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "dataset_path='/cache/data'" on the website UI interface.
+    #          Add "lr: 0.004" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/centerface" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on base_config.yaml file.
+    #          Set "checkpoint='./centerface/centerface_trained.ckpt'" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_your_trained_model/'" on the website UI interface.
+    #          Add "checkpoint='./centerface/centerface_trained.ckpt'" on the website UI interface.
+    #          Add "dataset_path='/cache/data'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/centerface" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start evaluating as follows)
+
+1. Export s8 multiscale and flip with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "file_name='centerface'" on base_config.yaml file.
+    #          Set "file_format='AIR'" on base_config.yaml file.
+    #          Set "checkpoint_url='/The path of checkpoint in S3/'" on beta_config.yaml file.
+    #          Set "ckpt_file='/cache/checkpoint_path/model.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "file_name='centerface'" on the website UI interface.
+    #          Add "file_format='AIR'" on the website UI interface.
+    #          Add "checkpoint_url='/The path of checkpoint in S3/'" on the website UI interface.
+    #          Add "ckpt_file='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your trained model to S3 bucket.
+    # (3) Set the code directory to "/path/centerface" on the website UI interface.
+    # (4) Set the startup file to "export.py" on the website UI interface.
+    # (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (6) Create your job.
+    ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -192,7 +295,7 @@ sh eval_all.sh [ground_truth_path]
         ├── postprocess.py               // 310infer postprocess scripts
         ├── README.md                    // descriptions about CenterFace
         ├── ascend310_infer              // application for 310 inference
-        ├─default_config.yaml            // Training parameter profile
+        ├── default_config.yaml          // Training parameter profile
         ├── scripts
         │   ├──run_infer_310.sh          // shell script for infer on ascend310
         │   ├──eval.sh                   // evaluate a single testing result
@@ -211,13 +314,13 @@ sh eval_all.sh [ground_truth_path]
         │   ├──mobile_v2.py              // modified mobilenet_v2 backbone
         │   ├──utils.py                  // auxiliary functions for train, to log and preload
         │   ├──var_init.py               // weight initialization
-        │   ├──convert_weight_mobilenetv2.py   // convert pretrained backbone to mindspore
+        │   ├──convert_weight_centerface.py   // convert pretrained backbone to mindspore
         │   ├──convert_weight.py               // CenterFace model convert to mindspore
         |   └──model_utils
-        |      ├──config.py          // Processing configuration parameters
-        |      ├──device_adapter.py  // Get cloud ID
-        |      ├──local_adapter.py   // Get local ID
-        |     └ ──moxing_adapter.py  // Parameter processing
+        |      ├──config.py              // Processing configuration parameters
+        |      ├──device_adapter.py      // Get cloud ID
+        |      ├──local_adapter.py       // Get local ID
+        |     └ ──moxing_adapter.py      // Parameter processing
         └── dependency                   // third party codes: MIT License
             ├──extd                      // training dependency: data augmentation
             │   ├──utils
@@ -318,7 +421,7 @@ Major parameters eval.py as follows:
 step1: user need train a mobilenet_v2 model by mindspore or use the script below:
 
 ```python
-python torch_to_ms_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
+python torch_to_ms_centerface.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
 ```
 
 step2: prepare user rank_table

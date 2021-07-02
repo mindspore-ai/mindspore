@@ -15,7 +15,6 @@
 
 """Evaluation for FasterRcnn"""
 import os
-import argparse
 import time
 import numpy as np
 from pycocotools.coco import COCO
@@ -26,34 +25,17 @@ from mindspore.common import set_seed, Parameter
 
 from src.dataset import data_to_mindrecord_byte_image, create_fasterrcnn_dataset
 from src.util import coco_eval, bbox2result_1image, results2json
-import src.config as cfg
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
+
 
 set_seed(1)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
 
-parser = argparse.ArgumentParser(description="FasterRcnn evaluation")
-parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
-parser.add_argument("--ann_file", type=str, default="val.json", help="Ann file, default is val.json.")
-parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    help="device where the code will be implemented, default is Ascend")
-parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-parser.add_argument("--backbone", type=str, required=True, \
-                    help="backbone network name, options:resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152")
-args_opt = parser.parse_args()
-
-context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
-
-if args_opt.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
+if config.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
     from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
-    if args_opt.backbone == "resnet_v1.5_50":
-        config = cfg.get_config("./src/config_50.yaml")
-    elif args_opt.backbone == "resnet_v1_101":
-        config = cfg.get_config("./src/config_101.yaml")
-    elif args_opt.backbone == "resnet_v1_152":
-        config = cfg.get_config("./src/config_152.yaml")
-
-elif args_opt.backbone == "resnet_v1_50":
-    config = cfg.get_config("./src/config_50.yaml")
+elif config.backbone == "resnet_v1_50":
     from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
 
 def fasterrcnn_eval(dataset_path, ckpt_path, ann_file):
@@ -61,7 +43,7 @@ def fasterrcnn_eval(dataset_path, ckpt_path, ann_file):
     ds = create_fasterrcnn_dataset(config, dataset_path, batch_size=config.test_batch_size, is_training=False)
     net = Faster_Rcnn_Resnet(config)
     param_dict = load_checkpoint(ckpt_path)
-    if args_opt.device_target == "GPU":
+    if config.device_target == "GPU":
         for key, value in param_dict.items():
             tensor = value.asnumpy().astype(np.float32)
             param_dict[key] = Parameter(tensor, key)
@@ -125,7 +107,13 @@ def fasterrcnn_eval(dataset_path, ckpt_path, ann_file):
     coco_eval(result_files, eval_types, dataset_coco, single_result=True)
 
 
-if __name__ == '__main__':
+def modelarts_pre_process():
+    pass
+    # config.ckpt_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def eval_fasterrcnn():
+    """ eval_fasterrcnn """
     prefix = "FasterRcnn_eval.mindrecord"
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix)
@@ -134,7 +122,7 @@ if __name__ == '__main__':
     if not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
-        if args_opt.dataset == "coco":
+        if config.dataset == "coco":
             if os.path.isdir(config.coco_root):
                 print("Create Mindrecord. It may take some time.")
                 data_to_mindrecord_byte_image(config, "coco", False, prefix, file_num=1)
@@ -151,4 +139,7 @@ if __name__ == '__main__':
 
     print("CHECKING MINDRECORD FILES DONE!")
     print("Start Eval!")
-    fasterrcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)
+    fasterrcnn_eval(mindrecord_file, config.checkpoint_path, config.ann_file)
+
+if __name__ == '__main__':
+    eval_fasterrcnn()
