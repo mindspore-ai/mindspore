@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-python eval.py --platform GPU --device_id 0 --model ResNet --G_A_ckpt ./outputs/ckpt/G_A_200.ckpt \
-               --G_B_ckpt ./outputs/ckpt/G_B_200.ckpt > output.eval.log 2>&1 &
+python train.py --platform GPU --device_id 0 --model ResNet --max_epoch 200 --dataroot ./data/horse2zebra/ \
+       --outputs_dir ./outputs > output.train.log 2>&1 &

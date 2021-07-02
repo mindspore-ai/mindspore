@@ -59,7 +59,8 @@ class Reporter(logging.Logger):
         self.save_args(args)
         self.step = 0
         self.epoch = 0
-        self.dataset_size = args.dataset_size
+        self.dataset_size = args.dataset_size // args.device_num
+        self.device_num = args.device_num
         self.print_iter = args.print_iter
         self.G_loss = []
         self.D_loss = []
@@ -102,13 +103,13 @@ class Reporter(logging.Logger):
             self.step_start_time = time.time()
 
     def epoch_end(self, net):
-        """print log and save cgeckpoints when epoch end."""
+        """print log and save checkpoints when epoch end."""
         epoch_cost = (time.time() - self.epoch_start_time) * 1000
-        pre_step_time = epoch_cost / self.dataset_size
+        per_step_time = epoch_cost / self.dataset_size
         mean_loss_G = sum(self.G_loss) / self.dataset_size
         mean_loss_D = sum(self.D_loss) / self.dataset_size
-        self.info("Epoch [{}] total cost: {:.2f} ms, pre step: {:.2f} ms, G_loss: {:.2f}, D_loss: {:.2f}".format(
-            self.epoch, epoch_cost, pre_step_time, mean_loss_G, mean_loss_D))
+        self.info("Epoch [{}] total cost: {:.2f} ms, per step: {:.2f} ms, G_loss: {:.2f}, D_loss: {:.2f}".format(
+            self.epoch, epoch_cost, per_step_time, mean_loss_G, mean_loss_D))
 
         if self.epoch % self.save_checkpoint_epochs == 0:
             save_checkpoint(net.G.generator.G_A, os.path.join(self.ckpts_dir, f"G_A_{self.epoch}.ckpt"))
@@ -130,6 +131,6 @@ class Reporter(logging.Logger):
 
     def end_predict(self):
         cost = (time.time() - self.predict_start_time) * 1000
-        pre_step_cost = cost / self.dataset_size
-        self.info('total {} imgs cost {:.2f} ms, pre img cost {:.2f}'.format(self.dataset_size, cost, pre_step_cost))
+        per_step_cost = cost / self.dataset_size
+        self.info('total {} imgs cost {:.2f} ms, per img cost {:.2f}'.format(self.dataset_size, cost, per_step_cost))
         self.info('==========end predict %s===============\n', self.direction)

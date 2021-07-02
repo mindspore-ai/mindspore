@@ -17,9 +17,9 @@
 
 import argparse
 import ast
-from mindspore.context import ParallelMode
 from mindspore import context
-from mindspore.communication.management import init, get_rank
+from mindspore.context import ParallelMode
+from mindspore.communication.management import init, get_rank, get_group_size
 
 
 parser = argparse.ArgumentParser(description='Cycle GAN')
@@ -27,7 +27,11 @@ parser = argparse.ArgumentParser(description='Cycle GAN')
 parser.add_argument('--platform', type=str, default='Ascend', help='only support GPU and Ascend')
 parser.add_argument('--device_id', type=int, default=0, help='device id, default is 0.')
 parser.add_argument('--device_num', type=int, default=1, help='device num, default is 1.')
-parser.add_argument('--model', type=str, default='DepthResNet', choices=('DepthResNet', 'ResNet', 'UNet'), \
+parser.add_argument('--is_save_on_master', type=int, default=1,
+                    help='Save ckpt on master or all rank, 1 for master, 0 for all ranks. Default: 1')
+parser.add_argument('--rank', type=int, default=0, help='Local rank of distributed. Default: 0')
+parser.add_argument('--group_size', type=int, default=1, help='World size of device. Default: 1')
+parser.add_argument('--model', type=str, default='ResNet', choices=('DepthResNet', 'ResNet', 'UNet'), \
                     help='generator model')
 parser.add_argument('--init_type', type=str, default='normal', choices=('normal', 'xavier'), \
                     help='network initialization, default is normal.')
@@ -105,12 +109,14 @@ args = parser.parse_args()
 def get_args(phase):
     """Define the common options that are used in both training and test."""
     if args.device_num > 1:
+
         context.set_context(mode=context.GRAPH_MODE, device_target=args.platform, save_graphs=args.save_graphs)
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=args.device_num)
         init()
         args.rank = get_rank()
+        args.group_size = get_group_size()
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target=args.platform,
                             save_graphs=args.save_graphs, device_id=args.device_id)

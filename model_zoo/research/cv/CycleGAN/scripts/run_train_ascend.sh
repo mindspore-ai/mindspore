@@ -13,10 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "=============================================================================================================="
-echo "Please run the train as: "
-echo "python train.py device_id platform model max_epoch dataroot outputs_dir"
-echo "for example: python train.py --platform Ascend --device_id 0 --model ResNet --max_epoch 200 --dataroot ./data/horse2zebra/ --outputs_dir ./outputs"
-echo "================================================================================================================="
-
-python train.py --platform Ascend --device_id 0 --model DepthResNet --max_epoch 200 --dataroot ./data/horse2zebra/ --outputs_dir ./outputs
+python train.py --platform Ascend --device_id 0 --model DepthResNet --max_epoch 200 --dataroot ./data/horse2zebra/ \
+       --outputs_dir ./outputs > output.train.log 2>&1 &

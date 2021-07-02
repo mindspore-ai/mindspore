@@ -13,4 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-python eval.py --platform Ascend --device_id 0 --model DepthResNet --G_A_ckpt ./outputs/ckpt/G_A_200.ckpt --G_B_ckpt ./outputs/ckpt/G_B_200.ckpt
+python eval.py --platform Ascend --device_id 0 --model DepthResNet --G_A_ckpt ./outputs/ckpt/G_A_200.ckpt \
+       --G_B_ckpt ./outputs/ckpt/G_B_200.ckpt > output.train.log 2>&1 &

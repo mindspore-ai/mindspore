@@ -20,6 +20,7 @@ Example:
         python train.py --dataroot ./data/horse2zebra --model ResNet
 """
 
+import mindspore as ms
 import mindspore.nn as nn
 from src.utils.args import get_args
 from src.utils.reporter import Reporter
@@ -28,6 +29,7 @@ from src.dataset.cyclegan_dataset import create_dataset
 from src.models.losses import DiscriminatorLoss, GeneratorLoss
 from src.models.cycle_gan import get_generator, get_discriminator, Generator, TrainOneStepG, TrainOneStepD
 
+ms.set_seed(1)
 
 def train():
     """Train function."""
@@ -55,10 +57,12 @@ def train():
     net_D = TrainOneStepD(loss_D, optimizer_D)
 
     data_loader = ds.create_dict_iterator()
-    reporter = Reporter(args)
-    reporter.info('==========start training===============')
+    if args.rank == 0:
+        reporter = Reporter(args)
+        reporter.info('==========start training===============')
     for _ in range(args.max_epoch):
-        reporter.epoch_start()
+        if args.rank == 0:
+            reporter.epoch_start()
         for data in data_loader:
             img_A = data["image_A"]
             img_B = data["image_B"]
@@ -66,14 +70,16 @@ def train():
             fake_A = res_G[0]
             fake_B = res_G[1]
             res_D = net_D(img_A, img_B, imgae_pool_A.query(fake_A), imgae_pool_B.query(fake_B))
-            reporter.step_end(res_G, res_D)
-            reporter.visualizer(img_A, img_B, fake_A, fake_B)
-        reporter.epoch_end(net_G)
+            if args.rank == 0:
+                reporter.step_end(res_G, res_D)
+                reporter.visualizer(img_A, img_B, fake_A, fake_B)
+        if args.rank == 0:
+            reporter.epoch_end(net_G)
         if args.need_profiler:
             profiler.analyse()
             break
-
-    reporter.info('==========end training===============')
+    if args.rank == 0:
+        reporter.info('==========end training===============')
 
 
 if __name__ == "__main__":
