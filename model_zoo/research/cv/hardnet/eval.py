@@ -34,13 +34,10 @@ np.random.seed(1)
 dataset.config.set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--use_hardnet', type=bool, default=True, help='Enable HarnetUnit')
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 
-parser.add_argument('--dataset_path', type=str, default='/data/imagenet_original/val/',
-                    help='Dataset path')
-parser.add_argument('--ckpt_path', type=str,
-                    default='/home/hardnet/result/HarDNet-150_625.ckpt',
+parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
+parser.add_argument('--ckpt_path', type=str, default='',
                     help='if mode is test, must provide path where the trained ckpt file')
 parser.add_argument('--label_smooth_factor', type=float, default=0.1, help='label_smooth_factor')
 parser.add_argument('--device_id', type=int, default=0, help='device_id')
@@ -52,8 +49,10 @@ def test(ckpt_path):
     # init context
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=target,
-                        save_graphs=False,
-                        device_id=args.device_id)
+                        save_graphs=False)
+
+    if args.device_target == "Ascend":
+        context.set_context(device_id=args.device_id)
 
     # dataset
     predict_data = create_dataset_ImageNet(dataset_path=args.dataset_path,

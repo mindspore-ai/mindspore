@@ -103,6 +103,25 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
 
  <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.>
 
+- GPU环境运行
+
+  ```python
+  # 运行训练示例
+  export CUDA_VISIBLE_DEVICES=0
+  python3 train.py --device_target 'GPU' --distribute False --dataset_path /path/dataset --pre_ckpt_path /path/pretrained_path > train.log 2>&1 &
+  或
+  bash run_single_train_gpu.sh 0 /path/dataset /path/pretrain_path
+
+  # 运行分布式训练示例
+  bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 /path/dataset /path/pretrain_path
+
+  # 运行评估示例
+  export CUDA_VISIBLE_DEVICES=0
+  python3 eval.py --device_target 'GPU' --dataset_path /path/dataset --ckpt_path /path/ckpt_path > eval.log 2>&1 &
+  或
+  bash run_eval_gpu.sh /path/dataset 0 /path/ckpt
+  ```
+
 - 默认使用ImageNet2012数据集。您也可以将`$dataset_type`传入脚本，以便选择其他数据集。如需查看更多详情，请参考指定脚本。
 
 # 脚本说明
@@ -118,6 +137,9 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
         │   ├──run_single_train.sh             // 单卡到Ascend的shell脚本
         │   ├──run_distribute_train.sh             // 分布式到Ascend的shell脚本
         │   ├──run_eval.sh              // Ascend评估的shell脚本
+        |   ├──run_single_train_gpu.sh             // 单卡到GPU的shell脚本
+        │   ├──run_distribute_train_gpu.sh             // 分布式到GPU的shell脚本
+        │   ├──run_eval_gpu.sh              // GPU评估的shell脚本
         ├── src
         │   ├──dataset.py             // 创建数据集
         │   ├──hardnet.py          //  hardnet架构
@@ -191,6 +213,28 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
 
   模型检查点保存在当前目录下。
 
+- GPU处理器环境运行
+
+  ```bash
+  export CUDA_VISIBLE_DEVICES=0
+  python3 train.py --device_target 'GPU' --isModelArts False --distribute False --dataset_path /path/dataset --pre_ckpt_path /path/pretrained_path > train.log 2>&1 &
+  或
+  bash run_single_train_gpu.sh 0 /path/dataset /path/pretrain_path
+  ```
+
+  上述python命令将在后台运行，您可以通过train.log文件查看结果。
+
+  训练结束后，您可在默认脚本文件夹下找到检查点文件。采用以下方式达到损失值：
+
+  ```bash
+  # grep "loss is " train.log
+  epoch:1 step:5000, loss is 3.0897788
+  epcoh:2 step:5000, loss is 2.4842823
+  ...
+  ```
+
+  模型检查点保存在当前目录下。
+
 ### 分布式训练
 
 - Ascend处理器环境运行
@@ -211,6 +255,35 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
   device1/log:epoch:1 step:625, loss is 2.3458025
   device1/log:epcoh:2 step:625, loss is 2.3729336
   ...
+  ...
+  ```
+
+- GPU处理器环境运行
+
+  ```bash
+  bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 /path/dataset /path/pretrain_path
+  ```
+
+  上述shell脚本将在后台运行分布训练。您可以通过train.log文件查看结果。采用以下方式达到损失值：
+
+  ```bash
+  # grep "result:" train.log
+  epoch: 1 step: 625, loss is 2.7857578
+  epoch: 1 step: 625, loss is 2.7340727
+  epoch: 1 step: 625, loss is 2.7651663
+  epoch: 1 step: 625, loss is 2.8074665
+  epoch: 1 step: 625, loss is 2.8567638
+  epoch: 1 step: 625, loss is 2.768191
+  epoch: 1 step: 625, loss is 3.0651402
+  epoch: 1 step: 625, loss is 3.039652
+  epoch time: 1753885.943 ms, per step time: 2806.218 ms
+  epoch time: 1753861.017 ms, per step time: 2806.178 ms
+  epoch time: 1753959.524 ms, per step time: 2806.335 ms
+  epoch time: 1753182.479 ms, per step time: 2805.092 ms
+  epoch time: 1753981.462 ms, per step time: 2806.370 ms
+  epoch time: 1753181.926 ms, per step time: 2805.091 ms
+  epoch time: 1753266.931 ms, per step time: 2805.227 ms
+  epoch time: 1753218.315 ms, per step time: 2805.149 ms
   ...
   ```
 
@@ -236,6 +309,31 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
   ```
 
   注：对于分布式训练后评估，请将checkpoint_path设置为最后保存的检查点文件，如“username/hardnet/device0/train_hardnet-150-625.ckpt”。测试数据集的准确性如下：
+
+  ```bash
+  # grep "accuracy:" dist.eval.log
+  accuracy:{'acc':0.777}
+  ```
+
+- 在GPU环境运行时评估ImageNet数据集
+
+  在运行以下命令之前，请检查用于评估的检查点路径。请将检查点路径设置为绝对全路径，例如“username/hardnet/train_hardnet_390.ckpt”。
+
+  ```bash
+  export CUDA_VISIBLE_DEVICES=0
+  python3 eval.py --device_target 'GPU' --dataset_path /path/dataset --ckpt_path /path/ckpt_path > eval.log 2>&1 &
+  或
+  bash run_eval_gpu.sh /path/dataset 0 /path/ckpt
+  ```
+
+  上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试数据集的准确性如下：
+
+  ```bash
+  # grep "accuracy:" eval.log
+  accuracy:{'acc':0.775}
+  ```
+
+  注：对于分布式训练后评估，请将checkpoint_path设置为最后保存的检查点文件，如“username/hardnet/result/train_hardnet-150-625.ckpt”。测试数据集的准确性如下：
 
   ```bash
   # grep "accuracy:" dist.eval.log
@@ -284,38 +382,38 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
 
 #### ImageNet上的HarDNet
 
-| 参数                 | Ascend                                                      |
-| -------------------------- | ----------------------------------------------------------- |
-| 模型版本              | Inception V1                                                |
-| 资源                   | Ascend 910 ；CPU 2.60GHz，192核；内存：755G             |
-| 上传日期              | 2021-3-22                        |
-| MindSpore版本          | 1.1.1-aarch64                                        |
-| 数据集                    | ImageNet2012                                      |
-| 训练参数        | epoch=150, steps=625, batch_size = 256, lr=0.1    |
-| 优化器                  | Momentum                                                    |
-| 损失函数              | Softmax交叉熵                                       |
-| 输出                    | 概率                                                 |
-| 损失                       | 0.0016                                                      |
-| 速度                      | 单卡：347毫秒/步;  8卡：358毫秒/步                   |
-| 总时长                 | 单卡：72小时50分钟;  8卡：10小时14分钟          |
-| 参数(M)             | 13.0                                                        |
-| 微调检查点 | 280M (.ckpt文件)                                      |
-| 脚本                    | [hardnet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/hardnet) |
+| 参数                 | Ascend                    |GPU                         |
+| -------------------- | ------------------------- | -------------------------- |
+| 模型版本              | Inception V1              | Inception V1                |
+| 资源                  | Ascend 910               | Tesla V100                  |
+| 上传日期              | 2021-3-22                 | 2021-4-21                  |
+| MindSpore版本         | 1.1.1-aarch64            | 1.1.1-aarch64               |
+| 数据集                | ImageNet2012             | ImageNet2012                |
+| 训练参数              | epoch=150, steps=625, batch_size = 256, lr=0.1  | epoch=150, steps=625, batch_size = 256, lr=0.1  |
+| 优化器                | Momentum                 | Momentum                 |
+| 损失函数              | Softmax交叉熵             | Softmax交叉熵             |
+| 输出                  | 概率                      | 概率                     |
+| 损失                  | 0.0016                    | 0.0016                  |
+| 速度                  | 单卡：347毫秒/步;  8卡：358毫秒/步 | 8卡：2806毫秒/步             |
+| 总时长                | 单卡：72小时50分钟;  8卡：10小时14分钟 | 8卡：71小时14分钟         |
+| 参数(M)               | 13.0                       | 13.0                   |
+| 微调检查点            | 280M (.ckpt文件)  | 281M (.ckpt文件)  |
+| 脚本                  | [hardnet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/hardnet) | [hardnet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/hardnet) |
 
 ### 推理性能
 
 #### ImageNet上的HarDNet
 
-| 参数          | Ascend                      |
-| ------------------- | --------------------------- |
-| 模型版本       | Inception V1                |
-| 资源            | Ascend 910                  |
-| 上传日期       | 2020-09-20 |
-| MindSpore版本   | 1.1.1-aarch64    |
-| 数据集             | ImageNet2012    |
-| batch_size          | 256                         |
-| 输出             | 概率                 |
-| 准确性            | 8卡: 78%           |
+| 参数          | Ascend                      | GPU                    |
+| ------------------- | --------------------------- | --------------------------- |
+| 模型版本       | Inception V1                | Inception V1                |
+| 资源            | Ascend 910                  | Tesla V100                  |
+| 上传日期       | 2021-03-22               | 2020-04-21                   |
+| MindSpore版本   | 1.1.1-aarch64    | 1.1.1-aarch64          |
+| 数据集             | ImageNet2012    | ImageNet2012    |
+| batch_size          | 256                         | 256                         |
+| 输出             | 概率                 | 概率                 |
+| 准确性            | 8卡: 78%           | 8卡: 77.7%           |
 
 ## 使用流程
 
@@ -328,9 +426,9 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
   ```python
   # 设置上下文
   context.set_context(mode=context.GRAPH_MODE,
-                          device_target=target,
-                        save_graphs=False,
-                          device_id=device_id)
+                      device_target="Ascend",
+                      save_graphs=False,
+                      device_id=device_id)
 
   # 加载未知数据集进行推理
   predict_data = create_dataset_ImageNet(dataset_path=args.dataset_path,  
@@ -355,6 +453,38 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
 
   # 对未知数据集进行预测
   acc = model.eval(predict_data)
+  print("==============Acc: {} ==============".format(acc))
+  ```
+
+如果您需要使用此训练模型在GPU上进行推理，可参考此[链接](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html)。下面是操作步骤示例：
+
+- GPU处理器环境运行
+
+  ```python
+  # 设置上下文
+  context.set_context(mode=context.GRAPH_MODE,
+                      device_target="GPU",
+                      save_graphs=False,)
+
+  # 加载未知数据集进行推理
+  dataset = dataset.create_dataset(cfg.data_path, 1, False)
+
+  # 定义网络
+  network = HarDNet85(num_classes=config.class_num)
+
+  # 加载checkpoint
+  param_dict = load_checkpoint(ckpt_path)
+  load_param_into_net(network, param_dict)
+
+  # 定义损失函数
+  loss = CrossEntropySmooth(smooth_factor=args.label_smooth_factor,
+                            num_classes=config.class_num)
+
+  # 定义模型
+  model = Model(network, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})
+
+  # 对未知数据集进行预测
+  acc = model.eval(dataset)
   print("==============Acc: {} ==============".format(acc))
   ```
 

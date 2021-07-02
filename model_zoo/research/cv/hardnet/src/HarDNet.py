@@ -81,13 +81,13 @@ class _CombConvLayer(nn.Cell):
     combconvlayer
     """
     def __init__(self, in_channels, out_channels, kernel=1, stride=1, dropout=0.9, bias=False):
-        super(CombConvLayer, self).__init__()
+        super(_CombConvLayer, self).__init__()
         self.CombConvLayer_Conv = _ConvLayer(in_channels, out_channels, kernel=kernel)
         self.CombConvLayer_DWConv = _DWConvLayer(out_channels, out_channels, stride=stride)
 
     def construct(self, x):
-        out = CombConvLayer_Conv(x)
-        out = CombConvLayer_DWConv(out)
+        out = self.CombConvLayer_Conv(x)
+        out = self.CombConvLayer_DWConv(out)
 
         return out
 
@@ -178,11 +178,11 @@ class _CommenHead(nn.Cell):
     """
     the transition layer
     """
-    def __init__(self, num_classes, out_channels, drop_rate):
+    def __init__(self, num_classes, out_channels, keep_rate):
         super(_CommenHead, self).__init__()
         self.avgpool = GlobalAvgpooling()
         self.flat = nn.Flatten()
-        self.drop = nn.Dropout(keep_prob=drop_rate)
+        self.drop = nn.Dropout(keep_prob=keep_rate)
         self.dense = nn.Dense(out_channels, num_classes, has_bias=True)
 
     def construct(self, x):
@@ -204,7 +204,7 @@ class HarDNet(nn.Cell):
         second_kernel = 3
         max_pool = True
         grmul = 1.7
-        drop_rate = 0.9
+        keep_rate = 0.9
 
         # HarDNet68
         ch_list = [128, 256, 320, 640, 1024]
@@ -219,7 +219,7 @@ class HarDNet(nn.Cell):
             gr = [24, 24, 28, 36, 48, 256]
             n_layers = [8, 16, 16, 16, 16, 4]
             downSamp = [1, 0, 1, 0, 1, 0]
-            drop_rate = 0.2
+            keep_rate = 0.8
         elif arch == 39:
             # HarDNet39
             first_ch = [24, 48]
@@ -232,7 +232,7 @@ class HarDNet(nn.Cell):
         if depth_wise:
             second_kernel = 1
             max_pool = False
-            drop_rate = 0.05
+            keep_rate = 0.95
 
         blks = len(n_layers)
         self.layers = nn.CellList()
@@ -261,7 +261,7 @@ class HarDNet(nn.Cell):
                 else:
                     self.layers.append(_DWConvLayer(ch, ch, stride=2))
         self.out_channels = ch_list[blks - 1]
-        self.droprate = drop_rate
+        self.keeprate = keep_rate
 
     def construct(self, x):
         for layer in self.layers:
@@ -272,8 +272,8 @@ class HarDNet(nn.Cell):
     def get_out_channels(self):
         return self.out_channels
 
-    def get_drop_rate(self):
-        return self.droprate
+    def get_keep_rate(self):
+        return self.keeprate
 
 class HarDNet68(nn.Cell):
     """
@@ -283,9 +283,9 @@ class HarDNet68(nn.Cell):
         super(HarDNet68, self).__init__()
         self.net = HarDNet(depth_wise=False, arch=68, pretrained=False)
         out_channels = self.net.get_out_channels()
-        drop_rate = self.net.get_drop_rate()
+        keep_rate = self.net.get_keep_rate()
 
-        self.head = _CommenHead(num_classes, out_channels, drop_rate)
+        self.head = _CommenHead(num_classes, out_channels, keep_rate)
 
     def construct(self, x):
         x = self.net(x)
@@ -301,9 +301,9 @@ class HarDNet85(nn.Cell):
         super(HarDNet85, self).__init__()
         self.net = HarDNet(depth_wise=False, arch=85, pretrained=False)
         out_channels = self.net.get_out_channels()
-        drop_rate = self.net.get_drop_rate()
+        keep_rate = self.net.get_keep_rate()
 
-        self.head = _CommenHead(num_classes, out_channels, drop_rate)
+        self.head = _CommenHead(num_classes, out_channels, keep_rate)
 
     def construct(self, x):
         x = self.net(x)
