@@ -51,7 +51,7 @@ def crnn_eval():
     loss = CTCLoss(max_sequence_length=config.num_step,
                    max_label_length=max_text_length,
                    batch_size=config.batch_size)
-    net = crnn(config)
+    net = crnn(config, full_precision=config.device_target == 'GPU')
     # load checkpoint
     param_dict = load_checkpoint(config.checkpoint_path)
     load_param_into_net(net, param_dict)

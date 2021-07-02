@@ -81,13 +81,14 @@ def train():
                              batch_size=config.batch_size,
                              num_shards=device_num, shard_id=rank, config=config)
     step_size = dataset.get_dataset_size()
+    print("step_size:", step_size)
     # define lr
     lr_init = config.learning_rate
     lr = nn.dynamic_lr.cosine_decay_lr(0.0, lr_init, config.epoch_size * step_size, step_size, config.epoch_size)
     loss = CTCLoss(max_sequence_length=config.num_step,
                    max_label_length=max_text_length,
                    batch_size=config.batch_size)
-    net = crnn(config)
+    net = crnn(config, full_precision=config.device_target == 'GPU')
     opt = nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum, nesterov=config.nesterov)
 
     net_with_loss = WithLossCell(net, loss)
@@ -95,9 +96,10 @@ def train():
     # define model
     model = Model(net_with_grads)
     # define callbacks
-    callbacks = [LossMonitor(), TimeMonitor(data_size=step_size)]
+    callbacks = [LossMonitor(per_print_times=config.per_print_time),
+                 TimeMonitor(data_size=step_size)]
     save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
-    if config.run_eval:
+    if config.run_eval and rank == 0:
         if config.train_eval_dataset_path is None or (not os.path.isdir(config.train_eval_dataset_path)):
             raise ValueError("{} is not a existing path.".format(config.train_eval_dataset_path))
         eval_dataset = create_dataset(name=config.train_eval_dataset,
@@ -105,19 +107,19 @@ def train():
                                       batch_size=config.batch_size,
                                       is_training=False,
                                       config=config)
-        eval_model = Model(net, loss, metrics={'CRNNAccuracy': CRNNAccuracy(config)})
+        eval_model = Model(net, loss, metrics={'CRNNAccuracy': CRNNAccuracy(config, print_flag=False)})
         eval_param_dict = {"model": eval_model, "dataset": eval_dataset, "metrics_name": "CRNNAccuracy"}
         eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=config.eval_interval,
                                eval_start_epoch=config.eval_start_epoch, save_best_ckpt=True,
-                               ckpt_directory=save_ckpt_path, besk_ckpt_name="best_acc.ckpt",
-                               metrics_name="acc")
+                               ckpt_directory=save_ckpt_path, best_ckpt_name="best_acc.ckpt",
+                               eval_all_saved_ckpts=config.eval_all_saved_ckpts, metrics_name="acc")
         callbacks += [eval_cb]
     if config.save_checkpoint and rank == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint(prefix="crnn", directory=save_ckpt_path, config=config_ck)
         callbacks.append(ckpt_cb)
-    model.train(config.epoch_size, dataset, callbacks=callbacks)
+    model.train(config.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=config.device_target == 'Ascend')
 
 
 if __name__ == '__main__':
