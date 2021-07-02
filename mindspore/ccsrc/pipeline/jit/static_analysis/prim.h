@@ -73,7 +73,7 @@ class DoSignatureEvaluator : public Evaluator {
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                     const AnfNodeConfigPtr &out_config = nullptr) override;
 
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
@@ -88,7 +88,7 @@ class UnpackGraphEvaluator : public Evaluator {
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                     const AnfNodeConfigPtr &out_config = nullptr) override;
 
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
@@ -104,7 +104,7 @@ class MixedPrecisionCastEvaluator : public Evaluator {
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                     const AnfNodeConfigPtr &out_config = nullptr) override;
 
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 

@@ -644,7 +644,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
     return eval_result;
   }
 
-  pybind11::gil_scoped_acquire gil;
+  py::gil_scoped_acquire gil;
   auto py_args = PreparePyInputs(prim_py_, args);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
@@ -1256,7 +1256,7 @@ class PartialEvaluator : public Evaluator {
     return eval_result;
   }
 
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 

@@ -43,6 +43,18 @@
 
 namespace mindspore {
 namespace abstract {
+void ResetFunctionCallDepth();
+void IncreaseFunctionCallDepth();
+void DecreaseFunctionCallDepth();
+size_t FunctionCallDepth();
+size_t FunctionCallMaxDepth();
+
+void ResetStackFrameDepth();
+void IncreaseStackFrameDepth();
+void DecreaseStackFrameDepth();
+size_t StackFrameDepth();
+size_t StackFrameMaxDepth();
+
 // define attribute value map
 using AttrValueMap = std::unordered_map<std::string, ValuePtr>;
 using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
@@ -203,12 +215,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
       : prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {
-    function_call_depth_ = 0;
-    function_call_max_depth_ = 0;
-    stack_frame_depth_ = 0;
-    stack_frame_max_depth_ = 0;
     forward_count_ = 0;
-
     enable_recursive_eval_ = (common::GetEnv("ENV_RECURSIVE_EVAL") == "1");
   }
   ~AnalysisEngine() = default;
@@ -254,43 +261,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
-  void ResetFunctionCallDepth() {
-    function_call_depth_ = 0;
-    function_call_max_depth_ = 0;
-  }
-  void IncreaseFunctionCallDepth() {
-    function_call_depth_++;
-    if (function_call_max_depth_ < function_call_depth_) {
-      function_call_max_depth_ = function_call_depth_.load();
-    }
-  }
-  void DecreaseFunctionCallDepth() {
-    if (function_call_depth_ == 0) {
-      MS_LOG(EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
-    }
-    function_call_depth_--;
-  }
-  size_t function_call_depth() const { return function_call_depth_; }
-  size_t function_call_max_depth() const { return function_call_max_depth_; }
-
-  void ResetStackFrameDepth() {
-    stack_frame_depth_ = 0;
-    stack_frame_max_depth_ = 0;
-  }
-  void IncreaseStackFrameDepth() {
-    stack_frame_depth_++;
-    if (stack_frame_max_depth_ < stack_frame_depth_) {
-      stack_frame_max_depth_ = stack_frame_depth_.load();
-    }
-  }
-  void DecreaseStackFrameDepth() {
-    if (stack_frame_depth_ == 0) {
-      MS_LOG(EXCEPTION) << "Current stack frame depth is already 0, can not decrease it.";
-    }
-    stack_frame_depth_--;
-  }
-  size_t stack_frame_depth() const { return stack_frame_depth_; }
-  size_t stack_frame_max_depth() const { return stack_frame_max_depth_; }
   void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
   bool enable_recursive_eval() const { return enable_recursive_eval_; }
   static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
@@ -327,13 +297,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr ExecuteMultipleEvaluatorsMultiThread(const std::vector<EvaluatorPtr> &evaluators,
                                                      const AnfNodeConfigPtr &out_conf,
                                                      const ConfigPtrList &args_conf_list);
-  // Record current depth of function call stack, including `stack_frame_depth_`.
-  std::atomic_long function_call_depth_;
-  std::atomic_long function_call_max_depth_;
-
-  // Record current depth of stack frames call.
-  std::atomic_long stack_frame_depth_;
-  std::atomic_long stack_frame_max_depth_;
 
   std::atomic_long forward_count_;
 
