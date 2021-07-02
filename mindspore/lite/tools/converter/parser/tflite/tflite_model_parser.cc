@@ -426,9 +426,14 @@ STATUS TfliteModelParser::ConvertGraphInputs() {
     }
     auto parameter = res_graph_->add_parameter();
     const auto &tensor = tflite_subgraph->tensors.at(tflite_graph_input);
-    std::vector<int64_t> shape_vector;
-    (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
-                         [](const int32_t &value) { return static_cast<int64_t>(value); });
+    std::vector<int64_t> shape_vector = ConverterContext::GetInstance()->GetGraphInputTensorShape(tensor->name);
+    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
+      MS_LOG(WARNING) << "Can not find name in map. name is " << tensor->name;
+    }
+    if (shape_vector.empty()) {
+      (void)std::transform(tensor->shape.begin(), tensor->shape.end(), std::back_inserter(shape_vector),
+                           [](const int32_t &value) { return static_cast<int64_t>(value); });
+    }
     auto dtype = GetTfliteDataType(tensor->type);
     auto abstract_tensor = CreateTensorAbstract(shape_vector, dtype);
     if (abstract_tensor == nullptr) {

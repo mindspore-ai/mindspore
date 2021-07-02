@@ -425,9 +425,15 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
 
   std::vector<int64_t> shape;
   if (TensorFlowUtils::FindAttrValue(node, "shape", &attr_value)) {
-    auto &shape_attr = attr_value.shape();
-    for (int i = 0; i < shape_attr.dim_size(); ++i) {
-      shape.push_back(shape_attr.dim(i).size());
+    shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(node.name());
+    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
+      MS_LOG(WARNING) << "Can not find name in map. name is " << node.name();
+    }
+    if (shape.empty()) {
+      auto &shape_attr = attr_value.shape();
+      for (int i = 0; i < shape_attr.dim_size(); ++i) {
+        shape.push_back(shape_attr.dim(i).size());
+      }
     }
   }
 

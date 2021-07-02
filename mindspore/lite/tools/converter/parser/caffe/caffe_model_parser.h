@@ -60,6 +60,12 @@ class CaffeModelParser : public ModelParser {
 
   STATUS HardCodeCaffe(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
 
+  STATUS ConvertGraphInputsOfLayer();
+
+  STATUS ConvertGraphInputsOfDim();
+
+  STATUS ConvertGraphInputsOfShape();
+
   caffe::NetParameter caffe_model_;
   caffe::NetParameter caffe_weight_;
   std::unordered_map<std::string, caffe::LayerParameter> caffe_layers_;

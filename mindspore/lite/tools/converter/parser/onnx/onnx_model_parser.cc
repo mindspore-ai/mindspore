@@ -328,11 +328,16 @@ STATUS OnnxModelParser::ConvertGraphInputs(const onnx::GraphProto &onnx_graph, c
                     << static_cast<onnx::TensorProto_DataType>(input_value.type().tensor_type().elem_type());
       return RET_ERROR;
     }
-    std::vector<int64_t> shape_vector;
-    auto onnx_shape = input_value.type().tensor_type().shape().dim();
-    std::transform(onnx_shape.begin(), onnx_shape.end(), std::back_inserter(shape_vector),
-                   [](const onnx::TensorShapeProto_Dimension &val) { return static_cast<int64_t>(val.dim_value()); });
-    std::replace(shape_vector.begin(), shape_vector.end(), 0, -1);
+    std::vector<int64_t> shape_vector = ConverterContext::GetInstance()->GetGraphInputTensorShape(input_value.name());
+    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
+      MS_LOG(WARNING) << "Can not find name in map. name is " << input_value.name();
+    }
+    if (shape_vector.empty()) {
+      auto onnx_shape = input_value.type().tensor_type().shape().dim();
+      std::transform(onnx_shape.begin(), onnx_shape.end(), std::back_inserter(shape_vector),
+                     [](const onnx::TensorShapeProto_Dimension &val) { return static_cast<int64_t>(val.dim_value()); });
+      std::replace(shape_vector.begin(), shape_vector.end(), 0, -1);
+    }
     auto abstract_tensor = CreateTensorAbstract(shape_vector, data_type);
     if (abstract_tensor == nullptr) {
       MS_LOG(ERROR) << "Create tensor abstarct failed";

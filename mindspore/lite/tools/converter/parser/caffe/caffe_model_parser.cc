@@ -324,14 +324,19 @@ STATUS CaffeModelParser::InitOriginModel(const std::string &model_file, const st
   return RET_OK;
 }
 
-STATUS CaffeModelParser::ConvertGraphInputs() {
+STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
   for (int i = 0; i < caffe_model_.layer_size(); i++) {
     auto layer = caffe_model_.layer(i);
     if (layer.type() == "Input") {
       auto parameter = res_graph_->add_parameter();
-      std::vector<int64_t> shape;
-      for (int j = 0; j < layer.input_param().shape(0).dim_size(); j++) {
-        shape.push_back(layer.input_param().shape(0).dim(j));
+      std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(layer.name());
+      if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
+        MS_LOG(WARNING) << "Can not find name in map. name is " << layer.name();
+      }
+      if (shape.empty()) {
+        for (int j = 0; j < layer.input_param().shape(0).dim_size(); j++) {
+          shape.push_back(layer.input_param().shape(0).dim(j));
+        }
       }
       auto abstract = CreateTensorAbstract(shape, kNumberTypeFloat32);
       if (abstract == nullptr) {
@@ -343,10 +348,47 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       nodes_.insert(std::pair(layer.top(0), parameter));
     }
   }
+  return RET_OK;
+}
 
-  if (caffe_model_.input_dim_size() > 0) {
-    for (int i = 0; i < caffe_model_.input_size(); i++) {
-      std::vector<int64_t> shape;
+STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
+  for (int i = 0; i < caffe_model_.input_shape_size(); i++) {
+    auto shape = caffe_model_.input_shape(i);
+    std::vector<int64_t> shape_vector =
+      ConverterContext::GetInstance()->GetGraphInputTensorShape(caffe_model_.input(i));
+    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
+      MS_LOG(WARNING) << "Can not find name in map. name is " << caffe_model_.input(i);
+    }
+    if (shape_vector.empty()) {
+      for (int j = 0; j < shape.dim_size(); j++) {
+        shape_vector.push_back(shape.dim(j));
+      }
+    }
+    auto parameter = res_graph_->add_parameter();
+    auto tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeFloat32);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "Create tensor info failed";
+      return RET_ERROR;
+    }
+    auto abstract = tensor_info->ToAbstract();
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    parameter->set_abstract(abstract);
+    parameter->set_name("graph_input-" + caffe_model_.input(i));
+    nodes_.insert(std::pair(caffe_model_.input(i), parameter));
+  }
+  return RET_OK;
+}
+
+STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
+  for (int i = 0; i < caffe_model_.input_size(); i++) {
+    std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(caffe_model_.input(i));
+    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
+      MS_LOG(WARNING) << "Can not find name in map. name is " << caffe_model_.input(i);
+    }
+    if (shape.empty()) {
       if (caffe_model_.input_dim_size() > 4) {
         int step = caffe_model_.input_dim_size() / caffe_model_.input_size();
         for (int j = i * step; j < (i + 1) * step; j++) {
@@ -357,40 +399,31 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
           shape.push_back(caffe_model_.input_dim(j));
         }
       }
-      auto parameter = res_graph_->add_parameter();
-      auto abstract = CreateTensorAbstract(shape, kNumberTypeFloat32);
-      if (abstract == nullptr) {
-        MS_LOG(ERROR) << "Create tensor abstarct failed";
-        return RET_ERROR;
-      }
-      parameter->set_abstract(abstract);
-      parameter->set_name("graph_input-" + caffe_model_.input(i));
-      nodes_.insert(std::pair(caffe_model_.input(i), parameter));
     }
-  } else {
-    for (int i = 0; i < caffe_model_.input_shape_size(); i++) {
-      auto shape = caffe_model_.input_shape(i);
-      std::vector<int64_t> shape_vector;
-      for (int j = 0; j < shape.dim_size(); j++) {
-        shape_vector.push_back(shape.dim(j));
-      }
-      auto parameter = res_graph_->add_parameter();
-      auto tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kNumberTypeFloat32);
-      if (tensor_info == nullptr) {
-        MS_LOG(ERROR) << "Create tensor info failed";
-        return RET_ERROR;
-      }
-      auto abstract = tensor_info->ToAbstract();
-      if (abstract == nullptr) {
-        MS_LOG(ERROR) << "Create tensor abstarct failed";
-        return RET_ERROR;
-      }
-      parameter->set_abstract(abstract);
-      parameter->set_name("graph_input-" + caffe_model_.input(i));
-      nodes_.insert(std::pair(caffe_model_.input(i), parameter));
+    auto parameter = res_graph_->add_parameter();
+    auto abstract = CreateTensorAbstract(shape, kNumberTypeFloat32);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
     }
+    parameter->set_abstract(abstract);
+    parameter->set_name("graph_input-" + caffe_model_.input(i));
+    nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
+}
+
+STATUS CaffeModelParser::ConvertGraphInputs() {
+  auto ret = ConvertGraphInputsOfLayer();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  if (caffe_model_.input_dim_size() > 0) {
+    return ConvertGraphInputsOfDim();
+  } else {
+    return ConvertGraphInputsOfShape();
+  }
+  return ret;
 }
 
 STATUS CaffeModelParser::ConvertGraphOutputs() {

@@ -728,7 +728,7 @@ STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph) {
   size_t idx = 0;
   for (auto &input : func_graph->get_inputs()) {
     TypeId type = GetParameterDtype(input->cast<ParameterPtr>());
-    TensorDataType::GetInstance()->UpdateGraphInputDType(idx, type);
+    ConverterContext::GetInstance()->UpdateGraphInputDType(idx, type);
     idx++;
   }
   // update graph outputs dtype
@@ -744,15 +744,15 @@ STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph) {
         }
         for (const auto &tuple_item : tuple->elements()) {
           TypeId type = GetAbstractTensorDtype(tuple_item->cast<abstract::AbstractTensorPtr>());
-          TensorDataType::GetInstance()->UpdateGraphOutputDType(idx, type);
+          ConverterContext::GetInstance()->UpdateGraphOutputDType(idx, type);
           idx++;
         }
       } else if (utils::isa<abstract::AbstractTensor>(input->abstract())) {
         TypeId type = GetAbstractTensorDtype(input->abstract()->cast<abstract::AbstractTensorPtr>());
-        TensorDataType::GetInstance()->UpdateGraphOutputDType(idx, type);
+        ConverterContext::GetInstance()->UpdateGraphOutputDType(idx, type);
         idx++;
       } else {
-        TensorDataType::GetInstance()->UpdateGraphOutputDType(idx, kTypeUnknown);
+        ConverterContext::GetInstance()->UpdateGraphOutputDType(idx, kTypeUnknown);
         idx++;
       }
     }
