@@ -72,25 +72,35 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     return true;
   }
 
-  const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
-  DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
-
   if (ReachThresholdForStartFLJob(fbb)) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
+  const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
+  DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
   if (!ReadyForStartFLJob(fbb, device_meta)) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
+  PBMetadata metadata;
+  *metadata.mutable_device_meta() = device_meta;
+  if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata)) {
+    std::string reason = "Updating device metadata failed.";
+    BuildStartFLJobRsp(fbb, schema::ResponseCode_OutOfTime, reason, false,
+                       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
+                       {});
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+
+  StartFLJob(fbb, device_meta);
   // If calling ReportCount before ReadyForStartFLJob, the result will be inconsistent if the device is not selected.
   if (!CountForStartFLJob(fbb, start_fl_job_req)) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
 
-  StartFLJob(fbb, device_meta);
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
@@ -165,16 +175,6 @@ bool StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
 }
 
 void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta) {
-  PBMetadata metadata;
-  *metadata.mutable_device_meta() = device_meta;
-  if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata)) {
-    std::string reason = "Updating device metadata failed.";
-    BuildStartFLJobRsp(fbb, schema::ResponseCode_SystemError, reason, false,
-                       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
-                       {});
-    return;
-  }
-
   size_t last_iteration = LocalMetaStore::GetInstance().curr_iter_num() - 1;
   auto feature_maps = ModelStore::GetInstance().GetModelByIterNum(last_iteration);
   if (feature_maps.empty()) {

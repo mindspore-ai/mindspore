@@ -88,6 +88,7 @@ class Iteration {
       : server_node_(nullptr),
         communicator_(nullptr),
         iteration_state_(IterationState::kCompleted),
+        iteration_loop_count_(0),
         iteration_num_(1),
         is_last_iteration_valid_(true),
         pinned_iter_num_(0) {
@@ -139,6 +140,9 @@ class Iteration {
 
   // The iteration is either running or completed at any time.
   std::atomic<IterationState> iteration_state_;
+
+  // The count of iteration loops which are completed.
+  size_t iteration_loop_count_;
 
   // Server's current iteration number.
   size_t iteration_num_;

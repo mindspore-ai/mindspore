@@ -30,6 +30,9 @@ namespace server {
 // The initial iteration number is 0 in server.
 constexpr size_t kInitIterationNum = 0;
 
+// The initial iteration number after ModelStore is reset.
+constexpr size_t kResetInitIterNum = 1;
+
 // Server framework use ModelStore to store and query models.
 // ModelStore stores multiple models because worker could get models of the previous iterations.
 class ModelStore {

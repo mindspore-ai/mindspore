@@ -72,8 +72,32 @@ _set_ps_context_func_map = {
 }
 
 _get_ps_context_func_map = {
+    "server_mode": ps_context().server_mode,
+    "ms_role": ps_context().ms_role,
     "enable_ps": ps_context().is_ps_mode,
-    "ms_role": ps_context().ms_role
+    "enable_fl": ps_context().is_ps_mode,
+    "worker_num": ps_context().worker_num,
+    "server_num": ps_context().server_num,
+    "scheduler_ip": ps_context().scheduler_ip,
+    "scheduler_port": ps_context().scheduler_port,
+    "fl_server_port": ps_context().fl_server_port,
+    "enable_fl_client": ps_context().fl_client_enable,
+    "start_fl_job_threshold": ps_context().start_fl_job_threshold,
+    "start_fl_job_time_window": ps_context().start_fl_job_time_window,
+    "update_model_ratio": ps_context().update_model_ratio,
+    "update_model_time_window": ps_context().update_model_time_window,
+    "share_secrets_ratio": ps_context().share_secrets_ratio,
+    "get_model_ratio": ps_context().get_model_ratio,
+    "reconstruct_secrets_threshhold": ps_context().reconstruct_secrets_threshhold,
+    "fl_name": ps_context().fl_name,
+    "fl_iteration_num": ps_context().fl_iteration_num,
+    "client_epoch_num": ps_context().client_epoch_num,
+    "client_batch_size": ps_context().client_batch_size,
+    "client_learning_rate": ps_context().client_learning_rate,
+    "worker_step_num_per_iteration": ps_context().worker_step_num_per_iteration,
+    "enable_ps_ssl": ps_context().enable_ssl,
+    "scheduler_manage_port": ps_context().scheduler_manage_port,
+    "config_file_path": ps_context().config_file_path
 }
 
 

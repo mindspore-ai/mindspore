@@ -25,6 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace ps {
 using mindspore::kernel::SparseApplyAdamCPUKernel;
+constexpr size_t kSparseApplyAdamPSInputSize = 10;
 class SparseApplyAdamPSKernel : public SparseApplyAdamCPUKernel, public PServerKernel {
  public:
   SparseApplyAdamPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
