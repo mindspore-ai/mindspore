@@ -306,6 +306,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{device_address->format()});
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{device_address->type_id()});
     kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
+    AnfAlgo::SetOutputAddr(device_address, 0, param.get());
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
   // construct abstract of parameter
