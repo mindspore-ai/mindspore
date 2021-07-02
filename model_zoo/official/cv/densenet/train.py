@@ -171,7 +171,6 @@ def train():
     # dataloader
     de_dataset = classification_dataset(config.train_data_dir, config.image_size
                                         , config.per_batch_size, config.max_epoch, config.rank, config.group_size)
-    de_dataset.map_model = 4
     config.steps_per_epoch = de_dataset.get_dataset_size()
 
     config.logger.save_args(config)
