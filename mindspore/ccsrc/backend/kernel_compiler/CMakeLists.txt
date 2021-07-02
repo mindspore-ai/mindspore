@@ -66,18 +66,6 @@ if(ENABLE_CPU)
     if(PLATFORM_ARM64)
         add_compile_definitions(ENABLE_ARM)
     endif()
-
-    if("${ARM_SIMD}" STREQUAL "neon")
-        set(CPU_SIMD_SRC "${CMAKE_CURRENT_SOURCE_DIR}/cpu/adam_weight_decay_cpu_kernel.cc")
-        add_compile_definitions(ENABLE_NEON)
-        set_property(SOURCE ${CPU_SIMD_SRC} PROPERTY COMPILE_OPTIONS -O3 -ffast-math)
-    endif()
-
-    if("${X86_64_SIMD}" STREQUAL "avx")
-        set(CPU_SIMD_SRC "${CMAKE_CURRENT_SOURCE_DIR}/cpu/adam_weight_decay_cpu_kernel.cc")
-        add_compile_definitions(ENABLE_AVX512)
-        set_property(SOURCE ${CPU_SIMD_SRC} PROPERTY COMPILE_OPTIONS -O3 -fopenmp -mavx512f -ffast-math)
-    endif()
 endif()
 
 if(NOT ENABLE_CPU OR WIN32)
