@@ -198,7 +198,9 @@ class GradientFreeze:
 
     def generate_freeze_index_sequence(self, parameter_groups_number, freeze_strategy, freeze_p, total_steps):
         """Generate index sequence for gradient freezing training."""
-        total_step = total_steps * 1.01
+        total_step = int(total_steps * 1.01)
+        if parameter_groups_number <= 1:
+            return [0 for _ in range(total_step)]
         # local continuous freezing training strategy, as '00001234'
         if freeze_strategy == CONTINUOUS_STRATEGY:
             zero_cnt = int(
@@ -251,7 +253,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
                                              use_grad_accumulation, opt, max_accumulation_step)
                             for reducer, opt in zip(grad_reducers, optimizer.opts))
     else:
-        freeze_nets = tuple(_TrainFreezeCell(network, sens, grad, self.grad_reducer,
+        freeze_nets = tuple(_TrainFreezeCell(network, sens, grad, F.identity,
                                              use_grad_accumulation, opt, max_accumulation_step)
                             for opt in optimizer.opts)
     return freeze_nets

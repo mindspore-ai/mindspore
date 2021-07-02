@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """acc"""
-from easydict import EasyDict as edict
-
 from .less_batch_normalization import LessBN
 from .grad_freeze import GradientFreeze
 from .base import OptimizerProcess, ParameterProcess
@@ -43,7 +41,7 @@ class AutoAcc:
         if level not in _acc_config_level.keys():
             level = 'O0'
         acc_config = _acc_config_level[level]
-        self._acc_config = edict(acc_config)
+        self._acc_config = acc_config
         self._fn_flag = True
         self._gc_flag = True
         self._param_groups = 10
@@ -63,7 +61,7 @@ class AutoAcc:
 
     def network_auto_process_train(self, network, optimizer):
         """Network train."""
-        if self._acc_config.less_bn:
+        if self._acc_config["less_bn"]:
             network = LessBN(network, fn_flag=self._fn_flag)
             optimizer_process = OptimizerProcess(optimizer)
             group_params = self._param_processer.assign_parameter_group(network.trainable_params(),
@@ -75,7 +73,7 @@ class AutoAcc:
                 parameters = optimizer_process.origin_params
             optimizer = optimizer_process.generate_new_optimizer(parameters)
 
-        if self._acc_config.grad_freeze:
+        if self._acc_config["grad_freeze"]:
             freeze_processer = GradientFreeze(self._param_groups, self._freeze_type,
                                               self._freeze_p, self._total_steps)
             network, optimizer = freeze_processer.freeze_generate(network, optimizer)
@@ -84,7 +82,7 @@ class AutoAcc:
 
     def network_auto_process_eval(self, network):
         """Network eval."""
-        if self._acc_config.less_bn:
+        if self._acc_config["less_bn"]:
             network = LessBN(network)
 
         return network
