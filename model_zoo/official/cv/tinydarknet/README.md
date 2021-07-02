@@ -326,9 +326,36 @@ For more configuration details, please refer the script `imagenet_config.yaml`.
 
 ### Export MindIR
 
+- Export on local
+
 ```shell
 # Ascend310 inference
 python export.py --dataset [DATASET] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
+```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# (1) Upload the code folder to S3 bucket.
+# (2) Click to "create training task" on the website UI interface.
+# (3) Set the code directory to "/{path}/tinydarknet" on the website UI interface.
+# (4) Set the startup file to /{path}/tinydarknet/export.py" on the website UI interface.
+# (5) Perform a or b.
+#     a. setting parameters in /{path}/tinydarknet/default_config.yaml.
+#         1. Set ”enable_modelarts: True“
+#         2. Set “checkpoint_path: ./{path}/*.ckpt”('checkpoint_path' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Set ”file_name: tinydarknet“
+#         4. Set ”file_format：MINDIR“
+#     b. adding on the website UI interface.
+#         1. Add ”enable_modelarts=True“
+#         2. Add “checkpoint_path=./{path}/*.ckpt”('checkpoint_path' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Add ”file_name=tinydarknet“
+#         4. Add ”file_format=MINDIR“
+# (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (This step is useless, but necessary.).
+# (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (9) Under the item "resource pool selection", select the specification of a single card.
+# (10) Create your job.
+# You will see tinydarknet.mindir under {Output file path}.
 ```
 
 The parameter does not have the ckpt_file option. Please store the ckpt file according to the path of the parameter `checkpoint_path` in `imagenet_config.yaml`.

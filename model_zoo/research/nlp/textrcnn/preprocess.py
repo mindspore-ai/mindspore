@@ -14,20 +14,16 @@
 # ============================================================================
 """preprocess"""
 import os
-import argparse
 import numpy as np
 
 from src.model_utils.config import config as cfg
 from src.dataset import create_dataset
 
-parser = argparse.ArgumentParser(description='preprocess')
-parser.add_argument('--result_path', type=str, default="./preprocess_Result")
-args = parser.parse_args()
 
 def get_bin():
     '''generate bin files.'''
     ds_eval = create_dataset(cfg.preprocess_path, cfg.batch_size, False)
-    img_path = os.path.join(args.result_path, "00_feature")
+    img_path = os.path.join(cfg.pre_result_path, "00_feature")
     os.makedirs(img_path)
     label_list = []
 
@@ -38,7 +34,7 @@ def get_bin():
         data["feature"].tofile(file_path)
         label_list.append(data["label"])
 
-    np.save(os.path.join(args.result_path, "label_ids.npy"), label_list)
+    np.save(os.path.join(cfg.pre_result_path, "label_ids.npy"), label_list)
     print("=" * 20, "bin files finished", "=" * 20)
 
 if __name__ == '__main__':

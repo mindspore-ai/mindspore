@@ -14,27 +14,22 @@
 # ============================================================================
 """postprocess"""
 import os
-import argparse
 import numpy as np
 
 from mindspore.nn.metrics import Accuracy
 from src.model_utils.config import config as cfg
 
-parser = argparse.ArgumentParser(description='postprocess')
-parser.add_argument('--label_path', type=str, default="./preprocess_Result/label_ids.npy")
-parser.add_argument('--result_path', type=str, default="./result_Files")
-args = parser.parse_args()
 
 def get_acc():
     '''calculate accuracy'''
     metric = Accuracy()
     metric.clear()
-    label_list = np.load(args.label_path, allow_pickle=True)
-    file_num = len(os.listdir(args.result_path))
+    label_list = np.load(cfg.label_path, allow_pickle=True)
+    file_num = len(os.listdir(cfg.result_path))
 
     for i in range(file_num):
         f_name = "textcrnn_bs" + str(cfg.batch_size) + "_" + str(i) + "_0.bin"
-        pred = np.fromfile(os.path.join(args.result_path, f_name), np.float16)
+        pred = np.fromfile(os.path.join(cfg.result_path, f_name), np.float16)
         pred = pred.reshape(cfg.batch_size, int(pred.shape[0]/cfg.batch_size))
         metric.update(pred, label_list[i])
     acc = metric.eval()

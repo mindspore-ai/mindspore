@@ -39,6 +39,11 @@ ckpt_file: ''
 file_name: 'textrcnn'
 file_format: "MINDIR"
 
+# postprocess and result_path related
+pre_result_path: "./preprocess_result"
+label_path: "./preprocess_Result/label_ids.npy"
+result_path: "./result_Files"
+
 ---
 
 # Help description for each configuration
