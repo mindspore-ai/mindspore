@@ -126,24 +126,22 @@ def _auto_enable_graph_kernel(device_target, graph_kernel_mode):
         cfg.bert_network in ('base', 'large') and cfg.optimizer == 'AdamWeightDecay'
 
 
-def _set_graph_kernel_context(device_target, enable_graph_kernel, is_auto_enable_graph_kernel):
+def _set_graph_kernel_context(device_target):
     """Add suitable graph kernel context for different configs."""
-    if enable_graph_kernel == "true" or is_auto_enable_graph_kernel:
-        if device_target == 'GPU':
-            if cfg.bert_network == 'base':
-                context.set_context(enable_graph_kernel=True,
-                                    graph_kernel_flags="--enable_stitch_fusion=true "
-                                                       "--enable_parallel_fusion=true "
-                                                       "--enable_cluster_ops=BatchMatMul")
-            else:
-                context.set_context(enable_graph_kernel=True)
+    if device_target == 'GPU':
+        if cfg.bert_network == 'base':
+            context.set_context(enable_graph_kernel=True,
+                                graph_kernel_flags="--enable_stitch_fusion=true "
+                                                   "--enable_parallel_fusion=true "
+                                                   "--enable_cluster_ops=BatchMatMul")
         else:
-            logger.warning('Graph kernel only supports GPU back-end now, run with graph kernel off.')
+            context.set_context(enable_graph_kernel=True)
+    else:
+        logger.warning('Graph kernel only supports GPU back-end now, run with graph kernel off.')
 
 
-def _check_compute_type(args_opt, is_auto_enable_graph_kernel):
-    if args_opt.device_target == 'GPU' and bert_net_cfg.compute_type != mstype.float32 and \
-       not is_auto_enable_graph_kernel and cfg.bert_network != 'base':
+def _check_compute_type(args_opt):
+    if args_opt.device_target == 'GPU' and bert_net_cfg.compute_type != mstype.float32 and cfg.bert_network != 'base':
         warning_message = 'Gpu only support fp32 temporarily, run with fp32.'
         bert_net_cfg.compute_type = mstype.float32
         if args_opt.enable_lossscale == "true":
@@ -184,8 +182,7 @@ def argparse_init():
     parser.add_argument("--save_checkpoint_num", type=int, default=1, help="Save checkpoint numbers, default is 1.")
     parser.add_argument("--data_dir", type=str, default="", help="Data path, it is better to use absolute path")
     parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
-    parser.add_argument("--enable_graph_kernel", type=str, default="auto", choices=["auto", "true", "false"],
-                        help="Accelerate by graph kernel, default is auto.")
+
     return parser
 
 
@@ -195,8 +192,7 @@ def run_pretrain():
     args_opt = parser.parse_args()
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
     context.set_context(reserve_class_name_in_scope=False)
-    is_auto_enable_graph_kernel = _auto_enable_graph_kernel(args_opt.device_target, args_opt.enable_graph_kernel)
-    _set_graph_kernel_context(args_opt.device_target, args_opt.enable_graph_kernel, is_auto_enable_graph_kernel)
+    _set_graph_kernel_context(args_opt.device_target)
     ckpt_save_dir = args_opt.save_checkpoint_path
     if args_opt.distribute == "true":
         if args_opt.device_target == 'Ascend':
@@ -217,7 +213,7 @@ def run_pretrain():
         rank = 0
         device_num = 1
 
-    _check_compute_type(args_opt, is_auto_enable_graph_kernel)
+    _check_compute_type(args_opt)
 
     if args_opt.accumulation_steps > 1:
         logger.info("accumulation steps: {}".format(args_opt.accumulation_steps))
