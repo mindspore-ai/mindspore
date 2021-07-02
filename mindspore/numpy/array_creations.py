@@ -1689,7 +1689,7 @@ def vander(x, N=None, increasing=False):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> print(np.vander([1,2,3,4,5]))
+        >>> print(np.vander([1., 2., 3., 4., 5.]))
         [[  1   1   1   1   1]
          [ 16   8   4   2   1]
          [ 81  27   9   3   1]

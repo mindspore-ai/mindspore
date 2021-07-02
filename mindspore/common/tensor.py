@@ -888,6 +888,9 @@ class Tensor(Tensor_):
                 tensor, unless it has an integer dtype with a precision less than :class:`float32`.
                 In that case, :class:`float32` is used. Default: None.
 
+        Raises:
+            ValueError: if axis is out of range.
+
         Returns:
             Tensor.
 
@@ -979,7 +982,7 @@ class Tensor(Tensor_):
             value. If `axis` is given, the result is an array of dimension ``self.ndim - 1``.
 
         Raises:
-            TypeError: if the input is not a tensor.
+            TypeError: if arguments have types not specified above.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1024,7 +1027,7 @@ class Tensor(Tensor_):
             value. If `axis` is given, the result is an array of dimension ``self.ndim - 1``.
 
         Raises:
-            TypeError: if the input is not a tensor.
+            TypeError: if arguments have types not specified above.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1099,7 +1102,7 @@ class Tensor(Tensor_):
             Tensor.
 
         Raises:
-            TypeError: if the input is not a tensor.
+            TypeError: if `self` is not a tensor, or `axis` and `keepdims` have types not specified above.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1146,6 +1149,10 @@ class Tensor(Tensor_):
         Returns:
             Tensor, a tensor with the elements of input tensor, but where values
             < `xmin` are replaced with `xmin`, and those > `xmax` with `xmax`.
+
+        Raises:
+            TypeError: If inputs have types not specified above.
+            ValueError: If the shapes of `x1` and `x2` cannot broadcast, or both `xmin` and `xmax` are `None`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1477,8 +1484,7 @@ class Tensor(Tensor_):
             Tensor, the indexed result.
 
         Raises:
-            ValueError: if axis is out of range.
-            TypeError: if the input is not a Tensor.
+            ValueError: if `axis` is out of range, or `mode` has values other than (‘raise’, ‘wrap’, ‘clip’)
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1824,7 +1830,7 @@ class Tensor(Tensor_):
 
         Raises:
             ValueError: if axis is out of range.
-            TypeError: if input is not a Tensor.
+            TypeError: if arguments have types not specified above.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
