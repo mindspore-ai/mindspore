@@ -53,7 +53,7 @@ function Run_Converter() {
     local x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_tflite_posttraining_config" "$models_caffe_posttraining_config" \
                              "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
-                             "$models_weightquant_9bit_config" "$models_with_multiple_inputs_config" "$models_for_process_only_config")
+                             "$models_weightquant_9bit_config" "$models_for_process_only_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
     Convert "${x86_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
@@ -132,7 +132,7 @@ function Run_x86() {
     # Prepare the config file list
     local x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_caffe_posttraining_config" "$models_tflite_awaretraining_config" \
-                             "$models_weightquant_config" "$models_with_multiple_inputs_config" "$models_for_process_only_config")
+                             "$models_weightquant_config" "$models_for_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_log_file $run_benchmark_result_file 'x86' 'CPU' ''
@@ -178,7 +178,7 @@ function Run_x86_sse() {
     # Prepare the config file list
     local sse_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_caffe_posttraining_config" "$models_tflite_awaretraining_config" \
-                             "$models_weightquant_config" "$models_with_multiple_inputs_config" "$models_for_process_only_config")
+                             "$models_weightquant_config" "$models_for_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${sse_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_sse_log_file $run_benchmark_result_file 'x86' 'CPU' ''
@@ -224,7 +224,7 @@ function Run_x86_avx() {
     # Prepare the config file list
     local avx_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                              "$models_mindspore_train_config" "$models_caffe_posttraining_config" "$models_tflite_awaretraining_config" \
-                             "$models_weightquant_config" "$models_with_multiple_inputs_config" "$models_for_process_only_config")
+                             "$models_weightquant_config" "$models_for_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
     Run_Benchmark "${avx_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_avx_log_file $run_benchmark_result_file 'x86' 'CPU' ''
@@ -375,7 +375,6 @@ models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
 models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_config=${basepath}/../config/models_weightquant.cfg
-models_with_multiple_inputs_config=${basepath}/../config/models_with_multiple_inputs.cfg
 models_for_process_only_config=${basepath}/../config/models_for_process_only.cfg
 models_codegen_config=${basepath}/../config/models_codegen.cfg
 models_codegen_parallel_config=${basepath}/../config/models_codegen_parallel.cfg

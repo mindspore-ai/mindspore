@@ -6,7 +6,7 @@ function Convert() {
   local cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
-      if [[ $line == \#* ]]; then
+      if [[ $line == \#* || $line == "" ]]; then
         continue
       fi
       model_info=${line%% *}
@@ -118,7 +118,7 @@ function Run_Benchmark() {
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
       line_info=${line}
-      if [[ $line_info == \#* ]]; then
+      if [[ $line_info == \#* || $line_info == "" ]]; then
         continue
       fi
       model_info=`echo ${line_info}|awk -F ' ' '{print $1}'`
@@ -238,8 +238,8 @@ function Run_Benchmark() {
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
     echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                  Testcase                                                                                             Result   "
-    echo -e "---                  --------                                                                                             ------   "
+    echo -e "env                    Testcase                                                                                           Result   "
+    echo -e "---                    --------                                                                                           ------   "
 }
 
 # Print start msg after run testcase

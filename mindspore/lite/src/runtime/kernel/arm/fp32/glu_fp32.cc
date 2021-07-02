@@ -61,14 +61,6 @@ void GluCPUKernel::FreeTmpBuffer() {
   }
 }
 
-GluCPUKernel::~GluCPUKernel() {
-  FreeTmpBuffer();
-  if (split_param_.split_sizes_ != nullptr) {
-    delete[] split_param_.split_sizes_;
-    split_param_.split_sizes_ = nullptr;
-  }
-}
-
 int GluCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -82,7 +74,7 @@ int GluCPUKernel::ReSize() {
   if (split_param_.split_sizes_ != nullptr) {
     delete[] split_param_.split_sizes_;
   }
-  split_param_.split_sizes_ = new int[kSplitNum];
+  split_param_.split_sizes_ = this->split_sizes_;
   memset(split_param_.split_sizes_, 0, kSplitNum * sizeof(int));
 
   auto in_tensor = in_tensors_.front();
