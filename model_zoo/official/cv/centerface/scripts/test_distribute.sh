@@ -63,27 +63,28 @@ steps_per_epoch=198 #198 for 8P; 1583 for 1p
 start=11 # start epoch number = start * device_num + min(device_phy_id) + 1
 end=18 # end epoch number = end * device_num + max(device_phy_id) + 1
 
-if [ $# == 1 ]
+if [ $# -ge 1 ]
 then
     model_path=$(get_real_path $1)
-    if [ ! -f $model_path ]
+#    if [ ! -f $model_path ]
+    if [ ! -d $model_path ]
     then
-        echo "error: model_path=$model_path is not a file"
+        echo "error: model_path=$model_path is not a dir"
     exit 1
     fi
 fi
 
-if [ $# == 2 ]
+if [ $# -ge 2 ]
 then
     dataset_path=$(get_real_path $2)
-    if [ ! -f $dataset_path ]
+    if [ ! -d $dataset_path ]
     then
-        echo "error: dataset_path=$dataset_path is not a file"
+        echo "error: dataset_path=$dataset_path is not a dir"
     exit 1
     fi
 fi
 
-if [ $# == 3 ]
+if [ $# -ge 3 ]
 then
     ground_truth_mat=$(get_real_path $3)
     if [ ! -f $ground_truth_mat ]
@@ -93,27 +94,27 @@ then
     fi
 fi
 
-if [ $# == 4 ]
+if [ $# -ge 4 ]
 then
     save_path=$(get_real_path $4)
-    if [ ! -f $save_path ]
+    if [ ! -d $save_path ]
     then
-        echo "error: save_path=$save_path is not a file"
+        echo "error: save_path=$save_path is not a dir"
     exit 1
     fi
 fi
 
-if [ $# == 5 ]
+if [ $# -ge 5 ]
 then
     device_num=$5
 fi
 
-if [ $# == 6 ]
+if [ $# -ge 6 ]
 then
     steps_per_epoch=$6
 fi
 
-if [ $# == 7 ]
+if [ $# -ge 7 ]
 then
     start=$7
 fi

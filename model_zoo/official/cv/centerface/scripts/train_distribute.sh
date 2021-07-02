@@ -51,7 +51,7 @@ annot_path=$dataset_path/annotations/train.json
 img_dir=$dataset_path/images/train/images
 rank_table=$root/rank_table_8p.json
 
-if [ $# == 1 ]
+if [ $# -ge 1 ]
 then
     rank_table=$(get_real_path $1)
     if [ ! -f $rank_table ]
@@ -61,7 +61,7 @@ then
     fi
 fi
 
-if [ $# == 2 ]
+if [ $# -ge 2 ]
 then
     pretrained_backbone=$(get_real_path $2)
     if [ ! -f $pretrained_backbone ]
@@ -71,17 +71,17 @@ then
     fi
 fi
 
-if [ $# == 3 ]
+if [ $# -ge 3 ]
 then
     dataset_path=$(get_real_path $3)
-    if [ ! -f $dataset_path ]
+    if [ ! -d $dataset_path ]
     then
-        echo "error: dataset_path=$dataset_path is not a file"
+        echo "error: dataset_path=$dataset_path is not a dir"
     exit 1
     fi
 fi
 
-if [ $# == 4 ]
+if [ $# -ge 4 ]
 then
     annot_path=$(get_real_path $4)
     if [ ! -f $annot_path ]
@@ -91,12 +91,12 @@ then
     fi
 fi
 
-if [ $# == 5 ]
+if [ $# -ge 5 ]
 then
     img_dir=$(get_real_path $5)
-    if [ ! -f $img_dir ]
+    if [ ! -d $img_dir ]
     then
-        echo "error: img_dir=$img_dir is not a file"
+        echo "error: img_dir=$img_dir is not a dir"
     exit 1
     fi
 fi

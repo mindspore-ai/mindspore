@@ -91,11 +91,11 @@ def load_backbone(net, ckpt_path, args):
                 else:
                     not_found_param.append(mobilev2_beta)
 
-    args.logger.info('================found_param {}========='.format(len(find_param)))
-    args.logger.info(find_param)
-    args.logger.info('================not_found_param {}========='.format(len(not_found_param)))
-    args.logger.info(not_found_param)
-    args.logger.info('=====load {} successfully ====='.format(ckpt_path))
+    print('================found_param {}========='.format(len(find_param)))
+    print(find_param)
+    print('================not_found_param {}========='.format(len(not_found_param)))
+    print(not_found_param)
+    print('=====load {} successfully ====='.format(ckpt_path))
 
     return net
 

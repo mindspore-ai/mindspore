@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-root=$PWD
-save_path=$root/output/centerface/
-ground_truth_path=$1
-echo "start eval"
-python ../dependency/evaluate/eval.py --pred=$save_path --gt=$ground_truth_path
-echo "end eval"
+"""Device adapter for ModelArts"""
+
+from .config import config
+
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

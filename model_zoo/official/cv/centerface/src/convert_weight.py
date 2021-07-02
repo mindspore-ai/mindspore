@@ -16,20 +16,11 @@
 Centerface model transform
 """
 import os
-import argparse
 import torch
 from mindspore.train.serialization import load_checkpoint, save_checkpoint
 from mindspore import Tensor
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('--ckpt_fn', type=str, default='/model_path/centerface.ckpt',
-                    help='ckpt for user to get cell/module name')
-parser.add_argument('--pt_fn', type=str, default='/model_path/centerface.pth', help='checkpoint filename to convert')
-parser.add_argument('--out_fn', type=str, default='/model_path/centerface_out.ckpt',
-                    help='convert output ckpt/pth path')
-parser.add_argument('--pt2ckpt', type=int, default=1, help='1 : pt2ckpt; 0 : ckpt2pt')
-
-args = parser.parse_args()
 
 def load_model(model_path):
     """
@@ -160,10 +151,10 @@ def ckpt_to_pt(pt, ckpt, out_path):
     return state_dict
 
 if __name__ == "__main__":
-    if args.pt2ckpt == 1:
-        pt_to_ckpt(args.pt_fn, args.ckpt_fn, args.out_fn)
-    elif args.pt2ckpt == 0:
-        ckpt_to_pt(args.pt_fn, args.ckpt_fn, args.out_fn)
+    if config.pt2ckpt == 1:
+        pt_to_ckpt(config.pt_fn, config.ckpt_fn, config.out_fn)
+    elif config.pt2ckpt == 0:
+        ckpt_to_pt(config.pt_fn, config.ckpt_fn, config.out_fn)
     else:
         # user defined functions
         pass

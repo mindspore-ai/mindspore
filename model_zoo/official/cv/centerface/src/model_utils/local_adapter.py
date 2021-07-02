@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-root=$PWD
-save_path=$root/output/centerface/
-ground_truth_path=$1
-echo "start eval"
-python ../dependency/evaluate/eval.py --pred=$save_path --gt=$ground_truth_path
-echo "end eval"
+"""Local adapter"""
+
+import os
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
+
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

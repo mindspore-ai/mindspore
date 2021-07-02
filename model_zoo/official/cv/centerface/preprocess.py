@@ -14,21 +14,14 @@
 # ============================================================================
 """pre process for 310 inference"""
 import os
-import argparse
 import shutil
 import cv2
 import numpy as np
-from src.config import ConfigCenterface
+from src.model_utils.config import config
 from dependency.centernet.src.lib.detectors.base_detector import CenterFaceDetector
-
-parser = argparse.ArgumentParser(description="centerface preprocess")
-parser.add_argument("--dataset_path", type=str, required=True, help="dataset path.")
-parser.add_argument("--preprocess_path", type=str, required=True, help="preprocess path.")
-args = parser.parse_args()
 
 
 def preprocess(dataset_path, preprocess_path):
-    config = ConfigCenterface()
     event_list = os.listdir(dataset_path)
     input_path = os.path.join(preprocess_path, "input")
     meta_path = os.path.join(preprocess_path, "meta/meta")
@@ -65,4 +58,4 @@ def preprocess(dataset_path, preprocess_path):
 
 
 if __name__ == '__main__':
-    preprocess(args.dataset_path, args.preprocess_path)
+    preprocess(config.dataset_path, config.preprocess_path)
