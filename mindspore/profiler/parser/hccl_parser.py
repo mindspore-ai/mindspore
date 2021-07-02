@@ -100,6 +100,8 @@ class HcclParser:
         operators_average_value = dict()
         for key, value in operators_cost_info.items():
             average_value = self._calculate_communication_average_value(value)
+            # The symbol '-' is used to indicate that the line is average information.
+            average_value.insert(0, '-')
             operators_average_value[key] = average_value
         device_communication_average_value.append(operators_average_value)
         # The symbol '-' is used to indicate that the line is average information.
@@ -116,6 +118,8 @@ class HcclParser:
             # device_communication_average_value[3]: average value for link info
             # device_communication_average_value[4]: average value for operator info
             device_communication_average_value[3] = json.dumps(device_communication_average_value[3])
+            device_communication_average_value[4] = json.dumps(device_communication_average_value[4])
+
             csv_writer.writerow(device_communication_average_value)
         os.chmod(self._save_path, stat.S_IREAD | stat.S_IWRITE)
 
