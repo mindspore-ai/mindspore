@@ -139,6 +139,9 @@ class ConvertNetUtils():
         Args:
             net (Cell): Network to be trained by the second-order optimizer thor.
 
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
         Examples:
             >>> ConvertNetUtils().convert_to_thor_net(net)
 
@@ -185,6 +188,9 @@ class ConvertModelUtils():
         Returns:
              model (Object): High-Level API for Training.
                             `Model` groups layers into an object with training features.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
 
         Examples:
             >>> from mindspore.nn.optim import thor

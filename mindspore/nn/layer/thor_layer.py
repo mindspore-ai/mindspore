@@ -64,6 +64,9 @@ class DenseThor(Cell):
     Raises:
         ValueError: If the shape of `weight_init` or `bias_init` is incorrect.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> x = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> net = nn.DenseThor(3, 4)
@@ -351,6 +354,9 @@ class Conv2dThor(_ConvThor):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.Conv2dThor(120, 240, 4, has_bias=False, weight_init='normal')
         >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
@@ -549,6 +555,9 @@ class EmbeddingThor(Cell):
 
     Outputs:
         Tensor of output shape :math:`(\text{batch_size}, \text{x_length}, \text{embedding_size})`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = nn.EmbeddingThor(20000, 768,  True)
