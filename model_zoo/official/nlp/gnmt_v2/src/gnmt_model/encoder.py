@@ -17,7 +17,6 @@ from mindspore import nn
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
-from config.config import GNMTConfig
 from .dynamic_rnn import DynamicRNNNet
 
 
@@ -26,7 +25,7 @@ class GNMTEncoder(nn.Cell):
     Implements of GNMT encoder.
 
     Args:
-        config (GNMTConfig): Configuration of GNMT network.
+        config: Configuration of GNMT network.
         is_training (bool): Whether to train.
         compute_type (mstype): Mindspore data type.
 
@@ -35,7 +34,7 @@ class GNMTEncoder(nn.Cell):
     """
 
     def __init__(self,
-                 config: GNMTConfig,
+                 config,
                  is_training: bool,
                  compute_type=mstype.float32):
         super(GNMTEncoder, self).__init__()

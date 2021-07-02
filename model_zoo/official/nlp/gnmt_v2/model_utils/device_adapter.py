@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""GNMTv2 Init."""
-from .gnmt import GNMT
-from .attention import BahdanauAttention
-from .gnmt_for_train import GNMTTraining, LabelSmoothedCrossEntropyCriterion, \
-    GNMTNetworkWithLoss, GNMTTrainOneStepWithLossScaleCell
-from .gnmt_for_infer import infer
-from .bleu_calculate import bleu_calculate
+
+"""Device adapter for ModelArts"""
+
+from .config import config
+
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 
 __all__ = [
-    "infer",
-    "GNMTTraining",
-    "LabelSmoothedCrossEntropyCriterion",
-    "GNMTTrainOneStepWithLossScaleCell",
-    "GNMTNetworkWithLoss",
-    "GNMT",
-    "BahdanauAttention",
-    "bleu_calculate"
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
 ]

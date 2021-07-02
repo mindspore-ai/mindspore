@@ -24,7 +24,7 @@ def load_infer_weights(config):
     Load weights from ckpt or npz.
 
     Args:
-        config (GNMTConfig): Config.
+        config: Config.
 
     Returns:
         dict, weights.

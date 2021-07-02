@@ -26,7 +26,7 @@ class CreateAttentionPaddingsFromInputPaddings(nn.Cell):
     Create attention mask according to input mask.
 
     Args:
-        config (GNMTConfig): Config class.
+        config: Config class.
 
     Returns:
         Tensor, shape of (N, T, T).

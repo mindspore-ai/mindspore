@@ -72,7 +72,7 @@ class BeamDecoderStep(nn.Cell):
     Multi-layer transformer decoder step.
 
     Args:
-        config (GNMTConfig): The config of Transformer.
+        config: The config of Transformer.
     """
 
     def __init__(self,

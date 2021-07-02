@@ -43,12 +43,15 @@ do
     mkdir ${current_exec_path}/device$i
     cd ${current_exec_path}/device$i || exit
     cp ../../*.py .
+    cp ../../*.yaml .
     cp -r ../../src .
-    cp -r ../../config .
+    cp -r ../../model_utils .
     export RANK_ID=$i
     export DEVICE_ID=$i
+    config_path="${current_exec_path}/device${i}/default_config.yaml"
+    echo "config path is : ${config_path}"
   python ../../train.py \
-    --config=${current_exec_path}/device${i}/config/config.json \
+    --config_path=$config_path \
     --pre_train_dataset=$PRE_TRAIN_DATASET > log_gnmt_network${i}.log 2>&1 &
     cd ${current_exec_path} || exit
 done

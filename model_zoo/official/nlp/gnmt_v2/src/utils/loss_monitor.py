@@ -16,7 +16,6 @@
 import time
 
 from mindspore.train.callback import Callback
-from config import GNMTConfig
 
 
 class LossCallBack(Callback):
@@ -34,7 +33,7 @@ class LossCallBack(Callback):
     time_stamp_init = False
     time_stamp_first = 0
 
-    def __init__(self, config: GNMTConfig, per_print_times: int = 1):
+    def __init__(self, config, per_print_times: int = 1):
         super(LossCallBack, self).__init__()
         if not isinstance(per_print_times, int) or per_print_times < 0:
             raise ValueError("print_step must be int and >= 0.")

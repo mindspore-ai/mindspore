@@ -35,12 +35,17 @@ then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp -r ../src ./train
-cp -r ../config ./train
+cp -r ../model_utils ./train
 cd ./train || exit
 echo "start for training"
 env > env.log
+
+config_path="${current_exec_path}/train/default_test_config.yaml"
+echo "config path is : ${config_path}"
+
 python train.py \
-  --config=${current_exec_path}/train/config/config.json \
+  --config_path=$config_path \
   --pre_train_dataset=$PRE_TRAIN_DATASET > log_gnmt_network.log 2>&1 &
 cd ..

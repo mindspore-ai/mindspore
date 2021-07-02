@@ -19,7 +19,6 @@ from mindspore import nn
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
-from config.config import GNMTConfig
 from .embedding import EmbeddingLookup
 from .create_attn_padding import CreateAttentionPaddingsFromInputPaddings
 from .beam_search import BeamSearchDecoder, TileBeam
@@ -36,7 +35,7 @@ class GNMT(nn.Cell):
     In GNMT, we define T = src_max_len, T' = tgt_max_len.
 
     Args:
-        config (GNMTConfig): Model config.
+        config: Model config.
         is_training (bool): Whether is training.
         use_one_hot_embeddings (bool): Whether use one-hot embedding.
 
@@ -45,7 +44,7 @@ class GNMT(nn.Cell):
     """
 
     def __init__(self,
-                 config: GNMTConfig,
+                 config,
                  is_training: bool = False,
                  use_one_hot_embeddings: bool = False,
                  use_positional_embedding: bool = True,
