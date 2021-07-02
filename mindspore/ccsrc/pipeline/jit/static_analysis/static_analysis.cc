@@ -628,12 +628,12 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
 #endif
 }
 
-bool AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg) {
+void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg) {
   static std::mutex fg_lock;
   std::lock_guard<std::mutex> infer_lock(fg_lock);
   auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
   if (fg_eval == nullptr) {
-    return false;
+    return;
   }
 
   auto fg = fg_eval->func_graph();
@@ -644,16 +644,14 @@ bool AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const Fu
     if (fg_parent != nullptr) {
       fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
       MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString() << " for fg: " << fg->ToString();
-      return true;
+      return;
     } else if (possible_parent_fg != nullptr) {
       possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
       MS_LOG(DEBUG) << "Set graph undetermined: " << possible_parent_fg->ToString() << " for fg: " << fg->ToString();
-      return true;
     } else {
       MS_LOG(EXCEPTION) << "cannot find parent for fg: " << fg->ToString();
     }
   }
-  return false;
 }
 
 EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators,
@@ -791,20 +789,17 @@ bool NeedWaitForTwoBranches(const AbstractBasePtr &abstract) {
 }
 
 void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList args_conf_list, AnfNodeConfigPtr out_conf,
-                   std::string caller, AsyncAbstractResultPtr async_result_branch,
-                   AsyncAbstractResultPtr async_result_main, bool first, AsyncAbstractResultPtr async_first_Result) {
+                   std::string caller, AsyncAbstractPtr async_result_branch, AsyncAbstractPtr async_result_main,
+                   AsyncAbstractPtr async_run_flag) {
   AnalysisResultCacheMgr::UpdateCaller(caller);
-  // Wait for the first fg to run
-  if (!first) {
-    (void)async_first_Result->GetResult();
-  }
   try {
+    // Wait for Signal to run
+    MS_LOG(DEBUG) << async_run_flag.get() << "  " << eval->ToString() << " waiting.";
+    (void)async_run_flag->GetResult();
+    MS_LOG(DEBUG) << async_run_flag.get() << "  " << eval->ToString() << " running.";
+
     // Acquire GIL
     py::gil_scoped_acquire pyGuard;
-    // Notify the second fg to go
-    if (first) {
-      async_first_Result->JoinResult(std::make_shared<AbstractScalar>(1));
-    }
     trace::ClearTraceStack();
     auto result = eval->Run(engine, args_conf_list, out_conf);
     MS_EXCEPTION_IF_NULL(result);
@@ -813,13 +808,14 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     // Broaden the result of switch(c,t,f)()
     auto broadAbstract = result->abstract()->Broaden();
     // Let main thread to continue.
-    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf,
-                                                         std::make_shared<EvalResult>(broadAbstract, nullptr));
+    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, broadAbstract);
     async_result_branch->JoinResult(broadAbstract);
     async_result_main->JoinResult(broadAbstract);
     MS_LOG(DEBUG) << GetInferThread() << "async :" << eval->ToString()
                   << " asyncResult address = " << async_result_branch.get()
                   << " value = " << async_result_branch->TryGetResult()->ToString();
+    // Decrease infer thread.
+    HealthPointMgr::GetInstance().DropPoint();
   } catch (const std::exception &e) {
     std::ostringstream oss;
     oss << "Eval node: " << out_conf->node()->ToString() << "  " << eval->ToString() << " threw exception.";
@@ -828,13 +824,11 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
       MS_LOG(ERROR) << oss.str();
     }
     auto abstractErrPtr = std::make_shared<AbstractError>(std::make_shared<StringImm>(oss.str()), out_conf->node());
-    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf,
-                                                         std::make_shared<EvalResult>(abstractErrPtr, nullptr));
+    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, abstractErrPtr);
     async_result_main->JoinResult(abstractErrPtr);
     StaticAnalysisException::Instance().SetException();
+    HealthPointMgr::GetInstance().HandleException();
   }
-  // Decrease infer thread.
-  HealthPointMgr::GetInstance().DropPoint();
 }
 
 EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::vector<EvaluatorPtr> &evaluators,
@@ -843,54 +837,64 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   // Release GIL;
   py::gil_scoped_release infer_gil_release;
 
-  // Wait for the switch node to finish.
+  // Wait for the last switch node to finish.
   MS_LOG(DEBUG) << GetInferThread() << "async : entry switch  " << out_conf->ToString();
   auto eval_result = AnalysisResultCacheMgr::GetInstance().GetSwitchValue(out_conf);
   if (eval_result == nullptr) {
     MS_LOG(INFO) << GetInferThread() << "async : Init switch  " << out_conf->node()->ToString();
     AnalysisResultCacheMgr::GetInstance().InitSwitchValue(out_conf);
   } else {
-    if (eval_result->abstract()->isa<AbstractTimeOut>()) {
+    if (eval_result->isa<AbstractTimeOut>()) {
       MS_LOG(EXCEPTION) << "Eval " << out_conf->node()->ToString() << " time out."
                         << " Please check the code if there are recursive functions.";
     }
-    if (eval_result->abstract()->isa<AbstractError>()) {
+    if (eval_result->isa<AbstractError>()) {
       MS_LOG(DEBUG) << "Eval " << out_conf->node()->ToString() << " threw exception.";
       StaticAnalysisException::Instance().CheckException();
     }
-    return eval_result;
+    return std::make_shared<EvalResult>(eval_result, nullptr);
   }
 
   // Eval result of the branches and main.
-  AsyncAbstractResultPtr asyncResult_main = std::make_shared<AsyncAbstractResult>();
-  AsyncAbstractResultPtr asyncResult0 = std::make_shared<AsyncAbstractResult>();
-  AsyncAbstractResultPtr asyncResult1 = std::make_shared<AsyncAbstractResult>();
-  AsyncAbstractResultPtr asyncFirstRunResult = std::make_shared<AsyncAbstractResult>();
+  AsyncAbstractPtr asyncResult_main = std::make_shared<AsyncAbstract>();
+  AsyncAbstractPtr asyncResult0 = std::make_shared<AsyncAbstract>();
+  AsyncAbstractPtr asyncResult1 = std::make_shared<AsyncAbstract>();
+
+  // Control which thread to run.
+  AsyncAbstractPtr asyncRun0 = std::make_shared<AsyncAbstract>();
+  AsyncAbstractPtr asyncRun1 = std::make_shared<AsyncAbstract>();
 
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   auto possible_parent_fg = out_conf->node()->func_graph();
-  bool firstRun = !SetUndeterminedFlag(evaluators[0], possible_parent_fg);
-  (void)SetUndeterminedFlag(evaluators[1], possible_parent_fg);
+  SetUndeterminedFlag(evaluators[0], possible_parent_fg);
+  SetUndeterminedFlag(evaluators[1], possible_parent_fg);
   std::string threadId = AnalysisResultCacheMgr::GetThreadid();
 
   MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluators[0]->ToString();
   // Add point to infer thread
   HealthPointMgr::GetInstance().AddPoint();
   auto future0 = std::async(std::launch::async, ExecEvaluator, evaluators[0], shared_from_this(), args_conf_list,
-                            out_conf, threadId, asyncResult0, asyncResult_main, firstRun, asyncFirstRunResult);
+                            out_conf, threadId, asyncResult0, asyncResult_main, asyncRun0);
 
   MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluators[1]->ToString();
   // Add point to infer thread
   HealthPointMgr::GetInstance().AddPoint();
   auto future1 = std::async(std::launch::async, ExecEvaluator, evaluators[1], shared_from_this(), args_conf_list,
-                            out_conf, threadId, asyncResult1, asyncResult_main, !firstRun, asyncFirstRunResult);
+                            out_conf, threadId, asyncResult1, asyncResult_main, asyncRun1);
 
   // Wait for async threads to finish.
   AnalysisResultCacheMgr::GetInstance().PushTowait(std::move(future0), std::move(future1));
+  // Push to list of running loop
+  asyncRun0->JoinResult(std::make_shared<AbstractScalar>(0));
+  asyncRun1->JoinResult(std::make_shared<AbstractScalar>(0));
+  // Run order
+  HealthPointMgr::GetInstance().PushBack(asyncRun0);  // First order
+  HealthPointMgr::GetInstance().PushBack(asyncRun1);  // Second order
 
   MS_LOG(DEBUG) << GetInferThread() << "async : wait for one of async to finish.  " << evaluators[0]->ToString()
                 << " or  " << evaluators[1]->ToString();
+  HealthPointMgr::GetInstance().PushBack(asyncResult_main);  // Third order
   auto branchResult = asyncResult_main->GetResult();
   if (branchResult == nullptr || branchResult->isa<AbstractTimeOut>()) {
     MS_LOG(EXCEPTION) << "Can't finish " << evaluators[0]->ToString() << " or " << evaluators[1]->ToString()
@@ -906,6 +910,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   AbstractBasePtrList out_specs;
   if (NeedWaitForTwoBranches(branchResult)) {
     MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[0]->ToString();
+    // The asyncRun0 will eval asyncResult0
+    HealthPointMgr::GetInstance().PushBack(asyncResult0);
     auto result0 = asyncResult0->GetResult();
     if (result0 == nullptr || result0->isa<AbstractTimeOut>()) {
       MS_LOG(EXCEPTION) << "Eval " << evaluators[0]->ToString() << " is time out."
@@ -914,6 +920,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     out_specs.push_back(result0);
 
     MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[1]->ToString();
+    // The asyncRun1 will eval asyncResult1
+    HealthPointMgr::GetInstance().PushBack(asyncResult1);
     auto result1 = asyncResult1->GetResult();
     if (result1 == nullptr || result1->isa<AbstractTimeOut>()) {
       MS_LOG(EXCEPTION) << "Eval " << evaluators[1]->ToString() << " is time out."
@@ -921,15 +929,24 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     }
     out_specs.push_back(result1);
   } else {
-    if (asyncResult0->TryGetResult((HealthPointMgr::GetInstance().point() - 1) * kInferTryTimeout)) {
+    // Next time to get the result of branches.
+    HealthPointMgr::GetInstance().PushBack(asyncResult_main);
+    (void)asyncResult_main->GetResult();
+
+    // Don't use GetResult
+    auto value0 = asyncResult0->TryGetResult();
+    if (value0) {
       MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[0]->ToString()
-                    << " value0=" << asyncResult0->GetResult()->ToString();
-      out_specs.push_back(asyncResult0->GetResult());
+                    << " value0=" << value0->ToString();
+      out_specs.push_back(value0);
     }
-    if (asyncResult1->TryGetResult((HealthPointMgr::GetInstance().point() - 1) * kInferTryTimeout)) {
+
+    // Don't use GetResult
+    auto value1 = asyncResult1->TryGetResult();
+    if (value1) {
       MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[1]->ToString()
-                    << " value1=" << asyncResult1->GetResult()->ToString();
-      out_specs.push_back(asyncResult1->GetResult());
+                    << " value1=" << value1->ToString();
+      out_specs.push_back(value1);
     }
   }
   return ProcessEvalResults(out_specs, out_conf->node());

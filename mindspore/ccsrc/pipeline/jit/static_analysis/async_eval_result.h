@@ -33,42 +33,52 @@
 
 namespace mindspore {
 namespace abstract {
-constexpr size_t kInferTimeout = 1800;  // 60*30 30min, next pr will change the solution of endless.
-constexpr size_t kInferTryTimeout = 3;  // 3 microsecond.
 
+class AsyncAbstract;
+using AsyncAbstractPtr = std::shared_ptr<AsyncAbstract>;
 class HealthPointMgr {
  public:
   ~HealthPointMgr() = default;
   HealthPointMgr(const HealthPointMgr &) = delete;
   HealthPointMgr &operator=(const HealthPointMgr &) = delete;
-  static HealthPointMgr &GetInstance();
+  static HealthPointMgr &GetInstance() { return instance_; }
+  void SetNextRunable();
 
-  void DropPoint() {
-    std::unique_lock<std::mutex> lock(lock_);
-    auto time = std::chrono::microseconds(kInferTryTimeout);
-    auto cond = condition_var_.wait_for(lock, time, [this] { return point_ > 1; });
-    if (cond) {
-      --point_;
-    } else {
-      MS_LOG(EXCEPTION) << "Enter endless loop. Please check the code. ";
+  void CheckPoint() {
+    MS_LOG(DEBUG) << "The Health Point is " << point_;
+    if (point_ == 0) {
+      SetNextRunable();
+    } else if (point_ < 0) {
+      MS_LOG(EXCEPTION) << "There is something wrong.";
     }
   }
 
+  void DropPoint() {
+    std::lock_guard<std::recursive_mutex> lock(lock_);
+    --point_;
+    CheckPoint();
+  }
+
+  void HandleException();
+
   void AddPoint() {
-    {
-      std::lock_guard<std::mutex> lock(lock_);
-      ++point_;
-    }
-    condition_var_.notify_all();
+    std::lock_guard<std::recursive_mutex> lock(lock_);
+    ++point_;
   }
 
   int point() { return point_; }
 
+  void PushBack(const AsyncAbstractPtr &base) {
+    std::lock_guard<std::recursive_mutex> lock(lock_);
+    asyncAbstractList_.push_back(base);
+  }
+
  private:
   HealthPointMgr() = default;
+  static HealthPointMgr instance_;
   int point_{1};
-  std::mutex lock_;
-  std::condition_variable condition_var_;
+  std::recursive_mutex lock_;
+  std::list<AsyncAbstractPtr> asyncAbstractList_;
 };
 
 class HealthPointScopedDrop {
@@ -171,70 +181,65 @@ class NormalCache {
   CacheType cache_;
 };
 
-class AsyncEvalResult;
-using AsyncEvalResultPtr = std::shared_ptr<AsyncEvalResult>;
-
-using EvaluatorCacheMap =
-  std::unordered_map<AbstractBasePtrList, EvalResultPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
-using EvalResultCache = NormalCache<AbstractBasePtrList, EvalResultPtr, EvaluatorCacheMap>;
-
-class AsyncEvalResult {
+class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
  public:
-  AsyncEvalResult() = default;
-  ~AsyncEvalResult() = default;
+  AsyncAbstract() = default;
+  ~AsyncAbstract() = default;
   // Wait
-  EvalResultPtr GetResult();
-  // Not wait
-  EvalResultPtr TryGetResult(int ms = 0);
-  void JoinResult(const EvalResultPtr &result);
-  std::string ToString();
-
- private:
-  EvalResultPtr result_{nullptr};
-  std::mutex lock_;
-  std::condition_variable condition_var_;
-};
-
-template <typename Type>
-class AsyncResult {
- public:
-  AsyncResult() = default;
-  ~AsyncResult() = default;
-  // Wait
-  Type GetResult() {
+  AbstractBasePtr GetResult() {
+    StaticAnalysisException::Instance().CheckException();
     std::unique_lock<std::mutex> lock(lock_);
-    if (result_ != nullptr) {
-      return result_;
+    while (true) {
+      ++count_;
+      // The point should be dropped if it can't run. It will be added when it can run.
+      bool hasDropPoint = false;
+      if (!runable_) {
+        HealthPointMgr::GetInstance().DropPoint();
+        hasDropPoint = true;
+      }
+
+      MS_LOG(DEBUG) << this << " ranable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
+      condition_var_.wait(lock, [this] { return runable_; });
+      MS_LOG(DEBUG) << this << " continue ranable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
+      StaticAnalysisException::Instance().CheckException();
+      runable_ = false;
+      if (result_ != nullptr) {
+        if (hasDropPoint) {
+          HealthPointMgr::GetInstance().AddPoint();
+        }
+        MS_LOG(DEBUG) << this << " Return  result: " << (result_ ? result_.get() : 0);
+        return result_;
+      }
+      // Push to list
+      HealthPointMgr::GetInstance().PushBack(shared_from_this());
+      if (hasDropPoint) {
+        HealthPointMgr::GetInstance().AddPoint();
+      }
+      // Notify the next asyncAbastract to run.
+      HealthPointMgr::GetInstance().SetNextRunable();
+      MS_LOG(DEBUG) << this << " SetNextRunable "
+                    << " ranable: " << runable_ << " result: " << (result_ ? result_.get() : 0)
+                    << " point:" << HealthPointMgr::GetInstance().point();
     }
-    auto time = std::chrono::seconds(kInferTimeout);
-    // Check if enter endless loop
-    HealthPointScopedDrop health_point_check;
-    auto cond = condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
-    if (cond) {
-      return result_;
-    } else {
-      MS_LOG(ERROR) << "Timeout!";
-      return nullptr;
-    }
+    return nullptr;
   }
+  void SetRunable() {
+    MS_LOG(DEBUG) << this << " Runable.";
+    runable_ = true;
+    condition_var_.notify_one();
+  }
+  int count() { return count_; }
+
+  bool HasResult() { return result_ != nullptr; }
   // Not wait
-  Type TryGetResult(int ms = 0) {
-    std::unique_lock<std::mutex> lock(lock_);
-    if (ms == 0) {
-      return result_;
-    }
-    auto time = std::chrono::microseconds(ms);
-    // Wait for ms.
-    (void)condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
+  AbstractBasePtr TryGetResult() {
+    std::lock_guard<std::mutex> lock(lock_);
     return result_;
   }
-  void JoinResult(const Type &result) {
+  void JoinResult(const AbstractBasePtr &result) {
     MS_EXCEPTION_IF_NULL(result);
-    {
-      std::lock_guard<std::mutex> lock(lock_);
-      result_ = result;
-    }
-    condition_var_.notify_all();
+    std::lock_guard<std::mutex> lock(lock_);
+    result_ = result;
   }
   std::string ToString() {
     std::ostringstream buffer;
@@ -244,13 +249,16 @@ class AsyncResult {
   }
 
  private:
-  Type result_{nullptr};
   std::mutex lock_;
   std::condition_variable condition_var_;
+  bool runable_{false};
+  int count_{0};
+  AbstractBasePtr result_{nullptr};
 };
 
-using AsyncAbstractResult = AsyncResult<AbstractBasePtr>;
-using AsyncAbstractResultPtr = std::shared_ptr<AsyncAbstractResult>;
+using EvaluatorCacheMap =
+  std::unordered_map<AbstractBasePtrList, EvalResultPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+using EvalResultCache = NormalCache<AbstractBasePtrList, EvalResultPtr, EvaluatorCacheMap>;
 
 class EvaluatorCacheMgr {
  public:
@@ -273,23 +281,10 @@ class AnalysisResultCacheMgr {
   ~AnalysisResultCacheMgr() = default;
   AnalysisResultCacheMgr(const AnalysisResultCacheMgr &) = delete;
   AnalysisResultCacheMgr &operator=(const AnalysisResultCacheMgr &) = delete;
-  static AnalysisResultCacheMgr &GetInstance();
+  static AnalysisResultCacheMgr &GetInstance() { return instance_; }
   void Clear();
-
-  using AnalysisConfigAsyncResultMap =
-    std::unordered_map<AnfNodeConfigPtr, AsyncEvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
-  using AnalysisConfigAsyncResultCache =
-    MultiThreadCache<AnfNodeConfigPtr, AsyncEvalResultPtr, AnalysisConfigAsyncResultMap>;
-
-  using AnalysisConfigResultMap =
-    std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
-  using AnalysisConfigResultCache = NormalCache<AnfNodeConfigPtr, EvalResultPtr, AnalysisConfigResultMap>;
-
   inline void SetValue(const AnfNodeConfigPtr &conf, const EvalResultPtr &arg) { cache_.set(conf, arg); }
   inline EvalResultPtr GetValue(const AnfNodeConfigPtr &conf) { return cache_.get(conf); }
-
-  // Dump all the conf and result
-  void DumpCache(const std::string &filename);
   // Wait for async Eval(conf) to finish.
   void Wait();
   void PushTowait(std::future<void> &&future0, std::future<void> &&future1);
@@ -297,13 +292,23 @@ class AnalysisResultCacheMgr {
   void Todo();
   static void UpdateCaller(const std::string &caller);
   static std::string &GetThreadid();
-
   void InitSwitchValue(const AnfNodeConfigPtr &conf);
-  EvalResultPtr GetSwitchValue(const AnfNodeConfigPtr &conf);
-  void SetSwitchValue(const AnfNodeConfigPtr &conf, const EvalResultPtr vale);
+  AbstractBasePtr GetSwitchValue(const AnfNodeConfigPtr &conf);
+  AbstractBasePtr TryGetSwitchValue(const AnfNodeConfigPtr &conf);
+  void SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr vale);
 
  private:
+  using AnalysisConfigAsyncResultMap =
+    std::unordered_map<AnfNodeConfigPtr, AsyncAbstractPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
+  using AnalysisConfigAsyncResultCache =
+    MultiThreadCache<AnfNodeConfigPtr, AsyncAbstractPtr, AnalysisConfigAsyncResultMap>;
+
+  using AnalysisConfigResultMap =
+    std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
+  using AnalysisConfigResultCache = NormalCache<AnfNodeConfigPtr, EvalResultPtr, AnalysisConfigResultMap>;
+
   AnalysisResultCacheMgr() = default;
+  static AnalysisResultCacheMgr instance_;
   std::mutex lock_;
   std::list<std::future<void>> waiting_;
   std::mutex todo_lock_;
