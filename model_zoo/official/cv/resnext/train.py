@@ -155,7 +155,6 @@ def train():
     de_dataset = classification_dataset(config.data_path, config.image_size,
                                         config.per_batch_size, 1,
                                         config.rank, config.group_size, num_parallel_workers=8)
-    de_dataset.map_model = 4  # !!!important
     config.steps_per_epoch = de_dataset.get_dataset_size()
 
     config.logger.save_args(config)

@@ -163,7 +163,6 @@ def run_train():
     # dataloader
     de_dataset = create_dataset(config.data_dir, config.image_size, config.per_batch_size,
                                 config.rank, config.group_size, num_parallel_workers=8)
-    de_dataset.map_model = 4
     config.steps_per_epoch = de_dataset.get_dataset_size()
 
     config.logger.save_args(config)

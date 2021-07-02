@@ -109,6 +109,5 @@ def create_dataset(args, data_url, epoch_num=1, batch_size=1, usage="train", shu
         dataset = dataset.shuffle(1464)
     dataset = dataset.batch(batch_size, drop_remainder=(usage == "train"))
     dataset = dataset.repeat(count=epoch_num)
-    dataset.map_model = 4
 
     return dataset
