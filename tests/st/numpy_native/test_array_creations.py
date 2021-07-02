@@ -317,14 +317,6 @@ def test_arange():
     expected = mnp.arange(0, 10).asnumpy()
     match_array(actual, expected)
 
-    actual = onp.arange(start=10)
-    expected = mnp.arange(start=10).asnumpy()
-    match_array(actual, expected)
-
-    actual = onp.arange(start=10, step=0.1)
-    expected = mnp.arange(start=10, step=0.1).asnumpy()
-    match_array(actual, expected, error=6)
-
     actual = onp.arange(10, step=0.1)
     expected = mnp.arange(10, step=0.1).asnumpy()
     match_array(actual, expected, error=6)

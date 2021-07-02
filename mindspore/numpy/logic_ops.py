@@ -469,7 +469,7 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         rtol (Number): The relative tolerance parameter (see Note).
         atol (Number): The absolute tolerance parameter (see Note).
         equal_nan (bool): Whether to compare ``NaN`` as equal. If True, ``NaN`` in
-        `a` will be considered equal to ``NaN`` in `b` in the output tensor.
+            `a` will be considered equal to ``NaN`` in `b` in the output tensor.
 
     Returns:
         A ``bool`` tensor of where `a` and `b` are equal within the given tolerance.
