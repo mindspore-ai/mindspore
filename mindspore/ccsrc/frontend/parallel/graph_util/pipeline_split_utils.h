@@ -60,6 +60,7 @@ AnfNodePtr GetPreNode(const AnfNodePtr &node);
 void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void SetStridedSliceStrategy(const AnfNodePtr &node);
 void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
+ValuePtr Micro(const CNodePtr &cnode, NodeUsersMap *node_users_map);
 void CheckBorderNode(const PipelinePair &forward_start_pair, const PipelinePair &forward_end_pair,
                      const PipelinePair &backward_start_pair, const PipelinePair &backward_end_pair, size_t micro_size);
 }  // namespace parallel

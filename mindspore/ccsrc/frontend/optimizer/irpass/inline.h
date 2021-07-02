@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include "frontend/optimizer/irpass.h"
+#include "frontend/parallel/context.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "ir/func_graph.h"
@@ -41,8 +42,13 @@ class ReplaceApplicator : public AnfVisitor {
     }
 
     auto fg = GetValueNode<FuncGraphPtr>(node);
-    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub() || *(fg->switch_input()) ||
+    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub() || *(fg->switch_input()) ||
         *(fg->switch_layer_input())) {
+      return nullptr;
+    }
+    // Defer inlining in the case of pipeline.
+    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    if (fg->stage() != -1 && stage_num > 1) {
       return nullptr;
     }
     // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
@@ -101,7 +107,12 @@ class InlinerBase : public AnfVisitor {
     auto &inputs = cnode->inputs();
     // G
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
+    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub()) {
+      return nullptr;
+    }
+    // Defer inlining in the case of pipeline.
+    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    if (fg->stage() != -1 && stage_num > 1) {
       return nullptr;
     }
     // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
