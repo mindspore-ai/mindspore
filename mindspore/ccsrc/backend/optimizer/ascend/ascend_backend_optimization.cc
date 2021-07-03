@@ -386,7 +386,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
-  other_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
