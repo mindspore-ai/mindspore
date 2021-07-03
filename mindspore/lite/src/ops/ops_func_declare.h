@@ -32,6 +32,7 @@
 #include "ops/assert.h"
 #include "ops/assign.h"
 #include "ops/assign_add.h"
+#include "ops/attention.h"
 #include "ops/atan.h"
 #include "ops/audio_spectrogram.h"
 #include "ops/avg_pool.h"
@@ -458,6 +459,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(TensorArray)
 FUNC_MSOP2SCHEMAOP_DECLARE(TensorArrayRead)
 FUNC_MSOP2SCHEMAOP_DECLARE(TensorArrayWrite)
 FUNC_MSOP2SCHEMAOP_DECLARE(Affine)
+FUNC_MSOP2SCHEMAOP_DECLARE(Attention)
 #endif
 }  // namespace mindspore::lite::ops
 #else

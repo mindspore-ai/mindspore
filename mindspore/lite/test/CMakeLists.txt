@@ -174,7 +174,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_LITE_SRC}
             ${TEST_CASE_TFLITE_PARSERS_SRC}
             ${LITE_DIR}/tools/converter/ops/while.cc
-            ${LITE_DIR}/tools/converter/ops/attention.cc
             ${LITE_DIR}/tools/common/protobuf_utils.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
@@ -188,6 +187,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/common/format_utils.cc
+            ${LITE_DIR}/tools/optimizer/common/multiple_pattern_process_pass.cc
             ${LITE_DIR}/tools/optimizer/fusion/affine_activation_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/affine_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_biasadd_fusion.cc
@@ -196,6 +196,8 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/conv_transform_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_scale_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_bn_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/multi_head_attention_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/reshape_reshape_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/constant_folding_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/quant_dtype_cast_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/norm_fusion.cc
@@ -208,7 +210,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/matmul_add_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/mul_add_fusion.cc
-            ${LITE_DIR}/tools/optimizer/fusion/tf_multi_head_attention_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/glu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/gelu_fusion.cc

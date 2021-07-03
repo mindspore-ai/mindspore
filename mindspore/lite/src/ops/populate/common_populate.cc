@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+using mindspore::schema::PrimitiveType_Attention;
 using mindspore::schema::PrimitiveType_Depend;
 using mindspore::schema::PrimitiveType_ZerosLike;
 
@@ -35,5 +36,6 @@ OpParameter *PopulateCommonParameter(const void *prim) {
 }
 REG_POPULATE(PrimitiveType_ZerosLike, PopulateCommonParameter, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_Depend, PopulateCommonParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_Attention, PopulateCommonParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

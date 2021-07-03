@@ -15,6 +15,7 @@
  */
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include <functional>
+#include <utility>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
@@ -22,10 +23,11 @@
 namespace mindspore::opt {
 namespace {
 const auto &p1 = std::placeholders::_1;
+
 }  // namespace
 
 TfliteRelPosMultiHeadAttentionFusion::TfliteRelPosMultiHeadAttentionFusion(const string &name, bool multigraph)
-    : TfMultiHeadAttentionFusion(name, multigraph) {
+    : MultiHeadAttentionFusion(name, multigraph) {
   query_u_ = std::make_shared<Var>();
   query_v_ = std::make_shared<Var>();
   input_p_ = std::make_shared<Var>();
@@ -44,7 +46,7 @@ TfliteRelPosMultiHeadAttentionFusion::TfliteRelPosMultiHeadAttentionFusion(const
   }
 }
 
-const BaseRef TfliteRelPosMultiHeadAttentionFusion::DefinePattern() const {
+std::unordered_map<std::string, VectorRef> TfliteRelPosMultiHeadAttentionFusion::DefinePatterns() const {
   auto query = DefineProcessInputPattern(input_q_, weight_q_, bias_q_, query_stack_params_, query_prim_);
   auto query_with_bias_u =
     VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), query, query_u_});
@@ -77,11 +79,15 @@ const BaseRef TfliteRelPosMultiHeadAttentionFusion::DefinePattern() const {
   auto value = DefineProcessInputPattern(input_v_, weight_v_, bias_v_, value_stack_params_, value_prim_, true);
   auto output =
     VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMul)), logits_softmax, value});
-  return DefineProcessOutputPattern(output, weight_o_, bias_o_);
+  auto pattern = DefineProcessOutputPattern(output, weight_o_, bias_o_);
+  std::unordered_map<std::string, VectorRef> patterns;
+  patterns.insert(std::make_pair(kRPMHAttentionPatternName, pattern));
+  return patterns;
 }
 
-const AnfNodePtr TfliteRelPosMultiHeadAttentionFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                               const EquivPtr &equiv) const {
+AnfNodePtr TfliteRelPosMultiHeadAttentionFusion::Process(const std::string &pattern_name,
+                                                         const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                         const EquivPtr &equiv) const {
   return CreateRelPosMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope());
 }
 
@@ -139,25 +145,6 @@ std::shared_ptr<ops::Attention> TfliteRelPosMultiHeadAttentionFusion::BuildAtten
     }
     shape_k.emplace_back(dim);
   }
-
-  std::vector<int> shape_v;
-  for (auto &value_stack_param : value_stack_params_) {
-    auto reshape_v = utils::cast<ParameterPtr>((*equiv)[value_stack_param]);
-    int dim;
-    if (RET_OK != GetIntParameterData(reshape_v, &dim)) {
-      MS_LOG(ERROR) << "Get reshape k data failed";
-      return nullptr;
-    }
-    shape_v.emplace_back(dim);
-  }
-
-  if (shape_k.size() < 2 || shape_v.size() < 2 || shape_k.at(shape_k.size() - 2) != shape_v.at(shape_v.size() - 2)) {
-    MS_LOG(ERROR) << "Shape k or shape v is invalid.";
-    return nullptr;
-  }
-  attention_prim->set_num_heads(shape_k.at(shape_k.size() - 2));
-  attention_prim->set_key_dim(shape_k.at(shape_k.size() - 1));
-  attention_prim->set_value_dim(shape_v.at(shape_v.size() - 1));
   return attention_prim;
 }
 

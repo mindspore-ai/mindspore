@@ -19,26 +19,24 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "utils/check_convert_utils.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAttention = "Attention";
+// Attention MultiHeadAttention
 class Attention : public PrimitiveC {
  public:
   Attention() : PrimitiveC(kNameAttention) {
-    InitIOName({"query", "key", "value", "w_q", "b_q", "w_k", "b_k", "w_v", "b_v", "w_o", "b_o"}, {"output"});
+    InitIOName(
+      {"q", "k", "v", "weight_q", "weight_k", "weight_v", "weight_o", "bias_q", "bias_k", "bias_v", "bias_o", "mask"},
+      {"output"});
   }
-  ~Attention() = default;
+  ~Attention() override = default;
   MS_DECLARE_PARENT(Attention, PrimitiveC);
-  void Init(const int64_t number_heads = 0, const int64_t key_dim = 0, const int64_t value_dim = 0);
-  void set_num_heads(const int64_t num_heads);
-  void set_key_dim(const int64_t key_dim);
-  void set_value_dim(const int64_t value_dim);
-  int64_t get_num_heads() const;
-  int64_t get_key_dim() const;
-  int64_t get_value_dim() const;
+  void Init() {}
 };
 }  // namespace ops
 }  // namespace mindspore
