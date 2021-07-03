@@ -673,10 +673,10 @@ bool StartServerAction(const ResourcePtr &res) {
     {"pushWeight", false, 3000, true, server_num, true}};
 
   float share_secrets_ratio = ps::PSContext::instance()->share_secrets_ratio();
-  float get_model_ratio = ps::PSContext::instance()->get_model_ratio();
+  uint64_t cipher_time_window = ps::PSContext::instance()->cipher_time_window();
   size_t reconstruct_secrets_threshhold = ps::PSContext::instance()->reconstruct_secrets_threshhold();
 
-  ps::server::CipherConfig cipher_config = {share_secrets_ratio, get_model_ratio, reconstruct_secrets_threshhold};
+  ps::server::CipherConfig cipher_config = {share_secrets_ratio, cipher_time_window, reconstruct_secrets_threshhold};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

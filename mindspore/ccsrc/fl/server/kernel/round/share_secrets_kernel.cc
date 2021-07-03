@@ -85,7 +85,10 @@ bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
   MS_LOG(INFO) << "share_secrets_kernel success time is : " << duration;
-  return response;
+  if (!response) {
+    MS_LOG(INFO) << "share_secrets_kernel response is false.";
+  }
+  return true;
 }
 
 bool ShareSecretsKernel::Reset() {

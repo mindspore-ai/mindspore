@@ -36,9 +36,6 @@ parser.add_argument("--start_fl_job_threshold", type=int, default=1)
 parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
 parser.add_argument("--update_model_ratio", type=float, default=1.0)
 parser.add_argument("--update_model_time_window", type=int, default=3000)
-parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
-parser.add_argument("--get_model_ratio", type=float, default=1.0)
-parser.add_argument("--reconstruct_secrets_threshhold", type=int, default=0)
 parser.add_argument("--fl_name", type=str, default="Lenet")
 parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--client_epoch_num", type=int, default=20)
@@ -51,6 +48,10 @@ parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 parser.add_argument("--dp_eps", type=float, default=50.0)
 parser.add_argument("--dp_delta", type=float, default=0.01)  # 1/worker_num
 parser.add_argument("--dp_norm_clip", type=float, default=1.0)
+# parameters for encrypt_type='PW_ENCRYPT'
+parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
+parser.add_argument("--cipher_time_window", type=int, default=300000)
+parser.add_argument("--reconstruct_secrets_threshhold", type=int, default=3)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -66,7 +67,7 @@ start_fl_job_time_window = args.start_fl_job_time_window
 update_model_ratio = args.update_model_ratio
 update_model_time_window = args.update_model_time_window
 share_secrets_ratio = args.share_secrets_ratio
-get_model_ratio = args.get_model_ratio
+cipher_time_window = args.cipher_time_window
 reconstruct_secrets_threshhold = args.reconstruct_secrets_threshhold
 fl_name = args.fl_name
 fl_iteration_num = args.fl_iteration_num
@@ -94,7 +95,7 @@ ctx = {
     "update_model_ratio": update_model_ratio,
     "update_model_time_window": update_model_time_window,
     "share_secrets_ratio": share_secrets_ratio,
-    "get_model_ratio": get_model_ratio,
+    "cipher_time_window": cipher_time_window,
     "reconstruct_secrets_threshhold": reconstruct_secrets_threshhold,
     "fl_name": fl_name,
     "fl_iteration_num": fl_iteration_num,

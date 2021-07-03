@@ -367,8 +367,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_share_secrets_ratio", &PSContext::set_share_secrets_ratio,
          "Set threshold count ratio for share secrets round.")
     .def("share_secrets_ratio", &PSContext::share_secrets_ratio, "Get threshold count ratio for share secrets round.")
-    .def("set_get_model_ratio", &PSContext::set_get_model_ratio, "Set threshold count ratio for get model round.")
-    .def("get_model_ratio", &PSContext::get_model_ratio, "Get threshold count ratio for get model round.")
+    .def("set_cipher_time_window", &PSContext::set_cipher_time_window, "Set time window for each cipher round.")
     .def("set_reconstruct_secrets_threshhold", &PSContext::set_reconstruct_secrets_threshhold,
          "Set threshold count for reconstruct secrets round.")
     .def("reconstruct_secrets_threshhold", &PSContext::reconstruct_secrets_threshhold,

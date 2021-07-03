@@ -48,7 +48,7 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
   std::string next_timestamp = std::to_string(CURRENT_TIME_MILLI.count());
   size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
-  MS_LOG(INFO) << "ITERATION NUMBER IS : " << iter_num << ", Total ExchangeKeysKernel allowed Duration Is "
+  MS_LOG(INFO) << "ITERATION NUMBER IS : " << iter_num << ", Total GetSecretsKernel allowed Duration Is "
                << total_duration;
 
   clock_t start_time = clock();
@@ -84,7 +84,10 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
   MS_LOG(INFO) << "GetSecretsKernel DURATION TIME is : " << duration;
-  return response;
+  if (!response) {
+    MS_LOG(INFO) << "GetSecretsKernel response is false.";
+  }
+  return true;
 }
 
 bool GetSecretsKernel::Reset() {
