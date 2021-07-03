@@ -39,12 +39,8 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
     *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
   }
 
-  const size_t kOMPThreadNumThreshold = 16;
-  if (cpu_core_num <= kOMPThreadNumThreshold) {
-    *OMP_thread_num = cpu_core_num;
-  } else {
-    *OMP_thread_num = cpu_core_num / (*actor_thread_num - 1);
-  }
+  const size_t kOMPThreadMaxNum = 8;
+  *OMP_thread_num = cpu_core_num < kOMPThreadMaxNum ? cpu_core_num : kOMPThreadMaxNum;
 }
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
