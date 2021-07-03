@@ -352,7 +352,7 @@ void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
       DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
     if (device_tensor == nullptr) {
       std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
         ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
@@ -373,6 +373,9 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     MS_LOG(EXCEPTION) << "Switch actor invalid index:" << index;
   }
 
+  // Must be the execution order: send branch id --> send result --> send data --> send control, avoid the illegal
+  // timing problem.
+  // 1.Send branch id.
   if (local_branch_id_ >= 0) {
     const auto &branch_arrows = output_branch_branch_arrows_[index];
     for (const auto &branch_arrow : branch_arrows) {
@@ -380,19 +383,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     }
   }
 
-  auto &output_branch_arrow = output_branch_arrows_[index];
-  auto &output_data = output_data_[index];
-  for (size_t i = 0; i < output_branch_arrow.size(); ++i) {
-    auto &data_arrow = output_branch_arrow[i];
-    auto &data = output_data[i];
-    MS_EXCEPTION_IF_NULL(data_arrow);
-    MS_EXCEPTION_IF_NULL(data);
-    data->data_ = input_device_tensors_[data_arrow->from_output_index_];
-
-    Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
-  }
-
-  // Send result.
+  // 2.Send result.
   auto &output_branch_result_arrow = output_branch_result_arrows_[index];
   for (size_t i = 0; i < output_branch_result_arrow.size(); ++i) {
     auto &result_arrow = output_branch_result_arrow[i];
@@ -426,7 +417,20 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     }
   }
 
-  // Send output control.
+  // 3.Send Data.
+  auto &output_branch_arrow = output_branch_arrows_[index];
+  auto &output_data = output_data_[index];
+  for (size_t i = 0; i < output_branch_arrow.size(); ++i) {
+    auto &data_arrow = output_branch_arrow[i];
+    auto &data = output_data[i];
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    MS_EXCEPTION_IF_NULL(data);
+    data->data_ = input_device_tensors_[data_arrow->from_output_index_];
+
+    Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
+  }
+
+  // 4.Send output control.
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_branch_control_arrows_[index]) {
     Async(output_control, &OpActor::RunOpControl, source_aid, context);

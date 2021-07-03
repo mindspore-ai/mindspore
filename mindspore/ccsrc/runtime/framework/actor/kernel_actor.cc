@@ -205,12 +205,12 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
     auto ret = device_context_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
                                              launch_info_.outputs_, is_dynamic_shape_);
     if (!ret) {
-      std::string error_info = "Launch kernel failed: " + kernel_->ToString();
+      std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
-    std::string error_info = "Launch kernel exception: " + kernel_->ToString();
+    std::string error_info = "Launch kernel exception: " + kernel_->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
   }
 
@@ -295,7 +295,7 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
       DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
     if (device_tensor == nullptr) {
       std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
         ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
@@ -371,25 +371,26 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *context) {
 }
 
 void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
+  MS_EXCEPTION_IF_NULL(context);
   if (strategy_ == GraphExecutionStrategy::kStep) {
     return;
   }
 
-  MS_EXCEPTION_IF_NULL(context);
-  // Send output data.
-  for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
-  }
-
-  // Send graph output result.
+  // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
+  // 1.Send graph output result.
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
           result_arrow->to_input_index_, context);
   }
 
-  // Send output control.
+  // 2.Send output data.
+  for (auto &output_data : output_data_) {
+    MS_EXCEPTION_IF_NULL(output_data);
+    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
+  }
+
+  // 3.Send output control.
   if (output_control_arrows_.size() > 0) {
     auto source_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
@@ -397,7 +398,7 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
     }
   }
 
-  // Send recorder info.
+  // 4.Send recorder info.
   if (recorder_aid_ != nullptr) {
     Async(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_, device_context_,
           context);
