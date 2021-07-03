@@ -16,23 +16,26 @@
 PanGu predict run
 """
 import os
+
 import numpy as np
-from mindspore import context, Tensor
-from mindspore.train.model import Model
-import mindspore.communication.management as D
-from mindspore.context import ParallelMode
-from mindspore.train.serialization import load_distributed_checkpoint
+
 import mindspore.common.dtype as mstype
-from mindspore.parallel._cost_model_context import _set_multi_subgraphs
+import mindspore.communication.management as D
+from mindspore import context, Tensor
+from mindspore import export
+from mindspore.context import ParallelMode
 from mindspore.parallel import set_algo_parameters
+from mindspore.parallel._cost_model_context import _set_multi_subgraphs
+from mindspore.train.model import Model
+from mindspore.train.serialization import load_distributed_checkpoint
 from src.pangu_alpha import PanguAlpha, EvalNet
 from src.pangu_alpha_config import PANGUALPHAConfig, set_parse
 from src.utils import get_args
 
 
-def run_predict(args_opt):
+def load_model(args_opt):
     r"""
-     The main function for running prediction
+     The main function for load model
     """
     device_id = int(os.getenv("DEVICE_ID"))
     rank_id_str = os.getenv('RANK_ID', '0')
@@ -73,6 +76,9 @@ def run_predict(args_opt):
         rank = 0
         device_num = 1
 
+    use_past = False
+    if args_opt.export:
+        use_past = True
     # Set model property
     model_parallel_num = args_opt.op_level_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
@@ -91,7 +97,7 @@ def run_predict(args_opt):
         post_layernorm_residual=False,
         dropout_rate=0.0,
         compute_dtype=mstype.float16,
-        use_past=False,
+        use_past=use_past,
         self_layernorm=True,
         stage_num=args_opt.stage_num,
         micro_size=args_opt.micro_size,
@@ -108,7 +114,6 @@ def run_predict(args_opt):
     eval_net = EvalNet(pangu_alpha)
     eval_net.set_train(False)
     model_predict = Model(eval_net)
-
     # Compile network and obtain tensor layout for loading ckpt
     inputs_np = Tensor(np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32)
     current_index = Tensor(np.array([0]), mstype.int32)
@@ -130,7 +135,29 @@ def run_predict(args_opt):
     # Load checkpoint files
     load_distributed_checkpoint(eval_net, ckpt_file_list, predict_layout)
     print("================load param ok=================", flush=True)
+    return model_predict, config
 
+
+def export_mindir(model_predict, config):
+    """Export mindir model"""
+    inputs_np = Tensor(np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32)
+    current_index = Tensor(np.array([0]), mstype.int32)
+
+    batch_valid_length = Tensor(np.array([0]), mstype.int32)
+    init_true = Tensor([True], mstype.bool_)
+    inputs_np_1 = Tensor(np.ones(shape=(config.batch_size, 1)), mstype.int32)
+
+    model_predict.predict_network.add_flags_recursive(is_first_iteration=True)
+    export(model_predict.predict_network, inputs_np, current_index,
+           init_true, batch_valid_length, file_name='pangu_alpha_1024', file_format='MINDIR')
+    model_predict.predict_network.add_flags_recursive(is_first_iteration=False)
+    export(model_predict.predict_network, inputs_np_1, current_index,
+           init_true, batch_valid_length, file_name='pangu_alpha_1', file_format='MINDIR')
+    print("Export finished and now exit.")
+
+
+def run_predict(model_predict, config, args_opt):
+    """run predict"""
     from src.tokenization_jieba import JIEBATokenizer
     from src.generate import generate, generate_increment
     # Define tokenizer
@@ -144,12 +171,22 @@ def run_predict(args_opt):
     input_ids = np.array(start_sentence).reshape(1, -1)
     # Call inference
     generate_func = generate_increment if config.use_past else generate
-    output_ids = generate_func(model_predict, input_ids, opt)
+    output_ids = generate_func(model_predict, input_ids, args_opt)
     # Decode output ids to sentence
     output_samples = tokenizer.convert_ids_to_tokens(output_ids.tolist())
     print('Output is:', output_samples, flush=True)
 
-if __name__ == "__main__":
+
+def main():
+    """Main process for predict or export model"""
     opt = get_args(True)
     set_parse(opt)
-    run_predict(opt)
+    model_predict, config = load_model(opt)
+    if opt.export:
+        export_mindir(model_predict, config)
+    else:
+        run_predict(model_predict, config, opt)
+
+
+if __name__ == "__main__":
+    main()

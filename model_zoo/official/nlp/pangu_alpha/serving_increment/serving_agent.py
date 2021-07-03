@@ -15,15 +15,16 @@
 # ============================================================================
 """Serving agents startup code, load and execute models of pangu alpha"""
 
-from mindspore_serving.worker.distributed import agent_startup
+from mindspore_serving.server import distributed
 
 
 def start():
     """Start agents to load and execute models of pangu alpha"""
     model_files = []
     for i in range(8):
-        model_files.append(f"models/device_{i}/pangu_alpha_graph.mindir")
-    agent_startup.startup_worker_agents(worker_ip="0.0.0.0", worker_port=6200, model_files=model_files)
+        model_files.append([f"models/device{i}/pangu_alpha_1024_graph.mindir",
+                            f"models/device{i}/pangu_alpha_1_graph.mindir"])
+    distributed.startup_agents(distributed_address="0.0.0.0:6200", model_files=model_files)
 
 
 if __name__ == "__main__":

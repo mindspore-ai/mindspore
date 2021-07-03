@@ -23,6 +23,7 @@ import sentencepiece as spm
 
 class JIEBATokenizer:
     """jieba tokenizer for encode and decode text"""
+
     def __init__(self, vocab_file, model_file, max_len=None):
         self.max_len = max_len if max_len is not None else int(1e12)
         # self.encoder = json.load(open(vocab_file))

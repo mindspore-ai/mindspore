@@ -255,6 +255,10 @@ def add_inference_params(opt):
                      type=int,
                      default=9,
                      help="the token id for <end of document>")
+    opt.add_argument("--use_pynative_op",
+                     type=int,
+                     default=0,
+                     help="Whether use pynative op for postproecess")
 
 
 def add_training_params(opt):
@@ -409,6 +413,10 @@ def get_args(inference=False):
                         type=int,
                         default=1,
                         help="Running on cloud of not. Default 1.")
+    parser.add_argument("--export",
+                        type=int,
+                        default=0,
+                        help="Whether export mindir for serving.")
     add_training_params(parser)
     if inference:
         add_inference_params(parser)
