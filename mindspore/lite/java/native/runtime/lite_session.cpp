@@ -356,8 +356,8 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_setLea
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_setupVirtualBatch(JNIEnv *env, jobject thiz,
                                                                                            jlong session_ptr,
-                                                                                           jint virtualBatchMultiplier,
-                                                                                           jfloat learningRate,
+                                                                                           jint virtual_batch_factor,
+                                                                                           jfloat learning_rate,
                                                                                            jfloat momentum) {
   auto *session_pointer = reinterpret_cast<void *>(session_ptr);
   if (session_pointer == nullptr) {
@@ -365,7 +365,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_setupV
     return (jboolean) false;
   }
   auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
-  auto ret = lite_session_ptr->SetupVirtualBatch(virtualBatchMultiplier, learningRate, momentum);
+  auto ret = lite_session_ptr->SetupVirtualBatch(virtual_batch_factor, learning_rate, momentum);
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
 
@@ -410,4 +410,25 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getFeat
     env->CallBooleanMethod(ret, array_list_add, tensor_addr);
   }
   return ret;
+}
+
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createTrainSession(JNIEnv *env, jobject thiz,
+                                                                                          jstring file_name,
+                                                                                          jlong ms_context_ptr,
+                                                                                          jboolean train_mode,
+                                                                                          jlong train_config_ptr) {
+  auto *pointer = reinterpret_cast<void *>(ms_context_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Context pointer from java is nullptr");
+    return jlong(nullptr);
+  }
+  auto *lite_context_ptr = static_cast<mindspore::lite::Context *>(pointer);
+
+  auto session = mindspore::session::LiteSession::CreateTrainSession(env->GetStringUTFChars(file_name, JNI_FALSE),
+                                                                     lite_context_ptr, train_mode, nullptr);
+  if (session == nullptr) {
+    MS_LOGE("CreateTrainSession failed");
+    return jlong(nullptr);
+  }
+  return jlong(session);
 }
