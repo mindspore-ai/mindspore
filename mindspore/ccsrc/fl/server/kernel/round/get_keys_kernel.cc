@@ -82,7 +82,10 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
   MS_LOG(INFO) << "GetKeysKernel DURATION TIME IS : " << duration;
-  return response;
+  if (!response) {
+    MS_LOG(INFO) << "GetKeysKernel response is false.";
+  }
+  return true;
 }
 
 bool GetKeysKernel::Reset() {

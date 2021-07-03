@@ -82,16 +82,19 @@ bool CipherMetaStorage::GetClientNoisesFromServer(const char *list_name, std::ve
   return true;
 }
 
-bool CipherMetaStorage::GetPrimeFromServer(const char *list_name, unsigned char *prime) {
-  const ps::PBMetadata &prime_pb_out = ps::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
-  auto &prime_list_pb = prime_pb_out.prime_list();
-  if (prime_list_pb.prime_size() > 0 && prime_list_pb.prime(0).size() >= PRIME_MAX_LEN) {
-    for (int i = 0; i < PRIME_MAX_LEN; i++) {
-      prime[i] = static_cast<unsigned char>(prime_list_pb.prime(0)[i]);
-    }
+bool CipherMetaStorage::GetPrimeFromServer(const char *prime_name, unsigned char *prime) {
+  const ps::PBMetadata &prime_pb_out = ps::server::DistributedMetadataStore::GetInstance().GetMetadata(prime_name);
+  ps::Prime prime_pb(prime_pb_out.prime());
+  std::string str = *(prime_pb.mutable_prime());
+  MS_LOG(INFO) << "get prime from metastorage :" << str;
+
+  if (str.size() != PRIME_MAX_LEN) {
+    MS_LOG(ERROR) << "get prime size is :" << str.size();
+    return false;
+  } else {
+    memcpy_s(prime, PRIME_MAX_LEN, str.data(), PRIME_MAX_LEN);
     return true;
   }
-  return false;
 }
 
 bool CipherMetaStorage::UpdateClientToServer(const char *list_name, const std::string &fl_id) {
@@ -104,6 +107,7 @@ bool CipherMetaStorage::UpdateClientToServer(const char *list_name, const std::s
   return retcode;
 }
 void CipherMetaStorage::RegisterPrime(const char *list_name, const std::string &prime) {
+  MS_LOG(INFO) << "register prime: " << prime;
   ps::Prime prime_id_pb;
   prime_id_pb.set_prime(prime);
   ps::PBMetadata prime_pb;

@@ -105,10 +105,6 @@ message ClientNoises {
   OneClientNoises one_client_noises = 1;
 }
 
-message PrimeList {
-  repeated bytes prime = 1;
-}
-
 message PairClientKeys {
   string fl_id = 1;
   KeysPb client_keys = 2;
@@ -156,7 +152,6 @@ message PBMetadata {
     ClientNoises client_noises = 11;
 
     Prime prime = 12;
-    PrimeList prime_list = 13;
   }
 }
 

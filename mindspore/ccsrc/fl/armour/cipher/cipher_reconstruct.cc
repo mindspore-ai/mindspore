@@ -77,7 +77,7 @@ bool CipherReconStruct::CombineMask(
         std::vector<float> noise(cipher_init_->featuremap_, 0.0);
         if (GetSuvNoise(clients_share_list, record_public_keys, fl_id, &noise, secret, length) == false)
           retcode = false;
-        client_keys->at(fl_id) = noise;
+        client_keys->insert(std::pair<std::string, std::vector<float>>(fl_id, noise));
         MS_LOG(INFO) << " fl_id : " << fl_id;
         MS_LOG(INFO) << "end get complete s_uv.";
       } else {
@@ -87,7 +87,7 @@ bool CipherReconStruct::CombineMask(
         for (size_t index_noise = 0; index_noise < cipher_init_->featuremap_; index_noise++) {
           noise[index_noise] *= -1;
         }
-        client_keys->at(fl_id) = noise;
+        client_keys->insert(std::pair<std::string, std::vector<float>>(fl_id, noise));
         MS_LOG(INFO) << " fl_id : " << fl_id;
       }
     }

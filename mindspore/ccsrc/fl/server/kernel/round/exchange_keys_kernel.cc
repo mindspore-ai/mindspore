@@ -85,7 +85,10 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
   MS_LOG(INFO) << "ExchangeKeysKernel DURATION TIME IS : " << duration;
-  return response;
+  if (!response) {
+    MS_LOG(INFO) << "ExchangeKeysKernel response is false.";
+  }
+  return true;
 }
 
 bool ExchangeKeysKernel::Reset() {

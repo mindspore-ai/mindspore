@@ -15,8 +15,10 @@
  */
 
 #include "fl/armour/cipher/cipher_init.h"
-#include "fl/server/common.h"
+
 #include "fl/armour/cipher/cipher_meta_storage.h"
+#include "fl/server/common.h"
+#include "fl/server/model_store.h"
 
 namespace mindspore {
 namespace armour {
@@ -43,8 +45,7 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
   publicparam_.t = param.t;
   secrets_minnums_ = param.t;
   client_num_need_ = cipher_initial_client_cnt;
-  featuremap_ = 1000;  // todo: wait for other code
-                       // merge.ps::server::DistributedMetadataStore::GetInstance().model_size() / sizeof(float);
+  featuremap_ = ps::server::ModelStore::GetInstance().model_size() / sizeof(float);
   share_clients_num_need_ = cipher_share_secrets_cnt;
   reconstruct_clients_num_need_ = cipher_reconstruct_secrets_down_cnt + 1;
   get_model_num_need_ = cipher_get_clientlist_cnt;
