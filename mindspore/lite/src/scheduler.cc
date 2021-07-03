@@ -99,6 +99,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     }
   }
   FindAllInoutKernels(*dst_kernels);
+  ret = InitKernels(*dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitKernels failed.";
+    return ret;
+  }
 
   auto src_kernel = *dst_kernels;
   dst_kernels->clear();
@@ -109,6 +114,36 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
   MS_LOG(DEBUG) << "schedule kernels success.";
+  return RET_OK;
+}
+
+int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
+  if (is_train_session_) {
+    return RET_OK;
+  }
+  for (auto kernel : dst_kernels) {
+    if (kernel->subgraph_type() != kernel::kNotSubGraph) {
+      auto subgraph_nodes = reinterpret_cast<kernel::SubGraphKernel *>(kernel)->nodes();
+      for (auto node : subgraph_nodes) {
+        auto ret = node->Init();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Kernel " << node->name() << " Init failed.";
+          return ret;
+        }
+      }
+      continue;
+    }
+    // delegate graph kernel
+    if (kernel->desc().delegate != nullptr) {
+      continue;
+    }
+    // origin inner kernel
+    auto ret = kernel->Init();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Kernel " << kernel->name() << " Init failed.";
+      return ret;
+    }
+  }
   return RET_OK;
 }
 
@@ -665,9 +700,6 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
       kernel = SchedulePartialToKernel(node);
     } else {  // kernel
       kernel = ScheduleNodeToKernel(node, prefer_data_type);
-      if ((kernel != nullptr) && (!is_train_session_)) {
-        ret = kernel->Init();
-      }
     }
     if (kernel == nullptr || ret != RET_OK) {
       MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << node->name_

@@ -71,6 +71,8 @@ class Scheduler {
 
   int ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels);
 
+  int InitKernels(std::vector<kernel::LiteKernel *> dst_kernels);
+
   // schedule a partial node to a subgraph_kernel
   kernel::LiteKernel *SchedulePartialToKernel(const lite::Model::Node *src_node);
   // schedule a node to a kernel
