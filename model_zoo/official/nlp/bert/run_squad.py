@@ -17,12 +17,7 @@
 Bert finetune and evaluation script.
 '''
 import os
-import argparse
 import collections
-from src.bert_for_finetune import BertSquadCell, BertSquad
-from src.finetune_eval_config import optimizer_cfg, bert_net_cfg
-from src.dataset import create_squad_dataset
-from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore import log as logger
@@ -33,7 +28,15 @@ from mindspore.train.model import Model
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
+from src.bert_for_finetune import BertSquadCell, BertSquad
+from src.dataset import create_squad_dataset
+from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate
+from src.model_utils.config import config as args_opt, optimizer_cfg, bert_net_cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
+
 _cur_dir = os.getcwd()
+
 
 def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
     """ do train """
@@ -118,39 +121,24 @@ def do_eval(dataset=None, load_checkpoint_path="", eval_batch_size=1):
                 end_logits=end_logits))
     return output
 
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    args_opt.device_id = get_device_id()
+    _file_dir = os.path.dirname(os.path.abspath(__file__))
+    args_opt.load_pretrain_checkpoint_path = os.path.join(_file_dir, args_opt.load_pretrain_checkpoint_path)
+    args_opt.load_finetune_checkpoint_path = os.path.join(args_opt.output_path, args_opt.load_finetune_checkpoint_path)
+    args_opt.save_finetune_checkpoint_path = os.path.join(args_opt.output_path, args_opt.save_finetune_checkpoint_path)
+    args_opt.vocab_file_path = os.path.join(args_opt.data_path, args_opt.vocab_file_path)
+    if args_opt.schema_file_path:
+        args_opt.schema_file_path = os.path.join(args_opt.data_path, args_opt.schema_file_path)
+    args_opt.train_data_file_path = os.path.join(args_opt.data_path, args_opt.train_data_file_path)
+    args_opt.eval_json_path = os.path.join(args_opt.data_path, args_opt.eval_json_path)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_squad():
     """run squad task"""
-    parser = argparse.ArgumentParser(description="run squad")
-    parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
-                        help="Device type, default is Ascend")
-    parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
-                        help="Eable train, default is false")
-    parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],
-                        help="Eable eval, default is false")
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--epoch_num", type=int, default=3, help="Epoch number, default is 1.")
-    parser.add_argument("--num_class", type=int, default=2, help="The number of class, default is 2.")
-    parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
-                        help="Enable train data shuffle, default is true")
-    parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
-                        help="Enable eval data shuffle, default is false")
-    parser.add_argument("--train_batch_size", type=int, default=32, help="Train batch size, default is 32")
-    parser.add_argument("--eval_batch_size", type=int, default=1, help="Eval batch size, default is 1")
-    parser.add_argument("--vocab_file_path", type=str, default="", help="Vocab file path")
-    parser.add_argument("--eval_json_path", type=str, default="", help="Evaluation json file path, can be eval.json")
-    parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
-    parser.add_argument("--load_pretrain_checkpoint_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--load_finetune_checkpoint_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--train_data_file_path", type=str, default="",
-                        help="Data path, it is better to use absolute path")
-    parser.add_argument("--schema_file_path", type=str, default="",
-                        help="Schema path, it is better to use absolute path")
-    args_opt = parser.parse_args()
-    epoch_num = args_opt.epoch_num
-    load_pretrain_checkpoint_path = args_opt.load_pretrain_checkpoint_path
-    save_finetune_checkpoint_path = args_opt.save_finetune_checkpoint_path
-    load_finetune_checkpoint_path = args_opt.load_finetune_checkpoint_path
-
     if args_opt.do_train.lower() == "false" and args_opt.do_eval.lower() == "false":
         raise ValueError("At least one of 'do_train' or 'do_eval' must be true")
     if args_opt.do_train.lower() == "true" and args_opt.train_data_file_path == "":
@@ -160,8 +148,10 @@ def run_squad():
             raise ValueError("'vocab_file_path' must be set when do evaluation task")
         if args_opt.eval_json_path == "":
             raise ValueError("'tokenization_file_path' must be set when do evaluation task")
-
-
+    epoch_num = args_opt.epoch_num
+    load_pretrain_checkpoint_path = args_opt.load_pretrain_checkpoint_path
+    save_finetune_checkpoint_path = args_opt.save_finetune_checkpoint_path
+    load_finetune_checkpoint_path = args_opt.load_finetune_checkpoint_path
     target = args_opt.device_target
     if target == "Ascend":
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)

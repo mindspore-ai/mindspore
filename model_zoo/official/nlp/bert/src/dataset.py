@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore import log as logger
-from .config import cfg
+from .model_utils.config import config as cfg
 
 
 def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, schema_dir=None):

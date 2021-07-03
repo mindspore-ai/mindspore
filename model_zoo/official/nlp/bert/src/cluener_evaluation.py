@@ -22,7 +22,7 @@ from mindspore.common.tensor import Tensor
 from src import tokenization
 from src.sample_process import label_generation, process_one_example_p
 from src.CRF import postprocess
-from src.finetune_eval_config import bert_net_cfg
+from src.model_utils.config import bert_net_cfg
 from src.score import get_result
 
 def process(model=None, text="", tokenizer_=None, use_crf="", tag_to_index=None, vocab=""):

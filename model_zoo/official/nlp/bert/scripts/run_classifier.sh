@@ -27,6 +27,7 @@ PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_classifier.py  \
+    --config_path="../../task_classifier_config.yaml" \
     --device_target="Ascend" \
     --do_train="true" \
     --do_eval="false" \
