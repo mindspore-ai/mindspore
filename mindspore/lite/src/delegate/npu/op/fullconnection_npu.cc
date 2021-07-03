@@ -65,7 +65,7 @@ int FullconnectionNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_
     MS_LOG(ERROR) << "New weight const failed.";
     return RET_ERROR;
   }
-  auto weight_tensor = mindspore::ConverterToNPUTensor(in_tensors[1]);
+  auto weight_tensor = ConverterToNPUTensor(in_tensors[1]);
   weight_->set_attr_value(weight_tensor);
   fc_->set_input_x2(*weight_).set_attr_transpose_x2(true);
 

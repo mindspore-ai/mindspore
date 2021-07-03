@@ -15,8 +15,45 @@
  */
 
 #include "src/delegate/npu/npu_converter_utils.h"
+#include <arm_neon.h>
 #include "src/common/log_adapter.h"
 namespace mindspore {
+#define C8NUM 8
+#ifdef ENABLE_ARM64
+void Float32ToFloat16(const float *__restrict input, float16_t *__restrict output, int number) {
+  int count = (number & ~(C8NUM - 1));
+  int i = 0;
+  for (; i < count; i += C8NUM) {
+    float32x4_t in1 = vld1q_f32(input + i);
+    float16x4_t out1 = vcvt_f16_f32(in1);
+    float32x4_t in2 = vld1q_f32(input + i + 4);
+    float16x4_t out2 = vcvt_f16_f32(in2);
+    float16x8_t out = vcombine_f16(out1, out2);
+    vst1q_f16(output + i, out);
+  }
+  for (; i < number; ++i) {
+    output[i] = static_cast<float16_t>(input[i]);
+  }
+}
+
+void Float16ToFloat32(const float16_t *__restrict input, float *__restrict output, int number) {
+  int count = number & ~(C8NUM - 1);
+  int i = 0;
+  for (; i < count; i += C8NUM) {
+    float16x8_t in = vld1q_f16(input + i);
+    float16x4_t in1 = vget_low_f16(in);
+    float16x4_t in2 = vget_high_f16(in);
+    float32x4_t out1 = vcvt_f32_f16(in1);
+    vst1q_f32(output + i, out1);
+    float32x4_t out2 = vcvt_f32_f16(in2);
+    vst1q_f32(output + i + 4, out2);
+  }
+  for (; i < number; ++i) {
+    output[i] = static_cast<float>(input[i]);
+  }
+}
+#endif
+
 ge::Shape ConverterToNPUShape(const std::vector<int> &src_shape) {
   vector<int64_t> shapes;
   shapes.reserve(src_shape.size());
@@ -50,10 +87,8 @@ ge::DataType ConverterToNPUDataType(TypeId type_id) {
   switch (type_id) {
     case kNumberTypeFloat:
     case kNumberTypeFloat32:
-      data_type = ge::DT_FLOAT;
-      break;
     case kNumberTypeFloat16:
-      data_type = ge::DT_FLOAT16;
+      data_type = ge::DT_FLOAT;
       break;
     case kNumberTypeInt8:
       data_type = ge::DT_INT8;
@@ -93,7 +128,7 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(tensor::MSTensor *src) {
   std::shared_ptr<ge::Tensor> ge_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
   if (ge_tensor == nullptr) {
     MS_LOG(ERROR) << "new ge_tensor failed.";
-    return ge_tensor;
+    return nullptr;
   }
   ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ge::FORMAT_NCHW,
                              ConverterToNPUDataType(src->data_type()));
@@ -101,7 +136,20 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(tensor::MSTensor *src) {
   ge_tensor->SetTensorDesc(tensor_desc);
 
   if (src->data() != nullptr) {
-    ge_tensor->SetData(reinterpret_cast<const uint8_t *>(src->data()), src->Size());
+    if (src->data_type() == kNumberTypeFloat16) {
+#ifdef ENABLE_ARM64
+      auto fp32_data = malloc(src->ElementsNum() * sizeof(float));
+      Float16ToFloat32(reinterpret_cast<float16_t *>(src->data()), reinterpret_cast<float *>(fp32_data),
+                       src->ElementsNum());
+      ge_tensor->SetData(reinterpret_cast<const uint8_t *>(fp32_data), src->ElementsNum() * sizeof(float));
+      free(fp32_data);
+#else
+      MS_LOG(ERROR) << "This platform does not support fp16.";
+      return nullptr;
+#endif
+    } else {
+      ge_tensor->SetData(reinterpret_cast<const uint8_t *>(src->data()), src->Size());
+    }
   }
   return ge_tensor;
 }

@@ -41,15 +41,13 @@ int InstanceNormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_te
   instance_norm_->set_input_x(*npu_inputs[0]);
 
   auto gamma_shape = in_tensors[1]->shape();
-  std::shared_ptr<ge::Tensor> gamma_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  auto gamma_tensor = ConverterToNPUTensor(in_tensors[1]);
   if (gamma_tensor == nullptr) {
-    MS_LOG(ERROR) << "new gamma_tensor failed.";
+    MS_LOG(ERROR) << "Get gamma_tensor failed.";
     return RET_ERROR;
   }
-  ge::TensorDesc gamma_tensor_desc(ConverterToNPUShape({1, gamma_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                   ConverterToNPUDataType(in_tensors[1]->data_type()));
-  gamma_tensor->SetTensorDesc(gamma_tensor_desc);
-  gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(in_tensors[1]->data()), in_tensors[1]->Size());
+  gamma_tensor->SetTensorDesc(ge::TensorDesc(ConverterToNPUShape({1, gamma_shape[0], 1, 1})));
+
   gamma_ = new (std::nothrow) hiai::op::Const(name_ + "_gamma");
   if (gamma_ == nullptr) {
     MS_LOG(ERROR) << "New gamma_ const failed.";
@@ -59,15 +57,13 @@ int InstanceNormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_te
   instance_norm_->set_input_gamma(*gamma_);
 
   auto beta_shape = in_tensors[2]->shape();
-  std::shared_ptr<ge::Tensor> beta_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  auto beta_tensor = ConverterToNPUTensor(in_tensors[2]);
   if (beta_tensor == nullptr) {
-    MS_LOG(ERROR) << "new beta_tensor failed.";
+    MS_LOG(ERROR) << "Get beta_tensor failed.";
     return RET_ERROR;
   }
-  ge::TensorDesc beta_tensor_desc(ConverterToNPUShape({1, beta_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                  ConverterToNPUDataType(in_tensors[2]->data_type()));
-  beta_tensor->SetTensorDesc(beta_tensor_desc);
-  beta_tensor->SetData(reinterpret_cast<const uint8_t *>(in_tensors[2]->data()), in_tensors[2]->Size());
+  beta_tensor->SetTensorDesc(ge::TensorDesc(ConverterToNPUShape({1, beta_shape[0], 1, 1})));
+
   beta_ = new (std::nothrow) hiai::op::Const(name_ + "_beta");
   if (beta_ == nullptr) {
     MS_LOG(ERROR) << "New beta_ const failed.";
