@@ -37,6 +37,8 @@ namespace ad {
 std::unordered_map<FuncGraphPtr, DFunctorPtr> DFunctor::func_graph_to_functor_;
 std::unordered_map<AnfNodePtr, AdjointPtr> DFunctor::anfnode_to_adjoin_definition_;
 
+bool lift_fv_before_grad = true;
+
 DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources)
     : primal_graph_(primal_graph), resources_(resources), need_cut_(false), is_top_(false) {
   {
@@ -73,6 +75,10 @@ void DFunctor::Clear() {
 }
 
 void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
+  if (lift_fv_before_grad) {
+    MS_LOG(EXCEPTION) << "BackPropagateFv can not find adjoint in anfnode_to_adjoin_ fv "
+                      << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
+  }
   auto fv_adjoint = anfnode_to_adjoin_.find(fv);
   if (fv_adjoint == anfnode_to_adjoin_.end()) {
     MS_LOG(DEBUG) << "BackPropagateFv can not find adjoint in anfnode_to_adjoin_ fv " << fv->func_graph()->ToString()
@@ -437,6 +443,13 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
   AnfNodePtr new_grad_fv = grad_fv;
   // Add grads wrt fv.
   const auto &free_variables_nodes = primal_graph_->free_variables_nodes();
+  if (!is_top_ && free_variables_nodes.size() != 0) {
+    if (lift_fv_before_grad) {
+      MS_LOG(EXCEPTION) << "direct fv size is: " << free_variables_nodes.size() << " in " << primal_graph_->ToString()
+                        << ".";
+    }
+  }
+
   for (auto &fv : free_variables_nodes) {
     auto fv_adjoint = anfnode_to_adjoin_.find(fv);
     if (fv_adjoint == anfnode_to_adjoin_.end()) {
@@ -460,6 +473,10 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
 }
 
 AnfNodePtr DFunctor::AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv) {
+  if (lift_fv_before_grad) {
+    MS_LOG(EXCEPTION) << "Lift free variable case: AttachIndirectFvDoutToTape backprop indirect fv "
+                      << grad_fv->ToString() << " " << primal_graph_->ToString() << ".";
+  }
   AnfNodePtr new_grad_fv = grad_fv;
   // Add indirect fv bprop.
   for (auto &fv_adjoint : anfnode_to_adjoin_indirect_fv_) {
@@ -497,7 +514,12 @@ void DFunctor::MapMorphism() {
   output_adjoint->second->AccumulateDout(dout_);
 
   // Set output for tape closure.
-  auto grad_fv = AttachIndirectFvDoutToTape(AttachFvDoutToTape(NewValueNode(newenv)));
+  AnfNodePtr grad_fv;
+  if (lift_fv_before_grad) {
+    grad_fv = AttachFvDoutToTape(NewValueNode(newenv));
+  } else {
+    grad_fv = AttachIndirectFvDoutToTape(AttachFvDoutToTape(NewValueNode(newenv)));
+  }
 
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple), grad_fv};
   // Add grads wrt inputs.

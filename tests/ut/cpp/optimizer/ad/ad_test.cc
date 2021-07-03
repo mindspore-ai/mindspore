@@ -37,11 +37,13 @@ class TestAD : public UT::Common {
 
  public:
   UT::PyFuncGraphFetcher getPyFun;
-  pipeline::ResourceBasePtr resourcePtr = std::make_shared<pipeline::ResourceBase>();
+  pipeline::ResourcePtr resourcePtr = std::make_shared<pipeline::Resource>();
 
  protected:
   void AssertExpect(const std::string& testCase) {
     FuncGraphPtr g = getPyFun(testCase);
+    resourcePtr->manager()->RemoveRoots();
+    resourcePtr->manager()->AddFuncGraph(g, true);
     FuncGraphPtr dg = Grad(g, resourcePtr);
     AssertExpect(testCase, dg);
   }

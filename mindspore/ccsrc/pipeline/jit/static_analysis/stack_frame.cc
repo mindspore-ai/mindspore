@@ -96,7 +96,6 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   }
 
   // Create a new stack frame and set arguments for it.
-  fg_evaluator->set_context(new_context);
   auto new_stack_frame = std::make_shared<StackFrame>(fg_evaluator, fg, new_context, parent_context);
   new_stack_frame->set_args_abs_list(std::move(args_abs_list));
   return new_stack_frame;

@@ -91,6 +91,9 @@ bool IsInside(InlinerBase *, const FuncGraphPtr &, const AnfNodePtr &node);
 bool IsCore(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &);
 bool IsDirectParentCall(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &node);
 bool IsNotRecursive(InlinerBase *inliner, const FuncGraphPtr &fg, const AnfNodePtr &);
+bool IsForceInline(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) {
+  return fg->has_flag(FUNC_GRAPH_FLAG_FORCE_INLINE);
+}
 
 // {G, Xs}
 class InlinerBase : public AnfVisitor {
@@ -138,6 +141,14 @@ class InlinerBase : public AnfVisitor {
       return nullptr;
     }
 
+    if (IsForceInline(this, fg, node)) {
+      if (IsUniqueUse(nullptr, fg, nullptr)) {
+        return InlineMove(node, fg, args, inputs);
+      } else {
+        return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
+      }
+    }
+
     if (IsUniqueUse(nullptr, fg, nullptr)) {
       // For the single used fg, including non-after and after not matched above,
       // we move the whole fg nodes.
@@ -162,15 +173,20 @@ class InlinerBase : public AnfVisitor {
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
   }
 
+  AnfNodePtr InlineMove(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &args,
+                        const std::vector<AnfNodePtr> &inputs) {
+    auto mng = fg->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    ReplaceParams(mng, args, fg);
+    auto out_node = fg->output();
+    mng->MoveAllCNodeDropGraph(fg, node->func_graph(), inputs[0]->scope());
+    return out_node;
+  }
+
   AnfNodePtr InlineForUniqueUse(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &args,
                                 const std::vector<AnfNodePtr> &inputs) {
     if (use_move_) {
-      auto mng = fg->manager();
-      MS_EXCEPTION_IF_NULL(mng);
-      ReplaceParams(mng, args, fg);
-      auto out_node = fg->output();
-      mng->MoveAllCNodeDropGraph(fg, node->func_graph(), inputs[0]->scope());
-      return out_node;
+      return InlineMove(node, fg, args, inputs);
     }
 
     // The other branch calling the last after block.
@@ -377,6 +393,7 @@ class DirectInliner : public InlinerBase {
       : InlinerBase(
           // Supports AND conditions in one criterion, Ex. {IsUniqueUse, IsNotRecursive}.
           {
+            {IsForceInline},
             {IsDirectParentCall},
           },
           use_move) {}

@@ -20,9 +20,10 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.common.parameter import Parameter, ParameterTuple
 
 grad_all = C.GradOperation(get_all=True)
-
+grad_by_list = C.GradOperation(get_by_list=True)
 
 class CropAndResizeNet(nn.Cell):
     def __init__(self, crop_size):
@@ -138,3 +139,38 @@ def test_ad_fv_cnode_order():
     net.add_flags_recursive(defer_inline=True)
     grad_net = grad_all(net)
     grad_net(input_x, input_y)
+
+
+# True and False branch of switch have different number of parameters.
+def test_if_branch_with_different_params():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.weight1 = Parameter(Tensor(np.array([1.0], dtype=np.float32)), name="weight1")
+            self.weight2 = Parameter(Tensor(np.array([2.0], dtype=np.float32)), name="weight2")
+
+        def construct(self, idx, end, x):
+            out = x
+            if idx < end:
+                out = out + self.weight1 * self.weight2
+            else:
+                out = out + self.weight1
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = ParameterTuple(net.trainable_params())
+
+        def construct(self, idx, end, x):
+            return grad_by_list(self.net, self.weights)(idx, end, x)
+
+    idx = Tensor(np.array((0), dtype=np.int32))
+    end = Tensor(np.array((3), dtype=np.int32))
+    x = Tensor(np.array([2.0], dtype=np.float32))
+
+    net = Net()
+    grad_net = GradNet(net)
+    grad_net(idx, end, x)

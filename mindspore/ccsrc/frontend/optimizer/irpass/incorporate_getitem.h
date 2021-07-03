@@ -164,6 +164,7 @@ class IncorporateGetitem : public AnfVisitor {
         }
       }
     }
+    new_node->set_abstract(node->abstract());
     return new_node;
   }
 
@@ -228,6 +229,7 @@ class IncorporateGetitemDepend : public AnfVisitor {
       new_depend_cnode =
         node->func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), new_fg_cnode, depend_2nd_input_});
     }
+    new_depend_cnode->set_abstract(node->abstract());
     return new_depend_cnode;
   }
 
@@ -294,8 +296,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     is_in_get_ = false;
 
     auto fg = node->func_graph();
-    if (idx_ == -1 || switch_ == nullptr || fg == nullptr ||
-        (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) && !ExistEnvNode(fg))) {
+    if (idx_ == -1 || switch_ == nullptr || fg == nullptr) {
       return nullptr;
     }
 
@@ -308,10 +309,27 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     }
     auto tuple_getitem = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple_getitem);
+    bool has_env_type = false;
+    if (tuple_getitem->input(1)->abstract() && tuple_getitem->input(1)->abstract()->isa<abstract::AbstractTuple>()) {
+      const auto &abs_tuple = *(tuple_getitem->input(1)->abstract()->cast<abstract::AbstractTuplePtr>());
+      // eliminate (envinstance, value1, value2, ...) built by bprop func_graph()
+      if (abs_tuple.size() >= 1) {
+        // Value maybe kAnyValue, so check the type track;
+        if (abs_tuple[0]->isa<abstract::AbstractScalar>() && abs_tuple[0]->GetTypeTrack()->isa<EnvType>()) {
+          has_env_type = true;
+        }
+      }
+      // eliminate (value, bprop_func) built by fprop func_graph
+      if (abs_tuple.size() >= 2) {
+        if (abs_tuple[1]->isa<abstract::AbstractFunction>()) {
+          has_env_type = true;
+        }
+      }
+    }
     // If exist env_getitem/env_setitem in this funcgraph or
     // if g1_/g2_ is fprop func_graph and the corresponding bprop funcgraph has any env_getitem or env_setitem;
     if (MultipleUseOfSwitch(tuple_getitem->input(1), fg) && !ExistEnvNode(fg) && !ExistEnvNodeInTupleItem(g1_) &&
-        !ExistEnvNodeInTupleItem(g2_)) {
+        !ExistEnvNodeInTupleItem(g2_) && !has_env_type) {
       return nullptr;
     }
     auto new_g1 = getitem_transform_(g1_, idx_);
@@ -319,7 +337,9 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     auto sw_node = fg->NewCNode({NewValueNode(prim::kPrimSwitch), x_, NewValueNode(new_g1), NewValueNode(new_g2)});
     (void)args_.insert(args_.begin(), sw_node);
 
-    return fg->NewCNode(args_);
+    auto new_node = fg->NewCNode(args_);
+    new_node->set_abstract(node->abstract());
+    return new_node;
   }
 
   void Visit(const AnfNodePtr &node) override {
@@ -398,8 +418,8 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     }
     const auto &cnode = output->cast<CNodePtr>();
     const auto &inputs = cnode->inputs();
-    return std::any_of(inputs.cbegin() + 1, inputs.cend(), [](const auto &node) {
-      auto sub_fg = GetValueNode<FuncGraphPtr>(node);
+    return std::any_of(inputs.cbegin() + 1, inputs.cend(), [](const auto &input) {
+      auto sub_fg = GetValueNode<FuncGraphPtr>(input);
       if (sub_fg != nullptr && ExistEnvNode(sub_fg)) {
         return true;
       }

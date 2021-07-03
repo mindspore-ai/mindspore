@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
+#include <utility>
 #include <memory>
 
 #include "frontend/optimizer/irpass.h"
@@ -38,29 +39,36 @@ class CallOutputTransform {
   CallOutputTransform() : cache_() {}
   ~CallOutputTransform() = default;
 
-  FuncGraphPtr operator()(const FuncGraphPtr &fg, size_t nargs) {
+  FuncGraphPtr operator()(const FuncGraphPtr &fg, size_t nargs, bool xs_first) {
     if (cache_.find(fg) == cache_.end()) {
       cache_[fg] = {};
     }
 
     auto &cache = cache_[fg];
-    if (cache.find(nargs) == cache.end()) {
+    auto key = std::make_pair(nargs, xs_first);
+    if (cache.find(key) == cache.end()) {
       FuncGraphPtr new_fg = TransformableClone(fg, std::make_shared<TraceTransform>("call"));
 
       std::vector<AnfNodePtr> new_items;
       new_items.push_back(new_fg->output());
-      for (size_t i = 0; i < nargs; i++) {
-        new_items.push_back(new_fg->add_parameter());
+      if (xs_first) {
+        for (size_t i = 0; i < nargs; i++) {
+          new_items.push_back(new_fg->add_parameter());
+        }
+      } else {
+        for (size_t i = 0; i < nargs; i++) {
+          new_items.push_back(new_fg->InsertFrontParameter());
+        }
       }
       new_fg->set_output(new_fg->NewCNode(new_items));
 
-      cache[nargs] = new_fg;
+      cache[key] = new_fg;
     }
-    return cache[nargs];
+    return cache[key];
   }
 
  private:
-  std::unordered_map<FuncGraphPtr, std::unordered_map<size_t, FuncGraphPtr>> cache_;
+  std::unordered_map<FuncGraphPtr, std::unordered_map<std::pair<size_t, bool>, FuncGraphPtr, PairHasher>> cache_;
 };
 }  // namespace internal
 
@@ -88,20 +96,35 @@ class IncorporateCall : public AnfVisitor {
 
     auto xs_size = Xs_.size();
     auto ys_size = inputs.size() - 1;
-    auto new_fg = call_output_transform_(fg_, ys_size);
+    bool xs_first = true;
+    if ((xs_size > 0) && (Xs_[xs_size - 1]->abstract() != nullptr) &&
+        (Xs_[xs_size - 1]->abstract()->isa<abstract::AbstractMonad>())) {
+      xs_first = false;
+    }
+    auto new_fg = call_output_transform_(fg_, ys_size, xs_first);
 
     std::vector<AnfNodePtr> args;
     args.push_back(NewValueNode(new_fg));
 
-    if (xs_size > 0) {
-      (void)args.insert(args.end(), Xs_.begin(), Xs_.end());
+    if (xs_first) {
+      if (xs_size > 0) {
+        (void)args.insert(args.end(), Xs_.begin(), Xs_.end());
+      }
+      if (ys_size > 0) {
+        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+      }
+    } else {
+      if (ys_size > 0) {
+        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+      }
+      if (xs_size > 0) {
+        (void)args.insert(args.end(), Xs_.begin(), Xs_.end());
+      }
     }
 
-    if (ys_size > 0) {
-      (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
-    }
-
-    return node->func_graph()->NewCNode(args);
+    auto new_node = node->func_graph()->NewCNode(args);
+    new_node->set_abstract(node->abstract());
+    return new_node;
   }
 
   void Visit(const CNodePtr &cnode) override {
@@ -159,19 +182,35 @@ class IncorporateCallSwitch : public AnfVisitor {
     auto fg = node->func_graph();
     auto xs_size = inputs_x.size() - 1;
     auto ys_size = inputs.size() - 1;
-    auto new_g1 = call_output_transform_(g1_, ys_size);
-    auto new_g2 = call_output_transform_(g2_, ys_size);
+    bool xs_first = true;
+    if ((xs_size > 0) && (inputs_x[xs_size - 1]->abstract() != nullptr) &&
+        (inputs_x[xs_size - 1]->abstract()->isa<abstract::AbstractMonad>())) {
+      xs_first = false;
+    }
+    auto new_g1 = call_output_transform_(g1_, ys_size, xs_first);
+    auto new_g2 = call_output_transform_(g2_, ys_size, xs_first);
     auto sw_node = fg->NewCNode({NewValueNode(prim::kPrimSwitch), x_, NewValueNode(new_g1), NewValueNode(new_g2)});
 
     std::vector<AnfNodePtr> args{sw_node};
-    if (xs_size > 0) {
-      (void)args.insert(args.end(), inputs_x.begin() + 1, inputs_x.end());
-    }
-    if (ys_size > 0) {
-      (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+    if (xs_first) {
+      if (xs_size > 0) {
+        (void)args.insert(args.end(), inputs_x.begin() + 1, inputs_x.end());
+      }
+      if (ys_size > 0) {
+        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+      }
+    } else {
+      if (ys_size > 0) {
+        (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+      }
+      if (xs_size > 0) {
+        (void)args.insert(args.end(), inputs_x.begin() + 1, inputs_x.end());
+      }
     }
 
-    return fg->NewCNode(args);
+    auto new_node = fg->NewCNode(args);
+    new_node->set_abstract(node->abstract());
+    return new_node;
   }
 
   void Visit(const AnfNodePtr &node) override {
