@@ -20,6 +20,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <vector>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
@@ -71,11 +72,11 @@ class NotSupportOp {
   std::string fmk_type_;
 };
 
-class TensorDataType {
+class ConverterContext {
  public:
-  static TensorDataType *GetInstance() {
-    static TensorDataType tensor_data_type;
-    return &tensor_data_type;
+  static ConverterContext *GetInstance() {
+    static ConverterContext converter_context;
+    return &converter_context;
   }
 
   void UpdateGraphInputDType(int32_t index, int32_t dtype) { graph_input_data_type_map_[index] = dtype; }
@@ -94,12 +95,24 @@ class TensorDataType {
     return graph_output_data_type_map_.at(index);
   }
 
+  void UpdateGraphInputTensorShape(const std::string &tensor_name, const std::vector<int64_t> &shape) {
+    graph_input_tensor_shape_map_[tensor_name] = shape;
+  }
+  std::vector<int64_t> GetGraphInputTensorShape(const std::string &tensor_name) const {
+    if (graph_input_tensor_shape_map_.find(tensor_name) == graph_input_tensor_shape_map_.end()) {
+      return {};
+    }
+    return graph_input_tensor_shape_map_.at(tensor_name);
+  }
+  size_t GetGraphInputTensorShapeMapSize() { return graph_input_tensor_shape_map_.size(); }
+
  private:
-  TensorDataType() {}
-  virtual ~TensorDataType() = default;
+  ConverterContext() {}
+  virtual ~ConverterContext() = default;
   std::map<int32_t, int32_t> tensor_data_type_map_;
   std::map<int32_t, int32_t> graph_input_data_type_map_;
   std::map<int32_t, int32_t> graph_output_data_type_map_;
+  std::map<std::string, std::vector<int64_t>> graph_input_tensor_shape_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

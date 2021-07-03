@@ -267,7 +267,7 @@ int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const size_t subgrap
   for (unsigned int &i : return_node->inputIndex) {
     if (subgraph_index == kMainGraphIndex) {
       auto &tensor = meta_graphT->allTensors.at(i);
-      TensorDataType::GetInstance()->UpdateGraphOutputDType(meta_graphT->outputIndex.size(), tensor->dataType);
+      ConverterContext::GetInstance()->UpdateGraphOutputDType(meta_graphT->outputIndex.size(), tensor->dataType);
       meta_graphT->outputIndex.push_back(i);
     }
     meta_graphT->subGraph.at(subgraph_index)->outputIndices.push_back(i);

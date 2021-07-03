@@ -21,6 +21,7 @@
 #include <vector>
 #include "tools/anf_exporter/fetch_content.h"
 #include "tools/converter/quant_param_holder.h"
+#include "tools/converter/converter_context.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
@@ -56,9 +57,29 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, lite::converte
   MS_ASSERT(CNode != nullptr);
   std::vector<Tensor *> tensors;
   for (size_t i = 1; i < cnode->size(); ++i) {
-    int status;
+    int status = 0;
     lite::DataInfo data_info;
-    if (utils::isa<ParameterPtr>(cnode->input(i))) {
+    if (CheckPrimitiveType(cnode, prim::kPrimShape)) {
+      if (utils::isa<abstract::AbstractTensorPtr>(cnode->input(i)->abstract())) {
+        auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->input(i)->abstract());
+        if (abstract_tensor == nullptr) {
+          MS_LOG(ERROR) << "abstract tensor is nullptr.";
+          return {};
+        }
+        auto shape = utils::cast<abstract::ShapePtr>(abstract_tensor->GetShapeTrack())->shape();
+        bool is_dynamic_shape = false;
+        for (size_t j = 0; j < shape.size(); j++) {
+          auto dim = shape[j];
+          if (dim == -1) {
+            is_dynamic_shape = true;
+            break;
+          }
+        }
+        if (!is_dynamic_shape) {
+          status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, false, &data_info);
+        }
+      }
+    } else if (utils::isa<ParameterPtr>(cnode->input(i))) {
       if (!cnode->input(i)->cast<ParameterPtr>()->has_default()) {
         FreeTensors(&tensors, nullptr);
         return {};

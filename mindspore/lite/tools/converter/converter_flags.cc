@@ -24,6 +24,7 @@
 #include <memory>
 #include "ir/dtype/type_id.h"
 #include "common/file_utils.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -64,6 +65,11 @@ Flags::Flags() {
           "Decryption method for the MindIR file. Only valid when dec_key is set."
           "AES-GCM | AES-CBC",
           "AES-GCM");
+  AddFlag(&Flags::inTensorShape, "inputShape",
+          "Set shape for model inputs for further optimizing model. Output model will lose dynamic shape feature of "
+          "set this option. Model input shapes is same with origin model by default."
+          "e.g. inTensor1:1,32,32,32;inTensor2:1,1,32,32,4",
+          "");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -198,6 +204,38 @@ int Flags::InitTrainModel() {
   return RET_OK;
 }
 
+int Flags::InitInTensorShape() {
+  std::string content = this->inTensorShape;
+  std::vector<int64_t> shape;
+  auto shape_strs = StringSplit(content, std::string(";"));
+  for (const auto &shape_str : shape_strs) {
+    shape.clear();
+    auto string_split = StringSplit(shape_str, std::string(":"));
+    auto name = string_split[0];
+    if (name.empty()) {
+      MS_LOG(ERROR) << "input tensor name is empty";
+    }
+    auto dim_strs = string_split[1];
+    if (dim_strs.empty()) {
+      MS_LOG(ERROR) << "input tensor dim string is empty";
+    }
+    auto dims = StringSplit(dim_strs, std::string(","));
+    if (dims.empty()) {
+      MS_LOG(ERROR) << "input tensor dim is empty";
+    }
+    for (const auto &dim : dims) {
+      if (std::stoi(dim) < 0) {
+        MS_LOG(ERROR) << "Unsupported dim < 0.";
+        return RET_ERROR;
+      } else {
+        shape.push_back(std::stoi(dim));
+      }
+    }
+    ConverterContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
+  }
+  return RET_OK;
+}
+
 int Flags::InitConfigFile() {
   auto plugins_path_str = GetStrFromConfigFile(this->configFile, "plugin_path");
   if (!plugins_path_str.empty()) {
@@ -307,6 +345,13 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
+  if (!this->inTensorShape.empty()) {
+    ret = InitInTensorShape();
+    if (ret != RET_OK) {
+      std::cerr << "Init input tensor shape failed." << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
   return RET_OK;
 }
 

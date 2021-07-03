@@ -63,6 +63,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitConfigFile();
 
+  int InitInTensorShape();
+
   int Init(int argc, const char **argv);
 
  public:
@@ -93,6 +95,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool trainModel = false;
   std::vector<std::string> pluginsPath;
   bool disableFusion = false;
+  std::string inTensorShape;
   std::string dec_key = "";
   std::string dec_mode = "AES-GCM";
 };
