@@ -21,7 +21,7 @@
 #ifdef SUPPORT_NPU
 #include "include/HiAiModelManagerType.h"
 #endif
-#ifdef SUPPORT_GPU
+#ifdef GPU_OPENCL
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
 
@@ -170,7 +170,7 @@ bool InnerContext::IsCpuFloat16Enabled() const {
 }
 
 bool InnerContext::IsGpuFloat16Enabled() const {
-#ifdef SUPPORT_GPU
+#ifdef GPU_OPENCL
   if (!IsGpuEnabled()) {
     return false;
   }

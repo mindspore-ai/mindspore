@@ -200,7 +200,7 @@ endif()
 
 if(SUPPORT_TENSORRT)
     add_compile_definitions(GPU_TENSORRT)
-    set(TENSORRT_PATH $ENV{TENSORRT_HOME})
+    set(TENSORRT_PATH $ENV{TENSORRT_PATH})
     set(CUDA_PATH $ENV{CUDA_HOME})
     set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
     set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
