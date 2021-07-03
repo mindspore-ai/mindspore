@@ -235,6 +235,10 @@ void Server::InitCipher() {
   unsigned char cipher_p[SECRET_MAX_LEN] = {0};
   int cipher_g = 1;
   unsigned char cipher_prime[PRIME_MAX_LEN] = {0};
+  float dp_eps = PSContext::instance()->dp_eps();
+  float dp_delta = PSContext::instance()->dp_delta();
+  float dp_norm_clip = PSContext::instance()->dp_norm_clip();
+  std::string encrypt_type = PSContext::instance()->encrypt_type();
 
   mpz_t prim;
   mpz_init(prim);
@@ -248,10 +252,10 @@ void Server::InitCipher() {
   param.t = cipher_t;
   memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, SECRET_MAX_LEN);
   memcpy_s(param.prime, PRIME_MAX_LEN, cipher_prime, PRIME_MAX_LEN);
-  // param.dp_delta = dp_delta;
-  // param.dp_eps = dp_eps;
-  // param.dp_norm_clip = dp_norm_clip;
-  param.encrypt_type = kNotEncryptType;  // PSContext::instance()->encrypt_type;
+  param.dp_delta = dp_delta;
+  param.dp_eps = dp_eps;
+  param.dp_norm_clip = dp_norm_clip;
+  param.encrypt_type = encrypt_type;
   cipher_init_->Init(param, 0, cipher_initial_client_cnt_, cipher_exchange_secrets_cnt_, cipher_share_secrets_cnt_,
                      cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
                      cipher_reconstruct_secrets_up_cnt_);

@@ -68,7 +68,11 @@ _set_ps_context_func_map = {
     "worker_step_num_per_iteration": ps_context().set_worker_step_num_per_iteration,
     "enable_ps_ssl": ps_context().set_enable_ssl,
     "scheduler_manage_port": ps_context().set_scheduler_manage_port,
-    "config_file_path": ps_context().set_config_file_path
+    "config_file_path": ps_context().set_config_file_path,
+    "dp_eps": ps_context().set_dp_eps,
+    "dp_delta": ps_context().set_dp_delta,
+    "dp_norm_clip": ps_context().set_dp_norm_clip,
+    "encrypt_type": ps_context().set_encrypt_type
 }
 
 _get_ps_context_func_map = {
