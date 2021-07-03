@@ -616,9 +616,13 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     graph_compiler_->GetParamAndOutputIndex(graph, inputs[graph_index], outputs, &parameter_index,
                                             &graph_output_info.output_indexes);
 
-    std::map<KernelWithIndex, size_t> &cnode_ref_count = cnode_ref_counts_[graph->graph_id()];
-    if (cnode_ref_count.empty()) {
+    std::map<KernelWithIndex, size_t> cnode_ref_count;
+    auto iter = cnode_ref_counts_.find(graph->graph_id());
+    if (iter == cnode_ref_counts_.end()) {
       graph_compiler_->CalculateRefCount(graph, &cnode_ref_count);
+      cnode_ref_counts_.emplace(graph->graph_id(), cnode_ref_count);
+    } else {
+      cnode_ref_count = iter->second;
     }
 
     // Clear bucket resources every step
