@@ -166,6 +166,7 @@ void CreateDeviceTensorForValueNode(const AnfNodePtr &front_node, const AnfNodeP
   device::DeviceAddressPtr address =
     device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
   MS_EXCEPTION_IF_NULL(address);
+  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address;
   AnfAlgo::SetOutputAddr(address, 0, front_node.get());
 }
 
@@ -190,6 +191,7 @@ void CreateDeviceTensorForFrontParameter(const AnfNodePtr &node, const DeviceCon
   // Create device tensor.
   device::DeviceAddressPtr address = device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id);
   MS_EXCEPTION_IF_NULL(address);
+  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(node) << " addr:" << address;
   AnfAlgo::SetOutputAddr(address, 0, node.get());
 }
 
@@ -1217,9 +1219,23 @@ void ControlNodeParser::FetchFrontToBackendKernel(const std::vector<KernelGraphP
       if (IsKernelActor(kernel) && (!IsSkippedKernelActor(kernel))) {
         auto front_node = graph->GetFrontAnfByBackendAnf(kernel);
         if (front_node != nullptr) {
-          front_to_backend_kernels_[front_node] = {kernel, device_context};
+          for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(kernel); ++j) {
+            front_to_backend_kernels_[{front_node, j}] = {{kernel, j}, device_context};
+            MS_LOG(DEBUG) << "Add front to backend kernel, front:" << AnfAlgo::GetNodeDebugString(front_node)
+                          << "index:" << j << " addr:" << front_node
+                          << " second:" << AnfAlgo::GetNodeDebugString(kernel) << "index:" << j << " addr:" << kernel;
+          }
         }
       }
+    }
+
+    const auto graph_output_map = graph->graph_output_map();
+    for (const auto &output_pair : graph_output_map) {
+      front_to_backend_kernels_[output_pair.second] = {output_pair.first, device_context};
+      MS_LOG(DEBUG) << "Add front to backend kernel, front:" << AnfAlgo::GetNodeDebugString(output_pair.second.first)
+                    << "index:" << output_pair.second.second << " addr:" << output_pair.second.first
+                    << " second:" << AnfAlgo::GetNodeDebugString(output_pair.first.first)
+                    << "index:" << output_pair.first.second << " addr:" << output_pair.first.first;
     }
   }
 }
@@ -1230,6 +1246,12 @@ void ControlNodeParser::FetchBackendOutputByFrontOutput(const AnfNodePtr &front_
                                                         std::set<KernelWithIndex> *results) {
   if (front_output->isa<ValueNode>()) {
     (*results).insert({front_output, 0});
+    const auto &iter = formal_to_real_parameters_.find(front_output);
+    if (iter != formal_to_real_parameters_.end()) {
+      for (const auto &node : iter->second) {
+        (*results).insert(node);
+      }
+    }
   } else if (front_output->isa<Parameter>()) {
     // Output is a parameter.
     const auto iter = formal_to_real_parameters_.find(front_output);
@@ -1265,11 +1287,10 @@ void ControlNodeParser::FetchBackendOutputByFrontOutput(const AnfNodePtr &front_
     }
   } else if (front_output->isa<CNode>()) {
     // Output is a kernel.
-    const auto iter = front_to_backend_kernels_.find(front_output);
+    const auto iter = front_to_backend_kernels_.find(AnfAlgo::VisitKernelWithReturnType(front_output, 0));
 
     if (iter != front_to_backend_kernels_.end()) {
-      const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(iter->second.first, 0);
-      (*results).insert(output_with_index);
+      (*results).insert(iter->second.first);
     } else {
       MS_LOG(EXCEPTION) << "Cannot find backend node for front kernel:" << AnfAlgo::GetNodeDebugString(front_output);
     }
@@ -1298,11 +1319,11 @@ void ControlNodeParser::FetchBackendInputNodebyFrontNode(
         }
         formal_to_real_parameters_[formal_parameter].push_back({iter->second.first, 0});
       } else {
-        const auto iter = front_to_backend_kernels_.find(node_with_index.first);
+        const auto iter = front_to_backend_kernels_.find(node_with_index);
         if (iter == front_to_backend_kernels_.end()) {
           MS_LOG(EXCEPTION) << "Cannot find actor of front node:" << AnfAlgo::GetNodeDebugString(node_with_index.first);
         }
-        formal_to_real_parameters_[formal_parameter].push_back({iter->second.first, node_with_index.second});
+        formal_to_real_parameters_[formal_parameter].emplace_back(iter->second.first);
       }
     }
   } else if (real_parameter->isa<ValueNode>()) {
@@ -1315,11 +1336,11 @@ void ControlNodeParser::FetchBackendInputNodebyFrontNode(
   } else {
     // Input node is a cnode.
     const auto node_with_index = AnfAlgo::VisitKernelWithReturnType(real_parameter, 0);
-    const auto iter = front_to_backend_kernels_.find(node_with_index.first);
+    const auto iter = front_to_backend_kernels_.find(node_with_index);
     if (iter == front_to_backend_kernels_.end()) {
       MS_LOG(EXCEPTION) << "Cannot find backend node of node:" << AnfAlgo::GetNodeDebugString(node_with_index.first);
     }
-    formal_to_real_parameters_[formal_parameter].push_back({iter->second.first, node_with_index.second});
+    formal_to_real_parameters_[formal_parameter].emplace_back(iter->second.first);
   }
 }
 
@@ -1373,6 +1394,17 @@ void ControlNodeParser::FetchBackendInputNode(const std::vector<KernelGraphPtr> 
   FetchBackendParameterNode(graphs, device_contexts, real_to_formal_front_parameters, formal_to_real_front_parameters,
                             &front_to_backend_parameters);
 
+  for (size_t i = 0; i < graphs.size(); ++i) {
+    const auto &graph = graphs[i];
+    for (const auto &value_node : graph->graph_value_nodes()) {
+      auto front_node = graph->GetFrontAnfByBackendAnf(value_node);
+
+      if (front_node != nullptr) {
+        formal_to_real_parameters_[front_node].push_back({value_node, 0});
+      }
+    }
+  }
+
   for (const auto &func_graph_to_parameters : func_graph_to_parameters_) {
     const auto &func_graph = func_graph_to_parameters.first;
     std::vector<AnfNodePtr> graph_inputs;
@@ -1418,9 +1450,10 @@ void ControlNodeParser::FetchAutoMonadNode(const std::vector<AnfNodePtr> &contro
       for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
         if (AnfAlgo::CheckPrimitiveType(inputs[i], prim::kPrimUpdateState)) {
           const auto &node = FetchSourceNodeByAutoMonad(inputs[i]);
-          const auto &iter = front_to_backend_kernels_.find(node);
+          const auto &iter = front_to_backend_kernels_.find(AnfAlgo::VisitKernelWithReturnType(node, 0));
           if (iter != front_to_backend_kernels_.end()) {
-            kernel_to_call_nodes_[iter->second.first] = control_node;
+            kernel_to_call_nodes_[iter->second.first.first] = control_node;
+            MS_LOG(DEBUG) << "Add auto monad control arrow for node:" << AnfAlgo::GetNodeDebugString(node);
           }
         }
       }

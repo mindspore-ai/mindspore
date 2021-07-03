@@ -114,7 +114,7 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
     size_t from_index = result_arrow->from_output_index_;
     const auto &front_node = data_nodes_[from_index];
     for (const auto &backend_node : front_to_backend_parameter_.at(front_node)) {
-      if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second).get() ==
+      if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second, false).get() ==
           input_device_tensors_[from_index]) {
         Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, backend_node.second,
               result_arrow->to_input_index_, context);

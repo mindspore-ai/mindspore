@@ -255,11 +255,10 @@ class GraphScheduler {
   void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void LinkOutputResultArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
-  void PrepareDataForControlNode(const ControlNodeParserPtr &control_node_parser,
+  void PrepareDataForControlNode(HostQueueDataSourceActor *host_data_source_actor,
+                                 const ControlNodeParserPtr &control_node_parser,
                                  const std::vector<AnfNodePtr> &origin_parameters,
-                                 const std::vector<TensorPtr> &tensors,
-                                 const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
-                                 std::vector<TensorPtr> *host_tensors);
+                                 const std::vector<TensorPtr> &tensors, std::vector<TensorPtr> *host_tensors);
 
   // The processing of actors link dynamically.
   // Analyze necessary input data of current actor, generate and cache op arrow

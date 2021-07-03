@@ -339,6 +339,7 @@ class KernelGraph : public FuncGraph {
 
   bool is_all_nop_node() const { return is_all_nop_node_; }
   void set_is_all_nop_node(bool is_all_nop_node) { is_all_nop_node_ = is_all_nop_node; }
+  std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_map() { return graph_output_to_front_node_map_; }
 
  private:
   // remove value node form graph

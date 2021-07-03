@@ -613,8 +613,8 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
   }
 
   // 3.Prepare the data which belongs to control node.
-  PrepareDataForControlNode(graph_compiler_info.control_node_parser_, graph_compiler_info.origin_parameters_order_,
-                            input_tensors.back(), host_data_source_actor->data_node_position_map_, &host_tensors);
+  PrepareDataForControlNode(host_data_source_actor, graph_compiler_info.control_node_parser_,
+                            graph_compiler_info.origin_parameters_order_, input_tensors.back(), &host_tensors);
 
   // 4.Prepare the data of host tensor queue(non weighted parameters of graph).
   if (host_data_source_actor != nullptr) {
@@ -670,10 +670,10 @@ void GraphScheduler::PrepareRunOp(const ActorSet *actor_set, const GraphCompiler
   }
 }
 
-void GraphScheduler::PrepareDataForControlNode(const ControlNodeParserPtr &control_node_parser,
+void GraphScheduler::PrepareDataForControlNode(HostQueueDataSourceActor *host_data_source_actor,
+                                               const ControlNodeParserPtr &control_node_parser,
                                                const std::vector<AnfNodePtr> &origin_parameters,
                                                const std::vector<TensorPtr> &tensors,
-                                               const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
                                                std::vector<TensorPtr> *host_tensors) {
   const auto &control_node_parameters = control_node_parser->GetControlNodeParameter();
 
@@ -692,7 +692,17 @@ void GraphScheduler::PrepareDataForControlNode(const ControlNodeParserPtr &contr
       PrepareDataForControlWeightNode(node_with_context.first, input_node, input_tensor, node_with_context.second,
                                       control_node_parser->host_parameter_to_weights_);
     } else if (find(origin_parameters.begin(), origin_parameters.end(), input_node) != origin_parameters.end()) {
-      PrepareDataForHostDataSourceActor(data_node_position_map, input_node, input_tensor, host_tensors);
+      const auto &iter = host_data_source_actor->data_node_position_map_.find(input_node);
+      if (iter == host_data_source_actor->data_node_position_map_.end()) {
+        MS_LOG(EXCEPTION) << "Cannot find node" << AnfAlgo::GetNodeDebugString(input_node) << " in data source actor";
+      }
+      const size_t pos = iter->second;
+      const AnfNodePtr &backend_node = host_data_source_actor->data_nodes_[pos];
+      (*host_tensors)[pos] = input_tensor;
+      auto device_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
+      if (device_address != nullptr) {
+        AnfAlgo::SetOutputAddr(device_address, 0, backend_node.get());
+      }
     }
   }
 
@@ -989,6 +999,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.second);
     }
   }
+
   return data_source_actors;
 }
 
@@ -1918,7 +1929,7 @@ void GraphScheduler::LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo
       }
 
       for (const auto pos : iter->second) {
-        auto op_arrow = std::make_shared<DataArrow>(input_pos[0], to_actor->GetAID(), pos);
+        auto op_arrow = std::make_shared<DataArrow>(0, to_actor->GetAID(), pos);
         from_actor->output_branch_result_arrows_[i].emplace_back(op_arrow);
       }
 
@@ -2211,8 +2222,22 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
   } else if (IsKernelActor(input_node, graph_compiler_info.strategy_)) {
     // The actor input is a cnode.
     if (front_node_to_actor_.find(input_node) == front_node_to_actor_.end()) {
-      MS_LOG(EXCEPTION) << "Cannot find actor:" << to_actor->GetAID()
-                        << " input_node:" << AnfAlgo::GetNodeDebugString(input_node);
+      const auto &kernel_with_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0);
+      const auto &backend_node =
+        graph_compiler_info.control_node_parser_->GetBackendKernelByFrontKernel(kernel_with_index);
+      if (backend_node.first == nullptr) {
+        MS_LOG(EXCEPTION) << "Cannot find actor:" << to_actor->GetAID()
+                          << " input_node:" << AnfAlgo::GetNodeDebugString(input_node) << " addr:" << input_node;
+      }
+      const auto &actor_name = backend_node.first->fullname_with_scope();
+      const auto &actor = FetchActor(actor_name);
+      MS_EXCEPTION_IF_NULL(actor);
+      auto op_arrow = std::make_shared<DataArrow>(backend_node.second, to_actor->GetAID(), to_index);
+      auto from_actor = dynamic_cast<KernelActor *>(actor);
+      from_actor->output_data_arrows_.emplace_back(op_arrow);
+      auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_actor->kernel_, backend_node.second, false);
+      UpdateRefCount(device_tensor.get(), true);
+      return;
     }
 
     auto op_arrow = std::make_shared<DataArrow>(input_with_index.second, to_actor->GetAID(), to_index);

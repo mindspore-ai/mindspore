@@ -397,14 +397,32 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
   for (size_t i = 0; i < output_branch_result_arrow.size(); ++i) {
     auto &result_arrow = output_branch_result_arrow[i];
     MS_EXCEPTION_IF_NULL(result_arrow);
-    size_t from_index = result_arrow->from_output_index_;
+    if (result_arrow->from_output_index_ >= SizeToInt(branch_inputs_pos_[index].size())) {
+      MS_LOG(EXCEPTION) << "Invalid from index in switch actor, from index:" << result_arrow->from_output_index_
+                        << " total:" << branch_inputs_pos_[index].size() << " actor:" << GetAID();
+    }
+    size_t from_index = branch_inputs_pos_[index][result_arrow->from_output_index_];
+
+    MS_LOG(DEBUG) << "Switch actor:" << GetAID() << " send result addr:" << input_device_tensors_[from_index];
+    bool is_send = false;
     for (const auto &backend_node : backend_parameters_[from_index]) {
-      if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second).get() ==
-          input_device_tensors_[from_index]) {
-        Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, backend_node.second,
-              result_arrow->to_input_index_, context);
-        break;
+      for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(backend_node.first); ++j) {
+        if (AnfAlgo::OutputAddrExist(backend_node.first, j, false) &&
+            AnfAlgo::GetMutableOutputAddr(backend_node.first, j, false).get() == input_device_tensors_[from_index]) {
+          Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, j,
+                result_arrow->to_input_index_, context);
+          is_send = true;
+          MS_LOG(DEBUG) << "Switch actor:" << GetAID() << " send result addr:" << input_device_tensors_[from_index]
+                        << " succeed";
+          break;
+        }
       }
+    }
+    if (!is_send) {
+      MS_LOG(EXCEPTION) << "Failed to get backend node of switch actor output, actor:" << GetAID()
+                        << " branch:" << index << " index:" << result_arrow->from_output_index_ << " output pos"
+                        << branch_inputs_pos_[index][result_arrow->from_output_index_] << " output index"
+                        << result_arrow->to_input_index_;
     }
   }
 
