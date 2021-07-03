@@ -52,7 +52,8 @@ class Evaluator : public Base {
   virtual EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                             const AnfNodeConfigPtr &out_conf);
 
-  virtual EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) = 0;
+  virtual EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
+                             const AnfNodeConfigPtr &out_conf) = 0;
   virtual EvalResultPtr SingleRun(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                   const AnfNodeConfigPtr &out_conf);
 
@@ -109,7 +110,7 @@ class PrimEvaluator : public Evaluator {
   explicit PrimEvaluator(const std::string &id) : Evaluator(id) {}
   ~PrimEvaluator() override = default;
   MS_DECLARE_PARENT(PrimEvaluator, Evaluator);
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) final {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) final {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 };
@@ -154,7 +155,9 @@ class DummyEvaluator : public Evaluator {
   DummyEvaluator() : Evaluator("dummy") {}
   ~DummyEvaluator() override = default;
   MS_DECLARE_PARENT(DummyEvaluator, Evaluator);
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override { return nullptr; }
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
+    return nullptr;
+  }
 };
 
 // Wrap another evaluator to track a subset of uses.
@@ -180,7 +183,7 @@ class TrackedEvaluator : public Evaluator {
     bound_node_ = AnfNodeWeakPtr(node);
   }
 
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -204,7 +207,8 @@ class BaseFuncGraphEvaluator : public Evaluator {
   ~BaseFuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(BaseFuncGraphEvaluator, Evaluator);
 
-  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) override;
+  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
+                     const AnfNodeConfigPtr &out_conf) override;
 
   virtual FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) = 0;
 
@@ -292,7 +296,7 @@ class PartialAppEvaluator : public Evaluator {
     bound_node_ = AnfNodeWeakPtr(node);
   }
 
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
 
@@ -312,7 +316,8 @@ class VirtualEvaluator : public Evaluator {
   ~VirtualEvaluator() override = default;
   MS_DECLARE_PARENT(VirtualEvaluator, Evaluator);
 
-  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) override;
+  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
+                     const AnfNodeConfigPtr &out_conf) override;
   std::string ToString() const override { return identifier_; }
 
  private:
@@ -340,7 +345,7 @@ class JEvaluator : public Evaluator {
     bound_node_ = AnfNodeWeakPtr(node);
   }
 
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,

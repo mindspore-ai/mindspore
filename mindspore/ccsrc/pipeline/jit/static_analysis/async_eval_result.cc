@@ -188,7 +188,7 @@ void AnalysisResultCacheMgr::Todo() {
 }
 
 void AnalysisResultCacheMgr::Wait() {
-  pybind11::gil_scoped_release infer_gil_release;
+  py::gil_scoped_release infer_gil_release;
   while (true) {
     StaticAnalysisException::Instance().CheckException();
     lock_.lock();

@@ -79,18 +79,17 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
   trace::TraceGraphEvalEnter(evaluator, call_conf);
 
   // Increase & Check the func graph call depth.
-  engine->IncreaseFunctionCallDepth();
-  engine->IncreaseStackFrameDepth();
+  IncreaseFunctionCallDepth();
+  IncreaseStackFrameDepth();
   const uint32_t max_depth = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH);
-  if (engine->function_call_depth() > max_depth) {
+  if (FunctionCallDepth() > max_depth) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit " << max_depth
-                      << ", (function call depth: " << engine->function_call_depth()
-                      << ", simulate call depth: " << engine->stack_frame_depth()
+                      << ", (function call depth: " << FunctionCallDepth()
+                      << ", simulate call depth: " << StackFrameDepth()
                       << "), please call 'context.set_context(max_call_depth=value)' to adjust this value.";
   }
   MS_LOG(DEBUG) << evaluator << "(" << evaluator->type_name() << "/" << evaluator->ToString()
-                << "), enter, function call depth: " << engine->function_call_depth() << " - "
-                << engine->stack_frame_depth();
+                << "), enter, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
 }
 
 void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &engine,
@@ -101,11 +100,10 @@ void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &engine,
   trace::TraceGraphEvalLeave(evaluator);
 
   // Decrease the func graph call depth.
-  engine->DecreaseFunctionCallDepth();
-  engine->DecreaseStackFrameDepth();
+  DecreaseFunctionCallDepth();
+  DecreaseStackFrameDepth();
   MS_LOG(DEBUG) << evaluator << "(" << evaluator->type_name() << "/" << evaluator->ToString()
-                << "), leave, function call depth: " << engine->function_call_depth() << " - "
-                << engine->stack_frame_depth();
+                << "), leave, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
 }
 
 // Start running stack frames in a Evaluator.
@@ -178,7 +176,8 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
   return res_base;
 }
 
-EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) {
+EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list,
+                                           const AnfNodeConfigPtr &out_conf) {
   auto eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
   if (eval_result != nullptr) {
     MS_LOG(ERROR) << ToString() << ArgsToString(args_abs_list) << " entered again. There is something wrong.";
@@ -186,19 +185,20 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   } else {
     MS_LOG(DEBUG) << ToString() << " entered first.";
   }
-
   MS_EXCEPTION_IF_NULL(engine);
-  engine->IncreaseFunctionCallDepth();
+
+  trace::TraceGraphEvalEnter(shared_from_base<Evaluator>(), out_conf);
+  // Increase & Check the func graph call depth.
+  IncreaseFunctionCallDepth();
   const uint32_t max_depth = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH);
-  if (engine->function_call_depth() > max_depth) {
+  if (FunctionCallDepth() > max_depth) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit " << max_depth
-                      << ", (function call depth: " << engine->function_call_depth()
-                      << ", simulate call depth: " << engine->stack_frame_depth()
+                      << ", (function call depth: " << FunctionCallDepth()
+                      << ", simulate call depth: " << StackFrameDepth()
                       << "), please call 'context.set_context(max_call_depth=value)' to adjust this value.";
   }
   MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
-                << "), enter, function call depth: " << engine->function_call_depth() << " - "
-                << engine->stack_frame_depth();
+                << "), enter, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
 
   // Initialize evaluator starter with args_abs_list.
   FuncGraphPtr fg = GetFuncGraph(engine, args_abs_list);
@@ -234,7 +234,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
                 << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
                 << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")
-                << ", current function call depth: " << engine->function_call_depth();
+                << ", current function call depth: " << FunctionCallDepth();
   AbstractBasePtr res_base = nullptr;
   if (engine->enable_recursive_eval()) {
     res_base = LaunchRecursiveEval(engine, fg, context);
@@ -248,12 +248,13 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   if (fg->stub()) {
     res_base = std::make_shared<AbstractUndetermined>();
   }
-
   MS_LOG(DEBUG) << GetInferThread() << "} //" << fg->ToString() << " = " << res_base->ToString();
-  engine->DecreaseFunctionCallDepth();
+
+  trace::TraceGraphEvalLeave(shared_from_base<Evaluator>());
+  // Decrease the func graph call depth.
+  DecreaseFunctionCallDepth();
   MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
-                << "), leave, function call depth: " << engine->function_call_depth() << " - "
-                << engine->stack_frame_depth();
+                << "), leave, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
   auto res = std::make_shared<EvalResult>(res_base, nullptr);
   return res;
 }
@@ -357,17 +358,16 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
-
   args_spec_list = NormalizeArgs(args_spec_list);
   args_spec_list = BroadenUndeterminedArgs(args_spec_list);
-  trace::TraceGraphEvalEnter(shared_from_base<Evaluator>(), out_conf);
+
   MS_LOG(DEBUG) << EvalEntryLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
   const std::string &evaluator_name = ToString();
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
   auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
   if (eval_result == nullptr) {
     MS_LOG(DEBUG) << evaluator_name << " cache miss, call Eval().";
-    eval_result = Eval(engine, args_spec_list);
+    eval_result = Eval(engine, args_spec_list, out_conf);
     MS_EXCEPTION_IF_NULL(eval_result);
     if (eval_result->abstract() == nullptr) {
       EvalFailLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
@@ -380,7 +380,6 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     MS_EXCEPTION_IF_NULL(eval_result->abstract());
     MS_LOG(DEBUG) << evaluator_name << " cache hit. return: " << eval_result->abstract()->ToString() << ".";
   }
-  trace::TraceGraphEvalLeave(shared_from_base<Evaluator>());
   return eval_result;
 }
 
@@ -507,7 +506,8 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   return res;
 }
 
-EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrList &args_spec_list) {
+EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrList &args_spec_list,
+                                     const AnfNodeConfigPtr &out_conf) {
   if (args_spec_list.size() != args_spec_list_.size()) {
     MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_spec_list_.size()
                       << ", arguments no: " << args_spec_list.size();

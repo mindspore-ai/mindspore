@@ -35,6 +35,51 @@
 
 namespace mindspore {
 namespace abstract {
+// Record current depth of function call stack, including `stack_frame_depth`.
+thread_local size_t function_call_depth;
+thread_local size_t function_call_max_depth;
+// Record current depth of stack frames call.
+thread_local size_t stack_frame_depth;
+thread_local size_t stack_frame_max_depth;
+
+void ResetFunctionCallDepth() {
+  function_call_depth = 0;
+  function_call_max_depth = 0;
+}
+void IncreaseFunctionCallDepth() {
+  function_call_depth++;
+  if (function_call_max_depth < function_call_depth) {
+    function_call_max_depth = function_call_depth;
+  }
+}
+void DecreaseFunctionCallDepth() {
+  if (function_call_depth == 0) {
+    MS_LOG(EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
+  }
+  function_call_depth--;
+}
+size_t FunctionCallDepth() { return function_call_depth; }
+size_t FunctionCallMaxDepth() { return function_call_max_depth; }
+
+void ResetStackFrameDepth() {
+  stack_frame_depth = 0;
+  stack_frame_max_depth = 0;
+}
+void IncreaseStackFrameDepth() {
+  stack_frame_depth++;
+  if (stack_frame_max_depth < stack_frame_depth) {
+    stack_frame_max_depth = stack_frame_depth;
+  }
+}
+void DecreaseStackFrameDepth() {
+  if (stack_frame_depth == 0) {
+    MS_LOG(EXCEPTION) << "Current stack frame depth is already 0, can not decrease it.";
+  }
+  stack_frame_depth--;
+}
+size_t StackFrameDepth() { return stack_frame_depth; }
+size_t StackFrameMaxDepth() { return stack_frame_max_depth; }
+
 bool IsIntermediateAbstract(const AbstractBasePtr &arg_spec) {
   if (dyn_cast<AbstractScalar>(arg_spec)) {
     auto v = arg_spec->GetValueTrack();
@@ -796,7 +841,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
                                                                    const AnfNodeConfigPtr &out_conf,
                                                                    const ConfigPtrList &args_conf_list) {
   // Release GIL;
-  pybind11::gil_scoped_release infer_gil_release;
+  py::gil_scoped_release infer_gil_release;
 
   // Wait for the switch node to finish.
   MS_LOG(DEBUG) << GetInferThread() << "async : entry switch  " << out_conf->ToString();
