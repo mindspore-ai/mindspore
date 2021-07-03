@@ -306,13 +306,6 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
   if (iter->second == "format") {
     ValuePtr format = prim->GetAttr("format");
     MS_EXCEPTION_IF_NULL(format);
-    std::string type_name = prim->name();
-    bool converted = CheckAndConvertUtils::ConvertAttrValueToString(type_name, "format", &format);
-    if (!converted) {
-      MS_LOG(ERROR) << "Fail to convert from attr value to string"
-                    << " for Op: " << type_name;
-      return ret;
-    }
     return GetValue<std::string>(format);
   }
   return iter->second;
