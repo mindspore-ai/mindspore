@@ -398,7 +398,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     bool is_send = false;
     for (const auto &backend_node : backend_parameters_[from_index]) {
       for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(backend_node.first); ++j) {
-        if (AnfAlgo::OutputAddrExist(backend_node.first, j, false) &&
+        if (backend_node.first->kernel_info() != nullptr && AnfAlgo::OutputAddrExist(backend_node.first, j, false) &&
             AnfAlgo::GetMutableOutputAddr(backend_node.first, j, false).get() == input_device_tensors_[from_index]) {
           Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, j,
                 result_arrow->to_input_index_, context);
