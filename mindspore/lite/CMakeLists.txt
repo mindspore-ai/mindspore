@@ -131,7 +131,10 @@ message(STATUS "\tMSLITE_ENABLE_TESTCASES = \t${MSLITE_ENABLE_TESTCASES}")
 message(STATUS "\tMSLITE_ENABLE_TENSORRT = \t${MSLITE_ENABLE_TENSORRT}")
 
 if(ENABLE_ASAN)
-    add_definitions(-fsanitize=address -fno-omit-frame-pointer -mllvm -asan-use-private-alias=1)
+    add_definitions(-fsanitize=address -fno-omit-frame-pointer)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        add_definitions(-mllvm -asan-use-private-alias=1)
+    endif()
     add_link_options(-fsanitize=address)
 endif()
 
