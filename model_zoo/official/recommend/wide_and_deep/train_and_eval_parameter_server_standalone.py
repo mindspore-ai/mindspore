@@ -117,13 +117,14 @@ def train_and_eval(config):
 
 
 def modelarts_pre_process():
-    config.ckpt_path = config.output_path
+    cfg.ckpt_path = cfg.output_path
+
+context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=True)
+cache_enable = cfg.vocab_cache_size > 0
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_wide_and_deep():
     """ train_wide_and_deep """
-    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=True)
-    cache_enable = cfg.vocab_cache_size > 0
     if not cache_enable:
         cfg.sparse = True
     if cfg.sparse:

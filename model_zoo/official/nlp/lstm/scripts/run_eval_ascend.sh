@@ -39,6 +39,6 @@ CONFIG_FILE="${BASE_PATH}/../../config_ascend.yaml"
 python ../../eval.py  \
     --config_path=$CONFIG_FILE \
     --device_target="Ascend" \
-    --preprocess=true  \
-    --glove_path=$PREPROCESS_DIR \
+    --preprocess=false \
+    --preprocess_path=$PREPROCESS_DIR \
     --ckpt_file=$CKPT_FILE > log.txt 2>&1 &
