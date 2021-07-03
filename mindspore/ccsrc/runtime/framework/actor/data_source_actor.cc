@@ -65,7 +65,11 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }
 
-  // Send output data.
+  // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
+  // 1.Send graph output result.
+  SendResult(context);
+
+  // 2.Send output data.
   const auto &output_device_tensors = buffers_.front();
   for (size_t i = 0; i < output_data_arrows_.size(); ++i) {
     auto &data_arrow = output_data_arrows_[i];
@@ -79,10 +83,7 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
     Async(data_arrow->to_op_id_, &OpActor::RunOpData, output_data.get(), context);
   }
 
-  // Send graph output result.
-  SendResult(context);
-
-  // Send output control.
+  // 3.Send output control.
   if (output_control_arrows_.size() > 0) {
     auto source_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
@@ -90,7 +91,7 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
     }
   }
 
-  // Send recorder info.
+  // 4.Send recorder info.
   if (recorder_aid_ != nullptr) {
     SendRecorderInfo(context);
   }
@@ -153,12 +154,12 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     auto ret = device_context_->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
                                              launch_info_.outputs_);
     if (!ret) {
-      std::string error_info = "Launch kernel failed: " + data_kernel_->ToString();
+      std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
-    std::string error_info = "Launch kernel exception: " + data_kernel_->ToString();
+    std::string error_info = "Launch kernel exception: " + data_kernel_->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 

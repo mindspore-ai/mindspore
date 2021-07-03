@@ -99,7 +99,9 @@ void GatherActor::FetchBackendInputNode(const FuncGraphPtr &func_graph, const Co
 
 void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
-  // Send output branch id.
+  // Must be the execution order: send branch id --> send result --> send data --> send control, avoid the illegal
+  // timing problem.
+  // 1.Send output branch id.
   if (find(output_branch_arrows_.begin(), output_branch_arrows_.end(), switch_aid_) != output_branch_arrows_.end()) {
     int branch_id = input_branch_id_;
     Async(switch_aid_, &SwitchActor::CollectBranchId, branch_id, context);
@@ -108,7 +110,7 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
     Async(gather_aid_, &GatherActor::CollectBranchId, local_branch_id_, context);
   }
 
-  // Send output result.
+  // 2.Send output result.
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     size_t from_index = result_arrow->from_output_index_;
@@ -123,13 +125,13 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
     }
   }
 
-  // Send output data.
+  // 3.Send output data.
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data);
     Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
   }
 
-  // Send output control.
+  // 4.Send output control.
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_control_arrows_) {
     Async(output_control, &OpActor::RunOpControl, source_aid, context);
@@ -153,7 +155,7 @@ void GatherActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
       DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context->GetDeviceAddressType());
     if (device_tensor == nullptr) {
       std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
         ", device type:" + std::to_string(static_cast<int>(device_context->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
