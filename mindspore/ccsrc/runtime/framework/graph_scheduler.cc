@@ -1367,11 +1367,13 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
                       << ", internal parameter:" << AnfAlgo::GetNodeDebugString(internal_parameter);
   }
   auto actor_pair = graph_output_to_actor_[front_output_with_index];
-  MS_LOG(INFO) << "Graph " << graph->graph_id() << " internal parameter:" << internal_parameter->DebugString()
-               << ", corresponding front node:" << front_output_node->fullname_with_scope()
-               << " with index:" << front_output_with_index.second
-               << ", from actor:" << actor_pair.first->GetAID().Name() << " with index:" << actor_pair.second
-               << ", to actor:" << to_actor->GetAID().Name() << " with index:" << to_kernel_with_input_idx.second;
+  if (actor_pair.first != nullptr) {
+    MS_LOG(INFO) << "Graph " << graph->graph_id() << " internal parameter:" << internal_parameter->DebugString()
+                 << ", corresponding front node:" << front_output_node->fullname_with_scope()
+                 << " with index:" << front_output_with_index.second
+                 << ", from actor:" << actor_pair.first->GetAID().Name() << " with index:" << actor_pair.second
+                 << ", to actor:" << to_actor->GetAID().Name() << " with index:" << to_kernel_with_input_idx.second;
+  }
 
   if (IsDeviceQueueDSActor(front_output_node)) {
     auto from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(actor_pair.first);
