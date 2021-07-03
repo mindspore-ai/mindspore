@@ -242,17 +242,19 @@ void PsCacheManager::AllocMemForHashTable() {
 
 void PsCacheManager::SetLocalIdRank() {
   auto worker_num = PSContext::instance()->initial_worker_num();
-  auto local_shard_size = FloatToInt(std::ceil(SizeToFloat(vocab_size_) / worker_num));
-  vocab_cache_size_diff_ = local_shard_size - SizeToInt(vocab_cache_size_);
-  emb_table_slice_bounds_.first = local_shard_size * rank_id_;
-  emb_table_slice_bounds_.second = std::min(emb_table_slice_bounds_.first + local_shard_size, SizeToInt(vocab_size_));
-  cache_indices_bounds_.first = SizeToInt(vocab_cache_size_) * rank_id_;
-  cache_indices_bounds_.second = cache_indices_bounds_.first + SizeToInt(vocab_cache_size_);
-  MS_LOG(INFO) << "Worker num:" << worker_num << ", rank id:" << rank_id_
-               << ", id begin:" << emb_table_slice_bounds_.first << ", id end:" << emb_table_slice_bounds_.second
-               << ", cache indices begin: " << cache_indices_bounds_.first
-               << ", cache indices end: " << cache_indices_bounds_.second
-               << ", vocab_cache_size_diff: " << vocab_cache_size_diff_;
+  if (worker_num > 0) {
+    auto local_shard_size = FloatToInt(std::ceil(SizeToFloat(vocab_size_) / worker_num));
+    vocab_cache_size_diff_ = local_shard_size - SizeToInt(vocab_cache_size_);
+    emb_table_slice_bounds_.first = local_shard_size * rank_id_;
+    emb_table_slice_bounds_.second = std::min(emb_table_slice_bounds_.first + local_shard_size, SizeToInt(vocab_size_));
+    cache_indices_bounds_.first = SizeToInt(vocab_cache_size_) * rank_id_;
+    cache_indices_bounds_.second = cache_indices_bounds_.first + SizeToInt(vocab_cache_size_);
+    MS_LOG(INFO) << "Worker num:" << worker_num << ", rank id:" << rank_id_
+                 << ", id begin:" << emb_table_slice_bounds_.first << ", id end:" << emb_table_slice_bounds_.second
+                 << ", cache indices begin: " << cache_indices_bounds_.first
+                 << ", cache indices end: " << cache_indices_bounds_.second
+                 << ", vocab_cache_size_diff: " << vocab_cache_size_diff_;
+  }
 }
 
 int PsCacheManager::cache_indices_lower_bound() const { return cache_indices_bounds_.first; }

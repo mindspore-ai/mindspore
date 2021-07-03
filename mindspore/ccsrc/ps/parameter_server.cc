@@ -35,7 +35,9 @@ void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   SyncEmbeddingTables();
   MS_LOG(INFO) << "PServer finished updating models, starts finalizing...";
   server_node_->Finish();
-  server_node_->Stop();
+  if (!server_node_->Stop()) {
+    MS_LOG(WARNING) << "Parameter server stop failed.";
+  }
   MS_LOG(INFO) << "PServer finalized successfully.";
 }
 
@@ -561,7 +563,9 @@ void ParameterServer::ServerHandler::HandleInitWeights(DataPtr data, size_t size
   std::unique_lock<std::mutex> lock(ps_->mutex());
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  input.ParseFromArray(data.get(), size);
+  if (!input.ParseFromArray(data.get(), SizeToInt(size))) {
+    MS_LOG(WARNING) << "Parse data failed.";
+  }
   int key_num = input.keys_size();
   const float *data_ptr = input.values().data();
   size_t pos = 0;
@@ -586,9 +590,11 @@ void ParameterServer::ServerHandler::HandleInitWeightToOptimId(DataPtr data, siz
   std::unique_lock<std::mutex> lock(ps_->mutex());
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  input.ParseFromArray(data.get(), size);
-  size_t key_num = input.keys_size();
-  for (size_t i = 0; i < key_num; i++) {
+  if (!input.ParseFromArray(data.get(), SizeToInt(size))) {
+    MS_LOG(WARNING) << "Parse data failed.";
+  }
+  int key_num = input.keys_size();
+  for (int i = 0; i < key_num; i++) {
     Key key = input.keys()[i];
     float val = input.values()[i];
     if (init_weight_to_optim_[key]) {
@@ -596,7 +602,7 @@ void ParameterServer::ServerHandler::HandleInitWeightToOptimId(DataPtr data, siz
     } else {
       init_weight_to_optim_[key] = true;
     }
-    ps_->InitWeightKeyToOptims(key, val);
+    ps_->InitWeightKeyToOptims(key, static_cast<int64_t>(val));
   }
 }
 
@@ -722,7 +728,7 @@ void ParameterServer::ServerHandler::HandleUpdateEmbeddings(DataPtr data, size_t
   ps_->UpdateEmbeddings(key, lookup_ids, update_vals);
 }
 
-void ParameterServer::ServerHandler::HandleFinalize(DataPtr data, size_t size, VectorPtr res) {
+void ParameterServer::ServerHandler::HandleFinalize(DataPtr, size_t, VectorPtr res) {
   MS_EXCEPTION_IF_NULL(res);
   ps_->Finalize();
 }

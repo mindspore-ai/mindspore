@@ -31,8 +31,8 @@ std::string Node::BoundIp() const { return node_info_.ip_; }
 
 bool Node::WaitForStart(const uint32_t &timeout) {
   std::unique_lock<std::mutex> lock(wait_start_mutex_);
-  bool res = wait_start_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {
-    bool res = is_ready_.load();
+  bool res = wait_start_cond_.wait_for(lock, std::chrono::seconds(timeout), [this] {
+    bool res = this->is_ready_.load();
     if (res) {
       MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " is success start!";
     }

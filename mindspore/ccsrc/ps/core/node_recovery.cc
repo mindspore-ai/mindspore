@@ -19,7 +19,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 bool NodeRecovery::Recover() {
   if (recovery_storage_ == nullptr) {
     return false;

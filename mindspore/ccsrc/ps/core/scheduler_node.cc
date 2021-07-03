@@ -21,7 +21,9 @@ namespace ps {
 namespace core {
 SchedulerNode::~SchedulerNode() {
   MS_LOG(INFO) << "Stop scheduler node!";
-  Stop();
+  if (!Stop()) {
+    MS_LOG(WARNING) << "Scheduler node stop failed.";
+  }
 }
 
 bool SchedulerNode::Start(const uint32_t &timeout) {
@@ -66,8 +68,10 @@ void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::sha
 
   heartbeat_resp_message.set_is_worker_or_server0(node_manager_.IsWorkerOrServer0());
 
-  server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
-                      heartbeat_resp_message.ByteSizeLong());
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
+                           heartbeat_resp_message.ByteSizeLong())) {
+    MS_LOG(WARNING) << "Send heart beat failed.";
+  }
 }
 
 void SchedulerNode::Initialize() {
@@ -98,7 +102,7 @@ void SchedulerNode::CreateTcpServer() {
   uint32_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
   server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port);
   server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                  const Protos &protos, const void *data, size_t size) {
+                                  const Protos &, const void *data, size_t size) {
     if (handlers_.count(meta->cmd()) == 0) {
       MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
     }
@@ -122,7 +126,9 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
   MS_EXCEPTION_IF_NULL(data);
   MS_LOG(INFO) << "The scheduler process a register message!";
   RegisterMessage register_message;
-  register_message.ParseFromArray(data, size);
+  if (!register_message.ParseFromArray(data, SizeToInt(size))) {
+    MS_LOG(WARNING) << "Parse data failed.";
+  }
 
   // assign worker node and server node rank id
   uint32_t rank_id = node_manager_.NextRankId(register_message);
@@ -179,7 +185,6 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
     }
     return false;
   });
-
   if (iter != scale_in_node_ids_.end()) {
     return;
   }
@@ -450,11 +455,11 @@ bool SchedulerNode::Stop() {
 bool SchedulerNode::Finish(const uint32_t &) {
   MS_LOG(INFO) << "[Scheduler finish]: 1. Begin to finish scheduler node!";
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
-  wait_finish_cond_.wait(lock, [&] {
-    if (is_finish_.load()) {
+  wait_finish_cond_.wait(lock, [this] {
+    if (this->is_finish_.load()) {
       MS_LOG(INFO) << "[Scheduler finish]: 2. Successfully finish scheduler!";
     }
-    return is_finish_.load();
+    return this->is_finish_.load();
   });
   return true;
 }

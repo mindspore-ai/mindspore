@@ -19,7 +19,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 void RecoveryBase::Initialize(const std::string &config_json) {
   nlohmann::json recovery_config;
   try {
@@ -35,7 +34,6 @@ void RecoveryBase::Initialize(const std::string &config_json) {
     storage_type_ = StorageType::kFileStorage;
 
     storage_file_path = recovery_config.at(kStoreFilePath);
-
     if (storage_file_path == "") {
       MS_LOG(EXCEPTION) << "If the scheduler support recovery, and if the persistent storage is a file, the path of "
                            "the file must be configured";

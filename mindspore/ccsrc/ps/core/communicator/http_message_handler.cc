@@ -45,7 +45,10 @@ void HttpMessageHandler::InitHttpMessage() {
   const char *query = evhttp_uri_get_query(event_uri_);
   if (query != nullptr) {
     MS_LOG(WARNING) << "The query is:" << query;
-    evhttp_parse_query_str(query, &path_params_);
+    int result = evhttp_parse_query_str(query, &path_params_);
+    if (result < 0) {
+      MS_LOG(ERROR) << "Http parse query:" << query << " failed.";
+    }
   }
 
   head_params_ = evhttp_request_get_input_headers(event_request_);
@@ -58,14 +61,14 @@ void HttpMessageHandler::ParseUrl(const std::string &url) {
   MS_EXCEPTION_IF_NULL(event_uri_);
 }
 
-std::string HttpMessageHandler::GetHeadParam(const std::string &key) {
+std::string HttpMessageHandler::GetHeadParam(const std::string &key) const {
   MS_EXCEPTION_IF_NULL(head_params_);
   const char *val = evhttp_find_header(head_params_, key.c_str());
   MS_EXCEPTION_IF_NULL(val);
   return std::string(val);
 }
 
-std::string HttpMessageHandler::GetPathParam(const std::string &key) {
+std::string HttpMessageHandler::GetPathParam(const std::string &key) const {
   const char *val = evhttp_find_header(&path_params_, key.c_str());
   MS_EXCEPTION_IF_NULL(val);
   return std::string(val);
@@ -134,7 +137,7 @@ std::string HttpMessageHandler::GetPostParam(const std::string &key) {
   return std::string(val);
 }
 
-std::string HttpMessageHandler::GetRequestUri() {
+std::string HttpMessageHandler::GetRequestUri() const {
   MS_EXCEPTION_IF_NULL(event_request_);
   const char *uri = evhttp_request_get_uri(event_request_);
   MS_EXCEPTION_IF_NULL(uri);
@@ -148,14 +151,14 @@ std::string HttpMessageHandler::GetRequestHost() {
   return std::string(host);
 }
 
-const char *HttpMessageHandler::GetHostByUri() {
+const char *HttpMessageHandler::GetHostByUri() const {
   MS_EXCEPTION_IF_NULL(event_uri_);
   const char *host = evhttp_uri_get_host(event_uri_);
   MS_EXCEPTION_IF_NULL(host);
   return host;
 }
 
-int HttpMessageHandler::GetUriPort() {
+int HttpMessageHandler::GetUriPort() const {
   MS_EXCEPTION_IF_NULL(event_uri_);
   int port = evhttp_uri_get_port(event_uri_);
   if (port < 0) {
@@ -164,7 +167,7 @@ int HttpMessageHandler::GetUriPort() {
   return port;
 }
 
-std::string HttpMessageHandler::GetUriPath() {
+std::string HttpMessageHandler::GetUriPath() const {
   MS_EXCEPTION_IF_NULL(event_uri_);
   const char *path = evhttp_uri_get_path(event_uri_);
   MS_EXCEPTION_IF_NULL(path);
@@ -186,7 +189,7 @@ std::string HttpMessageHandler::GetRequestPath() {
   return path_res;
 }
 
-std::string HttpMessageHandler::GetUriQuery() {
+std::string HttpMessageHandler::GetUriQuery() const {
   MS_EXCEPTION_IF_NULL(event_uri_);
   const char *query = evhttp_uri_get_query(event_uri_);
   MS_EXCEPTION_IF_NULL(query);
@@ -259,8 +262,7 @@ void HttpMessageHandler::SimpleResponse(int code, const HttpHeaders &headers, co
   MS_EXCEPTION_IF_NULL(resp_buf_);
   AddRespHeaders(headers);
   AddRespString(body);
-  MS_EXCEPTION_IF_NULL(resp_buf_);
-  evhttp_send_reply(event_request_, resp_code_, nullptr, resp_buf_);
+  evhttp_send_reply(event_request_, code, nullptr, resp_buf_);
 }
 
 void HttpMessageHandler::ErrorResponse(int code, RequestProcessResult result) {
@@ -293,9 +295,9 @@ void HttpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
 
 void HttpMessageHandler::set_content_len(const uint64_t &len) { content_len_ = len; }
 
-uint64_t HttpMessageHandler::content_len() { return content_len_; }
+uint64_t HttpMessageHandler::content_len() const { return content_len_; }
 
-const event_base *HttpMessageHandler::http_base() { return event_base_; }
+const event_base *HttpMessageHandler::http_base() const { return event_base_; }
 
 void HttpMessageHandler::set_http_base(const struct event_base *base) {
   MS_EXCEPTION_IF_NULL(base);
@@ -307,13 +309,13 @@ void HttpMessageHandler::set_request(const struct evhttp_request *req) {
   event_request_ = const_cast<evhttp_request *>(req);
 }
 
-const struct evhttp_request *HttpMessageHandler::request() { return event_request_; }
+const struct evhttp_request *HttpMessageHandler::request() const { return event_request_; }
 
 void HttpMessageHandler::InitBodySize() { body_->resize(content_len()); }
 
 std::shared_ptr<std::vector<char>> HttpMessageHandler::body() { return body_; }
 
-void HttpMessageHandler::set_body(std::shared_ptr<std::vector<char>> body) { body_ = body; }
+void HttpMessageHandler::set_body(const VectorPtr &body) { body_ = body; }
 
 const nlohmann::json &HttpMessageHandler::request_message() const { return request_message_; }
 

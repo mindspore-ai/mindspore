@@ -69,19 +69,19 @@ class HttpMessageHandler {
   void InitHttpMessage();
   void ParseUrl(const std::string &url);
 
-  std::string GetRequestUri();
+  std::string GetRequestUri() const;
   std::string GetRequestHost();
-  const char *GetHostByUri();
-  std::string GetHeadParam(const std::string &key);
-  std::string GetPathParam(const std::string &key);
+  const char *GetHostByUri() const;
+  std::string GetHeadParam(const std::string &key) const;
+  std::string GetPathParam(const std::string &key) const;
   std::string GetPostParam(const std::string &key);
   uint64_t GetPostMsg(unsigned char **buffer);
-  std::string GetUriPath();
+  std::string GetUriPath() const;
   std::string GetRequestPath();
-  std::string GetUriQuery();
+  std::string GetUriQuery() const;
 
   // It will return -1 if no port set
-  int GetUriPort();
+  int GetUriPort() const;
 
   // Useless to get from a request url, fragment is only for browser to locate sth.
   std::string GetUriFragment();
@@ -104,14 +104,14 @@ class HttpMessageHandler {
   RequestProcessResult ParsePostMessageToJson();
   void ReceiveMessage(const void *buffer, size_t num);
   void set_content_len(const uint64_t &len);
-  uint64_t content_len();
-  const event_base *http_base();
+  uint64_t content_len() const;
+  const event_base *http_base() const;
   void set_http_base(const struct event_base *base);
   void set_request(const struct evhttp_request *req);
-  const struct evhttp_request *request();
+  const struct evhttp_request *request() const;
   void InitBodySize();
   VectorPtr body();
-  void set_body(VectorPtr body);
+  void set_body(const VectorPtr &body);
   const nlohmann::json &request_message() const;
   RequestProcessResult ParseValueFromKey(const std::string &key, int32_t *const value);
 
