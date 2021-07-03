@@ -12,9 +12,9 @@ output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
 device_num: 1
 device_id: 0
-device_target: 'Ascend'
-checkpoint_path: './checkpoint/'
-checkpoint_file_path: 'suqeezenet_imagenet-200_5004.ckpt'
+device_target: "Ascend"
+checkpoint_path: "./checkpoint/"
+checkpoint_file_path: "suqeezenet_imagenet-200_5004.ckpt"
 
 # ==============================================================================
 # Training options

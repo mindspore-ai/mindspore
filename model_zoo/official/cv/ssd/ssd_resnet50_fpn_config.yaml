@@ -10,9 +10,9 @@ enable_profiling: False
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
-device_target: 'Ascend'
-checkpoint_path: './checkpoint/'
-checkpoint_file_path: 'resnet50.ckpt'
+device_target: "Ascend"
+checkpoint_path: "./checkpoint/"
+checkpoint_file_path: "resnet50.ckpt"
 
 # ==============================================================================
 # Training options
@@ -113,16 +113,16 @@ file_format: "AIR"
 
 ---
 # Help description for each configuration
-enable_modelarts: 'Whether training on modelarts, default: False'
-data_url: 'Dataset url for obs'
-train_url: 'Training output url for obs'
-checkpoint_url: 'The location of checkpoint for obs'
-data_path: 'Dataset path for local'
-output_path: 'Training output path for local'
-load_path: 'The location of checkpoint for obs'
-device_target: 'Target device type, available: [Ascend, GPU, CPU]'
-enable_profiling: 'Whether enable profiling while training, default: False'
-num_classes: 'Class for dataset'
+enable_modelarts: "Whether training on modelarts, default: False"
+data_url: "Dataset url for obs"
+train_url: "Training output url for obs"
+checkpoint_url: "The location of checkpoint for obs"
+data_path: "Dataset path for local"
+output_path: "Training output path for local"
+load_path: "The location of checkpoint for obs"
+device_target: "Target device type, available: [Ascend, GPU, CPU]"
+enable_profiling: "Whether enable profiling while training, default: False"
+num_classes: "Class for dataset"
 batch_size: "Batch size for training and evaluation"
 epoch_size: "Total training epochs."
 keep_checkpoint_max: "keep the last keep_checkpoint_max checkpoint"

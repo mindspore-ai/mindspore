@@ -10,13 +10,13 @@ enable_profiling: False
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
-device_target: 'Ascend'
-checkpoint_path: './checkpoint/'
-checkpoint_file_path: ''
+device_target: "Ascend"
+checkpoint_path: "./checkpoint/"
+checkpoint_file_path: ""
 
 # ==============================================================================
 # Training options
-optimizer: 'Momentum'
+optimizer: "Momentum"
 infer_label: ""
 class_num: 1001
 batch_size: 32
@@ -54,8 +54,8 @@ mode_name: "GRAPH"
 
 # Export options
 device_id: 0
-width: 224
-height: 224
+width: 256
+height: 256
 file_name: "se-resnet50"
 file_format: "AIR"
 ckpt_file: ""
@@ -63,15 +63,15 @@ network_dataset: "se-resnet50_imagenet2012"
 
 ---
 # Help description for each configuration
-enable_modelarts: 'Whether training on modelarts, default: False'
-data_url: 'Dataset url for obs'
-checkpoint_url: 'The location of checkpoint for obs'
-data_path: 'Dataset path for local'
-output_path: 'Training output path for local'
-load_path: 'The location of checkpoint for obs'
-device_target: 'Target device type, available: [Ascend, GPU, CPU]'
-enable_profiling: 'Whether enable profiling while training, default: False'
-num_classes: 'Class for dataset'
+enable_modelarts: "Whether training on modelarts, default: False"
+data_url: "Dataset url for obs"
+checkpoint_url: "The location of checkpoint for obs"
+data_path: "Dataset path for local"
+output_path: "Training output path for local"
+load_path: "The location of checkpoint for obs"
+device_target: "Target device type, available: [Ascend, GPU, CPU]"
+enable_profiling: "Whether enable profiling while training, default: False"
+num_classes: "Class for dataset"
 batch_size: "Batch size for training and evaluation"
 epoch_size: "Total training epochs."
 checkpoint_path: "The location of the checkpoint file."
