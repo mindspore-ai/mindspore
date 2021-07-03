@@ -269,6 +269,16 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
             new_sub_graph->input_indices_.end()) {
           continue;
         }
+
+        auto in_tensor_in_nodes = tensors_[input].out_nodes_;
+        if (!in_tensor_in_nodes.empty()) {
+          uint32_t in_tensor_in_node = in_tensor_in_nodes[0];
+          if (std::find(new_sub_graph->node_indices_.begin(), new_sub_graph->node_indices_.end(), in_tensor_in_node) !=
+              new_sub_graph->node_indices_.end()) {
+            continue;
+          }
+        }
+
         new_sub_graph->input_indices_.insert(new_sub_graph->input_indices_.end(), input);
         new_partial_node->input_indices_.insert(new_partial_node->input_indices_.end(), input);
       }
@@ -363,7 +373,7 @@ void SearchSubGraph::RemoveConstNode(std::vector<uint32_t> *nodes) {
   return;
 }
 
-void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph) {
+void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph, uint32_t last_index) {
   if (subgraph->search_terminate_) {
     return;
   }
@@ -394,7 +404,7 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph) {
       subgraph->search_terminate_ = true;
       return;
     }
-    subgraph->heads_.push_back(subgraph->nodes_.front());
+    subgraph->heads_.push_back(last_index);
     return;
   }
 
@@ -410,7 +420,7 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph) {
   for (uint32_t in : input) {
     auto next_nodes = tensors_[in].out_nodes_;
     for (uint32_t next_node : next_nodes) {
-      InsertNode(next_node, subgraph);
+      InsertNode(next_node, subgraph, index);
     }
   }
   return;
@@ -475,7 +485,7 @@ void SearchSubGraph::InsertHeadNode(uint32_t head_node_index, Subgraph *subgraph
   for (uint32_t in : head_node_inputs) {
     auto next_nodes = tensors_[in].out_nodes_;
     for (uint32_t next_node : next_nodes) {
-      InsertNodeByMid(next_node, subgraph);
+      InsertNodeByMid(next_node, subgraph, head_node_index);
     }
   }
 
@@ -485,7 +495,7 @@ void SearchSubGraph::InsertHeadNode(uint32_t head_node_index, Subgraph *subgraph
   return;
 }
 
-void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph) {
+void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, uint32_t last_index) {
   Model::Node *node = node_list_.at(node_index);
   if (node == nullptr) {
     return;
@@ -497,7 +507,7 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph) {
 
     if (IsNodeSubGraphHead(node_index, subgraph->nodes_)) {
       /* this node can not be included in this subgraph */
-      if (!subgraph->nodes_.empty()) subgraph->heads_.push_back(subgraph->nodes_.front());
+      if (!subgraph->nodes_.empty()) subgraph->heads_.push_back(last_index);
       return;
     }
 
@@ -512,6 +522,7 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph) {
 
     /* insert heads */
     std::set<uint32_t> subs_head;
+    subs_head.insert(node_index);
     for (Subgraph &sub : subs) {
       for (uint32_t head : sub.heads_) {
         subs_head.insert(head);
@@ -528,7 +539,7 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph) {
 
       uint32_t input_node = input_nodes.at(0);
       if (!IsNodeSubGraphHead(input_node, subgraph->nodes_)) {
-        InsertNodeByMid(input_node, subgraph);
+        InsertNodeByMid(input_node, subgraph, head_node);
         subs_head_baklist.erase(head_node);
       }
     }
@@ -546,10 +557,8 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph) {
 
   if (IsNodeSubGraphHead(node_index, subgraph->nodes_)) {
     if (!subgraph->nodes_.empty()) {
-      uint32_t current_node_list_head = subgraph->nodes_.front();
-      if (std::find(subgraph->heads_.begin(), subgraph->heads_.end(), current_node_list_head) ==
-          subgraph->heads_.end()) {
-        subgraph->heads_.push_back(current_node_list_head);
+      if (std::find(subgraph->heads_.begin(), subgraph->heads_.end(), last_index) == subgraph->heads_.end()) {
+        subgraph->heads_.push_back(last_index);
       }
     }
     return;
@@ -565,7 +574,7 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph) {
       if (!subgraph->nodes_.empty()) subgraph->heads_.push_back(subgraph->nodes_.front());
     } else {
       for (uint32_t next_node : next_nodes) {
-        InsertNodeByMid(next_node, subgraph);
+        InsertNodeByMid(next_node, subgraph, node_index);
       }
     }
   }
@@ -587,7 +596,7 @@ void SearchSubGraph::InitMiddleSubgraph(std::vector<uint32_t> *multy_in_nodes) {
 
       Subgraph sub;
       sub.ends_.push_back(input_node);
-      InsertNodeByMid(input_node, &sub);
+      InsertNodeByMid(input_node, &sub, input_node);
       node_subs.push_back(sub);
     }
     if (!node_subs.empty()) {
@@ -625,7 +634,7 @@ void SearchSubGraph::InitSearchSubGraphByOutput() {
   for (uint32_t out : *output_nodes_) {
     Subgraph subgraph;
 
-    InsertNode(out, &subgraph);
+    InsertNode(out, &subgraph, out);
 
     sub_graphs_.push_back(std::move(subgraph));
   }
@@ -851,7 +860,7 @@ void SearchSubGraph::SubGraphSplitByOffLineParallel() {
       std::vector<uint32_t> input_nodes = tensor->out_nodes_;
       Subgraph sub;
       sub.ends_.push_back(input_nodes[0]);
-      InsertNodeByMid(input_nodes[0], &sub);
+      InsertNodeByMid(input_nodes[0], &sub, input_nodes[0]);
       node_subs.push_back(sub);
     }
     node_sub_map_.insert(std::make_pair(node_index, node_subs));
