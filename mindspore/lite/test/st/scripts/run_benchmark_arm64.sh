@@ -17,16 +17,15 @@ function Run_Converter() {
     local fp32_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                               "$models_mindspore_train_config" "$models_tflite_posttraining_config" "$models_caffe_posttraining_config" \
                               "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
-                              "$models_weightquant_9bit_config" "$models_with_multiple_inputs_config" "$models_for_process_only_config")
+                              "$models_weightquant_9bit_config" "$models_for_process_only_config")
 
-    local fp16_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config" \
-                              "$models_multiple_inputs_fp16_config")
+    local fp16_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config")
     # Convert models:
     if [[ $1 == "all" || $1 == "arm64_cpu" || $1 == "arm64_fp32" ]]; then
         # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
         Convert "${fp32_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
     fi
-    if [[ $1 == "all" || $1 == "arm64_cpu" || $1 == "arm64_fp16" ]]; then
+    if [[ $1 == "arm64_fp16" ]]; then
         Convert "${fp16_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
     fi
 }
@@ -76,7 +75,7 @@ function Run_arm64() {
     # Prepare the config file list
     local arm64_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                                "$models_mindspore_train_config" "$models_caffe_posttraining_config" "$models_tflite_awaretraining_config" \
-                               "$models_weightquant_config" "$models_with_multiple_inputs_config" "$models_compatibility_config" "$models_for_process_only_config")
+                               "$models_weightquant_config" "$models_compatibility_config" "$models_for_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${arm64_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp32_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id
@@ -85,7 +84,7 @@ function Run_arm64() {
 # Run on arm64-fp16 platform:
 function Run_arm64_fp16() {
     Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
-    local arm64_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config" "$models_multiple_inputs_fp16_config")
+    local arm64_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config")
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${arm64_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id
 }
@@ -225,14 +224,12 @@ models_onnx_fp16_config=${basepath}/../config/models_onnx_fp16.cfg
 models_caffe_fp16_config=${basepath}/../config/models_caffe_fp16.cfg
 models_tflite_fp16_config=${basepath}/../config/models_tflite_fp16.cfg
 models_tf_fp16_config=${basepath}/../config/models_tf_fp16.cfg
-models_multiple_inputs_fp16_config=${basepath}/../config/models_with_multiple_inputs_fp16.cfg
 models_mindspore_config=${basepath}/../config/models_mindspore.cfg
 models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
 models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_config=${basepath}/../config/models_weightquant.cfg
 models_compatibility_config=${basepath}/../config/models_compatibility.cfg
-models_with_multiple_inputs_config=${basepath}/../config/models_with_multiple_inputs.cfg
 models_for_process_only_config=${basepath}/../config/models_for_process_only.cfg
 models_codegen_config=${basepath}/../config/models_codegen.cfg
 

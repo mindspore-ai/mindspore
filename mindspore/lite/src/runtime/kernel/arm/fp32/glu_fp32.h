@@ -38,7 +38,7 @@ class GluCPUKernel : public InnerKernel {
     glu_param_ = reinterpret_cast<GluParameter *>(op_parameter_);
     split_ptr_.resize(kSplitNum, nullptr);
   }
-  ~GluCPUKernel() override;
+  ~GluCPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -55,6 +55,7 @@ class GluCPUKernel : public InnerKernel {
   void *input_ptr_ = nullptr;
   int8_t *sigmoid_ptr_ = nullptr;
   std::vector<int8_t *> split_ptr_;
+  int split_sizes_[kSplitNum];
   int thread_n_stride_ = 0;
   int usable_thread_num_ = 0;
   int num_unit_ = 0;
