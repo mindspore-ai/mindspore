@@ -62,7 +62,7 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
     if (zero_shape_num != kernel->out_tensors().size()) {
       if (is_tune) {
         ret = op_kernel->PreProcess();
-        if (RET_OK != ret) {
+        if (ret != RET_OK) {
           MS_LOG(WARNING) << "PreProcess kernel failed, name: " << kernel->name() << " in tuning";
           opencl_runtime_ins->SetProfiling(profiling_tmp);
           return RET_OK;
@@ -71,6 +71,12 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "tuning kernel failed, name: " << kernel->name();
           return ret;
+        }
+        ret = op_kernel->PostProcess();
+        if (ret != RET_OK) {
+          MS_LOG(WARNING) << "PostProcess kernel failed, name: " << kernel->name() << " in tuning";
+          opencl_runtime_ins->SetProfiling(profiling_tmp);
+          return RET_OK;
         }
       } else {
         ret = kernel->Execute();
