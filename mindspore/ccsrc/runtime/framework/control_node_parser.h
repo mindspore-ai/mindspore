@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <set>
+#include <map>
 #include <utility>
 #include <unordered_map>
 #include <algorithm>
@@ -38,6 +39,7 @@ constexpr int kMainBranchID = 0;
 constexpr int kSubBranchStartID = 1;
 
 using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
+using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToParameter = std::unordered_map<FuncGraphPtr, std::vector<std::vector<AnfNodePtr>>>;
 using HostParameterToWeight = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
 using NodeWithDeviceContext = std::vector<std::pair<AnfNodePtr, DeviceContext *>>;
@@ -117,6 +119,10 @@ class ControlNodeParser {
   // Get the backend node corresponding to the weight node in the subgraph.
   AnfNodePtr FetchBackendNodebyWeightNode(const AnfNodePtr &node);
 
+  KernelWithIndex GetBackendKernelByFrontKernel(const KernelWithIndex &front_node_with_index) {
+    return front_to_backend_kernels_[front_node_with_index].first;
+  }
+
  private:
   friend class GraphScheduler;
 
@@ -193,7 +199,7 @@ class ControlNodeParser {
   std::unordered_map<AnfNodePtr, std::vector<KernelWithIndex>> formal_to_real_parameters_;
 
   // Relationship between the front and backend of the executable kernel in all kernel graphs.
-  FrontToBackendNodeWithContext front_to_backend_kernels_;
+  FrontToBackendKernelWithContext front_to_backend_kernels_;
 
   // The funcgraph to parameters map records the input parameters of funcgraph and is used to initialize
   // the input node of gather.
