@@ -13,9 +13,9 @@ modelarts_dataset_unzip_name: "face_detect_dataset"
 
 # ==============================================================================
 # train options
-run_platform: "Ascend" # choices in ("Ascend", "CPU")
-mindrecord_path: ""
-pretrained: ""
+run_platform: "Ascend" # choices in ("Ascend", "CPU", "GPU")
+mindrecord_path: ""    # change to your own path of train data
+pretrained: ""         # if you have pretrained backbone, set the path of pretrained_ckpt
 use_loss_scale: True
 
 # default options
@@ -29,9 +29,9 @@ momentum: 0.5
 max_epoch: 2500
 
 log_interval: 10
-ckpt_path: "../../output"
+ckpt_path: "./output"
 ckpt_interval: 1000
-result_path: "../../results"
+result_path: "./results"
 
 input_shape: [768, 448]
 jitter: 0.3

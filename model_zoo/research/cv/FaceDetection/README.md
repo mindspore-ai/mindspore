@@ -69,8 +69,8 @@ We use about 13K images as training dataset and 3K as evaluating dataset in this
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend, CPU）
-    - Prepare hardware environment with Ascend or CPU processor.
+- Hardware（Ascend, CPU, GPU）
+    - Prepare hardware environment with Ascend, CPU or GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -96,7 +96,9 @@ The entire code structure is as following:
     └─ moxing_adapter.py                    # Moxing adapter for ModelArts
   ├─ scripts
     ├─ run_standalone_train.sh              # launch standalone training(1p) in ascend
+    ├─ run_standalone_train_gpu.sh          # launch standalone training(1p) in GPU
     ├─ run_distribute_train.sh              # launch distributed training(8p) in ascend
+    ├─ run_distribute_train_gpu.sh          # launch distributed training(8p) in GPU
     ├─ run_eval.sh                          # launch evaluating in ascend
     ├─ run_infer_310.sh                     # launch inference on Ascend310
     └─ run_export.sh                        # launch exporting air model
@@ -129,6 +131,8 @@ The entire code structure is as following:
 
 - Stand alone mode
 
+    # Training on Ascend
+
     ```bash
     cd ./scripts
     bash run_standalone_train.sh [PLATFORM] [MINDRECORD_FILE] [USE_DEVICE_ID]
@@ -148,7 +152,20 @@ The entire code structure is as following:
     bash run_standalone_train.sh CPU /home/train.mindrecord 0 /home/a.ckpt
     ```
 
+    # Training on GPU
+
+    ```python
+    python ./train.py --config_path=./default_config.yaml
+    ```
+
+    ```bash
+    cd ./scripts
+    bash run_standalone_train_gpu.sh [CONFIG_PATH]
+    ```
+
 - Distribute mode (recommended)
+
+    # Distribute training on Ascend
 
     ```bash
     cd ./scripts
@@ -167,6 +184,19 @@ The entire code structure is as following:
     ```bash
     cd ./scripts
     bash run_distribute_train.sh /home/train.mindrecord ./rank_table_8p.json /home/a.ckpt
+    ```
+
+    # Distribute training on GPU
+
+    ```python
+    mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
+        python ./train.py \
+        --config_path=$CONFIG_PATH > train.log  2>&1 &
+    ```
+
+    ```bash
+    cd ./scripts
+    bash run_distribute_train_gpu.sh [CONFIG_PATH]
     ```
 
     *Distribute mode doesn't support running on CPU*. You will get the loss value of each step as following in "./scripts/device0/output/[TIME]/[TIME].log" or "./scripts/device0/train.log":
@@ -278,11 +308,21 @@ cd ./scripts
 bash run_eval.sh [PLATFORM] [MINDRECORD_FILE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 ```
 
+```python
+GPU platform
+python eval.py [CONFIG_PATH]
+```
+
 for example:
 
 ```bash
 cd ./scripts
 bash run_eval.sh Ascend /home/eval.mindrecord 0 /home/a.ckpt
+```
+
+```python
+GPU platform
+python eval.py --config_path=./default_config.yaml
 ```
 
 You will get the result as following in "./scripts/device0/eval.log":
@@ -335,34 +375,34 @@ Saving ../../results/0-2441_61000/.._.._results_0-2441_61000_face_AP_0.7575.png
 
 ### Training Performance
 
-| Parameters                 | Face Detection                                              |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | V1                                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |
-| uploaded Date              | 09/30/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
-| Dataset                    | 13K images                                                  |
-| Training Parameters        | epoch=2500, batch_size=64, momentum=0.5                     |
-| Optimizer                  | Momentum                                                    |
-| Loss Function              | Softmax Cross Entropy, Sigmoid Cross Entropy, SmoothL1Loss  |
-| outputs                    | boxes and label                                             |
-| Speed                      | 1pc: 800~850 ms/step; 8pcs: 1000~1150 ms/step               |
-| Total time                 | 1pc: 120 hours; 8pcs: 18 hours                              |
-| Checkpoint for Fine tuning | 37M (.ckpt file)                                            |
+| Parameters                 | Face Detection                                              | Face Detection                                              |
+| -------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| Model Version              | V1                                                          | V1                                                          |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 | GPU PCIE V100-32G                                           |
+| uploaded Date              | 09/30/2020 (month/day/year)                                 | 07/01/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                       | 1.3.0                                                       |
+| Dataset                    | 13K images                                                  | 13K images                                                  |
+| Training Parameters        | epoch=2500, batch_size=64, momentum=0.5                     | epoch=2500, batch_size=64, momentum=0.5                     |
+| Optimizer                  | Momentum                                                    | Momentum                                                    |
+| Loss Function              | Softmax Cross Entropy, Sigmoid Cross Entropy, SmoothL1Loss  | Softmax Cross Entropy, Sigmoid Cross Entropy, SmoothL1Loss  |
+| outputs                    | boxes and label                                             | boxes and label                                             |
+| Speed                      | 1pc: 800~850 ms/step; 8pcs: 1000~1150 ms/step               | 1pc: 180fps; 4pcs: 385fps                                   |
+| Total time                 | 1pc: 120 hours; 8pcs: 18 hours                              | 4pcs: 23 hours                                              |
+| Checkpoint for Fine tuning | 37M (.ckpt file)                                            | --                                                          |
 
 ### Evaluation Performance
 
-| Parameters          | Face Detection              |
-| ------------------- | --------------------------- |
-| Model Version       | V1                          |
-| Resource            | Ascend 910; OS Euler2.8     |
-| Uploaded Date       | 09/30/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
-| Dataset             | 3K images                   |
-| batch_size          | 1                           |
-| outputs             | mAP                         |
-| Accuracy            | 8pcs: 76.0%                 |
-| Model for inference | 37M (.ckpt file)            |
+| Parameters          | Face Detection              | Face Detection              |
+| ------------------- | --------------------------- | --------------------------- |
+| Model Version       | V1                          | V1                          |
+| Resource            | Ascend 910; OS Euler2.8     | GPU NV SMX2 V100-32G        |
+| Uploaded Date       | 09/30/2020 (month/day/year) | 07/01/2021 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.3.0                       |
+| Dataset             | 3K images                   | 3K images                   |
+| batch_size          | 1                           | 1                           |
+| outputs             | mAP                         | mAP                         |
+| Accuracy            | 8pcs: 76.0%                 | 4pcs: 77.8%                 |
+| Model for inference | 37M (.ckpt file)            | --                          |
 
 ### Inference Performance
 
