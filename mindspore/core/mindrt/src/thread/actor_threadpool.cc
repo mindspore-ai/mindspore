@@ -42,6 +42,7 @@ void ActorWorker::RunWithSpin() {
     }
     if (spin_count_ >= kDefaultSpinCount) {
       WaitUntilActive();
+      spin_count_ = 0;
     }
   }
 }
