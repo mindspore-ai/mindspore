@@ -161,7 +161,7 @@ Test Acc: 0.9954400658607483  Loss: 0.02102319709956646
 | Speed                      | 215 ms/step                          |
 | Total time                 | 3 h 23m (8p)                |
 | Checkpoint for Fine tuning | 440 KB (.ckpt file)                                         |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/protonet |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ProtoNet |
 
 # [ModelZoo Homepage](#contents)
 

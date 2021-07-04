@@ -20,7 +20,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
             - [ResNet50[benchmark]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/README.md)
             - [ResNet50_Quant](https://gitee.com/mindspore/mindspore/blob/master/model_zoo/official/cv/resnet50_quant/README.md)
             - [ResNet101](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/README.md)
-            - [ResNext50](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnext50/README.md)
+            - [ResNext50](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnext/README.md)
             - [VGG16](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/vgg16/README.md)
             - [AlexNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet/README.md)
             - [LeNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet/README.md)
