@@ -258,13 +258,15 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
     MS_EXCEPTION_IF_NULL(host_tensor);
     MS_EXCEPTION_IF_NULL(device_tensor);
     auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(host_tensor->device_address());
+    // Sync data from host_tensor_device_address to device_tensor.
     if (tensor_device_address != nullptr) {
-      if (tensor_device_address.get() != device_tensor) {
-        MS_LOG(EXCEPTION) << "The device tensor of host queue node should be equal to device address of input tensor";
+      if ((tensor_device_address.get() != device_tensor) && (!Copy(device_tensor, tensor_device_address.get()))) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
       }
       continue;
     }
 
+    // Sync data from host_tensor to device_tensor.
     if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(data_nodes_[i], 0),
                                          LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(),
                                          host_tensor->data_c(), host_tensor->device_info().host_format_)) {

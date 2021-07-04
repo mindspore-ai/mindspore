@@ -89,22 +89,6 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   SendOutput(context);
 }
 
-bool CopyActor::Copy(DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
-  MS_EXCEPTION_IF_NULL(dst_device_tensor);
-  MS_EXCEPTION_IF_NULL(src_device_tensor);
-
-  if (src_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
-    // CPU device tensor copy to other device tensor.
-    return dst_device_tensor->SyncHostToDevice(src_device_tensor->GetSize(), src_device_tensor->GetPtr());
-  } else if (dst_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
-    // Other device tensor copy to CPU device tensor.
-    return src_device_tensor->SyncDeviceToHost(dst_device_tensor->GetSize(), dst_device_tensor->GetMutablePtr());
-  } else {
-    MS_LOG(ERROR) << "Invalid device type for copy actor: " << GetAID().Name();
-    return false;
-  }
-}
-
 bool CopyActor::CheckCopyCondition(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
