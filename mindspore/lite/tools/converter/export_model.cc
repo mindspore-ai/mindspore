@@ -27,8 +27,7 @@
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/dump_graph_init.h"
 #include "tools/optimizer/graph/unify_format_pass.h"
-#include "tools/optimizer/graph/while_pass.h"
-#include "tools/optimizer/graph/if_pass.h"
+#include "tools/optimizer/graph/control_flow_pass.h"
 
 namespace mindspore {
 namespace lite {
@@ -203,8 +202,7 @@ STATUS ExportModel(const FuncGraphPtr &graph) {
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   if (flags->fmk == lite::converter::FmkType_TFLITE || flags->fmk == lite::converter::FmkType_TF ||
       flags->fmk == lite::converter::FmkType_ONNX) {
-    graph_pm->AddPass(std::make_shared<opt::WhilePass>());
-    graph_pm->AddPass(std::make_shared<opt::IfPass>());
+    graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   optimizer->AddPassManager(graph_pm);
   if (optimizer->Optimize(mirror_graph) == nullptr) {

@@ -138,7 +138,17 @@ void SubGraphKernel::InitOutTensorInitRefCount() {
   for (auto *node : nodes_) {
     node->InitOutTensorInitRefCount();
   }
+  for (auto &input : this->in_tensors()) {
+    int input_init_ref_count = input->init_ref_count();
+    for (auto *node : nodes_) {
+      if (lite::IsContain(node->in_tensors(), input)) {
+        input_init_ref_count++;
+      }
+    }
+    input->set_init_ref_count(input_init_ref_count);
+  }
 }
+
 void SubGraphKernel::DropNode(LiteKernel *node) {
   lite::VectorErase(&nodes_, node);
   lite::VectorErase(&in_nodes_, node);
@@ -201,6 +211,9 @@ int CpuSubGraph::Prepare() {
       MS_ASSERT(tensor != nullptr);
       tensor->set_allocator(this->Context()->allocator);
     }
+  }
+  for (auto &out : this->out_tensors()) {
+    out->set_allocator(this->Context()->allocator);
   }
   return RET_OK;
 }

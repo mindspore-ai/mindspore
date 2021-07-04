@@ -29,11 +29,13 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   std::vector<std::unique_ptr<schema::CNodeT>> new_nodes;
   std::vector<size_t> sinked_tensor_idxes;
+  for (auto &subgraph : graph->subGraph) {
+    std::copy(subgraph->inputIndices.begin(), subgraph->inputIndices.end(), std::back_inserter(sinked_tensor_idxes));
+  }
   // put all const tensor index into sinked_tensor_idxes
   for (size_t i = 0; i < graph->allTensors.size(); i++) {
-    if (graph->allTensors.at(i)->nodeType == NodeType_ValueNode ||
-        graph->allTensors.at(i)->nodeType == NodeType_Parameter) {
-      sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), i);
+    if (graph->allTensors.at(i)->nodeType == NodeType_ValueNode) {
+      sinked_tensor_idxes.push_back(i);
     }
   }
   auto &old_nodes = graph->nodes;
@@ -81,17 +83,8 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
 bool TopologicalSortPass::IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> &node,
                                           const std::vector<size_t> &sinked_tensor_idxes) {
   MS_ASSERT(node != nullptr);
-  if (node->primitive && node->primitive->value.type == schema::PrimitiveType_Merge) {
-    auto node_input_index = node->inputIndex;
-    MS_ASSERT(node_input_index.size() % 2 == 0);
-    return std::all_of(node_input_index.begin(), node_input_index.begin() + node_input_index.size() / 2,
-                       [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, input_idx); }) ||
-           std::all_of(node_input_index.begin() + node_input_index.size() / 2, node_input_index.end(),
-                       [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, input_idx); });
-  } else {
-    return std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
-                       [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, size_t(input_idx)); });
-  }
+  return std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
+                     [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, size_t(input_idx)); });
 }
 }  // namespace lite
 }  // namespace mindspore

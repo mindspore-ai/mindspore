@@ -153,12 +153,10 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
 
-  // controlflow pass
   {
     // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer switch_optimizer;
-    switch_optimizer.AddPass(new (std::nothrow) SwitchPass());
     switch_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     switch_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     switch_optimizer.AddPass(new (std::nothrow) SubgraphTensorPass());
@@ -174,7 +172,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto old_nodes = GetGraphNodes();
     nested_loop_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     nested_loop_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-    nested_loop_optimizer.AddPass(new (std::nothrow) NestedLoopExpandPass());
     status = nested_loop_optimizer.Run(graph_defT_);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run nested_loop_optimizer graphPasses Failed";

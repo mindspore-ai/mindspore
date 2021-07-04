@@ -108,8 +108,15 @@ STATUS DropoutNodeRemovePass::Run(schema::MetaGraphT *graph) {
   for (size_t i = 0; i < graph->nodes.size(); i++) {
     auto &node = graph->nodes.at(i);
     if (node->primitive == nullptr) {
-      MS_LOG(ERROR) << "node->primitive is nullptr, node name: " << node->name;
-      return RET_ERROR;
+      MS_LOG(INFO) << "node->primitive is nullptr, node name: " << node->name;
+      ifChanged = true;
+      auto status = IsolateDropoutNode(graph, i);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "IsolateDropoutNode failed, subGraph: " << graph->name << ", node: " << node->name
+                      << ", error: " << status;
+        return status;
+      }
+      continue;
     }
     if (node->primitive->value.type == schema::PrimitiveType_Dropout) {
       ifChanged = true;

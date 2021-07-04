@@ -416,7 +416,7 @@ int TrainExport::SaveToFile() { return Storage::Save(*meta_graph_, file_name_); 
 
 int TrainExport::IsInputTensor(const schema::TensorT &t) {
   int total_dims = std::accumulate(t.dims.begin(), t.dims.end(), 1, std::multiplies<int>());
-  return ((t.nodeType == NodeType_ValueNode) && (t.data.size() == 0) && (total_dims != 0));
+  return ((t.data.size() == 0) && (total_dims != 0));
 }
 
 TrainExport::~TrainExport() { delete meta_graph_; }

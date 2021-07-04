@@ -226,8 +226,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/redundant_op_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/control_flow_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unify_format_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/node_infershape.cc
             ${LITE_DIR}/tools/optimizer/graph/transpose_strategy.cc
@@ -314,7 +313,6 @@ if(MSLITE_ENABLE_CONVERTER)
     set(TEST_SRC
             ${TEST_SRC}
             ${TEST_DIR}/st/converter_test.cc
-            ${TEST_DIR}/st/control_flow_test.cc
             ${TEST_DIR}/st/mindrt_parallel_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/common/import_from_meta_graphT.cc

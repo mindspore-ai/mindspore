@@ -62,11 +62,15 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {
-  MS_ASSERT(parameter != nullptr);
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
-  int ret = 0;
-  ret = GenerateInTensorC(parameter, inputs, outputs, &in_tensors);
+  if (parameter->type_ == schema::PrimitiveType_PartialFusion || parameter->type_ == schema::PrimitiveType_Switch ||
+      parameter->type_ == schema::PrimitiveType_Call) {
+    MS_LOG(INFO) << "no need infer shape.";
+    return RET_OK;
+  }
+
+  int ret = GenerateInTensorC(parameter, inputs, outputs, &in_tensors);
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);
     return RET_ERROR;

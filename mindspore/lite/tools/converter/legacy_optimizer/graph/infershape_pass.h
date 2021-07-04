@@ -44,14 +44,21 @@ class InferShapePass : public GraphPass {
   STATUS Run(MetaGraphT *graph) override;
 
  private:
-  void InitSearchTensor(MetaGraphT *graph);
-  void AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> next_nodes_indexes, size_t index);
-  void AddOutputNodes(MetaGraphT *graph, uint32_t infer_node_index);
+  std::vector<uint32_t> InitSearchTensor(const int &subgraph_index, MetaGraphT *graph);
+  void AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes,
+                             std::vector<uint32_t> next_nodes_indexes, size_t index);
+  void AddOutputNodes(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes, uint32_t infer_node_index);
   void ResetIncorrectTensorShape(MetaGraphT *graph);
+  int InferPartialNode(const CNodeT *partial_node, MetaGraphT *graph);
+  int InferSwitchNode(const std::unique_ptr<CNodeT> &switch_node, MetaGraphT *graph);
+  int InferCallNode(const std::unique_ptr<CNodeT> &call_node, MetaGraphT *graph);
+  int CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaGraphT *graph);
+  int RestoreSubGraphInput(const CNodeT *partial_node, MetaGraphT *graph);
+  void InitInferTensor(MetaGraphT *graph);
+  int InferSubgraph(const int &subgraph_index, MetaGraphT *graph);
 
   lite::converter::FmkType fmk_type_ = FmkType_TF;
   std::vector<InferTensor> tensors_ = {};
-  std::vector<uint32_t> infer_node_indexes_ = {};
 };
 }  // namespace lite
 }  // namespace mindspore
