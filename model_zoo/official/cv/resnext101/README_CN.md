@@ -65,7 +65,7 @@ ResNeXt是ResNet网络的改进版本，比ResNet的网络多了块多了cardina
 
 ## 快速入门指南
 
-目录说明，代码参考了Modelzoo上的[ResNext50](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnext50)
+目录说明，代码参考了Modelzoo上的[ResNext50](https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/official/cv/resnext50)
 
 ```path
 .
