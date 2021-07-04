@@ -532,32 +532,32 @@ build_lite_x86_64_jni_and_jar()
         cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     fi
 
+    cd ${LITE_JAVA_PATH}/java
+    rm -rf gradle .gradle gradlew gradlew.bat
+    gradle wrapper --gradle-version 6.6.1 --distribution-type all
     # build java common
-    cd ${LITE_JAVA_PATH}/java/common
-    gradle clean
-    gradle build
+    ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/common
+    ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/common
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/linux_x86/libs/
 
     # build java fl_client
     if [[ "X$is_train" = "Xon" ]]; then
-      cd ${LITE_JAVA_PATH}/java/fl_client
-      gradle clean
+      ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------building createFlatBuffers for fl_client------------------------"
-      gradle createFlatBuffers
+      ${LITE_JAVA_PATH}/java/gradlew createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------create FlatBuffers for fl_client success--------------------"
-      gradle build
-      gradle clearJar
+      ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/fl_client
+      ${LITE_JAVA_PATH}/java/gradlew clearJar -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------building flReleaseJar for fl_client------------------------"
-      gradle flReleaseJarX86 --rerun-tasks
+      ${LITE_JAVA_PATH}/java/gradlew flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------build jar for fl_client success ------------------------"
       cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     fi
 
     # build jar
-    cd ${LITE_JAVA_PATH}/java/linux_x86/
-    gradle clean
-    gradle releaseJar
-    cp ./build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+    ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/linux_x86/
+    ${LITE_JAVA_PATH}/java/gradlew releaseJar -p ${LITE_JAVA_PATH}/java/linux_x86/
+    cp ${LITE_JAVA_PATH}/java/linux_x86/build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
 
     # package
     cd ${BASEPATH}/output/tmp
@@ -780,10 +780,12 @@ build_aar() {
     if [[ "X${INC_BUILD}" == "Xoff" ]]; then
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/mindspore/lite/build
     fi
+    cd ${LITE_JAVA_PATH}/java
+    rm -rf gradle .gradle gradlew gradlew.bat
+    gradle wrapper --gradle-version 6.6.1 --distribution-type all
     # build common module
-    cd ${LITE_JAVA_PATH}/java/common
-    gradle clean
-    gradle build
+    ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/common
+    ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/common
 
     # build aar
     local npu_bak=${MSLITE_ENABLE_NPU}
@@ -800,24 +802,22 @@ build_aar() {
       is_train=off
     fi
     if [[ "X$is_train" = "Xon" ]]; then
-      cd ${LITE_JAVA_PATH}/java/fl_client
-      gradle clean
+      ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------building createFlatBuffers for fl_client------------------------"
-      gradle createFlatBuffers
+      ${LITE_JAVA_PATH}/java/gradlew createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------create FlatBuffers for fl_client success--------------------"
-      gradle build
-      gradle clearJar
+      ${LITE_JAVA_PATH}/java/gradlew build -p ${LITE_JAVA_PATH}/java/fl_client
+      ${LITE_JAVA_PATH}/java/gradlew clearJar -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------building flReleaseJar for fl_client------------------------"
-      gradle flReleaseJarAAR --rerun-tasks
+      ${LITE_JAVA_PATH}/java/gradlew flReleaseJarAAR --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
       echo "--------------------build jar for fl_client success ------------------------"
       cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarAAR/mindspore-lite-java-flclient.jar ${LITE_JAVA_PATH}/java/app/libs
     fi
     
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/app/libs
-    cd ${LITE_JAVA_PATH}/java/app
-    gradle clean
-    gradle build
-    gradle publish -PLITE_VERSION=${VERSION_STR}
+    ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/app
+    ${LITE_JAVA_PATH}/java/gradlew build  -p ${LITE_JAVA_PATH}/java/app
+    ${LITE_JAVA_PATH}/java/gradlew publish -PLITE_VERSION=${VERSION_STR} -p ${LITE_JAVA_PATH}/java/app
 
     cd ${LITE_JAVA_PATH}/java/app/build
     [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/*.tar.gz*
