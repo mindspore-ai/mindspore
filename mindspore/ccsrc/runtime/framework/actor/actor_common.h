@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <thread>
+#include <algorithm>
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/device/device_address.h"
 #include "backend/session/kernel_graph.h"
@@ -86,6 +87,9 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node);
 // Judge whether the front node is in a gather actor.
 bool IsGatherActor(const AnfNodePtr &front_node,
                    const std::unordered_map<std::string, OpActor<DeviceTensor> *> &actor_name_to_actor);
+
+// Copy data from src_device_tensor to dst_device_tensor.
+bool Copy(DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
 }  // namespace runtime
 }  // namespace mindspore
 

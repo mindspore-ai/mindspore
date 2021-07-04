@@ -113,5 +113,25 @@ bool IsGatherActor(const AnfNodePtr &front_node,
   }
   return false;
 }
+
+bool Copy(DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
+  MS_EXCEPTION_IF_NULL(dst_device_tensor);
+  MS_EXCEPTION_IF_NULL(src_device_tensor);
+
+  // Exist the size alignment in some device, so get the min device size.
+  size_t copy_size = std::min(src_device_tensor->GetSize(), dst_device_tensor->GetSize());
+
+  if (src_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
+    // CPU device tensor copy to other device tensor.
+    return dst_device_tensor->SyncHostToDevice(copy_size, src_device_tensor->GetPtr());
+  } else if (dst_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
+    // Other device tensor copy to CPU device tensor.
+    return src_device_tensor->SyncDeviceToHost(copy_size, dst_device_tensor->GetMutablePtr());
+  } else {
+    MS_LOG(ERROR) << "Invalid device type, src device type: " << src_device_tensor->DeviceType()
+                  << ", dst device type: " << dst_device_tensor->DeviceType();
+    return false;
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore

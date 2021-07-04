@@ -65,8 +65,6 @@ class CopyActor : public MemoryAwareActor {
   // Fetch the device tensor for copy.
   void FetchDeviceTensor(OpContext<DeviceTensor> *context);
 
-  // Copy data from src_device_tensor to dst_device_tensor.
-  bool Copy(DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
   // Send output data and output controls when finish copy.
   void SendOutput(OpContext<DeviceTensor> *context) const;
   // Erase input data and input controls when finish copy.
