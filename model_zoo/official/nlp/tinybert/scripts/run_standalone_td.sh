@@ -26,6 +26,7 @@ CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_task_distill.py \
+    --config_path="../../td_config/td_config_sst2.yaml" \
     --device_target="Ascend" \
     --device_id=0 \
     --do_train="true" \

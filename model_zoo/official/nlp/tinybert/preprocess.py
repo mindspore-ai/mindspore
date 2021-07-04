@@ -16,19 +16,10 @@
 """preprocess"""
 
 import os
-import argparse
 import numpy as np
-from src.td_config import eval_cfg
+from src.model_utils.config import eval_cfg, config as args_opt
 from src.dataset import create_tinybert_dataset, DataType
 
-
-parser = argparse.ArgumentParser(description='preprocess')
-parser.add_argument("--eval_data_dir", type=str, default="", help="Data path, it is better to use absolute path")
-parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
-parser.add_argument("--dataset_type", type=str, default="tfrecord",
-                    help="dataset type tfrecord/mindrecord, default is tfrecord")
-parser.add_argument("--result_path", type=str, default="./preprocess_Result/", help="result path")
-args_opt = parser.parse_args()
 
 if args_opt.dataset_type == "tfrecord":
     dataset_type = DataType.TFRECORD

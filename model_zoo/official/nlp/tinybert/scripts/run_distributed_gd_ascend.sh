@@ -54,6 +54,7 @@ do
     export GLOG_logtostderr=0
     env > env.log
     taskset -c $cmdopt python ${PROJECT_DIR}/../run_general_distill.py  \
+    --config_path="../../gd_config.yaml" \
     --distribute="true" \
     --device_target="Ascend" \
     --epoch_size=$EPOCH_SIZE \

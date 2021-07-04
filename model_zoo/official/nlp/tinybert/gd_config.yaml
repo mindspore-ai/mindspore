@@ -1,0 +1,114 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+# Url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+# Path for local
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+device_target: "Ascend"
+enable_profiling: False
+
+modelarts_dataset_unzip_name: ''
+folder_name_under_zip_file: './'
+# ==============================================================================
+description: 'general_distill'
+
+distribute: "false"
+epoch_size: 3
+device_id: 0
+device_num: 1
+save_ckpt_step: 100
+max_ckpt_num: 1
+do_shuffle: "true"
+enable_data_sink: "true"
+data_sink_steps: 1
+save_ckpt_path: ''
+load_teacher_ckpt_path: ''
+data_dir: ''
+schema_dir: ''
+dataset_type: "tfrecord"
+
+common_cfg:
+    batch_size: 32
+    loss_scale_value: 65536
+    scale_factor: 2
+    scale_window: 1000
+    AdamWeightDecay:
+        learning_rate: 0.00005  # 5e-5
+        end_learning_rate: 0.00000000000001  # 1e-14
+        power: 1.0
+        weight_decay: 0.0001  # 1e-4
+        eps: 0.000001  # 1e-6
+        decay_filter: ['layernorm', 'bias']
+
+bert_teacher_net_cfg:
+    seq_length: 128
+    vocab_size: 30522
+    hidden_size: 768
+    num_hidden_layers: 12
+    num_attention_heads: 12
+    intermediate_size: 3072
+    hidden_act: "gelu"
+    hidden_dropout_prob: 0.1
+    attention_probs_dropout_prob: 0.1
+    max_position_embeddings: 512
+    type_vocab_size: 2
+    initializer_range: 0.02
+    use_relative_positions: False
+    dtype: mstype.float32
+    compute_type: mstype.float16
+
+bert_student_net_cfg:
+    seq_length: 128
+    vocab_size: 30522
+    hidden_size: 384
+    num_hidden_layers: 4
+    num_attention_heads: 12
+    intermediate_size: 1536
+    hidden_act: "gelu"
+    hidden_dropout_prob: 0.1
+    attention_probs_dropout_prob: 0.1
+    max_position_embeddings: 512
+    type_vocab_size: 2
+    initializer_range: 0.02
+    use_relative_positions: False
+    dtype: mstype.float32
+    compute_type: mstype.float16
+
+---
+
+# Help description for each configuration
+enable_modelarts: "Whether training on modelarts, default: False"
+data_url: "Url for modelarts"
+train_url: "Url for modelarts"
+data_path: "The location of the input data."
+output_path: "The location of the output file."
+device_target: "Running platform, choose from Ascend, GPU or CPU, and default is Ascend."
+enable_profiling: 'Whether enable profiling while training, default: False'
+modelarts_dataset_unzip_name: ""
+folder_name_under_zip_file: ''
+
+distribute: "Run distribute, default is false."
+epoch_size: "Epoch size, default is 1."
+device_id: "Device id, default is 0."
+device_num: "Use device nums, default is 1."
+save_ckpt_step: "Enable data sink, default is true."
+max_ckpt_num: ""
+do_shuffle: "Enable shuffle for dataset, default is true."
+enable_data_sink: "Enable data sink, default is true."
+data_sink_steps: "Sink steps for each epoch, default is 1."
+save_ckpt_path: "Save checkpoint path"
+load_teacher_ckpt_path: "Load checkpoint file path"
+data_dir: "Data path, it is better to use absolute path"
+schema_dir: "Schema path, it is better to use absolute path"
+dataset_type: "dataset type tfrecord/mindrecord, default is tfrecord"
+
+---
+# choices
+device_target: ['Ascend', 'GPU', 'CPU']
+distribute: ["true", "false"]
+do_shuffle: ["true", "false"]
+enable_data_sink: ["true", "false"]

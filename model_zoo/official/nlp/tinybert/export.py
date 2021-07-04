@@ -15,27 +15,16 @@
 """export checkpoint file into air models"""
 
 import re
-import argparse
+import os
 import numpy as np
 
 from mindspore import Tensor, context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
-from src.td_config import td_student_net_cfg
 from src.tinybert_model import BertModelCLS, BertModelNER
-
-parser = argparse.ArgumentParser(description='tinybert task distill')
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="tinybert ckpt file.")
-parser.add_argument("--file_name", type=str, default="tinybert", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
-parser.add_argument("--task_type", type=str, default="classification", choices=["classification", "ner"],
-                    help="The type of the task to train.")
-parser.add_argument("--task_name", type=str, default="", choices=["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"],
-                    help="The name of the task to train.")
-args = parser.parse_args()
+from src.model_utils.config import config as args, td_student_net_cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 if args.device_target == "Ascend":
@@ -49,6 +38,7 @@ task_params = {"SST-2": {"num_labels": 2, "seq_length": 64},
                "MNLI": {"num_labels": 3, "seq_length": 128},
                "TNEWS": {"num_labels": 15, "seq_length": 128},
                "CLUENER": {"num_labels": 43, "seq_length": 128}}
+
 
 class Task:
     """
@@ -69,7 +59,18 @@ class Task:
             return task_params[self.task_name]["seq_length"]
         return DEFAULT_SEQ_LENGTH
 
-if __name__ == '__main__':
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    args.device_id = get_device_id()
+    _file_dir = os.path.dirname(os.path.abspath(__file__))
+    args.ckpt_file = os.path.join(_file_dir, args.ckpt_file)
+    args.file_name = os.path.join(args.output_path, args.file_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """export function"""
     task = Task(args.task_name)
     td_student_net_cfg.seq_length = task.seq_length
     td_student_net_cfg.batch_size = DEFAULT_BS
@@ -96,3 +97,7 @@ if __name__ == '__main__':
 
     input_data = [input_ids, token_type_id, input_mask]
     export(eval_model, *input_data, file_name=args.file_name, file_format=args.file_format)
+
+
+if __name__ == '__main__':
+    run_export()

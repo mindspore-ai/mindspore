@@ -16,8 +16,8 @@
 """task distill script"""
 
 import os
+import time
 import re
-import argparse
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.train.model import Model
@@ -29,9 +29,11 @@ from mindspore import log as logger
 from src.dataset import create_tinybert_dataset, DataType
 from src.utils import LossCallBack, ModelSaveCkpt, EvalCallBack, BertLearningRate
 from src.assessment_method import Accuracy, F1
-from src.td_config import phase1_cfg, phase2_cfg, eval_cfg, td_teacher_net_cfg, td_student_net_cfg
 from src.tinybert_for_gd_td import BertEvaluationWithLossScaleCell, BertNetworkWithLoss_td, BertEvaluationCell
 from src.tinybert_model import BertModelCLS, BertModelNER
+from src.model_utils.config import config as args_opt, phase1_cfg, phase2_cfg, eval_cfg, td_teacher_net_cfg, td_student_net_cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
 
 _cur_dir = os.getcwd()
 td_phase1_save_ckpt_dir = os.path.join(_cur_dir, 'tinybert_td_phase1_save_ckpt')
@@ -40,62 +42,9 @@ if not os.path.exists(td_phase1_save_ckpt_dir):
     os.makedirs(td_phase1_save_ckpt_dir)
 if not os.path.exists(td_phase2_save_ckpt_dir):
     os.makedirs(td_phase2_save_ckpt_dir)
-
-def parse_args():
-    """
-    parse args
-    """
-    parser = argparse.ArgumentParser(description='tinybert task distill')
-    parser.add_argument("--device_target", type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
-                        help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument("--do_train", type=str, default="true", choices=["true", "false"],
-                        help="Do train task, default is true.")
-    parser.add_argument("--do_eval", type=str, default="true", choices=["true", "false"],
-                        help="Do eval task, default is true.")
-    parser.add_argument("--td_phase1_epoch_size", type=int, default=10,
-                        help="Epoch size for td phase 1, default is 10.")
-    parser.add_argument("--td_phase2_epoch_size", type=int, default=3, help="Epoch size for td phase 2, default is 3.")
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--do_shuffle", type=str, default="true", choices=["true", "false"],
-                        help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--enable_data_sink", type=str, default="true", choices=["true", "false"],
-                        help="Enable data sink, default is true.")
-    parser.add_argument("--save_ckpt_step", type=int, default=100, help="Enable data sink, default is true.")
-    parser.add_argument("--max_ckpt_num", type=int, default=1, help="Enable data sink, default is true.")
-    parser.add_argument("--data_sink_steps", type=int, default=1, help="Sink steps for each epoch, default is 1.")
-    parser.add_argument("--load_teacher_ckpt_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--load_gd_ckpt_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--load_td1_ckpt_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--train_data_dir", type=str, default="", help="Data path, it is better to use absolute path")
-    parser.add_argument("--eval_data_dir", type=str, default="", help="Data path, it is better to use absolute path")
-    parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
-    parser.add_argument("--task_type", type=str, default="classification", choices=["classification", "ner"],
-                        help="The type of the task to train.")
-    parser.add_argument("--task_name", type=str, default="", choices=["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"],
-                        help="The name of the task to train.")
-    parser.add_argument("--assessment_method", type=str, default="accuracy", choices=["accuracy", "bf1", "mf1"],
-                        help="assessment_method include: [accuracy, bf1, mf1], default is accuracy")
-    parser.add_argument("--dataset_type", type=str, default="tfrecord",
-                        help="dataset type tfrecord/mindrecord, default is tfrecord")
-    args = parser.parse_args()
-    if args.do_train.lower() != "true" and args.do_eval.lower() != "true":
-        raise ValueError("do train or do eval must have one be true, please confirm your config")
-    if args.task_name in ["SST-2", "QNLI", "MNLI", "TNEWS"] and args.task_type != "classification":
-        raise ValueError(f"{args.task_name} is a classification dataset, please set --task_type=classification")
-    if args.task_name in ["CLUENER"] and args.task_type != "ner":
-        raise ValueError(f"{args.task_name} is a ner dataset, please set --task_type=ner")
-    if args.task_name in ["SST-2", "QNLI", "MNLI"] and \
-        (td_teacher_net_cfg.vocab_size != 30522 or td_student_net_cfg.vocab_size != 30522):
-        logger.warning(f"{args.task_name} is an English dataset. Usually, we use 21128 for CN vocabs and 30522 for "\
-                       "EN vocabs according to the origin paper.")
-    if args.task_name in ["TNEWS", "CLUENER"] and \
-            (td_teacher_net_cfg.vocab_size != 21128 or td_student_net_cfg.vocab_size != 21128):
-        logger.warning(f"{args.task_name} is a Chinese dataset. Usually, we use 21128 for CN vocabs and 30522 for " \
-                       "EN vocabs according to the origin paper.")
-    return args
+enable_loss_scale = True
 
 
-args_opt = parse_args()
 if args_opt.dataset_type == "tfrecord":
     dataset_type = DataType.TFRECORD
 elif args_opt.dataset_type == "mindrecord":
@@ -129,6 +78,8 @@ class Task:
         if self.task_name in task_params and "seq_length" in task_params[self.task_name]:
             return task_params[self.task_name]["seq_length"]
         return DEFAULT_SEQ_LENGTH
+
+
 task = Task(args_opt.task_name)
 
 
@@ -192,6 +143,7 @@ def run_predistill():
     model.train(repeat_count, dataset, callbacks=callback,
                 dataset_sink_mode=(args_opt.enable_data_sink == 'true'),
                 sink_size=args_opt.data_sink_steps)
+
 
 def run_task_distill(ckpt_file):
     """
@@ -269,6 +221,7 @@ def run_task_distill(ckpt_file):
                 dataset_sink_mode=(args_opt.enable_data_sink == 'true'),
                 sink_size=args_opt.data_sink_steps)
 
+
 def eval_result_print(assessment_method="accuracy", callback=None):
     """print eval result"""
     if assessment_method == "accuracy":
@@ -281,6 +234,7 @@ def eval_result_print(assessment_method="accuracy", callback=None):
         print("F1 {:.6f} ".format(callback.eval()))
     else:
         raise ValueError("Assessment method not supported, support: [accuracy, f1]")
+
 
 def do_eval_standalone():
     """
@@ -332,12 +286,96 @@ def do_eval_standalone():
     print("==============================================================")
 
 
-if __name__ == '__main__':
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    global td_phase1_save_ckpt_dir
+    global td_phase2_save_ckpt_dir
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, args_opt.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("Unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("Unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("Cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if args_opt.modelarts_dataset_unzip_name:
+        zip_file_1 = os.path.join(args_opt.data_path, args_opt.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(args_opt.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+    _file_dir = os.path.dirname(os.path.abspath(__file__))
+    args_opt.device_id = get_device_id()
+    td_phase1_save_ckpt_dir = os.path.join(args_opt.output_path, 'tinybert_td_phase1_save_ckpt')
+    td_phase2_save_ckpt_dir = os.path.join(args_opt.output_path, 'tinybert_td_phase2_save_ckpt')
+    if not os.path.exists(td_phase1_save_ckpt_dir):
+        os.makedirs(td_phase1_save_ckpt_dir)
+    if not os.path.exists(td_phase2_save_ckpt_dir):
+        os.makedirs(td_phase2_save_ckpt_dir)
+    args_opt.load_teacher_ckpt_path = os.path.join(_file_dir, args_opt.load_teacher_ckpt_path)
+    args_opt.load_gd_ckpt_path = os.path.join(_file_dir, args_opt.load_gd_ckpt_path)
+    args_opt.train_data_dir = os.path.join(args_opt.data_path, args_opt.train_data_dir)
+    args_opt.schema_dir = os.path.join(args_opt.data_path, args_opt.schema_dir)
+    args_opt.eval_data_dir = os.path.join(args_opt.data_path, args_opt.eval_data_dir)
+    args_opt.load_td1_ckpt_path = os.path.join(_file_dir, args_opt.load_td1_ckpt_path)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_main():
+    """task_distill function"""
+    global enable_loss_scale
+    if args_opt.do_train.lower() != "true" and args_opt.do_eval.lower() != "true":
+        raise ValueError("do train or do eval must have one be true, please confirm your config")
+    if args_opt.task_name in ["SST-2", "QNLI", "MNLI", "TNEWS"] and args_opt.task_type != "classification":
+        raise ValueError(f"{args_opt.task_name} is a classification dataset, please set --task_type=classification")
+    if args_opt.task_name in ["CLUENER"] and args_opt.task_type != "ner":
+        raise ValueError(f"{args_opt.task_name} is a ner dataset, please set --task_type=ner")
+    if args_opt.task_name in ["SST-2", "QNLI", "MNLI"] and \
+            (td_teacher_net_cfg.vocab_size != 30522 or td_student_net_cfg.vocab_size != 30522):
+        logger.warning(f"{args_opt.task_name} is an English dataset. Usually, we use 21128 for CN vocabs and 30522 for "
+                       f"EN vocabs according to the origin paper.")
+    if args_opt.task_name in ["TNEWS", "CLUENER"] and \
+            (td_teacher_net_cfg.vocab_size != 21128 or td_student_net_cfg.vocab_size != 21128):
+        logger.warning(f"{args_opt.task_name} is a Chinese dataset. Usually, we use 21128 for CN vocabs and 30522 for "
+                       f"EN vocabs according to the origin paper.")
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target,
                         reserve_class_name_in_scope=False)
     if args_opt.device_target == "Ascend":
         context.set_context(device_id=args_opt.device_id)
-    enable_loss_scale = True
     if args_opt.device_target == "GPU":
         context.set_context(enable_graph_kernel=True)
         if td_student_net_cfg.compute_type != mstype.float32:
@@ -363,7 +401,7 @@ if __name__ == '__main__':
         run_predistill()
         lists = os.listdir(td_phase1_save_ckpt_dir)
         if lists:
-            lists.sort(key=lambda fn: os.path.getmtime(td_phase1_save_ckpt_dir+'/'+fn))
+            lists.sort(key=lambda fn: os.path.getmtime(td_phase1_save_ckpt_dir + '/' + fn))
             name_ext = os.path.splitext(lists[-1])
             if name_ext[-1] != ".ckpt":
                 raise ValueError("Invalid file, checkpoint file should be .ckpt file")
@@ -374,3 +412,7 @@ if __name__ == '__main__':
             raise ValueError("Checkpoint file not exists, please make sure ckpt file has been saved")
     else:
         do_eval_standalone()
+
+
+if __name__ == '__main__':
+    run_main()
