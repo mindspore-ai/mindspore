@@ -51,6 +51,7 @@ std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &out
   }
   return real_outputs;
 }
+
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_) {
   // get inputs
   auto kernel_inputs = launch_info_->inputs_;
@@ -77,6 +78,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uin
 #endif
   }
 }
+
 void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_) {
   // get outputs
   auto kernel_outputs = launch_info_->outputs_;

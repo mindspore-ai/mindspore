@@ -351,6 +351,9 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
         } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
           // stop only when receive the first sub run graph for each step
           // if we have stopped for the last kernel before, no need to stop again
+          if (pipeline::ExecutorPy::GetDebugTerminate()) {
+            return;
+          }
           if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
             CommandLoop();
           }
