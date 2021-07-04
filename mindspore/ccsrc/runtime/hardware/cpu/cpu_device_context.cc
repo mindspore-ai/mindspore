@@ -29,6 +29,7 @@
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
 #include "profiler/device/cpu/cpu_profiling.h"
+#include "debug/data_dump/dump_json_parser.h"
 
 namespace mindspore {
 namespace device {
@@ -37,8 +38,17 @@ bool CPUDeviceContext::Initialize() {
   if (initialized_) {
     return true;
   }
+
   mem_manager_ = std::make_shared<CPUMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
+
+  // Dump json config file if dump is enabled.
+  auto rank_id = GetRankID();
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  json_parser.CopyJsonToDir(rank_id);
+  json_parser.CopyMSCfgJsonToDir(rank_id);
+
   initialized_ = true;
   return true;
 }

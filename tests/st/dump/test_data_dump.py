@@ -116,7 +116,6 @@ def test_cpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     run_e2e_dump()
 
-
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):
         super().__init__()

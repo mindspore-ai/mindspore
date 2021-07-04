@@ -134,6 +134,9 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   }
   auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
   MS_EXCEPTION_IF_NULL(addr);
+  if (addr->GetPtr() == nullptr) {
+    return;
+  }
   ShapeVector int_shapes;
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes));
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
@@ -162,6 +165,13 @@ void CPUE2eDump::DumpParametersAndConst(const session::KernelGraph *graph, uint3
   auto value_nodes = graph->graph_value_nodes();
   for (const auto &value_node : value_nodes) {
     DumpSingleAnfNode(value_node, VALUE_NODE_OUTPUT_INDEX, dump_path, &const_map);
+  }
+}
+
+void CPUE2eDump::DumpParametersAndConst() {
+  auto &graphs = DumpJsonParser::GetInstance().graphs();
+  for (auto graph : graphs) {
+    DumpParametersAndConst(graph, graph->graph_id());
   }
 }
 }  // namespace mindspore
