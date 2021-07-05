@@ -151,6 +151,25 @@ bool IsCompatible(const abstract::AbstractBasePtr &a1, const abstract::AbstractB
   if (a1 == a2) {
     return true;
   }
+  // Check AbstractTuple.
+  if (a1->isa<abstract::AbstractTuple>() && a2->isa<abstract::AbstractTuple>()) {
+    auto &a1_tuple = static_cast<abstract::AbstractTuple &>(*a1);
+    auto &a2_tuple = static_cast<abstract::AbstractTuple &>(*a2);
+    auto &a1_elements = a1_tuple.elements();
+    auto &a2_elements = a2_tuple.elements();
+    if (a1_elements.size() != a2_elements.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < a1_elements.size(); i++) {
+      MS_EXCEPTION_IF_NULL(a1_elements[i]);
+      MS_EXCEPTION_IF_NULL(a2_elements[i]);
+      if (!IsCompatible(a1_elements[i], a2_elements[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  // Check AbstractTensor and AbstractRef.
   auto type1 = a1->BuildType();
   auto type2 = a2->BuildType();
   if (type1 != type2 && *type1 != *type2) {
