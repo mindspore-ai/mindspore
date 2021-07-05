@@ -709,6 +709,7 @@ LiteSession::~LiteSession() {
   }
   for (auto *kernel : kernels_) {
     delete kernel;
+    kernel = nullptr;
   }
   for (auto tensor : tensors_) {
     MS_ASSERT(tensor != nullptr);
@@ -718,12 +719,14 @@ LiteSession::~LiteSession() {
       tensor->set_data(nullptr);
     }
     delete tensor;
+    tensor = nullptr;
   }
 
   for (auto item : graph_output_map_) {
     auto isolate_output_tensor = item.first;
     isolate_output_tensor->set_data(nullptr);
     delete isolate_output_tensor;
+    isolate_output_tensor = nullptr;
   }
 
   // Tensor * in input_map output_map are freed in tensors
