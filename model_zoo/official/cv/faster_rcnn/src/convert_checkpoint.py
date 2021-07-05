@@ -15,15 +15,13 @@
 """
 convert resnet pretrain model to faster_rcnn backbone pretrain model
 """
-import argparse
 from mindspore.train.serialization import load_checkpoint, save_checkpoint
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
+from .model_utils.config import config
 
-parser = argparse.ArgumentParser(description='load_ckpt')
-parser.add_argument('--ckpt_file', type=str, default='', help='ckpt file path')
-args_opt = parser.parse_args()
+
 def load_weights(model_path, use_fp16_weight):
     """
     load resnet pretrain checkpoint file.
@@ -60,5 +58,5 @@ def load_weights(model_path, use_fp16_weight):
     return param_list
 
 if __name__ == "__main__":
-    parameter_list = load_weights(args_opt.ckpt_file, use_fp16_weight=False)
+    parameter_list = load_weights(config.ckpt_file, use_fp16_weight=False)
     save_checkpoint(parameter_list, "resnet_backbone.ckpt")

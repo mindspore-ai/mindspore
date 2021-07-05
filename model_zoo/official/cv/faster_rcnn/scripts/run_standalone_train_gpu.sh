@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 2 ]
+if [ $# -le 2 ]
 then 
-    echo "Usage: sh run_standalone_train_gpu.sh [PRETRAINED_PATH] [BACKBONE]"
+    echo "Usage: sh run_standalone_train_gpu.sh [PRETRAINED_PATH] [BACKBONE] [COCO_ROOT] [MINDRECORD_DIR](option)"
 exit 1
 fi
 
@@ -35,12 +35,50 @@ get_real_path(){
 }
 
 PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $3)
 echo $PATH1
+echo $PATH2
 
 if [ ! -f $PATH1 ]
 then 
     echo "error: PRETRAINED_PATH=$PATH1 is not a file"
 exit 1
+fi
+
+if [ ! -d $PATH2 ]
+then
+    echo "error: COCO_ROOT=$PATH2 is not a dir"
+exit 1
+fi
+
+mindrecord_dir=$PATH2/MindRecord_COCO_TRAIN/
+if [ $# -eq 4 ]
+then
+    mindrecord_dir=$(get_real_path $4)
+    if [ ! -d $mindrecord_dir ]
+    then
+        echo "error: mindrecord_dir=$mindrecord_dir is not a dir"
+    exit 1
+    fi
+fi
+echo $mindrecord_dir
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+if [ $# -ge 1 ]; then
+  if [ $2 == 'resnet_v1.5_50' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  elif [ $2 == 'resnet_v1_101' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_101.yaml"
+  elif [ $2 == 'resnet_v1_152' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config_152.yaml"
+  elif [ $2 == 'resnet_v1_50' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
 fi
 
 ulimit -u unlimited
@@ -55,10 +93,12 @@ then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --device_id=$DEVICE_ID --pre_trained=$PATH1 --device_target="GPU" --backbone=$2 &> log &
+python train.py --config_path=$CONFIG_FILE --coco_root=$PATH2 --mindrecord_dir=$mindrecord_dir \
+--device_id=$DEVICE_ID --pre_trained=$PATH1 --device_target="GPU" --backbone=$2 &> log &
 cd ..

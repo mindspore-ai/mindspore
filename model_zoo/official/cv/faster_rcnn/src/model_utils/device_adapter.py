@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
 
-from src.model_utils.config import config
+"""Device adapter for ModelArts"""
 
+from .config import config
 
-if config.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
-    from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
-elif config.backbone == "resnet_v1_50":
-    from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 
-def create_network(name, *args, **kwargs):
-    if name == "faster_rcnn":
-        return Faster_Rcnn_Resnet(config=config)
-    raise NotImplementedError(f"{name} is not implemented in the repo")
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

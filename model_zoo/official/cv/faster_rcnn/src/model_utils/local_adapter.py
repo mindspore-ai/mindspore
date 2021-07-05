@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""hub config."""
 
-from src.model_utils.config import config
+"""Local adapter"""
+
+import os
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
 
 
-if config.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
-    from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
-elif config.backbone == "resnet_v1_50":
-    from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
 
-def create_network(name, *args, **kwargs):
-    if name == "faster_rcnn":
-        return Faster_Rcnn_Resnet(config=config)
-    raise NotImplementedError(f"{name} is not implemented in the repo")
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

@@ -17,8 +17,6 @@
 
 import os
 import time
-import argparse
-import ast
 import numpy as np
 
 import mindspore.common.dtype as mstype
@@ -34,62 +32,45 @@ from mindspore.common import set_seed
 from src.network_define import LossCallBack, WithLossCell, TrainOneStepCell, LossNet
 from src.dataset import data_to_mindrecord_byte_image, create_fasterrcnn_dataset
 from src.lr_schedule import dynamic_lr
-import src.config as cfg
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+
 
 set_seed(1)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
 
-parser = argparse.ArgumentParser(description="FasterRcnn training")
-parser.add_argument("--run_distribute", type=ast.literal_eval, default=False, help="Run distribute, default: false.")
-parser.add_argument("--dataset", type=str, default="coco", help="Dataset name, default: coco.")
-parser.add_argument("--pre_trained", type=str, default="", help="Pretrained file path.")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    help="device where the code will be implemented, default is Ascend")
-parser.add_argument("--device_id", type=int, default=0, help="Device id, default: 0.")
-parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default: 1.")
-parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default: 0.")
-parser.add_argument("--backbone", type=str, required=True, \
-                    help="backbone network name, options:resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152")
-args_opt = parser.parse_args()
-
-context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
-
-if args_opt.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
+if config.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
     from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
-    if args_opt.backbone == "resnet_v1.5_50":
-        config = cfg.get_config("./src/config_50.yaml")
-    elif args_opt.backbone == "resnet_v1_101":
-        config = cfg.get_config("./src/config_101.yaml")
-    elif args_opt.backbone == "resnet_v1_152":
-        config = cfg.get_config("./src/config_152.yaml")
-
-elif args_opt.backbone == "resnet_v1_50":
-    config = cfg.get_config("./src/config_50.yaml")
+elif config.backbone == "resnet_v1_50":
     from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
 
-if __name__ == '__main__':
-    if args_opt.device_target == "GPU":
-        context.set_context(enable_graph_kernel=True)
-    if args_opt.run_distribute:
-        if args_opt.device_target == "Ascend":
-            rank = args_opt.rank_id
-            device_num = args_opt.device_num
-            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
-            init()
-        else:
-            init("nccl")
-            context.reset_auto_parallel_context()
-            rank = get_rank()
-            device_num = get_group_size()
-            context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
+if config.device_target == "GPU":
+    context.set_context(enable_graph_kernel=True)
+if config.run_distribute:
+    if config.device_target == "Ascend":
+        rank = get_rank_id()
+        device_num = get_device_num()
+        context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          gradients_mean=True)
+        init()
     else:
-        rank = 0
-        device_num = 1
+        init("nccl")
+        context.reset_auto_parallel_context()
+        rank = get_rank()
+        device_num = get_group_size()
+        context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          gradients_mean=True)
+else:
+    rank = 0
+    device_num = 1
 
+
+def train_fasterrcnn_():
+    """ train_fasterrcnn_ """
     print("Start create dataset!")
 
-    # It will generate mindrecord file in args_opt.mindrecord_dir,
+    # It will generate mindrecord file in config.mindrecord_dir,
     # and the file name is FasterRcnn.mindrecord0, 1, ... file_num.
     prefix = "FasterRcnn.mindrecord"
     mindrecord_dir = config.mindrecord_dir
@@ -99,7 +80,7 @@ if __name__ == '__main__':
     if rank == 0 and not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
-        if args_opt.dataset == "coco":
+        if config.dataset == "coco":
             if os.path.isdir(config.coco_root):
                 if not os.path.exists(config.coco_root):
                     print("Please make sure config:coco_root is valid.")
@@ -125,8 +106,6 @@ if __name__ == '__main__':
 
     print("CHECKING MINDRECORD FILES DONE!")
 
-    loss_scale = float(config.loss_scale)
-
     # When create MindDataset, using the fitst mindrecord file, such as FasterRcnn.mindrecord0.
     dataset = create_fasterrcnn_dataset(config, mindrecord_file, batch_size=config.batch_size,
                                         device_num=device_num, rank_id=rank,
@@ -136,10 +115,20 @@ if __name__ == '__main__':
     dataset_size = dataset.get_dataset_size()
     print("Create dataset done!")
 
+    return dataset_size, dataset
+
+
+def modelarts_pre_process():
+    config.save_checkpoint_path = config.output_path
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_fasterrcnn():
+    """ train_fasterrcnn """
+    dataset_size, dataset = train_fasterrcnn_()
     net = Faster_Rcnn_Resnet(config=config)
     net = net.set_train()
 
-    load_path = args_opt.pre_trained
+    load_path = config.pre_trained
     if load_path != "":
         param_dict = load_checkpoint(load_path)
 
@@ -180,7 +169,7 @@ if __name__ == '__main__':
     opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
               weight_decay=config.weight_decay, loss_scale=config.loss_scale)
     net_with_loss = WithLossCell(net, loss)
-    if args_opt.run_distribute:
+    if config.run_distribute:
         net = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale, reduce_flag=True,
                                mean=True, degree=device_num)
     else:
@@ -198,3 +187,6 @@ if __name__ == '__main__':
 
     model = Model(net)
     model.train(config.epoch_size, dataset, callbacks=cb)
+
+if __name__ == '__main__':
+    train_fasterrcnn()

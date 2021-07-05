@@ -1,17 +1,16 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ===========================================================================
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+device_target: Ascend
+enable_profiling: False
+
+# ==============================================================================
+# config
 
 img_width: 1280
 img_height: 768
@@ -20,7 +19,7 @@ flip_ratio: 0.5
 expand_ratio: 1.0
 
 # anchor
-feature_shapes: 
+feature_shapes:
 - [192, 320]
 - [96, 160]
 - [48, 80]
@@ -32,7 +31,7 @@ anchor_strides: [4, 8, 16, 32, 64]
 num_anchors: 3
 
 # resnet
-resnet_block: [3, 4, 6, 3]
+resnet_block: [3, 8, 36, 3]
 resnet_in_channels: [64, 256, 512, 1024]
 resnet_out_channels: [256, 512, 1024, 2048]
 
@@ -112,7 +111,7 @@ rpn_head_use_sigmoid: True
 rpn_head_weight: 1.0
 
 # LR
-base_lr: 0.04
+base_lr: 0.02
 warmup_step: 500
 warmup_ratio: 0.0625
 sgd_step: [8, 11]
@@ -154,3 +153,64 @@ coco_classes: ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane
                      'refrigerator', 'book', 'clock', 'vase', 'scissors',
                      'teddy bear', 'hair drier', 'toothbrush']
 num_classes: 81
+
+# train.py FasterRcnn training
+run_distribute: False
+dataset: "coco"
+pre_trained: "/cache/train/fasterrcnn/faster_rcnn-12_7393.ckpt"
+device_id: 0
+device_num: 1
+rank_id: 0
+image_dir: ''
+anno_path: ''
+backbone: 'resnet_v1_50'
+
+# eval.py FasterRcnn evaluation
+ann_file: '/cache/data/annotations/instances_val2017.json'
+checkpoint_path: "/cache/train/fasterrcnn/faster_rcnn-12_7393.ckpt"
+
+# export.py fasterrcnn_export
+file_name: "faster_rcnn"
+file_format: "AIR"
+ckpt_file: "/cache/train/fasterrcnn/faster_rcnn-12_7393.ckpt"
+
+# postprocess ("./src/config_50.yaml")
+#ann_file: ''
+result_path: ''
+
+---
+# Config description for each option
+enable_modelarts: 'Whether training on modelarts, default: False'
+data_url: 'Dataset url for obs'
+train_url: 'Training output url for obs'
+data_path: 'Dataset path for local'
+output_path: 'Training output path for local'
+result_dir: "result files path."
+label_dir: "image file path."
+
+device_target: "device where the code will be implemented, default is Ascend"
+file_name: "output file name."
+dataset: "Dataset, either cifar10 or imagenet2012"
+parameter_server: 'Run parameter server train'
+width: 'input width'
+height: 'input height'
+enable_profiling: 'Whether enable profiling while training, default: False'
+only_create_dataset: 'If set it true, only create Mindrecord, default is false.'
+run_distribute: 'Run distribute, default is false.'
+do_train: 'Do train or not, default is true.'
+do_eval: 'Do eval or not, default is false.'
+pre_trained: 'Pretrained checkpoint path'
+device_id: 'Device id, default is 0.'
+device_num: 'Use device nums, default is 1.'
+rank_id: 'Rank id, default is 0.'
+file_format: 'file format'
+ann_file: "Ann file, default is val.json."
+checkpoint_path: "Checkpoint file path."
+ckpt_file: 'fasterrcnn ckpt file.'
+result_path: "result file path."
+backbone: "backbone network name, options:resnet_v1_50, resnet_v1.5_50, resnet_v1_101, resnet_v1_152"
+
+---
+device_target: ['Ascend', 'GPU', 'CPU']
+file_format: ["AIR", "ONNX", "MINDIR"]
+dataset_name: ["cifar10", "imagenet2012"]
