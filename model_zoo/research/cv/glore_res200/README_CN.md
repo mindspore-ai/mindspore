@@ -73,7 +73,7 @@
 - 硬件(Ascend/GPU)
     - 准备Ascend或GPU处理器搭建硬件环境。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
@@ -296,7 +296,7 @@ result:{'top_1 acc':0.802303685897436}
 | 总时长                 | 33时45分钟                                   |94时08分                          |
 | 参数(M)             | 70.6                                           |70.6
 | 微调检查点| 807.57M（.ckpt文件）                                      |808.28(.ckpt)
-| 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/Glore_resnet200) |
+| 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/glore_res200) |
 
 ### 推理性能
 
