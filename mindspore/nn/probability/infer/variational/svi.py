@@ -57,7 +57,7 @@ class SVI:
             epochs (int): Total number of iterations on the data. Default: 10.
             train_dataset (Dataset): A training dataset iterator.
 
-        Outputs:
+        Returns:
             Cell, the trained probability network.
         """
         epochs = Validator.check_positive_int(epochs)
