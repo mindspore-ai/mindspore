@@ -26,6 +26,10 @@ batch_size: 16000
 ckpt_file: ''
 file_name: "autodis"
 file_format: "AIR"
+# 310infer related
+dataset_path: ""
+result_path: "./result_Files"
+label_path: ""
 # Dataset related
 DataConfig:
     data_vocab_size: 184965

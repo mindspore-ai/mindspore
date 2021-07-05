@@ -373,8 +373,30 @@ Total boxes: 104125
 
 ### [Export MindIR](#contents)
 
+- Export on local
+
 ```shell
 python export.py
+```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# (1) Upload the code folder to S3 bucket.
+# (2) Click to "create training task" on the website UI interface.
+# (3) Set the code directory to "/{path}/simple_pose" on the website UI interface.
+# (4) Set the startup file to /{path}/simple_pose/export.py" on the website UI interface.
+# (5) Perform a .
+#     a. setting parameters in /{path}/simple_pose/default_config.yaml.
+#         1. Set ”enable_modelarts: True“
+#         2. Set “TEST.MODEL_FILE: ./{path}/*.ckpt”('TEST.MODEL_FILE' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Set ”EXPORT.FILE_NAME: simple_pose“
+#         4. Set ”EXPORT.FILE_FORMAT：MINDIR“
+# (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (This step is useless, but necessary.).
+# (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (9) Under the item "resource pool selection", select the specification of a single card.
+# (10) Create your job.
+# You will see simple_pose.mindir under {Output file path}.
 ```
 
 The `TEST.MODEL_FILE` parameter is required

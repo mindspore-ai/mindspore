@@ -198,8 +198,35 @@ Parameters for both training and evaluation can be set in `default_config.yaml`
 
 ### [Export MindIR](#contents)
 
+- Export on local
+
 ```shell
 python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# (1) Upload the code folder to S3 bucket.
+# (2) Click to "create training task" on the website UI interface.
+# (3) Set the code directory to "/{path}/textrcnn" on the website UI interface.
+# (4) Set the startup file to /{path}/textrcnn/export.py" on the website UI interface.
+# (5) Perform a or b.
+#     a. setting parameters in /{path}/textrcnn/default_config.yaml.
+#         1. Set ”enable_modelarts: True“
+#         2. Set “ckpt_file: ./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Set ”file_name: textrcnn“
+#         4. Set ”file_format：MINDIR“
+#     b. adding on the website UI interface.
+#         1. Add ”enable_modelarts=True“
+#         2. Add “ckpt_file=./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Add ”file_name=textrcnn“
+#         4. Add ”file_format=MINDIR“
+# (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+# (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (9) Under the item "resource pool selection", select the specification of a single card.
+# (10) Create your job.
+# You will see textrcnn.mindir under {Output file path}.
 ```
 
 The ckpt_file parameter is required,

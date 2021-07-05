@@ -24,8 +24,18 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net, 
 
 from src.model_utils.config import config
 from src.tinydarknet import TinyDarkNet
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-if __name__ == '__main__':
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+    config.checkpoint_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.checkpoint_path)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """export function"""
     if config.dataset_name != 'imagenet':
         raise ValueError("Dataset is not support.")
 
@@ -37,3 +47,6 @@ if __name__ == '__main__':
 
     input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[config.batch_size, 3, 224, 224]), ms.float32)
     export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
+
+if __name__ == '__main__':
+    run_export()

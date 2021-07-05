@@ -14,25 +14,19 @@
 # ============================================================================
 """preprocess."""
 import os
-import argparse
 
-from src.model_utils.config import data_config, train_config
+from src.model_utils.config import config, data_config, train_config
 from src.dataset import create_dataset, DataType
-
-parser = argparse.ArgumentParser(description='preprocess.')
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--result_path', type=str, default='./preprocess_Result', help='Result path')
-args_opt, _ = parser.parse_known_args()
 
 
 def generate_bin():
     '''generate bin files'''
-    ds = create_dataset(args_opt.dataset_path, train_mode=False,
+    ds = create_dataset(config.dataset_path, train_mode=False,
                         epochs=1, batch_size=train_config.batch_size,
                         data_type=DataType(data_config.data_format))
-    batch_ids_path = os.path.join(args_opt.result_path, "00_batch_ids")
-    batch_wts_path = os.path.join(args_opt.result_path, "01_batch_wts")
-    labels_path = os.path.join(args_opt.result_path, "02_labels")
+    batch_ids_path = os.path.join(config.result_path, "00_batch_ids")
+    batch_wts_path = os.path.join(config.result_path, "01_batch_wts")
+    labels_path = os.path.join(config.result_path, "02_labels")
 
     os.makedirs(batch_ids_path)
     os.makedirs(batch_wts_path)

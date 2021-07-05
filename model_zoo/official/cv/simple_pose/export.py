@@ -20,8 +20,17 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net, 
 from src.model import get_pose_net
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-if __name__ == '__main__':
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.EXPORT.FILE_NAME = os.path.join(config.output_path, config.EXPORT.FILE_NAME)
+    config.TEST.MODEL_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.TEST.MODEL_FILE)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_export():
+    """export function"""
     # set context
     device_id = get_device_id()
     context.set_context(mode=context.GRAPH_MODE,
@@ -39,3 +48,6 @@ if __name__ == '__main__':
     input_shape = [config.TEST.BATCH_SIZE, 3, config.MODEL.IMAGE_SIZE[1], config.MODEL.IMAGE_SIZE[0]]
     input_ids = Tensor(np.zeros(input_shape), float32)
     export(model, input_ids, file_name=config.EXPORT.FILE_NAME, file_format=config.EXPORT.FILE_FORMAT)
+
+if __name__ == '__main__':
+    run_export()

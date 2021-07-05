@@ -20,7 +20,17 @@ from mindspore import Tensor, context, load_checkpoint, load_param_into_net, exp
 from src.textrcnn import textrcnn
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.file_name = os.path.join(config.output_path, config.file_name)
+    config.ckpt_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.ckpt_file)
+    config.preprocess_path = config.data_path
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_export():
     '''export function.'''
     context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())

@@ -14,26 +14,21 @@
 # ============================================================================
 """postprocess."""
 import os
-import argparse
 import numpy as np
 from mindspore import Tensor
 from src.autodis import AUCMetric
-from src.model_utils.config import train_config
+from src.model_utils.config import config, train_config
 
-parser = argparse.ArgumentParser(description='postprocess')
-parser.add_argument('--result_path', type=str, default="./result_Files", help='result path')
-parser.add_argument('--label_path', type=str, default=None, help='label path')
-args_opt, _ = parser.parse_known_args()
 
 def get_acc():
     ''' get accuracy '''
     auc_metric = AUCMetric()
-    files = os.listdir(args_opt.label_path)
+    files = os.listdir(config.label_path)
     batch_size = train_config.batch_size
 
     for f in files:
-        rst_file = os.path.join(args_opt.result_path, f.split('.')[0] + '_0.bin')
-        label_file = os.path.join(args_opt.label_path, f)
+        rst_file = os.path.join(config.result_path, f.split('.')[0] + '_0.bin')
+        label_file = os.path.join(config.label_path, f)
 
         logit = Tensor(np.fromfile(rst_file, np.float32).reshape(batch_size, 1))
         label = Tensor(np.fromfile(label_file, np.float32).reshape(batch_size, 1))
