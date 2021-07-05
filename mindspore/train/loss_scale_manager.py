@@ -54,7 +54,7 @@ class FixedLossScaleManager(LossScaleManager):
         >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
         >>>
         >>> #2) Execute parameter update even if overflow occurs
-        >>> loss_scale = 1024
+        >>> loss_scale = 1024.0
         >>> loss_scale_manager = FixedLossScaleManager(loss_scale, False)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=loss_scale)
         >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
