@@ -16,20 +16,10 @@
 """postprocess"""
 
 import os
-import argparse
 import numpy as np
 from mindspore import Tensor
 from src.assessment_method import Accuracy, F1
-from src.td_config import eval_cfg
-
-parser = argparse.ArgumentParser(description='postprocess')
-parser.add_argument("--task_name", type=str, default="", choices=["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"],
-                    help="The name of the task to train.")
-parser.add_argument("--assessment_method", type=str, default="accuracy", choices=["accuracy", "bf1", "mf1"],
-                    help="assessment_method include: [accuracy, bf1, mf1], default is accuracy")
-parser.add_argument("--result_path", type=str, default="./result_Files", help="result path")
-parser.add_argument("--label_path", type=str, default="./preprocess_Result/label_ids.npy", help="label path")
-args_opt = parser.parse_args()
+from src.model_utils.config import eval_cfg, config as args_opt
 
 
 DEFAULT_NUM_LABELS = 2

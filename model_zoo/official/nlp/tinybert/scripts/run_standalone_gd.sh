@@ -28,6 +28,7 @@ CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_general_distill.py  \
+    --config_path="../../gd_config.yaml" \
     --distribute="false" \
     --device_target="Ascend" \
     --epoch_size=3 \

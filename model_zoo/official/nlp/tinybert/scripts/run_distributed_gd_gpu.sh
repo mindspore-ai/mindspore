@@ -31,6 +31,7 @@ PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 
 mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
     python ${PROJECT_DIR}/../run_general_distill.py  \
+    --config_path="../../gd_config.yaml" \
     --distribute="true" \
     --device_target="GPU" \
     --epoch_size=$EPOCH_SIZE \

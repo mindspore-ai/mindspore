@@ -16,7 +16,7 @@
 """general distill script"""
 
 import os
-import argparse
+import time
 import datetime
 import mindspore.communication.management as D
 import mindspore.common.dtype as mstype
@@ -30,40 +30,76 @@ from mindspore import log as logger
 from mindspore.common import set_seed
 from src.dataset import create_tinybert_dataset, DataType
 from src.utils import LossCallBack, ModelSaveCkpt, BertLearningRate
-from src.gd_config import common_cfg, bert_teacher_net_cfg, bert_student_net_cfg
+from src.model_utils.config import config as args_opt, common_cfg, bert_teacher_net_cfg, bert_student_net_cfg
 from src.tinybert_for_gd_td import BertTrainWithLossScaleCell, BertNetworkWithLoss_gd, BertTrainCell
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
 
-def get_argument():
-    """Tinybert general distill argument parser."""
-    parser = argparse.ArgumentParser(description='tinybert general distill')
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU', 'CPU'],
-                        help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument("--distribute", type=str, default="false", choices=["true", "false"],
-                        help="Run distribute, default is false.")
-    parser.add_argument("--epoch_size", type=int, default="3", help="Epoch size, default is 1.")
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-    parser.add_argument("--save_ckpt_step", type=int, default=100, help="Enable data sink, default is true.")
-    parser.add_argument("--max_ckpt_num", type=int, default=1, help="Enable data sink, default is true.")
-    parser.add_argument("--do_shuffle", type=str, default="true", choices=["true", "false"],
-                        help="Enable shuffle for dataset, default is true.")
-    parser.add_argument("--enable_data_sink", type=str, default="true", choices=["true", "false"],
-                        help="Enable data sink, default is true.")
-    parser.add_argument("--data_sink_steps", type=int, default=1, help="Sink steps for each epoch, default is 1.")
-    parser.add_argument("--save_ckpt_path", type=str, default="", help="Save checkpoint path")
-    parser.add_argument("--load_teacher_ckpt_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--data_dir", type=str, default="", help="Data path, it is better to use absolute path")
-    parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
-    parser.add_argument("--dataset_type", type=str, default="tfrecord",
-                        help="dataset type tfrecord/mindrecord, default is tfrecord")
-    args_opt = parser.parse_args()
-    return args_opt
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, args_opt.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("Unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("Unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("Cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if args_opt.modelarts_dataset_unzip_name:
+        zip_file_1 = os.path.join(args_opt.data_path, args_opt.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(args_opt.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+    _file_dir = os.path.dirname(os.path.abspath(__file__))
+    args_opt.device_id = get_device_id()
+    args_opt.device_num = get_device_num()
+    args_opt.data_dir = os.path.join(args_opt.data_path, args_opt.data_dir)
+    args_opt.schema_dir = os.path.join(args_opt.data_path, args_opt.schema_dir)
+    args_opt.save_ckpt_path = os.path.join(args_opt.output_path, args_opt.save_ckpt_path)
+    args_opt.load_teacher_ckpt_path = os.path.join(_file_dir, args_opt.load_teacher_ckpt_path)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_general_distill():
     """
     run general distill
     """
-    args_opt = get_argument()
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target,
                         reserve_class_name_in_scope=False)
     if args_opt.device_target == "Ascend":
@@ -81,7 +117,7 @@ def run_general_distill():
             D.init()
             device_num = D.get_group_size()
             rank = D.get_rank()
-            save_ckpt_dir = save_ckpt_dir + '_ckpt_' + str(rank)
+        save_ckpt_dir = save_ckpt_dir + '_ckpt_' + str(rank)
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
@@ -163,6 +199,7 @@ def run_general_distill():
     model.train(repeat_count, dataset, callbacks=callback,
                 dataset_sink_mode=(args_opt.enable_data_sink == "true"),
                 sink_size=args_opt.data_sink_steps)
+
 
 if __name__ == '__main__':
     set_seed(0)
