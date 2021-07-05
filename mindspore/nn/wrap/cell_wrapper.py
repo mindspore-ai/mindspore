@@ -659,7 +659,7 @@ class ParameterUpdate(Cell):
         KeyError: If parameter with the specified name does not exist.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> network = nn.Dense(3, 4)
