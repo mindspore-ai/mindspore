@@ -82,7 +82,7 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     for (auto &path : flag->pluginsPath) {
       auto status = dynamic_library_loader.Open(path.c_str());
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "open dynamic library failed.";
+        MS_LOG(ERROR) << "open dynamic library failed. " << path;
         return nullptr;
       }
       dynamic_library_loader.Close();

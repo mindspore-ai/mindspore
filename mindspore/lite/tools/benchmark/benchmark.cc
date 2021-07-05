@@ -33,6 +33,12 @@
 #include <asm/unistd.h>
 #include <unistd.h>
 #endif
+#ifdef SUPPORT_NNIE
+#include "include/hi_common.h"
+#include "include/hi_comm_vb.h"
+#include "include/mpi_sys.h"
+#include "include/mpi_vb.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -1350,18 +1356,76 @@ int Benchmark::PrintPerfResult(const std::vector<std::string> &title,
 }
 #endif
 
+#ifdef SUPPORT_NNIE
+int SvpSysInit() {
+  HI_S32 ret = HI_SUCCESS;
+  VB_CONFIG_S struVbConf;
+
+  HI_MPI_SYS_Exit();
+  HI_MPI_VB_Exit();
+
+  memset(&struVbConf, 0, sizeof(VB_CONFIG_S));
+  struVbConf.u32MaxPoolCnt = 2;
+  struVbConf.astCommPool[1].u64BlkSize = 768 * 576 * 2;
+  struVbConf.astCommPool[1].u32BlkCnt = 1;
+
+  ret = HI_MPI_VB_SetConfig((const VB_CONFIG_S *)&struVbConf);
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_VB_SetConf failed!";
+    return RET_ERROR;
+  }
+
+  ret = HI_MPI_VB_Init();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_VB_Init failed!";
+    return RET_ERROR;
+  }
+
+  ret = HI_MPI_SYS_Init();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_SYS_Init failed!";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
+int SvpSysExit() {
+  HI_S32 ret = HI_SUCCESS;
+
+  ret = HI_MPI_SYS_Exit();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_SYS_Exit failed!";
+    return RET_ERROR;
+  }
+
+  ret = HI_MPI_VB_Exit();
+  if (HI_SUCCESS != ret) {
+    MS_LOG(ERROR) << "Error:HI_MPI_VB_Exit failed!";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+#endif
+
 Benchmark::~Benchmark() {
   for (const auto &iter : this->benchmark_data_) {
     delete (iter.second);
   }
   this->benchmark_data_.clear();
   delete (session_);
+#ifdef SUPPORT_NNIE
+  SvpSysExit();
+#endif
 }
 
 int RunBenchmark(int argc, const char **argv) {
   BenchmarkFlags flags;
   Option<std::string> err = flags.ParseFlags(argc, argv);
-
+#ifdef SUPPORT_NNIE
+  SvpSysInit();
+#endif
   if (err.IsSome()) {
     std::cerr << err.Get() << std::endl;
     std::cerr << flags.Usage() << std::endl;

@@ -29,6 +29,7 @@ option(MSLITE_ENABLE_CONVERTER "enable converter, only x86_64 support" on)
 option(MSLITE_ENABLE_TOOLS "enable tools" on)
 option(MSLITE_ENABLE_TESTCASES "enable testcase" off)
 option(MSLITE_ENABLE_NNIE "enable NNIE" off)
+option(MSLITE_COMPILE_NNIE "compile NNIE" off)
 
 # Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -69,6 +70,9 @@ if(DEFINED ENV{MSLITE_ENABLE_TESTCASES})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_NNIE})
     set(MSLITE_ENABLE_NNIE $ENV{MSLITE_ENABLE_NNIE})
+endif()
+if(DEFINED ENV{MSLITE_COMPILE_NNIE})
+    set(MSLITE_COMPILE_NNIE $ENV{MSLITE_COMPILE_NNIE})
 endif()
 
 if(PLATFORM_ARM64)
@@ -177,6 +181,10 @@ elseif(WIN32)
     endif()
 else()
     set(RUNTIME_COMPONENT_NAME "linux-x64")
+endif()
+
+if(MSLITE_COMPILE_NNIE AND (NOT PLATFORM_ARM))
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter/nnie)
 endif()
 
 string(REPLACE "/mindspore/lite" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
