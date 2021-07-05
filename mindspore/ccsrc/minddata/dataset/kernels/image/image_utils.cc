@@ -632,8 +632,8 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Rotate: load image failed.");
     }
-    if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
-      RETURN_STATUS_UNEXPECTED("Rotate: input tensor is not in shape of <H,W,C> or <H,W>.");
+    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
+      RETURN_STATUS_UNEXPECTED("Rotate: image shape is not <H,W,C> or <H,W>.");
     }
 
     cv::Mat input_img = input_cv->mat();
@@ -641,8 +641,10 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       RETURN_STATUS_UNEXPECTED("Rotate: image is too large and center is not precise.");
     }
     // default to center of image
-    if (fx == -1 && fy == -1) {
+    if (fx == -1) {
       fx = (input_img.cols - 1) / 2.0;
+    }
+    if (fy == -1) {
       fy = (input_img.rows - 1) / 2.0;
     }
     cv::Mat output_img;
@@ -1270,6 +1272,9 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
                     int32_t kernel_y, float sigma_x, float sigma_y) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    if (input_cv->mat().data == nullptr) {
+      RETURN_STATUS_UNEXPECTED("GaussianBlur: load image failed.");
+    }
     cv::Mat output_cv_mat;
     cv::GaussianBlur(input_cv->mat(), output_cv_mat, cv::Size(kernel_x, kernel_y), static_cast<double>(sigma_x),
                      static_cast<double>(sigma_y));
