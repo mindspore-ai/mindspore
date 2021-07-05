@@ -205,7 +205,6 @@ def generate_increment(model, origin_inputs, config):
         log_probs = logits.reshape(1, config.vocab_size)
 
         # Get the revised log_probs considering frequency and presence penalty to eliminate duplicate in generated results
-        log_probs = log_probs.asnumpy().reshape(1, config.vocab_size)
         log_probs_revised = log_probs - frequency_list * frequency_penalty - (frequency_list > 0) * presence_penalty
 
         p, p_args = sampler(log_probs_revised, top_p, top_k_num, use_pynative)
