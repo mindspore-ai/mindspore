@@ -22,6 +22,7 @@ import multiprocessing.queues
 import multiprocessing
 import numpy as np
 from mindspore import log as logger
+from ..core.validator_helpers import is_serializable
 from ..transforms.py_transforms_util import ExceptionHandler
 
 
@@ -78,6 +79,9 @@ class _SharedQueue(multiprocessing.queues.Queue):
                 raise TypeError("return value of user defined python function in GeneratorDataset or"
                                 " map should be numpy array or tuple of numpy array.")
             for r in data:
+                if not is_serializable(obj=r):
+                    raise TypeError("Can not pickle {} object, please verify pyfunc return with numpy array"
+                                    .format(type(r)))
                 if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
                         and start_bytes + r.nbytes < self.seg_size):
                     # need to convert start_bytes to offset in array

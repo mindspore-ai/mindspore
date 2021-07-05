@@ -293,7 +293,7 @@ class GraphData:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
             neighbor_type (int): Specify the type of neighbor.
             output_format (OutputFormat, optional): Output storage format (default=OutputFormat.NORMAL)
-            It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
+                It can be any of [OutputFormat.NORMAL, OutputFormat.COO, OutputFormat.CSR].
 
         Returns:
             For NORMAL format or COO format

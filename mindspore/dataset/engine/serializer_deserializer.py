@@ -40,7 +40,7 @@ def serialize(dataset, json_filepath=""):
        dict containing the serialized dataset graph.
 
     Raises:
-        OSError cannot open a file
+        OSError: Can not open a file
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
