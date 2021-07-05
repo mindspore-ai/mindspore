@@ -121,6 +121,10 @@ def count_nonzero(x, axis=None, keepdims=False):
         Tensor, indicating number of non-zero values in the `x` along a given axis.
         Otherwise, the total number of non-zero values in `x` is returned.
 
+    Raises:
+        TypeError: If axis is not int or tuple.
+        ValueError: If axis is not in range [-x.ndim, x.ndim)
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -160,6 +164,10 @@ def clip(x, xmin, xmax, dtype=None):
     Returns:
         Tensor, a tensor with the elements of `x`, but where values
         < `xmin` are replaced with `xmin`, and those > `xmax` with `xmax`.
+
+    Raises:
+        TypeError: If inputs have types not specified above.
+        ValueError: If the shapes of `x1` and `x2` cannot broadcast, or both `xmin` and `xmax` are `None`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3577,8 +3585,8 @@ def arctan(x, dtype=None):
     Examples:
         >>> import mindspore.numpy as np
         >>> x = np.arange(5).astype('float32')
-        >>> print(np.tan(x))
-        [ 0.          1.5574077  -2.1850398  -0.14254655  1.1578213 ]
+        >>> print(np.arctan(x))
+        [0.        0.7853982 1.1071488 1.2490457 1.3258177]
     """
     x = _cast_type_for_trigonometric(x)
     return _apply_tensor_op(F.atan, x, dtype=dtype)
