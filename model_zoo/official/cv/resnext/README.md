@@ -322,17 +322,17 @@ Total data:50000, top1 accuracy:0.79858, top5 accuracy:0.94716
 | Total time                 | 7.8 h 8ps                                                  | 21.5 h 8ps                |
 | Checkpoint for Fine tuning | 192 M(.ckpt file)                                          | 192 M(.ckpt file)         |
 
-| Parameters                 | ResNeXt101                                                |                           |
+| Parameters                 | ResNeXt101                                                 |
 | -------------------------- | ---------------------------------------------------------- |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8|
-| uploaded Date              | 22/06/2021 (month/day/year)                                                 |
+| uploaded Date              | 22/06/2021 (month/day/year)                                |
 | MindSpore Version          | 1.2.0                                                      |
 | Dataset                    | ImageNet                                                   |
-| Training Parameters        | default_config.yaml                                              |
+| Training Parameters        | default_config.yaml                                        |
 | Optimizer                  | Momentum                                                   |
 | Loss Function              | SoftmaxCrossEntropy                                        |
-| Accuracy                   | 79.56%%(TOP1)                                                  |
-| train performance          | 196.33image/sec 1ps                                                  |
+| Accuracy                   | 79.56%%(TOP1)                                              |
+| train performance          | 196.33image/sec 1ps                                        |
 
 #### Inference Performance
 
