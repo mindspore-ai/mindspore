@@ -23,36 +23,17 @@
 
 namespace mindspore {
 namespace abstract {
-AnalysisContextPtr AnalysisContext::NewContext(AnalysisContextPtr parent_context, FuncGraphPtr fg,
+AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &func_graph,
                                                const AbstractBasePtrList &args_spec_list) {
-  MS_EXCEPTION_IF_NULL(parent_context);
-  auto children_context_map_iter = parent_context->children_cache_.find(fg);
-  if (children_context_map_iter != parent_context->children_cache_.end()) {
-    auto children_context_map = children_context_map_iter->second;
-    auto children_context_iter = children_context_map.find(args_spec_list);
-    if (children_context_iter != children_context_map.end()) {
-      return children_context_iter->second.lock();
-    }
-  }
-  AnalysisContextPtr new_context = std::make_shared<AnalysisContext>(parent_context, fg, args_spec_list);
-  // Reference to myself, so use weak_ptr to break reference cycle.
-  auto weak_context = std::weak_ptr<AnalysisContext>(new_context);
-  new_context->parent_cache_[fg] = weak_context;
-  parent_context->children_cache_[fg][args_spec_list] = weak_context;
-  return new_context;
-}
-
-AnalysisContextPtr AnalysisContext::NewFuncGraphContext(const FuncGraphPtr &func_graph,
-                                                        const AbstractBasePtrList &args_spec_list) {
+  // Find func graph's parent and its parent context firstly.
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphPtr parent_graph = func_graph->parent();
   AnalysisContextPtr parent_context = nullptr;
-  auto iter = parent_cache_.find(parent_graph);
-  if (iter != parent_cache_.end()) {
+  auto iter = extant_context_cache_.find(parent_graph);
+  if (iter != extant_context_cache_.end()) {
     parent_context = iter->second.lock();
   }
-  // If this happen, it will be a bug in code. But we raise exception to keep the scene.
-  if (parent_context == nullptr) {
+  if (parent_context == nullptr) {  // If parent context is not found, we'll raise exception.
     std::ostringstream oss;
     oss << "BUG: Failed to find parent context in current context: " << this->ToString()
         << ", func_graph: " << func_graph->ToString() << ", parent_graph: ";
@@ -63,31 +44,48 @@ AnalysisContextPtr AnalysisContext::NewFuncGraphContext(const FuncGraphPtr &func
     }
     MS_LOG(EXCEPTION) << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
   }
-  return NewContext(parent_context, func_graph, args_spec_list);
+
+  // Check if we created a context for func graph with the same arguments before.
+  auto children_context_map_iter = parent_context->children_cache_.find(func_graph);
+  if (children_context_map_iter != parent_context->children_cache_.end()) {
+    auto children_context_map = children_context_map_iter->second;
+    auto children_context_iter = children_context_map.find(args_spec_list);
+    if (children_context_iter != children_context_map.end()) {
+      return children_context_iter->second.lock();
+    }
+  }
+
+  // Create a new context for the func graph and its specific arguments.
+  AnalysisContextPtr new_context = std::make_shared<AnalysisContext>(parent_context, func_graph, args_spec_list);
+  // To avoid cycle-reference, use weak_ptr here.
+  auto weak_new_context = std::weak_ptr<AnalysisContext>(new_context);
+  new_context->extant_context_cache_[func_graph] = weak_new_context;
+  parent_context->children_cache_[func_graph][args_spec_list] = weak_new_context;
+  return new_context;
 }
 
-AnalysisContextPtr AnalysisContext::FindParentContext(const FuncGraphPtr &func_graph) {
-  auto p_iter = parent_cache_.find(func_graph);
-  AnalysisContextPtr parent_context = nullptr;
-  if (p_iter != parent_cache_.end()) {
-    parent_context = p_iter->second.lock();
+AnalysisContextPtr AnalysisContext::FindOwnOrParentContext(const FuncGraphPtr &func_graph) {
+  auto p_iter = extant_context_cache_.find(func_graph);
+  AnalysisContextPtr extant_context = nullptr;
+  if (p_iter != extant_context_cache_.end()) {
+    extant_context = p_iter->second.lock();
   } else {
-    auto iter_parent = parent_cache_.find(func_graph->parent());
-    if (iter_parent != parent_cache_.end()) {
-      parent_context = iter_parent->second.lock();
+    auto iter_parent = extant_context_cache_.find(func_graph->parent());
+    if (iter_parent != extant_context_cache_.end()) {
+      extant_context = iter_parent->second.lock();
     }
   }
   // If this happen, it would be a bug in code. But we raise exception to keep the scene.
-  if (parent_context == nullptr) {
+  if (extant_context == nullptr) {
     std::ostringstream oss;
-    oss << "BUG: Failed to find parent context for: " << func_graph->ToString() << ", parent_graph: ";
+    oss << "BUG: Failed to find context for: " << func_graph->ToString() << ", parent_graph: ";
     if (func_graph->parent() != nullptr) {
       oss << func_graph->parent()->ToString();
     } else {
       oss << "nullptr";
     }
-    oss << " parent_cache_: {";
-    for (auto iter : parent_cache_) {
+    oss << " extant context list: {";
+    for (auto iter : extant_context_cache_) {
       if (iter.first == nullptr) {
         oss << " [graph: nullptr";
       } else {
@@ -100,12 +98,12 @@ AnalysisContextPtr AnalysisContext::FindParentContext(const FuncGraphPtr &func_g
     oss << "}";
     MS_LOG(EXCEPTION) << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
   }
-  return parent_context;
+  return extant_context;
 }
 
 AnalysisContextPtr AnalysisContext::DummyContext() {
   AnalysisContextPtr dummy_context = std::make_shared<AnalysisContext>(nullptr, nullptr, AbstractBasePtrList());
-  dummy_context->parent_cache_[nullptr] = std::weak_ptr<AnalysisContext>(dummy_context);
+  dummy_context->extant_context_cache_[nullptr] = std::weak_ptr<AnalysisContext>(dummy_context);
   return dummy_context;
 }
 

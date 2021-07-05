@@ -58,16 +58,6 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
 }
 }  // namespace
 
-AnalysisContextPtr BaseFuncGraphEvaluator::MakeContext(const AnalysisEnginePtr &engine,
-                                                       const AbstractBasePtrList &args_spec_list) {
-  AbstractBasePtrList normalized_args_spec_list = NormalizeArgs(args_spec_list);
-  normalized_args_spec_list = BroadenUndeterminedArgs(normalized_args_spec_list);
-  FuncGraphPtr fg = GetFuncGraph(engine, normalized_args_spec_list);
-  MS_EXCEPTION_IF_NULL(parent_context_);
-  AnalysisContextPtr context = parent_context_->NewFuncGraphContext(fg, normalized_args_spec_list);
-  return context;
-}
-
 void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
                                              const StackFramePtr &new_stack_frame) {
   // Enter new func graph.
@@ -216,7 +206,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                   << parent_context_->func_graph()->ToString() << "()->" << AnalysisResultCacheMgr::GetThreadid() << ":"
                   << fg->ToString() << "();";
   }
-  auto context = parent_context_->NewFuncGraphContext(fg, args_abs_list);
+  auto context = parent_context_->NewContext(fg, args_abs_list);
   auto func_graph_evaluator = dyn_cast<FuncGraphEvaluator>(shared_from_base<BaseFuncGraphEvaluator>());
   if (func_graph_evaluator != nullptr) {
     if (engine->root_func_graph() == func_graph_evaluator->func_graph()) {
