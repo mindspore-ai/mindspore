@@ -119,6 +119,7 @@ bool AnfNodeConfigEqual::operator()(const AnfNodeConfigPtr lhs, const AnfNodeCon
 
 AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list) {
   StaticAnalysisException::Instance().ClearException();
+  HealthPointMgr::GetInstance().Clear();
   ConfigPtrList args_conf_list;
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(args_conf_list),
                        [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
@@ -889,12 +890,12 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   asyncRun0->JoinResult(std::make_shared<AbstractScalar>(0));
   asyncRun1->JoinResult(std::make_shared<AbstractScalar>(0));
   // Run order
-  HealthPointMgr::GetInstance().PushBack(asyncRun0);  // First order
-  HealthPointMgr::GetInstance().PushBack(asyncRun1);  // Second order
+  HealthPointMgr::GetInstance().Add2Schedule(asyncRun0);  // First order
+  HealthPointMgr::GetInstance().Add2Schedule(asyncRun1);  // Second order
 
   MS_LOG(DEBUG) << GetInferThread() << "async : wait for one of async to finish.  " << evaluators[0]->ToString()
                 << " or  " << evaluators[1]->ToString();
-  HealthPointMgr::GetInstance().PushBack(asyncResult_main);  // Third order
+  HealthPointMgr::GetInstance().Add2Schedule(asyncResult_main);  // Third order
   auto branchResult = asyncResult_main->GetResult();
   if (branchResult == nullptr || branchResult->isa<AbstractTimeOut>()) {
     MS_LOG(EXCEPTION) << "Can't finish " << evaluators[0]->ToString() << " or " << evaluators[1]->ToString()
@@ -911,7 +912,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   if (NeedWaitForTwoBranches(branchResult)) {
     MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[0]->ToString();
     // The asyncRun0 will eval asyncResult0
-    HealthPointMgr::GetInstance().PushBack(asyncResult0);
+    HealthPointMgr::GetInstance().Add2Schedule(asyncResult0);
     auto result0 = asyncResult0->GetResult();
     if (result0 == nullptr || result0->isa<AbstractTimeOut>()) {
       MS_LOG(EXCEPTION) << "Eval " << evaluators[0]->ToString() << " is time out."
@@ -921,7 +922,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
 
     MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[1]->ToString();
     // The asyncRun1 will eval asyncResult1
-    HealthPointMgr::GetInstance().PushBack(asyncResult1);
+    HealthPointMgr::GetInstance().Add2Schedule(asyncResult1);
     auto result1 = asyncResult1->GetResult();
     if (result1 == nullptr || result1->isa<AbstractTimeOut>()) {
       MS_LOG(EXCEPTION) << "Eval " << evaluators[1]->ToString() << " is time out."
@@ -930,7 +931,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     out_specs.push_back(result1);
   } else {
     // Next time to get the result of branches.
-    HealthPointMgr::GetInstance().PushBack(asyncResult_main);
+    HealthPointMgr::GetInstance().Add2Schedule(asyncResult_main);
     (void)asyncResult_main->GetResult();
 
     // Don't use GetResult

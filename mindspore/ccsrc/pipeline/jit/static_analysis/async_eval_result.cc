@@ -26,11 +26,14 @@ namespace mindspore {
 namespace abstract {
 HealthPointMgr HealthPointMgr::instance_;
 
+void HealthPointMgr::Clear() { point_ = 1; }
+
 void HealthPointMgr::HandleException() {
   std::lock_guard<std::recursive_mutex> lock(lock_);
   for (auto &item : asyncAbstractList_) {
     item->SetRunable();
   }
+  asyncAbstractList_.clear();
 }
 void HealthPointMgr::SetNextRunable() {
   std::lock_guard<std::recursive_mutex> lock(lock_);
@@ -43,8 +46,7 @@ void HealthPointMgr::SetNextRunable() {
                          [](const auto &item) { return item->HasResult(); });
   if (it == asyncAbstractList_.end()) {
     // Enter endless loop if there is not ready result.
-    MS_LOG(EXCEPTION) << "Enter endless loop. Please check the code. point = "
-                      << " point:" << HealthPointMgr::GetInstance().point()
+    MS_LOG(EXCEPTION) << "Enter endless loop. Please check the code. point = " << HealthPointMgr::GetInstance().point()
                       << " Called times : " << asyncAbstractList_.front()->count();
   }
   asyncAbstractList_.insert(asyncAbstractList_.end(), asyncAbstractList_.begin(), it);
@@ -110,13 +112,14 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
   // Conf has been visited and set value.
   if (async_eval_result != nullptr) {
     // Add to schedule
-    HealthPointMgr::GetInstance().PushBack(async_eval_result);
+    HealthPointMgr::GetInstance().Add2Schedule(async_eval_result);
     // Maybe blocked for waiting. AsyncAbstract maybe null, if time out.
     auto result = async_eval_result->GetResult();
     if (result == nullptr) {
       result = std::make_shared<AbstractTimeOut>();
-      MS_LOG(ERROR) << "AsyncAbstract for NodeConfig " << conf->node()->ToString() << " is nullptr, maybe timeout.";
-      MS_LOG(ERROR) << "detail:" << conf->ToString();
+      MS_LOG(ERROR) << "AsyncAbstract of NodeConfig " << conf->node()->ToString()
+                    << " is nullptr. There is something wrong.";
+      StaticAnalysisException::Instance().CheckException();
     }
     return result;
   }
