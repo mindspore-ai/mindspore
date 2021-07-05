@@ -45,7 +45,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
     auto rank_it = std::find_if(registered_nodes_info_.begin(), registered_nodes_info_.end(), [&rank_id](auto item) {
       bool res = item.second.is_alive == false && item.second.node_role_ == NodeRole::SERVER;
       if (res) {
-        MS_LOG(INFO) << "The server node id:" << item.first << " rank id:" << rank_id << " is not alive.";
+        MS_LOG(INFO) << "The server node id:" << item.first << " rank id:" << item.second.rank_id_ << " is not alive.";
         rank_id = item.second.rank_id_;
       }
       return res;
