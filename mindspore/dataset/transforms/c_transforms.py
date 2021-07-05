@@ -228,7 +228,7 @@ DE_C_RELATIONAL = {Relational.EQ: cde.RelationalOp.EQ,
 
 
 class Mask(TensorOperation):
-    """
+    r"""
     Mask content of the input tensor with the given predicate.
     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
 
@@ -237,7 +237,7 @@ class Mask(TensorOperation):
             Relational.GT, Relational.LE, Relational.GE], take Relational.EQ as example, EQ refers to equal.
         constant (Union[str, int, float, bool]): Constant to be compared to.
             Constant will be cast to the type of the input tensor.
-        dtype (mindspore.dtype, optional): Type of the generated mask (Default mstype.bool_).
+        dtype (mindspore.dtype, optional): Type of the generated mask (Default mstype.bool\_).
 
     Examples:
         >>> from mindspore.dataset.transforms.c_transforms import Relational
