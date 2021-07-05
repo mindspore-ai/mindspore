@@ -45,7 +45,7 @@ int BatchnormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tenso
     MS_LOG(ERROR) << "New scale const failed.";
     return RET_ERROR;
   }
-  auto scale_tensor = mindspore::ConverterToNPUTensor(in_tensors[1]);
+  auto scale_tensor = ConverterToNPUTensor(in_tensors[1]);
   scale->set_attr_value(scale_tensor);
   batchnorm_->set_input_scale(*scale);
 
@@ -54,7 +54,7 @@ int BatchnormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tenso
     MS_LOG(ERROR) << "New offset const failed.";
     return RET_ERROR;
   }
-  auto offset_tensor = mindspore::ConverterToNPUTensor(in_tensors[2]);
+  auto offset_tensor = ConverterToNPUTensor(in_tensors[2]);
   offset->set_attr_value(offset_tensor);
   batchnorm_->set_input_offset(*offset);
 
@@ -63,7 +63,7 @@ int BatchnormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tenso
     MS_LOG(ERROR) << "New mean const failed.";
     return RET_ERROR;
   }
-  auto mean_tensor = mindspore::ConverterToNPUTensor(in_tensors[3]);
+  auto mean_tensor = ConverterToNPUTensor(in_tensors[3]);
   mean->set_attr_value(mean_tensor);
   batchnorm_->set_input_mean(*mean);
 
@@ -72,7 +72,7 @@ int BatchnormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tenso
     MS_LOG(ERROR) << "New variance const failed.";
     return RET_ERROR;
   }
-  auto variance_tensor = mindspore::ConverterToNPUTensor(in_tensors[4]);
+  auto variance_tensor = ConverterToNPUTensor(in_tensors[4]);
   variance->set_attr_value(variance_tensor);
   batchnorm_->set_input_variance(*variance);
   return RET_OK;

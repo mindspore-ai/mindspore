@@ -67,16 +67,14 @@ int ScaleNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
   op_->set_input_x(*npu_inputs.at(0));
   MS_ASSERT(in_tensors.size() > 1);
-  auto scale_shape = in_tensors.at(1)->shape();
-  std::shared_ptr<ge::Tensor> scale_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  auto scale_shape = in_tensors[1]->shape();
+  auto scale_tensor = ConverterToNPUTensor(in_tensors[1]);
   if (scale_tensor == nullptr) {
-    MS_LOG(ERROR) << "new scale_tensor failed.";
+    MS_LOG(ERROR) << "Get scale_tensor failed.";
     return RET_ERROR;
   }
-  ge::TensorDesc scale_tensor_desc(ConverterToNPUShape({1, scale_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                   ConverterToNPUDataType(in_tensors[1]->data_type()));
-  scale_tensor->SetTensorDesc(scale_tensor_desc);
-  scale_tensor->SetData(reinterpret_cast<const uint8_t *>(in_tensors[1]->data()), in_tensors[1]->Size());
+  scale_tensor->SetTensorDesc(ge::TensorDesc(ConverterToNPUShape({1, scale_shape[0], 1, 1})));
+
   scale_ = new (std::nothrow) hiai::op::Const(name_ + "_scale");
   if (scale_ == nullptr) {
     MS_LOG(ERROR) << "New scale_ const failed.";
@@ -87,15 +85,13 @@ int ScaleNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
 
   if (in_tensors.size() > 2 && in_tensors[2] != nullptr) {
     auto bias_shape = in_tensors[2]->shape();
-    std::shared_ptr<ge::Tensor> bias_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+    auto bias_tensor = ConverterToNPUTensor(in_tensors[2]);
     if (bias_tensor == nullptr) {
-      MS_LOG(ERROR) << "new bias_tensor failed.";
+      MS_LOG(ERROR) << "Get bias_tensor failed.";
       return RET_ERROR;
     }
-    ge::TensorDesc bias_tensor_desc(ConverterToNPUShape({1, bias_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                    ConverterToNPUDataType(in_tensors[2]->data_type()));
-    bias_tensor->SetTensorDesc(bias_tensor_desc);
-    bias_tensor->SetData(reinterpret_cast<const uint8_t *>(in_tensors[2]->data()), in_tensors[2]->Size());
+    scale_tensor->SetTensorDesc(ge::TensorDesc(ConverterToNPUShape({1, bias_shape[0], 1, 1})));
+
     bias_ = new (std::nothrow) hiai::op::Const(name_ + "_beta");
     if (bias_ == nullptr) {
       MS_LOG(ERROR) << "New beta_ const failed.";

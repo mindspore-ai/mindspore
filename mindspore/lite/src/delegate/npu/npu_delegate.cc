@@ -217,6 +217,17 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
       return nullptr;
     }
   }
+
+  for (auto tensor : in_tensors) {
+    if (tensor->data_type() == kNumberTypeFloat16 && tensor->data() == nullptr) {
+      tensor->set_data_type(kNumberTypeFloat32);
+    }
+  }
+  for (auto tensor : out_tensors) {
+    if (tensor->data_type() == kNumberTypeFloat16) {
+      tensor->set_data_type(kNumberTypeFloat32);
+    }
+  }
   return npu_op;
 }
 

@@ -139,6 +139,11 @@ NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<tensor
     return nullptr;
   }
 
+  if (in_tensors[0]->data_type() != kNumberTypeFloat32 && in_tensors[0]->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Npu does not support datatype " << in_tensors[0]->data_type();
+    return nullptr;
+  }
+
   NPUOp *op = nullptr;
   auto conv_prim = primitive->value_as_Conv2DFusion();
   auto group = static_cast<int>(conv_prim->group());

@@ -126,7 +126,8 @@ NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MS
   std::set<schema::PrimitiveType> int32_lists = {schema::PrimitiveType_Cast, schema::PrimitiveType_StridedSlice};
   auto support_int32 = in_tensors[0]->data_type() == kNumberTypeInt32 &&
                        find(int32_lists.begin(), int32_lists.end(), primitive->value_type()) != int32_lists.end();
-  if (in_tensors[0]->data_type() != kNumberTypeFloat32 && !support_int32) {
+  if (in_tensors[0]->data_type() != kNumberTypeFloat32 && in_tensors[0]->data_type() != kNumberTypeFloat16 &&
+      !support_int32) {
     MS_LOG(ERROR) << "Npu does not support datatype " << in_tensors[0]->data_type() << " for op type "
                   << primitive->value_type();
     return nullptr;

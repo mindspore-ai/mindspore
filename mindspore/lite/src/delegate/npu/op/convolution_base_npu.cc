@@ -17,6 +17,8 @@
 #include "src/delegate/npu/op/convolution_base_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 #include "src/delegate/npu/transpose_kernel.h"
+#include "nnacl/fp16/cast_fp16.h"
+
 namespace mindspore {
 ConvolutionBaseNPUOp::~ConvolutionBaseNPUOp() {
   if (act_ != nullptr) {
@@ -40,13 +42,20 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<tensor::MSTensor *> 
     return RET_ERROR;
   }
   auto w_shape = inputs[1]->shape();
-  auto nhwc_data = inputs[1]->data();
+  auto origin_data = inputs[1]->data();
+  auto fp32_data = origin_data;
+  if (inputs[1]->data_type() == kNumberTypeFloat16) {
+    fp32_data = reinterpret_cast<float *>(malloc(inputs[1]->ElementsNum() * sizeof(float)));
+    // fp16->fp32
+    Float16ToFloat32(reinterpret_cast<float16_t *>(origin_data), reinterpret_cast<float *>(fp32_data),
+                     inputs[1]->ElementsNum());
+  }
   auto nchw_data = reinterpret_cast<float *>(malloc(inputs[1]->ElementsNum() * sizeof(float)));
   if (nchw_data == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNHWCToNCHWFp32(nhwc_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+  PackNHWCToNCHWFp32(fp32_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
 
   std::shared_ptr<ge::Tensor> weight_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
   if (weight_tensor == nullptr) {
@@ -56,7 +65,7 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<tensor::MSTensor *> 
   ge::TensorDesc tensor_desc(ConverterToNPUShape({w_shape[0], w_shape[3], w_shape[1], w_shape[2]}), ge::FORMAT_NCHW,
                              ConverterToNPUDataType(inputs[1]->data_type()));
   weight_tensor->SetTensorDesc(tensor_desc);
-  weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_data), inputs[1]->Size());
+  weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_data), inputs[1]->ElementsNum() * sizeof(float));
 
   weight_->set_attr_value(weight_tensor);
   free(nchw_data);
@@ -70,15 +79,11 @@ int ConvolutionBaseNPUOp::InitBiasConst(const std::vector<tensor::MSTensor *> &i
       MS_LOG(ERROR) << "New bias const failed.";
       return RET_ERROR;
     }
-    std::shared_ptr<ge::Tensor> bias_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+    std::shared_ptr<ge::Tensor> bias_tensor = ConverterToNPUTensor(inputs[2]);
     if (bias_tensor == nullptr) {
-      MS_LOG(ERROR) << "new bias_tensor failed.";
+      MS_LOG(ERROR) << "Get bias_tensor failed.";
       return RET_ERROR;
     }
-    ge::TensorDesc tensor_desc(ConverterToNPUShape({inputs[2]->shape()[0]}), ge::FORMAT_NCHW,
-                               ConverterToNPUDataType(inputs[2]->data_type()));
-    bias_tensor->SetTensorDesc(tensor_desc);
-    bias_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[2]->data()), inputs[2]->Size());
     bias_->set_attr_value(bias_tensor);
   }
   return RET_OK;

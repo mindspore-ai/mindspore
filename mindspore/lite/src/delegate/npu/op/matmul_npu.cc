@@ -61,18 +61,18 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
     }
     add_op_->set_input_x1(*matmul_);
     auto bias_shape = in_tensors[2]->shape();
-    auto bias_tensor = std::make_shared<ge::Tensor>();
+    auto bias_tensor = ConverterToNPUTensor(in_tensors[2]);
     if (bias_tensor == nullptr) {
-      MS_LOG(ERROR) << "new bias_tensor failed.";
+      MS_LOG(ERROR) << "Get bias_tensor failed.";
       return RET_ERROR;
     }
-    ge::TensorDesc bias_tensor_desc(ConverterToNPUShape({1, bias_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                    ConverterToNPUDataType(in_tensors[2]->data_type()));
+
+    ge::TensorDesc bias_tensor_desc(ConverterToNPUShape({1, bias_shape[0], 1, 1}));
     if (out_tensors[0]->shape().size() == 2) {
       bias_tensor_desc.SetShape(ConverterToNPUShape({1, bias_shape[0]}));
     }
     bias_tensor->SetTensorDesc(bias_tensor_desc);
-    bias_tensor->SetData(reinterpret_cast<const uint8_t *>(in_tensors[2]->data()), in_tensors[2]->Size());
+
     bias_ = new (std::nothrow) hiai::op::Const(name_ + "_bias");
     if (bias_ == nullptr) {
       MS_LOG(ERROR) << "new bias const failed.";

@@ -28,6 +28,9 @@ DeConvWinogradFp16CPUKernel::~DeConvWinogradFp16CPUKernel() {
 }
 
 void DeConvWinogradFp16CPUKernel::FreeResizeBuf() {
+  if (deconv_param_ == nullptr) {
+    return;
+  }
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
     if (unit.tmp_buffer_ != nullptr) {
