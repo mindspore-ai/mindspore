@@ -19,8 +19,8 @@ ann_file: "./annotations/instances_val2017.json"
 modelarts_dataset_unzip_name: 'cocodataset'
 need_modelarts_dataset_unzip: True
 
-img_path: ''    # "image file path."
-result_path: '' # "result file path."
+img_path: ''
+result_path: ''
 
 # Training options
 img_width: 1280
@@ -30,10 +30,15 @@ flip_ratio: 0.5
 expand_ratio: 1.0
 
 max_instance_count: 128
-mask_shape: (28, 28)
+mask_shape: [28, 28]
 
 # anchor
-feature_shapes: [(192, 320), (96, 160), (48, 80), (24, 40), (12, 20)]
+feature_shapes:
+- [192, 320]
+- [96, 160]
+- [48, 80]
+- [24, 40]
+- [12, 20]
 anchor_scales: [8]
 anchor_ratios: [0.5, 1.0, 2.0]
 anchor_strides: [4, 8, 16, 32, 64]
@@ -72,7 +77,7 @@ activate_num_classes: 2
 use_sigmoid_cls: True
 
 # roi_align
-roi_layer: dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
+roi_layer: {type: 'RoIAlign', out_size: 7, mask_out_size: 14, sample_num: 2}
 roi_align_out_channels: 256
 roi_align_featmap_strides: [4, 8, 16, 32]
 roi_align_finest_scale: 56
@@ -127,7 +132,7 @@ base_lr: 0.02
 base_step: 58633
 total_epoch: 13
 warmup_step: 500
-warmup_ratio: 1/3.0
+warmup_ratio: 0.333333
 sgd_momentum: 0.9
 
 # train
@@ -142,11 +147,11 @@ save_checkpoint_epochs: 1
 keep_checkpoint_max: 12
 save_checkpoint_path: "./"
 
-mindrecord_dir: "./MindRecord_COCO" # "/home/mask_rcnn/MindRecord_COCO2017_Train"
+mindrecord_dir: "./MindRecord_COCO"
 train_data_type: "train2017"
 val_data_type: "val2017"
 instance_set: "annotations/instances_{}.json"
-coco_classes: ('background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+coco_classes: ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
                      'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
                      'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
                      'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
@@ -160,7 +165,7 @@ coco_classes: ('background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane
                      'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
                      'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink',
                      'refrigerator', 'book', 'clock', 'vase', 'scissors',
-                     'teddy bear', 'hair drier', 'toothbrush')
+                     'teddy bear', 'hair drier', 'toothbrush']
 num_classes: 81
 
 only_create_dataset: False 
@@ -173,7 +178,6 @@ device_num: 1
 rank_id: 0
 
 # maskrcnn export
-batch_size_export: 2
 file_name: "maskrcnn"
 file_format: "AIR"
 ckpt_file: '/cache/data/cocodataset/ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'

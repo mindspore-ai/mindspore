@@ -16,8 +16,8 @@
 if [ $# != 5 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH"
-echo "for example: sh run_distribute_pretrain.sh 8 52 /path/ende-l128-mindrecord00 /path/hccl.json ./default_config_large.yaml"
+echo "sh run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH"
+echo "for example: sh run_distribute_train_ascend.sh 8 52 /path/ende-l128-mindrecord00 /path/hccl.json ./default_config_large.yaml"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 exit 1;

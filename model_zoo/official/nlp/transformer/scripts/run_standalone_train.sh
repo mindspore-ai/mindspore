@@ -48,8 +48,7 @@ if [ $DEVICE_TARGET == 'Ascend' ];then
         --checkpoint_path="" \
         --save_checkpoint_steps=2500 \
         --save_checkpoint_num=30 \
-        --data_path=$DATA_PATH \
-        --bucket_boundaries=[16,32,48,64,128] > log.txt 2>&1 &
+        --data_path=$DATA_PATH > log.txt 2>&1 &
 elif [ $DEVICE_TARGET == 'GPU' ];then
     export CUDA_VISIBLE_DEVICES="$2"
 
@@ -64,8 +63,7 @@ elif [ $DEVICE_TARGET == 'GPU' ];then
         --checkpoint_path="" \
         --save_checkpoint_steps=2500 \
         --save_checkpoint_num=30 \
-        --data_path=$DATA_PATH \
-        --bucket_boundaries=[16,32,48,64,128] > log.txt 2>&1 &
+        --data_path=$DATA_PATH > log.txt 2>&1 &
 else
     echo "Not supported device target."
 fi
