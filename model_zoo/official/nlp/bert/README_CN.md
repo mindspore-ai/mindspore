@@ -139,6 +139,54 @@ bash scripts/run_distributed_pretrain_for_gpu.sh 8 40 /path/cn-wiki-128
   bash scripts/run_squad.sh
 ```
 
+- 在ModelArts上运行(如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    - 在ModelArt上使用8卡预训练
+
+    ```python
+    # (1) 上传你的代码到 s3 桶上
+    # (2) 在ModelArts上创建训练任务
+    # (3) 选择代码目录 /{path}/bert
+    # (4) 选择启动文件 /{path}/bert/run_pretrain.py
+    # (5) 执行a或b
+    #     a. 在 /{path}/bert/default_config.yaml 文件中设置参数
+    #         1. 设置 ”enable_modelarts=True“
+    #         2. 设置其它参数，其它参数配置可以参考 `./scripts/run_distributed_pretrain_ascend.sh`
+    #     b. 在 网页上设置
+    #         1. 添加 ”run_distributed=True“
+    #         2. 添加其它参数，其它参数配置可以参考 `./scripts/run_distributed_pretrain_ascend.sh`
+    # (6) 上传你的 数据 到 s3 桶上
+    # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径
+    # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+    # (9) 在网页上的’资源池选择‘项目下， 选择8卡规格的资源
+    # (10) 创建训练作业
+    # 训练结束后会在'训练输出文件路径'下保存训练的权重
+    ```
+
+    - 在ModelArts上使用单卡运行下游任务
+
+    ```python
+    # (1) 上传你的代码到 s3 桶上
+    # (2) 在ModelArts上创建训练任务
+    # (3) 选择代码目录 /{path}/bert
+    # (4) 选择启动文件 /{path}/bert/run_ner.py(或 run_squad.py 或 run_classifier.py)
+    # (5) 执行a或b
+    #     a. 在 /path/bert 下的`task_ner_config.yaml`(或 `task_squad_config.yaml` 或 `task_classifier_config.yaml`) 文件中设置参数
+    #         1. 设置 ”enable_modelarts=True“
+    #         2. 设置其它参数，其它参数配置可以参考 './scripts/'下的 `run_ner.sh`或`run_squad.sh`或`run_classifier.sh`
+    #     b. 在 网页上设置
+    #         1. 添加 ”enable_modelarts=True“
+    #         2. 添加其它参数，其它参数配置可以参考 './scripts/'下的 `run_ner.sh`或`run_squad.sh`或`run_classifier.sh`
+    #     注意vocab_file_path，label_file_path，train_data_file_path，eval_data_file_path，schema_file_path填写相对于第7步所选路径的相对路径。
+    #     最后必须在网页上添加 “config_path=../../*.yaml”(根据下游任务选择 *.yaml 配置文件)
+    # (6) 上传你的 数据 到 s3 桶上
+    # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径（该路径下仅有 数据/数据zip压缩包）
+    # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+    # (9) 在网页上的’资源池选择‘项目下， 选择单卡规格的资源
+    # (10) 创建训练作业
+    # 训练结束后会在'训练输出文件路径'下保存训练的权重
+    ```
+
 在Ascend设备上做分布式训练时，请提前创建JSON格式的HCCL配置文件。
 
 在Ascend设备上做单机分布式训练时，请参考[here](https://gitee.com/mindspore/mindspore/tree/master/config/hccl_single_machine_multi_rank.json)创建HCCL配置文件。
@@ -207,12 +255,14 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
 ```shell
 .
 └─bert
+  ├─ascend310_infer
   ├─README.md
+  ├─README_CN.md
   ├─scripts
     ├─ascend_distributed_launcher
         ├─__init__.py
         ├─hyper_parameter_config.ini          # 分布式预训练超参
-        ├─get_distribute_pretrain_cmd.py          # 分布式预训练脚本
+        ├─get_distribute_pretrain_cmd.py      # 分布式预训练脚本
         --README.md
     ├─run_classifier.sh                       # Ascend或GPU设备上单机分类器任务shell脚本
     ├─run_ner.sh                              # Ascend或GPU设备上单机NER任务shell脚本
@@ -222,6 +272,11 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─run_distributed_pretrain_gpu.sh         # GPU设备上分布式预训练shell脚本
     └─run_standaloned_pretrain_gpu.sh         # GPU设备上单机预训练shell脚本
   ├─src
+    ├─model_utils
+      ├── config.py                           # 解析 *.yaml参数配置文件
+      ├── devcie_adapter.py                   # 区分本地/ModelArts训练
+      ├── local_adapter.py                    # 本地训练获取相关环境变量
+      └── moxing_adapter.py                   # ModelArts训练获取相关环境变量、交换数据
     ├─__init__.py
     ├─assessment_method.py                    # 评估过程的测评方法
     ├─bert_for_finetune.py                    # 网络骨干编码
@@ -229,13 +284,15 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─bert_model.py                           # 网络骨干编码
     ├─finetune_data_preprocess.py             # 数据预处理
     ├─cluner_evaluation.py                    # 评估线索生成工具
-    ├─config.py                               # 预训练参数配置
     ├─CRF.py                                  # 线索数据集评估方法
     ├─dataset.py                              # 数据预处理
-    ├─finetune_eval_config.py                 # 微调参数配置
     ├─finetune_eval_model.py                  # 网络骨干编码
     ├─sample_process.py                       # 样例处理
     ├─utils.py                                # util函数
+  ├─pretrain_config.yaml                      # 预训练参数配置
+  ├─task_ner_config.yaml                      # 下游任务_ner 参数配置
+  ├─task_classifier_config.yaml               # 下游任务_classifier 参数配置
+  ├─task_squad_config.yaml                    # 下游任务_squad 参数配置
   ├─pretrain_eval.py                          # 训练和评估网络
   ├─run_classifier.py                         # 分类器任务的微调和评估网络
   ├─run_ner.py                                # NER任务的微调和评估网络
@@ -556,8 +613,38 @@ bash scripts/squad.sh
 
 ## 导出mindir模型
 
+- 在本地导出
+
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+- 在ModelArts上导出
+
+```python
+# (1) 上传你的代码到 s3 桶上
+# (2) 在ModelArts上创建训练任务
+# (3) 选择代码目录 /{path}/bert
+# (4) 选择启动文件 /{path}/bert/export.py
+# (5) 执行a或b
+#     a. 在 /path/bert 下的`task_ner_config.yaml`(或 `task_squad_config.yaml` 或 `task_classifier_config.yaml`) 文件中设置参数
+#         1. 设置 ”enable_modelarts: True“
+#         2. 设置 “export_ckpt_file: ./{path}/*.ckpt”('export_ckpt_file' 指待导出的'*.ckpt'权重文件相对于`export.py`的路径, 且权重文件必须包含在代码目录下)
+#         3. 设置 ”export_file_name: bert_ner“
+#         4. 设置 ”file_format：MINDIR“
+#         5. 设置 ”label_file_path：{path}/*.txt“('label_file_path'指相对于第7步所选文件夹的相对路径)
+#     b. 在 网页上设置
+#         1. 添加 ”enable_modelarts=True“
+#         2. 添加 “export_ckpt_file=./{path}/*.ckpt”(('export_ckpt_file' 指待导出的'*.ckpt'权重文件相对于`export.py`的路径, 且权重文件必须包含在代码目录下)
+#         3. 添加 ”export_file_name=bert_ner“
+#         4. 添加 ”file_format=MINDIR“
+#         5. 添加 ”label_file_path：{path}/*.txt“('label_file_path'指相对于第7步所选文件夹的相对路径)
+#     最后必须在网页上添加 “config_path=../../*.yaml”(根据下游任务选择 *.yaml 配置文件)
+# (7) 在网页上勾选数据存储位置，设置“训练数据集”路径
+# (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+# (9) 在网页上的’资源池选择‘项目下， 选择单卡规格的资源
+# (10) 创建训练作业
+# 你将在{Output file path}下看到 'bert_ner.mindir'文件
 ```
 
 参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。

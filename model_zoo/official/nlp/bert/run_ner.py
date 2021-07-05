@@ -18,13 +18,7 @@ Bert finetune and evaluation script.
 '''
 
 import os
-import argparse
 import time
-from src.bert_for_finetune import BertFinetuneCell, BertNER
-from src.finetune_eval_config import optimizer_cfg, bert_net_cfg
-from src.dataset import create_ner_dataset
-from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate, convert_labels_to_index
-from src.assessment_method import Accuracy, F1, MCC, Spearman_Correlation
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore import log as logger
@@ -34,6 +28,13 @@ from mindspore.train.model import Model
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
+from src.bert_for_finetune import BertFinetuneCell, BertNER
+from src.dataset import create_ner_dataset
+from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate, convert_labels_to_index
+from src.assessment_method import Accuracy, F1, MCC, Spearman_Correlation
+from src.model_utils.config import config as args_opt, optimizer_cfg, bert_net_cfg
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 _cur_dir = os.getcwd()
 
 
@@ -85,6 +86,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     train_end = time.time()
     print("latency: {:.6f} s".format(train_end - train_begin))
 
+
 def eval_result_print(assessment_method="accuracy", callback=None):
     """print eval result"""
     if assessment_method == "accuracy":
@@ -102,6 +104,7 @@ def eval_result_print(assessment_method="accuracy", callback=None):
         print("Spearman Correlation is {:.6f} ".format(callback.cal()[0]))
     else:
         raise ValueError("Assessment method not supported, support: [accuracy, f1, mcc, spearman_correlation]")
+
 
 def do_eval(dataset=None, network=None, use_crf="", num_class=41, assessment_method="accuracy", data_file="",
             load_checkpoint_path="", vocab_file="", label_file="", tag_to_index=None, batch_size=1):
@@ -146,41 +149,22 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=41, assessment_met
         print("==============================================================")
 
 
-def parse_args():
-    """set and check parameters."""
-    parser = argparse.ArgumentParser(description="run ner")
-    parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
-                        help="Device type, default is Ascend")
-    parser.add_argument("--assessment_method", type=str, default="BF1", choices=["BF1", "clue_benchmark", "MF1"],
-                        help="assessment_method include: [BF1, clue_benchmark, MF1], default is BF1")
-    parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
-                        help="Eable train, default is false")
-    parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],
-                        help="Eable eval, default is false")
-    parser.add_argument("--use_crf", type=str, default="false", choices=["true", "false"],
-                        help="Use crf, default is false")
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--epoch_num", type=int, default=5, help="Epoch number, default is 5.")
-    parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
-                        help="Enable train data shuffle, default is true")
-    parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
-                        help="Enable eval data shuffle, default is false")
-    parser.add_argument("--train_batch_size", type=int, default=32, help="Train batch size, default is 32")
-    parser.add_argument("--eval_batch_size", type=int, default=1, help="Eval batch size, default is 1")
-    parser.add_argument("--vocab_file_path", type=str, default="", help="Vocab file path, used in clue benchmark")
-    parser.add_argument("--label_file_path", type=str, default="", help="label file path, used in clue benchmark")
-    parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
-    parser.add_argument("--load_pretrain_checkpoint_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--load_finetune_checkpoint_path", type=str, default="", help="Load checkpoint file path")
-    parser.add_argument("--train_data_file_path", type=str, default="",
-                        help="Data path, it is better to use absolute path")
-    parser.add_argument("--eval_data_file_path", type=str, default="",
-                        help="Data path, it is better to use absolute path")
-    parser.add_argument("--dataset_format", type=str, default="mindrecord", choices=["mindrecord", "tfrecord"],
-                        help="Dataset format, support mindrecord or tfrecord")
-    parser.add_argument("--schema_file_path", type=str, default="",
-                        help="Schema path, it is better to use absolute path")
-    args_opt = parser.parse_args()
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    args_opt.device_id = get_device_id()
+    _file_dir = os.path.dirname(os.path.abspath(__file__))
+    args_opt.load_pretrain_checkpoint_path = os.path.join(_file_dir, args_opt.load_pretrain_checkpoint_path)
+    args_opt.load_finetune_checkpoint_path = os.path.join(args_opt.output_path, args_opt.load_finetune_checkpoint_path)
+    args_opt.save_finetune_checkpoint_path = os.path.join(args_opt.output_path, args_opt.save_finetune_checkpoint_path)
+    if args_opt.schema_file_path:
+        args_opt.schema_file_path = os.path.join(args_opt.data_path, args_opt.schema_file_path)
+    args_opt.train_data_file_path = os.path.join(args_opt.data_path, args_opt.train_data_file_path)
+    args_opt.eval_data_file_path = os.path.join(args_opt.data_path, args_opt.eval_data_file_path)
+    args_opt.label_file_path = os.path.join(args_opt.data_path, args_opt.label_file_path)
+
+
+def determine_params():
+    """Determine whether the parameters are reasonable."""
     if args_opt.do_train.lower() == "false" and args_opt.do_eval.lower() == "false":
         raise ValueError("At least one of 'do_train' or 'do_eval' must be true")
     if args_opt.do_train.lower() == "true" and args_opt.train_data_file_path == "":
@@ -193,14 +177,14 @@ def parse_args():
         raise ValueError("'label_file_path' must be set to use crf")
     if args_opt.assessment_method.lower() == "clue_benchmark" and args_opt.label_file_path == "":
         raise ValueError("'label_file_path' must be set to do clue benchmark")
-    if args_opt.assessment_method.lower() == "clue_benchmark":
-        args_opt.eval_batch_size = 1
-    return args_opt
 
 
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_ner():
     """run ner task"""
-    args_opt = parse_args()
+    determine_params()
+    if args_opt.assessment_method.lower() == "clue_benchmark":
+        args_opt.eval_batch_size = 1
     epoch_num = args_opt.epoch_num
     assessment_method = args_opt.assessment_method.lower()
     load_pretrain_checkpoint_path = args_opt.load_pretrain_checkpoint_path
@@ -261,6 +245,7 @@ def run_ner():
         do_eval(ds, BertNER, args_opt.use_crf, number_labels, assessment_method,
                 args_opt.eval_data_file_path, load_finetune_checkpoint_path, args_opt.vocab_file_path,
                 args_opt.label_file_path, tag_to_index, args_opt.eval_batch_size)
+
 
 if __name__ == "__main__":
     run_ner()

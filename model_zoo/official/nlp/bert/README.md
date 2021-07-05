@@ -134,6 +134,56 @@ bash scripts/run_distributed_pretrain_for_gpu.sh 8 40 /path/cn-wiki-128
   bash scripts/run_squad.sh
 ```
 
+- running on ModelArts
+
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+- Pretraining with 8 cards on ModelArts
+
+  ```python
+  # (1) Upload the code folder to S3 bucket.
+  # (2) Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/bert" on the website UI interface.
+  # (4) Set the startup file to /{path}/bert/train.py" on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in /{path}/bert/pretrain_config.yaml.
+  #         1. Set ”enable_modelarts=True“
+  #         2. Set other parameters, other parameter configuration can refer to `./scripts/run_distributed_pretrain_ascend.sh`
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts=True“
+  #         3. Add other parameters, other parameter configuration can refer to `./scripts/run_distributed_pretrain_ascend.sh`
+  # (6) Upload the dataset to S3 bucket.
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of 8 cards.
+  # (10) Create your job.
+  # After training, the '*.ckpt' file will be saved under the'training output file path'
+  ```
+
+- Running downstream tasks with single card on ModelArts
+
+  ```python
+  # (1) Upload the code folder to S3 bucket.
+  # (2)  Click to "create training task" on the website UI interface.
+  # (3) Set the code directory to "/{path}/bert" on the website UI interface.
+  # (4) Set the startup file to /{path}/bert/run_ner.py"(or run_pretrain.py or run_squad.py) on the website UI interface.
+  # (5) Perform a or b.
+  #     a. setting parameters in task_ner_config.yaml(or task_squad_config.yaml or task_classifier_config.yaml under the folder `/{path}/bert/`
+  #         1. Set ”enable_modelarts=True“
+  #         2. Set other parameters, other parameter configuration can refer to `run_ner.sh`(or run_squad.sh or run_classifier.sh) under the folder '{path}/bert/scripts/'.
+  #     b. adding on the website UI interface.
+  #         1. Add ”enable_modelarts=True“
+  #         2. Set other parameters, other parameter configuration can refer to `run_ner.sh`(or run_squad.sh or run_classifier.sh) under the folder '{path}/bert/scripts/'.
+  #     Note that vocab_file_path, label_file_path, train_data_file_path, eval_data_file_path, schema_file_path fill in the relative path relative to the path selected in step 7.
+  #     Finally, "config_path=../../*.yaml" must be added on the web page (select the *.yaml configuration file according to the downstream task)
+  # (6) Upload the dataset to S3 bucket.
+  # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+  # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+  # (9) Under the item "resource pool selection", select the specification of a single card.
+  # (10) Create your job.
+  # After training, the '*.ckpt' file will be saved under the'training output file path'
+  ```
+
 For distributed training on Ascend, an hccl configuration file with JSON format needs to be created in advance.
 
 For distributed training on single machine, [here](https://gitee.com/mindspore/mindspore/tree/master/config/hccl_single_machine_multi_rank.json) is an example hccl.json.
@@ -205,7 +255,9 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
 ```shell
 .
 └─bert
+  ├─ascend310_infer
   ├─README.md
+  ├─README_CN.md
   ├─scripts
     ├─ascend_distributed_launcher
         ├─__init__.py
@@ -220,6 +272,11 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─run_distributed_pretrain_gpu.sh         # shell script for distributed pretrain on gpu
     └─run_standaloned_pretrain_gpu.sh         # shell script for distributed pretrain on gpu
   ├─src
+    ├─model_utils
+      ├── config.py                           # parse *.yaml parameter configuration file
+      ├── devcie_adapter.py                   # distinguish local/ModelArts training
+      ├── local_adapter.py                    # get related environment variables in local training
+      └── moxing_adapter.py                   # get related environment variables in ModelArts training
     ├─__init__.py
     ├─assessment_method.py                    # assessment method for evaluation
     ├─bert_for_finetune.py                    # backbone code of network
@@ -227,13 +284,15 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─bert_model.py                           # backbone code of network
     ├─finetune_data_preprocess.py             # data preprocessing
     ├─cluner_evaluation.py                    # evaluation for cluner
-    ├─config.py                               # parameter configuration for pretraining
     ├─CRF.py                                  # assessment method for clue dataset
     ├─dataset.py                              # data preprocessing
-    ├─finetune_eval_config.py                 # parameter configuration for finetuning
     ├─finetune_eval_model.py                  # backbone code of network
     ├─sample_process.py                       # sample processing
     ├─utils.py                                # util function
+  ├─pretrain_config.yaml                      # parameter configuration for pretrain
+  ├─task_ner_config.yaml                      # parameter configuration for downstream_task_ner
+  ├─task_classifier_config.yaml               # parameter configuration for downstream_task_classifier
+  ├─task_squad_config.yaml                    # parameter configuration for downstream_task_squad
   ├─pretrain_eval.py                          # train and eval net  
   ├─run_classifier.py                         # finetune and eval net for classifier task
   ├─run_ner.py                                # finetune and eval net for ner task
@@ -591,8 +650,38 @@ The result will be as follows:
 
 ### [Export MindIR](#contents)
 
+- Export on local
+
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# (1) Upload the code folder to S3 bucket.
+# (2) Click to "create training task" on the website UI interface.
+# (3) Set the code directory to "/{path}/bert" on the website UI interface.
+# (4) Set the startup file to /{path}/bert/export.py" on the website UI interface.
+# (5) Perform a or b.
+#     a. setting parameters in task_ner_config.yaml(or task_squad_config.yaml or task_classifier_config.yaml under the folder `/{path}/bert/`
+#         1. Set ”enable_modelarts: True“
+#         2. Set “export_ckpt_file: ./{path}/*.ckpt”('export_ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Set ”export_file_name: bert_ner“
+#         4. Set ”file_format：MINDIR“
+#         5. Set ”label_file_path：{path}/*.txt“('label_file_path' refers to the relative path relative to the folder selected in step 7.)
+#     b. adding on the website UI interface.
+#         1. Add ”enable_modelarts=True“
+#         2. Add “export_ckpt_file=./{path}/*.ckpt”('export_ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Add ”export_file_name=bert_ner“
+#         4. Add ”file_format=MINDIR“
+#         5. Add ”label_file_path：{path}/*.txt“('label_file_path' refers to the relative path relative to the folder selected in step 7.)
+#     Finally, "config_path=../../*.yaml" must be added on the web page (select the *.yaml configuration file according to the downstream task)
+# (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+# (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (9) Under the item "resource pool selection", select the specification of a single card.
+# (10) Create your job.
+# You will see bert_ner.mindir under {Output file path}.
 ```
 
 The ckpt_file parameter is required,
