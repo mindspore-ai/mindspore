@@ -28,7 +28,6 @@ import com.mindspore.lite.config.MSConfig;
 public class LiteSession {
     static {
         System.loadLibrary("mindspore-lite-jni");
-        System.loadLibrary("mindspore-lite-train-jni");
     }
 
     private long sessionPtr = 0;
@@ -64,9 +63,9 @@ public class LiteSession {
         }
     }
 
-    public static LiteSession createTrainSession(String modelname, final MSConfig config, boolean train_mode) {
+    public static LiteSession createTrainSession(String modelName, final MSConfig config, boolean trainMode) {
         LiteSession liteSession = new LiteSession();
-        liteSession.sessionPtr = liteSession.createTrainSession(modelname, config.getMSConfigPtr(), train_mode, 0);
+        liteSession.sessionPtr = liteSession.createTrainSession(modelName, config.getMSConfigPtr(), trainMode, 0);
         if (liteSession.sessionPtr == 0) {
             return null;
         } else {
@@ -78,8 +77,8 @@ public class LiteSession {
         return sessionPtr;
     }
 
-    public void bindThread(boolean if_bind) {
-        this.bindThread(this.sessionPtr, if_bind);
+    public void bindThread(boolean ifBind) {
+        this.bindThread(this.sessionPtr, ifBind);
     }
 
     public boolean compileGraph(Model model) {
@@ -156,8 +155,8 @@ public class LiteSession {
         return this.resize(this.sessionPtr, inputsArray, dims);
     }
 
-    public boolean export(String modelFilename, int model_type, int quantization_type) {
-        return this.export(this.sessionPtr, modelFilename, model_type, quantization_type);
+    public boolean export(String modelFileName, int modelType, int quantizationType) {
+        return this.export(this.sessionPtr, modelFileName, modelType, quantizationType);
     }
 
     public boolean train() {
@@ -205,11 +204,11 @@ public class LiteSession {
 
     private native long createSessionWithModel(MappedByteBuffer buffer, long msConfigPtr);
 
-    private native long createTrainSession(String filename, long msContextPtr, boolean train_mode, long msTrainCfgPtr);
+    private native long createTrainSession(String filename, long msContextPtr, boolean trainMode, long msTrainCfgPtr);
 
     private native boolean compileGraph(long sessionPtr, long modelPtr);
 
-    private native void bindThread(long sessionPtr, boolean if_bind);
+    private native void bindThread(long sessionPtr, boolean ifBind);
 
     private native boolean runGraph(long sessionPtr);
 
@@ -229,7 +228,7 @@ public class LiteSession {
 
     private native boolean resize(long sessionPtr, long[] inputs, int[][] dims);
 
-    private native boolean export(long sessionPtr, String modelFilename, int model_type, int quantization_type);
+    private native boolean export(long sessionPtr, String modelFileName, int modelType, int quantizationType);
 
     private native boolean train(long sessionPtr);
 
@@ -239,7 +238,7 @@ public class LiteSession {
 
     private native boolean isEval(long sessionPtr);
 
-    private native boolean setLearningRate(long sessionPtr, float learning_rate);
+    private native boolean setLearningRate(long sessionPtr, float learningRate);
 
     private native boolean setupVirtualBatch(long sessionPtr, int virtualBatchMultiplier, float learningRate, float momentum);
 
