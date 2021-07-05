@@ -29,15 +29,16 @@ def serialize(dataset, json_filepath=""):
     """
     Serialize dataset pipeline into a json file.
 
-    Currently some python objects are not supported to be serialized.
-    For python function serialization of map operator, de.serialize will only return its function name.
+    Note:
+        Currently some python objects are not supported to be serialized.
+        For python function serialization of map operator, de.serialize will only return its function name.
 
     Args:
-        dataset (Dataset): the starting node.
-        json_filepath (str): a filepath where a serialized json file will be generated.
+        dataset (Dataset): The starting node.
+        json_filepath (str): The filepath where a serialized json file will be generated.
 
     Returns:
-       dict containing the serialized dataset graph.
+       Dict, The dictionary contains the serialized dataset graph.
 
     Raises:
         OSError: Can not open a file
@@ -58,11 +59,12 @@ def deserialize(input_dict=None, json_filepath=None):
     """
     Construct a de pipeline from a json file produced by de.serialize().
 
-    Currently python function deserialization of map operator are not supported.
+    Note:
+        Currently python function deserialization of map operator are not supported.
 
     Args:
-        input_dict (dict): a Python dictionary containing a serialized dataset graph
-        json_filepath (str): a path to the json file.
+        input_dict (dict): A Python dictionary containing a serialized dataset graph.
+        json_filepath (str): A path to the json file.
 
     Returns:
         de.Dataset or None if error occurs.
@@ -107,11 +109,12 @@ def expand_path(node_repr, key, val):
 
 def show(dataset, indentation=2):
     """
-    Write the dataset pipeline graph onto logger.info.
+    Write the dataset pipeline graph to logger.info file.
 
     Args:
-        dataset (Dataset): the starting node.
-        indentation (int, optional): indentation used by the json print. Pass None to not indent.
+        dataset (Dataset): The starting node.
+        indentation (int, optional): The indentation used by the json print.
+            Do not indent if indentation is None.
     """
 
     pipeline = dataset.to_json()

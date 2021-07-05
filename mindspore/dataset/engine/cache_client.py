@@ -37,7 +37,8 @@ class DatasetCache:
         hostname (str, optional): Host name (default=None, use default hostname '127.0.0.1').
         port (int, optional): Port to connect to server (default=None, use default port 50052).
         num_connections (int, optional): Number of tcp/ip connections (default=None, use default value 12).
-        prefetch_size (int, optional): Prefetch size (default=None, use default value 20).
+        prefetch_size (int, optional): The size of the cache queue between operations
+            (default=None, use default value 20).
 
     Examples:
             >>> import mindspore.dataset as ds

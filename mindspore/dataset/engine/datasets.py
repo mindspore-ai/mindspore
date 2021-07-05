@@ -4497,7 +4497,7 @@ class Schema:
     Class to represent a schema of a dataset.
 
     Args:
-        schema_file(str): Path of schema file (default=None).
+        schema_file(str): Path of the schema file (default=None).
 
     Returns:
         Schema object, schema info about dataset.
@@ -4524,7 +4524,7 @@ class Schema:
         Add new column to the schema.
 
         Args:
-            name (str): Name of the column.
+            name (str): The new name of the column.
             de_type (str): Data type of the column.
             shape (list[int], optional): Shape of the column
                 (default=None, [-1] which is an unknown shape of rank 1).

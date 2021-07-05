@@ -121,7 +121,7 @@ class BuiltinSampler:
         self.child_sampler = sampler
 
     def get_child(self):
-        """ add a child sampler """
+        """ add a child sampler. """
         return self.child_sampler
 
     def parse_child(self):
@@ -188,7 +188,7 @@ class BuiltinSampler:
              - None
 
         Returns:
-            int, the number of samples, or None
+            int, the number of samples, or None.
         """
         if self.child_sampler is not None:
             child_samples = self.child_sampler.get_num_samples()
@@ -310,9 +310,9 @@ class DistributedSampler(BuiltinSampler):
 
     Args:
         num_shards (int): Number of shards to divide the dataset into.
-        shard_id (int): Shard ID of the current shard within num_shards.
-        shuffle (bool, optional): If True, the indices are shuffled (default=True).
-        num_samples (int, optional): The number of samples to draw (default=None, all elements).
+        shard_id (int): Shard ID of the current shard, which should within the range of [0, num_shards-1].
+        shuffle (bool, optional): If True, the indices are shuffled, otherwise it will not be shuffled(default=True).
+        num_samples (int, optional): The number of samples to draw (default=None, which means sample all elements).
         offset(int, optional): The starting shard ID where the elements in the dataset are sent to (default=-1), which
             should be no more than num_shards.
 
@@ -408,11 +408,12 @@ class PKSampler(BuiltinSampler):
 
     Args:
         num_val (int): Number of elements to sample for each class.
-        num_class (int, optional): Number of classes to sample (default=None, all classes).
+        num_class (int, optional): Number of classes to sample (default=None, sample all classes).
             The parameter does not supported to specify currently.
-        shuffle (bool, optional): If True, the class IDs are shuffled (default=False).
+        shuffle (bool, optional): If True, the class IDs are shuffled, otherwise it will not be
+            shuffled(default=False).
         class_column (str, optional): Name of column with class labels for MindDataset (default='label').
-        num_samples (int, optional): The number of samples to draw (default=None, all elements).
+        num_samples (int, optional): The number of samples to draw (default=None, which means sample all elements).
 
     Examples:
         >>> # creates a PKSampler that will get 3 samples from every class.
@@ -495,7 +496,7 @@ class RandomSampler(BuiltinSampler):
 
     Args:
         replacement (bool, optional): If True, put the sample ID back for the next draw (default=False).
-        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+        num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Examples:
         >>> # creates a RandomSampler
@@ -555,11 +556,11 @@ class RandomSampler(BuiltinSampler):
 
 class SequentialSampler(BuiltinSampler):
     """
-    Samples the dataset elements sequentially, same as not having a sampler.
+    Samples the dataset elements sequentially that is equivalent to not using a sampler.
 
     Args:
         start_index (int, optional): Index to start sampling at. (default=None, start at first ID)
-        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+        num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Examples:
         >>> # creates a SequentialSampler
@@ -626,7 +627,7 @@ class SubsetSampler(BuiltinSampler):
 
     Args:
         indices (Any iterable Python object but string): A sequence of indices.
-        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+        num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Examples:
         >>> indices = [0, 1, 2, 3, 4, 5]
@@ -713,7 +714,7 @@ class SubsetRandomSampler(SubsetSampler):
 
     Args:
         indices (Any iterable python object but string): A sequence of indices.
-        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+        num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Examples:
         >>> indices = [0, 1, 2, 3, 7, 88, 119]
@@ -757,7 +758,7 @@ class IterSampler(Sampler):
 
     Args:
         sampler (iterable object): an user defined iterable object.
-        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+        num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Examples:
         >>> class MySampler:
@@ -788,7 +789,7 @@ class WeightedRandomSampler(BuiltinSampler):
 
     Args:
         weights (list[float, int]): A sequence of weights, not necessarily summing up to 1.
-        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+        num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
         replacement (bool): If True, put the sample ID back for the next draw (default=True).
 
     Examples:
