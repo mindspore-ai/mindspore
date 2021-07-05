@@ -24,79 +24,45 @@
 
 namespace mindspore {
 namespace abstract {
-EvalResultPtr AsyncEvalResult::TryGetResult(int ms) {
-  std::unique_lock<std::mutex> lock(lock_);
-  if (ms == 0) {
-    return result_;
-  }
-  auto time = std::chrono::microseconds(ms);
-  // Wait for ms.
-  (void)condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
-  return result_;
-}
+HealthPointMgr HealthPointMgr::instance_;
 
-EvalResultPtr AsyncEvalResult::GetResult() {
-  std::unique_lock<std::mutex> lock(lock_);
-  if (result_ != nullptr) {
-    return result_;
+void HealthPointMgr::HandleException() {
+  std::lock_guard<std::recursive_mutex> lock(lock_);
+  for (auto &item : asyncAbstractList_) {
+    item->SetRunable();
+  }
+}
+void HealthPointMgr::SetNextRunable() {
+  std::lock_guard<std::recursive_mutex> lock(lock_);
+  if (asyncAbstractList_.empty()) {
+    MS_LOG(DEBUG) << "The Health List is empty. ";
+    return;
   }
   // Check if enter endless loop
-  HealthPointScopedDrop health_point_check;
-  auto time = std::chrono::seconds(kInferTimeout);
-  auto cond = condition_var_.wait_for(lock, time, [this] { return result_ != nullptr; });
-  if (cond) {
-    return result_;
-  } else {
-    MS_LOG(ERROR) << "Timeout!";
-    return std::make_shared<EvalResult>(std::make_shared<AbstractTimeOut>(), nullptr);
+  auto it = std::find_if(asyncAbstractList_.begin(), asyncAbstractList_.end(),
+                         [](const auto &item) { return item->HasResult(); });
+  if (it == asyncAbstractList_.end()) {
+    // Enter endless loop if there is not ready result.
+    MS_LOG(EXCEPTION) << "Enter endless loop. Please check the code. point = "
+                      << " point:" << HealthPointMgr::GetInstance().point()
+                      << " Called times : " << asyncAbstractList_.front()->count();
   }
+  asyncAbstractList_.insert(asyncAbstractList_.end(), asyncAbstractList_.begin(), it);
+  asyncAbstractList_.erase(asyncAbstractList_.begin(), it);
+
+  MS_LOG(DEBUG) << asyncAbstractList_.front().get() << " The Health Point is " << point_
+                << " Called times : " << asyncAbstractList_.front()->count();
+  asyncAbstractList_.front()->SetRunable();
+  asyncAbstractList_.pop_front();
 }
 
-std::string AsyncEvalResult::ToString() {
-  std::ostringstream buffer;
-  std::lock_guard<std::mutex> lock(lock_);
-  buffer << (result_ == nullptr ? "NOT SET" : result_->abstract()->ToString());
-  return buffer.str();
-}
-
-void AsyncEvalResult::JoinResult(const EvalResultPtr &result) {
-  MS_EXCEPTION_IF_NULL(result);
-  {
-    std::lock_guard<std::mutex> lock(lock_);
-    result_ = result;
-  }
-  condition_var_.notify_all();
-}
+AnalysisResultCacheMgr AnalysisResultCacheMgr::instance_;
 
 void AnalysisResultCacheMgr::Clear() {
   std::lock_guard<std::mutex> lock(lock_);
   cache_.clear();
   switch_cache_.clear();
   todo_.clear();
-}
-
-AnalysisResultCacheMgr &AnalysisResultCacheMgr::GetInstance() {
-  static AnalysisResultCacheMgr instance;
-  return instance;
-}
-
-void AnalysisResultCacheMgr::DumpCache(const std::string &filename) {
-  auto path = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".cache"));
-  auto realpath = Common::GetRealPath(path);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << path;
-    return;
-  }
-  ChangeFileMode(realpath.value(), S_IRWXU);
-  std::ofstream fout(realpath.value());
-  if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!";
-    return;
-  }
-  fout << cache_.dump();
-  fout.close();
-  // Set file mode to read only by user
-  ChangeFileMode(realpath.value(), S_IRUSR);
 }
 
 thread_local static std::string local_threadid;
@@ -121,23 +87,35 @@ void AnalysisResultCacheMgr::PushTodo(const AnfNodeConfigPtr &conf) {
 
 void AnalysisResultCacheMgr::InitSwitchValue(const AnfNodeConfigPtr &conf) {
   std::lock_guard<std::mutex> lock(lock_);
-  AsyncEvalResultPtr async_eval_result = switch_cache_.get(conf);
+  AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
   if (async_eval_result == nullptr) {
-    async_eval_result = std::make_shared<AsyncEvalResult>();
+    async_eval_result = std::make_shared<AsyncAbstract>();
     switch_cache_.set(conf, async_eval_result);
   }
 }
-
-EvalResultPtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &conf) {
+AbstractBasePtr AnalysisResultCacheMgr::TryGetSwitchValue(const AnfNodeConfigPtr &conf) {
   // don't call lock_.lock(). switch_cache is protected. and it waits for result.
-  AsyncEvalResultPtr async_eval_result = switch_cache_.get(conf);
+  AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
   // Conf has been visited and set value.
   if (async_eval_result != nullptr) {
-    // Maybe blocked for waiting. AsyncEvalResult maybe null, if time out.
+    return async_eval_result->TryGetResult();
+  }
+  return nullptr;
+}
+
+AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &conf) {
+  StaticAnalysisException::Instance().CheckException();
+  // don't call lock_.lock(). switch_cache is protected. and it waits for result.
+  AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
+  // Conf has been visited and set value.
+  if (async_eval_result != nullptr) {
+    // Add to schedule
+    HealthPointMgr::GetInstance().PushBack(async_eval_result);
+    // Maybe blocked for waiting. AsyncAbstract maybe null, if time out.
     auto result = async_eval_result->GetResult();
     if (result == nullptr) {
-      result = std::make_shared<EvalResult>(std::make_shared<AbstractTimeOut>(), nullptr);
-      MS_LOG(ERROR) << "AsyncEvalResult for NodeConfig " << conf->node()->ToString() << " is nullptr, maybe timeout.";
+      result = std::make_shared<AbstractTimeOut>();
+      MS_LOG(ERROR) << "AsyncAbstract for NodeConfig " << conf->node()->ToString() << " is nullptr, maybe timeout.";
       MS_LOG(ERROR) << "detail:" << conf->ToString();
     }
     return result;
@@ -145,26 +123,26 @@ EvalResultPtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &con
   return nullptr;
 }
 
-void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const EvalResultPtr arg) {
+void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr arg) {
   MS_EXCEPTION_IF_NULL(conf);
-  if (arg == nullptr || arg->abstract() == nullptr) {
+  if (arg == nullptr) {
     MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr";
   }
   std::lock_guard<std::mutex> lock(lock_);
-  AsyncEvalResultPtr async_eval_result = switch_cache_.get(conf);
+  AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
   if (async_eval_result == nullptr) {
-    async_eval_result = std::make_shared<AsyncEvalResult>();
+    async_eval_result = std::make_shared<AsyncAbstract>();
     async_eval_result->JoinResult(arg);
     switch_cache_.set(conf, async_eval_result);
   } else {
     auto ab1 = async_eval_result->TryGetResult();
     AbstractBasePtrList absList;
     if (ab1 != nullptr) {
-      absList.push_back(arg->abstract());
-      absList.push_back(ab1->abstract());
+      absList.push_back(arg);
+      absList.push_back(ab1);
       // Join two branches's result
       auto joined_result = AnalysisEngine::ProcessEvalResults(absList, conf->node());
-      async_eval_result->JoinResult(joined_result);
+      async_eval_result->JoinResult(joined_result->abstract());
       if (!(*joined_result == *ab1)) {
         PushTodo(conf);
       }
@@ -179,9 +157,9 @@ void AnalysisResultCacheMgr::Todo() {
   while (!todo_.empty()) {
     AnfNodeConfigPtr conf = todo_.front();
     todo_.pop_front();
-    if (!(*GetValue(conf)->abstract() == *GetSwitchValue(conf)->abstract())) {
+    if (!(*GetValue(conf)->abstract() == *TryGetSwitchValue(conf))) {
       MS_LOG(WARNING) << " Switch Value is not eq. "
-                      << " switchCache: " << GetSwitchValue(conf)->abstract()->ToString()
+                      << " switchCache: " << TryGetSwitchValue(conf)->ToString()
                       << " globleCache: " << GetValue(conf)->abstract()->ToString() << "\t\tConf: " << conf->ToString();
     }
   }
@@ -189,6 +167,8 @@ void AnalysisResultCacheMgr::Todo() {
 
 void AnalysisResultCacheMgr::Wait() {
   py::gil_scoped_release infer_gil_release;
+  // Check all the async to finish.
+  HealthPointScopedDrop hpCheck;
   while (true) {
     StaticAnalysisException::Instance().CheckException();
     lock_.lock();
@@ -206,11 +186,6 @@ void AnalysisResultCacheMgr::Wait() {
   if (IS_OUTPUT_ON(DEBUG)) {
     Todo();
   }
-}
-
-HealthPointMgr &HealthPointMgr::GetInstance() {
-  static HealthPointMgr instance;
-  return instance;
 }
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list) {

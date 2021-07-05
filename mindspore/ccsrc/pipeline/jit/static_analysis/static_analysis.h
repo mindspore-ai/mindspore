@@ -266,7 +266,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 
  private:
-  bool SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg);
+  void SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg);
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
                                      bool *continue_flag);
