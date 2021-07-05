@@ -17,10 +17,7 @@
 #include <regex>
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
-
-namespace gelc {
-uint32_t GetOptInfo(uint32_t, const std::string &, std::map<std::string, std::string> &);  // NOLINT
-}  // namespace gelc
+#include "opt_info/opt_info.h"
 
 namespace mindspore {
 namespace {
