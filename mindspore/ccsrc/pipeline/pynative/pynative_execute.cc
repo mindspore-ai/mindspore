@@ -874,7 +874,7 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
       abs = input_value->ToAbstract();
       if (!is_const_prim && !is_const_input) {
         MS_EXCEPTION_IF_NULL(abs);
-        abs = abs->Broaden();
+        abs = abs->PartialBroaden();
         MS_LOG(DEBUG) << "Broaden for " << prim->ToString();
         node_abs_map_[id] = abs;
       }
@@ -1799,7 +1799,7 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
       cell_id += it->second->BuildType()->ToString();
     } else {
       auto abs = PyAttrValue(args[i])->ToAbstract();
-      abs = abs->Broaden();
+      abs = abs->PartialBroaden();
       forward()->node_abs_map()[arg_id] = abs;
       cell_id += "_" + abs->BuildShape()->ToString();
       cell_id += abs->BuildType()->ToString();
