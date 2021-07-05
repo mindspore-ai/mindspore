@@ -398,41 +398,6 @@ class DihedralForce(PrimitiveWithInfer):
     on the corresponding atoms. Assume the number of dihedral terms is m and
     the number of atoms is n.
 
-    .. math::
-
-        dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
-    .. math::
-        dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
-    .. math::
-        dr_{cd} = (x_d-x_c, y_d-y_c, z_d-z_c)
-    .. math::
-        r1 = dr_{ab}*dr_{cb}
-    .. math::
-        r2 = dr_{cd}*dr_{cb}
-    .. math::
-        phi = pi - sign(inner_product(r1*r2), dr_{cb})
-            * arccos(inner_product(r1, r2)/|r1|/|r2|)
-    .. math::
-        dEdphi = n*phi*(k*cos(phi_0)*sin(n*phi) - k*sin(phi_0)*cos(n*phi))/sin(phi)
-    .. math::
-        dphidr1 = r2/|r1|/|r2| + cos(phi)/|r1|^2*r1
-    .. math::
-        dphidr2 = r1/|r1|/|r2| + cos(phi)/|r2|^2*r2
-    .. math::
-        dEdra = dEdphi * dr_{cb} * dphidr1
-    .. math::
-        dEdrd = dEdphi * dphi_dr2 * dr_{cb}
-    .. math::
-        dEdrjpart = dEdphi * ((dr_{ab} * dphidr1) + (dr_{cd} * dphidr2))
-    .. math::
-        F_a = dEdri
-    .. math::
-        F_b = dEdrjpart - dEdri
-    .. math::
-        F_c = - dEdrl - dEdrjpart
-    .. math::
-        F_d = dEdrl
-
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
 
@@ -520,10 +485,6 @@ class DihedralEnergy(PrimitiveWithInfer):
     """
     Calculate the potential energy caused by dihedral terms for each 4-atom pair.
     Assume our system has n atoms and m dihedral terms.
-
-    .. math::
-
-        E = k(1 + cos(n*phi - phi_0))
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
@@ -2110,7 +2071,7 @@ class LJEnergy(PrimitiveWithInfer):
     .. math::
         E = A/|dr|^{12} - B/|dr|^{6}
 
-    Agrs:
+    Args:
         atom_numbers(int32): the number of atoms, n.
         cutoff_square(float32): the square value of cutoff.
 
@@ -2198,7 +2159,7 @@ class LJForce(PrimitiveWithInfer):
 
         F = (-12*A/|dr|^{14} + 6*B/|dr|^{8}) * dr
 
-    Agrs:
+    Args:
         atom_numbers(int32): the number of atoms, n.
         cutoff_square(float32): the square value of cutoff.
 
