@@ -648,11 +648,11 @@ The ckpt_file parameter is required,
 ### Infer on Ascend310
 
 Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
-Need to install OpenCV, You can download it from [OpenCV](https://opencv.org/).  
+Need to install OpenCV(Version >= 4.0), You can download it from [OpenCV](https://opencv.org/).
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [SAVE_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
 ```
 
 - `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. Only support CPU mode .
@@ -715,7 +715,7 @@ CenterFace on 3.2K images(The annotation and data format must be the same as wid
 
 | Parameters          | CenterFace                      |
 | ------------------- | --------------------------- |
-| Model Version       | CNNCTC                      |
+| Model Version       | CenterFace                      |
 | Resource            | Ascend 310; CentOS 3.10     |
 | Uploaded Date       | 23/06/2021 (month/day/year) |
 | MindSpore Version   | 1.2.0                       |

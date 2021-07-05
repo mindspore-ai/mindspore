@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [[ $# -lt 5 || $# -gt 6 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [SAVE_PATH] [LABEL_FILE] [DVPP] [DEVICE_ID]
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [SAVE_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
     DVPP is mandatory, and must choose from [DVPP|CPU], it's case-insensitive. Current only support CPU mode.
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
@@ -31,7 +31,7 @@ get_real_path(){
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
 save_path=$(get_real_path $3)
-label_file=$(get_real_path $4)
+label_path=$(get_real_path $4)
 DVPP=${5^^}
 device_id=0
 if [ $# == 6 ]; then
@@ -41,7 +41,7 @@ fi
 echo "mindir name: "$model
 echo "dataset path: "$data_path
 echo "save path: "$save_path
-echo "label file: "$label_file
+echo "label path: "$label_path
 echo "image process mode: "$DVPP
 echo "device id: "$device_id
 
@@ -101,7 +101,7 @@ function cal_ap()
     if [ -d ${save_path} ]; then
         rm -rf ${save_path}
     fi
-    python3.7 ../postprocess.py --result_path=./result_Files --label_file=$label_file --meta_file=./dataset/meta --save_path=$save_path &> ap.log &
+    python3.7 ../postprocess.py --result_path=./result_Files --label_path=$label_path --meta_path=./dataset/meta --save_path=$save_path &> ap.log &
 }
 
 preprocess_data
