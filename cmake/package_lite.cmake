@@ -292,12 +292,52 @@ elseif(WIN32)
     if(MSLITE_ENABLE_CONVERTER)
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/registry/ DESTINATION ${CONVERTER_ROOT_DIR}/include/registry
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${CONVERTER_ROOT_DIR}/include
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h"
+                PATTERN "train*" EXCLUDE PATTERN "delegate.h" EXCLUDE PATTERN "lite_session.h" EXCLUDE)
         install(FILES ${LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/registry/libmslite_converter_plugin.dll
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/../bin/libglog.dll DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/abstract/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/base/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/ir/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/ops/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ops
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/utils/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(FILES ${TOP_DIR}/mindspore/ccsrc/backend/optimizer/common/pass.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/model_parser.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/dump_graph.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/ops/ops_def.h
+                DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/build/mindspore/schema/ DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${flatbuffers_INC}/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/glog
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/third_party/securec/include/
+                DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/securec
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${protobuf_INC}/google DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${eigen3_INC}/eigen3 DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/mindspore_core/${MINDSPORE_CORE_LIB_NAME}.a
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/mindspore_core/gvar/libmindspore_gvar.a
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/build/mindspore/securec/src/libsecurec.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${protobuf_LIBPATH}/libprotobuf.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         __install_micro_wrapper()
         __install_micro_codegen()
@@ -318,6 +358,12 @@ elseif(WIN32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE
                 PATTERN "*registry.h" EXCLUDE)
     endif()
+    install(FILES ${TOP_DIR}/build/mindspore/schema/model_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${TOP_DIR}/build/mindspore/schema/ops_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${TOP_DIR}/build/mindspore/schema/ops_types_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/format.h DESTINATION ${RUNTIME_INC_DIR}/ir
@@ -398,14 +444,11 @@ else()
         install(DIRECTORY ${TOP_DIR}/third_party/securec/include/
                 DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/securec
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        file(GLOB PROTOBUF_INCLUDE_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/protobuf_*/include/google)
-        install(DIRECTORY ${PROTOBUF_INCLUDE_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+        install(DIRECTORY ${protobuf_INC}/google DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        file(GLOB CYTPO_INCLUDE_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/openssl_*/include/openssl/*.h)
-        install(FILES ${CYPTO_INCLUDE_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/openssl
+        install(DIRECTORY ${openssl_INC}/openssl DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        file(GLOB EIGEN_INCLUDE_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/eigen3_*/include/eigen3)
-        install(DIRECTORY ${EIGEN_INCLUDE_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+        install(DIRECTORY ${eigen3_INC}/eigen3 DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/${MINDSPORE_CORE_LIB_NAME}.a
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -413,11 +456,9 @@ else()
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        file(GLOB PROTOBUF_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/protobuf_*/lib/libprotobuf.a)
-        install(FILES ${PROTOBUF_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
+        install(FILES ${protobuf_LIBPATH}/libprotobuf.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        file(GLOB CRYPTO_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/openssl_*/lib/libcrypto.a)
-        install(FILES ${CRYPTO_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
+        install(FILES ${openssl_LIBPATH}/libcrypto.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
