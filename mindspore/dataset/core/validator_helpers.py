@@ -68,10 +68,10 @@ def is_serializable(obj):
     Helper function to check if object is serializable.
 
     Args:
-        obj (any): object to check if serializable
+        obj (any): object to check if serializable.
 
     Returns:
-        bool, true if object is serializable
+        bool, true if object is serializable.
     """
     try:
         dumps(obj)
