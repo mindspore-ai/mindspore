@@ -64,12 +64,12 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 # 环境要求
 
 - 硬件（Ascend/GPU）
-    - 使用Ascend来搭建硬件环境。
+    - 使用Ascend/GPU来搭建硬件环境。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
 # 快速入门
 
@@ -303,7 +303,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 | 参数(M)             | 10.7                                                        | 10.7                   |
 | 微调检查点 | 82.91M (.ckpt文件)                                         | 82.91M (.ckpt文件)                |
 | 推理模型        | 41.66M (.mindir文件)                     | 41.66M (.mindir文件)                 |
-| 脚本                    | [posenet脚本](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/research/cv/posenet) | [posenet脚本](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/master/cv/posenet) |
+| 脚本                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/posenet> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/posenet> |
 
 #### StMarysChurch上的PoseNet
 
