@@ -221,7 +221,8 @@ class GraphScheduler {
   // Link the control arrows for allreduce kernel by the send/recv nodes in the kernel graph.
   void LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph);
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
-  void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes);
+  void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
+                                           const GraphCompilerInfo &graph_compiler_info);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
 
   // 3. The processing of linking output result arrows.
