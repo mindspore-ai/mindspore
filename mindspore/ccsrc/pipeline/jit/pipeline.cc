@@ -673,7 +673,14 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   ResourcePtr resource = std::make_shared<Resource>(obj);
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE)) {
+#ifdef ENABLE_PROFILE
+    double t1 = GetTime();
+#endif
     GetCachedFuncGraph(resource, queue_name);
+#ifdef ENABLE_PROFILE
+    double t2 = GetTime();
+    MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
+#endif
   }
 
   auto p_actions = GetPipeline(resource, phase_s, use_vm);
@@ -787,6 +794,19 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   return ret_value;
 }
 
+void CacheValidateFuncGraph(const std::string &phase_s, const ResourcePtr &resource) {
+  if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
+#ifdef ENABLE_PROFILE
+    double t1 = GetTime();
+#endif
+    CacheFuncGraph(resource);
+#ifdef ENABLE_PROFILE
+    double t2 = GetTime();
+    MsProfile::StatTime("SaveCacheFuncGraph", t2 - t1);
+#endif
+  }
+}
+
 void Pipeline::Run(const std::string &phase_s) {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
@@ -808,9 +828,7 @@ void Pipeline::Run(const std::string &phase_s) {
       if (action.first == "task_emit") {
         SetGpuLoopSink(resource_);
       } else if (action.first == "validate") {
-        if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_COMPILE_CACHE)) {
-          CacheFuncGraph(resource_);
-        }
+        CacheValidateFuncGraph(phase_s, resource_);
       }
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
