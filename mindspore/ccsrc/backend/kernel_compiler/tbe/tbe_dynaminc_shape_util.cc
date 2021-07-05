@@ -281,16 +281,17 @@ RangePair DynamicShapeRangeTrans(const RangePair &ori_range, const std::string &
   }
   auto temp_range = ori_range;
   if (ori_range.size() < kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
-    MS_LOG(WARNING) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
+    MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
     temp_range = PaddingRangeTo4D(ori_range);
   }
   if (ori_range.size() < kNcdhwDims && k3DFormatSet.find(format) != k3DFormatSet.end()) {
-    MS_LOG(WARNING) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
+    MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
     temp_range = PaddingRangeTo5D(ori_range);
   }
   auto iter = format_range_map.find(format);
   if (iter == format_range_map.end()) {
-    MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
+    MS_LOG(WARNING) << "Can not find a supported format: " << format << ", using default range";
+    return ori_range;
   }
   return iter->second(temp_range);
 }
