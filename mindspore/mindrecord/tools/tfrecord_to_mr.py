@@ -70,16 +70,9 @@ class TFRecordToMR:
     Args:
         source (str): the TFRecord file to be transformed.
         destination (str): the MindRecord file path to transform into.
-        feature_dict (dict): a dictionary that states the feature type,
+        feature_dict (dict): a dictionary that states the feature type, and
+        `VarLenFeature` is not supported.
         bytes_fields (list, optional): the bytes fields which are in `feature_dict` and can be images bytes.
-
-    Examples:
-        >>> feature_dict = {"xxxx": tf.io.FixedLenFeature([], tf.string),
-        ...                 "yyyy": tf.io.FixedLenFeature([], tf.int64)}
-        >>> # Follow case which uses VarLenFeature is not supported.
-        >>> feature_dict = {"context": {"xxxx": tf.io.FixedLenFeature([], tf.string),
-        ...                             "yyyy": tf.io.VarLenFeature(tf.int64)},
-        ...                             "sequence": {"zzzz": tf.io.FixedLenSequenceFeature([], tf.float32)}}
 
     Raises:
         ValueError: If parameter is invalid.
