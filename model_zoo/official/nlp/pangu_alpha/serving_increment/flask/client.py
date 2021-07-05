@@ -41,8 +41,8 @@ def generate(input_sentence):
 @app.route('/query')
 def do_query():
     s = request.args.get('u')
-    output_sentence, end_flag = generate(s)
-    return jsonify(ok=True, rsvp=output_sentence, end_flag=end_flag)
+    output_sentence = generate(s)
+    return jsonify(ok=True, rsvp=output_sentence)
 
 
 @app.route('/')
