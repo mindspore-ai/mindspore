@@ -1640,9 +1640,11 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
     }
     // Link the control arrow between the kernel actors.
     const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_kernel->fullname_with_scope()));
+    if (from_actor == nullptr) {
+      continue;
+    }
     MS_LOG(INFO) << "Link control arrow by auto monad, from actor:  " << real_depend_kernel->fullname_with_scope()
                  << ", to actor: " << to_actor->GetAID().Name();
-    MS_EXCEPTION_IF_NULL(from_actor);
     from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
     to_actor->input_controls_num_++;
   }
@@ -2690,9 +2692,15 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
 
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
-      DeviceTensorStore::GetInstance().Insert(front_node.get(), device_tensor);
-      UpdateRefCount(device_tensor.get(), true);
+      if (IsPersistentDeviceTensor(input_node)) {
+        DeviceTensorStore::GetInstance().Insert(front_node.get(), device_tensor);
+        UpdateRefCount(device_tensor.get(), true);
+      }
 
+      // Share the weight in the host and device, then input_node is internal parameter and front_node is weight.
+      if (!IsPersistentDeviceTensor(front_node)) {
+        continue;
+      }
       // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
       if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceAddressType()) == nullptr) {
         MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()

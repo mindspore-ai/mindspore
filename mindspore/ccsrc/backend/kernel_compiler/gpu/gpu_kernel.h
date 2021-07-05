@@ -90,7 +90,9 @@ class GpuKernel : public KernelMod {
     if ((addr_list[index] == nullptr) || (addr_list[index]->size == 0)) {
       return nullptr;
     }
-    MS_EXCEPTION_IF_NULL(addr_list[index]->addr);
+    if (addr_list[index]->addr == nullptr) {
+      MS_LOG(EXCEPTION) << "The device address is empty, address index:" << index;
+    }
     return reinterpret_cast<T *>(addr_list[index]->addr);
   }
 
