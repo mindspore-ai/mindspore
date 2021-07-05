@@ -83,7 +83,7 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
     retry_count_++;
     std::string reason = "The aggregation for the weights is not done yet.";
     BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
-    if (retry_count_ % kPrintPullWeightForEveryRetryTime == 0) {
+    if (retry_count_ % kPrintPullWeightForEveryRetryTime == 1) {
       MS_LOG(WARNING) << reason << " Retry count is " << retry_count_;
     }
     return;

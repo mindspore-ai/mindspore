@@ -430,13 +430,16 @@ void Iteration::EndLastIter() {
   iteration_num_++;
   // After the job is done, reset the iteration to the initial number and reset ModelStore.
   if (iteration_num_ > PSContext::instance()->fl_iteration_num()) {
-    MS_LOG(INFO) << PSContext::instance()->fl_iteration_num() << " iterations are completed.";
+    MS_LOG(INFO) << "Iteration loop " << iteration_loop_count_
+                 << " is completed. Iteration number: " << PSContext::instance()->fl_iteration_num();
     iteration_num_ = 1;
+    iteration_loop_count_++;
     ModelStore::GetInstance().Reset();
   }
 
   Server::GetInstance().CancelSafeMode();
   SetIterationCompleted();
+  pinned_iter_num_ = 0;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
 }

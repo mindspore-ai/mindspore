@@ -25,6 +25,10 @@ namespace ps {
 void SparseApplyAdamPSKernel::InitKernel(
   const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
+  if (shape_vec.size() <= kSparseApplyAdamPSInputSize) {
+    MS_LOG(EXCEPTION) << "SparseApplyAdamPSKernel needs 10 input shapes, but got " << shape_vec.size();
+    return;
+  }
   std::vector<size_t> &var_shape = *(shape_vec[0]);
   std::vector<size_t> &m_shape = *(shape_vec[1]);
   std::vector<size_t> &v_shape = *(shape_vec[2]);

@@ -271,5 +271,8 @@ while True:
             time.sleep(duration / 1000)
         continue
 
+    if current_iteration == 1:
+        time.sleep(2)
+
     print("")
     sys.stdout.flush()

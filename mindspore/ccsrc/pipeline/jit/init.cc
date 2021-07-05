@@ -341,37 +341,63 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_ms_role", &PSContext::set_ms_role, "Set role for this process.")
     .def("ms_role", &PSContext::ms_role, "Get role for this process.")
     .def("set_worker_num", &PSContext::set_worker_num, "Set worker number.")
+    .def("worker_num", &PSContext::worker_num, "Get worker number.")
     .def("set_server_num", &PSContext::set_server_num, "Set server number.")
+    .def("server_num", &PSContext::server_num, "Get server number.")
     .def("set_scheduler_ip", &PSContext::set_scheduler_ip, "Set scheduler ip.")
+    .def("scheduler_ip", &PSContext::scheduler_ip, "Get scheduler ip.")
     .def("set_scheduler_port", &PSContext::set_scheduler_port, "Set scheduler port.")
+    .def("scheduler_port", &PSContext::scheduler_port, "Get scheduler port.")
     .def("set_fl_server_port", &PSContext::set_fl_server_port, "Set federated learning server port.")
+    .def("fl_server_port", &PSContext::fl_server_port, "Get federated learning server port.")
     .def("set_fl_client_enable", &PSContext::set_fl_client_enable, "Set federated learning client.")
+    .def("fl_client_enable", &PSContext::fl_client_enable, "Get federated learning client.")
     .def("set_start_fl_job_threshold", &PSContext::set_start_fl_job_threshold,
          "Set threshold count for startFLJob round.")
+    .def("start_fl_job_threshold", &PSContext::start_fl_job_threshold, "Get threshold count for startFLJob round.")
     .def("set_start_fl_job_time_window", &PSContext::set_start_fl_job_time_window,
          "Set time window for startFLJob round.")
+    .def("start_fl_job_time_window", &PSContext::start_fl_job_time_window, "Get time window for startFLJob round.")
     .def("set_update_model_ratio", &PSContext::set_update_model_ratio,
          "Set threshold count ratio for updateModel round.")
+    .def("update_model_ratio", &PSContext::update_model_ratio, "Get threshold count ratio for updateModel round.")
     .def("set_update_model_time_window", &PSContext::set_update_model_time_window,
          "Set time window for updateModel round.")
+    .def("update_model_time_window", &PSContext::update_model_time_window, "Get time window for updateModel round.")
     .def("set_share_secrets_ratio", &PSContext::set_share_secrets_ratio,
          "Set threshold count ratio for share secrets round.")
+    .def("share_secrets_ratio", &PSContext::share_secrets_ratio, "Get threshold count ratio for share secrets round.")
     .def("set_get_model_ratio", &PSContext::set_get_model_ratio, "Set threshold count ratio for get model round.")
+    .def("get_model_ratio", &PSContext::get_model_ratio, "Get threshold count ratio for get model round.")
     .def("set_reconstruct_secrets_threshhold", &PSContext::set_reconstruct_secrets_threshhold,
          "Set threshold count for reconstruct secrets round.")
+    .def("reconstruct_secrets_threshhold", &PSContext::reconstruct_secrets_threshhold,
+         "Get threshold count for reconstruct secrets round.")
     .def("set_fl_name", &PSContext::set_fl_name, "Set federated learning name.")
+    .def("fl_name", &PSContext::fl_name, "Get federated learning name.")
     .def("set_fl_iteration_num", &PSContext::set_fl_iteration_num, "Set federated learning iteration number.")
+    .def("fl_iteration_num", &PSContext::fl_iteration_num, "Get federated learning iteration number.")
     .def("set_client_epoch_num", &PSContext::set_client_epoch_num, "Set federated learning client epoch number.")
+    .def("client_epoch_num", &PSContext::client_epoch_num, "Get federated learning client epoch number.")
     .def("set_client_batch_size", &PSContext::set_client_batch_size, "Set federated learning client batch size.")
+    .def("client_batch_size", &PSContext::client_batch_size, "Get federated learning client batch size.")
     .def("set_client_learning_rate", &PSContext::set_client_learning_rate,
          "Set worker's standalone training step number before communicating with server.")
+    .def("client_learning_rate", &PSContext::client_learning_rate,
+         "Get worker's standalone training step number before communicating with server.")
     .def("set_worker_step_num_per_iteration", &PSContext::set_worker_step_num_per_iteration,
          "Set federated learning client learning rate.")
+    .def("worker_step_num_per_iteration", &PSContext::worker_step_num_per_iteration,
+         "Get federated learning client learning rate.")
     .def("set_scheduler_manage_port", &PSContext::set_scheduler_manage_port,
          "Set scheduler manage port used to scale out/in.")
+    .def("scheduler_manage_port", &PSContext::scheduler_manage_port, "Get scheduler manage port used to scale out/in.")
     .def("set_enable_ssl", &PSContext::set_enable_ssl, "Set PS SSL mode enabled or disabled.")
+    .def("enable_ssl", &PSContext::enable_ssl, "Get PS SSL mode enabled or disabled.")
     .def("set_config_file_path", &PSContext::set_config_file_path,
-         "Set configuration files required by the communication layer.");
+         "Set configuration files required by the communication layer.")
+    .def("config_file_path", &PSContext::config_file_path,
+         "Get configuration files required by the communication layer.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())

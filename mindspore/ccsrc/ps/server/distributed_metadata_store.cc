@@ -218,9 +218,13 @@ bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const P
   std::unique_lock<std::mutex> lock(mutex_[name]);
   if (meta.has_device_meta()) {
     auto &fl_id_to_meta_map = *metadata_[name].mutable_device_metas()->mutable_fl_id_to_meta();
-    auto &fl_id = meta.device_meta().fl_id();
+    auto &device_meta_fl_id = meta.device_meta().fl_id();
+    if (fl_id_to_meta_map.count(device_meta_fl_id) != 0) {
+      MS_LOG(WARNING) << "The fl id " << device_meta_fl_id << " already exists.";
+      return false;
+    }
     auto &device_meta = meta.device_meta();
-    fl_id_to_meta_map[fl_id] = device_meta;
+    fl_id_to_meta_map[device_meta_fl_id] = device_meta;
   } else if (meta.has_fl_id()) {
     auto client_list = metadata_[name].mutable_client_list();
     auto &fl_id = meta.fl_id().fl_id();
