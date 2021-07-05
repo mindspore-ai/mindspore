@@ -82,7 +82,7 @@ std::string GetRankId() {
   MS_EXCEPTION_IF_NULL(mpi_config_ptr);
   if (mpi_config_ptr->enable_mpi()) {
     int rank_id = GetMPIRankId();
-    const std::string offset = std::getenv("RANK_OFFSET");
+    const std::string offset = common::GetEnv("RANK_OFFSET");
     if (offset.empty()) {
       try {
         int rank_offset = std::stoi(offset);
@@ -95,10 +95,10 @@ std::string GetRankId() {
     }
     rank_id_str = std::to_string(rank_id);
   } else {
-    rank_id_str = std::getenv("RANK_ID");
+    rank_id_str = common::GetEnv("RANK_ID");
   }
 #else
-  rank_id_str = std::getenv("RANK_ID");
+  rank_id_str = common::GetEnv("RANK_ID");
 #endif
   if (rank_id_str.empty()) {
     MS_LOG(ERROR) << "Get hccl rankid failed, please set env RANK_ID";
