@@ -92,6 +92,12 @@ set(JNI_SRC
 
 set(LITE_SO_NAME mindspore-lite)
 
+if(SUPPORT_TRAIN)
+  set(JNI_SRC
+          ${JNI_SRC}
+          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
+  )
+endif()
 add_library(mindspore-lite-jni SHARED ${JNI_SRC})
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)

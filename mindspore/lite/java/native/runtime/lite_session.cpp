@@ -411,24 +411,3 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_lite_LiteSession_getFeat
   }
   return ret;
 }
-
-extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createTrainSession(JNIEnv *env, jobject thiz,
-                                                                                          jstring file_name,
-                                                                                          jlong ms_context_ptr,
-                                                                                          jboolean train_mode,
-                                                                                          jlong train_config_ptr) {
-  auto *pointer = reinterpret_cast<void *>(ms_context_ptr);
-  if (pointer == nullptr) {
-    MS_LOGE("Context pointer from java is nullptr");
-    return jlong(nullptr);
-  }
-  auto *lite_context_ptr = static_cast<mindspore::lite::Context *>(pointer);
-
-  auto session = mindspore::session::LiteSession::CreateTrainSession(env->GetStringUTFChars(file_name, JNI_FALSE),
-                                                                     lite_context_ptr, train_mode, nullptr);
-  if (session == nullptr) {
-    MS_LOGE("CreateTrainSession failed");
-    return jlong(nullptr);
-  }
-  return jlong(session);
-}
