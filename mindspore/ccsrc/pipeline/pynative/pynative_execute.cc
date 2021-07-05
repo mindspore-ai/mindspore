@@ -1091,14 +1091,9 @@ void ForwardExecutor::DoSignatrueCast(const PrimitivePyPtr &prim, const std::map
     if (!signature.empty()) {
       sig = signature[i].rw;
     }
-    bool is_parameter = false;
     TypeId arg_type_id = kTypeUnknown;
     if (py::isinstance<tensor::MetaTensor>(obj)) {
       auto arg = py::cast<tensor::MetaTensorPtr>(obj);
-      if (arg->is_parameter()) {
-        is_parameter = true;
-        MS_LOG(DEBUG) << "Parameter is read " << i;
-      }
       arg_type_id = arg->data_type();
     }
     // implicit cast
@@ -1107,9 +1102,6 @@ void ForwardExecutor::DoSignatrueCast(const PrimitivePyPtr &prim, const std::map
       is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second);
     }
     if (sig == SignatureEnumRW::kRWWrite) {
-      if (!is_parameter) {
-        prim::RaiseExceptionForCheckParameter(prim->name(), i, "not");
-      }
       if (arg_type_id != kTypeUnknown) {
         if (!is_same_type) {
           prim::RaiseExceptionForConvertRefDtype(prim->name(), TypeIdToMsTypeStr(arg_type_id),

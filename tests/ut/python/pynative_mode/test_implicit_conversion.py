@@ -283,6 +283,6 @@ def test_assign_check_in_sig():
     net = AssignCheck()
     x = Tensor(2, ms.int8)
     y = Tensor(3, ms.uint8)
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(RuntimeError) as e:
         net(x, y)
-    assert "Parameter" in e.value.args[0]
+    assert "can not cast automatically" in e.value.args[0]
