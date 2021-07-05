@@ -43,6 +43,7 @@ SET(DE_UT_SRCS
         c_api_vision_random_subselect_policy_test.cc
         c_api_vision_random_test.cc
         c_api_vision_r_to_z_test.cc
+        c_api_vision_slice_patches_test.cc
         c_api_vision_soft_dvpp_test.cc
         c_api_vision_uniform_aug_test.cc
         c_api_vision_vertical_flip_test.cc

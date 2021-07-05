@@ -823,6 +823,33 @@ class RGBA2RGB final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
+/// \note Slice the tensor to multiple patches in horizontal and vertical directions.
+class SlicePatches final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] num_height The number of patches in vertical direction (default=1).
+  /// \param[in] num_width The number of patches in horizontal direction (default=1).
+  /// \param[in] slice_mode An enum for the mode of slice (default=SliceMode::kPad).
+  /// \param[in] fill_value A value representing the pixel to fill the padding area in right and
+  ///     bottom border if slice_mode is kPad. Then padded tensor could be just sliced to multiple patches (default=0).
+  /// \note The usage scenerio is suitable to tensor with large height and width. The tensor will keep the same
+  ///     if set both num_height and num_width to 1. And the number of output tensors is equal to num_height*num_width.
+  SlicePatches(int32_t num_height = 1, int32_t num_width = 1, SliceMode slice_mode = SliceMode::kPad,
+               uint8_t fill_value = 0);
+
+  /// \brief Destructor.
+  ~SlicePatches() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Decode, randomly crop and resize a JPEG image using the simulation algorithm of
 ///     Ascend series chip DVPP module. The application scenario is consistent with SoftDvppDecodeResizeJpeg.
 ///     The input image size should be in range [32*32, 8192*8192].

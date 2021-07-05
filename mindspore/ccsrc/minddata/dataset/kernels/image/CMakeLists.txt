@@ -52,6 +52,7 @@ add_library(kernels-image OBJECT
     rgba_to_bgr_op.cc
     rgba_to_rgb_op.cc
     sharpness_op.cc
+    slice_patches_op.cc
     solarize_op.cc
     swap_red_blue_op.cc
     uniform_aug_op.cc

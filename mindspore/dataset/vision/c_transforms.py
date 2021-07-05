@@ -47,14 +47,14 @@ import numpy as np
 from PIL import Image
 import mindspore._c_dataengine as cde
 
-from .utils import Inter, Border, ImageBatchFormat
+from .utils import Inter, Border, ImageBatchFormat, SliceMode
 from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, check_random_resize_crop, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
     check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, \
     check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
-    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate
+    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches
 from ..transforms.c_transforms import TensorOperation
 
 
@@ -87,6 +87,8 @@ DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBO
                    Inter.AREA: cde.InterpolationMode.DE_INTER_AREA,
                    Inter.PILCUBIC: cde.InterpolationMode.DE_INTER_PILCUBIC}
 
+DE_C_SLICE_MODE = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
+                   SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
 
 def parse_padding(padding):
     """ Parses and prepares the padding tuple"""
@@ -1538,6 +1540,43 @@ class Rotate(ImageTensorOperation):
         return cde.RotateOperation(self.degrees, DE_C_INTER_MODE[self.resample], self.expand, self.center,
                                    self.fill_value)
 
+
+class SlicePatches(ImageTensorOperation):
+    """
+    Slice Tensor to multiple patches in horizontal and vertical directions.
+
+    The usage scenerio is suitable to large height and width Tensor. The Tensor
+    will keep the same if set both num_height and num_width to 1. And the
+    number of output tensors is equal to num_height*num_width.
+
+    Args:
+        num_height (int, optional): The number of patches in vertical direction (default=1).
+        num_height (int, optional): The number of patches in horizontal direction (default=1).
+        slice_mode (Inter mode, optional): An mode represents pad or drop (default=SliceMode.PAD).
+            It can be any of [SliceMode.PAD, SliceMode.DROP].
+        fill_value (int, optional): The border width in number of pixels in
+            right and bottom direction if slice_mode is set to be SliceMode.PAD (default=0).
+
+    Examples:
+        >>> # default padding mode
+        >>> slice_patches_op = c_vision.SlicePatches(num_h, num_w)
+        >>> cols = ['img' + str(x) for x in range(num_h*num_w)]
+        >>> dataset1 = dataset1.map(operations=decode_op, input_columns=["image"])
+        >>> dataset1 = dataset1.map(operations=resize_op, input_columns=["image"])
+        >>> dataset1 = dataset1.map(operations=slice_patches_op, input_columns=[
+        ...                         "image"], output_columns=cols, column_order=cols)
+    """
+
+    @check_slice_patches
+    def __init__(self, num_height=1, num_width=1, slice_mode=SliceMode.PAD, fill_value=0):
+        self.num_height = num_height
+        self.num_width = num_width
+        self.slice_mode = slice_mode
+        self.fill_value = fill_value
+
+    def parse(self):
+        return cde.SlicePatchesOperation(self.num_height, self.num_width,
+                                         DE_C_SLICE_MODE[self.slice_mode], self.fill_value)
 
 class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     """

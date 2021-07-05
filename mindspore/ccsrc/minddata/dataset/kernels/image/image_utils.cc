@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <vector>
 #include <stdexcept>
-#include <utility>
 #include <opencv2/imgcodecs.hpp>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
@@ -29,6 +28,9 @@
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 
 const int32_t MAX_INT_PRECISION = 16777216;  // float int precision is 16777216
+const int32_t DEFAULT_NUM_HEIGHT = 1;
+const int32_t DEFAULT_NUM_WIDTH = 1;
+
 namespace mindspore {
 namespace dataset {
 int GetCVInterpolationMode(InterpolationMode mode) {
@@ -1284,6 +1286,82 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("GaussianBlur: " + std::string(e.what()));
+  }
+}
+
+Status ComputePatchSize(const std::shared_ptr<CVTensor> &input_cv,
+                        std::shared_ptr<std::pair<int32_t, int32_t>> *patch_size, int32_t num_height, int32_t num_width,
+                        SliceMode slice_mode) {
+  if (input_cv->mat().data == nullptr) {
+    RETURN_STATUS_UNEXPECTED("SlicePatches: Tensor could not convert to CV Tensor.");
+  }
+  if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
+    RETURN_STATUS_UNEXPECTED("SlicePatches: image shape is not <H,W,C> or <H,W>.");
+  }
+
+  cv::Mat in_img = input_cv->mat();
+  cv::Size s = in_img.size();
+  if (num_height == 0 || num_height > s.height) {
+    RETURN_STATUS_UNEXPECTED("SlicePatches: The number of patches on height axis equals 0 or is greater than height.");
+  }
+  if (num_width == 0 || num_width > s.width) {
+    RETURN_STATUS_UNEXPECTED("SlicePatches: The number of patches on width axis equals 0 or is greater than width.");
+  }
+  int32_t patch_h = s.height / num_height;
+  if (s.height % num_height != 0) {
+    if (slice_mode == SliceMode::kPad) {
+      patch_h += 1;  // patch_h * num_height - s.height
+    }
+  }
+  int32_t patch_w = s.width / num_width;
+  if (s.width % num_width != 0) {
+    if (slice_mode == SliceMode::kPad) {
+      patch_w += 1;  // patch_w * num_width - s.width
+    }
+  }
+  (*patch_size)->first = patch_h;
+  (*patch_size)->second = patch_w;
+  return Status::OK();
+}
+
+Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::shared_ptr<Tensor>> *output,
+                    int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value) {
+  if (num_height == DEFAULT_NUM_HEIGHT && num_width == DEFAULT_NUM_WIDTH) {
+    (*output).push_back(input);
+    return Status::OK();
+  }
+
+  auto patch_size = std::make_shared<std::pair<int32_t, int32_t>>(0, 0);
+  int32_t patch_h = 0;
+  int32_t patch_w = 0;
+
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+  RETURN_IF_NOT_OK(ComputePatchSize(input_cv, &patch_size, num_height, num_width, slice_mode));
+  std::tie(patch_h, patch_w) = *patch_size;
+
+  cv::Mat in_img = input_cv->mat();
+  cv::Size s = in_img.size();
+  try {
+    cv::Mat out_img;
+    if (slice_mode == SliceMode::kPad) {  // padding on right and bottom directions
+      auto padding_h = patch_h * num_height - s.height;
+      auto padding_w = patch_w * num_width - s.width;
+      out_img = cv::Mat(s.height + padding_h, s.width + padding_w, in_img.type(), cv::Scalar::all(fill_value));
+      in_img.copyTo(out_img(cv::Rect(0, 0, s.width, s.height)));
+    } else {
+      out_img = in_img;
+    }
+    for (int i = 0; i < num_height; ++i) {
+      for (int j = 0; j < num_width; ++j) {
+        std::shared_ptr<CVTensor> patch_cv;
+        cv::Rect patch(j * patch_w, i * patch_h, patch_w, patch_h);
+        RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_img(patch), &patch_cv));
+        (*output).push_back(std::static_pointer_cast<Tensor>(patch_cv));
+      }
+    }
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("SlicePatches: " + std::string(e.what()));
   }
 }
 }  // namespace dataset

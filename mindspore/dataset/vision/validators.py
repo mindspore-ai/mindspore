@@ -22,7 +22,7 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
     check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff, check_value_ratio, check_odd
-from .utils import Inter, Border, ImageBatchFormat
+from .utils import Inter, Border, ImageBatchFormat, SliceMode
 
 
 def check_crop_size(size):
@@ -506,6 +506,27 @@ def check_pad(method):
 
     return new_method
 
+
+def check_slice_patches(method):
+    """Wrapper method to check the parameters of slice patches."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [num_height, num_width, slice_mode, fill_value], _ = parse_user_args(method, *args, **kwargs)
+        if num_height is not None:
+            type_check(num_height, (int,), "num_height")
+            check_value(num_height, (1, INT32_MAX), "num_height")
+        if num_width is not None:
+            type_check(num_width, (int,), "num_width")
+            check_value(num_width, (1, INT32_MAX), "num_width")
+        if slice_mode is not None:
+            type_check(slice_mode, (SliceMode,), "slice_mode")
+        if fill_value is not None:
+            type_check(fill_value, (int,), "fill_value")
+            check_value(fill_value, [0, 255], "fill_value")
+        return method(self, *args, **kwargs)
+
+    return new_method
 
 def check_random_perspective(method):
     """Wrapper method to check the parameters of random perspective."""

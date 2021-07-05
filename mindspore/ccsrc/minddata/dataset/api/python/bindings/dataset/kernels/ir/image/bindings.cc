@@ -58,6 +58,7 @@
 #include "minddata/dataset/kernels/ir/vision/resize_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
+#include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
@@ -552,6 +553,18 @@ PYBIND_REGISTER(RotateOperation, 1, ([](const py::module *m) {
                       return rotate;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  SlicePatchesOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::SlicePatchesOperation, TensorOperation, std::shared_ptr<vision::SlicePatchesOperation>>(
+      *m, "SlicePatchesOperation")
+      .def(py::init([](int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value) {
+        auto slice_patches =
+          std::make_shared<vision::SlicePatchesOperation>(num_height, num_width, slice_mode, fill_value);
+        THROW_IF_ERROR(slice_patches->ValidateParams());
+        return slice_patches;
+      }));
+  }));
 
 PYBIND_REGISTER(SoftDvppDecodeRandomCropResizeJpegOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::SoftDvppDecodeRandomCropResizeJpegOperation, TensorOperation,

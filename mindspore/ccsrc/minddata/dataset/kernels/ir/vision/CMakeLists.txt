@@ -47,6 +47,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         rgba_to_bgr_ir.cc
         rgba_to_rgb_ir.cc
         rotate_ir.cc
+        slice_patches_ir.cc
         softdvpp_decode_random_crop_resize_jpeg_ir.cc
         softdvpp_decode_resize_jpeg_ir.cc
         swap_red_blue_ir.cc

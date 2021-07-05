@@ -21,6 +21,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 #if defined(_WIN32) || defined(_WIN64)
 #undef HAVE_STDDEF_H
@@ -338,6 +339,25 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t kernel_size_x,
                     int32_t kernel_size_y, float sigma_x, float sigma_y);
 
+/// \brief Slice tensor to multiple patches.
+/// \param[in] input Input Tensor
+/// \param[out] output Vector of Output Tensor
+/// \param[in] num_height Number of patches in vertical direction.
+/// \param[in] num_width Number of patches in horizontal direction.
+/// \param[in] slice_mode Mode represents padding or drop.
+/// \param[in] fill_value The value of filled pixel in right and bottom border when padding.
+Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::shared_ptr<Tensor>> *output,
+                    int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value);
+
+/// \brief Compute patch height and width.
+/// \param[in] input Input CVTensor
+/// \param[out] patch_size Size of patch
+/// \param[in] num_height Number of patches in vertical direction.
+/// \param[in] num_width Number of patches in horizontal direction.
+/// \param[in] slice_mode Mode represents padding or drop.
+Status ComputePatchSize(const std::shared_ptr<CVTensor> &input_cv,
+                        std::shared_ptr<std::pair<int32_t, int32_t>> *patch_size, int32_t num_height, int32_t num_width,
+                        SliceMode slice_mode);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

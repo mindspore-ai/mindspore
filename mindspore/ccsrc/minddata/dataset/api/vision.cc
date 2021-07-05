@@ -66,6 +66,7 @@
 #include "minddata/dataset/kernels/ir/vision/rgba_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgba_to_rgb_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
+#include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
@@ -876,6 +877,24 @@ std::shared_ptr<TensorOperation> RGBA2BGR::Parse() { return std::make_shared<Rgb
 RGBA2RGB::RGBA2RGB() {}
 
 std::shared_ptr<TensorOperation> RGBA2RGB::Parse() { return std::make_shared<RgbaToRgbOperation>(); }
+
+// SlicePatches Transform Operation.
+struct SlicePatches::Data {
+  Data(int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value)
+      : num_height_(num_height), num_width_(num_width), slice_mode_(slice_mode), fill_value_(fill_value) {}
+  int32_t num_height_;
+  int32_t num_width_;
+  SliceMode slice_mode_;
+  uint8_t fill_value_;
+};
+
+SlicePatches::SlicePatches(int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value)
+    : data_(std::make_shared<Data>(num_height, num_width, slice_mode, fill_value)) {}
+
+std::shared_ptr<TensorOperation> SlicePatches::Parse() {
+  return std::make_shared<SlicePatchesOperation>(data_->num_height_, data_->num_width_, data_->slice_mode_,
+                                                 data_->fill_value_);
+}
 
 // SoftDvppDecodeRandomCropResizeJpeg Transform Operation.
 struct SoftDvppDecodeRandomCropResizeJpeg::Data {
