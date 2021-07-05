@@ -19,6 +19,32 @@
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 
+#ifdef ENABLE_SSE
+#include <x86intrin.h>
+#endif
+
+#ifdef ENABLE_AVX
+#include <immintrin.h>
+#endif
+#ifdef ENABLE_AVX512
+struct AVX_Data {
+  __m512 data;
+};
+
+static inline void LoadStep4(struct AVX_Data *inp0, const float *inp1) {
+  inp0[0].data = _mm512_loadu_ps(inp1);
+  inp0[1].data = _mm512_loadu_ps(inp1 + C16NUM);
+  inp0[2].data = _mm512_loadu_ps(inp1 + C16NUM * 2);
+  inp0[3].data = _mm512_loadu_ps(inp1 + C16NUM * 3);
+}
+
+static inline void StoreStep4(float *inp0, struct AVX_Data *inp1) {
+  _mm512_storeu_ps(inp0, inp1[0].data);
+  _mm512_storeu_ps(inp0 + C16NUM, inp1[1].data);
+  _mm512_storeu_ps(inp0 + C16NUM * 2, inp1[2].data);
+  _mm512_storeu_ps(inp0 + C16NUM * 3, inp1[3].data);
+}
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
