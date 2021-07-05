@@ -69,7 +69,7 @@ NPUDelegate::~NPUDelegate() {
 }
 
 int NPUDelegate::Init() {
-  npu_manager_ = new (std::nothrow) NPUManager();
+  npu_manager_ = new (std::nothrow) NPUManager(frequency_);
   if (npu_manager_ == nullptr) {
     MS_LOG(ERROR) << "New npu manager failed.";
     return RET_ERROR;

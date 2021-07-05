@@ -57,7 +57,6 @@ class NPUPassUtils {
   static int MaskDataNHWC2NCHW(int mask);
 };
 
-// todo y00520784 : refactor the code of transform op
 class RuntimePass {
  public:
   RuntimePass(std::vector<NPUOp *> *ops, std::vector<tensor::MSTensor *> *tensors)

@@ -170,7 +170,6 @@ int NPUSubGraph::BuildNPUInputOp() {
       }
 
       bool is_weight_tensor = true;
-      // todo cpu in_ops can't be found
       auto pre_ops = FindPreOps(op);
       for (auto pre_op : pre_ops) {
         if (find(pre_op->outputs().begin(), pre_op->outputs().end(), in_tensor) != pre_op->outputs().end()) {
@@ -276,8 +275,7 @@ int NPUSubGraph::Init() {
   }
 
   MS_ASSERT(npu_manager_ != nullptr);
-  // todo y00520784, get frequency
-  npu_manager_->AddModel(model_buffer_data, GetOMModelName(), 3);
+  npu_manager_->AddModel(model_buffer_data, GetOMModelName(), npu_manager_->GetFrequency());
 
   executor_ = new (std::nothrow) NPUExecutor(GetOMModelName(), npu_manager_);
 
