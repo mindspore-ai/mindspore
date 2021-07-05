@@ -166,6 +166,7 @@ getCommonFile() {
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.c
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/infer_manager.cc
+    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/populate_register.cc
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.c
     "${MINDSPORE_HOME}"/mindspore/core/utils/status.cc
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.c

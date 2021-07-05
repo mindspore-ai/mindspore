@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_OP_POPULATE_REGISTER_H
-#define LITE_MINDSPORE_LITE_C_OPS_OP_POPULATE_REGISTER_H
+#ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_POPULATE_REGISTER_H_
+#define MINDSPORE_LITE_SRC_OPS_POPULATE_POPULATE_REGISTER_H_
 
 #include <map>
 #include "schema/model_generated.h"
@@ -28,12 +28,10 @@
 namespace mindspore {
 namespace lite {
 typedef OpParameter *(*ParameterGen)(const void *prim);
+
 class PopulateRegistry {
  public:
-  static PopulateRegistry *GetInstance() {
-    static PopulateRegistry registry;
-    return &registry;
-  }
+  static PopulateRegistry *GetInstance();
 
   void InsertParameterMap(int type, ParameterGen creator, int version) {
     parameters_[GenPrimVersionKey(type, version)] = creator;
@@ -69,4 +67,4 @@ class Registry {
 
 }  // namespace lite
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_POPULATE_REGISTER_H_
