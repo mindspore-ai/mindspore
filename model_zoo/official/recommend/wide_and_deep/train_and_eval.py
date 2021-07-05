@@ -104,7 +104,7 @@ def test_train_eval(config):
 
 
 def modelarts_pre_process():
-    config.ckpt_path = config.output_path
+    cfg.ckpt_path = cfg.output_path
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_wide_and_deep():

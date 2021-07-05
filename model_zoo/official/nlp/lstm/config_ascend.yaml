@@ -33,7 +33,7 @@ global_step: 0
 
 # MindSpore LSTM Example - train.py
 preprocess: 'false'
-aclimdb_path: "/cache/data/aclImdb"
+aclimdb_path: "./aclImdb"
 glove_path: "/cache/data"
 preprocess_path: "/cache/train/preprocess"
 ckpt_path: './ckpt_lstm/'

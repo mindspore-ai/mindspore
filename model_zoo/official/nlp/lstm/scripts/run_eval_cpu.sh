@@ -37,6 +37,6 @@ python ../eval.py  \
     --device_target="CPU" \
     --aclimdb_path=$ACLIMDB_DIR \
     --glove_path=$GLOVE_DIR \
-    --preprocess=true  \
+    --preprocess=false \
     --preprocess_path=./preprocess \
     --ckpt_file=$CKPT_FILE > log.txt 2>&1 &
