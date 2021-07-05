@@ -330,7 +330,7 @@ def add_training_params(opt):
                      help="Enable optimizer parallel, default is 1")
     opt.add_argument("--per_batch_size",
                      type=int,
-                     default=6,
+                     default=0,
                      help="The batch size for each data parallel way. default 6")
     opt.add_argument("--start_lr",
                      type=float,

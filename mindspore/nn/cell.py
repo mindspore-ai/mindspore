@@ -1330,10 +1330,10 @@ class Cell(Cell_):
         Raises:
             RuntimeError: If there is a parameter does not belong to any stage.
         """
-        from mindspore.communication import get_group_size, get_rank
+        from mindspore.parallel._utils import _get_global_rank, _get_device_num
         stage_num = context.get_auto_parallel_context("pipeline_stages")
-        device_num = get_group_size()
-        rank_id = get_rank()
+        device_num = _get_device_num()
+        rank_id = _get_global_rank()
         per_stage_devices = device_num // stage_num
         current_stage = rank_id // per_stage_devices
         params = []

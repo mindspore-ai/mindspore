@@ -25,6 +25,7 @@ from mindspore import context, Parameter
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.communication.management import get_group_size
+from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from src.utils import ClipByGlobalNorm
 
 GRADIENT_CLIP_TYPE = 1
@@ -61,6 +62,7 @@ def _clip_grad(clip_type, clip_value, grad):
 
 
 grad_scale = C.MultitypeFuncGraph("grad_scale")
+shard_grad_scale = C.MultitypeFuncGraph("shard_grad_scale")
 reciprocal = P.Reciprocal()
 
 
@@ -75,6 +77,13 @@ def tensor_grad_scale_pipeline(scale, grad, accu_grad):
     accu_grad = F.depend(accu_grad, new_grad)
     zeros = F.tensor_mul(accu_grad, 0.0)
     _ = F.assign(accu_grad, zeros)
+    return new_grad
+
+@shard_grad_scale.register("Tensor", "Tensor", "Tensor")
+def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
+    new_grad = grad * reciprocal(scale)
+    accu_grad = F.depend(accu_grad, new_grad)
+    _ = F.assign(accu_grad, F.zeros_like(accu_grad))
     return new_grad
 
 class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
@@ -106,7 +115,7 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
         self.clip = ClipByGlobalNorm(self.weights, config)
         self.cast = P.Cast()
 
-    def construct(self, input_ids, input_position=None, attention_mask=None, layer_past=None, sens=None):
+    def construct(self, input_ids, input_position, attention_mask, layer_past=None, sens=None):
         """Defines the computation performed."""
         weights = self.weights
         # Forward process
@@ -194,6 +203,7 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
                                         name="loss_scale")
         self.clip = ClipByGlobalNorm(self.weights, self.config)
         self.micro_size = config.micro_size
+        self.opt_shard = _get_enable_parallel_optimizer()
 
     @C.add_flags(has_effect=True)
     def construct(self,
@@ -224,8 +234,12 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         flag_sum = self.reduce_sum(init, (0,))
         loss = F.depend(loss, status_clear)
         # apply grad reducer on grads
-        accu_grads = self.grad_reducer(self.accu_grads)
-        grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads, accu_grads)
+        if self.opt_shard:
+            grads = self.grad_reducer(grads)
+            grads = self.hyper_map(F.partial(shard_grad_scale, scaling_sens * self.degree), grads, self.accu_grads)
+        else:
+            accu_grads = self.grad_reducer(self.accu_grads)
+            grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads, accu_grads)
         if self.enable_global_norm:
             grads, _ = self.clip(grads)
         else:

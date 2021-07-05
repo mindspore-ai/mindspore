@@ -20,7 +20,7 @@ from mindspore._checkparam import Validator
 from mindspore.common.dtype import pytype_to_dtype
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
-from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes
+from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes, _get_pipeline_stages
 from ..ops import operations as P
 
 
@@ -158,7 +158,7 @@ def connect_network_with_dataset(network, dataset_helper):
             network = dataset_iter.__network_manage__[key]
         else:
             if _need_to_full():
-                device_num = _get_device_num()
+                device_num = _get_device_num() // _get_pipeline_stages()
                 dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
             network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name)
@@ -360,7 +360,7 @@ class _DatasetIterGE(_DatasetIter):
         self.sink_count = self.get_sink_count(dataset)
         batch_expand_num = 1
         if _need_to_full():
-            batch_expand_num = _get_device_num()
+            batch_expand_num = _get_device_num() // _get_pipeline_stages()
         tensor_list_run = _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num)
 
         def op():
@@ -395,7 +395,7 @@ class _DatasetIterMSLoopSink(_DatasetIter):
         # use a complete tensor to compile, and slice tensor to run. The batch dimension of tensors for
         # compile is device_number times the batch dimension of tensors for run. Now only support LoopSink.
         if _need_to_full():
-            device_num = _get_device_num()
+            device_num = _get_device_num() // _get_pipeline_stages()
             self.dataset_shapes = _to_full_shapes(self.dataset_shapes, device_num)
 
         def op():

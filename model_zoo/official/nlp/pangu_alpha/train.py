@@ -31,8 +31,7 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell
 from src.dataset import create_dataset
-from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss,\
-    PanguAlphaPipeline, PanguAlphaWithLossPipeline, CrossEntropyLoss
+from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
 from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, PanguAlphaTrainPipelineWithLossScaleCell
 from src.pangu_alpha_config import PANGUALPHAConfig, set_parse
 from src.utils import LearningRate, get_args, FP32StateAdamWeightDecay
@@ -196,10 +195,7 @@ def run_train_pipeline(args_opt):
     The main training process in pipeline.
     """
     device_id = int(os.getenv("DEVICE_ID"))
-    context.set_context(save_graphs=False,
-                        mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        device_id=device_id)
+    context.set_context(save_graphs=False, mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id)
     context.set_context(variable_memory_max_size="31GB")
     if args_opt.distribute == "true":
         D.init()
@@ -210,7 +206,7 @@ def run_train_pipeline(args_opt):
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
             gradients_mean=False,
             device_num=device_num,
-            full_batch=True,
+            full_batch=bool(args_opt.full_batch),
             loss_repeated_mean=True,
             enable_parallel_optimizer=bool(args_opt.optimizer_shard),
             pipeline_stages=args_opt.stage_num)
@@ -219,6 +215,12 @@ def run_train_pipeline(args_opt):
     else:
         rank_id = int(os.getenv("RANK_ID"))
         device_num = 1
+    # copy data from the cloud to the /cache/Data
+    cache_url = '/cache/Data/'
+    if args_opt.offline:
+        cache_url = args_opt.data_url
+    else:
+        download_data(src_data_url=args_opt.data_url, tgt_data_path=cache_url, rank=rank_id)
     model_parallel_num = args_opt.op_level_model_parallel_num
     stage_device_num = int(device_num / args_opt.stage_num)
     data_parallel_num = int(stage_device_num / model_parallel_num)
@@ -238,20 +240,17 @@ def run_train_pipeline(args_opt):
         dropout_rate=0.1,
         compute_dtype=mstype.float16,
         use_past=False,
-        self_layernorm=True,
         stage_num=args_opt.stage_num,
         micro_size=args_opt.micro_size,
         word_emb_dp=bool(args_opt.word_emb_dp))
     print("===config is: ", config, flush=True)
-    pangu_alpha = PanguAlphaPipeline(config)
+    pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
-    pangu_alpha_with_loss = PipelineCell(PanguAlphaWithLossPipeline(config, pangu_alpha, loss), config.micro_size)
+    pangu_alpha_with_loss = PipelineCell(PanguAlphaWithLoss(config, pangu_alpha, loss), config.micro_size)
     pangu_alpha_with_loss = _VirtualDatasetCell(pangu_alpha_with_loss)
     print("=====args_opt is: ", args_opt, flush=True)
-    lr = LearningRate(learning_rate=args_opt.start_lr,
-                      end_learning_rate=args_opt.end_lr,
-                      warmup_steps=args_opt.warmup_step,
-                      decay_steps=args_opt.decay_steps)
+    lr = LearningRate(learning_rate=args_opt.start_lr, end_learning_rate=args_opt.end_lr,
+                      warmup_steps=args_opt.warmup_step, decay_steps=args_opt.decay_steps)
     params = pangu_alpha.infer_param_pipeline_stage()
     decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
     decay_params = list(filter(decay_filter, params))
@@ -269,32 +268,33 @@ def run_train_pipeline(args_opt):
         optimizer = nn.Lamb(group_params, learning_rate=lr)
     else:
         optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, beta1=0.9, beta2=0.95, eps=1e-8)
-    ds = create_dataset(config.batch_size, data_path=args_opt.data_url, eod_reset=True,
-                        data_start_index=0, full_batch=True, column_name=args_opt.data_column_name)
+    if context.get_auto_parallel_context("full_batch"):
+        ds = create_dataset(config.batch_size, data_path=cache_url, eod_reset=True,
+                            data_start_index=0, full_batch=True, column_name=args_opt.data_column_name)
+    else:
+        if batch_size % stage_device_num != 0:
+            raise ValueError("Batch_size should be divisible by device_num")
+        ds = create_dataset(config.batch_size, data_path=cache_url, device_num=stage_device_num,
+                            rank=rank_id, eod_reset=True, data_start_index=0, full_batch=False,
+                            column_name=args_opt.data_column_name)
     epoch_num = args_opt.epoch_size
     step_per_epoch = ds.get_dataset_size()
     callback_size = args_opt.sink_size
     actual_epoch_num = int(epoch_num * step_per_epoch / callback_size)
-    callback = [
-        TimeMonitor(callback_size),
-        LossCallBack(callback_size, rank_id, config.stage_num)
-    ]
+    callback = [TimeMonitor(callback_size), LossCallBack(callback_size, rank_id, config.stage_num)]
     loss_scale_value = math.pow(2, 32)
-    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value,
-                                             scale_factor=2,
-                                             scale_window=1000)
+    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
     pangu_alpha_with_grads = PanguAlphaTrainPipelineWithLossScaleCell(
         pangu_alpha_with_loss, optimizer=optimizer, config=config, scale_update_cell=update_cell)
     model = Model(pangu_alpha_with_grads)
-    model.train(actual_epoch_num,
-                ds,
-                callbacks=callback,
-                sink_size=callback_size,
-                dataset_sink_mode=True)
+    model.train(actual_epoch_num, ds, callbacks=callback,
+                sink_size=callback_size, dataset_sink_mode=True)
 
 if __name__ == "__main__":
     opt = get_args()
     set_parse(opt)
+    if opt.per_batch_size == 0:
+        raise ValueError("The per_batch_size has not been configured.")
     if opt.stage_num > 1:
         run_train_pipeline(opt)
     else:
