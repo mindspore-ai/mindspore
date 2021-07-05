@@ -60,8 +60,8 @@ Dataset used: [omniglot](https://github.com/brendenlake/omniglot)
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
@@ -164,7 +164,7 @@ Test Acc: 0.9954400658607483  Loss: 0.02102319709956646
 | Speed                      | 215 ms/step                          |
 | Total time                 | 3 h 23m (8p)                |
 | Checkpoint for Fine tuning | 440 KB (.ckpt file)                                         |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/research/cv/protonet |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/research/cv/ProtoNet> |
 
 # [ModelZoo Homepage](#contents)
 
