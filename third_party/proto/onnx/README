@@ -4,4 +4,4 @@
 
 The onnx.proto file comes from onnx official website.
 
-[onnx.proto](https://github.com/onnx/onnx/blob/master/onnx/onnx.proto)
+[onnx.proto](https://github.com/onnx/onnx/blob/rel-1.6.0/onnx/onnx.proto)
