@@ -442,35 +442,35 @@ sh run_export_cpu.sh [PRETRAINED_BACKBONE] [BATCH_SIZE] [FILE_NAME](optional)
 
 ### Training Performance
 
-| Parameters                 | Ascend     | CPU     |
-| -------------------------- | ------------------------------------------------- | ------------------------------------------ |
-| Model Version              | V1        | V1        |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                 | Intel(R) Xeon(R) CPU E5-2690 v4 |
-| Uploaded Date              | 09/30/2020 (month/day/year)          | 05/14/2021  (month/day/year)          |
-| MindSpore Version          | 1.0.0                | 1.2.0               |
-| Dataset          | 122K images            | 122K images        |
-| Training Parameters        | epoch=40, batch_size=32, momentum=0.9, lr=0.02              | epoch=40, batch_size=32, momentum=0.9, lr=0.02              |
-| Optimizer                  | Momentum             | Momentum           |
-| Loss Function              | MSELoss, Softmax Cross Entropy    | MSELoss, Softmax Cross Entropy       |
-| Outputs                    | probability and point       | probability and point         |
-| Speed                      | 1pc: 200-240 ms/step; 8pcs: 35-40 ms/step                   | 1pc: 6 s/step  |
-| Total time                 | 1ps: 2.5 hours; 8pcs: 0.5 hours                             | 1ps: 32 hours    |
-| Checkpoint for Fine tuning | 16M (.ckpt file)     | 16M (.ckpt file)          |
+| Parameters                 | Ascend                                                     | CPU                                           | GPU                                           |
+| -------------------------- | ---------------------------------------------------------- | --------------------------------------------  | --------------------------------------------  |
+| Model Version              | V1                                                         | V1                                            | V1                                            |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8| Intel(R) Xeon(R) CPU E5-2690 v4               | NV SMX2 V100-32G                              |
+| Uploaded Date              | 09/30/2020 (month/day/year)                                | 05/14/2021  (month/day/year)                  | 07/06/2021  (month/day/year)                  |
+| MindSpore Version          | 1.0.0                                                      | 1.2.0                                         | 1.3.0                                         |
+| Dataset                    | 122K images                                                | 122K images                                   | 122K images                                   |
+| Training Parameters        | epoch=40, batch_size=32, momentum=0.9, lr=0.02             | epoch=40, batch_size=32, momentum=0.9, lr=0.02| epoch=40, batch_size=32, momentum=0.9, lr=0.02|
+| Optimizer                  | Momentum                                                   | Momentum                                      | Momentum                                      |
+| Loss Function              | MSELoss, Softmax Cross Entropy                             | MSELoss, Softmax Cross Entropy                | MSELoss, Softmax Cross Entropy                |
+| Outputs                    | probability and point                                      | probability and point                         | probability and point                         |
+| Speed                      | 1pc: 200-240 ms/step; 8pcs: 35-40 ms/step                  | 1pc: 6 s/step                                 | 1pc: 71ms/step, 8pcs: 40ms/step               |
+| Total time                 | 1ps: 2.5 hours; 8pcs: 0.5 hours                            | 1ps: 32 hours                                 | 1ps: 0.5h, 8pcs: 0.25h                        |
+| Checkpoint for Fine tuning | 16M (.ckpt file)                                           | 16M (.ckpt file)                              |
 
 ### Evaluation Performance
 
-| Parameters          | Ascend     | CPU    |
-| ------------------- | --------------------------- | --------------------------- |
-| Model Version       | V1                          | V1                          |
-| Resource            | Ascend 910; OS Euler2.8                      | Intel(R) Xeon(R) CPU E5-2690 v4 |
-| Uploaded Date       | 09/30/2020 (month/day/year) | 05/14/2021  (month/day/year)          |
-| MindSpore Version   | 1.0.0                       | 1.2.0               |
-| Dataset             | 2K images                   | 2K images                   |
-| batch_size          | 256          | 256          |
-| Outputs             | IPN, MAE                    | IPN, MAE                    |
-| Accuracy      | 8 pcs: IPN of 5 keypoints:19.5     | 1 pcs: IPN of 5 keypoints:20.09     |
-|                     | 8 pcs: MAE of elur:18.02           | 1 pcs: MAE of elur:18.23           |
-| Model for inference | 16M (.ckpt file)            | 16M (.ckpt file)            |
+| Parameters          | Ascend                        | CPU                             | GPU                             |
+| ------------------- | ----------------------------- | ------------------------------- | ------------------------------- |
+| Model Version       | V1                            | V1                              | V1                              |
+| Resource            | Ascend 910; OS Euler2.8       | Intel(R) Xeon(R) CPU E5-2690 v4 | NV SMX2 V100-32G                |
+| Uploaded Date       | 09/30/2020 (month/day/year)   | 05/14/2021  (month/day/year)    | 07/06/2021  (month/day/year)    |
+| MindSpore Version   | 1.0.0                         | 1.2.0                           | 1.3.0                           |
+| Dataset             | 2K images                     | 2K images                       | 2K images                       |
+| batch_size          | 256                           | 256                             | 256                             |
+| Outputs             | IPN, MAE                      | IPN, MAE                        | IPN, MAE                        |
+| Accuracy            | 8 pcs: IPN of 5 keypoints:19.5| 1 pcs: IPN of 5 keypoints:20.09 | 8 pcs: IPN of 5 keypoints:19.29 |
+|                     | 8 pcs: MAE of elur:18.02      | 1 pcs: MAE of elur:18.23        | 8 pcs: MAE of elur:18.04        |
+| Model for inference | 16M (.ckpt file)              | 16M (.ckpt file)                | 16M (.ckpt file)                |
 
 # [ModelZoo Homepage](#contents)
 

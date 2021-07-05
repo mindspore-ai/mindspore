@@ -8,7 +8,7 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-device_target: "Ascend"
+device_target: "Ascend"    # choices in ("Ascend", "CPU", "GPU")
 need_modelarts_dataset_unzip: True
 modelarts_dataset_unzip_name: "face_quality_dataset"
 
@@ -32,7 +32,7 @@ weight_decay: 0.0005
 momentum: 0.9
 max_epoch: 40
 warmup_epochs: 0
-pretrained: ''
+pretrained: ''    # change to your own pretrained ckpt
 
 # logging related
 log_interval: 10
@@ -41,10 +41,10 @@ ckpt_interval: 500
 
 # train option
 is_distributed: 0
-train_label_file: ''
+train_label_file: ''    # change to your own train data path
 
 # eval option
-eval_dir: ''
+eval_dir: ''    # change to your own eval data path
 
 # export option
 batch_size: 8
