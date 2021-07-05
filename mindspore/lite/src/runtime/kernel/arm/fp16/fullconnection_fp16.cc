@@ -50,12 +50,11 @@ int FullconnectionFP16CPUKernel::Init() {
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;
 
-  MatmulBaseFP16CPUKernel::InitParameter();
-
+  params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
+  params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
   if (params_->a_const_ == true) {
     InitAShape();
   }
-
   if (params_->b_const_ == true) {
     InitBShape();
   }
