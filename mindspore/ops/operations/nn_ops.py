@@ -94,7 +94,7 @@ class Flatten(PrimitiveWithInfer):
     Flattens a tensor without changing its batch size on the 0-th axis.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened, where :math:`N` is batch size.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
@@ -108,9 +108,9 @@ class Flatten(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_tensor = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
+        >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
         >>> flatten = ops.Flatten()
-        >>> output = flatten(input_tensor)
+        >>> output = flatten(input_x)
         >>> print(output.shape)
         (1, 24)
     """
@@ -172,15 +172,39 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
         ``GPU``
 
     Examples:
+        >>> # case 1: output_size=(None, 2)
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         >>>                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         >>>                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
-        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((2, 2))
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((None, 2))
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
-        [[[3.0, 4.0], [6.0, 7.0]],
-        [[3.0, 4.0], [6.0, 7.0]],
-        [[3.0, 4.0], [6.0, 7.0]]]
+        [[[2.5 3.5]
+          [4.5 5.5]
+          [6.5 7.5]]
+         [[2.5 3.5]
+          [4.5 5.5]
+          [6.5 7.5]]
+         [[2.5 3.5]
+          [4.5 5.5]
+          [6.5 7.5]]]
+        >>> # case 2: output_size=2
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D(2)
+        >>> output = adaptive_avg_pool_2d(input_x)
+        >>> print(output)
+        [[[3. 4.]
+          [6. 7.]]
+         [[3. 4.]
+          [6. 7.]]
+         [[3. 4.]
+          [6. 7.]]]
+        >>> # case 3: output_size=(1, 2)
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((1, 2))
+        >>> output = adaptive_avg_pool_2d(input_x)
+        >>> print(output)
+        [[[3.5 6.5]]
+         [[3.5 6.5]]
+         [[3.5 6.5]]]
     """
 
     @prim_attr_register
@@ -217,7 +241,7 @@ class Softmax(Primitive):
     Softmax operation.
 
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice in the given aixs :math:`x`, then for each element :math:`x_i`,
+    Supposes a slice in the given aixs :math:`x`, then for each element :math:`x_i`,
     the Softmax function is shown as follows:
 
     .. math::
@@ -229,7 +253,8 @@ class Softmax(Primitive):
         axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: -1.
 
     Inputs:
-        - **logits** (Tensor) - The input of Softmax, with float16 or float32 data type.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the logits.
@@ -238,15 +263,15 @@ class Softmax(Primitive):
         TypeError: If `axis` is neither an int nor a tuple.
         TypeError: If dtype of `logits` is neither float16 nor float32.
         ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits), len(logits)).
+        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> softmax = ops.Softmax()
-        >>> output = softmax(input_x)
+        >>> output = softmax(logits)
         >>> print(output)
         [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
     """
@@ -267,7 +292,7 @@ class LogSoftmax(Primitive):
     Log Softmax activation function.
 
     Applies the Log Softmax function to the input tensor on the specified axis.
-    Suppose a slice in the given aixs, :math:`x` for each element :math:`x_i`,
+    Supposes a slice in the given aixs, :math:`x` for each element :math:`x_i`,
     the Log Softmax function is shown as follows:
 
     .. math::
@@ -279,7 +304,8 @@ class LogSoftmax(Primitive):
         axis (int): The axis to perform the Log softmax operation. Default: -1.
 
     Inputs:
-        - **logits** (Tensor) - The input of Log Softmax, with float16 or float32 data type.
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the logits.
@@ -287,15 +313,15 @@ class LogSoftmax(Primitive):
     Raises:
         TypeError: If `axis` is not an int.
         TypeError: If dtype of `logits` is neither float16 nor float32.
-        ValueError: If `axis` is not in range [-len(logits), len(logits)].
+        ValueError: If `axis` is not in range [-len(logits.shape), len(logits.shape)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> log_softmax = ops.LogSoftmax()
-        >>> output = log_softmax(input_x)
+        >>> output = log_softmax(logits)
         >>> print(output)
         [-4.4519143 -3.4519143 -2.4519143 -1.4519144 -0.4519144]
     """
@@ -315,17 +341,19 @@ class Softplus(Primitive):
     The function is shown as follows:
 
     .. math::
-        \text{output} = \log(1 + \exp(\text{input_x})),
+
+        \text{output} = \log(1 + \exp(\text{x})),
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor whose data type must be float.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is not float.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``  ``GPU``
@@ -355,7 +383,8 @@ class Softsign(PrimitiveWithInfer):
         \text{SoftSign}(x) = \frac{x}{ 1 + |x|}
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor whose data type must be float16 or float32.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -395,7 +424,8 @@ class ReLU(Primitive):
     It returns :math:`\max(x,\  0)` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with number data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -436,7 +466,8 @@ class Mish(PrimitiveWithInfer):
     <https://arxiv.org/abs/1908.08681>`_.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. Only support float16 and float32.
+        - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
@@ -448,9 +479,9 @@ class Mish(PrimitiveWithInfer):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> mish = ops.Mish()
-        >>> output = mish(input_x)
+        >>> output = mish(x)
         >>> print(output)
         [[-0.30273438  3.9974136 -0.015625]
          [ 1.9439697  -0.02929688 8.999999]]
@@ -479,7 +510,7 @@ class SeLU(PrimitiveWithInfer):
         E_{i} =
         scale *
         \begin{cases}
-        x, &\text{if } x \geq 0; \cr
+        x_{i}, &\text{if } x_{i} \geq 0; \cr
         \text{alpha} * (\exp(x_i) - 1), &\text{otherwise.}
         \end{cases}
 
@@ -489,7 +520,8 @@ class SeLU(PrimitiveWithInfer):
     See more details in `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -534,7 +566,8 @@ class ReLU6(PrimitiveWithCheck):
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor, with float16 or float32 data type.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -581,9 +614,8 @@ class ReLUV2(Primitive):
         - **mask** (Tensor) - A tensor whose data type must be uint8.
 
     Raises:
-        TypeError: If `input_x`, `output` or `mask` is not a Tensor.
-        TypeError: If dtype of `output` is not same as `input_x` .
-        TypeError: If dtype of `mask` is not unit8.
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If shape of `input_x` is not 4-D.
 
     Supported Platforms:
         ``Ascend``
@@ -629,7 +661,8 @@ class Elu(PrimitiveWithInfer):
             only support '1.0' currently. Default: 1.0.
 
     Inputs:
-        - **input_x** (Tensor) - The input of Elu with data type of float16 or float32.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
@@ -674,19 +707,21 @@ class HSwish(PrimitiveWithInfer):
     Hard swish is defined as:
 
     .. math::
+
         \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
 
-    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
+    where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSwish, data type must be float16 or float32.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If `input_data` is not a Tensor.
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -719,12 +754,14 @@ class Sigmoid(PrimitiveWithInfer):
     Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
 
     .. math::
+
         \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
-    where :math:`x_i` is the element of the input.
+    where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_x** (Tensor) - The input of Sigmoid, data type must be float16 or float32.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
@@ -766,19 +803,21 @@ class HSigmoid(PrimitiveWithInfer):
     Hard sigmoid is defined as:
 
     .. math::
+
         \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
 
-    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
+    where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSigmoid, data type must be float16 or float32.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_data`.
+        Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If `input_data` is not a Tensor.
-        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -811,15 +850,17 @@ class Tanh(PrimitiveWithInfer):
     Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
 
     .. math::
+
         tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_x** (Tensor) - The input of Tanh with data type of float16 or float32.
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
-        Tensor, with the same type and shape as the input_x.
+        Tensor, with the same type and shape as the `input_x`.
 
     Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
@@ -876,6 +917,7 @@ class InstanceNorm(PrimitiveWithInfer):
     of data and the learned parameters which can be described in the following formula.
 
     .. math::
+
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
@@ -990,20 +1032,16 @@ class BNTrainingReduce(PrimitiveWithInfer):
         - **square_sum** (Tensor) - A 1-D Tensor with float16 or float32 data type. Tensor of shape :math:`(C,)`.
 
     Raises:
-        TypeError: If `x`, `sum` or `square_sum` is not a Tensor.
-        TypeError: If dtype of `square_sum` is neither float16 nor float32.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> from mindspore.common import dtype as mstype
-        >>> input_x = Tensor(np.ones([128, 3, 32, 3]), mstype.float32)
+        >>> x = Tensor(np.ones([128, 3, 32, 3]), mindspore.float32)
         >>> bn_training_reduce = ops.BNTrainingReduce()
-        >>> output = bn_training_reduce(input_x)
+        >>> output = bn_training_reduce(x)
         >>> print(output)
         (Tensor(shape=[3], dtype=Float32, value=
         [ 1.22880000e+04, 1.22880000e+04, 1.22880000e+04]), Tensor(shape=[3], dtype=Float32, value=
@@ -1050,12 +1088,12 @@ class BNTrainingUpdate(PrimitiveWithInfer):
           Tensor of shape :math:`(C,)`.
 
     Outputs:
-        - **y** (Tensor) - Tensor, has the same shape data type as `x`.
+        - **y** (Tensor) - Tensor, has the same shape and data type as `input_x`.
         - **mean** (Tensor) - Tensor for the updated mean, with float32 data type.
           Has the same shape as `variance`.
         - **variance** (Tensor) - Tensor for the updated variance, with float32 data type.
           Has the same shape as `variance`.
-        - **batch_mean** (Tensor) - Tensor for the mean of `x`, with float32 data type.
+        - **batch_mean** (Tensor) - Tensor for the mean of `input_x`, with float32 data type.
           Has the same shape as `variance`.
         - **batch_variance** (Tensor) - Tensor for the mean of `variance`, with float32 data type.
           Has the same shape as `variance`.
@@ -1063,27 +1101,23 @@ class BNTrainingUpdate(PrimitiveWithInfer):
     Raises:
         TypeError: If `isRef` is not a bool.
         TypeError: If dtype of `epsilon` or `factor` is not float.
-        TypeError: If `x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is not a Tensor.
-        TypeError: If dtype of `x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is neither float16 nor
-                   float32.
+        TypeError: If `input_x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is not a Tensor.
+        TypeError: If dtype of `input_x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is neither
+                   float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> input_x = Tensor(np.ones([1, 2, 2, 2]), mstype.float32)
-        >>> sum = Tensor(np.ones([2]), mstype.float32)
-        >>> square_sum = Tensor(np.ones([2]), mstype.float32)
-        >>> scale = Tensor(np.ones([2]), mstype.float32)
-        >>> offset = Tensor(np.ones([2]), mstype.float32)
-        >>> mean = Tensor(np.ones([2]), mstype.float32)
-        >>> variance = Tensor(np.ones([2]), mstype.float32)
+        >>> input_x = Tensor(np.ones([1, 2, 2, 2]), mindspore.float32)
+        >>> sum_val = Tensor(np.ones([2]), mindspore.float32)
+        >>> square_sum = Tensor(np.ones([2]), mindspore.float32)
+        >>> scale = Tensor(np.ones([2]), mindspore.float32)
+        >>> offset = Tensor(np.ones([2]), mindspore.float32)
+        >>> mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> variance = Tensor(np.ones([2]), mindspore.float32)
         >>> bn_training_update = ops.BNTrainingUpdate()
-        >>> output = bn_training_update(input_x, sum, square_sum, scale, offset, mean, variance)
+        >>> output = bn_training_update(input_x, sum_val, square_sum, scale, offset, mean, variance)
         >>> print(output)
         (Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
         [[[[ 2.73200464e+00,  2.73200464e+00],
@@ -1142,6 +1176,7 @@ class BatchNorm(PrimitiveWithInfer):
     in the following formula,
 
     .. math::
+
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon, :math:`mean` is the mean of x,
@@ -1194,15 +1229,11 @@ class BatchNorm(PrimitiveWithInfer):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> import mindspore.ops as ops
-        >>> input_x = Tensor(np.ones([2, 2]), mstype.float32)
-        >>> scale = Tensor(np.ones([2]), mstype.float32)
-        >>> bias = Tensor(np.ones([2]), mstype.float32)
-        >>> mean = Tensor(np.ones([2]), mstype.float32)
-        >>> variance = Tensor(np.ones([2]), mstype.float32)
+        >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
+        >>> scale = Tensor(np.ones([2]), mindspore.float32)
+        >>> bias = Tensor(np.ones([2]), mindspore.float32)
+        >>> mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> variance = Tensor(np.ones([2]), mindspore.float32)
         >>> batch_norm = ops.BatchNorm()
         >>> output = batch_norm(input_x, scale, bias, mean, variance)
         >>> print(output)
@@ -1272,16 +1303,17 @@ class Conv2D(Primitive):
     where :math:`ccor` is the cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
     from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
     filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
-    of kernel and it has shape :math:`(\text{ks_h}, \text{ks_w})`, where :math:`\text{ks_h}` and
-    :math:`\text{ks_w}` are the height and width of the convolution kernel. The full kernel has shape
-    :math:`(C_{out}, C_{in} // \text{group}, \text{ks_h}, \text{ks_w})`, where group is the group number
-    to split the input in the channel dimension.
+    of kernel and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the
+    convolution kernel. The full kernel has shape
+    :math:`(C_{out}, C_{in} // \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where group is the group number to split the input in the channel dimension.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
-    :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
-    (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
-    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively.
+    :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
+    (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
+    (\text{kernel_size[1]} - 1) \times (\text{dilation[1]} - 1) }{\text{stride[1]}}} \right \rfloor` respectively.
     Where :math:`dialtion` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
 
@@ -1291,23 +1323,47 @@ class Conv2D(Primitive):
     http://cs231n.github.io/convolutional-networks/.
 
     Args:
-        out_channel (int): The dimension of the output.
-        kernel_size (Union[int, tuple[int]]): The kernel size of the 2D convolution.
+        out_channel (int): The number of output channel :math:`C_{out}`.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
+            and width of the 2D convolution window. Single int means the value is for both the height and the width of
+            the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
+            width of the kernel.
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
-        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
-                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
-        stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
-        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid", "pad". Default: "same".
+
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input `x`. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible. Otherwise, the
+              last extra padding will be done from the bottom and the right side. If this mode is set, `pad`
+              must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
+              without padding. Extra pixels will be discarded. If this mode is set, `pad`
+              must be 0.
+
+            - pad: Implicit paddings on both sides of the input `x`. The number of `pad` will be padded to the input
+              Tensor borders. `pad` must be greater than or equal to 0.
+        pad (Union(int, tuple[int])): Implicit paddings on both sides of the input `x`. If `pad` is one integer,
+                    the paddings of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple
+                    with four integers, the paddings of top, bottom, left and right will be equal to pad[0],
+                    pad[1], pad[2], and pad[3] accordingly. Default: 0.
+        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
+                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
+                                      be greater or equal to 1 and bounded by the height and width of the
+                                      input `x`. Default: 1.
         group (int): Splits input into groups. Default: 1.
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'. Default: "NCHW".
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-        - **weight** (Tensor) - Set size of kernel is :math:`(\text{ks_h}, \text{ks_w})`, then the shape is
-          :math:`(C_{out}, C_{in}, \text{ks_h}, \text{ks_w})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **weight** (Tensor) - Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
+          then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})`.
 
     Outputs:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -1325,14 +1381,10 @@ class Conv2D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> import mindspore.ops as ops
-        >>> input_tensor = Tensor(np.ones([10, 32, 32, 32]), mstype.float32)
-        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mstype.float32)
+        >>> x = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
+        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> conv2d = ops.Conv2D(out_channel=32, kernel_size=3)
-        >>> output = conv2d(input_tensor, weight)
+        >>> output = conv2d(x, weight)
         >>> print(output.shape)
         (10, 32, 30, 30)
     """
@@ -7947,7 +7999,7 @@ class Conv3D(PrimitiveWithInfer):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
