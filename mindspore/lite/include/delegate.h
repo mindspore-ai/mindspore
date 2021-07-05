@@ -29,9 +29,10 @@ using KernelIter = std::vector<kernel::Kernel *>::iterator;
 class DelegateModel {
  public:
   /// \brief Constructor of MindSpore Lite DelegateModel.
-  DelegateModel(std::vector<kernel::Kernel *> *kernels,
-                const std::map<kernel::Kernel *, const schema::Primitive *> primitives)
-      : kernels_(kernels), primitives_(primitives) {}
+  DelegateModel(std::vector<kernel::Kernel *> *kernels, const std::vector<tensor::MSTensor *> &inputs,
+                const std::vector<tensor::MSTensor *> &outputs,
+                const std::map<kernel::Kernel *, const schema::Primitive *> &primitives)
+      : kernels_(kernels), inputs_(inputs), outputs_(outputs), primitives_(primitives) {}
 
   /// \brief Destructor of MindSpore Lite DelegateModel.
   ~DelegateModel() = default;
@@ -61,9 +62,15 @@ class DelegateModel {
   /// \return The next iterator after graph_kernel, point to the next kernel that is not visited.
   KernelIter Replace(KernelIter from, KernelIter end, kernel::Kernel *graph_kernel);
 
+  const std::vector<mindspore::tensor::MSTensor *> &inputs() { return this->inputs_; }
+
+  const std::vector<mindspore::tensor::MSTensor *> &outputs() { return this->outputs_; }
+
  protected:
   std::vector<kernel::Kernel *> *kernels_;
-  const std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
+  const std::vector<mindspore::tensor::MSTensor *> &inputs_;
+  const std::vector<mindspore::tensor::MSTensor *> &outputs_;
+  const std::map<kernel::Kernel *, const schema::Primitive *> &primitives_;
 };
 
 typedef void (*DelegateHook)(std::shared_ptr<Delegate> delegate);

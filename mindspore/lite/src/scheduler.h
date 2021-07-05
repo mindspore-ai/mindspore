@@ -31,11 +31,14 @@
 namespace mindspore::lite {
 class Scheduler {
  public:
-  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors, bool is_train_session,
-            std::shared_ptr<Delegate> delegate = nullptr)
+  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors,
+            const std::vector<Tensor *> &input_tensors, const std::vector<Tensor *> &output_tensors,
+            bool is_train_session, std::shared_ptr<Delegate> delegate = nullptr)
       : context_(ctx),
         src_model_(src_model),
         src_tensors_(src_tensors),
+        inputs_(input_tensors),
+        outputs_(output_tensors),
         is_train_session_(is_train_session),
         delegate_(delegate) {}
   ~Scheduler() = default;
@@ -113,6 +116,8 @@ class Scheduler {
   const InnerContext *context_ = nullptr;
   Model *src_model_ = nullptr;
   std::vector<Tensor *> *src_tensors_;
+  const std::vector<Tensor *> &inputs_;
+  const std::vector<Tensor *> &outputs_;
   std::vector<size_t> graph_output_node_indexes_;
   std::map<int, OpParameter *> op_parameters_;
   bool is_train_session_ = false;

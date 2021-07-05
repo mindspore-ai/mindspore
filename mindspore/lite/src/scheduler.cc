@@ -152,7 +152,17 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
   for (size_t i = 0; i < dst_kernels->size(); i++) {
     kernels.push_back((*dst_kernels)[i]->kernel());
   }
-  DelegateModel *model = new (std::nothrow) DelegateModel(&kernels, primitives_);
+
+  std::vector<tensor::MSTensor *> input_ms_tensors;
+  input_ms_tensors.resize(inputs_.size());
+  (void)std::transform(inputs_.begin(), inputs_.end(), input_ms_tensors.begin(),
+                       [](lite::Tensor *tensor) { return reinterpret_cast<tensor::MSTensor *>(tensor); });
+  std::vector<tensor::MSTensor *> output_ms_tensors;
+  output_ms_tensors.resize(outputs_.size());
+  (void)std::transform(outputs_.begin(), outputs_.end(), output_ms_tensors.begin(),
+                       [](lite::Tensor *tensor) { return reinterpret_cast<tensor::MSTensor *>(tensor); });
+
+  DelegateModel *model = new (std::nothrow) DelegateModel(&kernels, input_ms_tensors, output_ms_tensors, primitives_);
   if (model == nullptr) {
     MS_LOG(ERROR) << "New delegate model failed.";
     return RET_NULL_PTR;
