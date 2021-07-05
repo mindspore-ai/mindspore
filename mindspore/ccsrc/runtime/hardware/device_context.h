@@ -86,6 +86,11 @@ class DeviceContext {
   // 'KernelMod' is real executive object of kernel.
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const = 0;
 
+  // Adjust kernel graph before run graph, used in Graph Mode.
+  virtual void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {}
+  // Adjust single op kernel graph before run graph, used in PyNative Mode.
+  virtual void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {}
+
   // Infer kernel shape and update abstract info for dynamic shape kernel.
   virtual void UpdateDynamicShape(const CNodePtr &kernel) const { AnfAlgo::InferShape(kernel); }
 

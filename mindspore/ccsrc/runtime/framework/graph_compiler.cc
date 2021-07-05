@@ -319,6 +319,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // 'KernelMod' is real executive object of kernel.
   device_context->CreateKernel(graph->execution_order());
 
+  device_context->PreprocessBeforeRunGraph(graph);
+
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     // Create device address for all anf nodes of graph.
     CreateDeviceAddress(graph, device_context);
@@ -375,6 +377,8 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const
 
   // Generate 'KernelMod' for kernel in graph.
   device_context->CreateKernel(graph->execution_order());
+
+  device_context->PreprocessBeforeRunSingleOpGraph(graph);
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context);

@@ -88,11 +88,6 @@ void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 
   // Run final optimization.
   opt::CommonFinalOptimization(graph);
-
-  // Remove reorder after PS feature finish adapting push/pull in auto_monad.
-  auto execution_order = graph->execution_order();
-  AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
-  graph->set_execution_order(execution_order);
 }
 
 void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
@@ -104,9 +99,7 @@ void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
 void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast_cpu"));
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
-  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
@@ -141,6 +134,30 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
     AnfAlgo::SetKernelMod(cpu_kernel, node.get());
   }
 }
+
+namespace {
+void ProcessCast(const KernelGraphPtr &graph) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast_cpu"));
+  MS_LOG(INFO) << "Insert cast pass";
+  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
+}
+}  // namespace
+
+void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
+  ProcessCast(graph);
+
+  // Remove reorder after PS feature finish adapting push/pull in auto_monad.
+  auto execution_order = graph->execution_order();
+  AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
+  graph->set_execution_order(execution_order);
+}
+
+void CPUDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const { ProcessCast(graph); }
 
 bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
