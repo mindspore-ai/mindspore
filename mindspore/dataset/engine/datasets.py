@@ -442,7 +442,7 @@ class Dataset:
                 (list[Tensor], list[Tensor], ...). The length of each list in output should be same as the input.
                 output_columns is required if the number of output lists is different from input.
             input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of the list
-                should match with signature of per_batch_map callable.
+                should match with signature of per_batch_map callable (default=None).
             output_columns (Union[str, list[str]], optional): List of names assigned to the columns
                 outputted by the last operation. This parameter is mandatory if len(input_columns) !=
                 len(output_columns). The size of this list must match the number of output
@@ -452,7 +452,8 @@ class Dataset:
                 dataset. The parameter is required when len(input_column) != len(output_column). Caution: the list here
                 is not just the columns specified in parameter input_columns and output_columns.
             pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
-                would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
+                would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0
+                (default=None).
             python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with multi-processing.
                 This option could be beneficial if the function is computational heavy (default=False).
 
