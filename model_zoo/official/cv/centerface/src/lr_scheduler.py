@@ -484,15 +484,13 @@ class CyclicLR(_LRScheduler):
         self.gamma = gamma
 
         if scale_fn is None:
-            if self.mode == 'triangular':
-                self.scale_fn = self._triangular_scale_fn
-                self.scale_mode = 'cycle'
-            elif self.mode == 'triangular2':
-                self.scale_fn = self._triangular2_scale_fn
-                self.scale_mode = 'cycle'
-            elif self.mode == 'exp_range':
-                self.scale_fn = self._exp_range_scale_fn
-                self.scale_mode = 'iterations'
+            mode_map = {
+                'triangular': ['cycle', self._triangular_scale_fn],
+                'triangular2': ['cycle', self._triangular2_scale_fn],
+                'exp_range': ['iterations', self._exp_range_scale_fn]
+            }
+            self.scale_mode = mode_map.get(self.mode)[0]
+            self.scale_fn = mode_map.get(self.mode)[1]
         else:
             self.scale_fn = scale_fn
             self.scale_mode = scale_mode
