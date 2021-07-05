@@ -119,6 +119,10 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
     if (init_seed_ == 0 && cur_seed_ != 0) {
       cur_seed_ = 0;
     }
+
+    if (init_seed_ != 0) {
+      generator_.seed(init_seed_);
+    }
   }
 
  protected:
