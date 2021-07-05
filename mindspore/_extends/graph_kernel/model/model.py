@@ -192,6 +192,9 @@ class PrimLib:
         'UnPadAkg': Prim(OPAQUE),
         'PadAkg': Prim(OPAQUE),
         'Conv2D': Prim(OPAQUE),
+        'CReal': Prim(ELEMWISE),
+        'CImag': Prim(ELEMWISE),
+        'Complex': Prim(ELEMWISE),
     }
 
     default_primtive = Prim(UNKNOWN)
@@ -466,6 +469,7 @@ class GraphVisitor:
             for i in range(len(graph.ops)-1, -1, -1):
                 self.visit(graph.ops[i])
 
+
 class AlignShape(GraphVisitor):
     """Align shape"""
 
@@ -483,6 +487,7 @@ class AlignShape(GraphVisitor):
                     align_dim = len(t.shape)
             if align_dim > out_dim:
                 op.output.shape = [1] * (align_dim - out_dim) + op.output.shape
+
 
 class AddControlBuddy(GraphVisitor):
     """Add control buddy"""

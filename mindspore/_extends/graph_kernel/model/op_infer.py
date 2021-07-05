@@ -255,6 +255,38 @@ class _CompareOp(_Elemwise):
         return "bool"
 
 
+class CImag(OpInfer):
+    def _check_type(self):
+        if self.inputs[0].dtype != "complex64":
+            raise GKException(
+                "CImag's input[0] should be a complex64 condition but got {}".format(self.inputs[0].dtype))
+
+    def _infer_type(self):
+        return "float32"
+
+
+class CReal(OpInfer):
+    def _check_type(self):
+        if self.inputs[0].dtype != "complex64":
+            raise GKException(
+                "CReal's input[0] should be a complex64 condition but got {}".format(self.inputs[0].dtype))
+
+    def _infer_type(self):
+        return "float32"
+
+
+class Complex(OpInfer):
+    def _check_type(self):
+        if self.inputs[0].dtype != "float32":
+            raise GKException(
+                "Complex's input[0] should be a float32 condition but got {}".format(self.inputs[0].dtype))
+        if self.inputs[0].dtype != self.inputs[1].dtype:
+            raise GKException("Complex's input mismatch ({} vs {})".format(self.inputs[0].dtype, self.inputs[1].dtype))
+
+    def _infer_type(self):
+        return "complex64"
+
+
 class Less(_CompareOp):
     pass
 

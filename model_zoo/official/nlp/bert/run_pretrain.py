@@ -31,10 +31,10 @@ from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay, thor
 from mindspore import log as logger
 from mindspore.common import set_seed
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
-                BertTrainAccumulationAllReduceEachWithLossScaleCell, \
-                BertTrainAccumulationAllReducePostWithLossScaleCell, \
-                BertTrainOneStepWithLossScaleCellForAdam, \
-                AdamWeightDecayForBert, AdamWeightDecayOp
+    BertTrainAccumulationAllReduceEachWithLossScaleCell, \
+    BertTrainAccumulationAllReducePostWithLossScaleCell, \
+    BertTrainOneStepWithLossScaleCellForAdam, \
+    AdamWeightDecayForBert, AdamWeightDecayOp
 from src.dataset import create_bert_dataset
 from src.utils import LossCallBack, BertLearningRate
 from src.model_utils.config import config as cfg, bert_net_cfg
@@ -118,12 +118,6 @@ def _get_optimizer(args_opt, network):
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay, Thor]".
                          format(cfg.optimizer))
     return optimizer
-
-
-def _auto_enable_graph_kernel(device_target, graph_kernel_mode):
-    """Judge whether is suitable to enable graph kernel."""
-    return graph_kernel_mode in ("auto", "true") and device_target == 'GPU' and \
-        cfg.bert_network in ('base', 'large') and cfg.optimizer == 'AdamWeightDecay'
 
 
 def _set_graph_kernel_context(device_target):
@@ -246,7 +240,6 @@ def run_pretrain():
         if cfg.optimizer == "Thor":
             net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, sens=cfg.Thor.loss_scale,
                                                   enable_clip_grad=False)
-
 
     model = Model(net_with_grads)
     model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer)

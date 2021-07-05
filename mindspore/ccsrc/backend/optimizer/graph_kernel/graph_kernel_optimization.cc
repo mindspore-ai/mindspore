@@ -27,6 +27,7 @@
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
+#include "backend/optimizer/graph_kernel/eliminate_redundant_complex.h"
 #include "backend/optimizer/graph_kernel/insert_pad.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
@@ -74,6 +75,10 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
+
+  // Expand complex op to composite kernels
+  pm->AddPass(std::make_shared<GraphKernelComplexExpander>(), OptLevel_1, false);
+
   // Expand complex basic kernels to composite kernels
   pm->AddPass(std::make_shared<GraphKernelExpander>(), OptLevel_1);
 
@@ -108,6 +113,9 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
 
   // Common subexpression elimination
   pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_2);
+
+  // Elimate Redundant Complex op
+  pm->AddPass(std::make_shared<EliminateRedundantComplex>(), OptLevel_2, false);
   return pm;
 }
 
