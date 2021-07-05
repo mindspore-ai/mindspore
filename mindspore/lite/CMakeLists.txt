@@ -19,7 +19,7 @@ if(PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPI
 endif()
 
 # Options that can be configured through environment variables or manually
-set(MSLITE_GPU_BACKEND "off" CACHE STRING "enable gpu backend, \
+set(MSLITE_GPU_BACKEND "" CACHE STRING "enable gpu backend, \
 only arm64 support opencl, only x86_64 support tensorrt, opencl/vulkan/cuda/tensorrt/off")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" on)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
@@ -71,8 +71,25 @@ if(DEFINED ENV{MSLITE_ENABLE_NNIE})
     set(MSLITE_ENABLE_NNIE $ENV{MSLITE_ENABLE_NNIE})
 endif()
 
-if(MSLITE_GPU_BACKEND STREQUAL off AND PLATFORM_ARM64)
-    set(MSLITE_GPU_BACKEND "opencl")
+if(PLATFORM_ARM64)
+    if(MSLITE_GPU_BACKEND STREQUAL "")
+        set(MSLITE_GPU_BACKEND "opencl")
+    endif()
+    if((NOT MSLITE_GPU_BACKEND STREQUAL "opencl") AND (NOT MSLITE_GPU_BACKEND STREQUAL "off"))
+        message("invalid MSLITE_GPU_BACKEND value ${MSLITE_GPU_BACKEND} for arm64, MSLITE_GPU_BACKEND is set to off.")
+        set(MSLITE_GPU_BACKEND "off")
+    endif()
+elseif(PLATFORM_ARM32 OR WIN32)
+    set(MSLITE_GPU_BACKEND "off")
+else()
+# x86_64
+    if(MSLITE_GPU_BACKEND STREQUAL "")
+        set(MSLITE_GPU_BACKEND "off")
+    endif()
+    if((NOT MSLITE_GPU_BACKEND STREQUAL "tensorrt") AND (NOT MSLITE_GPU_BACKEND STREQUAL "off"))
+        message("invalid MSLITE_GPU_BACKEND value ${MSLITE_GPU_BACKEND} for x86_64, MSLITE_GPU_BACKEND is set to off.")
+        set(MSLITE_GPU_BACKEND "off")
+    endif()
 endif()
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
