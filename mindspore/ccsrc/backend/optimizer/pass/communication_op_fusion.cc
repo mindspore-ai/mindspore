@@ -151,7 +151,7 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
     uint32_t last_index = 0;
     for (size_t i = 0; i < split_indices.size(); ++i) {
       uint32_t index = split_indices[i];
-      if (index <= last_index || index >= communication_op_node_size) {
+      if ((index <= last_index && i != 0) || index >= communication_op_node_size) {
         MS_LOG(EXCEPTION) << "invalid " << op_name_ << " split index " << i << " " << index;
       }
       segment_index->push_back(index);
