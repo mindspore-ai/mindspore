@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include "runtime/device/device_address.h"
 #include "runtime/device/ascend/ascend_memory_pool.h"
 #include "ir/dtype.h"
@@ -32,6 +31,7 @@ namespace mindspore {
 class Debugger;
 #endif
 namespace device {
+class LaunchKernel;
 namespace ascend {
 class AscendDeviceAddress : public DeviceAddress {
  public:
@@ -63,12 +63,12 @@ class AscendDeviceAddress : public DeviceAddress {
                                                         const std::vector<size_t> &device_shape, size_t size,
                                                         mindspore::TypeId type, void *host_ptr) const;
   void SyncStream() const;
-
-  void LaunchTransData(const kernel::KernelModPtr &kernel_mod_ptr, void *output_address_ptr, size_t output_size,
-                       const std::vector<size_t> &workspace_size_list) const;
   std::vector<size_t> GetDeviceShape(std::vector<size_t> *host_shape) const;
-  std::vector<size_t> GetWorkspaceSizeList(const nlohmann::json &kernel_json) const;
-  kernel::KernelModPtr CompileTransDataAndObtainKernelMod(const nlohmann::json &kernel_json) const;
+  std::shared_ptr<LaunchKernel> CreateLaunchTransData(const std::vector<size_t> &host_shape,
+                                                      const std::vector<size_t> &device_shape,
+                                                      const std::string &ori_format,
+                                                      const std::string &dst_format) const;
+  mutable std::shared_ptr<LaunchKernel> launch_transdata_{nullptr};
 };
 using AscendDeviceAddressPtr = std::shared_ptr<AscendDeviceAddress>;
 }  // namespace ascend

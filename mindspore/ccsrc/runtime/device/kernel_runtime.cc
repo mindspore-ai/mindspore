@@ -1087,28 +1087,6 @@ void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
   }
 }
 
-bool KernelRuntime::LaunchTaskBasedOnSingleKernel(const kernel::KernelModPtr &kernel_mod_ptr,
-                                                  const AddressPtrList &kernel_inputs,
-                                                  const AddressPtrList &kernel_outputs,
-                                                  const AddressPtrList &kernel_workspaces) const {
-  MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
-  auto ret = kernel_mod_ptr->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
-  if (!ret) {
-    MS_LOG(ERROR) << "Launch kernel failed.";
-    return false;
-  }
-  return true;
-}
-
-DeviceAddressPtr KernelRuntime::AssignSingleOpLaunchMemory(size_t size, const std::string &format, TypeId type) {
-  auto device_address = CreateDeviceAddress(nullptr, size, format, type);
-  MS_EXCEPTION_IF_NULL(device_address);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  auto base_ptr = mem_manager_->MallocMem(kStaticMem, size, device_address);
-  MS_EXCEPTION_IF_NULL(base_ptr);
-  return device_address;
-}
-
 #if (ENABLE_CPU && !_WIN32)
 void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph *graph,
                                              AnfNodePtr *const first_cache_input_index,
