@@ -687,7 +687,7 @@ class MultiClassDiceLoss(LossBase):
 class SampledSoftmaxLoss(LossBase):
     r"""
     Computes the sampled softmax training loss. This operator can accelerate the trainging of the softmax classifier
-    over a large number of classes.
+    over a large number of classes. It is generally an underestimate of the full softmax loss.
 
     Args:
         num_sampled (int): The number of classes to randomly sample per batch.

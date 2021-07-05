@@ -574,7 +574,7 @@ class Conv3d(_Conv):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float32)

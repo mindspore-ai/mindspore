@@ -1966,7 +1966,7 @@ class Erf(PrimitiveWithInfer):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
