@@ -48,7 +48,7 @@ struct SubGraphModel {
 
 class NPUManager {
  public:
-  NPUManager() = default;
+  explicit NPUManager(int frequency) : frequency_(frequency) {}
 
   ~NPUManager() { Reset(); }
 
@@ -70,6 +70,8 @@ class NPUManager {
   int LoadModel(const std::shared_ptr<hiai::AiModelMngerClient> &client,
                 std::vector<std::shared_ptr<hiai::AiModelDescription>> desc_list);
 
+  int GetFrequency() { return frequency_; }
+
  private:
   bool IsKirinChip();
 
@@ -87,6 +89,7 @@ class NPUManager {
   bool is_support_ = false;
   std::unordered_map<std::string, std::shared_ptr<SubGraphModel>> models_;
   std::vector<std::shared_ptr<hiai::AiModelMngerClient>> clients_;
+  int frequency_ = 0;
 };
 
 }  // namespace mindspore
