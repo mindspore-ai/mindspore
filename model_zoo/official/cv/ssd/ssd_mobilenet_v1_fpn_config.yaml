@@ -10,9 +10,9 @@ enable_profiling: False
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
-device_target: 'Ascend'
-checkpoint_path: './checkpoint/'
-checkpoint_file_path: 'mobilenet_v1.ckpt'
+device_target: "Ascend"
+checkpoint_path: "./checkpoint/"
+checkpoint_file_path: "mobilenet_v1.ckpt"
 
 # ==============================================================================
 # Training options
