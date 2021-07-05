@@ -133,13 +133,10 @@ ValuePtr AbstractBase::BuildValue() const {
   return value_;
 }
 
-AbstractBasePtr AbstractBase::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractBase::Broaden() const {
   AbstractBasePtr clone = Clone();
   MS_EXCEPTION_IF_NULL(clone);
-  auto not_broaden = config & (kBroadenTensorOnly | kBroadenParameterOnly);
-  if (not_broaden == 0) {
-    clone->set_value(kAnyValue);
-  }
+  clone->set_value(kAnyValue);
   return clone;
 }
 
@@ -156,18 +153,17 @@ std::string AbstractBase::ToString() const {
   return buffer.str();
 }
 
-AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractScalar::Broaden() const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) || config == kBroadenScalarParameterOnly) {
-    return AbstractBase::Broaden(config);
-  } else {
-    auto type = this->BuildType()->type_id();
-    if (type < kNumberTypeBegin || type > kNumberTypeEnd) {
-      return AbstractBase::Broaden(config);
-    }
-    return Clone();
+  if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
+    return AbstractBase::Broaden();
   }
+  auto type_id = GetTypeTrack()->type_id();
+  if (type_id == kObjectTypeEnvType) {
+    return AbstractBase::Broaden();
+  }
+  return Clone();
 }
 
 AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
@@ -311,11 +307,11 @@ AbstractBasePtrList AbstractSequeue::ElementsClone() const {
   return ele_list;
 }
 
-AbstractBasePtrList AbstractSequeue::ElementsBroaden(uint8_t config) const {
+AbstractBasePtrList AbstractSequeue::ElementsBroaden() const {
   AbstractBasePtrList ele_list;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
-    AbstractBasePtr broadend = ele->Broaden(config);
+    AbstractBasePtr broadend = ele->Broaden();
     ele_list.push_back(broadend);
   }
   return ele_list;
@@ -457,13 +453,13 @@ AbstractBasePtr AbstractSlice::Clone() const {
   return std::make_shared<AbstractSlice>(start, stop, step);
 }
 
-AbstractBasePtr AbstractSlice::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractSlice::Broaden() const {
   MS_EXCEPTION_IF_NULL(start_);
   MS_EXCEPTION_IF_NULL(stop_);
   MS_EXCEPTION_IF_NULL(step_);
-  AbstractBasePtr start = start_->Broaden(config);
-  AbstractBasePtr stop = stop_->Broaden(config);
-  AbstractBasePtr step = step_->Broaden(config);
+  AbstractBasePtr start = start_->Broaden();
+  AbstractBasePtr stop = stop_->Broaden();
+  AbstractBasePtr step = step_->Broaden();
   return std::make_shared<AbstractSlice>(start, stop, step);
 }
 
@@ -506,6 +502,14 @@ ShapePtr AbstractUndetermined::shape() const {
     MS_LOG(EXCEPTION) << "Tensor should have a shape.";
   }
   return shp;
+}
+
+void AbstractUndetermined::set_shape(const BaseShapePtr &shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->isa<NoShape>()) {
+    MS_LOG(EXCEPTION) << "AbstractUndetermined can't set shape as NoShape.";
+  }
+  AbstractBase::set_shape(shape);
 }
 
 TypePtr AbstractTensor::BuildType() const {
@@ -606,16 +610,13 @@ AbstractBasePtr AbstractTensor::Clone() const {
   return clone;
 }
 
-AbstractBasePtr AbstractTensor::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractTensor::Broaden() const {
   MS_EXCEPTION_IF_NULL(element_);
   auto broaden = std::make_shared<AbstractTensor>(element_->Broaden());
   auto shp = shape();
   MS_EXCEPTION_IF_NULL(shp);
   broaden->set_shape(shp->Clone());
-  auto not_broaden = config & kBroadenParameterOnly;
-  if (not_broaden == 0) {
-    broaden->set_value(kAnyValue);
-  }
+  broaden->set_value(kAnyValue);
   return broaden;
 }
 
@@ -692,12 +693,12 @@ AbstractBasePtr AbstractDictionary::Clone() const {
   return std::make_shared<AbstractDictionary>(kv);
 }
 
-AbstractBasePtr AbstractDictionary::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractDictionary::Broaden() const {
   std::vector<AbstractAttribute> kv;
   (void)std::transform(key_values_.begin(), key_values_.end(), std::back_inserter(kv),
-                       [config](const AbstractAttribute &item) {
+                       [](const AbstractAttribute &item) {
                          MS_EXCEPTION_IF_NULL(item.second);
-                         return std::make_pair(item.first, item.second->Broaden(config));
+                         return std::make_pair(item.first, item.second->Broaden());
                        });
   return std::make_shared<AbstractDictionary>(kv);
 }
@@ -818,11 +819,11 @@ AbstractBasePtr AbstractClass::Clone() const {
   return std::make_shared<AbstractClass>(tag_, attributes_clone, methods_);
 }
 
-AbstractBasePtr AbstractClass::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractClass::Broaden() const {
   std::vector<AbstractAttribute> attributes_clone;
   for (const auto &attr : attributes_) {
     MS_EXCEPTION_IF_NULL(attr.second);
-    AbstractBasePtr clone = attr.second->Broaden(config);
+    AbstractBasePtr clone = attr.second->Broaden();
     AbstractAttribute elem(attr.first, clone);
     attributes_clone.push_back(elem);
   }
@@ -1022,15 +1023,6 @@ std::string AbstractNone::ToString() const {
 
 ValuePtr AbstractNone::RealBuildValue() const { return kNone; }
 
-AbstractBasePtr AbstractRefKey::Broaden(uint8_t config) const {
-  auto refkey = std::make_shared<AbstractRefKey>();
-  auto not_broaden = config & (kBroadenTensorOnly | kBroadenParameterOnly);
-  if (not_broaden == 0) {
-    refkey->set_value(kAnyValue);
-  }
-  return refkey;
-}
-
 bool AbstractRefKey::operator==(const AbstractRefKey &other) const {
   ValuePtr value_self = GetValueTrack();
   ValuePtr value_other = other.GetValueTrack();
@@ -1141,9 +1133,9 @@ AbstractBasePtr AbstractKeywordArg::Clone() const {
   return std::make_shared<AbstractKeywordArg>(arg_name_, arg_value_->Clone());
 }
 
-AbstractBasePtr AbstractKeywordArg::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractKeywordArg::Broaden() const {
   MS_EXCEPTION_IF_NULL(arg_value_);
-  return std::make_shared<AbstractKeywordArg>(arg_name_, arg_value_->Broaden(config));
+  return std::make_shared<AbstractKeywordArg>(arg_name_, arg_value_->Broaden());
 }
 
 std::size_t AbstractKeywordArg::hash() const {
@@ -1259,7 +1251,7 @@ AbstractBasePtr AbstractRowTensor::Clone() const {
   return clone;
 }
 
-AbstractBasePtr AbstractRowTensor::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractRowTensor::Broaden() const {
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   auto shp = shape();
@@ -1351,7 +1343,7 @@ AbstractBasePtr AbstractSparseTensor::Clone() const {
   return clone;
 }
 
-AbstractBasePtr AbstractSparseTensor::Broaden(uint8_t config) const {
+AbstractBasePtr AbstractSparseTensor::Broaden() const {
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractSparseTensor>(element()->Broaden());
   auto shp = shape();

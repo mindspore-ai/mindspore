@@ -338,9 +338,8 @@ void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList 
     auto &arg_value = op_args[i];
     auto arg_abs = arg_value->ToAbstract();
     if (!is_const_prim && !is_const_input) {
-      auto config = abstract::AbstractBase::kBroadenTensorOnly;
-      arg_abs = arg_abs->Broaden(config);
-      MS_LOG(DEBUG) << "Broaden for " << prim->ToString() << " " << config;
+      arg_abs = arg_abs->Broaden();
+      MS_LOG(DEBUG) << "Broaden for " << prim->ToString();
     }
     (*abs_list).emplace_back(arg_abs);
   }
@@ -353,8 +352,7 @@ abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr
   }
   abstract::AbstractBasePtrList new_abs_list(abs_list);
   auto out_abs = out->ToAbstract();
-  auto config = abstract::AbstractBase::kBroadenTensorOnly;
-  out_abs = out_abs->Broaden(config);
+  out_abs = out_abs->Broaden();
   new_abs_list.emplace_back(out_abs);
   new_abs_list.emplace_back(out_abs);
   return new_abs_list;
