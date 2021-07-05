@@ -41,6 +41,7 @@ enum SpecializeStatusCode {
 };
 
 class FuncGraphSpecializer;
+using BaseFuncGraphEvaluatorPtr = std::shared_ptr<BaseFuncGraphEvaluator>;
 
 // Specialize a func graph using analyzed abstract values.
 class ProgramSpecializer {
@@ -103,7 +104,10 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void ProcessNode(const AnfNodePtr &node);
   void ProcessCNode(const CNodePtr &new_node);
 
-  AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node);
+  inline AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node);
+  inline AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const BaseFuncGraphEvaluatorPtr &evaluator,
+                                        const AbstractBasePtrList &args_spec_list);
+
   inline void AddTodoItem(const AnfNodePtr &node) { todo_.push_back(node); }
   // Get node replicated by Cloner.
   AnfNodePtr GetReplicatedNode(const AnfNodePtr &node);

@@ -92,7 +92,7 @@ using ConfigPtrList = std::vector<ConfigPtr>;
 class AnfNodeConfig : public Config {
  public:
   AnfNodeConfig(const AnalysisEnginePtr &engine, const AnfNodePtr &node, const AnalysisContextPtr &context)
-      : Config(), engine_(std::weak_ptr<AnalysisEngine>(engine)), node_(node) {
+      : Config(), engine_(std::weak_ptr<AnalysisEngine>(engine)), node_(node), context_(nullptr) {
     FuncGraphPtr fg;
     if (IsValueNode<FuncGraph>(node)) {
       auto v = node->cast<ValueNodePtr>();
@@ -100,9 +100,17 @@ class AnfNodeConfig : public Config {
     } else {
       fg = node->func_graph();
     }
-    context_ = nullptr;
-    if (context != nullptr) {
-      context_ = context->FindParentContext(fg);
+
+    if (context == nullptr) {
+      return;
+    }
+    if (context->func_graph() == fg) {
+      // Usually `node` is CNode and not a FV, or top graph's ValueNodes.
+      context_ = context;
+    } else {
+      // If `node` is FV, FuncGraph, or other graph ValueNodes.
+      // Non-FuncGraph ValueNodes will always get a DummyContext since `fg` is null.
+      context_ = context->FindOwnOrParentContext(fg);
     }
   }
 

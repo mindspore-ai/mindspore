@@ -38,9 +38,8 @@ AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr 
                                                 const AbstractFunctionPtr &graph_func) {
   AnalysisContextPtr parent_context = nullptr;
   auto func_graph_abs = dyn_cast<FuncGraphAbstractClosure>(graph_func);
-  if (func_graph_abs != nullptr) {  // Find parent context for FuncGraphAbstractClosure.
-    auto branch_fg = func_graph_abs->func_graph();
-    parent_context = func_graph_abs->context()->FindParentContext(branch_fg);
+  if (func_graph_abs != nullptr) {  // Set parent context for FuncGraphAbstractClosure.
+    parent_context = func_graph_abs->context();
   } else if (graph_func->isa<MetaFuncGraphAbstractClosure>()) {  // Or DummyContext for MetaFuncGraphAbstractClosure.
     parent_context = fg_evaluator->parent_context();
     if (parent_context == nullptr) {
@@ -85,7 +84,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   // Find parent context and create new context.
   AnalysisContextPtr parent_context = GetParentContext(fg_evaluator, graph_func);
   MS_EXCEPTION_IF_NULL(parent_context);
-  auto new_context = parent_context->NewFuncGraphContext(fg, args_abs_list);
+  auto new_context = parent_context->NewContext(fg, args_abs_list);
 
   // Evaluate the parameters with new context.
   for (size_t i = 0; i < nargs; i++) {
