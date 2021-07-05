@@ -498,21 +498,21 @@ mkdir -p ${benchmark_train_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_train_test_path} || exit 1
 
 isFailed=0
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen&train" ]]; then
     # Run on x86
     echo "start Run x86 ..."
     Run_x86 &
     Run_x86_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen&train" ]]; then
     # Run on arm64
     echo "start Run arm64 ..."
     Run_arm arm64
     Run_arm64_status=$?
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" || $backend == "arm32_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen&train" ]]; then
     # Run on arm32
     echo "start Run arm32 ..."
     Run_arm arm32
@@ -520,7 +520,7 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" |
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen&train" ]]; then
     wait ${Run_x86_PID}
     Run_x86_status=$?
     cat ${run_benchmark_train_result_file}
@@ -532,14 +532,14 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-train" ]]; 
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen&train" ]]; then
     if [[ ${Run_arm64_status} != 0 ]];then
         echo "Run_arm64 train failed"
         cat ${run_arm64_log_file}
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" || $backend == "arm32_train" ]]; then
+if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen&train" ]]; then
     if [[ ${Run_arm32_status} != 0 ]];then
         echo "Run_arm32 train failed"
         cat ${run_arm32_log_file}

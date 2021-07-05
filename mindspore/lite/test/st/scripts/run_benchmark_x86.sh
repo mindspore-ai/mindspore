@@ -78,25 +78,25 @@ function Run_x86() {
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_1_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_1_1_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}_1_1_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86: '${model_name}_1_1_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_2_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_1_2_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}_1_2_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86: '${model_name}_1_2_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_3_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
         ./benchmark --modelFile=${ms_models_path}/${model_name}_1_3_parallel_split.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --inputShapes=${input_shapes} --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}_1_3_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86: '${model_name}_1_3_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_parallel_split_config}
 
@@ -123,9 +123,9 @@ function Run_x86() {
             ./benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=${transformer_data_path}/decoder_buffer_in_9.bin,${transformer_data_path}/decoder_buffer_in_2.bin,${transformer_data_path}/decoder_buffer_in_0.bin,${transformer_data_path}/decoder_buffer_in_1.bin,${transformer_data_path}/decoder_buffer_in_5.bin,${transformer_data_path}/decoder_buffer_in_3.bin,${transformer_data_path}/decoder_buffer_in_4.bin,${transformer_data_path}/decoder_buffer_in_8.bin,${transformer_data_path}/decoder_buffer_in_6.bin,${transformer_data_path}/decoder_buffer_in_7.bin,${transformer_data_path}/decoder_buffer_in_10.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         fi
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86_posttraining: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_posttraining: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_posttraining_config}
 
@@ -265,70 +265,6 @@ function Run_x86_java() {
     done < ${models_tflite_config}
 }
 
-# Run on x86 codegen benchmark
-function Run_x86_codegen() {
-    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
-
-    rm -rf ${build_path}
-    mkdir -p ${build_path}
-
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_x86_codegen_log_file}"
-        ${CODEGEN_PATH}/codegen --codePath=${build_path} --modelPath=${ms_models_path}/${model_name}.ms >> ${run_x86_codegen_log_file}
-        # 1. build benchmark
-        mkdir -p ${build_path}/${model_name}/build && cd ${build_path}/${model_name}/build || exit 1
-        cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${build_path}/${model_name} >> ${run_x86_codegen_log_file}
-        make >> ${run_x86_codegen_log_file}
-        # 2. run benchmark
-        echo "net file: ${build_path}/${model_name}/src/net.bin" >> ${run_x86_codegen_log_file}
-        echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out" >> ${run_x86_codegen_log_file}
-        ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out >> ${run_x86_codegen_log_file}
-        if [ $? = 0 ]; then
-            run_result='x86_codegen: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86_codegen: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_codegen_config}
-
-    rm -rf ${build_path}
-}
-
-# Run on x86 codegen benchmark parallel
-function Run_x86_codegen_parallel() {
-    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
-
-    rm -rf ${build_parallal_path}
-    mkdir -p ${build_parallal_path}
-
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_x86_codegen_parallel_log_file}"
-        ${CODEGEN_PATH}/codegen --codePath=${build_parallal_path} --modelPath=${ms_models_path}/${model_name}.ms --supportParallel=true >> ${run_x86_codegen_parallel_log_file}
-        # 1. build benchmark
-        mkdir -p ${build_parallal_path}/${model_name}/build && cd ${build_parallal_path}/${model_name}/build || exit 1
-        cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${build_parallal_path}/${model_name} >> ${run_x86_codegen_parallel_log_file}
-        make >> ${run_x86_codegen_parallel_log_file}
-        # 2. run benchmark
-        echo "net file: ${build_parallal_path}/${model_name}/src/net.bin" >> ${run_x86_codegen_parallel_log_file}
-        echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_parallal_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out thread_num=4 0" >> ${run_x86_codegen_parallel_log_file}
-        ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_parallal_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out 4 0 >> ${run_x86_codegen_parallel_log_file}
-        if [ $? = 0 ]; then
-            run_result='x86_codegen_parallel: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86_codegen_parallel: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_codegen_parallel_config}
-
-    rm -rf ${build_parallal_path}
-}
-
 basepath=$(pwd)
 echo ${basepath}
 #set -e
@@ -376,12 +312,8 @@ models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_config=${basepath}/../config/models_weightquant.cfg
 models_for_process_only_config=${basepath}/../config/models_for_process_only.cfg
-models_codegen_config=${basepath}/../config/models_codegen.cfg
-models_codegen_parallel_config=${basepath}/../config/models_codegen_parallel.cfg
 
 ms_models_path=${basepath}/ms_models
-build_path=${basepath}/codegen_build
-build_parallal_path=${basepath}/codegen_parallel_build
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
@@ -413,21 +345,12 @@ echo ' ' > ${run_benchmark_result_file}
 
 run_x86_log_file=${basepath}/run_x86_log.txt
 echo 'run x86 logs: ' > ${run_x86_log_file}
-
 run_x86_sse_log_file=${basepath}/run_x86_sse_log.txt
 echo 'run x86 sse logs: ' > ${run_x86_sse_log_file}
-
 run_x86_avx_log_file=${basepath}/run_x86_avx_log.txt
 echo 'run x86 avx logs: ' > ${run_x86_avx_log_file}
-
 run_x86_java_log_file=${basepath}/run_x86_java_log.txt
 echo 'run x86 java logs: ' > ${run_x86_java_log_file}
-
-run_x86_codegen_log_file=${basepath}/run_x86_codegen_log.txt
-echo 'run x86 codegen logs: ' > ${run_x86_codegen_log_file}
-
-run_x86_codegen_parallel_log_file=${basepath}/run_x86_codegen_parallel_log.txt
-echo 'run x86 codegen parallel logs: ' > ${run_x86_codegen_parallel_log_file}
 
 backend=${backend:-"all"}
 isFailed=0
@@ -458,20 +381,6 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; t
     echo "start Run x86 java ..."
     Run_x86_java &
     Run_x86_java_PID=$!
-    sleep 1
-fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-codegen" ]]; then
-    # Run on x86-codegen
-    echo "start Run x86 codegen ..."
-    Run_x86_codegen &
-    Run_x86_codegen_PID=$!
-    sleep 1
-fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-codegen-parallel" ]]; then
-    # Run on x86-codegen-parallel
-    echo "start Run x86 codegen parallel ..."
-    Run_x86_codegen_parallel &
-    Run_x86_codegen_parallel_PID=$!
     sleep 1
 fi
 
@@ -513,26 +422,6 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; t
     if [[ ${Run_x86_java_status} != 0 ]];then
         echo "Run_x86 java failed"
         cat ${run_x86_java_log_file}
-        isFailed=1
-    fi
-fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-codegen" ]]; then
-    wait ${Run_x86_codegen_PID}
-    Run_x86_codegen_status=$?
-
-    if [[ ${Run_x86_codegen_status} != 0 ]];then
-        echo "Run_x86 codegen failed"
-        cat ${run_x86_codegen_log_file}
-        isFailed=1
-    fi
-fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-codegen" ]]; then
-    wait ${Run_x86_codegen_parallel_PID}
-    Run_x86_codegen_parallel_status=$?
-
-    if [[ ${Run_x86_codegen_parallel_status} != 0 ]];then
-        echo "Run_x86 codegen parallel failed"
-        cat ${run_x86_codegen_log_file}
         isFailed=1
     fi
 fi

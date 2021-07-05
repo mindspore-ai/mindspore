@@ -161,8 +161,6 @@ benchmark_test_path=${basepath}/benchmark_test
 rm -rf ${benchmark_test_path}
 mkdir -p ${benchmark_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
-# Copy models converted using old release of mslite converter for compatibility test
-cp -a ${models_path}/compatibility_test/*.ms ${benchmark_test_path} || exit 1
 
 backend=${backend:-"all"}
 isFailed=0
@@ -195,13 +193,11 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
         echo "Run cropper failed"
         cat ${run_gpu_log_file}
         isFailed=1
-        exit 1
     fi
 fi
 
 echo "Run_gpu and Run_cropper is ended"
 Print_Benchmark_Result $run_benchmark_result_file
-exit ${isFailed}
 
 ########## mindrt parallel test ##############
 run_parallel_result_file=${basepath}/run_parallel_result.txt
@@ -226,9 +222,8 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
     Print_Parallel_Result $run_parallel_result_file
 
     if [[ ${Run_mindrt_parallel_status} != 0 ]];then
-        exit 1
+        isFailed=1
     fi
 fi
 ########## mindrt parallel test end ##############
-
-exit 0
+exit ${isFailed}
