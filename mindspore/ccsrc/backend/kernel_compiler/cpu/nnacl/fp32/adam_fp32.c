@@ -13,37 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_SSE
-#include <x86intrin.h>
-#endif
-
-#ifdef ENABLE_AVX
-#include <immintrin.h>
-#endif
-
 #include <math.h>
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32/adam_fp32.h"
 
-#ifdef ENABLE_AVX512
-struct AVX_Data {
-  __m512 data;
-};
-
-inline void LoadStep4(struct AVX_Data *inp0, const float *inp1) {
-  inp0[0].data = _mm512_loadu_ps(inp1);
-  inp0[1].data = _mm512_loadu_ps(inp1 + C16NUM);
-  inp0[2].data = _mm512_loadu_ps(inp1 + C16NUM * 2);
-  inp0[3].data = _mm512_loadu_ps(inp1 + C16NUM * 3);
-}
-
-inline void StoreStep4(float *inp0, struct AVX_Data *inp1) {
-  _mm512_storeu_ps(inp0, inp1[0].data);
-  _mm512_storeu_ps(inp0 + C16NUM, inp1[1].data);
-  _mm512_storeu_ps(inp0 + C16NUM * 2, inp1[2].data);
-  _mm512_storeu_ps(inp0 + C16NUM * 3, inp1[3].data);
-}
-#endif
 int AdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, const float *gradient,
              size_t start, size_t end, bool use_nesterov) {
   size_t c1 = start;
