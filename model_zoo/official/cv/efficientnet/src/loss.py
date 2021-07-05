@@ -13,14 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """define loss function for network."""
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
 import mindspore.nn as nn
 
-class LabelSmoothingCrossEntropy(Loss):
+class LabelSmoothingCrossEntropy(LossBase):
 
     def __init__(self, smooth_factor=0.1, num_classes=1000):
         super(LabelSmoothingCrossEntropy, self).__init__()

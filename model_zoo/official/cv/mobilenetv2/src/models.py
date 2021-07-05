@@ -19,12 +19,12 @@ from mindspore import nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.train.callback import Callback
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
 
-class CrossEntropyWithLabelSmooth(Loss):
+class CrossEntropyWithLabelSmooth(LossBase):
     """
     CrossEntropyWith LabelSmooth.
 

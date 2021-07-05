@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """define evaluation loss function for network."""
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
@@ -21,7 +21,7 @@ from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 
 
-class CrossEntropy_Val(Loss):
+class CrossEntropy_Val(LossBase):
     """the redefined loss function with SoftmaxCrossEntropyWithLogits, will be used in inference process"""
     def __init__(self, smooth_factor=0, num_classes=1000):
         super(CrossEntropy_Val, self).__init__()

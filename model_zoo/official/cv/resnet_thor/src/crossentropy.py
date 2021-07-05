@@ -72,7 +72,7 @@ class Loss(nn.Cell):
         raise NotImplementedError
 
 
-class CrossEntropy(Loss):
+class CrossEntropy(LossBase):
     """CrossEntropy"""
     def __init__(self, smooth_factor=0., num_classes=1000):
         super(CrossEntropy, self).__init__()

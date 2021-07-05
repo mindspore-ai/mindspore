@@ -14,10 +14,10 @@
 # ============================================================================
 """NLLLoss cell"""
 import mindspore.ops.operations as P
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import functional as F
 
-class NLLLoss(Loss):
+class NLLLoss(LossBase):
     '''
        NLLLoss function
     '''

@@ -28,7 +28,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ... import context
 
-class Loss(Cell):
+class LossBase(Cell):
     """
     Base class for other losses.
 
@@ -47,7 +47,7 @@ class Loss(Cell):
     """
     def __init__(self, reduction='mean'):
         """Initialize Loss."""
-        super(Loss, self).__init__()
+        super(LossBase, self).__init__()
 
         if reduction not in ('mean', 'sum', 'none'):
             raise ValueError(f"reduction method for {reduction} is not supported")
@@ -92,15 +92,15 @@ class Loss(Cell):
         raise NotImplementedError
 
 
-class _Loss(Loss):
+class _Loss(LossBase):
     """
     Base class for other losses.
     """
     def __init__(self, reduction='mean'):
         """Initialize _Loss."""
         log.warning("'_Loss' is deprecated from version 1.3 and "
-                    "will be removed in a future version, use 'Loss' instead.")
-        super(_Loss, self).__init__()
+                    "will be removed in a future version, use 'LossBase' instead.")
+        super(_Loss, self).__init__(reduction)
 
     def construct(self, base, target):
         raise NotImplementedError
@@ -112,7 +112,7 @@ def _check_is_tensor(param_name, input_data, cls_name):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
                         f"but got '{F.typeof(input_data)}'")
 
-class L1Loss(Loss):
+class L1Loss(LossBase):
     r"""
     L1Loss creates a criterion to measure the mean absolute error (MAE) between :math:`x` and :math:`y` element-wise,
     where :math:`x` is the input Tensor and :math:`y` is the target Tensor.
@@ -182,7 +182,7 @@ class L1Loss(Loss):
         return self.get_loss(x)
 
 
-class MSELoss(Loss):
+class MSELoss(LossBase):
     r"""
     MSELoss creates a criterion to measure the mean squared error (squared L2-norm) between :math:`x` and :math:`y`
     element-wise, where :math:`x` is the input and :math:`y` is the target.
@@ -247,7 +247,7 @@ class MSELoss(Loss):
         return self.get_loss(x)
 
 
-class RMSELoss(Loss):
+class RMSELoss(LossBase):
     r"""
     RMSELoss creates a criterion to measure the root mean square error between :math:`x` and :math:`y`
     element-wise, where :math:`x` is the input and :math:`y` is the target.
@@ -299,7 +299,7 @@ class RMSELoss(Loss):
         return rmse_loss
 
 
-class MAELoss(Loss):
+class MAELoss(LossBase):
     r"""
     MAELoss creates a criterion to measure the average absolute error between :math:`x` and :math:`y`
     element-wise, where :math:`x` is the input and :math:`y` is the target.
@@ -369,7 +369,7 @@ class MAELoss(Loss):
         return self.get_loss(x)
 
 
-class SmoothL1Loss(Loss):
+class SmoothL1Loss(LossBase):
     r"""
     A loss class for learning region proposals.
 
@@ -434,7 +434,7 @@ class SmoothL1Loss(Loss):
         return self.smooth_l1_loss(base, target)
 
 
-class SoftmaxCrossEntropyWithLogits(Loss):
+class SoftmaxCrossEntropyWithLogits(LossBase):
     r"""
     Computes softmax cross entropy between logits and labels.
 
@@ -527,7 +527,7 @@ def _check_label_dtype(labels_dtype, cls_name):
     validator.check_type_name("labels", labels_dtype, [mstype.int32, mstype.int64], cls_name)
 
 
-class DiceLoss(Loss):
+class DiceLoss(LossBase):
     r"""
     The Dice coefficient is a set similarity loss. It is used to calculate the similarity between two samples. The
     value of the Dice coefficient is 1 when the segmentation result is the best and 0 when the segmentation result
@@ -604,7 +604,7 @@ def _check_weights(weight_shape, label_shape):
         raise ValueError("The weight shape[0] should be equal to label.shape[1].")
 
 
-class MultiClassDiceLoss(Loss):
+class MultiClassDiceLoss(LossBase):
     r"""
     When there are multiple classifications, label is transformed into multiple binary classifications by one hot.
     For each channel section in the channel, it can be regarded as a binary classification problem, so it can be
@@ -684,7 +684,7 @@ class MultiClassDiceLoss(Loss):
         return total_loss/label.shape[1]
 
 
-class SampledSoftmaxLoss(Loss):
+class SampledSoftmaxLoss(LossBase):
     r"""
     Computes the sampled softmax training loss. This operator can accelerate the trainging of the softmax classifier
     over a large number of classes.
@@ -904,7 +904,7 @@ class SampledSoftmaxLoss(Loss):
         return out_logits, out_labels
 
 
-class BCELoss(Loss):
+class BCELoss(LossBase):
     r"""
     BCELoss creates a criterion to measure the binary cross entropy between the true labels and predicted labels.
 
@@ -987,7 +987,7 @@ def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name):
     validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name)
 
 
-class CosineEmbeddingLoss(Loss):
+class CosineEmbeddingLoss(LossBase):
     r"""
     CosineEmbeddingLoss creates a criterion to measure the similarity between two tensors using cosine distance.
 
@@ -1064,7 +1064,7 @@ class CosineEmbeddingLoss(Loss):
         return self.get_loss(output_unreduced)
 
 
-class BCEWithLogitsLoss(Loss):
+class BCEWithLogitsLoss(LossBase):
     r"""
     Adds sigmoid activation function to input logits, and uses the given logits to compute binary cross entropy
     between the labels and the output.
@@ -1181,7 +1181,7 @@ def _check_input_dtype(targets_dtype, cls_name):
                                                          mstype.float32], cls_name)
 
 
-class FocalLoss(Loss):
+class FocalLoss(LossBase):
     r"""
     The loss function proposed by Kaiming team in their paper ``Focal Loss for Dense Object Detection`` improves the
     effect of image object detection. It is a loss function to solve the imbalance of categories and the difference of

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Face Recognition loss."""
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
@@ -23,7 +23,7 @@ import mindspore.nn as nn
 eps = 1e-24
 
 
-class CrossEntropyNew(Loss):
+class CrossEntropyNew(LossBase):
     '''CrossEntropyNew'''
     def __init__(self, smooth_factor=0., num_classes=1000):
         super(CrossEntropyNew, self).__init__()
@@ -42,7 +42,7 @@ class CrossEntropyNew(Loss):
         return loss
 
 
-class CrossEntropy(Loss):
+class CrossEntropy(LossBase):
     '''CrossEntropy'''
     def __init__(self):
         super(CrossEntropy, self).__init__()
@@ -106,7 +106,7 @@ class CrossEntropyWithIgnoreIndex(nn.Cell):
 eps = 1e-24
 
 
-class CEWithIgnoreIndex3D(Loss):
+class CEWithIgnoreIndex3D(LossBase):
     '''CEWithIgnoreIndex3D'''
     def __init__(self):
         super(CEWithIgnoreIndex3D, self).__init__()

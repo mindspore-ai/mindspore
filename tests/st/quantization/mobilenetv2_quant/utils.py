@@ -20,7 +20,7 @@ import numpy as np
 from mindspore.train.callback import Callback
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.nn.loss.loss import Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
@@ -87,7 +87,7 @@ class Monitor(Callback):
             run_context.request_stop()
 
 
-class CrossEntropyWithLabelSmooth(Loss):
+class CrossEntropyWithLabelSmooth(LossBase):
     """
     CrossEntropyWith LabelSmooth.
 
