@@ -677,15 +677,14 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
 void DebugServices::SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *slot_string_to_check,
                                      std::string *dump_style_kernel_name, size_t slot, bool is_output) {
   std::string dump_style_name_part = *dump_style_kernel_name;
-  std::string slot_str = "";
   GetNodeNameWithoutScope(&dump_style_name_part);
+  std::string slot_str;
   if (is_output) {
-    dump_style_name_part += ".output." + std::to_string(slot);
-    slot_str += ".output." + std::to_string(slot);
+    slot_str = ".output." + std::to_string(slot);
   } else {
-    dump_style_name_part += ".input." + std::to_string(slot);
-    slot_str += ".input." + std::to_string(slot);
+    slot_str = ".input." + std::to_string(slot);
   }
+  dump_style_name_part += slot_str;
   *prefix_dump_file_name = dump_style_name_part;
   *slot_string_to_check = slot_str;
 }
