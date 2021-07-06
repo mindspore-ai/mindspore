@@ -706,8 +706,9 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
         dim1_start, dim1_stop, _ = const_utils.normalize_slice(tuple_index[1], data.shape[1])
         if dim1_stop - dim1_start <= 0:
             return data
-        start = (tuple_index[0], dim1_start)
-        stop = (tuple_index[0] + 1, dim1_stop)
+        dim0_start = tuple_index[0] if tuple_index[0] >= 0 else tuple_index[0] + data.shape[0]
+        start = (dim0_start, dim1_start)
+        stop = (dim0_start + 1, dim1_stop)
         step = (1, 1)
         value_shape = (dim1_stop - dim1_start,) + const_utils.tuple_slice(data.shape, 2, None)
         value = _broadcast(value_shape, value)
