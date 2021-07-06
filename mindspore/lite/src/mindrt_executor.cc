@@ -121,8 +121,18 @@ void MindrtExecutor::TransferGraphOutput() {
 
 void MindrtExecutor::FreeOutputTensor() {
   for (auto tensor_map : *output_tensor_map_) {
+    auto src_tensor = tensor_map.first;
     auto dst_tensor = tensor_map.second;
-    dst_tensor->FreeData();
+    if (dst_tensor->allocator() != nullptr) {
+      dst_tensor->FreeData();
+    } else {
+      if (dst_tensor->data_type() == src_tensor->data_type()) {
+        /* user set graph-output-tensor from outside */
+        src_tensor->set_data(dst_tensor->data());
+        src_tensor->set_own_data(false);
+        src_tensor->set_allocator(nullptr);
+      }
+    }
   }
   return;
 }
