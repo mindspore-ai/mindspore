@@ -70,7 +70,6 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
   while (row.size() != 0) {
     auto image = row["image"];
     auto label = row["label"];
-    // EXPECT_EQ(label, res[i % 10]);
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     std::shared_ptr<Tensor> de_label;
     ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));

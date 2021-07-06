@@ -619,9 +619,9 @@ Status CsvOp::CountAllFileRows(const std::vector<std::string> &files, bool csv_h
   int32_t num_workers = GlobalContext::config_manager()->num_parallel_workers();
   int32_t op_connector_size = GlobalContext::config_manager()->op_connector_size();
   int32_t worker_connector_size = GlobalContext::config_manager()->worker_connector_size();
-  int32_t device_id = 0;
-  int32_t num_devices = 1;
-  int32_t num_samples = 0;
+  const int32_t device_id = 0;
+  const int32_t num_devices = 1;
+  const int64_t num_samples = 0;
   bool shuffle_files = false;
   std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_list;
   std::vector<std::string> column_name_list;
@@ -629,7 +629,7 @@ Status CsvOp::CountAllFileRows(const std::vector<std::string> &files, bool csv_h
   std::shared_ptr<CsvOp> op;
   *count = 0;
   if (!csv_header) {
-    column_name_list.push_back("");
+    column_name_list.emplace_back("");
   }
   op = std::make_shared<CsvOp>(files, field_delim, column_list, column_name_list, num_workers, num_samples,
                                worker_connector_size, op_connector_size, shuffle_files, num_devices, device_id);

@@ -50,106 +50,6 @@ class VOCOp : public MappableLeafOp {
  public:
   enum class TaskType { Segmentation = 0, Detection = 1 };
 
-  class Builder {
-   public:
-    // Constructor for Builder class of ImageFolderOp
-    // @param  uint32_t numWrks - number of parallel workers
-    // @param dir - directory folder got ImageNetFolder
-    Builder();
-
-    // Destructor.
-    ~Builder() = default;
-
-    // Setter method.
-    // @param const std::string & build_dir
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetDir(const std::string &build_dir) {
-      builder_dir_ = build_dir;
-      return *this;
-    }
-
-    // Setter method.
-    // @param const std::map<std::string, int32_t> &map - a class name to label map
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetClassIndex(const std::map<std::string, int32_t> &map) {
-      builder_labels_to_read_ = map;
-      return *this;
-    }
-
-    // Setter method.
-    // @param const std::string &task_type
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetTask(const std::string &task_type) {
-      if (task_type == "Segmentation") {
-        builder_task_type_ = TaskType::Segmentation;
-      } else if (task_type == "Detection") {
-        builder_task_type_ = TaskType::Detection;
-      }
-      return *this;
-    }
-
-    // Setter method.
-    // @param const std::string &usage
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetUsage(const std::string &usage) {
-      builder_usage_ = usage;
-      return *this;
-    }
-
-    // Setter method.
-    // @param int32_t num_workers
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      builder_num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method.
-    // @param int32_t op_connector_size
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t op_connector_size) {
-      builder_op_connector_size_ = op_connector_size;
-      return *this;
-    }
-
-    // Setter method.
-    // @param std::shared_ptr<Sampler> sampler
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      builder_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    // Setter method.
-    // @param bool do_decode
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetDecode(bool do_decode) {
-      builder_decode_ = do_decode;
-      return *this;
-    }
-
-    // Check validity of input args
-    // @return Status The status code returned
-    Status SanityCheck();
-
-    // The builder "Build" method creates the final object.
-    // @param std::shared_ptr<VOCOp> *op - DatasetOp
-    // @return Status The status code returned
-    Status Build(std::shared_ptr<VOCOp> *op);
-
-   private:
-    bool builder_decode_;
-    std::string builder_dir_;
-    TaskType builder_task_type_;
-    std::string builder_usage_;
-    int32_t builder_num_workers_;
-    int32_t builder_op_connector_size_;
-    int32_t builder_rows_per_buffer_;
-    std::shared_ptr<SamplerRT> builder_sampler_;
-    std::unique_ptr<DataSchema> builder_schema_;
-    std::map<std::string, int32_t> builder_labels_to_read_;
-  };
-
   // Constructor
   // @param TaskType task_type - task type of VOC
   // @param std::string task_mode - task mode of VOC
@@ -173,24 +73,8 @@ class VOCOp : public MappableLeafOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-  // @param const std::string &dir - VOC dir path
-  // @param const std::string &task_type - task type of reading voc job
-  // @param const std::string &task_mode - task mode of reading voc job
-  // @param const std::map<std::string, int32_t> input_class_indexing - input map of class index
   // @param int64_t *count - output rows number of VOCDataset
-  static Status CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                               const std::map<std::string, int32_t> &input_class_indexing, int64_t *count);
-
-#ifdef ENABLE_PYTHON
-  // @param const std::string &dir - VOC dir path
-  // @param const std::string &task_type - task type of reading voc job
-  // @param const std::string &task_mode - task mode of reading voc job
-  // @param const py::dict &dict - input dict of class index
-  // @param int64_t numSamples - samples number of VOCDataset
-  // @param std::map<std::string, int32_t> *output_class_indexing - output class index of VOCDataset
-  static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                                 const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing);
-#endif
+  Status CountTotalRows(int64_t *count);
 
   // Op name getter
   // @return Name of the current Op

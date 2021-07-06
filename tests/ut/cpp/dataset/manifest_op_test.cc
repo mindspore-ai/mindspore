@@ -37,24 +37,19 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::ERROR;
 
-// std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
-
-// std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
-
 std::shared_ptr<ManifestOp> Manifest(int32_t num_works, int32_t rows, int32_t conns, const std::string &file,
                                      std::string usage = "train", std::shared_ptr<SamplerRT> sampler = nullptr,
                                      std::map<std::string, int32_t> map = {}, bool decode = false) {
-  std::shared_ptr<ManifestOp> so;
-  ManifestOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_works)
-                .SetManifestFile(file)
-                .SetOpConnectorSize(conns)
-                .SetSampler(std::move(sampler))
-                .SetClassIndex(map)
-                .SetDecode(decode)
-                .SetUsage(usage)
-                .Build(&so);
-  return so;
+  if (sampler == nullptr) {
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
+  }
+  auto schema = std::make_unique<DataSchema>();
+  schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1));
+  schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1));
+  return std::make_shared<ManifestOp>(num_works, file, conns, decode, map, std::move(schema), std::move(sampler),
+                                      usage);
 }
 
 class MindDataTestManifest : public UT::DatasetOpTesting {

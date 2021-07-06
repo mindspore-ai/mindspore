@@ -31,39 +31,6 @@
 
 namespace mindspore {
 namespace dataset {
-ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_decode_(false) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status ManifestOp::Builder::Build(std::shared_ptr<ManifestOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  if (builder_sampler_ == nullptr) {
-    const int64_t num_samples = 0;
-    const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
-  }
-  builder_schema_ = std::make_unique<DataSchema>();
-  RETURN_IF_NOT_OK(
-    builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-  RETURN_IF_NOT_OK(
-    builder_schema_->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-  *ptr = std::make_shared<ManifestOp>(builder_num_workers_, builder_file_, builder_op_connector_size_, builder_decode_,
-                                      builder_labels_to_read_, std::move(builder_schema_), std::move(builder_sampler_),
-                                      builder_usage_);
-  return Status::OK();
-}
-
-Status ManifestOp::Builder::SanityCheck() {
-  std::string err_msg;
-  err_msg += builder_file_.empty() ? "Invalid parameter, Manifest file is not set.\n" : "";
-  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                           std::to_string(builder_num_workers_) + ".\n"
-                                       : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
-}
-
 ManifestOp::ManifestOp(int32_t num_works, std::string file, int32_t queue_size, bool decode,
                        const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
                        std::shared_ptr<SamplerRT> sampler, std::string usage)
@@ -296,44 +263,12 @@ Status ManifestOp::CountDatasetInfo() {
   return Status::OK();
 }
 
-Status ManifestOp::CountTotalRows(const std::string &file, const std::map<std::string, int32_t> &map,
-                                  const std::string &usage, int64_t *count, int64_t *numClasses) {
-  // the logic of counting the number of samples is copied from ParseManifestFile()
-  std::shared_ptr<ManifestOp> op;
+Status ManifestOp::CountTotalRows(int64_t *count) {
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetManifestFile(file).SetClassIndex(map).SetUsage(usage).Build(&op));
-  RETURN_IF_NOT_OK(op->ParseManifestFile());
-  *numClasses = static_cast<int64_t>(op->label_index_.size());
-  *count = static_cast<int64_t>(op->image_labelname_.size());
+  RETURN_IF_NOT_OK(ParseManifestFile());
+  *count = static_cast<int64_t>(image_labelname_.size());
   return Status::OK();
 }
-
-#ifdef ENABLE_PYTHON
-Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
-                                    std::map<std::string, int32_t> *output_class_indexing) {
-  std::map<std::string, int32_t> input_class_indexing;
-  for (auto p : dict) {
-    (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
-                                                                      py::reinterpret_borrow<py::int_>(p.second)));
-  }
-
-  if (!input_class_indexing.empty()) {
-    *output_class_indexing = input_class_indexing;
-  } else {
-    std::shared_ptr<ManifestOp> op;
-    RETURN_IF_NOT_OK(Builder().SetManifestFile(file).SetClassIndex(input_class_indexing).SetUsage(usage).Build(&op));
-    RETURN_IF_NOT_OK(op->ParseManifestFile());
-    RETURN_IF_NOT_OK(op->CountDatasetInfo());
-    uint32_t count = 0;
-    for (const auto label : op->label_index_) {
-      (*output_class_indexing).insert(std::make_pair(label.first, count));
-      count++;
-    }
-  }
-
-  return Status::OK();
-}
-#endif
 
 Status ManifestOp::ComputeColMap() {
   // Set the column name map (base class field)
@@ -354,10 +289,8 @@ Status ManifestOp::GetNumClasses(int64_t *num_classes) {
     return Status::OK();
   }
   int64_t classes_count;
-  std::shared_ptr<ManifestOp> op;
-  RETURN_IF_NOT_OK(Builder().SetManifestFile(file_).SetClassIndex(class_index_).SetUsage(usage_).Build(&op));
-  RETURN_IF_NOT_OK(op->ParseManifestFile());
-  classes_count = static_cast<int64_t>(op->label_index_.size());
+  RETURN_IF_NOT_OK(ParseManifestFile());
+  classes_count = static_cast<int64_t>(label_index_.size());
   *num_classes = classes_count;
   num_classes_ = classes_count;
   return Status::OK();
@@ -365,12 +298,10 @@ Status ManifestOp::GetNumClasses(int64_t *num_classes) {
 
 Status ManifestOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
   if ((*output_class_indexing).empty()) {
-    std::shared_ptr<ManifestOp> op;
-    RETURN_IF_NOT_OK(Builder().SetManifestFile(file_).SetClassIndex(class_index_).SetUsage(usage_).Build(&op));
-    RETURN_IF_NOT_OK(op->ParseManifestFile());
-    RETURN_IF_NOT_OK(op->CountDatasetInfo());
-    uint32_t count = 0;
-    for (const auto label : op->label_index_) {
+    RETURN_IF_NOT_OK(ParseManifestFile());
+    RETURN_IF_NOT_OK(CountDatasetInfo());
+    int32_t count = 0;
+    for (const auto &label : label_index_) {
       if (!class_index_.empty()) {
         (*output_class_indexing)
           .emplace_back(std::make_pair(label.first, std::vector<int32_t>(1, class_index_[label.first])));

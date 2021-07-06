@@ -168,21 +168,8 @@ class CocoOp : public MappableLeafOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-  // @param const std::string &dir - Coco image dir path
-  // @param const std::string &file - Coco json file path
-  // @param const std::string &task - task mode of Coco task
-  // @param int64_t numSamples - samples number of CocoDataset
   // @param int64_t *count - output rows number of CocoDataset
-  static Status CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                               int64_t *count);
-
-  // @param const std::string &dir - Coco image dir path
-  // @param const std::string &file - Coco json file path
-  // @param const std::string &task - task mode of Coco task
-  // @param int64_t numSamples - samples number of CocoDataset
-  // @param std::map<std::string, int32_t> *output_class_indexing - output class index of CocoDataset
-  static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                                 std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
+  Status CountTotalRows(int64_t *count);
 
   // Op name getter
   // @return Name of the current Op
