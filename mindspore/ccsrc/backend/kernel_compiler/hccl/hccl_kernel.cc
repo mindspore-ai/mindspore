@@ -234,7 +234,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
     }
 
     results.emplace_back(
-      std::make_shared<HcclTaskInfo>(kernel_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
+      std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
                                      output_data_addr, workspace_addr, task.workspace_size, task.stream_num,
                                      private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
                                      hccl_count_, root_id_, op_type_, data_type, group_, NeedDump()));

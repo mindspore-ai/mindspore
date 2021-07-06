@@ -36,7 +36,7 @@ ge::proto::DataType GeTypesConvert::GetGeDataType(TypeId type_id) {
   MS_LOG(INFO) << "Vm origin type_id:" << type_id;
   auto iter = data_type_map.find(type_id);
   if (iter == data_type_map.end()) {
-    MS_LOG(EXCEPTION) << "Invalid data type:" << type_id;
+    MS_LOG(EXCEPTION) << "MindSpore data type:" << TypeIdLabel(type_id) << " can't been found in GE.";
   }
   return iter->second;
 }

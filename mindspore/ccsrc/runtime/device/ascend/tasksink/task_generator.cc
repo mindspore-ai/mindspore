@@ -147,7 +147,9 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   AddressPtrList kernel_outputs;
   auto kernel_mod = AnfAlgo::GetKernelMod(anf_node_ptr);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  kernel_mod->set_kernel_name(anf_node_ptr->fullname_with_scope());
+  kernel_mod->set_unique_name(anf_node_ptr->UniqueName());
+  kernel_mod->set_fullname(anf_node_ptr->fullname_with_scope());
+  kernel_mod->set_is_monad(AnfAlgo::IsNodeInputContainMonad(anf_node_ptr) && HasAbstractMonad(anf_node_ptr));
   auto op_name = AnfAlgo::GetCNodeName(anf_node_ptr);
   constexpr size_t kNonePlaceholderIdx = 3;
   if ((op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, anf_node_ptr)) {

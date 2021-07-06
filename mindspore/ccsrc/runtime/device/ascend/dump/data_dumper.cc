@@ -100,8 +100,8 @@ void DataDumper::LoadDumpInfo() {
     if (!KernelNeedDump(kernel)) {
       continue;
     }
-    MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->fullname_with_scope();
-    dump_kernel_names_.emplace_back(kernel->fullname_with_scope());
+    MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->UniqueName();
+    dump_kernel_names_.emplace_back(kernel->UniqueName());
     DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
 
     aicpu::dump::Task task;
@@ -251,7 +251,7 @@ void DataDumper::ReleaseDevMem(void **ptr) const {
 
 void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const {
   dump_task->set_end_graph(false);
-  auto iter = runtime_info_map_.find(kernel->fullname_with_scope());
+  auto iter = runtime_info_map_.find(kernel->UniqueName());
   if (iter == runtime_info_map_.end()) {
     MS_LOG(EXCEPTION) << "[DataDump] kernel name not found in runtime_info_map";
   }
@@ -389,6 +389,10 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     MS_LOG(INFO) << "Skip dump output";
     return;
   }
+  if (HasAbstractMonad(kernel)) {
+    MS_LOG(WARNING) << "Skip Monad node output:" << kernel->fullname_with_scope();
+    return;
+  }
   MS_LOG(INFO) << "[DataDump] DumpKernelOutput start. Kernel:" << kernel->fullname_with_scope();
   auto input_size = AnfAlgo::GetInputTensorNum(kernel);
   auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
@@ -421,6 +425,10 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
 void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
   if (!DumpJsonParser::GetInstance().InputNeedDump()) {
     MS_LOG(INFO) << "Skip dump input";
+    return;
+  }
+  if (AnfAlgo::IsNodeInputContainMonad(kernel)) {
+    MS_LOG(WARNING) << "Skip Monad node:" << kernel->fullname_with_scope();
     return;
   }
   MS_LOG(INFO) << "[DataDump] DumpKernelInput start. Kernel:" << kernel->fullname_with_scope();
