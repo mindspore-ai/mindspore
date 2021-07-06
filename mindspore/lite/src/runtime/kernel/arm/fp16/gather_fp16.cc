@@ -61,35 +61,6 @@ int GatherFp16CPUKernel::Init() {
 
 int GatherFp16CPUKernel::ReSize() { return RET_OK; }
 
-int GatherFp16CPUKernel::PreProcess() {
-  if (!InferShapeDone()) {
-    auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "InferShape fail!";
-      return ret;
-    }
-    ret = ReSize();
-    if (ret != 0) {
-      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
-      return ret;
-    }
-    out_tensors_[0]->set_data_type(kNumberTypeFloat16);
-  }
-  for (auto *output : out_tensors_) {
-    MS_ASSERT(output != nullptr);
-    auto ret = output->MallocData();
-    if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
-      MS_LOG(ERROR) << "The size of output tensor is too big";
-      return RET_ERROR;
-    }
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "gather out tensor malloc data failed.";
-      return ret;
-    }
-  }
-  return RET_OK;
-}
-
 int GatherFp16CPUKernel::DoGather(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);

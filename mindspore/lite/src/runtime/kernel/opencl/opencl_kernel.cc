@@ -183,6 +183,7 @@ int OpenCLKernel::PreProcess() {
       }
     }
     output->set_allocator(allocator);
+    output->ResetRefCount();
   }
   return RET_OK;
 }
