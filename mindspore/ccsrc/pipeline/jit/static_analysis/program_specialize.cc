@@ -466,7 +466,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &nod
   if (func->context() == nullptr) {
     MS_LOG(EXCEPTION) << "Func context is nullptr NodeInfo: " << trace::GetDebugInfo(func_graph_->debug_info());
   }
-  AnalysisContextPtr context = real_eval->MakeContext(engine_, argvals);
+  AnalysisContextPtr context = MakeContext(engine_, real_eval, argvals);
   MS_LOG(DEBUG) << "Specialize function graph: " << context->func_graph()->ToString() << ", args: " << argvals.size()
                 << ", graph: " << context->func_graph()->get_return()->DebugString();
   if (context->func_graph()->stub()) {
@@ -478,6 +478,17 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &nod
   FuncGraphPtr v = specializer_->SpecializeFuncGraph(context->func_graph(), context);
   v->set_flag(kFuncGraphFlagUndetermined, false);
   return BuildValueNode(v, abs);
+}
+
+AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &engine,
+                                                     const BaseFuncGraphEvaluatorPtr &evaluator,
+                                                     const AbstractBasePtrList &args_spec_list) {
+  AbstractBasePtrList normalized_args_spec_list = evaluator->NormalizeArgs(args_spec_list);
+  normalized_args_spec_list = evaluator->BroadenUndeterminedArgs(normalized_args_spec_list);
+  FuncGraphPtr fg = evaluator->GetFuncGraph(engine, normalized_args_spec_list);
+  MS_EXCEPTION_IF_NULL(evaluator->parent_context());
+  AnalysisContextPtr new_context = evaluator->parent_context()->NewContext(fg, normalized_args_spec_list);
+  return new_context;
 }
 
 AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &new_node) {
