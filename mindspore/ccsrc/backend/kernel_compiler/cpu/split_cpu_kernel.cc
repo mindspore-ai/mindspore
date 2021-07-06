@@ -24,7 +24,9 @@ template <typename T>
 void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
   output_num_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num");
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
+                       [](const int &value) { return static_cast<int>(value); });
   CheckParam(kernel_node);
 }
 
@@ -44,8 +46,6 @@ bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 template <typename T>
 void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t size) {
-  (void)std::transform(input_shape_.begin(), input_shape_.end(), std::back_inserter(input_shape_int_),
-                       [](const int &value) { return static_cast<int>(value); });
   SplitParameter param;
   param.num_split_ = output_num_;
   param.split_dim_ = axis_;
@@ -64,7 +64,7 @@ void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t size) {
     param.split_count_ *= input_shape_[i];
   }
   auto task = [&](size_t start, size_t end) {
-    DoSplit(input, reinterpret_cast<void **>(output), &input_shape_int_[0], start, end - start, &param, sizeof(T));
+    (void)DoSplit(input, reinterpret_cast<void **>(output), &input_shape_[0], start, end - start, &param, sizeof(T));
   };
   CPUKernelUtils::ParallelFor(task, param.split_count_ * param.num_split_);
   return;
