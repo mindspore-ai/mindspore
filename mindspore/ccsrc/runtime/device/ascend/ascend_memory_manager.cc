@@ -29,21 +29,24 @@ namespace device {
 namespace ascend {
 namespace {
 constexpr uint64_t kAscendInitDeviceMemGB = 30;
-constexpr uint64_t kAscendMaxDeviceMemGB = 31;
 constexpr uint64_t kMemSizeGB = 30;
 constexpr uint64_t kAscendDeviceMemSize = (kAscendInitDeviceMemGB << kMemSizeGB);
 
-uint64_t GetDefaultDeviceMemSize() {
+uint64_t GetDeviceHBMSize() {
   size_t free = 0;
   size_t total = 0;
   rtError_t ret = rtMemGetInfoEx(RT_MEMORYINFO_HBM, &free, &total);
   if (ret != RT_ERROR_NONE || total == 0) {
-    MS_LOG(WARNING) << "Get total HBM memory size failed, ret = " << ret << ", use default value "
-                    << kAscendDeviceMemSize;
-    return kAscendDeviceMemSize;
+    MS_LOG(EXCEPTION) << "Get Device HBM memory size failed, ret = " << ret << ", total =  " << total;
   }
+  return total;
+}
 
-  return total * 15 / 16;  // reserved memory is 1/16 of total
+uint64_t GetDefaultDeviceMemSize() {
+  auto total = GetDeviceHBMSize();
+  auto ret = total * 15 / 16;  // reserved memory is 1/16 of total
+  MS_LOG(INFO) << "The Device HBM memory size is " << total << ", allocate " << ret << " for backend.";
+  return ret;
 }
 }  // namespace
 
@@ -89,8 +92,11 @@ uint64_t AscendMemoryManager::GetDeviceMemSizeFromContext() {
   auto gb_str = variable_memory_max_size.substr(0, pos);
   auto gb_var = std::stoull(gb_str);
   MS_LOG(INFO) << "variable_memory_max_size(GB):" << gb_var;
-  if (gb_var > kAscendMaxDeviceMemGB || gb_var == 0) {
-    MS_LOG(EXCEPTION) << "Invalid allocate memory size:" << gb_var << " which should be in (0-31]GB";
+  auto total_hbm_size_GB = GetDeviceHBMSize() >> kMemSizeGB;
+  auto backend_max_size_GB = total_hbm_size_GB - 1;  // reserved 1 GB for other component
+  if (gb_var > backend_max_size_GB || gb_var == 0) {
+    MS_LOG(EXCEPTION) << "The Total Device Memory Size is " << total_hbm_size_GB << " GB, variable_memory_max_size "
+                      << gb_var << " GB is out of range (0-" << backend_max_size_GB << "]GB";
   }
   return gb_var << kMemSizeGB;
 }
