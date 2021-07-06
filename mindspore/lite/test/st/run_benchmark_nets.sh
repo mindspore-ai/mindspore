@@ -36,14 +36,21 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" |
       echo "Run arm64 failed"
       exit 1
     fi
+    # run codegen
+    sh $cur_path/scripts/run_benchmark_codegen.sh -r $release_path -m $models_path -d $device_id -e "arm64_codegen"
+    arm64_status=$?
+    if [[ $arm64_status -ne 0 ]]; then
+      echo "Run arm64 codegen failed"
+      exit 1
+    fi
     # run train
-    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend
+    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -d $device_id -e "arm64_train"
     arm64_status=$?
     if [[ $arm64_status -ne 0 ]]; then
       echo "Run arm64 train failed"
       exit 1
     fi
-    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend -c ${cur_path}/../config/models_ms_transfer.cfg
+    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -d $device_id -e "arm64_train" -c ${cur_path}/../config/models_ms_transfer.cfg
     arm64_status=$?
     if [[ $arm64_status -ne 0 ]]; then
       echo "Run arm64 transferLearning failed"
@@ -59,14 +66,21 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" |
       echo "Run arm32 failed"
       exit 1
     fi
+    # run codegen
+    sh $cur_path/scripts/run_benchmark_codegen.sh -r $release_path -m $models_path -d $device_id -e "arm32_codegen"
+    arm32_status=$?
+    if [[ $arm32_status -ne 0 ]]; then
+      echo "Run arm32 codegen failed"
+      exit 1
+    fi
     # run train
-    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend
+    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -d $device_id -e "arm32_train"
     arm32_status=$?
     if [[ $arm32_status -ne 0 ]]; then
       echo "Run arm32 train failed"
       exit 1
     fi
-    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -d $device_id -e $backend -c ${cur_path}/../config/models_ms_transfer.cfg
+    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -d $device_id -e "arm32_train" -c ${cur_path}/../config/models_ms_transfer.cfg
     arm32_status=$?
     if [[ $arm32_status -ne 0 ]]; then
       echo "Run arm32 transferLearning failed"
@@ -93,21 +107,28 @@ if [[ $backend == "all" || $backend == "npu" ]]; then
 fi
 
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backend == "x86-sse" || \
-      $backend == "x86-avx" || $backend == "x86-java" || $backend == "x86-codegen" ]]; then
+      $backend == "x86-avx" || $backend == "x86-java" || $backend == "x86_codegen" ]]; then
     sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
       echo "Run x86 failed"
       exit 1
     fi
+    # run codegen
+    sh $cur_path/scripts/run_benchmark_codegen.sh -r $release_path -m $models_path -e "x86_codegen"
+    x86_status=$?
+    if [[ $x86_status -ne 0 ]]; then
+      echo "Run x86 codegen failed"
+      exit 1
+    fi
     # run train
-    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -e $backend
+    sh $cur_path/scripts/run_net_train.sh -r $release_path -m ${models_path}/../../models_train -e "x86_train"
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
       echo "Run x86 train failed"
       exit 1
     fi
-    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -e $backend -c ${cur_path}/../config/models_ms_transfer.cfg
+    sh $cur_path/scripts/run_net_train.sh -T -r $release_path -m ${models_path}/../../models_train -e "x86_train" -c ${cur_path}/../config/models_ms_transfer.cfg
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
       echo "Run x86 transferLearning failed"

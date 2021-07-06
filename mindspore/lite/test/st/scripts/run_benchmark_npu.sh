@@ -73,7 +73,6 @@ while getopts "r:m:d:e:" opt; do
 done
 
 # mkdir train
-
 x86_path=${release_path}/ubuntu_x86
 file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"

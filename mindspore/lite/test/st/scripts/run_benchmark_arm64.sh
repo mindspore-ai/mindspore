@@ -89,94 +89,6 @@ function Run_arm64_fp16() {
     Run_Benchmark "${arm64_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id
 }
 
-function Run_arm64_codegen() {
-    echo "ANDROID_NDK: ${ANDROID_NDK}" >> ${run_arm64_fp32_codegen_log_file}
-    cd ${arm64_path} || exit 1
-    tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
-    local PKG_PATH=${arm64_path}/mindspore-lite-${version}-android-aarch64
-    local CODEGEN_PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/codegen
-
-    rm -rf ${build_path}
-    mkdir -p ${build_path}
-
-    # Run tflite converted models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-
-        {
-            echo "arm64_codegen: ${model_name}"
-            echo "${CODEGEN_PATH}/codegen --codePath=${build_path} --modelPath=${ms_models_path}/${model_name}.ms --target=ARM64"
-            ${CODEGEN_PATH}/codegen --codePath=${build_path} --modelPath=${ms_models_path}/${model_name}.ms --target=ARM64
-        } >> ${run_arm64_fp32_codegen_log_file}
-
-        rm -rf ${build_path}/benchmark
-        mkdir -p ${build_path}/benchmark && cd ${build_path}/benchmark || exit 1
-
-        {
-            echo "cmake -DCMAKE_BUILD_TYPE=Release
-                  -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
-                  -DANDROID_ABI=arm64-v8a
-                  -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
-                  -DANDROID_NATIVE_API_LEVEL=19
-                  -DPLATFORM_ARM64=ON
-                  -DPKG_PATH=${PKG_PATH} ${build_path}/${model_name}"
-
-            cmake -DCMAKE_BUILD_TYPE=Release \
-                  -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
-                  -DANDROID_ABI="arm64-v8a" \
-                  -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" \
-                  -DANDROID_NATIVE_API_LEVEL="19" \
-                  -DPLATFORM_ARM64=ON \
-                  -DPKG_PATH=${PKG_PATH} ${build_path}/${model_name}
-
-            make -j4
-        } >> ${run_arm64_fp32_codegen_log_file}
-
-        rm -rf ${build_path}/codegen_test
-        mkdir ${build_path}/codegen_test && cd ${build_path}/codegen_test || exit 1
-        cp -a ${build_path}/benchmark/benchmark ${build_path}/codegen_test/benchmark || exit 1
-        cp -a ${build_path}/${model_name}/src/net.bin ${build_path}/codegen_test/net.bin || exit 1
-
-        {
-            echo 'ls ${build_path}/codegen_test'
-            ls ${build_path}/codegen_test
-        } >> ${run_arm64_fp32_codegen_log_file}
-
-        # adb push all needed files to the phone
-        adb -s ${device_id} push ${build_path}/codegen_test /data/local/tmp/ > adb_push_log.txt
-
-        {
-            echo 'cd  /data/local/tmp/codegen_test'
-            echo 'chmod 777 benchmark'
-            echo 'chmod 777 net.bin'
-            echo 'ls'
-            echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
-            echo 'cd .. && rm -rf codegen_test'
-        } >> ${run_arm64_fp32_codegen_log_file}
-
-        {
-            echo 'cd  /data/local/tmp/codegen_test'
-            echo 'chmod 777 benchmark'
-            echo 'chmod 777 net.bin'
-            echo 'ls'
-            echo './benchmark /data/local/tmp/input_output/input/'${model_name}'.ms.bin ./net.bin 1 /data/local/tmp/input_output/output/'${model_name}'.ms.out'
-            echo 'cd .. && rm -rf codegen_test'
-        } > adb_run_cmd.txt
-
-        adb -s ${device_id} shell < adb_run_cmd.txt >> ${run_arm64_fp32_codegen_log_file}
-        if [ $? = 0 ]; then
-            run_result='arm64_codegen: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_codegen: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_codegen_config}
-
-    rm -rf ${build_path}
-}
-
 basepath=$(pwd)
 echo ${basepath}
 #set -e
@@ -206,8 +118,9 @@ while getopts "r:m:d:e:" opt; do
     esac
 done
 
-# mkdir train
+# package info
 x86_path=${release_path}/ubuntu_x86
+arm64_path=${release_path}/android_aarch64
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
@@ -231,10 +144,8 @@ models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_config=${basepath}/../config/models_weightquant.cfg
 models_compatibility_config=${basepath}/../config/models_compatibility.cfg
 models_for_process_only_config=${basepath}/../config/models_for_process_only.cfg
-models_codegen_config=${basepath}/../config/models_codegen.cfg
 
 ms_models_path=${basepath}/ms_models
-build_path=${basepath}/codegen_build
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
@@ -268,10 +179,6 @@ echo ' ' > ${run_benchmark_result_file}
 
 run_arm64_fp32_log_file=${basepath}/run_arm64_fp32_log.txt
 echo 'run arm64_fp32 logs: ' > ${run_arm64_fp32_log_file}
-
-run_arm64_fp32_codegen_log_file=${basepath}/run_arm64_fp32_codegen_log.txt
-echo 'run arm64_codegen logs: ' > ${run_arm64_fp32_codegen_log_file}
-
 run_arm64_fp16_log_file=${basepath}/run_arm64_fp16_log.txt
 echo 'run arm64_fp16 logs: ' > ${run_arm64_fp16_log_file}
 
@@ -284,12 +191,6 @@ cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
 # Copy models converted using old release of mslite converter for compatibility test
 cp -a ${models_path}/compatibility_test/*.ms ${benchmark_test_path} || exit 1
 
-# package info
-arm64_path=${release_path}/android_aarch64
-file_name=$(ls ${arm64_path}/*-android-aarch64.tar.gz)
-IFS="-" read -r -a file_name_array <<< "$file_name"
-version=${file_name_array[2]}
-
 backend=${backend:-"all"}
 isFailed=0
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" ]]; then
@@ -301,18 +202,6 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" ]
     if [[ ${Run_arm64_fp32_status} != 0 ]];then
         echo "Run_arm64_fp32 failed"
         cat ${run_arm64_fp32_log_file}
-        isFailed=1
-    fi
-fi
-if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_codegen" ]]; then
-    # Run on codegen
-    echo "start Run arm64 codegen ..."
-    Run_arm64_codegen
-    Run_arm64_codegen_status=$?
-    sleep 1
-    if [[ ${Run_arm64_codegen_status} != 0 ]];then
-        echo "Run_arm64_codegen failed"
-        cat ${run_arm64_fp32_codegen_log_file}
         isFailed=1
     fi
 fi
