@@ -77,3 +77,5 @@ from .stack_push_pop import _stack_push_aicpu
 from .stack_push_pop import _stack_pop_aicpu
 from .stack_push_pop import _stack_destroy_aicpu
 from .ctc_greedy_decoder import _ctc_greedy_decoder_aicpu
+from .resize_bilinear import _resize_bilinear_aicpu
+from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
