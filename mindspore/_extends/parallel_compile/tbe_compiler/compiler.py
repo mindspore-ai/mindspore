@@ -73,6 +73,9 @@ def build_op(build_type, json_str, tune_mode=None):
     rl_tune_switch = kernel_info['op_info']['rl_tune_switch']
     rl_tune_list = kernel_info['op_info']['rl_tune_list']
     reset_op_info = kernel_info["reset_op_info"]
+    op_tune_switch = kernel_info['op_info']['op_tune_switch']
+    op_tune_list = kernel_info['op_info']['op_tune_list']
+    pass_list = kernel_info['op_info']['pass_list']
 
     try:
         custom_flag = False
@@ -147,7 +150,10 @@ def build_op(build_type, json_str, tune_mode=None):
                                                  fuzz_build_info=None,
                                                  reset_op_info=reset_op_info,
                                                  switch_str=rl_tune_switch,
-                                                 lic_opt_list=rl_tune_list)
+                                                 lic_opt_list=rl_tune_list,
+                                                 pass_opt_list=pass_list,
+                                                 switch_optune=op_tune_switch,
+                                                 optune_opt_list=op_tune_list)
             if tune_mode is not None:
                 return None, (inputs_args, outputs_args, attrs_args), op_module_name
             return res
@@ -177,8 +183,12 @@ def compile_fusion_op(json_str):
     fusion_op_arg = args['fusion_op']
     rl_tune_switch = args['fusion_op']['rl_tune_switch']
     rl_tune_list = args['fusion_op']['rl_tune_list']
+    op_tune_switch = args['fusion_op']['op_tune_switch']
+    op_tune_list = args['fusion_op']['op_tune_list']
+    pass_list = args['fusion_op']['pass_list']
     return fusion_op(json.dumps(fusion_op_arg), reset_op_info=reset_op_info, switch_str=rl_tune_switch,
-                     lic_opt_list=rl_tune_list)
+                     lic_opt_list=rl_tune_list, pass_opt_list=pass_list,
+                     switch_optune=op_tune_switch, optune_opt_list=op_tune_list)
 
 
 def compile_with_json(json_str):
