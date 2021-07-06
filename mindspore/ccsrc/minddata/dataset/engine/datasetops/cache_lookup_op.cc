@@ -26,34 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor. Creates the builder object.
-CacheLookupOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullptr) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  build_num_workers_ = cfg->num_parallel_workers();
-  build_op_connector_size_ = cfg->op_connector_size();
-}
-
-// Check if the required parameters are set by the builder.
-Status CacheLookupOp::Builder::SanityCheck() const {
-  if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, CacheLookupOp requires a CacheClient, but got nullptr.");
-  }
-  // Make sure the cache client has a valid session
-  if (!build_cache_client_->session_id()) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, cache client for CacheLookupOp requires a session id which is not equal to 0.");
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object and does some init on it
-Status CacheLookupOp::Builder::Build(std::shared_ptr<CacheLookupOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr =
-    std::make_shared<CacheLookupOp>(build_num_workers_, build_op_connector_size_, build_cache_client_, build_sampler_);
-  return Status::OK();
-}
 Status CacheLookupOp::operator()() {
   if (!sampler_) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,

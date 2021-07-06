@@ -58,12 +58,13 @@ class DatasetCacheImpl : public DatasetCache {
   /// \return Status Error code
   Status Build() override;
 
-  Status CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) override;
+  Status CreateCacheOp(int32_t num_workers, int32_t connector_queue_size, std::shared_ptr<SamplerObj> sampler,
+                       std::shared_ptr<DatasetOp> *ds) override;
 
-  Status CreateCacheLookupOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds,
-                             std::shared_ptr<SamplerObj> sampler) override;
+  Status CreateCacheLookupOp(int32_t num_workers, int32_t connector_queue_size, std::shared_ptr<SamplerObj> sampler,
+                             std::shared_ptr<DatasetOp> *ds) override;
 
-  Status CreateCacheMergeOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) override;
+  Status CreateCacheMergeOp(int32_t num_workers, int32_t connector_queue_size, std::shared_ptr<DatasetOp> *ds) override;
 
   Status ValidateParams() override { return Status::OK(); }
 

@@ -38,35 +38,35 @@ Status DatasetCacheImpl::Build() {
   return builder.Build(&cache_client_);
 }
 
-Status DatasetCacheImpl::CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "Cache client has not been created yet.");
-  std::shared_ptr<CacheOp> cache_op = nullptr;
-  RETURN_IF_NOT_OK(CacheOp::Builder().SetNumWorkers(num_workers).SetClient(cache_client_).Build(&cache_op));
+Status DatasetCacheImpl::CreateCacheOp(int32_t num_workers, int32_t connector_queue_size,
+                                       std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetOp> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "CacheOp requires a CacheClient, but got nullptr.");
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler->SamplerBuild(&sampler_rt));
+  std::shared_ptr<CacheOp> cache_op =
+    std::make_shared<CacheOp>(num_workers, connector_queue_size, cache_client_, std::move(sampler_rt));
   *ds = cache_op;
 
   return Status::OK();
 }
 
-Status DatasetCacheImpl::CreateCacheLookupOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds,
-                                             std::shared_ptr<SamplerObj> sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "Cache client has not been created yet.");
-  std::shared_ptr<CacheLookupOp> lookup_op = nullptr;
+Status DatasetCacheImpl::CreateCacheLookupOp(int32_t num_workers, int32_t connector_queue_size,
+                                             std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetOp> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "CacheLookupOp requires a CacheClient, but got nullptr.");
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler->SamplerBuild(&sampler_rt));
-  RETURN_IF_NOT_OK(CacheLookupOp::Builder()
-                     .SetNumWorkers(num_workers)
-                     .SetClient(cache_client_)
-                     .SetSampler(sampler_rt)
-                     .Build(&lookup_op));
+  std::shared_ptr<CacheLookupOp> lookup_op =
+    std::make_shared<CacheLookupOp>(num_workers, connector_queue_size, cache_client_, std::move(sampler_rt));
   *ds = lookup_op;
 
   return Status::OK();
 }
 
-Status DatasetCacheImpl::CreateCacheMergeOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "Cache client has not been created yet.");
-  std::shared_ptr<CacheMergeOp> merge_op = nullptr;
-  RETURN_IF_NOT_OK(CacheMergeOp::Builder().SetNumWorkers(num_workers).SetClient(cache_client_).Build(&merge_op));
+Status DatasetCacheImpl::CreateCacheMergeOp(int32_t num_workers, int32_t connector_queue_size,
+                                            std::shared_ptr<DatasetOp> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "CacheMergeOp requires a CacheClient, but got nullptr.");
+  std::shared_ptr<CacheMergeOp> merge_op =
+    std::make_shared<CacheMergeOp>(num_workers, connector_queue_size, num_workers, cache_client_);
   *ds = merge_op;
 
   return Status::OK();

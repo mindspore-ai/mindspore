@@ -72,83 +72,13 @@ class CacheMergeOp : public ParallelOp {
   constexpr static int kCacheHitChildIdx = 0;   // Cache hit stream
   constexpr static int kCacheMissChildIdx = 1;  // Cache miss stream
 
-  /// \brief The nested builder class inside of the CacheMergeOp is used to help manage all of
-  /// the arguments for constructing it.  Use the builder by setting each argument
-  /// with the provided set methods, and then finally call the build method to execute
-  /// the actual construction.
-  class Builder {
-   public:
-    /// Builder constructor. Creates the builder object.
-    /// \note No default args
-    Builder();
-
-    /// Default destructor
-    ~Builder() = default;
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      build_num_workers_ = num_workers;
-      // Adjust the number of cleaners to match the number of workers
-      build_num_cleaners_ = std::max(build_num_cleaners_, build_num_workers_);
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t connector_size) {
-      build_op_connector_size_ = connector_size;
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetClient(std::shared_ptr<CacheClient> cache_client) {
-      build_cache_client_ = cache_client;
-      return *this;
-    }
-
-    /// \brief Setter method
-    /// \param sampler
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      build_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    /// \brief Setter method
-    /// \param num_cleaners
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetNumCleaner(int32_t num_cleaners) {
-      build_num_cleaners_ = num_cleaners;
-      return *this;
-    }
-
-    /// The builder "build" method creates the final object and does some init on it.
-    /// \param ptr The shared_ptr to the new CacheMergeOp object
-    /// \return Status
-    Status Build(std::shared_ptr<CacheMergeOp> *ptr);
-
-   private:
-    int32_t build_num_workers_;
-    int32_t build_op_connector_size_;
-    int32_t build_num_cleaners_;
-    std::shared_ptr<CacheClient> build_cache_client_;
-    std::shared_ptr<SamplerRT> build_sampler_;
-
-    /// Check if the required parameters are set by the builder.
-    /// \return Status The status code returned
-    Status SanityCheck() const;
-  };
-
   /// \brief Constructor
   /// \param numWorkers Number of parallel workers as a derived class of ParallelOp
   /// \param opConnector Size Connector size as a derived class of ParallelOp
   /// \param numCleaners Number of cleaners to move cache miss rows into the cache server
   /// \param cache_client CacheClient to communicate with the Cache server
-  /// \param sampler as a derived class of ParallelOp
   CacheMergeOp(int32_t numWorkers, int32_t opConnectorSize, int32_t numCleaners,
-               std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<SamplerRT> &sampler);
+               std::shared_ptr<CacheClient> cache_client);
   ~CacheMergeOp();
   void Print(std::ostream &out, bool show_all) const override;
   std::string Name() const override { return kCacheMergeOp; }
