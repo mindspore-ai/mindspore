@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace pipeline {
-static int64_t GetRank() {
+std::string GetWorldGroup() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string world_group;
@@ -37,6 +37,13 @@ static int64_t GetRank() {
   } else {
     MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
   }
+  return world_group;
+}
+
+static int64_t GetRank() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto world_group = GetWorldGroup();
   int64_t global_rank = parallel::ParallelContext::GetInstance()->global_rank();
   uint32_t rank_id = 0;
   if (!parallel::ParallelContext::GetInstance()->global_rank_is_set()) {
@@ -75,7 +82,18 @@ bool PipelineSplit(const ResourcePtr &res) {
   auto manager = res->manager();
   auto root = res->func_graph();
   auto global_rank = GetRank();
-  auto device_num = parallel::ParallelContext::GetInstance()->device_num();
+  auto world_group = GetWorldGroup();
+  uint32_t world_rank_size = 0;
+  int64_t device_num = 0;
+  if (!parallel::ParallelContext::GetInstance()->device_num_is_set()) {
+    if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
+      MS_LOG(EXCEPTION) << "Get rank size failed";
+    }
+    device_num = UintToInt(world_rank_size);
+    MS_LOG(INFO) << "Get device num from communication model, the device num is  " << device_num;
+  } else {
+    device_num = parallel::ParallelContext::GetInstance()->device_num();
+  }
   if (device_num < 1) {
     MS_LOG(EXCEPTION) << "Invalid device num: " << device_num;
   }

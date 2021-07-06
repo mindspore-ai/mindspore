@@ -99,7 +99,7 @@ OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAtt
                                     std::vector<Shapes> shape_list);
 
 // Extract strategy from attr
-StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs);
+StrategyPtr ExtractStrategy(const ValuePtr &strategy);
 
 Shapes GetNodeShape(const AnfNodePtr &node);
 
