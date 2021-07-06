@@ -35,6 +35,7 @@ from .gather_nd import _gather_nd_cpu
 from .maximum import _maximum_cpu
 from .maximum_grad import _maximum_grad_cpu
 from .conv2d import _conv2d_cpu
+from .conv3d import _conv3d_cpu
 from .hsigmoid import _hsigmoid_cpu
 from .hsigmoid_grad import _hsigmoid_grad_cpu
 from .hswish import _hswish_cpu
