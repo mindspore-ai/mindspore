@@ -24,7 +24,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
@@ -171,7 +171,8 @@ def run_train():
     device_num = get_device_num()
 
     if cfg.device_target == "Ascend":
-        context.set_context(device_id=get_device_id())
+        device_id = get_device_id()
+        context.set_context(device_id=device_id)
         if device_num > 1:
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -179,11 +180,13 @@ def run_train():
             init()
     elif cfg.device_target == "GPU":
         context.set_context(enable_graph_kernel=True)
+        device_id = 0
         if device_num > 1:
             init()
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
+            device_id = get_rank()
 
     if cfg.dataset_name == "cifar10":
         dataset = create_dataset_cifar10(cfg.train_data_path, 1, cifar_cfg=cfg)
@@ -240,7 +243,6 @@ def run_train():
     loss_cb = LossMonitor()
 
     cbs = [time_cb, ckpoint_cb, loss_cb]
-    device_id = get_device_id()
     if device_num > 1 and device_id != 0:
         cbs = [time_cb, loss_cb]
     model.train(cfg.epoch_size, dataset, callbacks=cbs)
