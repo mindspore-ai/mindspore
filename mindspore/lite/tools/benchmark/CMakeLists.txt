@@ -30,3 +30,20 @@ if(NOT TARGET_HIMIX200)
     endif()
 endif()
 
+if(MSLITE_COMPILE_NNIE AND TARGET_HIMIX200 AND PLATFORM_ARM)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nnie/third_patry/hi3516_sdk)
+    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/nnie/third_patry/hi3516_sdk/lib)
+    set(CMAKE_SKIP_BUILD_RPATH on)
+    add_subdirectory(nnie)
+    add_subdirectory(nnie_proposal)
+
+    add_executable(benchmark
+            ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/benchmark.cc
+            ${COMMON_SRC})
+
+    add_dependencies(benchmark fbs_src)
+
+    target_link_libraries(benchmark mindspore-lite mindspore::json pthread nnie_proposal
+            mslite_nnie dl nnie mpi  VoiceEngine upvqe dnvqe securec)
+endif()
