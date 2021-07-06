@@ -38,7 +38,7 @@ __global__ void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, si
     for (size_t j = 0; j < dim1; ++j) {
       size_t read_index = j * stride2 + offset;
       if (j == 0) {
-        output[read_index] = 0;
+        output[read_index] = 1;
       } else {
         size_t read_index2 = (j - 1) * stride2 + offset;
         output[read_index] = input[read_index2];
@@ -60,7 +60,7 @@ __global__ void RightMove(const T *input, T *output, size_t dim0, size_t dim1, s
     for (int j = dim1 - 1; j >= 0; --j) {
       size_t read_index = j * stride2 + offset;
       if (j == dim1 - 1) {
-        output[read_index] = 0;
+        output[read_index] = 1;
       } else {
         size_t read_index2 = (j + 1) * stride2 + offset;
         output[read_index] = input[read_index2];
