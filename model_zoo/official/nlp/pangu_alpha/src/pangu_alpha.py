@@ -194,7 +194,7 @@ class MappingOutput(nn.Cell):
         return output
 
 
-class Output(nn.Cell):
+class FeedForwardLayer(nn.Cell):
     """
     The output mapping module for each layer
     Args:
@@ -206,7 +206,7 @@ class Output(nn.Cell):
         output: Tensor, the output of this layer after mapping
     """
     def __init__(self, config, scale=1.0):
-        super(Output, self).__init__()
+        super(FeedForwardLayer, self).__init__()
         input_size = config.embedding_size
         output_size = config.embedding_size * config.expand_ratio
         # Project to expand_ratio*embedding_size
@@ -559,7 +559,7 @@ class Decoder(nn.Cell):
 
         self.attention = Attention(config, scale, layer_idx)
         # Feed Forward Network, FFN
-        self.output = Output(config, scale)
+        self.output = FeedForwardLayer(config, scale)
         self.post_layernorm_residual = config.post_layernorm_residual
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
         # Last activation of this layer will be saved for recompute in backward process
@@ -778,7 +778,7 @@ class QueryLayer(nn.Cell):
         self.layernorm1 = LayerNorm((config.embedding_size,), config.dp).to_float(mstype.float32)
         self.layernorm2 = LayerNorm((config.embedding_size,), config.dp).to_float(mstype.float32)
         self.attention = QueryLayerAttention(config, scale)
-        self.output = Output(config, scale)
+        self.output = FeedForwardLayer(config, scale)
         self.post_layernorm_residual = config.post_layernorm_residual
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
         self.dtype = config.compute_dtype
@@ -909,7 +909,7 @@ class PanguAlpha_Model(nn.Cell):
         self.is_pipeline = (config.stage_num > 1)
         if self.is_pipeline:
             self.top_query_embedding_table = Parameter(initializer(TruncatedNormal(0.02),
-                                                                   [config.vocab_size, config.embedding_size]),
+                                                                   [config.seq_length, config.embedding_size]),
                                                        name='embedding_table', parallel_optimizer=False)
             self.top_query_embedding = EmbeddingLookup()
             for i in range(config.num_layers):
@@ -942,24 +942,25 @@ class PanguAlpha_Model(nn.Cell):
             else:
                 top_query_table_param = TruncatedNormal(0.02)
             self.top_query_embedding_table = Parameter(initializer(top_query_table_param,
-                                                                   [config.vocab_size, config.embedding_size]),
+                                                                   [config.seq_length, config.embedding_size]),
                                                        name='embedding_table', parallel_optimizer=False)
             self.top_query_embedding = EmbeddingLookup()
             # Total fusion groups for HCCL operators. Specifically, the same tyep HCCL operators in same group will be fused.
             fusion_group_num = 4
             fusion_group_size = config.num_layers // fusion_group_num
             fusion_group_size = max(fusion_group_size, 1)
-            for i in range(config.num_layers):
-                if i == config.num_layers - 1:
-                    per_block = QueryLayer(config).set_comm_fusion(int(i / fusion_group_size) + 2)
-                else:
-                    per_block = Decoder(config, i + 1).set_comm_fusion(int(i / fusion_group_size) + 2)
+            for i in range(config.num_layers-1):
+                per_block = Decoder(config, i + 1).set_comm_fusion(int(i / fusion_group_size) + 2)
                 # Each layer will be remoputed in the backward process. The output activation of each layer will be saved,
                 # in other words, in backward process each block will be almosttotally recomputed.
                 per_block.recompute()
                 self.blocks.append(per_block)
             self.layernorm = LayerNorm((config.embedding_size,), config.dp).to_float(mstype.float32)
             self.layernorm.set_comm_fusion(int((config.num_layers - 1) / fusion_group_size) + 2)
+
+            self.top_query_layer = QueryLayer(config).set_comm_fusion(
+                int((config.num_layers - 1) / fusion_group_size) + 2)
+            self.top_query_layer.recompute()
             self.top_query_embedding_table.comm_fusion = int((config.num_layers - 1) / fusion_group_size) + 2
         self.top_query_embedding.gather.shard(((1, 1), (config.dp,)))
 
@@ -983,8 +984,8 @@ class PanguAlpha_Model(nn.Cell):
             output_state = self.layernorm(hidden_states)
             output_state = F.cast(output_state, self.dtype)
             top_query_hidden_states = self.top_query_embedding(input_position.view(-1,), self.top_query_embedding_table)
-            output_state, _ = self.blocks[self.num_layers-1](output_state, top_query_hidden_states,
-                                                             attention_mask, init_reset, batch_valid_length)
+            output_state, _ = self.top_query_layer(output_state, top_query_hidden_states,
+                                                   attention_mask, init_reset, batch_valid_length)
         return output_state
 
 class PanguAlpha_Head(nn.Cell):
