@@ -450,9 +450,8 @@ void Debugger::PostExecuteGraphDebugger() {
   for (auto graph : graph_ptr_list_) {
     debugger_->LoadParametersAndConst(graph);
   }
-  bool dump_enabled = debugger_->DumpDataEnabledIteration();
   // debug used for dump
-  if (debugger_ && dump_enabled) {
+  if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
     // Dump Parameters and consts
     for (auto graph : graph_ptr_list_) {
       debugger_->Dump(graph);
@@ -460,9 +459,6 @@ void Debugger::PostExecuteGraphDebugger() {
         debugger_->ClearCurrentData();
       }
     }
-
-  } else {
-    DumpJsonParser::GetInstance().UpdateDumpIter();
   }
   if (debugger_) {
     debugger_->PostExecute();
