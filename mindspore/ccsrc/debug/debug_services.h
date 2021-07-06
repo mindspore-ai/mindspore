@@ -226,8 +226,8 @@ class DebugServices {
                        const std::size_t data_size, const std::string &type_name, const std::vector<int64_t> &shape,
                        std::vector<char> *buffer, std::vector<std::shared_ptr<TensorData>> *result_list);
 
-  void SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *dump_style_kernel_name, size_t slot,
-                        bool is_output);
+  void SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *slot_string_to_check,
+                        std::string *dump_style_kernel_name, size_t slot, bool is_output);
 
   void ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                         std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,

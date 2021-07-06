@@ -674,16 +674,20 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   result_list->push_back(tensor_data);
 }
 
-void DebugServices::SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *dump_style_kernel_name,
-                                     size_t slot, bool is_output) {
+void DebugServices::SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *slot_string_to_check,
+                                     std::string *dump_style_kernel_name, size_t slot, bool is_output) {
   std::string dump_style_name_part = *dump_style_kernel_name;
+  std::string slot_str = "";
   GetNodeNameWithoutScope(&dump_style_name_part);
   if (is_output) {
     dump_style_name_part += ".output." + std::to_string(slot);
+    slot_str += ".output." + std::to_string(slot);
   } else {
     dump_style_name_part += ".input." + std::to_string(slot);
+    slot_str += ".input." + std::to_string(slot);
   }
   *prefix_dump_file_name = dump_style_name_part;
+  *slot_string_to_check = slot_str;
 }
 
 std::string GetNewestFilePath(std::vector<std::string> file_list) {
@@ -709,8 +713,11 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     std::size_t found_colon = dump_style_kernel_name.find_last_of(":");
     dump_style_kernel_name = dump_style_kernel_name.substr(0, found_colon);
 
+    std::string slot_string_to_check;
     std::string prefix_dump_file_name;
-    SetPrefixToCheck(&prefix_dump_file_name, &dump_style_kernel_name, slot[i], is_output[i]);
+    SetPrefixToCheck(&prefix_dump_file_name, &slot_string_to_check, &dump_style_kernel_name, slot[i], is_output[i]);
+    std::string prefix_dump_to_check = dump_style_kernel_name;
+    GetNodeNameWithoutScope(&prefix_dump_to_check);
 
     std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
@@ -765,9 +772,9 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       bool found = false;
       // if async mode
       for (const std::string &file_path : async_file_pool) {
-        std::string stripped_file_name = GetStrippedFilename(file_path);
         if (file_path.find(specific_dump_dir) != std::string::npos &&
-            stripped_file_name.find(prefix_dump_file_name) != std::string::npos) {
+            file_path.find(prefix_dump_to_check) != std::string::npos &&
+            file_path.find(slot_string_to_check) != std::string::npos) {
           found = true;
           shape.clear();
           ReadTensorFromNpy(file_path, &type_name, &data_size, &shape, &buffer);
