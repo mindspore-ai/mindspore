@@ -28,7 +28,6 @@ class SwitchCPUKernel : public CarryDataKernel {
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : CarryDataKernel(parameter, inputs, outputs, ctx) {}
   ~SwitchCPUKernel() override = default;
-  int PostProcess() override;
   int Init() override;
   int ReSize() override;
   int Run() override;
