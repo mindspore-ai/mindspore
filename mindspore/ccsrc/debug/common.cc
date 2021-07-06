@@ -293,4 +293,29 @@ bool Common::FileExists(const std::string &filepath) {
   f.close();
   return cache_file_existed;
 }
+
+struct GlogLogDirRegister {
+  GlogLogDirRegister() {
+    const char *logtostderr = ::getenv("GLOG_logtostderr");
+    const char *log_dir = ::getenv("GLOG_log_dir");
+    if (logtostderr != nullptr && log_dir != nullptr) {
+      std::string logtostderr_str = std::string(logtostderr);
+      std::string log_dir_str = std::string(log_dir);
+
+      auto real_log_dir_str = Common::GetRealPath(log_dir_str);
+
+      // While 'GLOG_logtostderr' = 0, logs output to files.
+      // 'GLOG_log_dir' must be specified as the path of log files.
+      if (logtostderr_str == "0" && real_log_dir_str.has_value()) {
+        if (!Common::IsPathValid(real_log_dir_str.value(), MAX_DIRECTORY_LENGTH, "")) {
+          MS_LOG(EXCEPTION) << "The path of log files, set by 'GLOG_log_dir', is invalid";
+        } else if (!Common::CreateNotExistDirs(real_log_dir_str.value())) {
+          MS_LOG(EXCEPTION) << "Create the path of log files, set by 'GLOG_log_dir', failed.";
+        }
+      } else if (logtostderr_str == "0") {
+        MS_LOG(EXCEPTION) << "The path of log files, set by 'GLOG_log_dir', is invalid.";
+      }
+    }
+  }
+} _glog_log_dir_register;
 }  // namespace mindspore

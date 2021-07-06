@@ -17,7 +17,6 @@ log module
 """
 import sys
 import os
-import re
 import stat
 import time
 import logging
@@ -290,38 +289,6 @@ def _get_env_config():
             config_dict[key] = value.strip()
     return config_dict
 
-def check_directory_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
-    """Check whether directory is legitimate."""
-    if not isinstance(target, str):
-        raise ValueError("Args directory {} must be string, please check it".format(target))
-    if reg is None:
-        reg = r"^[\/0-9a-zA-Z\_\-\.\:\\]+$"
-    if re.match(reg, target, flag) is None:
-        prim_name = f'in `{prim_name}`' if prim_name else ""
-        raise ValueError("'{}' {} is illegal, it should be match regular'{}' by flags'{}'".format(
-            target, prim_name, reg, flag))
-    return True
-
-def _make_directory(path: str):
-    """Make directory."""
-    if path is None or not isinstance(path, str) or path.strip() == "":
-        raise TypeError("Input path '{}' is invalid type".format(path))
-
-    path = os.path.realpath(path)
-    check_directory_by_regular(path)
-    if os.path.exists(path):
-        real_path = path
-    else:
-        try:
-            permissions = os.R_OK | os.W_OK | os.X_OK
-            os.umask(permissions << 3 | permissions)
-            mode = permissions << 6
-            os.makedirs(path, mode=mode, exist_ok=True)
-            real_path = path
-        except PermissionError:
-            raise TypeError("No write permission on the directory `{path}`.")
-    return real_path
-
 def _verify_config(kwargs):
     """
     Verify log configurations.
@@ -362,7 +329,8 @@ def _verify_config(kwargs):
         if console == _std_off and file_path is not None:
             file_real_path = os.path.realpath(file_path)
             if not os.path.exists(file_real_path):
-                _make_directory(file_real_path)
+                raise ValueError(f'The file path does not exist.'
+                                 f'{_confmap_dict["filepath"]}:{file_path}')
 
         # Check the input value of maxBytes
         max_bytes = kwargs.get('maxBytes', None)

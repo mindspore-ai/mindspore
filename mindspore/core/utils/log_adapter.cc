@@ -433,8 +433,7 @@ void common_log_init(void) {
   if (logtostderr.empty()) {
     FLAGS_logtostderr = true;
   } else if (logtostderr == "0" && mindspore::GetEnv("GLOG_log_dir").empty()) {
-    FLAGS_logtostderr = true;
-    MS_LOG(WARNING) << "`GLOG_log_dir` is not set, output log to screen.";
+    MS_LOG(EXCEPTION) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
   }
 
   // default GLOG_stderrthreshold level to WARNING
