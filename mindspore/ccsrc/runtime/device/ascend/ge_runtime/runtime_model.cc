@@ -203,7 +203,8 @@ void RuntimeModel::DistributeTask() {
       std::shared_ptr<RuntimeInfo> runtime_tuple = std::make_shared<RuntimeInfo>(task_id, stream_id, task->Args());
       auto emplace_ret = runtime_info_map_.emplace(task->task_name(), runtime_tuple);
       if (!emplace_ret.second) {
-        MS_LOG(WARNING) << "Task name exist: " << task->task_name();
+        // The task_name is (fullname_with_scope + UniqueId). There should be no duplication.
+        MS_LOG(EXCEPTION) << "Task name exist: " << task->task_name();
       }
     }
   }

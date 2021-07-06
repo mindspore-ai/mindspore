@@ -142,10 +142,14 @@ class KernelMod {
   virtual void ReleaseResource() {}
 
   virtual ~KernelMod() = default;
-  void set_kernel_name(const std::string &kernel_name) { kernel_name_ = kernel_name; }
+  void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
+  void set_fullname(const std::string &fullname) { fullname_ = fullname; }
+  void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
 
  protected:
-  std::string kernel_name_;
+  std::string unique_name_;
+  std::string fullname_;
+  bool is_monad_{false};
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 }  // namespace kernel

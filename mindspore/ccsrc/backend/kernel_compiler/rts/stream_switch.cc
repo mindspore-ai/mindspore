@@ -91,7 +91,7 @@ std::vector<TaskInfoPtr> StreamSwitchKernel::GenTask(const std::vector<AddressPt
   MS_LOG(INFO) << "cond_:" << static_cast<int>(cond_) << ", true_stream_index_:" << true_stream_index_
                << ", stream_id:" << stream_id;
   std::shared_ptr<StreamSwitchTaskInfo> task_info_ptr = std::make_shared<StreamSwitchTaskInfo>(
-    kernel_name_, stream_id, true_stream_index_, loop_cnt, ites_per_loop, cond_, data_type_);
+    unique_name_, stream_id, true_stream_index_, loop_cnt, ites_per_loop, cond_, data_type_);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }

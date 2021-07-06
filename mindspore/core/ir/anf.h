@@ -153,6 +153,7 @@ class AnfNode : public Base {
 
   std::size_t hash() const override { return this->hash_(this); }
   virtual std::string fullname_with_scope() { return ""; }
+  std::string UniqueName() { return fullname_with_scope() + "_" + UniqueId(); }
 
   virtual std::string DebugString(int recursive_level = 1) const { return ToString(); }
   virtual std::string DebugString(bool recursive) const { return DebugString(recursive ? 1 : 0); }
