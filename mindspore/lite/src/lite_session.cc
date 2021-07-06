@@ -716,6 +716,11 @@ LiteSession::~LiteSession() {
     if (tensor->IsConst() && !tensor->own_data()) {
       tensor->set_data(nullptr);
     }
+
+    /* situation : user set graph-output-tensor data */
+    if (tensor->IsGraphOutput() && tensor->allocator() == nullptr) {
+      tensor->set_data(nullptr);
+    }
     delete tensor;
     tensor = nullptr;
   }
