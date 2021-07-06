@@ -295,7 +295,7 @@ OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode, int tup
   if (!StrategyFound(attrs)) {
     strategy = GenerateBatchParallelStrategy(op_info, prim);
   } else {
-    strategy = ExtractStrategy(attrs);
+    strategy = ExtractStrategy(attrs[STRATEGY]);
   }
   MS_EXCEPTION_IF_NULL(strategy);
   if (op_info->Init(strategy) == FAILED) {

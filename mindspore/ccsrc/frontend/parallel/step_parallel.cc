@@ -1435,12 +1435,12 @@ OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAtt
   return operator_;
 }
 
-StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
-  ValueTuplePtr var = attrs[STRATEGY]->cast<ValueTuplePtr>();
+StrategyPtr ExtractStrategy(const ValuePtr &stra) {
+  ValueTuplePtr var = stra->cast<ValueTuplePtr>();
   StrategyPtr strategyPtr;
   int64_t stage_id = g_device_manager->stage_id();
 
-  MS_LOG(INFO) << "Extract information: strategy " << attrs[STRATEGY]->ToString();
+  MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
   if (var == nullptr) {
     MS_LOG(EXCEPTION) << "Strategy value is nullptr";
   }
@@ -2180,12 +2180,14 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
     }
     bool load_strategy_from_ckpt =
       StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-    if ((!StrategyFound(attrs) && !load_strategy_from_ckpt)) {
+    if ((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(STRATEGY)) {
       MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                    << " is empty, using batch parallel";
       strategyPtr = GenerateBatchParallelStrategy(operator_, prim);
+    } else if (cnode->HasPrimalAttr(STRATEGY)) {
+      strategyPtr = ExtractStrategy(cnode->GetPrimalAttr(STRATEGY));
     } else if (StrategyFound(attrs)) {
-      strategyPtr = ExtractStrategy(attrs);
+      strategyPtr = ExtractStrategy(attrs[STRATEGY]);
     } else {
       strategyPtr = stra_map[strategy_key_name];
     }

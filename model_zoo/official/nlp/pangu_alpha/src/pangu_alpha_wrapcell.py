@@ -76,14 +76,14 @@ def tensor_grad_scale_pipeline(scale, grad, accu_grad):
     new_grad = accu_grad * reciprocal(scale)
     accu_grad = F.depend(accu_grad, new_grad)
     zeros = F.tensor_mul(accu_grad, 0.0)
-    _ = F.assign(accu_grad, zeros)
+    new_grad = F.depend(new_grad, F.assign(accu_grad, zeros))
     return new_grad
 
 @shard_grad_scale.register("Tensor", "Tensor", "Tensor")
 def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
     new_grad = grad * reciprocal(scale)
     accu_grad = F.depend(accu_grad, new_grad)
-    _ = F.assign(accu_grad, F.zeros_like(accu_grad))
+    new_grad = F.depend(new_grad, F.assign(accu_grad, F.zeros_like(accu_grad)))
     return new_grad
 
 class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
