@@ -1510,7 +1510,7 @@ class Dataset:
 
     def get_col_names(self):
         """
-        Renturn the names of the columns in dataset
+        Renturn the names of the columns in dataset.
 
         Returns:
             list, list of column names in the dataset.
@@ -1757,7 +1757,7 @@ class Dataset:
         Returns:
             dict, a str-to-int mapping from label name to index.
             dict, a str-to-list<int> mapping from label name to index for Coco ONLY. The second number
-            in the list is used to indicate the super category
+            in the list is used to indicate the super category.
         """
         if self.children:
             return self.children[0].get_class_indexing()
@@ -3181,24 +3181,27 @@ class ImageFolderDataset(MappableDataset):
         ...                                 extensions=[".JPEG", ".png"])
 
     About ImageFolderDataset:
-        | You can construct the following directory structure from your dataset files and read by MindSpore's API.
-        | .
-        | └── image_folder_dataset_directory
-        |      ├── class1
-        |      │    ├── 000000000001.jpg
-        |      │    ├── 000000000002.jpg
-        |      │    ├── ...
-        |      ├── class2
-        |      │    ├── 000000000001.jpg
-        |      │    ├── 000000000002.jpg
-        |      │    ├── ...
-        |      ├── class3
-        |      │    ├── 000000000001.jpg
-        |      │    ├── 000000000002.jpg
-        |      │    ├── ...
-        |      ├── classN
-        |      ├── ...
 
+    You can construct the following directory structure from your dataset files and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── image_folder_dataset_directory
+             ├── class1
+             │    ├── 000000000001.jpg
+             │    ├── 000000000002.jpg
+             │    ├── ...
+             ├── class2
+             │    ├── 000000000001.jpg
+             │    ├── 000000000002.jpg
+             │    ├── ...
+             ├── class3
+             │    ├── 000000000001.jpg
+             │    ├── 000000000002.jpg
+             │    ├── ...
+             ├── classN
+             ├── ...
     """
 
     @check_imagefolderdataset
@@ -3292,29 +3295,35 @@ class MnistDataset(MappableDataset):
         >>> # Note: In mnist_dataset dataset, each dictionary has keys "image" and "label"
 
     About MNIST dataset:
-        | The MNIST database of handwritten digits has a training set of 60,000 examples,
-          and a test set of 10,000 examples. It is a subset of a larger set available from
-          NIST. The digits have been size-normalized and centered in a fixed-size image.
 
-        | Here is the original MNIST dataset structure.
-        | You can unzip the dataset files into this directory structure and read by MindSpore's API.
-        | .
-        | └── mnist_dataset_dir
-        |      ├── t10k-images-idx3-ubyte
-        |      ├── t10k-labels-idx1-ubyte
-        |      ├── train-images-idx3-ubyte
-        |      └── train-labels-idx1-ubyte
+    The MNIST database of handwritten digits has a training set of 60,000 examples,
+    and a test set of 10,000 examples. It is a subset of a larger set available from
+    NIST. The digits have been size-normalized and centered in a fixed-size image.
 
-        .. code-block::
+    Here is the original MNIST dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
-            @article{lecun2010mnist,
-            title        = {MNIST handwritten digit database},
-            author       = {LeCun, Yann and Cortes, Corinna and Burges, CJ},
-            journal      = {ATT Labs [Online]},
-            volume       = {2},
-            year         = {2010},
-            howpublished = {http://yann.lecun.com/exdb/mnist}
-            }
+    .. code-block::
+
+        .
+        └── mnist_dataset_dir
+             ├── t10k-images-idx3-ubyte
+             ├── t10k-labels-idx1-ubyte
+             ├── train-images-idx3-ubyte
+             └── train-labels-idx1-ubyte
+
+    Citation:
+
+    .. code-block::
+
+        @article{lecun2010mnist,
+        title        = {MNIST handwritten digit database},
+        author       = {LeCun, Yann and Cortes, Corinna and Burges, CJ},
+        journal      = {ATT Labs [Online]},
+        volume       = {2},
+        year         = {2010},
+        howpublished = {http://yann.lecun.com/exdb/mnist}
+        }
     """
 
     @check_mnist_cifar_dataset
@@ -4021,8 +4030,8 @@ class TFRecordDataset(SourceDataset):
             pattern of files. The list will be sorted in a lexicographical order.
         schema (Union[str, Schema], optional): Path to the JSON schema file or schema object (default=None).
             If the schema is not provided, the meta data from the TFData file is considered the schema.
-        columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
-        num_samples (int, optional): Number of samples (rows) to read (default=None).
+        columns_list (list[str], optional): List of columns to be read (default=None, read all columns).
+        num_samples (int, optional): The number of samples (rows) to be included in the dataset (default=None).
             If num_samples is None and numRows(parsed from schema) does not exist, read the full dataset;
             If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
@@ -4222,9 +4231,9 @@ class Cifar10Dataset(MappableDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 50,000
-            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples.
-            (default=None, all samples)
-        num_samples (int, optional): The number of images to be included in the dataset.
+            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples
+            (default=None, all samples).
+        num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
@@ -4294,32 +4303,38 @@ class Cifar10Dataset(MappableDataset):
         >>> # In CIFAR10 dataset, each dictionary has keys "image" and "label"
 
     About CIFAR-10 dataset:
-        | The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes,
-          with 6000 images per class. There are 50000 training images and 10000 test images.
-          The 10 different classes represent airplanes, cars, birds, cats, deer, dogs, frogs, horses, ships, and trucks.
 
-        | Here is the original CIFAR-10 dataset structure.
-        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
-        | .
-        | └── cifar-10-batches-bin
-        |      ├── data_batch_1.bin
-        |      ├── data_batch_2.bin
-        |      ├── data_batch_3.bin
-        |      ├── data_batch_4.bin
-        |      ├── data_batch_5.bin
-        |      ├── test_batch.bin
-        |      ├── readme.html
-        |      └── batches.meta.txt
+    The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes,
+    with 6000 images per class. There are 50000 training images and 10000 test images.
+    The 10 different classes represent airplanes, cars, birds, cats, deer, dogs, frogs, horses, ships, and trucks.
 
-        .. code-block::
+    Here is the original CIFAR-10 dataset structure.
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
 
-            @techreport{Krizhevsky09,
-            author       = {Alex Krizhevsky},
-            title        = {Learning multiple layers of features from tiny images},
-            institution  = {},
-            year         = {2009},
-            howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
-            }
+    .. code-block::
+
+        .
+        └── cifar-10-batches-bin
+             ├── data_batch_1.bin
+             ├── data_batch_2.bin
+             ├── data_batch_3.bin
+             ├── data_batch_4.bin
+             ├── data_batch_5.bin
+             ├── test_batch.bin
+             ├── readme.html
+             └── batches.meta.txt
+
+    Citation:
+
+    .. code-block::
+
+        @techreport{Krizhevsky09,
+        author       = {Alex Krizhevsky},
+        title        = {Learning multiple layers of features from tiny images},
+        institution  = {},
+        year         = {2009},
+        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
+        }
     """
 
     @check_mnist_cifar_dataset
@@ -4346,9 +4361,9 @@ class Cifar100Dataset(MappableDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 50,000
-            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples.
-            (default=None, all samples)
-        num_samples (int, optional): The number of images to be included in the dataset.
+            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples
+            (default=None, all samples).
+        num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
@@ -4415,29 +4430,35 @@ class Cifar100Dataset(MappableDataset):
         >>> # In CIFAR100 dataset, each dictionary has 3 keys: "image", "fine_label" and "coarse_label"
 
     About CIFAR-100 dataset:
-        | This dataset is just like the CIFAR-10, except it has 100 classes containing 600 images
-          each. There are 500 training images and 100 testing images per class. The 100 classes in
-          the CIFAR-100 are grouped into 20 superclasses. Each image comes with a "fine" label (the
-          class to which it belongs) and a "coarse" label (the superclass to which it belongs).
 
-        | Here is the original CIFAR-100 dataset structure.
-        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
-        | .
-        | └── cifar-100-binary
-        |      ├── train.bin
-        |      ├── test.bin
-        |      ├── fine_label_names.txt
-        |      └── coarse_label_names.txt
+    This dataset is just like the CIFAR-10, except it has 100 classes containing 600 images
+    each. There are 500 training images and 100 testing images per class. The 100 classes in
+    the CIFAR-100 are grouped into 20 superclasses. Each image comes with a "fine" label (the
+    class to which it belongs) and a "coarse" label (the superclass to which it belongs).
 
-        .. code-block::
+    Here is the original CIFAR-100 dataset structure.
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
 
-            @techreport{Krizhevsky09,
-            author       = {Alex Krizhevsky},
-            title        = {Learning multiple layers of features from tiny images},
-            institution  = {},
-            year         = {2009},
-            howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
-            }
+    .. code-block::
+
+        .
+        └── cifar-100-binary
+            ├── train.bin
+            ├── test.bin
+            ├── fine_label_names.txt
+            └── coarse_label_names.txt
+
+    Citation:
+
+    .. code-block::
+
+        @techreport{Krizhevsky09,
+        author       = {Alex Krizhevsky},
+        title        = {Learning multiple layers of features from tiny images},
+        institution  = {},
+        year         = {2009},
+        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
+        }
     """
 
     @check_mnist_cifar_dataset
@@ -4458,11 +4479,13 @@ class RandomDataset(SourceDataset):
     A source dataset that generates random data.
 
     Args:
-        total_rows (int): Number of rows for the dataset to generate (default=None, number of rows is random)
+        total_rows (int, optional): Number of samples for the dataset to generate
+            (default=None, number of samples is random).
         schema (Union[str, Schema], optional): Path to the JSON schema file or schema object (default=None).
             If the schema is not provided, the random dataset generates a random schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
-        num_samples (int): number of samples to draw from the total. (default=None, which means all rows)
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, all samples).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
@@ -4614,10 +4637,10 @@ class VOCDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str): Set the task type of reading voc data, now only support `Segmentation` or `Detection`
+        task (str, optional): Set the task type of reading voc data, now only support `Segmentation` or `Detection`
             (default=`Segmentation`).
-        usage (str): Set the task type of ImageSets(default=`train`). If task is `Segmentation`, image and annotation
-            list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is `Detection`, image and
+        usage (str, optional): Set the task type of ImageSets(default=`train`). If task is `Segmentation`, image and
+            annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is `Detection`, image and
             annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage is not set, image and
             annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
         class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
@@ -4710,50 +4733,56 @@ class VOCDataset(MappableDataset):
         >>> # In VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
 
     About VOC dataset.
-        | The PASCAL Visual Object Classes (VOC) challenge is a benchmark in visual
-          object category recognition and detection, providing the vision and machine
-          learning communities with a standard dataset of images and annotation, and
-          standard evaluation procedures.
 
-        | You can unzip the original VOC-2012 dataset files into this directory structure and read by MindSpore's API.
-        | .
-        | └── voc2012_dataset_dir
-        |      ├── Annotations
-        |      │    ├── 2007_000027.xml
-        |      │    ├── 2007_000032.xml
-        |      │    ├── ...
-        |      ├── ImageSets
-        |      │    ├── Action
-        |      │    ├── Layout
-        |      │    ├── Main
-        |      │    └── Segmentation
-        |      ├── JPEGImages
-        |      │    ├── 2007_000027.jpg
-        |      │    ├── 2007_000032.jpg
-        |      │    ├── ...
-        |      ├── SegmentationClass
-        |      │    ├── 2007_000032.png
-        |      │    ├── 2007_000033.png
-        |      │    ├── ...
-        |      └── SegmentationObject
-        |           ├── 2007_000032.png
-        |           ├── 2007_000033.png
-        |           ├── ...
+    The PASCAL Visual Object Classes (VOC) challenge is a benchmark in visual
+    object category recognition and detection, providing the vision and machine
+    learning communities with a standard dataset of images and annotation, and
+    standard evaluation procedures.
 
-        .. code-block::
+    You can unzip the original VOC-2012 dataset files into this directory structure and read by MindSpore's API.
 
-            @article{Everingham10,
-            author       = {Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.},
-            title        = {The Pascal Visual Object Classes (VOC) Challenge},
-            journal      = {International Journal of Computer Vision},
-            volume       = {88},
-            year         = {2010},
-            number       = {2},
-            month        = {jun},
-            pages        = {303--338},
-            biburl       = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
-            howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/index.html}
-            }
+    .. code-block::
+
+        .
+        └── voc2012_dataset_dir
+            ├── Annotations
+            │    ├── 2007_000027.xml
+            │    ├── 2007_000032.xml
+            │    ├── ...
+            ├── ImageSets
+            │    ├── Action
+            │    ├── Layout
+            │    ├── Main
+            │    └── Segmentation
+            ├── JPEGImages
+            │    ├── 2007_000027.jpg
+            │    ├── 2007_000032.jpg
+            │    ├── ...
+            ├── SegmentationClass
+            │    ├── 2007_000032.png
+            │    ├── 2007_000033.png
+            │    ├── ...
+            └── SegmentationObject
+                 ├── 2007_000032.png
+                 ├── 2007_000033.png
+                 ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @article{Everingham10,
+        author       = {Everingham, M. and Van~Gool, L. and Williams, C. K. I. and Winn, J. and Zisserman, A.},
+        title        = {The Pascal Visual Object Classes (VOC) Challenge},
+        journal      = {International Journal of Computer Vision},
+        volume       = {88},
+        year         = {2010},
+        number       = {2},
+        month        = {jun},
+        pages        = {303--338},
+        biburl       = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
+        howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/index.html}
+        }
     """
 
     @check_vocdataset
@@ -4812,8 +4841,8 @@ class CocoDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        annotation_file (str): Path to the annotation JSON.
-        task (str): Set the task type for reading COCO data.  Supported task types:
+        annotation_file (str): Path to the annotation JSON file.
+        task (str, optional): Set the task type for reading COCO data. Supported task types:
             `Detection`, `Stuff`, `Panoptic` and `Keypoint` (default=`Detection`).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
@@ -4907,51 +4936,57 @@ class CocoDataset(MappableDataset):
         >>> # In COCO dataset, each dictionary has keys "image" and "annotation"
 
     About COCO dataset:
-        | COCO is a large-scale object detection, segmentation, and captioning dataset.
-          It contains 91 common object categories with 82 of them having more than 5,000
-          labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
-          categories but more instances per category.
 
-        | You can unzip the original COCO-2017 dataset files into this directory structure and read by MindSpore's API.
-        | .
-        | └── coco_dataset_directory
-        |      ├── train2017
-        |      │    ├── 000000000009.jpg
-        |      │    ├── 000000000025.jpg
-        |      │    ├── ...
-        |      ├── test2017
-        |      │    ├── 000000000001.jpg
-        |      │    ├── 000000058136.jpg
-        |      │    ├── ...
-        |      ├── val2017
-        |      │    ├── 000000000139.jpg
-        |      │    ├── 000000057027.jpg
-        |      │    ├── ...
-        |      └── annotations
-        |           ├── captions_train2017.json
-        |           ├── captions_val2017.json
-        |           ├── instances_train2017.json
-        |           ├── instances_val2017.json
-        |           ├── person_keypoints_train2017.json
-        |           └── person_keypoints_val2017.json
+    COCO is a large-scale object detection, segmentation, and captioning dataset.
+    It contains 91 common object categories with 82 of them having more than 5,000
+    labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
+    categories but more instances per category.
 
-        .. code-block::
+    You can unzip the original COCO-2017 dataset files into this directory structure and read by MindSpore's API.
 
-            @article{DBLP:journals/corr/LinMBHPRDZ14,
-            author        = {Tsung{-}Yi Lin and Michael Maire and Serge J. Belongie and
-                            Lubomir D. Bourdev and  Ross B. Girshick and James Hays and
-                            Pietro Perona and Deva Ramanan and Piotr Doll{\'{a}}r and C. Lawrence Zitnick},
-            title         = {Microsoft {COCO:} Common Objects in Context},
-            journal       = {CoRR},
-            volume        = {abs/1405.0312},
-            year          = {2014},
-            url           = {http://arxiv.org/abs/1405.0312},
-            archivePrefix = {arXiv},
-            eprint        = {1405.0312},
-            timestamp     = {Mon, 13 Aug 2018 16:48:13 +0200},
-            biburl        = {https://dblp.org/rec/journals/corr/LinMBHPRDZ14.bib},
-            bibsource     = {dblp computer science bibliography, https://dblp.org}
-            }
+    .. code-block::
+
+        .
+        └── coco_dataset_directory
+             ├── train2017
+             │    ├── 000000000009.jpg
+             │    ├── 000000000025.jpg
+             │    ├── ...
+             ├── test2017
+             │    ├── 000000000001.jpg
+             │    ├── 000000058136.jpg
+             │    ├── ...
+             ├── val2017
+             │    ├── 000000000139.jpg
+             │    ├── 000000057027.jpg
+             │    ├── ...
+             └── annotations
+                  ├── captions_train2017.json
+                  ├── captions_val2017.json
+                  ├── instances_train2017.json
+                  ├── instances_val2017.json
+                  ├── person_keypoints_train2017.json
+                  └── person_keypoints_val2017.json
+
+    Citation:
+
+    .. code-block::
+
+        @article{DBLP:journals/corr/LinMBHPRDZ14,
+        author        = {Tsung{-}Yi Lin and Michael Maire and Serge J. Belongie and
+                        Lubomir D. Bourdev and  Ross B. Girshick and James Hays and
+                        Pietro Perona and Deva Ramanan and Piotr Doll{\'{a}}r and C. Lawrence Zitnick},
+        title         = {Microsoft {COCO:} Common Objects in Context},
+        journal       = {CoRR},
+        volume        = {abs/1405.0312},
+        year          = {2014},
+        url           = {http://arxiv.org/abs/1405.0312},
+        archivePrefix = {arXiv},
+        eprint        = {1405.0312},
+        timestamp     = {Mon, 13 Aug 2018 16:48:13 +0200},
+        biburl        = {https://dblp.org/rec/journals/corr/LinMBHPRDZ14.bib},
+        bibsource     = {dblp computer science bibliography, https://dblp.org}
+        }
     """
 
     @check_cocodataset
@@ -4999,7 +5034,8 @@ class CelebADataset(MappableDataset):
         num_parallel_workers (int, optional): Number of workers to read the data (default=None, will use value set in
             the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        usage (str): one of `all`, `train`, `valid` or `test` (default=`all`, will read all samples).
+        usage (str, optional): Specify the `train`, `valid`, `test` part or `all` parts of dataset
+            (default=`all`, will read all samples).
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
         decode (bool, optional): decode the images after reading (default=False).
         extensions (list[str], optional): List of file extensions to be included in the dataset (default=None).
@@ -5061,61 +5097,71 @@ class CelebADataset(MappableDataset):
         >>> # Note: In celeba dataset, each data dictionary owns keys "image" and "attr"
 
     About CelebA dataset:
-        | CelebFaces Attributes Dataset (CelebA) is a large-scale face attributes dataset
-          with more than 200K celebrity images, each with 40 attribute annotations.
-        |
-        | The images in this dataset cover large pose variations and background clutter.
-          CelebA has large diversities, large quantities, and rich annotations, including
-        |   * 10,177 number of identities,
-        |   * 202,599 number of face images, and
-        |   * 5 landmark locations, 40 binary attributes annotations per image.
-        |
-        | The dataset can be employed as the training and test sets for the following computer
-          vision tasks: face attribute recognition, face detection, landmark (or facial part)
-          localization, and face editing & synthesis.
 
-        | Original CelebA dataset structure:
-        | .
-        | └── CelebA
-        |      ├── README.md
-        |      ├── Img
-        |      │    ├── img_celeba.7z
-        |      │    ├── img_align_celeba_png.7z
-        |      │    └── img_align_celeba.zip
-        |      ├── Eval
-        |      │    └── list_eval_partition.txt
-        |      └── Anno
-        |           ├── list_landmarks_celeba.txt
-        |           ├── list_landmarks_align_celeba.txt
-        |           ├── list_bbox_celeba.txt
-        |           ├── list_attr_celeba.txt
-        |           └── identity_CelebA.txt
+    CelebFaces Attributes Dataset (CelebA) is a large-scale face attributes dataset
+    with more than 200K celebrity images, each with 40 attribute annotations.
 
-        | You can unzip the dataset files into the following structure and read by MindSpore's API.
-        | .
-        | └── celeba_dataset_directory
-        |      ├── list_attr_celeba.txt
-        |      ├── 000001.jpg
-        |      ├── 000002.jpg
-        |      ├── 000003.jpg
-        |      ├── ...
+    The images in this dataset cover large pose variations and background clutter.
+    CelebA has large diversities, large quantities, and rich annotations, including
 
-        .. code-block::
+    * 10,177 number of identities,
+    * 202,599 number of face images, and
+    * 5 landmark locations, 40 binary attributes annotations per image.
 
-            @article{DBLP:journals/corr/LiuLWT14,
-            author    = {Ziwei Liu and Ping Luo and Xiaogang Wang and Xiaoou Tang},
-            title     = {Deep Learning Face Attributes in the Wild},
-            journal   = {CoRR},
-            volume    = {abs/1411.7766},
-            year      = {2014},
-            url       = {http://arxiv.org/abs/1411.7766},
-            archivePrefix = {arXiv},
-            eprint    = {1411.7766},
-            timestamp = {Tue, 10 Dec 2019 15:37:26 +0100},
-            biburl    = {https://dblp.org/rec/journals/corr/LiuLWT14.bib},
-            bibsource = {dblp computer science bibliography, https://dblp.org},
-            howpublished = {http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html},
-            }
+    The dataset can be employed as the training and test sets for the following computer
+    vision tasks: face attribute recognition, face detection, landmark (or facial part)
+    localization, and face editing & synthesis.
+
+    Original CelebA dataset structure:
+
+    .. code-block::
+
+        .
+        └── CelebA
+             ├── README.md
+             ├── Img
+             │    ├── img_celeba.7z
+             │    ├── img_align_celeba_png.7z
+             │    └── img_align_celeba.zip
+             ├── Eval
+             │    └── list_eval_partition.txt
+             └── Anno
+                  ├── list_landmarks_celeba.txt
+                  ├── list_landmarks_align_celeba.txt
+                  ├── list_bbox_celeba.txt
+                  ├── list_attr_celeba.txt
+                  └── identity_CelebA.txt
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── celeba_dataset_directory
+            ├── list_attr_celeba.txt
+            ├── 000001.jpg
+            ├── 000002.jpg
+            ├── 000003.jpg
+            ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @article{DBLP:journals/corr/LiuLWT14,
+        author        = {Ziwei Liu and Ping Luo and Xiaogang Wang and Xiaoou Tang},
+        title         = {Deep Learning Face Attributes in the Wild},
+        journal       = {CoRR},
+        volume        = {abs/1411.7766},
+        year          = {2014},
+        url           = {http://arxiv.org/abs/1411.7766},
+        archivePrefix = {arXiv},
+        eprint        = {1411.7766},
+        timestamp     = {Tue, 10 Dec 2019 15:37:26 +0100},
+        biburl        = {https://dblp.org/rec/journals/corr/LiuLWT14.bib},
+        bibsource     = {dblp computer science bibliography, https://dblp.org},
+        howpublished  = {http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html}
+        }
     """
 
     @check_celebadataset
@@ -5202,8 +5248,9 @@ class CLUEDataset(SourceDataset):
             a pattern of files. The list will be sorted in a lexicographical order.
         task (str, optional): The kind of task, one of `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
             (default=AFQMC).
-        usage (str, optional): Need train, test or eval data (default="train").
-        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        usage (str, optional): Specify the `train`, `test` or `eval` part of dataset (default="train").
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
@@ -5233,31 +5280,37 @@ class CLUEDataset(SourceDataset):
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
         >>> dataset = ds.CLUEDataset(dataset_files=clue_dataset_dir, task='AFQMC', usage='train')
 
-    About CLUE dataset.
-        | CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
-          tasks, including single-sentence classification, sentence pair classification, and machine
-          reading comprehension.
+    About CLUE dataset:
 
-        | You can unzip the dataset files into the following structure and read by MindSpore's API,
-          such as afqmc dataset:
-        | .
-        | └── afqmc_public
-        |      ├── train.json
-        |      ├── test.json
-        |      └── dev.json
+    CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
+    tasks, including single-sentence classification, sentence pair classification, and machine
+    reading comprehension.
 
-        .. code-block::
+    You can unzip the dataset files into the following structure and read by MindSpore's API,
+    such as afqmc dataset:
 
-            @article{CLUEbenchmark,
-            title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
-            author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
-                    Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
-                    Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
-                    Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
-            journal = {arXiv preprint arXiv:2004.05986},
-            year    = {2020},
-            howpublished = {https://github.com/CLUEbenchmark/CLUE}
-            }
+    .. code-block::
+
+        .
+        └── afqmc_public
+             ├── train.json
+             ├── test.json
+             └── dev.json
+
+    Citation:
+
+    .. code-block::
+
+        @article{CLUEbenchmark,
+        title   = {CLUE: A Chinese Language Understanding Evaluation Benchmark},
+        author  = {Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li,
+                Kai Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
+                Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+                Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Zhenzhong Lan},
+        journal = {arXiv preprint arXiv:2004.05986},
+        year    = {2020},
+        howpublished = {https://github.com/CLUEbenchmark/CLUE}
+        }
     """
 
     @check_cluedataset
@@ -5288,7 +5341,8 @@ class CSVDataset(SourceDataset):
             columns as string type.
         column_names (list[str], optional): List of column names of the dataset (default=None). If this
             is not provided, infers the column_names from the first row of CSV file.
-        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
@@ -5343,7 +5397,8 @@ class TextFileDataset(SourceDataset):
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in a lexicographical order.
-        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
@@ -5465,8 +5520,9 @@ class NumpySlicesDataset(GeneratorDataset):
             list, there will be one column in each row, otherwise there tends to be multi columns. Large data is not
             recommended to be loaded in this way as data is loading into memory.
         column_names (list[str], optional): List of column names of the dataset (default=None). If column_names is not
-            provided, when data is dict, column_names will be its keys, otherwise it will be like column_0, column_1 ...
-        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
+            provided, the output column names will be named as the keys of dict when the input data is a dict,
+            otherwise they will be named like column_0, column_1 ...
+        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all samples).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).

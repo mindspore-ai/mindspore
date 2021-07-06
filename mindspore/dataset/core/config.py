@@ -107,9 +107,9 @@ def set_seed(seed):
 
 def get_seed():
     """
-    Get random number seed. If seed has been set, then get_seed will
-    get the seed value that has been set, if the seed is not set,
-    it will return std::mt19937::default_seed.
+    Get random number seed. If the seed has been set, then will
+    return the set value, otherwise it will return the default seed value
+    which equals to std::mt19937::default_seed.
 
     Returns:
         int, random number seed.
