@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import mindspore.context as context
 from mindspore import Tensor, ms_function
 from mindspore.common import dtype as mstype
@@ -33,7 +34,10 @@ def hof(x):
     ret = g(x)(x)
     return ret
 
-
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fun_fun():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([10], mstype.int32)

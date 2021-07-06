@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
@@ -70,6 +71,10 @@ def test_forward():
     assert graph_mode_out == pynative_mode_out
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_backward():
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
