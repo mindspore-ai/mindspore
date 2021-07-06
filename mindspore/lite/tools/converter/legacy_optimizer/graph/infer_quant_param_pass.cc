@@ -49,6 +49,10 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
       return RET_NULL_PTR;
     }
 
+    if (!node->primitive) {
+      continue;
+    }
+
     auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
 
     quant_helper->NodeQuantPreprocess(graph, node.get());

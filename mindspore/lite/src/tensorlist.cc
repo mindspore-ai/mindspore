@@ -161,10 +161,10 @@ int TensorList::FreeTensorListData() {
   if (this->tensors_.empty()) {
     return RET_OK;
   }
-  for (size_t i = 0; i < this->tensors_.size(); ++i) {
-    if (this->tensors_[i] != nullptr) {
-      delete this->tensors_[i];
-      this->tensors_[i] = nullptr;
+  for (auto &tensor : this->tensors_) {
+    if (tensor != nullptr) {
+      delete tensor;
+      tensor = nullptr;
     }
   }
   tensors_.clear();

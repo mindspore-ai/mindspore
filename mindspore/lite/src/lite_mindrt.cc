@@ -15,11 +15,13 @@
  */
 
 #include <utility>
+#include <algorithm>
 #include "src/lite_mindrt.h"
 #include "mindrt/include/mindrt.hpp"
 #include "src/lite_kernel_util.h"
-#include "nnacl/partial_fusion_parameter.h"
 #include "src/common/tensor_util.h"
+#include "src/runtime/inner_allocator.h"
+#include "src/runtime/kernel/arm/base/partial_fusion.h"
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
@@ -55,10 +57,31 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
   return;
 }
 
+bool IsOtherOutput(const std::vector<kernel::LiteKernel *> &kernels, const kernel::LiteKernel &this_kernel,
+                   const lite::Tensor &this_input_tensor) {
+  for (auto &kernel : kernels) {
+    if (kernel == &this_kernel) {
+      continue;
+    }
+    if (std::any_of(kernel->out_tensors().begin(), kernel->out_tensors().end(),
+                    [&this_input_tensor](lite::Tensor *tensor) { return tensor == &this_input_tensor; })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
+  std::vector<kernel::LiteKernel *> kernels{};
+  std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
+                 [](std::shared_ptr<LiteOpActor> actor) { return actor->kernel_; });
   size_t in_tensor_size = kernel_->in_tensors().size();
   for (size_t i = 0; i < in_tensor_size; i++) {
     Tensor *old_tensor = kernel_->in_tensors()[i];
+
+    if (!IsOtherOutput(kernels, *kernel_, *old_tensor)) {
+      continue;
+    }
 
     TypeId new_data_type = old_tensor->data_type();
     if (old_tensor->data_type() == kNumberTypeFloat16 || old_tensor->data_type() == kNumberTypeFloat32) {
@@ -103,7 +126,6 @@ int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors
 
   /* subgraph transaction isolation */
   IsolateInputData(actors);
-
   return RET_OK;
 }
 
@@ -169,9 +191,9 @@ int LiteOpActor::CompileArrowThroughPartialCall() {
       continue;
     }
     partial_node_ = partial_node;
+    auto subgraph = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel())->subgraph_kernel();
+    auto out_actor_id = subgraph_to_actor_.at(subgraph);
 
-    auto partial_para = reinterpret_cast<PartialParameter *>(partial_node->op_parameter());
-    auto out_actor_id = subgraph_index_to_actor.at(partial_para->sub_graph_index_);
     kernel_->set_out_tensors(partial_node->in_tensors());
     for (size_t i = 0; i < partial_node->in_tensors().size(); ++i) {
       auto arrow = std::make_shared<DataArrow>(i, out_actor_id, i);
@@ -209,31 +231,74 @@ int LiteOpActor::CompileArrow() {
   return ret;
 }
 
-void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
+void LiteOpActor::MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor) {
   MS_ASSERT(src_tensor != dst_tensor);
-
   dst_tensor->FreeData();
   dst_tensor->ResetRefCount();
-
-  if (src_tensor->allocator() == nullptr && !(src_tensor->IsConst()) && !(src_tensor->IsGraphInput())) {
-    // delegate graph kernel output tensor
-    dst_tensor->MallocData();
-    memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
-    return;
-  }
-
   dst_tensor->set_allocator(src_tensor->allocator());
   if (src_tensor->allocator() != nullptr) {
     src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
   }
-  // todo fix tensorlist
-  dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
-
+  if (src_tensor->data_c() != nullptr) {
+    dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
+  }
+  dst_tensor->set_own_data(src_tensor->own_data());
   if (src_tensor->IsConst() || src_tensor->IsGraphInput()) {
     dst_tensor->set_own_data(false);
   } else {
-    dst_tensor->set_own_data(true);
     src_tensor->DecRefCount();
+  }
+}
+
+void LiteOpActor::MoveTensorListInputData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
+  MS_ASSERT(src_tensorlist != nullptr);
+  MS_ASSERT(dst_tensorlist != nullptr);
+  dst_tensorlist->FreeData();
+  dst_tensorlist->ResetRefCount();
+  dst_tensorlist->set_allocator(src_tensorlist->allocator());
+
+  auto src_tensorlist_tensors_size = src_tensorlist->tensors().size();
+  auto dst_tensorlist_tensors_size = dst_tensorlist->tensors().size();
+  if (src_tensorlist_tensors_size != dst_tensorlist_tensors_size) {
+    MS_LOG(ERROR) << "src tensorlist: " << src_tensorlist->tensor_name()
+                  << " tesnors size: " << src_tensorlist_tensors_size
+                  << " vs dst tensorlist: " << src_tensorlist->tensor_name()
+                  << " tensors size: " << dst_tensorlist_tensors_size;
+    return;
+  }
+
+  dst_tensorlist->set_own_data(src_tensorlist->own_data());
+  for (size_t i = 0; i < src_tensorlist_tensors_size; ++i) {
+    auto &src_tensor = src_tensorlist->tensors()[i];
+    auto &dst_tensor = dst_tensorlist->tensors()[i];
+
+    if (src_tensor->allocator() != nullptr) {
+      src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
+    }
+    dst_tensor->set_own_data(src_tensor->own_data());
+    if (src_tensor->data_c() != nullptr) {
+      dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
+    }
+    dst_tensor->set_shape(src_tensor->shape());
+  }
+
+  if (src_tensorlist->IsConst() || src_tensorlist->IsGraphInput()) {
+    dst_tensorlist->set_own_data(false);
+  } else {
+    src_tensorlist->DecRefCount();
+  }
+}
+
+void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
+  if (src_tensor == dst_tensor) {
+    MS_LOG(INFO) << "no need to move.";
+    return;
+  }
+
+  if (src_tensor->data_type() == kObjectTypeTensorType) {
+    MoveTensorListInputData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
+  } else {
+    MoveTensorInputData(dst_tensor, src_tensor);
   }
   return;
 }
@@ -241,13 +306,12 @@ void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
 void LiteOpActor::CopyInputData(Tensor *dst_tensor, Tensor *src_tensor) {
   dst_tensor->ResetRefCount();
   dst_tensor->MallocData();
-
-  CastTensorData(dst_tensor, src_tensor);
-
-  src_tensor->DecRefCount();
+  memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
 }
 
-int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
+int LiteOpActor::CastInputData(Tensor *dst, Tensor *src) {
+  dst->ResetRefCount();
+  dst->MallocData();
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   if (dst->shape() != src->shape()) {
     MS_LOG(ERROR) << "dst tensor: " << dst->tensor_name() << " shape: " << dst->shape() << " vs "
@@ -270,20 +334,53 @@ int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
   }
   return RET_OK;
 #endif
+  src->DecRefCount();
   return RET_ERROR;
 }
 
+void LiteOpActor::SetInputShape() {
+  for (size_t i = 0; i < inputs_data_.size(); ++i) {
+    auto &input_tensor = kernel_->in_tensors()[i];
+    if (input_tensor->shape() == inputs_data_[i]->shape()) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "inputs_data_[" << i << "].shape: " << inputs_data_[i]->shape() << " vs kernel_->in_tensors()["
+                  << i << "].shape: " << kernel_->in_tensors()[i]->shape() << " are not equal.";
+    MS_LOG(DEBUG) << "this->kernel_->name(): " << this->kernel_->name();
+
+    if (input_tensor->data_type() == kObjectTypeTensorType) {
+      auto input_tensorlist = reinterpret_cast<TensorList *>(input_tensor);
+      auto input_data_tensorlist = reinterpret_cast<TensorList *>(inputs_data_[i]);
+      input_tensorlist->FreeTensorListData();
+      input_tensorlist->set_element_shape(input_data_tensorlist->element_shape());
+      input_tensorlist->set_shape(input_data_tensorlist->shape());
+      std::vector<std::vector<int>> tensor_shape{};
+      std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
+                     std::back_inserter(tensor_shape), [](Tensor *tensor_item) { return tensor_item->shape(); });
+      input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
+    } else {
+      input_tensor->set_shape(inputs_data_[i]->shape());
+      input_tensor->set_format(inputs_data_[i]->format());
+    }
+  }
+}
+
 int LiteOpActor::SetInputData() {
+  SetInputShape();
+
   for (size_t i = 0; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->in_tensors()[i];
     auto src_tensor = inputs_data_[i];
-
-    /* infershape done in runtime */
-    dst_tensor->set_shape(src_tensor->shape());
-    dst_tensor->set_format(src_tensor->format());
-    dst_tensor->ResetRefCount();
+    if (dst_tensor->init_ref_count() == 0) {
+      src_tensor->DecRefCount();
+      continue;
+    }
 
     if (src_tensor->data_type() != dst_tensor->data_type()) {
+      CastInputData(dst_tensor, src_tensor);
+    } else if (src_tensor->allocator() == nullptr && !(src_tensor->IsConst()) && !(src_tensor->IsGraphInput()) &&
+               src_tensor->own_data()) {
+      // delegate graph kernel output tensor
       CopyInputData(dst_tensor, src_tensor);
     } else {
       MoveInputData(dst_tensor, src_tensor);
@@ -309,7 +406,6 @@ void LiteOpActor::SetOutputData(OpContext<Tensor> *context) {
 
 int LiteOpActor::PrepareOutputData() {
   outputs_data_.resize(output_data_arrows_.size());
-
   for (size_t i = 0; i < output_data_arrows_.size(); i++) {
     auto &arrow = output_data_arrows_[i];
     auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
@@ -319,58 +415,13 @@ int LiteOpActor::PrepareOutputData() {
   return RET_OK;
 }
 
-std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
-                                                        const lite::InnerContext *ctx) {
-  std::vector<std::shared_ptr<LiteOpActor>> actors;
-  std::unordered_map<size_t, AID> partial_map{};
-  auto thread_pool = ctx->thread_pool();
-  if (thread_pool == nullptr) {
-    MS_LOG(ERROR) << "thread pool is nullptr";
-    return actors;
-  }
-  for (size_t i = 0; i < kernels.size(); ++i) {
-    if ((kernel::LiteKernelUtil::IsSwitchCall(kernels[i]))) {
-      auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernels[i]);
-      if (switch_actor == nullptr) {
-        MS_LOG(ERROR) << "create LiteSwitchOpActor failed: " << kernels[i]->name();
-        actors.clear();
-        return actors;
-      }
-      switch_actor->set_thread_pool(thread_pool);
-      partial_map[i] = switch_actor->GetAID();
-      actors.push_back(switch_actor);
-    } else {
-      auto actor = std::make_shared<LiteOpActor>(kernels[i]);
-      if (actor == nullptr) {
-        MS_LOG(ERROR) << "create LiteOpActor failed: " << kernels[i]->name();
-        actors.clear();
-        return actors;
-      }
-      actor->set_thread_pool(thread_pool);
-      partial_map[i] = actor->GetAID();
-      actors.push_back(actor);
-    }
-  }
-
-  for (auto &actor : actors) {
-    actor->SetPartialMap(partial_map);
-    auto aid = mindspore::Spawn(actor);
-  }
-  return actors;
-}
-
 int LiteSwitchOpActor::CompileTrueBranchArrow() {
-  true_branch_output_data_arrows_.clear();
   if (true_partial_node_ == nullptr) {
     MS_LOG(ERROR) << "true_partial_node_ is nullptr.";
     return RET_NULL_PTR;
   }
-  auto true_partial_para = reinterpret_cast<PartialParameter *>(true_partial_node_->op_parameter());
-  if (true_partial_para == nullptr) {
-    MS_LOG(ERROR) << "true_partial_node_->op_parameter() is nullptr.";
-    return RET_NULL_PTR;
-  }
-  auto true_branch_actor_id = subgraph_index_to_actor.at(true_partial_para->sub_graph_index_);
+  auto subgraph = static_cast<kernel::PartialFusionKernel *>(true_partial_node_->kernel())->subgraph_kernel();
+  auto true_branch_actor_id = subgraph_to_actor_.at(subgraph);
 
   for (size_t i = 0; i < true_partial_node_->in_tensors().size(); ++i) {
     int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
@@ -390,17 +441,12 @@ int LiteSwitchOpActor::CompileTrueBranchArrow() {
 }
 
 int LiteSwitchOpActor::CompileFalseBranchArrow() {
-  false_branch_output_data_arrows_.clear();
   if (false_partial_node_ == nullptr) {
     MS_LOG(ERROR) << "false_partial_node_ is nullptr.";
     return RET_NULL_PTR;
   }
-  auto false_partial_para = reinterpret_cast<PartialParameter *>(false_partial_node_->op_parameter());
-  if (false_partial_para == nullptr) {
-    MS_LOG(ERROR) << "false_partial_para->op_parameter() is nullptr.";
-    return RET_NULL_PTR;
-  }
-  auto false_branch_actor_id = subgraph_index_to_actor.at(false_partial_para->sub_graph_index_);
+  auto subgraph = static_cast<kernel::PartialFusionKernel *>(false_partial_node_->kernel())->subgraph_kernel();
+  auto false_branch_actor_id = subgraph_to_actor_.at(subgraph);
 
   for (size_t i = 0; i < false_partial_node_->in_tensors().size(); ++i) {
     int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
@@ -430,21 +476,33 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
       continue;
     }
     switch_node_ = switch_node;
-    if (switch_node->in_kernels().size() != kSwitchInputsSize) {
-      MS_LOG(ERROR) << "switch input size: " << switch_node->in_kernels().size();
-      return RET_MEMORY_FAILED;
+    if (switch_node->in_kernels().size() == kSwitchMaxInputsSize) {
+      bool_node_ = switch_node->in_kernels().at(kSwitchCondInputIndex);
+      true_partial_node_ = switch_node->in_kernels().at(kSwitchTruePartialInputIndex);
+      false_partial_node_ = switch_node->in_kernels().at(kSwitchFalsePartialInputIndex);
     }
 
-    bool_node_ = switch_node->in_kernels().at(kSwitchCondInputIndex);
-    true_partial_node_ = switch_node->in_kernels().at(kSwitchTruePartialInputIndex);
-    false_partial_node_ = switch_node->in_kernels().at(kSwitchFalsePartialInputIndex);
+    if (switch_node->in_kernels().size() == kSwitchMinInputsSize) {
+      if (!switch_node->in_tensors()[0]->IsConst()) {
+        MS_LOG(ERROR) << "actor name: " << this->GetAID() << " ;s switch node " << switch_node->name()
+                      << " input size: " << switch_node->in_kernels().size()
+                      << " but switch_node->in_tensors()[0] is not const";
+        return RET_MEMORY_FAILED;
+      }
+
+      true_partial_node_ = switch_node->in_kernels().at(kSwitchTruePartialInputIndex - 1);
+      false_partial_node_ = switch_node->in_kernels().at(kSwitchFalsePartialInputIndex - 1);
+    }
+
     break;
   }
   return RET_OK;
 }
 
 void LiteSwitchOpActor::AppendOutputTensors() {
-  output_tensors_.push_back(bool_node_->out_tensors().front());
+  if (bool_node_ != nullptr) {
+    output_tensors_.push_back(bool_node_->out_tensors().front());
+  }
   for (auto &tensor : true_partial_node_->in_tensors()) {
     if (std::find(output_tensors_.begin(), output_tensors_.end(), tensor) == output_tensors_.end()) {
       output_tensors_.push_back(tensor);
@@ -518,16 +576,25 @@ int LiteSwitchOpActor::CompileArrow() {
 }
 
 int LiteSwitchOpActor::PrepareOutputData() {
-  for (auto &arrow : true_branch_output_data_arrows_) {
+  true_branch_outputs_data_.resize(true_branch_output_data_arrows_.size());
+  for (size_t i = 0; i < true_branch_output_data_arrows_.size(); i++) {
+    auto &arrow = true_branch_output_data_arrows_[i];
     auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
-    true_branch_outputs_data_.emplace_back(data);
+    true_branch_outputs_data_.at(i) = data;
   }
 
-  for (auto &arrow : false_branch_output_data_arrows_) {
+  false_branch_outputs_data_.resize(false_branch_output_data_arrows_.size());
+  for (size_t i = 0; i < false_branch_output_data_arrows_.size(); i++) {
+    auto &arrow = false_branch_output_data_arrows_[i];
     auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
-    false_branch_outputs_data_.emplace_back(data);
+    auto iter = std::find_if(true_branch_outputs_data_.begin(), true_branch_outputs_data_.end(),
+                             [&data](const auto &true_branch_data) { return true_branch_data->data_ == data->data_; });
+    if (iter != true_branch_outputs_data_.end() && !data->data_->IsConst()) {
+      data->data_->set_init_ref_count(data->data_->init_ref_count() - 1);
+    }
+    false_branch_outputs_data_.at(i) = data;
   }
   return RET_OK;
 }
@@ -546,6 +613,83 @@ void LiteSwitchOpActor::AsyncFalseBranchOutput(OpContext<Tensor> *context) {
     auto &data = false_branch_outputs_data_.at(i);
     Async(false_branch_output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
+}
+
+void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context) {
+  auto op_uuid = context->sequential_num_;
+  input_op_datas_[op_uuid].push_back(inputs);
+  inputs_data_[inputs->index_] = inputs->data_;
+  if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
+    return;
+  }
+
+  int ret = SetInputData();
+  if (ret != RET_OK) {
+    input_op_datas_.erase(op_uuid);
+    context->SetFailed(ret);
+    return;
+  }
+
+  ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                  *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  if (ret != RET_OK) {
+    input_op_datas_.erase(op_uuid);
+    context->SetFailed(ret);
+    return;
+  }
+  input_op_datas_.erase(op_uuid);
+
+  bool *cond = nullptr;
+  if (bool_node_ != nullptr) {
+    cond = reinterpret_cast<bool *>(output_tensors_[0]->data());
+  } else {
+    cond = reinterpret_cast<bool *>(switch_node_->in_tensors()[0]->data());
+  }
+  if (*cond) {
+    AsyncTrueBranchOutput(context);
+  } else {
+    AsyncFalseBranchOutput(context);
+  }
+}
+
+std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
+                                                        const lite::InnerContext *ctx) {
+  std::vector<std::shared_ptr<LiteOpActor>> actors;
+  std::unordered_map<kernel::LiteKernel *, AID> subgraph_name_AID_map{};
+  auto thread_pool = ctx->thread_pool();
+  if (thread_pool == nullptr) {
+    MS_LOG(ERROR) << "thread pool is nullptr";
+    return actors;
+  }
+  for (auto &kernel : kernels) {
+    if ((kernel::LiteKernelUtil::IsSwitchCall(kernel))) {
+      auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel);
+      if (switch_actor == nullptr) {
+        MS_LOG(ERROR) << "create LiteSwitchOpActor failed: " << kernel->name();
+        actors.clear();
+        return actors;
+      }
+      switch_actor->set_thread_pool(thread_pool);
+      subgraph_name_AID_map[kernel] = switch_actor->GetAID();
+      actors.push_back(switch_actor);
+    } else {
+      auto actor = std::make_shared<LiteOpActor>(kernel);
+      if (actor == nullptr) {
+        MS_LOG(ERROR) << "create LiteOpActor failed: " << kernel->name();
+        actors.clear();
+        return actors;
+      }
+      actor->set_thread_pool(thread_pool);
+      subgraph_name_AID_map[kernel] = actor->GetAID();
+      actors.push_back(actor);
+    }
+  }
+
+  for (auto &actor : actors) {
+    actor->SetSubgraphAIDMap(subgraph_name_AID_map);
+    auto aid = mindspore::Spawn(actor);
+  }
+  return actors;
 }
 
 int MindrtInit() { return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", ""); }

@@ -135,6 +135,7 @@ int TensorListStackCPUKernel::MergeSubShape(const std::vector<int> &shape) {
 }
 
 int TensorListStackCPUKernel::Run() {
+  output0_ = out_tensors_[0];
   if (CheckParam() != RET_OK) {
     MS_LOG(ERROR) << "CheckParam failed!";
     return RET_ERROR;

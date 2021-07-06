@@ -16,6 +16,8 @@
 
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include <vector>
+#include <deque>
+#include <set>
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -34,6 +36,9 @@ namespace lite {
 namespace {
 constexpr int DEFAULT_DIM_VALUE = -1;
 constexpr size_t kInitialSize = 1024;
+constexpr int kMainGraphIndex = 0;
+constexpr int kCallInputMinSize = 1;
+constexpr int kSwitchInputMinSize = 3;
 
 void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *output_tensors) {
   if (input_tensors == nullptr) {
@@ -63,20 +68,23 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
 void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, std::vector<Tensor *> *lite_tensors) {
   std::unique_ptr<Tensor> lite_tensor = nullptr;
   auto &tensorT = graph->allTensors.at(index);
-  auto tensor_shape = tensorT->dims;
+  std::vector<int32_t> tensor_shape{};
   TypeId type = kTypeUnknown;
   std::vector<int> element_shape;
   if (!tensorT->data.empty()) {
     int *data = reinterpret_cast<int *>(tensorT->data.data());
     type = TypeId(data[0]);
-    if (tensorT->data.size() < 8 || (data[1] != 0 && (data[1] + 2) * 4 != static_cast<int>(tensorT->data.size()))) {
-      MS_LOG(ERROR) << "tensorlist data length illegal";
+    if (tensorT->data.size() < 8 || (data[1] != 0 && (data[1] + 3) * 4 != static_cast<int>(tensorT->data.size()))) {
+      MS_LOG(ERROR) << "tensorlist data length illegal, tensorT name: " << tensorT->name;
+      MS_LOG(ERROR) << "(data[1] + 3) * 4: " << (data[1] + 3) * 4;
+      MS_LOG(ERROR) << "static_cast<int>(tensorT->data.size()): " << static_cast<int>(tensorT->data.size());
       *convert_succ = false;
       return;
     }
     for (int j = 0; j < data[1]; ++j) {
       element_shape.push_back(data[j + 2]);
     }
+    tensor_shape = {data[data[1] + 2]};
   }
   lite_tensor = std::make_unique<TensorList>(tensor_shape, element_shape);
   if (lite_tensor == nullptr) {
@@ -84,7 +92,22 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
     *convert_succ = false;
     return;
   }
-  reinterpret_cast<TensorList *>(lite_tensor.get())->set_tensors_data_type(type);
+
+  auto lite_tensor_list = reinterpret_cast<TensorList *>(lite_tensor.get());
+  std::vector<Tensor *> tensors{};
+  if (!tensor_shape.empty() && tensor_shape.front() == -1) {
+    MS_LOG(ERROR) << "tensor_shape is -1, tensor name: " << lite_tensor->tensor_name();
+  }
+  if (!tensor_shape.empty() && tensor_shape.front() != -1) {
+    for (int32_t i = 0; i < tensor_shape.front(); ++i) {
+      auto tensor = new (std::nothrow) Tensor(type, element_shape);
+      tensors.emplace_back(tensor);
+    }
+  }
+
+  lite_tensor_list->set_tensors_data_type(type);
+  lite_tensor_list->set_element_shape(element_shape);
+  lite_tensor_list->set_tensors(tensors);
   lite_tensors->emplace_back(lite_tensor.release());
 }
 
@@ -221,7 +244,7 @@ void PrintTensorShape(const std::vector<Tensor *> &input_tensors, const std::vec
 }
 #endif
 
-void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, std::vector<InferTensor> *tensors_,
+void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, std::vector<InferTensor> *tensors,
                  uint32_t i, uint32_t infer_node_index) {
   auto &node = graph->nodes.at(infer_node_index);
   auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
@@ -229,26 +252,112 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
   output_tensor->dataType = output_tensors[i]->data_type();
   if (output_tensors[i]->data_type() == kObjectTypeTensorType) {
     auto tensor_list = reinterpret_cast<TensorList *>(output_tensors[i]);
-    if (output_tensor->data.empty()) {
-      output_tensor->data.resize(8, 0);
+    int tensor_shape_dims = 0;
+    if (!tensor_list->tensors().empty()) {
+      tensor_shape_dims = static_cast<int>(tensor_list->tensors().front()->shape().size());
     }
+    auto total_size = (tensor_shape_dims + 3) * sizeof(int);
+    output_tensor->data.resize(total_size, 0);
+    auto output_tensor_data = reinterpret_cast<int *>(output_tensor->data.data());
     if (tensor_list->tensors_data_type() == kTypeUnknown) {
-      tensors_->at(node->outputIndex[i]).is_inferred_ = false;
-      return;
+      if (!tensor_list->tensors().empty()) {
+        tensor_list->set_tensors_data_type(tensor_list->tensors().front()->data_type());
+      }
     }
-    output_tensor->data.at(0) = tensor_list->tensors_data_type();
+    output_tensor_data[0] = tensor_list->tensors_data_type();
+    if (tensor_list->element_shape().empty() && !tensor_list->tensors().empty()) {
+      tensor_list->set_element_shape(tensor_list->tensors().front()->shape());
+    }
+    output_tensor_data[1] = static_cast<int>(tensor_list->element_shape().size());
+    for (size_t j = 0; j < tensor_list->element_shape().size(); ++j) {
+      output_tensor_data[j + 2] = tensor_list->element_shape().at(j);
+    }
+    output_tensor_data[2 + output_tensor_data[1]] = static_cast<int>(tensor_list->tensors().size());
+
   } else if (output_tensors[i]->data_type() == kTypeUnknown) {
-    tensors_->at(node->outputIndex[i]).is_inferred_ = false;
+    tensors->at(node->outputIndex[i]).is_inferred_ = false;
     return;
   }
-  tensors_->at(node->outputIndex[i]).is_inferred_ = true;
-  return;
+  tensors->at(node->outputIndex[i]).is_inferred_ = true;
 }
+
+int PartialGraphIndex(const CNodeT *partial_node) {
+  return partial_node->primitive->value.AsPartialFusion()->sub_graph_index;
+}
+
 }  // namespace
 
-STATUS InferShapePass::Run(MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
-  InitSearchTensor(graph);
+int InferShapePass::CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaGraphT *graph) {
+  auto subgraph_index = PartialGraphIndex(partial_node);
+  auto &subgraph = graph->subGraph.at(subgraph_index);
+
+  if (subgraph->inputIndices.size() != partial_node->inputIndex.size()) {
+    MS_LOG(ERROR) << "partial node " << partial_node->name << " inputs size: " << partial_node->inputIndex.size()
+                  << " vs "
+                  << " subgraph " << subgraph_index << " input size: " << subgraph->inputIndices.size();
+    return RET_PARAM_INVALID;
+  }
+
+  for (size_t i = 0; i < partial_node->inputIndex.size(); ++i) {
+    auto &subgraph_input = graph->allTensors.at(subgraph->inputIndices[i]);
+    auto &partial_input = graph->allTensors.at(partial_node->inputIndex[i]);
+    subgraph_input->dataType = partial_input->dataType;
+    subgraph_input->dims = partial_input->dims;
+    subgraph_input->format = partial_input->format;
+    subgraph_input->data.resize(partial_input->data.size(), 0);
+    memcpy(subgraph_input->data.data(), partial_input->data.data(), partial_input->data.size());
+  }
+  return RET_OK;
+}
+
+int InferShapePass::RestoreSubGraphInput(const CNodeT *partial_node, MetaGraphT *graph) {
+  auto subgraph_index = PartialGraphIndex(partial_node);
+  auto &subgraph = graph->subGraph.at(subgraph_index);
+  for (size_t i = 0; i < subgraph->inputIndices.size(); ++i) {
+    auto &subgraph_input = graph->allTensors.at(subgraph->inputIndices[i]);
+    if (subgraph_input->dataType != kObjectTypeTensorType) {
+      subgraph_input->data = {};
+    }
+  }
+  return RET_OK;
+}
+
+int InferShapePass::InferPartialNode(const CNodeT *partial_node, MetaGraphT *graph) {
+  int subgraph_index = PartialGraphIndex(partial_node);
+  int ret = CopyPartialShapeToSubGraph(partial_node, graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CopyPartialShapeToSubGraph failed, ret: " << ret;
+    return ret;
+  }
+
+  ret = InferSubgraph(subgraph_index, graph);
+  if (ret != RET_OK) {
+    // not return ret here to infer the following part of graph
+    MS_LOG(WARNING) << "InferSubgraph index: " << subgraph_index << " failed, ret: " << ret;
+  }
+
+  ret = RestoreSubGraphInput(partial_node, graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "RestoreSubGraphInput failed, ret: " << ret;
+  }
+  return ret;
+}
+
+void InferShapePass::InitInferTensor(MetaGraphT *graph) {
+  tensors_.resize(graph->allTensors.size());
+  for (size_t i = 0; i < graph->nodes.size(); i++) {
+    auto &node = graph->nodes.at(i);
+    auto node_input_indexes = node->inputIndex;
+    //  init in_nodes index
+    for (size_t j = 0; j < node_input_indexes.size(); j++) {
+      tensors_[node_input_indexes[j]].next_nodes_.push_back(i);
+    }
+    auto node_output_indexes = node->outputIndex;
+    for (size_t j = 0; j < node_output_indexes.size(); j++) {
+      tensors_[node_output_indexes[j]].prev_nodes_.push_back(i);
+    }
+  }
+
   for (auto input_idx : graph->inputIndex) {
     auto input_tensor = graph->allTensors[input_idx].get();
     for (auto &dim : input_tensor->dims) {
@@ -258,18 +367,110 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       }
     }
   }
-  while (!infer_node_indexes_.empty()) {
-    auto infer_node_index = infer_node_indexes_.front();
-    auto &node = graph->nodes.at(infer_node_index);
-    auto node_type = node->primitive->value.type;
-    if (node_type == PrimitiveType_Switch && node->outputIndex.size() != 2 * (node->inputIndex.size() - 1)) {
-      MS_LOG(WARNING) << "do infershape after switch pass.";
-      return RET_OK;
-    }
-    infer_node_indexes_.erase(infer_node_indexes_.begin());
-    if (node_type == PrimitiveType_PartialFusion) {
+}
+
+int InferShapePass::InferSwitchNode(const std::unique_ptr<CNodeT> &switch_node, MetaGraphT *graph) {
+  if (switch_node->inputIndex.size() < kSwitchInputMinSize) {
+    MS_LOG(ERROR) << "switch node input size: " << switch_node->inputIndex.size() << " is less than three.";
+    return RET_PARAM_INVALID;
+  }
+
+  static std::set<CNodeT *> partial_cnode_inferred{};
+  std::deque<CNodeT *> to_process{};
+  auto true_branch_output_index = switch_node->inputIndex.at(1);
+  auto false_branch_output_index = switch_node->inputIndex.at(2);
+  for (auto &node : graph->nodes) {
+    if (node->primitive->value.type != PrimitiveType_PartialFusion) {
       continue;
     }
+    if (IsContain(node->outputIndex, true_branch_output_index) &&
+        partial_cnode_inferred.find(node.get()) == partial_cnode_inferred.end()) {
+      to_process.push_back(node.get());
+      partial_cnode_inferred.insert(node.get());
+      break;
+    }
+  }
+  for (auto &node : graph->nodes) {
+    if (node->primitive->value.type != PrimitiveType_PartialFusion) {
+      continue;
+    }
+    if (IsContain(node->outputIndex, false_branch_output_index) &&
+        partial_cnode_inferred.find(node.get()) == partial_cnode_inferred.end()) {
+      to_process.push_back(node.get());
+      partial_cnode_inferred.insert(node.get());
+      break;
+    }
+  }
+
+  while (!to_process.empty()) {
+    auto node = to_process.front();
+    to_process.pop_front();
+    int ret = InferPartialNode(node, graph);
+    if (ret != RET_OK) {
+      MS_LOG(WARNING) << "not support partial infer.";
+      return ret;
+    }
+  }
+
+  return RET_OK;
+}
+
+int InferShapePass::InferCallNode(const std::unique_ptr<CNodeT> &call_node, MetaGraphT *graph) {
+  if (call_node->inputIndex.size() < kCallInputMinSize) {
+    MS_LOG(ERROR) << "call node input size: " << call_node->inputIndex.size() << " is less than one.";
+    return RET_PARAM_INVALID;
+  }
+  auto call_first_input_index = call_node->inputIndex.front();
+  bool find_partial = false;
+  bool find_switch = false;
+  for (auto &node : graph->nodes) {
+    if (IsContain(node->outputIndex, call_first_input_index) &&
+        node->primitive->value.type == PrimitiveType_PartialFusion) {
+      find_partial = true;
+      int ret = InferPartialNode(node.get(), graph);
+      if (ret != RET_OK) {
+        MS_LOG(WARNING) << "not support partial infer.";
+        return ret;
+      }
+      break;
+    }
+    if (IsContain(node->outputIndex, call_first_input_index) && node->primitive->value.type == PrimitiveType_Switch) {
+      find_switch = true;
+      int ret = InferSwitchNode(node, graph);
+      if (ret != RET_OK) {
+        MS_LOG(WARNING) << "not support partial infer.";
+        return ret;
+      }
+      break;
+    }
+  }
+  if (!find_partial && !find_switch) {
+    MS_LOG(ERROR) << "not able to call partial or call switch.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int InferShapePass::InferSubgraph(const int &subgraph_index, MetaGraphT *graph) {
+  auto infer_node_indexes = InitSearchTensor(subgraph_index, graph);
+  if (infer_node_indexes.empty()) {
+    MS_LOG(ERROR) << "InitSearchTensor failed.";
+    return RET_ERROR;
+  }
+
+  while (!infer_node_indexes.empty()) {
+    auto infer_node_index = infer_node_indexes.front();
+    auto &node = graph->nodes.at(infer_node_index);
+    auto node_type = node->primitive->value.type;
+    if (node_type == PrimitiveType_Call) {
+      int ret = InferCallNode(node, graph);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "infer call node failed.";
+        return ret;
+      }
+    }
+
+    infer_node_indexes.erase(infer_node_indexes.begin());
     auto input_tensors = ConvertTensorToLiteTensor(graph, node->inputIndex);
     auto output_tensors = ConvertTensorToLiteTensor(graph, node->outputIndex);
     if (output_tensors.empty() || output_tensors.size() != node->outputIndex.size() || input_tensors.empty() ||
@@ -287,8 +488,8 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       // copy output shape to tensorT
       for (size_t i = 0; i < output_tensors.size(); i++) {
         auto output_dims = output_tensors[i]->shape();
-        auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
-        output_tensor->dims.swap(output_dims);
+        auto &output_tensorT = graph->allTensors.at(node->outputIndex[i]);
+        output_tensorT->dims.swap(output_dims);
         SetDataType(graph, output_tensors, &tensors_, i, infer_node_index);
       }
     } else {
@@ -298,44 +499,50 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       return RET_INFER_ERR;
     }
     FreeTensors(&input_tensors, &output_tensors);
-    AddOutputNodes(graph, infer_node_index);
+    AddOutputNodes(graph, &infer_node_indexes, infer_node_index);
   }
+  return RET_OK;
+}
+
+STATUS InferShapePass::Run(MetaGraphT *graph) {
+  MS_ASSERT(graph != nullptr);
+  InitInferTensor(graph);
+
+  int ret = InferSubgraph(kMainGraphIndex, graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InferSubgraph index: " << kMainGraphIndex << " failed, ret: " << ret;
+    return ret;
+  }
+
   ResetIncorrectTensorShape(graph);
   return RET_OK;
 }
 
-void InferShapePass::InitSearchTensor(MetaGraphT *graph) {
-  std::vector<uint32_t> all_node_output_tensor_indexes = {};
-  tensors_.resize(graph->allTensors.size());
-  for (size_t i = 0; i < graph->nodes.size(); i++) {
-    auto &node = graph->nodes.at(i);
-    auto node_input_indexes = node->inputIndex;
-    //  init in_nodes index
-    for (size_t j = 0; j < node_input_indexes.size(); j++) {
-      tensors_[node_input_indexes[j]].next_nodes_.push_back(i);
-    }
-    auto node_output_indexes = node->outputIndex;
-    for (size_t j = 0; j < node_output_indexes.size(); j++) {
-      tensors_[node_output_indexes[j]].prev_nodes_.push_back(i);
-    }
-    all_node_output_tensor_indexes.insert(all_node_output_tensor_indexes.end(), node_output_indexes.begin(),
-                                          node_output_indexes.end());
+std::vector<uint32_t> InferShapePass::InitSearchTensor(const int &subgraph_index, MetaGraphT *graph) {
+  std::vector<uint32_t> infer_node_indexes = {};
+  if (static_cast<size_t>(subgraph_index) >= graph->subGraph.size()) {
+    MS_LOG(ERROR) << "subgraph_index: " << subgraph_index
+                  << " is larger than graph->subGraph.size(): " << graph->subGraph.size();
+    return {};
   }
+  auto &subgraph = graph->subGraph.at(subgraph_index);
   for (uint32_t i = 0; i < tensors_.size(); i++) {
-    if (tensors_[i].prev_nodes_.empty() || IsContain(graph->inputIndex, i) || !graph->allTensors.at(i)->data.empty()) {
+    if (IsContain(subgraph->inputIndices, i) || !graph->allTensors.at(i)->data.empty()) {
       tensors_[i].is_inferred_ = true;
     }
   }
-  for (size_t i = 0; i < graph->nodes.size(); i++) {
-    auto &node = graph->nodes.at(i);
+  for (size_t i = 0; i < subgraph->nodeIndices.size(); i++) {
+    auto &node = graph->nodes.at(subgraph->nodeIndices.at(i));
     if (std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
                     [&](uint32_t idx) { return tensors_[idx].is_inferred_; })) {
-      infer_node_indexes_.push_back(i);
+      infer_node_indexes.push_back(subgraph->nodeIndices.at(i));
     }
   }
+  return infer_node_indexes;
 }
 
-void InferShapePass::AddOutputNodes(MetaGraphT *graph, uint32_t infer_node_index) {
+void InferShapePass::AddOutputNodes(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes,
+                                    uint32_t infer_node_index) {
   auto &node = graph->nodes.at(infer_node_index);
   for (size_t i = 0; i < node->outputIndex.size(); i++) {
     auto next_nodes_indexes = tensors_[node->outputIndex[i]].next_nodes_;
@@ -343,29 +550,20 @@ void InferShapePass::AddOutputNodes(MetaGraphT *graph, uint32_t infer_node_index
       auto &next_node = graph->nodes.at(next_nodes_indexes[j]);
       if (std::any_of(next_node->outputIndex.begin(), next_node->outputIndex.end(),
                       [&](uint32_t idx) { return !tensors_[idx].is_inferred_; })) {
-        AddNextInferShapeNode(graph, next_nodes_indexes, j);
+        AddNextInferShapeNode(graph, infer_node_indexes, next_nodes_indexes, j);
       }
     }
   }
 }
 
-void InferShapePass::AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> next_nodes_indexes, size_t index) {
+void InferShapePass::AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> *infer_node_indexes,
+                                           std::vector<uint32_t> next_nodes_indexes, size_t index) {
   auto &next_node = graph->nodes.at(next_nodes_indexes[index]);
-  if (find(infer_node_indexes_.begin(), infer_node_indexes_.end(), next_nodes_indexes[index]) ==
-      infer_node_indexes_.end()) {
-    auto next_node_type = next_node->primitive->value.type;
-    if (next_node_type == schema::PrimitiveType_Merge) {
-      if (std::all_of(next_node->inputIndex.begin(), next_node->inputIndex.begin() + next_node->inputIndex.size() / 2,
-                      [&](uint32_t i) { return tensors_[i].is_inferred_; }) ||
-          std::all_of(next_node->inputIndex.begin() + next_node->inputIndex.size() / 2, next_node->inputIndex.end(),
-                      [&](uint32_t i) { return tensors_[i].is_inferred_; })) {
-        infer_node_indexes_.push_back(next_nodes_indexes[index]);
-      }
-    } else if (std::all_of(next_node->inputIndex.begin(), next_node->inputIndex.end(),
-                           [&](uint32_t i) { return tensors_[i].is_inferred_; }) ||
-               std::any_of(next_node->inputIndex.begin(), next_node->inputIndex.end(),
-                           [&](uint32_t i) { return graph->allTensors.at(i)->dataType == kObjectTypeTensorType; })) {
-      infer_node_indexes_.push_back(next_nodes_indexes[index]);
+  if (find(infer_node_indexes->begin(), infer_node_indexes->end(), next_nodes_indexes[index]) ==
+      infer_node_indexes->end()) {
+    if (std::all_of(next_node->inputIndex.begin(), next_node->inputIndex.end(),
+                    [&](uint32_t i) { return tensors_[i].is_inferred_; })) {
+      infer_node_indexes->push_back(next_nodes_indexes[index]);
     }
   }
 }
@@ -375,9 +573,13 @@ void InferShapePass::ResetIncorrectTensorShape(MetaGraphT *graph) {
   for (auto &node : graph->nodes) {
     auto out_tensors_index = node->outputIndex;
     for (auto index : out_tensors_index) {
-      auto shape = graph->allTensors.at(index)->dims;
+      auto &tensor = graph->allTensors.at(index);
+      auto shape = tensor->dims;
       if (shape == std::vector{-1}) {
-        graph->allTensors.at(index)->dims = {};
+        tensor->dims = {};
+        if (tensor->dataType == kObjectTypeTensorType) {
+          reinterpret_cast<TensorList *>(tensor.get())->set_tensors({});
+        }
       }
     }
   }

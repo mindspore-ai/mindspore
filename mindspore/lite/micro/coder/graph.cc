@@ -62,14 +62,12 @@ int CoderGraph::ConvertTensors() {
     MS_CHECK_PTR_WITH_EXE(origin_tensor, clear_tensors());
     // tensor dims
     std::vector<int> shape;
-    if (origin_tensor->nodeType() == NodeType_ValueNode) {
-      if (origin_tensor->dims() != nullptr) {
-        for (uint32_t j = 0; j < origin_tensor->dims()->size(); j++) {
-          MS_CHECK_PTR(origin_tensor->dims()->data());
-          int dim = static_cast<int>(origin_tensor->dims()->data()[j]);
-          MS_CHECK_RET_CODE_WITH_EXE(check_dim(dim), "parse shape failed!", clear_tensors());
-          shape.push_back(dim);
-        }
+    if (origin_tensor->dims() != nullptr) {
+      for (uint32_t j = 0; j < origin_tensor->dims()->size(); j++) {
+        MS_CHECK_PTR(origin_tensor->dims()->data());
+        int dim = static_cast<int>(origin_tensor->dims()->data()[j]);
+        MS_CHECK_RET_CODE_WITH_EXE(check_dim(dim), "parse shape failed!", clear_tensors());
+        shape.push_back(dim);
       }
     }
     // tensor Datatype
@@ -130,8 +128,8 @@ int CoderGraph::InitGraphInOutTensors() {
     for (uint32_t i = 0; i < in_node->input_indices_.size(); i++) {
       auto in_tensor_index = size_t(in_node->input_indices_.at(i));
       bool is_graph_input = false;
-      for (uint32_t j = 0; j < model_->sub_graphs_.at(0)->input_indices_.size(); j++) {
-        if (in_tensor_index == size_t(model_->sub_graphs_.at(0)->input_indices_.at(j))) {
+      for (uint32_t j = 0; j < model_->input_indices_.size(); j++) {
+        if (in_tensor_index == size_t(model_->input_indices_.at(j))) {
           input_indices.push_back(static_cast<uint32_t>(in_tensor_index));
           is_graph_input = true;
           break;
@@ -155,8 +153,8 @@ int CoderGraph::InitGraphInOutTensors() {
     for (uint32_t i = 0; i < out_node->output_indices_.size(); i++) {
       auto out_tensor_index = size_t(out_node->output_indices_.at(i));
       bool is_graph_output = false;
-      for (uint32_t j = 0; j < model_->sub_graphs_.at(0)->output_indices_.size(); j++) {
-        if (out_tensor_index == size_t(model_->sub_graphs_.at(0)->output_indices_.at(j))) {
+      for (uint32_t j = 0; j < model_->output_indices_.size(); j++) {
+        if (out_tensor_index == size_t(model_->output_indices_.at(j))) {
           output_indices.push_back(static_cast<uint32_t>(out_tensor_index));
           is_graph_output = true;
           break;

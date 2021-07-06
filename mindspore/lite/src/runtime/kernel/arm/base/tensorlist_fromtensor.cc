@@ -99,6 +99,7 @@ int TensorListFromTensorCPUKernel::Run() {
     out_ptr->set_data_type(dtype_);
     in_data += data_offset;
   }
+  output0->set_own_data(true);
   output0->set_tensors_data_type(dtype_);
   return RET_OK;
 }

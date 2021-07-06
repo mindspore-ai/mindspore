@@ -645,6 +645,8 @@ std::string GetModelName(const std::string &modelFile) {
 int SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT) {
   for (auto &subgraph : meta_graphT->subGraph) {
     std::vector<uint32_t> subgraph_indices{};
+    subgraph_indices.assign(subgraph->inputIndices.begin(), subgraph->inputIndices.end());
+    subgraph_indices.assign(subgraph->outputIndices.begin(), subgraph->outputIndices.end());
     for (auto &node_idx : subgraph->nodeIndices) {
       auto &node = meta_graphT->nodes.at(node_idx);
       for (auto &input_idx : node->inputIndex) {

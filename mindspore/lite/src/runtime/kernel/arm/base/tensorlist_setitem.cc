@@ -41,7 +41,6 @@ int TensorListSetItemCPUKernel::CheckParam() {
 }
 
 int TensorListSetItemCPUKernel::IncrementOutputSize(int origin_size) {
-  output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
   int new_tensors_size = origin_size + 1;
   output0_->set_shape({new_tensors_size});
   std::vector<std::vector<int>> out_shape;
@@ -56,15 +55,16 @@ int TensorListSetItemCPUKernel::IncrementOutputSize(int origin_size) {
 
 int TensorListSetItemCPUKernel::Run() {
   input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
+  output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
   if (CheckParam() != RET_OK) {
     MS_LOG(ERROR) << "check param failed.";
     return RET_ERROR;
   }
 
-  int dim0 = input0_->ElementsNum() - 1;
+  int dim0 = output0_->ElementsNum() - 1;
   index_ = reinterpret_cast<int *>(in_tensors_[1]->data_c())[0];
   if (index_ < 0 || index_ > dim0) {
-    if (IncrementOutputSize(output0_->shape()[0]) != RET_OK) {
+    if (IncrementOutputSize(output0_->tensors().size()) != RET_OK) {
       MS_LOG(ERROR) << "Resizeoutput Error ,index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";
       return RET_ERROR;
     }
@@ -76,6 +76,7 @@ int TensorListSetItemCPUKernel::Run() {
   }
   output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
   MS_ASSERT(output0_ != nullptr);
+  output0_->set_allocator(context_->allocator);
   // new loop count
   if (output0_->tensors().empty() && input0_->tensors().empty()) {
     if (IncrementOutputSize(0) != RET_OK) {
@@ -88,11 +89,14 @@ int TensorListSetItemCPUKernel::Run() {
     input0_->set_element_shape(input2_->shape());
     output0_->set_element_shape(input2_->shape());
   }
+  if (output0_->allocator() == nullptr) {
+    output0_->set_allocator(context_->allocator);
+  }
   for (int i = 0; i < output0_->ElementsNum(); ++i) {
     if (i == index_) {
       auto dst = output0_->GetTensor(i);
       if (dst == nullptr) {
-        dst = lite::Tensor::CopyTensor(*input2_, true);
+        dst = lite::Tensor::CopyTensor(*input2_, true, context_->allocator);
         auto &tensors = output0_->tensors();
         tensors.emplace_back(dst);
       } else {
@@ -100,8 +104,6 @@ int TensorListSetItemCPUKernel::Run() {
         dst->set_shape(input2_->shape());
         dst->set_format(input2_->format());
         dst->set_category(input2_->category());
-        dst->set_root_tensor(input2_->root_tensor());
-        dst->set_tensor_name(input2_->tensor_name());
         dst->set_quant_clusters(input2_->quant_clusters());
         auto ret = lite::Tensor::CopyTensorData(*input2_, dst);
         if (ret != RET_OK) {
@@ -115,7 +117,7 @@ int TensorListSetItemCPUKernel::Run() {
       MS_ASSERT(src != nullptr);
       // merge move data will delete tensors
       if (dst == nullptr) {
-        dst = lite::Tensor::CopyTensor(*src, src->data_c() != nullptr);
+        dst = lite::Tensor::CopyTensor(*src, src->data_c() != nullptr, context_->allocator);
         auto &tensors = output0_->tensors();
         tensors.emplace_back(dst);
         continue;

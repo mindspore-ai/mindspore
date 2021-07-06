@@ -22,6 +22,8 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <set>
+#include <list>
 #include "schema/inner/model_generated.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"
@@ -35,6 +37,10 @@ using mindspore::ops::PrimitiveC;
 namespace mindspore::lite {
 
 constexpr const int kMainGraphIndex = 0;
+constexpr const int kFirstDataIndex = 1;
+constexpr const int kSecondDataIndex = 2;
+constexpr const int kPrimIndex = 0;
+constexpr const int kSwitchFalseIndex = 3;
 
 class AnfExporter {
  public:
@@ -55,9 +61,9 @@ class AnfExporter {
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *op_node);
   int ConvertInputValueNode(const CNodePtr &cnode, size_t index, const PrimitivePtr &primitive,
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *op_node);
-  int SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const size_t &subgraph_index);
-  int SetGraphoutputIndex(const CNodePtr &cnode, size_t subgraph_index,
-                          const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *return_node);
+  int SetSubGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const size_t &subgraph_index);
+  int SetSubGraphOutputIndex(const CNodePtr &cnode, size_t subgraph_index,
+                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *return_node);
   static int SetPostTrainOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                           const std::shared_ptr<mindspore::Primitive> &primitive,
                                           const std::unique_ptr<schema::CNodeT> &dst_node);
@@ -69,17 +75,25 @@ class AnfExporter {
   int ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      bool keep_graph, bool copy_primitive, const std::shared_ptr<AnfNode> &partial_anode = nullptr);
   static ValueNodePtr GetPartialAnfPrim();
-  static CNodePtr CreatePartialCnode(const FuncGraphPtr &fg, AnfNodePtr cnode);
-  static std::vector<schema::CNodeT *> GetSubgraphNodes(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
-                                                        const size_t &subgraph_index);
+  static ValueNodePtr GetCallAnfPrim();
+  static CNodePtr CreateCallCnode(const FuncGraphPtr &fg, const AnfNodePtr &cnode);
+  static CNodePtr CreatePartialCnode(const FuncGraphPtr &fg, const AnfNodePtr &node);
   bool HasExported(const FuncGraphPtr &func_graph);
+  int ExportPartialNode(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const bool &keep_graph,
+                        const bool &copy_primitive, const CNodePtr &partial_cnode,
+                        const std::unique_ptr<schema::CNodeT> &schema_cnode);
+  std::list<CNodePtr> InsertCallNode(const FuncGraphPtr &func_graph);
+  int SetMetaGraphOutput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
+  bool IsCall(const AnfNodePtr node);
+  int CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const AnfNodePtr &input);
 
  private:
-  std::map<std::pair<AnfNodePtr, int>, int> node_id_map_;
   // Key is a pair of node and its output id. Value is the mapped tensor id of meta_graph.
-  std::vector<schema::CNodeT *> graph_input_nodes_;
+  std::map<std::pair<AnfNodePtr, int>, int> node_id_map_;
   // The first item is FuncGraph which has been exported, the second item is the subgraph index in meta_graph
-  std::map<FuncGraphPtr, int> fg_subgraph_map_;
+  std::map<FuncGraphPtr, size_t> fg_subgraph_map_;
+  std::vector<AnfNodePtr> graph_inputs_;
+  std::set<AnfNodePtr> graph_inputs_has_exported_;
   uint32_t node_idx_ = 0;
   bool train_flag_ = false;
 };

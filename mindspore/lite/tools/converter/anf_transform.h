@@ -54,10 +54,6 @@ class AnfTransform {
   static STATUS RunPluginPass(const FuncGraphPtr &old_graph, int position);
 
   int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
-
-  void GetAllFuncGraph(const FuncGraphPtr &func_graph);
-
-  std::set<FuncGraphPtr> func_graphs_{};
 };
 }  // namespace lite
 }  // namespace mindspore

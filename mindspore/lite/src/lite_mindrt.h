@@ -27,11 +27,13 @@
 #include "async/future.h"
 #include "src/sub_graph_kernel.h"
 #include "src/cpu_info.h"
+#include "src/tensorlist.h"
 
 namespace mindspore::lite {
 
 typedef enum { GRAPH, OP_BY_OP } MindRTMode;
-const constexpr int kSwitchInputsSize = 3;
+const constexpr int kSwitchMaxInputsSize = 3;
+const constexpr int kSwitchMinInputsSize = 2;
 const constexpr int kSwitchCondInputIndex = 0;
 const constexpr int kSwitchTruePartialInputIndex = 1;
 const constexpr int kSwitchFalsePartialInputIndex = 2;
@@ -53,7 +55,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
   }
   void RunOpData(OpData<lite::Tensor> *input_data, OpContext<lite::Tensor> *context = nullptr) override;
-  int CastTensorData(Tensor *dst, Tensor *src);
   virtual int CompileArrow();
   int RunKernel(const KernelCallBack &before, const KernelCallBack &after) {
     auto ret = kernel_->Execute(before, after);
@@ -69,9 +70,12 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
  public:
   void AddResultIndex(size_t index);
-  void SetPartialMap(const std::unordered_map<size_t, AID> &partial_map) { subgraph_index_to_actor = partial_map; }
+  void SetSubgraphAIDMap(const std::unordered_map<kernel::LiteKernel *, AID> &partial_map) {
+    subgraph_to_actor_ = partial_map;
+  }
 
  protected:
+  void SetInputShape();
   int SetInputData();
   void SetOutputData(OpContext<Tensor> *context);
   void AsyncOutput(OpContext<Tensor> *context);
@@ -81,19 +85,22 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
   kernel::LiteKernel *kernel_;
   std::vector<size_t> results_index_{};
-  std::unordered_map<size_t, AID> subgraph_index_to_actor{};
+  std::unordered_map<kernel::LiteKernel *, AID> subgraph_to_actor_{};
   std::vector<OpDataPtr<Tensor>> outputs_data_{};
   std::vector<Tensor *> inputs_data_{};
+  std::unordered_map<Tensor *, Tensor *> isolate_input_map_{}; /* <calculate-tensor,  src-input-tensor> */
 
  private:
   void IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors);
+  void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void CopyInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  int CastInputData(Tensor *dst_tensor, Tensor *src_tensor);
 
  private:
   kernel::LiteKernel *partial_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
-  std::unordered_map<Tensor *, Tensor *> isolate_input_map_; /* <calculate-tensor,  src-input-tensor> */
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   bool support_fp16_ = false;
 #endif
@@ -103,70 +110,18 @@ class LiteSwitchOpActor : public LiteOpActor {
  public:
   explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}
   ~LiteSwitchOpActor() override = default;
-  void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override {
-    auto op_uuid = context->sequential_num_;
-    input_op_datas_[op_uuid].push_back(inputs);
-    inputs_data_.push_back(inputs->data_);
-    if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
-      return;
-    }
-
-    auto ret = SetInputData();
-    if (ret != RET_OK) {
-      input_op_datas_.erase(op_uuid);
-      context->SetFailed(ret);
-      return;
-    }
-
-    ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                    *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
-    if (ret != RET_OK) {
-      input_op_datas_.erase(op_uuid);
-      context->SetFailed(ret);
-      return;
-    }
-    input_op_datas_.erase(op_uuid);
-    inputs_data_.clear();
-
-    bool *cond = reinterpret_cast<bool *>(output_tensors_[0]->data());
-    if (*cond) {
-      for (auto &arrow : true_branch_output_data_arrows_) {
-        kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
-      }
-      AsyncTrueBranchOutput(context);
-    } else {
-      for (auto &arrow : false_branch_output_data_arrows_) {
-        kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
-      }
-      AsyncFalseBranchOutput(context);
-    }
-  }
-
-  void Init() override {
-    auto ret = CompileArrow();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "CompileArrow failed, name: " << kernel_->name();
-      // do not support return error
-    }
-
-    ret = PrepareOutputData();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "PrepareOutputData failed, name: " << kernel_->name();
-      // do not support return error
-    }
-  }
+  void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
   int CompileArrow() override;
+  int PrepareOutputData() override;
 
  private:
   void AsyncTrueBranchOutput(OpContext<Tensor> *context);
   void AsyncFalseBranchOutput(OpContext<Tensor> *context);
-
   int GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel);
   void AppendOutputTensors();
   int CompileTrueBranchArrow();
   int CompileFalseBranchArrow();
   int CompileArrowThroughSwitchCall();
-  int PrepareOutputData() override;
 
   std::vector<DataArrowPtr> true_branch_output_data_arrows_;
   std::vector<DataArrowPtr> false_branch_output_data_arrows_;

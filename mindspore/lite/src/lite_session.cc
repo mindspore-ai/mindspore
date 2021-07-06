@@ -118,10 +118,8 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
                                     lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
-  auto src_category = TensorCategory(src_tensor);
-  if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
-      src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
-    if (src_tensor->dataType() == kObjectTypeTensorType) {
+  if (src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
+    if (dst_tensor->data_type() == kObjectTypeTensorType) {
       auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
       if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
         MS_LOG(ERROR) << "Decode tensorlist data failed";
@@ -147,7 +145,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   if (src_tensor.dims() == nullptr) {
     MS_LOG(DEBUG) << "Dims of src_tensor is nullptr";
   }
-  if (src_tensor.dims() != nullptr && src_category == Tensor::Category::CONST_TENSOR) {
+  if (src_tensor.dims() != nullptr) {
     if (src_tensor.dataType() == kObjectTypeString && src_tensor.data() != nullptr) {
       shape.push_back(src_tensor.data()->size());
     } else {

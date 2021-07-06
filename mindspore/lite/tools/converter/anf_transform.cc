@@ -52,8 +52,7 @@
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/graph/slice_prepose_pass.h"
-#include "tools/optimizer/graph/while_pass.h"
-#include "tools/optimizer/graph/if_pass.h"
+#include "tools/optimizer/graph/control_flow_pass.h"
 #include "tools/optimizer/graph/reduce_same_act_pass.h"
 #include "tools/optimizer/graph/split_one_pass.h"
 #include "tools/optimizer/graph/unify_format_pass.h"
@@ -190,8 +189,7 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   if (config->fmk == lite::converter::FmkType_TFLITE || config->fmk == lite::converter::FmkType_TF ||
       config->fmk == lite::converter::FmkType_ONNX) {
-    graph_pm->AddPass(std::make_shared<opt::WhilePass>());
-    graph_pm->AddPass(std::make_shared<opt::IfPass>());
+    graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   slice_prepose_pass->SetFmkType(config->fmk);
@@ -289,19 +287,16 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     MS_LOG(ERROR) << "config should be specified";
     return nullptr;
   }
-  int status;
-  for (auto &fg : func_graphs_) {
-    status = RunConstFoldPass(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run const fold pass failed.";
-      return nullptr;
-    }
+  int status = RunConstFoldPass(old_graph, config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run const fold pass failed.";
+    return nullptr;
+  }
 
-    status = RunConvertPass(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run convert pass failed.";
-      return nullptr;
-    }
+  status = RunConvertPass(old_graph, config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run convert pass failed.";
+    return nullptr;
   }
 
   auto format_pass = std::make_shared<opt::UnifyFormatPass>();
@@ -318,28 +313,22 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   }
 
   auto reduce_act_pass = std::make_shared<opt::ReduceSameActPass>();
-  for (auto &fg : func_graphs_) {
-    if (!reduce_act_pass->Run(fg)) {
-      MS_LOG(ERROR) << "Run reduce same act pass failed.";
-      return nullptr;
-    }
+  if (!reduce_act_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run reduce same act pass failed.";
+    return nullptr;
   }
 
   auto split_one_pass = std::make_shared<opt::SplitOnePass>();
-  for (auto &fg : func_graphs_) {
-    if (!split_one_pass->Run(fg)) {
-      MS_LOG(ERROR) << "Run split one pass failed.";
-      return nullptr;
-    }
+  if (!split_one_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run split one pass failed.";
+    return nullptr;
   }
 
-  for (auto &fg : func_graphs_) {
-    if (!config->disableFusion) {
-      status = RunFusionPass(fg, config);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "Run fusion pass failed.";
-        return nullptr;
-      }
+  if (!config->disableFusion) {
+    status = RunFusionPass(old_graph, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run fusion pass failed.";
+      return nullptr;
     }
   }
 
@@ -356,57 +345,27 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  for (auto &fg : func_graphs_) {
-    status = RunGraphPass(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run convert pass failed.";
-      return nullptr;
-    }
+  status = RunGraphPass(old_graph, config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run convert pass failed.";
+    return nullptr;
+  }
 
-    status = RunParallelPass(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run convert pass failed.";
-      return nullptr;
-    }
+  status = RunParallelPass(old_graph, config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run convert pass failed.";
+    return nullptr;
+  }
 
-    status = DoQuantize(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do Quantize failed.";
-      return nullptr;
-    }
+  status = DoQuantize(old_graph, config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Do Quantize failed.";
+    return nullptr;
   }
   return old_graph;
 }
 
-void AnfTransform::GetAllFuncGraph(const FuncGraphPtr &func_graph) {
-  if (func_graphs_.find(func_graph) == func_graphs_.end()) {
-    func_graphs_.insert(func_graph);
-  } else {
-    return;
-  }
-
-  auto nodes = func_graph->nodes();
-  for (auto &node : nodes) {
-    if (IsValueNode<FuncGraph>(node)) {
-      auto new_fg = (node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
-      GetAllFuncGraph(new_fg);
-    }
-    if (utils::isa<CNodePtr>(node)) {
-      auto cnode = node->cast<CNodePtr>();
-      for (auto &input : cnode->inputs()) {
-        if (input->isa<ValueNode>()) {
-          if (IsValueNode<FuncGraph>(input)) {
-            auto new_fg = (input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
-            GetAllFuncGraph(new_fg);
-          }
-        }
-      }
-    }
-  }
-}
-
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
-  GetAllFuncGraph(main_graph);
   auto new_graph = TransformFuncGraph(main_graph, config);
   if (new_graph == nullptr) {
     MS_LOG(ERROR) << "optimizer failed.";
