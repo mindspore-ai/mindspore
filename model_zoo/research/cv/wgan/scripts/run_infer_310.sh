@@ -102,6 +102,10 @@ function infer()
 
 function cal_acc()
 {
+    if [ -d infer_output ]; then
+        rm -rf ./infer_output
+    fi
+    mkdir infer_output
     python3.7 ../postprocess.py --config=$config_path --output_dir=./infer_output --nimages=$nimages --post_result_path=./result_Files --device_id=$device_id &> acc.log
 }
 
