@@ -15,3 +15,8 @@ add_library(mslite_converter_plugin SHARED ${REG_SRC})
 target_link_libraries(mslite_converter_plugin mindspore::glog)
 add_dependencies(mslite_converter_plugin fbs_src)
 add_dependencies(mslite_converter_plugin fbs_inner_src)
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND (NOT WIN32))
+    add_custom_command(TARGET mslite_converter_plugin POST_BUILD COMMAND strip
+            ${CMAKE_CURRENT_BINARY_DIR}/libmslite_converter_plugin.so)
+endif()
