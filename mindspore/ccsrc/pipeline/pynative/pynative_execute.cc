@@ -2102,9 +2102,20 @@ void GradExecutor::CreateMakeTupleNodeForMultiOut(const std::string &cell_id, co
   // get input node and value
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
   ValuePtrList input_args;
+  std::vector<int> value_index;
   for (size_t i = 0; i < out_tuple.size(); i++) {
+    auto v = parse::data_converter::PyDataToValue(out_tuple[i]);
+    // Graph have no define for grad
+    if (v->isa<FuncGraph>()) {
+      continue;
+    }
+    value_index.emplace_back(i);
+    input_args.emplace_back(v);
     inputs.emplace_back(GetInput(out_tuple[i], false));
-    input_args.emplace_back(parse::data_converter::PyDataToValue(out_tuple[i]));
+  }
+  py::tuple value_outs(value_index.size());
+  for (size_t i = 0; i < value_index.size(); ++i) {
+    value_outs[i] = out_tuple[value_index[i]];
   }
   auto cnode = curr_g_->NewCNode(inputs);
   MS_LOG(DEBUG) << "Tuple output node info " << cnode->DebugString();
@@ -2116,7 +2127,7 @@ void GradExecutor::CreateMakeTupleNodeForMultiOut(const std::string &cell_id, co
     return;
   }
   // run ad for maketuple node
-  ValuePtr out_value = parse::data_converter::PyDataToValue(out);
+  ValuePtr out_value = parse::data_converter::PyDataToValue(value_outs);
   ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args, out_value);
 }
 

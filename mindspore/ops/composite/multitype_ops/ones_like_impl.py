@@ -58,6 +58,24 @@ def _ones_like_sparse_tensor(x):
     return F.make_sparse_tensor(F.sparse_tensor_get_indices(x), values, F.sparse_tensor_get_dense_shape(x))
 
 
+newenv = base.EnvInstance_()
+
+
+@ones_like_leaf.register("Function")
+def _ones_like_func(x):
+    """
+    Derivation of a function.
+
+    Args:
+        x (Function): x
+
+    Returns:
+        EnvInstance_, value is newenv.
+    """
+    # Unused parameters are placeholders.
+    return newenv
+
+
 ones_like = base.HyperMap(ones_like_leaf)
 """
 `ones_like` is a function which can generate a graph of `ones_like` operation according to input tensor dtype.
