@@ -61,22 +61,34 @@ std::vector<std::string> GetImagesById(const std::string &idFile, const std::str
 }
 
 int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
-  std::string homePath = "./result_Files";
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    size_t outputSize;
-    std::shared_ptr<const void> netOutput;
-    netOutput = outputs[i].Data();
-    outputSize = outputs[i].DataSize();
-    int pos = imageFile.rfind('/');
-    std::string fileName(imageFile, pos + 1);
-    fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
-    std::string outFileName = homePath + "/" + fileName;
-    FILE * outputFile = fopen(outFileName.c_str(), "wb");
-    fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
-    fclose(outputFile);
-    outputFile = nullptr;
-  }
-  return 0;
+    std::string homePath = "./result_Files";
+    for (size_t i = 0; i < outputs.size(); ++i) {
+        size_t outputSize;
+        std::shared_ptr<const void> netOutput;
+        netOutput = outputs[i].Data();
+        outputSize = outputs[i].DataSize();
+        int pos = imageFile.rfind('/');
+        std::string fileName(imageFile, pos + 1);
+        fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
+        std::string outFileName = homePath + "/" + fileName;
+        FILE * outputFile = fopen(outFileName.c_str(), "wb");
+        if (outputFile == nullptr) {
+            std::cout << "open result file" << outFileName << "failed" << std::endl;
+            return -1;
+        }
+        size_t size = fwrite(netOutput.get(), sizeof(char), outputSize, outputFile);
+        if (size != outputSize) {
+            fclose(outputFile);
+            outputFile = nullptr;
+            std::cout << "writer result file" << outFileName << "failed write size[" << size <<
+                "] is smaller than output size[" << outputSize << "], maybe the disk is full" << std::endl;
+            return -1;
+        }
+
+        fclose(outputFile);
+        outputFile = nullptr;
+    }
+    return 0;
 }
 
 MSTensor ReadFileToTensor(const std::string &file) {
