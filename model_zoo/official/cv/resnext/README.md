@@ -221,7 +221,7 @@ or shell script:
 
 ```script
 # Evaluation
-sh run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH DEVICE_TARGET
+sh scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH DEVICE_TARGET
 ```
 
 PLATFORM is Ascend or GPU, default is Ascend.

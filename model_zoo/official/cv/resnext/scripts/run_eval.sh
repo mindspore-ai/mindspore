@@ -17,13 +17,11 @@
 export DEVICE_ID=$1
 DATA_DIR=$2
 PATH_CHECKPOINT=$3
-PLATFORM=Ascend
-if [ $# == 4 ]
-then
-  PLATFORM=$4
-fi
+PLATFORM=$4
+
 
 python eval.py  \
     --checkpoint_file_path=$PATH_CHECKPOINT \
     --device_target=$PLATFORM \
-    --data_path=$DATA_DIR > log.txt 2>&1 &
+    --data_path=$DATA_DIR \
+    --device_target=$PLATFORM > log.txt 2>&1 &
