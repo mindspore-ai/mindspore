@@ -42,7 +42,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     kernel_size.emplace_back(weight_shape[i]);
   }
   size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
-  if (group != 1) {
+  if (group > 1) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << "Conv channels should be divided by group!";
     }
