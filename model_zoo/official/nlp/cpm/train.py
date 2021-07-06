@@ -14,8 +14,6 @@
 # ============================================================================
 """Train."""
 import os
-import ast
-import argparse
 import math
 import numpy as np
 
@@ -34,20 +32,22 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore.parallel import set_algo_parameters
 
-from src.config import config_train_single_machine, config_train_multi_machine
 from src.cpm_train import CPMWithLoss, CPMTrainOneStepWithLossScaleCell, VirtualDatasetOneInputCell, \
     CPMTrainAccuStepsWithLossScaleCell
 from src.lr_schedule import CPMLearningRate
 from src.loss_monitor import LossCallBack, TimeCallBack
 from src.model_cpm import Model_ACCU as Model_CPM
 
-device_id = int(os.getenv("DEVICE_ID"))
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+
 
 set_seed(23333)
 context.set_context(mode=context.GRAPH_MODE,
                     save_graphs=False,
                     device_target="Ascend",
-                    device_id=device_id)
+                    device_id=get_device_id())
 context.set_context(variable_memory_max_size="30GB")
 
 
@@ -188,7 +188,8 @@ def _build_training_pipeline(datasets, pretrain_ckpt_path, config_train):
                                    integrated_save=False,
                                    keep_checkpoint_max=config_train.epoch)
     ckpt_model = ModelCheckpoint(prefix='cpm_rank_{}'.format(os.getenv("RANK_ID")),
-                                 directory=os.path.join('./', 'ckpt_rank_{}'.format(os.getenv("RANK_ID"))),
+                                 directory=os.path.join(config.save_checkpoint_path,
+                                                        'ckpt_rank_{}'.format(get_rank_id())),
                                  config=ckpt_config)
     callback.append(ckpt_model)
 
@@ -221,7 +222,7 @@ def set_parallel_env(config_train):
     context.reset_auto_parallel_context()
     MultiAscend.init()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
-                                      device_num=MultiAscend.get_group_size(),
+                                      device_num=get_device_num(),
                                       gradients_mean=True,
                                       grad_accumulation_step=config_train.grad_accumulation_step,
                                       full_batch=True)
@@ -248,22 +249,24 @@ def train_paralle(input_file, pretrain_ckpt_path, config_train):
     print("Staring training on multiple device")
     processed_data = load_dataset(dataset=input_file,
                                   batch_size=config_train.batch_size,
-                                  rank_size=MultiAscend.get_group_size(),
-                                  rank_id=MultiAscend.get_rank())
+                                  rank_size=get_device_num(),
+                                  rank_id=get_rank_id())
     _build_training_pipeline(processed_data, pretrain_ckpt_path, config_train)
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    config.save_checkpoint_path = config.output_path
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="CPM training.")
-    parser.add_argument("--dataset", type=str, default="", help="CPM dataset path")
-    parser.add_argument("--pretrain_ckpt_path", type=str, default="",
-                        help="Load the checkpoint file path for train.")
-    parser.add_argument("--multi_machine", type=ast.literal_eval, default=False, help='distributed training')
-
-    args = parser.parse_args()
-    if args.multi_machine:
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
+    config_train_single_machine = config.config_train_single_machine
+    config_train_multi_machine = config.config_train_multi_machine
+    if config.multi_machine:
         print("Training on multiple machines.")
-        train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_multi_machine)
+        train_paralle(config.dataset, config.pretrain_ckpt_path, config_train_multi_machine)
     else:
         print("Training on single machine.")
-        train_paralle(args.dataset, args.pretrain_ckpt_path, config_train_single_machine)
+        train_paralle(config.dataset, config.pretrain_ckpt_path, config_train_single_machine)
+
+if __name__ == '__main__':
+    run_train()
