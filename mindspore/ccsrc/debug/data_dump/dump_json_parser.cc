@@ -325,6 +325,7 @@ void DumpJsonParser::ParseNetName(const nlohmann::json &content) {
 
 void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
   CheckJsonStringType(content, kIteration);
+  auto context = MsContext::GetInstance();
   if (e2e_dump_enabled_ || async_dump_enabled_) {
     iteration_ = content;
     if (iteration_.empty() || (!std::all_of(iteration_.begin(), iteration_.end(), [](char c) {
@@ -332,6 +333,8 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
         }) && iteration_ != "all")) {
       MS_LOG(EXCEPTION) << "iteration only supports digits, {'-', '|'}, or just \"all\" but got: " << iteration_;
     }
+  } else if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
+    MS_LOG(WARNING) << "Dump not enabled. ";
   } else {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. Async or E2E should be enabled. ";
   }
