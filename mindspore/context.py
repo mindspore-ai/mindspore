@@ -851,6 +851,17 @@ def set_fl_context(**kwargs):
         client_learning_rate (float): Client training learning rate. Default: 0.001.
         worker_step_num_per_iteration (int): The worker's standalone training step number before communicating with
                                              server. Default: 65.
+        dp_eps (float): Epsilon budget of differential privacy mechanism. The smaller the dp_eps, the better the
+            privacy protection effect. Default: 50.0.
+        dp_delta (float): Delta budget of differential privacy mechanism, which is usually equals the reciprocal of
+            client number. The smaller the dp_delta, the better the privacy protection effect. Default: 0.01.
+        dp_norm_clip (float): A factor used for clipping model's weights for differential mechanism. Its value is
+            suggested to be 0.5~2. Default: 1.0.
+        encrypt_type (string): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT' or
+            'PW_ENCRYPT'. If 'DP_ENCRYPT', differential privacy schema would be applied for clients and the privacy
+            protection effect would be determined by dp_eps, dp_delta and dp_norm_clip as described above. If
+            'PW_ENCRYPT', pairwise secure aggregation would be applied to protect clients' model from stealing.
+            Default: 'NOT_ENCRYPT'.
 
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.

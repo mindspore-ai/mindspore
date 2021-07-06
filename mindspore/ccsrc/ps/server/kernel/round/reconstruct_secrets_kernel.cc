@@ -133,7 +133,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
 
 void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) {
   MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
-  if (true) {  // todo: PSContext::instance()->encrypt_type == PWEncrypt {
+  if (PSContext::instance()->encrypt_type() == kPWEncryptType) {
     while (!Executor::GetInstance().IsAllWeightAggregationDone()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }

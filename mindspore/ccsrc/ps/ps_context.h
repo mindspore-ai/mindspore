@@ -35,9 +35,9 @@ constexpr char kEnvRoleOfServer[] = "MS_SERVER";
 constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
 constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
-constexpr char kDPEncryptType[] = "DPEncrypt";
-constexpr char kPWEncryptType[] = "PWEncrypt";
-constexpr char kNotEncryptType[] = "NotEncrypt";
+constexpr char kDPEncryptType[] = "DP_ENCRYPT";
+constexpr char kPWEncryptType[] = "PW_ENCRYPT";
+constexpr char kNotEncryptType[] = "NOT_ENCRYPT";
 
 // Use binary data to represent federated learning server's context so that we can judge which round resets the
 // iteration. From right to left, each bit stands for:
@@ -166,6 +166,18 @@ class PSContext {
   void set_config_file_path(const std::string &path);
   std::string config_file_path() const;
 
+  void set_dp_eps(float dp_eps);
+  float dp_eps() const;
+
+  void set_dp_delta(float dp_delta);
+  float dp_delta() const;
+
+  void set_dp_norm_clip(float dp_norm_clip);
+  float dp_norm_clip() const;
+
+  void set_encrypt_type(const std::string &encrypt_type);
+  const std::string &encrypt_type() const;
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -199,7 +211,11 @@ class PSContext {
         secure_aggregation_(false),
         cluster_config_(nullptr),
         scheduler_manage_port_(11202),
-        config_file_path_("") {}
+        config_file_path_(""),
+        dp_eps_(50),
+        dp_delta_(0.01),
+        dp_norm_clip_(1.0),
+        encrypt_type_(kNotEncryptType) {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -276,6 +292,18 @@ class PSContext {
 
   // The path of the configuration file, used to configure the certification path and persistent storage type, etc.
   std::string config_file_path_;
+
+  // Epsilon budget of differential privacy mechanism. Used in federated learning for now.
+  float dp_eps_;
+
+  // Delta budget of differential privacy mechanism. Used in federated learning for now.
+  float dp_delta_;
+
+  // Norm clip factor of differential privacy mechanism. Used in federated learning for now.
+  float dp_norm_clip_;
+
+  // Secure mechanism for federated learning. Used in federated learning for now.
+  std::string encrypt_type_;
 };
 }  // namespace ps
 }  // namespace mindspore

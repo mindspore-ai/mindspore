@@ -184,6 +184,47 @@ void PSContext::set_server_mode(const std::string &server_mode) {
 
 const std::string &PSContext::server_mode() const { return server_mode_; }
 
+void PSContext::set_encrypt_type(const std::string &encrypt_type) {
+  if (encrypt_type != kNotEncryptType && encrypt_type != kDPEncryptType && encrypt_type != kPWEncryptType) {
+    MS_LOG(EXCEPTION) << encrypt_type << " is invalid. Encrypt type must be " << kNotEncryptType << " or "
+                      << kDPEncryptType << " or " << kPWEncryptType;
+    return;
+  }
+  encrypt_type_ = encrypt_type;
+}
+const std::string &PSContext::encrypt_type() const { return encrypt_type_; }
+
+void PSContext::set_dp_eps(float dp_eps) {
+  if (dp_eps > 0) {
+    dp_eps_ = dp_eps;
+  } else {
+    MS_LOG(EXCEPTION) << dp_eps << " is invalid, dp_eps must be larger than 0.";
+    return;
+  }
+}
+
+float PSContext::dp_eps() const { return dp_eps_; }
+
+void PSContext::set_dp_delta(float dp_delta) {
+  if (dp_delta > 0 && dp_delta < 1) {
+    dp_delta_ = dp_delta;
+  } else {
+    MS_LOG(EXCEPTION) << dp_delta << " is invalid, dp_delta must be in range of (0, 1).";
+    return;
+  }
+}
+float PSContext::dp_delta() const { return dp_delta_; }
+
+void PSContext::set_dp_norm_clip(float dp_norm_clip) {
+  if (dp_norm_clip > 0) {
+    dp_norm_clip_ = dp_norm_clip;
+  } else {
+    MS_LOG(EXCEPTION) << dp_norm_clip << " is invalid, dp_norm_clip must be larger than 0.";
+    return;
+  }
+}
+float PSContext::dp_norm_clip() const { return dp_norm_clip_; }
+
 void PSContext::set_ms_role(const std::string &role) {
   if (server_mode_ != kServerModeFL && server_mode_ != kServerModeHybrid) {
     MS_LOG(EXCEPTION) << "Only federated learning supports to set role by fl context.";

@@ -96,8 +96,9 @@ void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHand
     size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
     MS_LOG(INFO) << "Total data size for iteration " << LocalMetaStore::GetInstance().curr_iter_num() << " is "
                  << total_data_size;
-
-    FinishIteration();
+    if (PSContext::instance()->encrypt_type() != kPWEncryptType) {
+      FinishIteration();
+    }
   }
 }
 

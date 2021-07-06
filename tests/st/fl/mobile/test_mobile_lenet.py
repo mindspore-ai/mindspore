@@ -46,6 +46,10 @@ parser.add_argument("--client_batch_size", type=int, default=32)
 parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--scheduler_manage_port", type=int, default=11202)
 parser.add_argument("--config_file_path", type=str, default="")
+# parameters for encrypt_type='DP_ENCRYPT'
+parser.add_argument("--dp_eps", type=float, default=50.0)
+parser.add_argument("--dp_delta", type=float, default=0.01)  # 1/worker_num
+parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -70,6 +74,10 @@ client_batch_size = args.client_batch_size
 client_learning_rate = args.client_learning_rate
 scheduler_manage_port = args.scheduler_manage_port
 config_file_path = args.config_file_path
+dp_eps = args.dp_eps
+dp_delta = args.dp_delta
+dp_norm_clip = args.dp_norm_clip
+encrypt_type = args.encrypt_type
 
 ctx = {
     "enable_fl": True,
@@ -93,7 +101,11 @@ ctx = {
     "client_batch_size": client_batch_size,
     "client_learning_rate": client_learning_rate,
     "scheduler_manage_port": scheduler_manage_port,
-    "config_file_path": config_file_path
+    "config_file_path": config_file_path,
+    "dp_eps": dp_eps,
+    "dp_delta": dp_delta,
+    "dp_norm_clip": dp_norm_clip,
+    "encrypt_type": encrypt_type
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target, save_graphs=False)

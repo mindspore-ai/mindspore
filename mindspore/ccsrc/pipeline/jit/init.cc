@@ -397,7 +397,13 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_config_file_path", &PSContext::set_config_file_path,
          "Set configuration files required by the communication layer.")
     .def("config_file_path", &PSContext::config_file_path,
-         "Get configuration files required by the communication layer.");
+         "Get configuration files required by the communication layer.")
+    .def("set_dp_eps", &PSContext::set_dp_eps, "Set dp epsilon for federated learning secure aggregation.")
+    .def("set_dp_delta", &PSContext::set_dp_delta, "Set dp delta for federated learning secure aggregation.")
+    .def("set_dp_norm_clip", &PSContext::set_dp_norm_clip,
+         "Set dp norm clip for federated learning secure aggregation.")
+    .def("set_encrypt_type", &PSContext::set_encrypt_type,
+         "Set encrypt type for federated learning secure aggregation.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())

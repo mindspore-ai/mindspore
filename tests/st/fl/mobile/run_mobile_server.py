@@ -38,6 +38,11 @@ parser.add_argument("--client_batch_size", type=int, default=32)
 parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--local_server_num", type=int, default=-1)
 parser.add_argument("--config_file_path", type=str, default="")
+parser.add_argument("--encrypt_type", type=str, default="NotEncrypt")
+# parameters for encrypt_type='DP_ENCRYPT'
+parser.add_argument("--dp_eps", type=float, default=50.0)
+parser.add_argument("--dp_delta", type=float, default=0.01)  # 1/worker_num
+parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 
 if __name__ == "__main__":
     args, _ = parser.parse_known_args()
@@ -62,6 +67,10 @@ if __name__ == "__main__":
     client_learning_rate = args.client_learning_rate
     local_server_num = args.local_server_num
     config_file_path = args.config_file_path
+    dp_eps = args.dp_eps
+    dp_delta = args.dp_delta
+    dp_norm_clip = args.dp_norm_clip
+    encrypt_type = args.encrypt_type
 
     if local_server_num == -1:
         local_server_num = server_num
@@ -95,6 +104,10 @@ if __name__ == "__main__":
         cmd_server += " --client_epoch_num=" + str(client_epoch_num)
         cmd_server += " --client_batch_size=" + str(client_batch_size)
         cmd_server += " --client_learning_rate=" + str(client_learning_rate)
+        cmd_server += " --dp_eps=" + str(dp_eps)
+        cmd_server += " --dp_delta=" + str(dp_delta)
+        cmd_server += " --dp_norm_clip=" + str(dp_norm_clip)
+        cmd_server += " --encrypt_type=" + str(encrypt_type)
         cmd_server += " > server.log 2>&1 &"
 
         import time
