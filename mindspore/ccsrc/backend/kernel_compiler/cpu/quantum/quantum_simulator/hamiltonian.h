@@ -43,6 +43,7 @@ class Hamiltonian {
   void Sparsed(bool);
   const Simulator::ComplexTermsDict &GetCTD() const;
   const Simulator::TermsDict &GetTD() const;
+  ~Hamiltonian() {}
 };
 }  // namespace mindquantum
 }  // namespace mindspore

@@ -28,6 +28,7 @@ class RXGate : public IntrinsicOneParaGate {
  public:
   RXGate(const Indexes &, const Indexes &, const ParameterResolver &);
   RXGate();
+  ~RXGate() {}
 };
 
 class RYGate : public IntrinsicOneParaGate {
@@ -36,6 +37,8 @@ class RYGate : public IntrinsicOneParaGate {
 
  public:
   RYGate(const Indexes &, const Indexes &, const ParameterResolver &);
+  RYGate();
+  ~RYGate() {}
 };
 
 class RZGate : public IntrinsicOneParaGate {
@@ -44,6 +47,8 @@ class RZGate : public IntrinsicOneParaGate {
 
  public:
   RZGate(const Indexes &, const Indexes &, const ParameterResolver &);
+  RZGate();
+  ~RZGate() {}
 };
 
 class PhaseShiftGate : public IntrinsicOneParaGate {
@@ -52,6 +57,8 @@ class PhaseShiftGate : public IntrinsicOneParaGate {
 
  public:
   PhaseShiftGate(const Indexes &, const Indexes &, const ParameterResolver &);
+  PhaseShiftGate();
+  ~PhaseShiftGate() {}
 };
 
 class XXGate : public IntrinsicOneParaGate {
@@ -60,6 +67,8 @@ class XXGate : public IntrinsicOneParaGate {
 
  public:
   XXGate(const Indexes &, const Indexes &, const ParameterResolver &);
+  XXGate();
+  ~XXGate() {}
 };
 
 class YYGate : public IntrinsicOneParaGate {
@@ -68,6 +77,8 @@ class YYGate : public IntrinsicOneParaGate {
 
  public:
   YYGate(const Indexes &, const Indexes &, const ParameterResolver &);
+  YYGate();
+  ~YYGate() {}
 };
 
 class ZZGate : public IntrinsicOneParaGate {
@@ -76,6 +87,8 @@ class ZZGate : public IntrinsicOneParaGate {
 
  public:
   ZZGate(const Indexes &, const Indexes &, const ParameterResolver &);
+  ZZGate();
+  ~ZZGate() {}
 };
 }  // namespace mindquantum
 }  // namespace mindspore

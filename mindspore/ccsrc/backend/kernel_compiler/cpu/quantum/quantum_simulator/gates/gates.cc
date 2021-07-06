@@ -38,6 +38,8 @@ Matrix RXGate::GetIntrinsicDiffMatrix(CalcType theta) {
 RYGate::RYGate(const Indexes &obj_qubits, const Indexes &ctrl_qubits, const ParameterResolver &paras)
     : IntrinsicOneParaGate("RY", obj_qubits, ctrl_qubits, paras) {}
 
+RYGate::RYGate() : IntrinsicOneParaGate("RY", {}, {}, {}) {}
+
 Matrix RYGate::GetIntrinsicMatrix(CalcType theta) {
   Matrix result = {{{cos(theta / 2), 0}, {-sin(theta / 2), 0}}, {{sin(theta / 2), 0}, {cos(theta / 2), 0}}};
   return result;
@@ -51,6 +53,8 @@ Matrix RYGate::GetIntrinsicDiffMatrix(CalcType theta) {
 
 RZGate::RZGate(const Indexes &obj_qubits, const Indexes &ctrl_qubits, const ParameterResolver &paras)
     : IntrinsicOneParaGate("RZ", obj_qubits, ctrl_qubits, paras) {}
+
+RZGate::RZGate() : IntrinsicOneParaGate("RZ", {}, {}, {}) {}
 
 Matrix RZGate::GetIntrinsicMatrix(CalcType theta) {
   Matrix result = {{{cos(theta / 2), -sin(theta / 2)}, {0, 0}}, {{0, 0}, {cos(theta / 2), sin(theta / 2)}}};
@@ -66,6 +70,8 @@ Matrix RZGate::GetIntrinsicDiffMatrix(CalcType theta) {
 PhaseShiftGate::PhaseShiftGate(const Indexes &obj_qubits, const Indexes &ctrl_qubits, const ParameterResolver &paras)
     : IntrinsicOneParaGate("PS", obj_qubits, ctrl_qubits, paras) {}
 
+PhaseShiftGate::PhaseShiftGate() : IntrinsicOneParaGate("PS", {}, {}, {}) {}
+
 Matrix PhaseShiftGate::GetIntrinsicMatrix(CalcType theta) {
   Matrix result = {{{1, 0}, {0, 0}}, {{0, 0}, {cos(theta), sin(theta)}}};
   return result;
@@ -78,6 +84,8 @@ Matrix PhaseShiftGate::GetIntrinsicDiffMatrix(CalcType theta) {
 
 XXGate::XXGate(const Indexes &obj_qubits, const Indexes &ctrl_qubits, const ParameterResolver &paras)
     : IntrinsicOneParaGate("XX", obj_qubits, ctrl_qubits, paras) {}
+
+XXGate::XXGate() : IntrinsicOneParaGate("XX", {}, {}, {}) {}
 
 Matrix XXGate::GetIntrinsicMatrix(CalcType theta) {
   double c = cos(theta);
@@ -104,6 +112,8 @@ Matrix XXGate::GetIntrinsicDiffMatrix(CalcType theta) {
 YYGate::YYGate(const Indexes &obj_qubits, const Indexes &ctrl_qubits, const ParameterResolver &paras)
     : IntrinsicOneParaGate("YY", obj_qubits, ctrl_qubits, paras) {}
 
+YYGate::YYGate() : IntrinsicOneParaGate("YY", {}, {}, {}) {}
+
 Matrix YYGate::GetIntrinsicMatrix(CalcType theta) {
   double c = cos(theta);
   double s = sin(theta);
@@ -128,6 +138,8 @@ Matrix YYGate::GetIntrinsicDiffMatrix(CalcType theta) {
 
 ZZGate::ZZGate(const Indexes &obj_qubits, const Indexes &ctrl_qubits, const ParameterResolver &paras)
     : IntrinsicOneParaGate("ZZ", obj_qubits, ctrl_qubits, paras) {}
+
+ZZGate::ZZGate() : IntrinsicOneParaGate("ZZ", {}, {}, {}) {}
 
 Matrix ZZGate::GetIntrinsicMatrix(CalcType theta) {
   double c = cos(theta);

@@ -28,6 +28,7 @@ class Projector {
   explicit Projector(const NameType &);
   void HandleMask();
   Indexes GetMasks();
+  ~Projector() {}
 
  private:
   NameType proj_str_;
