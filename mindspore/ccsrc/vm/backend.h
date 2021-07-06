@@ -163,6 +163,8 @@ class MindRTBackend : public Backend {
   std::shared_ptr<GraphCompiler> graph_compiler_;
   std::string device_name_;
   uint32_t device_id_;
+  int ms_execution_mode_{kGraphMode};
+  int real_execution_mode_{kGraphMode};
 };
 }  // namespace compile
 }  // namespace mindspore

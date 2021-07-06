@@ -168,6 +168,10 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
   MS_EXCEPTION_IF_NULL(graph);
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::IsControlOpExecInBackend(kernel)) {
+      continue;
+    }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_sizes = kernel_mod->GetOutputSizeList();
@@ -190,6 +194,10 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
   MS_EXCEPTION_IF_NULL(graph);
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::IsControlOpExecInBackend(kernel)) {
+      continue;
+    }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();

@@ -1192,6 +1192,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
                           << ", input size: " << inputs.size();
       }
       const auto &input = inputs[index];
+      MS_EXCEPTION_IF_NULL(input);
       // Check shape of input and parameter
       const auto &input_shape = input->shape();
       const auto &param_shape = AnfAlgo::GetOutputInferShape(param, 0);
