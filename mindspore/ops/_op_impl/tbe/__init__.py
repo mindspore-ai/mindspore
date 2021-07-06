@@ -387,3 +387,4 @@ from .reciprocal_ds import _reciprocal_ds_tbe
 from .ctc_loss_v2 import _ctc_loss_v2_tbe
 from .ctc_loss_v2_grad import _ctc_loss_v2_grad_tbe
 from .soft_shrink import _soft_shrink_tbe
+from .soft_shrink_grad import _soft_shrink_grad_tbe

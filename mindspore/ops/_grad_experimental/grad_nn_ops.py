@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
+
 """Define the grad rules of neural network related operations."""
 from .._grad.grad_base import bprop_getters
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
-
+from ..operations import _grad_ops as G
 
 @bprop_getters.register(P.CTCLossV2)
 def get_bprop_ctc_loss_v2(self):
@@ -29,5 +30,18 @@ def get_bprop_ctc_loss_v2(self):
         grad = ctc_loss_grad(dout[1], log_probs, targets, input_lengths, target_lengths, out[0], out[1])
         grad = transpose(grad, (1, 0, 2))
         return grad, zeros_like(targets), zeros_like(input_lengths), zeros_like(target_lengths)
+
+    return bprop
+
+"""nn_ops"""
+
+@bprop_getters.register(P.SoftShrink)
+def get_bprop_softshrink(self):
+    """Grad definition for `SoftShrink` operation."""
+    input_grad = G.SoftShrinkGrad(self.lambd)
+
+    def bprop(input_x, out, dout):
+        dx = input_grad(dout, input_x)
+        return (dx,)
 
     return bprop
