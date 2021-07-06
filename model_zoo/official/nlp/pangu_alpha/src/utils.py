@@ -422,6 +422,10 @@ def get_args(inference=False):
                         type=int,
                         default=0,
                         help="Whether export mindir for serving.")
+    parser.add_argument("--incremental_training",
+                        type=int,
+                        default=0,
+                        help="Enable incremental training. Default 0.")
     add_training_params(parser)
     if inference:
         add_inference_params(parser)
