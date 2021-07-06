@@ -109,12 +109,15 @@ class OrderEnforcer {
 
   void EnforceOrderForLoad(const CNodePtr &update_state, const CNodePtr &load,
                            const std::unordered_set<AnfNodePtr> &refs) {
-    if (refs.find(load->input(1)) == refs.end()) {
+    auto parameter = load->input(1);
+    if (refs.find(parameter) == refs.end()) {
       // Skip if loaded parameter is not updated.
       return;
     }
     // Find load users, ignore processed nodes.
-    auto load_users = FindLoadUsers(load, update_state);
+    auto load_users = FindUsers(load, update_state);
+    auto parameter_users = FindUsers(parameter, update_state);
+    load_users.insert(parameter_users.begin(), parameter_users.end());
     // Find load users that not depend on the UpdateState,
     // and than let UpdateState depend on them.
     AddInputEdges(update_state, load_users);
@@ -137,16 +140,39 @@ class OrderEnforcer {
         continue;
       }
       auto load = input->cast<CNodePtr>();
-      if (refs.find(load->input(1)) == refs.end()) {
+      auto parameter = load->input(1);
+      if (refs.find(parameter) == refs.end()) {
         // Skip if loaded parameter is not updated.
         continue;
       }
-      auto load_users = FindLoadUsers(load, make_tuple);
+      auto load_users = FindUsers(load, make_tuple);
+      auto parameter_users = FindUsers(parameter, make_tuple);
+      all_load_users.insert(parameter_users.begin(), parameter_users.end());
       all_load_users.insert(load_users.begin(), load_users.end());
     }
     // Find load users that not depend on the UpdateState,
     // and than let UpdateState depend on them.
     AddInputEdges(update_state, all_load_users);
+  }
+
+  bool IsInUpdateState(const AnfNodePtr &load_user, const CNodePtr &update_state) {
+    const size_t attach_index = 2;
+    const size_t input_size = update_state->inputs().size();
+    for (size_t index = attach_index; index < input_size; index++) {
+      auto attach = update_state->input(attach_index);
+      if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+        auto attach_cnode = attach->cast<CNodePtr>();
+        auto inputs = attach_cnode->inputs();
+        bool has_load_user =
+          std::any_of(inputs.begin() + 1, inputs.end(), [load_user](const auto &input) { return input == load_user; });
+        if (has_load_user) {
+          return true;
+        }
+      } else if (attach == load_user) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // Add load users as input edges of the update_state node.
@@ -155,7 +181,9 @@ class OrderEnforcer {
     for (auto &load_user : sorted_load_users) {
       if (!IsDependOn(load_user, update_state)) {
         processed_nodes_.insert(load_user);
-        manager_->AddEdge(update_state, load_user);
+        if (!IsInUpdateState(load_user, update_state)) {
+          manager_->AddEdge(update_state, load_user);
+        }
       }
     }
   }
@@ -211,14 +239,14 @@ class OrderEnforcer {
     return topo_sort_map_[node1] < topo_sort_map_[node2];
   }
 
-  // Find Load users as the candidate nodes to enforce order of execution.
-  std::unordered_set<AnfNodePtr> FindLoadUsers(const CNodePtr &load, const AnfNodePtr &exclude) {
+  // Find Load or parameter users as the candidate nodes to enforce order of execution.
+  std::unordered_set<AnfNodePtr> FindUsers(const AnfNodePtr &load_or_param, const AnfNodePtr &exclude) {
     auto &node_users = manager_->node_users();
-    auto iter = node_users.find(load);
+    auto iter = node_users.find(load_or_param);
     if (iter == node_users.end()) {
       return {};
     }
-    std::unordered_set<AnfNodePtr> load_users;
+    std::unordered_set<AnfNodePtr> load_param_users;
     auto &users = iter->second;
     for (auto &user : users) {
       auto &user_node = user.first;
@@ -232,16 +260,9 @@ class OrderEnforcer {
       }
       auto cnode = dyn_cast<CNode>(user_node);
       MS_EXCEPTION_IF_NULL(cnode);
-      auto &inputs = cnode->inputs();
-      const bool has_u_input =
-        std::any_of(inputs.begin() + 1, inputs.end(), [](const AnfNodePtr &input) { return HasAbstractUMonad(input); });
-      if (has_u_input) {
-        // Skip nodes with memory side effects, which use u input.
-        continue;
-      }
-      load_users.insert(cnode);
+      load_param_users.insert(cnode);
     }
-    return load_users;
+    return load_param_users;
   }
 
  private:
@@ -259,5 +280,10 @@ class OrderEnforcer {
 void OrderEnforce(const FuncGraphPtr &func_graph) {
   OrderEnforcer enforcer(func_graph);
   enforcer.Run();
+  auto fg_used_total = func_graph->func_graphs_used_total();
+  for (auto &fg : fg_used_total) {
+    OrderEnforcer fg_enforcer(fg);
+    fg_enforcer.Run();
+  }
 }
 }  // namespace mindspore::pipeline
