@@ -222,8 +222,8 @@ int ControlFlowPass::CreateAfterGraph(const FuncGraphPtr &main_fg, const std::ve
 }
 
 int ControlFlowPass::CreateWhileCondCallNode(
-  const FuncGraphPtr &fg, const CNodePtr &while_cnode, std::vector<AnfNodePtr> *visited_nodes_used_by_after_fg,
-  CNodePtr *cond_call_cnode,
+  const FuncGraphPtr &fg, const CNodePtr &while_cnode, const std::vector<AnfNodePtr> &visited_nodes_used_by_after_fg,
+  CNodePtr *cond_call_cnode, std::vector<AnfNodePtr> *cond_nodes_used_by_after_partial,
   std::unordered_map<AnfNodePtr, AnfNodePtr> *visited_nodes_and_cond_fg_inputs_replace_pairs) {
   auto cond_vnode = while_cnode->input(kWhileCondIndex);
   MS_ASSERT(cond_vnode != nullptr);
@@ -245,31 +245,30 @@ int ControlFlowPass::CreateWhileCondCallNode(
                                    while_cnode->inputs().end());
 
   auto origin_cond_fg_inputs = cond_fg->get_inputs();
-  for (auto it = visited_nodes_used_by_after_fg->begin(); it != visited_nodes_used_by_after_fg->end();) {
+  for (auto &item : visited_nodes_used_by_after_fg) {
     bool found = false;
-    size_t index = -1;
+    size_t input_index = -1;
     for (size_t i = kPartialFirstInputSize; i < cond_partial_cnode_inputs.size(); ++i) {
-      if (cond_partial_cnode_inputs[i] == *it) {
+      if (cond_partial_cnode_inputs[i] == item) {
         found = true;
-        index = i - kPartialFirstInputSize;
+        input_index = i - kPartialFirstInputSize;
         break;
       }
     }
 
     if (found) {
-      it = visited_nodes_used_by_after_fg->erase(it);
-      (*visited_nodes_and_cond_fg_inputs_replace_pairs)[*it] = origin_cond_fg_inputs.at(index);
+      (*visited_nodes_and_cond_fg_inputs_replace_pairs)[item] = origin_cond_fg_inputs.at(input_index);
+      cond_nodes_used_by_after_partial->push_back(origin_cond_fg_inputs.at(input_index));
       continue;
     }
 
     // set after fg inputs to cond_partial_cnode inputs
-    cond_partial_cnode_inputs.push_back(*it);
+    cond_partial_cnode_inputs.push_back(item);
     auto new_parameter = cond_fg->add_parameter();
-    new_parameter->set_name((*it)->fullname_with_scope() + "_cond_fg_parameter");
-    new_parameter->set_abstract((*it)->abstract());
-    (*visited_nodes_and_cond_fg_inputs_replace_pairs)[*it] = new_parameter;
-
-    ++it;
+    new_parameter->set_name(item->fullname_with_scope() + "_cond_fg_parameter");
+    new_parameter->set_abstract(item->abstract());
+    (*visited_nodes_and_cond_fg_inputs_replace_pairs)[item] = new_parameter;
+    cond_nodes_used_by_after_partial->push_back(new_parameter);
   }
 
   auto cond_partial_cnode = fg->NewCNode(cond_partial_cnode_inputs);
@@ -349,7 +348,7 @@ int ControlFlowPass::CreateWhileBodyPartialNode(const FuncGraphPtr &cond_fg, con
 
 int ControlFlowPass::CreateWhileAfterPartialNode(
   const FuncGraphPtr &main_fg, const FuncGraphPtr &cond_fg, const std::vector<AnfNodePtr> &remain_nodes,
-  const std::vector<AnfNodePtr> &visited_nodes_used_by_after_fg,
+  const std::vector<AnfNodePtr> &cond_nodes_used_by_after_partial,
   const std::unordered_map<AnfNodePtr, AnfNodePtr> &visited_nodes_and_cond_fg_inputs_replace_pairs,
   CNodePtr *while_cnode, CNodePtr *after_partial_cnode) {
   // create after_fg
@@ -397,20 +396,17 @@ int ControlFlowPass::CreateWhileAfterPartialNode(
     after_partial_inputs_and_after_fg_inputs_replace_pairs[node] = new_parameter;
   }
 
-  for (auto &pair : after_partial_inputs_and_after_fg_inputs_replace_pairs) {
-    after_fg->manager()->Replace(pair.first, pair.second);
-    after_fg->DropNode(pair.first);
-  }
-
   std::unordered_map<AnfNodePtr, AnfNodePtr> visited_nodes_after_fg_replace_pair{};
-  for (auto &input : visited_nodes_used_by_after_fg) {
+  for (auto &input : cond_nodes_used_by_after_partial) {
     after_partial_cnode_inputs.push_back(visited_nodes_and_cond_fg_inputs_replace_pairs.at(input));
     auto new_parameter = after_fg->add_parameter();
     new_parameter->set_name(input->fullname_with_scope() + "_after_fg_parameter");
     new_parameter->set_abstract(input->abstract());
-    visited_nodes_after_fg_replace_pair[input] = new_parameter;
+    visited_nodes_after_fg_replace_pair[visited_nodes_and_cond_fg_inputs_replace_pairs.at(input)] = new_parameter;
   }
 
+  ReplaceNode(after_fg, visited_nodes_and_cond_fg_inputs_replace_pairs);
+  ReplaceNode(after_fg, after_partial_inputs_and_after_fg_inputs_replace_pairs);
   ReplaceNode(after_fg, visited_nodes_after_fg_replace_pair);
   *after_partial_cnode = cond_fg->NewCNode(after_partial_cnode_inputs);
   (*after_partial_cnode)->set_fullname_with_scope("CNode_" + after_fg->get_attr("graph_name")->ToString());
@@ -436,8 +432,9 @@ int ControlFlowPass::ProcessWhileOp(const FuncGraphPtr &fg, const std::set<AnfNo
 
   CNodePtr cond_call_cnode = nullptr;
   std::unordered_map<AnfNodePtr, AnfNodePtr> visited_nodes_and_cond_fg_inputs_replace_pairs{};
-  int ret = CreateWhileCondCallNode(fg, while_cnode, &visited_nodes_used_by_after_fg, &cond_call_cnode,
-                                    &visited_nodes_and_cond_fg_inputs_replace_pairs);
+  std::vector<AnfNodePtr> cond_nodes_used_by_after_partial{};
+  int ret = CreateWhileCondCallNode(fg, while_cnode, visited_nodes_used_by_after_fg, &cond_call_cnode,
+                                    &cond_nodes_used_by_after_partial, &visited_nodes_and_cond_fg_inputs_replace_pairs);
   if (ret != RET_SUCCESS) {
     MS_LOG(ERROR) << "while create cond call cnode failed, ret: " << ret;
     return ret;
