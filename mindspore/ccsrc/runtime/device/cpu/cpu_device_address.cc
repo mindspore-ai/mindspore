@@ -36,6 +36,11 @@ bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::str
 }
 
 bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId type, void *host_ptr) const {
+  // The input or output may be empty.
+  if ((size == 0) || (size_ == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+    return true;
+  }
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";
     return false;
@@ -46,7 +51,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
   }
 
   if (type == type_id_) {
-    if ((size == 0) || (size_ == 0) || (size > size_)) {
+    if (size > size_) {
       MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
       return true;
     }
@@ -73,6 +78,11 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
 
 bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /* shape */, size_t size, TypeId type, const void *host_ptr,
                                         const std::string &format) const {
+  // The input or output may be empty.
+  if ((size == 0) || (size_ == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+    return true;
+  }
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";
     return false;
@@ -83,7 +93,7 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /* shape */, size_t 
   }
 
   if (type == type_id_) {
-    if ((size == 0) || (size_ == 0) || (size > size_)) {
+    if (size > size_) {
       MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
       return true;
     }
