@@ -266,17 +266,28 @@ class LiteMat {
   }
 
  private:
-  /// \brief apply for memory alignment
+  /// \brief Apply for memory alignment
+  /// \param[in] size The size of the requested memory alignment.
   void *AlignMalloc(unsigned int size);
 
-  /// \brief free memory
+  /// \brief Free memory
+  /// \param[in] ptr Pointer to free memory.
   void AlignFree(void *ptr);
 
+  /// \brief Initialize the element size of different types of data.
+  /// \param[in] data_type Type of data.
   void InitElemSize(LDataType data_type);
 
-  /// \brief add reference
+  /// \brief Add value of reference count.
+  /// \param[in] p The point of references count.
+  /// \param[in] value The value of new added references.
+  /// \return return reference count.
   int addRef(int *p, int value);
 
+  /// \brief Set the step size of the pixels in the Litemat array.
+  /// \param[in] c0 The number used to set teh value of step[0].
+  /// \param[in] c1 The number used to set teh value of step[1].
+  /// \param[in] c2 The number used to set teh value of step[2].
   void setSteps(int c0, int c1, int c2);
 
  public:
