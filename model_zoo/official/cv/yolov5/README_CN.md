@@ -14,12 +14,15 @@
         - [测试](#测试)
     - [评估过程](#评估过程)
         - [评估](#评估)
-    - [转换过程](#转换过程)
-        - [转换](#转换)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出mindir)
+        - [在Ascend310执行推理](#在ascend310执行推理)
+        - [结果](#结果)
 - [模型说明](#模型说明)
     - [性能](#性能)
         - [评估性能](#评估性能)
         - [推理性能](#推理性能)
+        - [310推理性能](#310推理性能)
 - [ModelZoo主页](#modelzoo主页)
 
 # [YOLOv5描述](#目录)
@@ -125,9 +128,11 @@ sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 ©¸©¤yolov5
   ©À©¤README.md
   ©À©¤mindspore_hub_conf.md             # Mindspore Hub配置
+  ©À©¤ascend310_infer                   # 用于310推理
   ©À©¤scripts
     ©À©¤run_standalone_train.sh         # 在Ascend中启动单机训练（1卡）
     ©À©¤run_distribute_train.sh         # 在Ascend中启动分布式训练（8卡）
+    ©À©¤run_infer_310.sh                # 在Ascend中启动310推理
     ©¸©¤run_eval.sh                     # 在Ascend中启动评估
   ©À©¤src
     ©À©¤__init__.py                     # Python初始化文件
@@ -145,6 +150,8 @@ sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 
   ©À©¤eval.py                           # 评估验证结果
   ©À©¤export.py                         # 将MindSpore模型转换为AIR模型
+  ©À©¤preprocess.py                     # 310推理前处理脚本
+  ©À©¤postprocess.py                    # 310推理后处理脚本
   ©¸©¤train.py                          # 训练网络
 ```
 
@@ -306,14 +313,49 @@ sh run_eval.sh dataset/coco2017 checkpoint/yolov5.ckpt
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.674
 ```
 
-## [转换过程](#目录)
+## [推理过程](#目录)
 
-### 转换
+### 导出MindIR
 
-如果您想推断Ascend 310上的网络，则应将模型转换为AIR：
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
+```
 
-```python
-python export.py [BATCH_SIZE] [PRETRAINED_BACKBONE]
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+`BATCH_SIZE` 目前仅支持batch_size为1的推理。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DVPP] [DEVICE_ID]
+```
+
+- `ANN_FILE` Annotations 文件路径。
+- `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。目前仅支持CPU算子推理。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+=============coco 310 infer reulst=========
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.369
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.571
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.398
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.216
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.421
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.487
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.301
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.502
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.558
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.388
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.617
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.677
 ```
 
 # [模型说明](#目录)
@@ -353,6 +395,21 @@ YOLOv5应用于5000张图像上（标注和数据格式必须与COCO val 2017相
 |批处理大小|1|
 |输出|边框位置和分数，以及概率|
 |精度|map=36.8~37.2%（shape=640）|
+|推理模型| 58M（.ckpt文件）|
+
+### 310推理性能
+
+YOLOv5应用于5000张图像上（标注和数据格式必须与COCO val 2017相同）
+
+|参数| YOLOv5s |
+| -------------------------- | ----------------------------------------------------------- |
+| 资源                   | Ascend 310；CPU 2.60GHz，192核；内存：755G             |
+|上传日期| 2021年06月28日 |
+| MindSpore版本 | 1.2.0 |
+|数据集|5000张图像|
+|批处理大小|1|
+|输出|边框位置和分数，以及概率|
+|精度|map=36.9%（shape=640）|
 |推理模型| 58M（.ckpt文件）|
 
 # [随机情况说明](#目录)
