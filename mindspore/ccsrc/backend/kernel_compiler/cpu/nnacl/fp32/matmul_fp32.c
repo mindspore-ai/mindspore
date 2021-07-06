@@ -955,7 +955,7 @@ void MatVecMulFp32Neon64(const float *a, const float *b, float *c, const float *
     }
     vst1q_f32(c, acc_0);
     if (ci + C8NUM - 1 >= col) {
-      int c_remain = col - ci;
+      int c_remain = col - ci - C4NUM;
       for (int i = 0; i < c_remain; ++i) {
         if (act_type == ActType_Relu) {
           c[C4NUM + i] = MSMAX(acc_1[i], 0.0f);

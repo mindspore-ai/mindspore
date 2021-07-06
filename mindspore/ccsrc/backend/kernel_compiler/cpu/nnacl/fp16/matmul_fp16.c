@@ -454,7 +454,7 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
     vst1q_f16(c, acc_0);
 
     if (ci + C16NUM > col) {
-      int c_remain = col - ci;
+      int c_remain = col - ci - C8NUM;
       for (int i = 0; i < c_remain; ++i) {
         if (act_type == ActType_Relu) {
           c[C8NUM + i] = MSMAX(acc_1[i], (float16_t)0.0);
