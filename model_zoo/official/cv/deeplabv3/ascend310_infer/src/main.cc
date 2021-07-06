@@ -195,7 +195,11 @@ int main(int argc, char **argv) {
     startTimeMs = (1.0 * start.tv_sec * 1000000 + start.tv_usec) / 1000;
     endTimeMs = (1.0 * end.tv_sec * 1000000 + end.tv_usec) / 1000;
     costTime_map.insert(std::pair<double, double>(startTimeMs, endTimeMs));
-    WriteResult(all_files[i], outputs);
+    int rst = WriteResult(all_files[i], outputs);
+    if (rst != 0) {
+        std::cout << "write result failed." << std::endl;
+        return rst;
+    }
   }
   double average = 0.0;
   int inferCount = 0;

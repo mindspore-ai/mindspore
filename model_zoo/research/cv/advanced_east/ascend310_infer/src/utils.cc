@@ -22,7 +22,6 @@
 using mindspore::MSTensor;
 using mindspore::DataType;
 
-
 std::vector<std::vector<std::string>> GetAllInputData(std::string dir_name) {
   std::vector<std::vector<std::string>> ret;
 
@@ -102,6 +101,8 @@ std::vector<std::string> GetAllFiles(std::string_view dirName) {
 
 int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
   std::string homePath = "./result_Files";
+  int INVALID_POINTER = -1;
+  int ERROR = -2;
   for (size_t i = 0; i < outputs.size(); ++i) {
     size_t outputSize;
     std::shared_ptr<const void> netOutput;
@@ -112,7 +113,18 @@ int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outpu
     fileName = fileName + '_' + std::to_string(i) + ".bin";
     std::string outFileName = homePath + "/" + fileName;
     FILE *outputFile = fopen(outFileName.c_str(), "wb");
-    fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
+    if (outputFile == nullptr) {
+        std::cout << "open result file " << outFileName << " failed" << std::endl;
+        return INVALID_POINTER;
+    }
+    size_t size = fwrite(netOutput.get(), sizeof(char), outputSize, outputFile);
+    if (size != outputSize) {
+        fclose(outputFile);
+        outputFile = nullptr;
+        std::cout << "write result file " << outFileName << " failed, write size[" << size <<
+            "] is smaller than output size[" << outputSize << "], maybe the disk is full." << std::endl;
+        return ERROR;
+    }
     fclose(outputFile);
     outputFile = nullptr;
   }
