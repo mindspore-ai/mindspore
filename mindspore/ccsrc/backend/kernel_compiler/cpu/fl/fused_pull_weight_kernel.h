@@ -26,7 +26,7 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "schema/fl_job_generated.h"
 #include "ps/ps_context.h"
-#include "ps/worker/fl_worker.h"
+#include "fl/worker/fl_worker.h"
 
 namespace mindspore {
 namespace kernel {

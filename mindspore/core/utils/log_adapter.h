@@ -131,6 +131,7 @@ enum SubModuleId : int {
   SM_VM,                 // VM
   SM_PROFILER,           // profiler
   SM_PS,                 // Parameter Server
+  SM_FL,                 // Federated Learning
   SM_LITE,               // LITE
   SM_ARMOUR,             // ARMOUR
   SM_HCCL_ADPT,          // Hccl Adapter

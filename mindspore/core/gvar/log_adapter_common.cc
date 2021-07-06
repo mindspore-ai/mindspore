@@ -44,6 +44,7 @@ static const std::vector<std::string> sub_module_names = {
   "VM",                 // SM_VM
   "PROFILER",           // SM_PROFILER
   "PS",                 // SM_PS
+  "FL",                 // SM_FL
   "LITE",               // SM_LITE
   "ARMOUR",             // SM_ARMOUR
   "HCCL_ADPT",          // SM_HCCL_ADPT

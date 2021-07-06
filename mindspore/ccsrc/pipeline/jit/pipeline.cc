@@ -59,10 +59,10 @@
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/worker.h"
-#include "ps/worker/fl_worker.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/ps_cache/ps_cache_manager.h"
-#include "ps/server/server.h"
+#include "fl/server/server.h"
+#include "fl/worker/fl_worker.h"
 #endif
 
 #if ((defined ENABLE_GE) || (defined ENABLE_D))
