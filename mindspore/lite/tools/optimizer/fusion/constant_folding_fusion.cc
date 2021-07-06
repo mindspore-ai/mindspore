@@ -59,7 +59,8 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, lite::converte
   for (size_t i = 1; i < cnode->size(); ++i) {
     int status = 0;
     lite::DataInfo data_info;
-    if (CheckPrimitiveType(cnode, prim::kPrimShape)) {
+    if (lite::ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 &&
+        CheckPrimitiveType(cnode, prim::kPrimShape)) {
       if (utils::isa<abstract::AbstractTensorPtr>(cnode->input(i)->abstract())) {
         auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->input(i)->abstract());
         if (abstract_tensor == nullptr) {
