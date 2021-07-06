@@ -2606,17 +2606,17 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
         - **dt** (float32) - time step for finite difference.
         - **half_dt** (float32) - half of time step for finite difference.
         - **exp_gamma** (float32) - parameter in Liu's dynamic, equals
-        exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
-        dynamics.
+          exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
+          dynamics.
         - **max_velocity** (float32) - the upper limit of velocity, when the
-        veclocity overflows, scale it to the upper limit.
+          veclocity overflows, scale it to the upper limit.
         - **is_max_velocity** (int32) - whether the max velocity control is
-        open or not.
+          open or not.
 
         - **mass_inverse** (Tensor, float32) - [n,], the inverse value of
-        mass of each atom.
+          mass of each atom.
         - **sqrt_mass** (Tensor, float32) - [n,], the inverse square root value
-        of effect mass in Liu's dynamics of each atom.
+          of effect mass in Liu's dynamics of each atom.
         - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
         - **frc** (Tensor, float32) - [n, 3], the force felt by each atom.
@@ -2713,15 +2713,15 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
 
     Inputs:
         - **inverse_mass** (Tensor, float32) - [n,], the inverse value of
-        mass of each atom.
+          mass of each atom.
         - **sqrt_mass_inverse** (Tensor, float32) - [n,], the inverse square root value
-        of effect mass in Liu's dynamics of each atom.
+          of effect mass in Liu's dynamics of each atom.
         - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
         - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
         - **frc** (Tensor, float32) - [n, 3], the force felt by each atom.
         - **acc** (Tensor, float32) - [n, 3], the acceleration of each atom.
         - **rand_state** (Tensor, float32) - [math.ceil(atom_numbers * 3.0 / 4.0) * 16, ], random state to generate
-        random force.
+          random force.
         - **rand_frc** (Tensor, float32) - [n, 3], the random forces.
 
     Outputs:
@@ -2860,7 +2860,7 @@ class TransferCrd(PrimitiveWithInfer):
         - **radial** (Tensor, float32) - [number,], the array of radial transferred from coordinates.
         - **angular** (Tensor, float32) - [number,], the array of angular transferred from coordinates.
         - **nowarp_crd** (Tensor, float32) - [n, 3], the modified coordinate of each atom for
-         computing radial and angular.
+          computing radial and angular.
         - **box_map_times** (Tensor, int32) - [n, 3], the box map times for radial and  angular.
 
     Supported Platforms:
