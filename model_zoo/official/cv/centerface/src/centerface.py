@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +38,13 @@ reciprocal = P.Reciprocal()
 @_grad_scale.register("Tensor", "Tensor")
 def tensor_grad_scale(scale, grad):
     return grad * reciprocal(scale)
+
+_grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
+grad_overflow = P.FloatStatus()
+
+@_grad_overflow.register("Tensor")
+def _tensor_grad_overflow(grad):
+    return grad_overflow(grad)
 
 def conv1x1(in_channels, out_channels, stride=1, padding=0, has_bias=False):
     return nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, has_bias=has_bias,
@@ -240,9 +247,16 @@ class TrainingWrapper(nn.Cell):
             self.grad_reducer = nn.DistributedGradReducer(optimizer.parameters, mean, degree)
 
         self.hyper_map = C.HyperMap()
-        self.alloc_status = NPUAllocFloatStatus()
-        self.get_status = NPUGetFloatStatus()
-        self.clear_status = NPUClearFloatStatus()
+        if context.get_context("device_target") == "GPU":
+            self.gpu_target = True
+            self.float_status = P.FloatStatus()
+            self.addn = P.AddN()
+            self.reshape = P.Reshape()
+        else:
+            self.gpu_target = False
+            self.alloc_status = NPUAllocFloatStatus()
+            self.get_status = NPUGetFloatStatus()
+            self.clear_status = NPUClearFloatStatus()
         self.reduce_sum = ReduceSum(keep_dims=False)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = LessEqual()
@@ -257,12 +271,15 @@ class TrainingWrapper(nn.Cell):
         weights = self.weights
         loss = self.network(x, hm, reg_mask, ind, wh, wight_mask, hm_offset, hps_mask, landmarks)
 
-        # init overflow buffer
-        init = self.alloc_status()
-        init = F.depend(init, loss)
-        # clear overflow buffer
-        clear_status = self.clear_status(init)
-        loss = F.depend(loss, clear_status)
+        init = False
+
+        if not self.gpu_target:
+            # init overflow buffer
+            init = self.alloc_status()
+            init = F.depend(init, loss)
+            # clear overflow buffer
+            clear_status = self.clear_status(init)
+            loss = F.depend(loss, clear_status)
 
         #sens = sens_input #P.Fill()(P.DType()(loss), P.Shape()(loss), sens_input) # user can contral loss scale by add a sens_input
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
@@ -272,12 +289,20 @@ class TrainingWrapper(nn.Cell):
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
 
-        # get the overflow buffer
-        init = F.depend(init, grads)
-        get_status = self.get_status(init)
-        init = F.depend(init, get_status)
-        # sum overflow buffer elements, 0:not overflow , >0:overflow
-        flag_sum = self.reduce_sum(init, (0,))
+        if not self.gpu_target:
+            # get the overflow buffer
+            init = F.depend(init, grads)
+
+            get_status = self.get_status(init)
+            init = F.depend(init, get_status)
+            # sum overflow buffer elements, 0:not overflow , >0:overflow
+            flag_sum = self.reduce_sum(init, (0,))
+        else:
+            flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
+            flag_sum = self.addn(flag_sum)
+            # convert flag_sum to scalar
+            flag_sum = self.reshape(flag_sum, (()))
+
         if self.is_distributed:
             # sum overflow flag over devices
             flag_reduce = self.allreduce(flag_sum)

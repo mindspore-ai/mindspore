@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -gt 8 ]
+if [ $# -gt 9 ]
 then
-    echo "Usage: sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START] [END]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH] [DATASET]"
-    echo "   or: sh test_distribute.sh [MODEL_PATH]"
+    echo "Usage: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START] [END]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH]"
+    echo "   or: sh test_distribute.sh [DEVICE_TARGET]"
     echo "   or: sh test_distribute.sh "
 exit 1
 fi
@@ -58,6 +59,7 @@ save_path=$root/output/centerface/
 # model/ckpt name is "0-" + str(ckpt_num) + "_" + str(198*ckpt_num) + ".ckpt";
 # ckpt_num is epoch number, can be calculated by device_num
 # detail can be found in "test.py"
+device_target="Ascend"
 device_num=8
 steps_per_epoch=198 #198 for 8P; 1583 for 1p
 start=11 # start epoch number = start * device_num + min(device_phy_id) + 1
@@ -65,8 +67,17 @@ end=18 # end epoch number = end * device_num + max(device_phy_id) + 1
 
 if [ $# -ge 1 ]
 then
-    model_path=$(get_real_path $1)
-#    if [ ! -f $model_path ]
+    device_target="$1"
+    if [ "$device_target" != "Ascend" ] && [ "$device_target" != "GPU" ]
+    then
+        echo "error: device_target=$device_target is not a valid option (Ascend or GPU)"
+    exit 1
+    fi
+fi
+
+if [ $# -ge 2 ]
+then
+    model_path=$(get_real_path $2)
     if [ ! -d $model_path ]
     then
         echo "error: model_path=$model_path is not a dir"
@@ -74,9 +85,9 @@ then
     fi
 fi
 
-if [ $# -ge 2 ]
+if [ $# -ge 3 ]
 then
-    dataset_path=$(get_real_path $2)
+    dataset_path=$(get_real_path $3)
     if [ ! -d $dataset_path ]
     then
         echo "error: dataset_path=$dataset_path is not a dir"
@@ -84,9 +95,9 @@ then
     fi
 fi
 
-if [ $# -ge 3 ]
+if [ $# -ge 4 ]
 then
-    ground_truth_mat=$(get_real_path $3)
+    ground_truth_mat=$(get_real_path $4)
     if [ ! -f $ground_truth_mat ]
     then
         echo "error: ground_truth_mat=$ground_truth_mat is not a file"
@@ -94,9 +105,9 @@ then
     fi
 fi
 
-if [ $# -ge 4 ]
+if [ $# -ge 5 ]
 then
-    save_path=$(get_real_path $4)
+    save_path=$(get_real_path $5)
     if [ ! -d $save_path ]
     then
         echo "error: save_path=$save_path is not a dir"
@@ -104,24 +115,24 @@ then
     fi
 fi
 
-if [ $# -ge 5 ]
-then
-    device_num=$5
-fi
-
 if [ $# -ge 6 ]
 then
-    steps_per_epoch=$6
+    device_num=$6
 fi
 
 if [ $# -ge 7 ]
 then
-    start=$7
+    steps_per_epoch=$7
 fi
 
-if [ $# == 8 ]
+if [ $# -ge 8 ]
 then
-    end=$8
+    start=$8
+fi
+
+if [ $# == 9 ]
+then
+    end=$9
 fi
 
 echo $model_path
@@ -150,6 +161,7 @@ do
         --save_dir=$save_path \
         --rank=$i \
         --device_num=$device_num \
+        --device_target=$device_target \
         --steps_per_epoch=$steps_per_epoch \
         --start=$start \
         --end=$end > test.log  2>&1 &

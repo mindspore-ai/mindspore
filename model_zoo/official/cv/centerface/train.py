@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,13 +52,17 @@ from src.model_utils.device_adapter import get_device_id
 
 set_seed(1)
 dev_id = get_device_id()
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=False,
-                    device_target="Ascend", save_graphs=False, device_id=dev_id, reserve_class_name_in_scope=False)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target,
+                    save_graphs=False, device_id=dev_id, reserve_class_name_in_scope=False)
+
+if config.device_target == "Ascend":
+    context.set_context(enable_auto_mixed_precision=False)
 
 if config.lr_scheduler == 'cosine_annealing' and config.max_epoch > config.t_max:
     config.t_max = config.max_epoch
 
 config.lr_epochs = list(map(int, config.lr_epochs.split(',')))
+
 
 def convert_training_shape(args_):
     """
@@ -81,9 +85,11 @@ class InternalCallbackParam(dict):
 def modelarts_pre_process():
     config.ckpt_path = os.path.join(config.output_path, config.ckpt_path)
 
+
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_centerface():
     pass
+
 
 if __name__ == "__main__":
     train_centerface()
@@ -103,7 +109,8 @@ if __name__ == "__main__":
         config.rank_save_ckpt_flag = 1
 
     # logger
-    config.outputs_dir = os.path.join(config.ckpt_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    config.outputs_dir = os.path.join(
+        config.ckpt_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
 
     if config.need_profiler:
         profiler = Profiler(output_path=config.outputs_dir)
@@ -120,14 +127,16 @@ if __name__ == "__main__":
 
     # Notice: parameter_broadcast should be supported, but current version has bugs, thus been disabled.
     # To make sure the init weight on all npu is the same, we need to set a static seed in default_recurisive_init when weight initialization
-    context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
+    context.set_auto_parallel_context(
+        parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
     network = CenterfaceMobilev2()
     # init, to avoid overflow, some std of weight should be enough small
     default_recurisive_init(network)
 
     if config.pretrained_backbone:
         network = load_backbone(network, config.pretrained_backbone, config)
-        print('load pre-trained backbone {} into network'.format(config.pretrained_backbone))
+        print(
+            'load pre-trained backbone {} into network'.format(config.pretrained_backbone))
     else:
         print('Not load pre-trained backbone, please be careful')
 
@@ -155,9 +164,10 @@ if __name__ == "__main__":
         config.multi_scale = [convert_training_shape(config)]
 
     # data loader
-    data_loader, config.steps_per_epoch = GetDataLoader(per_batch_size=config.per_batch_size, \
-        max_epoch=config.max_epoch, rank=config.rank, group_size=config.group_size, \
-        config=config, split='train')
+    data_loader, config.steps_per_epoch = GetDataLoader(per_batch_size=config.per_batch_size,
+                                                        max_epoch=config.max_epoch, rank=config.rank,
+                                                        group_size=config.group_size,
+                                                        config=config, split='train')
     config.steps_per_epoch = config.steps_per_epoch // config.max_epoch
     print('Finish loading dataset')
 
@@ -238,7 +248,7 @@ if __name__ == "__main__":
         run_context = RunContext(cb_params)
         ckpt_cb.begin(run_context)
 
-        print('config.steps_per_epoch = {} config.ckpt_interval ={}'.format(config.steps_per_epoch, \
+        print('config.steps_per_epoch = {} config.ckpt_interval ={}'.format(config.steps_per_epoch,
                                                                             config.ckpt_interval))
 
     t_end = time.time()
@@ -258,12 +268,13 @@ if __name__ == "__main__":
         hps_mask = Tensor(hps_mask)
         landmarks = Tensor(landmarks)
 
-        loss, overflow, scaling = network(images, hm, reg_mask, ind, wh, wight_mask, hm_offset, hps_mask, landmarks)
+        loss, overflow, scaling = network(
+            images, hm, reg_mask, ind, wh, wight_mask, hm_offset, hps_mask, landmarks)
         # Tensor to numpy
         overflow = np.all(overflow.asnumpy())
         loss = loss.asnumpy()
         loss_meter.update(loss)
-        print('epoch:{}, iter:{}, avg_loss:{}, loss:{}, overflow:{}, loss_scale:{}'.format( \
+        print('epoch:{}, iter:{}, avg_loss:{}, loss:{}, overflow:{}, loss_scale:{}'.format(
             epoch, i, loss_meter, loss, overflow, scaling.asnumpy()))
 
         if config.rank_save_ckpt_flag:
@@ -280,7 +291,7 @@ if __name__ == "__main__":
                 print(
                     'epoch[{}], {}, {:.2f} imgs/sec, lr:{}'
                     .format(epoch, loss_meter, fps, lr[i + (epoch-1)*config.steps_per_epoch])
-                    )
+                )
             t_end = time.time()
             loss_meter.reset()
 
