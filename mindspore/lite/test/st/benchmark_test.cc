@@ -75,5 +75,38 @@ TEST_F(BenchmarkTest, TestHebing) {
   auto status = RunBenchmark(4, argv);
   ASSERT_EQ(status, RET_OK);
 }
+
+TEST_F(BenchmarkTest, mindrtParallelOffline1) {
+  const char *benchmark_argv1[] = {"./benchmark",
+                                   "--enableParallel=true",
+                                   "--numThreads=3",
+                                   "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
+                                   "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
+                                   "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
+  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv1);
+  ASSERT_EQ(converter_ret, lite::RET_OK);
+}
+
+TEST_F(BenchmarkTest, mindrtParallelOffline2) {
+  const char *benchmark_argv2[] = {"./benchmark",
+                                   "--enableParallel=true",
+                                   "--numThreads=4",
+                                   "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
+                                   "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
+                                   "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
+  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv2);
+  ASSERT_EQ(converter_ret, lite::RET_OK);
+}
+
+TEST_F(BenchmarkTest, mindrtParallelOffline3) {
+  const char *benchmark_argv3[] = {"./benchmark",
+                                   "--enableParallel=false",
+                                   "--numThreads=1",
+                                   "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
+                                   "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
+                                   "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
+  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv3);
+  ASSERT_EQ(converter_ret, lite::RET_OK);
+}
 }  // namespace lite
 }  // namespace mindspore

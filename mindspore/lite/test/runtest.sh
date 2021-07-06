@@ -24,9 +24,6 @@ echo 'run common ut tests'
 # test cases of Converter
 ## ./lite-test --gtest_filter="TestTfliteParser*"
 
-# test cases with benchmark
-## ./lite-test --gtest_filter="*TestHebing*"
-
 # test cases of framework
 
 # test cases of FP32 OP
@@ -71,3 +68,4 @@ echo 'run inference ut tests'
 
 echo 'run mindrt parallel ut test'
 ./lite-test --gtest_filter="MindrtParallelTest.*"
+./lite-test --gtest_filter="BenchmarkTest.mindrtParallelOffline*"
