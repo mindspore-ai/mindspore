@@ -499,7 +499,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
   // scheduler kernels
-  Scheduler scheduler(context_, model, &tensors_, is_train_session_, delegate_);
+  Scheduler scheduler(context_, model, &tensors_, inputs_, outputs_, is_train_session_, delegate_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
