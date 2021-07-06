@@ -397,6 +397,11 @@ def get_args(inference=False):
                         default="2.6B",
                         choices=["200B", "13B", "2.6B", "self_define"],
                         help="The scale of the model parameters")
+    parser.add_argument("--device_target",
+                        type=str,
+                        default="Ascend",
+                        choices=["Ascend", "GPU"],
+                        help="The running device")
     parser.add_argument("--strategy_load_ckpt_path",
                         type=str,
                         default="",

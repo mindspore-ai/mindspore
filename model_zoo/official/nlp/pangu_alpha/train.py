@@ -44,12 +44,13 @@ class LossCallBack(Callback):
     If the loss in NAN or INF terminating training.
     """
 
-    def __init__(self, dataset_size=-1, local_rank=0, has_trained_epoch=0, has_trained_step=0):
+    def __init__(self, dataset_size=-1, local_rank=0, has_trained_epoch=0, has_trained_step=0, micro_size=1):
         super(LossCallBack, self).__init__()
         self._dataset_size = dataset_size
         self.local_rank = local_rank
         self.has_trained_epoch = has_trained_epoch
         self.has_trained_step = has_trained_step
+        self.micro_size = micro_size
         print("load has trained epoch :{} and step: {}".format(has_trained_epoch, has_trained_step), flush=True)
 
     def step_end(self, run_context):
@@ -63,9 +64,10 @@ class LossCallBack(Callback):
             if percent == 0:
                 epoch_num -= 1
             date = time.asctime(time.localtime(time.time()))
+            loss_value = cb_params.net_outputs[0].asnumpy() / self.micro_size
             print("time: {} local_rank: {}, epoch: {}, step: {}, output is {}, overflow is {}, scale is {}".
                   format(date, int(self.local_rank), int(epoch_num) + int(self.has_trained_epoch),
-                         cb_params.cur_step_num + int(self.has_trained_step), cb_params.net_outputs[0].asnumpy(),
+                         cb_params.cur_step_num + int(self.has_trained_step), loss_value,
                          cb_params.net_outputs[1].asnumpy(), cb_params.net_outputs[2].asnumpy()))
 
 
@@ -78,25 +80,21 @@ def run_train(args_opt):
     r"""
     The main training process.
     """
-    device_id = int(os.getenv('DEVICE_ID'))
     # Set execution mode
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        device_id=device_id)
+                        device_target=args_opt.device_target)
     context.set_context(variable_memory_max_size="30GB")
     # Set parallel context
     if args_opt.distribute == "true":
         D.init()
         device_num = D.get_group_size()
         rank = D.get_rank()
-        print("device_id is {}, rank_id is {}, device_num is {}".format(
-            device_id, rank, device_num))
+        print("rank_id is {}, device_num is {}".format(rank, device_num))
 
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
             gradients_mean=False,
-            device_num=device_num,
             full_batch=bool(args_opt.full_batch),
             enable_parallel_optimizer=bool(args_opt.optimizer_shard))
         set_algo_parameters(elementwise_op_strategy_follow=True)
@@ -105,7 +103,7 @@ def run_train(args_opt):
     else:
         rank = 0
         device_num = 1
-
+    context.set_context(save_graphs=False, save_graphs_path="./graphs_of_device_id_" + str(rank))
     # copy data from the cloud to the /cache/Data
     cache_url = '/cache/Data/'
     if args_opt.offline:
@@ -194,18 +192,17 @@ def run_train_pipeline(args_opt):
     r"""
     The main training process in pipeline.
     """
-    device_id = int(os.getenv("DEVICE_ID"))
-    context.set_context(save_graphs=False, mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id)
+    context.set_context(save_graphs=False, mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     context.set_context(variable_memory_max_size="31GB")
     if args_opt.distribute == "true":
         D.init()
         device_num = D.get_group_size()
         rank_id = D.get_rank()
+        print("rank_id is {}, device_num is {}".format(rank_id, device_num))
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
             gradients_mean=False,
-            device_num=device_num,
             full_batch=bool(args_opt.full_batch),
             loss_repeated_mean=True,
             enable_parallel_optimizer=bool(args_opt.optimizer_shard),
@@ -281,7 +278,7 @@ def run_train_pipeline(args_opt):
     step_per_epoch = ds.get_dataset_size()
     callback_size = args_opt.sink_size
     actual_epoch_num = int(epoch_num * step_per_epoch / callback_size)
-    callback = [TimeMonitor(callback_size), LossCallBack(callback_size, rank_id, config.stage_num)]
+    callback = [TimeMonitor(callback_size), LossCallBack(callback_size, rank_id, config.stage_num, config.micro_size)]
     loss_scale_value = math.pow(2, 32)
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
     pangu_alpha_with_grads = PanguAlphaTrainPipelineWithLossScaleCell(
