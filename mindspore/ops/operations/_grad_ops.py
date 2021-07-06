@@ -2206,6 +2206,7 @@ class SoftShrinkGrad(Primitive):
           Supported Platforms:
               ``Ascend``
       """
+
     @prim_attr_register
     def __init__(self, lambd=0.5):
         self.init_prim_io_names(inputs=['input_grad', 'input_x'], outputs=['output'])

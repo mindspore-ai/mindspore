@@ -37,7 +37,6 @@ AbstractBasePtr SoftShrinkInfer(const abstract::AnalysisEnginePtr &, const Primi
                                 const std::vector<AbstractBasePtr> &input_args);
 
 using PrimSoftShrinkPtr = std::shared_ptr<SoftShrink>;
-
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SOFTSHRINK_H_

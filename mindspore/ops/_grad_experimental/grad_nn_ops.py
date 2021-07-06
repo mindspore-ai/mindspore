@@ -33,7 +33,6 @@ def get_bprop_ctc_loss_v2(self):
 
     return bprop
 
-"""nn_ops"""
 
 @bprop_getters.register(P.SoftShrink)
 def get_bprop_softshrink(self):
