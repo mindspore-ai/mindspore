@@ -370,6 +370,7 @@ inline const PrimitivePtr kLambApplyWeightAssign = std::make_shared<Primitive>("
 inline const PrimitivePtr kSoftmaxGradExt = std::make_shared<Primitive>("SoftmaxGradExt");
 inline const PrimitivePtr kSquareSumV1 = std::make_shared<Primitive>("SquareSumV1");
 inline const PrimitivePtr kFusedMulAdd = std::make_shared<Primitive>("FusedMulAdd");
+inline const PrimitivePtr kPrimSoftShrink = std::make_shared<Primitive>("SoftShrink");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");

@@ -2145,6 +2145,10 @@ test_case_nn_ops = [
                         Tensor(np.zeros((1, 1, 2, 2)), mstype.uint16)],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('SoftShrink', {
+        'block': P.SoftShrink(),
+        'desc_inputs': [Tensor(np.array([[0.5297, 0.7871, 1.1754], [0.7836, 0.6218, -1.1542]]), mstype.float32)],
+        'desc_bprop': [Tensor(np.array([[0, 0.4, 1], [1, 2, 4]]), mstype.float32)]}),
 ]
 
 test_case_array_ops = [
