@@ -15,8 +15,8 @@
  */
 
 #include "armour/cipher/cipher_unmask.h"
-#include "ps/server/common.h"
-#include "ps/server/local_meta_store.h"
+#include "fl/server/common.h"
+#include "fl/server/local_meta_store.h"
 #include "armour/cipher/cipher_meta_storage.h"
 
 namespace mindspore {

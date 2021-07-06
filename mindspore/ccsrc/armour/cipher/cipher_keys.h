@@ -26,7 +26,7 @@
 #include "utils/log_adapter.h"
 #include "armour/cipher/cipher_init.h"
 #include "armour/cipher/cipher_meta_storage.h"
-#include "ps/server/common.h"
+#include "fl/server/common.h"
 
 namespace mindspore {
 namespace armour {
