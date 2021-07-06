@@ -37,7 +37,7 @@ def _read_file(filename):
         return f.read()
 
 
-version = _read_file('MS_VERSION').replace("\n", "")
+version = _read_file('version.txt').replace("\n", "")
 readme = _read_file('README.md')
 
 
