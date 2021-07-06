@@ -66,7 +66,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --result_path=./preprocess_Result > preprocess.log 2>&1
+    python3.7 ../preprocess.py --pre_result_path=./preprocess_Result > preprocess.log 2>&1
 }
 
 function compile_app()
