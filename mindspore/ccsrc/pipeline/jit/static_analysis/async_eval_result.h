@@ -42,7 +42,9 @@ class HealthPointMgr {
   HealthPointMgr(const HealthPointMgr &) = delete;
   HealthPointMgr &operator=(const HealthPointMgr &) = delete;
   static HealthPointMgr &GetInstance() { return instance_; }
+  void Clear();
   void SetNextRunable();
+  void HandleException();
 
   void CheckPoint() {
     MS_LOG(DEBUG) << "The Health Point is " << point_;
@@ -59,8 +61,6 @@ class HealthPointMgr {
     CheckPoint();
   }
 
-  void HandleException();
-
   void AddPoint() {
     std::lock_guard<std::recursive_mutex> lock(lock_);
     ++point_;
@@ -68,9 +68,9 @@ class HealthPointMgr {
 
   int point() { return point_; }
 
-  void PushBack(const AsyncAbstractPtr &base) {
+  void Add2Schedule(const AsyncAbstractPtr &asyncAbastract) {
     std::lock_guard<std::recursive_mutex> lock(lock_);
-    asyncAbstractList_.push_back(base);
+    asyncAbstractList_.push_back(asyncAbastract);
   }
 
  private:
@@ -198,9 +198,9 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
         hasDropPoint = true;
       }
 
-      MS_LOG(DEBUG) << this << " ranable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
+      MS_LOG(DEBUG) << this << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
       condition_var_.wait(lock, [this] { return runable_; });
-      MS_LOG(DEBUG) << this << " continue ranable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
+      MS_LOG(DEBUG) << this << " continue runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
       StaticAnalysisException::Instance().CheckException();
       runable_ = false;
       if (result_ != nullptr) {
@@ -211,14 +211,14 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
         return result_;
       }
       // Push to list
-      HealthPointMgr::GetInstance().PushBack(shared_from_this());
+      HealthPointMgr::GetInstance().Add2Schedule(shared_from_this());
       if (hasDropPoint) {
         HealthPointMgr::GetInstance().AddPoint();
       }
       // Notify the next asyncAbastract to run.
       HealthPointMgr::GetInstance().SetNextRunable();
       MS_LOG(DEBUG) << this << " SetNextRunable "
-                    << " ranable: " << runable_ << " result: " << (result_ ? result_.get() : 0)
+                    << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0)
                     << " point:" << HealthPointMgr::GetInstance().point();
     }
     return nullptr;
