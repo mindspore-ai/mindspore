@@ -37,33 +37,21 @@ def load_model(args_opt):
     r"""
      The main function for load model
     """
-    device_id = int(os.getenv("DEVICE_ID"))
-    rank_id_str = os.getenv('RANK_ID', '0')
-    rank_id = int(
-        rank_id_str[rank_id_str.rfind('-') +
-                    1:])
-    print('rank_id:{}'.format(rank_id), "rank_id str:{}".format(rank_id_str))
-    device_id = int(os.getenv('DEVICE_ID'))
-    local_rank = rank_id
-    print('local_rank:{}, device id:{} start to run...'.format(local_rank, device_id), flush=True)
     # Set execution mode
     context.set_context(save_graphs=False,
                         mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        device_id=device_id)
+                        device_target=args_opt.device_target)
     context.set_context(variable_memory_max_size="30GB")
     # Set parallel context
     if args_opt.distribute == "true":
         D.init()
         device_num = D.get_group_size()
         rank = D.get_rank()
-        print("device_id is {}, rank_id is {}, device_num is {}".format(
-            device_id, rank, device_num))
+        print("rank_id is {}, device_num is {}".format(rank, device_num))
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
             gradients_mean=False,
-            device_num=device_num,
             full_batch=True,
             loss_repeated_mean=True,
             enable_parallel_optimizer=False,
@@ -75,7 +63,7 @@ def load_model(args_opt):
     else:
         rank = 0
         device_num = 1
-
+    print('local_rank:{}, start to run...'.format(rank), flush=True)
     use_past = False
     if args_opt.export:
         use_past = True

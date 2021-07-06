@@ -76,6 +76,13 @@ class Dropout(nn.Cell):
     def extend_repr(self):
         return 'keep_prob={}, dtype={}'.format(self.keep_prob, self.dtype)
 
+    def shard(self, strategy):
+        if self.is_ascend:
+            self.dropout_gen_mask.shard(strategy)
+            self.dropout_do_mask.shard(strategy)
+        else:
+            self.dropout.shard(strategy)
+
 class LayerNorm(nn.Cell):
     r"""
         A self-defined layer norm operation using reduce sum and reduce mean
@@ -147,7 +154,7 @@ class Mapping(nn.Cell):
         return output
 
 
-class Mapping_output(nn.Cell):
+class MappingOutput(nn.Cell):
     """
     A mapping function with a 3d input
     Args:
@@ -161,7 +168,7 @@ class Mapping_output(nn.Cell):
         output: Tensor, a 3d tensor after projection
     """
     def __init__(self, config, input_size, output_size, scale=1.0):
-        super(Mapping_output, self).__init__()
+        super(MappingOutput, self).__init__()
         self.output_size = output_size
         self.input_size = input_size
         self.weight = Parameter(initializer(Normal(sigma=0.02 * scale),
@@ -203,14 +210,13 @@ class Output(nn.Cell):
         input_size = config.embedding_size
         output_size = config.embedding_size * config.expand_ratio
         # Project to expand_ratio*embedding_size
-        self.mapping = Mapping_output(config, input_size, output_size)
+        self.mapping = MappingOutput(config, input_size, output_size)
         # Project back to embedding_size
         self.projection = Mapping(config, output_size, input_size, scale)
         self.activation = nn.GELU()
         self.activation.gelu.shard(((config.dp, 1, config.mp),))
         self.dropout = Dropout(1 - config.dropout_rate)
-        self.dropout.dropout_gen_mask.shard(((config.dp, 1, 1),))
-        self.dropout.dropout_do_mask.shard(((config.dp, 1, 1),))
+        self.dropout.shard(((config.dp, 1, 1),))
 
     def construct(self, x):
         # [bs, seq_length, expand_ratio*embedding_size]
@@ -282,13 +288,9 @@ class Attention(nn.Cell):
             self.coeff = Tensor(self.coeff)
         self.use_past = config.use_past
         self.dropout = Dropout(1 - config.dropout_rate)
-        self.dropout.dropout_gen_mask.shard(((config.dp, 1, 1),))
-        self.dropout.dropout_do_mask.shard(((config.dp, 1, 1),))
+        self.dropout.shard(((config.dp, 1, 1),))
         self.prob_dropout = Dropout(1 - config.dropout_rate)
-        self.prob_dropout.dropout_gen_mask.shard(
-            ((config.dp, config.mp, 1, 1),))
-        self.prob_dropout.dropout_do_mask.shard(
-            ((config.dp, config.mp, 1, 1),))
+        self.prob_dropout.shard(((config.dp, config.mp, 1, 1),))
         self.softmax = nn.Softmax()
         self.softmax.softmax.shard(((config.dp, config.mp, 1),))
         self.expand_dims = P.ExpandDims().shard(((config.dp, 1, 1),))
@@ -631,12 +633,12 @@ class Decoder(nn.Cell):
             output = self.add(x, mlp_logit)
         return output, layer_present
 
-class EmbeddingCell(nn.Cell):
+class Embedding(nn.Cell):
     """
-    EmbeddingCell
+    Embedding
     """
     def __init__(self, config):
-        super(EmbeddingCell, self).__init__()
+        super(Embedding, self).__init__()
         self.word_embedding = EmbeddingLookup().set_comm_fusion(1)
         if config.word_emb_dp:
             self.word_embedding.gather.shard(((1, 1), (config.dp, 1)))
@@ -669,8 +671,7 @@ class EmbeddingCell(nn.Cell):
         self.position_embedding.expand.shard(((config.dp, 1),))
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
         self.dropout = Dropout(1 - config.dropout_rate)
-        self.dropout.dropout_gen_mask.shard(((config.dp, 1, 1),))
-        self.dropout.dropout_do_mask.shard(((config.dp, 1, 1),))
+        self.dropout.shard(((config.dp, 1, 1),))
         self.use_past = config.use_past
         self.is_first_iteration = True
 
@@ -686,12 +687,12 @@ class EmbeddingCell(nn.Cell):
         return hidden_states
 
 
-class MaskCell(nn.Cell):
+class Mask(nn.Cell):
     """
-    MaskCell
+    Mask
     """
     def __init__(self, config):
-        super(MaskCell, self).__init__()
+        super(Mask, self).__init__()
         self.dtype = config.compute_dtype
         self.expand_dims = P.ExpandDims().shard(((config.dp, 1, 1),))
     def construct(self, attention_mask):
@@ -871,10 +872,10 @@ class PanguAlphaEmbedding(nn.Cell):
     """
     def __init__(self, config):
         super(PanguAlphaEmbedding, self).__init__()
-        self.embedding = EmbeddingCell(config)
+        self.embedding = Embedding(config)
         if config.stage_num > 1:
             self.embedding.pipeline_stage = 0
-        self.mask = MaskCell(config)
+        self.mask = Mask(config)
 
     def construct(self, input_ids, input_mask, table, input_position, attention_mask, valid_index=None):
         """
