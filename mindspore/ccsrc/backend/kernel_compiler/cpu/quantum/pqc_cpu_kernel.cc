@@ -75,9 +75,12 @@ void ComputerForwardBackward(const std::shared_ptr<ComputeParam> &input_params, 
   MS_EXCEPTION_IF_NULL(encoder_params_names);
   MS_EXCEPTION_IF_NULL(ansatz_params_names);
   MS_EXCEPTION_IF_NULL(tmp_sims);
-
-  if (end * hams->size() > result_len || end * encoder_params_names->size() * hams->size() > encoder_g_len ||
-      end * ansatz_params_names->size() * hams->size() > ansatz_g_len) {
+  auto mea_size = hams->size();
+  if (is_projector) {
+    mea_size = projectors->size();
+  }
+  if (end * mea_size > result_len || end * encoder_params_names->size() * mea_size > encoder_g_len ||
+      end * ansatz_params_names->size() * mea_size > ansatz_g_len) {
     MS_LOG(EXCEPTION) << "pqc error input size!";
   }
   mindquantum::ParameterResolver pr;
@@ -107,18 +110,18 @@ void ComputerForwardBackward(const std::shared_ptr<ComputeParam> &input_params, 
     auto energy = e0_grad1_grad_2[0];
     auto grad_encoder = e0_grad1_grad_2[1];
     auto grad_ansatz = e0_grad1_grad_2[2];
-    if (energy.size() != hams->size() || grad_encoder.size() != encoder_params_names->size() * hams->size() ||
-        grad_ansatz.size() != ansatz_params_names->size() * hams->size()) {
+    if (energy.size() != mea_size || grad_encoder.size() != encoder_params_names->size() * mea_size ||
+        grad_ansatz.size() != ansatz_params_names->size() * mea_size) {
       MS_LOG(EXCEPTION) << "pqc error evolution or batch size!";
     }
-    for (size_t poi = 0; poi < hams->size(); poi++) {
-      output[n * hams->size() + poi] = energy[poi];
+    for (size_t poi = 0; poi < mea_size; poi++) {
+      output[n * mea_size + poi] = energy[poi];
     }
-    for (size_t poi = 0; poi < encoder_params_names->size() * hams->size(); poi++) {
-      gradient_encoder[n * hams->size() * encoder_params_names->size() + poi] = grad_encoder[poi];
+    for (size_t poi = 0; poi < encoder_params_names->size() * mea_size; poi++) {
+      gradient_encoder[n * mea_size * encoder_params_names->size() + poi] = grad_encoder[poi];
     }
-    for (size_t poi = 0; poi < ansatz_params_names->size() * hams->size(); poi++) {
-      gradient_ansatz[n * hams->size() * ansatz_params_names->size() + poi] = grad_ansatz[poi];
+    for (size_t poi = 0; poi < ansatz_params_names->size() * mea_size; poi++) {
+      gradient_ansatz[n * mea_size * ansatz_params_names->size() + poi] = grad_ansatz[poi];
     }
   }
 }

@@ -32,6 +32,7 @@ class ParameterResolver {
   void SetData(const std::string &, const CalcType &);
   void InsertNoGrad(const std::string &);
   void InsertRequiresGrad(const std::string &);
+  ~ParameterResolver() {}
 
  private:
   ParaType data_;

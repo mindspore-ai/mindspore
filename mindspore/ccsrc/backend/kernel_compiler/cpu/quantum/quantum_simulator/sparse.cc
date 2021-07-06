@@ -62,7 +62,7 @@ SparseMatrix BasiGateSparse(char g) {
 
 SparseMatrix IdentitySparse(int n_qubit) {
   if (n_qubit == 0) {
-    int dim = 1UL << n_qubit;
+    int dim = static_cast<int>(1UL << n_qubit);
     SparseMatrix out(dim, dim);
     out.reserve(VectorXi::Constant(dim, dim));
     for (int i = 0; i < dim; i++) {

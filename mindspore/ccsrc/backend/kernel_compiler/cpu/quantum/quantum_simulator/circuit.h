@@ -38,6 +38,7 @@ class BasicCircuit {
   void AppendNoneParameterGate(const std::string &, Matrix, Indexes, Indexes);
   void AppendParameterGate(const std::string &, Indexes, Indexes, const ParameterResolver &);
   const GateBlocks &GetGateBlocks() const;
+  ~BasicCircuit() {}
 };
 }  // namespace mindquantum
 }  // namespace mindspore

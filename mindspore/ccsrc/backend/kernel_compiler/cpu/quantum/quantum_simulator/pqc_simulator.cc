@@ -127,6 +127,9 @@ std::vector<std::vector<float>> PQCSimulator::CalcGradient(const std::shared_ptr
     if (dummy_circuit_) {
       continue;
     }
+    if (len > circ_herm_gate_blocks.at(0).size()) {
+      MS_LOG(EXCEPTION) << "hermitian circuit size error!";
+    }
     for (unsigned i = 0; i < len; i++) {
       if ((!circ_herm_gate_blocks.at(0)[i]->IsParameterGate()) ||
           (circ_herm_gate_blocks.at(0)[i]->GetParameterResolver().GetRequiresGradParameters().size() == 0)) {
