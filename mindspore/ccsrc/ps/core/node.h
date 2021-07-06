@@ -42,7 +42,7 @@ namespace mindspore {
 namespace ps {
 namespace core {
 constexpr int kTimeoutInSeconds = 30;
-constexpr int kCommTimeoutInSeconds = 30;
+constexpr int kCommTimeoutInSeconds = 3;
 class Node {
  public:
   Node()

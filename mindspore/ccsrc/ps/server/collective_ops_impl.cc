@@ -77,7 +77,7 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
 
     std::shared_ptr<std::vector<unsigned char>> recv_str;
     auto recv_req_id = server_node_->CollectiveReceiveAsync(core::NodeRole::SERVER, recv_from_rank, &recv_str);
-    if (!server_node_->CollectiveWait(recv_req_id, 1)) {
+    if (!server_node_->CollectiveWait(recv_req_id)) {
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;
     }
@@ -111,7 +111,7 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
     std::shared_ptr<std::vector<unsigned char>> recv_str;
     auto recv_req_id = server_node_->CollectiveReceiveAsync(core::NodeRole::SERVER, recv_from_rank, &recv_str);
 
-    if (!server_node_->CollectiveWait(recv_req_id, 1)) {
+    if (!server_node_->CollectiveWait(recv_req_id)) {
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;
     }
@@ -144,7 +144,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
       std::shared_ptr<std::vector<unsigned char>> recv_str;
       MS_LOG(DEBUG) << "Reduce rank 0 receive from rank " << i;
       auto recv_req_id = server_node_->CollectiveReceiveAsync(core::NodeRole::SERVER, i, &recv_str);
-      if (!server_node_->CollectiveWait(recv_req_id, 1)) {
+      if (!server_node_->CollectiveWait(recv_req_id)) {
         MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
         return false;
       }
@@ -156,7 +156,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
   } else {
     MS_LOG(DEBUG) << "Reduce send data to rank 0 process.";
     auto send_req_id = server_node_->CollectiveSendAsync(core::NodeRole::SERVER, 0, sendbuff, count * sizeof(T));
-    if (!server_node_->Wait(send_req_id, 1)) {
+    if (!server_node_->Wait(send_req_id)) {
       MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
       return false;
     }
@@ -169,7 +169,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
     for (uint32_t i = 1; i < rank_size; i++) {
       MS_LOG(DEBUG) << "Broadcast data to process " << i;
       auto send_req_id = server_node_->CollectiveSendAsync(core::NodeRole::SERVER, i, output_buff, count * sizeof(T));
-      if (!server_node_->Wait(send_req_id, 1)) {
+      if (!server_node_->Wait(send_req_id)) {
         MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
         return false;
       }
@@ -178,7 +178,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
     MS_LOG(DEBUG) << "Broadcast receive from rank 0.";
     std::shared_ptr<std::vector<unsigned char>> recv_str;
     auto recv_req_id = server_node_->CollectiveReceiveAsync(core::NodeRole::SERVER, 0, &recv_str);
-    if (!server_node_->CollectiveWait(recv_req_id, 1)) {
+    if (!server_node_->CollectiveWait(recv_req_id)) {
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;
     }

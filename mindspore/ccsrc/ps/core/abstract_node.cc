@@ -344,18 +344,15 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
     MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
   } else {
     receive_callbacks_[std::make_pair(rank_id, rank_request_id)] = [=]() mutable {
-      receive_callbacks_mutex_.lock();
       auto res = received_data_[std::make_pair(rank_id, rank_request_id)];
       if (*output != nullptr) {
         MS_LOG(WARNING) << "The output is not empty.";
-
       } else {
         *output = res;
         received_data_.erase(std::make_pair(rank_id, rank_request_id));
         receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
         MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
       }
-      receive_callbacks_mutex_.unlock();
     };
   }
   receive_callbacks_mutex_.unlock();
@@ -571,7 +568,7 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {
     nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
-    MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port();
+    MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port() << ", the rank id:" << it.rank_id();
   }
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   is_ready_ = true;
@@ -851,13 +848,11 @@ void AbstractNode::RunReceiveCallback(std::shared_ptr<MessageMeta> meta, const P
                 << ", the send request id is:" << meta->request_id() << " the size is:" << size;
   auto it = receive_callbacks_.find(std::make_pair(rank_id, rank_request_id));
   if (it != receive_callbacks_.end()) {
-    receive_callbacks_mutex_.unlock();
-
-    if (it->second) {
-      it->second();
+    if (receive_messages_done_[std::make_pair(rank_id, rank_request_id)] == false) {
+      if (it->second) {
+        it->second();
+      }
     }
-
-    receive_callbacks_mutex_.lock();
     receive_cond_.notify_all();
     receive_callbacks_.erase(it);
   }
