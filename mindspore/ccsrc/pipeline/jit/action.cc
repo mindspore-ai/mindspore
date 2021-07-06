@@ -48,8 +48,8 @@
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
 #include "ps/worker.h"
-#include "ps/worker/fl_worker.h"
-#include "ps/server/server.h"
+#include "fl/worker/fl_worker.h"
+#include "fl/server/server.h"
 #endif
 
 namespace mindspore {

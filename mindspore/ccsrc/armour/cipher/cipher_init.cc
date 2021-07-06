@@ -15,7 +15,7 @@
  */
 
 #include "armour/cipher/cipher_init.h"
-#include "ps/server/common.h"
+#include "fl/server/common.h"
 #include "armour/cipher/cipher_meta_storage.h"
 
 namespace mindspore {
