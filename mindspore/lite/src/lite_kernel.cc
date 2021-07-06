@@ -21,7 +21,6 @@
 #include "src/common/utils.h"
 #include "src/runtime/infer_manager.h"
 #include "src/common/version_manager.h"
-#include "src/runtime/kernel/arm/base/merge.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -29,9 +28,6 @@ using mindspore::lite::RET_OK;
 
 bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   MS_ASSERT(kernel_ != nullptr);
-  if ((desc_.provider == kBuiltin) && (kernel_->type() == schema::PrimitiveType_Merge)) {
-    return std::static_pointer_cast<MergeCPUKernel>(kernel_)->IsReady(scope_tensors);
-  }
   auto &in_tensors = this->in_tensors();
   return std::all_of(in_tensors.begin(), in_tensors.end(), [&](lite::Tensor *in_tensor) {
     if (IsContain(scope_tensors, in_tensor)) {

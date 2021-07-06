@@ -193,7 +193,7 @@ int LiteModel::VersionVerify(flatbuffers::Verifier *verify) const {
 
 int LiteModel::NodeVerify() const {
   auto tensor_size = this->all_tensors_.size();
-  uint32_t subGraph_size = this->sub_graphs_.size();
+  uint32_t subgraph_size = this->sub_graphs_.size();
 
   for (auto &node : this->all_nodes_) {
     if (node == nullptr || node->primitive_ == nullptr) {
@@ -211,11 +211,10 @@ int LiteModel::NodeVerify() const {
       return RET_ERROR;
     }
 
-    if (IsWhileNode(node->primitive_)) {
-      auto body_index = GetWhileBodySubgraphIndex(node->primitive_);
-      auto cond_index = GetWhileCondSubgraphIndex(node->primitive_);
-      if (static_cast<uint32_t>(body_index) >= subGraph_size || static_cast<uint32_t>(cond_index) >= subGraph_size) {
-        MS_LOG(ERROR) << "index of subGraph is beyond subGraph_size.";
+    if (IsPartialNode(node->primitive_)) {
+      auto subgraph_index = GetPartialGraphIndex(node->primitive_);
+      if (static_cast<uint32_t>(subgraph_index) >= subgraph_size) {
+        MS_LOG(ERROR) << "subgraph index：" << subgraph_index << " is beyond subgraph_size: " << subgraph_size;
         return RET_ERROR;
       }
     }
@@ -267,10 +266,11 @@ bool LiteModel::ModelVerify() const {
     MS_LOG(ERROR) << "Model does not have a main graph.";
     return false;
   }
-  auto main_graph = this->sub_graphs_.front();
-  for (auto input_index : main_graph->input_indices_) {
-    if (input_index >= this->all_tensors_.size()) {
-      MS_LOG(ERROR) << "Graph indices is beyond tensor_size.";
+
+  auto all_tensors_size = this->all_tensors_.size();
+  for (auto input_index : this->input_indices_) {
+    if (input_index >= all_tensors_size) {
+      MS_LOG(ERROR) << "Graph input indices is beyond tensor_size.";
       return false;
     }
     auto *tensor = this->all_tensors_.at(input_index);
@@ -282,6 +282,12 @@ bool LiteModel::ModelVerify() const {
       MS_LOG(ERROR) << "Graph input tensor should be NHWC";
       return false;
     }
+  }
+
+  if (std::any_of(this->output_indices_.begin(), this->output_indices_.end(),
+                  [&all_tensors_size](const uint32_t &idx) { return idx >= all_tensors_size; })) {
+    MS_LOG(ERROR) << "Graph output indices is beyond tensor_size.";
+    return false;
   }
   return NodeVerify() == RET_OK && SubGraphVerify() == RET_OK;
 }
