@@ -23,7 +23,8 @@ import mindspore.common.dtype as mstype
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
 from src.args import get_args
-
+from src.dcgan_model import DcganG
+from src.dcgannobn_model import DcgannobnG
 
 if __name__ == '__main__':
     args_opt = get_args('export')
