@@ -51,13 +51,13 @@ class ControlFlowPass : public Pass {
 
   // process while
   int CreateWhileCondCallNode(
-    const FuncGraphPtr &fg, const CNodePtr &while_cnode, std::vector<AnfNodePtr> *visited_nodes_used_by_after_fg,
-    CNodePtr *cond_partial_cnode,
+    const FuncGraphPtr &fg, const CNodePtr &while_cnode, const std::vector<AnfNodePtr> &visited_nodes_used_by_after_fg,
+    CNodePtr *cond_partial_cnode, std::vector<AnfNodePtr> *cond_nodes_used_by_after_partial,
     std::unordered_map<AnfNodePtr, AnfNodePtr> *visited_nodes_and_cond_fg_inputs_replace_pairs);
   int CreateWhileBodyPartialNode(const FuncGraphPtr &cond_fg, const CNodePtr &while_cnode, CNodePtr *body_partial_node);
   int CreateWhileAfterPartialNode(
     const FuncGraphPtr &main_fg, const FuncGraphPtr &cond_fg, const std::vector<AnfNodePtr> &remain_nodes,
-    const std::vector<AnfNodePtr> &visited_nodes_used_by_after_fg,
+    const std::vector<AnfNodePtr> &cond_nodes_used_by_after_partial,
     const std::unordered_map<AnfNodePtr, AnfNodePtr> &visited_nodes_and_cond_fg_inputs_replace_pairs,
     CNodePtr *while_cnode, CNodePtr *after_partial_cnode);
   int ProcessWhileOp(const FuncGraphPtr &fg, const std::set<AnfNodePtr> &visited_nodes,
