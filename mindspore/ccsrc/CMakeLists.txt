@@ -224,7 +224,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug pybind_api utils vm profiler ps
+        common debug pybind_api utils vm profiler ps fl
 )
 
 if(ENABLE_CPU AND NOT WIN32)
