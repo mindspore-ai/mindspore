@@ -40,6 +40,7 @@ bool AddCacheEmbeddingPass(const ResourcePtr &res);
 bool InferenceOptPreparePass(const ResourcePtr &res);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &res);
+bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 }  // namespace pipeline
 }  // namespace mindspore
 

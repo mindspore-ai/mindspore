@@ -27,6 +27,7 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/validator.h"
 #include "pipeline/jit/remove_value_node_dup.h"
+#include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/cse_pass.h"
 #include "frontend/optimizer/graph_kernel_reuse.h"
@@ -43,6 +44,7 @@
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -515,6 +517,26 @@ bool PynativeOptPass(const ResourcePtr &res) {
   auto pynative_opt = GetOptPassesPynativeElim(irpass);
   auto pynative_opt_opt = opt::Optimizer::MakeOptimizer("pynative_opt", res, pynative_opt);
   (void)pynative_opt_opt->step(func_graph, false);
+  return true;
+}
+
+bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(func_graph->manager());
+  auto res = std::make_shared<pipeline::Resource>();
+  res->set_func_graph(func_graph);
+  res->set_manager(func_graph->manager());
+
+  // opt::irpass::OptimizeIRPassLib is not used here to avoid double free problems in external calls.
+  opt::SubstitutionPtr updatestate_eliminater = opt::MakeSubstitution(
+    std::make_shared<opt::irpass::UpdatestateEliminater>(), "updatestate_eliminater", prim::kPrimUpdateState);
+  opt::OptPassGroupMap elim_map({
+    {"updatestate_eliminate", opt::OptPassConfig({updatestate_eliminater})},
+    {"auto_monad_eliminator", opt::OptPassConfig(opt::AutoMonadEliminator())},
+  });
+
+  auto auto_monad_elim_opt = opt::Optimizer::MakeOptimizer("auto_monad_elim", res, elim_map);
+  (void)auto_monad_elim_opt->step(func_graph, false);
   return true;
 }
 
