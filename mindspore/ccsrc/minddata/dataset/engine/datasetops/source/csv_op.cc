@@ -28,52 +28,14 @@
 
 namespace mindspore {
 namespace dataset {
-CsvOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_num_samples_(0), builder_shuffle_files_(false) {
-  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
-  builder_num_workers_ = config_manager->num_parallel_workers();
-  builder_op_connector_size_ = config_manager->op_connector_size();
-  builder_worker_connector_size_ = config_manager->worker_connector_size();
-}
-
-Status CsvOp::Builder::ValidateInputs() const {
-  std::string err;
-  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                       std::to_string(builder_num_workers_) + ".\n"
-                                   : "";
-  err += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1)
-           ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
-               std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n"
-           : "";
-  return err.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err);
-}
-
-Status CsvOp::Builder::Build(std::shared_ptr<CsvOp> *op) {
-  RETURN_IF_NOT_OK(ValidateInputs());
-
-  // Throttle the number of workers if we have more workers than files!
-  if (static_cast<size_t>(builder_num_workers_) > builder_csv_files_list_.size()) {
-    builder_num_workers_ = builder_csv_files_list_.size();
-    MS_LOG(WARNING) << "CsvOp operator parallelism reduced to " << builder_num_workers_ << " workers.";
-  }
-
-  std::shared_ptr<CsvOp> csv_op = std::make_shared<CsvOp>(
-    builder_csv_files_list_, builder_field_delim_, builder_column_default_list_, builder_column_name_list_,
-    builder_num_workers_, builder_num_samples_, builder_worker_connector_size_, builder_op_connector_size_,
-    builder_shuffle_files_, builder_num_devices_, builder_device_id_);
-  RETURN_IF_NOT_OK(csv_op->Init());
-  *op = std::move(csv_op);
-
-  return Status::OK();
-}
 
 CsvOp::CsvOp(const std::vector<std::string> &csv_files_list, char field_delim,
              const std::vector<std::shared_ptr<BaseRecord>> &column_default,
              const std::vector<std::string> &column_name, int32_t num_workers, int64_t num_samples,
              int32_t worker_connector_size, int32_t op_connector_size, bool shuffle_files, int32_t num_devices,
              int32_t device_id)
-    : NonMappableLeafOp(num_workers, worker_connector_size, num_samples, op_connector_size, shuffle_files, num_devices,
-                        device_id),
+    : NonMappableLeafOp(std::min(num_workers, static_cast<int32_t>(csv_files_list.size())), worker_connector_size,
+                        num_samples, op_connector_size, shuffle_files, num_devices, device_id),
       csv_files_list_(std::move(csv_files_list)),
       field_delim_(field_delim),
       column_default_list_(column_default),
@@ -654,13 +616,24 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
 }
 
 Status CsvOp::CountAllFileRows(const std::vector<std::string> &files, bool csv_header, int64_t *count) {
+  int32_t num_workers = GlobalContext::config_manager()->num_parallel_workers();
+  int32_t op_connector_size = GlobalContext::config_manager()->op_connector_size();
+  int32_t worker_connector_size = GlobalContext::config_manager()->worker_connector_size();
+  int32_t device_id = 0;
+  int32_t num_devices = 1;
+  int32_t num_samples = 0;
+  bool shuffle_files = false;
+  std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_list;
+  std::vector<std::string> column_name_list;
+  char field_delim = ',';
   std::shared_ptr<CsvOp> op;
   *count = 0;
-  if (csv_header) {
-    RETURN_IF_NOT_OK(Builder().SetCsvFilesList(files).Build(&op));
-  } else {
-    RETURN_IF_NOT_OK(Builder().SetCsvFilesList(files).SetColumName({""}).Build(&op));
+  if (!csv_header) {
+    column_name_list.push_back("");
   }
+  op = std::make_shared<CsvOp>(files, field_delim, column_list, column_name_list, num_workers, num_samples,
+                               worker_connector_size, op_connector_size, shuffle_files, num_devices, device_id);
+  RETURN_IF_NOT_OK(op->Init());
   for (auto file : files) {
     *count += op->CountTotalRows(file);
   }

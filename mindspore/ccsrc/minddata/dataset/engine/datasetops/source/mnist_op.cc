@@ -32,46 +32,6 @@ const int32_t kMnistLabelFileMagicNumber = 2049;
 const int32_t kMnistImageRows = 28;
 const int32_t kMnistImageCols = 28;
 
-MnistOp::Builder::Builder() : builder_sampler_(nullptr), builder_usage_("") {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status MnistOp::Builder::Build(std::shared_ptr<MnistOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  if (builder_sampler_ == nullptr) {
-    const int64_t num_samples = 0;
-    const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
-  }
-  builder_schema_ = std::make_unique<DataSchema>();
-  RETURN_IF_NOT_OK(
-    builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
-  TensorShape scalar = TensorShape::CreateScalar();
-  RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-    ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-  *ptr = std::make_shared<MnistOp>(builder_usage_, builder_num_workers_, builder_dir_, builder_op_connector_size_,
-                                   std::move(builder_schema_), std::move(builder_sampler_));
-  return Status::OK();
-}
-
-Status MnistOp::Builder::SanityCheck() {
-  const std::set<std::string> valid = {"test", "train", "all", ""};
-  Path dir(builder_dir_);
-  std::string err_msg;
-  err_msg += dir.IsDirectory() == false
-               ? "Invalid parameter, MNIST path is invalid or not set, path: " + builder_dir_ + ".\n"
-               : "";
-  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                           std::to_string(builder_num_workers_) + ".\n"
-                                       : "";
-  err_msg += valid.find(builder_usage_) == valid.end()
-               ? "Invalid parameter, usage must be 'train','test' or 'all', but got " + builder_usage_ + ".\n"
-               : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
-}
-
 MnistOp::MnistOp(const std::string &usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
                  std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
@@ -306,10 +266,19 @@ Status MnistOp::LaunchThreadsAndInitOp() {
 
 Status MnistOp::CountTotalRows(const std::string &dir, const std::string &usage, int64_t *count) {
   // the logic of counting the number of samples is copied from ParseMnistData() and uses CheckReader()
-  std::shared_ptr<MnistOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetDir(dir).SetUsage(usage).Build(&op));
-
+  const int64_t num_samples = 0;
+  const int64_t start_index = 0;
+  auto sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
+  auto schema = std::make_unique<DataSchema>();
+  RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
+  TensorShape scalar = TensorShape::CreateScalar();
+  RETURN_IF_NOT_OK(
+    schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  int32_t num_workers = cfg->num_parallel_workers();
+  int32_t op_connect_size = cfg->op_connector_size();
+  auto op = std::make_shared<MnistOp>(usage, num_workers, dir, op_connect_size, std::move(schema), std::move(sampler));
   RETURN_IF_NOT_OK(op->WalkAllFiles());
 
   for (size_t i = 0; i < op->image_names_.size(); ++i) {
