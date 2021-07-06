@@ -14,6 +14,9 @@
         - [用法](#用法)
     - [评估过程](#评估过程)
         - [用法](#用法-1)
+    - [310推理](#310推理)
+        - [导出模型](#导出模型)
+        - [用法](#在ascend310执行推理)
 - [ModelZoo主页](#modelzoo主页)
 
 # 概述
@@ -190,6 +193,34 @@ sh scripts/run_classifier_finetune_{platform}.sh
 sh scripts/run_classifier_eval_{platform}.sh
 # platform: gpu or ascend
 ```
+
+## 310推理
+
+### 导出模型
+
+```shell
+sh scripts/export.sh
+# export finetune ckpt to mindir
+```
+
+参数`ckpt_file`，`file_format`已在`export.sh`中设置。
+
+### 在Ascend310执行推理
+
+以下展示了使用minir模型执行推理的示例。
+
+```shell
+# Ascend310推理
+bash scripts/run_infer_310.sh [MINDIR_PATH] [DATA_FILE_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+- `DATA_FILE_PATH` 为预处理为MindRecord格式的测试数据。
+- `NEED_PREPROCESS` 表示数据是否需要预处理，取值范围为：'y' 或者 'n'。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，精度计算结果可以在acc.log中看到。
 
 # ModelZoo主页
 
