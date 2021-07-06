@@ -111,11 +111,13 @@ set(TEST_LITE_SRC
 file(GLOB KERNEL_REG_SRC ${LITE_DIR}/src/registry/*.cc)
 set(TEST_LITE_SRC ${TEST_LITE_SRC} ${KERNEL_REG_SRC})
 
-set(TEST_LITE_SRC
-    ${TEST_LITE_SRC}
-    ${LITE_DIR}/tools/benchmark/benchmark.cc
-    ${LITE_DIR}/test/st/benchmark_test.cc
-    )
+if(ENABLE_TOOLS)
+    set(TEST_LITE_SRC
+        ${TEST_LITE_SRC}
+        ${LITE_DIR}/tools/benchmark/benchmark.cc
+        ${LITE_DIR}/test/st/benchmark_test.cc
+        )
+endif()
 
 ### gpu runtime
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
