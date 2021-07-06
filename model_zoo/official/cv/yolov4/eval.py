@@ -127,8 +127,7 @@ def run_eval():
     ann_val_file = config.ann_val_file
 
     ds, data_size = create_yolo_dataset(data_root, ann_val_file, is_training=False, batch_size=config.per_batch_size,
-                                        max_epoch=1, device_num=1, rank=rank_id, shuffle=False,
-                                        config=config)
+                                        max_epoch=1, device_num=1, rank=rank_id, shuffle=False, default_config=config)
 
     config.logger.info('testing shape : %s', config.test_img_shape)
     config.logger.info('totol %d images to eval', data_size)

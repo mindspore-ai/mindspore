@@ -288,6 +288,8 @@ Parameters for both training and evaluation can be set in config.py
   'transfer_training': False          # whether do transfer training
   'filter_weight': ["final.weight"]   # weight name to filter while doing transfer training
   'run_eval': False                   # Run evaluation when training
+  'show_eval': False                  # Draw eval result
+  'eval_activate': softmax            # Select output processing method, should be softmax or argmax
   'save_best_ckpt': True              # Save best checkpoint when run_eval is True
   'eval_start_epoch': 0               # Evaluation start epoch when run_eval is True
   'eval_interval': 1                  # valuation interval when run_eval is True
@@ -319,6 +321,8 @@ Parameters for both training and evaluation can be set in config.py
   'transfer_training': False          # whether do transfer training
   'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']  # weight name to filter while doing transfer training
   'run_eval': False                   # Run evaluation when training
+  'show_eval': False                  # Draw eval result
+  'eval_activate': softmax            # Select output processing method, should be softmax or argmax
   'save_best_ckpt': True              # Save best checkpoint when run_eval is True
   'eval_start_epoch': 0               # Evaluation start epoch when run_eval is True
   'eval_interval': 1                  # valuation interval when run_eval is True

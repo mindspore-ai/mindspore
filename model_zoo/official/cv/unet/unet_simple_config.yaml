@@ -32,7 +32,9 @@ FixedLossScaleManager: 1024.0
 resume: False
 resume_ckpt: "./"
 transfer_training: False
-filter_weight: ["final1.weight"]
+filter_weight: ['final1.weight']
+show_eval: False
+color: [[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 0, 255], [255, 255, 255]]
 
 #Eval options
 keep_checkpoint_max: 10

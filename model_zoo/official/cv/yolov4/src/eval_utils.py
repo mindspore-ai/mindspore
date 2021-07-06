@@ -9,6 +9,8 @@ from pycocotools.cocoeval import COCOeval
 from mindspore.train.callback import Callback
 from mindspore import log as logger
 from mindspore import save_checkpoint
+from model_utils.config import config
+
 
 class Redirct:
     def __init__(self):
@@ -20,20 +22,13 @@ class Redirct:
     def flush(self):
         self.content = ""
 
+
 class DetectionEngine:
     """Detection engine."""
+
     def __init__(self, args_detection):
         self.eval_ignore_threshold = args_detection.eval_ignore_threshold
-        self.labels = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat',
-                       'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat',
-                       'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack',
-                       'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
-                       'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket',
-                       'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
-                       'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair',
-                       'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
-                       'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book',
-                       'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
+        self.labels = config.labels
         self.num_classes = len(self.labels)
         self.results = {}
         self.file_path = ''
@@ -44,6 +39,8 @@ class DetectionEngine:
         self.det_boxes = []
         self.nms_thresh = args_detection.nms_thresh
         self.coco_catids = self._coco.getCatIds()
+        self.multi_label = config.multi_label
+        self.multi_label_thresh = config.multi_label_thresh
 
     def do_nms_for_results(self):
         """Get result boxes."""
@@ -130,7 +127,6 @@ class DetectionEngine:
             order = order[inds + 1]
         return keep
 
-
     def write_result(self):
         """Save result to file."""
         import json
@@ -193,31 +189,54 @@ class DetectionEngine:
                 y = y.reshape(-1)
                 w = w.reshape(-1)
                 h = h.reshape(-1)
-                cls_emb = cls_emb.reshape(-1, self.num_classes)
-                conf = conf.reshape(-1)
-                cls_argmax = cls_argmax.reshape(-1)
-
                 x_top_left = x - w / 2.
                 y_top_left = y - h / 2.
-                # create all False
-                flag = np.random.random(cls_emb.shape) > sys.maxsize
-                for i in range(flag.shape[0]):
-                    c = cls_argmax[i]
-                    flag[i, c] = True
-                confidence = cls_emb[flag] * conf
-                for x_lefti, y_lefti, wi, hi, confi, clsi in zip(x_top_left, y_top_left, w, h, confidence, cls_argmax):
-                    if confi < self.eval_ignore_threshold:
-                        continue
-                    if img_id not in self.results:
-                        self.results[img_id] = defaultdict(list)
-                    x_lefti = max(0, x_lefti)
-                    y_lefti = max(0, y_lefti)
-                    wi = min(wi, ori_w)
-                    hi = min(hi, ori_h)
-                    # transform catId to match coco
-                    coco_clsi = self.coco_catids[clsi]
-                    self.results[img_id][coco_clsi].append([x_lefti, y_lefti, wi, hi, confi])
+                cls_emb = cls_emb.reshape(-1, self.num_classes)
+                if not self.multi_label:
+                    conf = conf.reshape(-1)
+                    cls_argmax = cls_argmax.reshape(-1)
 
+                    # create all False
+                    flag = np.random.random(cls_emb.shape) > sys.maxsize
+                    for i in range(flag.shape[0]):
+                        c = cls_argmax[i]
+                        flag[i, c] = True
+                    confidence = cls_emb[flag] * conf
+                    for x_lefti, y_lefti, wi, hi, confi, clsi in zip(x_top_left, y_top_left, w, h, confidence,
+                                                                     cls_argmax):
+                        if confi < self.eval_ignore_threshold:
+                            continue
+                        if img_id not in self.results:
+                            self.results[img_id] = defaultdict(list)
+                        x_lefti = max(0, x_lefti)
+                        y_lefti = max(0, y_lefti)
+                        wi = min(wi, ori_w)
+                        hi = min(hi, ori_h)
+                        # transform catId to match coco
+                        coco_clsi = self.coco_catids[clsi]
+                        self.results[img_id][coco_clsi].append([x_lefti, y_lefti, wi, hi, confi])
+                else:
+                    conf = conf.reshape(-1, 1)
+                    # create all False
+                    confidence = cls_emb * conf
+                    flag = cls_emb > self.multi_label_thresh
+                    flag = flag.nonzero()
+                    for index in range(len(flag[0])):
+                        i = flag[0][index]
+                        j = flag[1][index]
+                        confi = confidence[i][j]
+                        if confi < self.eval_ignore_threshold:
+                            continue
+                        if img_id not in self.results:
+                            self.results[img_id] = defaultdict(list)
+                        x_lefti = max(0, x_top_left[i])
+                        y_lefti = max(0, y_top_left[i])
+                        wi = min(w[i], ori_w)
+                        hi = min(h[i], ori_h)
+                        clsi = j
+                        # transform catId to match coco
+                        coco_clsi = self.coco_catids[clsi]
+                        self.results[img_id][coco_clsi].append([x_lefti, y_lefti, wi, hi, confi])
 
 
 class EvalCallBack(Callback):
@@ -288,6 +307,7 @@ class EvalCallBack(Callback):
     def end(self, run_context):
         self.args.logger.info("End training, the best {0} is: {1}, "
                               "the best {0} epoch is {2}".format(self.metrics_name, self.best_res, self.best_epoch))
+
 
 def apply_eval(eval_param_dict):
     network = eval_param_dict["net"]

@@ -40,7 +40,7 @@ def test_net(data_dir,
         raise ValueError("Unsupported model: {}".format(config.model_name))
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(net, param_dict)
-    net = UnetEval(net)
+    net = UnetEval(net, eval_activate=config.eval_activate.lower())
     if hasattr(config, "dataset") and config.dataset != "ISBI":
         split = config.split if hasattr(config, "split") else 0.8
         valid_dataset = create_multi_class_dataset(data_dir, config.image_size, 1, 1,
@@ -50,7 +50,7 @@ def test_net(data_dir,
     else:
         _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
                                           do_crop=config.crop, img_size=config.image_size)
-    model = Model(net, loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff()})
+    model = Model(net, loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff(show_eval=config.show_eval)})
 
     print("============== Starting Evaluating ============")
     eval_score = model.eval(valid_dataset, dataset_sink_mode=False)["dice_coeff"]

@@ -321,7 +321,7 @@ def run_test():
     data_txt = os.path.join(config.data_dir, 'testdev2017.txt')
     ds, data_size = create_yolo_datasetv2(data_root, data_txt=data_txt, batch_size=config.per_batch_size,
                                           max_epoch=1, device_num=config.group_size, rank=config.rank, shuffle=False,
-                                          config=config)
+                                          default_config=config)
 
     config.logger.info('testing shape : %s', config.test_img_shape)
     config.logger.info('totol %d images to eval', data_size)

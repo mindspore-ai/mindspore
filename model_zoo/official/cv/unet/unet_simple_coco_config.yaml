@@ -13,14 +13,16 @@ enable_profiling: False
 
 # ==============================================================================
 # Training options
-model_name: "unet_simple"
+model_name: 'unet_simple'
+include_background: False
+show_eval: False
 run_eval: False
 run_distribute: False
 dataset: "COCO"
 split : 1.0
-image_size : [512, 512]
-lr: 0.0001
-epochs: 80
+image_size : [256, 192]
+lr: 0.0002
+epochs: 400
 repeat: 1
 distribute_epochs: 120
 batch_size: 16
@@ -34,6 +36,7 @@ resume: False
 resume_ckpt: "./"
 transfer_training: False
 filter_weight: ['final1.weight']
+color: [[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 0, 255], [255, 255, 255]]
 coco_classes: ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
                      'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
                      'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
@@ -90,3 +93,6 @@ weight_decay: "Weight decay."
 keep_checkpoint_max: "keep the last keep_checkpoint_max checkpoint"
 checkpoint_path: "The location of the checkpoint file."
 checkpoint_file_path: "The location of the checkpoint file."
+include_background: "Computing background or not."
+show_eval: "Show eval result."
+color: "set color to draw eval result."

@@ -293,6 +293,8 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
   'is_save_on_master': 1,             # 在master或all rank上保存检查点
   'rank': 0,                          # 分布式local rank（默认为0）
   'resume': False,                    # 是否使用预训练模型训练
+  'show_eval': False                  # 是否将推理结果进行绘制
+  'eval_activate': softmax            # 选择输出的后处理方法，必须为sofmax或者argmax
   'resume_ckpt': './',                # 预训练模型路径
   ```
 
@@ -319,6 +321,8 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
   'resume': False,                    # 是否使用预训练模型训练
   'resume_ckpt': './',                # 预训练模型路径
   'transfer_training': False          # 是否使用迁移学习
+  'show_eval': False                  # 是否将推理结果进行绘制
+  'eval_activate': softmax            # 选择输出的后处理方法，必须为sofmax或者argmax
   'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']  # 迁移学习过滤参数名
   ```
 
