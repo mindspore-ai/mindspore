@@ -539,13 +539,12 @@ void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_prot
       auto sub_graph_str = grpc_client_->ChunkString(str, graph_size);
       for (unsigned int i = 0; i < sub_graph_str.size(); i++) {
         chunk.set_buffer(sub_graph_str[i]);
-        chunked_graph_proto_list.push_back(chunk);
         if (i < sub_graph_str.size() - 1) {
           chunk.set_finished(false);
         } else {
           chunk.set_finished(true);
-          chunked_graph_proto_list.push_back(chunk);
         }
+        chunked_graph_proto_list.push_back(chunk);
       }
     } else {
       chunk.set_buffer(str);
