@@ -22,7 +22,7 @@ get_version() {
     VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
 }
 get_version
-MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/model_extend.ms"
+MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/add_extend.ms"
 MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
 MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
@@ -31,8 +31,8 @@ mkdir -p build
 mkdir -p lib
 mkdir -p include
 mkdir -p model
-if [ ! -e ${BASEPATH}/model/model_extend.ms ]; then
-    wget -c -O ${BASEPATH}/model/model_extend.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
+if [ ! -e ${BASEPATH}/model/add_extend.ms ]; then
+    wget -c -O ${BASEPATH}/model/add_extend.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
 fi
 if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
   wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
