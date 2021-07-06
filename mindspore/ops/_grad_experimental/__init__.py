@@ -16,5 +16,6 @@
 """grad experimental impl."""
 from .._grad.grad_base import get_bprop_fn
 from . import grad_inner_ops
+from . import grad_nn_ops
 
 __all__ = ['get_bprop_fn']
