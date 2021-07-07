@@ -356,10 +356,8 @@ void LiteSession::AdjustModelOutputTensorInitRefCount(const lite::Model *model) 
   }
 }
 
-void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
-  InitGraphInputTensors(model);
+void LiteSession::InitGraphInOutTensorsMap(const lite::Model *model) {
   InitGraphInputMSTensors();
-  InitGraphOutputTensors(model);
   InitGraphInputMap(model);
   InitGraphOutputNodeMap(model);
   InitGraphOutputTensorMap(model);
@@ -498,6 +496,8 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+  InitGraphInputTensors(model);
+  InitGraphOutputTensors(model);
   // scheduler kernels
   Scheduler scheduler(context_, model, &tensors_, inputs_, outputs_, is_train_session_, delegate_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
@@ -507,7 +507,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  InitGraphInOutTensors(model);
+  InitGraphInOutTensorsMap(model);
 
   bool use_mindrt_run = IfUseMindrtExecutor();
 

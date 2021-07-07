@@ -84,7 +84,7 @@ class LiteSession : public session::LiteSession {
 
   int ConvertTensors(const lite::Model *model);
 
-  void InitGraphInOutTensors(const lite::Model *model);
+  void InitGraphInOutTensorsMap(const lite::Model *model);
 
   void IsolateOutputTensor();
 
