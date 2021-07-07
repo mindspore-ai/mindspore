@@ -114,7 +114,7 @@ class RcnnCls(nn.Cell):
         self.train_batch_size = batch_size
         self.test_batch_size = cfg.test_batch_size
 
-        self.fpn_cls = FpnCls(self.in_channels, self.rcnn_fc_out_channels, self.num_classes, cfg.roi_layer["out_size"])
+        self.fpn_cls = FpnCls(self.in_channels, self.rcnn_fc_out_channels, self.num_classes, cfg.roi_layer.out_size)
         self.relu = P.ReLU()
         self.logicaland = P.LogicalAnd()
         self.loss_cls = P.SoftmaxCrossEntropyWithLogits()

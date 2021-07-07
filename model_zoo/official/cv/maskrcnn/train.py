@@ -17,7 +17,6 @@
 
 import time
 import os
-import re
 
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
@@ -39,12 +38,6 @@ from mindspore.common import set_seed
 from mindspore.communication.management import get_rank, get_group_size
 
 set_seed(1)
-
-lss = [int(re.findall(r'[0-9]+', i)[0]) for i in config.feature_shapes]
-config.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
-config.roi_layer = dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
-config.warmup_ratio = 1/3.0
-config.mask_shape = (28, 28)
 
 def modelarts_pre_process():
     def unzip(zip_file, save_dir):

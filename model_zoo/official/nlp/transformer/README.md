@@ -189,7 +189,6 @@ python eval.py > eval.log 2>&1 &
     ├─__init__.py
     ├─beam_search.py
     ├─dataset.py
-    ├─eval_config.py
     ├─lr_schedule.py
     ├─process_output.py
     ├─tokenization.py
@@ -244,15 +243,12 @@ options:
 #### Running Options
 
 ```text
-config.py:
+default_config.yaml:
     transformer_network             version of Transformer model: base | large, default is large
     init_loss_scale_value           initial value of loss scale: N, default is 2^10
     scale_factor                    factor used to update loss scale: N, default is 2
     scale_window                    steps for once updatation of loss scale: N, default is 2000
     optimizer                       optimizer used in the network: Adam, default is "Adam"
-
-eval_config.py:
-    transformer_network             version of Transformer model: base | large, default is large
     data_file                       data file: PATH
     model_file                      checkpoint file to be loaded: PATH
     output_file                     output file of evaluation: PATH
@@ -313,7 +309,7 @@ Parameters for learning rate:
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `default_config.yaml`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
 
 - Run `run_standalone_train.sh` for non-distributed training of Transformer model.
 
@@ -331,7 +327,7 @@ Parameters for learning rate:
 
 ## [Evaluation Process](#contents)
 
-- Set options in `eval_config.py`. Make sure the 'data_file', 'model_file' and 'output_file' are set to your own path.
+- Set options in `default_config.yaml`. Make sure the 'data_file', 'model_file' and 'output_file' are set to your own path.
 
 - Run `eval.py` for evaluation of Transformer model.
 
@@ -422,7 +418,7 @@ There are three random situations:
 - Initialization of some model weights.
 - Dropout operations.
 
-Some seeds have already been set in train.py to avoid the randomness of dataset shuffle and weight initialization. If you want to disable dropout, please set the corresponding dropout_prob parameter to 0 in src/config.py.
+Some seeds have already been set in train.py to avoid the randomness of dataset shuffle and weight initialization. If you want to disable dropout, please set the corresponding dropout_prob parameter to 0 in default_config.yaml.
 
 ## [ModelZoo Homepage](#contents)
 
