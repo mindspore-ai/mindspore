@@ -61,7 +61,7 @@ class Assign(Primitive):
         >>> net = Net()
         >>> output = net(x)
         >>> print(output)
-        Parameter (name=y, shape=(1,), dtype=Float32, requires_grad=True)
+        [2.]
     """
     __mindspore_signature__ = (
         sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
