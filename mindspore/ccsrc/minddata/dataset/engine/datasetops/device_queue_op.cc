@@ -568,8 +568,8 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
                                        const int32_t &worker_id) {
   int i = 0;
   for (auto &sub_item : *items) {
-    RETURN_IF_NOT_OK(pool_[worker_id]->Allocate(sub_item.data_len_, &sub_item.data_ptr_));
-    if (sub_item.data_ptr_ == nullptr) {
+    auto rc = pool_[worker_id]->Allocate(sub_item.data_len_, &sub_item.data_ptr_);
+    if (rc.IsError() || sub_item.data_ptr_ == nullptr) {
       return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "Memory malloc failed.");
     }
     if (curr_row[i] == nullptr) {
