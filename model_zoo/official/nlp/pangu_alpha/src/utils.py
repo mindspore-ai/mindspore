@@ -71,11 +71,13 @@ class FP32StateAdamWeightDecay(AdamWeightDecay):
 
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 
+
 @get_square_sum.register("Tensor", "Number")
 def _get_square_sum(grad, value):
     norm = P.ReduceSum(False)(F.square(grad), ()) / value
     norm = F.expand_dims(F.cast(norm, mstype.float32), 0)
     return norm
+
 
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
 
@@ -84,6 +86,7 @@ apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
 def _apply_global_norm(clip_norm, global_norm, grad):
     grad = grad * clip_norm / global_norm
     return grad
+
 
 def _get_model_parallel_group(mp):
     """
@@ -99,10 +102,11 @@ def _get_model_parallel_group(mp):
     local_stage_rank_id = rank % per_stage_device_nums
     index = local_stage_rank_id // mp
     group = range(0, mp)
-    rank_str_list = [str(x + index * mp + stage_id * per_stage_device_nums)  for x in group]
+    rank_str_list = [str(x + index * mp + stage_id * per_stage_device_nums) for x in group]
     rank_list_str = "-".join(rank_str_list)
     rank_list = [x + index * mp + stage_id * per_stage_device_nums for x in group]
     return rank_list, rank_list_str
+
 
 def _get_pipeline_group():
     """
@@ -121,10 +125,12 @@ def _get_pipeline_group():
     rank_list_str = "-".join(rank_str_list)
     return rank_list, rank_list_str
 
+
 class GlobalNorm(nn.Cell):
     """
     Calculate the global norm value of given tensors
     """
+
     def __init__(self, params, config):
         super(GlobalNorm, self).__init__()
         self.norm = nn.Norm()
@@ -165,12 +171,14 @@ class GlobalNorm(nn.Cell):
             global_norms = F.sqrt(P.AllReduce()(square_reduce_sum))
         return global_norms
 
+
 class ClipByGlobalNorm(nn.Cell):
     """
 
     Clip grads by global norm
 
     """
+
     def __init__(self, params, config, clip_norm=1.0):
         super(ClipByGlobalNorm, self).__init__()
         self.global_norm = GlobalNorm(params, config)
@@ -184,6 +192,7 @@ class ClipByGlobalNorm(nn.Cell):
         global_norm = F.select(cond, global_norm_value, self.clip_norm)
         grads = self.hyper_map(F.partial(apply_global_norm, self.clip_norm, global_norm), grads)
         return grads, global_norm_value
+
 
 class LearningRate(LearningRateSchedule):
     """
@@ -259,6 +268,11 @@ def add_inference_params(opt):
                      type=int,
                      default=0,
                      help="Whether use pynative op for postproecess")
+    opt.add_argument("--use_past",
+                     type=str,
+                     default="true",
+                     choices=["true", "false"],
+                     help="Whether enable state reuse")
 
 
 def add_training_params(opt):
