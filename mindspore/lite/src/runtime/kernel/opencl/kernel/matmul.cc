@@ -161,7 +161,7 @@ void MatMulOpenCLKernel::PadWeight(std::vector<int> weight_shape_4d, int ci, int
 
 int MatMulOpenCLKernel::InitWeights() {
   if (!in_tensors_[1]->IsConst()) {
-    return RET_OK;
+    return InitBias();
   }
   // ABMCI @ ABCICO = ABMCO
   auto allocator = ocl_runtime_->GetAllocator();
