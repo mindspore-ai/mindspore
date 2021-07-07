@@ -24,6 +24,9 @@
 #include <unordered_map>
 #include <utility>
 #include "profiler/device/profiling.h"
+#if ENABLE_GPU
+#include "profiler/device/gpu/gpu_profiling.h"
+#endif
 
 namespace mindspore {
 namespace profiler {

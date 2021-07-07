@@ -41,6 +41,7 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const sessio
   }
 
   ProfilingTraceInfo empty_info;
+  ProfilingTraceInfo last_graph_profiling_trace = profiling_trace;
   profiling_trace = empty_info;
   SetTraceIterEnd(cnode_exec_order);
   SetTraceFpStart(cnode_exec_order);
@@ -49,7 +50,13 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const sessio
 
   OutputStepTraceOpNameStatus();
   is_first_step_map_[graph_ptr->graph_id()] = false;
-  return profiling_trace;
+
+  // If current graph has only one node, the bp_end will be empty, so select the last graph node.
+  if (profiling_trace.trace_bp_end != "") {
+    return profiling_trace;
+  } else {
+    return last_graph_profiling_trace;
+  }
 }
 
 void ProfilingUtils::OutputStepTraceOpNameStatus() {

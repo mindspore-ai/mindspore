@@ -29,6 +29,8 @@ namespace profiler {
 namespace cpu {
 class CpuDataSaver : public DataSaver {
  public:
+  static std::shared_ptr<CpuDataSaver> &GetInstance();
+
   CpuDataSaver() = default;
 
   ~CpuDataSaver() = default;
@@ -37,7 +39,12 @@ class CpuDataSaver : public DataSaver {
 
   CpuDataSaver &operator=(const CpuDataSaver &) = delete;
 
+  OpTimestampInfo &GetOpTimeStampInfo();
+
   void WriteFile(const std::string out_path);
+
+ private:
+  static std::shared_ptr<CpuDataSaver> cpu_data_saver_inst_;
 };
 }  // namespace cpu
 }  // namespace profiler

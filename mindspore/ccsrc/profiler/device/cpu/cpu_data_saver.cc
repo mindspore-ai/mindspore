@@ -24,6 +24,8 @@
 namespace mindspore {
 namespace profiler {
 namespace cpu {
+std::shared_ptr<CpuDataSaver> CpuDataSaver::cpu_data_saver_inst_ = std::make_shared<CpuDataSaver>();
+
 void CpuDataSaver::WriteFile(const std::string out_path_dir) {
   if (op_detail_infos_.empty() || op_type_infos_.empty()) {
     MS_LOG(INFO) << "No cpu operation detail infos to write.";
@@ -38,6 +40,10 @@ void CpuDataSaver::WriteFile(const std::string out_path_dir) {
   WriteOpType(out_path_dir);
   WriteOpTimestamp(out_path_dir);
 }
+
+OpTimestampInfo &CpuDataSaver::GetOpTimeStampInfo() { return op_timestamps_map_; }
+
+std::shared_ptr<CpuDataSaver> &CpuDataSaver::GetInstance() { return cpu_data_saver_inst_; }
 }  // namespace cpu
 }  // namespace profiler
 }  // namespace mindspore
