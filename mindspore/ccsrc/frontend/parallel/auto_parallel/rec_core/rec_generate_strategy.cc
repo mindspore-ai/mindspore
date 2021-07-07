@@ -49,7 +49,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
     // Set user-defined strategy
     auto attrs = op->attrs();
     if (StrategyFound(attrs)) {
-      StrategyPtr user_defined_stra = parallel::ExtractStrategy(attrs);
+      StrategyPtr user_defined_stra = parallel::ExtractStrategy(attrs[STRATEGY]);
       op->SetSelectedStrategyAndCost(user_defined_stra, op->selected_cost());
     }
     // Set back to raw strategy for special node in predict/eval

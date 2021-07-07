@@ -228,7 +228,7 @@ TEST_F(TestStepParallel, ExtractStrategy) {
   ValueTuplePtr strategy_tuple = std::make_shared<ValueTuple>(elements);
   attrs["strategy"] = strategy_tuple;
   Strategys strategy_expect = {v1, v2};
-  StrategyPtr strategy = ExtractStrategy(attrs);
+  StrategyPtr strategy = ExtractStrategy(attrs["strategy"]);
   Strategys strategy_test = strategy->GetInputDim();
 
   ASSERT_EQ(strategy_expect, strategy_test);

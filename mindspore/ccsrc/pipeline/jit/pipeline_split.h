@@ -17,11 +17,13 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_SPLIT_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PIPELINE_SPLIT_H_
 
+#include <string>
 #include "pipeline/jit/resource.h"
 
 namespace mindspore {
 namespace pipeline {
 bool PipelineSplit(const ResourcePtr &res);
+std::string GetWorldGroup();
 }  // namespace pipeline
 }  // namespace mindspore
 

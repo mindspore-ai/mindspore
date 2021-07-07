@@ -242,12 +242,12 @@ void InitCostGraph() {
 }
 
 void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const PrimitivePtr &prim,
-                           const std::unordered_map<std::string, ValuePtr> &attrs, bool is_last_nodes,
-                           StrategyMap *stra_map, const std::string &strategy_key_name) {
+                           std::unordered_map<std::string, ValuePtr> attrs, bool is_last_nodes, StrategyMap *stra_map,
+                           const std::string &strategy_key_name) {
   // In this case, the configured strategy should be extracted to help setting cost
   StrategyPtr strategyPtr;
   if (StrategyFound(attrs)) {
-    strategyPtr = parallel::ExtractStrategy(attrs);
+    strategyPtr = parallel::ExtractStrategy(attrs[STRATEGY]);
   } else {
     strategyPtr = (*stra_map)[strategy_key_name];
   }
