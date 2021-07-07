@@ -163,7 +163,7 @@ device_num: 1
 rank_id: 0
 image_dir: ''
 anno_path: ''
-backbone: 'resnet_v1_50'
+backbone: 'resnet_v1_101'
 
 # eval.py FasterRcnn evaluation
 ann_file: '/cache/data/annotations/instances_val2017.json'

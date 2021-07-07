@@ -39,6 +39,7 @@ compute_type: mstype.float16
 
 #eval_config/cfg edict
 data_file: '/cache/data'
+data_file_name: 'newstest2014-l128-mindrecord'
 model_file: './transformer/transformer_trained.ckpt'
 output_file: './output_eval.txt'
 
