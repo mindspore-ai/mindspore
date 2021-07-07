@@ -487,7 +487,7 @@ class Validator:
                 addition_error_info = ''
             type_str = (type(type_).__name__ if isinstance(type_, (tuple, list)) else "") + str(type_)
             raise TypeError(f'For \'{prim_name}\', the type of `{arg_name}` should be subclass'
-                            f' of {", ".join((str(x) for x in template_types))}, but got {type_str}.'
+                            f' of {", ".join((str(x) for x in template_types))}, but got {type_str}'
                             f' {addition_error_info}. This message is only for reference. The supported data types'
                             f' depend on the hardware that executes the operator'
                             f' and it is a subset of the data types above.')
