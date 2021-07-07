@@ -106,7 +106,7 @@ def _update_param(param, new_param, strict_load):
                    .format(param.name, param.data.dtype, new_param.data.dtype))
             raise RuntimeError(msg)
 
-        param.set_data(new_param.data)
+        param.set_data(new_param.data, param.sliced)
         return
 
     if isinstance(param.data, Tensor) and not isinstance(new_param.data, Tensor):
