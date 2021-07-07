@@ -103,7 +103,12 @@ void Node::NotifyMessageArrival(std::shared_ptr<MessageMeta> meta) {
   std::lock_guard<std::mutex> lock(message_tracker_mutex_);
   uint64_t request_id = meta->request_id();
 
-  message_tracker_[request_id].second++;
+  if (message_tracker_.count(request_id)) {
+    message_tracker_[request_id].second++;
+  } else {
+    MS_LOG(WARNING) << "The request id:" << request_id << " is removed.";
+  }
+
   message_tracker_cond_.notify_all();
 }
 }  // namespace core
