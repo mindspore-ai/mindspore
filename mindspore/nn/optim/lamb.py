@@ -44,7 +44,7 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay (Number): Weight decay. Should be equal to or greater than 0.
+        weight_decay (numbers.Number): Weight decay. Should be equal to or greater than 0.
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
@@ -127,7 +127,7 @@ def _update_run_op_ascend(beta1, beta2, eps, global_step, lr, weight_decay, para
         beta2 (Tensor): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
         eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
         lr (Tensor): Learning rate.
-        weight_decay (Number): Weight decay. Should be equal to or greater than 0.
+        weight_decay (numbers.Number): Weight decay. Should be equal to or greater than 0.
         global_step (Tensor): Global step.
         param (Tensor): Parameters.
         m (Tensor): m value of parameters.
