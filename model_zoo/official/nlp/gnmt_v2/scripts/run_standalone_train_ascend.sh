@@ -42,7 +42,7 @@ cd ./train || exit
 echo "start for training"
 env > env.log
 
-config_path="${current_exec_path}/train/default_test_config.yaml"
+config_path="${current_exec_path}/train/default_config.yaml"
 echo "config path is : ${config_path}"
 
 python train.py \
