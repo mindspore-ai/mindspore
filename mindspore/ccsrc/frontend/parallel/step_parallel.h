@@ -140,7 +140,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
 
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth);
 
-void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes);
+void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
 // main step of Parallel
 bool StepParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer);
