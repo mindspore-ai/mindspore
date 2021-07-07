@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 public class Common {
     public static final String LOG_TITLE = "<FLClient> ";
     private static final Logger LOGGER = Logger.getLogger(Common.class.toString());
-    private static List<String> flNameTrustList = new ArrayList<>(Arrays.asList("lenet", "adbert"));
+    private static List<String> flNameTrustList = new ArrayList<>(Arrays.asList("lenet", "albert"));
 
     public static String generateUrl(boolean useHttps, boolean useElb, String ip, int port, int serverNum) {
         if (useHttps) {

@@ -15,8 +15,8 @@
  */
 package com.mindspore.flclient;
 
-import com.mindspore.flclient.model.AdInferBert;
-import com.mindspore.flclient.model.AdTrainBert;
+import com.mindspore.flclient.model.AlInferBert;
+import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
 import mindspore.schema.ResponseGetModel;
@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
-import static com.mindspore.flclient.LocalFLParameter.ADBERT;
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 public class SyncFLJob {
@@ -203,9 +203,9 @@ public class SyncFLJob {
 
     private Map<String, float[]> getFeatureMap() {
         Map<String, float[]> featureMap = new HashMap<>();
-        if (flParameter.getFlName().equals(ADBERT)) {
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            featureMap = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(adTrainBert.getTrainSession()));
+        if (flParameter.getFlName().equals(ALBERT)) {
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            featureMap = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             featureMap = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
@@ -215,12 +215,12 @@ public class SyncFLJob {
 
     public int[] modelInference(String flName, String dataPath, String vocabFile, String idsFile, String modelPath) {
         int[] labels = new int[0];
-        if (flName.equals(ADBERT)) {
-            AdInferBert adInferBert = AdInferBert.getInstance();
+        if (flName.equals(ALBERT)) {
+            AlInferBert alInferBert = AlInferBert.getInstance();
             LOGGER.info(Common.addTag("===========model inference============="));
-            labels = adInferBert.inferModel(modelPath, dataPath, vocabFile, idsFile);
+            labels = alInferBert.inferModel(modelPath, dataPath, vocabFile, idsFile);
             LOGGER.info(Common.addTag("[model inference] the predicted labels: " + Arrays.toString(labels)));
-            SessionUtil.free(adInferBert.getTrainSession());
+            SessionUtil.free(alInferBert.getTrainSession());
             LOGGER.info(Common.addTag("[model inference] inference finish"));
         } else if (flName.equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
@@ -240,18 +240,18 @@ public class SyncFLJob {
         int tag = 0;
         FLClientStatus status = FLClientStatus.SUCCESS;
         try {
-            if (flParameter.getFlName().equals(ADBERT)) {
+            if (flParameter.getFlName().equals(ALBERT)) {
                 localFLParameter.setServerMod(ServerMod.HYBRID_TRAINING.toString());
                 LOGGER.info(Common.addTag("[getModel] ==========Loading train model, " + flParameter.getTrainModelPath() + " Create Train Session============="));
-                AdTrainBert adTrainBert = AdTrainBert.getInstance();
-                tag = adTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
+                AlTrainBert alTrainBert = AlTrainBert.getInstance();
+                tag = alTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
                 if (tag == -1) {
                     LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is -1"));
                     return FLClientStatus.FAILED;
                 }
                 LOGGER.info(Common.addTag("[getModel] ==========Loading inference model, " + flParameter.getInferModelPath() + " Create inference Session============="));
-                AdInferBert adInferBert = AdInferBert.getInstance();
-                tag = adInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
+                AlInferBert alInferBert = AlInferBert.getInstance();
+                tag = alInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
             } else if (flParameter.getFlName().equals(LENET)) {
                 localFLParameter.setServerMod(ServerMod.FEDERATED_LEARNING.toString());
                 LOGGER.info(Common.addTag("[getModel] ==========Loading train model, " + flParameter.getTrainModelPath() + " Create Train Session============="));
@@ -278,13 +278,13 @@ public class SyncFLJob {
             LOGGER.severe(Common.addTag("[getModel] unsolved error code: catch Exception: " + e.getMessage()));
             status = FLClientStatus.FAILED;
         }
-        if (flParameter.getFlName().equals(ADBERT)) {
+        if (flParameter.getFlName().equals(ALBERT)) {
             LOGGER.info(Common.addTag("===========free train session============="));
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            SessionUtil.free(adTrainBert.getTrainSession());
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            SessionUtil.free(alTrainBert.getTrainSession());
             LOGGER.info(Common.addTag("===========free inference session============="));
-            AdInferBert adInferBert = AdInferBert.getInstance();
-            SessionUtil.free(adInferBert.getTrainSession());
+            AlInferBert alInferBert = AlInferBert.getInstance();
+            SessionUtil.free(alInferBert.getTrainSession());
         } else if (flParameter.getFlName().equals(LENET)) {
             LOGGER.info(Common.addTag("===========free session============="));
             TrainLenet trainLenet = TrainLenet.getInstance();
@@ -376,7 +376,7 @@ public class SyncFLJob {
             flParameter.setTimeWindow(timeWindow);
             flParameter.setUseElb(useElb);
             flParameter.setServerNum(serverNum);
-            if (ADBERT.equals(flName)) {
+            if (ALBERT.equals(flName)) {
                 flParameter.setVocabFile(vocabFile);
                 flParameter.setIdsFile(idsFile);
             }

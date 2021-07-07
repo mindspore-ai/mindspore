@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class CustomTokenizer {
-    private static final Logger logger = Logger.getLogger(AdInferBert.class.toString());
+    private static final Logger logger = Logger.getLogger(CustomTokenizer.class.toString());
     private Map<String, Integer> vocabs = new HashMap<>();
     private Boolean doLowerCase = Boolean.TRUE;
     private int maxInputChars = 100;

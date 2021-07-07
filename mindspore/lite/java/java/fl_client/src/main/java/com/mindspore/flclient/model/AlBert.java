@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class AdBert extends TrainModel {
-    private static final Logger logger = Logger.getLogger(AdBert.class.toString());
+public class AlBert extends TrainModel {
+    private static final Logger logger = Logger.getLogger(AlBert.class.toString());
 
     private static final int NUM_OF_CLASS = 4;
 

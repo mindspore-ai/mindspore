@@ -17,8 +17,8 @@
 package com.mindspore.flclient;
 
 import com.mindspore.flclient.cipher.BaseUtil;
-import com.mindspore.flclient.model.AdInferBert;
-import com.mindspore.flclient.model.AdTrainBert;
+import com.mindspore.flclient.model.AlInferBert;
+import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
 import mindspore.schema.CipherPublicParams;
@@ -37,7 +37,7 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
-import static com.mindspore.flclient.LocalFLParameter.ADBERT;
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 public class FLLiteClient {
@@ -83,9 +83,9 @@ public class FLLiteClient {
         localFLParameter.setServerMod(serverMod);
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <serverMod> from server: " + serverMod));
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-            LOGGER.info(Common.addTag("[startFLJob] set <batchSize> for AdTrainBert: " + batchSize));
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            adTrainBert.setBatchSize(batchSize);
+            LOGGER.info(Common.addTag("[startFLJob] set <batchSize> for AlTrainBert: " + batchSize));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            alTrainBert.setBatchSize(batchSize);
         } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
             LOGGER.info(Common.addTag("[startFLJob] set <batchSize> for TrainLenet: " + batchSize));
             TrainLenet trainLenet = TrainLenet.getInstance();
@@ -227,12 +227,12 @@ public class FLLiteClient {
         LOGGER.info(Common.addTag("[train] ====================================global train epoch " + iteration + "===================================="));
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
-        if (flParameter.getFlName().equals(ADBERT)) {
+        if (flParameter.getFlName().equals(ALBERT)) {
             LOGGER.info(Common.addTag("[train] train in adbert"));
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            int tag = adTrainBert.trainModel(flParameter.getTrainModelPath(), epochs);
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            int tag = alTrainBert.trainModel(flParameter.getTrainModelPath(), epochs);
             if (tag == -1) {
-                LOGGER.severe(Common.addTag("[train] unsolved error code in <adTrainBert.trainModel>"));
+                LOGGER.severe(Common.addTag("[train] unsolved error code in <alTrainBert.trainModel>"));
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
             }
@@ -366,9 +366,9 @@ public class FLLiteClient {
                 return curStatus;
             case DP_ENCRYPT:
                 Map<String, float[]> map = new HashMap<String, float[]>();
-                if (flParameter.getFlName().equals(ADBERT)) {
-                    AdTrainBert adTrainBert = AdTrainBert.getInstance();
-                    map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(adTrainBert.getTrainSession()));
+                if (flParameter.getFlName().equals(ALBERT)) {
+                    AlTrainBert alTrainBert = AlTrainBert.getInstance();
+                    map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
                 } else if (flParameter.getFlName().equals(LENET)) {
                     TrainLenet trainLenet = TrainLenet.getInstance();
                     map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
@@ -424,18 +424,18 @@ public class FLLiteClient {
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
         LOGGER.info(Common.addTag("===================================evaluate model after getting model from server==================================="));
-        if (flParameter.getFlName().equals(ADBERT)) {
-            AdInferBert adInferBert = AdInferBert.getInstance();
-            int dataSize = adInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile(), true);
+        if (flParameter.getFlName().equals(ALBERT)) {
+            AlInferBert alInferBert = AlInferBert.getInstance();
+            int dataSize = alInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile(), true);
             if (dataSize <= 0) {
-                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <adTrainBert.initDataSet>: the return dataSize<=0"));
+                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alTrainBert.initDataSet>: the return dataSize<=0"));
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
                 return status;
             }
-            float acc = adInferBert.evalModel();
+            float acc = alInferBert.evalModel();
             if (acc == Float.NaN) {
-                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <adTrainBert.evalModel>: the return acc is NAN"));
+                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alTrainBert.evalModel>: the return acc is NAN"));
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
                 return status;
@@ -471,9 +471,9 @@ public class FLLiteClient {
         retCode = ResponseCode.SUCCEED;
         LOGGER.info(Common.addTag("==========set input==========="));
         int dataSize = 0;
-        if (flParameter.getFlName().equals(ADBERT)) {
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            dataSize = adTrainBert.initDataSet(dataPath, flParameter.getVocabFile(), flParameter.getIdsFile());
+        if (flParameter.getFlName().equals(ALBERT)) {
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            dataSize = alTrainBert.initDataSet(dataPath, flParameter.getVocabFile(), flParameter.getIdsFile());
             LOGGER.info(Common.addTag("[set input] " + "dataPath: " + dataPath + " dataSize: " + +dataSize + " vocabFile: " + flParameter.getVocabFile() + " idsFile: " + flParameter.getIdsFile()));
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
@@ -490,18 +490,18 @@ public class FLLiteClient {
     public FLClientStatus initSession() {
         int tag = 0;
         retCode = ResponseCode.SUCCEED;
-        if (flParameter.getFlName().equals(ADBERT)) {
+        if (flParameter.getFlName().equals(ALBERT)) {
             LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create Train Session============="));
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            tag = adTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            tag = alTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
             if (tag == -1) {
                 LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is -1"));
                 retCode = ResponseCode.RequestError;
                 return FLClientStatus.FAILED;
             }
             LOGGER.info(Common.addTag("==========Loading inference model, " + flParameter.getInferModelPath() + " Create inference Session============="));
-            AdInferBert adInferBert = AdInferBert.getInstance();
-            tag = adInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
+            AlInferBert alInferBert = AlInferBert.getInstance();
+            tag = alInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
         } else if (flParameter.getFlName().equals(LENET)) {
             LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create Train Session============="));
             TrainLenet trainLenet = TrainLenet.getInstance();
@@ -517,14 +517,14 @@ public class FLLiteClient {
 
     @Override
     protected void finalize() {
-        if (flParameter.getFlName().equals(ADBERT)) {
+        if (flParameter.getFlName().equals(ALBERT)) {
             LOGGER.info(Common.addTag("===========free train session============="));
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            SessionUtil.free(adTrainBert.getTrainSession());
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            SessionUtil.free(alTrainBert.getTrainSession());
             if (!flParameter.getTestDataset().equals("null")) {
                 LOGGER.info(Common.addTag("===========free inference session============="));
-                AdInferBert adInferBert = AdInferBert.getInstance();
-                SessionUtil.free(adInferBert.getTrainSession());
+                AlInferBert alInferBert = AlInferBert.getInstance();
+                SessionUtil.free(alInferBert.getTrainSession());
             }
         } else if (flParameter.getFlName().equals(LENET)) {
             LOGGER.info(Common.addTag("===========free session============="));
