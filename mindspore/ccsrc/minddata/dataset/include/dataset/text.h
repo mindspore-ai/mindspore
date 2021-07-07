@@ -214,8 +214,13 @@ class Lookup final : public TensorTransform {
   /// \param[in] data_type mindspore::DataType of the tensor after lookup; must be numeric, including bool.
   ///   (default=mindspore::DataType::kNumberTypeInt32).
   explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token = {},
-                  mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32)
-      : Lookup(vocab, OptionalStringToChar(unknown_token), data_type) {}
+                  mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32) {
+    std::optional<std::vector<char>> unknown_token_c = std::nullopt;
+    if (unknown_token != std::nullopt) {
+      unknown_token_c = std::vector<char>(unknown_token->begin(), unknown_token->end());
+    }
+    new (this) Lookup(vocab, unknown_token_c, data_type);
+  }
 
   explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
                   mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32);
