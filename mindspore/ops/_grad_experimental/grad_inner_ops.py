@@ -18,6 +18,7 @@
 from .._grad.grad_base import bprop_getters
 from ..operations import _inner_ops as inner
 from .. import functional as F
+from ..composite.multitype_ops.zeros_like_impl import zeros_like
 
 @bprop_getters.register(inner.TensorCopySlices)
 def get_bprop_tensor_copy_slices(self):
@@ -25,8 +26,8 @@ def get_bprop_tensor_copy_slices(self):
     tensor_copy_slices = inner.TensorCopySlices()
 
     def bprop(x, update, begin, end, stride, out, dout):
-        x_grad = tensor_copy_slices(dout, F.zeros_like(update), begin, end, stride)
+        x_grad = tensor_copy_slices(dout, zeros_like(update), begin, end, stride)
         update_grad = F.strided_slice(dout, begin, end, stride)
-        return x_grad, update_grad, F.zeros_like(begin), F.zeros_like(end), F.zeros_like(stride)
+        return x_grad, update_grad, zeros_like(begin), zeros_like(end), zeros_like(stride)
 
     return bprop
