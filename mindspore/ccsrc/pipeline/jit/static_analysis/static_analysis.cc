@@ -256,17 +256,12 @@ void AnalysisEngine::CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf) {
   if (forward_count_ != 0) {  // Ignore Forward Config.
     return;
   }
-  auto &infer_stack = trace::GetCurrenGraphEvalStack();
-  if (infer_stack.empty()) {
+  auto &graph_stack = trace::GetCurrenGraphEvalStack();
+  if (graph_stack.empty()) {
     return;
   }
-  auto top_evaluator = infer_stack.top().first;
-  // Top or root func_graph must be FuncGraph other than MetaFuncGraph;
-  if (!top_evaluator->isa<FuncGraphEvaluator>()) {
-    MS_LOG(EXCEPTION) << "Top evaluator is " << top_evaluator->ToString();
-  }
-  auto top_fg_evaluator = dyn_cast<FuncGraphEvaluator>(top_evaluator);
-  auto top_context_fg = top_fg_evaluator->func_graph();
+  auto top_context = graph_stack.top().first;
+  auto top_context_fg = top_context->func_graph();
   if (current_cnode_fg != top_context_fg) {  // Ignore FV call.
     return;
   }
