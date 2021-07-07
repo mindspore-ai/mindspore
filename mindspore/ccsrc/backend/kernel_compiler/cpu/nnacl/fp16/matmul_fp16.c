@@ -397,16 +397,19 @@ void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const floa
 // 8 X 16
 void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth,
                    int col) {
-  int align_col = UP_ROUND(col, C16NUM);
-  int ci = 0;
-  for (; ci < align_col - C16NUM + 1; ci += C16NUM) {
+  int ci = col;
+  const float16_t *bv_base = b;
+
+  while (ci > 0) {
     float16x8_t acc_0 = vdupq_n_f16((float16_t)0.0);
     float16x8_t acc_1 = vdupq_n_f16((float16_t)0.0);
     if (bias != NULL) {
-      acc_0 = vld1q_f16(bias + ci);
-      acc_1 = vld1q_f16(bias + ci + C8NUM);
+      acc_0 = vld1q_f16(bias);
+      bias += C8NUM;
+      acc_1 = vld1q_f16(bias);
+      bias += C8NUM;
     }
-    const float16_t *bv_base = b + ci * depth;
+
     int di = 0;
     for (; di < depth - C8NUM + 1; di += C8NUM) {
       float16x8_t av = vld1q_f16(a + di);
@@ -414,8 +417,9 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
       float16x8_t bv_1[C8NUM];
       for (int i = 0; i < C8NUM; ++i) {
         bv_0[i] = vld1q_f16(bv_base);
-        bv_1[i] = vld1q_f16(bv_base + C8NUM);
-        bv_base += C16NUM;
+        bv_base += C8NUM;
+        bv_1[i] = vld1q_f16(bv_base);
+        bv_base += C8NUM;
       }
       for (int i = 0; i < C8NUM; ++i) {
         acc_0 = vfmaq_n_f16(acc_0, bv_0[i], av[i]);
@@ -426,54 +430,41 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
       for (; di < depth; ++di) {
         float16_t ai = a[di];
         float16x8_t bv0 = vld1q_f16(bv_base);
-        float16x8_t bv1 = vld1q_f16(bv_base + C8NUM);
+        bv_base += C8NUM;
+        float16x8_t bv1 = vld1q_f16(bv_base);
+        bv_base += C8NUM;
         acc_0 = vfmaq_n_f16(acc_0, bv0, ai);
         acc_1 = vfmaq_n_f16(acc_1, bv1, ai);
-        bv_base += C16NUM;
       }
-    }  // only save actual col num data
-    if (ci + C8NUM > col) {
-      int c_remain = col - ci;
-      for (int i = 0; i < c_remain; ++i) {
-        if (act_type == ActType_Relu) {
-          c[i] = MSMAX(acc_0[i], (float16_t)0.0);
-        } else if (act_type == ActType_Relu6) {
-          c[i] = MSMIN(MSMAX(acc_0[i], (float16_t)0.0), (float16_t)6.0);
-        } else {
-          c[i] = acc_0[i];
-        }
-      }
-      return;
     }
     if (act_type == ActType_Relu) {
       acc_0 = vmaxq_f16(acc_0, vdupq_n_f16((float16_t)0.0));
-    }
-    if (act_type == ActType_Relu6) {
-      acc_0 = vminq_f16(vmaxq_f16(acc_0, vdupq_n_f16((float16_t)0.0)), vdupq_n_f16((float16_t)6.0));
-    }
-    vst1q_f16(c, acc_0);
-
-    if (ci + C16NUM > col) {
-      int c_remain = col - ci - C8NUM;
-      for (int i = 0; i < c_remain; ++i) {
-        if (act_type == ActType_Relu) {
-          c[C8NUM + i] = MSMAX(acc_1[i], (float16_t)0.0);
-        } else if (act_type == ActType_Relu6) {
-          c[C8NUM + i] = MSMIN(MSMAX(acc_1[i], (float16_t)0.0), (float16_t)6.0);
-        } else {
-          c[C8NUM + i] = acc_1[i];
-        }
-      }
-      return;
-    }
-    if (act_type == ActType_Relu) {
       acc_1 = vmaxq_f16(acc_1, vdupq_n_f16((float16_t)0.0));
     }
     if (act_type == ActType_Relu6) {
+      acc_0 = vminq_f16(vmaxq_f16(acc_0, vdupq_n_f16((float16_t)0.0)), vdupq_n_f16((float16_t)6.0));
       acc_1 = vminq_f16(vmaxq_f16(acc_1, vdupq_n_f16((float16_t)0.0)), vdupq_n_f16((float16_t)6.0));
     }
-    vst1q_f16(c + C8NUM, acc_1);
-    c += C16NUM;
+
+    // only save actual col num data
+    if (ci < C8NUM) {
+      for (int i = 0; i < ci; ++i) {
+        c[i] = acc_0[i];
+      }
+      return;
+    }
+    vst1q_f16(c, acc_0);
+    c += C8NUM;
+    ci -= C8NUM;
+    if (ci < C8NUM) {
+      for (int i = 0; i < ci; ++i) {
+        c[i] = acc_1[i];
+      }
+      return;
+    }
+    vst1q_f16(c, acc_1);
+    c += C8NUM;
+    ci -= C8NUM;
   }
 }
 #endif

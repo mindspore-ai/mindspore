@@ -55,7 +55,7 @@ void MatmulFp32BaseCPUKernel::ResizeParameter() {
     // vector matmul col is aligned to C8NUM in avx
     col_tile_ = C8NUM;
 #elif defined(ENABLE_ARM64)
-    col_tile_ = 1;
+    col_tile_ = C8NUM;
 #endif
     row_tile_ = 1;
   }
@@ -64,7 +64,8 @@ void MatmulFp32BaseCPUKernel::ResizeParameter() {
   // avx is aligned to col_tile_
   params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
 #elif defined(ENABLE_ARM64)
-  params_->col_align_ = vec_matmul_ ? params_->col_ : UP_ROUND(params_->col_, col_tile_);
+  // no matter vec_matmul_ or not, use col_tile_ to get col_align_
+  params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
 #else
   params_->col_align_ = vec_matmul_ ? params_->col_ : UP_ROUND(params_->col_, col_tile_);
 #endif
@@ -178,7 +179,7 @@ int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
 #ifdef ENABLE_AVX
         RowMajor2Col32Major(src_data, dst, params_->deep_, params_->col_);
 #elif defined(ENABLE_ARM64)
-        memcpy(dst, src_data, params_->col_ * params_->deep_ * static_cast<int>(sizeof(float)));
+        RowMajor2Col8Major(src_data, dst, params_->col_, params_->deep_);
 #else
         memcpy(dst, src_data, params_->col_ * params_->deep_ * static_cast<int>(sizeof(float)));
 #endif
@@ -186,7 +187,7 @@ int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
 #ifdef ENABLE_AVX
         RowMajor2Row32Major(src_data, dst, params_->col_, params_->deep_);
 #elif defined(ENABLE_ARM64)
-        RowMajor2ColMajor(src_data, dst, params_->deep_, params_->col_);
+        RowMajor2Row8Major(src_data, dst, params_->deep_, params_->col_);
 #else
         RowMajor2ColMajor(src_data, dst, params_->deep_, params_->col_);
 #endif
@@ -260,7 +261,8 @@ int MatmulFp32BaseCPUKernel::FloatRun(int task_id) const {
 #ifdef ENABLE_AVX
     MatVecMulAvxFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
 #elif defined(ENABLE_ARM64)
-    MatVecMulFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
+    int rest_align_col = MSMIN(params_->col_align_ - current_start_oc, thread_stride_ * col_tile_);
+    MatVecMulFp32Neon64(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, rest_align_col);
 #else
     MatVecMulFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
 #endif
