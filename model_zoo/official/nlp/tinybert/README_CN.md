@@ -78,63 +78,118 @@ TinyBERT模型的主干结构是转换器，转换器包含四个编码器模块
 
 从官网下载安装MindSpore之后，可以开始一般蒸馏。任务蒸馏和评估方法如下：
 
-```bash
-# 单机运行一般蒸馏示例
-bash scripts/run_standalone_gd.sh
+- 在本地运行
 
-Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_standalone_gd.sh file first. If running on GPU, please set the `device_target=GPU`.
+    ```bash
+    # 单机运行一般蒸馏示例
+    bash scripts/run_standalone_gd.sh
 
-# Ascend设备上分布式运行一般蒸馏示例
-bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
+    Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_standalone_gd.sh file first. If running on GPU, please set the `device_target=GPU`.
 
-Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_distributed_gd_ascend.sh file first.
+    # Ascend设备上分布式运行一般蒸馏示例
+    bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
 
-# GPU设备上分布式运行一般蒸馏示例
-bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
+    Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_distributed_gd_ascend.sh file first.
 
-# 运行任务蒸馏和评估示例
-bash scripts/run_standalone_td.sh
+    # GPU设备上分布式运行一般蒸馏示例
+    bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
 
-Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir`, `schema_dir` and `dataset_type` in the run_standalone_td.sh file first.
-If running on GPU, please set the `device_target=GPU`.
-```
+    # 运行任务蒸馏和评估示例
+    bash scripts/run_standalone_td.sh {path}/*.yaml
 
-若在Ascend设备上运行分布式训练，请提前创建JSON格式的HCCL配置文件。
-详情参见如下链接：
-https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
+    Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir`, `schema_dir` and `dataset_type` in the run_standalone_td.sh file first.
+    If running on GPU, please set the `device_target=GPU`.
+    ```
 
-如需设置数据集格式和参数，请创建JSON格式的视图配置文件，详见[TFRecord](https://www.mindspore.cn/doc/programming_guide/zh-CN/master/dataset_loading.html#tfrecord) 格式。
+    若在Ascend设备上运行分布式训练，请提前创建JSON格式的HCCL配置文件。
+    详情参见如下链接：
+    https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
-```text
-For general task, schema file contains ["input_ids", "input_mask", "segment_ids"].
+    如需设置数据集格式和参数，请创建JSON格式的视图配置文件，详见[TFRecord](https://www.mindspore.cn/doc/programming_guide/zh-CN/master/dataset_loading.html#tfrecord) 格式。
 
-For task distill and eval phase, schema file contains ["input_ids", "input_mask", "segment_ids", "label_ids"].
+    ```text
+    For general task, schema file contains ["input_ids", "input_mask", "segment_ids"].
 
-`numRows` is the only option which could be set by user, the others value must be set according to the dataset.
+    For task distill and eval phase, schema file contains ["input_ids", "input_mask", "segment_ids", "label_ids"].
 
-For example, the dataset is cn-wiki-128, the schema file for general distill phase as following:
-{
- "datasetType": "TF",
- "numRows": 7680,
- "columns": {
-  "input_ids": {
-   "type": "int64",
-   "rank": 1,
-   "shape": [256]
-  },
-  "input_mask": {
-   "type": "int64",
-   "rank": 1,
-   "shape": [256]
-  },
-  "segment_ids": {
-   "type": "int64",
-   "rank": 1,
-   "shape": [256]
-  }
- }
-}
-```
+    `numRows` is the only option which could be set by user, the others value must be set according to the dataset.
+
+    For example, the dataset is cn-wiki-128, the schema file for general distill phase as following:
+    {
+     "datasetType": "TF",
+     "numRows": 7680,
+     "columns": {
+      "input_ids": {
+       "type": "int64",
+       "rank": 1,
+       "shape": [256]
+      },
+      "input_mask": {
+       "type": "int64",
+       "rank": 1,
+       "shape": [256]
+      },
+      "segment_ids": {
+       "type": "int64",
+       "rank": 1,
+       "shape": [256]
+      }
+     }
+    }
+    ```
+
+- 在ModelArts上运行(如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    - 在ModelArt上使用8卡一般蒸馏
+
+    ```python
+    # (1) 上传你的代码到 s3 桶上
+    # (2) 在ModelArts上创建训练任务
+    # (3) 选择代码目录 /{path}/tinybert
+    # (4) 选择启动文件 /{path}/tinybert/run_general_distill.py
+    # (5) 执行a或b
+    #     a. 在 /{path}/tinybert/default_config.yaml 文件中设置参数
+    #         1. 设置 ”enable_modelarts=True“
+    #         2. 设置其它参数(config_path无法在这里设置)，其它参数配置可以参考 `./scripts/run_distributed_gd_ascend.sh`
+    #     b. 在 网页上设置
+    #         1. 添加 ”enable_modelarts=True“
+    #         2. 添加其它参数，其它参数配置可以参考 `./scripts/run_distributed_gd_ascend.sh`
+    #     注意'data_dir'、'schema_dir'填写相对于第7步所选路径的相对路径。
+    #     在网页上添加 “config_path=../../gd_config.yaml”('config_path' 是'*.yaml'文件相对于 {path}/tinybert/src/model_utils/config.py的路径, 且'*.yaml'文件必须在{path}/bert/内)
+    # (6) 上传你的 数据 到 s3 桶上
+    # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径
+    # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+    # (9) 在网页上的’资源池选择‘项目下， 选择8卡规格的资源
+    # (10) 创建训练作业
+    # 训练结束后会在'训练输出文件路径'下保存训练的权重
+    ```
+
+    - 在ModelArts上使用单卡运行任务蒸馏
+
+    ```python
+    # (1) 上传你的代码到 s3 桶上
+    # (2) 在ModelArts上创建训练任务
+    # (3) 选择代码目录 /{path}/tinybert
+    # (4) 选择启动文件 /{path}/tinybert/run_task_distill.py
+    # (5) 在网页上添加 “config_path=../../td_config/td_config_sst2.yaml”(根据蒸馏任务选择 *.yaml 配置文件)
+    #     执行a或b
+    #     a. 在选定的'*.yaml'文件中设置参数
+    #         1. 设置 ”enable_modelarts=True“
+    #         2. 设置 ”task_name=SST-2“(根据任务不同，在["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"]中选择)
+    #         3. 设置其它参数，其它参数配置可以参考 './scripts/'下的 `run_standalone_td.sh`
+    #     b. 在 网页上设置
+    #         1. 添加 ”enable_modelarts=True“
+    #         2. 添加 ”task_name=SST-2“(根据任务不同，在["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"]中选择)
+    #         3. 添加其它参数，其它参数配置可以参考 './scripts/'下的 `run_standalone_td.sh`
+    #     注意load_teacher_ckpt_path，train_data_dir，eval_data_dir，schema_dir填写相对于第7步所选路径的相对路径。
+    #     注意load_gd_ckpt_path填写相对于第3步所选路径的相对路径
+    # (6) 上传你的 数据 到 s3 桶上
+    # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径
+    # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+    # (9) 在网页上的’资源池选择‘项目下， 选择单卡规格的资源
+    # (10) 创建训练作业
+    # 训练结束后会在'训练输出文件路径'下保存训练的权重
+    ```
 
 # 脚本说明
 
@@ -142,25 +197,41 @@ For example, the dataset is cn-wiki-128, the schema file for general distill pha
 
 ```shell
 .
-└─bert
+└─tinybert
   ├─README.md
+  ├─README_CN.md
   ├─scripts
     ├─run_distributed_gd_ascend.sh       # Ascend设备上分布式运行一般蒸馏的shell脚本
     ├─run_distributed_gd_gpu.sh          # GPU设备上分布式运行一般蒸馏的shell脚本
+    ├─run_infer_310.sh                   # 310推理的shell脚本
     ├─run_standalone_gd.sh               # 单机运行一般蒸馏的shell脚本
     ├─run_standalone_td.sh               # 单机运行任务蒸馏的shell脚本
   ├─src
+    ├─model_utils
+      ├── config.py                      # 解析 *.yaml参数配置文件
+      ├── devcie_adapter.py              # 区分本地/ModelArts训练
+      ├── local_adapter.py               # 本地训练获取相关环境变量
+      └── moxing_adapter.py              # ModelArts训练获取相关环境变量、交换数据
     ├─__init__.py
     ├─assessment_method.py               # 评估过程的测评方法
     ├─dataset.py                         # 数据处理
-    ├─gd_config.py                       # 一般蒸馏阶段的参数配置
-    ├─td_config.py                       # 任务蒸馏阶段的参数配置
     ├─tinybert_for_gd_td.py              # 网络骨干编码
     ├─tinybert_model.py                  # 网络骨干编码
     ├─utils.py                           # util函数
+  ├─td_config                            # 不同蒸馏任务的*.yaml文件所在文件夹
+    ├── td_config_15cls.yaml
+    ├── td_config_mnli.py
+    ├── td_config_ner.py
+    ├── td_config_qnli.py
+    └── td_config_stt2.py
   ├─__init__.py
+  ├─export.py                            # export scripts
+  ├─gd_config.yaml                       # 一般蒸馏参数配置文件
+  ├─mindspore_hub_conf.py                # Mindspore Hub接口
+  ├─postprocess.py                       # 310推理前处理脚本
+  ├─preprocess.py                        # 310推理后处理脚本
   ├─run_general_distill.py               # 一般蒸馏训练网络
-  ├─run_task_distill.py                  # 任务蒸馏训练评估网络
+  └─run_task_distill.py                  # 任务蒸馏训练评估网络
 ```
 
 ## 脚本参数
@@ -233,7 +304,7 @@ options:
 
 ## 选项及参数
 
-`gd_config.py` and `td_config.py` 包含BERT模型参数与优化器和损失缩放选项。
+`gd_config.yaml` and `td_config/*.yaml` 包含BERT模型参数与优化器和损失缩放选项。
 
 ### 选项
 
@@ -321,7 +392,7 @@ epoch: 1, step: 100, outputs are 28.2093
 运行以下命令前，确保已设置load_teacher_ckpt_path、data_dir和schma_dir。请将路径设置为绝对全路径，例如/username/checkpoint_100_300.ckpt。
 
 ```bash
-bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
+bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json /path/gd_config.json
 ```
 
 以上命令后台运行，您可以在log.txt文件中查看运行结果。训练后，可以得到默认log*文件夹路径下的检查点文件。 得到如下损失值：
@@ -339,7 +410,7 @@ epoch: 1, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, 30.5901), Ten
 输入绝对全路径，例如："/username/checkpoint_100_300.ckpt"。
 
 ```bash
-bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
+bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt /path/gd_config.json
 ```
 
 以上命令后台运行，您可以在log.txt文件中查看运行结果。训练结束后，您可以在默认LOG*文件夹下找到检查点文件。得到如下损失值：
@@ -359,7 +430,7 @@ epoch: 1, step: 1, outputs are 63.4098
 #### 基于SST-2数据集进行评估
 
 ```bash
-bash scripts/run_standalone_td.sh
+bash scripts/run_standalone_td.sh {path}/*.yaml
 ```
 
 以上命令后台运行，您可以在log.txt文件中查看运行结果。得出如下测试数据集准确率：
@@ -379,7 +450,7 @@ The best acc is 0.902777
 运行如下命令前，请确保已设置加载与训练检查点路径。请将检查点路径设置为绝对全路径，例如，/username/pretrain/checkpoint_100_300.ckpt。
 
 ```bash
-bash scripts/run_standalone_td.sh
+bash scripts/run_standalone_td.sh {path}/*.yaml
 ```
 
 以上命令将在后台运行，请在log.txt文件中查看结果。测试数据集的准确率如下：
@@ -399,7 +470,7 @@ The best acc is 0.813929
 运行如下命令前，请确保已设置加载与训练检查点路径。请将检查点路径设置为绝对全路径，例如/username/pretrain/checkpoint_100_300.ckpt。
 
 ```bash
-bash scripts/run_standalone_td.sh
+bash scripts/run_standalone_td.sh {path}/*.yaml
 ```
 
 以上命令后台运行，您可以在log.txt文件中查看运行结果。测试数据集的准确率如下：
@@ -418,8 +489,36 @@ The best acc is 0.891176
 
 ### [导出MindIR](#contents)
 
-```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+- 在本地导出
+
+    ```shell
+    python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+    ```
+
+- 在ModelArts上导出
+
+```python
+# (1) 上传你的代码到 s3 桶上
+# (2) 在ModelArts上创建训练任务
+# (3) 选择代码目录 /{path}/tinybert
+# (4) 选择启动文件 /{path}/tinybert/export.py
+# (5) 执行a或b
+#     a. 在 /path/tinybert/td_config/ 下的某个*.yaml文件中设置参数
+#         1. 设置 ”enable_modelarts: True“
+#         2. 设置 “ckpt_file: ./{path}/*.ckpt”('ckpt_file' 指待导出的'*.ckpt'权重文件相对于`export.py`的路径, 且权重文件必须包含在代码目录下)
+#         3. 设置 ”file_name: tinybert_sst2“
+#         4. 设置 ”file_format：MINDIR“
+#     b. 在 网页上设置
+#         1. 添加 ”enable_modelarts=True“
+#         2. 添加 “ckpt_file=./{path}/*.ckpt”(('ckpt_file' 指待导出的'*.ckpt'权重文件相对于`export.py`的路径, 且权重文件必须包含在代码目录下)
+#         3. 添加 ”file_name=tinybert_sst2“
+#         4. 添加 ”file_format=MINDIR“
+#     最后必须在网页上添加 “config_path=../../td_config/*.yaml”(根据下游任务选择 *.yaml 配置文件)
+# (7) 在网页上勾选数据存储位置，设置“训练数据集”路径(虽然没用，但要做)
+# (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+# (9) 在网页上的’资源池选择‘项目下， 选择单卡规格的资源
+# (10) 创建训练作业
+# 你将在{Output file path}下看到 'tinybert_sst2.mindir'文件
 ```
 
 参数ckpt_file为必填项，
@@ -460,7 +559,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [SCHEMA_DIR] [DATASET_TYPE] [
 | 上传日期              | 2020-08-20                                           | 2020-08-24      |
 | MindSpore版本          | 0.6.0                                                      | 0.7.0                     |
 | 数据集                    | en-wiki-128                                                | en-wiki-128               |
-| 训练参数        | src/gd_config.py                                           | src/gd_config.py          |
+| 训练参数        | src/gd_config.yaml                                           | src/gd_config.yaml          |
 | 优化器| AdamWeightDecay | AdamWeightDecay |
 | 损耗函数             | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
 | 输出              | 概率                                                | 概率               |
@@ -489,7 +588,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [SCHEMA_DIR] [DATASET_TYPE] [
 
 run_standaloned_td.sh脚本中设置了do_shuffle来轮换数据集。
 
-gd_config.py和td_config.py文件中设置了hidden_dropout_prob和attention_pros_dropout_prob，使网点随机失活。
+gd_config.yaml和td_config/*.yaml文件中设置了hidden_dropout_prob和attention_pros_dropout_prob，使网点随机失活。
 
 run_general_distill.py文件中设置了随机种子，确保分布式训练初始权重相同。
 

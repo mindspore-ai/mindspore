@@ -14,7 +14,7 @@ enable_profiling: False
 # ==============================================================================
 description: 'run_pretrain'
 distribute: 'false'
-epoch_size: 1
+epoch_size: 40
 device_id: 0
 device_num: 1
 enable_save_ckpt: 'true'

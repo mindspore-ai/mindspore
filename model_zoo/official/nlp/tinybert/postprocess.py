@@ -16,12 +16,22 @@
 """postprocess"""
 
 import os
+import argparse
 import numpy as np
 from mindspore import Tensor
 from src.assessment_method import Accuracy, F1
-from src.model_utils.config import eval_cfg, config as args_opt
 
 
+parser = argparse.ArgumentParser(description='postprocess')
+parser.add_argument("--task_name", type=str, default="", choices=["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"],
+                    help="The name of the task to train.")
+parser.add_argument("--assessment_method", type=str, default="accuracy", choices=["accuracy", "bf1", "mf1"],
+                    help="assessment_method include: [accuracy, bf1, mf1], default is accuracy")
+parser.add_argument("--result_path", type=str, default="./result_Files", help="result path")
+parser.add_argument("--label_path", type=str, default="./preprocess_Result/label_ids.npy", help="label path")
+args_opt = parser.parse_args()
+
+BATCH_SIZE = 32
 DEFAULT_NUM_LABELS = 2
 DEFAULT_SEQ_LENGTH = 128
 task_params = {"SST-2": {"num_labels": 2, "seq_length": 64},
@@ -49,7 +59,10 @@ class Task:
         if self.task_name in task_params and "seq_length" in task_params[self.task_name]:
             return task_params[self.task_name]["seq_length"]
         return DEFAULT_SEQ_LENGTH
+
+
 task = Task(args_opt.task_name)
+
 
 def eval_result_print(assessment_method="accuracy", callback=None):
     """print eval result"""
@@ -79,9 +92,9 @@ def get_acc():
     labels = np.load(args_opt.label_path)
     file_num = len(os.listdir(args_opt.result_path))
     for i in range(file_num):
-        f_name = "tinybert_bs" + str(eval_cfg.batch_size) + "_" + str(i) + "_0.bin"
+        f_name = "tinybert_bs" + str(BATCH_SIZE) + "_" + str(i) + "_0.bin"
         logits = np.fromfile(os.path.join(args_opt.result_path, f_name), np.float32)
-        logits = logits.reshape(eval_cfg.batch_size, task.num_labels)
+        logits = logits.reshape(BATCH_SIZE, task.num_labels)
         label_ids = labels[i]
         callback.update(Tensor(logits), Tensor(label_ids))
     print("==============================================================")

@@ -16,10 +16,20 @@
 """preprocess"""
 
 import os
+import argparse
 import numpy as np
-from src.model_utils.config import eval_cfg, config as args_opt
 from src.dataset import create_tinybert_dataset, DataType
 
+
+parser = argparse.ArgumentParser(description='preprocess')
+parser.add_argument("--eval_data_dir", type=str, default="", help="Data path, it is better to use absolute path")
+parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
+parser.add_argument("--dataset_type", type=str, default="tfrecord",
+                    help="dataset type tfrecord/mindrecord, default is tfrecord")
+parser.add_argument("--result_path", type=str, default="./preprocess_Result/", help="result path")
+args_opt = parser.parse_args()
+
+BATCH_SIZE = 32
 
 if args_opt.dataset_type == "tfrecord":
     dataset_type = DataType.TFRECORD
@@ -27,6 +37,7 @@ elif args_opt.dataset_type == "mindrecord":
     dataset_type = DataType.MINDRECORD
 else:
     raise Exception("dataset format is not supported yet")
+
 
 def get_bin():
     """
@@ -41,7 +52,7 @@ def get_bin():
     os.makedirs(token_type_id_path)
     os.makedirs(input_mask_path)
 
-    eval_dataset = create_tinybert_dataset('td', batch_size=eval_cfg.batch_size,
+    eval_dataset = create_tinybert_dataset('td', batch_size=BATCH_SIZE,
                                            device_num=1, rank=0, do_shuffle="false",
                                            data_dir=args_opt.eval_data_dir,
                                            schema_dir=args_opt.schema_dir,
@@ -49,7 +60,7 @@ def get_bin():
     columns_list = ["input_ids", "input_mask", "segment_ids", "label_ids"]
     label_list = []
     for j, data in enumerate(eval_dataset.create_dict_iterator(output_numpy=True, num_epochs=1)):
-        file_name = "tinybert_bs" + str(eval_cfg.batch_size) + "_" + str(j) + ".bin"
+        file_name = "tinybert_bs" + str(BATCH_SIZE) + "_" + str(j) + ".bin"
         input_data = []
         for i in columns_list:
             input_data.append(data[i])
