@@ -39,6 +39,7 @@ def set_profiling_env_var():
     os.environ['PROFILING_MODE'] = 'true'
     os.environ['MINDDATA_PROFILING_DIR'] = '.'
     os.environ['DEVICE_ID'] = '1'
+    os.environ['RANK_ID'] = '1'
 
 
 def delete_profiling_files():
@@ -55,6 +56,7 @@ def delete_profiling_files():
     del os.environ['PROFILING_MODE']
     del os.environ['MINDDATA_PROFILING_DIR']
     del os.environ['DEVICE_ID']
+    del os.environ['RANK_ID']
 
 
 def confirm_cpuutil(num_pipeline_ops):

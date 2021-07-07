@@ -110,8 +110,8 @@ Status ProfilingManager::Initialize() {
     device_id_ = std::to_string(rank_id);
   }
 #else
-  device_id_ = common::GetEnv("DEVICE_ID");
-  // If DEVICE_ID is not set, default value is 0
+  device_id_ = common::GetEnv("RANK_ID");
+  // If RANK_ID is not set, default value is 0
   if (device_id_.empty()) {
     device_id_ = "0";
   }

@@ -14,7 +14,6 @@
 # ============================================================================
 """Profiling api file."""
 import os
-import re
 import stat
 import time
 import json
@@ -66,12 +65,12 @@ class Profiler:
     Args:
         output_path (str): Output data path.
         optypes_not_deal (str): (Ascend only) Op type names, determine the data of which optype should be collected
-            and analysed,will deal with all op if null; Different op types should be separated by comma.
-        ascend_job_id (str): (Ascend only) The directory where the profiling files to be parsed are located;
+            and analysed, will deal with all op if null. Different op types should be separated by comma.
+        ascend_job_id (str): (Ascend only) The directory where the profiling files to be parsed are located.
             This parameter is used to support offline parsing.
-        profile_communication (bool): Whether to collect communication performance data in a multi devices training.
+        profile_communication (bool): Whether to collect communication performance data in a multi devices training,
             collect when True. Default is False. Setting this parameter has no effect during single device training.
-        profile_memory (bool): Whether to collect tensor memory data, collect when True.Default is False.
+        profile_memory (bool): Whether to collect tensor memory data, collect when True. Default is False.
 
     Examples:
         >>> import numpy as np
@@ -123,7 +122,7 @@ class Profiler:
 
     def __init__(self, **kwargs):
         # get device_id and device_target
-        self._get_devid_and_devtarget()
+        self._get_devid_rankid_and_devtarget()
         self._get_output_path(kwargs)
         self._profile_communication = False
 
@@ -251,7 +250,7 @@ class Profiler:
 
         source_path = os.path.join(self._output_path, job_id)
         # parse hwts.log.data.45.dev file, and get task profiling data
-        hwts_output_filename = self._hwts_output_filename_target + self._dev_id + ".txt"
+        hwts_output_filename = self._hwts_output_filename_target + self._rank_id + ".txt"
         hwts_output_filename = os.path.join(self._output_path, hwts_output_filename)
         source_path = validate_and_normalize_path(source_path)
         hwts_output_filename = validate_and_normalize_path(hwts_output_filename)
@@ -259,7 +258,7 @@ class Profiler:
         hwtslog_parser.execute()
 
         # parse Framework file, and get the relation of op and tasks
-        framework_parser = FrameworkParser(job_id, self._dev_id, self._output_path)
+        framework_parser = FrameworkParser(job_id, self._dev_id, self._rank_id, self._output_path)
         framework_parser.parse()
         op_task_dict = framework_parser.to_task_id_full_op_name_dict()
         if not op_task_dict:
@@ -267,39 +266,39 @@ class Profiler:
             return
 
         # get op compute time from hwts data and framework data, write output_op_compute_time.txt
-        opcompute_output_filename = self._opcompute_output_filename_target + self._dev_id + ".txt"
+        opcompute_output_filename = self._opcompute_output_filename_target + self._rank_id + ".txt"
         opcompute_output_filename = os.path.join(self._output_path, opcompute_output_filename)
         opcompute_output_filename = validate_and_normalize_path(opcompute_output_filename)
         optime_parser = OPComputeTimeParser(
             hwts_output_filename, opcompute_output_filename,
-            op_task_dict, self._output_path, self._dev_id
+            op_task_dict, self._output_path, self._rank_id
         )
         optime_parser.execute()
 
         # parse DATA_PREPROCESS.dev.AICPU file, write output_data_preprocess_aicpu_x.txt
-        output_data_preprocess_aicpu = self._aicpu_op_output_filename_target + self._dev_id + ".txt"
+        output_data_preprocess_aicpu = self._aicpu_op_output_filename_target + self._rank_id + ".txt"
         output_data_preprocess_aicpu = os.path.join(self._output_path, output_data_preprocess_aicpu)
         output_data_preprocess_aicpu = validate_and_normalize_path(output_data_preprocess_aicpu)
         aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu)
         aicpu_data_parser.execute()
 
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
-        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id)
+        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id, self._rank_id)
         flops_parser.execute()
 
         # Parsing minddata AICPU profiling
-        MinddataParser.execute(source_path, self._output_path, self._dev_id)
+        MinddataParser.execute(source_path, self._output_path, self._rank_id)
 
         # parse minddata pipeline operator and queue
         try:
-            pipeline_parser = MinddataPipelineParser(self._output_path, self._dev_id, self._output_path)
+            pipeline_parser = MinddataPipelineParser(self._output_path, self._rank_id, self._output_path)
             pipeline_parser.parse()
         except ProfilerException as err:
             logger.warning(err.message)
 
         # Analyze minddata information
         try:
-            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._dev_id, self._output_path)
+            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._rank_id, self._output_path)
             md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
@@ -391,13 +390,14 @@ class Profiler:
         """
         logger.info("Begin to parse step trace.")
         # construct output path
+        dev_id = self._rank_id if self._device_target == "Ascend" else self._dev_id
         step_trace_intermediate_file_path = os.path.join(
             self._output_path,
-            f'step_trace_raw_{self._dev_id}_detail_time.csv'
+            f'step_trace_raw_{dev_id}_detail_time.csv'
         )
         point_info_file_path = os.path.join(
             self._output_path,
-            f'step_trace_point_info_{self._dev_id}.json'
+            f'step_trace_point_info_{dev_id}.json'
         )
         step_trace_intermediate_file_path = validate_and_normalize_path(step_trace_intermediate_file_path)
         point_info_file_path = validate_and_normalize_path(point_info_file_path)
@@ -446,9 +446,9 @@ class Profiler:
             optime_parser (OPComputeTimeParserParser): The parser instance for AI Core
                 operator execution time calculation.
         """
-        timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id)
+        timeline_analyser = AscendTimelineGenerator(self._output_path, self._rank_id)
         # Get framework info
-        integrator = Integrator(self._output_path, self._dev_id)
+        integrator = Integrator(self._output_path, self._rank_id)
         aicore_detail_data = integrator.get_aicore_detail_data()
         aicore_detail_data_size = len(aicore_detail_data)
         col_names = ['op_name', 'op_type', 'avg_execution_time', 'subgraph',
@@ -489,9 +489,9 @@ class Profiler:
 
     def _analyse_memory_usage(self, points):
         """Analyse memory usage data."""
-        integrator = Integrator(self._output_path, self._dev_id)
+        integrator = Integrator(self._output_path, self._rank_id)
         aicore_detail_data = integrator.get_aicore_detail_data()
-        memory_parser = MemoryUsageParser(self._output_path, self._dev_id)
+        memory_parser = MemoryUsageParser(self._output_path, self._rank_id)
         memory_parser.init_memory_usage_info(aicore_detail_data, points)
         memory_parser.write_memory_files()
 
@@ -559,13 +559,13 @@ class Profiler:
 
     def _analyser_op_info(self):
         """Analyse the operator information."""
-        integrator = Integrator(self._output_path, self._dev_id)
+        integrator = Integrator(self._output_path, self._rank_id)
         integrator.integrate()
 
         aicore_type_result = self._query_op_type_info()
         detail_file_path = os.path.join(
             self._output_path,
-            'output_op_compute_time_detail_{}.txt'.format(self._dev_id)
+            'output_op_compute_time_detail_{}.txt'.format(self._rank_id)
         )
         fwrite_format(detail_file_path, data_source='title:op compute time')
         display_names = [
@@ -591,7 +591,7 @@ class Profiler:
         Returns:
             list[list], the AICORE operator type and execution time information.
         """
-        integrator = Integrator(self._output_path, self._dev_id)
+        integrator = Integrator(self._output_path, self._rank_id)
         return integrator.get_aicore_data()
 
     def _query_op_detail_info(self, op_type_order):
@@ -613,14 +613,15 @@ class Profiler:
             'op_type': op_type_condition,
             'is_display_detail': False,
         }
-        integrator = Integrator(self._output_path, self._dev_id)
+        integrator = Integrator(self._output_path, self._rank_id)
         return integrator.query_and_sort_by_op_type(filter_condition, op_type_order)
 
-    def _get_devid_and_devtarget(self):
-        """Get device id and target of this training."""
+    def _get_devid_rankid_and_devtarget(self):
+        """Get device id and rank id and target of this training."""
 
         device_target = ""
         dev_id = ""
+        rank_id = ""
         try:
             dev_id = str(context.get_context("device_id"))
             device_target = context.get_context("device_target")
@@ -631,40 +632,23 @@ class Profiler:
             dev_id = os.getenv('DEVICE_ID')
         if not dev_id or not dev_id.isdigit():
             dev_id = "0"
-            logger.error("Fail to get DEVICE_ID, use 0 instead.")
+            logger.warning("Fail to get DEVICE_ID, use 0 instead.")
 
         if device_target and device_target not in ["Ascend", "GPU"]:
             msg = "Profiling: unsupported backend: %s" % device_target
             raise RuntimeError(msg)
 
+        rank_id = os.getenv("RANK_ID")
+        if not rank_id or not rank_id.isdigit():
+            rank_id = "0"
+            logger.info("Fail to get RANK_ID, use 0 instead.")
+
         self._dev_id = dev_id
         self._device_target = device_target
+        self._rank_id = rank_id
 
     def _get_output_path(self, kwargs):
         """Get output path of profiling data."""
-        current_time = int(time.time())
-
-        # to avoid getting different timestamp from different process in multi-card training,
-        # set the timestamp as exist timestamp if it's difference is less than 6 seconds.
-        def _select_timestamp(dir_name, re_pattern, input_time):
-            """select the timestamp from current_time and exist timestamp."""
-            timestamp_diff_threshold = 6
-            exist_timestamp_list = []
-            select_time = input_time
-            if not os.path.exists(dir_name):
-                os.makedirs(dir_name, exist_ok=True)
-            for file_name in os.listdir(dir_name):
-                match_res = re_pattern.match(file_name)
-                if match_res:
-                    exist_timestamp_list.append(int(match_res.group(1)))
-            if exist_timestamp_list:
-                time_diff_list = [input_time - timestamp for timestamp in exist_timestamp_list]
-                min_time_diff = min(time_diff_list)
-                if min_time_diff <= timestamp_diff_threshold:
-                    select_time = exist_timestamp_list[time_diff_list.index(min_time_diff)]
-
-            return select_time
-
         if kwargs.get("output_path") is None:
             if "output_path" in kwargs:
                 kwargs.pop("output_path")
@@ -672,19 +656,13 @@ class Profiler:
             output_path = os.getenv("MS_DIAGNOSTIC_DATA_PATH")
             if output_path:
                 self._output_path = validate_and_normalize_path(output_path)
-                selected_timestamp = _select_timestamp(self._output_path,
-                                                       re.compile(r'profiler-(\d+)'), current_time)
             else:
-                selected_timestamp = _select_timestamp(os.getcwd(), re.compile(r'data-(\d+)'), current_time)
-                output_path = f"data-{selected_timestamp}"
+                output_path = "data"
                 self._output_path = validate_and_normalize_path(output_path)
         else:
             output_path = kwargs.pop("output_path")
             self._output_path = validate_and_normalize_path(output_path)
-            selected_timestamp = _select_timestamp(self._output_path,
-                                                   re.compile(r'profiler-(\d+)'), current_time)
-
-        self._output_path = os.path.join(self._output_path, f"profiler-{selected_timestamp}")
+        self._output_path = os.path.join(self._output_path, "profiler")
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path, exist_ok=True)
             os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)

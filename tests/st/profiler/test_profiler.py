@@ -127,19 +127,31 @@ def cleanup():
 
 class TestProfiler:
     device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
+    rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
     mnist_path = '/home/workspace/mindspore_dataset/mnist'
 
-    @classmethod
-    def teardown_class(cls):
-        """ Run after class end."""
+    def teardown(self):
+        """ Run after each use case."""
         cleanup()
 
     @pytest.mark.level1
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
     def test_gpu_profiler(self):
-        context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-        profiler = Profiler(output_path='data')
+        self._train_with_profiler(device_target="GPU")
+        self._check_gpu_profiling_file()
+
+    @pytest.mark.level0
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    def test_ascend_profiler(self):
+        self._train_with_profiler(device_target="Ascend")
+        self._check_d_profiling_file()
+
+    def _train_with_profiler(self, device_target):
+        context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+        profiler = Profiler(profile_memory=True, output_path='data')
         profiler_name = os.listdir(os.path.join(os.getcwd(), 'data'))[0]
         self.profiler_path = os.path.join(os.getcwd(), f'data/{profiler_name}/')
         ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
@@ -153,8 +165,6 @@ class TestProfiler:
 
         model.train(1, ds_train, dataset_sink_mode=True)
         profiler.analyse()
-
-        self._check_gpu_profiling_file()
 
     def _check_gpu_profiling_file(self):
         op_detail_file = self.profiler_path + f'gpu_op_detail_info_{self.device_id}.csv'
@@ -172,12 +182,13 @@ class TestProfiler:
         assert os.path.exists(pipeline_file)
 
     def _check_d_profiling_file(self):
-        aicore_file = self.profiler_path + f'aicore_intermediate_{self.device_id}_detail.csv'
-        step_trace_file = self.profiler_path + f'step_trace_raw_{self.device_id}_detail_time.csv'
-        timeline_file = self.profiler_path + f'ascend_timeline_display_{self.device_id}.json'
-        aicpu_file = self.profiler_path + f'aicpu_intermediate_{self.device_id}.csv'
-        minddata_pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.device_id}.csv'
-        queue_profiling_file = self.profiler_path + f'device_queue_profiling_{self.device_id}.txt'
+        aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
+        step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
+        timeline_file = self.profiler_path + f'ascend_timeline_display_{self.rank_id}.json'
+        aicpu_file = self.profiler_path + f'aicpu_intermediate_{self.rank_id}.csv'
+        minddata_pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.rank_id}.csv'
+        queue_profiling_file = self.profiler_path + f'device_queue_profiling_{self.rank_id}.txt'
+        memory_file = self.profiler_path + f'memory_usage_{self.rank_id}.pb'
 
         assert os.path.exists(aicore_file)
         assert os.path.exists(step_trace_file)
@@ -185,3 +196,4 @@ class TestProfiler:
         assert os.path.exists(queue_profiling_file)
         assert os.path.exists(minddata_pipeline_file)
         assert os.path.exists(aicpu_file)
+        assert os.path.exists(memory_file)

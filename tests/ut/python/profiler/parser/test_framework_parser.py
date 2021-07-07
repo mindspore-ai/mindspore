@@ -51,13 +51,13 @@ class TestFrameworkParser:
         """Initialization before test case execution."""
         self._output_path_1 = tempfile.NamedTemporaryFile(prefix='test_framework_parser_').name
         shutil.copytree(RAW_DATA_BASE, self._output_path_1)
-        self._parser_1 = FrameworkParser('JOB1', '0', self._output_path_1)
+        self._parser_1 = FrameworkParser('JOB1', '0', '0', self._output_path_1)
         self._output_path_2 = tempfile.NamedTemporaryFile(prefix='test_framework_parser_').name
         shutil.copytree(RAW_DATA_BASE, self._output_path_2)
-        self._parser_2 = FrameworkParser('JOB2', '0', self._output_path_2)
+        self._parser_2 = FrameworkParser('JOB2', '0', '0', self._output_path_2)
         self._output_path_4 = tempfile.NamedTemporaryFile(prefix='test_framework_parser_').name
         shutil.copytree(RAW_DATA_BASE, self._output_path_4)
-        self._parser_4 = FrameworkParser('JOB4', '0', self._output_path_4)
+        self._parser_4 = FrameworkParser('JOB4', '0', '0', self._output_path_4)
 
     def teardown_method(self) -> None:
         """Clear up after test case execution."""
@@ -125,6 +125,6 @@ class TestFrameworkParser:
         args[0].return_value = True
         args[1].return_value = []
         with pytest.raises(ProfilerFileNotFoundException) as exc_info:
-            FrameworkParser('JOB1', '0')
+            FrameworkParser('JOB1', '0', '0')
         assert exc_info.value.error_code == '50546084'
         assert exc_info.value.message == 'The file <Framework> not found.'
