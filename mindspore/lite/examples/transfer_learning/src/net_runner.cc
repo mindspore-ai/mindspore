@@ -25,6 +25,7 @@
 #include <iostream>
 #include "include/context.h"
 #include "include/lite_session.h"
+#include "include/train/train_session.h"
 #include "src/utils.h"
 
 static unsigned int seed = time(NULL);
@@ -77,7 +78,7 @@ void NetRunner::InitAndFigureInputs() {
   context.device_list_[0].device_info_.cpu_device_info_.enable_float16_ = enable_fp16_;
   context.thread_num_ = 1;
 
-  session_ = mindspore::session::LiteSession::CreateTransferSession(ms_backbone_file_, ms_head_file_, &context);
+  session_ = mindspore::session::TrainSession::CreateTransferSession(ms_backbone_file_, ms_head_file_, &context);
   MS_ASSERT(session_ != nullptr);
 
   auto inputs = session_->GetInputs();
