@@ -73,7 +73,8 @@ Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std:
   return impl_->Resize(inputs, dims);
 }
 
-Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                      const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return kMCFailed;

@@ -25,7 +25,6 @@
 
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
-constexpr auto kModelOptionCpuThreadAffinity = "mindspore.option.cpu.thread_affinity";
 constexpr auto kModelOptionMaliGpuEnableFP16 = "mindspore.option.mali_gpu.enable_fp16";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionProvider = "mindspore.option.provider";
@@ -34,7 +33,9 @@ constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
 struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
   int32_t thread_num = 2;
-  std::shared_ptr<Allocator> allocator = nullptr;
+  bool enable_parallel_ = false;
+  std::vector<int32_t> affinity_core_list_;
+  int affinity_mode_ = 2;
 };
 
 struct DeviceInfoContext::Data {
@@ -74,19 +75,54 @@ int32_t Context::GetThreadNum() const {
   return data_->thread_num;
 }
 
-void Context::SetAllocator(const std::shared_ptr<Allocator> &allocator) {
+void Context::SetEnableParallel(bool is_parallel) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->allocator = allocator;
+  data_->enable_parallel_ = is_parallel;
 }
-std::shared_ptr<Allocator> Context::GetAllocator() const {
+
+bool Context::GetEnableParallel() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
-    return nullptr;
+    return false;
   }
-  return data_->allocator;
+  return data_->enable_parallel_;
+}
+
+void Context::SetThreadAffinity(int mode) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->affinity_mode_ = mode;
+
+  return;
+}
+int Context::GetThreadAffinityMode() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return -1;
+  }
+  return data_->affinity_mode_;
+}
+
+void Context::SetThreadAffinity(const std::vector<int> &core_list) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->affinity_core_list_ = core_list;
+
+  return;
+}
+std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return {};
+  }
+  return data_->affinity_core_list_;
 }
 
 std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
@@ -161,21 +197,6 @@ bool CPUDeviceInfo::GetEnableFP16() const {
     return false;
   }
   return GetValue<bool>(data_, kModelOptionCpuEnableFP16);
-}
-
-void CPUDeviceInfo::SetThreadAffinity(int affinity) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->params[kModelOptionCpuThreadAffinity] = affinity;
-}
-int CPUDeviceInfo::GetThreadAffinity() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return 0;
-  }
-  return GetValue<int>(data_, kModelOptionCpuThreadAffinity);
 }
 
 void MaliGPUDeviceInfo::SetEnableFP16(bool is_fp16) {

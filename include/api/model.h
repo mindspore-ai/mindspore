@@ -41,7 +41,8 @@ class MS_API Model {
   Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr);
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
-  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                 const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
   std::vector<MSTensor> GetInputs();
   inline MSTensor GetInputByTensorName(const std::string &tensor_name);
