@@ -22,7 +22,7 @@
 #include "fl/server/executor.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
-#include "armour/cipher/cipher_shares.h"
+#include "fl/armour/cipher/cipher_shares.h"
 
 namespace mindspore {
 namespace ps {

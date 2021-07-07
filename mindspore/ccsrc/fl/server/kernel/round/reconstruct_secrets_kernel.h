@@ -23,7 +23,7 @@
 #include "fl/server/common.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
-#include "armour/cipher/cipher_reconstruct.h"
+#include "fl/armour/cipher/cipher_reconstruct.h"
 #include "fl/server/executor.h"
 
 namespace mindspore {

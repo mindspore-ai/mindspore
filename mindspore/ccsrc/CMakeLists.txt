@@ -227,11 +227,6 @@ set(SUB_COMP
         common debug pybind_api utils vm profiler ps fl
 )
 
-if(ENABLE_CPU AND NOT WIN32)
-    add_compile_definitions(ENABLE_ARMOUR)
-    list(APPEND SUB_COMP "armour")
-endif()
-
 foreach(_comp ${SUB_COMP})
     add_subdirectory(${_comp})
     string(REPLACE "/" "_" sub ${_comp})
