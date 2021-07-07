@@ -380,13 +380,13 @@ Please follow the instructions in the link [GPU-Multi-Host](https://www.mindspor
 - Parameter server training Ascend example
 
 ```bash
-bash run_parameter_server_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_parameter_server_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 - Parameter server training GPU example
 
 ```bash
-bash run_parameter_server_train_gpu.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_parameter_server_train_gpu.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 #### Evaluation while training

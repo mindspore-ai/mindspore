@@ -229,7 +229,7 @@ python eval.py --data_path ~/imagenet/val/ --device_target Ascend --checkpoint_f
 
 ```shell
 # 评估
-sh run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH PLATFORM
+sh scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH PLATFORM
 ```
 
 DEVICE_TARGET is Ascend or GPU, default is Ascend.
