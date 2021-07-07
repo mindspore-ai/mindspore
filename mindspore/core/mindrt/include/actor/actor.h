@@ -23,6 +23,7 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include "thread/hqueue.h"
 
 #include "actor/msg.h"
 
@@ -39,7 +40,7 @@ using ActorReference = std::shared_ptr<ActorBase>;
 // should be at least greater than 1
 constexpr uint32_t MAX_ACTOR_RECORD_SIZE = 3;
 
-class ActorBase {
+class ActorBase : std::enable_shared_from_this<ActorBase> {
  public:
   inline const AID &GetAID() const { return id; }
 
@@ -57,7 +58,7 @@ class ActorBase {
       startPoint = (startPoint + MAX_ACTOR_RECORD_SIZE - 1) % MAX_ACTOR_RECORD_SIZE;
     }
   }
-
+  ActorBase();
   explicit ActorBase(const std::string &name);
   explicit ActorBase(const std::string &name, ActorThreadPool *pool);
   virtual ~ActorBase();

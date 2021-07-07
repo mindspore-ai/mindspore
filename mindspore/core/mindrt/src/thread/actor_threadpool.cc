@@ -18,6 +18,7 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
+constexpr size_t MAX_READY_ACTOR_NR = 1024;
 void ActorWorker::CreateThread(ActorThreadPool *pool) {
   THREAD_RETURN_IF_NULL(pool);
   pool_ = pool;
@@ -54,13 +55,10 @@ bool ActorWorker::RunQueueActorTask() {
 }
 
 bool ActorWorker::Active() {
-  {
-    std::lock_guard<std::mutex> _l(mutex_);
-    if (status_ != kThreadIdle) {
-      return false;
-    }
-    status_ = kThreadBusy;
+  if (status_ != kThreadIdle) {
+    return false;
   }
+  status_ = kThreadBusy;
   cond_var_.notify_one();
   return true;
 }
@@ -70,8 +68,12 @@ ActorThreadPool::~ActorThreadPool() {
   bool terminate = false;
   do {
     {
+#ifdef USE_HQUEUE
+      terminate = actor_queue_.Empty();
+#else
       std::lock_guard<std::mutex> _l(actor_mutex_);
       terminate = actor_queue_.empty();
+#endif
     }
     if (!terminate) {
       std::this_thread::yield();
@@ -82,9 +84,15 @@ ActorThreadPool::~ActorThreadPool() {
     worker = nullptr;
   }
   workers_.clear();
+#ifdef USE_HQUEUE
+  actor_queue_.Clean();
+#endif
 }
 
-ActorReference ActorThreadPool::PopActorFromQueue() {
+ActorBase *ActorThreadPool::PopActorFromQueue() {
+#ifdef USE_HQUEUE
+  return actor_queue_.Dequeue();
+#else
   std::lock_guard<std::mutex> _l(actor_mutex_);
   if (actor_queue_.empty()) {
     return nullptr;
@@ -92,12 +100,21 @@ ActorReference ActorThreadPool::PopActorFromQueue() {
   auto actor = actor_queue_.front();
   actor_queue_.pop();
   return actor;
+#endif
 }
 
-void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
+void ActorThreadPool::PushActorToQueue(ActorBase *actor) {
+  if (!actor) {
+    return;
+  }
   {
+#ifdef USE_HQUEUE
+    while (!actor_queue_.Enqueue(actor)) {
+    }
+#else
     std::lock_guard<std::mutex> _l(actor_mutex_);
     actor_queue_.push(actor);
+#endif
   }
   THREAD_INFO("actor[%s] enqueue success", actor->GetAID().Name().c_str());
   // active one idle actor thread if exist
@@ -110,6 +127,10 @@ void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
 }
 
 int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num) {
+#ifdef USE_HQUEUE
+  actor_queue_.Init(MAX_READY_ACTOR_NR);
+#endif
+
   size_t core_num = std::thread::hardware_concurrency();
   THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;

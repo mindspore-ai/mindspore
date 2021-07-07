@@ -24,9 +24,8 @@
 #include "thread/threadpool.h"
 #include "actor/actor.h"
 #include "thread/hqueue.h"
-
+#define USE_HQUEUE
 namespace mindspore {
-
 class ActorThreadPool;
 
 class ActorWorker : public Worker {
@@ -49,18 +48,21 @@ class ActorThreadPool : public ThreadPool {
   static ActorThreadPool *CreateThreadPool(size_t thread_num);
   ~ActorThreadPool() override;
 
-  void PushActorToQueue(const ActorReference &actor);
-  ActorReference PopActorFromQueue();
+  void PushActorToQueue(ActorBase *actor);
+  ActorBase *PopActorFromQueue();
 
  private:
   ActorThreadPool() {}
   int CreateThreads(size_t actor_thread_num, size_t all_thread_num);
-
   size_t actor_thread_num_{0};
 
   std::mutex actor_mutex_;
-  // std::condition_variable actor_cond_;
-  std::queue<ActorReference> actor_queue_;
+  std::condition_variable actor_cond_;
+#ifdef USE_HQUEUE
+  HQueue<ActorBase> actor_queue_;
+#else
+  std::queue<ActorBase *> actor_queue_;
+#endif
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_ACTOR_THREADPOOL_H_
