@@ -115,13 +115,13 @@ class _TrainFreezeCell(Cell):
 
     Args:
         net (Cell): The training network.
-        sens (Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
+        sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
         grad (tuple(tensor)): The gradients of network parameters and inputs.
         grad_reducer (Cell): Constructs a gradient reducer Cell, which applies communication and average operations on
     single-process gradient values.
         use_grad_accumulation (Bool): Whether use grad accumulation.
         optimizer (Union[Cell]): Optimizer for updating the weights.
-        max_accumulation_step (Number): Max grad accumulation steps. Default: 1.0
+        max_accumulation_step (numbers.Number): Max grad accumulation steps. Default: 1.0
 
     Supported Platforms:
         ``Ascend``
@@ -161,7 +161,7 @@ class GradientFreeze:
         param_groups (Union[Tuple, List]): Groups of parameters for gradients freezing training.
         freeze_type (Int): Strategy of gradients freezing training.
         freeze_p (FLoat): probability of gradients freezing training.
-        total_steps (Number): Steps of the whole training.
+        total_steps (numbers.Number): Steps of the whole training.
 
     Examples:
         >>> gradient_freeze_class = acc.GradientFreeze(10, 1, 0.5, 2000)
