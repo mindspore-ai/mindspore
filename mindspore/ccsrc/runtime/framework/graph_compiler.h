@@ -73,6 +73,11 @@ class GraphCompiler {
   void GetSingleOpInputTensors(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                const std::map<AnfNodePtr, size_t> &parameter_index,
                                const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
+  // Get one input tensor for single control op, such as bprop_cut.
+  TensorPtr GetSingleOpInputTensorByIndex(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
+                                          const std::map<AnfNodePtr, size_t> &parameter_index,
+                                          const std::vector<TensorPtr> &graph_inputs,
+                                          InputTensorInfo *input_tensor_info, size_t input_index);
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
   void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
