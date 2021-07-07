@@ -138,7 +138,7 @@ PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
       MS_LOG(ERROR) << "Sending getting metadata message to server " << stored_rank << " failed.";
       return get_metadata_rsp;
     }
-    get_metadata_rsp.ParseFromArray(get_meta_rsp_msg->data(), get_meta_rsp_msg->size());
+    get_metadata_rsp.ParseFromArray(get_meta_rsp_msg->data(), SizeToInt(get_meta_rsp_msg->size()));
     return get_metadata_rsp;
   }
 }
@@ -181,7 +181,7 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
   }
 
   PBMetadataWithName meta_with_name;
-  meta_with_name.ParseFromArray(message->data(), message->len());
+  meta_with_name.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = meta_with_name.name();
   MS_LOG(INFO) << "Update metadata for " << name;
 

@@ -81,7 +81,11 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;
     }
-    memcpy_s(tmp_recv_chunk.get(), chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
+    ret = memcpy_s(tmp_recv_chunk.get(), chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
+    if (ret != 0) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      return false;
+    }
 
     // Step 3: Reduce the data so we can overlap the time cost of send.
     for (size_t j = 0; j < chunk_sizes[recv_chunk_index]; j++) {
@@ -115,7 +119,11 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;
     }
-    memcpy_s(recv_chunk, chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
+    ret = memcpy_s(recv_chunk, chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
+    if (ret != 0) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      return false;
+    }
     if (!server_node_->Wait(send_req_id, 1)) {
       MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
       return false;
@@ -148,7 +156,11 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
         MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
         return false;
       }
-      memcpy_s(tmp_recv_buff.get(), count * sizeof(T), recv_str->data(), recv_str->size());
+      ret = memcpy_s(tmp_recv_buff.get(), count * sizeof(T), recv_str->data(), recv_str->size());
+      if (ret != 0) {
+        MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+        return false;
+      }
       for (size_t j = 0; j < count; j++) {
         output_buff[j] += tmp_recv_buff[j];
       }
@@ -182,7 +194,11 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;
     }
-    memcpy_s(output_buff, count * sizeof(T), recv_str->data(), recv_str->size());
+    ret = memcpy_s(output_buff, count * sizeof(T), recv_str->data(), recv_str->size());
+    if (ret != 0) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      return false;
+    }
   }
   MS_LOG(DEBUG) << "End broadcast.";
   return true;

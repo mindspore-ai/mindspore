@@ -30,6 +30,7 @@ namespace mindspore {
 namespace ps {
 namespace server {
 namespace kernel {
+constexpr uint32_t kPrintGetModelForEveryRetryTime = 50;
 class GetModelKernel : public RoundKernel {
  public:
   GetModelKernel() = default;
@@ -51,6 +52,9 @@ class GetModelKernel : public RoundKernel {
 
   // The time window of one iteration.
   size_t iteration_time_window_;
+
+  // The count of retrying because the iteration is not finished.
+  std::atomic<uint64_t> retry_count_;
 };
 }  // namespace kernel
 }  // namespace server

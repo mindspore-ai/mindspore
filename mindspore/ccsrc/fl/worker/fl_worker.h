@@ -35,7 +35,7 @@ using FBBuilder = flatbuffers::FlatBufferBuilder;
 constexpr uint32_t kTrainBeginStepNum = 1;
 constexpr uint32_t kTrainEndStepNum = 0;
 
-// The worker has to sleep for a while before the networking is completed.
+// The sleeping time of the worker thread before the networking is completed.
 constexpr uint32_t kWorkerSleepTimeForNetworking = 1000;
 
 // The time duration between retrying when server is in safemode.
@@ -59,7 +59,7 @@ class FLWorker {
   }
   void Run();
   void Finalize();
-  bool SendToServer(uint32_t server_rank, void *data, size_t size, core::TcpUserCommand command,
+  bool SendToServer(uint32_t server_rank, const void *data, size_t size, core::TcpUserCommand command,
                     std::shared_ptr<std::vector<unsigned char>> *output = nullptr);
 
   uint32_t server_num() const;
@@ -106,8 +106,7 @@ class FLWorker {
   uint16_t scheduler_port_;
   std::shared_ptr<core::WorkerNode> worker_node_;
 
-  // The worker standalone training step number before communicating with server. This used in hybrid training mode for
-  // now.
+  // The worker standalone training step number before communicating with server. This used in hybrid training mode.
   uint64_t worker_step_num_per_iteration_;
 
   // The iteration state is either running or completed.
@@ -115,7 +114,7 @@ class FLWorker {
   // kIterationRunning/kIterationCompleted. triggered by server.
   std::atomic<IterationState> server_iteration_state_;
 
-  // The variable represents the worker iteration state and should be changed by worker training process.
+  // This variable represents the worker iteration state and should be changed by worker training process.
   std::atomic<IterationState> worker_iteration_state_;
 
   // The flag that represents whether worker is in safemode, which is decided by both worker and server iteration state.

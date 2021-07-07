@@ -32,7 +32,7 @@ namespace server {
 namespace kernel {
 class PushWeightKernel : public RoundKernel {
  public:
-  PushWeightKernel() = default;
+  PushWeightKernel() : executor_(nullptr), local_rank_(0) {}
   ~PushWeightKernel() override = default;
 
   void InitKernel(size_t threshold_count) override;

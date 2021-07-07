@@ -39,14 +39,18 @@ void GetModelKernel::InitKernel(size_t) {
   }
 }
 
-bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                             const std::vector<AddressPtr> &outputs) {
-  MS_LOG(INFO) << "Launching GetModelKernel kernel.";
   void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
     return false;
+  }
+
+  ++retry_count_;
+  if (retry_count_.load() % kPrintGetModelForEveryRetryTime == 1) {
+    MS_LOG(INFO) << "Launching GetModelKernel retry count is " << retry_count_.load();
   }
 
   const schema::RequestGetModel *get_model_req = flatbuffers::GetRoot<schema::RequestGetModel>(req_data);
@@ -58,6 +62,7 @@ bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
 bool GetModelKernel::Reset() {
   MS_LOG(INFO) << "Get model kernel reset!";
   StopTimer();
+  retry_count_ = 0;
   return true;
 }
 
@@ -76,7 +81,9 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
                          "2. Worker has not push all the weights to servers.";
     BuildGetModelRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps,
                      std::to_string(next_req_time));
-    MS_LOG(WARNING) << reason;
+    if (retry_count_.load() % kPrintGetModelForEveryRetryTime == 1) {
+      MS_LOG(WARNING) << reason;
+    }
     return;
   }
 

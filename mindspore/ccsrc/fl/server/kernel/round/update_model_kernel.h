@@ -35,7 +35,7 @@ constexpr uint64_t kInitialDataSizeSum = 0;
 
 class UpdateModelKernel : public RoundKernel {
  public:
-  UpdateModelKernel() = default;
+  UpdateModelKernel() : executor_(nullptr), iteration_time_window_(0) {}
   ~UpdateModelKernel() override = default;
 
   void InitKernel(size_t threshold_count) override;

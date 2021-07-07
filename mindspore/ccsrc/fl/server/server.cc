@@ -388,23 +388,18 @@ void Server::ProcessAfterScalingOut() {
 
   if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
-    return;
   }
   if (!CollectiveOpsImpl::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
-    return;
   }
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
-    return;
   }
   if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
     MS_LOG(WARNING) << "Iteration reinitializing failed.";
-    return;
   }
   if (!Executor::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "Executor reinitializing failed.";
-    return;
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   safemode_ = false;
@@ -427,23 +422,18 @@ void Server::ProcessAfterScalingIn() {
   // If the server is not the one to be scaled in, reintialize modules and recover service.
   if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
-    return;
   }
   if (!CollectiveOpsImpl::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
-    return;
   }
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
-    return;
   }
   if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
     MS_LOG(WARNING) << "Iteration reinitializing failed.";
-    return;
   }
   if (!Executor::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "Executor reinitializing failed.";
-    return;
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   safemode_ = false;
