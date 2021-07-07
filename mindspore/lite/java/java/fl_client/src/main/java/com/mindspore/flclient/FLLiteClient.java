@@ -95,7 +95,7 @@ public class FLLiteClient {
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <epochs> from server: " + epochs));
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <batchSize> from server: " + batchSize));
         CipherPublicParams cipherPublicParams = flPlan.cipher();
-        String encryptLevel = EncryptLevel.NOT_ENCRYPT.toString();
+        String encryptLevel = cipherPublicParams.encryptType();
         localFLParameter.setEncryptLevel(encryptLevel);
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <encryptLevel> from server: " + encryptLevel));
         switch (localFLParameter.getEncryptLevel()) {
