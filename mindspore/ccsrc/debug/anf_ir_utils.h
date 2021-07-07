@@ -65,7 +65,7 @@ struct ParamPtrHasher {
 class AnfExporter {
  public:
   explicit AnfExporter(bool export_used = true, bool check_integrity = false)
-      : param_index(-1), export_used_(export_used), check_integrity_(check_integrity) {
+      : param_index(1), export_used_(export_used), check_integrity_(check_integrity) {
     func_graph_set.clear();
     exported.clear();
   }
@@ -90,17 +90,20 @@ class AnfExporter {
   std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph);
   std::string GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                              const std::map<AnfNodePtr, int> &apply_map);
-  virtual void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
   void OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters,
                         OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> *param_map);
 
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
-  virtual void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
   void OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph);
+
+  OrderedMap<FuncGraphPtr, OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>> exported;
+
+ private:
+  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
+  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
 
   int param_index;
   OrderedSet<FuncGraphPtr> func_graph_set{};
-  OrderedMap<FuncGraphPtr, OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>> exported;
   bool export_used_ = true;       // whether export function graphs used in current exporting function graph
   bool check_integrity_ = false;  // whether check integrity or not, when dumping ir for loading, must set it to true
   TaggedNodeMap tagged_cnodes_;
