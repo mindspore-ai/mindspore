@@ -42,7 +42,6 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
       float16_t *col_major_gemm_input = col_major_input + task_id * deep * tile_n;
       size_t packed_input_size = deep * tile_n * sizeof(float16_t);
       memset(gemm_input, 0, packed_input_size);
-      memset(col_major_gemm_input, 0, packed_input_size);
       Im2ColPackUnitFp16(input_data + in_batch_offset, conv_param, gemm_input, real_cal_num, start_index);
 
       int out_offset = thread_id * tile_n * out_channel + out_batch_offset;
