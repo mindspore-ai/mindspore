@@ -91,7 +91,7 @@ bool HttpServer::InitServer() {
 
   result = ::bind(fd_, (struct sockaddr *)&addr, sizeof(addr));
   if (result < 0) {
-    MS_LOG(ERROR) << "Bind ip:" << server_address_ << " port:" << server_port_ << "failed!";
+    MS_LOG(ERROR) << "Bind ip:" << server_address_ << " port:" << server_port_ << " failed!";
     close(fd_);
     fd_ = -1;
     return false;
@@ -99,7 +99,7 @@ bool HttpServer::InitServer() {
 
   result = ::listen(fd_, backlog_);
   if (result < 0) {
-    MS_LOG(ERROR) << "Listen ip:" << server_address_ << " port:" << server_port_ << "failed!";
+    MS_LOG(ERROR) << "Listen ip:" << server_address_ << " port:" << server_port_ << " failed!";
     close(fd_);
     fd_ = -1;
     return false;
