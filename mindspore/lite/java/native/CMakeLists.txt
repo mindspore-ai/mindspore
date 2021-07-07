@@ -3,7 +3,7 @@ project(Lite-java)
 
 set(BUILD_LITE "on")
 
-if(PLATFORM_ARM32 OR PLATFORM_ARM32)
+if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(PLATFORM_ARM "on")
     add_compile_definitions(PLATFORM_ARM)
 endif()

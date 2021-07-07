@@ -27,27 +27,6 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
   }
 
   auto &cpu_device_ctx = context->device_list_[0];
-  switch (device_type) {
-    case 0:
-      context->device_list_[0].device_type_ = mindspore::lite::DT_CPU;
-      break;
-    case 1:  // DT_GPU
-    {
-      mindspore::lite::DeviceContext gpu_device_ctx{mindspore::lite::DT_GPU, {false}};
-      gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = enable_float16;
-      context->device_list_.push_back(gpu_device_ctx);
-      break;
-    }
-    case 2:  // DT_NPU
-      MS_LOGE("We only support CPU and GPU now.");
-      delete context;
-      return (jlong) nullptr;
-    default:
-      MS_LOGE("Invalid device_type : %d", device_type);
-      delete context;
-      return (jlong) nullptr;
-  }
-
   switch (cpu_bind_mode) {
     case 0:
       cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::NO_BIND;
@@ -63,9 +42,31 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
       delete context;
       return (jlong) nullptr;
   }
-
-  cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = enable_float16;
-
+  if (enable_float16) {
+    cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = true;
+  }
+  switch (device_type) {
+    case 0:
+      context->device_list_[0].device_type_ = mindspore::lite::DT_CPU;
+      break;
+    case 1:  // DT_GPU
+    {
+      mindspore::lite::DeviceContext gpu_device_ctx{mindspore::lite::DT_GPU, {false}};
+      if (enable_float16) {
+        gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = true;
+      }
+      context->device_list_.push_back(gpu_device_ctx);
+      break;
+    }
+    case 2:  // DT_NPU
+      MS_LOGE("We only support CPU and GPU now.");
+      delete context;
+      return (jlong) nullptr;
+    default:
+      MS_LOGE("Invalid device_type : %d", device_type);
+      delete context;
+      return (jlong) nullptr;
+  }
   context->thread_num_ = thread_num;
   return (jlong)context;
 }
