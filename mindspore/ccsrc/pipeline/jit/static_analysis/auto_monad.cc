@@ -566,8 +566,17 @@ class SideEffectFinder {
       // Pop out tuple index.
       auto top_index = tuple_indexes->top();
       tuple_indexes->pop();
-      // Follow the tuple item according the index.
-      size_t input_index = static_cast<size_t>(top_index) + 1;
+      size_t input_index = 0;
+      // Support tuple index is negative
+      if (top_index < 0) {
+        if (cnode->size() + top_index < 0) {
+          MS_LOG(EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
+        }
+        input_index = static_cast<size_t>(cnode->size() + top_index);
+      } else {
+        // Follow the tuple item according the index.
+        input_index = static_cast<size_t>(top_index) + 1;
+      }
       if (input_index >= cnode->size()) {
         MS_LOG(EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
       }
