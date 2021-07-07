@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_PUSH_WEIGHT_KERNEL_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_PUSH_WEIGHT_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_PUSH_WEIGHT_KERNEL_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_PUSH_WEIGHT_KERNEL_H_
 
 #include <map>
 #include <memory>
@@ -27,19 +27,19 @@
 #include "fl/server/executor.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 class PushWeightKernel : public RoundKernel {
  public:
-  PushWeightKernel() = default;
+  PushWeightKernel() : executor_(nullptr), local_rank_(0) {}
   ~PushWeightKernel() override = default;
 
   void InitKernel(size_t threshold_count) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs);
   bool Reset() override;
-  void OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) override;
+  void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) override;
 
  private:
   bool PushWeight(std::shared_ptr<FBBuilder> fbb, const schema::RequestPushWeight *push_weight_req);
@@ -52,6 +52,6 @@ class PushWeightKernel : public RoundKernel {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_PUSH_WEIGHT_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_PUSH_WEIGHT_KERNEL_H_

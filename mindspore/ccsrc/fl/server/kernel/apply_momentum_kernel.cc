@@ -17,7 +17,7 @@
 #include "fl/server/kernel/apply_momentum_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 REG_OPTIMIZER_KERNEL(ApplyMomentum,
@@ -30,5 +30,5 @@ REG_OPTIMIZER_KERNEL(ApplyMomentum,
                      ApplyMomentumKernel, float)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

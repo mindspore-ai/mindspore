@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_CLIENT_LIST_KERNEL_H
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_CLIENT_LIST_KERNEL_H
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_CLIENT_LIST_KERNEL_H
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_CLIENT_LIST_KERNEL_H
 #include <string>
 #include <vector>
 #include <memory>
@@ -26,7 +26,7 @@
 #include "fl/server/executor.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 class ClientListKernel : public RoundKernel {
@@ -50,6 +50,6 @@ class ClientListKernel : public RoundKernel {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_CLIENT_LIST_KERNEL_H
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_CLIENT_LIST_KERNEL_H

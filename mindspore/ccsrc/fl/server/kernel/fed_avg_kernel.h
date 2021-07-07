@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_FED_AVG_KERNEL_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_FED_AVG_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_FED_AVG_KERNEL_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_FED_AVG_KERNEL_H_
 
 #include <memory>
 #include <string>
@@ -31,7 +31,7 @@
 #include "fl/server/kernel/aggregation_kernel_factory.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 // The implementation for the federated average. We do weighted average for the weights. The uploaded weights from
@@ -42,7 +42,13 @@ namespace kernel {
 template <typename T, typename S>
 class FedAvgKernel : public AggregationKernel {
  public:
-  FedAvgKernel() : participated_(false) {}
+  FedAvgKernel()
+      : cnode_weight_idx_(0),
+        weight_addr_(nullptr),
+        data_size_addr_(nullptr),
+        new_weight_addr_(nullptr),
+        new_data_size_addr_(nullptr),
+        participated_(false) {}
   ~FedAvgKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override {
@@ -68,13 +74,13 @@ class FedAvgKernel : public AggregationKernel {
       AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, cnode_weight_idx_), 0).first;
     MS_EXCEPTION_IF_NULL(weight_node);
     name_ = cnode_name + "." + weight_node->fullname_with_scope();
-    first_cnt_handler_ = [&](std::shared_ptr<core::MessageHandler>) {
+    first_cnt_handler_ = [&](std::shared_ptr<ps::core::MessageHandler>) {
       std::unique_lock<std::mutex> lock(weight_mutex_);
       if (!participated_) {
         ClearWeightAndDataSize();
       }
     };
-    last_cnt_handler_ = [&](std::shared_ptr<core::MessageHandler>) {
+    last_cnt_handler_ = [&](std::shared_ptr<ps::core::MessageHandler>) {
       T *weight_addr = reinterpret_cast<T *>(weight_addr_->addr);
       size_t weight_size = weight_addr_->size;
       S *data_size_addr = reinterpret_cast<S *>(data_size_addr_->addr);
@@ -193,7 +199,7 @@ class FedAvgKernel : public AggregationKernel {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_FED_AVG_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_FED_AVG_KERNEL_H_

@@ -19,7 +19,7 @@
 #include <memory>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void ShareSecretsKernel::InitKernel(size_t) {
@@ -101,5 +101,5 @@ bool ShareSecretsKernel::Reset() {
 REG_ROUND_KERNEL(shareSecrets, ShareSecretsKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

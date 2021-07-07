@@ -17,7 +17,7 @@
 #include "fl/server/consistent_hash_ring.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 bool ConsistentHashRing::Insert(uint32_t rank) {
   for (uint32_t i = 0; i < virtual_node_num_; i++) {
@@ -53,5 +53,5 @@ uint32_t ConsistentHashRing::Find(const std::string &key) {
   return iterator->second;
 }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

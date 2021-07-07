@@ -20,7 +20,7 @@
 #include <memory>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
@@ -34,17 +34,17 @@ void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
     MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
     return;
   }
-  auto last_cnt_handler = [&](std::shared_ptr<core::MessageHandler>) {
+  auto last_cnt_handler = [&](std::shared_ptr<ps::core::MessageHandler>) {
     MS_LOG(INFO) << "start FinishIteration";
     FinishIteration();
     MS_LOG(INFO) << "end FinishIteration";
     return;
   };
-  auto first_cnt_handler = [&](std::shared_ptr<core::MessageHandler>) { return; };
+  auto first_cnt_handler = [&](std::shared_ptr<ps::core::MessageHandler>) { return; };
   name_unmask_ = "UnMaskKernel";
   MS_LOG(INFO) << "ReconstructSecretsKernel Init, ITERATION NUMBER IS : "
                << LocalMetaStore::GetInstance().curr_iter_num();
-  DistributedCountService::GetInstance().RegisterCounter(name_unmask_, PSContext::instance()->initial_server_num(),
+  DistributedCountService::GetInstance().RegisterCounter(name_unmask_, ps::PSContext::instance()->initial_server_num(),
                                                          {first_cnt_handler, last_cnt_handler});
 }
 
@@ -134,9 +134,9 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
   return true;
 }
 
-void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) {
+void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
-  if (PSContext::instance()->encrypt_type() == kPWEncryptType) {
+  if (ps::PSContext::instance()->encrypt_type() == ps::kPWEncryptType) {
     while (!Executor::GetInstance().IsAllWeightAggregationDone()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
@@ -164,5 +164,5 @@ bool ReconstructSecretsKernel::Reset() {
 REG_ROUND_KERNEL(reconstructSecrets, ReconstructSecretsKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

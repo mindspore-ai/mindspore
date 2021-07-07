@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_DISTRIBUTED_META_STORE_H_
-#define MINDSPORE_CCSRC_PS_SERVER_DISTRIBUTED_META_STORE_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_DISTRIBUTED_META_STORE_H_
+#define MINDSPORE_CCSRC_FL_SERVER_DISTRIBUTED_META_STORE_H_
 
 #include <string>
 #include <memory>
@@ -27,7 +27,7 @@
 #include "fl/server/consistent_hash_ring.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 constexpr auto kModuleDistributedMetadataStore = "DistributedMetadataStore";
 // This class is used for distributed metadata storage using consistent hash. All metadata is distributedly
@@ -44,10 +44,10 @@ class DistributedMetadataStore {
   }
 
   // Initialize metadata storage with the server node because communication is needed.
-  void Initialize(const std::shared_ptr<core::ServerNode> &server_node);
+  void Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node);
 
   // Register callbacks for the server to handle update/get metadata messages from other servers.
-  void RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator);
+  void RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator);
 
   // Register metadata for the name with the initial value. This method should be only called once for each name.
   void RegisterMetadata(const std::string &name, const PBMetadata &meta);
@@ -65,7 +65,13 @@ class DistributedMetadataStore {
   bool ReInitForScaling();
 
  private:
-  DistributedMetadataStore() = default;
+  DistributedMetadataStore()
+      : server_node_(nullptr),
+        communicator_(nullptr),
+        local_rank_(0),
+        server_num_(0),
+        router_(nullptr),
+        metadata_({}) {}
   ~DistributedMetadataStore() = default;
   DistributedMetadataStore(const DistributedMetadataStore &) = delete;
   DistributedMetadataStore &operator=(const DistributedMetadataStore &) = delete;
@@ -74,17 +80,17 @@ class DistributedMetadataStore {
   void InitHashRing();
 
   // Callback for updating metadata request sent to the server.
-  void HandleUpdateMetadataRequest(const std::shared_ptr<core::MessageHandler> &message);
+  void HandleUpdateMetadataRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Callback for getting metadata request sent to the server.
-  void HandleGetMetadataRequest(const std::shared_ptr<core::MessageHandler> &message);
+  void HandleGetMetadataRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Do updating metadata in the server where the metadata for the name is stored.
   bool DoUpdateMetadata(const std::string &name, const PBMetadata &meta);
 
   // Members for the communication between servers.
-  std::shared_ptr<core::ServerNode> server_node_;
-  std::shared_ptr<core::TcpCommunicator> communicator_;
+  std::shared_ptr<ps::core::ServerNode> server_node_;
+  std::shared_ptr<ps::core::TcpCommunicator> communicator_;
   uint32_t local_rank_;
   uint32_t server_num_;
 
@@ -100,6 +106,6 @@ class DistributedMetadataStore {
   std::unordered_map<std::string, std::mutex> mutex_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_DISTRIBUTED_META_STORE_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_DISTRIBUTED_META_STORE_H_

@@ -45,13 +45,13 @@ class FusedPushWeightKernel : public CPUKernel {
       return false;
     }
 
-    std::shared_ptr<ps::FBBuilder> fbb = std::make_shared<ps::FBBuilder>();
+    std::shared_ptr<fl::FBBuilder> fbb = std::make_shared<fl::FBBuilder>();
     MS_EXCEPTION_IF_NULL(fbb);
 
     total_iteration_++;
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
-    if (total_iteration_ % ps::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
-        ps::kTrainBeginStepNum) {
+    if (total_iteration_ % fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
+        fl::kTrainBeginStepNum) {
       return true;
     }
 
@@ -67,17 +67,17 @@ class FusedPushWeightKernel : public CPUKernel {
     }
 
     // The server number may change after scaling in/out.
-    for (uint32_t i = 0; i < ps::worker::FLWorker::GetInstance().server_num(); i++) {
+    for (uint32_t i = 0; i < fl::worker::FLWorker::GetInstance().server_num(); i++) {
       std::shared_ptr<std::vector<unsigned char>> push_weight_rsp_msg = nullptr;
       const schema::ResponsePushWeight *push_weight_rsp = nullptr;
       int retcode = schema::ResponseCode_SucNotReady;
       while (retcode == schema::ResponseCode_SucNotReady) {
-        if (!ps::worker::FLWorker::GetInstance().SendToServer(i, fbb->GetBufferPointer(), fbb->GetSize(),
+        if (!fl::worker::FLWorker::GetInstance().SendToServer(i, fbb->GetBufferPointer(), fbb->GetSize(),
                                                               ps::core::TcpUserCommand::kPushWeight,
                                                               &push_weight_rsp_msg)) {
           MS_LOG(WARNING) << "Sending request for FusedPushWeight to server " << i
                           << " failed. This iteration is dropped.";
-          ps::worker::FLWorker::GetInstance().SetIterationCompleted();
+          fl::worker::FLWorker::GetInstance().SetIterationCompleted();
           return true;
         }
         MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
@@ -105,7 +105,7 @@ class FusedPushWeightKernel : public CPUKernel {
     }
 
     MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
-    ps::worker::FLWorker::GetInstance().SetIterationCompleted();
+    fl::worker::FLWorker::GetInstance().SetIterationCompleted();
     return true;
   }
 
@@ -143,7 +143,7 @@ class FusedPushWeightKernel : public CPUKernel {
   void InitSizeLists() { return; }
 
  private:
-  bool BuildPushWeightReq(std::shared_ptr<ps::FBBuilder> fbb, const std::vector<AddressPtr> &weights) {
+  bool BuildPushWeightReq(std::shared_ptr<fl::FBBuilder> fbb, const std::vector<AddressPtr> &weights) {
     std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;
     for (size_t i = 0; i < weight_full_names_.size(); i++) {
       const std::string &weight_name = weight_full_names_[i];

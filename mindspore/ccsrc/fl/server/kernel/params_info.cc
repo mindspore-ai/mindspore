@@ -18,7 +18,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 ParamsInfo &ParamsInfo::AddInputNameType(const std::string &name, TypeId type) {
@@ -64,5 +64,5 @@ const std::vector<std::string> &ParamsInfo::workspace_names() const { return wor
 const std::vector<std::string> &ParamsInfo::outputs_names() const { return outputs_names_; }
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

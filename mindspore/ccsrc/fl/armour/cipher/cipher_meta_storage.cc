@@ -21,16 +21,16 @@ namespace armour {
 
 void CipherMetaStorage::GetClientSharesFromServer(
   const char *list_name, std::map<std::string, std::vector<clientshare_str>> *clients_shares_list) {
-  const ps::PBMetadata &clients_shares_pb_out =
-    ps::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
-  const ps::ClientShares &clients_shares_pb = clients_shares_pb_out.client_shares();
+  const fl::PBMetadata &clients_shares_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
+  const fl::ClientShares &clients_shares_pb = clients_shares_pb_out.client_shares();
   auto iter = clients_shares_pb.client_secret_shares().begin();
   for (; iter != clients_shares_pb.client_secret_shares().end(); ++iter) {
     std::string fl_id = iter->first;
-    const ps::SharesPb &shares_pb = iter->second;
+    const fl::SharesPb &shares_pb = iter->second;
     std::vector<clientshare_str> encrpted_shares_new;
     for (int index_shares = 0; index_shares < shares_pb.clientsharestrs_size(); ++index_shares) {
-      const ps::ClientShareStr &client_share_str_pb = shares_pb.clientsharestrs(index_shares);
+      const fl::ClientShareStr &client_share_str_pb = shares_pb.clientsharestrs(index_shares);
       clientshare_str new_clientshare;
       new_clientshare.fl_id = client_share_str_pb.fl_id();
       new_clientshare.index = client_share_str_pb.index();
@@ -42,8 +42,8 @@ void CipherMetaStorage::GetClientSharesFromServer(
 }
 
 void CipherMetaStorage::GetClientListFromServer(const char *list_name, std::vector<std::string> *clients_list) {
-  const ps::PBMetadata &client_list_pb_out = ps::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
-  const ps::UpdateModelClientList &client_list_pb = client_list_pb_out.client_list();
+  const fl::PBMetadata &client_list_pb_out = fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
+  const fl::UpdateModelClientList &client_list_pb = client_list_pb_out.client_list();
   for (int i = 0; i < client_list_pb.fl_id_size(); ++i) {
     std::string fl_id = client_list_pb.fl_id(i);
     clients_list->push_back(fl_id);
@@ -52,14 +52,14 @@ void CipherMetaStorage::GetClientListFromServer(const char *list_name, std::vect
 
 void CipherMetaStorage::GetClientKeysFromServer(
   const char *list_name, std::map<std::string, std::vector<std::vector<unsigned char>>> *clients_keys_list) {
-  const ps::PBMetadata &clients_keys_pb_out =
-    ps::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
-  const ps::ClientKeys &clients_keys_pb = clients_keys_pb_out.client_keys();
+  const fl::PBMetadata &clients_keys_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
+  const fl::ClientKeys &clients_keys_pb = clients_keys_pb_out.client_keys();
 
   for (auto iter = clients_keys_pb.client_keys().begin(); iter != clients_keys_pb.client_keys().end(); ++iter) {
     // const PairClientKeys & pair_client_keys_pb = clients_keys_pb.client_keys(i);
     std::string fl_id = iter->first;
-    ps::KeysPb keys_pb = iter->second;
+    fl::KeysPb keys_pb = iter->second;
     std::vector<unsigned char> cpk(keys_pb.key(0).begin(), keys_pb.key(0).end());
     std::vector<unsigned char> spk(keys_pb.key(1).begin(), keys_pb.key(1).end());
     std::vector<std::vector<unsigned char>> cur_keys;
@@ -70,9 +70,9 @@ void CipherMetaStorage::GetClientKeysFromServer(
 }
 
 bool CipherMetaStorage::GetClientNoisesFromServer(const char *list_name, std::vector<float> *cur_public_noise) {
-  const ps::PBMetadata &clients_noises_pb_out =
-    ps::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
-  const ps::ClientNoises &clients_noises_pb = clients_noises_pb_out.client_noises();
+  const fl::PBMetadata &clients_noises_pb_out =
+    fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
+  const fl::ClientNoises &clients_noises_pb = clients_noises_pb_out.client_noises();
   while (clients_noises_pb.has_one_client_noises() == false) {
     MS_LOG(INFO) << "GetClientNoisesFromServer NULL.";
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -83,8 +83,8 @@ bool CipherMetaStorage::GetClientNoisesFromServer(const char *list_name, std::ve
 }
 
 bool CipherMetaStorage::GetPrimeFromServer(const char *prime_name, unsigned char *prime) {
-  const ps::PBMetadata &prime_pb_out = ps::server::DistributedMetadataStore::GetInstance().GetMetadata(prime_name);
-  ps::Prime prime_pb(prime_pb_out.prime());
+  const fl::PBMetadata &prime_pb_out = fl::server::DistributedMetadataStore::GetInstance().GetMetadata(prime_name);
+  fl::Prime prime_pb(prime_pb_out.prime());
   std::string str = *(prime_pb.mutable_prime());
   MS_LOG(INFO) << "get prime from metastorage :" << str;
 
@@ -99,20 +99,20 @@ bool CipherMetaStorage::GetPrimeFromServer(const char *prime_name, unsigned char
 
 bool CipherMetaStorage::UpdateClientToServer(const char *list_name, const std::string &fl_id) {
   bool retcode = true;
-  ps::FLId fl_id_pb;
+  fl::FLId fl_id_pb;
   fl_id_pb.set_fl_id(fl_id);
-  ps::PBMetadata client_pb;
+  fl::PBMetadata client_pb;
   client_pb.mutable_fl_id()->MergeFrom(fl_id_pb);
-  retcode = ps::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_pb);
+  retcode = fl::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_pb);
   return retcode;
 }
 void CipherMetaStorage::RegisterPrime(const char *list_name, const std::string &prime) {
   MS_LOG(INFO) << "register prime: " << prime;
-  ps::Prime prime_id_pb;
+  fl::Prime prime_id_pb;
   prime_id_pb.set_prime(prime);
-  ps::PBMetadata prime_pb;
+  fl::PBMetadata prime_pb;
   prime_pb.mutable_prime()->MergeFrom(prime_id_pb);
-  ps::server::DistributedMetadataStore::GetInstance().RegisterMetadata(list_name, prime_pb);
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(list_name, prime_pb);
 }
 
 bool CipherMetaStorage::UpdateClientKeyToServer(const char *list_name, const std::string &fl_id,
@@ -123,25 +123,25 @@ bool CipherMetaStorage::UpdateClientKeyToServer(const char *list_name, const std
     return false;
   }
   // update new item to memory server.
-  ps::KeysPb keys;
+  fl::KeysPb keys;
   keys.add_key()->assign(cur_public_key[0].begin(), cur_public_key[0].end());
   keys.add_key()->assign(cur_public_key[1].begin(), cur_public_key[1].end());
-  ps::PairClientKeys pair_client_keys_pb;
+  fl::PairClientKeys pair_client_keys_pb;
   pair_client_keys_pb.set_fl_id(fl_id);
   pair_client_keys_pb.mutable_client_keys()->MergeFrom(keys);
-  ps::PBMetadata client_and_keys_pb;
+  fl::PBMetadata client_and_keys_pb;
   client_and_keys_pb.mutable_pair_client_keys()->MergeFrom(pair_client_keys_pb);
-  retcode = ps::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_and_keys_pb);
+  retcode = fl::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_and_keys_pb);
   return retcode;
 }
 
 bool CipherMetaStorage::UpdateClientNoiseToServer(const char *list_name, const std::vector<float> &cur_public_noise) {
   // update new item to memory server.
-  ps::OneClientNoises noises_pb;
+  fl::OneClientNoises noises_pb;
   *noises_pb.mutable_noise() = {cur_public_noise.begin(), cur_public_noise.end()};
-  ps::PBMetadata client_noises_pb;
+  fl::PBMetadata client_noises_pb;
   client_noises_pb.mutable_one_client_noises()->MergeFrom(noises_pb);
-  return ps::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_noises_pb);
+  return fl::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_noises_pb);
 }
 
 bool CipherMetaStorage::UpdateClientShareToServer(
@@ -149,10 +149,10 @@ bool CipherMetaStorage::UpdateClientShareToServer(
   const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientShare>> *shares) {
   bool retcode = true;
   int size_shares = shares->size();
-  ps::SharesPb shares_pb;
+  fl::SharesPb shares_pb;
   for (int index = 0; index < size_shares; ++index) {
     // new item
-    ps::ClientShareStr *client_share_str_new_p = shares_pb.add_clientsharestrs();
+    fl::ClientShareStr *client_share_str_new_p = shares_pb.add_clientsharestrs();
     std::string fl_id_new = (*shares)[index]->fl_id()->str();
     int index_new = (*shares)[index]->index();
     auto share = (*shares)[index]->share();
@@ -160,32 +160,32 @@ bool CipherMetaStorage::UpdateClientShareToServer(
     client_share_str_new_p->set_fl_id(fl_id_new);
     client_share_str_new_p->set_index(index_new);
   }
-  ps::PairClientShares pair_client_shares_pb;
+  fl::PairClientShares pair_client_shares_pb;
   pair_client_shares_pb.set_fl_id(fl_id);
   pair_client_shares_pb.mutable_client_shares()->MergeFrom(shares_pb);
-  ps::PBMetadata client_and_shares_pb;
+  fl::PBMetadata client_and_shares_pb;
   client_and_shares_pb.mutable_pair_client_shares()->MergeFrom(pair_client_shares_pb);
-  retcode = ps::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_and_shares_pb);
+  retcode = fl::server::DistributedMetadataStore::GetInstance().UpdateMetadata(list_name, client_and_shares_pb);
   return retcode;
 }
 
 void CipherMetaStorage::RegisterClass() {
-  ps::PBMetadata exchange_kyes_client_list;
-  ps::server::DistributedMetadataStore::GetInstance().RegisterMetadata(ps::server::kCtxExChangeKeysClientList,
+  fl::PBMetadata exchange_kyes_client_list;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxExChangeKeysClientList,
                                                                        exchange_kyes_client_list);
-  ps::PBMetadata clients_keys;
-  ps::server::DistributedMetadataStore::GetInstance().RegisterMetadata(ps::server::kCtxClientsKeys, clients_keys);
-  ps::PBMetadata reconstruct_client_list;
-  ps::server::DistributedMetadataStore::GetInstance().RegisterMetadata(ps::server::kCtxReconstructClientList,
+  fl::PBMetadata clients_keys;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxClientsKeys, clients_keys);
+  fl::PBMetadata reconstruct_client_list;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxReconstructClientList,
                                                                        reconstruct_client_list);
-  ps::PBMetadata clients_reconstruct_shares;
-  ps::server::DistributedMetadataStore::GetInstance().RegisterMetadata(ps::server::kCtxClientsReconstructShares,
+  fl::PBMetadata clients_reconstruct_shares;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxClientsReconstructShares,
                                                                        clients_reconstruct_shares);
-  ps::PBMetadata share_secretes_client_list;
-  ps::server::DistributedMetadataStore::GetInstance().RegisterMetadata(ps::server::kCtxShareSecretsClientList,
+  fl::PBMetadata share_secretes_client_list;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxShareSecretsClientList,
                                                                        share_secretes_client_list);
-  ps::PBMetadata clients_encrypt_shares;
-  ps::server::DistributedMetadataStore::GetInstance().RegisterMetadata(ps::server::kCtxClientsEncryptedShares,
+  fl::PBMetadata clients_encrypt_shares;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxClientsEncryptedShares,
                                                                        clients_encrypt_shares);
 }
 }  // namespace armour

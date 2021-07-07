@@ -26,7 +26,7 @@
 #endif
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void StartFLJobKernel::InitKernel(size_t) {
@@ -34,7 +34,7 @@ void StartFLJobKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
-  iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
+  iter_next_req_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
 
   executor_ = &Executor::GetInstance();
@@ -49,7 +49,7 @@ void StartFLJobKernel::InitKernel(size_t) {
   return;
 }
 
-bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Launching StartFLJobKernel kernel.";
   if (inputs.size() != 1 || outputs.size() != 1) {
@@ -113,7 +113,7 @@ bool StartFLJobKernel::Reset() {
   return true;
 }
 
-void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &) {
+void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
   iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
   // The first startFLJob request means a new iteration starts running.
@@ -133,6 +133,7 @@ bool StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuild
 }
 
 DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req) {
+  RETURN_IF_NULL(start_fl_job_req, {});
   std::string fl_name = start_fl_job_req->fl_name()->str();
   std::string fl_id = start_fl_job_req->fl_id()->str();
   int data_size = start_fl_job_req->data_size();
@@ -141,7 +142,7 @@ DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *st
   DeviceMeta device_meta;
   device_meta.set_fl_name(fl_name);
   device_meta.set_fl_id(fl_id);
-  device_meta.set_data_size(data_size);
+  device_meta.set_data_size(IntToSize(data_size));
   return device_meta;
 }
 
@@ -154,7 +155,7 @@ bool StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
   }
   if (!ret) {
     BuildStartFLJobRsp(
-      fbb, schema::ResponseCode_NotSelected, reason, false,
+      fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
   }
@@ -163,6 +164,7 @@ bool StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
 
 bool StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                           const schema::RequestFLJob *start_fl_job_req) {
+  RETURN_IF_NULL(start_fl_job_req, false);
   if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str())) {
     std::string reason = "Counting start fl job request failed. Please retry later.";
     BuildStartFLJobRsp(
@@ -192,8 +194,8 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
                                           std::map<std::string, AddressPtr> feature_maps) {
   auto fbs_reason = fbb->CreateString(reason);
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
-  auto fbs_server_mode = fbb->CreateString(PSContext::instance()->server_mode());
-  auto fbs_fl_name = fbb->CreateString(PSContext::instance()->fl_name());
+  auto fbs_server_mode = fbb->CreateString(ps::PSContext::instance()->server_mode());
+  auto fbs_fl_name = fbb->CreateString(ps::PSContext::instance()->fl_name());
 
 #ifdef ENABLE_ARMOUR
   auto *param = armour::CipherInit::GetInstance().GetPublicParams();
@@ -204,7 +206,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   float dp_eps = param->dp_eps;
   float dp_delta = param->dp_delta;
   float dp_norm_clip = param->dp_norm_clip;
-  auto encrypt_type = fbb->CreateString(PSContext::instance()->encrypt_type());
+  auto encrypt_type = fbb->CreateString(ps::PSContext::instance()->encrypt_type());
 
   auto cipher_public_params =
     schema::CreateCipherPublicParams(*fbb.get(), t, p, g, prime, dp_eps, dp_delta, dp_norm_clip, encrypt_type);
@@ -213,10 +215,10 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   schema::FLPlanBuilder fl_plan_builder(*(fbb.get()));
   fl_plan_builder.add_fl_name(fbs_fl_name);
   fl_plan_builder.add_server_mode(fbs_server_mode);
-  fl_plan_builder.add_iterations(PSContext::instance()->fl_iteration_num());
-  fl_plan_builder.add_epochs(PSContext::instance()->client_epoch_num());
-  fl_plan_builder.add_mini_batch(PSContext::instance()->client_batch_size());
-  fl_plan_builder.add_lr(PSContext::instance()->client_learning_rate());
+  fl_plan_builder.add_iterations(ps::PSContext::instance()->fl_iteration_num());
+  fl_plan_builder.add_epochs(ps::PSContext::instance()->client_epoch_num());
+  fl_plan_builder.add_mini_batch(ps::PSContext::instance()->client_batch_size());
+  fl_plan_builder.add_lr(ps::PSContext::instance()->client_learning_rate());
 #ifdef ENABLE_ARMOUR
   fl_plan_builder.add_cipher(cipher_public_params);
 #endif
@@ -235,7 +237,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   schema::ResponseFLJobBuilder rsp_fl_job_builder(*(fbb.get()));
   rsp_fl_job_builder.add_retcode(retcode);
   rsp_fl_job_builder.add_reason(fbs_reason);
-  rsp_fl_job_builder.add_iteration(LocalMetaStore::GetInstance().curr_iter_num());
+  rsp_fl_job_builder.add_iteration(SizeToInt(LocalMetaStore::GetInstance().curr_iter_num()));
   rsp_fl_job_builder.add_is_selected(is_selected);
   rsp_fl_job_builder.add_next_req_time(fbs_next_req_time);
   rsp_fl_job_builder.add_fl_plan_config(fbs_fl_plan);
@@ -248,5 +250,5 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
 REG_ROUND_KERNEL(startFLJob, StartFLJobKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

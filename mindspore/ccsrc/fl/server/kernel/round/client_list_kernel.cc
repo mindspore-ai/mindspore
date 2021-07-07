@@ -22,7 +22,7 @@
 #include "schema/cipher_generated.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void ClientListKernel::InitKernel(size_t) {
@@ -150,7 +150,7 @@ bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
   MS_LOG(INFO) << "client_list_kernel success time is : " << duration;
   return true;
-}  // namespace ps
+}  // namespace fl
 
 bool ClientListKernel::Reset() {
   MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
@@ -196,5 +196,5 @@ void ClientListKernel::BuildClientListRsp(std::shared_ptr<server::FBBuilder> cli
 REG_ROUND_KERNEL(getClientList, ClientListKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

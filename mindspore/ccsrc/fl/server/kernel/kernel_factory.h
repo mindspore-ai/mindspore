@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_KERNEL_FACTORY_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_KERNEL_FACTORY_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_KERNEL_FACTORY_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_KERNEL_FACTORY_H_
 
 #include <memory>
 #include <string>
@@ -26,7 +26,7 @@
 #include "fl/server/kernel/params_info.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 // KernelFactory is used to select and build kernels in server. It's the base class of OptimizerKernelFactory
@@ -87,6 +87,6 @@ class KernelFactory {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_KERNEL_FACTORY_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_KERNEL_FACTORY_H_

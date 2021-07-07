@@ -21,7 +21,7 @@
 #include "fl/server/executor.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 void ModelStore::Initialize(uint32_t max_count) {
   if (!Executor::GetInstance().initialized()) {
@@ -155,5 +155,5 @@ size_t ModelStore::ComputeModelSize() {
   return model_size;
 }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
