@@ -28,11 +28,13 @@ class DatasetCache {
  public:
   virtual Status Build() = 0;
   virtual Status ValidateParams() = 0;
-  virtual Status CreateCacheOp(int num_workers, std::shared_ptr<DatasetOp> *ds_op) = 0;
+  virtual Status CreateCacheOp(int32_t num_workers, int32_t connector_queue_size, std::shared_ptr<SamplerObj> sampler,
+                               std::shared_ptr<DatasetOp> *ds) = 0;
+  virtual Status CreateCacheLookupOp(int32_t num_workers, int32_t connector_queue_size,
+                                     std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetOp> *ds) = 0;
+  virtual Status CreateCacheMergeOp(int32_t num_workers, int32_t connector_queue_size,
+                                    std::shared_ptr<DatasetOp> *ds) = 0;
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
-  virtual Status CreateCacheLookupOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds,
-                                     std::shared_ptr<SamplerObj> sampler) = 0;
-  virtual Status CreateCacheMergeOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) = 0;
 };
 }  // namespace mindspore::dataset
 

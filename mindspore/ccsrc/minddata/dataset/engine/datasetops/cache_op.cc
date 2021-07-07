@@ -28,36 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor. Creates the builder object.
-CacheOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullptr) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  build_num_workers_ = cfg->num_parallel_workers();
-  build_op_connector_size_ = cfg->op_connector_size();
-}
-
-// Check if the required parameters are set by the builder.
-Status CacheOp::Builder::SanityCheck() const {
-  if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, CacheOp requires a CacheClient, but got nullptr.");
-  }
-  // Make sure the cache client has a valid session
-  if (!build_cache_client_->session_id()) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, cache client for CacheOp requires a session id which is not equal to 0.");
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object and does some init on it
-Status CacheOp::Builder::Build(std::shared_ptr<CacheOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<CacheOp>(build_num_workers_, build_op_connector_size_, build_cache_client_, build_sampler_);
-  RETURN_IF_NOT_OK((*ptr)->InitCache());
-
-  return Status::OK();
-}
-
 // Constructor of CacheOp
 CacheOp::CacheOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<CacheClient> cache_client,
                  std::shared_ptr<SamplerRT> sampler)
@@ -67,9 +37,6 @@ CacheOp::CacheOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr
 
 // Destructor
 CacheOp::~CacheOp() = default;
-
-// Private function for cache setup/init work just after construction
-Status CacheOp::InitCache() { return Status::OK(); }
 
 // This class functor will provide the master loop that drives the logic for performing the work
 Status CacheOp::operator()() {

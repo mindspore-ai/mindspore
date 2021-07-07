@@ -47,7 +47,7 @@ Status CacheMergeNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) 
                                "Internal error. Attempt to create a cache merge node without cache client.");
   RETURN_IF_NOT_OK(cache_->Build());
   std::shared_ptr<DatasetOp> merge_op = nullptr;
-  RETURN_IF_NOT_OK(cache_->CreateCacheMergeOp(num_workers_, &merge_op));
+  RETURN_IF_NOT_OK(cache_->CreateCacheMergeOp(num_workers_, connector_que_size_, &merge_op));
   merge_op->set_total_repeats(GetTotalRepeats());
   merge_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(merge_op);

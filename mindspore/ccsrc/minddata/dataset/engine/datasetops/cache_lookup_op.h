@@ -30,58 +30,6 @@ namespace dataset {
 /// \see CacheOp
 class CacheLookupOp : public CacheBase, public SamplerRT {
  public:
-  class Builder {
-   public:
-    /// \brief Builder constructor. Creates the builder object.
-    /// \note No default args
-    Builder();
-
-    /// Default destructor
-    ~Builder() = default;
-
-    /// Setter method.
-    /// \treturn Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      build_num_workers_ = num_workers;
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t connector_size) {
-      build_op_connector_size_ = connector_size;
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetClient(std::shared_ptr<CacheClient> cache_client) {
-      build_cache_client_ = cache_client;
-      return *this;
-    }
-
-    /// \brief Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      build_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    /// \brief The builder "build" method creates the final object and does some init on it.
-    /// \param ptr The shared_ptr to the new CacheLookupOp object
-    /// \return Status
-    Status Build(std::shared_ptr<CacheLookupOp> *ptr);
-
-   private:
-    int32_t build_num_workers_;
-    int32_t build_op_connector_size_;
-    std::shared_ptr<CacheClient> build_cache_client_;
-    std::shared_ptr<SamplerRT> build_sampler_;
-
-    // Check if the required parameters are set by the builder.
-    // \return Status The status code returned
-    Status SanityCheck() const;
-  };
   /// \brief Constructor
   /// \note It takes the same argument as the base class.
   /// \see CacheBase

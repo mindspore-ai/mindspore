@@ -44,8 +44,8 @@ void CacheMergeOp::Print(std::ostream &out, bool show_all) const {
 }
 
 CacheMergeOp::CacheMergeOp(int32_t numWorkers, int32_t opConnectorSize, int32_t numCleaners,
-                           std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<SamplerRT> &sampler)
-    : ParallelOp(numWorkers, opConnectorSize, sampler),
+                           std::shared_ptr<CacheClient> cache_client)
+    : ParallelOp(numWorkers, opConnectorSize),
       num_cleaners_(numCleaners),
       cache_client_(std::move(cache_client)),
       cache_missing_rows_(true) {}
@@ -217,36 +217,6 @@ Status CacheMergeOp::ComputeColMap() {
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!column_name_id_map().empty(),
                                "Invalid data, column_name_id_map of CacheMergeOp is empty.");
-  return Status::OK();
-}
-
-// Builder constructor. Creates the builder object.
-CacheMergeOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullptr) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  build_num_workers_ = cfg->num_parallel_workers();
-  build_op_connector_size_ = cfg->op_connector_size();
-  build_num_cleaners_ = cfg->num_parallel_workers();
-}
-
-// Check if the required parameters are set by the builder.
-Status CacheMergeOp::Builder::SanityCheck() const {
-  if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, CacheMergeOp requires a CacheClient, but got nullptr.");
-  }
-  // Make sure the cache client has a valid session
-  if (!build_cache_client_->session_id()) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, cache client for CacheMergeOp requires a session id which is not equal to 0.");
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object and does some init on it
-Status CacheMergeOp::Builder::Build(std::shared_ptr<CacheMergeOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<CacheMergeOp>(build_num_workers_, build_op_connector_size_, build_num_cleaners_,
-                                        build_cache_client_, build_sampler_);
   return Status::OK();
 }
 

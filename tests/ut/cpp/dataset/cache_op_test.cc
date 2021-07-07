@@ -268,18 +268,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   std::shared_ptr<CacheClient> myClient;
   rc = builder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
-  std::shared_ptr<CacheOp> myCacheOp;
 
   int64_t num_samples = 0;
   int64_t start_index = 0;
   auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
-  rc = CacheOp::Builder()
-         .SetNumWorkers(5)
-         .SetClient(myClient)
-
-         .SetSampler(std::move(seq_sampler))
-         .Build(&myCacheOp);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<CacheOp> myCacheOp =
+    std::make_shared<CacheOp>(5, op_connector_size, myClient, std::move(seq_sampler));
+  ASSERT_NE(myCacheOp, nullptr);
   rc = myTree->AssociateNode(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
 
@@ -390,9 +385,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   std::shared_ptr<CacheClient> myClient;
   rc = builder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
-  std::shared_ptr<CacheOp> myCacheOp;
-  rc = CacheOp::Builder().SetNumWorkers(4).SetClient(myClient).SetSampler(std::move(seq_sampler)).Build(&myCacheOp);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<CacheOp> myCacheOp =
+    std::make_shared<CacheOp>(4, op_connector_size, myClient, std::move(seq_sampler));
+  ASSERT_NE(myCacheOp, nullptr);
   rc = myTree->AssociateNode(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
 
@@ -461,10 +456,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = ccbuilder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
 
-  std::shared_ptr<CacheLookupOp> myLookupOp;
-  rc = CacheLookupOp::Builder().SetNumWorkers(4).SetClient(myClient).SetSampler(seq_sampler).Build(&myLookupOp);
-  std::shared_ptr<CacheMergeOp> myMergeOp;
-  rc = CacheMergeOp::Builder().SetNumWorkers(4).SetClient(myClient).Build(&myMergeOp);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  std::shared_ptr<CacheLookupOp> myLookupOp =
+    std::make_shared<CacheLookupOp>(4, op_connector_size, myClient, std::move(seq_sampler));
+  ASSERT_NE(myLookupOp, nullptr);
+  std::shared_ptr<CacheMergeOp> myMergeOp = std::make_shared<CacheMergeOp>(4, op_connector_size, 4, myClient);
+  ASSERT_NE(myMergeOp, nullptr);
 
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape scalar = TensorShape::CreateScalar();
@@ -478,7 +476,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   bool decode = false;
   std::map<std::string, int32_t> columns_to_load = {};
   std::shared_ptr<ImageFolderOp> so = std::make_shared<ImageFolderOp>(
-    3, dataset_path, 3, recursive, decode, ext, columns_to_load, std::move(schema), std::move(seq_sampler));
+    3, dataset_path, 3, recursive, decode, ext, columns_to_load, std::move(schema), nullptr);
   so->SetSampler(myLookupOp);
   ASSERT_TRUE(rc.IsOk());
 

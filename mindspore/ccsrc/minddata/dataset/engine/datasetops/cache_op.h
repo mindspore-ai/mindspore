@@ -36,65 +36,6 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   enum class Phase : uint8_t { kBuildPhase = 0, kFetchPhase = 1 };
   constexpr static int32_t kPhaseCheckIntervalInMilliSec = 100;
 
-  /// \brief The nested builder class inside of the CacheOp is used to help manage all of
-  /// the arguments for constructing it.  Use the builder by setting each argument
-  /// with the provided set methods, and then finally call the build method to execute
-  /// the actual construction.
-  class Builder {
-   public:
-    // Builder constructor. Creates the builder object.
-    // @note No default args
-    // @return This is a constructor.
-    Builder();
-
-    // Default destructor
-    ~Builder() = default;
-
-    /// \brief Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      build_num_workers_ = num_workers;
-      return *this;
-    }
-
-    /// \brief Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t connector_size) {
-      build_op_connector_size_ = connector_size;
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetClient(std::shared_ptr<CacheClient> cache_client) {
-      build_cache_client_ = cache_client;
-      return *this;
-    }
-
-    /// \brief Setter method
-    /// \param sampler
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      build_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    /// \brief The builder "build" method creates the final object and does some init on it.
-    /// \param ptr The shared_ptr to the new CacheOp object
-    /// \return Status
-    Status Build(std::shared_ptr<CacheOp> *ptr);
-
-   private:
-    int32_t build_num_workers_;
-    int32_t build_op_connector_size_;
-    std::shared_ptr<CacheClient> build_cache_client_;
-    std::shared_ptr<SamplerRT> build_sampler_;
-
-    /// \brief Check if the required parameters are set by the builder.
-    /// \return Status The status code returned
-    Status SanityCheck() const;
-  };
-
   /// \brief Constructor of CacheOp
   /// \note The builder class should be used to call it.
   /// \param num_workers The number of worker threads.
@@ -146,9 +87,6 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   /// \return Status object
   Status CacheAllRows(int32_t worker_id);
   Status RegisterResources() override;
-  /// \brief Private function for cache setup/init work just after construction
-  /// \return Status The status code returned
-  Status InitCache();
 };
 }  // namespace dataset
 }  // namespace mindspore
