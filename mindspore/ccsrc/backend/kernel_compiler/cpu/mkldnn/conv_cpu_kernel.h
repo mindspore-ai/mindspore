@@ -34,14 +34,8 @@ class ConvCPUKernel : public MKLCPUKernel {
 };
 
 MS_REG_CPU_KERNEL(Conv2D, KernelAttr(), ConvCPUKernel);
-MS_REG_CPU_KERNEL(
-  Conv3D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConvCPUKernel);
-MS_REG_CPU_KERNEL(
-  Conv3D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ConvCPUKernel);
+MS_REG_CPU_KERNEL(Conv3D, KernelAttr(), ConvCPUKernel);
+
 }  // namespace kernel
 }  // namespace mindspore
 
