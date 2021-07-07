@@ -258,6 +258,12 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void GetOpInputTensors(const CNodePtr &cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                          const std::map<AnfNodePtr, size_t> &parameter_index,
                          const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
+  tensor::TensorPtr GetOpInputTensorByIndex(const CNodePtr &cnode,
+                                            const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
+                                            const std::map<AnfNodePtr, size_t> &parameter_index,
+                                            const std::vector<tensor::TensorPtr> &graph_inputs,
+                                            InputTensorInfo *input_tensor_info, size_t input_index);
+
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);
