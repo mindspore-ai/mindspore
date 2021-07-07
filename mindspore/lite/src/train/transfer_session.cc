@@ -290,10 +290,10 @@ static session::LiteSession *CreateTransferSessionInt(const char *model_buf_back
   return session;
 }
 
-session::LiteSession *session::LiteSession::CreateTransferSession(const std::string &filename_backbone,
-                                                                  const std::string &filename_head,
-                                                                  const lite::Context *ctxt, bool train_mode,
-                                                                  const lite::TrainCfg *cfg) {
+session::LiteSession *session::TrainSession::CreateTransferSession(const std::string &filename_backbone,
+                                                                   const std::string &filename_head,
+                                                                   const lite::Context *ctxt, bool train_mode,
+                                                                   const lite::TrainCfg *cfg) {
   size_t size_head = 0;
   size_t size_backbone = 0;
   std::string filename = filename_head;
