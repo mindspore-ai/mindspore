@@ -509,9 +509,15 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
 }
 EvalResultPtr Evaluator::SingleRun(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                    const AnfNodeConfigPtr &out_conf) {
-  auto result = this->Run(engine, args_conf_list, out_conf);
-
+  EvalResultPtr result;
+  try {
+    result = this->Run(engine, args_conf_list, out_conf);
+  } catch (const std::exception &e) {
+    MS_LOG(WARNING) << "Eval " << ToString() << " throw exception.";
+    HealthPointMgr::GetInstance().HandleException();
+  }
   AnalysisResultCacheMgr::GetInstance().Wait();
+  StaticAnalysisException::Instance().CheckException();
   return result;
 }
 }  // namespace abstract

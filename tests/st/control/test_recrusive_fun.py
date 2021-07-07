@@ -51,6 +51,38 @@ def fr(x):
     return z
 
 
+@ms_function
+def f_pythonerr(x):
+    if x > 0:
+        return f_pythonerr(x - 1)
+    return NOT_DEF
+
+
+def test_python_error():
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor([5], mstype.int32)
+    try:
+        f_pythonerr(x)
+    except NameError as e:
+        assert 'not defined' in str(e)
+
+
+@ms_function
+def f_recrusive_endless(x):
+    if x > 0:
+        return f_recrusive_endless(x - 1)
+    return f_recrusive_endless(x + 1)
+
+
+def test_recrusive_endless():
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor([5], mstype.int32)
+    try:
+        f_recrusive_endless(x)
+    except RuntimeError as e:
+        assert 'endless loop' in str(e)
+
+
 def test_endless():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([5], mstype.int32)
@@ -58,6 +90,22 @@ def test_endless():
         f(x)
     except RuntimeError as e:
         assert 'endless loop' in str(e)
+
+
+@ms_function
+def f_ok(x):
+    if x > 0:
+        return f_ok(x - 1) + 1
+    return ONE
+
+
+@pytest.mark.skip(reason="backend is not supported yet")
+def test_f_ok():
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor([3], mstype.int32)
+    ret = f_ok(x)
+    expect = Tensor([4], mstype.int32)
+    assert ret == expect
 
 
 @pytest.mark.skip(reason="backend is not supported yet")
