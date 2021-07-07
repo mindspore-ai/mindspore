@@ -24,7 +24,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.common import set_seed
 from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
@@ -177,6 +177,18 @@ def run_eval(target, model, ckpt_save_dir, cb):
                                metrics_name="acc")
         cb += [eval_cb]
 
+
+def set_save_ckpt_dir():
+    """set save ckpt dir"""
+    ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
+    if config.enable_modelarts and config.run_distribute:
+        ckpt_save_dir = ckpt_save_dir + "ckpt_" + str(get_rank_id()) + "/"
+    else:
+        if config.run_distribute:
+            ckpt_save_dir = ckpt_save_dir + "ckpt_" + str(get_rank()) + "/"
+    return ckpt_save_dir
+
+
 @moxing_wrapper()
 def train_net():
     """train net"""
@@ -234,8 +246,7 @@ def train_net():
     time_cb = TimeMonitor(data_size=step_size)
     loss_cb = LossMonitor()
     cb = [time_cb, loss_cb]
-    ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
-    ckpt_save_dir = ckpt_save_dir + "ckpt_" + str(get_rank_id()) + "/"
+    ckpt_save_dir = set_save_ckpt_dir()
     if config.save_checkpoint:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                      keep_checkpoint_max=config.keep_checkpoint_max)

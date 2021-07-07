@@ -65,12 +65,16 @@ def test_resnet50_cifar10_gpu():
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
     config_path = os.path.join(cur_model_path, "resnet50_cifar10_config.yaml")
+    os.system("nvidia-smi")
     exec_network_shell = "cd resnet/scripts; sh run_distribute_train_gpu.sh {} {}" \
         .format(dataset_path, config_path)
     logger.warning("cmd [{}] is running...".format(exec_network_shell))
     os.system(exec_network_shell)
     cmd = "ps -ef | grep python | grep train.py | grep -v grep"
     ret = utils.process_check(100, cmd)
+    if not ret:
+        cmd = "{} | awk -F' ' '{{print $2}}' | xargs kill -9".format(cmd)
+        os.system(cmd)
     assert ret
     log_file = os.path.join(cur_model_path, "scripts/train_parallel/log")
     pattern = r"per step time: ([\d\.]+) ms"

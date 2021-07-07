@@ -127,8 +127,9 @@ def set_graph_kernel_context(device_target):
     if device_target == "GPU":
         context.set_context(enable_graph_kernel=True)
 
+
 @moxing_wrapper()
-def test(cloud_args=None):
+def test():
     """test"""
     set_parameters()
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
@@ -150,7 +151,7 @@ def test(cloud_args=None):
     if os.path.isdir(config.checkpoint_file_path):
         models = list(glob.glob(os.path.join(config.checkpoint_file_path, '*.ckpt')))
         print(models)
-        if config.graph_ckpt:
+        if config.checkpoint_file_path:
             f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('-')[-1].split('_')[0])
         else:
             f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('_')[-1])
