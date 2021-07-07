@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <deque>
 #include "src/common/log_adapter.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ir/primitive.h"
@@ -252,7 +253,30 @@ STATUS AnfTransform::RunPluginPass(const FuncGraphPtr &old_graph, int position) 
   return RET_OK;
 }
 
-int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
+  all_func_graphs->insert(func_graph);
+  auto nodes = func_graph->GetOrderedCnodes();
+  std::deque<CNodePtr> to_process{};
+  to_process.insert(to_process.end(), nodes.begin(), nodes.end());
+  while (!to_process.empty()) {
+    auto &cur_cnode = to_process.front();
+    to_process.pop_front();
+    for (auto &input : cur_cnode->inputs()) {
+      if (!IsValueNode<FuncGraph>(input)) {
+        continue;
+      }
+      auto new_fg = GetValueNode<FuncGraphPtr>(input);
+      if (all_func_graphs->find(new_fg) != all_func_graphs->end()) {
+        continue;
+      }
+      all_func_graphs->insert(new_fg);
+      auto new_nodes = new_fg->GetOrderedCnodes();
+      to_process.insert(to_process.end(), new_nodes.begin(), new_nodes.end());
+    }
+  }
+}
+
+int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   // quant
   if (config->quantType == schema::QuantType_PostTraining) {
     this->m_quantizer_ = std::make_unique<quant::PostTrainingQuantizer>(old_graph, config->configFile, config->bitNum);
@@ -276,6 +300,19 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
       MS_LOG(ERROR) << "Quant failed " << status;
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  std::set<FuncGraphPtr> all_func_graphs{};
+  GetFuncGraphs(old_graph, &all_func_graphs);
+  for (auto &item : all_func_graphs) {
+    auto status = DoSingleGraphQuantize(item, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Do Quantize failed.";
+      return status;
     }
   }
   return RET_OK;
