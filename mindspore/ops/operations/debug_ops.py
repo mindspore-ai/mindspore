@@ -371,6 +371,9 @@ class Print(PrimitiveWithInfer):
         - **input_x** (Union[Tensor, bool, int, float, str]) - The graph node to attach to.
           Supports multiple inputs which are separated by ','.
 
+    Outputs:
+        Tensor, has the same data type and shape as original `input_x`.
+
     Raises:
         TypeError: If `input_x` is not one of the following: Tensor, bool, int, float, str.
 
@@ -392,10 +395,12 @@ class Print(PrimitiveWithInfer):
         >>> net = PrintDemo()
         >>> result = net(x, y)
         Print Tensor x and Tensor y:
+        Tensor(shape=[2, 1], dtype=Int32, value=
         [[1]
-         [1]]
+         [1]])
+        Tensor(shape=[2, 2], dtype=Int32, value=
         [[1 1]
-         [1 1]]
+         [1 1]])
     """
 
     @prim_attr_register
