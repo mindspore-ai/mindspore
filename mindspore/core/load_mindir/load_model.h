@@ -25,10 +25,11 @@
 namespace mindspore {
 std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite = false,
                                       const unsigned char *dec_key = nullptr, const size_t key_len = 0,
-                                      const std::string &dec_mode = std::string("AES-GCM"));
+                                      const std::string &dec_mode = std::string("AES-GCM"), bool inc_load = false);
 std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(const std::vector<std::string> file_names, bool is_lite = false,
                                                     const unsigned char *dec_key = nullptr, const size_t key_len = 0,
-                                                    const std::string &dec_mode = std::string("AES-GCM"));
+                                                    const std::string &dec_mode = std::string("AES-GCM"),
+                                                    bool inc_load = true);
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
 std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
 }  // namespace mindspore
