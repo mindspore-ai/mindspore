@@ -144,7 +144,8 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
 #ifdef ENABLE_AVX
     if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
-        conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % 8 == 0) {
+        conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % 8 == 0 &&
+        (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
       kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
         origin_weight_, origin_bias_);
@@ -165,21 +166,22 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_), out_unit,
         origin_weight_, origin_bias_);
     } else {
-      if (conv_param->input_channel_ / op_parameter_->thread_num_ > 64) {
+#ifdef ENABLE_AVX
+      if (conv_param->input_channel_ / op_parameter_->thread_num_ > 64 ||
+          conv_param->input_h_ < conv_param->thread_num_) {
         kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
           origin_weight_, origin_bias_);
       } else {
-#ifdef ENABLE_AVX
         kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
           origin_weight_, origin_bias_);
-#else
-        kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
-          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
-          origin_weight_, origin_bias_);
-#endif
       }
+#else
+      kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter_, in_tensors_, out_tensors_,
+                                                               static_cast<const lite::InnerContext *>(this->context_),
+                                                               origin_weight_, origin_bias_);
+#endif
     }
   }
 

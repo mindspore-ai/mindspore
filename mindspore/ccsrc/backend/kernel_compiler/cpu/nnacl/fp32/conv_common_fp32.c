@@ -133,6 +133,13 @@ void SWBorder(float *dst, const float *src, const float *weight, const float *bi
 // fp32 sliding window common conv
 void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
                 int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param) {
+  int out_h = conv_param->output_h_;
+  int oh_step = UP_DIV(out_h, conv_param->thread_num_);
+  int oh_start = oh_step * task_id;
+  int oh_end = MSMIN(oh_start + oh_step, out_h);
+  if (oh_start >= oh_end) {
+    return;
+  }
   int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
   int act_type = 0;
   if (conv_param->act_type_ == ActType_Relu6) {
@@ -148,56 +155,75 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
   int in_sw_step = sw_param->in_sw_step_;
   int in_kw_step = sw_param->in_kw_step_;
   int in_kh_step = sw_param->in_kh_step_;
+  int in_sh_step = sw_param->in_sh_step_;
+  int out_h_step = sw_param->out_h_step_;
+  int kernel_step = sw_param->kernel_step_;
+  int in_step = sw_param->in_step_;
+  int out_step = sw_param->out_step_;
+  int c_block = sw_param->c_block_;
+  int top = sw_param->top_;
+  int left = sw_param->left_;
+  int right = sw_param->right_;
+  int bottom = sw_param->bottom_;
+  int block_channel = sw_param->block_channel_;
+  int stride_h = conv_param->stride_h_;
+  int stride_w = conv_param->stride_w_;
+  int out_w = conv_param->output_w_;
+  int pad_u = conv_param->pad_u_;
+  int pad_l = conv_param->pad_l_;
+  int in_h_step = sw_param->in_h_step_;
+  int out_batch = conv_param->output_batch_;
+  int in_h_start = top * stride_h - pad_u;
+  int in_w_start = left * stride_w - pad_l;
+  int center_step = in_h_start * in_h_step + in_w_start * ic_algin;
   const int ow_block_num[4] = {12, 6, 4, 3};
   const SWConvKernel kernel[4][2] = {{SWConv1x8Kernel, SWConv12x8Kernel},
                                      {SWConv1x16Kernel, SWConv6x16Kernel},
                                      {SWConv1x24Kernel, SWConv4x24Kernel},
                                      {SWConv1x32Kernel, SWConv3x32Kernel}};
-  for (int b = 0; b < conv_param->output_batch_; b++) {
-    for (int oh = task_id; oh < conv_param->output_h_; oh += conv_param->thread_num_) {
-      float *dst_oh = output_data + oh * sw_param->out_h_step_;
-      int in_h_start = sw_param->top_ * conv_param->stride_h_ - conv_param->pad_u_;
-      int in_w_start = sw_param->left_ * conv_param->stride_w_ - conv_param->pad_l_;
-      const float *src_h = input_data + in_h_start * sw_param->in_h_step_ + in_w_start * sw_param->ic_align_;
+  for (int b = 0; b < out_batch; b++) {
+    for (int oh = oh_start; oh < oh_end; oh += 1) {
+      float *dst_oh = output_data + oh * out_h_step;
+      const float *src_h = input_data + center_step;
 
       int oc_block = 0;
       const float *bias = bias_data;
-      for (int oc = 0; oc < sw_param->c_block_; oc += oc_block) {
-        oc_block = MSMIN(C4NUM, sw_param->c_block_ - oc);  // 4 3 2 1
-        const float *weight = packed_weight + oc * sw_param->kernel_step_;
+      for (int oc = 0; oc < c_block; oc += oc_block) {
+        oc_block = MSMIN(C4NUM, c_block - oc);  // 4 3 2 1
+        const float *weight = packed_weight + oc * kernel_step;
         if (bias != NULL) {
           bias = bias_data + oc * oc_tile_;
         }
         float *dst_w = dst_oh + oc * oc_tile_;
         const SWConvKernel kernel_border = kernel[oc_block - 1][0];
-        if (oh < sw_param->top_ || oh >= sw_param->bottom_) {  // oh in up or down border
-          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, conv_param->output_w_, conv_param, sw_param,
-                   kernel_border, act_type, 1, oc_block);
+        if (oh < top || oh >= bottom) {  // oh in up or down border
+          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, out_w, conv_param, sw_param, kernel_border, act_type,
+                   1, oc_block);
         } else {  // oh in center
           // ow in right
-          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, sw_param->left_, conv_param, sw_param, kernel_border,
-                   act_type, 1, oc_block);
+          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, 0, left, conv_param, sw_param, kernel_border, act_type,
+                   1, oc_block);
           // ow in center
-          const float *src_w = src_h + (oh - sw_param->top_) * sw_param->in_sh_step_;
-          int ow_block = ow_block_num[oc_block - 1];                               // 12 6 4 3
-          for (int ow = sw_param->left_; ow < sw_param->right_; ow += ow_block) {  // left ~ right
-            ow_block = MSMIN(ow_block, sw_param->right_ - ow);
+          const float *src_w = src_h + (oh - top) * in_sh_step;
+          int ow_block = ow_block_num[oc_block - 1];         // 12 6 4 3
+          for (int ow = left; ow < right; ow += ow_block) {  // left ~ right
+            ow_block = MSMIN(ow_block, right - ow);
             if (ow_block < ow_block_num[oc_block - 1]) {  // ow is not enough and process one ow
               ow_block = 1;
             }
             kernel[oc_block - 1][ow_block / ow_block_num[oc_block - 1]](
-              dst_w + ow * sw_param->block_channel_, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block,
-              oc_block, oc_algin, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0);
+              dst_w + ow * block_channel, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block, oc_block,
+              oc_algin, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0);
             src_w += ow_block * in_sw_step;
           }
           // ow in left
-          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, sw_param->right_, conv_param->output_w_, conv_param,
-                   sw_param, kernel_border, act_type, 1, oc_block);
+          SWBorder(dst_w, input_data, weight, bias, oh, oh + 1, right, out_w, conv_param, sw_param, kernel_border,
+                   act_type, 1, oc_block);
         }
       }
     }  // output h loop
-    input_data += sw_param->in_step_;
-    output_data += sw_param->out_step_;
+    input_data += in_step;
+    output_data += out_step;
   }  // batch loop
 }
 
