@@ -1,0 +1,230 @@
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+import argparse
+import os
+import sys
+from time import time
+from mindspore import context
+from mindspore.train.serialization import save_checkpoint, load_checkpoint
+from src.adam import AdamWeightDecayOp as AdamWeightDecay
+from src.tokenization import CustomizedTextTokenizer
+from src.config import train_cfg, server_net_cfg
+from src.dataset import load_dataset
+from src.utils import restore_params
+from src.model import AlbertModelCLS
+from src.cell_wrapper import NetworkWithCLSLoss, NetworkTrainCell
+
+
+
+
+def parse_args():
+    """
+    parse args
+    """
+    parser = argparse.ArgumentParser(description='server task')
+    parser.add_argument('--device_target', type=str, default='GPU', choices=['Ascend', 'GPU', 'CPU'])
+    parser.add_argument('--device_id', type=str, default='0')
+    parser.add_argument('--tokenizer_dir', type=str, default='../model_save/init/')
+    parser.add_argument('--server_data_path', type=str, default='../datasets/semi_supervise/server/train.txt')
+    parser.add_argument('--model_path', type=str, default='../model_save/init/albert_init.ckpt')
+    parser.add_argument('--output_dir', type=str, default='../model_save/train_server/')
+    parser.add_argument('--vocab_map_ids_path', type=str, default='../model_save/init/vocab_map_ids.txt')
+    parser.add_argument('--logging_step', type=int, default=1)
+
+    parser.add_argument("--server_mode", type=str, default="FEDERATED_LEARNING")
+    parser.add_argument("--ms_role", type=str, default="MS_WORKER")
+    parser.add_argument("--worker_num", type=int, default=0)
+    parser.add_argument("--server_num", type=int, default=1)
+    parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
+    parser.add_argument("--scheduler_port", type=int, default=8113)
+    parser.add_argument("--fl_server_port", type=int, default=6666)
+    parser.add_argument("--start_fl_job_threshold", type=int, default=1)
+    parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
+    parser.add_argument("--update_model_ratio", type=float, default=1.0)
+    parser.add_argument("--update_model_time_window", type=int, default=3000)
+    parser.add_argument("--fl_name", type=str, default="Lenet")
+    parser.add_argument("--fl_iteration_num", type=int, default=25)
+    parser.add_argument("--client_epoch_num", type=int, default=20)
+    parser.add_argument("--client_batch_size", type=int, default=32)
+    parser.add_argument("--client_learning_rate", type=float, default=0.1)
+    parser.add_argument("--worker_step_num_per_iteration", type=int, default=65)
+    parser.add_argument("--scheduler_manage_port", type=int, default=11202)
+    parser.add_argument("--dp_eps", type=float, default=50.0)
+    parser.add_argument("--dp_delta", type=float, default=0.01)  # usually equals 1/start_fl_job_threshold
+    parser.add_argument("--dp_norm_clip", type=float, default=0.05)
+    parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
+    return parser.parse_args()
+
+
+def server_train(args):
+    start = time()
+
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.device_id
+    tokenizer_dir = args.tokenizer_dir
+    server_data_path = args.server_data_path
+    model_path = args.model_path
+    output_dir = args.output_dir
+    vocab_map_ids_path = args.vocab_map_ids_path
+    logging_step = args.logging_step
+
+    device_target = args.device_target
+    server_mode = args.server_mode
+    ms_role = args.ms_role
+    worker_num = args.worker_num
+    server_num = args.server_num
+    scheduler_ip = args.scheduler_ip
+    scheduler_port = args.scheduler_port
+    fl_server_port = args.fl_server_port
+    start_fl_job_threshold = args.start_fl_job_threshold
+    start_fl_job_time_window = args.start_fl_job_time_window
+    update_model_ratio = args.update_model_ratio
+    update_model_time_window = args.update_model_time_window
+    fl_name = args.fl_name
+    fl_iteration_num = args.fl_iteration_num
+    client_epoch_num = args.client_epoch_num
+    client_batch_size = args.client_batch_size
+    client_learning_rate = args.client_learning_rate
+    scheduler_manage_port = args.scheduler_manage_port
+    dp_delta = args.dp_delta
+    dp_norm_clip = args.dp_norm_clip
+    encrypt_type = args.encrypt_type
+
+    # Replace some parameters with federated learning parameters.
+    train_cfg.max_global_epoch = fl_iteration_num
+
+    fl_ctx = {
+        "enable_fl": True,
+        "server_mode": server_mode,
+        "ms_role": ms_role,
+        "worker_num": worker_num,
+        "server_num": server_num,
+        "scheduler_ip": scheduler_ip,
+        "scheduler_port": scheduler_port,
+        "fl_server_port": fl_server_port,
+        "start_fl_job_threshold": start_fl_job_threshold,
+        "start_fl_job_time_window": start_fl_job_time_window,
+        "update_model_ratio": update_model_ratio,
+        "update_model_time_window": update_model_time_window,
+        "fl_name": fl_name,
+        "fl_iteration_num": fl_iteration_num,
+        "client_epoch_num": client_epoch_num,
+        "client_batch_size": client_batch_size,
+        "client_learning_rate": client_learning_rate,
+        "scheduler_manage_port": scheduler_manage_port,
+        "dp_delta": dp_delta,
+        "dp_norm_clip": dp_norm_clip,
+        "encrypt_type": encrypt_type
+    }
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # construct tokenizer
+    tokenizer = CustomizedTextTokenizer.from_pretrained(tokenizer_dir, vocab_map_ids_path=vocab_map_ids_path)
+    print('Tokenizer construction is done! Time cost: {}'.format(time() - start))
+    sys.stdout.flush()
+    start = time()
+
+    # mindspore context
+    context.set_context(mode=context.GRAPH_MODE, device_target=device_target, save_graphs=True)
+    context.set_fl_context(**fl_ctx)
+    print('Context setting is done! Time cost: {}'.format(time() - start))
+    sys.stdout.flush()
+    start = time()
+
+    # construct model
+    albert_model_cls = AlbertModelCLS(server_net_cfg)
+    network_with_cls_loss = NetworkWithCLSLoss(albert_model_cls)
+    network_with_cls_loss.set_train(True)
+
+    print('Model construction is done! Time cost: {}'.format(time() - start))
+    sys.stdout.flush()
+    start = time()
+
+    # train prepare
+    global_step = 0
+    param_dict = load_checkpoint(model_path)
+    if 'learning_rate' in param_dict:
+        del param_dict['learning_rate']
+
+    # server optimizer
+    server_params = [_ for _ in network_with_cls_loss.trainable_params()
+                     if 'word_embeddings' not in _.name
+                     and 'postprocessor' not in _.name]
+    server_decay_params = list(
+        filter(train_cfg.optimizer_cfg.AdamWeightDecay.decay_filter, server_params)
+    )
+    server_other_params = list(
+        filter(lambda x: not train_cfg.optimizer_cfg.AdamWeightDecay.decay_filter(x), server_params)
+    )
+    server_group_params = [
+        {'params': server_decay_params, 'weight_decay': train_cfg.optimizer_cfg.AdamWeightDecay.weight_decay},
+        {'params': server_other_params, 'weight_decay': 0.0},
+        {'order_params': server_params}
+    ]
+    server_optimizer = AdamWeightDecay(server_group_params,
+                                       learning_rate=train_cfg.server_cfg.learning_rate,
+                                       eps=train_cfg.optimizer_cfg.AdamWeightDecay.eps)
+    server_network_train_cell = NetworkTrainCell(network_with_cls_loss, optimizer=server_optimizer)
+
+    restore_params(server_network_train_cell, param_dict)
+
+    print('Optimizer construction is done! Time cost: {}'.format(time() - start))
+    sys.stdout.flush()
+    start = time()
+
+    # server load data
+    server_train_dataset, _ = load_dataset(
+        server_data_path, server_net_cfg.seq_length, tokenizer, train_cfg.batch_size,
+        label_list=None,
+        do_shuffle=True,
+        drop_remainder=True,
+        output_dir=None,
+        cyclic_trunc=train_cfg.server_cfg.cyclic_trunc
+    )
+    print('Server data loading is done! Time cost: {}'.format(time() - start))
+    start = time()
+
+    # train process
+    for global_epoch in range(train_cfg.max_global_epoch):
+        for server_local_epoch in range(train_cfg.server_cfg.max_local_epoch):
+            for server_step, server_batch in enumerate(server_train_dataset.create_tuple_iterator()):
+                input_ids, attention_mask, token_type_ids, label_ids, _ = server_batch
+                model_start_time = time()
+                cls_loss = server_network_train_cell(input_ids, attention_mask, token_type_ids, label_ids)
+                time_cost = time() - model_start_time
+                if global_step % logging_step == 0:
+                    print_text = 'server: '
+                    print_text += 'global_epoch {}/{} '.format(global_epoch, train_cfg.max_global_epoch)
+                    print_text += 'local_epoch {}/{} '.format(server_local_epoch, train_cfg.server_cfg.max_local_epoch)
+                    print_text += 'local_step {}/{} '.format(server_step, server_train_dataset.get_dataset_size())
+                    print_text += 'global_step {} cls_loss {} time_cost {}'.format(global_step, cls_loss, time_cost)
+                    print(print_text)
+                    sys.stdout.flush()
+                global_step += 1
+                del input_ids, attention_mask, token_type_ids, label_ids, _, cls_loss
+            output_path = os.path.join(
+                output_dir,
+                str(global_epoch*train_cfg.server_cfg.max_local_epoch+server_local_epoch)+'.ckpt'
+            )
+            save_checkpoint(server_network_train_cell.network, output_path)
+
+    print('Training process is done! Time cost: {}'.format(time() - start))
+
+
+if __name__ == '__main__':
+    args_opt = parse_args()
+    server_train(args_opt)
