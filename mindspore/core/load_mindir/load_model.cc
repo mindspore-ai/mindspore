@@ -171,19 +171,19 @@ bool ParseGraphProto(mind_ir::GraphProto *graph, std::string path, const unsigne
 
 std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(std::vector<std::string> file_names, bool is_lite,
                                                     const unsigned char *dec_key, const size_t key_len,
-                                                    const std::string &dec_mode) {
+                                                    const std::string &dec_mode, bool inc_load) {
   std::vector<std::shared_ptr<FuncGraph>> funcgraph_vec;
   MS_LOG(DEBUG) << "Load multiple MindIR files.";
   for (size_t i = 0; i < file_names.size(); ++i) {
     std::string file_name = file_names[i];
     MS_LOG(DEBUG) << "Load " << file_name;
-    funcgraph_vec.push_back(LoadMindIR(file_name, is_lite, dec_key, key_len, dec_mode));
+    funcgraph_vec.push_back(LoadMindIR(file_name, is_lite, dec_key, key_len, dec_mode, inc_load));
   }
   return funcgraph_vec;
 }
 
 std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite, const unsigned char *dec_key,
-                                      const size_t key_len, const std::string &dec_mode) {
+                                      const size_t key_len, const std::string &dec_mode, bool inc_load) {
   if (file_name.length() > PATH_MAX) {
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
     return nullptr;
@@ -253,6 +253,9 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   MSANFModelParser model_parser;
   if (is_lite) {
     model_parser.SetLite();
+  }
+  if (inc_load) {
+    model_parser.SetIncLoad();
   }
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model);
   return dstgraph_ptr;
