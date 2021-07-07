@@ -62,11 +62,8 @@ public class DataSet {
 
         List<Feature> features = new ArrayList<>(examples.size());
         for (int i = 0; i < examples.size(); i++) {
-            List<Integer> tokens = customTokenizer.tokenize(examples.get(i), trainMod);
+            List<Integer> tokens = customTokenizer.tokenize(examples.get(i), false);
             Feature feature = customTokenizer.getFeatures(tokens, labels.get(i));
-            if (trainMod) {
-                customTokenizer.addRandomMaskAndReplace(feature, true, true);
-            }
             features.add(feature);
         }
         return features;

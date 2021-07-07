@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 public class AdBert extends TrainModel {
     private static final Logger logger = Logger.getLogger(AdBert.class.toString());
 
-    private static final int NUM_OF_CLASS = 5;
+    private static final int NUM_OF_CLASS = 4;
 
     List<Feature> features;
 
@@ -66,7 +66,7 @@ public class AdBert extends TrainModel {
         tokenIdBufffer.order(ByteOrder.nativeOrder());
         maskIdBufffer.order(ByteOrder.nativeOrder());
         if (trainMod) {
-            labelIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
+            labelIdBufffer = ByteBuffer.allocateDirect(batchSize * Integer.BYTES);
             labelIdBufffer.order(ByteOrder.nativeOrder());
         }
         numOfClass = NUM_OF_CLASS;
@@ -93,13 +93,11 @@ public class AdBert extends TrainModel {
             for (int j = 0; j < dataSize; j++) {
                 maskIdBufffer.putInt(feature.inputMasks[j]);
             }
+            if(trainMod) {
+                labelIdBufffer.putInt(feature.labelIds);
+            }
             if (!trainMod) {
                 labels.add(feature.labelIds);
-            }
-            if (trainMod) {
-                for (int j = 0; j < dataSize; j++) {
-                    labelIdBufffer.putInt(feature.inputIds[j]);
-                }
             }
         }
 
@@ -109,10 +107,10 @@ public class AdBert extends TrainModel {
         MSTensor inputIdTensor;
         MSTensor maskIdTensor;
         if (trainMod) {
-            labelIdTensor = inputs.get(0);
-            tokenIdTensor = inputs.get(1);
-            inputIdTensor = inputs.get(2);
-            maskIdTensor = inputs.get(3);
+            labelIdTensor = inputs.get(3);
+            tokenIdTensor = inputs.get(0);
+            inputIdTensor = inputs.get(1);
+            maskIdTensor = inputs.get(2);
             labelIdTensor.setData(labelIdBufffer);
         } else {
             tokenIdTensor = inputs.get(0);
