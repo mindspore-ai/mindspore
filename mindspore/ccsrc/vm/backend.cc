@@ -349,6 +349,11 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
 
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  ms_execution_mode_ = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  real_execution_mode_ = ms_execution_mode_;
+
   // Compile root graph.
   graph_id_to_device_context_.clear();
   control_nodes_.clear();
@@ -365,10 +370,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph_);
 
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  const bool graph_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
-  if (graph_mode) {
+  if (real_execution_mode_ == kGraphMode) {
     // Transform graph to actor DAG, and schedule the actor DAG.
     const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
     runtime::GraphScheduler::GetInstance().Schedule(actor_set);
@@ -383,9 +385,12 @@ void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_partition_);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
 
+  bool contain_multi_target;
   // Split graph to segments.
-  const auto &segments = graph_partition_->Partition(func_graph);
+  const auto &segments = graph_partition_->Partition(func_graph, &contain_multi_target);
   MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size:" << segments.size();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
 
   // Foreach the segments to compile graph.
   for (const auto &segment : segments) {
@@ -409,8 +414,19 @@ void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
       AnfNodePtrList outputs;
       std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
 
+      // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
+      if (contain_multi_target && ms_execution_mode_ == kPynativeMode) {
+        real_execution_mode_ = kGraphMode;
+        context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+      }
+
       // Compile graph.
       auto graph_id = graph_compiler_->CompileGraph(segment->nodes_, outputs, device_context);
+
+      if (ms_execution_mode_ != real_execution_mode_) {
+        context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);
+      }
+
       graph_id_to_device_context_[graph_id] = device_context;
     } else {
       // Compile the cut node.
@@ -726,9 +742,8 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
 
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
-  auto ms_context = MsContext::GetInstance();
-  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
-  if (pynative_mode) {
+  // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
+  if (real_execution_mode_ == kPynativeMode) {
     RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
     return;
   }

@@ -588,11 +588,15 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
   return false;
 }
 
-std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph) {
+std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph, bool *multi_target) {
   MS_EXCEPTION_IF_NULL(graph);
   auto nodes = TopoSort(graph->get_return());
   MS_LOG(DEBUG) << "Split all nodes size:" << nodes.size();
   bool contain_multi_target = ContainMultiTarget(nodes);
+  if (multi_target != nullptr) {
+    *multi_target = contain_multi_target;
+  }
+
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
