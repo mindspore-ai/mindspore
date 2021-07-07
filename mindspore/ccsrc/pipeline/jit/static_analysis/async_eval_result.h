@@ -287,7 +287,7 @@ class AnalysisResultCacheMgr {
   inline EvalResultPtr GetValue(const AnfNodeConfigPtr &conf) { return cache_.get(conf); }
   // Wait for async Eval(conf) to finish.
   void Wait();
-  void PushTowait(std::future<void> &&future0, std::future<void> &&future1);
+  void PushTowait(std::future<void> &&future);
   void PushTodo(const AnfNodeConfigPtr &conf);
   void Todo();
   static void UpdateCaller(const std::string &caller);
