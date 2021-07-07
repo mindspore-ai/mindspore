@@ -1,5 +1,4 @@
-# coding=UTF-8
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Serving agents startup code, load and execute models of pangu alpha"""
+"""Serving server start code, serve service, and manage all agents which load and execute models"""
 
+import os
+from mindspore_serving import server
 from mindspore_serving.server import distributed
 
 
 def start():
-    """Start agents to load and execute models of pangu alpha"""
-    model_files = []
-    for i in range(8):
-        model_files.append([f"models/device{i}/pangu_alpha_1024_graph.mindir",
-                            f"models/device{i}/pangu_alpha_1_graph.mindir"])
-    distributed.startup_agents(distributed_address="0.0.0.0:6200", model_files=model_files)
+    """Start server to serve service, and manage all agents which load and execute models"""
+    servable_dir = os.path.dirname(os.path.realpath(__file__))
+    distributed.start_servable(servable_dir, "pangu", rank_table_json_file="hccl_8p.json",
+                               distributed_address="0.0.0.0:6200")
+
+    server.start_grpc_server("127.0.0.1:5500")
 
 
 if __name__ == "__main__":

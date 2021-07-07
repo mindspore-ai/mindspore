@@ -22,6 +22,7 @@ import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 
+
 def topk_fun(logits, topk=5):
     """Get topk"""
     target_column = logits[0].tolist()
@@ -32,6 +33,7 @@ def topk_fun(logits, topk=5):
     index = np.array([index])
     value = np.array([value])
     return value, index
+
 
 def sampler(log_probs_revised, top_p, top_k_num, use_pynative=False):
     """Convert the log_probs to probability"""
@@ -79,6 +81,7 @@ def sampler(log_probs_revised, top_p, top_k_num, use_pynative=False):
             probs = np.array([1 / top_k_num for _ in range(top_k_num)])
         p = probs / sum(probs)
     return p, p_args
+
 
 def generate(model, origin_inputs, config):
     """
@@ -130,7 +133,7 @@ def generate(model, origin_inputs, config):
         # Random select a token as final output for this round
         target_index = np.random.choice(len(p), p=p)
         # Stop judgment
-        if p_args[target_index] == end_token or valid_length == target_length-1:
+        if p_args[target_index] == end_token or valid_length == target_length - 1:
             outputs = input_ids
             break
 
@@ -144,6 +147,7 @@ def generate(model, origin_inputs, config):
     length = np.sum(outputs != 0)
     outputs = outputs[0][:length]
     return outputs
+
 
 def generate_increment(model, origin_inputs, config):
     """
@@ -183,8 +187,8 @@ def generate_increment(model, origin_inputs, config):
 
     # Indicate the exact token position
     current_index = valid_length - 1 if valid_length - 1 > 0 else 0
-    current_index = Tensor(np.array([current_index]), mstype.int32)
     batch_valid_length = Tensor(np.array([current_index]), mstype.int32)
+    current_index = Tensor(np.array([current_index]), mstype.int32)
     # For first graph, not_init should be false
     init_true = Tensor([True], mstype.bool_)
     init_false = Tensor([False], mstype.bool_)
@@ -211,7 +215,7 @@ def generate_increment(model, origin_inputs, config):
         # Random select a token as final output for this round
         target_index = np.random.choice(len(p), p=p)
         # Stop judgment
-        if p_args[target_index] == end_token or valid_length == target_length-1:
+        if p_args[target_index] == end_token or valid_length == target_length - 1:
             break
 
         # Update frequency list

@@ -17,12 +17,12 @@
 execute_path=$(pwd)
 script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
-export RANK_SIZE=8
-export RANK_TABLE_FILE=${execute_path}/../serving_increment/pangu_distributed/hccl_8p.json
-export MODE=13B
+export RANK_SIZE=1
+export MODE=13B # or 2.6B
 export PARAM_INIT_TYPE=fp16
 export STRATEGY=$1
 export CKPT_PATH=$2
+export DEVICE_TARGET=Ascend # or GPU
 export CKPT_NAME='filerted'
 
 for((i=0;i<$RANK_SIZE;i++));
@@ -34,5 +34,5 @@ do
   export DEVICE_ID=$i
   python -s ${self_path}/../predict.py --strategy_load_ckpt_path=$STRATEGY --load_ckpt_path=$CKPT_PATH \
                   --load_ckpt_name=$CKPT_NAME --mode=$MODE --run_type=predict --param_init_type=$PARAM_INIT_TYPE \
-                  --export=1 >log$i.log 2>&1 &
+                  --export=1 --distribute=false --device_target=$DEVICE_TARGET >log$i.log 2>&1 &
 done

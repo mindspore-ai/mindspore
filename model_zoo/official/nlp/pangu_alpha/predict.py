@@ -63,8 +63,12 @@ def load_model(args_opt):
     else:
         rank = 0
         device_num = 1
+        context.reset_auto_parallel_context()
+        context.set_auto_parallel_context(
+            strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path)
+
+    use_past = (args_opt.use_past == "true")
     print('local_rank:{}, start to run...'.format(rank), flush=True)
-    use_past = False
     if args_opt.export:
         use_past = True
     # Set model property
@@ -72,6 +76,9 @@ def load_model(args_opt):
     data_parallel_num = int(device_num / model_parallel_num)
     per_batch_size = args_opt.per_batch_size
     batch_size = per_batch_size * data_parallel_num
+    # Now only support single batch_size for predict
+    if args_opt.run_type == "predict":
+        batch_size = 1
     config = PANGUALPHAConfig(
         data_parallel_num=data_parallel_num,
         model_parallel_num=model_parallel_num,
@@ -105,11 +112,15 @@ def load_model(args_opt):
     inputs_np = Tensor(np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32)
     current_index = Tensor(np.array([0]), mstype.int32)
 
-    if config.use_past:
+    if args_opt.distribute == "false":
+        predict_layout = None
+    elif config.use_past:
         batch_valid_length = Tensor(np.array([0]), mstype.int32)
         init_true = Tensor([True], mstype.bool_)
         inputs_np_1 = Tensor(np.ones(shape=(config.batch_size, 1)), mstype.int32)
+        model_predict.predict_network.add_flags_recursive(is_first_iteration=True)
         predict_layout = model_predict.infer_predict_layout(inputs_np, current_index, init_true, batch_valid_length)
+        model_predict.predict_network.add_flags_recursive(is_first_iteration=False)
         _ = model_predict.infer_predict_layout(inputs_np_1, current_index, init_true, batch_valid_length)
     else:
         predict_layout = model_predict.infer_predict_layout(inputs_np, current_index)
