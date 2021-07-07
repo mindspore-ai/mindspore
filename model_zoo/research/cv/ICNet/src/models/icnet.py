@@ -67,7 +67,7 @@ class ICNet(nn.Cell):
 
         output = self.head(x_sub1, x_sub2, x_sub4)
 
-        return output
+        return output[0]
 
 
 class PyramidPoolingModule(nn.Cell):
