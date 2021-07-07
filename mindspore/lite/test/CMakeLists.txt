@@ -111,7 +111,7 @@ set(TEST_LITE_SRC
 file(GLOB KERNEL_REG_SRC ${LITE_DIR}/src/registry/*.cc)
 set(TEST_LITE_SRC ${TEST_LITE_SRC} ${KERNEL_REG_SRC})
 
-if(ENABLE_TOOLS)
+if(MSLITE_ENABLE_TOOLS)
     set(TEST_LITE_SRC
         ${TEST_LITE_SRC}
         ${LITE_DIR}/tools/benchmark/benchmark.cc
@@ -303,7 +303,6 @@ set(TEST_SRC
         ${TEST_DIR}/common/common_test.cc
         ${TEST_DIR}/ut/src/infer_test.cc
         ${TEST_DIR}/ut/src/utils_test.cc
-        ${TEST_DIR}/ut/src/lite_mindrt_test.cc
         ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
         ${TEST_DIR}/ut/src/lite_mindrt_test.cc
@@ -316,6 +315,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_SRC}
             ${TEST_DIR}/st/converter_test.cc
             ${TEST_DIR}/st/mindrt_parallel_test.cc
+            ${TEST_DIR}/st/graph_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/common/import_from_meta_graphT.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
