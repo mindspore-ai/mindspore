@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "armour/secure_protocol/secret_sharing.h"
+#include "fl/armour/secure_protocol/secret_sharing.h"
 
 namespace mindspore {
 namespace armour {

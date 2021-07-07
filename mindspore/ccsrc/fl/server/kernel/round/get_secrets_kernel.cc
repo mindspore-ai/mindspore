@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "armour/cipher/cipher_shares.h"
+#include "fl/armour/cipher/cipher_shares.h"
 
 namespace mindspore {
 namespace ps {

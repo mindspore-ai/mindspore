@@ -19,12 +19,12 @@
 
 #include <vector>
 #include <string>
-#include "armour/secure_protocol/secret_sharing.h"
+#include "fl/armour/secure_protocol/secret_sharing.h"
 #include "proto/ps.pb.h"
 #include "utils/log_adapter.h"
 #include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
-#include "armour/cipher/cipher_meta_storage.h"
+#include "fl/armour/cipher/cipher_meta_storage.h"
 
 namespace mindspore {
 namespace armour {

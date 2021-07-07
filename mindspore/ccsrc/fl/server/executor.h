@@ -27,7 +27,7 @@
 #include "fl/server/common.h"
 #include "fl/server/parameter_aggregator.h"
 #ifdef ENABLE_ARMOUR
-#include "armour/cipher/cipher_unmask.h"
+#include "fl/armour/cipher/cipher_unmask.h"
 #endif
 
 namespace mindspore {
