@@ -76,10 +76,9 @@ void AnalysisResultCacheMgr::UpdateCaller(const std::string &caller) {
 
 std::string &AnalysisResultCacheMgr::GetThreadid() { return local_threadid; }
 
-void AnalysisResultCacheMgr::PushTowait(std::future<void> &&future0, std::future<void> &&future1) {
+void AnalysisResultCacheMgr::PushTowait(std::future<void> &&future) {
   std::lock_guard<std::mutex> lock(lock_);
-  waiting_.emplace_back(std::move(future0));
-  waiting_.emplace_back(std::move(future1));
+  waiting_.emplace_back(std::move(future));
 }
 
 void AnalysisResultCacheMgr::PushTodo(const AnfNodeConfigPtr &conf) {
