@@ -68,11 +68,12 @@ class DenseThor(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> x = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
-        >>> net = nn.DenseThor(3, 4)
-        >>> net(x)
-        [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
-         [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
+        >>> x = Tensor(np.array([[1, 2, 3], [3, 4, 5]]), mindspore.float32)
+        >>> net = nn.DenseThor(3, 4, weight_init="ones")
+        >>> output = net(x)
+        >>> print(output)
+        [[  6.  6.  6.  6.]
+         [ 12. 12. 12. 12. ]]
     """
     def __init__(self,
                  in_channels,

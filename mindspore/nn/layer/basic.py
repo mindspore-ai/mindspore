@@ -712,7 +712,7 @@ class Pad(Cell):
         ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="CONSTANT")
         ...     def construct(self, x):
         ...         return self.pad(x)
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindsprore.float32)
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.float32)
         >>> pad = Net()
         >>> output = pad(x)
         >>> print(output)
@@ -1277,7 +1277,7 @@ class MatrixDiagPart(Cell):
         >>> x = Tensor([[-1, 0, 0, 1],
         ...             [-1, 0, 0, 1],
         ...             [-1, 0, 0, 1],
-        ...             [-1, 0, 0, 1], mindspore.float32)
+        ...             [-1, 0, 0, 1]], mindspore.float32)
         >>> matrix_diag_part = nn.MatrixDiagPart()
         >>> output = matrix_diag_part(x)
         >>> print(output)
