@@ -78,7 +78,9 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
   auto &sequential_num = context->sequential_num_;
   input_op_datas_[sequential_num].emplace_back(input_data);
   if (input_data->data_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Input data of actor:" << GetAID() << " num:" << input_data->index_ << " is empty";
+    std::string error_info =
+      "Input data of actor:" + GetAID().Name() + " num:" + std::to_string(input_data->index_) + " is empty";
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {

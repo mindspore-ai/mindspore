@@ -50,6 +50,9 @@ using RealToFormalNode = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>
 // 2. First input of node is a funcgraph value node.
 bool IsCallNode(const AnfNodePtr &node);
 
+// Check if the call node is the input of another call node.
+bool IsSubCallNode(const AnfNodePtr &node);
+
 // Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
 // it is determined whether it is a weight.
 bool HasAbstractRef(const AnfNodePtr &node);
@@ -66,7 +69,7 @@ AnfNodePtr GetFrontNodeByBackendNode(const AnfNodePtr &backend_node);
 
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the
 // corresponding cnode.
-AnfNodePtr GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);
+KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);
 
 // Get the funcgraph to which the node belongs.
 FuncGraphPtr GetFuncgraphByBackendNode(const AnfNodePtr &backend_node);
@@ -75,7 +78,7 @@ FuncGraphPtr GetFuncgraphByBackendNode(const AnfNodePtr &backend_node);
 std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const AnfNodePtr &node);
 
 // Get parameters in kernel graph.
-std::vector<AnfNodePtr> FetchParameterbyKernelGraph(const KernelGraphPtr &graph);
+std::vector<KernelWithIndex> FetchParameterbyKernelGraph(const KernelGraphPtr &graph);
 
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
@@ -204,6 +207,9 @@ class ControlNodeParser {
   // The funcgraph to parameters map records the input parameters of funcgraph and is used to initialize
   // the input node of gather.
   FuncGraphToParameter func_graph_to_parameters_;
+
+  // The relationship between the valuenode inputs of the call node and the backend parameter
+  std::map<KernelWithIndex, std::pair<AnfNodePtr, DeviceContext *>> call_node_to_backend_parameters_;
 
   // Branch id of funcgraph.
   // In control flow, funcgraph will be called in multiple places, and the output of funcgraph needs to return to
