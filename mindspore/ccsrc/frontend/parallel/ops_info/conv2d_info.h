@@ -95,10 +95,10 @@ class Conv2DInfo : public OperatorInfo {
   std::vector<int64_t> exchange_rank_ids_;
   Shapes recv_shapes_;
 
- private:
-  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
-  int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
-  int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
+  virtual Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
+  virtual void InferNewPadList();
+  virtual int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
+  virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
 };
 
 class Conv2DBackpropInputInfo : public Conv2DInfo {
@@ -117,8 +117,12 @@ class Conv2DBackpropInputInfo : public Conv2DInfo {
   Status InferTensorMap() override;
   Status InferMirrorOps() override;  // can not use OperatorInfo::InferMirrorOps(), since the 'out_shape' is not tensor
 
- private:
   Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
+  void InferNewPadList();
+  int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
+  int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
+
+ private:
   Shape out_shape_;
   Shape out_slice_shape_;
 };

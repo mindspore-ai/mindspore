@@ -80,6 +80,13 @@ inline int FloatToInt(float u) {
   return static_cast<int>(u);
 }
 
+inline int64_t DoubleToLong(double u) {
+  if (u > static_cast<double>((std::numeric_limits<int64_t>::max)())) {
+    MS_LOG(EXCEPTION) << "The double value(" << u << ") exceeds the maximum value of int64_t.";
+  }
+  return static_cast<int64_t>(u);
+}
+
 inline float SizeToFloat(size_t v) { return static_cast<float>(v); }
 
 inline double LongToDouble(int64_t v) { return static_cast<double>(v); }
