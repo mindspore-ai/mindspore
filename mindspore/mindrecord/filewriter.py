@@ -36,7 +36,8 @@ class FileWriter:
     Class to write user defined raw data into MindRecord files.
 
     Note:
-        The mindrecord file may fail to be read if the file name is modified.
+        After the MindRecord file is generated, if the file name is changed,
+            the file may fail to be read.
 
     Args:
         file_name (str): File name of MindRecord file.
@@ -266,7 +267,8 @@ class FileWriter:
         the MindRecord file can store.
 
         Args:
-            header_size (int): Size of header, between 16KB and 128MB.
+            header_size (int): Size of header, between 16*1024(16KB) and
+                128*1024*1024(128MB).
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
@@ -284,7 +286,8 @@ class FileWriter:
         The larger a page, the more data the page can store.
 
         Args:
-           page_size (int): Size of page, between 32KB and 256MB.
+           page_size (int): Size of page, between 32*1024(32KB) and
+               256*1024*1024(256MB).
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
