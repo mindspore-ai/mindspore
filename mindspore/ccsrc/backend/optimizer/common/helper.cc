@@ -979,5 +979,34 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr>
   builder.SetOutputsDeviceType(outputs_device_type);
   return builder.Build();
 }
+
+std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto manager = kernel_graph.manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
+  std::vector<int64_t> output_used_num(output_num, 0);
+  if (output_num == 1) {
+    output_used_num[0] = SizeToLong(manager->node_users()[node].size());
+  } else {
+    for (auto out_getitem : manager->node_users()[node]) {
+      MS_EXCEPTION_IF_NULL(out_getitem.first);
+      if (!AnfAlgo::CheckPrimitiveType(out_getitem.first, prim::kPrimTupleGetItem)) {
+        continue;
+      }
+      auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(out_getitem_ptr);
+      auto getitem_input2 = out_getitem_ptr->input(kInputNodeOutputIndexInTupleGetItem);
+      auto output_idx = GetValue<int64_t>(GetValueNode(getitem_input2));
+      output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
+    }
+  }
+  return output_used_num;
+}
+
+int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+  auto output_used_num = GetNodeOutputUsedNum(kernel_graph, node);
+  return std::accumulate(output_used_num.begin(), output_used_num.end(), 0);
+}
 }  // namespace opt
 }  // namespace mindspore

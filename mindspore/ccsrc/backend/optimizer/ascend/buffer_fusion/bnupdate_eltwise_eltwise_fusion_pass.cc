@@ -45,7 +45,8 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
     MS_EXCEPTION_IF_NULL(getitem);
     auto bnupdate = getitem->input(kRealInputNodeIndexInTupleGetItem);
     MS_EXCEPTION_IF_NULL(bnupdate);
-    if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName) {
+    if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName &&
+        GetNodeOutputTotalUsedNum(kernel_graph, bnupdate) == kBNTrainingUpdateOutputUsedTotalNum) {
       std::unordered_set<AnfNodePtr> record{cnode, relu_input, bnupdate};
       candidate_fusion->push_back(record);
       SetRecordFusionId(record);

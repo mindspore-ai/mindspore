@@ -24,6 +24,7 @@
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
+#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -39,7 +40,8 @@ void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr 
   MS_EXCEPTION_IF_NULL(getitem);
   auto bnupdate = getitem->input(kIndex1);
   MS_EXCEPTION_IF_NULL(bnupdate);
-  if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName) {
+  if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName &&
+      GetNodeOutputTotalUsedNum(kernel_graph, bnupdate) == kBNTrainingUpdateOutputUsedTotalNum) {
     std::unordered_set<AnfNodePtr> record{cnode, bnupdate};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
