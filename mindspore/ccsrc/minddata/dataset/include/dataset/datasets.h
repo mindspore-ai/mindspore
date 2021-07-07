@@ -1726,8 +1726,11 @@ inline std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint
                                                         std::optional<int32_t> port = std::nullopt,
                                                         std::optional<int32_t> num_connections = std::nullopt,
                                                         std::optional<int32_t> prefetch_sz = std::nullopt) {
-  return CreateDatasetCacheCharIF(id, mem_sz, spill, OptionalStringToChar(hostname), port, num_connections,
-                                  prefetch_sz);
+  std::optional<std::vector<char>> hostname_c = std::nullopt;
+  if (hostname != std::nullopt) {
+    hostname_c = std::vector<char>(hostname->begin(), hostname->end());
+  }
+  return CreateDatasetCacheCharIF(id, mem_sz, spill, hostname_c, port, num_connections, prefetch_sz);
 }
 
 /// \brief Function to create a ZipDataset.

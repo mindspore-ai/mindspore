@@ -212,9 +212,13 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
 struct Lookup::Data {
   Data(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
        mindspore::DataType data_type)
-      : vocab_(vocab),
-        unknown_token_(OptionalCharToString(unknown_token)),
-        data_type_(dataset::MSTypeToDEType(static_cast<TypeId>(data_type))) {}
+      : vocab_(vocab), data_type_(dataset::MSTypeToDEType(static_cast<TypeId>(data_type))) {
+    if (unknown_token == std::nullopt) {
+      unknown_token_ = std::nullopt;
+    } else {
+      unknown_token_ = std::string(unknown_token->begin(), unknown_token->end());
+    }
+  }
   std::shared_ptr<Vocab> vocab_;
   std::optional<std::string> unknown_token_;
   dataset::DataType data_type_;
