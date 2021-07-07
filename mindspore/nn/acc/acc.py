@@ -40,6 +40,7 @@ class AutoAcc:
     def __init__(self, level, kwargs):
         if level not in _acc_config_level.keys():
             level = 'O0'
+        self.level = level
         acc_config = _acc_config_level[level]
         self._acc_config = acc_config
         self._fn_flag = True

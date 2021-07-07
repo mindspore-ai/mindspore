@@ -73,16 +73,16 @@ class OptimizerProcess:
                     params_gc_value.append(param)
                 else:
                     params_value.append(param)
-                if params_gc_value:
-                    new_group_param = copy.deepcopy(group_param)
-                    new_group_param['params'] = params_gc_value
-                    new_group_param['grad_centralization'] = True
-                    group_params.append(new_group_param)
-                if params_value:
-                    new_group_param = copy.deepcopy(group_param)
-                    new_group_param['params'] = params_value
-                    group_params.append(new_group_param)
-            self.origin_params = group_params
+            if params_gc_value:
+                new_group_param = copy.deepcopy(group_param)
+                new_group_param['params'] = params_gc_value
+                new_group_param['grad_centralization'] = True
+                group_params.append(new_group_param)
+            if params_value:
+                new_group_param = copy.deepcopy(group_param)
+                new_group_param['params'] = params_value
+                group_params.append(new_group_param)
+        self.origin_params = group_params
 
     def generate_new_optimizer(self):
         """Generate new optimizer."""
@@ -135,6 +135,7 @@ class ParameterProcess:
         else:
             group_params = []
             params_name = [param.name for param in parameters]
+            new_params_count = copy.deepcopy(params_name)
             for group_param in origin_params_copy:
                 if 'order_params' in group_param.keys():
                     new_group_param = copy.deepcopy(group_param)
@@ -146,9 +147,16 @@ class ParameterProcess:
                     if param.name in params_name:
                         index = params_name.index(param.name)
                         params_value.append(parameters[index])
+                        new_params_count.remove(param.name)
                 new_group_param = copy.deepcopy(group_param)
                 new_group_param['params'] = params_value
                 group_params.append(new_group_param)
+            if new_params_count:
+                params_value = []
+                for param in new_params_count:
+                    index = params_name.index(param)
+                    params_value.append(parameters[index])
+                group_params.append({"params": params_value})
         return group_params
 
 _gradient_accumulation_op = C.MultitypeFuncGraph("gradient_accumulation_op")

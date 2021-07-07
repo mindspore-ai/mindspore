@@ -25,6 +25,7 @@ eval: False
 save_ckpt: False
 mode_name: "GRAPH"
 dtype: "fp16"
+acc_mode: "O0"
 
 # Export options
 device_id: 0
