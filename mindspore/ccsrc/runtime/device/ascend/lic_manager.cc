@@ -98,25 +98,25 @@ void LicManager::ParseSwitch() {
 }
 
 void LicManager::ParseFeSwitch(const std::map<std::string, std::string> &options_map) {
+  // no fe switch, open all
   auto options_iter = options_map.find(kFeKey);
   if (options_iter == options_map.end()) {
     return;
   }
 
-  const auto &options_str = options_iter->second;
-  // invalid options, do nothing.
-  if (options_str.empty()) {
-    return;
-  }
   // "All" in options means all open, do nothing.
+  const auto &options_str = options_iter->second;
   if (options_str.find(kAllOpen) != std::string::npos) {
     return;
   }
 
+  // close all first
   for (auto iter = kPassCodeMap.begin(); iter != kPassCodeMap.end(); ++iter) {
     auto pass = iter->second;
     pass_switch_.emplace(pass, false);
   }
+
+  // then open passes in options
   auto fe_pass = SplitStrByRegex(options_str, ":");
   for (auto &pass_code : fe_pass) {
     auto iter = kPassCodeMap.find(pass_code);
