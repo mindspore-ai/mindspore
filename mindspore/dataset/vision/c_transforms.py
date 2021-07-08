@@ -332,7 +332,7 @@ class Equalize(ImageTensorOperation):
 
 class GaussianBlur(ImageTensorOperation):
     """
-    BLur input image with the specified Gaussian kernel.
+    Blur input image with the specified Gaussian kernel.
 
     Args:
         kernel_size (Union[int, sequence]): Size of the Gaussian kernel to use. The value must be positive and odd. If
@@ -415,6 +415,8 @@ class MixUpBatch(ImageTensorOperation):
     Apply MixUp transformation on input batch of images and labels. Each image is
     multiplied by a random weight (lambda) and then added to a randomly selected image from the batch
     multiplied by (1 - lambda). The same formula is also applied to the one-hot labels.
+    The lambda is generated based on the specified alpha value. Two coefficients x1, x2 are randomly generated
+    in the range [alpha, 1], and lambda = (x1 / (x1 + x2)).
     Note that you need to make labels into one-hot format and batched before calling this operator.
 
     Args:
@@ -441,7 +443,7 @@ class MixUpBatch(ImageTensorOperation):
 class Normalize(ImageTensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation. This operator will normalize
-    the input image with: output = (input - mean) / std.
+    the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
@@ -572,7 +574,6 @@ class RandomAffine(ImageTensorOperation):
             and a shear parallel to Y axis in the range of (shear[2], shear[3]) is applied.
             If None, no shear is applied.
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
-            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
@@ -583,7 +584,7 @@ class RandomAffine(ImageTensorOperation):
 
         fill_value (tuple or int, optional): Optional fill_value to fill the area outside the transform
             in the output image. There must be three elements in tuple and the value of single element is [0, 255].
-            Used only in Pillow versions > 5.0.0 (default=0, filling is performed).
+            (default=0, filling is performed).
 
     Raises:
         ValueError: If degrees is negative.
@@ -1164,14 +1165,13 @@ class RandomResizeWithBBox(ImageTensorOperation):
 
 class RandomRotation(ImageTensorOperation):
     """
-    Rotate the input image by a random angle.
+    Rotate the input image randomly within a specified range of degrees.
 
     Args:
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If degrees is a number, the range will be converted to (-degrees, degrees).
             If degrees is a sequence, it should be (min, max).
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
-            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
@@ -1230,12 +1230,13 @@ class RandomRotation(ImageTensorOperation):
 
 class RandomSelectSubpolicy(ImageTensorOperation):
     """
-    Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
-    (op, prob), where op is a TensorOp operation and prob is the probability that this op will be applied. Once
-    a sub-policy is selected, each op within the subpolicy with be applied in sequence according to its probability.
+    Choose a random sub-policy from a policy list to be applied on the input image.
 
     Args:
-        policy (list(list(tuple(TensorOp, float))): List of sub-policies to choose from.
+        policy (list(list(tuple(TensorOp, prob (float)))): List of sub-policies to choose from.
+            A sub-policy is a list of tuples (op, prob), where op is a TensorOp operation and prob is the probability
+            that this op will be applied, and the prob values must be in range [0, 1]. Once a sub-policy is selected,
+            each op within the sub-policy with be applied in sequence according to its probability.
 
     Examples:
         >>> policy = [[(c_vision.RandomRotation((45, 45)), 0.5),
@@ -1252,9 +1253,6 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         self.policy = policy
 
     def parse(self):
-        """
-        Return a C++ representation of the operator for execution
-        """
         policy = []
         for list_one in self.policy:
             policy_one = []
@@ -1297,12 +1295,13 @@ class RandomSharpness(ImageTensorOperation):
 
 class RandomSolarize(ImageTensorOperation):
     """
-    Randomly invert the pixel values of input image within given range.
+    Randomly selects a subrange within the specified threshold range and sets the pixel value within
+    the subrange to (255 - pixel).
 
     Args:
         threshold (tuple, optional): Range of random solarize threshold (default=(0, 255)).
             Threshold values should always be in (min, max) format,
-            where min <= max, min and max are integers in the range (0, 255).
+            where min and max are integers in the range (0, 255), and min <= max.
             If min=max, then invert all pixel values above min(max).
 
     Examples:
@@ -1364,7 +1363,7 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
 class Rescale(ImageTensorOperation):
     """
     Rescale the input image with the given rescale and shift. This operator will rescale the input image
-    with: output = (image + rescale) / shift.
+    with: output = image * rescale + shift.
 
     Args:
         rescale (float): Rescale factor.
@@ -1492,7 +1491,6 @@ class Rotate(ImageTensorOperation):
         degrees (Union[int, float]): Rotation degrees.
 
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
-            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
