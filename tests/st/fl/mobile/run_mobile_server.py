@@ -38,7 +38,7 @@ parser.add_argument("--client_batch_size", type=int, default=32)
 parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--local_server_num", type=int, default=-1)
 parser.add_argument("--config_file_path", type=str, default="")
-parser.add_argument("--encrypt_type", type=str, default="NotEncrypt")
+parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 # parameters for encrypt_type='DP_ENCRYPT'
 parser.add_argument("--dp_eps", type=float, default=50.0)
 parser.add_argument("--dp_delta", type=float, default=0.01)  # 1/worker_num
