@@ -27,8 +27,8 @@ namespace mindspore {
 namespace kernel {
 class CustomAddKernel : public Kernel {
  public:
-  CustomAddKernel(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
-                  const schema::Primitive *primitive, const lite::Context *ctx)
+  CustomAddKernel(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
+                  const schema::Primitive *primitive, const mindspore::Context *ctx)
       : Kernel(inputs, outputs, primitive, ctx) {}
   // Prepare will be called during graph compilation
   int Prepare() override { return lite::RET_OK; }
@@ -40,10 +40,10 @@ class CustomAddKernel : public Kernel {
     }
     PreProcess();
     ParseAttrData();
-    float *in0 = static_cast<float *>(inputs_[0]->data());
-    float *in1 = static_cast<float *>(inputs_[1]->data());
-    float *out = static_cast<float *>(outputs_[0]->data());
-    auto num = outputs_[0]->ElementsNum();
+    const float *in0 = static_cast<const float *>(inputs_[0].Data().get());
+    const float *in1 = static_cast<const float *>(inputs_[1].Data().get());
+    float *out = static_cast<float *>(outputs_[0].MutableData());
+    auto num = outputs_[0].ElementNum();
     for (int i = 0; i < num; ++i) {
       out[i] = in0[i] + in1[i];
     }
@@ -57,7 +57,7 @@ class CustomAddKernel : public Kernel {
   // if output shape exists value -1, need to be inferred before applying memory for output tensor.
   int PreProcess() {
     if (common::CheckOutputs(outputs_) != lite::RET_OK) {
-      auto ret = RegisterKernelInterface::GetKernelInterface({}, primitive_)->Infer(inputs_, outputs_, primitive_);
+      auto ret = RegisterKernelInterface::GetKernelInterface({}, primitive_)->Infer(&inputs_, &outputs_, primitive_);
       if (ret != lite::RET_OK) {
         std::cerr << "infer failed." << std::endl;
         return lite::RET_ERROR;
@@ -68,9 +68,9 @@ class CustomAddKernel : public Kernel {
         return ret;
       }
     }
-    for (auto *output : outputs_) {
+    for (auto &output : outputs_) {
       // malloc data for output tensor
-      auto data = output->MutableData();
+      auto data = output.MutableData();
       if (data == nullptr) {
         std::cerr << "Get data failed" << std::endl;
         return lite::RET_ERROR;
@@ -101,9 +101,8 @@ class CustomAddKernel : public Kernel {
   std::map<std::string, std::string> attrs_;
 };
 
-std::shared_ptr<Kernel> CustomAddCreator(const std::vector<tensor::MSTensor *> &inputs,
-                                         const std::vector<tensor::MSTensor *> &outputs,
-                                         const schema::Primitive *primitive, const lite::Context *ctx) {
+std::shared_ptr<Kernel> CustomAddCreator(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
+                                         const schema::Primitive *primitive, const mindspore::Context *ctx) {
   return std::make_shared<CustomAddKernel>(inputs, outputs, primitive, ctx);
 }
 REGISTER_CUSTOM_KERNEL(CPU, Tutorial, kNumberTypeFloat32, Custom_Add, CustomAddCreator)

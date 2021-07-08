@@ -229,6 +229,7 @@ OP_ATTR_ENUM_WITH_VALUE(activation_type, ActivationType, 0)
 OP_ATTR(alpha, float)
 OP_ATTR(min_val, float)
 OP_ATTR(max_val, float)
+OP_ATTR_WITH_VALUE(approximate, bool, false)
 OP_SCHEMA_DEF_END(Activation)
 
 OP_SCHEMA_DEF(ActivationGrad)

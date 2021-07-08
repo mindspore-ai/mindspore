@@ -16,8 +16,9 @@
 #include <cmath>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "mindspore/lite/include/model.h"
 #include "common/common_test.h"
+#include "include/api/context.h"
+#include "include/api/model.h"
 #include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
@@ -37,8 +38,8 @@ using mindspore::schema::PrimitiveType_AddFusion;
 namespace mindspore {
 class TestCustomAdd : public Kernel {
  public:
-  TestCustomAdd(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
-                const schema::Primitive *primitive, const lite::Context *ctx)
+  TestCustomAdd(const std::vector<mindspore::MSTensor> &inputs, const std::vector<mindspore::MSTensor> &outputs,
+                const schema::Primitive *primitive, const mindspore::Context *ctx)
       : Kernel(inputs, outputs, primitive, ctx) {}
   int Prepare() override { return 0; }
 
@@ -48,9 +49,9 @@ class TestCustomAdd : public Kernel {
 
  private:
   int PreProcess() {
-    for (auto *output : outputs_) {
+    for (auto &output : outputs_) {
       // malloc data for output tensor
-      auto data = output->MutableData();
+      auto data = output.MutableData();
       if (data == nullptr) {
         MS_LOG(ERROR) << "Get data failed";
         return RET_ERROR;
@@ -65,10 +66,10 @@ int TestCustomAdd::Execute() {
     return RET_PARAM_INVALID;
   }
   PreProcess();
-  float *in0 = static_cast<float *>(inputs_[0]->data());
-  float *in1 = static_cast<float *>(inputs_[1]->data());
-  float *out = static_cast<float *>(outputs_[0]->data());
-  auto num = outputs_[0]->ElementsNum();
+  auto *in0 = static_cast<const float *>(inputs_[0].Data().get());
+  auto *in1 = static_cast<const float *>(inputs_[1].Data().get());
+  float *out = static_cast<float *>(outputs_[0].MutableData());
+  auto num = outputs_[0].ElementNum();
   for (int i = 0; i < num; ++i) {
     out[i] = in0[i] + in1[i];
   }
@@ -79,19 +80,18 @@ class TestCustomAddInfer : public KernelInterface {
  public:
   TestCustomAddInfer() = default;
   ~TestCustomAddInfer() = default;
-  int Infer(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
+  int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
             const schema::Primitive *primitive) override {
-    outputs[0]->set_format(inputs[0]->format());
-    outputs[0]->set_data_type(inputs[0]->data_type());
-    outputs[0]->set_shape(inputs[0]->shape());
+    (*outputs)[0].SetFormat((*inputs)[0].format());
+    (*outputs)[0].SetDataType((*inputs)[0].DataType());
+    (*outputs)[0].SetShape((*inputs)[0].Shape());
     return RET_OK;
   }
 };
 
 namespace {
-std::shared_ptr<Kernel> TestCustomAddCreator(const std::vector<tensor::MSTensor *> &inputs,
-                                             const std::vector<tensor::MSTensor *> &outputs,
-                                             const schema::Primitive *primitive, const lite::Context *ctx) {
+std::shared_ptr<Kernel> TestCustomAddCreator(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
+                                             const schema::Primitive *primitive, const mindspore::Context *ctx) {
   return std::make_shared<TestCustomAdd>(inputs, outputs, primitive, ctx);
 }
 
@@ -153,40 +153,41 @@ TEST_F(TestRegistry, TestAdd) {
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
 
-  auto model = lite::Model::Import(content, size);
-  ASSERT_NE(nullptr, model);
-  meta_graph.reset();
-  content = nullptr;
-  auto context = new lite::InnerContext;
-  auto &device_list = context->device_list_;
-  std::shared_ptr<DefaultAllocator> allocator = std::make_shared<DefaultAllocator>();
-  lite::DeviceContext device_ctx = {lite::DT_CPU, {false, lite::NO_BIND}, "BuiltInTest", "CPU", allocator};
-  device_list.push_back(device_ctx);
-  context->thread_num_ = 1;
-  ASSERT_EQ(lite::RET_OK, context->Init());
-  auto session = session::LiteSession::CreateSession(context);
-  ASSERT_NE(nullptr, session);
-  auto ret = session->CompileGraph(model);
-  ASSERT_EQ(lite::RET_OK, ret);
-  auto inputs = session->GetInputs();
+  // create a context
+  auto context = std::make_shared<mindspore::Context>();
+  context->SetThreadNum(1);
+  context->SetEnableParallel(false);
+  context->SetThreadAffinity(1);
+  auto &device_list = context->MutableDeviceInfo();
+  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
+  device_info->SetEnableFP16(false);
+  device_list.push_back(device_info);
+
+  // build a model
+  auto model = std::make_shared<mindspore::Model>();
+  auto ret = model->Build(content, size, kFlatBuffer, context);
+  ASSERT_EQ(kSuccess, ret.StatusCode());
+  auto inputs = model->GetInputs();
   ASSERT_EQ(inputs.size(), 2);
   auto inTensor = inputs.front();
-  ASSERT_NE(nullptr, inTensor);
-  float *in0_data = static_cast<float *>(inTensor->MutableData());
+  auto impl = inTensor.impl();
+  ASSERT_NE(nullptr, impl);
+  float *in0_data = static_cast<float *>(inTensor.MutableData());
   in0_data[0] = 10.0f;
   auto inTensor1 = inputs.back();
-  ASSERT_NE(nullptr, inTensor1);
-  float *in1_data = static_cast<float *>(inTensor1->MutableData());
+  impl = inTensor1.impl();
+  ASSERT_NE(nullptr, impl);
+  float *in1_data = static_cast<float *>(inTensor1.MutableData());
   in1_data[0] = 20.0f;
-  ret = session->RunGraph();
-  ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputs();
+  std::vector<mindspore::MSTensor> outputs;
+  ret = model->Predict(inputs, &outputs);
+  ASSERT_EQ(kSuccess, ret.StatusCode());
   ASSERT_EQ(outputs.size(), 1);
-  auto outTensor = outputs.begin()->second;
-  ASSERT_NE(nullptr, outTensor);
-  ASSERT_EQ(28 * 28 * 3, outTensor->ElementsNum());
-  ASSERT_EQ(TypeId::kNumberTypeFloat32, outTensor->data_type());
-  auto *outData = reinterpret_cast<float *>(outTensor->MutableData());
+  impl = outputs.front().impl();
+  ASSERT_NE(nullptr, impl);
+  ASSERT_EQ(28 * 28 * 3, outputs.front().ElementNum());
+  ASSERT_EQ(DataType::kNumberTypeFloat32, outputs.front().DataType());
+  auto *outData = reinterpret_cast<const float *>(outputs.front().Data().get());
   ASSERT_NE(nullptr, outData);
   ASSERT_EQ(30.0f, outData[0]);
   MS_LOG(INFO) << "Register add op test pass.";

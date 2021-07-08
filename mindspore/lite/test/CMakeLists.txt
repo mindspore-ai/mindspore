@@ -325,8 +325,8 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
         ${TEST_DIR}/ut/src/lite_mindrt_test.cc
-#        ${TEST_DIR}/ut/src/registry/registry_test.cc
-#        ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
+        ${TEST_DIR}/ut/src/registry/registry_test.cc
+        ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
         )
 
 if(MSLITE_ENABLE_CONVERTER)

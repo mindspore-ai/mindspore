@@ -19,9 +19,9 @@
 
 namespace mindspore {
 namespace common {
-int CheckInputs(const std::vector<tensor::MSTensor *> &inputs) {
+int CheckInputs(const std::vector<mindspore::MSTensor> &inputs) {
   for (auto &input : inputs) {
-    auto input_shape = input->shape();
+    auto input_shape = input.Shape();
     if (std::find(input_shape.begin(), input_shape.end(), -1) != input_shape.end()) {
       return lite::RET_INFER_INVALID;
     }
@@ -29,9 +29,9 @@ int CheckInputs(const std::vector<tensor::MSTensor *> &inputs) {
   return lite::RET_OK;
 }
 
-int CheckOutputs(const std::vector<tensor::MSTensor *> &outputs) {
+int CheckOutputs(const std::vector<mindspore::MSTensor> &outputs) {
   for (auto &output : outputs) {
-    auto output_shape = output->shape();
+    auto output_shape = output.Shape();
     if (std::find(output_shape.begin(), output_shape.end(), -1) != output_shape.end()) {
       return lite::RET_INFER_INVALID;
     }
