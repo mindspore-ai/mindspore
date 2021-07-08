@@ -449,7 +449,7 @@ bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client) {
   heartbeat_message.set_node_id(node_info_.node_id_);
 
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, heartbeat_message.SerializeAsString().data(),
-                       heartbeat_message.ByteSizeLong())) {
+                       heartbeat_message.ByteSizeLong(), kCommTimeoutInSeconds)) {
     MS_LOG(WARNING) << "The node id:" << node_info_.node_id_ << " Send heartbeat timeout!";
     return false;
   }
