@@ -152,9 +152,11 @@ def get_config():
     """
     Get Config according to the yaml file and cli arguments.
     """
-    def get_abs_path(path_relative):
+    def get_abs_path(path_input):
+        if os.path.isabs(path_input):
+            return path_input
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(current_dir, path_relative)
+        return os.path.join(current_dir, path_input)
     parser = argparse.ArgumentParser(description="default name", add_help=False)
     parser.add_argument("--config_path", type=get_abs_path, default="../../gd_config.yaml",
                         help="Config file path")

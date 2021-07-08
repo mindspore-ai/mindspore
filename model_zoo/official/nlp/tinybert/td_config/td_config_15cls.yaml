@@ -40,9 +40,6 @@ dataset_type: "tfrecord"
 ckpt_file: ''
 file_name: "tinybert"
 file_format: "AIR"
-# postprocess related
-result_path: "./result_Files"
-label_path: "./preprocess_Result/label_ids.npy"
 phase1_cfg:
     batch_size: 32
     loss_scale_value: 256

@@ -71,65 +71,122 @@ The backbone structure of TinyBERT is transformer, the transformer contains four
 
 # [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start general distill, task distill and evaluation as follows:
+- running on local
 
-```text
-# run standalone general distill example
-bash scripts/run_standalone_gd.sh
+  After installing MindSpore via the official website, you can start general distill, task distill and evaluation as follows:
 
-Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_standalone_gd.sh file first. If running on GPU, please set the `device_target=GPU`.
+    ```text
+    # run standalone general distill example
+    bash scripts/run_standalone_gd.sh
 
-# For Ascend device, run distributed general distill example
-bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
+    Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_standalone_gd.sh file first. If running on GPU, please set the `device_target=GPU`.
 
-Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_distributed_gd_ascend.sh file first.
+    # For Ascend device, run distributed general distill example
+    bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
 
-# For GPU device, run distributed general distill example
-bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
+    Before running the shell script, please set the `load_teacher_ckpt_path`, `data_dir`, `schema_dir` and `dataset_type` in the run_distributed_gd_ascend.sh file first.
 
-# run task distill and evaluation example
-bash scripts/run_standalone_td.sh
+    # For GPU device, run distributed general distill example
+    bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/teacher.ckpt
 
-Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir`, `schema_dir` and `dataset_type` in the run_standalone_td.sh file first.
-If running on GPU, please set the `device_target=GPU`.
-```
+    # run task distill and evaluation example
+    bash scripts/run_standalone_td.sh {path}/*.yaml
 
-For distributed training on Ascend, a hccl configuration file with JSON format needs to be created in advance.
-Please follow the instructions in the link below:
-https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
+    Before running the shell script, please set the `task_name`, `load_teacher_ckpt_path`, `load_gd_ckpt_path`, `train_data_dir`, `eval_data_dir`, `schema_dir` and `dataset_type` in the run_standalone_td.sh file first.
+    If running on GPU, please set the `device_target=GPU`.
+    ```
 
-For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/doc/programming_guide/en/master/dataset_loading.html#tfrecord) format.
+    For distributed training on Ascend, a hccl configuration file with JSON format needs to be created in advance.
+    Please follow the instructions in the link below:
+    https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
-```text
-For general task, schema file contains ["input_ids", "input_mask", "segment_ids"].
+    For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/doc/programming_guide/en/master/dataset_loading.html#tfrecord) format.
 
-For task distill and eval phase, schema file contains ["input_ids", "input_mask", "segment_ids", "label_ids"].
+    ```text
+    For general task, schema file contains ["input_ids", "input_mask", "segment_ids"].
 
-`numRows` is the only option which could be set by user, the others value must be set according to the dataset.
+    For task distill and eval phase, schema file contains ["input_ids", "input_mask", "segment_ids", "label_ids"].
 
-For example, the dataset is cn-wiki-128, the schema file for general distill phase as following:
-{
-    "datasetType": "TF",
-    "numRows": 7680,
-    "columns": {
-        "input_ids": {
-            "type": "int64",
-            "rank": 1,
-            "shape": [256]
-        },
-        "input_mask": {
-            "type": "int64",
-            "rank": 1,
-            "shape": [256]
-        },
-        "segment_ids": {
-            "type": "int64",
-            "rank": 1,
-            "shape": [256]
+    `numRows` is the only option which could be set by user, the others value must be set according to the dataset.
+
+    For example, the dataset is cn-wiki-128, the schema file for general distill phase as following:
+    {
+        "datasetType": "TF",
+        "numRows": 7680,
+        "columns": {
+            "input_ids": {
+                "type": "int64",
+                "rank": 1,
+                "shape": [256]
+            },
+            "input_mask": {
+                "type": "int64",
+                "rank": 1,
+                "shape": [256]
+            },
+            "segment_ids": {
+                "type": "int64",
+                "rank": 1,
+                "shape": [256]
+            }
         }
     }
-}
-```
+    ```
+
+- running on ModelArts
+
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+
+    - general_distill with 8 cards on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/tinybert" on the website UI interface.
+    # (4) Set the startup file to /{path}/tinybert/run_general_distill.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/tinybert/gd_config.yaml.
+    #         1. Set ”enable_modelarts=True“
+    #         2. Set other parameters('config_path' cannot be set here), other parameter configuration can refer to `./scripts/run_distributed_gd_ascend.sh`
+    #     b. adding on the website UI interface.
+    #         1. Add ”enable_modelarts=True“
+    #         3. Add other parameters, other parameter configuration can refer to `./scripts/run_distributed_gd_ascend.sh`
+    #     Note that 'data_dir' and 'schema_dir' fill in the relative path relative to the path selected in step 7.
+    #     Add "config_path=../../gd_config.yaml" on the webpage ('config_path' is the path of the'*.yaml' file relative to {path}/tinybert/src/model_utils/config.py, and'* .yaml' file must be in {path}/bert/)
+    # (6) Upload the dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of 8 cards.
+    # (10) Create your job.
+    # After training, the '*.ckpt' file will be saved under the'training output file path'
+    ```
+
+    - Running task_distill with single card on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2)  Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/tinybert" on the website UI interface.
+    # (4) Set the startup file to /{path}/tinybert/run_ner.py"(or run_pretrain.py or run_squad.py) on the website UI interface.
+    # (5) Perform a or b.
+    #     Add "config_path=../../td_config/td_config_sst2.yaml" on the web page (select the *.yaml configuration file according to the distill task)
+    #     a. setting parameters in task_ner_config.yaml(or task_squad_config.yaml or task_classifier_config.yaml under the folder `/{path}/bert/`
+    #         1. Set ”enable_modelarts=True“
+    #         2. Set "task_name=SST-2" (depending on the task, select from ["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"])
+    #         3. Set other parameters, other parameter configuration can refer to './scripts/run_standalone_td.sh'.
+    #     b. adding on the website UI interface.
+    #         1. Add ”enable_modelarts=True“
+    #         2. Add "task_name=SST-2" (depending on the task, select from ["SST-2", "QNLI", "MNLI", "TNEWS", "CLUENER"])
+    #         3. Add other parameters, other parameter configuration can refer to './scripts/run_standalone_td.sh'.
+    #     Note that 'load_teacher_ckpt_path', 'train_data_dir', 'eval_data_dir' and 'schema_dir' fill in the relative path relative to the path selected in step 7.
+    #     Note that 'load_gd_ckpt_path' fills in the relative path relative to the path selected in step 3.
+    # (6) Upload the dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of a single card.
+    # (10) Create your job.
+    # After training, the '*.ckpt' file will be saved under the'training output file path'.
+    ```
 
 # [Script Description](#contents)
 
@@ -139,23 +196,39 @@ For example, the dataset is cn-wiki-128, the schema file for general distill pha
 .
 └─bert
   ├─README.md
+  ├─README_CN.md
   ├─scripts
     ├─run_distributed_gd_ascend.sh       # shell script for distributed general distill phase on Ascend
     ├─run_distributed_gd_gpu.sh          # shell script for distributed general distill phase on GPU
+    ├─run_infer_310.sh                   # shell script for 310 infer
     ├─run_standalone_gd.sh               # shell script for standalone general distill phase
     ├─run_standalone_td.sh               # shell script for standalone task distill phase
   ├─src
+    ├─model_utils
+      ├── config.py                      # parse *.yaml parameter configuration file
+      ├── devcie_adapter.py              # distinguish local/ModelArts training
+      ├── local_adapter.py               # get related environment variables in local training
+      └── moxing_adapter.py              # get related environment variables in ModelArts training
     ├─__init__.py
     ├─assessment_method.py               # assessment method for evaluation
     ├─dataset.py                         # data processing
-    ├─gd_config.py                       # parameter configuration for general distill phase
-    ├─td_config.py                       # parameter configuration for task distill phase
     ├─tinybert_for_gd_td.py              # backbone code of network
     ├─tinybert_model.py                  # backbone code of network
     ├─utils.py                           # util function
+  ├─td_config                            # folder where *.yaml files of different distillation tasks are located
+    ├── td_config_15cls.yaml
+    ├── td_config_mnli.py
+    ├── td_config_ner.py
+    ├── td_config_qnli.py
+    └── td_config_stt2.py
   ├─__init__.py
+  ├─export.py                            # export scripts
+  ├─gd_config.yaml                       # parameter configuration for general_distill
+  ├─mindspore_hub_conf.py                # Mindspore Hub interface
+  ├─postprocess.py                       # scripts for 310 postprocess
+  ├─preprocess.py                        # scripts for 310 preprocess
   ├─run_general_distill.py               # train net for general distillation
-  ├─run_task_distill.py                  # train and eval net for task distillation
+  └─run_task_distill.py                  # train and eval net for task distillation
 ```
 
 ## [Script Parameters](#contents)
@@ -231,7 +304,7 @@ options:
 
 ## Options and Parameters
 
-`gd_config.py` and `td_config.py` contain parameters of BERT model and options for optimizer and lossscale.
+`gd_config.yaml` and `td_config/*.yaml` contain parameters of BERT model and options for optimizer and lossscale.
 
 ### Options
 
@@ -358,7 +431,7 @@ If you want to after running and continue to eval, please set `do_train=true` an
 #### evaluation on SST-2 dataset  
 
 ```bash
-bash scripts/run_standalone_td.sh
+bash scripts/run_standalone_td.sh {path}/*.yaml
 ```
 
 The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:
@@ -378,7 +451,7 @@ The best acc is 0.902777
 Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
 
 ```bash
-bash scripts/run_standalone_td.sh
+bash scripts/run_standalone_td.sh {path}/*.yaml
 ```
 
 The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:
@@ -398,7 +471,7 @@ The best acc is 0.813929
 Before running the command below, please check the load pretrain checkpoint path has been set. Please set the checkpoint path to be the absolute full path, e.g:"/username/pretrain/checkpoint_100_300.ckpt".
 
 ```bash
-bash scripts/run_standalone_td.sh
+bash scripts/run_standalone_td.sh {path}/*.yaml
 ```
 
 The command above will run in the background, you can view the results the file log.txt. The accuracy of the test dataset will be as follows:
@@ -417,12 +490,40 @@ The best acc is 0.891176
 
 ### [Export MindIR](#contents)
 
+- Export on local
+
 ```shell
 python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+- Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
+
+```python
+# (1) Upload the code folder to S3 bucket.
+# (2) Click to "create training task" on the website UI interface.
+# (3) Set the code directory to "/{path}/tinybert" on the website UI interface.
+# (4) Set the startup file to /{path}/tinybert/export.py" on the website UI interface.
+# (5) Perform a or b.
+#     a. Set parameters in a *.yaml file under /path/tinybert/td_config/
+#         1. Set ”enable_modelarts: True“
+#         2. Set “ckpt_file: ./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Set ”file_name: bert_ner“
+#         4. Set ”file_format：MINDIR“
+#     b. Adding on the website UI interface.
+#         1. Add ”enable_modelarts=True“
+#         2. Add “ckpt_file=./{path}/*.ckpt”('ckpt_file' indicates the path of the weight file to be exported relative to the file `export.py`, and the weight file must be included in the code directory.)
+#         3. Add ”file_name=tinybert_sst2“
+#         4. Add ”file_format=MINDIR“
+#     Finally, "config_path=../../td_config/*.yaml" must be added on the web page (select the *.yaml configuration file according to the downstream task)
+# (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path.(Although it is useless, but to do)
+# (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+# (9) Under the item "resource pool selection", select the specification of a single card.
+# (10) Create your job.
+# You will see tinybert_sst2.mindir under {Output file path}.
+```
 
 ### Infer on Ascend310
 
@@ -459,7 +560,7 @@ Inference result is saved in current path, you can find result like this in acc.
 | uploaded Date              | 08/20/2020                                                 | 08/24/2020                |
 | MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
 | Dataset                    | en-wiki-128                                                | en-wiki-128               |
-| Training Parameters        | src/gd_config.py                                           | src/gd_config.py          |
+| Training Parameters        | src/gd_config.yaml                                           | src/gd_config.yaml          |
 | Optimizer                  | AdamWeightDecay                                            | AdamWeightDecay           |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
 | outputs                    | probability                                                | probability               |
@@ -489,7 +590,7 @@ Inference result is saved in current path, you can find result like this in acc.
 
 In run_standaloned_td.sh, we set do_shuffle to shuffle the dataset.
 
-In gd_config.py and td_config.py, we set the hidden_dropout_prob and attention_pros_dropout_prob to dropout some network node.
+In gd_config.yaml and td_config/*.yaml, we set the hidden_dropout_prob and attention_pros_dropout_prob to dropout some network node.
 
 In run_general_distill.py, we set the random seed to make sure distribute training has the same init weight.
 
