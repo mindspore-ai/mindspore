@@ -2204,6 +2204,11 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.array([[-4, 4, 1]]), mstype.float32)],
         'desc_bprop': [Tensor(np.array([[0, 1, 0.6666]]), mstype.float32)],
         'skip': ['backward']}),
+    ('HardShrink', {
+        'block': P.HShrink(),
+        'desc_inputs': [Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mstype.float32)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [

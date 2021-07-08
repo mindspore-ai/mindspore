@@ -8665,7 +8665,6 @@ class SoftShrink(Primitive):
         x + \lambda, & \text{ if } x < -\lambda \\
         0, & \text{ otherwise }
         \end{cases}
-
     Args:
         lambd: the :math:`\lambda` must be no less than zero value for the Softshrink formulation. Default: 0.5.
 
@@ -8699,3 +8698,45 @@ class SoftShrink(Primitive):
         """Initialize SoftShrink"""
         validator.check_value_type("lambd", lambd, [float], self.name)
         validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
+
+
+class HShrink(Primitive):
+    r"""
+    Applies the hard shrinkage function element-wise, each element comply the follow function:
+
+    .. math::
+        \text{HardShrink}(x) =
+        \begin{cases}
+        x, & \text{ if } x > \lambda \\
+        x, & \text{ if } x < -\lambda \\
+        0, & \text{ otherwise }
+        \end{cases}
+        
+    Args:
+        lambd (float): The value for the Hardshrink formulation. Default: 0.5
+
+    Inputs:
+        - **input_x** (Tensor) - The input of hshrink with data type of float16 or float32.
+
+    Outputs:
+        Tensor, the same shape as the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If `lambd` is not a float.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mstype.float32)
+        >>> hshrink = P.HShrink()
+        >>> output = hshrink(input_x)
+        >>> print(output)
+        [[ 0.      1.      2.    ]
+        [ 0.      0.     -2.1233]]
+    """
+    @prim_attr_register
+    def __init__(self, lambd=0.5):
+        """Initialize HShrink"""
+        validator.check_value_type('lambd', lambd, [float], self.name)

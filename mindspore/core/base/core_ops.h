@@ -375,6 +375,7 @@ inline const PrimitivePtr kSquareSumV1 = std::make_shared<Primitive>("SquareSumV
 inline const PrimitivePtr kFusedMulAdd = std::make_shared<Primitive>("FusedMulAdd");
 inline const PrimitivePtr kPrimSoftShrink = std::make_shared<Primitive>("SoftShrink");
 inline const PrimitivePtr kPrimSoftShrinkGrad = std::make_shared<Primitive>("SoftShrinkGrad");
+inline const PrimitivePtr kPrimHShrink = std::make_shared<Primitive>("HShrink");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");

@@ -86,7 +86,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      FusedSparseFtrl, FusedSparseProximalAdagrad,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
-                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink)
+                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink, HShrink)
 from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingBoxEncode,
@@ -486,6 +486,8 @@ __all__ = [
     "SoftShrink",
     "FFT3D",
     "IFFT3D"
+    "HShrink"
+
 ]
 
 __all__.sort()
