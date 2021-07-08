@@ -86,6 +86,9 @@ class AbstractBase : public Base {
     os << a->ToString();
     return os;
   }
+  // Broaden abstract with constraints, broaden only if cond_func is true.Now this interface is only used in pynative
+  // mode when abstract type is AbstractTensor(not include the derived abstract type).
+  virtual AbstractBasePtr PartialBroaden() const;
 
  protected:
   // default implementation, it can be overwritten by subclass;
@@ -327,6 +330,7 @@ class AbstractTensor : public AbstractUndetermined {
     }
     return hash_sum;
   }
+  AbstractBasePtr PartialBroaden() const override;
 
  protected:
   bool equal_to(const AbstractTensor &other) const;
@@ -346,6 +350,7 @@ class AbstractSequeue : public AbstractBase {
   BaseShapePtrList ElementsShape() const;
   AbstractBasePtrList ElementsClone() const;
   AbstractBasePtrList ElementsBroaden() const;
+  AbstractBasePtrList ElementsPartialBroaden() const;
 
   template <typename T>
   ValuePtr ElementsBuildValue() const;
@@ -381,6 +386,8 @@ class AbstractTuple : public AbstractSequeue {
 
   AbstractBasePtr Broaden() const override { return std::make_shared<AbstractTuple>(ElementsBroaden()); }
 
+  AbstractBasePtr PartialBroaden() const override { return std::make_shared<AbstractTuple>(ElementsPartialBroaden()); }
+
   AbstractBasePtr Join(const AbstractBasePtr &other) override { return ElementsJoin<AbstractTuple>(other); }
 
   std::string ToString() const override { return type_name() + "(" + AbstractSequeue::ToString() + ")"; }
@@ -407,6 +414,8 @@ class AbstractList : public AbstractSequeue {
   AbstractBasePtr Clone() const override { return std::make_shared<AbstractList>(ElementsClone()); }
 
   AbstractBasePtr Broaden() const override { return std::make_shared<AbstractList>(ElementsBroaden()); }
+
+  AbstractBasePtr PartialBroaden() const override { return std::make_shared<AbstractList>(ElementsPartialBroaden()); }
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override { return ElementsJoin<AbstractList>(other); }
 
@@ -651,6 +660,7 @@ class AbstractRef : public AbstractTensor {
   std::size_t hash() const override {
     return AbstractTensor::hash() ^ (std::hash<uint32_t>{}(this->tid()) << 1);  // ref_key_->hash() ^
   }
+  AbstractBasePtr PartialBroaden() const override;
 
  private:
   AbstractBasePtr ref_key_;

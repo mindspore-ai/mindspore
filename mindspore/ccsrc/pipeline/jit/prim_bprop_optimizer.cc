@@ -338,7 +338,7 @@ void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList 
     auto &arg_value = op_args[i];
     auto arg_abs = arg_value->ToAbstract();
     if (!is_const_prim && !is_const_input) {
-      arg_abs = arg_abs->Broaden();
+      arg_abs = arg_abs->PartialBroaden();
       MS_LOG(DEBUG) << "Broaden for " << prim->ToString();
     }
     (*abs_list).emplace_back(arg_abs);
@@ -352,7 +352,7 @@ abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr
   }
   abstract::AbstractBasePtrList new_abs_list(abs_list);
   auto out_abs = out->ToAbstract();
-  out_abs = out_abs->Broaden();
+  out_abs = out_abs->PartialBroaden();
   new_abs_list.emplace_back(out_abs);
   new_abs_list.emplace_back(out_abs);
   return new_abs_list;
