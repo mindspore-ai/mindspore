@@ -15,7 +15,6 @@ enable_profiling: False
 # Training options
 model_name: 'unet_nested'
 include_background: False
-show_eval: False
 run_eval: False
 run_distribute: False
 dataset: 'COCO'
@@ -39,6 +38,7 @@ resume: False
 resume_ckpt: './'
 transfer_training: False
 filter_weight: ['final1.weight']
+show_eval: False
 color: [[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255], [0, 255, 255], [255, 0, 255], [255, 255, 255]]
 coco_classes: ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
                'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
