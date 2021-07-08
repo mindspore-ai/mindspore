@@ -16,14 +16,14 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "for example: sh run_distribute_train.sh 0 500 0.2 coco /opt/ssd-300.ckpt(optional) 200(optional)"
+echo "sh run_standalone_train.sh DEVICE_ID EPOCH_SIZE LR DATASET CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "for example: sh run_standalone_train.sh 0 500 0.2 coco /config_path /opt/ssd-300.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-if [ $# != 4 ] && [ $# != 6 ]
+if [ $# != 5 ] && [ $# != 7 ]
 then
-    echo "Usage: sh run_distribute_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] \
+    echo "Usage: sh run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] \
     [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
@@ -38,8 +38,9 @@ DEVICE_ID=$1
 EPOCH_SIZE=$2
 LR=$3
 DATASET=$4
-PRE_TRAINED=$5
-PRE_TRAINED_EPOCH_SIZE=$6
+CONFIG_PATH=$5
+PRE_TRAINED=$6
+PRE_TRAINED_EPOCH_SIZE=$7
 
 export DEVICE_ID=$DEVICE_ID
 rm -rf LOG$DEVICE_ID
@@ -50,16 +51,17 @@ cd ./LOG$DEVICE_ID || exit
 
 echo "start training with device $DEVICE_ID"
 env > env.log
-if [ $# == 4 ]
+if [ $# == 5 ]
 then
     python train.py  \
     --lr=$LR \
     --dataset=$DATASET \
     --device_id=$DEVICE_ID  \
+    --config_path=$CONFIG_PATH \
     --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
 fi
 
-if [ $# == 6 ]
+if [ $# == 7 ]
 then
     python train.py  \
     --lr=$LR \
@@ -67,6 +69,7 @@ then
     --device_id=$DEVICE_ID  \
     --pre_trained=$PRE_TRAINED \
     --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE \
+    --config_path=$CONFIG_PATH \
     --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
 fi
 
