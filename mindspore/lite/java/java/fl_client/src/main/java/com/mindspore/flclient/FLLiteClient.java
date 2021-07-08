@@ -96,8 +96,13 @@ public class FLLiteClient {
         LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <batchSize> from server: " + batchSize));
         CipherPublicParams cipherPublicParams = flPlan.cipher();
         String encryptLevel = cipherPublicParams.encryptType();
-        localFLParameter.setEncryptLevel(encryptLevel);
-        LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <encryptLevel> from server: " + encryptLevel));
+        if ("".equals(encryptLevel) || encryptLevel.isEmpty()) {
+            LOGGER.severe(Common.addTag("[startFLJob] GlobalParameters <encryptLevel> from server is null, set the encryptLevel to NOT_ENCRYPT "));
+            localFLParameter.setEncryptLevel(EncryptLevel.NOT_ENCRYPT.toString());
+        } else {
+            localFLParameter.setEncryptLevel(encryptLevel);
+            LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <encryptLevel> from server: " + encryptLevel));
+        }
         switch (localFLParameter.getEncryptLevel()) {
             case PW_ENCRYPT:
                 minSecretNum = cipherPublicParams.t();
@@ -425,17 +430,32 @@ public class FLLiteClient {
         retCode = ResponseCode.SUCCEED;
         LOGGER.info(Common.addTag("===================================evaluate model after getting model from server==================================="));
         if (flParameter.getFlName().equals(ALBERT)) {
-            AlInferBert alInferBert = AlInferBert.getInstance();
-            int dataSize = alInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile(), true);
-            if (dataSize <= 0) {
-                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alTrainBert.initDataSet>: the return dataSize<=0"));
-                status = FLClientStatus.FAILED;
-                retCode = ResponseCode.RequestError;
-                return status;
+            float acc = 0;
+            if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
+                LOGGER.info(Common.addTag("[evaluate] evaluateModel by " + localFLParameter.getServerMod()));
+                AlInferBert alInferBert = AlInferBert.getInstance();
+                int dataSize = alInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile(), true);
+                if (dataSize <= 0) {
+                    LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alInferBert.initDataSet>: the return dataSize<=0"));
+                    status = FLClientStatus.FAILED;
+                    retCode = ResponseCode.RequestError;
+                    return status;
+                }
+                acc = alInferBert.evalModel();
+            } else {
+                LOGGER.info(Common.addTag("[evaluate] evaluateModel by " + localFLParameter.getServerMod()));
+                AlTrainBert alTrainBert = AlTrainBert.getInstance();
+                int dataSize = alTrainBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile());
+                if (dataSize <= 0) {
+                    LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alTrainBert.initDataSet>: the return dataSize<=0"));
+                    status = FLClientStatus.FAILED;
+                    retCode = ResponseCode.RequestError;
+                    return status;
+                }
+                acc = alTrainBert.evalModel();
             }
-            float acc = alInferBert.evalModel();
             if (acc == Float.NaN) {
-                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <alTrainBert.evalModel>: the return acc is NAN"));
+                LOGGER.severe(Common.addTag("[evaluate] unsolved error code in <evalModel>: the return acc is NAN"));
                 status = FLClientStatus.FAILED;
                 retCode = ResponseCode.RequestError;
                 return status;
