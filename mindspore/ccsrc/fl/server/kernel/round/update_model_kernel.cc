@@ -42,7 +42,7 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   LocalMetaStore::GetInstance().put_value(kCtxFedAvgTotalDataSize, kInitialDataSizeSum);
 }
 
-bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1 || outputs.size() != 1) {
     MS_LOG(ERROR) << "inputs or outputs size is invalid.";
@@ -87,7 +87,7 @@ bool UpdateModelKernel::Reset() {
   return true;
 }
 
-void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) {
+void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &) {
   if (PSContext::instance()->resetter_round() == ResetterRound::kUpdateModel) {
     while (!executor_->IsAllWeightAggregationDone()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -116,6 +116,7 @@ bool UpdateModelKernel::ReachThresholdForUpdateModel(const std::shared_ptr<FBBui
 
 bool UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
                                     const std::shared_ptr<FBBuilder> &fbb) {
+  RETURN_IF_NULL(update_model_req, false);
   size_t iteration = static_cast<size_t>(update_model_req->iteration());
   if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
     std::string reason = "UpdateModel iteration number is invalid:" + std::to_string(iteration) +
@@ -131,6 +132,7 @@ bool UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_mod
   PBMetadata device_metas = DistributedMetadataStore::GetInstance().GetMetadata(kCtxDeviceMetas);
   FLIdToDeviceMeta fl_id_to_meta = device_metas.device_metas();
   std::string update_model_fl_id = update_model_req->fl_id()->str();
+  MS_LOG(INFO) << "Update model for fl id " << update_model_fl_id;
   if (fl_id_to_meta.fl_id_to_meta().count(update_model_fl_id) == 0) {
     std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
     BuildUpdateModelRsp(
@@ -180,6 +182,7 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
   RETURN_IF_NULL(update_model_req, {});
   std::map<std::string, UploadData> feature_map;
   auto fbs_feature_map = update_model_req->feature_map();
+  RETURN_IF_NULL(fbs_feature_map, feature_map);
   for (size_t i = 0; i < fbs_feature_map->size(); i++) {
     std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
     float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
@@ -194,6 +197,7 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
 
 bool UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                             const schema::RequestUpdateModel *update_model_req) {
+  RETURN_IF_NULL(update_model_req, false);
   if (!DistributedCountService::GetInstance().Count(name_, update_model_req->fl_id()->str())) {
     std::string reason = "Counting for update model request failed. Please retry later.";
     BuildUpdateModelRsp(

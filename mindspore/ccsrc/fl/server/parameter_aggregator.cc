@@ -319,7 +319,7 @@ bool ParameterAggregator::GenerateOptimizerKernelParams(const std::shared_ptr<ke
   return true;
 }
 
-std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &cnode) {
+std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &) {
   std::vector<std::string> aggregation_algorithm = {};
   if (PSContext::instance()->server_mode() == kServerModeFL ||
       PSContext::instance()->server_mode() == kServerModeHybrid) {

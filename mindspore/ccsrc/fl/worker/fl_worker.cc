@@ -36,7 +36,8 @@ void FLWorker::Run() {
   PSContext::instance()->cluster_config().initial_server_num = server_num_;
   MS_LOG(INFO) << "Initialize cluster config for worker. Worker number:" << worker_num_
                << ", Server number:" << server_num_ << ", Scheduler ip:" << scheduler_ip_
-               << ", Scheduler port:" << scheduler_port_;
+               << ", Scheduler port:" << scheduler_port_
+               << ", Worker training step per iteration:" << worker_step_num_per_iteration_;
 
   worker_node_ = std::make_shared<core::WorkerNode>();
   MS_EXCEPTION_IF_NULL(worker_node_);
@@ -73,7 +74,7 @@ void FLWorker::Finalize() {
   worker_node_->Stop();
 }
 
-bool FLWorker::SendToServer(uint32_t server_rank, void *data, size_t size, core::TcpUserCommand command,
+bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size, core::TcpUserCommand command,
                             std::shared_ptr<std::vector<unsigned char>> *output) {
   // If the worker is in safemode, do not communicate with server.
   while (safemode_.load()) {
@@ -147,7 +148,7 @@ void FLWorker::InitializeFollowerScaler() {
   worker_node_->RegisterFollowerScalerBarrierBeforeScaleOut("WorkerPipeline",
                                                             std::bind(&FLWorker::ProcessBeforeScalingOut, this));
   worker_node_->RegisterFollowerScalerBarrierBeforeScaleIn("WorkerPipeline",
-                                                           std::bind(&FLWorker::ProcessBeforeScalingOut, this));
+                                                           std::bind(&FLWorker::ProcessBeforeScalingIn, this));
 
   // Set handlers after scheduler scaling operations are done.
   worker_node_->RegisterFollowerScalerHandlerAfterScaleOut("WorkerPipeline",

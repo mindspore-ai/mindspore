@@ -71,27 +71,27 @@ class RoundKernel : virtual public CPUKernel {
   virtual void OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message);
 
   // Called when this round is finished. This round timer's Stop method will be called.
-  void StopTimer();
+  void StopTimer() const;
 
   // Called after this iteration(including all rounds) is finished. All rounds' Reset method will
   // be called.
-  void FinishIteration();
+  void FinishIteration() const;
 
   // Release the response data allocated inside the round kernel.
   // Server framework must call this after the response data is sent back.
-  void Release(AddressPtr addr_ptr);
+  void Release(const AddressPtr &addr_ptr);
 
   // Set round kernel name, which could be used in round kernel's methods.
   void set_name(const std::string &name);
 
   // Set callbacks to be called under certain triggered conditions.
-  void set_stop_timer_cb(StopTimerCb timer_stopper);
-  void set_finish_iteration_cb(FinishIterCb finish_iteration_cb);
+  void set_stop_timer_cb(const StopTimerCb &timer_stopper);
+  void set_finish_iteration_cb(const FinishIterCb &finish_iteration_cb);
 
  protected:
   // Generating response data of this round. The data is allocated on the heap to ensure it's not released before sent
   // back to worker.
-  void GenerateOutput(const std::vector<AddressPtr> &outputs, void *data, size_t len);
+  void GenerateOutput(const std::vector<AddressPtr> &outputs, const void *data, size_t len);
 
   // Round kernel's name.
   std::string name_;

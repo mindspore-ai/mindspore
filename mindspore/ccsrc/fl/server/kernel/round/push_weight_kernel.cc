@@ -30,7 +30,7 @@ void PushWeightKernel::InitKernel(size_t) {
   local_rank_ = DistributedCountService::GetInstance().local_rank();
 }
 
-bool PushWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool PushWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Launching PushWeightKernel kernel.";
   void *req_data = inputs[0]->addr;
@@ -111,6 +111,7 @@ std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::R
   RETURN_IF_NULL(push_weight_req, {});
   std::map<std::string, Address> upload_feature_map;
   auto fbs_feature_map = push_weight_req->feature_map();
+  RETURN_IF_NULL(push_weight_req, upload_feature_map);
   for (size_t i = 0; i < fbs_feature_map->size(); i++) {
     std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
     float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());

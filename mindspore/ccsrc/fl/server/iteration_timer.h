@@ -42,10 +42,10 @@ class IterationTimer {
   void SetTimeOutCallBack(const TimeOutCb &timeout_cb);
 
   // Judge whether current timestamp is out of time window's range since the Start function is called.
-  bool IsTimeOut(const std::chrono::milliseconds &timestamp);
+  bool IsTimeOut(const std::chrono::milliseconds &timestamp) const;
 
   // Judge whether the timer is keeping timing.
-  bool IsRunning();
+  bool IsRunning() const;
 
  private:
   // The running state for the timer.

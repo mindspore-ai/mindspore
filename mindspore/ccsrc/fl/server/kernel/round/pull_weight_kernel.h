@@ -33,7 +33,7 @@ namespace kernel {
 constexpr uint32_t kPrintPullWeightForEveryRetryTime = 500;
 class PullWeightKernel : public RoundKernel {
  public:
-  PullWeightKernel() = default;
+  PullWeightKernel() : executor_(nullptr), retry_count_(0) {}
   ~PullWeightKernel() override = default;
 
   void InitKernel(size_t required_cnt) override;
@@ -49,7 +49,7 @@ class PullWeightKernel : public RoundKernel {
   Executor *executor_;
 
   // The count of retrying because the aggregation of the weights is not done.
-  static uint64_t retry_count_;
+  std::atomic<uint64_t> retry_count_;
 };
 }  // namespace kernel
 }  // namespace server

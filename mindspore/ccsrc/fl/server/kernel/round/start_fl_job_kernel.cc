@@ -34,7 +34,7 @@ void StartFLJobKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
-  iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
+  iter_next_req_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
 
   executor_ = &Executor::GetInstance();
@@ -49,7 +49,7 @@ void StartFLJobKernel::InitKernel(size_t) {
   return;
 }
 
-bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Launching StartFLJobKernel kernel.";
   if (inputs.size() != 1 || outputs.size() != 1) {
@@ -114,7 +114,7 @@ bool StartFLJobKernel::Reset() {
 }
 
 void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &) {
-  iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
+  iter_next_req_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
   // The first startFLJob request means a new iteration starts running.
   Iteration::GetInstance().SetIterationRunning();
@@ -133,6 +133,7 @@ bool StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuild
 }
 
 DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req) {
+  RETURN_IF_NULL(start_fl_job_req, {});
   std::string fl_name = start_fl_job_req->fl_name()->str();
   std::string fl_id = start_fl_job_req->fl_id()->str();
   int data_size = start_fl_job_req->data_size();
@@ -141,7 +142,7 @@ DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *st
   DeviceMeta device_meta;
   device_meta.set_fl_name(fl_name);
   device_meta.set_fl_id(fl_id);
-  device_meta.set_data_size(data_size);
+  device_meta.set_data_size(IntToSize(data_size));
   return device_meta;
 }
 
@@ -154,7 +155,7 @@ bool StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
   }
   if (!ret) {
     BuildStartFLJobRsp(
-      fbb, schema::ResponseCode_NotSelected, reason, false,
+      fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
   }
@@ -163,6 +164,7 @@ bool StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
 
 bool StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                           const schema::RequestFLJob *start_fl_job_req) {
+  RETURN_IF_NULL(start_fl_job_req, false);
   if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str())) {
     std::string reason = "Counting start fl job request failed. Please retry later.";
     BuildStartFLJobRsp(
@@ -235,7 +237,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   schema::ResponseFLJobBuilder rsp_fl_job_builder(*(fbb.get()));
   rsp_fl_job_builder.add_retcode(retcode);
   rsp_fl_job_builder.add_reason(fbs_reason);
-  rsp_fl_job_builder.add_iteration(LocalMetaStore::GetInstance().curr_iter_num());
+  rsp_fl_job_builder.add_iteration(SizeToInt(LocalMetaStore::GetInstance().curr_iter_num()));
   rsp_fl_job_builder.add_is_selected(is_selected);
   rsp_fl_job_builder.add_next_req_time(fbs_next_req_time);
   rsp_fl_job_builder.add_fl_plan_config(fbs_fl_plan);
