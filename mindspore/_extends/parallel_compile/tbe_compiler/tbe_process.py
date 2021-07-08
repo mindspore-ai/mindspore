@@ -29,6 +29,7 @@ from mindspore import log
 from .tbe_common import check_kernel_info, TBEException
 from .helper import _op_select_format, _check_supported
 
+
 # tune type
 NO_TUNE = "NO_TUNE"
 GA_TUNE = "GA"
@@ -355,7 +356,10 @@ class TbeProcess:
                     log.error("Auto tune init failed, place check your hardware config or go back to normal compile!")
                     self.tune_init = False
                     return error_id
+                self.__reset_op_info = self.get_reset_op_info()
                 self.__tuner.tune_init = True
+            json_info["reset_op_info"] = self.__reset_op_info
+            op_json = json.dumps(json_info)
             self.__all_tune_tasks.append(task_id)
             self.__running_tune_tasks.append(task_id)
 
