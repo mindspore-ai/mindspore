@@ -379,10 +379,6 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->OptimizeSingleOpGraph(graph);
 
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->RunOpHideNopNode(graph);
-  session_->RunOpRemoveNopNode(graph);
-
   // Generate 'KernelMod' for kernel in graph.
   device_context->CreateKernel(graph->execution_order());
 
