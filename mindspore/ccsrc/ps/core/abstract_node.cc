@@ -586,7 +586,6 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
 
   std::lock_guard<std::mutex> lock(client_mutex_);
   connected_nodes_.clear();
-  MS_LOG(INFO) << "The current cluster state:" << CommUtil::ClusterStateToString(current_cluster_state_);
 }
 
 void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
