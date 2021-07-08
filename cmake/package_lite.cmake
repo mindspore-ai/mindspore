@@ -23,7 +23,9 @@ set(MINDSPORE_LITE_TRAIN_LIB_NAME libmindspore-lite-train)
 set(BENCHMARK_TRAIN_NAME benchmark_train)
 set(BENCHMARK_TRAIN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
 
+# full mode will also package the files of lite_cv mode.
 if(BUILD_MINDDATA STREQUAL "full")
+    # full header files
     install(FILES
             ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
             ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/data_helper.h
@@ -65,6 +67,10 @@ if(BUILD_MINDDATA STREQUAL "full")
         install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a
                 DESTINATION ${SECUREC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
+
+    # lite_cv header files
+    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv
+            DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
 endif()
 
 if(BUILD_MINDDATA STREQUAL "wrapper")
