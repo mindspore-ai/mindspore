@@ -24,8 +24,7 @@
 
 namespace mindspore {
 namespace dataset {
-const float RotateOp::kDefCenterX = -1;
-const float RotateOp::kDefCenterY = -1;
+const std::vector<float> RotateOp::kDefCenter = {};
 const InterpolationMode RotateOp::kDefInterpolation = InterpolationMode::kNearestNeighbour;
 const bool RotateOp::kDefExpand = false;
 const uint8_t RotateOp::kDefFillR = 0;
@@ -34,11 +33,10 @@ const uint8_t RotateOp::kDefFillB = 0;
 
 RotateOp::RotateOp(int angle_id) : angle_id_(angle_id) {}
 
-RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, float center_x, float center_y,
-                   uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
+RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, std::vector<float> center, uint8_t fill_r,
+                   uint8_t fill_g, uint8_t fill_b)
     : degrees_(degrees),
-      center_x_(center_x),
-      center_y_(center_y),
+      center_(center),
       interpolation_(resample),
       expand_(expand),
       fill_r_(fill_r),
@@ -48,7 +46,7 @@ RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, float
 Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
 #ifndef ENABLE_ANDROID
-  return Rotate(input, output, center_x_, center_y_, degrees_, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
+  return Rotate(input, output, center_, degrees_, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
 #else
   return Rotate(input, output, angle_id_);
 #endif

@@ -31,8 +31,7 @@ namespace dataset {
 class RandomRotationOp : public TensorOp {
  public:
   // Default values, also used by python_bindings.cc
-  static const float kDefCenterX;
-  static const float kDefCenterY;
+  static const std::vector<float> kDefCenter;
   static const InterpolationMode kDefInterpolation;
   static const bool kDefExpand;
   static const uint8_t kDefFillR;
@@ -44,8 +43,7 @@ class RandomRotationOp : public TensorOp {
   // @param endDegree ending range for random degree
   // @param interpolation DE interpolation mode for rotation
   // @param expand option for the output image shape to change
-  // @param center_x coordinate for center of image rotation
-  // @param center_y coordinate for center of image rotation
+  // @param center coordinate for center of image rotation
   // @param fill_r R value for the color to pad with
   // @param fill_g G value for the color to pad with
   // @param fill_b B value for the color to pad with
@@ -53,8 +51,8 @@ class RandomRotationOp : public TensorOp {
   // @details the output shape, if changed, will contain the entire rotated image
   // @note maybe using unsigned long int isn't the best here according to our coding rules
   RandomRotationOp(float start_degree, float end_degree, InterpolationMode resample = kDefInterpolation,
-                   bool expand = kDefExpand, float center_x = kDefCenterX, float center_y = kDefCenterY,
-                   uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
+                   bool expand = kDefExpand, std::vector<float> center = kDefCenter, uint8_t fill_r = kDefFillR,
+                   uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
 
   ~RandomRotationOp() override = default;
 
@@ -63,6 +61,7 @@ class RandomRotationOp : public TensorOp {
   // and transforms its data using openCV, the output memory is manipulated to contain the result
   // @return Status The status code returned
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
   std::string Name() const override { return kRandomRotationOp; }
@@ -70,8 +69,7 @@ class RandomRotationOp : public TensorOp {
  private:
   float degree_start_;
   float degree_end_;
-  float center_x_;
-  float center_y_;
+  std::vector<float> center_;
   InterpolationMode interpolation_;
   bool expand_;
   uint8_t fill_r_;

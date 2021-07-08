@@ -90,6 +90,7 @@ DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBO
 DE_C_SLICE_MODE = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
                    SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
 
+
 def parse_padding(padding):
     """ Parses and prepares the padding tuple"""
     if isinstance(padding, numbers.Number):
@@ -1214,7 +1215,7 @@ class RandomRotation(ImageTensorOperation):
                 if degrees[0] > degrees[1]:
                     degrees[1] += 360
         if center is None:
-            center = (-1, -1)
+            center = ()
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         self.degrees = degrees
@@ -1525,7 +1526,7 @@ class Rotate(ImageTensorOperation):
         if isinstance(degrees, (int, float)):
             degrees = degrees % 360
         if center is None:
-            center = (-1, -1)
+            center = ()
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         self.degrees = degrees
@@ -1575,6 +1576,7 @@ class SlicePatches(ImageTensorOperation):
     def parse(self):
         return cde.SlicePatchesOperation(self.num_height, self.num_width,
                                          DE_C_SLICE_MODE[self.slice_mode], self.fill_value)
+
 
 class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     """
