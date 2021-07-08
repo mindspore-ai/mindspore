@@ -70,6 +70,5 @@ echo 'run mindrt parallel ut test'
 ./lite-test --gtest_filter="MindrtParallelTest.*"
 ./lite-test --gtest_filter="BenchmarkTest.mindrtParallelOffline*"
 
-
 echo 'user set output tensors st test'
-./lite-test --gtest_filter="GraphTest.UserSetGraphOutput1"
+./lite-test --gtest_filter="GraphTest.UserSetGraphOutput*"

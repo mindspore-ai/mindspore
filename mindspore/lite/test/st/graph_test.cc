@@ -18,8 +18,6 @@
 #include "common/common_test.h"
 #include "include/errorcode.h"
 #include "tools/converter/converter.h"
-#include "tools/benchmark/benchmark.h"
-#include "src/mindrt_executor.h"
 #include "src/lite_session.h"
 #include "src/lite_kernel.h"
 
@@ -51,7 +49,6 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
   auto inputs = session->GetInputs();
   auto in = inputs[0];
   auto in_data = in->MutableData();
-  //  std::string bin_file = ;
   char *bin_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model.bin", &size);
   memcpy(in_data, bin_buf, in->Size());
 
