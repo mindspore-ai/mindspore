@@ -572,9 +572,9 @@ bash scripts/run_ner.sh
 如您选择F1作为评估方法，可得到如下结果：
 
 ```text
-Precision 0.920507
-Recall 0.948683
-F1 0.920507
+Precision 0.868245
+Recall 0.865611
+F1 0.866926
 ```
 
 #### Ascend处理器上运行后评估msra数据集
