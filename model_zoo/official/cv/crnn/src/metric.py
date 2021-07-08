@@ -23,7 +23,7 @@ class CRNNAccuracy(nn.Metric):
     """
 
     def __init__(self, config, print_flag=True):
-        super(CRNNAccuracy).__init__()
+        super(CRNNAccuracy, self).__init__()
         self.config = config
         self._correct_num = 0
         self._total_num = 0
