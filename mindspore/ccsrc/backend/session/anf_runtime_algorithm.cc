@@ -807,6 +807,27 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetPrevNodeOutputInferShape(const AnfNo
   return AnfRuntimeAlgorithm::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
 }
 
+std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node,
+                                                                          const size_t output_idx,
+                                                                          const std::string &format) {
+  auto output_shape = GetOutputDetailShape(node, output_idx);
+  std::vector<int64_t> infer_shape;
+  if (output_shape->isa<abstract::Shape>()) {
+    auto shape_ptr = output_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    infer_shape = shape_ptr->shape();
+  }
+  if (infer_shape.empty()) {
+    return infer_shape;
+  }
+
+  // if format is default_format or NC1KHKWHWC0,device shape = original shape
+  if (trans::IsNeedPadding(format, infer_shape.size())) {
+    infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx));
+  }
+  return trans::TransShapeToDevice(infer_shape, format, node, output_idx);
+}
+
 std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx) {
   auto format = GetOutputFormat(node, output_idx);
   auto infer_shape = GetOutputInferShape(node, output_idx);

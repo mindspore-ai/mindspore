@@ -17,9 +17,9 @@
 #include <functional>
 #include <numeric>
 #include <utility>
+#include <algorithm>
 #include "utils/ms_utils.h"
 #include "abstract/utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "runtime/device/convert_tensor_utils.h"
@@ -27,9 +27,9 @@
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
 
+using mindspore::abstract::Shape;
 namespace mindspore {
 namespace trans {
-enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims, kNcdhw };
 inline void SetData(size_t size, bool pad_zero, size_t src_idx, size_t dst_idx, const FormatArgs &args, void *result) {
   switch (size) {
     case 1:
@@ -214,7 +214,12 @@ bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const
 }
 
 namespace {
-bool CheckDims(const std::vector<size_t> &shape) {
+bool HasShapeDynamic(const std::vector<int64_t> &shape_list) {
+  return std::any_of(shape_list.begin(), shape_list.end(), [](int64_t shape) { return shape == Shape::SHP_ANY; });
+}
+
+template <typename T>
+bool CheckDims(const std::vector<T> &shape) {
   if (shape.size() != kNchwDims) {
     MS_LOG(ERROR) << "Host shape dims should be 4";
     return false;
@@ -223,6 +228,13 @@ bool CheckDims(const std::vector<size_t> &shape) {
 }
 
 std::vector<size_t> NchwDeviceShape(const std::vector<size_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  return shape;
+}
+
+std::vector<int64_t> NchwDeviceDynamicShape(const std::vector<int64_t> &shape) {
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
@@ -241,11 +253,35 @@ std::vector<size_t> NhwcDeviceShape(const std::vector<size_t> &shape) {
   return device_shape;
 }
 
+std::vector<int64_t> NhwcDeviceDynamicShape(const std::vector<int64_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Ccheck dims failed.";
+  }
+  std::vector<int64_t> device_shape;
+  device_shape.push_back(shape[kN]);
+  device_shape.push_back(shape[kH]);
+  device_shape.push_back(shape[kW]);
+  device_shape.push_back(shape[kC]);
+  return device_shape;
+}
+
 std::vector<size_t> HwchDeviceShape(const std::vector<size_t> &shape) {
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
   std::vector<size_t> device_shape;
+  device_shape.push_back(shape[kH]);
+  device_shape.push_back(shape[kW]);
+  device_shape.push_back(shape[kC]);
+  device_shape.push_back(shape[kN]);
+  return device_shape;
+}
+
+std::vector<int64_t> HwchDeviceDynamicShape(const std::vector<int64_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<int64_t> device_shape;
   device_shape.push_back(shape[kH]);
   device_shape.push_back(shape[kW]);
   device_shape.push_back(shape[kC]);
@@ -267,6 +303,28 @@ std::vector<size_t> FracZDeviceShape(const std::vector<size_t> &shape) {
   return device_shape;
 }
 
+std::vector<int64_t> FracZDeviceDynamicShape(const std::vector<int64_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<int64_t> device_shape;
+  if (HasShapeDynamic({shape[kC], shape[kH], shape[kW]})) {
+    device_shape.push_back(Shape::SHP_ANY);
+  } else {
+    const int64_t cin16 = ((shape[kC] + kCubeSize - 1) / kCubeSize) * kCubeSize;
+    device_shape.push_back(shape[kH] * shape[kW] * cin16 / kCubeSize);
+  }
+  if (shape[kN] == Shape::SHP_ANY) {
+    device_shape.push_back(Shape::SHP_ANY);
+  } else {
+    const int64_t cout16 = ((shape[kN] + kCubeSize - 1) / kCubeSize) * kCubeSize;
+    device_shape.push_back(cout16 / kCubeSize);
+  }
+  device_shape.push_back(kCubeSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
 std::vector<size_t> Nc1hwc0DeviceShape(const std::vector<size_t> &shape) {
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
@@ -274,6 +332,21 @@ std::vector<size_t> Nc1hwc0DeviceShape(const std::vector<size_t> &shape) {
   std::vector<size_t> device_shape;
   const size_t C1 = (shape[kC] + kCubeSize - 1) / kCubeSize;
   const size_t C0 = kCubeSize;
+  device_shape.push_back(shape[kN]);
+  device_shape.push_back(C1);
+  device_shape.push_back(shape[kH]);
+  device_shape.push_back(shape[kW]);
+  device_shape.push_back(C0);
+  return device_shape;
+}
+
+std::vector<int64_t> Nc1hwc0DeviceDynamicShape(const std::vector<int64_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<int64_t> device_shape;
+  const int64_t C1 = (shape[kC] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[kC] + kCubeSize - 1) / kCubeSize;
+  const int64_t C0 = kCubeSize;
   device_shape.push_back(shape[kN]);
   device_shape.push_back(C1);
   device_shape.push_back(shape[kH]);
@@ -299,6 +372,23 @@ std::vector<size_t> Ndc1hwc0DeviceShape(const std::vector<size_t> &shape) {
   return device_shape;
 }
 
+std::vector<int64_t> Ndc1hwc0DeviceDynamicShape(const std::vector<int64_t> &shape) {
+  // NCDHW
+  if (shape.size() != 5) {
+    MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
+  }
+  std::vector<int64_t> device_shape;
+  const int64_t C1 = (shape[1] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[1] + kCubeSize - 1) / kCubeSize;
+  const int64_t C0 = kCubeSize;
+  device_shape.push_back(shape[0]);
+  device_shape.push_back(shape[2]);
+  device_shape.push_back(C1);
+  device_shape.push_back(shape[3]);
+  device_shape.push_back(shape[4]);
+  device_shape.push_back(C0);
+  return device_shape;
+}
+
 std::vector<size_t> Fracz3DDeviceShape(const std::vector<size_t> &shape) {
   // NCDHW -> Frac_Z_3D
   if (shape.size() != 5) {
@@ -314,12 +404,47 @@ std::vector<size_t> Fracz3DDeviceShape(const std::vector<size_t> &shape) {
   return device_shape;
 }
 
+std::vector<int64_t> Fracz3DDeviceDynamicShape(const std::vector<int64_t> &shape) {
+  // NCDHW -> Frac_Z_3D
+  if (shape.size() != 5) {
+    MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
+  }
+  std::vector<int64_t> device_shape;
+  if (HasShapeDynamic({shape[1], shape[2], shape[3], shape[4]})) {
+    device_shape.push_back(Shape::SHP_ANY);
+  } else {
+    const int64_t C1 = (shape[1] + kCubeSize - 1) / kCubeSize;
+    device_shape.push_back(shape[2] * C1 * shape[3] * shape[4]);
+  }
+
+  const int64_t N1 = (shape[0] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[0] + kCubeSize - 1) / kCubeSize;
+  device_shape.push_back(N1);
+  device_shape.push_back(kCubeSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
 std::vector<size_t> C1hwncoc0DeviceShape(const std::vector<size_t> &shape) {
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
   std::vector<size_t> device_shape;
   device_shape.push_back((shape[kC] - 1) / kCubeSize + 1);
+  device_shape.push_back(shape[kH]);
+  device_shape.push_back(shape[kW]);
+  device_shape.push_back(shape[kN]);
+  device_shape.push_back(kCubeSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
+std::vector<int64_t> C1hwncoc0DeviceDynamicShape(const std::vector<int64_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<int64_t> device_shape;
+  shape[kC] == Shape::SHP_ANY ? device_shape.push_back(Shape::SHP_ANY)
+                              : device_shape.push_back((shape[kC] - 1) / kCubeSize + 1);
   device_shape.push_back(shape[kH]);
   device_shape.push_back(shape[kW]);
   device_shape.push_back(shape[kN]);
@@ -343,6 +468,28 @@ std::vector<size_t> FracZc04DeviceShape(const std::vector<size_t> &shape) {
   return device_shape;
 }
 
+std::vector<int64_t> FracZc04DeviceDynamicShape(const std::vector<int64_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<int64_t> device_shape;
+  const int64_t c0 = 4;
+
+  int64_t first_dim;
+  if (HasShapeDynamic({shape[kH], shape[kW]})) {
+    first_dim = Shape::SHP_ANY;
+  } else {
+    first_dim = DivCeil(c0 * shape[kH] * shape[kW], SizeToLong(kCubeSize));
+  }
+  auto shape_kN = shape.at(kN);
+  int64_t no = (shape_kN == Shape::SHP_ANY) ? Shape::SHP_ANY : DivCeil(shape.at(kN), SizeToLong(kCubeSize));
+  device_shape.push_back(first_dim);
+  device_shape.push_back(no);
+  device_shape.push_back(kCubeSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
 std::vector<size_t> Nc1hwc04DeviceShape(const std::vector<size_t> &shape) {
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
@@ -358,7 +505,29 @@ std::vector<size_t> Nc1hwc04DeviceShape(const std::vector<size_t> &shape) {
   return device_shape;
 }
 
+std::vector<int64_t> Nc1hwc04DeviceDynamicShape(const std::vector<int64_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<int64_t> device_shape;
+  const int64_t C1 = 1;
+  const int64_t C0 = 4;
+  device_shape.push_back(shape[kN]);
+  device_shape.push_back(C1);
+  device_shape.push_back(shape[kH]);
+  device_shape.push_back(shape[kW]);
+  device_shape.push_back(C0);
+  return device_shape;
+}
+
 std::vector<size_t> NcdhwDeviceShape(const std::vector<size_t> &shape) {
+  if (shape.size() < kNcdhw) {
+    MS_LOG(EXCEPTION) << "Shape dims must be 5 when format is ndhwc.";
+  }
+  return shape;
+}
+
+std::vector<int64_t> NcdhwDeviceDynamicShape(const std::vector<int64_t> &shape) {
   if (shape.size() < kNcdhw) {
     MS_LOG(EXCEPTION) << "Shape dims must be 5 when format is ndhwc.";
   }
@@ -380,6 +549,21 @@ std::vector<size_t> ChannelLastDeviceShape(const std::vector<size_t> &shape) {
   return device_shape;
 }
 
+// change channel-first shape to channel-last shape.
+// eg. [2,3,4] => [2,4,3]; [2,3,4,5] => [2,4,5,3]
+std::vector<int64_t> ChannelLastDeviceDynamicShape(const std::vector<int64_t> &shape) {
+  auto dim = shape.size();
+  std::vector<int64_t> axis;
+  axis.resize(dim);
+  std::iota(axis.begin() + 1, axis.end(), 2);
+  axis[dim - 1] = 1;
+
+  std::vector<int64_t> device_shape;
+  std::transform(axis.begin(), axis.end(), std::back_inserter(device_shape), [&shape](int n) { return shape[n]; });
+
+  return device_shape;
+}
+
 std::vector<size_t> FracZDeviceShapeWithGroups(const std::vector<size_t> &shape, const int64_t groups = 1) {
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
@@ -396,6 +580,80 @@ std::vector<size_t> FracZDeviceShapeWithGroups(const std::vector<size_t> &shape,
   device_shape.push_back(g_dim * c1_dim * shape[kH] * shape[kW]);
   device_shape.push_back(n1);
   device_shape.push_back(kNiSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
+std::vector<int64_t> FracZDeviceShapeWithGroups(const std::vector<int64_t> &shape, const int64_t groups = 1) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+
+  int64_t c1_dim = Shape::SHP_ANY;
+  int64_t g_dim = Shape::SHP_ANY;
+  int64_t n1 = Shape::SHP_ANY;
+  if (HasShapeDynamic({shape[kC], shape[kN]})) {
+    size_t group_size = LongToSize(groups);
+    size_t cin_ori_tmp = LongToSize(shape[kC]);
+    size_t cout_ori_tmp = LongToSize(shape[kN]) / group_size;
+    size_t e_mult =
+      std::min(Lcm(Lcm(cin_ori_tmp, kCubeSize) / cin_ori_tmp, Lcm(cout_ori_tmp, kCubeSize) / cout_ori_tmp), group_size);
+    int64_t cin_opt = DivCeil(e_mult * cin_ori_tmp, kCubeSize) * kCubeSize;
+    c1_dim = cin_opt / kCubeSize;
+    g_dim = DivCeil(group_size, e_mult);
+    n1 = DivCeil(cout_ori_tmp * e_mult, kCubeSize);
+  }
+
+  std::vector<int64_t> device_shape;
+  if (HasShapeDynamic({shape[kC], shape[kN], shape[kH], shape[kW]})) {
+    device_shape.push_back(g_dim * c1_dim * shape[kH] * shape[kW]);
+  } else {
+    device_shape.push_back(Shape::SHP_ANY);
+  }
+  device_shape.push_back(n1);
+  device_shape.push_back(kNiSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
+std::vector<int64_t> TransShapeToFracNZ(const std::vector<int64_t> &shape) {
+  std::vector<int64_t> device_shape;
+  if (shape.size() == 1 && (shape[0] == 1 || shape[0] % kCubeSize == 0)) {
+    // For [1] and [1024] shape we can trait it as NZ shape
+    return shape;
+  }
+  if (shape.size() < 2) {
+    MS_LOG(EXCEPTION) << "Format FRACTAL_NZ is not support shape " << shape.size();
+  } else {
+    (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
+  }
+  int64_t h_shape = shape[shape.size() - 2];
+  int64_t w_shape = shape[shape.size() - 1];
+  int64_t h1 = (h_shape == Shape::SHP_ANY) ? Shape::SHP_ANY : (h_shape - 1) / kCubeSize + 1;
+  int64_t w1 = (w_shape == Shape::SHP_ANY) ? Shape::SHP_ANY : (w_shape - 1) / kCubeSize + 1;
+  device_shape.push_back(w1);
+  device_shape.push_back(h1);
+  device_shape.push_back(kCubeSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
+std::vector<int64_t> TransShapeToFracNZLSTM(const std::vector<int64_t> &shape) {
+  std::vector<int64_t> device_shape;
+  const int64_t c0 = 4;
+  const int64_t h_shape = shape.at(kN);
+  const int64_t i_shape = shape.at(kC);
+  const int64_t h = (h_shape == Shape::SHP_ANY) ? Shape::SHP_ANY : h_shape / c0;
+
+  int64_t first = Shape::SHP_ANY;
+  if (h_shape != Shape::SHP_ANY && i_shape != Shape::SHP_ANY) {
+    int64_t i = i_shape - h;
+    first = DivCeil(i, SizeToLong(kCubeSize)) + DivCeil(h, SizeToLong(kCubeSize));
+  }
+  const int64_t second = (h == Shape::SHP_ANY) ? Shape::SHP_ANY : c0 * DivCeil(h, SizeToLong(kCubeSize));
+  device_shape.push_back(first);
+  device_shape.push_back(second);
+  device_shape.push_back(kCubeSize);
   device_shape.push_back(kCubeSize);
   return device_shape;
 }
@@ -437,20 +695,6 @@ bool IsNeedPadding(const std::string &format, const size_t shape_size) {
     return true;
   }
   return false;
-}
-
-std::vector<size_t> PaddingShape(const std::vector<size_t> &shape, const std::string &format,
-                                 const std::string &pad_index) {
-  std::vector<size_t> host_shape;
-  if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
-    if (shape.size() >= kNcdhw) {
-      return shape;
-    }
-    host_shape = trans::PaddingShapeTo5d(shape, pad_index);
-  } else {
-    host_shape = trans::PaddingShapeTo4d(shape, pad_index);
-  }
-  return host_shape;
 }
 
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
@@ -536,90 +780,6 @@ void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5
   }
 }
 
-std::vector<size_t> PaddingShapeTo5d(const std::vector<size_t> &shape, const std::string &padding_str) {
-  std::vector<Axis5D> padding_axis;
-  StringToAxisVector5D(padding_str, &padding_axis);
-  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
-    return PaddingShapeTo5dDefault(shape);
-  }
-  std::vector<size_t> shape_5d(kNcdhw, 1);
-  for (size_t index = 0; index < padding_axis.size(); index++) {
-    shape_5d[padding_axis[index]] = shape[index];
-  }
-  return shape_5d;
-}
-
-std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::string &padding_str) {
-  std::vector<Axis> padding_axis;
-  StringToAxisVector4D(padding_str, &padding_axis);
-  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
-    return PaddingShapeTo4dDefault(shape);
-  }
-  std::vector<size_t> shape_4d(kNchwDims, 1);
-  for (size_t index = 0; index < padding_axis.size(); index++) {
-    shape_4d[padding_axis[index]] = shape[index];
-  }
-  return shape_4d;
-}
-
-std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape) {
-  if (shape.size() >= kNcdhw) {
-    return shape;
-  }
-  std::vector<size_t> shape_5d(kNcdhw, 1);
-  switch (shape.size()) {
-    case 0:
-      return shape_5d;
-    case 1:
-      shape_5d[1] = shape[0];
-      break;
-    case 2:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
-      break;
-    case 3:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
-      shape_5d[3] = shape[2];
-      break;
-    case 4:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
-      shape_5d[3] = shape[2];
-      shape_5d[4] = shape[3];
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
-  }
-  return shape_5d;
-}
-
-std::vector<size_t> PaddingShapeTo4dDefault(const std::vector<size_t> &shape) {
-  std::vector<size_t> shape_4d(kNchwDims, 1);
-  switch (shape.size()) {
-    case 0:
-      return shape_4d;
-    case 1:
-      shape_4d[kC] = shape[kN];
-      break;
-    case 2:
-      shape_4d[kC] = shape[kN];
-      shape_4d[kH] = shape[kC];
-      break;
-    case 3:
-      shape_4d[kC] = shape[kN];
-      shape_4d[kH] = shape[kC];
-      shape_4d[kW] = shape[kH];
-      break;
-    case 4:
-      std::copy(shape.begin(), shape.end(), shape_4d.begin());
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
-  }
-  return shape_4d;
-}
-
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
                                        const int64_t groups) {
   using DeviceShapeTransfer = std::function<std::vector<size_t>(const std::vector<size_t> &)>;
@@ -687,13 +847,47 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
   return iter->second(temp_shape);
 }
 
-std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
-                                       const AnfNodePtr &node, const size_t index) {
-  int64_t groups = 1;
-  if (format == kOpFormat_FRAC_Z) {
-    groups = GetAttrGroups(node, index);
+std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const std::string &format,
+                                        const int64_t groups) {
+  using DeviceShapeTransfer = std::function<std::vector<int64_t>(const std::vector<int64_t> &)>;
+  const std::map<std::string, DeviceShapeTransfer> device_shape_map{
+    {kOpFormat_NCHW, NchwDeviceDynamicShape},
+    {kOpFormat_NHWC, NhwcDeviceDynamicShape},
+    {kOpFormat_HWCN, HwchDeviceDynamicShape},
+    {kOpFormat_FRAC_Z, FracZDeviceDynamicShape},
+    {kOpFormat_NC1HWC0, Nc1hwc0DeviceDynamicShape},
+    {kOpFormat_C1HWNCoC0, C1hwncoc0DeviceDynamicShape},
+    {kOpFormat_FRACTAL_Z_C04, FracZc04DeviceDynamicShape},
+    {kOpFormat_NC1HWC0_C04, Nc1hwc04DeviceDynamicShape},
+    {kOpFormat_NCDHW, NcdhwDeviceDynamicShape},
+    {kOpFormat_ChannelLast, ChannelLastDeviceDynamicShape},
+    {kOpFormat_NDC1HWC0, Ndc1hwc0DeviceDynamicShape},
+    {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceDynamicShape}};
+
+  if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
+    return shape;
   }
-  return TransShapeToDevice(shape, format, groups);
+  if (groups > 1 && format == kOpFormat_FRAC_Z) {
+    return FracZDeviceShapeWithGroups(shape, groups);
+  }
+  auto temp_shape = shape;
+  if (format == kOpFormat_FRAC_NZ) {
+    return TransShapeToFracNZ(shape);
+  } else if (format == kOpFormat_FRACTAL_ZN_LSTM) {
+    return TransShapeToFracNZLSTM(shape);
+  }
+  if (format != kOpFormat_ChannelLast && shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+    MS_LOG(WARNING) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
+    temp_shape = PaddingShapeTo4dDefault(shape);
+  }
+  if (shape.size() != kNcdhw && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+    temp_shape = PaddingShapeTo5dDefault(shape);
+  }
+  auto iter = device_shape_map.find(format);
+  if (iter == device_shape_map.end()) {
+    MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
+  }
+  return iter->second(temp_shape);
 }
 
 bool CheckArgs(const FormatArgs &args, size_t *size, size_t *total_size) {

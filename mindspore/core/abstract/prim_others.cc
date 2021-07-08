@@ -502,7 +502,9 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   MS_EXCEPTION_IF_NULL(input_x);
   auto attr = primitive->GetAttr("dst_type");
   if (attr == nullptr) {
-    attr = args_spec_list[1]->BuildValue();
+    auto input_dtype = args_spec_list[1];
+    MS_EXCEPTION_IF_NULL(input_dtype);
+    attr = input_dtype->BuildValue();
     MS_EXCEPTION_IF_NULL(attr);
     primitive->set_attr("dst_type", attr);
   }

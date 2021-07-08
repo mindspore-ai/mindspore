@@ -27,9 +27,11 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "ir/dtype/type.h"
 #include "utils/shape_utils.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace trans {
+enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims, kNcdhw };
 enum Axis5D : int {
   N_ncdhw = 0,
   C_ncdhw,
@@ -55,12 +57,7 @@ struct FormatArgs {
   TypeId src_data_type;
 };
 
-std::vector<size_t> PaddingShape(const std::vector<size_t> &shape, const std::string &format,
-                                 const std::string &pad_index = {""});
-std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::string &padding_axis = {""});
-std::vector<size_t> PaddingShapeTo5d(const std::vector<size_t> &shape, const std::string &padding_axis = {""});
-std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape);
-std::vector<size_t> PaddingShapeTo4dDefault(const std::vector<size_t> &shape);
+int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index);
 void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec);
 void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
@@ -68,8 +65,17 @@ bool IsNeedPadding(const std::string &format, const size_t shape_size);
 int64_t GetNodeGroups(const AnfNodePtr &node);
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
                                        const int64_t groups = 1);
-std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
-                                       const AnfNodePtr &node, const size_t index);
+std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const std::string &format,
+                                        const int64_t groups = 1);
+template <typename T>
+std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string &format, const AnfNodePtr &node,
+                                  const size_t index) {
+  int64_t groups = 1;
+  if (format == kOpFormat_FRAC_Z) {
+    groups = GetAttrGroups(node, index);
+  }
+  return TransShapeToDevice(shape, format, groups);
+}
 bool TransDataType(const TypeIdArgs &args, void *result);
 bool TransFormat(const FormatArgs &args, void *result, int64_t groups = 1);
 bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, const size_t index);
@@ -104,6 +110,109 @@ const std::map<std::string, FormatTransfer> kTransFormatMapOfHostToDevice{
   {kOpFormat_NC1HWC0, NchwToNc1hwc0},        {kOpFormat_C1HWNCoC0, NchwToC1hwncoc0},
   {kOpFormat_FRACTAL_Z_C04, NchwToFracZc04}, {kOpFormat_NC1HWC0_C04, NchwToNc1hwc04},
   {kOpFormat_NDC1HWC0, NcdhwToNdc1hwc0},     {kOpFormat_FRACTAL_Z_3D, NcdhwToFracZ3D}};
+
+template <typename T>
+std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape) {
+  if (shape.size() >= kNcdhw) {
+    return shape;
+  }
+  std::vector<T> shape_5d(kNcdhw, 1);
+  switch (shape.size()) {
+    case 0:
+      return shape_5d;
+    case 1:
+      shape_5d[1] = shape[0];
+      break;
+    case 2:
+      shape_5d[1] = shape[0];
+      shape_5d[2] = shape[1];
+      break;
+    case 3:
+      shape_5d[1] = shape[0];
+      shape_5d[2] = shape[1];
+      shape_5d[3] = shape[2];
+      break;
+    case 4:
+      shape_5d[1] = shape[0];
+      shape_5d[2] = shape[1];
+      shape_5d[3] = shape[2];
+      shape_5d[4] = shape[3];
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
+  }
+  return shape_5d;
+}
+
+template <typename T>
+std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape) {
+  std::vector<T> shape_4d(kNchwDims, 1);
+  switch (shape.size()) {
+    case 0:
+      return shape_4d;
+    case 1:
+      shape_4d[kC] = shape[kN];
+      break;
+    case 2:
+      shape_4d[kC] = shape[kN];
+      shape_4d[kH] = shape[kC];
+      break;
+    case 3:
+      shape_4d[kC] = shape[kN];
+      shape_4d[kH] = shape[kC];
+      shape_4d[kW] = shape[kH];
+      break;
+    case 4:
+      std::copy(shape.begin(), shape.end(), shape_4d.begin());
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
+  }
+  return shape_4d;
+}
+
+template <typename T>
+std::vector<T> PaddingShapeTo5d(const std::vector<T> &shape, const std::string &padding_str = {""}) {
+  std::vector<Axis5D> padding_axis;
+  StringToAxisVector5D(padding_str, &padding_axis);
+  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
+    return PaddingShapeTo5dDefault(shape);
+  }
+  std::vector<T> shape_5d(kNcdhw, 1);
+  for (size_t index = 0; index < padding_axis.size(); index++) {
+    shape_5d[padding_axis[index]] = shape[index];
+  }
+  return shape_5d;
+}
+
+template <typename T>
+std::vector<T> PaddingShapeTo4d(const std::vector<T> &shape, const std::string &padding_str = {""}) {
+  std::vector<Axis> padding_axis;
+  StringToAxisVector4D(padding_str, &padding_axis);
+  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
+    return PaddingShapeTo4dDefault(shape);
+  }
+  std::vector<T> shape_4d(kNchwDims, 1);
+  for (size_t index = 0; index < padding_axis.size(); index++) {
+    shape_4d[padding_axis[index]] = shape[index];
+  }
+  return shape_4d;
+}
+
+template <typename T>
+std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &format,
+                            const std::string &pad_index = {""}) {
+  std::vector<T> host_shape;
+  if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
+    if (shape.size() >= kNcdhw) {
+      return shape;
+    }
+    host_shape = trans::PaddingShapeTo5d(shape, pad_index);
+  } else {
+    host_shape = trans::PaddingShapeTo4d(shape, pad_index);
+  }
+  return host_shape;
+}
 }  // namespace trans
 }  // namespace mindspore
 

@@ -248,16 +248,41 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   MS_EXCEPTION_IF_NULL(kernel_select);
   CNodePtr trans_node = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(op_name)), input});
   MS_EXCEPTION_IF_NULL(trans_node);
+  auto infer_type = AnfAlgo::GetOutputInferDataType(input, 0);
+
+  auto out_shape_base = AnfAlgo::GetOutputDetailShape(input, 0);
+  MS_EXCEPTION_IF_NULL(out_shape_base);
+  ShapeVector out_shape;
+  ShapeVector out_shape_min;
+  ShapeVector out_shape_max;
+  bool is_dynamic_shape = false;
+  if (out_shape_base->isa<abstract::Shape>()) {
+    auto out_shape_ptr = out_shape_base->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(out_shape_ptr);
+    out_shape = out_shape_ptr->shape();
+    if (out_shape_ptr->IsDynamic()) {
+      out_shape_min = out_shape_ptr->min_shape();
+      out_shape_max = out_shape_ptr->max_shape();
+      is_dynamic_shape = true;
+    }
+  }
+
   if (need_padding) {
     // if need padding we should set the transdata node's shape to the padding shape
     auto padding_axis = AnfAlgo::GetOutputReshapeType(input, 0);
-    AnfAlgo::SetOutputInferTypeAndShape(
-      {AnfAlgo::GetOutputInferDataType(input, 0)},
-      {trans::PaddingShape(AnfAlgo::GetOutputInferShape(input, 0), AnfAlgo::GetOutputFormat(input, 0), padding_axis)},
-      trans_node.get());
+
+    abstract::ShapePtr pad_shape_ptr;
+    ShapeVector pad_shape = trans::PaddingShape(out_shape, AnfAlgo::GetOutputFormat(input, 0), padding_axis);
+    if (is_dynamic_shape) {
+      ShapeVector pad_shape_min = trans::PaddingShape(out_shape_min, AnfAlgo::GetOutputFormat(input, 0), padding_axis);
+      ShapeVector pad_shape_max = trans::PaddingShape(out_shape_max, AnfAlgo::GetOutputFormat(input, 0), padding_axis);
+      pad_shape_ptr = std::make_shared<abstract::Shape>(pad_shape, pad_shape_min, pad_shape_max);
+    } else {
+      pad_shape_ptr = std::make_shared<abstract::Shape>(pad_shape);
+    }
+    AnfAlgo::SetOutputTypeAndDetailShape({infer_type}, {pad_shape_ptr}, trans_node.get());
   } else {
-    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input, 0)},
-                                        {AnfAlgo::GetOutputInferShape(input, 0)}, trans_node.get());
+    AnfAlgo::SetOutputTypeAndDetailShape({infer_type}, {out_shape_base}, trans_node.get());
   }
   // special handle for ut
   if (trans_node->kernel_info() == nullptr) {
@@ -266,6 +291,11 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   }
   if (op_name == prim::kPrimTranspose->name()) {
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), trans_node);
+  }
+  if (is_dynamic_shape) {
+    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), trans_node);
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), trans_node);
+    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), trans_node);
   }
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), trans_node);
   AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), trans_node);
@@ -308,6 +338,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
   }
+  AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(origin_type), cast);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
   AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
   AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
