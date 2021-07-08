@@ -334,15 +334,17 @@ sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ```bash
+`BACKBONE` should be in ["resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152", "resnet_v1_50"]
+
 if backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
     from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
-    "resnet_v1.5_50" -> "./src/config_50.yaml"
-    "resnet_v1_101"  -> "./src/config_101.yaml"
-    "resnet_v1_152"  -> "./src/config_152.yaml"
+    "resnet_v1.5_50" -> "./default_config.yaml"
+    "resnet_v1_101"  -> "./default_config_101.yaml"
+    "resnet_v1_152"  -> "./default_config_152.yaml"
 
 elif backbone == "resnet_v1_50":
     from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
-    "resnet_v1_50" -> "./src/config_50.yaml"
+    "resnet_v1_50" -> "./default_config.yaml"
 ```
 
 ## Training Process
@@ -459,16 +461,18 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 ## Model Export
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE] --coco_root [COCO_ROOT] --mindrecord_dir [MINDRECORD_DIR](option)
+python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE]
 ```
 
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+`BACKBONE` should be in ["resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152", "resnet_v1_50"]
 
 ## Inference Process
 
 ### Usage
 
 Before performing inference, the model file must be exported by export script on the Ascend910 environment.
+The following example only supports mindir inference with batch_size=1.
 
 ```shell
 # Ascend310 inference
