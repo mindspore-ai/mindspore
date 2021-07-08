@@ -42,10 +42,10 @@ void GatherActor::Init() {
   }
 }
 
-size_t GatherActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
+size_t GatherActor::FetchDataNodePosition(const KernelWithIndex &data_node) const {
   const auto &iter = find(data_nodes_.begin(), data_nodes_.end(), data_node);
   if (iter == data_nodes_.end()) {
-    MS_LOG(EXCEPTION) << "Data node: " << AnfAlgo::GetNodeDebugString(data_node)
+    MS_LOG(EXCEPTION) << "Data node: " << AnfAlgo::GetNodeDebugString(data_node.first) << " index:" << data_node.second
                       << " is not exist in gather actor:" << GetAID();
   }
   return iter - data_nodes_.begin();
@@ -114,7 +114,7 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     size_t from_index = result_arrow->from_output_index_;
-    const auto &front_node = data_nodes_[from_index];
+    const auto &front_node = data_nodes_[from_index].first;
     for (const auto &backend_node : front_to_backend_parameter_.at(front_node)) {
       if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second, false).get() ==
           input_device_tensors_[from_index]) {

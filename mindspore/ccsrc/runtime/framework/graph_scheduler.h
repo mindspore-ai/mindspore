@@ -233,8 +233,9 @@ class GraphScheduler {
 
   // 4. The processing of control flow linking.
   void LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set);
-  void LinkDataArrowForGatherActor(GatherActor *from_actor, const AnfNodePtr &front_node, KernelActor *to_actor,
-                                   const size_t to_index);
+  void LinkDataArrowForGatherActor(GatherActor *from_actor, KernelActor *to_actor,
+                                   const KernelWithIndex &front_node_with_index,
+                                   const KernelWithIndex &to_node_with_index);
   void LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, SwitchActor *actor);
   // Connect the input of the actor.
   void LinkDataArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, const KernelWithIndex &input_node,
@@ -263,6 +264,9 @@ class GraphScheduler {
                                  const ControlNodeParserPtr &control_node_parser,
                                  const std::vector<AnfNodePtr> &origin_parameters,
                                  const std::vector<TensorPtr> &tensors, std::vector<TensorPtr> *host_tensors);
+  // Add input for switch actor. Since part of the input of funcgraph is on call node, these inputs need to be added
+  // to switch actor.
+  void PrepareInputNodeForSwitchActor(const std::vector<AnfNodePtr> &control_nodes);
 
   // The processing of actors link dynamically.
   // Analyze necessary input data of current actor, generate and cache op arrow
