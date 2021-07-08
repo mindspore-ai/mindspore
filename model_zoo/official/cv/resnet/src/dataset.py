@@ -124,9 +124,9 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
             device_num = 1
 
     if device_num == 1:
-        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True)
     else:
-        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True,
                                          num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
@@ -152,7 +152,7 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=12)
     # only enable cache for eval
     if do_train:
         enable_cache = False
@@ -160,10 +160,10 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         if not cache_session_id:
             raise ValueError("A cache session_id must be provided to use cache.")
         eval_cache = ds.DatasetCache(session_id=int(cache_session_id), size=0)
-        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8,
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12,
                                 cache=eval_cache)
     else:
-        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+        data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12)
 
     # apply batch operations
     data_set = data_set.batch(batch_size, drop_remainder=True)
