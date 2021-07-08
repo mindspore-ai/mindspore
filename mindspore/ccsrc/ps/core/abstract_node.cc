@@ -24,6 +24,7 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
   message_meta->set_cmd(NodeCommand::REGISTER);
+  message_meta->set_rank_id(node_info_.rank_id_);
 
   RegisterMessage register_message;
   register_message.set_node_id(node_info_.node_id_);

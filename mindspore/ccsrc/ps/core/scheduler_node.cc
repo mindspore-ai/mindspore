@@ -131,7 +131,7 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
   }
 
   // assign worker node and server node rank id
-  uint32_t rank_id = node_manager_.NextRankId(register_message);
+  uint32_t rank_id = node_manager_.NextRankId(register_message, meta);
   if (rank_id == UINT32_MAX) {
     MS_LOG(WARNING) << "The rank id is wrong!";
   }
@@ -559,7 +559,8 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
   int32_t scale_worker_num = 0;
   int32_t scale_server_num = 0;
   auto node_infos = node_manager_.nodes_info();
-  node_manager_.ResetMetadata();
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_IN);
+  node_manager_.ResetMetadata(scale_in_node_ids_);
   for (auto const &val : scale_in_node_ids_) {
     if (node_infos.count(val)) {
       scale_in_nodes[val] = true;
@@ -580,7 +581,6 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
   node_manager_.set_worker_num(total_worker_num);
   node_manager_.set_server_num(total_server_num);
   node_manager_.set_total_node_num(total_worker_num + total_server_num);
-  node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_IN);
   for (const auto &kvs : node_infos) {
     auto client = GetOrCreateClient(kvs.second);
     bool is_node_scale_in = false;

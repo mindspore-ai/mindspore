@@ -56,7 +56,7 @@ class NodeManager {
 
   // When initializing nodes, the initial number of nodes will be assigned to the total number of nodes.
   void InitNode();
-  uint32_t NextRankId(const RegisterMessage &register_message);
+  uint32_t NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta);
 
   void UpdateHeartbeat(const std::string &node_id);
 
@@ -106,7 +106,7 @@ class NodeManager {
 
   // When the scheduler receives the scale out or scale in message, the metadata needs to be reset, because all nodes
   // will re-register.
-  void ResetMetadata();
+  void ResetMetadata(const std::vector<std::string> &scale_in_nodes = {});
 
   // Recovery currently does not support worker or server0 node downtime.
   bool IsWorkerOrServer0();

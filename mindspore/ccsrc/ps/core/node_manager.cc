@@ -27,7 +27,7 @@ void NodeManager::InitNode() {
   total_node_num_ = initial_total_node_num_;
 }
 
-uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
+uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta) {
   std::lock_guard<std::mutex> lock(assign_rank_id_mutex_);
   uint32_t rank_id = UINT_MAX;
 
@@ -51,7 +51,12 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
       return res;
     });
     if (rank_it == registered_nodes_info_.end()) {
-      rank_id = ++next_server_rank_id_;
+      if (meta->rank_id() != UINT32_MAX && UintToInt(meta->rank_id()) <= next_server_rank_id_) {
+        rank_id = meta->rank_id();
+        MS_LOG(INFO) << "Use the old rank id:" << rank_id;
+      } else {
+        rank_id = ++next_server_rank_id_;
+      }
     } else {
       registered_nodes_info_.erase((*rank_it).first);
     }
@@ -85,7 +90,12 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
         return res;
       });
     if (worker_rank_it == registered_nodes_info_.end()) {
-      rank_id = ++next_worker_rank_id_;
+      if (meta->rank_id() != UINT32_MAX && UintToInt(meta->rank_id()) <= next_worker_rank_id_) {
+        rank_id = meta->rank_id();
+        MS_LOG(INFO) << "Use the old rank id:" << rank_id;
+      } else {
+        rank_id = ++next_worker_rank_id_;
+      }
     } else {
       registered_nodes_info_.erase((*worker_rank_it).first);
     }
@@ -235,12 +245,21 @@ ClusterState NodeManager::GetClusterState() {
   return cluster_state_;
 }
 
-void NodeManager::ResetMetadata() {
+void NodeManager::ResetMetadata(const std::vector<std::string> &scale_in_nodes) {
   MS_LOG(WARNING) << "Reset metadata.";
+  std::vector<uint32_t> server_rank_ids;
+  if (GetClusterState() == ClusterState::CLUSTER_SCALE_IN) {
+    for (const auto &item : scale_in_nodes) {
+      if (registered_nodes_info_.count(item)) {
+        server_rank_ids.push_back(registered_nodes_info_[item].rank_id_);
+      }
+    }
+    auto min_rank_id = std::min_element(server_rank_ids.begin(), server_rank_ids.end());
+    next_server_rank_id_ = *min_rank_id - 1;
+    MS_LOG(INFO) << "The next server rank id:" << next_server_rank_id_;
+  }
   registered_nodes_info_.clear();
   heartbeats_.clear();
-  next_worker_rank_id_ = -1;
-  next_server_rank_id_ = -1;
 }
 
 bool NodeManager::IsWorkerOrServer0() {
