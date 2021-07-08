@@ -49,10 +49,15 @@ class DatasetCacheImpl : public DatasetCache {
       : session_id_(id),
         cache_mem_sz_(mem_sz),
         spill_(spill),
-        hostname_(OptionalCharToString(hostname)),
         port_(std::move(port)),
         num_connections_(std::move(num_connections)),
-        prefetch_sz_(std::move(prefetch_sz)) {}
+        prefetch_sz_(std::move(prefetch_sz)) {
+    if (hostname == std::nullopt) {
+      hostname_ = std::nullopt;
+    } else {
+      hostname_ = std::string(hostname->begin(), hostname->end());
+    }
+  }
 
   /// Method to initialize the DatasetCache by creating an instance of a CacheClient
   /// \return Status Error code

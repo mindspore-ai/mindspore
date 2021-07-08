@@ -20,7 +20,6 @@
 #include <iterator>
 #include <map>
 #include <memory>
-#include <optional>
 #include <string>
 #include <set>
 #include <unordered_map>
@@ -31,18 +30,6 @@ namespace mindspore {
 inline std::vector<char> StringToChar(const std::string &s) { return std::vector<char>(s.begin(), s.end()); }
 
 inline std::string CharToString(const std::vector<char> &c) { return std::string(c.begin(), c.end()); }
-
-inline std::optional<std::vector<char>> OptionalStringToChar(const std::optional<std::string> &s) {
-  if (s == std::nullopt) return std::nullopt;
-  std::optional<std::vector<char>> ret = std::vector<char>(s->begin(), s->end());
-  return ret;
-}
-
-inline std::optional<std::string> OptionalCharToString(const std::optional<std::vector<char>> &c) {
-  if (c == std::nullopt) return std::nullopt;
-  std::optional<std::string> ret = std::string(c->begin(), c->end());
-  return ret;
-}
 
 inline std::pair<std::vector<char>, int32_t> PairStringToChar(const std::pair<std::string, int32_t> &s) {
   return std::pair<std::vector<char>, int32_t>(std::vector<char>(s.first.begin(), s.first.end()), s.second);
