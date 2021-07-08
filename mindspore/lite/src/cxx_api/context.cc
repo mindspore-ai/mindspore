@@ -17,7 +17,11 @@
 #include "include/api/context.h"
 #include <string>
 #include <memory>
+#ifndef SUPPORT_NNIE
 #include <any>
+#else
+#include <experimental/any>
+#endif
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "src/runtime/inner_allocator.h"
@@ -39,7 +43,11 @@ struct Context::Data {
 };
 
 struct DeviceInfoContext::Data {
+#ifndef SUPPORT_NNIE
   std::map<std::string, std::any> params;
+#else
+  std::map<std::string, std::experimental::any> params;
+#endif
   std::shared_ptr<Allocator> allocator = nullptr;
 };
 
@@ -55,9 +63,13 @@ static const U &GetValue(const std::shared_ptr<DeviceInfoContext::Data> &data, c
   if (iter == data->params.end()) {
     return empty_result;
   }
+#ifndef SUPPORT_NNIE
   const std::any &value = iter->second;
-
   return std::any_cast<const U &>(value);
+#else
+  const std::experimental::any &value = iter->second;
+  return std::experimental::any_cast<const U &>(value);
+#endif
 }
 
 void Context::SetThreadNum(int32_t thread_num) {

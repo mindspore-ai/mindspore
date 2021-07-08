@@ -35,10 +35,7 @@ else()
     endif()
 endif()
 
-if(TARGET_HIMIX200)
-    set(API_SRC)
-else()
-    set(API_SRC
+set(API_SRC
         ${CORE_DIR}/utils/status.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
@@ -50,7 +47,6 @@ else()
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/graph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/tensor_impl.cc
         )
-endif()
 
 if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
