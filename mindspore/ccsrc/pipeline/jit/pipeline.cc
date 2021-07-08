@@ -445,13 +445,13 @@ void ExecutorPy::DelNetRes(const std::string &id) {
 #endif
   }
   nested_called = false;
+#ifdef ENABLE_DUMP_IR
+  mindspore::RDR::ClearAll();
+#endif
 }
 
 void ExecutorPy::ClearRes() {
   MS_LOG(INFO) << "Clean executor resource!";
-#ifdef ENABLE_DUMP_IR
-  mindspore::RDR::ClearAll();
-#endif
   executor_ = nullptr;
 }
 
