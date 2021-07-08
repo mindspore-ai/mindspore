@@ -50,7 +50,7 @@ def _get_city_pairs(folder, split='train'):
         img_folder = os.path.join(folder, 'leftImg8bit/' + split)
         # "./Cityscapes/gtFine/train" or "./Cityscapes/gtFine/val"
         mask_folder = os.path.join(folder, 'gtFine/' + split)
-
+        # The order of img_paths and mask_paths is one-to-one correspondence
         img_paths, mask_paths = get_path_pairs(img_folder, mask_folder)
         return img_paths, mask_paths
 
