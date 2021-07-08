@@ -17,7 +17,7 @@
 package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
-import com.mindspore.flclient.model.AdTrainBert;
+import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
 import mindspore.schema.FeatureMap;
@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static com.mindspore.flclient.LocalFLParameter.ADBERT;
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 public class UpdateModel {
@@ -100,10 +100,10 @@ public class UpdateModel {
                 case NOT_ENCRYPT:
                 default:
                     Map<String, float[]> map = new HashMap<String, float[]>();
-                    if (flParameter.getFlName().equals(ADBERT)) {
+                    if (flParameter.getFlName().equals(ALBERT)) {
                         LOGGER.info(Common.addTag("[updateModel] serialize feature map for " + flParameter.getFlName()));
-                        AdTrainBert adTrainBert = AdTrainBert.getInstance();
-                        map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(adTrainBert.getTrainSession()));
+                        AlTrainBert alTrainBert = AlTrainBert.getInstance();
+                        map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
                         if (map.isEmpty()) {
                             LOGGER.severe(Common.addTag("[updateModel] the return map is empty in <SessionUtil.convertTensorToFeatures>"));
                             status = FLClientStatus.FAILED;

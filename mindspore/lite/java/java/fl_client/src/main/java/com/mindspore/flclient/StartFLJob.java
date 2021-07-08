@@ -16,8 +16,8 @@
 package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
-import com.mindspore.flclient.model.AdInferBert;
-import com.mindspore.flclient.model.AdTrainBert;
+import com.mindspore.flclient.model.AlInferBert;
+import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
 import mindspore.schema.FeatureMap;
@@ -27,6 +27,9 @@ import mindspore.schema.ResponseFLJob;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;
+
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 public class StartFLJob {
     static {
@@ -126,44 +129,67 @@ public class StartFLJob {
         return encryptFeatureName;
     }
 
-    private FLClientStatus parseResponseAdbert(ResponseFLJob flJob) {
+    private FLClientStatus parseResponseAlbert(ResponseFLJob flJob) {
         int fmCount = flJob.featureMapLength();
-        ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
-        ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
         encryptFeatureName.clear();
         if (fmCount <= 0) {
             LOGGER.severe(Common.addTag("[startFLJob] the feature size get from server is zero"));
             return FLClientStatus.FAILED;
         }
-        for (int i = 0; i < fmCount; i++) {
-            FeatureMap feature = flJob.featureMap(i);
-            String featureName = feature.weightFullname();
-            if (localFLParameter.getAlbertWeightName().contains(featureName)) {
-                albertFeatureMaps.add(feature);
-                inferFeatureMaps.add(feature);
-                featureSize += feature.dataLength();
-                encryptFeatureName.add(feature.weightFullname());
-            } else if (localFLParameter.getClassifierWeightName().contains(featureName)) {
-                inferFeatureMaps.add(feature);
-            } else {
-                continue;
+
+        if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
+            LOGGER.info(Common.addTag("[startFLJob] parseResponseAlbert by " + localFLParameter.getServerMod()));
+            ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
+            ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
+            for (int i = 0; i < fmCount; i++) {
+                FeatureMap feature = flJob.featureMap(i);
+                String featureName = feature.weightFullname();
+                if (localFLParameter.getAlbertWeightName().contains(featureName)) {
+                    albertFeatureMaps.add(feature);
+                    inferFeatureMaps.add(feature);
+                    featureSize += feature.dataLength();
+                    encryptFeatureName.add(feature.weightFullname());
+                } else if (localFLParameter.getClassifierWeightName().contains(featureName)) {
+                    inferFeatureMaps.add(feature);
+                } else {
+                    continue;
+                }
+                LOGGER.info(Common.addTag("[startFLJob] weightFullname: " + feature.weightFullname() + ", weightLength: " + feature.dataLength()));
             }
-            LOGGER.info(Common.addTag("[startFLJob] weightFullname: " + feature.weightFullname() + ", weightLength: " + feature.dataLength()));
-        }
-        int tag = 0;
-        LOGGER.info(Common.addTag("[startFLJob] ----------------loading weight into inference model-----------------"));
-        AdInferBert adInferBert = AdInferBert.getInstance();
-        tag = SessionUtil.updateFeatures(adInferBert.getTrainSession(), flParameter.getInferModelPath(), inferFeatureMaps);
-        if (tag == -1) {
-            LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>"));
-            return FLClientStatus.FAILED;
-        }
-        LOGGER.info(Common.addTag("[startFLJob] ----------------loading weight into train model-----------------"));
-        AdTrainBert adTrainBert = AdTrainBert.getInstance();
-        tag = SessionUtil.updateFeatures(adTrainBert.getTrainSession(), flParameter.getTrainModelPath(), albertFeatureMaps);
-        if (tag == -1) {
-            LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>"));
-            return FLClientStatus.FAILED;
+            int tag = 0;
+            LOGGER.info(Common.addTag("[startFLJob] ----------------loading weight into inference model-----------------"));
+            AlInferBert alInferBert = AlInferBert.getInstance();
+            tag = SessionUtil.updateFeatures(alInferBert.getTrainSession(), flParameter.getInferModelPath(), inferFeatureMaps);
+            if (tag == -1) {
+                LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>"));
+                return FLClientStatus.FAILED;
+            }
+            LOGGER.info(Common.addTag("[startFLJob] ----------------loading weight into train model-----------------"));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(), albertFeatureMaps);
+            if (tag == -1) {
+                LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>"));
+                return FLClientStatus.FAILED;
+            }
+        } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
+            LOGGER.info(Common.addTag("[startFLJob] parseResponseAlbert by " + localFLParameter.getServerMod()));
+            ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
+            for (int i = 0; i < fmCount; i++) {
+                FeatureMap feature = flJob.featureMap(i);
+                String featureName = feature.weightFullname();
+                featureMaps.add(feature);
+                featureSize += feature.dataLength();
+                encryptFeatureName.add(featureName);
+                LOGGER.info(Common.addTag("[startFLJob] weightFullname: " + feature.weightFullname() + ", weightLength: " + feature.dataLength()));
+            }
+            int tag = 0;
+            LOGGER.info(Common.addTag("[startFLJob] ----------------loading weight into model-----------------"));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(), featureMaps);
+            if (tag == -1) {
+                LOGGER.severe(Common.addTag("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>"));
+                return FLClientStatus.FAILED;
+            }
         }
         return FLClientStatus.SUCCESS;
     }
@@ -199,19 +225,20 @@ public class StartFLJob {
         LOGGER.info(Common.addTag("[startFLJob] next request time: " + flJob.nextReqTime()));
         nextRequestTime = flJob.nextReqTime();
         LOGGER.info(Common.addTag("[startFLJob] timestamp: " + flJob.timestamp()));
-        int retcode = flJob.retcode();
+        FLClientStatus status = FLClientStatus.SUCCESS;
+        int retCode = flJob.retcode();
 
-        switch (retcode) {
+        switch (retCode) {
             case (ResponseCode.SUCCEED):
                 localFLParameter.setServerMod(flJob.flPlanConfig().serverMode());
-                if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-                    LOGGER.info(Common.addTag("[startFLJob] into <parseResponseAdbert>"));
-                    parseResponseAdbert(flJob);
-                } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
+                if (ALBERT.equals(flParameter.getFlName())) {
+                    LOGGER.info(Common.addTag("[startFLJob] into <parseResponseAlbert>"));
+                    status = parseResponseAlbert(flJob);
+                } else if (LENET.equals(flParameter.getFlName())) {
                     LOGGER.info(Common.addTag("[startFLJob] into <parseResponseLenet>"));
-                    parseResponseLenet(flJob);
+                    status = parseResponseLenet(flJob);
                 }
-                return FLClientStatus.SUCCESS;
+                return status;
             case (ResponseCode.OutOfTime):
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
@@ -219,7 +246,7 @@ public class StartFLJob {
                 LOGGER.info(Common.addTag("[startFLJob] catch RequestError or SystemError"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[startFLJob] the return <retcode> from server is invalid: " + retcode));
+                LOGGER.severe(Common.addTag("[startFLJob] the return <retcode> from server is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }

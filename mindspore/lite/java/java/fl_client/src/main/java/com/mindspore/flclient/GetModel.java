@@ -16,8 +16,8 @@
 package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
-import com.mindspore.flclient.model.AdInferBert;
-import com.mindspore.flclient.model.AdTrainBert;
+import com.mindspore.flclient.model.AlInferBert;
+import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
 import mindspore.schema.FeatureMap;
@@ -28,6 +28,9 @@ import mindspore.schema.ResponseGetModel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.logging.Logger;
+
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 public class GetModel {
     static {
@@ -90,37 +93,57 @@ public class GetModel {
     }
 
 
-    private FLClientStatus parseResponseAdbert(ResponseGetModel responseDataBuf) {
+    private FLClientStatus parseResponseAlbert(ResponseGetModel responseDataBuf) {
         int fmCount = responseDataBuf.featureMapLength();
-        ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
-        ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
-        for (int i = 0; i < fmCount; i++) {
-            FeatureMap feature = responseDataBuf.featureMap(i);
-            String featureName = feature.weightFullname();
-            if (localFLParameter.getAlbertWeightName().contains(featureName)) {
-                albertFeatureMaps.add(feature);
-                inferFeatureMaps.add(feature);
-            } else if (localFLParameter.getClassifierWeightName().contains(featureName)) {
-                inferFeatureMaps.add(feature);
-            } else {
-                continue;
+        if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
+            LOGGER.info(Common.addTag("[getModel] into <parseResponseAdbert>"));
+            ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
+            ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
+            for (int i = 0; i < fmCount; i++) {
+                FeatureMap feature = responseDataBuf.featureMap(i);
+                String featureName = feature.weightFullname();
+                if (localFLParameter.getAlbertWeightName().contains(featureName)) {
+                    albertFeatureMaps.add(feature);
+                    inferFeatureMaps.add(feature);
+                } else if (localFLParameter.getClassifierWeightName().contains(featureName)) {
+                    inferFeatureMaps.add(feature);
+                } else {
+                    continue;
+                }
+                LOGGER.info(Common.addTag("[getModel] weightFullname: " + feature.weightFullname() + ", weightLength: " + feature.dataLength()));
             }
-            LOGGER.info(Common.addTag("[getModel] weightFullname: " + feature.weightFullname() + ", weightLength: " + feature.dataLength()));
-        }
-        int tag = 0;
-        LOGGER.info(Common.addTag("[getModel] ----------------loading weight into inference model-----------------"));
-        AdInferBert adInferBert = AdInferBert.getInstance();
-        tag = SessionUtil.updateFeatures(adInferBert.getTrainSession(), flParameter.getInferModelPath(), inferFeatureMaps);
-        if (tag == -1) {
-            LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
-            return FLClientStatus.FAILED;
-        }
-        LOGGER.info(Common.addTag("[getModel] ----------------loading weight into train model-----------------"));
-        AdTrainBert adTrainBert = AdTrainBert.getInstance();
-        tag = SessionUtil.updateFeatures(adTrainBert.getTrainSession(), flParameter.getTrainModelPath(), albertFeatureMaps);
-        if (tag == -1) {
-            LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
-            return FLClientStatus.FAILED;
+            int tag = 0;
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into inference model-----------------"));
+            AlInferBert alInferBert = AlInferBert.getInstance();
+            tag = SessionUtil.updateFeatures(alInferBert.getTrainSession(), flParameter.getInferModelPath(), inferFeatureMaps);
+            if (tag == -1) {
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
+                return FLClientStatus.FAILED;
+            }
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into train model-----------------"));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(), albertFeatureMaps);
+            if (tag == -1) {
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
+                return FLClientStatus.FAILED;
+            }
+        } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
+            LOGGER.info(Common.addTag("[getModel] into <parseResponseLenet>"));
+            ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
+            for (int i = 0; i < fmCount; i++) {
+                FeatureMap feature = responseDataBuf.featureMap(i);
+                String featureName = feature.weightFullname();
+                featureMaps.add(feature);
+                LOGGER.info(Common.addTag("[getModel] weightFullname: " + featureName + ", weightLength: " + feature.dataLength()));
+            }
+            int tag = 0;
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into model-----------------"));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(), featureMaps);
+            if (tag == -1) {
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
+                return FLClientStatus.FAILED;
+            }
         }
         return FLClientStatus.SUCCESS;
     }
@@ -157,10 +180,11 @@ public class GetModel {
         switch (retCode) {
             case (ResponseCode.SUCCEED):
                 LOGGER.info(Common.addTag("[getModel] getModel response success"));
-                if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-                    LOGGER.info(Common.addTag("[getModel] into <parseResponseAdbert>"));
-                    status = parseResponseAdbert(responseDataBuf);
-                } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
+
+                if (ALBERT.equals(flParameter.getFlName())) {
+                    LOGGER.info(Common.addTag("[getModel] into <parseResponseAlbert>"));
+                    status = parseResponseAlbert(responseDataBuf);
+                } else if (LENET.equals(flParameter.getFlName())) {
                     LOGGER.info(Common.addTag("[getModel] into <parseResponseLenet>"));
                     status = parseResponseLenet(responseDataBuf);
                 }
