@@ -459,7 +459,7 @@ build_mindspore()
     fi
     echo "${CMAKE_ARGS}"
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
-      cmake ${CMAKE_ARGS} ../..
+      cmake ${CMAKE_ARGS} ${BASEPATH}
     fi
     if [[ -n "$VERBOSE" ]]; then
       CMAKE_VERBOSE="--verbose"
@@ -849,8 +849,8 @@ else
       echo "acl mode, skipping deploy phase"
       rm -rf ${BASEPATH}/output/_CPack_Packages/
     else
-      cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
-      cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
+      cp -rf ${BUILD_PATH}/package/mindspore/lib ${BASEPATH}/mindspore
+      cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BASEPATH}/mindspore
   fi
 fi
 echo "---------------- MindSpore: build end   ----------------"
