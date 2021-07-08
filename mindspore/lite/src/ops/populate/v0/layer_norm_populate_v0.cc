@@ -29,6 +29,11 @@ OpParameter *PopulateLayerNormParameterV0(const void *prim) {
     MS_LOG(ERROR) << "layer_norm_prim is nullptr";
     return nullptr;
   }
+  auto normalized_shape = layer_norm_prim->normalizedShape();
+  if (normalized_shape == nullptr) {
+    MS_LOG(ERROR) << "normalized_shape is nullptr";
+    return nullptr;
+  }
   auto layer_norm_parameter = reinterpret_cast<LayerNormParameter *>(malloc(sizeof(LayerNormParameter)));
   if (layer_norm_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc LayerNormParameter failed.";
@@ -36,18 +41,8 @@ OpParameter *PopulateLayerNormParameterV0(const void *prim) {
   }
   memset(layer_norm_parameter, 0, sizeof(LayerNormParameter));
   layer_norm_parameter->op_parameter_.type_ = schema::PrimitiveType_LayerNormFusion;
-  auto normalized_shape = layer_norm_prim->normalizedShape();
-  if (normalized_shape != nullptr) {
-    layer_norm_parameter->normalized_dims_ = normalized_shape->size();
-    if (((size_t)normalized_shape->size()) > SIZE_MAX / sizeof(int)) {
-      MS_LOG(ERROR) << "normalized_shape size too big";
-      free(layer_norm_parameter);
-      return nullptr;
-    }
-    for (size_t i = 0; i < normalized_shape->size(); i++) {
-      layer_norm_parameter->normalized_shape_[i] = *(normalized_shape->begin() + i);
-    }
-  }
+  layer_norm_parameter->begin_norm_axis_ = -normalized_shape->size();
+  layer_norm_parameter->begin_params_axis_ = -normalized_shape->size();
   layer_norm_parameter->epsilon_ = layer_norm_prim->epsilon();
   layer_norm_parameter->elementwise_affine_ = layer_norm_prim->elementwiseAffine();
 
