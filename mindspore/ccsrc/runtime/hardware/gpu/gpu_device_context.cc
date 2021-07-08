@@ -314,6 +314,22 @@ void RunOpHardwareOptimize(const KernelGraphPtr &kernel_graph) {
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 }
+
+void RunOpHideNopNode(const KernelGraphPtr &kernel_graph) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    opt::HideNopNode(kernel_graph.get());
+  }
+}
+
+void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    opt::RemoveNopNode(kernel_graph.get());
+  }
+}
 }  // namespace
 
 void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
@@ -324,6 +340,9 @@ void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
   SetOperatorInfo(graph->execution_order());
 
   RunOpHardwareOptimize(graph);
+
+  RunOpHideNopNode(graph);
+  RunOpRemoveNopNode(graph);
 }
 
 void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
