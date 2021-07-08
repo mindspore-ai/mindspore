@@ -148,7 +148,6 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
     is_ready_ = true;
     MS_LOG(INFO) << "There are " << node_manager_.worker_num() << " workers and " << node_manager_.server_num()
                  << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
-    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_IN) {
       auto nodes = node_manager_.nodes_info();
       for (const auto &id : scale_in_node_ids_) {
@@ -163,6 +162,7 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
       auto client = GetOrCreateClient(kvs.second);
       SendMetadata(client, kvs.second.rank_id_);
     }
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     wait_start_cond_.notify_all();
   }
 }
