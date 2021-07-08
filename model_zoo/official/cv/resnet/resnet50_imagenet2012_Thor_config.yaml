@@ -10,31 +10,31 @@ enable_profiling: False
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
-device_target: "GPU"
+device_target: "Ascend"
 checkpoint_path: "./checkpoint/"
 checkpoint_file_path: ""
 
 # ==============================================================================
 # Training options
-optimizer: "Thor"
+optimizer: "Momentum"
 infer_label: ""
 class_num: 1001
 batch_size: 32
 loss_scale: 128
 momentum: 0.9
 weight_decay: 0.0005
-epoch_size: 40
+epoch_size: 45
 pretrain_epoch_size: 0
 save_checkpoint: True
-save_checkpoint_epochs: 1
+save_checkpoint_epochs: 2
 keep_checkpoint_max: 15
 use_label_smooth: True
 label_smooth_factor: 0.1
-lr_init: 0.05672
-lr_decay: 4.9687
-lr_end_epoch: 50
-damping_init: 0.02345
-damping_decay: 0.5467
+lr_init: 0.05803
+lr_decay: 4.04839
+lr_end_epoch: 53
+damping_init: 0.02714
+damping_decay: 0.50036
 frequency: 834
 
 net_name: "resnet50"
@@ -56,7 +56,7 @@ acc_mode: "O0"
 # Export options
 device_id: 0
 width: 224
-height: 224 
+height: 224
 file_name: "resnet50"
 file_format: "AIR"
 ckpt_file: ""
