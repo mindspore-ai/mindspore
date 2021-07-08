@@ -26,6 +26,13 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64)
         -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \
         -fno-aligned-allocation -DTARGET_OS_OSX")
     endif()
+else()
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+    endif()
 endif()
 
 if(TARGET_HIMIX200)
