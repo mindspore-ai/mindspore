@@ -45,8 +45,8 @@ lite::CpuBindMode ModelImpl::GetCpuBindMode() {
   }
 }
 
-Status ModelImpl::ConverterContext(lite::Context *model_context) {
-  auto device_list = context_->MutableDeviceInfo();
+Status ModelImpl::ConverterContext(const std::shared_ptr<Context> &context, lite::Context *model_context) {
+  auto device_list = context->MutableDeviceInfo();
   if (device_list.size() == 0) {
     MS_LOG(ERROR) << "Invalid device list.";
     return kLiteInputParamInvalid;
@@ -56,9 +56,9 @@ Status ModelImpl::ConverterContext(lite::Context *model_context) {
     return kLiteInputParamInvalid;
   }
 
-  model_context->thread_num_ = context_->GetThreadNum();
-  model_context->enable_parallel_ = context_->GetEnableParallel();
-  model_context->affinity_core_list_ = context_->GetThreadAffinityCoreList();
+  model_context->thread_num_ = context->GetThreadNum();
+  model_context->enable_parallel_ = context->GetEnableParallel();
+  model_context->affinity_core_list_ = context->GetThreadAffinityCoreList();
   model_context->device_list_.clear();
   if (device_list[0]->GetDeviceType() != kCPU) {
     MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
@@ -101,6 +101,26 @@ Status ModelImpl::ConverterContext(lite::Context *model_context) {
   return kSuccess;
 }
 
+Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
+                        const std::shared_ptr<Context> &ms_context) {
+  lite::Context lite_context;
+  auto status = ConverterContext(ms_context, &lite_context);
+  if (status != kSuccess) {
+    return status;
+  }
+
+  auto session = std::shared_ptr<session::LiteSession>(
+    session::LiteSession::CreateSession(static_cast<const char *>(model_data), data_size, &lite_context));
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "Allocate session failed.";
+    return kLiteNullptr;
+  }
+
+  session_.swap(session);
+  MS_LOG(DEBUG) << "Build model success.";
+  return kSuccess;
+}
+
 Status ModelImpl::Build() {
   MS_LOG(DEBUG) << "Start build model.";
   auto model = graph_->graph_data_->lite_model();
@@ -117,7 +137,7 @@ Status ModelImpl::Build() {
     return kLiteNullptr;
   }
   lite::Context model_context;
-  auto status = ConverterContext(&model_context);
+  auto status = ConverterContext(context_, &model_context);
   if (status != kSuccess) {
     return status;
   }

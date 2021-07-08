@@ -144,6 +144,12 @@ MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vecto
 
 std::string MSTensor::Name() const { return CharToString(CharName()); }
 
+using Key = struct Key {
+  const size_t max_key_len = 32;
+  size_t len;
+  unsigned char key[32];
+  Key() : len(0) {}
+};
 /// \brief CallBackParam defined input arguments for callBack function.
 struct MSCallBackParam {
   std::string node_name_; /**< node name argument */

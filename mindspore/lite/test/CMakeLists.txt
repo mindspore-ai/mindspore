@@ -76,7 +76,6 @@ set(TEST_LITE_SRC
         ${OPS_SRC}
         ${KERNEL_OP_SRC}
         ${LITE_DIR}/src/runtime/inner_allocator.cc
-        ${LITE_DIR}/src/runtime/parallel_executor.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/ms_tensor.cc

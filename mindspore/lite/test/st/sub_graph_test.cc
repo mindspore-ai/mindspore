@@ -25,7 +25,6 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
-#include "src/runtime/parallel_executor.h"
 #include "tools/common/storage.h"
 #include "include/version.h"
 

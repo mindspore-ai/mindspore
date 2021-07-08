@@ -455,15 +455,6 @@ bool LiteSession::IfUseMindrtExecutor() {
   use_mindrt_run = false;
 #endif
 
-  for (auto kernel : kernels_) {
-    if (kernel->desc().delegate != nullptr) {
-      continue;
-    }
-    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-    if (sub_graph->nodes()[0]->type() == schema::PrimitiveType_Merge) {
-      use_mindrt_run = false; /* control-flow model */
-    }
-  }
   return use_mindrt_run;
 }
 

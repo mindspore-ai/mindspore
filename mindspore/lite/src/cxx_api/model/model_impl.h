@@ -36,6 +36,8 @@ class ModelImpl {
   ~ModelImpl() = default;
 
   Status Build();
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context);
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
@@ -58,7 +60,7 @@ class ModelImpl {
   void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
   void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
   lite::CpuBindMode GetCpuBindMode();
-  Status ConverterContext(lite::Context *model_context);
+  Status ConverterContext(const std::shared_ptr<Context> &context, lite::Context *model_context);
   Status RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after);
 };
 }  // namespace mindspore
