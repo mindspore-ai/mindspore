@@ -46,6 +46,12 @@ bool MaskedSelectGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> 
   auto mask = reinterpret_cast<bool *>(inputs[1]->addr);
   auto grad = reinterpret_cast<T *>(inputs[2]->addr);
   auto dx = reinterpret_cast<T *>(outputs[0]->addr);
+
+  auto ret = memset_s(dx, outputs[0]->size, 0, outputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "Memset output[0] of kernel MaskedSelectGrad failed, ret: " << ret;
+  }
+
   uint64_t output_size = outputs[0]->size / sizeof(T);
   uint64_t j = 0;
   if (input_shape_a_ == input_shape_b_) {
