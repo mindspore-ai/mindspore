@@ -17,7 +17,6 @@
 export RANK_SIZE=1
 export DEVICE_ID=$1
 DATA_DIR=$2
-DS_TYPE=$3
 BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
 CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
 
@@ -28,6 +27,5 @@ echo  "start training for device id $DEVICE_ID"
 env > env.log
 python -u ../train.py --config_path=$CONFIG_FILE \
     --device_id=$1 \
-    --dataset_path=$DATA_DIR \
-    --ds_type=$DS_TYPE > log.txt 2>&1 &
+    --dataset_path=$DATA_DIR > log.txt 2>&1 &
 cd ../

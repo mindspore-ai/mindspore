@@ -19,7 +19,7 @@ import copy
 import numpy as np
 from PIL import Image
 import cv2
-from model_utils.config import config
+
 
 def _rand(a=0., b=1.):
     return np.random.rand() * (b - a) + a
@@ -550,13 +550,13 @@ class MultiScaleTrans:
 
         if self.size_dict.get(seed_key, None) is None:
             random.seed(seed_key)
-            new_size = random.choice(config.multi_scale)
+            new_size = random.choice(self.default_config.multi_scale)
             self.size_dict[seed_key] = new_size
         seed = seed_key
 
         input_size = self.size_dict[seed]
         for img, anno in zip(imgs, annos):
-            img, anno = preprocess_fn(img, anno, config, input_size, self.device_num, self.each_multiscale)
+            img, anno = preprocess_fn(img, anno, self.default_config, input_size, self.device_num, self.each_multiscale)
             ret_imgs.append(img.transpose(2, 0, 1).copy())
             bbox_true_1, bbox_true_2, bbox_true_3, gt_box1, gt_box2, gt_box3 = \
                 _preprocess_true_boxes(true_boxes=anno, anchors=self.anchor_scales, in_shape=img.shape[0:2],
