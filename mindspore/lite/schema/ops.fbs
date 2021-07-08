@@ -229,6 +229,7 @@ table Activation {
     alpha: float;
     min_val: float;
     max_val: float;
+    approximate: bool = false;
 }
 
 table ActivationGrad {

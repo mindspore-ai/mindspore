@@ -38,6 +38,8 @@ class Activation : public PrimitiveC {
   float get_min_val() const;
   float get_max_val() const;
   ActivationType get_activation_type() const;
+  void set_approximate(bool approximate);
+  bool get_approximate() const;
 };
 }  // namespace ops
 }  // namespace mindspore
