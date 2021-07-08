@@ -125,7 +125,7 @@ class TrainOneStepCell(nn.Cell):
         self.grad = ops.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
 
-        # 并行处理的定义
+        # Parallel processing
         self.reducer_flag = False
         self.grad_reducer_G = F.identity
         self.grad_reducer_D = F.identity

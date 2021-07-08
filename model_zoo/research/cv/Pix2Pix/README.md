@@ -169,6 +169,14 @@ python eval.py --device_target [Ascend] --device_id [0] --val_data_dir [./data/f
 
 **Note:**: Before training and evaluating, create folders like "./results/...". Then you will get the results as following in "./results/predict".
 
+## [310 infer](#contents)
+
+```python
+bash run_infer_310.sh [The path of the MINDIR for 310 infer] [The path of the dataset for 310 infer] y Ascend 0
+```
+
+**Note:**: Before executing 310 infer, create the MINDIR/AIR model using "python export.py --ckpt [The path of the CKPT for exporting] --train_data_dir [The path of the training dataset]".
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
