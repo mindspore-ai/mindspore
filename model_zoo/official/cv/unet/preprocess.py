@@ -44,7 +44,6 @@ class CellNucleiDataset:
         self.data_dir = data_dir
         self.img_ids = sorted(next(os.walk(self.data_dir))[1])
         self.train_ids = self.img_ids[:int(len(self.img_ids) * split)] * repeat
-        np.random.shuffle(self.train_ids)
         self.val_ids = self.img_ids[int(len(self.img_ids) * split):]
         self.is_train = is_train
         self.result_path = result_path
