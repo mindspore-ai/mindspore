@@ -15,6 +15,7 @@
 """loss callback"""
 
 import time
+import numpy as np
 from mindspore.train.callback import Callback
 from .util import AverageMeter
 
@@ -43,7 +44,7 @@ class LossCallBack(Callback):
     def step_end(self, run_context):
         cb_params = run_context.original_args()
 
-        loss = cb_params.net_outputs.asnumpy()
+        loss = np.array(cb_params.net_outputs)
 
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
         cur_num = cb_params.cur_step_num

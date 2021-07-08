@@ -1,4 +1,4 @@
-# Contents
+﻿# Contents
 
 - [CNNCTC Description](#CNNCTC-description)
 - [Model Architecture](#model-architecture)
@@ -99,9 +99,9 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
+- Hardware（Ascend/GPU）
 
-    - Prepare hardware environment with Ascend processor.
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
 
     - [MindSpore](https://www.mindspore.cn/install/en)
@@ -121,22 +121,40 @@ pip install tqdm
 pip install six
 ```
 
-- Standalone Training:
+- Standalone Ascend Training:
 
 ```bash
 bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
 ```
 
-- Distributed Training:
+- Standalone GPU Training:
+
+```bash
+bash scripts/run_standalone_train_gpu.sh $PRETRAINED_CKPT
+```
+
+- Distributed Ascend Training:
 
 ```bash
 bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
 ```
 
-- Evaluation:
+- Distributed GPU Training:
+
+```bash
+bash scripts/run_distribute_train_gpu.sh $PRETRAINED_CKPT
+```
+
+- Ascend Evaluation:
 
 ```bash
 bash scripts/run_eval_ascend.sh $TRAINED_CKPT
+```
+
+- GPU Evaluation:
+
+```bash
+bash scripts/run_eval_gpu.sh $TRAINED_CKPT
 ```
 
 # [Script Description](#contents)
@@ -159,7 +177,9 @@ The entire code structure is as following:
     |---scripts
         |---run_infer_310.sh    // shell script for infer on ascend310
         |---run_standalone_train_ascend.sh    // shell script for standalone on ascend
+        |---run_standalone_train_gpu.sh    // shell script for standalone on gpu
         |---run_distribute_train_ascend.sh    // shell script for distributed on ascend
+        |---run_distribute_train_gpu.sh    // shell script for distributed on gpu
         |---run_eval_ascend.sh    // shell script for eval on ascend
     |---src
         |---__init__.py    // init file
@@ -207,7 +227,7 @@ Arguments:
 
 ### Training
 
-- Standalone Training:
+- Standalone Ascend Training:
 
 ```bash
 bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [PRETRAINED_CKPT(options)]
@@ -217,7 +237,7 @@ Results and checkpoints are written to `./train` folder. Log can be found in `./
 
 `$PRETRAINED_CKPT` is the path to model checkpoint and it is **optional**. If none is given the model will be trained from scratch.
 
-- Distributed Training:
+- Distributed Ascend Training:
 
 ```bash
 bash scripts/run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT(options)]
@@ -314,17 +334,42 @@ epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.2184
 # (7) Start model inference。
 ```
 
+- Standalone GPU Training:
+
+```bash
+bash scripts/run_standalone_train_gpu.sh [PRETRAINED_CKPT(options)]
+```
+
+Results and checkpoints are written to `./train` folder. Log can be found in `./train/log` and loss values are recorded in `./train/loss.log`.
+
+`$PRETRAINED_CKPT` is the path to model checkpoint and it is **optional**. If none is given the model will be trained from scratch.
+
+- Distributed GPU Training:
+
+```bash
+bash scripts/run_distribute_train_gpu.sh [PRETRAINED_CKPT(options)]
+```
+
+Results and checkpoints are written to `./train_parallel` folder with model checkpoints in ckpt_{i} directories.
+Log can be found in `./train_parallel/log` and loss values are recorded in `./train_parallel/loss.log`.
+
 ## [Evaluation Process](#contents)
 
 ### Evaluation
 
-- Evaluation:
+- Ascend Evaluation:
 
 ```bash
 bash scripts/run_eval_ascend.sh [DEVICE_ID] [TRAINED_CKPT]
 ```
 
 The model will be evaluated on the IIIT dataset, sample results and overall accuracy will be printed.
+
+- GPU Evaluation:
+
+```bash
+bash scripts/run_eval_gpu.sh [TRAINED_CKPT]
+```
 
 ## [Inference process](#contents)
 
@@ -371,12 +416,22 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
 - `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. CNNCTC only support CPU mode .
 - `DEVICE_ID` is optional, default value is 0.
 
-### result
+### Result
+
+- Ascend Result
 
 Inference result is saved in current path, you can find result like this in acc.log file.
 
 ```bash
 'Accuracy': 0.8642
+```
+
+- GPU result
+
+Inference result is saved in ./eval/log, you can find result like this.
+
+```bash
+accuracy:  0.8533
 ```
 
 # [Model Description](#contents)
@@ -397,6 +452,21 @@ Inference result is saved in current path, you can find result like this in acc.
 | Loss Function              | CTCLoss                                      |
 | Speed                      | 1pc: 250 ms/step;  8pcs: 260 ms/step                          |
 | Total time                 | 1pc: 15 hours;  8pcs: 1.92 hours                          |
+| Parameters (M)             | 177                                                         |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/cnnctc> |
+
+| Parameters                 | CNNCTC                                                   |
+| -------------------------- | ----------------------------------------------------------- |
+| Model Version              | V1                                                |
+| Resource                   | GPU(Tesla V100-PCIE); CPU 2.60 GHz, 26 cores; Memory 790G; OS linux-gnu             |
+| uploaded Date              | 07/06/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                      |
+| Dataset                    |  MJSynth,SynthText                                                  |
+| Training Parameters        | epoch=3,  batch_size=192          |
+| Optimizer                  | RMSProp                                                         |
+| Loss Function              | CTCLoss                                      |
+| Speed                      | 1pc: 1180 ms/step;  8pcs: 1180 ms/step                          |
+| Total time                 | 1pc: 62.9 hours;  8pcs: 8.67 hours                          |
 | Parameters (M)             | 177                                                         |
 | Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/cnnctc> |
 

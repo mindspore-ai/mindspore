@@ -16,27 +16,29 @@
 
 
 import ast
+import numpy as np
 import mindspore
+import mindspore.common.dtype as mstype
 from mindspore import context
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore import Tensor
+from mindspore.common import set_seed
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.dataset import GeneratorDataset
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.model import Model
-from mindspore.communication.management import init
-from mindspore.common import set_seed
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.callback import LossCallBack
+from src.cnn_ctc import CNNCTC_Model, ctc_loss, WithLossCell, CNNCTCTrainOneStepWithLossScaleCell
 from src.dataset import ST_MJ_Generator_batch_fixed_length, ST_MJ_Generator_batch_fixed_length_para
-from src.cnn_ctc import CNNCTC_Model, ctc_loss, WithLossCell
 from src.model_utils.config import config
-from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.device_adapter import get_device_id
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 
 set_seed(1)
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False,
-                    save_graphs_path=".", enable_auto_mixed_precision=False)
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False, save_graphs_path=".")
 
 
 def dataset_creator(run_distribute):
@@ -58,10 +60,33 @@ def modelarts_pre_process():
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train():
-    device_id = get_device_id()
-    if config.run_distribute:
-        init()
-        context.set_auto_parallel_context(parallel_mode="data_parallel")
+    target = config.device_target
+    context.set_context(device_target=target)
+
+    if target == "Ascend":
+        device_id = get_device_id()
+        context.set_context(device_id=device_id, enable_auto_mixed_precision=False)
+
+        if config.run_distribute:
+            init()
+            context.set_auto_parallel_context(parallel_mode="data_parallel")
+
+        ckpt_save_dir = config.SAVE_PATH
+    else:
+        # GPU target
+        device_id = get_device_id()
+        context.set_context(device_id=device_id)
+        if config.run_distribute:
+            init()
+            context.set_auto_parallel_context(device_num=get_group_size(),
+                                              parallel_mode="data_parallel",
+                                              gradients_mean=False,
+                                              gradient_fp32_sync=False)
+
+            ckpt_save_dir = config.SAVE_PATH + "ckpt_" + str(get_rank()) + "/"
+            print(ckpt_save_dir)
+        else:
+            ckpt_save_dir = config.SAVE_PATH + "ckpt_standalone/"
 
     config.LR = ast.literal_eval(config.LR)
     config.LR_PARA = ast.literal_eval(config.LR_PARA)
@@ -79,25 +104,43 @@ def train():
         print('train from scratch...')
 
     criterion = ctc_loss()
-    opt = mindspore.nn.RMSProp(params=net.trainable_params(), centered=True, learning_rate=config.LR_PARA,
-                               momentum=config.MOMENTUM, loss_scale=config.LOSS_SCALE)
+    opt = mindspore.nn.RMSProp(params=net.trainable_params(),
+                               centered=True,
+                               learning_rate=config.LR_PARA,
+                               momentum=config.MOMENTUM,
+                               loss_scale=config.LOSS_SCALE)
 
     net = WithLossCell(net, criterion)
-    loss_scale_manager = mindspore.train.loss_scale_manager.FixedLossScaleManager(config.LOSS_SCALE, False)
-    model = Model(net, optimizer=opt, loss_scale_manager=loss_scale_manager, amp_level="O2")
+
+    if target == "Ascend":
+        loss_scale_manager = mindspore.train.loss_scale_manager.FixedLossScaleManager(
+            config.LOSS_SCALE, False)
+        net.set_train(True)
+        model = Model(net, optimizer=opt, loss_scale_manager=loss_scale_manager, amp_level="O2")
+    else:
+        scaling_sens = Tensor(np.full((1), config.LOSS_SCALE), dtype=mstype.float32)
+        net = CNNCTCTrainOneStepWithLossScaleCell(net, opt, scaling_sens)
+        net.set_train(True)
+        model = Model(net)
 
     callback = LossCallBack()
     config_ck = CheckpointConfig(save_checkpoint_steps=config.SAVE_CKPT_PER_N_STEP,
                                  keep_checkpoint_max=config.KEEP_CKPT_MAX_NUM)
-    ckpoint_cb = ModelCheckpoint(prefix="CNNCTC", config=config_ck, directory=config.SAVE_PATH)
+    ckpoint_cb = ModelCheckpoint(prefix="CNNCTC", config=config_ck, directory=ckpt_save_dir)
 
     if config.run_distribute:
         if device_id == 0:
-            model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback, ckpoint_cb], dataset_sink_mode=False)
+            model.train(config.TRAIN_EPOCHS,
+                        ds,
+                        callbacks=[callback, ckpoint_cb],
+                        dataset_sink_mode=False)
         else:
             model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback], dataset_sink_mode=False)
     else:
-        model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback, ckpoint_cb], dataset_sink_mode=False)
+        model.train(config.TRAIN_EPOCHS,
+                    ds,
+                    callbacks=[callback, ckpoint_cb],
+                    dataset_sink_mode=False)
 
 
 if __name__ == '__main__':
