@@ -641,7 +641,31 @@ Status Conv2DBackpropInputInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status Conv2DBackpropInputInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) { return SUCCESS; }
+Status Conv2DBackpropInputInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
+  if (pad_mode_ != 1) {  // only support same mode
+    MS_LOG(ERROR) << name_ << ": Do not support the pad mode " << pad_mode_ << " when split H or W dimension";
+    return FAILED;
+  }
+
+  if (h_strategy > 1) {
+    if (inputs_shape_[0][2] * stride_[2] != outputs_shape_[0][2]) {
+      MS_LOG(ERROR) << name_ << ": Do not support split h dimension when in_shape * stride != out_shape";
+      return FAILED;
+    }
+
+    if (kernel_size_[0] > stride_[2]) {
+      MS_LOG(ERROR) << name_ << ": Do not support split h dimension when kernel size larger than stride";
+      return FAILED;
+    }
+  }
+
+  if (w_strategy > 1 && inputs_shape_[0][3] * stride_[3] != outputs_shape_[0][3]) {
+    MS_LOG(ERROR) << name_ << ": Do not support split w dimension when in_shape * stride != out_shape";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
 
 Status Conv2DBackpropInputInfo::InferDevMatrixShape() {
   // the strategy is ((n, o, h, w), (o, i, 1, 1))
