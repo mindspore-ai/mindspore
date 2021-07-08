@@ -29,7 +29,7 @@ BUILT_IN_CUSTOM_OPS_REGISTER_PATH = "mindspore/ops/_op_impl/_custom_op"
 
 
 def op_info_register(op_info):
-    """
+    r"""
     A decorator which is used to register an operator.
 
     Note:
@@ -576,6 +576,7 @@ class DataType:
     Please add it if necessary.
 
     current support:
+    .. code-block::
     None_None = ("", "")
     None_Default = ("", "DefaultFormat")
     BOOL_None = ("bool", "")
