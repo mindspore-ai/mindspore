@@ -51,7 +51,7 @@ class HealthPointMgr {
     if (point_ == 0) {
       SetNextRunable();
     } else if (point_ < 0) {
-      MS_LOG(EXCEPTION) << "There is something wrong.";
+      MS_LOG(WARNING) << "There is something wrong. point = " << point_;
     }
   }
 
@@ -66,7 +66,7 @@ class HealthPointMgr {
     ++point_;
   }
 
-  int point() { return point_; }
+  int point() const { return point_; }
 
   void Add2Schedule(const AsyncAbstractPtr &asyncAbastract) {
     std::lock_guard<std::recursive_mutex> lock(lock_);
@@ -187,48 +187,47 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
   ~AsyncAbstract() = default;
   // Wait
   AbstractBasePtr GetResult() {
-    StaticAnalysisException::Instance().CheckException();
+    static HealthPointMgr &healthPointMgr = HealthPointMgr::GetInstance();
+    static StaticAnalysisException &exceptionMgr = StaticAnalysisException::Instance();
+    exceptionMgr.CheckException();
     std::unique_lock<std::mutex> lock(lock_);
     while (true) {
       ++count_;
       // The point should be dropped if it can't run. It will be added when it can run.
       bool hasDropPoint = false;
       if (!runable_) {
-        HealthPointMgr::GetInstance().DropPoint();
+        healthPointMgr.DropPoint();
         hasDropPoint = true;
       }
-
       MS_LOG(DEBUG) << this << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
       condition_var_.wait(lock, [this] { return runable_; });
+      if (hasDropPoint) {
+        healthPointMgr.AddPoint();
+      }
       MS_LOG(DEBUG) << this << " continue runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
-      StaticAnalysisException::Instance().CheckException();
+
+      exceptionMgr.CheckException();
       runable_ = false;
       if (result_ != nullptr) {
-        if (hasDropPoint) {
-          HealthPointMgr::GetInstance().AddPoint();
-        }
         MS_LOG(DEBUG) << this << " Return  result: " << (result_ ? result_.get() : 0);
         return result_;
       }
       // Push to list
-      HealthPointMgr::GetInstance().Add2Schedule(shared_from_this());
-      if (hasDropPoint) {
-        HealthPointMgr::GetInstance().AddPoint();
-      }
+      healthPointMgr.Add2Schedule(shared_from_this());
       // Notify the next asyncAbastract to run.
-      HealthPointMgr::GetInstance().SetNextRunable();
+      healthPointMgr.SetNextRunable();
       MS_LOG(DEBUG) << this << " SetNextRunable "
                     << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0)
-                    << " point:" << HealthPointMgr::GetInstance().point();
+                    << " point:" << healthPointMgr.point();
     }
-    return nullptr;
   }
+
   void SetRunable() {
     MS_LOG(DEBUG) << this << " Runable.";
     runable_ = true;
     condition_var_.notify_one();
   }
-  int count() { return count_; }
+  int count() const { return count_; }
 
   bool HasResult() { return result_ != nullptr; }
   // Not wait
@@ -287,7 +286,7 @@ class AnalysisResultCacheMgr {
   inline EvalResultPtr GetValue(const AnfNodeConfigPtr &conf) { return cache_.get(conf); }
   // Wait for async Eval(conf) to finish.
   void Wait();
-  void PushTowait(std::future<void> &&future);
+  void PushToWait(std::future<void> &&future);
   void PushTodo(const AnfNodeConfigPtr &conf);
   void Todo();
   static void UpdateCaller(const std::string &caller);
@@ -295,7 +294,7 @@ class AnalysisResultCacheMgr {
   void InitSwitchValue(const AnfNodeConfigPtr &conf);
   AbstractBasePtr GetSwitchValue(const AnfNodeConfigPtr &conf);
   AbstractBasePtr TryGetSwitchValue(const AnfNodeConfigPtr &conf);
-  void SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr vale);
+  void SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale);
 
  private:
   using AnalysisConfigAsyncResultMap =
