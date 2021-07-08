@@ -26,7 +26,7 @@
 #endif
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void StartFLJobKernel::InitKernel(size_t) {
@@ -113,8 +113,8 @@ bool StartFLJobKernel::Reset() {
   return true;
 }
 
-void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &) {
-  iter_next_req_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
+void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
+  iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
   // The first startFLJob request means a new iteration starts running.
   Iteration::GetInstance().SetIterationRunning();
@@ -194,8 +194,8 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
                                           std::map<std::string, AddressPtr> feature_maps) {
   auto fbs_reason = fbb->CreateString(reason);
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
-  auto fbs_server_mode = fbb->CreateString(PSContext::instance()->server_mode());
-  auto fbs_fl_name = fbb->CreateString(PSContext::instance()->fl_name());
+  auto fbs_server_mode = fbb->CreateString(ps::PSContext::instance()->server_mode());
+  auto fbs_fl_name = fbb->CreateString(ps::PSContext::instance()->fl_name());
 
 #ifdef ENABLE_ARMOUR
   auto *param = armour::CipherInit::GetInstance().GetPublicParams();
@@ -206,7 +206,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   float dp_eps = param->dp_eps;
   float dp_delta = param->dp_delta;
   float dp_norm_clip = param->dp_norm_clip;
-  auto encrypt_type = fbb->CreateString(PSContext::instance()->encrypt_type());
+  auto encrypt_type = fbb->CreateString(ps::PSContext::instance()->encrypt_type());
 
   auto cipher_public_params =
     schema::CreateCipherPublicParams(*fbb.get(), t, p, g, prime, dp_eps, dp_delta, dp_norm_clip, encrypt_type);
@@ -215,10 +215,10 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   schema::FLPlanBuilder fl_plan_builder(*(fbb.get()));
   fl_plan_builder.add_fl_name(fbs_fl_name);
   fl_plan_builder.add_server_mode(fbs_server_mode);
-  fl_plan_builder.add_iterations(PSContext::instance()->fl_iteration_num());
-  fl_plan_builder.add_epochs(PSContext::instance()->client_epoch_num());
-  fl_plan_builder.add_mini_batch(PSContext::instance()->client_batch_size());
-  fl_plan_builder.add_lr(PSContext::instance()->client_learning_rate());
+  fl_plan_builder.add_iterations(ps::PSContext::instance()->fl_iteration_num());
+  fl_plan_builder.add_epochs(ps::PSContext::instance()->client_epoch_num());
+  fl_plan_builder.add_mini_batch(ps::PSContext::instance()->client_batch_size());
+  fl_plan_builder.add_lr(ps::PSContext::instance()->client_learning_rate());
 #ifdef ENABLE_ARMOUR
   fl_plan_builder.add_cipher(cipher_public_params);
 #endif
@@ -250,5 +250,5 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
 REG_ROUND_KERNEL(startFLJob, StartFLJobKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

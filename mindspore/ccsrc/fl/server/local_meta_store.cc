@@ -17,7 +17,7 @@
 #include "fl/server/local_meta_store.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 void LocalMetaStore::remove_value(const std::string &name) {
   std::unique_lock<std::mutex> lock(mtx_);
@@ -41,5 +41,5 @@ const size_t LocalMetaStore::curr_iter_num() {
   return curr_iter_num_;
 }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

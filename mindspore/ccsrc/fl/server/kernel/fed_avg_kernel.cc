@@ -17,7 +17,7 @@
 #include "fl/server/kernel/fed_avg_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 REG_AGGREGATION_KERNEL_TWO(FedAvg,
@@ -29,5 +29,5 @@ REG_AGGREGATION_KERNEL_TWO(FedAvg,
                            FedAvgKernel, float, size_t)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

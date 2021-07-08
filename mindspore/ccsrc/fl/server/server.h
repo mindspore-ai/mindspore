@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_SERVER_H_
-#define MINDSPORE_CCSRC_PS_SERVER_SERVER_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_SERVER_H_
+#define MINDSPORE_CCSRC_FL_SERVER_SERVER_H_
 
 #include <memory>
 #include <string>
@@ -31,7 +31,7 @@
 #endif
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // Class Server is the entrance of MindSpore's parameter server training mode and federated learning.
 class Server {
@@ -90,7 +90,7 @@ class Server {
   void RegisterCommCallbacks();
 
   // Register cluster exception callbacks. This method is called in RegisterCommCallbacks.
-  void RegisterExceptionEventCallback(const std::shared_ptr<core::TcpCommunicator> &communicator);
+  void RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator);
 
   // Initialize executor according to the server mode.
   void InitExecutor();
@@ -113,11 +113,11 @@ class Server {
   void ProcessAfterScalingIn();
 
   // The server node is initialized in Server.
-  std::shared_ptr<core::ServerNode> server_node_;
+  std::shared_ptr<ps::core::ServerNode> server_node_;
 
   // The task executor of the communicators. This helps server to handle network message concurrently. The tasks
   // submitted to this task executor is asynchronous.
-  std::shared_ptr<core::TaskExecutor> task_executor_;
+  std::shared_ptr<ps::core::TaskExecutor> task_executor_;
 
   // Which protocol should communicators use.
   bool use_tcp_;
@@ -136,12 +136,12 @@ class Server {
 
   // Server need a tcp communicator to communicate with other servers for counting, metadata storing, collective
   // operations, etc.
-  std::shared_ptr<core::CommunicatorBase> communicator_with_server_;
+  std::shared_ptr<ps::core::CommunicatorBase> communicator_with_server_;
 
   // The communication with workers(including mobile devices), has multiple protocol types: HTTP and TCP.
   // In some cases, both types should be supported in one distributed training job. So here we may have multiple
   // communicators.
-  std::vector<std::shared_ptr<core::CommunicatorBase>> communicators_with_worker_;
+  std::vector<std::shared_ptr<ps::core::CommunicatorBase>> communicators_with_worker_;
 
   // Mutex for scaling operations. We must wait server's initialization done before handle scaling events.
   std::mutex scaling_mtx_;
@@ -176,6 +176,6 @@ class Server {
   float percent_for_get_model_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_SERVER_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_SERVER_H_

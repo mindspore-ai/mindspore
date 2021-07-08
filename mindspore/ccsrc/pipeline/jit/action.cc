@@ -639,7 +639,7 @@ bool StartPSWorkerAction(const ResourcePtr &res) {
   return true;
 }
 bool StartFLWorkerAction(const ResourcePtr &) {
-  ps::worker::FLWorker::GetInstance().Run();
+  fl::worker::FLWorker::GetInstance().Run();
   return true;
 }
 
@@ -665,7 +665,7 @@ bool StartServerAction(const ResourcePtr &res) {
   uint64_t start_fl_job_time_window = ps::PSContext::instance()->start_fl_job_time_window();
   uint64_t update_model_time_window = ps::PSContext::instance()->update_model_time_window();
 
-  std::vector<ps::server::RoundConfig> rounds_config = {
+  std::vector<fl::server::RoundConfig> rounds_config = {
     {"startFLJob", true, start_fl_job_time_window, true, start_fl_job_threshold},
     {"updateModel", true, update_model_time_window, true, update_model_threshold},
     {"getModel"},
@@ -676,22 +676,22 @@ bool StartServerAction(const ResourcePtr &res) {
   uint64_t cipher_time_window = ps::PSContext::instance()->cipher_time_window();
   size_t reconstruct_secrets_threshhold = ps::PSContext::instance()->reconstruct_secrets_threshhold();
 
-  ps::server::CipherConfig cipher_config = {share_secrets_ratio, cipher_time_window, reconstruct_secrets_threshhold};
+  fl::server::CipherConfig cipher_config = {share_secrets_ratio, cipher_time_window, reconstruct_secrets_threshhold};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {
     executor_threshold = update_model_threshold;
-    ps::server::Server::GetInstance().Initialize(true, true, fl_server_port, rounds_config, cipher_config, func_graph,
+    fl::server::Server::GetInstance().Initialize(true, true, fl_server_port, rounds_config, cipher_config, func_graph,
                                                  executor_threshold);
   } else if (server_mode_ == ps::kServerModePS) {
     executor_threshold = worker_num;
-    ps::server::Server::GetInstance().Initialize(true, false, 0, rounds_config, cipher_config, func_graph,
+    fl::server::Server::GetInstance().Initialize(true, false, 0, rounds_config, cipher_config, func_graph,
                                                  executor_threshold);
   } else {
     MS_LOG(EXCEPTION) << "Server mode " << server_mode_ << " is not supported.";
     return false;
   }
-  ps::server::Server::GetInstance().Run();
+  fl::server::Server::GetInstance().Run();
   return true;
 }
 

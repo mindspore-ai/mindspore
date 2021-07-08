@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_ROUND_ROUND_KERNEL_FACTORY_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_ROUND_ROUND_KERNEL_FACTORY_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_FACTORY_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_FACTORY_H_
 
 #include <memory>
 #include <string>
@@ -25,7 +25,7 @@
 #include "fl/server/kernel/round/round_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 using RoundKernelCreator = std::function<std::shared_ptr<RoundKernel>()>;
@@ -50,6 +50,7 @@ class RoundKernelRegister {
   RoundKernelRegister(const std::string &name, RoundKernelCreator &&creator) {
     RoundKernelFactory::GetInstance().Register(name, std::move(creator));
   }
+  ~RoundKernelRegister() = default;
 };
 
 #define REG_ROUND_KERNEL(NAME, CLASS)                                                        \
@@ -57,6 +58,6 @@ class RoundKernelRegister {
   static const RoundKernelRegister g_##NAME##_round_kernel_reg(#NAME, []() { return std::make_shared<CLASS>(); });
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_ROUND_ROUND_KERNEL_FACTORY_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_FACTORY_H_

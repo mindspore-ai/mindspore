@@ -21,7 +21,7 @@
 #include "fl/server/kernel/round/update_model_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void UpdateModelKernel::InitKernel(size_t threshold_count) {
@@ -87,8 +87,8 @@ bool UpdateModelKernel::Reset() {
   return true;
 }
 
-void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &) {
-  if (PSContext::instance()->resetter_round() == ResetterRound::kUpdateModel) {
+void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kUpdateModel) {
     while (!executor_->IsAllWeightAggregationDone()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
@@ -96,7 +96,7 @@ void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHand
     size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
     MS_LOG(INFO) << "Total data size for iteration " << LocalMetaStore::GetInstance().curr_iter_num() << " is "
                  << total_data_size;
-    if (PSContext::instance()->encrypt_type() != kPWEncryptType) {
+    if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
       FinishIteration();
     }
   }
@@ -226,5 +226,5 @@ void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fb
 REG_ROUND_KERNEL(updateModel, UpdateModelKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

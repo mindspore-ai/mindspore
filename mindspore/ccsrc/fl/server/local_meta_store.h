@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORE_H_
-#define MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORE_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_LOCAL_META_STORE_H_
+#define MINDSPORE_CCSRC_FL_SERVER_LOCAL_META_STORE_H_
 
 #include <any>
 #include <mutex>
@@ -24,7 +24,7 @@
 #include "fl/server/common.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // LocalMetaStore class is used for metadata storage of this server process.
 // For example, the current iteration number, time windows for round kernels, etc.
@@ -71,7 +71,7 @@ class LocalMetaStore {
   const size_t curr_iter_num();
 
  private:
-  LocalMetaStore() = default;
+  LocalMetaStore() : key_to_meta_({}), curr_iter_num_(0) {}
   ~LocalMetaStore() = default;
   LocalMetaStore(const LocalMetaStore &) = delete;
   LocalMetaStore &operator=(const LocalMetaStore &) = delete;
@@ -83,6 +83,6 @@ class LocalMetaStore {
   size_t curr_iter_num_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORE_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_LOCAL_META_STORE_H_

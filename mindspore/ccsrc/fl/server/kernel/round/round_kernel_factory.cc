@@ -17,7 +17,7 @@
 #include "fl/server/kernel/round/round_kernel_factory.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 RoundKernelFactory &RoundKernelFactory::GetInstance() {
@@ -40,5 +40,5 @@ std::shared_ptr<RoundKernel> RoundKernelFactory::Create(const std::string &name)
 }
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

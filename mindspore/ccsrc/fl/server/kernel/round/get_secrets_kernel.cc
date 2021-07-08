@@ -21,7 +21,7 @@
 #include "fl/armour/cipher/cipher_shares.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void GetSecretsKernel::InitKernel(size_t) {
@@ -102,5 +102,5 @@ bool GetSecretsKernel::Reset() {
 REG_ROUND_KERNEL(getSecrets, GetSecretsKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

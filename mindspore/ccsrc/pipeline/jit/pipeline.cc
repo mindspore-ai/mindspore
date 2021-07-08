@@ -1293,7 +1293,7 @@ void ClearResAtexit() {
     MS_LOG(INFO) << "Start finalizing worker.";
     const std::string &server_mode = ps::PSContext::instance()->server_mode();
     if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid)) {
-      ps::worker::FLWorker::GetInstance().Finalize();
+      fl::worker::FLWorker::GetInstance().Finalize();
     } else {
       ps::Worker::GetInstance().Finalize();
     }

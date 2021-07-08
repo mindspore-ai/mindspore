@@ -47,13 +47,13 @@ class FusedPullWeightKernel : public CPUKernel {
       return false;
     }
 
-    std::shared_ptr<ps::FBBuilder> fbb = std::make_shared<ps::FBBuilder>();
+    std::shared_ptr<fl::FBBuilder> fbb = std::make_shared<fl::FBBuilder>();
     MS_EXCEPTION_IF_NULL(fbb);
 
     total_iteration_++;
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
-    if (total_iteration_ % ps::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
-        ps::kTrainBeginStepNum) {
+    if (total_iteration_ % fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
+        fl::kTrainBeginStepNum) {
       return true;
     }
 
@@ -72,10 +72,10 @@ class FusedPullWeightKernel : public CPUKernel {
     const schema::ResponsePullWeight *pull_weight_rsp = nullptr;
     int retcode = schema::ResponseCode_SucNotReady;
     while (retcode == schema::ResponseCode_SucNotReady) {
-      if (!ps::worker::FLWorker::GetInstance().SendToServer(
+      if (!fl::worker::FLWorker::GetInstance().SendToServer(
             0, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPullWeight, &pull_weight_rsp_msg)) {
         MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. This iteration is dropped.";
-        ps::worker::FLWorker::GetInstance().SetIterationRunning();
+        fl::worker::FLWorker::GetInstance().SetIterationRunning();
         return true;
       }
       MS_EXCEPTION_IF_NULL(pull_weight_rsp_msg);
@@ -116,7 +116,7 @@ class FusedPullWeightKernel : public CPUKernel {
       }
     }
     MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
-    ps::worker::FLWorker::GetInstance().SetIterationRunning();
+    fl::worker::FLWorker::GetInstance().SetIterationRunning();
     return true;
   }
 
@@ -154,7 +154,7 @@ class FusedPullWeightKernel : public CPUKernel {
   void InitSizeLists() { return; }
 
  private:
-  bool BuildPullWeightReq(std::shared_ptr<ps::FBBuilder> fbb) {
+  bool BuildPullWeightReq(std::shared_ptr<fl::FBBuilder> fbb) {
     MS_EXCEPTION_IF_NULL(fbb);
     std::vector<flatbuffers::Offset<flatbuffers::String>> fbs_weight_names;
     for (const std::string &weight_name : weight_full_names_) {

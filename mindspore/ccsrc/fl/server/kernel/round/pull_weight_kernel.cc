@@ -22,7 +22,7 @@
 #include "fl/server/model_store.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void PullWeightKernel::InitKernel(size_t) {
@@ -137,5 +137,5 @@ void PullWeightKernel::BuildPullWeightRsp(std::shared_ptr<FBBuilder> fbb, const 
 REG_ROUND_KERNEL(pullWeight, PullWeightKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_START_FL_JOB_KERNEL_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_START_FL_JOB_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_START_FL_JOB_KERNEL_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_START_FL_JOB_KERNEL_H_
 
 #include <map>
 #include <memory>
@@ -27,7 +27,7 @@
 #include "fl/server/kernel/round/round_kernel_factory.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 class StartFLJobKernel : public RoundKernel {
@@ -40,7 +40,7 @@ class StartFLJobKernel : public RoundKernel {
               const std::vector<AddressPtr> &outputs) override;
   bool Reset() override;
 
-  void OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message) override;
+  void OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) override;
 
  private:
   // Returns whether the startFLJob count of this iteration has reached the threshold.
@@ -74,6 +74,6 @@ class StartFLJobKernel : public RoundKernel {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_START_FL_JOB_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_START_FL_JOB_KERNEL_H_

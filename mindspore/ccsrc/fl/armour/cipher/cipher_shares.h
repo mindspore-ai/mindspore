@@ -43,17 +43,17 @@ class CipherShares {
 
   // handle the client's request of share secrets.
   bool ShareSecrets(const int cur_iterator, const schema::RequestShareSecrets *share_secrets_req,
-                    std::shared_ptr<ps::server::FBBuilder> share_secrets_resp_builder, const string next_req_time);
+                    std::shared_ptr<fl::server::FBBuilder> share_secrets_resp_builder, const string next_req_time);
   // handle the client's request of get secrets.
   bool GetSecrets(const schema::GetShareSecrets *get_secrets_req,
-                  std::shared_ptr<ps::server::FBBuilder> get_secrets_resp_builder, const std::string &next_req_time);
+                  std::shared_ptr<fl::server::FBBuilder> get_secrets_resp_builder, const std::string &next_req_time);
 
   // build response code of share secrets.
-  void BuildShareSecretsRsp(std::shared_ptr<ps::server::FBBuilder> share_secrets_resp_builder,
+  void BuildShareSecretsRsp(std::shared_ptr<fl::server::FBBuilder> share_secrets_resp_builder,
                             const schema::ResponseCode retcode, const string &reason, const string &next_req_time,
                             const int iteration);
   // build response code of get secrets.
-  void BuildGetSecretsRsp(std::shared_ptr<ps::server::FBBuilder> get_secrets_resp_builder,
+  void BuildGetSecretsRsp(std::shared_ptr<fl::server::FBBuilder> get_secrets_resp_builder,
                           const schema::ResponseCode retcode, const int iteration, std::string next_req_time,
                           std::vector<flatbuffers::Offset<mindspore::schema::ClientShare>> *encrypted_shares);
   // clear the shared memory.
