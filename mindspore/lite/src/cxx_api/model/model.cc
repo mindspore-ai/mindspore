@@ -53,12 +53,13 @@ Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std:
   return impl_->Resize(inputs, dims);
 }
 
-Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                      const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteNullptr;
   }
-  return impl_->Predict(inputs, outputs);
+  return impl_->Predict(inputs, outputs, before, after);
 }
 
 Model::Model() : impl_(nullptr) {}

@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <functional>
 #include "include/api/data_type.h"
 #include "include/api/dual_abi_helper.h"
 
@@ -142,5 +143,16 @@ MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vecto
     : MSTensor(StringToChar(name), type, shape, data, data_len) {}
 
 std::string MSTensor::Name() const { return CharToString(CharName()); }
+
+/// \brief CallBackParam defined input arguments for callBack function.
+struct MSCallBackParam {
+  std::string node_name_; /**< node name argument */
+  std::string node_type_; /**< node type argument */
+};
+
+/// \brief KernelCallBack defined the function pointer for callBack.
+using MSKernelCallBack = std::function<bool(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
+                                            const MSCallBackParam &opInfo)>;
+
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_TYPES_H

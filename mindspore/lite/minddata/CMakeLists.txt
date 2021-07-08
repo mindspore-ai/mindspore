@@ -109,6 +109,7 @@ if(BUILD_MINDDATA STREQUAL "full")
 
     set(MINDDATA_FULL_SRC
         ${TOP_DIR}/mindspore/lite/src/cxx_api/types.cc
+        ${TOP_DIR}/mindspore/lite/src/cxx_api/tensor_utils.cc
         ${TOP_DIR}/mindspore/lite/src/cxx_api/tensor/tensor_impl.cc
         ${TOP_DIR}/mindspore/lite/src/tensor.cc
         ${TOP_DIR}/mindspore/lite/src/ms_tensor.cc

@@ -17,12 +17,9 @@
 #include "include/api/serialization.h"
 #include <algorithm>
 #include <queue>
-#include <set>
 #include "include/api/graph.h"
-#include "include/api/context.h"
 #include "include/api/types.h"
 #include "include/model.h"
-#include "include/ms_tensor.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/common/log_adapter.h"
 

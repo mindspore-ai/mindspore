@@ -46,8 +46,16 @@ class MS_API Context {
   void SetThreadNum(int32_t thread_num);
   int32_t GetThreadNum() const;
 
-  void SetAllocator(const std::shared_ptr<Allocator> &allocator);
-  std::shared_ptr<Allocator> GetAllocator() const;
+  /// \brief Set the thread affinity to CPU cores.
+  ///
+  /// \param mode: 0: no affinities, 1: big cores first, 2: little cores first
+  void SetThreadAffinity(int mode);
+  int GetThreadAffinityMode() const;
+
+  void SetThreadAffinity(const std::vector<int> &core_list);
+  std::vector<int32_t> GetThreadAffinityCoreList() const;
+  void SetEnableParallel(bool is_parallel);
+  bool GetEnableParallel() const;
 
   std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo();
 
@@ -91,11 +99,6 @@ class MS_API CPUDeviceInfo : public DeviceInfoContext {
  public:
   enum DeviceType GetDeviceType() const override { return DeviceType::kCPU; };
 
-  /// \brief Set the thread affinity to CPU cores.
-  ///
-  /// \param mode: 0: no affinities, 1: big cores first, 2: little cores first
-  void SetThreadAffinity(int mode);
-  int GetThreadAffinity() const;
   void SetEnableFP16(bool is_fp16);
   bool GetEnableFP16() const;
 };

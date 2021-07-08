@@ -353,4 +353,5 @@ TEST_F(InferTest, TestModel) {
   auto outputs = session->GetOutputs();
   MS_LOG(INFO) << "Passed";
 }
+
 }  // namespace mindspore
