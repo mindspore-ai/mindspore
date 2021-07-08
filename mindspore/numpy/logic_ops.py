@@ -466,8 +466,8 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
     Args:
         a (Union[Tensor, list, tuple]): Input first tensor to compare.
         b (Union[Tensor, list, tuple]): Input second tensor to compare.
-        rtol (Number): The relative tolerance parameter (see Note).
-        atol (Number): The absolute tolerance parameter (see Note).
+        rtol (numbers.Number): The relative tolerance parameter (see Note).
+        atol (numbers.Number): The absolute tolerance parameter (see Note).
         equal_nan (bool): Whether to compare ``NaN`` as equal. If True, ``NaN`` in
             `a` will be considered equal to ``NaN`` in `b` in the output tensor.
 
