@@ -140,9 +140,13 @@ class Primitive(Primitive_):
         Note:
             It is valid only in semi auto parallel.
             In other parallel modes, please set it to be 0.
-
         Args:
             stage (int): The stage id for the current operation.
+        Example:
+        >>> from mindspore.ops import operations as P
+        >>> add = P.Add()
+        >>> print(add.set_stage(0))
+        Prim[Add]<stage=0>
         """
         self.add_prim_attr("stage", stage)
         return self
@@ -157,6 +161,11 @@ class Primitive(Primitive_):
 
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
+        Example:
+        >>> from mindspore.ops import operations as P
+        >>> add = P.Add()
+        >>> print(add.shard(((1, 1), (1, 1))))
+        Prim[Add]<strategy=((1, 1), (1, 1))>
         """
         mode = context.get_auto_parallel_context("parallel_mode")
         if strategy is not None:

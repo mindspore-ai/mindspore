@@ -291,7 +291,7 @@ class DistributedGradReducer(Cell):
         ValueError: If degree is not a int or less than 0.
 
     Supported Platforms:
-        ``Ascend``, ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> # This example should be run with multiple processes.
