@@ -66,7 +66,8 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
   AnfNodeConfigPtr call_conf = engine->MakeConfig(current_node, current_context);
   auto evaluator = new_stack_frame->evaluator();
   MS_EXCEPTION_IF_NULL(evaluator);
-  trace::TraceGraphEvalEnter(evaluator, call_conf);
+  auto new_context = new_stack_frame->current_context();
+  trace::TraceGraphEvalEnter(new_context, call_conf);
 
   // Increase & Check the func graph call depth.
   IncreaseFunctionCallDepth();
@@ -85,13 +86,15 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
 void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &engine,
                                              const StackFramePtr &current_stack_frame) {
   // Leave current func graph.
-  auto evaluator = current_stack_frame->evaluator();
-  MS_EXCEPTION_IF_NULL(evaluator);
-  trace::TraceGraphEvalLeave(evaluator);
+  auto current_context = current_stack_frame->current_context();
+  trace::TraceGraphEvalLeave(current_context);
 
   // Decrease the func graph call depth.
   DecreaseFunctionCallDepth();
   DecreaseStackFrameDepth();
+
+  auto evaluator = current_stack_frame->evaluator();
+  MS_EXCEPTION_IF_NULL(evaluator);
   MS_LOG(DEBUG) << evaluator << "(" << evaluator->type_name() << "/" << evaluator->ToString()
                 << "), leave, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
 }
@@ -177,7 +180,6 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   }
   MS_EXCEPTION_IF_NULL(engine);
 
-  trace::TraceGraphEvalEnter(shared_from_base<Evaluator>(), out_conf);
   // Increase & Check the func graph call depth.
   IncreaseFunctionCallDepth();
   const uint32_t max_depth = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH);
@@ -190,9 +192,11 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
                 << "), enter, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
 
-  // Initialize evaluator starter with args_abs_list.
   FuncGraphPtr fg = GetFuncGraph(engine, args_abs_list);
   MS_EXCEPTION_IF_NULL(fg);
+  auto context = parent_context_->NewContext(fg, args_abs_list);
+  trace::TraceGraphEvalEnter(context, out_conf);
+
   std::size_t nargs = fg->parameters().size();
   if (args_abs_list.size() != nargs) {
     MS_EXCEPTION(TypeError) << "For function " << fg->ToString() << ", the number of parameters of this function is "
@@ -206,7 +210,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                   << parent_context_->func_graph()->ToString() << "()->" << AnalysisResultCacheMgr::GetThreadid() << ":"
                   << fg->ToString() << "();";
   }
-  auto context = parent_context_->NewContext(fg, args_abs_list);
+
   auto func_graph_evaluator = dyn_cast<FuncGraphEvaluator>(shared_from_base<BaseFuncGraphEvaluator>());
   if (func_graph_evaluator != nullptr) {
     if (engine->root_func_graph() == func_graph_evaluator->func_graph()) {
@@ -240,7 +244,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   }
   MS_LOG(DEBUG) << GetInferThread() << "} //" << fg->ToString() << " = " << res_base->ToString();
 
-  trace::TraceGraphEvalLeave(shared_from_base<Evaluator>());
+  trace::TraceGraphEvalLeave(context);
   // Decrease the func graph call depth.
   DecreaseFunctionCallDepth();
   MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
