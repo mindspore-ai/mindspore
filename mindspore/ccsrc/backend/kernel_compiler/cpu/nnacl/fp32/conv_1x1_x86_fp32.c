@@ -20,6 +20,15 @@
 // sliding window to compate 1x1 conv in x86
 void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
                    int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param) {
+  int output_w = conv_param->output_w_;
+  int output_h = conv_param->output_h_;
+  int ohw = output_h * output_w;
+  int ohw_step = UP_DIV(ohw, conv_param->thread_num_);
+  int ohw_start = ohw_step * task_id;
+  int ohw_end = MSMIN(ohw_start + ohw_step, ohw);
+  if (ohw_start >= ohw_end) {
+    return;
+  }
   int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
   int act_type = 0;
   if (conv_param->act_type_ == ActType_Relu6) {
@@ -28,8 +37,6 @@ void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const fl
   if (conv_param->act_type_ == ActType_Relu || conv_param->act_type_ == ActType_Relu6) {
     act_type += 2;
   }
-  int output_w = conv_param->output_w_;
-  int output_h = conv_param->output_h_;
   int pad_d = conv_param->pad_d_;
   int pad_l = conv_param->pad_l_;
   int pad_r = conv_param->pad_r_;
@@ -43,10 +50,6 @@ void Conv1x1SWFp32(const float *input_data, const float *packed_weight, const fl
   int oc_num = sw_param->c_block_;
   int in_step = sw_param->in_step_;
   int out_step = sw_param->out_step_;
-  int ohw = output_h * output_w;
-  int ohw_step = UP_DIV(ohw, conv_param->thread_num_);
-  int ohw_start = ohw_step * task_id;
-  int ohw_end = MSMIN(ohw_start + ohw_step, ohw);
   const int ow_block_num[4] = {12, 6, 4, 3};
   const Conv1x1SWKernel kernel[4][2] = {{Conv1x1SW1x8Kernel, Conv1x1SW12x8Kernel},
                                         {Conv1x1SW1x16Kernel, Conv1x1SW6x16Kernel},
