@@ -198,10 +198,21 @@ class AssignAdd(PrimitiveWithInfer):
     and the data type is consistent with the Tensor data type involved in the operation.
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
+    Note:
+        Since `variable` is a data type Parameter, the data type cannot be changed,
+        so only the type of `value` is allowed to be promoted to the type of `variable`.
+        And the conversion type supported by different devices will be different,
+        it is recommended to use the same data type when using this operator.
+
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
+          it is recommended to use the same data type when using this operator.
+
+    Outputs:
+        Tensor, has the same data type and shape as original `variable`.
 
     Raises:
         TypeError: If `value` is neither Number nor Tensor.
@@ -224,7 +235,7 @@ class AssignAdd(PrimitiveWithInfer):
         >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
         >>> output = net(value)
         >>> print(output)
-        Parameter (name=global_step, shape=(1,), dtype=Int64, requires_grad=True)
+        [101]
     """
     __mindspore_signature__ = (
         sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -257,10 +268,21 @@ class AssignSub(PrimitiveWithInfer):
     and the data type is consistent with the Tensor data type involved in the operation.
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
+    Note:
+        Since `variable` is a data type Parameter, the data type cannot be changed,
+        so only the type of `value` is allowed to be promoted to the type of `variable`.
+        And the conversion type supported by different devices will be different,
+        it is recommended to use the same data type when using this operator.
+
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **value** (Union[numbers.Number, Tensor]) - The value to be subtracted from the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
+          it is recommended to use the same data type when using this operator.
+
+    Outputs:
+        Tensor, has the same data type and shape as original `variable`.
 
     Raises:
         TypeError: If `value` is neither Number nor Tensor.
@@ -283,7 +305,7 @@ class AssignSub(PrimitiveWithInfer):
         >>> value = Tensor(np.ones([1]).astype(np.int32)*100)
         >>> output = net(value)
         >>> print(output)
-        Parameter (name=global_step, shape=(1,), dtype=Int32, requires_grad=True)
+        [-99]
     """
 
     __mindspore_signature__ = (

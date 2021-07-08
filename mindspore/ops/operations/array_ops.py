@@ -3114,6 +3114,7 @@ class StridedSlice(PrimitiveWithInfer):
         >>> #     ]
         >>> # ]
         >>> # The final output after finishing is:
+        >>> print(output)
         [[[3], [5]]]
         >>> # another example like :
         >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
