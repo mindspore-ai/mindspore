@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "armour/secure_protocol/encrypt.h"
+#include "fl/armour/secure_protocol/encrypt.h"
 
 namespace mindspore {
 namespace armour {

@@ -22,7 +22,7 @@
 #include "fl/server/model_store.h"
 #include "fl/server/iteration.h"
 #ifdef ENABLE_ARMOUR
-#include "armour/cipher/cipher_init.h"
+#include "fl/armour/cipher/cipher_init.h"
 #endif
 
 namespace mindspore {

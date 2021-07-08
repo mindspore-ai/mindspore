@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "armour/cipher/cipher_reconstruct.h"
+#include "fl/armour/cipher/cipher_reconstruct.h"
 #include "fl/server/common.h"
-#include "armour/secure_protocol/random.h"
-#include "armour/secure_protocol/key_agreement.h"
-#include "armour/cipher/cipher_meta_storage.h"
+#include "fl/armour/secure_protocol/random.h"
+#include "fl/armour/secure_protocol/key_agreement.h"
+#include "fl/armour/cipher/cipher_meta_storage.h"
 
 namespace mindspore {
 namespace armour {
