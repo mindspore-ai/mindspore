@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <set>
 #include <map>
 
 #include "vm/transform.h"
@@ -835,9 +836,11 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   actor_set->output_actor_->UpdateOutputDeviceAddress();
 }
 
-void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
-                                     const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,
-                                     VectorRef *outputs) {
+void MindRTBackend::ConstructOutputs(const AnfNodePtr &output, const std::vector<tensor::TensorPtr> &output_tensors,
+                                     size_t *output_position, VectorRef *outputs) {
+  std::set<AnfNodePtr> call_node;
+  const auto &output_node = runtime::FetchRealOutputByCallNode(output, &call_node);
+
   // The makeTuple node need expand and recurse.
   if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
     auto make_tuple = output_node->cast<CNodePtr>();
@@ -916,21 +919,34 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   size_t outputs_num = 0;
   const auto &root_output =
     AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0, false, {prim::kPrimTupleGetItem}).first;
+
   size_t position = 0;
-  auto outputs = AnfAlgo::GetAllOutputWithIndex(root_output);
-  if (runtime::IsCallNode(root_output)) {
-    std::vector<AnfNodePtr> call_nodes;
-    size_t call_output_num = runtime::FetchOutputSizebyCallNode(root_output, &call_nodes);
-    for (size_t i = 0; i < call_output_num; ++i) {
-      outputs.push_back({root_output, i});
+  std::vector<AnfNodePtr> tuple_outputs;
+  if (AnfAlgo::CheckPrimitiveType(root_output, prim::kPrimMakeTuple)) {
+    const auto inputs = root_output->cast<CNodePtr>()->inputs();
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      tuple_outputs.emplace_back(inputs[i]);
     }
+  } else {
+    tuple_outputs.emplace_back(root_output);
   }
-  outputs_num = outputs.size();
-  for (const auto &output : outputs) {
-    if (outputs_order.count(output) == 0) {
-      outputs_order[output] = {position++};
-    } else {
-      outputs_order[output].emplace_back(position++);
+
+  for (const auto tuple_output : tuple_outputs) {
+    auto outputs = AnfAlgo::GetAllOutputWithIndex(tuple_output);
+    if (runtime::IsCallNode(tuple_output)) {
+      std::vector<AnfNodePtr> call_nodes;
+      size_t call_output_num = runtime::FetchOutputSizebyCallNode(tuple_output, &call_nodes);
+      for (size_t i = 0; i < call_output_num; ++i) {
+        outputs.push_back({tuple_output, i});
+      }
+    }
+    outputs_num += outputs.size();
+    for (const auto &output : outputs) {
+      if (outputs_order.count(output) == 0) {
+        outputs_order[output] = {position++};
+      } else {
+        outputs_order[output].emplace_back(position++);
+      }
     }
   }
 

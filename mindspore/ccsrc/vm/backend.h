@@ -130,7 +130,7 @@ class MindRTBackend : public Backend {
   void CompileGraph(const FuncGraphPtr &func_graph);
 
   // Restore the outputs tuple by the origin funcGraph output node and output tensors.
-  void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
+  void ConstructOutputs(const AnfNodePtr &output, const std::vector<tensor::TensorPtr> &output_tensors,
                         size_t *output_position, VectorRef *outputs);
 
   // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
