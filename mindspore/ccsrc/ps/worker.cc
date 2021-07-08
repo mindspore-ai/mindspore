@@ -159,7 +159,7 @@ size_t Worker::GetParamKey(const std::string &param_name) {
 }
 
 void Worker::SetParamInitInServer(const std::string &param_name, bool init_in_server) {
-  MS_LOG(INFO) << "Set parameter " << param_name << " init_in_server:" << init_in_server;
+  MS_LOG(DEBUG) << "Set parameter " << param_name << " init_in_server:" << init_in_server;
   param_to_init_in_server_[param_name] = init_in_server;
 }
 
@@ -260,8 +260,8 @@ void Worker::InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::Ten
   SetParamInitInServer(param_name, init_in_server);
   bool init = IsKeyInit(param_key);
   if (!init) {
-    MS_LOG(INFO) << "Init parameter key " << param_key << " and optimizer in parameter server side for " << param_name
-                 << ", whether init in server: " << init_in_server;
+    MS_LOG(DEBUG) << "Init parameter key " << param_key << " and optimizer in parameter server side for " << param_name
+                  << ", whether init in server: " << init_in_server;
     AddKeyToServerId(param_key);
     if (!PsDataPrefetch::GetInstance().cache_enable()) {
       if (!init_in_server) {
@@ -449,7 +449,7 @@ void Worker::AddKeyByHashMod(const Key &key) {
     MS_LOG(EXCEPTION) << "Server number is invalid:0";
   }
   key_to_server_id_[key] = static_cast<int64_t>(key % server_num_);
-  MS_LOG(INFO) << "The server id of key " << key << " is " << key_to_server_id_[key];
+  MS_LOG(DEBUG) << "The server id of key " << key << " is " << key_to_server_id_[key];
 }
 
 void Worker::InitPSOptimId(const size_t param_key) {
