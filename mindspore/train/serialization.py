@@ -315,9 +315,9 @@ def load(file_name, **kwargs):
 
         kwargs (dict): Configuration options dictionary.
 
-            - dec_key: Byte type key used for decryption. Tha valid length is 16, 24, or 32.
-            - dec_mode: Specifies the decryption mode, take effect when dec_key is set. Option: 'AES-GCM' | 'AES-CBC'.
-              Default: 'AES-GCM'.
+            - dec_key (bytes): Byte type key used for decryption. Tha valid length is 16, 24, or 32.
+            - dec_mode (str): Specifies the decryption mode, take effect when dec_key is set.
+              Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
     Returns:
         Object, a compiled graph that can executed by `GraphCell`.
 
@@ -395,7 +395,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         >>>
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
-        >>> print(param_dict["conv2.weight]")
+        >>> print(param_dict["conv2.weight"])
         Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True
     """
     ckpt_file_name, filter_prefix = _check_checkpoint_param(ckpt_file_name, filter_prefix)
