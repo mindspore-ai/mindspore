@@ -31,8 +31,8 @@
 #include "armour/secure_protocol/secret_sharing.h"
 #include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
-#include "ps/server/distributed_metadata_store.h"
-#include "ps/server/common.h"
+#include "fl/server/distributed_metadata_store.h"
+#include "fl/server/common.h"
 
 namespace mindspore {
 namespace armour {
