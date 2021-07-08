@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "armour/cipher/cipher_meta_storage.h"
+#include "fl/armour/cipher/cipher_meta_storage.h"
 
 namespace mindspore {
 namespace armour {

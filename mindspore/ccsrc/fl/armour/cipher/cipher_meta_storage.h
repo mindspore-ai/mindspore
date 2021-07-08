@@ -28,7 +28,7 @@
 #endif
 #include "proto/ps.pb.h"
 #include "utils/log_adapter.h"
-#include "armour/secure_protocol/secret_sharing.h"
+#include "fl/armour/secure_protocol/secret_sharing.h"
 #include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
 #include "fl/server/distributed_metadata_store.h"

@@ -19,7 +19,7 @@
 #include <string>
 #include <csignal>
 #ifdef ENABLE_ARMOUR
-#include "armour/secure_protocol/secret_sharing.h"
+#include "fl/armour/secure_protocol/secret_sharing.h"
 #endif
 #include "fl/server/round.h"
 #include "fl/server/model_store.h"

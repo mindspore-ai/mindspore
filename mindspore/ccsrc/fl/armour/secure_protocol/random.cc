@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "armour/secure_protocol/random.h"
+#include "fl/armour/secure_protocol/random.h"
 
 namespace mindspore {
 namespace armour {

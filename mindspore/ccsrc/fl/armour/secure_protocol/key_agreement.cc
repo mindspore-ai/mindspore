@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "armour/secure_protocol/key_agreement.h"
+#include "fl/armour/secure_protocol/key_agreement.h"
 
 namespace mindspore {
 namespace armour {
