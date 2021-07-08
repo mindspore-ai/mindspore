@@ -35,21 +35,17 @@ else()
     endif()
 endif()
 
-if(TARGET_HIMIX200)
-    set(API_SRC)
-else()
-    set(API_SRC
-        ${CORE_DIR}/utils/status.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/types.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/context.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model_impl.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/graph.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/tensor_impl.cc
-        )
-endif()
+set(API_SRC
+    ${CORE_DIR}/utils/status.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/types.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/context.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model_impl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/graph.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/tensor_impl.cc
+    )
 
 if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
