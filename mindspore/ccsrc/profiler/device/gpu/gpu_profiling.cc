@@ -211,7 +211,10 @@ std::string GetKernelFuncName(std::string kernel_name) {
   return kernel_name.substr(func_name_begin_iter);
 }
 
-std::shared_ptr<GPUProfiler> &GPUProfiler::GetInstance() { return profiler_inst_; }
+std::shared_ptr<GPUProfiler> &GPUProfiler::GetInstance() {
+  MS_EXCEPTION_IF_NULL(profiler_inst_);
+  return profiler_inst_;
+}
 
 void GPUProfiler::SyncEnable(const bool enable_flag) {
   MS_LOG(INFO) << "GPU Profiler synchronous enable flag:" << enable_flag;
@@ -434,7 +437,9 @@ void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
   }
   SetRunTimeData(op_name, stream);
 
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) RecordOneStepStartEndInfo(op_name);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    RecordOneStepStartEndInfo(op_name);
+  }
 }
 
 void GPUProfiler::OpDataProducerEnd() {
@@ -490,36 +495,12 @@ void GPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
     MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
   } else {
-    GpuDataSaver dataSaver(step_trace_op_name, all_step_start_end_info_);
+    GpuDataSaver dataSaver(step_trace_op_name_, all_step_start_end_info_);
     dataSaver.ParseOpInfo(op_info_map_);
     dataSaver.ParseEvent(events_);
     dataSaver.WriteFile(profile_data_path_, base_time_);
     SaveExtraProfileData();
   }
-}
-
-void GPUProfiler::RecordOneStepStartEndInfo() {
-  std::lock_guard<std::mutex> locker(record_mutex_);
-  step_start_end_info_.iter_end_timestamp = GetCUPTITimeStamp();
-  all_step_start_end_info_.push_back(step_start_end_info_);
-  step_start_end_info_.iter_start_op_name = "";
-  step_start_end_info_.fp_start_op_name = "";
-}
-
-void GPUProfiler::RecordOneStepStartEndInfo(const std::string op_name) {
-  std::lock_guard<std::mutex> locker(record_mutex_);
-  if (step_start_end_info_.iter_start_op_name.empty()) {
-    step_start_end_info_.iter_start_op_name = op_name;
-    step_start_end_info_.fp_start_op_name = op_name;
-  }
-
-  std::string fp_start_op_name = step_start_end_info_.fp_start_op_name;
-
-  auto op_type_begin_iter = fp_start_op_name.rfind('/') + 1;
-  auto op_type_end_iter = fp_start_op_name.rfind('-');
-  auto op_type = fp_start_op_name.substr(op_type_begin_iter, op_type_end_iter - op_type_begin_iter);
-  if (op_type == "InitDataSetQueue" || op_type == "GetNext") step_start_end_info_.fp_start_op_name = op_name;
-  step_start_end_info_.iter_end_op_name = op_name;
 }
 
 void GPUProfiler::ClearInst() {
@@ -701,7 +682,7 @@ void GPUProfiler::HandleActivityRecord(CUpti_Activity *record) {
   AddEvent(std::move(profilingData));
 }
 
-void GPUProfiler::SetStepTraceOpName(ProfilingTraceInfo trace_op_name) { step_trace_op_name = trace_op_name; }
+void GPUProfiler::SetStepTraceOpName(ProfilingTraceInfo trace_op_name) { step_trace_op_name_ = trace_op_name; }
 
 void GPUProfiler::RegisterProfilingOp(std::shared_ptr<ProfilingOp> node) {
   PROFILER_ERROR_IF_NULLPTR(node);

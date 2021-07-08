@@ -170,6 +170,9 @@ class GraphScheduler {
   ~GraphScheduler() = default;
   DISABLE_COPY_AND_ASSIGN(GraphScheduler);
 
+  // The Global actors contain memory manager actor, recorder actor and debug actor.
+  void BuildAndScheduleGlobalActor();
+
   // Transform the nodes of graph to actors.
   ActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info);
   // Link actors to DAG through the edge connection of graph and graph execution strategy.
