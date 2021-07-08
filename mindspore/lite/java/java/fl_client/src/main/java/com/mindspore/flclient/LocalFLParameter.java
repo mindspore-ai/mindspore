@@ -24,7 +24,7 @@ public class LocalFLParameter {
     public static final int SEED_SIZE = 32;
     public static final int IVEC_LEN = 16;
     public static final String LENET = "lenet";
-    public static final String ADBERT = "adbert";
+    public static final String ALBERT = "albert";
     private List<String> classifierWeightName = new ArrayList<>();
     private List<String> albertWeightName = new ArrayList<>();
 
