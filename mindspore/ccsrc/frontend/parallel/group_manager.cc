@@ -190,14 +190,15 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
     MS_EXCEPTION_IF_NULL(context_ptr);
     std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    bool ret = CreateGroupByExecutor(device_name, group_name, ranks, device_id);
-    if (!ret) {
-      MS_LOG(ERROR) << "Create group failed, group name is " << group_name;
-      return Status::FAILED;
-    }
 
     std::pair<std::string, std::vector<uint32_t>> group_info = std::make_pair(group_name, ranks);
     group_info_.push_back(group_info);
+
+    bool ret = CreateGroupByExecutor(device_name, group_name, ranks, device_id);
+    if (!ret) {
+      MS_LOG(WARNING) << "Create group failed, group name is " << group_name;
+      return Status::FAILED;
+    }
 
     MS_LOG(INFO) << "Create group success, group name is " << group_name;
     return Status::SUCCESS;
