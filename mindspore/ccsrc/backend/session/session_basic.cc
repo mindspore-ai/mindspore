@@ -1406,6 +1406,36 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
   }
 }
 
+tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
+                                                        const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
+                                                        const std::map<AnfNodePtr, size_t> &parameter_index,
+                                                        const std::vector<tensor::TensorPtr> &graph_inputs,
+                                                        InputTensorInfo *input_tensor_info, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(input_tensor_info);
+  if (input_index >= cnode->inputs().size() - 1) {
+    MS_LOG(EXCEPTION) << "Input index is out of range:" << cnode->inputs().size() << ",cnode:" << cnode->DebugString();
+  }
+
+  const auto &input = cnode->input(input_index + 1);
+  auto kernel_with_index = AnfAlgo::VisitKernel(input, 0);
+  auto real_input = kernel_with_index.first;
+  MS_EXCEPTION_IF_NULL(real_input);
+
+  if (real_input->isa<Parameter>()) {
+    return GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
+  } else if (real_input->isa<CNode>()) {
+    tensor::TensorPtr tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
+    if (AnfAlgo::IsControlOpExecInBackend(real_input)) {
+      CheckInputTensorShape(tensor, cnode, input_index);
+    }
+    input_tensor_info->input_kernel.insert(kernel_with_index);
+    return tensor;
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
+  }
+}
+
 bool SessionBasic::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
