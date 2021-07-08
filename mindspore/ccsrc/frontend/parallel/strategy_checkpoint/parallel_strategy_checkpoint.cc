@@ -161,6 +161,7 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
   }
   for (auto &node_tensor_info : tensor_info_map) {
     TensorLayoutPtr tensor_layout = node_tensor_info.second;
+    MS_EXCEPTION_IF_NULL(tensor_layout);
     straspb::ParallelLayoutItem *parallel_layout_item = parallel_strategy_map.add_parallel_layout_item();
     MS_EXCEPTION_IF_NULL(parallel_layout_item);
     parallel_layout_item->set_param_name(node_tensor_info.first);

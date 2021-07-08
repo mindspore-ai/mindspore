@@ -134,6 +134,11 @@ void PipelineTransformer::LabelMicroBatch() {
   for (auto &node_user : node_users) {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
       auto data_users = manager_->node_users()[node_user.first];
+      auto node_first = data_users.front().first;
+      if (!IsPrimitiveCNode(node_first, prim::kPrimStridedSlice)) {
+        data_users.clear();
+        data_users = node_user_map[node_first];
+      }
       auto micro_size = int64_t(data_users.size());
       micro_size_ = micro_size;
       MS_LOG(INFO) << "Micro Size is: " << micro_size;
@@ -690,7 +695,10 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   auto depend_op = CreatOpInstance(depend_attrs, DEPEND, DEPEND);
   std::vector<AnfNodePtr> receive_ops;
   std::vector<AnfNodePtr> send_ops;
-  auto all_nodes = graph->nodes();
+  auto ret = graph->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  std::reverse(all_nodes.begin(), all_nodes.end());
   auto stage_num = g_device_manager->stage_num();
   if (root_->has_flag(TRAINING) && (stage_num > micro_size_)) {
     MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
