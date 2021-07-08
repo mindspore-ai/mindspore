@@ -30,7 +30,7 @@ void MemoryManagerActor::AllocateMemory(std::vector<DeviceTensor *> *alloc_list,
 
   for (auto &device_tensor : *alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    if ((device_tensor->GetPtr() != nullptr) || (device_tensor->GetSize() == 0)) {
+    if (device_tensor->GetPtr() != nullptr) {
       continue;
     }
     // Allocate memory through the device context.
@@ -97,7 +97,7 @@ void MemoryManagerActor::AllocateBatchMemory(std::vector<DeviceTensor *> *alloc_
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_tensor);
     MS_EXCEPTION_IF_NULL(device_context);
-    if ((device_tensor->GetPtr() != nullptr) || (device_tensor->GetSize() == 0)) {
+    if (device_tensor->GetPtr() != nullptr) {
       continue;
     }
 
