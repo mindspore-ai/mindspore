@@ -111,7 +111,6 @@ int main(int argc, char **argv) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;
   }
-
   auto all_files = GetAllFiles(FLAGS_dataset_path);
   std::map<double, double> costTime_map;
   size_t size = all_files.size();
@@ -149,16 +148,13 @@ int main(int argc, char **argv) {
         int n = NewWidth;
         netOutput++;
         while (n < FLAGS_image_width) {
-          *netOutput = temp;
-          netOutput++;
-          n++;
+          *netOutput = temp; netOutput++; n++;
         }
       }
     }
-
     std::vector<MSTensor> model_inputs = model.GetInputs();
     inputs.emplace_back(model_inputs[0].Name(), model_inputs[0].DataType(), model_inputs[0].Shape(),
-                     img.Data().get(), img.DataSize());
+                              img.Data().get(), img.DataSize());
     gettimeofday(&start, nullptr);
     ret = model.Predict(inputs, &outputs);
     gettimeofday(&end, nullptr);
@@ -169,11 +165,14 @@ int main(int argc, char **argv) {
     startTimeMs = (1.0 * start.tv_sec * 1000000 + start.tv_usec) / 1000;
     endTimeMs = (1.0 * end.tv_sec * 1000000 + end.tv_usec) / 1000;
     costTime_map.insert(std::pair<double, double>(startTimeMs, endTimeMs));
-    WriteResult(all_files[i], outputs);
+    int rst = WriteResult(all_files[i], outputs);
+    if (rst != 0) {
+        std::cout << "write result failed." << std::endl;
+        return rst;
+    }
   }
   double average = 0.0;
   int inferCount = 0;
-
   for (auto iter = costTime_map.begin(); iter != costTime_map.end(); iter++) {
     double diff = 0.0;
     diff = iter->second - iter->first;
