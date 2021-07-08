@@ -33,13 +33,13 @@ public class CustomTokenizer {
     private int maxInputChars = 100;
     private String[] NotSplitStrs = {"UNK"};
     private String unkToken = "[UNK]";
-    private int maxSeqLen = 16;
+    private int maxSeqLen = 8;
     private int vocabSize = 11682;
     private Map<String, Integer> labelMap = new HashMap<String, Integer>() {{
-        put("beauty", 0);
-        put("education", 1);
-        put("hotel", 2);
-        put("travel", 3);
+        put("good", 0);
+        put("leimu", 1);
+        put("xiaoku", 2);
+        put("xin", 3);
         put("other", 4);
     }};
 
@@ -199,6 +199,10 @@ public class CustomTokenizer {
     }
 
     public Feature getFeatures(List<Integer> tokens, String label) {
+        if (!labelMap.containsKey(label)) {
+            logger.severe(Common.addTag("label map not contains label:" + label));
+            return null;
+        }
         int[] segmentIds = new int[maxSeqLen];
         Arrays.fill(segmentIds, 0);
         int[] masks = new int[maxSeqLen];
