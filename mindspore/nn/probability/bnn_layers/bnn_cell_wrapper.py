@@ -41,15 +41,26 @@ class WithBNNLossCell(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore.nn.probability import bnn_layers
+        >>> from mindspore import Tensor
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.dense = bnn_layers.DenseReparam(16, 1)
+        ...     def construct(self, x):
+        ...         return self.dense(x)
         >>> net = Net()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
-        >>> net_with_criterion = WithBNNLossCell(net, loss_fn)
+        >>> net_with_criterion = bnn_layers.WithBNNLossCell(net, loss_fn)
         >>>
         >>> batch_size = 2
         >>> data = Tensor(np.ones([batch_size, 16]).astype(np.float32) * 0.01)
         >>> label = Tensor(np.ones([batch_size, 1]).astype(np.float32))
-        >>>
-        >>> net_with_criterion(data, label)
+        >>> output = net_with_criterion(data, label)
+        >>> print(output.shape)
+        (2,)
     """
 
     def __init__(self, backbone, loss_fn, dnn_factor=1, bnn_factor=1):
