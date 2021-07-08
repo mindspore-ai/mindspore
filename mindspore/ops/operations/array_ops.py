@@ -1035,7 +1035,6 @@ class Split(PrimitiveWithCheck):
         >>> split = ops.Split(1, 2)
         >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
         >>> print(x)
-        Tensor(shape=[2, 4], dtype=Int32, value=
         [[1 1 1 1]
          [2 2 2 2]])
         >>> output = split(x)
@@ -3115,7 +3114,8 @@ class StridedSlice(PrimitiveWithInfer):
         >>> # ]
         >>> # The final output after finishing is:
         >>> print(output)
-        [[[3], [5]]]
+        [[[3.]]
+         [[5.]]]
         >>> # another example like :
         >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
         >>> print(output)
@@ -3417,8 +3417,8 @@ class Eye(PrimitiveWithInfer):
         >>> reverse = ops.ReverseV2([1])
         >>> anti_diagonal_output = reverse(anti_diagonal_input)
         >>> print(anti_diagonal_output)
-        [[1. 0.]
-         [0. 1.]]
+        [[0 1]
+         [1 0]]
     """
 
     @prim_attr_register
@@ -4573,7 +4573,7 @@ class ScatterNdSub(_ScatterNdOp):
          [[ 0  0  0  0]
           [ 0  0  0  0]
           [ 0  0  0  0]
-          [ 0  0  0  0]]
+          [ 0  0  0  0]]]
     """
 
 

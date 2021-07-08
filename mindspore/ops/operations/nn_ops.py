@@ -3561,11 +3561,11 @@ class FastGeLU(PrimitiveWithInfer):
 
     Examples:
         >>> tensor = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> fast_gelu = P.FastGeLU()
+        >>> fast_gelu = ops.FastGeLU()
         >>> output = fast_gelu(tensor)
         >>> print(output)
-        [[-1.5420423e-01  3.9955849e+00 -9.7664278e-06]
-         [ 1.9356585e+00 -1.0070159e-03  8.9999981e+00]]
+        [[-1.5418735e-01  3.9921875e+00 -9.7473649e-06]
+         [ 1.9375000e+00 -1.0052517e-03  8.9824219e+00]]
     """
 
     @prim_attr_register
@@ -7267,16 +7267,22 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
         ``Ascend``
 
     Examples:
-        >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
+        >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]]
+        ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
-        >>> ctc_greedy_decoder = ops.CTCGreedyDecoder()
-        >>> decoded_indices, decoded_values, decoded_shape, log_probability =
-        ... ctc_greedy_decoder(inputs, sequence_length)
-        >>> print(decoded_indices, decoded_values, decoded_shape, log_probability)
-        [[0 0] [1 0] [1 1]]
+        >>> ctc_greedyDecoder = ops.CTCGreedyDecoder()
+        >>> decoded_indices, decoded_values, decoded_shape, log_probability = ctc_greedyDecoder(inputs, sequence_length)
+        >>> print(decoded_indices)
+        [[0 0]
+         [0 1]
+         [1 0]]
+        >>> print(decoded_values)
         [0 1 0]
+        >>> print(decoded_shape)
         [2 2]
-        [[-1.3671273] [-1.7975442]]
+        >>> print(log_probability)
+        [[-1.2]
+         [-1.3]]
     """
 
     @prim_attr_register
