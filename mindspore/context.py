@@ -862,6 +862,8 @@ def set_fl_context(**kwargs):
             protection effect would be determined by dp_eps, dp_delta and dp_norm_clip as described above. If
             'PW_ENCRYPT', pairwise secure aggregation would be applied to protect clients' model from stealing.
             Default: 'NOT_ENCRYPT'.
+        config_file_path (string): Configuration file path used by recovery. Default: ''.
+        scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
 
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.
