@@ -140,6 +140,8 @@ AbstractBasePtr AbstractBase::Broaden() const {
   return clone;
 }
 
+AbstractBasePtr AbstractBase::PartialBroaden() const { return Clone(); }
+
 std::string AbstractBase::ToString() const {
   std::ostringstream buffer;
   std::string value = std::string("value is null");
@@ -312,6 +314,16 @@ AbstractBasePtrList AbstractSequeue::ElementsBroaden() const {
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
     AbstractBasePtr broadend = ele->Broaden();
+    ele_list.push_back(broadend);
+  }
+  return ele_list;
+}
+
+AbstractBasePtrList AbstractSequeue::ElementsPartialBroaden() const {
+  AbstractBasePtrList ele_list;
+  for (const auto &ele : elements_) {
+    MS_EXCEPTION_IF_NULL(ele);
+    AbstractBasePtr broadend = ele->PartialBroaden();
     ele_list.push_back(broadend);
   }
   return ele_list;
@@ -630,6 +642,8 @@ AbstractBasePtr AbstractTensor::BroadenWithShape() const {
   broaden->set_value(kAnyValue);
   return broaden;
 }
+
+AbstractBasePtr AbstractTensor::PartialBroaden() const { return Broaden(); }
 
 std::string AbstractTensor::ToString() const {
   std::ostringstream buffer;
@@ -1004,6 +1018,8 @@ std::string AbstractRef::ToString() const {
   buffer << ")";
   return buffer.str();
 }
+
+AbstractBasePtr AbstractRef::PartialBroaden() const { return Clone(); }
 
 bool AbstractNone::operator==(const AbstractNone &) const { return true; }
 
