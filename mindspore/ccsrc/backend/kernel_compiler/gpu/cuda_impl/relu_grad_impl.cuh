@@ -20,8 +20,4 @@
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
 void CalReLUGrad(int input_size, T *dy, T *y, T *dx, cudaStream_t cuda_stream);
-
-template <typename T>
-void PReluChannelSharedGrad(size_t input_size, T *dy_addr, T *x_addr, T *w_addr, T *dx_addr, T *dwc_addr,
-                            cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_GRAD_H_

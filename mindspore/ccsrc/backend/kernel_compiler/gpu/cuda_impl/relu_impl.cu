@@ -96,18 +96,3 @@ template void ReluGradV2(const size_t num, const int64_t *dy, const uint32_t *ma
 template void ReluGradV2(const size_t num, const uint8_t *dy, const uint32_t *mask, uint8_t *dx,
         cudaStream_t cuda_stream);
 
-template <typename T>
-__global__ void CalPReLUKernel(int size, T *input_addr, T *weight_addr, T *output_addr) {
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    output_addr[pos] = input_addr[pos] > static_cast<T>(0) ? input_addr[pos] : *weight_addr * input_addr[pos];
-  }
-}
-
-template <typename T>
-void CalPReLU(int size, T *input_addr, T *weight_addr, T *output_addr, cudaStream_t cuda_stream) {
-  CalPReLUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, weight_addr, output_addr);
-  return;
-}
-
-template void CalPReLU(int size, float *input_addr, float *weight_addr, float *output_addr, cudaStream_t cuda_stream);
-template void CalPReLU(int size, half *input_addr, half *weight_addr, half *output_addr, cudaStream_t cuda_stream);

@@ -14,15 +14,15 @@
 # ============================================================================
 """activation"""
 import numpy as np
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer
-from mindspore.common.tensor import Tensor
-from mindspore._extends import cell_attr_register
-from mindspore._checkparam import Validator as validator
-from ..cell import Cell
 
+from mindspore._checkparam import Validator as validator
+from mindspore._extends import cell_attr_register
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from ..cell import Cell
 
 __all__ = ['Softmax',
            'LogSoftmax',
@@ -548,22 +548,24 @@ class PReLU(Cell):
     Activation_function#/media/File:Activation_prelu.svg>`_.
 
     Args:
-        channel (int): The dimension of input. Default: 1.
-        w (Union[float, list, Tensor]): The initial value of w. Default: 0.25.
+        channel (int): The elements number of parameter.
+          It could be an int, and the value is 1 or the channels number of input tensor `x`. Default: 1.
+        w (Union[float, list, Tensor): The initial value of parameter. It could be a float, a float list or
+          a tensor has the same dtype as the input tensor `x`. Default: 0.25.
 
     Inputs:
         - **x** (Tensor) - The input of PReLU with data type of float16 or float32.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same dtype and shape as the `x`.
 
     Raises:
         TypeError: If `channel` is not an int.
-        TypeError: If `w` is not one of float, list, Tensor.
+        TypeError: If `w` is not one of a float, a float list, a float Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If the `x` is a 0-D or 1-D Tensor on Ascend.
         ValueError: If `channel` is less than 1.
-        ValueError: If length of shape of `x` is equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -582,24 +584,34 @@ class PReLU(Cell):
         """Initialize PReLU."""
         super(PReLU, self).__init__()
         validator.check_positive_int(channel, 'channel', self.cls_name)
-        if isinstance(w, (np.float32, float)):
+        if isinstance(w, (float, np.float32)):
             tmp = np.empty((channel,), dtype=np.float32)
             tmp.fill(w)
-            w = Tensor(tmp)
+            w = Tensor(tmp, dtype=mstype.float32)
         elif isinstance(w, list):
-            w = Tensor(w)
-
-        if not isinstance(w, Tensor):
-            raise TypeError("w only support np.float32, float, list or Tensor type.")
-
-        self.w = Parameter(initializer(w, [channel]), name='a')
+            if len(w) != channel:
+                raise ValueError(f"When the 'w' is a list, the length should be equal to the channel, "
+                                 f"but got the length  {len(w)}, the channel {channel}")
+            for i in w:
+                if not isinstance(i, (float, np.float32)):
+                    raise ValueError(f"When the 'w' is a list, the all elements should be float, but got {w}")
+            w = Tensor(w, dtype=mstype.float32)
+        elif isinstance(w, Tensor):
+            if w.dtype not in (mstype.float16, mstype.float32):
+                raise ValueError(f"When the 'w' is a tensor, the dtype should be float16 or float32, but got {w.dtype}")
+            if len(w.shape) != 1 or w.shape[0] != channel:
+                raise ValueError(f"When the 'w' is a tensor, the rank should be 1, and the elements number "
+                                 f"should be equal to the channel, but got w shape {w}, the channel {channel}")
+        else:
+            raise TypeError(f"The 'w' only supported float list and tensor, but got {type(w)}")
+        self.w = Parameter(w, name='a')
         self.prelu = P.PReLU()
         self.relu = P.ReLU()
         self.assign = P.Assign()
 
     def construct(self, x):
         u = self.relu(self.w)
-        v = self.prelu(x, u)
+        v = self.prelu(x, F.cast(u, x.dtype))
         if self.training:
             self.assign(self.w, u)
         return v
