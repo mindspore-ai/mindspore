@@ -379,7 +379,7 @@ class Tensor(Tensor_):
         Then, tensor.itemset(\*args) is equivalent to :math:`tensor[args] = item`.
 
         Args:
-            args (Union[(Number), (int/tuple(int), Number)]): The arguments that
+            args (Union[(numbers.Number), (int/tuple(int), numbers.Number)]): The arguments that
                 specify the index and value. If `args` contain one argument (a scalar),
                 it is only used in case tensor is of size 1. If `args` contain two
                 arguments, the last argument is the value to be set and must be a
