@@ -64,9 +64,9 @@ Status RandomRotationOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // center
-  if (center_.empty() || center_.size() != 2) {
+  if (center_.size() != 0 && center_.size() != 2) {
     std::string err_msg =
-      "RandomRotation: center must be a vector of two values, got: " + std::to_string(center_.size());
+      "RandomRotation: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -97,7 +97,7 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
   }
 
   std::shared_ptr<RandomRotationOp> tensor_op = std::make_shared<RandomRotationOp>(
-    start_degree, end_degree, interpolation_mode_, expand_, center_[0], center_[1], fill_r, fill_g, fill_b);
+    start_degree, end_degree, interpolation_mode_, expand_, center_, fill_r, fill_g, fill_b);
   return tensor_op;
 }
 

@@ -24,8 +24,7 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomRotationOp::kDefCenterX = -1;
-const float RandomRotationOp::kDefCenterY = -1;
+const std::vector<float> RandomRotationOp::kDefCenter = {};
 const InterpolationMode RandomRotationOp::kDefInterpolation = InterpolationMode::kNearestNeighbour;
 const bool RandomRotationOp::kDefExpand = false;
 const uint8_t RandomRotationOp::kDefFillR = 0;
@@ -34,11 +33,10 @@ const uint8_t RandomRotationOp::kDefFillB = 0;
 
 // constructor
 RandomRotationOp::RandomRotationOp(float start_degree, float end_degree, InterpolationMode resample, bool expand,
-                                   float center_x, float center_y, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
+                                   std::vector<float> center, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
     : degree_start_(start_degree),
       degree_end_(end_degree),
-      center_x_(center_x),
-      center_y_(center_y),
+      center_(center),
       interpolation_(resample),
       expand_(expand),
       fill_r_(fill_r),
@@ -60,8 +58,9 @@ Status RandomRotationOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
   float mid = (degree_end_ + degree_start_) / 2;
   float degree = mid + random_double * degree_range;
 
-  return Rotate(input, output, center_x_, center_y_, degree, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
+  return Rotate(input, output, center_, degree, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
 }
+
 Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
