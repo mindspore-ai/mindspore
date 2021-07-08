@@ -23,13 +23,15 @@ ONE = Tensor([1], mstype.int32)
 
 @ms_function
 def f(x):
-    y = f(x - 4)
+    y = ZERO
     if x < 0:
         y = f(x - 3)
     elif x < 3:
         y = x * f(x - 1)
-    elif x >= 3:
+    elif x < 5:
         y = x * f(x - 2)
+    else:
+        y = f(x - 4)
     z = y + 1
     return z
 
@@ -41,8 +43,10 @@ def fr(x):
         y = ONE
     elif x < 3:
         y = x * fr(x - 1)
-    elif x >= 3:
+    elif x < 5:
         y = x * fr(x - 2)
+    else:
+        y = fr(x - 4)
     z = y + 1
     return z
 
@@ -50,18 +54,20 @@ def fr(x):
 def test_endless():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([5], mstype.int32)
-    f(x)
-    with pytest.raises(ValueError):
-        print("endless.")
+    try:
+        f(x)
+    except RuntimeError as e:
+        assert 'endless loop' in str(e)
 
 
+@pytest.mark.skip(reason="backend is not supported yet")
 def test_recrusive_fun():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([5], mstype.int32)
     ret = fr(x)
-    expect = Tensor([36], mstype.int32)
+    expect = Tensor([3], mstype.int32)
     assert ret == expect
 
 
 if __name__ == "__main__":
-    test_recrusive_fun()
+    test_endless()
