@@ -130,6 +130,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
 };
 using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
 
+void CheckArgsValid(const py::tuple &args);
 // Generate a key for mapping function graph
 py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults);
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
@@ -162,7 +163,6 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
 py::bytes PyEncrypt(char *plain_data, const size_t plain_len, char *key, const size_t key_len, std::string enc_mode);
 py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const size_t key_len, std::string dec_mode);
 bool PyIsCipherFile(const std::string &file_path);
-
 }  // namespace pipeline
 }  // namespace mindspore
 

@@ -56,6 +56,7 @@ AbstractFunctionPtr FuncGraph::abstract() {
 }
 
 void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
+  MS_EXCEPTION_IF_NULL(value);
   if (force_new_ret || return_ == nullptr) {
     std::vector<AnfNodePtr> params({NewValueNode(prim::kPrimReturn), value});
     FuncGraphPtr this_graph = shared_from_base<FuncGraph>();

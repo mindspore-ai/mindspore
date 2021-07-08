@@ -136,18 +136,6 @@ bool CheckArgValid(const py::handle &arg) {
          (py::isinstance<Tensor>(arg) && !py::hasattr(arg, "__parameter__"));
 }
 
-void CheckArgsValid(const py::tuple &args) {
-  for (size_t i = 0; i < args.size(); i++) {
-    if (!CheckArgValid(args[i])) {
-      MS_EXCEPTION(TypeError)
-        << "The inputs types of the outermost network support bool, int, float, tensor, "
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
-           "and tuple or list containing only these types, and dict whose values are these types, but got "
-        << i << "th arg is " << py::str(args[i]);
-    }
-  }
-}
-
 std::string GetCompileExceptionInfo() {
   std::ostringstream oss;
   trace::TraceGraphEval();
@@ -235,6 +223,18 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
 }  // namespace
+
+void CheckArgsValid(const py::tuple &args) {
+  for (size_t i = 0; i < args.size(); i++) {
+    if (!CheckArgValid(args[i])) {
+      MS_EXCEPTION(TypeError)
+        << "The inputs types of the outermost network support bool, int, float, tensor, "
+           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
+           "and tuple or list containing only these types, and dict whose values are these types, but got "
+        << i << "th arg is " << py::str(args[i]);
+    }
+  }
+}
 
 py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults) {
   MS_LOG(DEBUG) << "GenerateKey args size:" << defaults.size();

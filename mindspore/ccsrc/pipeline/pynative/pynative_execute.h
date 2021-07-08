@@ -202,7 +202,6 @@ class GradExecutor {
 
  private:
   ForwardExecutorPtr forward() const;
-
   // Higher derivative
   bool IsNestedGrad() const;
   void SwitchTopcell();
@@ -213,17 +212,20 @@ class GradExecutor {
   void PopCellStack();
   void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell);
   TopCellInfoPtr PopHighOrderGraphStack();
-
+  // Manage information of top cell.
   FuncGraphPtr GetDfbuilder(const std::string &cell_id = "");
   pipeline::ResourcePtr GetResource(const std::string &cell_id = "");
-  bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id);
-  bool IsBpropGraph(const std::string &cell_id);
-  void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
-  void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
+  void HandleInputArgsForTopCell(const py::args &args, bool is_bprop_top);
   void InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args);
-  void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args, bool is_topest);
+  void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
+  // Manage resource when run grad process.
+  bool IsBpropGraph(const std::string &cell_id);
+  bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id);
+  void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
+  void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
   void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
+  void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args,
                             py::args *forward_args = nullptr);
   void GradNetInner(py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
@@ -232,11 +234,12 @@ class GradExecutor {
                              const std::vector<AnfNodePtr> &weights, size_t arg_size, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
   abstract::AbstractBasePtrList GetArgsSpec(const py::args &args, const FuncGraphPtr &bprop_graph);
-  void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
-                                      const std::vector<int64_t> &index_sequence, bool is_param = false);
+  // Manage resource for construct forward graph.
+  std::string &graph_phase() { return graph_phase_; }
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
-  std::string &graph_phase() { return graph_phase_; }
+  void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
+                                      const std::vector<int64_t> &index_sequence, bool is_param = false);
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
                                   bool is_param = false);
   void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) {
@@ -252,7 +255,6 @@ class GradExecutor {
   }
   void CreateMakeTupleNodeForMultiOut(const std::string &cell_id, const FuncGraphPtr &curr_g, const py::object &out,
                                       const std::string &out_id);
-  void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
 
  private:
   bool grad_flag_{false};
