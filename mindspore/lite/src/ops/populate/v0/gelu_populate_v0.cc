@@ -16,28 +16,31 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/transpose.h"
+#include "nnacl/fp32/activation_fp32.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
-OpParameter *PopulateTransposeParameter(const void *prim) {
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "prim is nullptr";
+OpParameter *PopulateGeLUParameter(const void *prim) {
+  auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto gelu_prim = primitive->value_as_GeLU();
+  if (gelu_prim == nullptr) {
+    MS_LOG(ERROR) << "activation_prim is nullptr";
     return nullptr;
   }
-  auto *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
-  if (transpose_param == nullptr) {
-    MS_LOG(ERROR) << "malloc TransposeParameter failed.";
+  auto *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
+  if (act_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
   }
-  memset(transpose_param, 0, sizeof(TransposeParameter));
-
-  transpose_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
-  return reinterpret_cast<OpParameter *>(transpose_param);
+  memset(act_param, 0, sizeof(ActivationParameter));
+  act_param->op_parameter_.type_ = schema::PrimitiveType_Activation;
+  act_param->type_ = static_cast<int>(schema::ActivationType_GELU);
+  return reinterpret_cast<OpParameter *>(act_param);
 }
 }  // namespace
 
-Registry g_transposeV0ParameterRegistry(schema::v0::PrimitiveType_Transpose, PopulateTransposeParameter, SCHEMA_V0);
+Registry g_GeLUV0ParameterRegistry(schema::v0::PrimitiveType_GeLU, PopulateGeLUParameter, SCHEMA_V0);
 }  // namespace lite
 }  // namespace mindspore

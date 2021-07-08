@@ -37,24 +37,16 @@ OpParameter *PopulateSliceParameter(const void *prim) {
   memset(slice_param, 0, sizeof(SliceParameter));
 
   slice_param->op_parameter_.type_ = schema::PrimitiveType_SliceFusion;
-  auto param_begin = slice_prim->begin();
-  auto param_size = slice_prim->size();
   auto param_axis = slice_prim->axes();
-  if (param_begin == nullptr || param_size == nullptr || param_axis == nullptr) {
-    MS_LOG(ERROR) << "nullptr";
-    free(slice_param);
-    return nullptr;
-  }
-  if (param_begin->size() != param_size->size() || param_begin->size() != param_axis->size()) {
-    free(slice_param);
-    return nullptr;
-  }
-
-  slice_param->param_length_ = static_cast<int32_t>(param_begin->size());
-  for (int32_t i = 0; i < slice_param->param_length_; ++i) {
-    slice_param->begin_[i] = *(param_begin->begin() + i);
-    slice_param->size_[i] = *(param_size->begin() + i);
-    slice_param->axis_[i] = *(param_axis->begin() + i);
+  if (param_axis != nullptr) {
+    for (size_t i = 0; i < param_axis->size(); ++i) {
+      slice_param->axis_[i] = param_axis->Get(i);
+    }
+  } else {
+    // use default axes
+    for (int32_t i = 0; i < DIMENSION_8D; i++) {
+      slice_param->axis_[i] = i;
+    }
   }
 
   return reinterpret_cast<OpParameter *>(slice_param);
