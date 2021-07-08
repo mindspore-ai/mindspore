@@ -27,12 +27,31 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
     {schema::PrimitiveType_SubFusion, nvinfer1::ElementWiseOperation::kSUB},
   };
-  auto iter = element_wise_ops.find(this->type_);
-  if (iter == element_wise_ops.end()) {
-    MS_LOG(ERROR) << "invalid PrimitiveType for ElementWiseTensorRT, PrimitiveType: " << this->type_;
-    return RET_ERROR;
+  auto iter_op = element_wise_ops.find(this->type_);
+  if (iter_op != element_wise_ops.end()) {
+    element_wise_op_ = iter_op->second;
+  } else {
+    // PrimitiveType_Eltwise
+    auto eltwise_op = op_primitive_->value_as_Eltwise();
+    if (eltwise_op == nullptr) {
+      MS_LOG(ERROR) << "convert to Eltwise failed: " << op_name_;
+      return RET_ERROR;
+    }
+    schema::EltwiseMode eltwiseMode = eltwise_op->mode();
+    std::map<schema::EltwiseMode, nvinfer1::ElementWiseOperation> eltwise_modes = {
+      {schema::EltwiseMode::EltwiseMode_SUM, nvinfer1::ElementWiseOperation::kSUM},
+      {schema::EltwiseMode::EltwiseMode_PROD, nvinfer1::ElementWiseOperation::kPROD},
+      {schema::EltwiseMode::EltwiseMode_MAXIMUM, nvinfer1::ElementWiseOperation::kMAX},
+    };
+    auto iter_mode = eltwise_modes.find(eltwiseMode);
+    if (iter_mode != eltwise_modes.end()) {
+      element_wise_op_ = iter_mode->second;
+    } else {
+      MS_LOG(ERROR) << "unsupported type for ElementWise op" << op_name_;
+      return RET_ERROR;
+    }
   }
-  element_wise_op_ = iter->second;
+
   if (in_tensors.size() != 2) {
     MS_LOG(ERROR) << "invalid input tensort size: " << in_tensors.size();
     return RET_ERROR;
@@ -83,7 +102,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   op_out_tensor = (activation_out_tensor == nullptr) ? op_out_tensor : activation_out_tensor;
 
   // scale and shift
-  if (element_wise_op_ == nvinfer1::ElementWiseOperation::kPOW) {
+  if (type_ == schema::PrimitiveType_PowFusion) {
     auto pow_op = op_primitive_->value_as_PowFusion();
     if (pow_op == nullptr) {
       MS_LOG(ERROR) << "PowFusion convert failed.";
@@ -104,8 +123,8 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,
                                                       nvinfer1::ITensor *in_tensor) {
   schema::ActivationType activation = schema::ActivationType::ActivationType_NO_ACTIVATION;
-  switch (element_wise_op_) {
-    case nvinfer1::ElementWiseOperation::kSUM: {
+  switch (type_) {
+    case schema::PrimitiveType_AddFusion: {
       auto sum_op = op_primitive_->value_as_AddFusion();
       if (sum_op == nullptr) {
         MS_LOG(ERROR) << "AddFusion convert failed.";
@@ -114,7 +133,7 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
       activation = sum_op->activation_type();
       break;
     }
-    case nvinfer1::ElementWiseOperation::kDIV: {
+    case schema::PrimitiveType_DivFusion: {
       auto div_op = op_primitive_->value_as_DivFusion();
       if (div_op == nullptr) {
         MS_LOG(ERROR) << "DivFusion convert failed.";
@@ -123,7 +142,7 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
       activation = div_op->activation_type();
       break;
     }
-    case nvinfer1::ElementWiseOperation::kSUB: {
+    case schema::PrimitiveType_SubFusion: {
       auto sub_op = op_primitive_->value_as_SubFusion();
       if (sub_op == nullptr) {
         MS_LOG(ERROR) << "SubFusion convert failed.";
@@ -133,7 +152,7 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
       break;
     }
     default:
-      MS_LOG(INFO) << "no activation need for: " << op_name_;
+      MS_LOG(DEBUG) << "no activation need for: " << op_name_;
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
   if (activation != schema::ActivationType::ActivationType_NO_ACTIVATION) {

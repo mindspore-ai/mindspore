@@ -13,32 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_TENSORRT_OP_DECONVOLUTION_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_TENSORRT_OP_DECONVOLUTION_TENSORRT_H_
 #include <string>
 #include <vector>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
-class ActivationTensorRT : public TensorRTOp {
+class DeconvolutionTensorRT : public TensorRTOp {
  public:
-  ActivationTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                     const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
+  DeconvolutionTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                        const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
-  ~ActivationTensorRT() override = default;
+  ~DeconvolutionTensorRT() override;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  static nvinfer1::IActivationLayer *AddActivation(nvinfer1::INetworkDefinition *network,
-                                                   schema::ActivationType activation_type, float alpha,
-                                                   nvinfer1::ITensor *trt_in_tensor);
-
  private:
-  nvinfer1::ActivationType action_code_;
+  void SetAttributes(const schema::Conv2dTransposeFusion *ms_op, nvinfer1::IDeconvolutionLayer *decon_layer);
+
+  float *pack_weight_{nullptr};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_TENSORRT_OP_DECONVOLUTION_TENSORRT_H_

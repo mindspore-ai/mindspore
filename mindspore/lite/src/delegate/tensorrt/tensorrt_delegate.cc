@@ -26,6 +26,7 @@
 #include "src/delegate/tensorrt/op/shuffle_tensorrt.h"
 #include "src/delegate/tensorrt/op/concate_tensorrt.h"
 #include "src/delegate/tensorrt/op/convolution_tensorrt.h"
+#include "src/delegate/tensorrt/op/deconvolution_tensorrt.h"
 #include "src/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/delegate/tensorrt/op/reduce_tensorrt.h"
 #include "src/delegate/tensorrt/op/softmax_tensorrt.h"
@@ -56,10 +57,12 @@ int TensorRTDelegate::Init() {
     {schema::PrimitiveType_Reshape, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Concat, GetTensorRTOp<ConcateTensorRT>},
     {schema::PrimitiveType_Conv2DFusion, GetTensorRTOp<ConvolutionTensorRT>},
+    {schema::PrimitiveType_Conv2dTransposeFusion, GetTensorRTOp<DeconvolutionTensorRT>},
     {schema::PrimitiveType_SubFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_DivFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_PowFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_AddFusion, GetTensorRTOp<ElementWiseTensorRT>},
+    {schema::PrimitiveType_Eltwise, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Transpose, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_ReduceFusion, GetTensorRTOp<ReduceTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},

@@ -20,8 +20,16 @@
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
+#include "nnacl/pack.h"
 
 namespace mindspore::lite {
+struct ActivationParams {
+  nvinfer1::ActivationType activation_type;
+  bool has_alpha;
+  float alpha;
+  bool has_beta;
+  float beta;
+};
 // Convert shape to Cuda Dims.
 nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape);
 
@@ -36,7 +44,7 @@ nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const 
 
 nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
 
-nvinfer1::ActivationType ConvertActivationType(schema::ActivationType activation_type);
+ActivationParams ConvertActivationType(schema::ActivationType activation_type);
 
 nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor);
 
@@ -44,5 +52,10 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
                                                size_t expand_shape_size);
 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, void *value);
+
+nvinfer1::Weights TransposeWeight(mindspore::MSTensor ms_tensor, float **pack_weight);
+
+nvinfer1::Weights ConvertWeight(mindspore::MSTensor ms_tensor);
+
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
