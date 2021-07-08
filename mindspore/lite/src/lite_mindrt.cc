@@ -57,18 +57,21 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
   return;
 }
 
-bool IsOtherOutput(const std::vector<kernel::LiteKernel *> &kernels, const kernel::LiteKernel &this_kernel,
-                   const lite::Tensor &this_input_tensor) {
+bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const kernel::LiteKernel &this_kernel,
+                     const lite::Tensor &this_input_tensor) {
+  if (this_input_tensor.IsGraphInput()) {
+    return false;
+  }
   for (auto &kernel : kernels) {
     if (kernel == &this_kernel) {
       continue;
     }
     if (std::any_of(kernel->out_tensors().begin(), kernel->out_tensors().end(),
                     [&this_input_tensor](lite::Tensor *tensor) { return tensor == &this_input_tensor; })) {
-      return true;
+      return false;
     }
   }
-  return false;
+  return true;
 }
 
 void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
@@ -79,7 +82,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
   for (size_t i = 0; i < in_tensor_size; i++) {
     Tensor *old_tensor = kernel_->in_tensors()[i];
 
-    if (!IsOtherOutput(kernels, *kernel_, *old_tensor)) {
+    if (OfflineIsolated(kernels, *kernel_, *old_tensor)) {
       continue;
     }
 
