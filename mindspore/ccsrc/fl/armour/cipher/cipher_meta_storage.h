@@ -65,7 +65,7 @@ class CipherMetaStorage {
   // Register Prime.
   void RegisterPrime(const char *list_name, const std::string &prime);
   // Get tprime from shared server.
-  bool GetPrimeFromServer(const char *list_name, unsigned char *prime);
+  bool GetPrimeFromServer(const char *prime_name, unsigned char *prime);
   // Get client shares from shared server.
   void GetClientSharesFromServer(const char *list_name,
                                  std::map<std::string, std::vector<clientshare_str>> *clients_shares_list);

@@ -840,7 +840,7 @@ def set_fl_context(**kwargs):
         start_fl_job_time_window (int): The time window duration for startFLJob in millisecond. Default: 3000.
         share_secrets_ratio (float): The ratio for computing the threshold count of share secrets. Default: 1.0.
         update_model_ratio (float): The ratio for computing the threshold count of updateModel. Default: 1.0.
-        get_model_ratio (float): The ratio for computing the threshold count of get model. Default: 1.0.
+        cipher_time_window (int): The time window duration for each cipher round in millisecond. Default: 300000.
         reconstruct_secrets_threshold (int): The threshold count of reconstruct threshold. Default: 0.
         update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 3000.
         fl_name (string): The federated learning job name. Default: ''.

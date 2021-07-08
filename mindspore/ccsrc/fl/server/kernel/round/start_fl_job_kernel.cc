@@ -204,7 +204,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   float dp_eps = param->dp_eps;
   float dp_delta = param->dp_delta;
   float dp_norm_clip = param->dp_norm_clip;
-  auto encrypt_type = fbb->CreateString(param->encrypt_type);
+  auto encrypt_type = fbb->CreateString(PSContext::instance()->encrypt_type());
 
   auto cipher_public_params =
     schema::CreateCipherPublicParams(*fbb.get(), t, p, g, prime, dp_eps, dp_delta, dp_norm_clip, encrypt_type);

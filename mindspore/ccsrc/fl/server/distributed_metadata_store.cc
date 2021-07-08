@@ -243,11 +243,7 @@ bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const P
     auto update_model_threshold = metadata_[name].mutable_update_model_threshold();
     *update_model_threshold = meta.update_model_threshold();
   } else if (meta.has_prime()) {
-    auto prime_list = metadata_[name].mutable_prime_list();
-    auto &prime_id = meta.prime().prime();
-    if (prime_list->prime_size() == 0) {
-      prime_list->add_prime(prime_id);
-    }
+    metadata_[name] = meta;
   } else if (meta.has_pair_client_keys()) {
     auto &client_keys_map = *metadata_[name].mutable_client_keys()->mutable_client_keys();
     auto &fl_id = meta.pair_client_keys().fl_id();

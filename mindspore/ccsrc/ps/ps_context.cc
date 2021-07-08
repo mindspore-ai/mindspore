@@ -339,9 +339,14 @@ void PSContext::set_share_secrets_ratio(float share_secrets_ratio) { share_secre
 
 float PSContext::share_secrets_ratio() const { return share_secrets_ratio_; }
 
-void PSContext::set_get_model_ratio(float get_model_ratio) { get_model_ratio_ = get_model_ratio; }
+void PSContext::set_cipher_time_window(uint64_t cipher_time_window) {
+  if (cipher_time_window_ < 0) {
+    MS_LOG(EXCEPTION) << "cipher_time_window should not be less than 0..";
+  }
+  cipher_time_window_ = cipher_time_window;
+}
 
-float PSContext::get_model_ratio() const { return get_model_ratio_; }
+uint64_t PSContext::cipher_time_window() const { return cipher_time_window_; }
 
 void PSContext::set_reconstruct_secrets_threshhold(uint64_t reconstruct_secrets_threshhold) {
   reconstruct_secrets_threshhold_ = reconstruct_secrets_threshhold;

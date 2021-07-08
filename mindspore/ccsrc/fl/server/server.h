@@ -170,6 +170,7 @@ class Server {
   size_t cipher_get_clientlist_cnt_;
   size_t cipher_reconstruct_secrets_up_cnt_;
   size_t cipher_reconstruct_secrets_down_cnt_;
+  uint64_t cipher_time_window_;
 
   float percent_for_update_model_;
   float percent_for_get_model_;
