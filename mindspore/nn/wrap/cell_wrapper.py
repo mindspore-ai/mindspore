@@ -487,7 +487,7 @@ class _MicroBatch(Cell):
             input_shape = self.shape(each_input)
             micro_batch_begin = i * input_shape[0] // self.micro_size
             micro_batch_end = (i + 1) * input_shape[0] // self.micro_size
-            micro_input = each_input[micro_batch_begin:micro_batch_end, :]
+            micro_input = each_input[micro_batch_begin:micro_batch_end]
             micro_inputs += (micro_input,)
         return micro_inputs
 

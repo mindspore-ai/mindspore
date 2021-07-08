@@ -60,10 +60,7 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(prim);
   int64_t dev_num = 1;
-  auto attrs_temp = prim->attrs();
   std::vector<Shapes> shape_list = ExtractShape(cnode);
   if (shape_list.empty()) {
     MS_LOG(EXCEPTION) << "Failure:node " << cnode->ToString() << " failed to extract shape";
@@ -80,8 +77,7 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
     elements.push_back(MakeValue(input_strategy));
   }
   ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
-  attrs_temp[STRATEGY] = strategy;
-  (void)prim->SetAttrs(attrs_temp);
+  cnode->AddPrimalAttr(STRATEGY, strategy);
 }
 
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,
@@ -467,12 +463,6 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     auto prim = GetCNodePrimitive(node);
     if (prim && prim->HasAttr(PARAMETER_START)) {
       auto micro = Micro(cnode, &node_users_map);
-      OperatorAttrs attrs_;
-      auto op = CreatOpInstance(attrs_, prim->name(), "");
-      auto value_node = NewValueNode(op);
-      auto new_prim = GetValueNode(value_node)->cast<PrimitivePtr>();
-      new_prim->SetAttrs(prim->attrs());
-      manager->SetEdge(cnode, 0, value_node);
       cnode->AddPrimalAttr(MICRO, micro);
       cnode->AddPrimalAttr(PARAMETER_START, micro);
     }
