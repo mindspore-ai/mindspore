@@ -16,6 +16,7 @@
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
+from .optimizer import opt_init_args_register
 
 _rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 _centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
@@ -175,6 +176,8 @@ class RMSProp(Optimizer):
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
+
+    @opt_init_args_register
     def __init__(self, params, learning_rate=0.1, decay=0.9, momentum=0.0, epsilon=1e-10,
                  use_locking=False, centered=False, loss_scale=1.0, weight_decay=0.0):
         super(RMSProp, self).__init__(learning_rate, params, weight_decay, loss_scale)
