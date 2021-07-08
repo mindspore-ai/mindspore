@@ -21,20 +21,14 @@ import glob
 import json
 import os
 import re
+from functools import partial
 from multiprocessing import Pool, current_process
 import numpy as np
 
-try:
-    from transformers import GPT2Tokenizer
-except ModuleNotFoundError:
-    print("module 'transformers' not installed.")
-
 from mindspore.mindrecord import FileWriter
+from src.tokenization_jieba import JIEBATokenizer
 
 
-EOT = 50256  # id of endoftext
-SEQ_LEN = 1025  # the length of sample
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
 
 def chunks(lst, n):
@@ -92,7 +86,7 @@ def clean_wikitext(string):
     return string
 
 
-def tokenize_openwebtext(iterator):
+def tokenize_openwebtext(tokenizer, iterator, seq_length, eot):
     """ tokenize openwebtext dataset"""
     for file_path in iterator:
         if os.path.getsize(file_path) == 0:
@@ -103,15 +97,15 @@ def tokenize_openwebtext(iterator):
                 if para:
                     tokenized_text = tokenizer.tokenize(para)
                     content += tokenizer.convert_tokens_to_ids(tokenized_text) + [
-                        EOT]
-        for chunk in chunks(content, SEQ_LEN):
+                        eot]
+        for chunk in chunks(content, seq_length):
             sample = {}
-            if len(chunk) == SEQ_LEN:
+            if len(chunk) == seq_length:
                 sample['input_ids'] = np.array(chunk, dtype=np.int32)
                 yield sample
 
 
-def tokenize_wiki(file_path):
+def tokenize_wiki(tokenizer, file_path, seq_length, eot):
     """tokenize wikitext-2/wikitext-103 dataset"""
     content = []
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -119,15 +113,15 @@ def tokenize_wiki(file_path):
             if para and para.strip().startswith('=') is False:
                 tokenized_text = tokenizer.tokenize(para)
                 content += tokenizer.convert_tokens_to_ids(tokenized_text) + [
-                    EOT]
-    for chunk in chunks(content, SEQ_LEN):
+                    eot]
+    for chunk in chunks(content, seq_length):
         sample = {}
-        if len(chunk) == SEQ_LEN:
+        if len(chunk) == seq_length:
             sample['input_ids'] = np.array(chunk, dtype=np.int32)
             yield sample
 
 
-def tokenize_lambada(file_path):
+def tokenize_lambada(tokenizer, file_path, seq_length, eot):
     """tokenize lambada dataset"""
     content = []
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -135,20 +129,20 @@ def tokenize_lambada(file_path):
             para = json.loads(line)['text'].replace(
                 "“", '"').replace("”", '"').strip().strip(".")
             tokenized_text = tokenizer.tokenize(para)
-            content += tokenizer.convert_tokens_to_ids(tokenized_text) + [EOT]
-    for chunk in chunks(content, SEQ_LEN):
+            content += tokenizer.convert_tokens_to_ids(tokenized_text) + [eot]
+    for chunk in chunks(content, seq_length):
         sample = {}
-        if len(chunk) == SEQ_LEN:
+        if len(chunk) == seq_length:
             sample['input_ids'] = np.array(chunk, dtype=np.int32)
             yield sample
 
 
-def task_unit(iterator, parallel_writer=True):
+def task_unit(iterator, tokenizer, seq_length, eot, parallel_writer=True):
     """task for each process"""
     p = current_process()
     index = p.pid if p.pid else 0
 
-    item_iter = tokenize_openwebtext(iterator)
+    item_iter = tokenize_openwebtext(tokenizer, iterator, seq_length, eot)
     batch_size = 1024  # size of write batch
     count = 0
     while True:
@@ -175,36 +169,58 @@ if __name__ == '__main__':
     parser.add_argument('--input_glob', type=str, default='*.txt')
     parser.add_argument('--output_file', type=str,
                         default='./output/transfered_mindrecord')
+    parser.add_argument('--tokenizer', type=str, default='gpt', choices=['gpt', 'jieba'])
+    parser.add_argument('--vocab_file', type=str, default=None)
+    parser.add_argument('--model_file', type=str, default=None)
     parser.add_argument('--file_partition', type=int, default=1)
     parser.add_argument('--file_batch_size', type=int, default=1024)
     parser.add_argument('--num_process', type=int, default=64)
+    parser.add_argument('--seq_length', type=int, default=1025)
+    parser.add_argument('--eot', type=int, default=50256)
+    parser.add_argument('--data_column_name', type=str, default='input_ids')
+
 
     args = parser.parse_args()
-    ###
+
     out_dir, out_file = os.path.split(os.path.abspath(args.output_file))
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
-    schema = {"input_ids": {"type": "int32", "shape": [-1]},}
+    schema = {args.data_column_name: {"type": "int32", "shape": [-1]},}
     writer = FileWriter(file_name=args.output_file,
                         shard_num=args.file_partition)
     writer.add_schema(schema, args.dataset_type)
     writer.open_and_set_header()
-    ###
+
+    # Start to load tokenizer
+    if args.tokenizer == 'gpt':
+        try:
+            from transformers import GPT2Tokenizer
+        except ModuleNotFoundError:
+            print("module 'transformers' not installed.")
+        word_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    else:
+        if not os.path.exists(args.vocab_file):
+            raise FileNotFoundError(f"file {args.vocab_file} do not exists.")
+        if not os.path.exists(args.model_file):
+            raise FileNotFoundError(f"file {args.model_file} do not exists.")
+        word_tokenizer = JIEBATokenizer(vocab_file=args.vocab_file, model_file=args.model_file)
+
     transforms_count = 0
     if args.dataset_type == 'wiki':
-        for x in tokenize_wiki(args.input_glob):
+        for x in tokenize_wiki(word_tokenizer, args.input_glob, args.seq_length, args.eot):
             transforms_count += 1
             writer.write_raw_data([x])
         print("Transformed {} records.".format(transforms_count))
     elif args.dataset_type == 'lambada':
-        for x in tokenize_lambada(args.input_glob):
+        for x in tokenize_lambada(word_tokenizer, args.input_glob, args.seq_length, args.eot):
             transforms_count += 1
             writer.write_raw_data([x])
         print("Transformed {} records.".format(transforms_count))
     elif args.dataset_type == 'openwebtext':
         file_iter = glob.iglob(args.input_glob)
         with Pool(processes=args.num_process) as pool:
-            pool.map(task_unit, package_file(file_iter, args.file_batch_size))
+            map_func = partial(task_unit, tokenizer=word_tokenizer, seq_length=args.seq_length, eot=args.eot)
+            pool.map(map_func, package_file(file_iter, args.file_batch_size))
     else:
         raise ValueError(
             "Not support dataset type: {}".format(args.dataset_type))

@@ -96,6 +96,7 @@ def run_train(args_opt):
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
             gradients_mean=False,
             full_batch=bool(args_opt.full_batch),
+            strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path,
             enable_parallel_optimizer=bool(args_opt.optimizer_shard))
         set_algo_parameters(elementwise_op_strategy_follow=True)
         _set_multi_subgraphs()
@@ -129,6 +130,7 @@ def run_train(args_opt):
         stage_num=args_opt.stage_num,
         micro_size=args_opt.micro_size,
         eod_reset=bool(args_opt.eod_reset),
+        load_ckpt_path=args_opt.load_ckpt_path,
         param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16,
         word_emb_dp=bool(args_opt.word_emb_dp))
     print("===config is: ", config, flush=True)
@@ -185,6 +187,17 @@ def run_train(args_opt):
         pangu_alpha_with_loss, optimizer=optimizer, scale_update_cell=update_cell, enable_global_norm=True,
         config=config)
     model = Model(pangu_alpha_with_grads)
+    if args_opt.incremental_training:
+        from mindspore.train.serialization import load_distributed_checkpoint
+        strategy = model.infer_train_layout(train_dataset=ds, sink_size=callback_size)
+        print("======start load_distributed checkpoint", flush=True)
+        # For 2.6B and 13B models, the number of ckpt files is 512.
+        ckpt_name = 'filerted'
+        ckpt_file_list = [os.path.join(args_opt.load_ckpt_path, f"{ckpt_name}_{ckpt_rank}.ckpt") for ckpt_rank in
+                          range(0, 512)]
+        print(f"Loading from path {ckpt_file_list[0]}", flush=True)
+        # Load checkpoint files
+        load_distributed_checkpoint(model.train_network, ckpt_file_list, strategy)
     print("Dataset size: {}, actual_epoch_num: {}".format(ds.get_dataset_size(), actual_epoch_num), flush=True)
     model.train(actual_epoch_num, ds, callbacks=callback, sink_size=callback_size, dataset_sink_mode=True)
 
@@ -205,6 +218,7 @@ def run_train_pipeline(args_opt):
             gradients_mean=False,
             full_batch=bool(args_opt.full_batch),
             loss_repeated_mean=True,
+            device_num=device_num,
             enable_parallel_optimizer=bool(args_opt.optimizer_shard),
             pipeline_stages=args_opt.stage_num)
         set_algo_parameters(elementwise_op_strategy_follow=True)
