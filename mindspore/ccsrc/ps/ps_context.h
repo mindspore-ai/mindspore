@@ -131,8 +131,8 @@ class PSContext {
   void set_share_secrets_ratio(float share_secrets_ratio);
   float share_secrets_ratio() const;
 
-  void set_get_model_ratio(float get_model_ratio);
-  float get_model_ratio() const;
+  void set_cipher_time_window(uint64_t cipher_time_window);
+  uint64_t cipher_time_window() const;
 
   void set_reconstruct_secrets_threshhold(uint64_t reconstruct_secrets_threshhold);
   uint64_t reconstruct_secrets_threshhold() const;
@@ -201,7 +201,7 @@ class PSContext {
         update_model_ratio_(1.0),
         update_model_time_window_(3000),
         share_secrets_ratio_(1.0),
-        get_model_ratio_(1.0),
+        cipher_time_window_(300000),
         reconstruct_secrets_threshhold_(2000),
         fl_iteration_num_(20),
         client_epoch_num_(25),
@@ -260,8 +260,8 @@ class PSContext {
   // Share model threshold is a certain ratio of share secrets threshold which is set as share_secrets_ratio_.
   float share_secrets_ratio_;
 
-  // Get model threshold is a certain ratio of get model threshold which is set as get_model_ratio_.
-  float get_model_ratio_;
+  // The time window of each cipher round in millisecond.
+  uint64_t cipher_time_window_;
 
   // The threshold count of reconstruct secrets round. Used in federated learning for now.
   uint64_t reconstruct_secrets_threshhold_;

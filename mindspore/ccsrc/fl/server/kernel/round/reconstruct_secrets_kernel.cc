@@ -76,7 +76,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
                                                      "Current amount for ReconstructSecretsKernel is enough.", iter_num,
                                                      std::to_string(CURRENT_TIME_MILLI.count()));
       GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-      return false;
+      return true;
     }
 
     void *req_data = inputs[0]->addr;
@@ -94,7 +94,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
                                                      "update_model_client_num is zero.", iter_num,
                                                      std::to_string(CURRENT_TIME_MILLI.count()));
       GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-      return false;
+      return true;
     }
     const PBMetadata client_list_pb_out =
       DistributedMetadataStore::GetInstance().GetMetadata(kCtxUpdateModelClientList);
@@ -110,7 +110,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
                                                      "ReconstructSecretsKernel : client list is not ready", iter_num,
                                                      std::to_string(CURRENT_TIME_MILLI.count()));
       GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-      return response;
+      return true;
     }
     for (int i = 0; i < client_list_pb.fl_id_size(); ++i) {
       client_list.push_back(client_list_pb.fl_id(i));
@@ -128,7 +128,10 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
   MS_LOG(INFO) << "reconstruct_secrets_kernel success time is : " << duration;
-  return response;
+  if (!response) {
+    MS_LOG(INFO) << "reconstruct_secrets_kernel response is false.";
+  }
+  return true;
 }
 
 void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) {

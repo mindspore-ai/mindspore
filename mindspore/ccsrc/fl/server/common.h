@@ -61,7 +61,7 @@ struct RoundConfig {
 
 struct CipherConfig {
   float share_secrets_ratio = 1.0;
-  float get_model_ratio = 1.0;
+  uint64_t cipher_time_window = 300000;
   size_t reconstruct_secrets_threshhold = 0;
 };
 
