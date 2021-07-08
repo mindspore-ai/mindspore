@@ -1040,6 +1040,12 @@ void DepthwiseBorderAvxFp32(float *dst, const float *src, const float *weight, c
 
 void DepthwiseSWAvxFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                         const ConvParameter *conv_param, const SlidingWindowParam *sw_param, int task_id) {
+  int oh_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
+  int oh_start = oh_step * task_id;
+  int oh_end = MSMIN(oh_start + oh_step, conv_param->output_h_);
+  if (oh_start >= oh_end) {
+    return;
+  }
   // depthwise sw in x86 avx instructions
   int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
   int act_type = 0;
@@ -1064,6 +1070,8 @@ void DepthwiseSWAvxFp32(float *output_data, const float *input_data, const float
   int out_left = sw_param->left_;
   int out_top = sw_param->top_;
   int out_bottom = sw_param->bottom_;
+  int kernel_step = sw_param->kernel_step_;
+  int out_h_step = sw_param->out_h_step_;
   int in_h_start = out_top * conv_param->stride_h_ - conv_param->pad_u_;
   int in_w_start = out_left * conv_param->stride_w_ - conv_param->pad_l_;
   int in_start = in_h_start * sw_param->in_h_step_ + in_w_start * oc_algin;
@@ -1072,19 +1080,16 @@ void DepthwiseSWAvxFp32(float *output_data, const float *input_data, const float
                                           {DepthwiseSW1x16Kernel, DepthwiseSW4x16Kernel},
                                           {DepthwiseSW1x24Kernel, DepthwiseSW4x24Kernel},
                                           {DepthwiseSW1x32Kernel, DepthwiseSW3x32Kernel}};
-  int oh_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
-  int oh_start = oh_step * task_id;
-  int oh_end = MSMIN(oh_start + oh_step, conv_param->output_h_);
   for (int b = 0; b < conv_param->output_batch_; b++) {
     for (int oh = oh_start; oh < oh_end; ++oh) {
-      float *dst_oh = output_data + oh * sw_param->out_h_step_;
+      float *dst_oh = output_data + oh * out_h_step;
       const float *src_h = input_data + in_start + (oh - out_top) * in_sh_step;
       int oc_block = 0;
       const float *bias = bias_data;
       for (int oc = 0; oc < oc_num; oc += oc_block) {
         oc_block = MSMIN(C4NUM, oc_num - oc);  // 4 3 2 1
         int oc_step = oc * oc_tile_;
-        const float *weight = weight_data + oc * sw_param->kernel_step_;
+        const float *weight = weight_data + oc * kernel_step;
         if (bias != NULL) {
           bias = bias_data + oc_step;
         }
