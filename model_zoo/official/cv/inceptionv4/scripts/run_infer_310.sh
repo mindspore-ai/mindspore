@@ -85,7 +85,7 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/out/main --config_path=$CONFIG_FILE --model_path=$model --dataset_path=$data_path --device_id=$device_id &> infer.log
+    ../ascend310_infer/out/main --model_path=$model --dataset_path=$data_path --device_id=$device_id &> infer.log
 
     if [ $? -ne 0 ]; then
         echo "execute inference failed"
