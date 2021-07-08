@@ -16,7 +16,7 @@
 package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
-import com.mindspore.flclient.model.AdTrainBert;
+import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.TrainLenet;
 import mindspore.schema.FeatureMap;
@@ -130,8 +130,8 @@ public class SecureProtocol {
         // get feature map
         Map<String, float[]> map = new HashMap<String, float[]>();
         if (flParameter.getFlName().equals("adbert")) {
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(adTrainBert.getTrainSession()));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
         } else if (flParameter.getFlName().equals("lenet")) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
@@ -267,8 +267,8 @@ public class SecureProtocol {
         // get feature map
         Map<String, float[]> map = new HashMap<String, float[]>();
         if (flParameter.getFlName().equals("adbert")) {
-            AdTrainBert adTrainBert = AdTrainBert.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(adTrainBert.getTrainSession()));
+            AlTrainBert alTrainBert = AlTrainBert.getInstance();
+            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
         } else if (flParameter.getFlName().equals("lenet")) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));

@@ -21,18 +21,18 @@ import com.mindspore.flclient.Common;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-public class AdInferBert extends AdBert {
-    private static final Logger logger = Logger.getLogger(AdInferBert.class.toString());
+public class AlInferBert extends AlBert {
+    private static final Logger logger = Logger.getLogger(AlInferBert.class.toString());
 
-    private static volatile AdInferBert adInferBert;
+    private static volatile AlInferBert alInferBert;
 
-    public static AdInferBert getInstance() {
-        AdInferBert localRef = adInferBert;
+    public static AlInferBert getInstance() {
+        AlInferBert localRef = alInferBert;
         if (localRef == null) {
-            synchronized (AdInferBert.class) {
-                localRef = adInferBert;
+            synchronized (AlInferBert.class) {
+                localRef = alInferBert;
                 if (localRef == null) {
-                    adInferBert = localRef = new AdInferBert();
+                    alInferBert = localRef = new AlInferBert();
                 }
             }
         }
