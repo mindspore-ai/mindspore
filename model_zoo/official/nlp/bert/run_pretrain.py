@@ -196,7 +196,7 @@ def run_pretrain():
             cfg.save_checkpoint_steps *= cfg.accumulation_steps
             logger.info("save checkpoint steps: {}".format(cfg.save_checkpoint_steps))
 
-    ds = create_bert_dataset(device_num, rank, cfg.do_shuffle, cfg.data_dir, cfg.schema_dir)
+    ds = create_bert_dataset(device_num, rank, cfg.do_shuffle, cfg.data_dir, cfg.schema_dir, cfg.batch_size)
     net_with_loss = BertNetworkWithLoss(bert_net_cfg, True)
 
     new_repeat_count = cfg.epoch_size * ds.get_dataset_size() // cfg.data_sink_steps
