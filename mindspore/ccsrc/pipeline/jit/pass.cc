@@ -188,9 +188,12 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     irpass.reshape_eliminate_,
     irpass.switch_simplify_,
     irpass.addn_zero_filter_,
-    irpass.zero_like_fill_zero_,
   });
-  OptPassGroupMap map({{"ad_final_opt", bg_final_opt}});
+  opt::OptPassConfig fill_zeros_like = opt::OptPassConfig{irpass.zero_like_fill_zero_};
+  OptPassGroupMap map({
+    {"ad_final_opt", bg_final_opt},
+    {"zeros_like", fill_zeros_like},
+  });
   if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
     map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
   }
@@ -256,7 +259,6 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.env_get_set_item_eliminate_,
     irpass.env_get_item_depend_swap_,
 
-    irpass.cast_eliminate_,
     irpass.reshape_eliminate_,
     irpass.reduce_eliminate_,
     irpass.tile_eliminate_,
@@ -283,6 +285,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = GetOptPassA1(irpass);
   opt::OptPassConfig a_2 = opt::OptPassConfig(
     {
+      irpass.cast_eliminate_,
       irpass.specialize_transform_,
       irpass.merge_addn_,
       irpass.float_tuple_getitem_switch_,
