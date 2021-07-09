@@ -106,6 +106,12 @@ class Cifar10ToMR:
     def transform(self, fields=None):
         """
         Encapsulate the run function to exit normally
+
+        Args:
+            fields (list[str], optional): A list of index fields. Default: None.
+
+        Returns:
+            MSRStatus, whether cifar10 is successfully transformed to MindRecord.
         """
 
         t = ExceptionThread(target=self.run, kwargs={'fields': fields})
