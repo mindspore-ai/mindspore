@@ -126,6 +126,8 @@ class ControlNodeParser {
     return front_to_backend_kernels_[front_node_with_index].first;
   }
 
+  AnfNodePtr FetchRootGraphFrontNodeBySubFrontNode(const AnfNodePtr &sub_front_node);
+
  private:
   friend class GraphScheduler;
 
@@ -221,6 +223,7 @@ class ControlNodeParser {
   // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
   // When initializing the weights, all related weights need to be recorded as the same device tensor.
   HostParameterToWeight host_parameter_to_weights_;
+  std::unordered_map<AnfNodePtr, AnfNodePtr> sub_front_node_to_root_front_node_;
 
   // The front value node saves all value nodes that are not in the kernel graph. These nodes are generally the
   // input of the control node.
