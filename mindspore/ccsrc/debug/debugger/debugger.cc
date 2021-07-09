@@ -1194,14 +1194,14 @@ void Debugger::LoadParametersAndConst() {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph_ptr_);
   // load parameters
-  MS_LOG(INFO) << "Start to load Parameters!";
+  MS_LOG(INFO) << "Start to load Parameters for graph " << graph_ptr_->graph_id() << ".";
   const auto &parameters = graph_ptr_->inputs();
   for (auto &item : parameters) {
     LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
-  // get all constant avlues from the graph
-  MS_LOG(INFO) << "Start to load value nodes!";
+  // get all constant values from the graph
+  MS_LOG(INFO) << "Start to load value nodes for graph " << graph_ptr_->graph_id() << ".";
   const auto value_nodes = graph_ptr_->graph_value_nodes();
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);
@@ -1212,14 +1212,14 @@ void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph);
   // load parameters
-  MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id();
+  MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id() << ".";
   const auto &parameters = graph_ptr_->inputs();
   for (auto &item : parameters) {
     LoadSingleAnfnode(item, PARAMETER_OUTPUT_INDEX);
   }
   // load value nodes
-  // get all constant avlues from the graph
-  MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id();
+  // get all constant values from the graph
+  MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id() << ".";
   const auto value_nodes = graph_ptr_->graph_value_nodes();
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX);
