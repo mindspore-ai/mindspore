@@ -3718,7 +3718,7 @@ class LSTM(PrimitiveWithInfer):
     Performs the Long Short-Term Memory (LSTM) on the input.
 
     For detailed information, please refer to `nn.LSTM
-    <https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/nn/mindspore.nn.LSTM.html>`_.
+    <https://www.mindspore.cn/docs/api/zh-CN/r1.3/api_python/nn/mindspore.nn.LSTM.html>`_.
 
     Args:
         input_size (int): Number of features of input.
