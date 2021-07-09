@@ -279,20 +279,16 @@ def run_train_pipeline(args_opt):
         optimizer = nn.Lamb(group_params, learning_rate=lr)
     else:
         optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, beta1=0.9, beta2=0.95, eps=1e-8)
-    if context.get_auto_parallel_context("full_batch"):
-        ds = create_dataset(config.batch_size, data_path=cache_url, eod_reset=True,
-                            data_start_index=0, full_batch=True, column_name=args_opt.data_column_name)
-    else:
-        if batch_size % stage_device_num != 0:
-            raise ValueError("Batch_size should be divisible by device_num")
-        ds = create_dataset(config.batch_size, data_path=cache_url, device_num=stage_device_num,
-                            rank=rank_id, eod_reset=True, data_start_index=0, full_batch=False,
-                            column_name=args_opt.data_column_name)
+
+    ds = create_dataset(config.batch_size, data_path=cache_url, device_num=stage_device_num,
+                        rank=rank_id % stage_device_num, eod_reset=True, data_start_index=0,
+                        full_batch=context.get_auto_parallel_context("full_batch"),
+                        column_name=args_opt.data_column_name)
     epoch_num = args_opt.epoch_size
     step_per_epoch = ds.get_dataset_size()
     callback_size = args_opt.sink_size
     actual_epoch_num = int(epoch_num * step_per_epoch / callback_size)
-    callback = [TimeMonitor(callback_size), LossCallBack(callback_size, rank_id, config.stage_num, config.micro_size)]
+    callback = [TimeMonitor(callback_size), LossCallBack(callback_size, rank_id, micro_size=config.micro_size)]
     loss_scale_value = math.pow(2, 32)
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
     pangu_alpha_with_grads = PanguAlphaTrainPipelineWithLossScaleCell(
