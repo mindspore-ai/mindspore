@@ -23,8 +23,6 @@ function Run_Converter() {
 
 # Run on npu platform:
 function Run_npu() {
-    # Push files to the phone
-    Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
     # Prepare the config file list
     local npu_cfg_file_list=("$models_npu_config")
     # Run converted models:
@@ -34,8 +32,6 @@ function Run_npu() {
 
 # Run on npu and fp16 platform:
 function Run_npu_fp16() {
-    # Push files to the phone
-    Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
     # Prepare the config file list
     local npu_fp16_cfg_file_list=("$models_npu_fp16_config")
     # Run converted models:
@@ -74,6 +70,7 @@ done
 
 # mkdir train
 x86_path=${release_path}/ubuntu_x86
+arm64_path=${release_path}/android_aarch64/npu
 file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
@@ -95,8 +92,6 @@ echo ' ' > ${run_converter_result_file}
 echo "start Run converter ..."
 Run_Converter
 Run_converter_status=$?
-sleep 1
-
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
@@ -125,31 +120,39 @@ rm -rf ${benchmark_test_path}
 mkdir -p ${benchmark_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
 
+# Push files to the phone
+Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
+
 backend=${backend:-"all"}
 isFailed=0
-
-if [[ $backend == "all" || $backend == "npu" ]]; then
+if [[ $backend == "all" || $backend == "npu" || $backend == "npu_fp32" ]]; then
     # Run on npu
-    arm64_path=${release_path}/android_aarch64/npu
-    # mv ${arm64_path}/*train-android-aarch64* ./train
-    file_name=$(ls ${arm64_path}/*android-aarch64.tar.gz)
-    IFS="-" read -r -a file_name_array <<< "$file_name"
-    version=${file_name_array[2]}
-
     echo "start Run npu ..."
     Run_npu
     Run_npu_status=$?
-    sleep 1
+    # Run_npu_PID=$!
+    # sleep 1
+fi
+if [[ $backend == "all" || $backend == "npu" || $backend == "npu_fp16" ]]; then
+    echo "start Run npu fp16 ..."
+    Run_npu_fp16
+    Run_npu_fp16_status=$?
+    # Run_npu_fp16_PID=$!
+    # sleep 1
+fi
+
+if [[ $backend == "all" || $backend == "npu" || $backend == "npu_fp32" ]]; then
+    # wait ${Run_npu_PID}
+    # Run_npu_status=$?
     if [[ ${Run_npu_status} != 0 ]];then
         echo "Run_npu failed"
         cat ${run_npu_log_file}
         isFailed=1
     fi
-
-    echo "start Run npu fp16 ..."
-    Run_npu_fp16
-    Run_npu_fp16_status=$?
-    sleep 1
+fi
+if [[ $backend == "all" || $backend == "npu" || $backend == "npu_fp16" ]]; then
+    # wait ${Run_npu_fp16_PID}
+    # Run_npu_fp16_status=$?
     if [[ ${Run_npu_fp16_status} != 0 ]];then
         echo "Run_npu_fp16 failed"
         cat ${run_npu_fp16_log_file}
