@@ -2206,10 +2206,10 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
     MS_EXCEPTION_IF_NULL(actor);
     auto gather_actor = dynamic_cast<GatherActor *>(actor);
 
-    for (const auto &input_with_index : gather_actor->data_nodes_) {
+    for (size_t i = 0; i < gather_actor->data_nodes_.size(); ++i) {
+      const auto &input_with_index = gather_actor->data_nodes_[i];
       const auto &from_func_graph = kernel_graph->GetFuncGraph();
-      LinkDataArrowByControlNode(graph_compiler_info, input_with_index, from_func_graph, gather_actor,
-                                 gather_actor->FetchDataNodePosition(input_with_index));
+      LinkDataArrowByControlNode(graph_compiler_info, input_with_index, from_func_graph, gather_actor, i);
     }
   }
   LinkBranchArrowForSwitchActor(graph_compiler_info, actor_set);
