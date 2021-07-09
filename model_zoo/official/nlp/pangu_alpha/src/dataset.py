@@ -95,6 +95,8 @@ def create_dataset(batch_size, data_path, device_num=1, rank=0, drop=True, full_
         os.path.join(home_path, name) for name in files
         if not name.endswith(".db")
     ]
+    # Ensure the order of mindrecords is same in all machines, otherwise it will meet loss converge problem.
+    data.sort()
 
     # Load data files and preprocess
     dataset = ds.MindDataset(data[data_start_index:], columns_list=[column_name], shuffle=False)
