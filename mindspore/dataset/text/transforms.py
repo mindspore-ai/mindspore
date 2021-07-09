@@ -334,6 +334,9 @@ class SentencePieceTokenizer(TextTensorOperation):
         out_type (SPieceTokenizerOutType): The type of output, it can be any of [SPieceTokenizerOutType.STRING,
             SPieceTokenizerOutType.INT].
 
+            - SPieceTokenizerOutType.STRING, means output type of SentencePice Tokenizer is string.
+            - SPieceTokenizerOutType.INT, means output type of SentencePice Tokenizer is int.
+
     Examples:
         >>> from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
         >>> sentence_piece_vocab_file = "/path/to/sentence/piece/vocab/file"
@@ -573,8 +576,16 @@ if platform.system().lower() != 'windows':
                 on input text to fold the text to lower case and strip accents characters. If False, only apply
                 NormalizeUTF8 operation with the specified mode on input text (default=False).
             keep_whitespace (bool, optional): If True, the whitespace will be kept in output tokens (default=False).
-            normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode. This is
-                only effective when `lower_case` is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
+            normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode
+                (default=NormalizeForm.NONE). This is only effective when `lower_case` is False. It can be any of
+                [NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD, NormalizeForm.NFKD].
+
+                - NormalizeForm.NONE, do nothing for input string tensor.
+                - NormalizeForm.NFC, normalize with Normalization Form C.
+                - NormalizeForm.NFKC, normalize with Normalization Form KC.
+                - NormalizeForm.NFD, normalize with Normalization Form D.
+                - NormalizeForm.NFKD, normalize with Normalization Form KD.
+
             preserve_unused_token (bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
             with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).

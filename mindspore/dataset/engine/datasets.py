@@ -776,14 +776,11 @@ class Dataset:
     @check_repeat
     def repeat(self, count=None):
         """
-        Repeat this dataset N times where N = count. Repeat infinitely if the count is None or -1.
+        Repeat this dataset `count` times. Repeat infinitely if the count is None or -1.
 
         Note:
             The order of using repeat and batch reflects the number of batches. It is recommended that
             the repeat operation be used after the batch operation.
-            If dataset_sink_mode is False, the repeat operation is invalid.
-            If dataset_sink_mode is True, repeat count must be equal to the epoch of training. Otherwise,
-            errors could occur since the amount of data is not the amount training requires.
 
         Args:
             count (int): Number of times the dataset is going to be repeated (default=None).
