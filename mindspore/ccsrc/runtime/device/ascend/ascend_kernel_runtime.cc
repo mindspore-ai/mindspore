@@ -676,7 +676,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
   try {
     ModelRunner::Instance().RunModel(graph->graph_id());
-  } catch (const std::exception &) {
+  } catch (const std::exception &e) {
     DumpTaskExceptionInfo(graph);
     std::string file_name = "task_error_debug" + std::to_string(graph->graph_id()) + ".ir";
     auto graph_tmp = std::make_shared<session::KernelGraph>(*graph);
@@ -690,6 +690,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
       MS_LOG(INFO) << "Destroy tdt channel success.";
     }
 #endif
+    MS_LOG(ERROR) << "RunModel error msg: " << e.what();
     return false;
   }
   task_fail_infoes_.clear();
