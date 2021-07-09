@@ -42,7 +42,6 @@ const std::vector<size_t> &FakeLearnedScaleQuantPerChannelGradGpuKernel::GetWork
 bool FakeLearnedScaleQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-
   if (input_num != 4) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num
                       << ", but FakeLearnedScaleQuantPerChannelGrad GpuKernel OP needs 4 input.";
@@ -109,7 +108,7 @@ bool FakeLearnedScaleQuantPerChannelGradGpuKernel::Launch(const std::vector<Addr
 
   if (global_step_ >= quant_delay_) {
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float) * num_channels_,
+                              cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float) * kChannelLen,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memory failed");
     CalLSQNudgePerChannel(input, quant_num_, input_alpha, input_quant_max, input_div_alpha, input_quant, neg_trunc_,
@@ -118,7 +117,7 @@ bool FakeLearnedScaleQuantPerChannelGradGpuKernel::Launch(const std::vector<Addr
                                            neg_trunc_, num_channels_, reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float) * num_channels_,
+                              cudaMemcpyAsync(grad_alpha, alpha_no_grad, sizeof(float) * kChannelLen,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memory failed");
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,

@@ -274,7 +274,7 @@ def without_fold_batchnorm(weight, cell_quant):
     return weight, bias
 
 
-def compute_KL_threshold(data, bitwidth):
+def compute_kl_threshold(data, bitwidth):
     r"""
     Using KL-J Distance to calculate the clip threshold.
 
@@ -284,20 +284,18 @@ def compute_KL_threshold(data, bitwidth):
     Outputs:
         Tensor with Shape 1. Threshold to calculate the data.
     """
-    bitwidth = bitwidth.num_bits
-    data_min = 0
     data_max = np.abs(data).max()
     if data_max < 1e-5:
         return 1e-5
-    hist, bin_edges = np.histogram(np.abs(data), bins='sqrt', range=(data_min, data_max), density=True)
+    hist, bin_edges = np.histogram(np.abs(data), bins='sqrt', range=(0, data_max), density=True)
     # For the sake of high efficiency, we limit the maximum number of bins to 1024 in `sqrt` mode, If it exceeds the
     # largest size, turn to use the default bins config.
     largest_bin_size = 1024
     if hist.shape[0] > largest_bin_size:
-        hist, bin_edges = np.histogram(np.abs(data), range=(data_min, data_max), density=True)
+        hist, bin_edges = np.histogram(np.abs(data), range=(0, data_max), density=True)
     hist = hist / np.sum(hist)
     cumsum = np.cumsum(hist)
-    bit_pow_range = pow(2, int(bitwidth) - 1)
+    bit_pow_range = pow(2, int(bitwidth.num_bits) - 1)
     threshold = []
     scaling_factor = []
     kl = []
@@ -401,11 +399,11 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
                 subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
 
             if cell.fake_quant_weight.per_channel:
-                max_init = [compute_KL_threshold(weight_para_each, cell.fake_quant_weight.quant_dtype)
+                max_init = [compute_kl_threshold(weight_para_each, cell.fake_quant_weight.quant_dtype)
                             for weight_para_each in subcell_weight_para]
                 min_init = [-x for x in max_init]
             else:
-                max_init = [compute_KL_threshold(subcell_weight_para, cell.fake_quant_weight.quant_dtype)]
+                max_init = [compute_kl_threshold(subcell_weight_para, cell.fake_quant_weight.quant_dtype)]
                 min_init = [-x for x in max_init]
 
             cell.fake_quant_weight.reset(quant_dtype=cell.fake_quant_weight.quant_dtype,

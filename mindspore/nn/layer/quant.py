@@ -1535,6 +1535,7 @@ class ActQuant(_QuantActivation):
                                                       quant_dtype=quant_dtype,
                                                       neg_trunc=self.neg_trunc,
                                                       narrow_range=self.narrow_range)
+
     def construct(self, x):
         if self.fake_before:
             x = self.fake_quant_act_before(x)

@@ -59,6 +59,36 @@ def _fake_learned_scale_quant_perlayer_grad_d_tbe():
     return
 
 
+def _sign_function(dtype, input_div_alpha):
+    """sign function imp"""
+    if dtype == "float32":
+        data_min = tvm.const(SCALAR_MIN_FP32, dtype=dtype)
+        neg_data_min = tvm.const(NEG_SCALAR_MIN_FP32, dtype=dtype)
+    elif dtype == "float16":
+        data_min = tvm.const(SCALAR_MIN_FP16, dtype=dtype)
+        neg_data_min = tvm.const(NEG_SCALAR_MIN_FP16, dtype=dtype)
+    else:
+        data_min = tvm.const(1, dtype=dtype)
+        neg_data_min = tvm.const(-1, dtype=dtype)
+    vmax = te.lang.cce.vmaxs(input_div_alpha, neg_data_min)
+    vmin = te.lang.cce.vmins(vmax, data_min)
+    if dtype == "float32":
+        # max num of float32 is 2**126
+        max_support_fp32 = tvm.const(2 ** 62, dtype=dtype)
+        res_mul1 = te.lang.cce.vmuls(vmin, max_support_fp32)
+        res_mul2 = te.lang.cce.vmuls(res_mul1, max_support_fp32)
+        sign = te.lang.cce.vmuls(res_mul2, tvm.const(2 ** 2, dtype=dtype))
+    elif dtype == "float16":
+        # max num of float16 is 2**24
+        # but cce can only support 2**12, so use 12/12 to adaptor 24
+        max_support_fp16 = tvm.const(2 ** 12, dtype=dtype)
+        res_mul1 = te.lang.cce.vmuls(vmin, max_support_fp16)
+        sign = te.lang.cce.vmuls(res_mul1, max_support_fp16)
+    else:
+        sign = vmin
+    return sign
+
+
 @fusion_manager.register("fake_learned_scale_quant_perlayer_grad_d")
 def fake_learned_scale_quant_perlayer_grad_d_compute(dout, input_data, alpha_data, quant_max_data, neg_trunc,
                                                      kernel_name="fake_learned_scale_quant_perlayer_grad_d"):
@@ -87,7 +117,6 @@ def fake_learned_scale_quant_perlayer_grad_d_compute(dout, input_data, alpha_dat
     tensor_one = tvm.const(1.0, input_div_alpha.dtype)
     tensor_one = te.lang.cce.broadcast(tensor_one, shape)
 
-    #out_of_bounds = te.lang.cce.vcmpsel(te.lang.cce.vabs(input_div_alpha), 1.0, 'gt', 1.0, 0.0)
     out_of_upper_bounds = te.lang.cce.vcmpsel(input_div_alpha, 1.0, 'gt', 1.0, 0.0)
     if neg_trunc:
         out_of_lower_bounds = te.lang.cce.vcmpsel(input_div_alpha, 0.0, 'lt', 1.0, 0.0)
@@ -97,32 +126,7 @@ def fake_learned_scale_quant_perlayer_grad_d_compute(dout, input_data, alpha_dat
 
     dx = te.lang.cce.vmul(dx, te.lang.cce.vsub(tensor_one, out_of_bounds))
 
-    # sign function imp
-    if dtype == "float32":
-        data_min = tvm.const(SCALAR_MIN_FP32, dtype=dtype)
-        neg_data_min = tvm.const(NEG_SCALAR_MIN_FP32, dtype=dtype)
-    elif dtype == "float16":
-        data_min = tvm.const(SCALAR_MIN_FP16, dtype=dtype)
-        neg_data_min = tvm.const(NEG_SCALAR_MIN_FP16, dtype=dtype)
-    else:
-        data_min = tvm.const(1, dtype=dtype)
-        neg_data_min = tvm.const(-1, dtype=dtype)
-    vmax = te.lang.cce.vmaxs(input_div_alpha, neg_data_min)
-    vmin = te.lang.cce.vmins(vmax, data_min)
-    if dtype == "float32":
-        # max num of float32 is 2**126
-        max_support_fp32 = tvm.const(2 ** 62, dtype=dtype)
-        res_mul1 = te.lang.cce.vmuls(vmin, max_support_fp32)
-        res_mul2 = te.lang.cce.vmuls(res_mul1, max_support_fp32)
-        sign = te.lang.cce.vmuls(res_mul2, tvm.const(2 ** 2, dtype=dtype))
-    elif dtype == "float16":
-        # max num of float16 is 2**24
-        # but cce can only support 2**12, so use 12/12 to adaptor 24
-        max_support_fp16 = tvm.const(2 ** 12, dtype=dtype)
-        res_mul1 = te.lang.cce.vmuls(vmin, max_support_fp16)
-        sign = te.lang.cce.vmuls(res_mul1, max_support_fp16)
-    else:
-        sign = vmin
+    sign = _sign_function(dtype, input_div_alpha)
 
     # The following lines are equivalent to :
     #     dalpha_each = dout * sign                             if out of bounds
@@ -137,10 +141,9 @@ def fake_learned_scale_quant_perlayer_grad_d_compute(dout, input_data, alpha_dat
     return [dx, dalpha_each]
 
 
-@util.check_input_type(dict, dict, dict, dict, dict, dict, bool, str)
-def fake_learned_scale_quant_perlayer_grad_d(dout, input_x, alpha, quant_max, dx, dalpha, neg_trunc,
-                                             kernel_name="fake_learned_scale_quant_perlayer_grad_d"):
-    """FakeLearnedScaleQuantPerLayerGradD"""
+def fake_learned_scale_quant_perlayer_grad_d_param(input_x, alpha, quant_max,
+                                                   kernel_name="fake_learned_scale_quant_perlayer_grad_d"):
+    """Get and check FakeLearnedScaleQuantPerLayerGradD parameters"""
     input_shape = input_x.get("shape")
     input_dtype = input_x.get("dtype")
     alpha_shape = alpha.get("ori_shape")
@@ -172,6 +175,15 @@ def fake_learned_scale_quant_perlayer_grad_d(dout, input_x, alpha, quant_max, dx
     input_data = tvm.placeholder(input_shape, name="x", dtype=input_dtype)
     alpha_data = tvm.placeholder(alpha_shape, name="alpha_data", dtype=alpha_dtype)
     quant_max_data = tvm.placeholder(quant_max_shape, name="quant_max_data", dtype=quant_max_dtype)
+    return dout_data, input_data, alpha_data, quant_max_data
+
+@util.check_input_type(dict, dict, dict, dict, dict, dict, bool, str)
+def fake_learned_scale_quant_perlayer_grad_d(dout, input_x, alpha, quant_max, dx, dalpha, neg_trunc,
+                                             kernel_name="fake_learned_scale_quant_perlayer_grad_d"):
+    """FakeLearnedScaleQuantPerLayerGradD"""
+    dout_data, input_data, alpha_data, quant_max_data = \
+        fake_learned_scale_quant_perlayer_grad_d_param(input_x, alpha, quant_max, kernel_name)
+
     res = fake_learned_scale_quant_perlayer_grad_d_compute(dout_data, input_data, alpha_data, quant_max_data,
                                                            neg_trunc, kernel_name)
 
