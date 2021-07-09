@@ -39,20 +39,17 @@ class AnalysisContext {
   AnalysisContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list)
       : parent_(parent), func_graph_(fg), args_spec_list_(args_spec_list) {
     if (parent_ != nullptr) {
-      parent_cache_ = parent_->parent_cache_;
+      extant_context_cache_ = parent_->extant_context_cache_;
     }
   }
 
   ~AnalysisContext() = default;
 
-  // Helper function to wrapper constructor to save shared_ptr in parent_cache.
-  AnalysisContextPtr NewContext(AnalysisContextPtr parent, FuncGraphPtr fg, const AbstractBasePtrList &args_spec_list);
-
   // Extend this context with values for another graph.
-  AnalysisContextPtr NewFuncGraphContext(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
+  AnalysisContextPtr NewContext(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
 
-  // Return a context restricted to a graph's dependencies.
-  AnalysisContextPtr FindParentContext(const FuncGraphPtr &graph);
+  // Return a context restricted to a graph and its parent.
+  AnalysisContextPtr FindOwnOrParentContext(const FuncGraphPtr &graph);
   bool operator==(const AnalysisContext &other) const;
   std::size_t hash();
   static AnalysisContextPtr DummyContext();
@@ -67,7 +64,11 @@ class AnalysisContext {
   AnalysisContextPtr parent_;
   FuncGraphPtr func_graph_;
   AbstractBasePtrList args_spec_list_;
-  std::unordered_map<FuncGraphPtr, AnalysisContextWeakPtr> parent_cache_;
+  // Record all created context for each func graph.
+  // `extant_context_cache_` is copied from its parent context.
+  std::unordered_map<FuncGraphPtr, AnalysisContextWeakPtr> extant_context_cache_;
+  // Record all created child contexts from this context.
+  // Like: key: [func_graph & arguments], value: [child_context]
   std::unordered_map<FuncGraphPtr, ArgsSpecToAnalysisContextMap> children_cache_;
 };
 

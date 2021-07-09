@@ -35,12 +35,12 @@ namespace trace {
 DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
 void TraceGraphEval();
 void GetEvalStackInfo(std::ostringstream &oss);
-void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node);
-void TraceGraphEvalLeave(const abstract::EvaluatorPtr &eval);
+void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abstract::AnfNodeConfigPtr &node);
+void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context);
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
 void TraceEvalCNodeLeave();
 std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack();
-std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack();
+std::stack<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack();
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
 void ClearTraceStack();
 }  // namespace trace

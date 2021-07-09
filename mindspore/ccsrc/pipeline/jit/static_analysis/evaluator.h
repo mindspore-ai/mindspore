@@ -234,7 +234,7 @@ class BaseFuncGraphEvaluator : public Evaluator {
 class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
  public:
   FuncGraphEvaluator(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context)
-      : BaseFuncGraphEvaluator(context->FindParentContext(func_graph)), func_graph_(func_graph) {}
+      : BaseFuncGraphEvaluator(context), func_graph_(func_graph) {}
 
   ~FuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(FuncGraphEvaluator, BaseFuncGraphEvaluator);

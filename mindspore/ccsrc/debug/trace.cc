@@ -20,6 +20,7 @@
 #include <fstream>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -82,85 +83,75 @@ std::string GetGraphParamString(const FuncGraphPtr &graph, abstract::AbstractBas
 }
 
 void DumpInferStack(std::ostringstream &oss) {
-  auto &infer_stack = GetCurrenGraphEvalStack();
-  if (infer_stack.empty()) {
+  auto &graph_stack = GetCurrenGraphEvalStack();
+  if (graph_stack.empty()) {
     return;
   }
-  std::vector<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> infer_vec;
-  while (!infer_stack.empty()) {
-    auto top = infer_stack.top();
+  std::vector<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> infer_vec;
+  while (!graph_stack.empty()) {
+    auto top = graph_stack.top();
     infer_vec.push_back(top);
-    infer_stack.pop();
+    graph_stack.pop();
   }
   std::reverse(infer_vec.begin(), infer_vec.end());
   int index = 0;
-  for (auto &item : infer_vec) {
-    auto graph_infer = std::dynamic_pointer_cast<abstract::BaseFuncGraphEvaluator>(item.first);
-    if (graph_infer == nullptr) {
-      MS_LOG(WARNING) << "DumpInferStack failed, got null graph evaluator";
-      infer_vec.clear();
-      break;
+  for (const auto &item : infer_vec) {
+    auto context = item.first;
+    if (context == nullptr) {
+      MS_LOG(EXCEPTION) << "DumpInferStack failed, got null graph context";
     }
-    auto graph_context = graph_infer->parent_context();
-    if (graph_context == nullptr) {
-      MS_LOG(INFO) << "Null context continue";
+    auto graph = context->func_graph();
+    if (graph == nullptr) {  // Top context.
       continue;
     }
-    auto graph = graph_context->func_graph();
-    if (graph == nullptr) {
-      continue;
-    }
-    auto args_spec_list = graph_context->args_spec_list();
+    auto args_spec_list = context->args_spec_list();
     oss << "    #" << index++ << " " << GetGraphParamString(graph, args_spec_list);
   }
 }
 
 void TraceGraphEval() {
-  auto &infer_stack = GetCurrenGraphEvalStack();
-  std::ostringstream oss;
-  if (infer_stack.empty()) {
-    MS_LOG(ERROR) << "Length of analysis graph stack is empty.";
+  auto &graph_stack = GetCurrenGraphEvalStack();
+  if (graph_stack.empty()) {
+    MS_LOG(INFO) << "Length of analysis graph stack is empty.";
     return;
   }
   MS_LOG(ERROR) << "\n*******************************graph evaluate stack**********************************";
+  std::ostringstream oss;
   oss << std::endl;
   DumpInferStack(oss);
   MS_LOG(ERROR) << oss.str();
   MS_LOG(ERROR) << "\n*************************************************************************************";
 }
 
-class AnalyzedFuncGraphExporter : public AnfExporter {
+class AnalyzeFailExporter : public AnfExporter {
  public:
-  AnalyzedFuncGraphExporter() : AnfExporter(true, false) {}
-  ~AnalyzedFuncGraphExporter() override = default;
+  AnalyzeFailExporter() : AnfExporter(true, false) {}
+  ~AnalyzeFailExporter() override = default;
 
-  bool ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs);
+  bool ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfg_stack);
 
-  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph) override;
-  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph) override;
+ private:
+  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map);
+  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,
+                    const TaggedNodeMap &tagged_cnodes_map);
   void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map);
 
- private:
   std::string GetNodeType(const AnfNodePtr &nd) override;
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
   AnfNodeConfigPtr GetFordwardConfigPtr(const AnfNodeConfigPtr &cfg);
-  std::vector<AnalysisContextPtr> ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
-  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node, const std::vector<AnalysisContextPtr> &ctxs);
-
-  // key: context, val: whether the context has already been printed
-  std::unordered_map<AnalysisContextPtr, bool> context_map_;
-  std::vector<AnalysisContextPtr> context_vec_;
+  void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
+  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
 
   AnalysisContextPtr cur_ctx_ = nullptr;
   AnalysisEnginePtr engine_ = nullptr;
 };
 
-std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs() {
+std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs(
+  const std::vector<abstract::AnfNodeConfigPtr> &node_cfg_stack) {
   std::unordered_map<FuncGraphPtr, TaggedNodeMap> tagged_func_graphs;
-  auto &list = GetCNodeDebugStack();
-  for (size_t i = 0; i < list.size(); ++i) {
-    auto node_cfg = list[i];
+  for (size_t i = 0; i < node_cfg_stack.size(); ++i) {
+    auto node_cfg = node_cfg_stack[i];
     MS_EXCEPTION_IF_NULL(node_cfg);
     auto fg = node_cfg->context()->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -171,11 +162,11 @@ std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs() {
 }
 
 bool OutputAnalyzedGraphWithType(const string &file_path) {
-  AnalyzedFuncGraphExporter exporter;
+  AnalyzeFailExporter exporter;
   return exporter.ExportFuncGraph(file_path, GetCNodeDebugStack());
 }
 
-std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
+std::string AnalyzeFailExporter::GetNodeType(const AnfNodePtr &node) {
   if (cur_ctx_ == nullptr) {
     return AnfExporter::GetNodeType(node);
   }
@@ -189,7 +180,7 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
   return GetAbstractStr(ret->abstract());
 }
 
-AbstractBasePtr AnalyzedFuncGraphExporter::GetNodeAbstract(const AnfNodePtr &node) {
+AbstractBasePtr AnalyzeFailExporter::GetNodeAbstract(const AnfNodePtr &node) {
   if (cur_ctx_ == nullptr) {
     return nullptr;
   }
@@ -199,7 +190,7 @@ AbstractBasePtr AnalyzedFuncGraphExporter::GetNodeAbstract(const AnfNodePtr &nod
   return ret == nullptr ? nullptr : ret->abstract();
 }
 
-AnfNodeConfigPtr AnalyzedFuncGraphExporter::GetFordwardConfigPtr(const AnfNodeConfigPtr &cfg) {
+AnfNodeConfigPtr AnalyzeFailExporter::GetFordwardConfigPtr(const AnfNodeConfigPtr &cfg) {
   AnfNodeConfigPtr cur_cfg = cfg;
   auto iter = engine_->anfnode_config_map().find(cur_cfg);
   while (iter != engine_->anfnode_config_map().end()) {
@@ -212,21 +203,17 @@ AnfNodeConfigPtr AnalyzedFuncGraphExporter::GetFordwardConfigPtr(const AnfNodeCo
   return cur_cfg;
 }
 
-std::vector<AnalysisContextPtr> AnalyzedFuncGraphExporter::ProcessFuncGraphCall(const CNodePtr &node,
-                                                                                std::string *const op_comment) {
-  std::vector<AnalysisContextPtr> ret_contexts;
+void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment) {
   if (node == nullptr) {
-    return ret_contexts;
+    return;
   }
   auto cfg = engine_->MakeConfig(node, cur_ctx_);
   cfg = GetFordwardConfigPtr(cfg);
   auto cnode = dyn_cast<CNode>(cfg->node());
   if (cnode == nullptr) {
     MS_LOG(DEBUG) << "CNode is nullptr";
-    return ret_contexts;
+    return;
   }
-
-  ret_contexts.resize(cnode->size());
 
   const auto &inputs = cnode->inputs();
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -256,29 +243,11 @@ std::vector<AnalysisContextPtr> AnalyzedFuncGraphExporter::ProcessFuncGraphCall(
         oss << ") -> " << GetAbstractStr(func->output()) << " ";
         *op_comment = oss.str();
       }
-      continue;
     }
-
-    auto evaluator = engine_->GetEvaluatorFor(dyn_cast<abstract::AbstractFunction>(op_abs));
-    if (!evaluator->isa<abstract::BaseFuncGraphEvaluator>()) {
-      MS_LOG(DEBUG) << "Evaluator for inputs[" << i << "] of cnode " << cnode->ToString() << " is of type "
-                    << evaluator->type_name() << ", not BaseFuncGraphEvaluator, ignore it.";
-      continue;
-    }
-
-    auto base_fg_evaluator = dyn_cast<abstract::BaseFuncGraphEvaluator>(evaluator);
-    auto ctx = base_fg_evaluator->parent_context();
-    if (ctx != nullptr && context_map_.insert({ctx, false}).second) {
-      MS_LOG(DEBUG) << "Add new context, ctx.addr = " << ctx.get() << "ctx = " << ctx->ToString();
-      context_vec_.push_back(ctx);
-    }
-    ret_contexts[i] = ctx;
   }
-  return ret_contexts;
 }
 
-void AnalyzedFuncGraphExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &node,
-                                                       const std::vector<AnalysisContextPtr> &ctxs) {
+void AnalyzeFailExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &node) {
   if (node == nullptr) {
     return;
   }
@@ -313,9 +282,6 @@ void AnalyzedFuncGraphExporter::OutputStatementComment(std::ofstream &ofs, const
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(arg);
     std::string func_graph_id = fg->debug_info()->get_id();
     comment << " fg_" << func_graph_id << "=" << fg->ToString();
-    if (ctxs.size() > i && ctxs[i] != nullptr) {
-      comment << "(@ctx.addr=" << ctxs[i].get() << ")";
-    }
   }
   if (has_comment) {
     ofs << comment.str();
@@ -323,8 +289,8 @@ void AnalyzedFuncGraphExporter::OutputStatementComment(std::ofstream &ofs, const
   ofs << " #scope: " << node->scope()->name();
 }
 
-void AnalyzedFuncGraphExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
-                                            int *idx, std::map<AnfNodePtr, int> *const apply_map) {
+void AnalyzeFailExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+                                      int *idx, std::map<AnfNodePtr, int> *const apply_map) {
   auto &inputs = cnode->inputs();
   std::string op_text = GetAnfNodeText(func_graph, inputs[0], *apply_map);
   // non-return node
@@ -352,17 +318,12 @@ void AnalyzedFuncGraphExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &
 
   // process function graph call
   std::string op_comment;
-  auto contexts = ProcessFuncGraphCall(cnode, &op_comment);
-  AnalysisContextPtr ctx = contexts.empty() ? nullptr : contexts[0];
-
+  ProcessFuncGraphCall(cnode, &op_comment);
   if (!op_comment.empty()) {
     ofs << "    #" << GetAnfNodeText(func_graph, inputs[0], *apply_map) << ".prototype = " << op_comment;
   }
   // output comment
-  OutputStatementComment(ofs, cnode, contexts);
-  if (ctx != nullptr) {
-    ofs << " @ctx.addr=" << ctx.get();
-  }
+  OutputStatementComment(ofs, cnode);
   ofs << "\n";
 
   if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
@@ -373,8 +334,8 @@ void AnalyzedFuncGraphExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &
   }
 }
 
-void AnalyzedFuncGraphExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes,
-                                             const FuncGraphPtr &func_graph) {
+void AnalyzeFailExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes,
+                                       const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map) {
   if (func_graph == nullptr) {
     return;
   }
@@ -387,8 +348,8 @@ void AnalyzedFuncGraphExporter::OutputCNodes(std::ofstream &ofs, const std::vect
       continue;
     }
 
-    auto iter = tagged_cnodes_.find(node);
-    if (iter != tagged_cnodes_.end()) {
+    auto iter = tagged_cnodes_map.find(node);
+    if (iter != tagged_cnodes_map.end()) {
       ofs << "\n#------------------------> " << iter->second << "\n";
     }
 
@@ -397,7 +358,8 @@ void AnalyzedFuncGraphExporter::OutputCNodes(std::ofstream &ofs, const std::vect
   }
 }
 
-void AnalyzedFuncGraphExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph) {
+void AnalyzeFailExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph,
+                                             const TaggedNodeMap &tagged_cnodes_map) {
   if (func_graph == nullptr) {
     return;
   }
@@ -429,20 +391,17 @@ void AnalyzedFuncGraphExporter::ExportOneFuncGraph(std::ofstream &ofs, const Fun
   exported[func_graph] = param_map;
   ofs << (!parameters.empty() ? "    " : "") << ") {\n";
 
-  OutputCNodes(ofs, nodes, func_graph);
+  OutputCNodes(ofs, nodes, func_graph, tagged_cnodes_map);
 
   ofs << "}\n";
 }
 
-bool AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
-                                                const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs) {
-  if (node_cfgs.empty()) {
+bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename,
+                                          const std::vector<abstract::AnfNodeConfigPtr> &node_cfg_stack) {
+  if (node_cfg_stack.empty()) {
     MS_LOG(DEBUG) << "Node configs is empty";
     return false;
   }
-
-  context_map_.clear();
-  context_vec_.clear();
 
   std::ofstream ofs(filename);
   if (!ofs.is_open()) {
@@ -450,53 +409,32 @@ bool AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
     return false;
   }
 
-  param_index = 1;
-  auto tagged_func_graphs = CalcTaggedFuncGraphs();
-
-  // 1. Output graph on the analysis stack
-  for (const auto &node_cfg : node_cfgs) {
+  auto tagged_func_graphs = CalcTaggedFuncGraphs(node_cfg_stack);
+  std::unordered_set<FuncGraphPtr> printed_func_graphs;  // Check if func graph has been printed.
+  // Output graph on the analysis stack
+  for (const auto &node_cfg : node_cfg_stack) {
     auto ctx = node_cfg->context();
+    auto fg = ctx->func_graph();
+    if (fg == nullptr) {
+      MS_LOG(ERROR) << "FuncGraph is null, context: " << node_cfg->context()->ToString();
+      continue;
+    }
+    if (printed_func_graphs.find(fg) != printed_func_graphs.end()) {
+      continue;
+    }
+    printed_func_graphs.emplace(fg);
+
     if (engine_ == nullptr) {
       engine_ = node_cfg->engine();
     }
-    if (context_map_.insert({ctx, false}).second) {
-      context_vec_.push_back(ctx);
-    }
-    // If the graph has already been printed
-    if (context_map_[ctx]) {
-      continue;
-    }
-    context_map_[ctx] = true;
 
-    auto fg = ctx->func_graph();
-
-    // Set current context
-    cur_ctx_ = ctx;
-    tagged_cnodes_ = tagged_func_graphs[fg];
-    ExportOneFuncGraph(ofs, fg);
+    cur_ctx_ = ctx;  // Set current context.
+    ExportOneFuncGraph(ofs, fg, tagged_func_graphs[fg]);
     ofs << "\n\n";
   }
 
-  tagged_cnodes_.clear();
-
-  // Print separator between function graphs on analyzed graph call stack and others
-  ofs << "#===============================================================================\n\n\n";
-
-  // 2. Output other graphs
-  size_t ctx_idx = 0;
-  while (ctx_idx < context_vec_.size()) {
-    auto ctx = context_vec_[ctx_idx++];
-    if (context_map_[ctx]) {
-      continue;
-    }
-    context_map_[ctx] = true;
-    cur_ctx_ = ctx;
-    ExportOneFuncGraph(ofs, ctx->func_graph());
-    ofs << "\n\n";
-  }
-
-  ofs << "# num of total function graphs: " << context_map_.size() << "\n";
-
+  ofs << "#===============================================================================\n";
+  ofs << "# num of function graphs printed: " << printed_func_graphs.size() << "/" << node_cfg_stack.size() << "\n";
   ofs.close();
   return true;
 }
@@ -505,7 +443,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   MS_LOG(INFO) << "Get graph analysis information begin";
   auto stack = GetCNodeDebugStack();
   if (stack.empty()) {
-    MS_LOG(ERROR) << "Length of analysis information stack is empty.";
+    MS_LOG(INFO) << "Length of analysis information stack is empty.";
     return;
   }
   static int fileNumber = 0;
@@ -553,26 +491,26 @@ void GetEvalStackInfo(std::ostringstream &oss) {
 }
 
 // trace the graph evaluator stack
-thread_local static std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
+thread_local static std::stack<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
 // trace the cnode infer debug info
 thread_local static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};
 
-void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node) {
-  if (eval == nullptr) {
-    MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
+void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abstract::AnfNodeConfigPtr &node) {
+  if (context == nullptr) {
+    MS_LOG(EXCEPTION) << "GraphInferEnter got null context";
   }
-  if (eval->isa<abstract::FuncGraphEvaluator>() || eval->isa<abstract::MetaFuncGraphEvaluator>()) {
-    (void)graph_infer_stack.emplace(std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>(eval, node));
-  }
+  (void)graph_infer_stack.emplace(std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>(context, node));
 }
 
-void TraceGraphEvalLeave(const abstract::EvaluatorPtr &eval) {
-  if (eval == nullptr) {
-    MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
+void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context) {
+  if (context == nullptr || graph_infer_stack.empty()) {
+    MS_LOG(EXCEPTION) << "The context is null, or call stack is empty.";
   }
-  if (eval->isa<abstract::FuncGraphEvaluator>() || eval->isa<abstract::MetaFuncGraphEvaluator>()) {
-    graph_infer_stack.pop();
+  if (context != graph_infer_stack.top().first) {
+    MS_LOG(EXCEPTION) << "Different context: " << context->func_graph()->ToString() << ", "
+                      << graph_infer_stack.top().first->func_graph()->ToString();
   }
+  graph_infer_stack.pop();
 }
 
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg) { cnode_debug_stack.push_back(node_cfg); }
@@ -581,7 +519,7 @@ void TraceEvalCNodeLeave() { cnode_debug_stack.pop_back(); }
 
 std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack() { return cnode_debug_stack; }
 
-std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack() {
+std::stack<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack() {
   return graph_infer_stack;
 }
 
