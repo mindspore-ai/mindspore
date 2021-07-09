@@ -54,7 +54,6 @@ struct Execute::ExtraInfo {
 #endif
 };
 
-// FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
 Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice device_type, uint32_t device_id) {
   ops_.emplace_back(std::move(op));
   device_type_ = device_type;

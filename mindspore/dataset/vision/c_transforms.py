@@ -720,6 +720,7 @@ class RandomColorAdjust(ImageTensorOperation):
         self.hue = hue
 
     def expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
+        """Expand input value for vision adjustment factor."""
         if isinstance(value, numbers.Number):
             value = [center - value, center + value]
             if non_negative:
@@ -1575,6 +1576,7 @@ class SlicePatches(ImageTensorOperation):
     def parse(self):
         return cde.SlicePatchesOperation(self.num_height, self.num_width,
                                          DE_C_SLICE_MODE[self.slice_mode], self.fill_value)
+
 
 class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     """
