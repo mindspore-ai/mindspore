@@ -15,26 +15,39 @@
  */
 
 #include "pipeline/jit/static_analysis/async_eval_result.h"
-#include <chrono>
+#include <debug/trace.h>
 #include "utils/symbolic.h"
 #include "debug/common.h"
 #include "pipeline/jit/base.h"
 #include "utils/utils.h"
-#include "abstract/utils.h"
 
 namespace mindspore {
 namespace abstract {
 HealthPointMgr HealthPointMgr::instance_;
 
-void HealthPointMgr::Clear() { point_ = 1; }
+void HealthPointMgr::Clear() {
+  MS_LOG(DEBUG) << " Point = " << point_;
+  point_ = 1;
+}
 
 void HealthPointMgr::HandleException() {
+  // Just record the first exception information.
+  if (!StaticAnalysisException::Instance().HasException()) {
+    std::ostringstream oss;
+    trace::GetEvalStackInfo(oss);
+    if (!oss.str().empty()) {
+      MS_LOG(ERROR) << oss.str();
+    }
+    StaticAnalysisException::Instance().SetException();
+  }
+  // Free all the locks. Let all the threads continue to run.
   std::lock_guard<std::recursive_mutex> lock(lock_);
   for (auto &item : asyncAbstractList_) {
     item->SetRunable();
   }
   asyncAbstractList_.clear();
 }
+
 void HealthPointMgr::SetNextRunable() {
   std::lock_guard<std::recursive_mutex> lock(lock_);
   if (asyncAbstractList_.empty()) {
@@ -46,9 +59,9 @@ void HealthPointMgr::SetNextRunable() {
                          [](const auto &item) { return item->HasResult(); });
   if (it == asyncAbstractList_.end()) {
     // Enter endless loop if there is not ready result.
-    MS_LOG(EXCEPTION) << "Enter endless loop. Please check the code. point = " << HealthPointMgr::GetInstance().point()
-                      << " Called times : " << asyncAbstractList_.front()->count();
+    MS_LOG(EXCEPTION) << "Enter endless loop. There is not more node that can been evaluated. Please check the code.";
   }
+  // Push back the not ready async.
   asyncAbstractList_.insert(asyncAbstractList_.end(), asyncAbstractList_.begin(), it);
   asyncAbstractList_.erase(asyncAbstractList_.begin(), it);
 
@@ -65,8 +78,10 @@ void AnalysisResultCacheMgr::Clear() {
   cache_.clear();
   switch_cache_.clear();
   todo_.clear();
+  waiting_.clear();
 }
 
+// The thread id format is XXXX.YYYY.ZZZZ
 thread_local static std::string local_threadid;
 void AnalysisResultCacheMgr::UpdateCaller(const std::string &caller) {
   std::ostringstream buffer;
@@ -76,7 +91,7 @@ void AnalysisResultCacheMgr::UpdateCaller(const std::string &caller) {
 
 std::string &AnalysisResultCacheMgr::GetThreadid() { return local_threadid; }
 
-void AnalysisResultCacheMgr::PushTowait(std::future<void> &&future) {
+void AnalysisResultCacheMgr::PushToWait(std::future<void> &&future) {
   std::lock_guard<std::mutex> lock(lock_);
   waiting_.emplace_back(std::move(future));
 }
@@ -94,6 +109,7 @@ void AnalysisResultCacheMgr::InitSwitchValue(const AnfNodeConfigPtr &conf) {
     switch_cache_.set(conf, async_eval_result);
   }
 }
+
 AbstractBasePtr AnalysisResultCacheMgr::TryGetSwitchValue(const AnfNodeConfigPtr &conf) {
   // don't call lock_.lock(). switch_cache is protected. and it waits for result.
   AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
@@ -125,7 +141,7 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
   return nullptr;
 }
 
-void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr arg) {
+void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
   MS_EXCEPTION_IF_NULL(conf);
   if (arg == nullptr) {
     MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr";
@@ -159,6 +175,14 @@ void AnalysisResultCacheMgr::Todo() {
   while (!todo_.empty()) {
     AnfNodeConfigPtr conf = todo_.front();
     todo_.pop_front();
+    if (GetValue(conf) == nullptr) {
+      MS_LOG(WARNING) << conf->node()->ToString() << " not in globleCache";
+      continue;
+    }
+    if (TryGetSwitchValue(conf) == nullptr) {
+      MS_LOG(WARNING) << conf->node()->ToString() << " not in switchCache";
+      continue;
+    }
     if (!(*GetValue(conf)->abstract() == *TryGetSwitchValue(conf))) {
       MS_LOG(WARNING) << " Switch Value is not eq. "
                       << " switchCache: " << TryGetSwitchValue(conf)->ToString()
@@ -172,7 +196,6 @@ void AnalysisResultCacheMgr::Wait() {
   // Check all the async to finish.
   HealthPointScopedDrop hpCheck;
   while (true) {
-    StaticAnalysisException::Instance().CheckException();
     lock_.lock();
     if (waiting_.empty()) {
       lock_.unlock();
@@ -188,6 +211,7 @@ void AnalysisResultCacheMgr::Wait() {
   if (IS_OUTPUT_ON(DEBUG)) {
     Todo();
   }
+  MS_LOG(INFO) << "Infer finished.";
 }
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list) {
