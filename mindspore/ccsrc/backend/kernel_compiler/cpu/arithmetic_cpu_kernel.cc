@@ -18,6 +18,7 @@
 #include <map>
 #include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "nnacl/fp32/power_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,11 +35,13 @@ void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] + input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -46,23 +49,35 @@ void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] - input2[idx[1]];
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  if (output_size_ > MAX_SUB_SERIAL_SIZE) {
+    auto task = [&](size_t start, size_t end) {
+      auto iter = base_iter;
+      iter.SetPos(start);
+      for (size_t i = start; i < end; i++) {
+        out[i] = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
+        iter.GenNextPos();
+      }
+    };
+    CPUKernelUtils::ParallelFor(task, output_size_);
+  } else {
+    base_iter.SetPos(0);
+    for (size_t i = 0; i < output_size_; i++) {
+      out[i] = input1[base_iter.GetInputPosA()] - input2[base_iter.GetInputPosB()];
+      base_iter.GenNextPos();
     }
-  };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  }
 }
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = input1[idx[0]] * input2[idx[1]];
+      out[i] = input1[iter.GetInputPosA()] * input2[iter.GetInputPosB()];
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -70,12 +85,14 @@ void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      auto dividend = input1[idx[0]];
-      auto divisor = input2[idx[1]];
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
       auto zero = (T)0;
       if (divisor == zero) {
         if (dividend == zero) {
@@ -97,12 +114,14 @@ void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      auto dividend = input1[idx[0]];
-      auto divisor = input2[idx[1]];
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
       auto zero = (T)0;
       if (divisor == zero) {
         if (dividend == zero) {
@@ -124,12 +143,14 @@ void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      auto dividend = input1[idx[0]];
-      auto divisor = input2[idx[1]];
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
       auto zero = (T)0;
       if (divisor == zero) {
         if (dividend == zero) {
@@ -151,12 +172,14 @@ void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) 
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      auto x = static_cast<double>(input1[idx[0]]);
-      auto y = static_cast<double>(input2[idx[1]]);
+      auto x = static_cast<double>(input1[iter.GetInputPosA()]);
+      auto y = static_cast<double>(input2[iter.GetInputPosB()]);
+      iter.GenNextPos();
       auto data_div = x / y;
       auto data_div_min = data_div < 0.0 ? data_div : 0.0;
       auto data_div_max = data_div > 0.0 ? data_div : 0.0;
@@ -171,12 +194,14 @@ void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      auto x = static_cast<double>(input1[idx[0]]);
-      auto y = static_cast<double>(input2[idx[1]]);
+      auto x = static_cast<double>(input1[iter.GetInputPosA()]);
+      auto y = static_cast<double>(input2[iter.GetInputPosB()]);
+      iter.GenNextPos();
       auto res = x - floor(x / y) * y;
       out[i] = static_cast<T>((std::abs(res) > 1e-9) && ((res < 0.0) != (y < 0.0)) ? res + y : res);
     }
@@ -186,26 +211,48 @@ void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) 
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      auto x = static_cast<double>(input1[idx[0]]);
-      auto y = static_cast<double>(input2[idx[1]]);
-      out[i] = static_cast<T>(std::pow(x, y));
+  if constexpr (std::is_same_v<T, float>) {
+    bool broadcast = (input_shape1_ == input_shape2_) ? false : true;
+    int len = SizeToInt(output_size_);
+    float scale = 1.0;
+    float shift = 0.0;
+    Power(input1, input2, out, len, scale, shift, broadcast);
+    return;
+  }
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  if (output_size_ > MAX_POW_SERIAL_SIZE) {
+    auto task = [&](size_t start, size_t end) {
+      auto iter = base_iter;
+      iter.SetPos(start);
+      for (size_t i = start; i < end; i++) {
+        auto x = static_cast<double>(input1[iter.GetInputPosA()]);
+        auto y = static_cast<double>(input2[iter.GetInputPosB()]);
+        out[i] = static_cast<T>(std::pow(x, y));
+        iter.GenNextPos();
+      }
+    };
+    CPUKernelUtils::ParallelFor(task, output_size_);
+  } else {
+    base_iter.SetPos(0);
+    for (size_t i = 0; i < output_size_; i++) {
+      auto sx = static_cast<double>(input1[base_iter.GetInputPosA()]);
+      auto sy = static_cast<double>(input2[base_iter.GetInputPosB()]);
+      out[i] = static_cast<T>(std::pow(sx, sy));
+      base_iter.GenNextPos();
     }
-  };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  }
 }
 
 template <typename T>
 void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      T diff = input1[idx[0]] - input2[idx[1]];
+      T diff = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
       out[i] = diff * diff;
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -213,11 +260,14 @@ void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2,
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> idx;
-      GenIndex(i, &idx);
-      out[i] = (T)atan2(static_cast<double>(input1[idx[0]]), static_cast<double>(input2[idx[1]]));
+      out[i] =
+        (T)atan2(static_cast<double>(input1[iter.GetInputPosA()]), static_cast<double>(input2[iter.GetInputPosB()]));
+      iter.GenNextPos();
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);
@@ -313,38 +363,6 @@ bool ArithmeticCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const
     return false;
   }
   return true;
-}
-
-template <typename T>
-void ArithmeticCPUKernel<T>::GenIndex(size_t num, std::vector<size_t> *idx) {  // broadcast index
-  std::vector<size_t> tmp;
-  for (size_t i = 0; i < output_shape_.size() - 1; ++i) {
-    if (output_element_num_[i] > num) {
-      tmp.push_back(0);
-    } else {
-      tmp.push_back(num / output_element_num_[i]);
-      num %= output_element_num_[i];
-    }
-  }
-  tmp.push_back(num);
-  size_t idx1 = 0;
-  size_t idx2 = 0;
-  for (size_t k = 0; k < tmp.size() - 1; ++k) {
-    if (input_shape1_[k] > 1) {
-      idx1 += tmp[k] * input_element_num1_[k];
-    }
-    if (input_shape2_[k] > 1) {
-      idx2 += tmp[k] * input_element_num2_[k];
-    }
-  }
-  if (input_shape1_[tmp.size() - 1] > 1) {
-    idx1 += tmp[tmp.size() - 1];
-  }
-  if (input_shape2_[tmp.size() - 1] > 1) {
-    idx2 += tmp[tmp.size() - 1];
-  }
-  idx->push_back(idx1);
-  idx->push_back(idx2);
 }
 }  // namespace kernel
 }  // namespace mindspore
