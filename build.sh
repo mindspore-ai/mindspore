@@ -26,7 +26,7 @@ usage()
   echo "              [-a on|off] [-p on|off] [-i] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 10.1|11.1|310|910] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-H on|off] \\"
-  echo "              [-A on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
+  echo "              [-A on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|avx512|off] \\"
   echo "              [-L Tensor-RT path]  \\"
   echo ""
   echo "Options:"
@@ -60,7 +60,7 @@ usage()
   echo "    -l Compile with python dependency, default on"
   echo "    -S Enable enable download cmake compile dependency from gitee , default off"
   echo "    -k Enable make clean, clean up compilation generated cache "
-  echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|avx|neon|off], default off for lite and avx for CPU"
+  echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|neon|avx|avx512|off], default off for lite and avx for CPU"
   echo "    -H Enable hidden"
   echo "    -L Link and specify Tensor-RT library path, default disable Tensor-RT lib linking"
 }
@@ -284,12 +284,12 @@ checkopts()
         fi
         ;;
       W)
-        if [[ "$OPTARG" != "sse" && "$OPTARG" != "off" && "$OPTARG" != "avx" && "$OPTARG" != "neon" ]]; then
-          echo "Invalid value ${OPTARG} for option -W, -W parameter must be sse|neon|avx|off"
+        if [[ "$OPTARG" != "sse" && "$OPTARG" != "off" && "$OPTARG" != "avx" && "$OPTARG" != "avx512" && "$OPTARG" != "neon" ]]; then
+          echo "Invalid value ${OPTARG} for option -W, -W parameter must be sse|neon|avx|avx512|off"
           usage
           exit 1
         fi
-        if [[ "$OPTARG" == "sse" || "$OPTARG" == "avx" ]]; then
+        if [[ "$OPTARG" == "sse" || "$OPTARG" == "avx" || "$OPTARG" == "avx512" ]]; then
           X86_64_SIMD="$OPTARG"
         fi
         if [[ "$OPTARG" == "neon" ]]; then
