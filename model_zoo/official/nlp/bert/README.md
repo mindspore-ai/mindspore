@@ -608,9 +608,9 @@ The command above will run in the background, you can view training logs in ner_
 If you choose F1 as assessment method, the result will be as follows:
 
 ```text
-Precision 0.920507
-Recall 0.948683
-F1 0.920507
+Precision 0.868245
+Recall 0.865611
+F1 0.866926
 ```
 
 #### evaluation on msra dataset when running on Ascend
