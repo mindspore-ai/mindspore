@@ -20,6 +20,7 @@
 
 #include "common/trans.h"
 #include "utils/ms_context.h"
+#include "debug/anf_ir_utils.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -62,10 +63,11 @@ void SetConstNodeId(const AnfNodePtr &node, std::map<std::string, size_t> *const
   if (!node->isa<ValueNode>()) {
     return;
   }
-  auto iter = const_map->find(node->fullname_with_scope());
+  std::string node_name = GetKernelNodeName(node);
+  auto iter = const_map->find(node_name);
   if (iter == const_map->end()) {
     auto const_idx = const_map->size() + 1;
-    (*const_map)[node->fullname_with_scope()] = const_idx;
+    (*const_map)[node_name] = const_idx;
   }
 }
 

@@ -17,12 +17,13 @@
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include <map>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "debug/anf_ir_utils.h"
 
 namespace mindspore {
 void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  std::string kernel_name = node->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(node);
   if (!dump_json_parser.NeedDump(kernel_name)) {
     return;
   }
@@ -40,7 +41,7 @@ void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
 
 void CPUE2eDump::DumpCNodeInputs(const CNodePtr &node, const std::string &dump_path) {
   MS_EXCEPTION_IF_NULL(node);
-  std::string kernel_name = node->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(node);
   MS_LOG(DEBUG) << "Start e2e dump CNode inputs data: " << kernel_name;
   DumpJsonParser::GetInstance().MatchKernel(kernel_name);
   DumpInputImpl(node, dump_path, &kernel_name);
@@ -48,7 +49,7 @@ void CPUE2eDump::DumpCNodeInputs(const CNodePtr &node, const std::string &dump_p
 
 void CPUE2eDump::DumpCNodeOutputs(const CNodePtr &node, const std::string &dump_path) {
   MS_EXCEPTION_IF_NULL(node);
-  std::string kernel_name = node->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(node);
   MS_LOG(DEBUG) << "Start e2e dump CNode outputs data: " << kernel_name;
   DumpJsonParser::GetInstance().MatchKernel(kernel_name);
   DumpOutputImpl(node, dump_path, &kernel_name);
@@ -113,7 +114,7 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
     return;
   }
-  std::string node_name = anf_node->fullname_with_scope();
+  std::string node_name = GetKernelNodeName(anf_node);
   std::string dump_name = node_name;
   if (anf_node->isa<ValueNode>()) {
     auto iter = const_map->find(node_name);

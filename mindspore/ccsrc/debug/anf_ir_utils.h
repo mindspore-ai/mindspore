@@ -111,6 +111,8 @@ class AnfExporter {
 
 void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph);
 void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs);
+
+std::string GetKernelNodeName(const AnfNodePtr &anf_node);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_

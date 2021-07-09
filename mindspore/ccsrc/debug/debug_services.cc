@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include "pybind11/embed.h"
 #ifdef ONLINE_DBG_MODE
+#include "debug/anf_ir_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #endif
 #include "debug/debugger/tensor_summary.h"
@@ -978,7 +979,7 @@ bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNode
     auto input_size = AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_size; ++j) {
       auto input_kernel = kernel->input(j + 1);
-      std::string input_kernel_name = input_kernel->fullname_with_scope();
+      std::string input_kernel_name = GetKernelNodeName(input_kernel);
       auto found = w_name.find_last_of('/');
       if (found != std::string::npos && w_name.substr(found + 1) == input_kernel_name) return true;
     }
@@ -1037,7 +1038,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNod
   MS_EXCEPTION_IF_NULL(kernel);
   std::vector<std::shared_ptr<TensorData>> result;
   auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
-  auto kernel_name = kernel->fullname_with_scope();
+  auto kernel_name = GetKernelNodeName(kernel);
   for (size_t j = 0; j < output_size; ++j) {
     auto tensor_name_with_slot = kernel_name + ":" + std::to_string(j);
     auto tensor = tensor_loader_->GetTensor(tensor_name_with_slot);
