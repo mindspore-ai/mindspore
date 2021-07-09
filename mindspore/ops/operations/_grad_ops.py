@@ -1544,8 +1544,6 @@ class PReLUGrad(PrimitiveWithInfer):
         pass
 
     def infer_shape(self, y_backprop_shape, a_shape, w_shape):
-        if len(a_shape) == 1:
-            raise ValueError(f'For \'{self.name}\' input_x rank 1 is not supported.')
         return y_backprop_shape, w_shape
 
     def infer_dtype(self, y_backprop_dtype, a_dtype, w_dtype):
