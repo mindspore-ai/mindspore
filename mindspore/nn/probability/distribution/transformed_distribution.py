@@ -52,6 +52,7 @@ class TransformedDistribution(Distribution):
         `reset_parameters` followed by `add_parameter`.
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
@@ -75,6 +76,8 @@ class TransformedDistribution(Distribution):
         >>> x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
         >>> tx = Tensor(x, dtype=mindspore.float32)
         >>> cdf, sample = net(tx)
+        >>> print(sample.shape)
+        (2, 3)
     """
 
     def __init__(self,

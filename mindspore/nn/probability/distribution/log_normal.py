@@ -29,9 +29,9 @@ class LogNormal(msd.TransformedDistribution):
     logarithm is normally distributed. It is constructed as the exponential transformation of a Normal distribution.
 
     Args:
-        loc (int, float, list, numpy.ndarray, Tensor): The mean of the underlying Normal distribution.
+        loc (int, float, list, numpy.ndarray, Tensor): The mean of the underlying Normal distribution. Default: None.
         scale (int, float, list, numpy.ndarray, Tensor): The standard deviation of the underlying
-          Normal distribution.
+          Normal distribution. Default: None.
         seed (int): the seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'LogNormal'.
@@ -45,6 +45,7 @@ class LogNormal(msd.TransformedDistribution):
         `dtype` must be a float type because LogNormal distributions are continuous.
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
@@ -57,6 +58,8 @@ class LogNormal(msd.TransformedDistribution):
         ...         return self.ln.prob(x_)
         >>> pdf = Prob()
         >>> output = pdf(Tensor([1.0, 2.0], dtype=mindspore.float32))
+        >>> print(output.shape)
+        (2, 2)
     """
 
     def __init__(self,

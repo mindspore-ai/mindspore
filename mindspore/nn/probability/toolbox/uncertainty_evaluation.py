@@ -58,10 +58,8 @@ class UncertaintyEvaluation:
 
     Examples:
         >>> network = LeNet()
-        >>> param_dict = load_checkpoint('checkpoint_lenet.ckpt')
-        >>> load_param_into_net(network, param_dict)
-        >>> ds_train = create_dataset('workspace/mnist/train')
-        >>> ds_eval = create_dataset('workspace/mnist/test')
+        >>> ds_train = create_dataset('workspace/mnist/train')   # handle train data
+        >>> ds_eval = create_dataset('workspace/mnist/test')   # handle test data
         >>> evaluation = UncertaintyEvaluation(model=network,
         ...                                    train_dataset=ds_train,
         ...                                    task_type='classification',

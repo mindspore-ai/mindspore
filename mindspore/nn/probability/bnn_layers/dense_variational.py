@@ -136,19 +136,19 @@ class DenseReparam(_DenseVariational):
             Note that if the type of activation is Cell, it must be instantiated beforehand.
             Default: None.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        weight_prior_fn: The prior distribution for weight.
+        weight_prior_fn (Cell): The prior distribution for weight.
             It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
-        weight_posterior_fn: The posterior distribution for sampling weight.
+        weight_posterior_fn (function): The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
             distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
-        bias_prior_fn: The prior distribution for bias vector. It must return
+        bias_prior_fn (Cell): The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
-        bias_posterior_fn: The posterior distribution for sampling bias vector.
+        bias_posterior_fn (function): The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
             distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
@@ -163,7 +163,11 @@ class DenseReparam(_DenseVariational):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = DenseReparam(3, 4)
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn.probability import bnn_layers
+        >>> net = bnn_layers.DenseReparam(3, 4)
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> output = net(input).shape
         >>> print(output)
@@ -225,19 +229,19 @@ class DenseLocalReparam(_DenseVariational):
             Note that if the type of activation is Cell, it must be instantiated beforehand.
             Default: None.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        weight_prior_fn: The prior distribution for weight.
+        weight_prior_fn (Cell): The prior distribution for weight.
             It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
-        weight_posterior_fn: The posterior distribution for sampling weight.
+        weight_posterior_fn (function): The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
             distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
-        bias_prior_fn: The prior distribution for bias vector. It must return
+        bias_prior_fn (Cell): The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
-        bias_posterior_fn: The posterior distribution for sampling bias vector.
+        bias_posterior_fn (function): The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
             distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
@@ -252,7 +256,11 @@ class DenseLocalReparam(_DenseVariational):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = DenseLocalReparam(3, 4)
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn.probability import bnn_layers
+        >>> net = bnn_layers.DenseLocalReparam(3, 4)
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> output = net(input).shape
         >>> print(output)

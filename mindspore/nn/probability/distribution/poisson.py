@@ -29,7 +29,7 @@ class Poisson(Distribution):
     Poisson Distribution.
 
     Args:
-        rate (list, numpy.ndarray, Tensor): The rate of the Poisson distribution..
+        rate (list, numpy.ndarray, Tensor): The rate of the Poisson distribution. Default: None.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Poisson'.

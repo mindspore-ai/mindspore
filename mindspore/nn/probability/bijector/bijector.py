@@ -278,7 +278,7 @@ class Bijector(Cell):
         Args:
             name (str): The name of the function.
             *args (list): A list of positional arguments that the function needs.
-            **kwargs (dictionary): A dictionary of keyword arguments that the function needs.
+            **kwargs (dict): A dictionary of keyword arguments that the function needs.
         """
         if name == 'forward':
             return self.forward(*args, **kwargs)
