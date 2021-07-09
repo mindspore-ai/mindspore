@@ -20,39 +20,48 @@
 
 template <typename T>
 __global__ void CalPReLUGradKernel(size_t size, size_t weight_size, size_t per_channel_size,
-                                   const T *dy, const T *x, const T *w, T *dx, T *dw) {
+                                   const T *dy, const T *x, const T *w, T *dx, float *dw_array) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    size_t index = 0;
-    if (weight_size != 1) {
-      index = (pos / per_channel_size) % weight_size;
+    size_t channel_id = weight_size == 1 ? 0 : (pos / per_channel_size) % weight_size;
+    dx[pos] = pos[x] <= static_cast<T>(0) ? w[channel_id] * dy[pos] : dy[pos];
+
+    if (pos[x] < static_cast<T>(0)) {
+      size_t index = channel_id * blockDim.x * gridDim.x + pos;
+      dw_array[index] += static_cast<float>(x[pos] * dy[pos]);
     }
-    T threshold = static_cast<T>(0);
-    dx[pos] = pos[x] <= threshold ? w[index] * dy[pos] : dy[pos];
-    if (pos[x] < threshold) {
-      MsAtomicAdd(dw + index, x[pos] * dy[pos]);
-    }
+  }
+}
+
+__global__ void InitDwArrayData(size_t dw_array_size, float *dw_array) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < dw_array_size; i += blockDim.x * gridDim.x) {
+    dw_array[i] = 0.0;
   }
 }
 
 template <typename T>
-__global__ void InitDwData(size_t weight_size, T *dw) {
-  T init_value = static_cast<T>(0);
+__global__ void ComputeDwData(size_t weight_size, size_t thread_num, const float *dw_array, T *dw) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < weight_size; i += blockDim.x * gridDim.x) {
-    dw[i] = init_value;
+    T value = 0.0;
+    for (size_t j = 0; j < thread_num; j++) {
+      value += dw_array[i * thread_num + j];
+    }
+    dw[i] = static_cast<T>(value);
   }
 }
-
 
 template <typename T>
 void CalPReLUGrad(size_t size, size_t weight_size, size_t per_channel_size,
-                  const T *dy, const T *x, const T *w, T *dx, T *dw, cudaStream_t cuda_stream) {
-  InitDwData<<<GET_BLOCKS(weight_size), GET_THREADS, 0, cuda_stream>>>(weight_size, dw);
+                  const T *dy, const T *x, const T *w, T *dx, T *dw, float *dw_array, cudaStream_t cuda_stream) {
+  size_t thread_num = static_cast<size_t>(GET_BLOCKS(size) * GET_THREADS);
+  size_t dw_array_size = weight_size * thread_num;
+  InitDwArrayData<<<GET_BLOCKS(dw_array_size), GET_THREADS, 0, cuda_stream>>>(dw_array_size, dw_array);
   CalPReLUGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, weight_size, per_channel_size,
-                                                                        dy, x, w, dx, dw);
+                                                                        dy, x, w, dx, dw_array);
+  ComputeDwData<<<GET_BLOCKS(weight_size), GET_THREADS, 0, cuda_stream>>>(weight_size, thread_num, dw_array, dw);
   return;
 }
 
-template void CalPReLUGrad(size_t, size_t, size_t, const float *, const float *, const float *, float *, float *,
-                           cudaStream_t);
-template void CalPReLUGrad(size_t, size_t, size_t, const half *, const half *, const half *, half *, half *,
-                           cudaStream_t);
+template void CalPReLUGrad(size_t, size_t, size_t, const float *, const float *, const float *,
+                           float *, float *, float *, cudaStream_t);
+template void CalPReLUGrad(size_t, size_t, size_t, const half *, const half *, const half *,
+                           half *, half *, float *, cudaStream_t);

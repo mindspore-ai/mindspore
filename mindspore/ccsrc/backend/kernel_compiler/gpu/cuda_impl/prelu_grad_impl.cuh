@@ -21,5 +21,5 @@
 
 template <typename T>
 void CalPReLUGrad(size_t input_size, size_t weight_size, size_t per_channel_size,
-                  const T *dy, const T *x, const T *w, T *dx, T *dw, cudaStream_t cuda_stream);
+                  const T *dy, const T *x, const T *w, T *dx, T *dw, float *dw_array, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_PRELU_GRAD_H_

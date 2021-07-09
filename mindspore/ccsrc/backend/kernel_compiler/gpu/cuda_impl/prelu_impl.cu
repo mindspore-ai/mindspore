@@ -18,22 +18,18 @@
 
 template <typename T>
 __global__ void CalPReLUKernel(size_t size, size_t weight_size, size_t per_channel_size,
-                               const T *input_addr, const T *weight_addr, T *output_addr) {
+                               const T *input, const T *weight, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    size_t index = 0;
-    if (weight_size != 1) {
-      index = (pos / per_channel_size) % weight_size;
-    }
-    T threshold = static_cast<T>(0);
-    output_addr[pos] = input_addr[pos] < threshold ? weight_addr[index] * input_addr[pos] : input_addr[pos];
+    size_t channel_id = weight_size == 1 ? 0 : (pos / per_channel_size) % weight_size;
+    output[pos] = input[pos] < static_cast<T>(0) ? weight[channel_id] * input[pos] :input[pos];
   }
 }
 
 template <typename T>
 void CalPReLU(size_t size, size_t weight_size, size_t per_channel_size,
-              const T *input_addr, const T *weight_addr, T *output_addr, cudaStream_t cuda_stream) {
+              const T *input, const T *weight, T *output, cudaStream_t cuda_stream) {
   CalPReLUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, weight_size, per_channel_size,
-                                                                    input_addr, weight_addr, output_addr);
+                                                                    input, weight, output);
   return;
 }
 

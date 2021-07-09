@@ -36,15 +36,16 @@ class PReLUGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto *dy = GetDeviceAddress<T>(inputs, 0);
     auto *x = GetDeviceAddress<T>(inputs, 1);
     auto *w = GetDeviceAddress<T>(inputs, 2);
     auto *dx = GetDeviceAddress<T>(outputs, 0);
     auto *dw = GetDeviceAddress<T>(outputs, 1);
+    auto *dw_array = GetDeviceAddress<float>(workspace, 0);
 
-    CalPReLUGrad(input_length_, weight_length_, per_channel_length_, dy, x, w, dx, dw,
+    CalPReLUGrad(input_length_, weight_length_, per_channel_length_, dy, x, w, dx, dw, dw_array,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -84,6 +85,7 @@ class PReLUGradGpuKernel : public GpuKernel {
                         << channel_num << ", but got weight shape " << weight_shape;
     }
     weight_length_ = weight_shape[0];
+    workspace_size_ = weight_length_ * IntToSize(GET_BLOCKS(input_length_) * GET_THREADS) * sizeof(float);
     InitSizeLists();
     return true;
   }
@@ -105,12 +107,14 @@ class PReLUGradGpuKernel : public GpuKernel {
     input_size_list_.push_back(weight_length_ * data_size);
     output_size_list_.push_back(input_length_ * data_size);
     output_size_list_.push_back(weight_length_ * data_size);
+    workspace_size_list_.push_back(workspace_size_);
   }
 
  private:
   size_t input_length_{0};
   size_t weight_length_{0};
   size_t per_channel_length_{0};
+  size_t workspace_size_{0};
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
