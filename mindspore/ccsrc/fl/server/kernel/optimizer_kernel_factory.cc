@@ -18,7 +18,7 @@
 #include <utility>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 bool OptimizerKernelFactory::Matched(const ParamsInfo &params_info, const CNodePtr &kernel_node) {
@@ -66,5 +66,5 @@ bool OptimizerKernelFactory::Matched(const ParamsInfo &params_info, const CNodeP
 }
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

@@ -18,7 +18,7 @@
 #include <utility>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 void MemoryRegister::RegisterAddressPtr(const std::string &name, const AddressPtr &address) {
   addresses_.try_emplace(name, address);
@@ -32,5 +32,5 @@ void MemoryRegister::StoreUint64Array(std::unique_ptr<size_t[]> *array) { uint64
 
 void MemoryRegister::StoreCharArray(std::unique_ptr<char[]> *array) { char_arrays_.push_back(std::move(*array)); }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

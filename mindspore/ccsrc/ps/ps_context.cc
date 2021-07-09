@@ -286,8 +286,9 @@ void PSContext::GenerateResetterRound() {
     return;
   }
 
-  binary_server_context = (is_parameter_server_mode << 0) | (is_federated_learning_mode << 1) |
-                          (is_mixed_training_mode << 2) | (secure_aggregation_ << 3);
+  binary_server_context = ((unsigned int)is_parameter_server_mode << 0) |
+                          ((unsigned int)is_federated_learning_mode << 1) |
+                          ((unsigned int)is_mixed_training_mode << 2) | ((unsigned int)secure_aggregation_ << 3);
   if (kServerContextToResetRoundMap.count(binary_server_context) == 0) {
     resetter_round_ = ResetterRound::kNoNeedToReset;
   } else {

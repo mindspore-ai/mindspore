@@ -26,13 +26,13 @@ bool CipherUnmask::UnMask(const std::map<std::string, AddressPtr> &data) {
   clock_t start_time = clock();
   std::vector<float> noise;
 
-  cipher_init_->cipher_meta_storage_.GetClientNoisesFromServer(ps::server::kCtxClientNoises, &noise);
+  cipher_init_->cipher_meta_storage_.GetClientNoisesFromServer(fl::server::kCtxClientNoises, &noise);
   if (noise.size() != cipher_init_->featuremap_) {
     MS_LOG(ERROR) << " CipherMgr UnMask ERROR";
     return false;
   }
 
-  size_t data_size = ps::server::LocalMetaStore::GetInstance().value<size_t>(ps::server::kCtxFedAvgTotalDataSize);
+  size_t data_size = fl::server::LocalMetaStore::GetInstance().value<size_t>(fl::server::kCtxFedAvgTotalDataSize);
   int sum_size = 0;
   for (auto iter = data.begin(); iter != data.end(); ++iter) {
     int size_data = iter->second->size / sizeof(float);

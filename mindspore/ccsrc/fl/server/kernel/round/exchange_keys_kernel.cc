@@ -20,7 +20,7 @@
 #include <memory>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void ExchangeKeysKernel::InitKernel(size_t) {
@@ -100,5 +100,5 @@ bool ExchangeKeysKernel::Reset() {
 REG_ROUND_KERNEL(exchangeKeys, ExchangeKeysKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

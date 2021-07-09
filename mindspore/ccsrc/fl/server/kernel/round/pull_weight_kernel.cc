@@ -22,10 +22,9 @@
 #include "fl/server/model_store.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
-uint64_t PullWeightKernel::retry_count_ = 0;
 void PullWeightKernel::InitKernel(size_t) {
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
@@ -35,7 +34,7 @@ void PullWeightKernel::InitKernel(size_t) {
   }
 }
 
-bool PullWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool PullWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   MS_LOG(DEBUG) << "Launching PullWeightKernel kernel.";
   void *req_data = inputs[0]->addr;
@@ -59,13 +58,16 @@ bool PullWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   return true;
 }
 
-bool PullWeightKernel::Reset() { return true; }
+bool PullWeightKernel::Reset() {
+  retry_count_ = 0;
+  return true;
+}
 
 void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::RequestPullWeight *pull_weight_req) {
   std::map<std::string, AddressPtr> feature_maps = {};
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
   size_t pull_weight_iter = static_cast<size_t>(pull_weight_req->iteration());
-  // The PullWeight round should be in the same iteration as other rounds.
+  // The iteration from worker should be the same as server's, otherwise return SucNotReady so that worker could retry.
   if (pull_weight_iter != current_iter) {
     std::string reason = "PullWeight iteration " + std::to_string(pull_weight_iter) +
                          " is invalid. Server current iteration: " + std::to_string(current_iter);
@@ -76,15 +78,19 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
 
   std::vector<std::string> weight_names = {};
   auto weights_names_fbs = pull_weight_req->weight_names();
+  if (weights_names_fbs == nullptr) {
+    MS_LOG(ERROR) << "weights_names_fbs is nullptr.";
+    return;
+  }
   for (size_t i = 0; i < weights_names_fbs->size(); i++) {
     weight_names.push_back(weights_names_fbs->Get(i)->str());
   }
   if (!executor_->IsWeightAggrDone(weight_names)) {
-    retry_count_++;
+    ++retry_count_;
     std::string reason = "The aggregation for the weights is not done yet.";
     BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
-    if (retry_count_ % kPrintPullWeightForEveryRetryTime == 1) {
-      MS_LOG(WARNING) << reason << " Retry count is " << retry_count_;
+    if (retry_count_.load() % kPrintPullWeightForEveryRetryTime == 1) {
+      MS_LOG(WARNING) << reason << " Retry count is " << retry_count_.load();
     }
     return;
   }
@@ -131,5 +137,5 @@ void PullWeightKernel::BuildPullWeightRsp(std::shared_ptr<FBBuilder> fbb, const 
 REG_ROUND_KERNEL(pullWeight, PullWeightKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

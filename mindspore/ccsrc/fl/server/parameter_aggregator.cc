@@ -23,7 +23,7 @@
 #include <algorithm>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -199,8 +199,8 @@ bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
 }
 
 bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &cnode) {
-  if (PSContext::instance()->server_mode() == kServerModeFL ||
-      PSContext::instance()->server_mode() == kServerModeHybrid) {
+  if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
+      ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
     MS_LOG(DEBUG) << "Federated learning mode doesn't need optimizer kernel.";
     return true;
   }
@@ -319,15 +319,15 @@ bool ParameterAggregator::GenerateOptimizerKernelParams(const std::shared_ptr<ke
   return true;
 }
 
-std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &cnode) {
+std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &) {
   std::vector<std::string> aggregation_algorithm = {};
-  if (PSContext::instance()->server_mode() == kServerModeFL ||
-      PSContext::instance()->server_mode() == kServerModeHybrid) {
+  if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
+      ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
     aggregation_algorithm.push_back("FedAvg");
-  } else if (PSContext::instance()->server_mode() == kServerModePS) {
+  } else if (ps::PSContext::instance()->server_mode() == ps::kServerModePS) {
     aggregation_algorithm.push_back("DenseGradAccum");
   } else {
-    MS_LOG(ERROR) << "Server doesn't support mode " << PSContext::instance()->server_mode();
+    MS_LOG(ERROR) << "Server doesn't support mode " << ps::PSContext::instance()->server_mode();
   }
 
   MS_LOG(INFO) << "Aggregation algorithm selection result: " << aggregation_algorithm;
@@ -344,5 +344,5 @@ template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::Aggregat
                                                 const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
                                                 std::shared_ptr<MemoryRegister> memory_register);
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

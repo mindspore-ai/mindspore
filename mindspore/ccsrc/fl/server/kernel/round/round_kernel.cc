@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 RoundKernel::RoundKernel() : name_(""), current_count_(0), required_count_(0), error_reason_(""), running_(true) {
@@ -61,25 +61,25 @@ RoundKernel::~RoundKernel() {
   }
 }
 
-void RoundKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message) { return; }
+void RoundKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) { return; }
 
-void RoundKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) { return; }
+void RoundKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) { return; }
 
-void RoundKernel::StopTimer() {
+void RoundKernel::StopTimer() const {
   if (stop_timer_cb_) {
     stop_timer_cb_();
   }
   return;
 }
 
-void RoundKernel::FinishIteration() {
+void RoundKernel::FinishIteration() const {
   if (finish_iteration_cb_) {
     finish_iteration_cb_(true, "");
   }
   return;
 }
 
-void RoundKernel::Release(AddressPtr addr_ptr) {
+void RoundKernel::Release(const AddressPtr &addr_ptr) {
   if (addr_ptr == nullptr) {
     MS_LOG(ERROR) << "Data to be released is empty.";
     return;
@@ -91,13 +91,13 @@ void RoundKernel::Release(AddressPtr addr_ptr) {
 
 void RoundKernel::set_name(const std::string &name) { name_ = name; }
 
-void RoundKernel::set_stop_timer_cb(StopTimerCb timer_stopper) { stop_timer_cb_ = timer_stopper; }
+void RoundKernel::set_stop_timer_cb(const StopTimerCb &timer_stopper) { stop_timer_cb_ = timer_stopper; }
 
-void RoundKernel::set_finish_iteration_cb(FinishIterCb finish_iteration_cb) {
+void RoundKernel::set_finish_iteration_cb(const FinishIterCb &finish_iteration_cb) {
   finish_iteration_cb_ = finish_iteration_cb;
 }
 
-void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, void *data, size_t len) {
+void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, const void *data, size_t len) {
   if (data == nullptr) {
     MS_LOG(ERROR) << "The data is nullptr.";
     return;
@@ -129,5 +129,5 @@ void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, void *d
 }
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

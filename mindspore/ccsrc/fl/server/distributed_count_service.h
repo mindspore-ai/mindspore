@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_DISTRIBUTED_COUNT_SERVICE_H_
-#define MINDSPORE_CCSRC_PS_SERVER_DISTRIBUTED_COUNT_SERVICE_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_DISTRIBUTED_COUNT_SERVICE_H_
+#define MINDSPORE_CCSRC_FL_SERVER_DISTRIBUTED_COUNT_SERVICE_H_
 
 #include <set>
 #include <string>
@@ -27,7 +27,7 @@
 #include "ps/core/communicator/tcp_communicator.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 constexpr uint32_t kDefaultCountingServerRank = 0;
 constexpr auto kModuleDistributedCountService = "DistributedCountService";
@@ -54,10 +54,10 @@ class DistributedCountService {
   }
 
   // Initialize counter service with the server node because communication is needed.
-  void Initialize(const std::shared_ptr<core::ServerNode> &server_node, uint32_t counting_server_rank);
+  void Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node, uint32_t counting_server_rank);
 
   // Register message callbacks of the counting server to handle messages sent by the other servers.
-  void RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator);
+  void RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator);
 
   // Register counter to the counting server for the name with its threshold count in server cluster dimension and
   // first/last count event callbacks.
@@ -87,15 +87,15 @@ class DistributedCountService {
   DistributedCountService &operator=(const DistributedCountService &) = delete;
 
   // Callback for the reporting count message from other servers. Only counting server will call this method.
-  void HandleCountRequest(const std::shared_ptr<core::MessageHandler> &message);
+  void HandleCountRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Callback for the querying whether threshold count is reached message from other servers. Only counting
   // server will call this method.
-  void HandleCountReachThresholdRequest(const std::shared_ptr<core::MessageHandler> &message);
+  void HandleCountReachThresholdRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Callback for the first/last event message from the counting server. Only other servers will call this
   // method.
-  void HandleCounterEvent(const std::shared_ptr<core::MessageHandler> &message);
+  void HandleCounterEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Call the callbacks when the first/last count event is triggered.
   bool TriggerCounterEvent(const std::string &name);
@@ -103,8 +103,8 @@ class DistributedCountService {
   bool TriggerLastCountEvent(const std::string &name);
 
   // Members for the communication between counting server and other servers.
-  std::shared_ptr<core::ServerNode> server_node_;
-  std::shared_ptr<core::TcpCommunicator> communicator_;
+  std::shared_ptr<ps::core::ServerNode> server_node_;
+  std::shared_ptr<ps::core::TcpCommunicator> communicator_;
   uint32_t local_rank_;
   uint32_t server_num_;
 
@@ -126,6 +126,6 @@ class DistributedCountService {
   std::unordered_map<std::string, std::mutex> mutex_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_DISTRIBUTED_COUNT_SERVICE_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_DISTRIBUTED_COUNT_SERVICE_H_

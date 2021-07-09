@@ -20,19 +20,19 @@
 #include <vector>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
-void DistributedCountService::Initialize(const std::shared_ptr<core::ServerNode> &server_node,
+void DistributedCountService::Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node,
                                          uint32_t counting_server_rank) {
   server_node_ = server_node;
   MS_EXCEPTION_IF_NULL(server_node_);
   local_rank_ = server_node_->rank_id();
-  server_num_ = PSContext::instance()->initial_server_num();
+  server_num_ = ps::PSContext::instance()->initial_server_num();
   counting_server_rank_ = counting_server_rank;
   return;
 }
 
-void DistributedCountService::RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
+void DistributedCountService::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
   communicator_ = communicator;
   MS_EXCEPTION_IF_NULL(communicator_);
   communicator_->RegisterMsgCallBack(
@@ -94,14 +94,14 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
     report_count_req.set_id(id);
 
     std::shared_ptr<std::vector<unsigned char>> report_cnt_rsp_msg = nullptr;
-    if (!communicator_->SendPbRequest(report_count_req, counting_server_rank_, core::TcpUserCommand::kCount,
+    if (!communicator_->SendPbRequest(report_count_req, counting_server_rank_, ps::core::TcpUserCommand::kCount,
                                       &report_cnt_rsp_msg)) {
       MS_LOG(ERROR) << "Sending reporting count message to leader server failed for " << name;
       return false;
     }
 
     CountResponse count_rsp;
-    count_rsp.ParseFromArray(report_cnt_rsp_msg->data(), report_cnt_rsp_msg->size());
+    count_rsp.ParseFromArray(report_cnt_rsp_msg->data(), SizeToInt(report_cnt_rsp_msg->size()));
     if (!count_rsp.result()) {
       MS_LOG(ERROR) << "Reporting count failed:" << count_rsp.reason();
       return false;
@@ -126,13 +126,14 @@ bool DistributedCountService::CountReachThreshold(const std::string &name) {
 
     std::shared_ptr<std::vector<unsigned char>> query_cnt_enough_rsp_msg = nullptr;
     if (!communicator_->SendPbRequest(count_reach_threshold_req, counting_server_rank_,
-                                      core::TcpUserCommand::kReachThreshold, &query_cnt_enough_rsp_msg)) {
+                                      ps::core::TcpUserCommand::kReachThreshold, &query_cnt_enough_rsp_msg)) {
       MS_LOG(ERROR) << "Sending querying whether count reaches threshold message to leader server failed for " << name;
       return false;
     }
 
     CountReachThresholdResponse count_reach_threshold_rsp;
-    count_reach_threshold_rsp.ParseFromArray(query_cnt_enough_rsp_msg->data(), query_cnt_enough_rsp_msg->size());
+    count_reach_threshold_rsp.ParseFromArray(query_cnt_enough_rsp_msg->data(),
+                                             SizeToInt(query_cnt_enough_rsp_msg->size()));
     return count_reach_threshold_rsp.is_enough();
   }
 }
@@ -164,14 +165,14 @@ bool DistributedCountService::ReInitForScaling() {
   return true;
 }
 
-void DistributedCountService::HandleCountRequest(const std::shared_ptr<core::MessageHandler> &message) {
+void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     MS_LOG(ERROR) << "Message is nullptr.";
     return;
   }
 
   CountRequest report_count_req;
-  report_count_req.ParseFromArray(message->data(), message->len());
+  report_count_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = report_count_req.name();
   const std::string &id = report_count_req.id();
 
@@ -213,14 +214,15 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<core::Mes
   return;
 }
 
-void DistributedCountService::HandleCountReachThresholdRequest(const std::shared_ptr<core::MessageHandler> &message) {
+void DistributedCountService::HandleCountReachThresholdRequest(
+  const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     MS_LOG(ERROR) << "Message is nullptr.";
     return;
   }
 
   CountReachThresholdRequest count_reach_threshold_req;
-  count_reach_threshold_req.ParseFromArray(message->data(), message->len());
+  count_reach_threshold_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = count_reach_threshold_req.name();
 
   std::unique_lock<std::mutex> lock(mutex_[name]);
@@ -236,7 +238,7 @@ void DistributedCountService::HandleCountReachThresholdRequest(const std::shared
   return;
 }
 
-void DistributedCountService::HandleCounterEvent(const std::shared_ptr<core::MessageHandler> &message) {
+void DistributedCountService::HandleCounterEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     MS_LOG(ERROR) << "Message is nullptr.";
     return;
@@ -248,7 +250,7 @@ void DistributedCountService::HandleCounterEvent(const std::shared_ptr<core::Mes
   communicator_->SendResponse(couter_event_rsp_msg.data(), couter_event_rsp_msg.size(), message);
 
   CounterEvent counter_event;
-  counter_event.ParseFromArray(message->data(), message->len());
+  counter_event.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &type = counter_event.type();
   const auto &name = counter_event.name();
 
@@ -289,7 +291,7 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name) {
 
   // Broadcast to all follower servers.
   for (uint32_t i = 1; i < server_num_; i++) {
-    if (!communicator_->SendPbRequest(first_count_event, i, core::TcpUserCommand::kCounterEvent)) {
+    if (!communicator_->SendPbRequest(first_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating first count event to server " << i << " failed.";
       return false;
     }
@@ -307,7 +309,7 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name) {
 
   // Broadcast to all follower servers.
   for (uint32_t i = 1; i < server_num_; i++) {
-    if (!communicator_->SendPbRequest(last_count_event, i, core::TcpUserCommand::kCounterEvent)) {
+    if (!communicator_->SendPbRequest(last_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating last count event to server " << i << " failed.";
       return false;
     }
@@ -317,5 +319,5 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name) {
   return true;
 }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

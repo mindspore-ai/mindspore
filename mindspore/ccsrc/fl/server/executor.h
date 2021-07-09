@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_EXECUTOR_H_
-#define MINDSPORE_CCSRC_PS_SERVER_EXECUTOR_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_EXECUTOR_H_
+#define MINDSPORE_CCSRC_FL_SERVER_EXECUTOR_H_
 
 #include <map>
 #include <set>
@@ -31,7 +31,7 @@
 #endif
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // Executor is the entrance for server to handle aggregation, optimizing, model querying, etc. It handles
 // logics relevant to kernel launching.
@@ -94,7 +94,7 @@ class Executor {
   bool Unmask();
 
  private:
-  Executor() {}
+  Executor() : initialized_(false), aggregation_count_(0), param_names_({}), param_aggrs_({}) {}
   ~Executor() = default;
   Executor(const Executor &) = delete;
   Executor &operator=(const Executor &) = delete;
@@ -126,6 +126,6 @@ class Executor {
 #endif
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_EXECUTOR_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_EXECUTOR_H_

@@ -31,8 +31,8 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
   int return_num = 0;
   cipher_meta_storage_.RegisterClass();
   const std::string new_prime(reinterpret_cast<const char *>(param.prime), PRIME_MAX_LEN);
-  cipher_meta_storage_.RegisterPrime(ps::server::kCtxCipherPrimer, new_prime);
-  if (!cipher_meta_storage_.GetPrimeFromServer(ps::server::kCtxCipherPrimer, publicparam_.prime)) {
+  cipher_meta_storage_.RegisterPrime(fl::server::kCtxCipherPrimer, new_prime);
+  if (!cipher_meta_storage_.GetPrimeFromServer(fl::server::kCtxCipherPrimer, publicparam_.prime)) {
     MS_LOG(ERROR) << "Cipher Param Update is invalid.";
     return false;
   }
@@ -45,7 +45,7 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
   publicparam_.t = param.t;
   secrets_minnums_ = param.t;
   client_num_need_ = cipher_initial_client_cnt;
-  featuremap_ = ps::server::ModelStore::GetInstance().model_size() / sizeof(float);
+  featuremap_ = fl::server::ModelStore::GetInstance().model_size() / sizeof(float);
   share_clients_num_need_ = cipher_share_secrets_cnt;
   reconstruct_clients_num_need_ = cipher_reconstruct_secrets_down_cnt + 1;
   get_model_num_need_ = cipher_get_clientlist_cnt;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_OPTIMIZER_KERNEL_FACTORY_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_OPTIMIZER_KERNEL_FACTORY_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_OPTIMIZER_KERNEL_FACTORY_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_OPTIMIZER_KERNEL_FACTORY_H_
 
 #include <memory>
 #include <string>
@@ -24,7 +24,7 @@
 #include "fl/server/kernel/optimizer_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 using OptimizerKernelCreator = std::function<std::shared_ptr<OptimizerKernel>()>;
@@ -50,6 +50,7 @@ class OptimizerKernelRegister {
   OptimizerKernelRegister(const std::string &name, const ParamsInfo &params_info, OptimizerKernelCreator &&creator) {
     OptimizerKernelFactory::GetInstance().Register(name, params_info, std::move(creator));
   }
+  ~OptimizerKernelRegister() = default;
 };
 
 // Register optimizer kernel with one template type T.
@@ -59,6 +60,6 @@ class OptimizerKernelRegister {
     #NAME, PARAMS_INFO, []() { return std::make_shared<CLASS<T>>(); });
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_OPTIMIZER_KERNEL_FACTORY_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_OPTIMIZER_KERNEL_FACTORY_H_

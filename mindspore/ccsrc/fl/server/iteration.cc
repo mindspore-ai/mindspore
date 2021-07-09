@@ -23,10 +23,10 @@
 #include "fl/server/server.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 class Server;
-void Iteration::RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
+void Iteration::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
   communicator_->RegisterMsgCallBack("syncIteration",
@@ -42,12 +42,12 @@ void Iteration::RegisterMessageCallback(const std::shared_ptr<core::TcpCommunica
                                      std::bind(&Iteration::HandleEndLastIterRequest, this, std::placeholders::_1));
 }
 
-void Iteration::RegisterEventCallback(const std::shared_ptr<core::ServerNode> &server_node) {
+void Iteration::RegisterEventCallback(const std::shared_ptr<ps::core::ServerNode> &server_node) {
   MS_EXCEPTION_IF_NULL(server_node);
   server_node_ = server_node;
-  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(CustomEvent::kIterationRunning),
+  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning),
                                            std::bind(&Iteration::HandleIterationRunningEvent, this));
-  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(CustomEvent::kIterationCompleted),
+  server_node->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted),
                                            std::bind(&Iteration::HandleIterationCompletedEvent, this));
 }
 
@@ -56,7 +56,7 @@ void Iteration::AddRound(const std::shared_ptr<Round> &round) {
   rounds_.push_back(round);
 }
 
-void Iteration::InitRounds(const std::vector<std::shared_ptr<core::CommunicatorBase>> &communicators,
+void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::CommunicatorBase>> &communicators,
                            const TimeOutCb &timeout_cb, const FinishIterCb &finish_iteration_cb) {
   if (communicators.empty()) {
     MS_LOG(EXCEPTION) << "Communicators for rounds is empty.";
@@ -64,7 +64,7 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<core::CommunicatorB
   }
 
   std::for_each(communicators.begin(), communicators.end(),
-                [&](const std::shared_ptr<core::CommunicatorBase> &communicator) {
+                [&](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
                   for (auto &round : rounds_) {
                     if (round == nullptr) {
                       continue;
@@ -120,7 +120,7 @@ void Iteration::SetIterationRunning() {
   }
   if (server_node_->rank_id() == kLeaderServerRank) {
     // This event helps worker/server to be consistent in iteration state.
-    server_node_->BroadcastEvent(static_cast<uint32_t>(CustomEvent::kIterationRunning));
+    server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning));
   }
   iteration_state_ = IterationState::kRunning;
 }
@@ -133,7 +133,7 @@ void Iteration::SetIterationCompleted() {
   }
   if (server_node_->rank_id() == kLeaderServerRank) {
     // This event helps worker/server to be consistent in iteration state.
-    server_node_->BroadcastEvent(static_cast<uint32_t>(CustomEvent::kIterationCompleted));
+    server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted));
   }
   iteration_state_ = IterationState::kCompleted;
 }
@@ -171,7 +171,7 @@ bool Iteration::SyncIteration(uint32_t rank) {
   sync_iter_req.set_rank(rank);
 
   std::shared_ptr<std::vector<unsigned char>> sync_iter_rsp_msg = nullptr;
-  if (!communicator_->SendPbRequest(sync_iter_req, kLeaderServerRank, core::TcpUserCommand::kSyncIteration,
+  if (!communicator_->SendPbRequest(sync_iter_req, kLeaderServerRank, ps::core::TcpUserCommand::kSyncIteration,
                                     &sync_iter_rsp_msg)) {
     MS_LOG(ERROR) << "Sending synchronizing iteration message to leader server failed.";
     return false;
@@ -189,7 +189,7 @@ bool Iteration::SyncIteration(uint32_t rank) {
   return true;
 }
 
-void Iteration::HandleSyncIterationRequest(const std::shared_ptr<core::MessageHandler> &message) {
+void Iteration::HandleSyncIterationRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     MS_LOG(ERROR) << "Message is nullptr.";
     return;
@@ -224,14 +224,14 @@ bool Iteration::NotifyLeaderMoveToNextIteration(bool is_last_iter_valid, const s
   notify_leader_to_next_iter_req.set_iter_num(iteration_num_);
   notify_leader_to_next_iter_req.set_reason(reason);
   if (!communicator_->SendPbRequest(notify_leader_to_next_iter_req, kLeaderServerRank,
-                                    core::TcpUserCommand::kNotifyLeaderToNextIter)) {
+                                    ps::core::TcpUserCommand::kNotifyLeaderToNextIter)) {
     MS_LOG(WARNING) << "Sending notify leader server to proceed next iteration request to leader server 0 failed.";
     return false;
   }
   return true;
 }
 
-void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<core::MessageHandler> &message) {
+void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     return;
   }
@@ -278,7 +278,7 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
 
   std::vector<uint32_t> offline_servers = {};
   for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
-    if (!communicator_->SendPbRequest(prepare_next_iter_req, i, core::TcpUserCommand::kPrepareForNextIter)) {
+    if (!communicator_->SendPbRequest(prepare_next_iter_req, i, ps::core::TcpUserCommand::kPrepareForNextIter)) {
       MS_LOG(WARNING) << "Sending prepare for next iteration request to server " << i << " failed. Retry later.";
       offline_servers.push_back(i);
       continue;
@@ -289,17 +289,18 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
   std::for_each(offline_servers.begin(), offline_servers.end(), [&](uint32_t rank) {
     // Should avoid endless loop if the server communicator is stopped.
     while (communicator_->running() &&
-           !communicator_->SendPbRequest(prepare_next_iter_req, rank, core::TcpUserCommand::kPrepareForNextIter)) {
+           !communicator_->SendPbRequest(prepare_next_iter_req, rank, ps::core::TcpUserCommand::kPrepareForNextIter)) {
       MS_LOG(WARNING) << "Retry sending prepare for next iteration request to server " << rank
                       << " failed. The server has not recovered yet.";
       std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationForPrepareForNextIter));
     }
     MS_LOG(INFO) << "Offline server " << rank << " preparing for next iteration success.";
   });
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   return true;
 }
 
-void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<core::MessageHandler> &message) {
+void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     return;
   }
@@ -329,7 +330,7 @@ bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const st
   proceed_to_next_iter_req.set_last_iter_num(iteration_num_);
   proceed_to_next_iter_req.set_reason(reason);
   for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
-    if (!communicator_->SendPbRequest(proceed_to_next_iter_req, i, core::TcpUserCommand::kProceedToNextIter)) {
+    if (!communicator_->SendPbRequest(proceed_to_next_iter_req, i, ps::core::TcpUserCommand::kProceedToNextIter)) {
       MS_LOG(WARNING) << "Sending proceed to next iteration request to server " << i << " failed.";
       continue;
     }
@@ -339,7 +340,7 @@ bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const st
   return true;
 }
 
-void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<core::MessageHandler> &message) {
+void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     return;
   }
@@ -388,7 +389,7 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
   EndLastIterRequest end_last_iter_req;
   end_last_iter_req.set_last_iter_num(last_iter_num);
   for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
-    if (!communicator_->SendPbRequest(end_last_iter_req, i, core::TcpUserCommand::kEndLastIter)) {
+    if (!communicator_->SendPbRequest(end_last_iter_req, i, ps::core::TcpUserCommand::kEndLastIter)) {
       MS_LOG(WARNING) << "Sending proceed to next iteration request to server " << i << " failed.";
       continue;
     }
@@ -398,7 +399,7 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
   return true;
 }
 
-void Iteration::HandleEndLastIterRequest(const std::shared_ptr<core::MessageHandler> &message) {
+void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     return;
   }
@@ -429,9 +430,9 @@ void Iteration::EndLastIter() {
   MS_LOG(INFO) << "End the last iteration " << iteration_num_;
   iteration_num_++;
   // After the job is done, reset the iteration to the initial number and reset ModelStore.
-  if (iteration_num_ > PSContext::instance()->fl_iteration_num()) {
+  if (iteration_num_ > ps::PSContext::instance()->fl_iteration_num()) {
     MS_LOG(INFO) << "Iteration loop " << iteration_loop_count_
-                 << " is completed. Iteration number: " << PSContext::instance()->fl_iteration_num();
+                 << " is completed. Iteration number: " << ps::PSContext::instance()->fl_iteration_num();
     iteration_num_ = 1;
     iteration_loop_count_++;
     ModelStore::GetInstance().Reset();
@@ -444,5 +445,5 @@ void Iteration::EndLastIter() {
   MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
 }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

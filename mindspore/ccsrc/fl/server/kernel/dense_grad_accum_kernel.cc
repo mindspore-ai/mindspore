@@ -17,7 +17,7 @@
 #include "fl/server/kernel/dense_grad_accum_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 REG_AGGREGATION_KERNEL(
@@ -26,5 +26,5 @@ REG_AGGREGATION_KERNEL(
   DenseGradAccumKernel, float)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
