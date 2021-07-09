@@ -117,7 +117,6 @@ class BertTokenizer final : public TensorTransform {
 };
 
 /// \brief Apply case fold operation on UTF-8 string tensors.
-/// \return Shared pointer to the current TensorOperation.
 class CaseFold final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -142,7 +141,8 @@ class JiebaTokenizer final : public TensorTransform {
   ///   official website of cppjieba (https://github.com/yanyiwu/cppjieba).
   /// \param[in] mp_path Dictionary file is used by the MPSegment algorithm. The dictionary can be obtained on the
   ///   official website of cppjieba (https://github.com/yanyiwu/cppjieba).
-  /// \param[in] mode Valid values can be any of JiebaMode.MP, JiebaMode.HMM and JiebaMode.MIX (default=JiebaMode.MIX).
+  /// \param[in] mode Valid values can be any of JiebaMode.kMP, JiebaMode.kHMM and JiebaMode.kMIX
+  ///   (default=JiebaMode.kMIX).
   ///   - JiebaMode.kMP, tokenizes with MPSegment algorithm.
   ///   - JiebaMode.kHMM, tokenizes with Hidden Markov Model Segment algorithm.
   ///   - JiebaMode.kMIX, tokenizes with a mix of MPSegment and HMMSegment algorithms.
@@ -248,7 +248,7 @@ class Ngram final : public TensorTransform {
   /// \param[in] left_pad {"pad_token", pad_width}. Padding performed on left side of the sequence. pad_width will
   ///    be capped at n-1. left_pad=("_",2) would pad the left side of the sequence with "__" (default={"", 0}}).
   /// \param[in] right_pad {"pad_token", pad_width}. Padding performed on right side of the sequence.pad_width will
-  ///    be capped at n-1. right_pad=("-":2) would pad the right side of the sequence with "--" (default={"", 0}}).
+  ///    be capped at n-1. right_pad=("-",2) would pad the right side of the sequence with "--" (default={"", 0}}).
   /// \param[in] separator Symbol used to join strings together (default=" ").
   explicit Ngram(const std::vector<int32_t> &ngrams, const std::pair<std::string, int32_t> &left_pad = {"", 0},
                  const std::pair<std::string, int32_t> &right_pad = {"", 0}, const std::string &separator = " ")
@@ -276,14 +276,13 @@ class NormalizeUTF8 final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] normalize_form Valid values can be any of [NormalizeForm::kNone,NormalizeForm::kNfc,
-  ///   NormalizeForm::kNfkc,
-  ///   NormalizeForm::kNfd, NormalizeForm::kNfkd](default=NormalizeForm::kNfkc).
+  ///   NormalizeForm::kNfkc, NormalizeForm::kNfd, NormalizeForm::kNfkd](default=NormalizeForm::kNfkc).
   ///   See http://unicode.org/reports/tr15/ for details.
-  ///   - NormalizeForm.NONE, remain the input string tensor unchanged.
-  ///   - NormalizeForm.NFC, normalizes with Normalization Form C.
-  ///   - NormalizeForm.NFKC, normalizes with Normalization Form KC.
-  ///   - NormalizeForm.NFD, normalizes with Normalization Form D.
-  ///   - NormalizeForm.NFKD, normalizes with Normalization Form KD.
+  ///   - NormalizeForm.kNone, remain the input string tensor unchanged.
+  ///   - NormalizeForm.kNfc, normalizes with Normalization Form C.
+  ///   - NormalizeForm.kNfkc, normalizes with Normalization Form KC.
+  ///   - NormalizeForm.kNfd, normalizes with Normalization Form D.
+  ///   - NormalizeForm.kNfkd, normalizes with Normalization Form KD.
   explicit NormalizeUTF8(NormalizeForm normalize_form = NormalizeForm::kNfkc);
 
   /// \brief Destructor

@@ -334,7 +334,7 @@ class Dataset:
         Serialize a pipeline into JSON string and dump into file if filename is provided.
 
         Args:
-            filename (str): filename of json file to be saved as
+            filename (str): filename of JSON file to be saved as.
 
         Returns:
             str, JSON string of the pipeline.
@@ -1511,7 +1511,7 @@ class Dataset:
 
     def get_col_names(self):
         """
-        Renturn the names of the columns in dataset.
+        Return the names of the columns in dataset.
 
         Returns:
             list, list of column names in the dataset.
@@ -1582,7 +1582,7 @@ class Dataset:
 
     def dynamic_min_max_shapes(self):
         """
-        Get minimum and maximum data length of dynamic source data, for graph compilation of ME.
+        Get minimum and maximum data length of dynamic source data, for dynamic graph compilation.
 
         Returns:
             lists, min_shapes, max_shapes of source data.
@@ -2187,7 +2187,7 @@ class BatchDataset(Dataset):
             self.per_batch_map = _PythonCallable(self.per_batch_map, idx, self.process_pool, arg_q_list, res_q_list)
             self.hook = _ExceptHookHandler()
             atexit.register(_mp_pool_exit_preprocess)
-            # If python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
+            # If Python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
             if sys.version_info >= (3, 8):
                 atexit.register(self.process_pool.close)
         else:
@@ -2682,7 +2682,7 @@ class MapDataset(Dataset):
                 self.operations = iter_specific_operations
                 self.hook = _ExceptHookHandler()
                 atexit.register(_mp_pool_exit_preprocess)
-                # If python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
+                # If Python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
                 if sys.version_info >= (3, 8):
                     atexit.register(self.process_pool.close)
 
@@ -3002,7 +3002,7 @@ class TransferDataset(Dataset):
         input_dataset (Dataset): Input Dataset to be transferred.
         send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
         create_data_info_queue (bool, optional): Whether to create queue which stores
-            types and shapes of data or not(default=False).
+            types and shapes of data or not (default=False).
 
     Raises:
         TypeError: If device_type is empty.
@@ -4798,12 +4798,12 @@ class VOCDataset(MappableDataset):
         title        = {The Pascal Visual Object Classes (VOC) Challenge},
         journal      = {International Journal of Computer Vision},
         volume       = {88},
-        year         = {2010},
+        year         = {2012},
         number       = {2},
         month        = {jun},
         pages        = {303--338},
         biburl       = {http://host.robots.ox.ac.uk/pascal/VOC/pubs/everingham10.html#bibtex},
-        howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/index.html}
+        howpublished = {http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html}
         }
     """
 
@@ -4959,10 +4959,11 @@ class CocoDataset(MappableDataset):
 
     About COCO dataset:
 
-    COCO is a large-scale object detection, segmentation, and captioning dataset.
-    It contains 91 common object categories with 82 of them having more than 5,000
-    labeled instances. In contrast to the popular ImageNet dataset, COCO has fewer
-    categories but more instances per category.
+    COCO(Microsoft Common Objects in Context) is a large-scale object detection, segmentation, and captioning dataset
+    with several features: Object segmentation, Recognition in context, Superpixel stuff segmentation,
+    330K images (>200K labeled), 1.5 million object instances, 80 object categories, 91 stuff categories,
+    5 captions per image, 250,000 people with keypoints. In contrast to the popular ImageNet dataset, COCO has fewer
+    categories but more instances in per category.
 
     You can unzip the original COCO-2017 dataset files into this directory structure and read by MindSpore's API.
 
@@ -5304,7 +5305,7 @@ class CLUEDataset(SourceDataset):
 
     About CLUE dataset:
 
-    CLUE, a Chinese Language Understanding Evaluation benchmark. It contains eight different
+    CLUE, a Chinese Language Understanding Evaluation benchmark. It contains multiple
     tasks, including single-sentence classification, sentence pair classification, and machine
     reading comprehension.
 

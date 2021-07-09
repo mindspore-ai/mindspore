@@ -14,7 +14,7 @@
 # ==============================================================================
 """
 This dataset module creates an internal queue class to more optimally pass data
-between multiple processes in python.  It has same API as multiprocessing.queue
+between multiple processes in Python.  It has same API as multiprocessing.queue
 but it will pass large data through shared memory.
 """
 
