@@ -157,9 +157,10 @@ std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::
     MS_LOG(EXCEPTION) << "Not registered CPU kernel: op[" << kernel_name << "]!";
   }
   auto creators = iter->second;
+  result.reserve(creators.size());
   for (size_t index = 0; index < creators.size(); ++index) {
     auto attr_creator = creators[index];
-    result.push_back(attr_creator.first);
+    result.emplace_back(attr_creator.first);
   }
   return result;
 }

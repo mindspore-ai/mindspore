@@ -79,14 +79,14 @@ bool ArgmaxCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   auto output = reinterpret_cast<int32_t *>(outputs[0]->addr);
 
+  std::vector<float> array_axis(dim_axis_);
   for (size_t i = 0; i < num_before_axis_; i++) {
     size_t src_index_i = i * dim_axis_ * num_after_axis_;
     for (size_t j = 0; j < num_after_axis_; j++) {
-      std::vector<float> array_axis;
       size_t src_index_j = src_index_i + j;
       for (size_t k = 0; k < dim_axis_; k++) {
         size_t src_index_k = k * num_after_axis_ + src_index_j;
-        array_axis.push_back(static_cast<float>(input[src_index_k]));
+        array_axis[k] = static_cast<float>(input[src_index_k]);
       }
       auto max_ops = std::max_element(array_axis.begin(), array_axis.end());
       auto max_index = static_cast<int32_t>(std::distance(array_axis.begin(), max_ops));

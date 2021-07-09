@@ -46,10 +46,10 @@ int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
 void UpdateShape(size_t miss_count, const CNodePtr &node_) {
   std::vector<size_t> out_shape;
   out_shape.emplace_back(miss_count);
-  std::vector<TypeId> dtypes;
   size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+  std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {
-    dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
+    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
   }
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetOutputInferShape(node_, 0), out_shape, out_shape, out_shape},
                                       node_.get());

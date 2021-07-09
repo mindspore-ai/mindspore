@@ -40,10 +40,11 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   }
   size_t input_num = AnfAlgo::GetInputTensorNum(node_);
   std::vector<std::vector<size_t>> input_flat_shape_list;
+  input_flat_shape_list.reserve(input_num);
   for (size_t i = 0; i < input_num; i++) {
     auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
     auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
-    input_flat_shape_list.push_back(flat_shape);
+    input_flat_shape_list.emplace_back(flat_shape);
   }
 
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);

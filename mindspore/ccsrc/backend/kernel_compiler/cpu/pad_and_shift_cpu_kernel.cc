@@ -76,14 +76,14 @@ void PadAndShiftCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   std::vector<size_t> out_shape;
   out_shape.emplace_back(output_size);
-  std::vector<TypeId> dtypes;
   auto node_ = node_wpt_.lock();
   if (!node_) {
     MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
   }
   auto output_nums = AnfAlgo::GetOutputTensorNum(node_);
+  std::vector<TypeId> dtypes(output_nums);
   for (size_t i = 0; i < output_nums; i++) {
-    dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
+    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
   }
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
 }

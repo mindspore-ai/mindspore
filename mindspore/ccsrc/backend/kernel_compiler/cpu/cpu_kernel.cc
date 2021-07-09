@@ -110,7 +110,6 @@ std::vector<size_t> CPUKernelUtils::FlatShapeByAxis(const std::vector<size_t> &s
   }
   size_t dim_row = 1;
   size_t dim_col = 1;
-  std::vector<size_t> flat_shape;
   for (size_t i = 0; i < shape.size(); ++i) {
     if (SizeToInt(i) < axis) {
       dim_row *= shape[i];
@@ -118,9 +117,9 @@ std::vector<size_t> CPUKernelUtils::FlatShapeByAxis(const std::vector<size_t> &s
       dim_col *= shape[i];
     }
   }
-  flat_shape.push_back(dim_row);
-  flat_shape.push_back(dim_col);
-  return flat_shape;
+  // referred to Copy elision https://en.cppreference.com/w/cpp/language/copy_elision
+  // returning a vector won't cause extra vector constructed or moved
+  return std::vector<size_t>{dim_row, dim_col};
 }
 
 BroadcastIterator::BroadcastIterator(std::vector<size_t> input_shape_a, std::vector<size_t> input_shape_b,

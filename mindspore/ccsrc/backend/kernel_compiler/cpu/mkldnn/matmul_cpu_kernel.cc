@@ -227,7 +227,7 @@ void MatMulCPUKernel::ParallelRun(float *output) {
     std::vector<common::Task> tasks;
     size_t thread_index = 0;
     while (thread_index < thread_count_) {
-      tasks.push_back(std::bind(&MatMulCPUKernel::FloatRun, this, thread_index));
+      tasks.emplace_back(std::bind(&MatMulCPUKernel::FloatRun, this, thread_index));
       thread_index++;
     }
     (void)common::ThreadPool::GetInstance().SyncRun(tasks);
