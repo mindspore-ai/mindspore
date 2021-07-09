@@ -17,7 +17,7 @@ if [ $# != 4 ] ; then
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "sh run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE DATA_PATH CONFIG_PATH"
-echo "for example: sh run_distribute_pretrain.sh 8 55 /path/ende-l128-mindrecord00 ./default_config_large_gpu.yaml"
+echo "for example: sh run_distribute_train_gpu.sh 8 55 /path/ende-l128-mindrecord00 ./default_config_large_gpu.yaml"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 exit 1;
@@ -47,5 +47,4 @@ mpirun -n $RANK_SIZE \
     --checkpoint_path="" \
     --save_checkpoint_steps=2500 \
     --save_checkpoint_num=30 \
-    --data_path=$DATA_PATH \
-    --bucket_boundaries=[16,32,48,64,128] > log.txt 2>&1 &
+    --data_path=$DATA_PATH > log.txt 2>&1 &

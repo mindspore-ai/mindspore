@@ -90,13 +90,13 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
     #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
     #          在 default_config.yaml 文件中设置 "distribute=True"
     #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
-    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/train'"
     #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
     #          在 default_config.yaml 文件中设置 其他参数
     #       b. 在网页上设置 "enable_modelarts=True"
     #          在网页上设置 "distribute=True"
     #          在网页上设置 "data_path=/cache/data"
-    #          在网页上设置 "ckpt_path=/cache/data"
+    #          在网页上设置 "ckpt_path=/cache/train"
     #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
     #          在网页上设置 其他参数
     # (3) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
@@ -110,12 +110,12 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
     # (1) 执行a或者b
     #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
     #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
-    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/train'"
     #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
     #          在 default_config.yaml 文件中设置 其他参数
     #       b. 在网页上设置 "enable_modelarts=True"
     #          在网页上设置 "data_path='/cache/data'"
-    #          在网页上设置 "ckpt_path='/cache/data'"
+    #          在网页上设置 "ckpt_path='/cache/train'"
     #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
     #          在网页上设置 其他参数
     # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
@@ -130,12 +130,12 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
     #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
     #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
     #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
-    #          在 default_config.yaml 文件中设置 "ckpt_file='/cache/data/checkpoint_lenet-10_1875.ckpt'"
+    #          在 default_config.yaml 文件中设置 "ckpt_file='/cache/train/checkpoint_lenet-10_1875.ckpt'"
     #          在 default_config.yaml 文件中设置 其他参数
     #       b. 在网页上设置 "enable_modelarts=True"
     #          在网页上设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
     #          在网页上设置 "data_path='/cache/data'"
-    #          在网页上设置 "ckpt_file='/cache/data/checkpoint_lenet-10_1875.ckpt'"
+    #          在网页上设置 "ckpt_file='/cache/train/checkpoint_lenet-10_1875.ckpt'"
     #          在网页上设置 其他参数
     # (3) 上传你训练好的模型到 S3 桶上
     # (4) 上传原始 mnist_data 数据集到 S3 桶上。
@@ -152,13 +152,13 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
     ```python
     # (1) 执行 a 或者 b.
     #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
-    #          在 base_config.yaml 文件中设置 "file_name='lenet'"
+    #          在 base_config.yaml 文件中设置 "file_name='/cache/train/lenet'"
     #          在 base_config.yaml 文件中设置 "file_format='AIR'"
     #          在 base_config.yaml 文件中设置 "checkpoint_url='/The path of checkpoint in S3/'"
     #          在 base_config.yaml 文件中设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
     #          在 base_config.yaml 文件中设置 其他参数
     #       b. 在网页上设置 "enable_modelarts=True"
-    #          在网页上设置 "file_name='lenet'"
+    #          在网页上设置 "file_name='/cache/train/lenet'"
     #          在网页上设置 "file_format='AIR'"
     #          在网页上设置 "checkpoint_url='/The path of checkpoint in S3/'"
     #          在网页上设置 "ckpt_file='/cache/checkpoint_path/model.ckpt'"
@@ -224,7 +224,7 @@ train.py和default_config.yaml中主要参数如下：
 ### 训练
 
 ```bash
-python train.py --config_path CONFIG_PATH --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
+python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_train_ascend.sh Data ckpt
 ```
@@ -250,7 +250,7 @@ epoch:1 step:1538, loss is 1.0221305
 在运行以下命令之前，请检查用于评估的检查点路径。
 
 ```bash
-python eval.py --config_path CONFIG_PATH --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
+python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ```
@@ -267,7 +267,7 @@ sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ### 导出MindIR
 
 ```shell
-python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 参数ckpt_file为必填项，

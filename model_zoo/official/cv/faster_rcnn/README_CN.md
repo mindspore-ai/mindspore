@@ -334,6 +334,20 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
   └─train.py                         // 训练脚本
 ```
 
+```bash
+`BACKBONE` should be in ["resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152", "resnet_v1_50"]
+
+if backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
+    from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
+    "resnet_v1.5_50" -> "./default_config.yaml"
+    "resnet_v1_101"  -> "./default_config_101.yaml"
+    "resnet_v1_152"  -> "./default_config_152.yaml"
+
+elif backbone == "resnet_v1_50":
+    from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
+    "resnet_v1_50" -> "./default_config.yaml"
+```
+
 ## 训练过程
 
 ### 用法
@@ -448,16 +462,17 @@ sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [BACKBONE] [COCO_ROO
 ## 模型导出
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE] --coco_root [COCO_ROOT] --mindrecord_dir [MINDRECORD_DIR](option)
+python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --backbone [BACKBONE]
 ```
 
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+`BACKBONE` 可选 ["resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152", "resnet_v1_50"]
 
 ## 推理过程
 
 ### 使用方法
 
-在推理之前需要在昇腾910环境上完成模型的导出。
+在推理之前需要在昇腾910环境上完成模型的导出。以下示例仅支持batch_size=1的mindir推理。
 
 ```shell
 # Ascend310 inference

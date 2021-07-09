@@ -16,7 +16,6 @@
 """Evaluation for MaskRcnn"""
 import os
 import time
-import re
 import numpy as np
 
 from src.model_utils.config import config
@@ -33,13 +32,6 @@ from mindspore.common import set_seed
 
 
 set_seed(1)
-
-lss = [int(re.findall(r'[0-9]+', i)[0]) for i in config.feature_shapes]
-config.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
-config.roi_layer = dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
-config.warmup_ratio = 1/3.0
-config.mask_shape = (28, 28)
-
 
 def maskrcnn_eval(dataset_path, ckpt_path, ann_file):
     """MaskRcnn evaluation."""

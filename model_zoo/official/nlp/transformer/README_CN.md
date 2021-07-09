@@ -195,7 +195,6 @@ python eval.py > eval.log 2>&1 &
     ├─__init__.py
     ├─beam_search.py
     ├─dataset.py
-    ├─eval_config.py
     ├─lr_schedule.py
     ├─process_output.py
     ├─tokenization.py
@@ -250,15 +249,12 @@ options:
 #### 运行选项
 
 ```text
-config.py:
+default_config.yaml:
     transformer_network             version of Transformer model: base | large, default is large
     init_loss_scale_value           initial value of loss scale: N, default is 2^10
     scale_factor                    factor used to update loss scale: N, default is 2
     scale_window                    steps for once updatation of loss scale: N, default is 2000
     optimizer                       optimizer used in the network: Adam, default is "Adam"
-
-eval_config.py:
-    transformer_network             version of Transformer model: base | large, default is large
     data_file                       data file: PATH
     model_file                      checkpoint file to be loaded: PATH
     output_file                     output file of evaluation: PATH
@@ -320,7 +316,7 @@ Parameters for learning rate:
 
 ### 训练过程
 
-- 在`config.py`中设置选项，包括loss_scale、学习率和网络超参数。点击[这里](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)查看更多数据集信息。
+- 在`default_config.yaml`中设置选项，包括loss_scale、学习率和网络超参数。点击[这里](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)查看更多数据集信息。
 
 - 运行`run_standalone_train.sh`，进行Transformer模型的非分布式训练。
 
@@ -338,7 +334,7 @@ Parameters for learning rate:
 
 ### 评估过程
 
-- 在`eval_config.py`中设置选项。确保已设置了‘data_file'、'model_file’和'output_file'文件路径。
+- 在`default_config.yaml`中设置选项。确保已设置了‘data_file'、'model_file’和'output_file'文件路径。
 
 - 运行`eval.py`，评估Transformer模型。
 
@@ -429,7 +425,7 @@ bash run_infer_310.sh [MINDIR_PATH] [NEED_PREPROCESS] [DEVICE_ID]
 - 初始化部分模型权重
 - 随机失活运行
 
-train.py已经设置了一些种子，避免数据集轮换和权重初始化的随机性。若需关闭随机失活，将src/config.py中相应的dropout_prob参数设置为0。
+train.py已经设置了一些种子，避免数据集轮换和权重初始化的随机性。若需关闭随机失活，将default_config.yaml中相应的dropout_prob参数设置为0。
 
 ## ModelZoo主页
 

@@ -18,10 +18,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
 import sys
 import tokenization
-from .model_utils.config import config
+from model_utils.config import config
 
 # Explicitly set the encoding
 sys.stdin = open(sys.stdin.fileno(), mode='r', encoding='utf-8', buffering=True)
