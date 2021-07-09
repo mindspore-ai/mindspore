@@ -34,7 +34,7 @@ class CPUDeviceAddress : public DeviceAddress {
   CPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const KernelWithIndex &node_index)
       : DeviceAddress(ptr, size, format, type_id, node_index) {}
 
-  ~CPUDeviceAddress() override = default;
+  ~CPUDeviceAddress() override;
 
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,

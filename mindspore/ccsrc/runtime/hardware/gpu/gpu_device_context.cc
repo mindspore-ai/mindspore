@@ -183,6 +183,9 @@ bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size
 void GPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(address->ptr_);
+  if (!address->from_mem_pool()) {
+    return;
+  }
   mem_manager_->FreeMemFromMemPool(address->ptr_);
   address->ptr_ = nullptr;
 }

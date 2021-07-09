@@ -31,6 +31,14 @@ void ShortToInt(void *dst, const void *src, size_t elem_num);
 void IntToShort(void *dst, const void *src, size_t elem_num);
 void LongToInt(void *dst, const void *src, size_t elem_num);
 void IntToLong(void *dst, const void *src, size_t elem_num);
+void ConvertSameType(void *dst, const void *src, size_t size, TypeId type);
+
+template <typename T>
+void ConvertSameType(T *dst, const T *src, size_t elem_num) {
+  for (size_t i = 0; i < elem_num; ++i) {
+    dst[i] = src[i];
+  }
+}
 }  // namespace device
 }  // namespace mindspore
 
