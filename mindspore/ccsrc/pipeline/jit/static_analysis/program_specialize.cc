@@ -842,7 +842,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
 }
 
 AnfNodeConfigPtr FuncGraphSpecializer::MakeConfig(const AnfNodePtr &node) {
-  return engine_->MakeConfig(node, context_);
+  return engine_->MakeConfig(node, context_, func_graph_);  // `func_graph_` is dummy here.
 }
 }  // namespace abstract
 }  // namespace mindspore
