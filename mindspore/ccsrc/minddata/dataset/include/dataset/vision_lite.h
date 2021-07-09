@@ -229,6 +229,11 @@ class RandomAffine final : public TensorTransform {
   ///    If the size is 2, (min_shear_x, max_shear_x, 0, 0),
   ///    if the size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y).
   /// \param[in] interpolation An enum for the mode of interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G and B channels respectively.
@@ -259,6 +264,11 @@ class Resize final : public TensorTransform {
   ///     If the size is a single value, the image will be resized to this value with
   ///     the same image aspect ratio. If the size has 2 values, it should be (height, width).
   /// \param[in] interpolation An enum for the mode of interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   explicit Resize(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
 
   /// \brief Destructor.
@@ -307,6 +317,11 @@ class Rotate final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] degrees A float value, representing the rotation degrees.
   /// \param[in] resample An enum for the mode of interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] expand A boolean representing whether the image is expanded after rotation.
   /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
