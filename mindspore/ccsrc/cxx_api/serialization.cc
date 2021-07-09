@@ -79,8 +79,20 @@ static Buffer ReadFile(const std::string &file) {
   return buffer;
 }
 
-Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph) {
-  return Load(model_data, data_size, model_type, graph, Key{}, StringToChar("AES-GCM"));
+Key::Key(const char *dec_key, size_t key_len) {
+  len = 0;
+  if (key_len >= max_key_len) {
+    MS_LOG(ERROR) << "Invalid key len " << key_len << " is more than max key len " << max_key_len;
+    return;
+  }
+
+  auto sec_ret = memcpy_s(key, max_key_len, dec_key, key_len);
+  if (sec_ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed, src_len = " << key_len << ", dst_len = " << max_key_len << ", ret = " << sec_ret;
+    return;
+  }
+
+  len = key_len;
 }
 
 Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
@@ -137,7 +149,7 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
 }
 
 Status Serialization::Load(const std::vector<char> &file, ModelType model_type, Graph *graph) {
-  return Load(file, model_type, graph, Key{}, StringToChar("AES-GCM"));
+  return Load(file, model_type, graph, Key{}, StringToChar(kDecModeAesGcm));
 }
 
 Status Serialization::Load(const std::vector<char> &file, ModelType model_type, Graph *graph, const Key &dec_key,
@@ -254,11 +266,6 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
   err_msg << "Unsupported ModelType " << model_type;
   MS_LOG(ERROR) << err_msg.str();
   return Status(kMEInvalidInput, err_msg.str());
-}
-
-Status Serialization::LoadCheckPoint(const std::string &, std::map<std::string, Buffer> *) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return kMEFailed;
 }
 
 Status Serialization::SetParameters(const std::map<std::string, Buffer> &, Model *) {
