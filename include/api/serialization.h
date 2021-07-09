@@ -27,12 +27,6 @@
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
-using Key = struct Key {
-  const size_t max_key_len = 32;
-  size_t len;
-  unsigned char key[32];
-  Key() : len(0) {}
-};
 
 class MS_API Serialization {
  public:

@@ -23,7 +23,6 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
-#include "src/runtime/parallel_executor.h"
 #include "src/runtime/inner_allocator.h"
 #include "include/registry/kernel_interface.h"
 #include "include/registry/register_kernel.h"

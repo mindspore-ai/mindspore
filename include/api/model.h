@@ -54,6 +54,10 @@ class MS_API Model {
 
   static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
 
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
+               const std::string &dec_mode = "AES-GCM");
+
  private:
   // api without std::string
   MSTensor GetInputByTensorName(const std::vector<char> &tensor_name);
