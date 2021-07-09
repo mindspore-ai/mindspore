@@ -18,14 +18,10 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-void ActorWorker::CreateThread(ActorThreadPool *pool, ThreadPolicy policy) {
+void ActorWorker::CreateThread(ActorThreadPool *pool) {
   THREAD_RETURN_IF_NULL(pool);
   pool_ = pool;
-  if (policy == kThreadSpin) {
-    thread_ = std::thread(&ActorWorker::RunWithSpin, this);
-  } else if (policy == kThreadWait) {
-    thread_ = std::thread(&ActorWorker::RunWithWait, this);
-  }
+  thread_ = std::thread(&ActorWorker::RunWithSpin, this);
 }
 
 void ActorWorker::RunWithSpin() {
@@ -43,21 +39,6 @@ void ActorWorker::RunWithSpin() {
     if (spin_count_ >= kDefaultSpinCount) {
       WaitUntilActive();
       spin_count_ = 0;
-    }
-  }
-}
-
-void ActorWorker::RunWithWait() {
-#ifndef __APPLE__
-  static std::atomic_int index = {0};
-  pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
-#endif
-  while (alive_) {
-    // only run PoolQueue ActorTask
-    bool success = RunQueueActorTask();
-    if (!success) {
-      // wait until enqueue ActorTask
-      pool_->WaitUntilNotify();
     }
   }
 }
@@ -96,18 +77,11 @@ ActorThreadPool::~ActorThreadPool() {
       std::this_thread::yield();
     }
   } while (!terminate);
-  exit_ = true;
-  actor_cond_.notify_all();
   for (auto &worker : workers_) {
     delete worker;
     worker = nullptr;
   }
   workers_.clear();
-}
-
-void ActorThreadPool::WaitUntilNotify() {
-  std::unique_lock<std::mutex> _l(actor_mutex_);
-  actor_cond_.wait(_l, [this] { return !actor_queue_.empty() || exit_; });
 }
 
 ActorReference ActorThreadPool::PopActorFromQueue() {
@@ -125,7 +99,6 @@ void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
     std::lock_guard<std::mutex> _l(actor_mutex_);
     actor_queue_.push(actor);
   }
-  actor_cond_.notify_one();
   THREAD_INFO("actor[%s] enqueue success", actor->GetAID().Name().c_str());
   // active one idle actor thread if exist
   for (size_t i = 0; i < actor_thread_num_; ++i) {
@@ -136,7 +109,7 @@ void ActorThreadPool::PushActorToQueue(const ActorReference &actor) {
   }
 }
 
-int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num, ThreadPolicy policy) {
+int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num) {
   size_t core_num = std::thread::hardware_concurrency();
   THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;
@@ -148,7 +121,7 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
     std::lock_guard<std::mutex> _l(pool_mutex_);
     auto worker = new (std::nothrow) ActorWorker();
     THREAD_ERROR_IF_NULL(worker);
-    worker->CreateThread(this, policy);
+    worker->CreateThread(this);
     workers_.push_back(worker);
     THREAD_INFO("create actor thread[%zu]", i);
   }
@@ -159,13 +132,12 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   return THREAD_OK;
 }
 
-ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
-                                                   ThreadPolicy policy) {
+ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num) {
   ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret = pool->CreateThreads(actor_thread_num, all_thread_num, policy);
+  int ret = pool->CreateThreads(actor_thread_num, all_thread_num);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;
@@ -180,12 +152,12 @@ ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size
   return pool;
 }
 
-ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t thread_num, ThreadPolicy policy) {
+ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t thread_num) {
   ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret = pool->CreateThreads(thread_num, thread_num, policy);
+  int ret = pool->CreateThreads(thread_num, thread_num);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

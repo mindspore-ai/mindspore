@@ -41,7 +41,8 @@ class MS_API Model {
   Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr);
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
-  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                 const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
   std::vector<MSTensor> GetInputs();
   inline MSTensor GetInputByTensorName(const std::string &tensor_name);
@@ -52,6 +53,10 @@ class MS_API Model {
   inline std::vector<MSTensor> GetOutputsByNodeName(const std::string &tensor_name);
 
   static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
+
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
+               const std::string &dec_mode = kDecModeAesGcm);
 
  private:
   // api without std::string

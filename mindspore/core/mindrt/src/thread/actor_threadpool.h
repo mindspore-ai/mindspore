@@ -26,20 +26,15 @@
 #include "thread/hqueue.h"
 
 namespace mindspore {
-enum ThreadPolicy {
-  kThreadSpin = 0,  // thread run in spin
-  kThreadWait = 1   // synchronous and wait
-};
 
 class ActorThreadPool;
 
 class ActorWorker : public Worker {
  public:
-  void CreateThread(ActorThreadPool *pool, ThreadPolicy policy);
+  void CreateThread(ActorThreadPool *pool);
   bool Active();
 
  private:
-  void RunWithWait();
   void RunWithSpin();
   bool RunQueueActorTask();
 
@@ -49,24 +44,22 @@ class ActorWorker : public Worker {
 class ActorThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains actor thread and kernel thread
-  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num, ThreadPolicy policy);
+  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num);
   // create ThreadPool that contains only actor thread
-  static ActorThreadPool *CreateThreadPool(size_t thread_num, ThreadPolicy policy);
+  static ActorThreadPool *CreateThreadPool(size_t thread_num);
   ~ActorThreadPool() override;
 
   void PushActorToQueue(const ActorReference &actor);
   ActorReference PopActorFromQueue();
-  void WaitUntilNotify();
 
  private:
   ActorThreadPool() {}
-  int CreateThreads(size_t actor_thread_num, size_t all_thread_num, ThreadPolicy policy);
+  int CreateThreads(size_t actor_thread_num, size_t all_thread_num);
 
   size_t actor_thread_num_{0};
 
-  bool exit_{false};
   std::mutex actor_mutex_;
-  std::condition_variable actor_cond_;
+
   std::queue<ActorReference> actor_queue_;
 };
 }  // namespace mindspore

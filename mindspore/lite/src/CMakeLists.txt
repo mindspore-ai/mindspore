@@ -39,6 +39,7 @@ set(API_SRC
     ${CORE_DIR}/utils/status.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor_utils.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/types.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/context.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model.cc
