@@ -166,7 +166,8 @@ Status MaxPoolInfo::InferTensorMap() {
 Status MaxPoolInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> MaxPoolInfo::GenerateOpStrategies(int64_t stage_id) {
-  Shape input0_split(inputs_shape_[0].size(), 1);
+  Shape input0_split(inputs_shape_[0].size(), 0);
+  input0_split[0] = 1;
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;
