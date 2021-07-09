@@ -22,6 +22,7 @@
 
 #include "debug/data_dump/dump_json_parser.h"
 #include "common/trans.h"
+#include "debug/anf_ir_utils.h"
 #include "debug/common.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
@@ -67,7 +68,7 @@ void E2eDump::DumpOutput(const session::KernelGraph *graph, const std::string &d
   const auto &apply_kernels = graph->execution_order();
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
-    std::string kernel_name = node->fullname_with_scope();
+    std::string kernel_name = GetKernelNodeName(node);
     if (!dump_json_parser.NeedDump(kernel_name)) {
       continue;
     }
@@ -83,7 +84,7 @@ void E2eDump::DumpOutputSingleNode(const CNodePtr &node, const std::string &dump
   }
   bool trans_flag = dump_json_parser.trans_flag();
   MS_EXCEPTION_IF_NULL(node);
-  std::string kernel_name = node->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(node);
   if (!dump_json_parser.NeedDump(kernel_name)) {
     return;
   }
@@ -115,7 +116,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
     if (IsDeviceTargetGPU()) {
-      DumpGPUMemToFile(file_path, node->fullname_with_scope(), *addr, int_shapes, type, device_type, trans_flag, j,
+      DumpGPUMemToFile(file_path, GetKernelNodeName(node), *addr, int_shapes, type, device_type, trans_flag, j,
                        debugger);
     } else {
       DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
@@ -134,7 +135,7 @@ void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &du
   const auto &apply_kernels = graph->execution_order();
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
-    std::string kernel_name = node->fullname_with_scope();
+    std::string kernel_name = GetKernelNodeName(node);
     if (!dump_json_parser.NeedDump(kernel_name)) {
       continue;
     }
@@ -150,7 +151,7 @@ void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_
   }
   bool trans_flag = dump_json_parser.trans_flag();
   MS_EXCEPTION_IF_NULL(node);
-  std::string kernel_name = node->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(node);
   if (!dump_json_parser.NeedDump(kernel_name)) {
     return;
   }
@@ -177,11 +178,11 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     size_t slot;
     if (IsDeviceTargetGPU()) {
       auto input_kernel = node->input(j + 1);
-      std::string input_kernel_name = input_kernel->fullname_with_scope();
+      std::string input_kernel_name = GetKernelNodeName(input_kernel);
       tensor_name = input_kernel_name;
       slot = 0;
     } else {
-      tensor_name = node->fullname_with_scope();
+      tensor_name = GetKernelNodeName(node);
       slot = j;
     }
     ShapeVector int_shapes;
@@ -210,7 +211,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   if ((!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) || IsValueNode<StringImm>(anf_node)) {
     return;
   }
-  std::string node_name = anf_node->fullname_with_scope();
+  std::string node_name = GetKernelNodeName(anf_node);
   std::string dump_name = node_name;
   if (anf_node->isa<ValueNode>()) {
     auto iter = const_map->find(node_name);
@@ -218,11 +219,6 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
       return;
     }
     dump_name = std::string("cst") + std::to_string(iter->second);
-  }
-
-  // Some parameter nodes have no name. Take the whole string value as the name when dumpping if it's missing.
-  if (dump_name.empty()) {
-    dump_name = anf_node->ToString();
   }
 
   if (!dump_json_parser.NeedDump(node_name)) {
