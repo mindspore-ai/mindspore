@@ -30,7 +30,7 @@ from ...nn.layer import quant
 from ...ops import functional as F
 from ..common import QuantDtype
 from .quantizer import Quantizer, OptimizeOption
-from .quant_utils import compute_KL_threshold
+from .quant_utils import compute_kl_threshold
 
 
 __all__ = ["QuantizationAwareTraining", "create_quant_config"]
@@ -281,7 +281,8 @@ class QuantizationAwareTraining(Quantizer):
                                                 mode=self.mode)
         self.eps = 1e-5
 
-    def _convert_op_name(self, name):
+    @staticmethod
+    def _convert_op_name(name):
         pattern = re.compile(r'([A-Z]{1})')
         name_new = re.sub(pattern, r'_\1', name).lower()
         if name_new[0] == '_':
@@ -382,7 +383,7 @@ class QuantizationAwareTraining(Quantizer):
                 scale_factor = (subcell.batchnorm.gamma.data.asnumpy() /
                                 np.sqrt(subcell.batchnorm.moving_variance.data.asnumpy() + self.eps))
                 subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
-            min_init, max_init = self._KL_init(subcell_weight_para, self.weight_dtype)
+            min_init, max_init = self._kl_init(subcell_weight_para, self.weight_dtype)
         self.quant_config = self.quant_config._replace(
             weight=self.quant_config.weight.partial_init(min_init=min_init, max_init=max_init))
 
@@ -485,7 +486,7 @@ class QuantizationAwareTraining(Quantizer):
                 scale_factor = (subcell.batchnorm.gamma.data.asnumpy() /
                                 np.sqrt(subcell.batchnorm.moving_variance.data.asnumpy() + self.eps))
                 subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
-            min_init, max_init = self._KL_init(subcell_weight_para, self.weight_dtype)
+            min_init, max_init = self._kl_init(subcell_weight_para, self.weight_dtype)
         self.quant_config = self.quant_config._replace(
             weight=self.quant_config.weight.partial_init(min_init=min_init, max_init=max_init))
 
@@ -533,16 +534,16 @@ class QuantizationAwareTraining(Quantizer):
                                   quant_dtype=self.act_dtype)
         raise ValueError("Unsupported activation in auto quant: ", act_class)
 
-    def _KL_init(self, subcell_weight_para, weight_dtype):
+    def _kl_init(self, subcell_weight_para, weight_dtype):
         """
-        Calculate the value of max_init and min_init with compute_KL_threshold.
+        Calculate the value of max_init and min_init with compute_kl_threshold.
         """
         if self.weight_channel:
-            max_init = [compute_KL_threshold(weight_para_each, weight_dtype)
+            max_init = [compute_kl_threshold(weight_para_each, weight_dtype)
                         for weight_para_each in subcell_weight_para]
             min_init = [-x for x in max_init]
         else:
-            max_init = [compute_KL_threshold(subcell_weight_para, weight_dtype)]
+            max_init = [compute_kl_threshold(subcell_weight_para, weight_dtype)]
             min_init = [-x for x in max_init]
         return min_init, max_init
 
@@ -567,15 +568,17 @@ class QuantizationAwareTraining(Quantizer):
             raise ValueError("The `_set_mixed_bits` function is currently only valid for `LEARNED_SCALE` "
                              "optimize_option.")
 
-        self.quantizable_idx = []
+        quantizable_idx = []
         pass_cell = None
         for i, cell_and_name in enumerate(network.cells_and_names()):
             cell = cell_and_name[1]
             if isinstance(cell, (nn.Conv2dBnAct, nn.DenseBnAct)) and cell is not pass_cell:
-                self.quantizable_idx.append(i)
+                quantizable_idx.append(i)
 
-        assert len(self.quantizable_idx) == len(strategy)
-        quantizable_layer_bit_dict = {idx: bit for idx, bit in zip(self.quantizable_idx, strategy)}
+        if len(quantizable_idx) != len(strategy):
+            raise ValueError("The dimension of quantifiable layers is not consistent with that of strategy.")
+
+        quantizable_layer_bit_dict = {idx: bit for idx, bit in zip(quantizable_idx, strategy)}
         type_map = {
             QuantDtype.INT2.num_bits: QuantDtype.INT2,
             QuantDtype.INT3.num_bits: QuantDtype.INT3,
@@ -587,7 +590,7 @@ class QuantizationAwareTraining(Quantizer):
         }
         for i, cell_and_name in enumerate(network.cells_and_names()):
             cell = cell_and_name[1]
-            if i not in self.quantizable_idx:
+            if i not in quantizable_idx:
                 continue
             else:
                 if isinstance(cell, (nn.Conv2dBnAct, nn.DenseBnAct)):
@@ -598,7 +601,7 @@ class QuantizationAwareTraining(Quantizer):
                             scale_factor = (cell.conv.gamma.data.asnumpy() /
                                             np.sqrt(cell.conv.moving_variance.data.asnumpy() + self.eps))
                             subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
-                        min_init, max_init = self._KL_init(subcell_weight_para, cell.weight_dtype)
+                        min_init, max_init = self._kl_init(subcell_weight_para, cell.weight_dtype)
                         cell.conv.fake_quant_weight.reset(quant_dtype=cell.weight_dtype,
                                                           min_init=min_init,
                                                           max_init=max_init)
@@ -608,7 +611,7 @@ class QuantizationAwareTraining(Quantizer):
                             scale_factor = (cell.dense.gamma.data.asnumpy() /
                                             np.sqrt(cell.dense.moving_variance.data.asnumpy() + self.eps))
                             subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
-                        min_init, max_init = self._KL_init(subcell_weight_para, cell.weight_dtype)
+                        min_init, max_init = self._kl_init(subcell_weight_para, cell.weight_dtype)
                         cell.dense.fake_quant_weight.reset(quant_dtype=cell.weight_dtype,
                                                            min_init=min_init,
                                                            max_init=max_init)
