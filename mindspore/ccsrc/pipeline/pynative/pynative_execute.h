@@ -181,7 +181,7 @@ class GradExecutor {
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
-  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
+  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const py::object &ret);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
   void DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &op_out);
