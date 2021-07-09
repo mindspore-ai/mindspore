@@ -305,9 +305,9 @@ class GraphData:
             >>> nodes = graph_dataset.get_all_nodes(node_type=1)
             >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2)
             >>> neighbors_coo = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-            >>>                                                 output_format=OutputFormat.COO)
+            ...                                                 output_format=OutputFormat.COO)
             >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-            >>>                                                               output_format=OutputFormat.CSR)
+            ...                                                               output_format=OutputFormat.CSR)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
