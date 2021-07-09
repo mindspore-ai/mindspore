@@ -233,6 +233,7 @@ constexpr auto kPaddingOpName = "Padding";
 constexpr auto kAvgPoolOpName = "AvgPool";
 constexpr auto kAvgPoolGradOpName = "AvgPoolGrad";
 constexpr auto kAvgPoolGradVmOpName = "AvgPoolGradVm";
+constexpr auto kMaxPoolOpName = "MaxPool";
 constexpr auto kmaxPoolGradOpName = "MaxPoolGrad";
 constexpr auto kMaxPoolWithArgmaxOpName = "MaxPoolWithArgmax";
 constexpr auto kMaxPoolGradWithArgmaxOpName = "MaxPoolGradWithArgmax";
@@ -595,6 +596,8 @@ const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
 const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
                                                  kGetNextOpName};
+
+const std::set<std::string> kOpNotSupportMultiThreadExecList = {kAvgPoolOpName, kAvgPoolGradOpName, kMaxPoolOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {
   kOpFormat_FRACTAL_Z_3D, kOpFormat_NC1KHKWHWC0,   kOpFormat_NC1HWC0,         kOpFormat_FRAC_NZ,  kOpFormat_C1HWNCoC0,
