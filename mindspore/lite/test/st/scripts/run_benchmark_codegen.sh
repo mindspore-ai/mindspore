@@ -195,8 +195,8 @@ done
 
 # package info
 x86_path=${release_path}/ubuntu_x86
-arm32_path=${release_path}/android_aarch32
-arm64_path=${release_path}/android_aarch64
+arm32_path=${release_path}/android_aarch32/npu
+arm64_path=${release_path}/android_aarch64/npu
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
