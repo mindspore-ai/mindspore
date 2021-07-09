@@ -52,7 +52,7 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       reduce_type_ = kReduceAny;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out |= input[pos]; };
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported reduce operation: " << kernel_name_ << " for bool.";
+      MS_LOG(EXCEPTION) << "Unsupported reduce operation: " << fullname_ << " for bool.";
     }
   } else {
     if (kernel_name == "ReduceMax") {
