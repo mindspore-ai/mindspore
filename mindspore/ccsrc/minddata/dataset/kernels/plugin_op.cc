@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 errno_t memcpy_s_loop(uchar *dest, size_t destMax, const uchar *src, size_t count) {
   int64_t step = 0;
   while (count >= SECUREC_MEM_MAX_LEN) {
@@ -56,14 +55,14 @@ Status PluginOp::TensorRowToPlugin(const TensorRow &in_row, std::vector<plugin::
       tensor.buffer_.resize(buffer_size);
       int ret_code = memcpy_s_loop(tensor.buffer_.data(), buffer_size, in_row[ind]->GetBuffer(), buffer_size);
       CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
-
     } else {  // string tensor, for now, only tensor with 1 string is supported!
       CHECK_FAIL_RETURN_UNEXPECTED(in_row[ind]->shape().NumOfElements() == 1,
                                    "String tensor with more than 1 element is not yet supported.");
       // get the first and only string in this tensor
       std::string str1(*(in_row[ind]->begin<std::string_view>()));
       tensor.buffer_.resize(str1.size());
-      std::memcpy(tensor.buffer_.data(), str1.data(), str1.size());
+      auto ret_code = memcpy_s(tensor.buffer_.data(), tensor.buffer_.size(), str1.data(), str1.size());
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "memcpy_s failed when copying string tensor.");
     }
     tensor.shape_ = in_row[ind]->shape().AsVector();
     tensor.type_ = in_row[ind]->type().ToString();
@@ -83,12 +82,12 @@ Status PluginOp::Compute(const TensorRow &input, TensorRow *output) {
 }
 
 PluginOp::PluginOp(const std::string &lib_path, const std::string &func_name, const std::string &user_args)
-    : lib_path_(lib_path), func_name_(func_name), user_args_(user_args) {
+    : plugin_op_(nullptr), lib_path_(lib_path), func_name_(func_name), user_args_(user_args) {
   init_code_ = Init();
 }
 
 Status PluginOp::Init() {
-  plugin::PluginManagerBase *plugin;
+  plugin::PluginManagerBase *plugin = nullptr;
   RETURN_IF_NOT_OK(PluginLoader::GetInstance()->LoadPlugin(lib_path_, &plugin));
   // casting a void pointer to specific type
   plugin_op_ = dynamic_cast<plugin::TensorOp *>(plugin->GetModule(func_name_));
