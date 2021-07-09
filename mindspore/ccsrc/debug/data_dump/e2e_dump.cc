@@ -379,7 +379,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
         command = "mv " + zero_dir_dump_path + "/* " + cur_iter_dump_path + "/.";
         MS_LOG(INFO) << "mv command: " << command;
         if (system(command.c_str())) {
-          MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
+          MS_LOG(INFO) << "issue with move command";
         }
       } else {
         MS_LOG(INFO) << "active dump dir, not created yet";
