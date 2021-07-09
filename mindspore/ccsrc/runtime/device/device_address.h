@@ -75,6 +75,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   void SetSize(size_t size) { size_ = size; }
   std::string format() const { return format_; }
   TypeId type_id() const { return type_id_; }
+  bool from_mem_pool() const { return from_mem_pool_; }
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
@@ -114,14 +115,14 @@ class DeviceAddress : public mindspore::DeviceSync {
     return node_index_.first.expired() ? KernelWithIndex{nullptr, node_index_.second}
                                        : KernelWithIndex{node_index_.first.lock(), node_index_.second};
   }
-  void *ptr_{nullptr};
+  mutable void *ptr_{nullptr};
   size_t size_{0};
-  size_t original_ref_count_{1};
+  mutable size_t original_ref_count_{1};
   // It will be decreased in the running, and reset by original_ref_count_ when it is zero.
-  size_t ref_count_{1};
+  mutable size_t ref_count_{1};
   string format_{"DefaultFormat"};
   TypeId type_id_{kNumberTypeFloat16};
-  bool from_mem_pool_{false};
+  mutable bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
   ShapeVector host_shape_{};
   // {node, out_index}

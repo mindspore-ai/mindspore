@@ -81,5 +81,35 @@ void IntToLong(void *dst, const void *src, size_t elem_num) {
     long_data[i] = static_cast<int64_t>(int_data[i]);
   }
 }
+
+void ConvertSameType(void *dst, const void *src, size_t size, TypeId type) {
+  if (type == kNumberTypeFloat16) {
+    auto dst_data = static_cast<float16 *>(dst);
+    auto src_data = static_cast<const float16 *>(src);
+    ConvertSameType(dst_data, src_data, size >> 1);
+  } else if (type == kNumberTypeFloat32) {
+    auto dst_data = static_cast<float *>(dst);
+    auto src_data = static_cast<const float *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(float));
+  } else if (type == kNumberTypeFloat64) {
+    auto dst_data = static_cast<double *>(dst);
+    auto src_data = static_cast<const double *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(double));
+  } else if (type == kNumberTypeInt16) {
+    auto dst_data = static_cast<int16_t *>(dst);
+    auto src_data = static_cast<const int16_t *>(src);
+    ConvertSameType(dst_data, src_data, size >> 1);
+  } else if (type == kNumberTypeInt32) {
+    auto dst_data = static_cast<int *>(dst);
+    auto src_data = static_cast<const int *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(int));
+  } else if (type == kNumberTypeInt64) {
+    auto dst_data = static_cast<int64_t *>(dst);
+    auto src_data = static_cast<const int64_t *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(int64_t));
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid Type: " << TypeIdLabel(type);
+  }
+}
 }  // namespace device
 }  // namespace mindspore
