@@ -134,8 +134,8 @@ class PSContext {
   void set_cipher_time_window(uint64_t cipher_time_window);
   uint64_t cipher_time_window() const;
 
-  void set_reconstruct_secrets_threshhold(uint64_t reconstruct_secrets_threshhold);
-  uint64_t reconstruct_secrets_threshhold() const;
+  void set_reconstruct_secrets_threshold(uint64_t reconstruct_secrets_threshold);
+  uint64_t reconstruct_secrets_threshold() const;
 
   void set_fl_name(const std::string &fl_name);
   const std::string &fl_name() const;
@@ -202,7 +202,7 @@ class PSContext {
         update_model_time_window_(3000),
         share_secrets_ratio_(1.0),
         cipher_time_window_(300000),
-        reconstruct_secrets_threshhold_(2000),
+        reconstruct_secrets_threshold_(2000),
         fl_iteration_num_(20),
         client_epoch_num_(25),
         client_batch_size_(32),
@@ -264,7 +264,7 @@ class PSContext {
   uint64_t cipher_time_window_;
 
   // The threshold count of reconstruct secrets round. Used in federated learning for now.
-  uint64_t reconstruct_secrets_threshhold_;
+  uint64_t reconstruct_secrets_threshold_;
 
   // Iteration number of federeated learning, which is the number of interactions between client and server.
   uint64_t fl_iteration_num_;

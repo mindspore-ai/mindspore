@@ -336,24 +336,36 @@ void PSContext::set_update_model_time_window(uint64_t update_model_time_window) 
 
 uint64_t PSContext::update_model_time_window() const { return update_model_time_window_; }
 
-void PSContext::set_share_secrets_ratio(float share_secrets_ratio) { share_secrets_ratio_ = share_secrets_ratio; }
+void PSContext::set_share_secrets_ratio(float share_secrets_ratio) {
+  if (share_secrets_ratio > 0 && share_secrets_ratio <= 1) {
+    share_secrets_ratio_ = share_secrets_ratio;
+  } else {
+    MS_LOG(EXCEPTION) << share_secrets_ratio << " is invalid, share_secrets_ratio must be in range of (0, 1].";
+    return;
+  }
+}
 
 float PSContext::share_secrets_ratio() const { return share_secrets_ratio_; }
 
 void PSContext::set_cipher_time_window(uint64_t cipher_time_window) {
   if (cipher_time_window_ < 0) {
-    MS_LOG(EXCEPTION) << "cipher_time_window should not be less than 0..";
+    MS_LOG(EXCEPTION) << "cipher_time_window should not be less than 0.";
+    return;
   }
   cipher_time_window_ = cipher_time_window;
 }
 
 uint64_t PSContext::cipher_time_window() const { return cipher_time_window_; }
 
-void PSContext::set_reconstruct_secrets_threshhold(uint64_t reconstruct_secrets_threshhold) {
-  reconstruct_secrets_threshhold_ = reconstruct_secrets_threshhold;
+void PSContext::set_reconstruct_secrets_threshold(uint64_t reconstruct_secrets_threshold) {
+  if (reconstruct_secrets_threshold <= 0) {
+    MS_LOG(EXCEPTION) << "reconstruct_secrets_threshold should be positive.";
+    return;
+  }
+  reconstruct_secrets_threshold_ = reconstruct_secrets_threshold;
 }
 
-uint64_t PSContext::reconstruct_secrets_threshhold() const { return reconstruct_secrets_threshhold_; }
+uint64_t PSContext::reconstruct_secrets_threshold() const { return reconstruct_secrets_threshold_; }
 
 void PSContext::set_fl_name(const std::string &fl_name) { fl_name_ = fl_name; }
 

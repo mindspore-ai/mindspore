@@ -53,7 +53,7 @@ parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 # parameters for encrypt_type='PW_ENCRYPT'
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
-parser.add_argument("--reconstruct_secrets_threshhold", type=int, default=3)
+parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -79,7 +79,7 @@ config_file_path = args.config_file_path
 encrypt_type = args.encrypt_type
 share_secrets_ratio = args.share_secrets_ratio
 cipher_time_window = args.cipher_time_window
-reconstruct_secrets_threshhold = args.reconstruct_secrets_threshhold
+reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
 dp_eps = args.dp_eps
 dp_delta = args.dp_delta
 dp_norm_clip = args.dp_norm_clip
@@ -107,7 +107,7 @@ ctx = {
     "config_file_path": config_file_path,
     "share_secrets_ratio": share_secrets_ratio,
     "cipher_time_window": cipher_time_window,
-    "reconstruct_secrets_threshhold": reconstruct_secrets_threshhold,
+    "reconstruct_secrets_threshold": reconstruct_secrets_threshold,
     "dp_eps": dp_eps,
     "dp_delta": dp_delta,
     "dp_norm_clip": dp_norm_clip,

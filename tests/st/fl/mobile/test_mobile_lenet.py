@@ -51,7 +51,7 @@ parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 # parameters for encrypt_type='PW_ENCRYPT'
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
-parser.add_argument("--reconstruct_secrets_threshhold", type=int, default=3)
+parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -68,7 +68,7 @@ update_model_ratio = args.update_model_ratio
 update_model_time_window = args.update_model_time_window
 share_secrets_ratio = args.share_secrets_ratio
 cipher_time_window = args.cipher_time_window
-reconstruct_secrets_threshhold = args.reconstruct_secrets_threshhold
+reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
 fl_name = args.fl_name
 fl_iteration_num = args.fl_iteration_num
 client_epoch_num = args.client_epoch_num
@@ -96,7 +96,7 @@ ctx = {
     "update_model_time_window": update_model_time_window,
     "share_secrets_ratio": share_secrets_ratio,
     "cipher_time_window": cipher_time_window,
-    "reconstruct_secrets_threshhold": reconstruct_secrets_threshhold,
+    "reconstruct_secrets_threshold": reconstruct_secrets_threshold,
     "fl_name": fl_name,
     "fl_iteration_num": fl_iteration_num,
     "client_epoch_num": client_epoch_num,
