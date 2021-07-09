@@ -159,7 +159,7 @@ class Complex64 : public Number {
 
   TypeId generic_type_id() const override { return kNumberTypeComplex64; }
   TypePtr DeepCopy() const override { return std::make_shared<Complex64>(); }
-  std::string ToString() const override { return GetTypeName("Complex64"); }
+  std::string ToString() const override { return GetTypeName("Complex"); }
   std::string ToReprString() const override { return nbits() == 0 ? "complex64_" : GetTypeName("complex64"); }
   std::string DumpText() const override {
     return nbits() == 0 ? std::string("Complex64") : std::string("C") + std::to_string(nbits());

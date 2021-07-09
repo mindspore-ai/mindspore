@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_H_
 #include <memory>
 #include <vector>
+#include <string>
 #include <nlohmann/json.hpp>
 #include "backend/optimizer/common/pass.h"
 #include "ir/func_graph.h"
@@ -34,28 +35,42 @@ class DefaultExpander : public Expander {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
-  bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
-  void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
-  AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node);
-  FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node);
+  virtual bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
+  virtual void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
+  virtual AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node);
+  virtual FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node);
 };
-
+class ComplexOpExpander : public DefaultExpander {
+ protected:
+  bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
+};
 class GraphKernelExpander : public Pass {
  public:
   GraphKernelExpander() : Pass("graph_kernel_expander") {}
+  explicit GraphKernelExpander(const std::string &name) : Pass(name) {}
   ~GraphKernelExpander() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
- private:
-  ExpanderPtr GetExpander(const AnfNodePtr &node);
-  bool DoExpand(const FuncGraphPtr &func_graph);
-  bool CanExpand(const CNodePtr &node) const {
+ protected:
+  virtual ExpanderPtr GetExpander(const AnfNodePtr &node);
+  virtual bool DoExpand(const FuncGraphPtr &func_graph);
+  virtual bool CanExpand(const CNodePtr &node) const {
     return std::any_of(expand_ops_.begin(), expand_ops_.end(),
                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
   }
 
  private:
   std::vector<PrimitivePtr> expand_ops_;
+};
+class GraphKernelComplexExpander : public GraphKernelExpander {
+ public:
+  GraphKernelComplexExpander() : GraphKernelExpander("graph_kernel_complex_expander") {}
+  ~GraphKernelComplexExpander() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
+
+ protected:
+  ExpanderPtr GetExpander(const AnfNodePtr &node) override;
+  bool CanExpand(const CNodePtr &node) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
