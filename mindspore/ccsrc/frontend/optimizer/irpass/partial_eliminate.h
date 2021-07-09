@@ -117,14 +117,19 @@ class ChoicePartialEliminater : public AnfVisitor {
     }
 
     // check funcgraph should be used once only.
-    for (auto &fg_node : fg_list_) {
+    for (size_t i = 0; i < fg_list_.size(); i++) {
+      auto fg_node = fg_list_[i];
       auto fg = GetValueNode<FuncGraphPtr>(fg_node);
       MS_EXCEPTION_IF_NULL(fg);
       if (fg->func_graph_cnodes_index().size() != 1) {
         for (auto iter : fg->func_graph_cnodes_index()) {
-          MS_LOG(ERROR) << "fg user: " << iter.first->first->DebugString(1) << ", index: " << iter.first->second;
+          MS_LOG(DEBUG) << "fg user: " << iter.first->first->DebugString(1) << ", index: " << iter.first->second;
         }
-        MS_LOG(EXCEPTION) << "fg is used multiple times: " << fg->ToString();
+        // If a graph is used by 2 or more partial nodes at the same time, clone the graph.
+        auto new_fg = BasicClone(fg);
+        auto new_fg_node = NewValueNode(new_fg);
+        fg->manager()->Replace(fg_node, new_fg_node);
+        fg_list_[i] = new_fg_node;
       }
     }
     return true;
