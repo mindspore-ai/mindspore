@@ -34,7 +34,8 @@ std::string GetDeviceTypeString(enum DeviceType type) {
   return "InvalidDeviceType" + std::to_string(static_cast<int>(type));
 }
 }  // namespace
-Status Model::Build(GraphCell graph_cell, const std::shared_ptr<Context> &model_context) {
+Status Model::Build(GraphCell graph_cell, const std::shared_ptr<Context> &model_context,
+                    const std::shared_ptr<TrainCfg> &) {
   if (graph_cell.GetGraph() == nullptr) {
     MS_LOG(ERROR) << "Invalid graph input.";
     return kMCInvalidInput;

@@ -17,11 +17,15 @@
 #include "include/api/model.h"
 #include "include/api/types.h"
 #include "include/api/context.h"
+#include "include/api/callback/callback.h"
 #include "include/api/dual_abi_helper.h"
 #include "src/cxx_api/model/model_impl.h"
+#include "src/cxx_api/callback/callback_impl.h"
+#include "src/cxx_api/callback/callback_adapter.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode) {
   impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
@@ -35,26 +39,33 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
   }
   return kSuccess;
 }
-Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context) {
+
+Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context,
+                    const std::shared_ptr<TrainCfg> &train_cfg) {
+  std::stringstream err_msg;
   if (impl_ != nullptr) {
     MS_LOG(DEBUG) << "Model has been already built.";
     return kSuccess;
   }
   impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
-    return kLiteNullptr;
+    err_msg << "Model implement is null.";
+    MS_LOG(ERROR) << err_msg.str();
+    return Status(kLiteNullptr, err_msg.str());
   }
   if (graph.GetGraph() == nullptr) {
-    MS_LOG(ERROR) << "Invalid graph.";
-    return kLiteNullptr;
+    err_msg << "Invalid null graph.";
+    MS_LOG(ERROR) << err_msg.str();
+    return Status(kLiteNullptr, err_msg.str());
   }
   if (model_context == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return kLiteNullptr;
+    err_msg << "Invalid null context.";
+    MS_LOG(ERROR) << err_msg.str();
+    return Status(kLiteNullptr, err_msg.str());
   }
   impl_->SetContext(model_context);
   impl_->SetGraph(graph.GetGraph());
+  impl_->SetConfig(train_cfg);
   return impl_->Build();
 }
 
@@ -86,10 +97,12 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
 
 std::vector<MSTensor> Model::GetInputs() {
   std::vector<MSTensor> empty;
+  // std::cout << "Model::GetInputs " << std::endl;
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return empty;
   }
+  // std::cout << "Model2::GetInputs " << std::endl;
   return impl_->GetInputs();
 }
 
@@ -135,4 +148,33 @@ std::vector<MSTensor> Model::GetOutputsByNodeName(const std::vector<char> &node_
   }
   return impl_->GetOutputsByNodeName(CharToString(node_name));
 }
+
+Status Model::SetTrainMode(bool train) {
+  if ((impl_ == nullptr) || (impl_->session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model is null.";
+    return kLiteUninitializedObj;
+  }
+  auto ret = (train) ? impl_->session_->Train() : impl_->session_->Eval();
+  return (ret == mindspore::lite::RET_OK) ? kSuccess : kLiteError;
+}
+
+bool Model::GetTrainMode() const { return ((impl_ != nullptr) && (impl_->session_) && (impl_->session_->IsTrain())); }
+
+Status Model::InitMetrics(std::vector<Metrics *> metrics) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteUninitializedObj;
+  }
+  return impl_->InitMetrics(metrics);
+}
+
+std::vector<Metrics *> Model::GetMetrics() {
+  std::vector<Metrics *> empty;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return empty;
+  }
+  return impl_->GetMetrics();
+}
+
 }  // namespace mindspore

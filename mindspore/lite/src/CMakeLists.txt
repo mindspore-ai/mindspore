@@ -35,17 +35,25 @@ else()
     endif()
 endif()
 
+file(GLOB CXX_API_SRCS
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/*.cc
+        )
+
 set(API_SRC
         ${CORE_DIR}/utils/status.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/types.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/context.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model_impl.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/graph.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/tensor_impl.cc
+        ${CXX_API_SRCS}
+        )
+
+file(GLOB CXX_API_TRAIN_SRCS
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/metrics/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/callback/*.cc
+        )
+set(API_TRAIN_SRC
+        ${CXX_API_TRAIN_SRCS}
         )
 
 if(SUPPORT_NPU)
@@ -121,6 +129,7 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
             )
 endif()
 set(TRAIN_SRC
+        ${API_TRAIN_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc

@@ -30,18 +30,16 @@ namespace mindspore {
 
 class MS_API Serialization {
  public:
-  static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph);
   inline static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
-                            const Key &dec_key, const std::string &dec_mode);
-  inline static Status Load(const std::string &file, ModelType model_type, Graph *graph);
-  inline static Status Load(const std::string &file, ModelType model_type, Graph *graph, const Key &dec_key,
-                            const std::string &dec_mode);
+                            const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
+  inline static Status Load(const std::string &file, ModelType model_type, Graph *graph, const Key &dec_key = {},
+                            const std::string &dec_mode = kDecModeAesGcm);
   inline static Status Load(const std::vector<std::string> &files, ModelType model_type, std::vector<Graph> *graphs,
-                            const Key &dec_key = {}, const std::string &dec_mode = "AES-GCM");
-  static Status LoadCheckPoint(const std::string &ckpt_file, std::map<std::string, Buffer> *parameters);
+                            const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
   static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
   static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data);
-  static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file);
+  static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
+                            QuantizationType quantization_type = kNoQuant, bool export_inference_only = true);
 
  private:
   static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph, const Key &dec_key,
@@ -56,10 +54,6 @@ class MS_API Serialization {
 Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
                            const Key &dec_key, const std::string &dec_mode) {
   return Load(model_data, data_size, model_type, graph, dec_key, StringToChar(dec_mode));
-}
-
-Status Serialization::Load(const std::string &file, ModelType model_type, Graph *graph) {
-  return Load(StringToChar(file), model_type, graph);
 }
 
 Status Serialization::Load(const std::string &file, ModelType model_type, Graph *graph, const Key &dec_key,

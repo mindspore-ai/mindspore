@@ -47,10 +47,10 @@ TEST_F(TestCxxApiSerialization, test_load_encrpty_mindir_SUCCESS) {
   Graph graph;
   std::string key_str = "0123456789ABCDEF";
   Key key;
-  memcpy(key.key, key_str.c_str(), key_str.size());
+  memcpy(key.key, key_str.data(), key_str.size());
   key.len = key_str.size();
   ASSERT_TRUE(Serialization::Load("./data/mindir/add_encrpty_key_0123456789ABCDEF.mindir", ModelType::kMindIR, &graph,
-                                  key, "AES-GCM") == kSuccess);
+                                  key, kDecModeAesGcm) == kSuccess);
 }
 
 TEST_F(TestCxxApiSerialization, test_load_encrpty_mindir_without_key_FAILED) {
@@ -66,10 +66,10 @@ TEST_F(TestCxxApiSerialization, test_load_encrpty_mindir_with_wrong_key_FAILED) 
   Graph graph;
   std::string key_str = "WRONG_KEY";
   Key key;
-  memcpy(key.key, key_str.c_str(), key_str.size());
+  memcpy(key.key, key_str.data(), key_str.size());
   key.len = key_str.size();
   auto status = Serialization::Load("./data/mindir/add_encrpty_key_0123456789ABCDEF.mindir", ModelType::kMindIR, &graph,
-                                    key, "AES-GCM");
+                                    key, kDecModeAesGcm);
   ASSERT_TRUE(status != kSuccess);
 }
 
@@ -77,9 +77,10 @@ TEST_F(TestCxxApiSerialization, test_load_no_encrpty_mindir_with_wrong_key_FAILE
   Graph graph;
   std::string key_str = "WRONG_KEY";
   Key key;
-  memcpy(key.key, key_str.c_str(), key_str.size());
+  memcpy(key.key, key_str.data(), key_str.size());
   key.len = key_str.size();
-  auto status = Serialization::Load("./data/mindir/add_no_encrpty.mindir", ModelType::kMindIR, &graph, key, "AES-GCM");
+  auto status = Serialization::Load("./data/mindir/add_no_encrpty.mindir", ModelType::kMindIR, &graph,
+                                    key, kDecModeAesGcm);
   ASSERT_TRUE(status != kSuccess);
 }
 

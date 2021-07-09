@@ -36,8 +36,24 @@ enum ModelType : uint32_t {
   kAIR = 1,
   kOM = 2,
   kONNX = 3,
+  kFlatBuffer = 4,
   // insert new data type here
   kUnknownType = 0xFFFFFFFF
+};
+
+enum QuantizationType : uint32_t {
+  kNoQuant = 0,
+  kWeightQuant = 1,
+  kFullQuant = 2,
+  kUnknownQuantType = 0xFFFFFFFF
+};
+
+enum OptimizationLevel : uint32_t {
+  kO0 = 0,  // Do not change
+  kO2 = 2,  // Cast network to float16, keep batchnorm and loss in float32,
+  kO3 = 3,  // Cast network to float16, including bacthnorm
+  kAuto = 4,  // Choose optimization based on device
+  kOptimizationType = 0xFFFFFFFF
 };
 
 class MS_API MSTensor {
@@ -149,7 +165,11 @@ using Key = struct Key {
   size_t len;
   unsigned char key[32];
   Key() : len(0) {}
+  explicit Key(const char *dec_key, size_t key_len);
 };
+constexpr char kDecModeAesGcm[] = "AES-GCM";
+
+
 /// \brief CallBackParam defined input arguments for callBack function.
 struct MSCallBackParam {
   std::string node_name_; /**< node name argument */

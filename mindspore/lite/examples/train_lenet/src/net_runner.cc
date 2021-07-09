@@ -133,6 +133,7 @@ bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inpu
 
 NetRunner::~NetRunner() {
   if (loop_ != nullptr) delete loop_;
+  if (session_ != nullptr) delete session_;
 }
 
 void NetRunner::InitAndFigureInputs() {

@@ -32,9 +32,7 @@ using session::RET_CONTINUE;
 using session::RET_EXIT;
 using session::RET_STOP_TRAINING;
 
-TrainLoop::~TrainLoop() {
-  if (train_session_ != nullptr) delete train_session_;
-}
+TrainLoop::~TrainLoop() {}
 
 int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func) {
   train_session_->Train();
