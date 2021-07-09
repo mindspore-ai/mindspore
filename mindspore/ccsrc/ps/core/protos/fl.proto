@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 syntax = "proto3";
-package mindspore.ps;
+package mindspore.fl;
 
 message CollectiveData {
   bytes data = 1;

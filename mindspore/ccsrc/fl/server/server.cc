@@ -30,17 +30,8 @@
 #include "fl/server/kernel/round/round_kernel_factory.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
-static std::vector<std::shared_ptr<core::CommunicatorBase>> global_worker_server_comms = {};
-// This function is for the exit of server process when an interrupt signal is captured.
-void SignalHandler(int signal) {
-  MS_LOG(INFO) << "Interrupt signal captured: " << signal;
-  std::for_each(global_worker_server_comms.begin(), global_worker_server_comms.end(),
-                [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
-  return;
-}
-
 void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const std::vector<RoundConfig> &rounds_config,
                         const CipherConfig &cipher_config, const FuncGraphPtr &func_graph, size_t executor_threshold) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -76,7 +67,6 @@ void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const s
 // Getting Model Size relies on ModelStorage Initialization which relies on Executor Initialization:
 // InitCipher---->InitExecutor
 void Server::Run() {
-  signal(SIGINT, SignalHandler);
   std::unique_lock<std::mutex> lock(scaling_mtx_);
   InitServerContext();
   InitCluster();
@@ -84,8 +74,8 @@ void Server::Run() {
   RegisterCommCallbacks();
   StartCommunicator();
   InitExecutor();
-  std::string encrypt_type = PSContext::instance()->encrypt_type();
-  if (encrypt_type != kNotEncryptType) {
+  std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
+  if (encrypt_type != ps::kNotEncryptType) {
     InitCipher();
     MS_LOG(INFO) << "Parameters for secure aggregation have been initiated.";
   }
@@ -96,7 +86,7 @@ void Server::Run() {
 
   // Wait communicators to stop so the main thread is blocked.
   std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Join(); });
+                [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Join(); });
   communicator_with_server_->Join();
   MsException::Instance().CheckException();
   return;
@@ -115,18 +105,18 @@ void Server::CancelSafeMode() {
 bool Server::IsSafeMode() { return safemode_.load(); }
 
 void Server::InitServerContext() {
-  PSContext::instance()->GenerateResetterRound();
-  scheduler_ip_ = PSContext::instance()->scheduler_host();
-  scheduler_port_ = PSContext::instance()->scheduler_port();
-  worker_num_ = PSContext::instance()->initial_worker_num();
-  server_num_ = PSContext::instance()->initial_server_num();
+  ps::PSContext::instance()->GenerateResetterRound();
+  scheduler_ip_ = ps::PSContext::instance()->scheduler_host();
+  scheduler_port_ = ps::PSContext::instance()->scheduler_port();
+  worker_num_ = ps::PSContext::instance()->initial_worker_num();
+  server_num_ = ps::PSContext::instance()->initial_server_num();
   return;
 }
 
 void Server::InitCluster() {
-  server_node_ = std::make_shared<core::ServerNode>();
+  server_node_ = std::make_shared<ps::core::ServerNode>();
   MS_EXCEPTION_IF_NULL(server_node_);
-  task_executor_ = std::make_shared<core::TaskExecutor>(32);
+  task_executor_ = std::make_shared<ps::core::TaskExecutor>(32);
   MS_EXCEPTION_IF_NULL(task_executor_);
   if (!InitCommunicatorWithServer()) {
     MS_LOG(EXCEPTION) << "Initializing cross-server communicator failed.";
@@ -136,7 +126,6 @@ void Server::InitCluster() {
     MS_LOG(EXCEPTION) << "Initializing worker-server communicator failed.";
     return;
   }
-  global_worker_server_comms = communicators_with_worker_;
   return;
 }
 
@@ -187,8 +176,8 @@ void Server::InitIteration() {
   }
 
 #ifdef ENABLE_ARMOUR
-  std::string encrypt_type = PSContext::instance()->encrypt_type();
-  if (encrypt_type == kPWEncryptType) {
+  std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
+  if (encrypt_type == ps::kPWEncryptType) {
     cipher_initial_client_cnt_ = rounds_config_[0].threshold_count;
     cipher_exchange_secrets_cnt_ = cipher_initial_client_cnt_ * 1.0;
     cipher_share_secrets_cnt_ = cipher_initial_client_cnt_ * cipher_config_.share_secrets_ratio;
@@ -245,10 +234,10 @@ void Server::InitCipher() {
   unsigned char cipher_p[SECRET_MAX_LEN] = {0};
   int cipher_g = 1;
   unsigned char cipher_prime[PRIME_MAX_LEN] = {0};
-  float dp_eps = PSContext::instance()->dp_eps();
-  float dp_delta = PSContext::instance()->dp_delta();
-  float dp_norm_clip = PSContext::instance()->dp_norm_clip();
-  std::string encrypt_type = PSContext::instance()->encrypt_type();
+  float dp_eps = ps::PSContext::instance()->dp_eps();
+  float dp_delta = ps::PSContext::instance()->dp_delta();
+  float dp_norm_clip = ps::PSContext::instance()->dp_norm_clip();
+  std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
 
   mpz_t prim;
   mpz_init(prim);
@@ -276,7 +265,7 @@ void Server::RegisterCommCallbacks() {
   // The message callbacks of round kernels are already set in method InitIteration, so here we don't need to register
   // rounds' callbacks.
 
-  auto tcp_comm = std::dynamic_pointer_cast<core::TcpCommunicator>(communicator_with_server_);
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
   MS_EXCEPTION_IF_NULL(tcp_comm);
 
   // Set message callbacks for server-to-server communication.
@@ -304,23 +293,23 @@ void Server::RegisterCommCallbacks() {
                                                           std::bind(&Server::ProcessAfterScalingIn, this));
 }
 
-void Server::RegisterExceptionEventCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
+void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
-  communicator->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
+  communicator->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
     MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
     safemode_ = true;
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
+                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Stop(); });
     communicator_with_server_->Stop();
   });
 
-  communicator->RegisterEventCallback(core::ClusterEvent::NODE_TIMEOUT, [&]() {
+  communicator->RegisterEventCallback(ps::core::ClusterEvent::NODE_TIMEOUT, [&]() {
     MS_LOG(ERROR)
       << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
          "network building phase.";
     safemode_ = true;
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
+                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Stop(); });
     communicator_with_server_->Stop();
   });
 }
@@ -377,7 +366,7 @@ void Server::StartCommunicator() {
 
   MS_LOG(INFO) << "Start communicator with worker.";
   std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Start(); });
+                [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Start(); });
 }
 
 void Server::ProcessBeforeScalingOut() {
@@ -424,7 +413,7 @@ void Server::ProcessAfterScalingIn() {
   if (server_node_->rank_id() == UINT32_MAX) {
     MS_LOG(WARNING) << "This server the one to be scaled in. Server exiting.";
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
+                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Stop(); });
     communicator_with_server_->Stop();
     return;
   }
@@ -449,5 +438,5 @@ void Server::ProcessAfterScalingIn() {
   safemode_ = false;
 }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

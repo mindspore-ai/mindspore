@@ -17,7 +17,7 @@
 #include "fl/server/iteration_timer.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 void IterationTimer::Start(const std::chrono::milliseconds &duration) {
   if (running_.load()) {
@@ -52,5 +52,5 @@ bool IterationTimer::IsTimeOut(const std::chrono::milliseconds &timestamp) const
 
 bool IterationTimer::IsRunning() const { return running_; }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

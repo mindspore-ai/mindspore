@@ -21,7 +21,7 @@
 #include "fl/server/iteration.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 class Server;
 class Iteration;
@@ -34,14 +34,14 @@ Round::Round(const std::string &name, bool check_timeout, size_t time_window, bo
       threshold_count_(threshold_count),
       server_num_as_threshold_(server_num_as_threshold) {}
 
-void Round::Initialize(const std::shared_ptr<core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
+void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
                        FinishIterCb finish_iteration_cb) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
 
   // Register callback for round kernel.
   communicator_->RegisterMsgCallBack(
-    name_, [&](std::shared_ptr<core::MessageHandler> message) { LaunchRoundKernel(message); });
+    name_, [&](std::shared_ptr<ps::core::MessageHandler> message) { LaunchRoundKernel(message); });
 
   // Callback when the iteration is finished.
   finish_iteration_cb_ = [this, finish_iteration_cb](bool is_iteration_valid, const std::string &) -> void {
@@ -106,7 +106,7 @@ void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) 
   return;
 }
 
-void Round::LaunchRoundKernel(const std::shared_ptr<core::MessageHandler> &message) {
+void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &message) {
   if (message == nullptr) {
     MS_LOG(ERROR) << "Message is nullptr.";
     return;
@@ -152,7 +152,7 @@ bool Round::check_timeout() const { return check_timeout_; }
 
 size_t Round::time_window() const { return time_window_; }
 
-void Round::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message) {
+void Round::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(INFO) << "Round " << name_ << " first count event is triggered.";
   // The timer starts only after the first count event is triggered by DistributedCountService.
   if (check_timeout_) {
@@ -164,7 +164,7 @@ void Round::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &messa
   return;
 }
 
-void Round::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) {
+void Round::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(INFO) << "Round " << name_ << " last count event is triggered.";
   // Same as the first count event, the timer must be stopped by DistributedCountService.
   if (check_timeout_) {
@@ -176,5 +176,5 @@ void Round::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &messag
   return;
 }
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

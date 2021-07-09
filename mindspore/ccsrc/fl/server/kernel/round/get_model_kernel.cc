@@ -23,7 +23,7 @@
 #include "fl/server/model_store.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void GetModelKernel::InitKernel(size_t) {
@@ -133,5 +133,5 @@ void GetModelKernel::BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, con
 REG_ROUND_KERNEL(getModel, GetModelKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

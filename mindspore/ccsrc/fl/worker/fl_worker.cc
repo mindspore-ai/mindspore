@@ -22,27 +22,27 @@
 #include "utils/ms_exception.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace worker {
 void FLWorker::Run() {
-  worker_num_ = PSContext::instance()->worker_num();
-  server_num_ = PSContext::instance()->server_num();
-  scheduler_ip_ = PSContext::instance()->scheduler_ip();
-  scheduler_port_ = PSContext::instance()->scheduler_port();
-  worker_step_num_per_iteration_ = PSContext::instance()->worker_step_num_per_iteration();
-  PSContext::instance()->cluster_config().scheduler_host = scheduler_ip_;
-  PSContext::instance()->cluster_config().scheduler_port = scheduler_port_;
-  PSContext::instance()->cluster_config().initial_worker_num = worker_num_;
-  PSContext::instance()->cluster_config().initial_server_num = server_num_;
+  worker_num_ = ps::PSContext::instance()->worker_num();
+  server_num_ = ps::PSContext::instance()->server_num();
+  scheduler_ip_ = ps::PSContext::instance()->scheduler_ip();
+  scheduler_port_ = ps::PSContext::instance()->scheduler_port();
+  worker_step_num_per_iteration_ = ps::PSContext::instance()->worker_step_num_per_iteration();
+  ps::PSContext::instance()->cluster_config().scheduler_host = scheduler_ip_;
+  ps::PSContext::instance()->cluster_config().scheduler_port = scheduler_port_;
+  ps::PSContext::instance()->cluster_config().initial_worker_num = worker_num_;
+  ps::PSContext::instance()->cluster_config().initial_server_num = server_num_;
   MS_LOG(INFO) << "Initialize cluster config for worker. Worker number:" << worker_num_
                << ", Server number:" << server_num_ << ", Scheduler ip:" << scheduler_ip_
                << ", Scheduler port:" << scheduler_port_
                << ", Worker training step per iteration:" << worker_step_num_per_iteration_;
 
-  worker_node_ = std::make_shared<core::WorkerNode>();
+  worker_node_ = std::make_shared<ps::core::WorkerNode>();
   MS_EXCEPTION_IF_NULL(worker_node_);
 
-  worker_node_->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
+  worker_node_->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
     Finalize();
     try {
       MS_LOG(EXCEPTION)
@@ -51,7 +51,7 @@ void FLWorker::Run() {
       MsException::Instance().SetException();
     }
   });
-  worker_node_->RegisterEventCallback(core::ClusterEvent::NODE_TIMEOUT, [this]() {
+  worker_node_->RegisterEventCallback(ps::core::ClusterEvent::NODE_TIMEOUT, [this]() {
     Finalize();
     try {
       MS_LOG(EXCEPTION)
@@ -74,7 +74,7 @@ void FLWorker::Finalize() {
   worker_node_->Stop();
 }
 
-bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size, core::TcpUserCommand command,
+bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size, ps::core::TcpUserCommand command,
                             std::shared_ptr<std::vector<unsigned char>> *output) {
   // If the worker is in safemode, do not communicate with server.
   while (safemode_.load()) {
@@ -97,7 +97,8 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
 
   if (output != nullptr) {
     while (true) {
-      if (!worker_node_->Send(core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command), output)) {
+      if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command),
+                              output)) {
         MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
         return false;
       }
@@ -106,7 +107,7 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
         return false;
       }
 
-      if (std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size()) == kClusterSafeMode) {
+      if (std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size()) == ps::kClusterSafeMode) {
         MS_LOG(INFO) << "The server " << server_rank << " is in safemode.";
         std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerRetryDurationForSafeMode));
       } else {
@@ -114,7 +115,7 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
       }
     }
   } else {
-    if (!worker_node_->Send(core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command))) {
+    if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command))) {
       MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
       return false;
     }
@@ -155,9 +156,9 @@ void FLWorker::InitializeFollowerScaler() {
                                                            std::bind(&FLWorker::ProcessAfterScalingOut, this));
   worker_node_->RegisterFollowerScalerHandlerAfterScaleIn("WorkerPipeline",
                                                           std::bind(&FLWorker::ProcessAfterScalingIn, this));
-  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(CustomEvent::kIterationRunning),
+  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning),
                                             std::bind(&FLWorker::HandleIterationRunningEvent, this));
-  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(CustomEvent::kIterationCompleted),
+  worker_node_->RegisterCustomEventCallback(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted),
                                             std::bind(&FLWorker::HandleIterationCompletedEvent, this));
 }
 
@@ -222,5 +223,5 @@ void FLWorker::ProcessAfterScalingIn() {
   safemode_ = false;
 }
 }  // namespace worker
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

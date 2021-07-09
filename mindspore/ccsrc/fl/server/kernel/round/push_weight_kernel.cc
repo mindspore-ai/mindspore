@@ -17,7 +17,7 @@
 #include "fl/server/kernel/round/push_weight_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 void PushWeightKernel::InitKernel(size_t) {
@@ -60,8 +60,8 @@ bool PushWeightKernel::Reset() {
   return true;
 }
 
-void PushWeightKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &) {
-  if (PSContext::instance()->resetter_round() == ResetterRound::kPushWeight) {
+void PushWeightKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
+  if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kPushWeight) {
     FinishIteration();
   }
   return;
@@ -136,5 +136,5 @@ void PushWeightKernel::BuildPushWeightRsp(std::shared_ptr<FBBuilder> fbb, const 
 REG_ROUND_KERNEL(pushWeight, PushWeightKernel)
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

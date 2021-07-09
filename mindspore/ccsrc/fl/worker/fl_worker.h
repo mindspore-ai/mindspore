@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_WORKER_FL_WORKER_H_
-#define MINDSPORE_CCSRC_PS_WORKER_FL_WORKER_H_
+#ifndef MINDSPORE_CCSRC_FL_WORKER_FL_WORKER_H_
+#define MINDSPORE_CCSRC_FL_WORKER_FL_WORKER_H_
 
 #include <memory>
 #include <string>
@@ -28,7 +28,7 @@
 #include "ps/core/communicator/tcp_communicator.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 using FBBuilder = flatbuffers::FlatBufferBuilder;
 
 // The step number for worker to judge whether to communicate with server.
@@ -59,7 +59,7 @@ class FLWorker {
   }
   void Run();
   void Finalize();
-  bool SendToServer(uint32_t server_rank, const void *data, size_t size, core::TcpUserCommand command,
+  bool SendToServer(uint32_t server_rank, const void *data, size_t size, ps::core::TcpUserCommand command,
                     std::shared_ptr<std::vector<unsigned char>> *output = nullptr);
 
   uint32_t server_num() const;
@@ -104,7 +104,7 @@ class FLWorker {
   uint32_t worker_num_;
   std::string scheduler_ip_;
   uint16_t scheduler_port_;
-  std::shared_ptr<core::WorkerNode> worker_node_;
+  std::shared_ptr<ps::core::WorkerNode> worker_node_;
 
   // The worker standalone training step number before communicating with server. This used in hybrid training mode.
   uint64_t worker_step_num_per_iteration_;
@@ -121,6 +121,6 @@ class FLWorker {
   std::atomic_bool safemode_;
 };
 }  // namespace worker
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_WORKER_FL_WORKER_H_
+#endif  // MINDSPORE_CCSRC_FL_WORKER_FL_WORKER_H_

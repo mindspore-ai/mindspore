@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_
 
 #include <map>
 #include <memory>
@@ -35,7 +35,7 @@
 #include "fl/server/distributed_metadata_store.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 // RoundKernel contains the main logic of server handling messages from workers. One iteration has multiple round
@@ -67,8 +67,8 @@ class RoundKernel : virtual public CPUKernel {
   // The counter event handlers for DistributedCountService.
   // The callbacks when first message and last message for this round kernel is received.
   // These methods is called by class DistributedCountService and triggered by counting server.
-  virtual void OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message);
-  virtual void OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message);
+  virtual void OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
+  virtual void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Called when this round is finished. This round timer's Stop method will be called.
   void StopTimer() const;
@@ -123,6 +123,6 @@ class RoundKernel : virtual public CPUKernel {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_

@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 RoundKernel::RoundKernel() : name_(""), current_count_(0), required_count_(0), error_reason_(""), running_(true) {
@@ -61,9 +61,9 @@ RoundKernel::~RoundKernel() {
   }
 }
 
-void RoundKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &) { return; }
+void RoundKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) { return; }
 
-void RoundKernel::OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &) { return; }
+void RoundKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) { return; }
 
 void RoundKernel::StopTimer() const {
   if (stop_timer_cb_) {
@@ -129,5 +129,5 @@ void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, const v
 }
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

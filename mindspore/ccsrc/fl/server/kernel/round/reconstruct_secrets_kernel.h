@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_RECONSTRUCT_SECRETS_KERNEL_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_RECONSTRUCT_SECRETS_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_RECONSTRUCT_SECRETS_KERNEL_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_RECONSTRUCT_SECRETS_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -27,7 +27,7 @@
 #include "fl/server/executor.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 class ReconstructSecretsKernel : public RoundKernel {
@@ -39,7 +39,7 @@ class ReconstructSecretsKernel : public RoundKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
   bool Reset() override;
-  void OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) override;
+  void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) override;
 
  private:
   std::string name_unmask_;
@@ -49,6 +49,6 @@ class ReconstructSecretsKernel : public RoundKernel {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_RECONSTRUCT_SECRETS_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_RECONSTRUCT_SECRETS_KERNEL_H_

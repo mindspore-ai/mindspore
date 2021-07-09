@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_ITERATION_TIMER_H_
-#define MINDSPORE_CCSRC_PS_SERVER_ITERATION_TIMER_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_ITERATION_TIMER_H_
+#define MINDSPORE_CCSRC_FL_SERVER_ITERATION_TIMER_H_
 
 #include <chrono>
 #include <atomic>
@@ -24,7 +24,7 @@
 #include "fl/server/common.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // IterationTimer controls the time window for the purpose of eliminating trailing time of each iteration.
 class IterationTimer {
@@ -59,6 +59,6 @@ class IterationTimer {
   TimeOutCb timeout_callback_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_ITERATION_TIMER_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_ITERATION_TIMER_H_

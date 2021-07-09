@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_COLLECTIVE_OPS_IMPL_H_
-#define MINDSPORE_CCSRC_PS_SERVER_COLLECTIVE_OPS_IMPL_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_COLLECTIVE_OPS_IMPL_H_
+#define MINDSPORE_CCSRC_FL_SERVER_COLLECTIVE_OPS_IMPL_H_
 
 #include <memory>
 #include <string>
@@ -27,7 +27,7 @@
 #include "fl/server/common.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // CollectiveOpsImpl is the collective communication API of the server.
 // For now, it implements two AllReduce algorithms: RingAllReduce and BroadcastAllReduce. Elastic AllReduce is also
@@ -39,7 +39,7 @@ class CollectiveOpsImpl {
     return instance;
   }
 
-  void Initialize(const std::shared_ptr<core::ServerNode> &server_node);
+  void Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node);
 
   template <typename T>
   bool AllReduce(const void *sendbuff, void *recvbuff, size_t count);
@@ -48,7 +48,7 @@ class CollectiveOpsImpl {
   bool ReInitForScaling();
 
  private:
-  CollectiveOpsImpl() = default;
+  CollectiveOpsImpl() : server_node_(nullptr), local_rank_(0), server_num_(0) {}
   ~CollectiveOpsImpl() = default;
   CollectiveOpsImpl(const CollectiveOpsImpl &) = delete;
   CollectiveOpsImpl &operator=(const CollectiveOpsImpl &) = delete;
@@ -61,7 +61,7 @@ class CollectiveOpsImpl {
   template <typename T>
   bool ReduceBroadcastAllReduce(const void *sendbuff, void *recvbuff, size_t count);
 
-  std::shared_ptr<core::ServerNode> server_node_;
+  std::shared_ptr<ps::core::ServerNode> server_node_;
   uint32_t local_rank_;
   uint32_t server_num_;
 
@@ -69,6 +69,6 @@ class CollectiveOpsImpl {
   std::mutex mtx_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_COLLECTIVE_OPS_IMPL_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_COLLECTIVE_OPS_IMPL_H_

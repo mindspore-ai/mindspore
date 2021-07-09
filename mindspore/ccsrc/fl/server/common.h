@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_COMMON_H_
-#define MINDSPORE_CCSRC_PS_SERVER_COMMON_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_COMMON_H_
+#define MINDSPORE_CCSRC_FL_SERVER_COMMON_H_
 
 #include <map>
 #include <string>
@@ -37,7 +37,7 @@
 #include "ps/core/communicator/message_handler.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // Definitions for the server framework.
 enum ServerMode { PARAMETER_SERVER = 0, FL_SERVER };
@@ -73,7 +73,7 @@ using TimeOutCb = std::function<void(bool, const std::string &)>;
 using StopTimerCb = std::function<void(void)>;
 using FinishIterCb = std::function<void(bool, const std::string &)>;
 using FinalizeCb = std::function<void(void)>;
-using MessageCallback = std::function<void(const std::shared_ptr<core::MessageHandler> &)>;
+using MessageCallback = std::function<void(const std::shared_ptr<ps::core::MessageHandler> &)>;
 
 // Information about whether server kernel will reuse kernel node memory from the front end.
 // Key refers to the server kernel's parameter name, like "weights", "grad", "learning_rate".
@@ -237,6 +237,6 @@ inline AddressPtr GenerateParameterNodeAddrPtr(const CNodePtr &kernel_node, size
 // Definitions for Parameter Server.
 
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_COMMON_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_COMMON_H_

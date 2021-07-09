@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_ROUND_H_
-#define MINDSPORE_CCSRC_PS_SERVER_ROUND_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_ROUND_H_
+#define MINDSPORE_CCSRC_FL_SERVER_ROUND_H_
 
 #include <memory>
 #include <string>
@@ -26,7 +26,7 @@
 #include "fl/server/kernel/round/round_kernel.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // Round helps server to handle network round messages and launch round kernels. One iteration in server consists of
 // multiple rounds like startFLJob, updateModel, Push, Pull, etc. Some round kernels may be stateful because of counting
@@ -37,7 +37,7 @@ class Round {
                  bool check_count = false, size_t threshold_count = 8, bool server_num_as_threshold = false);
   ~Round() = default;
 
-  void Initialize(const std::shared_ptr<core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
+  void Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
                   FinishIterCb finish_iteration_cb);
 
   // Reinitialize count service and round kernel of this round after scaling operations are done.
@@ -48,7 +48,7 @@ class Round {
 
   // This method is the callback which will be set to the communicator and called after the corresponding round message
   // is sent to the server.
-  void LaunchRoundKernel(const std::shared_ptr<core::MessageHandler> &message);
+  void LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Round needs to be reset after each iteration is finished or its timer expires.
   void Reset();
@@ -60,8 +60,8 @@ class Round {
 
  private:
   // The callbacks which will be set to DistributedCounterService.
-  void OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message);
-  void OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message);
+  void OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
+  void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   std::string name_;
 
@@ -83,7 +83,7 @@ class Round {
   // Whether this round uses the server number as its threshold count.
   bool server_num_as_threshold_;
 
-  std::shared_ptr<core::CommunicatorBase> communicator_;
+  std::shared_ptr<ps::core::CommunicatorBase> communicator_;
 
   // The round kernel for this Round.
   std::shared_ptr<kernel::RoundKernel> kernel_;
@@ -97,6 +97,6 @@ class Round {
   FinalizeCb finalize_cb_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_ROUND_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_ROUND_H_

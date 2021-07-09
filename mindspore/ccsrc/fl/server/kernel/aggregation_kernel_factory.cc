@@ -18,7 +18,7 @@
 #include <utility>
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 bool AggregationKernelFactory::Matched(const ParamsInfo &params_info, const CNodePtr &kernel_node) {
@@ -67,5 +67,5 @@ bool AggregationKernelFactory::Matched(const ParamsInfo &params_info, const CNod
 }
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore

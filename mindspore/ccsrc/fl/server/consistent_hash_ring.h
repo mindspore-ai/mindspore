@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_CONSISTENT_HASH_RING_H_
-#define MINDSPORE_CCSRC_PS_SERVER_CONSISTENT_HASH_RING_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_CONSISTENT_HASH_RING_H_
+#define MINDSPORE_CCSRC_FL_SERVER_CONSISTENT_HASH_RING_H_
 
 #include <map>
 #include <string>
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 // To support distributed storage and make servers easy to scale-out and scale-in for a large load of metadata in
 // server, we use class ConsistentHashRing to help servers find out which metadata is stored in which server node.
@@ -59,6 +59,6 @@ class ConsistentHashRing {
   std::map<size_t, uint32_t> ring_;
 };
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_CONSISTENT_HASH_RING_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_CONSISTENT_HASH_RING_H_

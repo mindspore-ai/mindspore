@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
-#define MINDSPORE_CCSRC_PS_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
+#define MINDSPORE_CCSRC_FL_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
 
 #include <map>
 #include <memory>
@@ -27,7 +27,7 @@
 #include "fl/server/executor.h"
 
 namespace mindspore {
-namespace ps {
+namespace fl {
 namespace server {
 namespace kernel {
 // The initial data size sum of federated learning is 0, which will be accumulated in updateModel round.
@@ -44,7 +44,7 @@ class UpdateModelKernel : public RoundKernel {
   bool Reset() override;
 
   // In some cases, the last updateModel message means this server iteration is finished.
-  void OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message) override;
+  void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) override;
 
  private:
   bool ReachThresholdForUpdateModel(const std::shared_ptr<FBBuilder> &fbb);
@@ -62,6 +62,6 @@ class UpdateModelKernel : public RoundKernel {
 };
 }  // namespace kernel
 }  // namespace server
-}  // namespace ps
+}  // namespace fl
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_FL_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
