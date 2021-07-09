@@ -69,17 +69,17 @@ Momentum:
     momentum: 0.9
 
 Thor:
-    lr_max: 0.0034
-    lr_min: 0.00003244  # 3.244e-5
-    lr_power: 1.0
+    lr_max: 0.006464
+    lr_min: 0.000001  # 1e-6
+    lr_power: 2.0
     lr_total_steps: 30000
-    damping_max: 0.05  # 5e-2
+    damping_max: 0.007035
     damping_min: 0.000001  # 1e-6
-    damping_power: 1.0
+    damping_power: 4.0
     damping_total_steps: 30000
     momentum: 0.9
-    weight_decay: 0.0005  # 5e-4,
-    loss_scale: 1.0
+    weight_decay: 0.00001  # 1e-5,
+    loss_scale: 1024.0
     frequency: 100
 # ==============================================================================
 # base
