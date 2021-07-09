@@ -65,19 +65,19 @@ echo $mindrecord_dir
 BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
 if [ $# -ge 1 ]; then
   if [ $3 == 'resnet_v1.5_50' ]; then
-    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+    CONFIG_FILE="${BASE_PATH}/default_config.yaml"
   elif [ $3 == 'resnet_v1_101' ]; then
-    CONFIG_FILE="${BASE_PATH}/../default_config_101.yaml"
+    CONFIG_FILE="${BASE_PATH}/default_config_101.yaml"
   elif [ $3 == 'resnet_v1_152' ]; then
-    CONFIG_FILE="${BASE_PATH}/../default_config_152.yaml"
+    CONFIG_FILE="${BASE_PATH}/default_config_152.yaml"
   elif [ $3 == 'resnet_v1_50' ]; then
-    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+    CONFIG_FILE="${BASE_PATH}/default_config.yaml"
   else
     echo "Unrecognized parameter"
     exit 1
   fi
 else
-  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  CONFIG_FILE="${BASE_PATH}/default_config.yaml"
 fi
 
 echo "start training on $RANK_SIZE devices"
