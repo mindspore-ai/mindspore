@@ -26,7 +26,7 @@ __global__ void Copy(T *input, T *output, size_t size) {
 }
 
 template <typename T>
-__global__ void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+__global__ void LeftMoveSum(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
                          size_t stride2) {
   size_t num = dim0 * dim2;
   size_t i, k, offset;
@@ -48,7 +48,7 @@ __global__ void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, si
 }
 
 template <typename T>
-__global__ void RightMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
+__global__ void RightMoveSum(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
                           size_t stride2) {
   size_t num = dim0 * dim2;
   size_t i, k, offset;
@@ -117,12 +117,12 @@ void CumSum(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, s
   int size = dim0 * dim2;
   if (exclusive_) {
     if (reverse_) {
-      RightMove<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, output, dim0, dim1, dim2, stride, stride2);
+      RightMoveSum<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, output, dim0, dim1, dim2, stride, stride2);
       Copy<<<GET_BLOCKS(size * dim1), GET_THREADS, 0, stream>>>(workspace, output, size * dim1);
       CumSumKernelReverse<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(workspace, output, dim0, dim1, dim2, stride,
                                                                         stride2);
     } else {
-      LeftMove<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, output, dim0, dim1, dim2, stride, stride2);
+      LeftMoveSum<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, output, dim0, dim1, dim2, stride, stride2);
       Copy<<<GET_BLOCKS(size * dim1), GET_THREADS, 0, stream>>>(workspace, output, size * dim1);
       CumSumKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(workspace, output, dim0, dim1, dim2, stride, stride2);
     }
