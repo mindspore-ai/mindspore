@@ -56,4 +56,3 @@ echo "start training for device $DEVICE_ID"
 env > env.log
 python ../../zero-shot.py  --dataset $DATASET --truth_labels_path $LABEL --ckpt_path_doc $MODEL_CKPT --has_train_strategy False > log_cpm.log 2>&1 &
 cd ..
-

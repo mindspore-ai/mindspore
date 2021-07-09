@@ -50,7 +50,7 @@ for((i=0;i<=1;i++));
 do
     rm -rf ${current_exec_path}/eval$i
     mkdir ${current_exec_path}/eval$i
-    cd ${current_exec_path}/eval$i
+    cd ${current_exec_path}/eval$i || exit
     cp -r ../../*.py ./
     cp -r ../../src ./
     cp -r ../../scripts/*.sh ./
@@ -60,6 +60,6 @@ do
     echo "start eval for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     python ../../eval.py  --dataset $DATASET --data_path $LABEL --ckpt_path_doc $MODEL_CKPT  --ckpt_partition $CKPT_NUMBER --distribute True --has_train_strategy True> log_cpm.log 2>&1 &
-    cd ${current_exec_path}
+    cd ${current_exec_path} || exit
 done
-cd ${current_exec_path}
+cd ${current_exec_path} || exit
