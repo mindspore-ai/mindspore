@@ -23,22 +23,20 @@ __all__ = ["load_nonquant_param_into_quant_net", "query_quant_layers"]
 
 def cal_quantization_params(input_min,
                             input_max,
+                            quant_min,
+                            quant_max,
                             data_type,
-                            num_bits=8,
-                            symmetric=False,
-                            narrow_range=False,
-                            neg_trunc=False):
+                            symmetric=False):
     r"""
     Calculate quantization params for scale and zero point.
 
     Args:
         input_min (numpy.ndarray): The dimension of channel or 1.
         input_max (numpy.ndarray): The dimension of channel or 1.
+        quant_min (int): The minimum quantization integer.
+        quant_max (int): The maximum quantization integer.
         data_type (numpy type) : Can be numpy int8, numpy uint8.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
         symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
-        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
-        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: False.
 
     Returns:
         scale (numpy.ndarray): quantization param.
@@ -56,6 +54,24 @@ def cal_quantization_params(input_min,
     if (input_max == input_min).all():
         return np.ones(input_min.shape), np.zeros(input_min.shape)
 
+    # calculate scale
+    if symmetric:
+        input_max = np.maximum(-input_min, input_max)
+        input_min = -input_max
+    scale = (input_max - input_min) / (quant_max - quant_min)
+
+    # calculate zero point
+    if data_type == np.int8 and symmetric:
+        zp = np.zeros(input_min.shape)
+    else:
+        zp_double = quant_min - input_min / scale
+        zp = np.floor(zp_double + 0.5)
+
+    return scale, zp
+
+
+def get_quant_min_max(data_type, num_bits=8, narrow_range=False):
+    """Calculate quantization params for minimum/maximum quantization integer"""
     if data_type == np.int8:
         quant_min = 0 - 2 ** (num_bits - 1)
         quant_max = 2 ** (num_bits - 1) - 1
@@ -66,24 +82,10 @@ def cal_quantization_params(input_min,
         raise ValueError("Unsupported datatype({})".format(data_type))
     if narrow_range:
         quant_min = quant_min + 1
-
-    # calculate scale
-    if symmetric and not neg_trunc:
-        input_max = np.maximum(-input_min, input_max)
-        input_min = -input_max
-    scale = (input_max - input_min) / (quant_max - quant_min)
-
-    # calculate zero point
-    if data_type == np.int8 and symmetric and not neg_trunc:
-        zp = np.zeros(input_min.shape)
-    else:
-        zp_double = quant_min - input_min / scale
-        zp = np.floor(zp_double + 0.5)
-
-    return scale, zp
+    return quant_min, quant_max
 
 
-def weight2int(data, scale, zero_point, data_type, num_bits=8, narrow_range=False):
+def weight2int(data, scale, zero_point, quant_min, quant_max):
     r"""
     Calculate int8/uint8 weight from fp32. the formula is defined as:
 
@@ -94,9 +96,8 @@ def weight2int(data, scale, zero_point, data_type, num_bits=8, narrow_range=Fals
         data (numpy.ndarray): The dimension of channel or 1. Should be NCHW.
         scale (numpy.ndarray): The dimension of channel or 1.
         zero_point (numpy.ndarray): The dimension of channel or 1.
-        data_type (numpy type) : Can be numpy int8, numpy uint8.
-        num_bits (int): Quantization number bit, support 4 and 8bit. Default: 8.
-        narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
+        quant_min (int): The minimum quantization integer.
+        quant_max (int): The maximum quantization integer.
 
     Returns:
         weight (numpy.ndarray): The dimension of channel or 1.
@@ -120,17 +121,6 @@ def weight2int(data, scale, zero_point, data_type, num_bits=8, narrow_range=Fals
         else:
             raise ValueError("Unsupported weight shape({})".format(data.shape))
 
-    if data_type == np.int8:
-        quant_min = 0 - 2 ** (num_bits - 1)
-        quant_max = 2 ** (num_bits - 1) - 1
-    elif data_type == np.uint8:
-        quant_min = 0
-        quant_max = 2 ** num_bits - 1
-    else:
-        raise ValueError("Unsupported weight datatype({})".format(data_type))
-    if narrow_range:
-        quant_min = quant_min + 1
-
     weight_int = np.round((data / scale) + zero_point)
     weight_int[weight_int > quant_max] = quant_max
     weight_int[weight_int < quant_min] = quant_min
@@ -145,54 +135,12 @@ def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
     if cell.mode == 'LEARNED_SCALE':
         maxq = np.abs(maxq)
         minq = -np.abs(minq)
-
+    quant_min, quant_max = get_quant_min_max(data_type, num_bits=cell.num_bits, narrow_range=cell.narrow_range)
+    symmetric = cell.symmetric and not cell.neg_trunc
     scale, zp = cal_quantization_params(
-        minq, maxq, data_type,
-        num_bits=cell.num_bits,
-        symmetric=cell.symmetric,
-        narrow_range=cell.narrow_range,
-        neg_trunc=cell.neg_trunc)
-    return scale, zp, maxq, minq
-
-
-def scale_zp_from_data(op, minq, maxq, data_type):
-    r"""
-    Get calculate quantization params for scale and zero point.
-
-    Calculate from `FakeQuantWithMinMax`'s Parameter or Fake quant primitive.
-
-    Args:
-        op (Primitive): Fake quant primitive `mindspore.ops.operation.FakeQuantPerLayer` or
-            `mindspore.ops.operation.FakeQuantPerChannel`
-        minq (Parameter): Parameter `minq` of `mindspore.nn.layer.FakeQuantWithMinMax`
-        maxq (Parameter): Parameter `maxq` of `mindspore.nn.layer.FakeQuantWithMinMax`
-        data_type (numpy type): Can be `numpy.int8` or `numpy.uint8`.
-
-    Returns:
-        scale (numpy.ndarray): quantization param.
-        zero point (numpy.ndarray): quantization param.
-    """
-    minq = minq.data.asnumpy()
-    maxq = maxq.data.asnumpy()
-
-    scale, zp = cal_quantization_params(
-        minq, maxq, data_type,
-        num_bits=op.num_bits,
-        symmetric=op.symmetric,
-        narrow_range=op.narrow_range)
-    return scale, zp
-
-
-def scale_zp_max_min_from_data(op, minq, maxq, data_type):
-    """Get calculate quantization params for scale, zero point, max and min."""
-    minq = minq.data.asnumpy()
-    maxq = maxq.data.asnumpy()
-
-    scale, zp = cal_quantization_params(
-        minq, maxq, data_type,
-        num_bits=op.num_bits,
-        symmetric=op.symmetric,
-        narrow_range=op.narrow_range)
+        minq, maxq,
+        quant_min, quant_max, data_type,
+        symmetric=symmetric)
     return scale, zp, maxq, minq
 
 

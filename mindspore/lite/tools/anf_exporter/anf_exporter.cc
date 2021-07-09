@@ -46,6 +46,8 @@ using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
 namespace {
+constexpr int BIT_NUM_8 = 8;
+constexpr int BIT_NUM_16 = 16;
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
@@ -113,14 +115,14 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
     auto repetition_packed = false;
     MS_LOG(DEBUG) << dst_node->name;
     if (dst_node->quantType == schema::QuantType_QUANT_WEIGHT) {
-      if (bit_num <= 8) {
+      if (bit_num <= BIT_NUM_8) {
         repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);
       } else {
         repetition_packed = PackRepetition<int16_t>(bit_num, tensor_input);
       }
     }
-
-    if (bit_num != 8 && bit_num != 16 && !repetition_packed && dst_node->quantType != schema::QuantType_QUANT_NONE) {
+    if (bit_num != BIT_NUM_8 && bit_num != BIT_NUM_16 && !repetition_packed &&
+        dst_node->quantType != schema::QuantType_QUANT_NONE) {
       auto status = DoBitPack(bit_num, tensor_input);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "do bit pack failed. " << status;

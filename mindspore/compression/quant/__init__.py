@@ -16,11 +16,6 @@
 Compression quant module.
 """
 
-from .quantizer import *
-from .qat import *
-from .quant_utils import *
-
-__all__ = []
-__all__.extend(qat.__all__)
-__all__.extend(quantizer.__all__)
-__all__.extend(quant_utils.__all__)
+from .quantizer import OptimizeOption
+from .qat import QuantizationAwareTraining, create_quant_config
+from .quant_utils import load_nonquant_param_into_quant_net, query_quant_layers
