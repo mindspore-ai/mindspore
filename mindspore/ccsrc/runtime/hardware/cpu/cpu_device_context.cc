@@ -206,6 +206,16 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
                                     bool) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  auto cpu_kernel_mod = dynamic_cast<kernel::CPUKernel *>(kernel_mod);
+  MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
+
+  // Some CPU kernels can't initialize kernel and launch kernel in different thread, so reinitialize the kernels before
+  // launch.
+  if (kOpNotSupportMultiThreadExecList.find(AnfAlgo::GetCNodeName(kernel)) != kOpNotSupportMultiThreadExecList.end()) {
+    cpu_kernel_mod->InitKernel(kernel);
+  }
 
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
@@ -213,8 +223,6 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
     return LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
   }
 
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
   return DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
 }
 
