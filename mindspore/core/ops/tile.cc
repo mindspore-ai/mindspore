@@ -52,7 +52,8 @@ std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, cons
 abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  const int INDEX = 2;
+  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, INDEX, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
