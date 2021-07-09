@@ -30,7 +30,7 @@ BarrierOp::BarrierOp(int32_t op_connector_size, const std::string &condition_nam
       clean_up_(false),
       eof_(false),
       condition_name_(condition_name),
-      condition_function_(condition_func) {}
+      condition_function_(std::move(condition_func)) {}
 
 // destructor
 BarrierOp::~BarrierOp() {}

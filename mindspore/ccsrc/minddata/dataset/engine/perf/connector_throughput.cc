@@ -50,7 +50,8 @@ Status ConnectorThroughput::Sample() {
     }
     auto prev_out_rows_count = out_row_count_table_[col][out_row_count_table_.size() - 1];
     if (dt != 0) {
-      auto thr = (cur_out_rows_count - prev_out_rows_count) / (1000 * dt);
+      const int32_t multiplier = 1000;
+      auto thr = (cur_out_rows_count - prev_out_rows_count) / (multiplier * dt);
       throughput_row[col] = thr;
     } else {
       throughput_row[col] = 0;

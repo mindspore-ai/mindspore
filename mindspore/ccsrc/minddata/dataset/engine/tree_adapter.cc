@@ -38,7 +38,7 @@
 namespace mindspore {
 namespace dataset {
 
-TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), tree_state_(kCompileStateInit), launched_(false) {
+TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), launched_(false), tree_state_(kCompileStateInit) {
   optimize_ = common::GetEnv("OPTIMIZE") == "true";
 
   // Initialize profiling parameters

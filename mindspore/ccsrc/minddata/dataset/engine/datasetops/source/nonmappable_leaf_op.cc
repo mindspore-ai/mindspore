@@ -35,18 +35,17 @@
 
 namespace mindspore {
 namespace dataset {
-
 NonMappableLeafOp::NonMappableLeafOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
                                      int32_t op_connector_size, bool shuffle_files, int32_t num_devices,
                                      int32_t device_id)
     : ParallelOp(num_workers, op_connector_size),
       device_id_(device_id),
       num_devices_(num_devices),
-      filename_index_(std::make_unique<StringIndex>()),
-      load_io_block_queue_(true),
       load_jagged_connector_(true),
-      total_rows_(total_num_rows),
+      filename_index_(std::make_unique<StringIndex>()),
       finished_reading_dataset_(false),
+      total_rows_(total_num_rows),
+      load_io_block_queue_(true),
       shuffle_files_(shuffle_files),
       num_rows_per_shard_(0),
       num_rows_(0) {
@@ -286,6 +285,5 @@ Status NonMappableLeafOp::WaitToFillIOBlockQueue() {
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

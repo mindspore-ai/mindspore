@@ -58,8 +58,8 @@ CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, char 
     : worker_id_(worker_id),
       rows_connector_(connector),
       csv_field_delim_(field_delim),
-      column_default_(column_default),
-      file_path_(file_path),
+      column_default_(std::move(column_default)),
+      file_path_(std::move(file_path)),
       cur_state_(START_OF_FILE),
       pos_(0),
       cur_col_(0),
@@ -629,7 +629,7 @@ Status CsvOp::CountAllFileRows(const std::vector<std::string> &files, bool csv_h
   std::shared_ptr<CsvOp> op;
   *count = 0;
   if (!csv_header) {
-    column_name_list.emplace_back("");
+    (void)column_name_list.emplace_back("");
   }
   op = std::make_shared<CsvOp>(files, field_delim, column_list, column_name_list, num_workers, num_samples,
                                worker_connector_size, op_connector_size, shuffle_files, num_devices, device_id);
