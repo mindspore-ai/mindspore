@@ -372,9 +372,9 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set threshold count ratio for share secrets round.")
     .def("share_secrets_ratio", &PSContext::share_secrets_ratio, "Get threshold count ratio for share secrets round.")
     .def("set_cipher_time_window", &PSContext::set_cipher_time_window, "Set time window for each cipher round.")
-    .def("set_reconstruct_secrets_threshhold", &PSContext::set_reconstruct_secrets_threshhold,
+    .def("set_reconstruct_secrets_threshold", &PSContext::set_reconstruct_secrets_threshold,
          "Set threshold count for reconstruct secrets round.")
-    .def("reconstruct_secrets_threshhold", &PSContext::reconstruct_secrets_threshhold,
+    .def("reconstruct_secrets_threshold", &PSContext::reconstruct_secrets_threshold,
          "Get threshold count for reconstruct secrets round.")
     .def("set_fl_name", &PSContext::set_fl_name, "Set federated learning name.")
     .def("fl_name", &PSContext::fl_name, "Get federated learning name.")

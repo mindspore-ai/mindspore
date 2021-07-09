@@ -43,7 +43,7 @@ parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 # parameters for encrypt_type='PW_ENCRYPT'
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
-parser.add_argument("--reconstruct_secrets_threshhold", type=int, default=3)
+parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 
 if __name__ == "__main__":
     args, _ = parser.parse_known_args()
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     update_model_time_window = args.update_model_time_window
     share_secrets_ratio = args.share_secrets_ratio
     cipher_time_window = args.cipher_time_window
-    reconstruct_secrets_threshhold = args.reconstruct_secrets_threshhold
+    reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
     fl_name = args.fl_name
     fl_iteration_num = args.fl_iteration_num
     client_epoch_num = args.client_epoch_num
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         cmd_server += " --update_model_time_window=" + str(update_model_time_window)
         cmd_server += " --share_secrets_ratio=" + str(share_secrets_ratio)
         cmd_server += " --cipher_time_window=" + str(cipher_time_window)
-        cmd_server += " --reconstruct_secrets_threshhold=" + str(reconstruct_secrets_threshhold)
+        cmd_server += " --reconstruct_secrets_threshold=" + str(reconstruct_secrets_threshold)
         cmd_server += " --fl_name=" + fl_name
         cmd_server += " --fl_iteration_num=" + str(fl_iteration_num)
         cmd_server += " --config_file_path=" + str(config_file_path)
