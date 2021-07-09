@@ -54,7 +54,7 @@ class CsvToMR:
         else:
             raise ValueError("The parameter source must be str.")
 
-        self.check_columns(columns_list, "columns_list")
+        self._check_columns(columns_list, "columns_list")
         self.columns_list = columns_list
 
         if isinstance(destination, str):
@@ -72,8 +72,7 @@ class CsvToMR:
 
         self.writer = FileWriter(self.destination, self.partition_number)
 
-    @staticmethod
-    def check_columns(columns, columns_name):
+    def _check_columns(self, columns, columns_name):
         """
         Validate the columns of csv
         """
@@ -111,8 +110,7 @@ class CsvToMR:
             raise RuntimeError("Failed to generate schema from csv file.")
         return schema
 
-    @staticmethod
-    def get_row_of_csv(df, columns_list):
+    def _get_row_of_csv(self, df, columns_list):
         """Get row data from csv file."""
         for _, r in df.iterrows():
             row = {}
@@ -152,7 +150,7 @@ class CsvToMR:
         # add the index
         self.writer.add_index(list(self.columns_list))
 
-        csv_iter = self.get_row_of_csv(df, self.columns_list)
+        csv_iter = self._get_row_of_csv(df, self.columns_list)
         batch_size = 256
         transform_count = 0
         while True:
