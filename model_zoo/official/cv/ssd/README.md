@@ -315,7 +315,7 @@ To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will ge
 - Standalone training
 
 ```shell
-    bash run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need five or seven parameters for this scripts.

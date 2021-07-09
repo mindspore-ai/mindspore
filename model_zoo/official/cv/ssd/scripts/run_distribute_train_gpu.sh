@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE LR DATASET PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "for example: sh run_distribute_train_gpu.sh 8 500 0.2 coco /opt/ssd-300.ckpt(optional) 200(optional)"
+echo "sh run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE LR DATASET  CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "for example: sh run_distribute_train_gpu.sh 8 500 0.2 coco /config_path /opt/ssd-300.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
