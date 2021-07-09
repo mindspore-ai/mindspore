@@ -23,7 +23,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import dataset as de
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.metrics import Accuracy
 from mindspore.nn.optim.adam import Adam
@@ -101,21 +101,30 @@ def train():
     target = config.device_target
     ckpt_save_dir = config.save_checkpoint_path
 
-    # init context
-    device_id = get_device_id()
-    rank_id = get_rank_id()
-    rank_size = get_device_num()
-    run_distribute = rank_size > 1
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=target,
-                        device_id=device_id, save_graphs=False)
+                        save_graphs=False)
+    rank_size = get_device_num()
+    run_distribute = rank_size > 1
+    device_id = get_device_id()
 
+    if target == "Ascend":
+        # init context
+        rank_id = get_rank_id()
+        context.set_context(device_id=device_id)
+
+        if run_distribute:
+            context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL)
+            init()
+    elif target == "GPU":
+        rank_id = 0
+        if run_distribute:
+            context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL)
+            init()
+            rank_id = get_rank()
     print("train args: ", config, "\ncfg: ", config,
           "\nparallel args: rank_id {}, device_id {}, rank_size {}".format(rank_id, device_id, rank_size))
 
-    if run_distribute:
-        context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL)
-        init()
 
     config.rank_save_ckpt_flag = 0
     if config.is_save_on_master:
@@ -129,6 +138,8 @@ def train():
     dataset = create_dataset_train(config.train_dataset_path + "/" + dataset_name +
                                    ".mindrecord0", config=config, dataset_name=dataset_name)
     step_size = dataset.get_dataset_size()
+
+    print("step_size ", step_size, flush=True)
 
     # define net
     net = CNNDirectionModel([3, 64, 48, 48, 64], [64, 48, 48, 64, 64], [256, 64], [64, 512])
