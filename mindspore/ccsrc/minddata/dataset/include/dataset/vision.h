@@ -253,9 +253,9 @@ class Pad final : public TensorTransform {
   ///    right and bottom with the second value.
   ///    If the vector has four values, it pads left, top, right, and bottom with
   ///    those values respectively.
-  /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
-  ///    BorderType.kConstant. If 1 value is provided, it is used for all RGB channels. If 3 values are provided,
-  ///    it is used to fill R, G, B channels respectively.
+  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Only valid if the
+  ///    padding_mode is BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
+  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
   /// \param[in] padding_mode The method of padding (default=BorderType.kConstant).
   ///    Can be any of
   ///    [BorderType.kConstant, BorderType.kEdge, BorderType.kReflect, BorderType.kSymmetric]
@@ -312,7 +312,7 @@ class RandomColorAdjust final : public TensorTransform {
   ///     if it is a vector of two values, it needs to be in the form of [min, max] (Default={1, 1}).
   /// \param[in] saturation Saturation adjustment factor. Must be a vector of one or two values
   ///     if it is a vector of two values, it needs to be in the form of [min, max] (Default={1, 1}).
-  /// \param[in] hue Brightness adjustment factor. Must be a vector of one or two values
+  /// \param[in] hue Hue adjustment factor. Must be a vector of one or two values
   ///     if it is a vector of two values, it must be in the form of [min, max] where -0.5 <= min <= max <= 0.5
   ///     (Default={0, 0}).
   explicit RandomColorAdjust(std::vector<float> brightness = {1.0, 1.0}, std::vector<float> contrast = {1.0, 1.0},
@@ -349,6 +349,12 @@ class RandomCrop final : public TensorTransform {
   /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
   ///     BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
   ///     If 3 values are provided, it is used to fill R, G, B channels respectively.
+  /// \param[in] padding_mode The method of padding (default=BorderType::kConstant).It can be any of
+  ///     [BorderType::kConstant, BorderType::kEdge, BorderType::kReflect, BorderType::kSymmetric].
+  ///   - BorderType::kConstant, Fill the border with constant values.
+  ///   - BorderType::kEdge, Fill the border with the last value on the edge.
+  ///   - BorderType::kReflect, Reflect the values on the edge omitting the last value of edge.
+  ///   - BorderType::kSymmetric, Reflect the values on the edge repeating the last value of edge.
   explicit RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
                       bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
                       BorderType padding_mode = BorderType::kConstant);
@@ -378,7 +384,12 @@ class RandomCropDecodeResize final : public TensorTransform {
   /// \param[in] ratio Range [min, max) of aspect ratio to be
   ///               cropped (default=(3. / 4., 4. / 3.)).
   /// \param[in] interpolation An enum for the mode of interpolation.
-  /// \param[in] The maximum number of attempts to propose a valid crop_area (default=10).
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
+  /// \param[in] max_attempts The maximum number of attempts to propose a valid crop_area (default=10).
   ///               If exceeded, fall back to use center_crop instead.
   explicit RandomCropDecodeResize(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
                                   std::vector<float> ratio = {3. / 4, 4. / 3},
@@ -414,11 +425,15 @@ class RandomCropWithBBox final : public TensorTransform {
   ///    those values respectively.
   /// \param[in] pad_if_needed A boolean indicating that whether to pad the image
   ///    if either side is smaller than the given output size.
-  /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
-  ///     BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
-  ///     If 3 values are provided, it is used to fill R, G, B channels respectively.
+  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Only valid
+  ///    if the padding_mode is BorderType.kConstant. If 1 value is provided, it is used for all
+  ///    RGB channels. If 3 values are provided, it is used to fill R, G, B channels respectively.
   /// \param[in] padding_mode The method of padding (default=BorderType::kConstant).It can be any of
   ///     [BorderType::kConstant, BorderType::kEdge, BorderType::kReflect, BorderType::kSymmetric].
+  ///   - BorderType::kConstant, Fill the border with constant values.
+  ///   - BorderType::kEdge, Fill the border with the last value on the edge.
+  ///   - BorderType::kReflect, Reflect the values on the edge omitting the last value of edge.
+  ///   - BorderType::kSymmetric, Reflect the values on the edge repeating the last value of edge.
   explicit RandomCropWithBBox(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
                               bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
                               BorderType padding_mode = BorderType::kConstant);
@@ -480,7 +495,8 @@ class RandomHorizontalFlipWithBBox final : public TensorTransform {
 class RandomPosterize final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] bit_range - uint8_t vector representing the minimum and maximum bit in range (Default={4, 8}).
+  /// \param[in] bit_range Range of random posterize to compress image.
+  ///     uint8_t vector representing the minimum and maximum bit in range of [1,8] (Default={4, 8}).
   explicit RandomPosterize(const std::vector<uint8_t> &bit_range = {4, 8});
 
   /// \brief Destructor.
@@ -502,7 +518,7 @@ class RandomResize final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
   ///     If the size is a single value, the smaller edge of the image will be resized to this value with
-  //      the same image aspect ratio. If the size has 2 values, it should be (height, width).
+  ///      the same image aspect ratio. If the size has 2 values, it should be (height, width).
   explicit RandomResize(std::vector<int32_t> size);
 
   /// \brief Destructor.
@@ -525,7 +541,7 @@ class RandomResizeWithBBox final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
   ///     If the size is a single value, the smaller edge of the image will be resized to this value with
-  //      the same image aspect ratio. If the size has 2 values, it should be (height, width).
+  ///      the same image aspect ratio. If the size has 2 values, it should be (height, width).
   explicit RandomResizeWithBBox(std::vector<int32_t> size);
 
   /// \brief Destructor.
@@ -553,6 +569,11 @@ class RandomResizedCrop final : public TensorTransform {
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
   ///     (default=(3. / 4., 4. / 3.)).
   /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear).
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] max_attempts The maximum number of attempts to propose a valid.
   ///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
   explicit RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
@@ -585,6 +606,11 @@ class RandomResizedCropWithBBox final : public TensorTransform {
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
   ///     (default=(3. / 4., 4. / 3.)).
   /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear).
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] max_attempts The maximum number of attempts to propose a valid
   ///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
   RandomResizedCropWithBBox(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
@@ -610,6 +636,11 @@ class RandomRotation final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the starting and ending degrees.
   /// \param[in] resample An enum for the mode of interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] expand A boolean representing whether the image is expanded after rotation.
   /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
@@ -778,6 +809,11 @@ class ResizeWithBBox final : public TensorTransform {
   ///     If the size is an integer, smaller edge of the image will be resized to this value with the same image aspect
   ///     ratio. If the size is a sequence of length 2, it should be (height, width).
   /// \param[in] interpolation An enum for the mode of interpolation (default=InterpolationMode::kLinear).
+  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   explicit ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
 
   /// \brief Destructor.
