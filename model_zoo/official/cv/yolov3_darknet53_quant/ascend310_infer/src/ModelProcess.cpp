@@ -181,7 +181,7 @@ void ModelProcess::DumpModelOutputResult(char *output_name) {
         std::string fileName = std::string(output_name) +  '_' + std::to_string(i) + ".bin";
         std::string outputFileName = homePath + "/" + fileName;
         FILE *outputFile = fopen(outputFileName.c_str(), "wb");
-        if (outputFile) {
+        if (outputFile != nullptr) {
             aclDataBuffer* dataBuffer = aclmdlGetDatasetBuffer(output_, i);
             void* data = aclGetDataBufferAddr(dataBuffer);
             uint32_t len = aclGetDataBufferSizeV2(dataBuffer);

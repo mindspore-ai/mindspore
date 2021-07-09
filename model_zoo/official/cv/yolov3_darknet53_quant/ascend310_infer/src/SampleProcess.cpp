@@ -82,8 +82,8 @@ Result SampleProcess::InitResource(const char *aclConfigPath) {
 }
 
 void SampleProcess::GetAllFiles(std::string path, std::vector<string> *files) {
-    DIR *pDir;
-    struct dirent* ptr;
+    DIR *pDir = nullptr;
+    struct dirent* ptr = nullptr;
     if (!(pDir = opendir(path.c_str())))
         return;
     while ((ptr = readdir(pDir)) != 0) {
@@ -127,11 +127,13 @@ Result SampleProcess::Process(const char *om_path, const char *input_folder) {
     void *inputShapeBuffer = nullptr;
     int mret = aclrtMalloc(&inputShapeBuffer, 8, ACL_MEM_MALLOC_NORMAL_ONLY);
     if (mret != ACL_ERROR_NONE) {
+        aclrtFree(inputShape);
         aclrtFree(inputShapeBuffer);
         return FAILED;
     }
     mret = aclrtMemcpy(reinterpret_cast<uint8_t *>(inputShapeBuffer), 8, inputShape, 8, ACL_MEMCPY_HOST_TO_DEVICE);
     if (mret != ACL_ERROR_NONE) {
+        aclrtFree(inputShape);
         aclrtFree(inputShapeBuffer);
         return FAILED;
     }
