@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace runtime {
-
+constexpr size_t kSingleCallDepth = 1;
 namespace {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 // Fetch all the weight parameters related to node. It runs like this:
@@ -339,25 +339,23 @@ std::vector<AnfNodePtr> FetchOutputByCallNode(const AnfNodePtr &call_node, std::
   const auto func_graphs = FetchFuncGraphbyCallNode(call_node);
 
   for (const auto func_graph : func_graphs) {
-    if (func_graph->output()->isa<ValueNode>()) {
-      outputs.push_back(func_graph->output());
-    } else {
-      std::vector<AnfNodePtr> sub_call_nodes;
-      const std::vector<AnfNodePtr> graph_outputs = FetchFuncGraphOutput(func_graph, &sub_call_nodes);
-      for (const auto &graph_output : graph_outputs) {
-        if (graph_output->isa<Parameter>()) {
-          outputs.push_back(graph_output);
-        } else if (AnfAlgo::CheckPrimitiveType(graph_output, prim::kPrimSwitch)) {
-          const auto &switch_outputs = FetchOutputBySwitchNode(graph_output, call_nodes, switch_nodes);
-          outputs.insert(outputs.end(), switch_outputs.begin(), switch_outputs.end());
-        } else if (IsCallNode(graph_output)) {
-          const auto &call_outputs = FetchOutputByCallNode(graph_output, call_nodes, switch_nodes);
-          outputs.insert(outputs.end(), call_outputs.begin(), call_outputs.end());
-        } else if (graph_output->isa<CNode>()) {
-          outputs.emplace_back(graph_output);
-        } else {
-          MS_LOG(EXCEPTION) << "Invalid front output:" << AnfAlgo::GetNodeDebugString(graph_output);
-        }
+    std::vector<AnfNodePtr> sub_call_nodes;
+    const std::vector<AnfNodePtr> graph_outputs = FetchFuncGraphOutput(func_graph, &sub_call_nodes);
+    for (const auto &graph_output : graph_outputs) {
+      if (graph_output->isa<Parameter>()) {
+        outputs.push_back(graph_output);
+      } else if (AnfAlgo::CheckPrimitiveType(graph_output, prim::kPrimSwitch)) {
+        const auto &switch_outputs = FetchOutputBySwitchNode(graph_output, call_nodes, switch_nodes);
+        outputs.insert(outputs.end(), switch_outputs.begin(), switch_outputs.end());
+      } else if (IsCallNode(graph_output)) {
+        const auto &call_outputs = FetchOutputByCallNode(graph_output, call_nodes, switch_nodes);
+        outputs.insert(outputs.end(), call_outputs.begin(), call_outputs.end());
+      } else if (graph_output->isa<CNode>()) {
+        outputs.emplace_back(graph_output);
+      } else if (graph_output->isa<ValueNode>()) {
+        outputs.push_back(graph_output);
+      } else {
+        MS_LOG(EXCEPTION) << "Invalid front output:" << AnfAlgo::GetNodeDebugString(graph_output);
       }
     }
   }
@@ -452,6 +450,70 @@ std::vector<AnfNodePtr> FetchParameterByControlNode(const std::vector<AnfNodePtr
   }
   return parameters;
 }
+
+// Get the number of calls, that is, the number of times the input of the call node is the call node.
+size_t FetchCallDepth(const AnfNodePtr &node) {
+  if (!IsCallNode(node)) {
+    return 0;
+  }
+
+  const auto &cnode = node->cast<CNodePtr>();
+  const auto &inputs = cnode->inputs();
+  return kSingleCallDepth + FetchCallDepth(inputs[0]);
+}
+
+// Get the final subgraph called by fungraph through the depth of calls.
+FuncGraphPtr FetchFuncGraphByCallDepth(const FuncGraphPtr &func_graph, const size_t call_depth) {
+  if (call_depth <= kSingleCallDepth) {
+    return func_graph;
+  }
+
+  const auto &output = func_graph->output();
+  if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimPartial)) {
+    const auto &cnode = output->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    if (inputs.size() < kPartialInputStartPos) {
+      MS_LOG(EXCEPTION) << "Invalid partial node:" << AnfAlgo::GetNodeDebugString(output);
+    }
+    const auto &called_func_graph = GetValueNode<FuncGraphPtr>(inputs[kPartialFuncGraphPos]);
+    return FetchFuncGraphByCallDepth(called_func_graph, call_depth - kSingleCallDepth);
+  } else if (output->isa<ValueNode>() && IsValueNode<FuncGraph>(output)) {
+    return FetchFuncGraphByCallDepth(GetValueNode<FuncGraphPtr>(output), call_depth - kSingleCallDepth);
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid output for call depth:" << call_depth << " funcgraph:" << func_graph->ToString()
+                      << " output node:" << AnfAlgo::GetNodeDebugString(output);
+  }
+}
+
+// Get funcgraph from node, the interface only accepts partial node and funcgraph value node.
+FuncGraphPtr FetchFuncGraphInNode(const auto &node) {
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+    const auto &func_graph = GetFuncGraphFromPartial(node);
+
+    if (AnfAlgo::CheckPrimitiveType(func_graph->output(), prim::kPrimPartial)) {
+      return FetchFuncGraphInNode(func_graph->output());
+    } else if (IsValueNode<FuncGraph>(func_graph->output())) {
+      // When the output of funcgraph is a partial node, it needs to return the funcgraph that is finally called.
+      return FetchFuncGraphInNode(func_graph->output());
+    }
+
+    return func_graph;
+  } else if (IsValueNode<FuncGraph>(node)) {
+    const auto &func_graph = GetValueNode<FuncGraphPtr>(node);
+
+    if (AnfAlgo::CheckPrimitiveType(func_graph->output(), prim::kPrimPartial)) {
+      // When the output of funcgraph is a funcgraph, it needs to return the funcgraph that is finally called.
+      return FetchFuncGraphInNode(func_graph->output());
+    } else if (IsValueNode<FuncGraph>(func_graph->output())) {
+      // When the output of funcgraph is a partial node, it needs to return the funcgraph that is finally called.
+      return FetchFuncGraphInNode(func_graph->output());
+    }
+
+    return func_graph;
+  }
+
+  return nullptr;
+}
 }  // namespace
 
 // Return true if the node has Ref abstract.
@@ -472,24 +534,56 @@ bool IsCallNode(const AnfNodePtr &node) {
   return inputs[0]->isa<CNode>() || (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0]));
 }
 
-std::vector<AnfNodePtr> FetchAllRealInputNodeByParameter(const AnfNodePtr &node) {
-  std::vector<AnfNodePtr> parameters;
-  const auto real_node = AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem}).first;
+bool IsSubCallNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
 
+  const auto inputs = node->cast<CNodePtr>()->inputs();
+
+  if (!AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer)) {
+    return false;
+  }
+
+  const auto &switch_layer_inputs = inputs[0]->cast<CNodePtr>()->inputs();
+  const auto tuple_inputs = switch_layer_inputs[kSwitchLayerBranchPos]->cast<CNodePtr>()->inputs();
+  if (tuple_inputs.size() <= kMakeTupleInputStartPos) {
+    return false;
+  }
+
+  // Check whether the funcgraph called by the call node returns funcgraph or partial node.
+  FuncGraphPtr func_graph = nullptr;
+  if (AnfAlgo::CheckPrimitiveType(tuple_inputs[kMakeTupleInputStartPos], prim::kPrimPartial)) {
+    const auto &func_graph_node = tuple_inputs[kMakeTupleInputStartPos]->cast<CNodePtr>()->input(kPartialFuncGraphPos);
+    func_graph = GetValueNode<FuncGraphPtr>(func_graph_node);
+  } else if (tuple_inputs[kMakeTupleInputStartPos]->isa<ValueNode>() &&
+             IsValueNode<FuncGraph>(tuple_inputs[kMakeTupleInputStartPos])) {
+    func_graph = GetValueNode<FuncGraphPtr>(tuple_inputs[kMakeTupleInputStartPos]);
+  }
+
+  const auto &output = func_graph->output();
+  return AnfAlgo::CheckPrimitiveType(output, prim::kPrimPartial) ||
+         (output->isa<ValueNode>() && IsValueNode<FuncGraph>(output));
+}
+
+std::vector<KernelWithIndex> FetchAllRealInputNodeByParameter(const KernelWithIndex &node) {
+  std::vector<KernelWithIndex> parameters;
+  const auto &real_node_with_index = AnfAlgo::VisitKernelWithReturnType(node.first, node.second);
+  const auto &real_node = real_node_with_index.first;
   if (real_node->isa<Parameter>()) {
     if (!HasAbstractRef(real_node) && !HasAbstractMonad(real_node)) {
-      parameters.emplace_back(real_node);
+      parameters.emplace_back(real_node_with_index);
     }
   } else if (HasAbstractMonad(real_node)) {
     return parameters;
   } else if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeTuple)) {
     const auto &inputs = real_node->cast<CNodePtr>()->inputs();
     for (size_t i = kMakeTupleInputStartPos; i < inputs.size(); ++i) {
-      const auto &sub_parameters = FetchAllRealInputNodeByParameter(inputs[i]);
+      const auto &sub_parameters = FetchAllRealInputNodeByParameter({inputs[i], 0});
       parameters.insert(parameters.end(), sub_parameters.begin(), sub_parameters.end());
     }
   } else {
-    parameters.emplace_back(real_node);
+    parameters.emplace_back(real_node_with_index);
   }
   return parameters;
 }
@@ -514,13 +608,15 @@ std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const AnfNodePtr &node) {
                AnfAlgo::CheckPrimitiveType(cnode_inputs[kSwitchLayerBranchPos], prim::kPrimMakeTuple)) {
       const auto &tuple_inputs = cnode_inputs[kSwitchLayerBranchPos]->cast<CNodePtr>()->inputs();
 
+      // Fetch all funcgraphs in make tuple node.
       for (size_t i = kMakeTupleInputStartPos; i < tuple_inputs.size(); ++i) {
-        if (AnfAlgo::CheckPrimitiveType(tuple_inputs[i], prim::kPrimPartial)) {
-          func_graphs.emplace_back(GetFuncGraphFromPartial(tuple_inputs[i]));
-        } else if (IsValueNode<FuncGraph>(tuple_inputs[i])) {
-          func_graphs.emplace_back(GetValueNode<FuncGraphPtr>(tuple_inputs[i]));
+        const auto func_graph = FetchFuncGraphInNode(tuple_inputs[i]);
+        if (func_graph != nullptr) {
+          func_graphs.emplace_back(func_graph);
         }
       }
+    } else if (IsCallNode(cnode)) {
+      return FetchFuncGraphbyCallNode(cnode);
     } else {
       MS_LOG(EXCEPTION) << "Unable to identify call node" << node->DebugString();
     }
@@ -563,7 +659,7 @@ size_t FetchOutputSizebyCallNode(const AnfNodePtr &node, std::vector<AnfNodePtr>
             break;
           }
           total_num += call_output_num;
-        } else {
+        } else if (!HasAbstractMonad(inputs[i])) {
           ++total_num;
         }
       }
@@ -612,16 +708,16 @@ AnfNodePtr GetFrontNodeByBackendNode(const AnfNodePtr &backend_node) {
   return kernel_graph->GetFrontAnfByBackendAnf(backend_node);
 }
 
-AnfNodePtr GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraphPtr &graph) {
+KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraphPtr &graph) {
   const auto &front_node = graph->GetFrontAnfByBackendAnf(backend_node);
   if (front_node != nullptr) {
-    return front_node;
+    return {front_node, 0};
   }
   const auto &front_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);
   if (front_node_with_index.first == nullptr) {
     MS_LOG(EXCEPTION) << "Invalid parameter of kernel graph, parameter:" << AnfAlgo::GetNodeDebugString(backend_node);
   }
-  return front_node_with_index.first;
+  return front_node_with_index;
 }
 
 FuncGraphPtr GetFuncgraphByBackendNode(const AnfNodePtr &backend_node) {
@@ -664,6 +760,8 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   FetchFuncGraphToParameter(control_nodes);
 
   FetchHostParameterToWeight(real_to_formal_front_parameters);
+
+  FetchCallInputKernelGraph(graphs, device_contexts);
 
   FetchFrontValueNode(control_nodes, graphs, device_contexts);
 
@@ -757,7 +855,7 @@ AnfNodePtr ControlNodeParser::FetchBackendNodebyWeightNode(const AnfNodePtr &nod
   for (const auto &host_parameter_to_weight : host_parameter_to_weights_) {
     for (const auto &front_weight : host_parameter_to_weight.second) {
       if (front_weight == node) {
-        const auto &iter = front_to_backend_parameters_.find(front_weight);
+        const auto &iter = front_to_backend_parameters_.find(host_parameter_to_weight.first);
         if (iter != front_to_backend_parameters_.end()) {
           return iter->second.first;
         }
@@ -868,6 +966,20 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
       }
     }
   }
+
+  // When funcgraph called by call node returns to the value node, device addresses should be created for these
+  // value nodes.
+  for (const auto &call_node_to_backend_parameter : call_node_to_backend_parameters_) {
+    const auto func_graphs = FetchFuncGraphbyCallNode(call_node_to_backend_parameter.first.first);
+    for (const auto &func_graph : func_graphs) {
+      const auto &output = func_graph->output();
+      if (output->isa<ValueNode>() && GetFrontValueNodeDeviceContext(output) == nullptr) {
+        const auto &device_context = call_node_to_backend_parameter.second.second;
+        CreateDeviceTensorForValueNode(output, call_node_to_backend_parameter.second.first, device_context);
+        front_value_nodes_.push_back({output, device_context});
+      }
+    }
+  }
 }
 
 void ControlNodeParser::FetchFrontToFrontParameter(
@@ -940,14 +1052,17 @@ void ControlNodeParser::FetchFrontToFrontParameter(
       }
     } else if (inputs[0]->isa<CNode>()) {
       // Call node which the first input node is a switch or switchlayer node.
-      if ((!AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitch)) &&
-          (!AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer))) {
+      if (AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitch) ||
+          AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer)) {
+        std::vector<AnfNodePtr> call_inputs;
+        call_inputs.assign(inputs.begin() + kCallInputStartPos, inputs.end());
+        switch_input_parse(inputs[0], call_inputs);
+      } else if (IsCallNode(inputs[0])) {
+        continue;
+      } else {
         MS_LOG(EXCEPTION) << "First input node of call node is not switch, node:"
                           << AnfAlgo::GetNodeDebugString(inputs[0]);
       }
-      std::vector<AnfNodePtr> call_inputs;
-      call_inputs.assign(inputs.begin() + kCallInputStartPos, inputs.end());
-      switch_input_parse(inputs[0], call_inputs);
     }
   }
 }
@@ -992,6 +1107,7 @@ void ControlNodeParser::FetchFuncGraphCallNum(const std::vector<AnfNodePtr> &con
   for (const auto &control_node : control_nodes) {
     if (IsCallNode(control_node)) {
       const auto &func_graphs = FetchFuncGraphbyCallNode(control_node);
+
       for (const auto &func_graph : func_graphs) {
         MS_EXCEPTION_IF_NULL(func_graph);
         if (func_graph->output()->isa<ValueNode>()) {
@@ -1019,7 +1135,7 @@ void ControlNodeParser::FetchCallInputKernelGraph(const std::vector<KernelGraphP
       const auto &internal_parameter_with_index = graph->GetFrontNodeByInternalParameter(input);
       if (internal_parameter_with_index.first != nullptr && IsCallNode(internal_parameter_with_index.first)) {
         call_input_kernel_graphs_[graph] = device_context;
-        break;
+        call_node_to_backend_parameters_[internal_parameter_with_index] = {input, device_context};
       }
     }
   }
@@ -1084,13 +1200,14 @@ std::vector<AnfNodePtr> FetchInputParameterbyControlNode(const AnfNodePtr &node,
   return parameters;
 }
 
-std::vector<AnfNodePtr> FetchParameterbyKernelGraph(const KernelGraphPtr &graph) {
-  std::vector<AnfNodePtr> parameters;
+std::vector<KernelWithIndex> FetchParameterbyKernelGraph(const KernelGraphPtr &graph) {
+  std::vector<KernelWithIndex> parameters;
   const auto &graph_parameters = graph->input_nodes();
 
   for (const auto &graph_parameter : graph_parameters) {
     const auto &external_front_node = graph->GetFrontAnfByBackendAnf(graph_parameter);
-    const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(graph_parameter).first;
+    const auto &internal_front_node_with_index = graph->GetFrontNodeByInternalParameter(graph_parameter);
+    const auto &internal_front_node = internal_front_node_with_index.first;
 
     if (external_front_node == nullptr && internal_front_node == nullptr) {
       MS_LOG(WARNING) << "Invalid parameter of kernel graph, parameter :"
@@ -1098,9 +1215,9 @@ std::vector<AnfNodePtr> FetchParameterbyKernelGraph(const KernelGraphPtr &graph)
       continue;
     }
 
-    const auto &front_node = (external_front_node != nullptr) ? external_front_node : internal_front_node;
-    const auto real_front_node = AnfAlgo::VisitKernelWithReturnType(front_node, 0).first;
-    const auto &sub_parameters = FetchAllRealInputNodeByParameter(real_front_node);
+    const auto &front_node_with_index =
+      ((external_front_node != nullptr) ? KernelWithIndex(external_front_node, 0) : internal_front_node_with_index);
+    const auto &sub_parameters = FetchAllRealInputNodeByParameter(front_node_with_index);
     parameters.insert(parameters.end(), sub_parameters.begin(), sub_parameters.end());
   }
 
@@ -1191,6 +1308,8 @@ void ControlNodeParser::FetchFuncGraphToParameter(const std::vector<AnfNodePtr> 
       } else if (AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer)) {
         // Switchlayer node.
         FetchParameterBySwitchLayerNode(inputs[0], inputs, &func_graph_to_parameters_);
+      } else if (IsCallNode(inputs[0])) {
+        continue;
       } else {
         MS_LOG(EXCEPTION) << "Unable to identify call node" << switch_cnode->DebugString();
       }
@@ -1232,10 +1351,6 @@ void ControlNodeParser::FetchFrontToBackendKernel(const std::vector<KernelGraphP
     const auto graph_output_map = graph->graph_output_map();
     for (const auto &output_pair : graph_output_map) {
       front_to_backend_kernels_[output_pair.second] = {output_pair.first, device_context};
-      MS_LOG(DEBUG) << "Add front to backend kernel, front:" << AnfAlgo::GetNodeDebugString(output_pair.second.first)
-                    << "index:" << output_pair.second.second << " addr:" << output_pair.second.first
-                    << " second:" << AnfAlgo::GetNodeDebugString(output_pair.first.first)
-                    << "index:" << output_pair.first.second << " addr:" << output_pair.first.first;
     }
   }
 }
@@ -1246,6 +1361,7 @@ void ControlNodeParser::FetchBackendOutputByFrontOutput(const AnfNodePtr &front_
                                                         std::set<KernelWithIndex> *results) {
   if (front_output->isa<ValueNode>()) {
     (*results).insert({front_output, 0});
+
     const auto &iter = formal_to_real_parameters_.find(front_output);
     if (iter != formal_to_real_parameters_.end()) {
       for (const auto &node : iter->second) {
@@ -1405,6 +1521,15 @@ void ControlNodeParser::FetchBackendInputNode(const std::vector<KernelGraphPtr> 
     }
   }
 
+  for (const auto &host_parameter_to_weight : host_parameter_to_weights_) {
+    for (const auto &front_weight : host_parameter_to_weight.second) {
+      const auto &iter = front_to_backend_parameters_.find(host_parameter_to_weight.first);
+      if (iter != front_to_backend_parameters_.end()) {
+        formal_to_real_parameters_[front_weight].push_back({iter->second.first, 0});
+      }
+    }
+  }
+
   for (const auto &func_graph_to_parameters : func_graph_to_parameters_) {
     const auto &func_graph = func_graph_to_parameters.first;
     std::vector<AnfNodePtr> graph_inputs;
@@ -1453,7 +1578,6 @@ void ControlNodeParser::FetchAutoMonadNode(const std::vector<AnfNodePtr> &contro
           const auto &iter = front_to_backend_kernels_.find(AnfAlgo::VisitKernelWithReturnType(node, 0));
           if (iter != front_to_backend_kernels_.end()) {
             kernel_to_call_nodes_[iter->second.first.first] = control_node;
-            MS_LOG(DEBUG) << "Add auto monad control arrow for node:" << AnfAlgo::GetNodeDebugString(node);
           }
         }
       }

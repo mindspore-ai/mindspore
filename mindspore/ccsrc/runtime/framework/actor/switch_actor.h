@@ -76,22 +76,23 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context);
   // The switch actor run when receive the input branch id.
   void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context);
-  // Initialize the input and output information of the switch actor According to node_.
-  void Initialize(const ControlNodeParserPtr &parser);
+  // Parse the input node information of the switch actor according to node_.
+  void ParseInput(const ControlNodeParserPtr &parser);
   // Add input for all branches.
   void AddCommonInput(const AnfNodePtr &node);
+  void AddSingleInput(const AnfNodePtr &node, size_t branch) { AddInput(node, branch); }
   // Fetch the input position of the data node.
   size_t FetchDataNodePosition(const AnfNodePtr &data_node) const;
 
  private:
   friend class GraphScheduler;
 
-  void InitPartial(const AnfNodePtr &node, const size_t branch_id);
-  void InitSwitch();
-  void InitSwitchLayer();
+  void ParsePartialInput(const AnfNodePtr &node, const size_t branch_id);
+  void ParseSwitchInput();
+  void ParseSwitchLayerInput();
   // In control flow, the output of each subgraph is connected to a switch actor, and the switch actor is
   // initialized with the return node of the subgraph.
-  void InitReturn(const ControlNodeParserPtr &parser);
+  void ParseReturnInput(const ControlNodeParserPtr &parser);
   // Initialize the size of the vector members.
   void InitVectorSize(const size_t num);
   // Get index from DeviceTensor.
@@ -170,6 +171,11 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
 
   //  The output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_;
+
+  // Used to indicate that in the control flow, when the input of the call node is a call node, the switch actor
+  // corresponding to the switch node called by the sub call node. At this time, the funcgraph of the input of
+  // the switch actor will return to a partial node or funcgraph.
+  bool is_mulit_call_{false};
 };
 
 using SwitchActorPtr = std::shared_ptr<SwitchActor>;

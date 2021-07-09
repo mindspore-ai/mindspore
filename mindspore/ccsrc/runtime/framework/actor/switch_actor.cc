@@ -72,20 +72,20 @@ void SwitchActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *
   input_branch_ids_[sequential_num].push(branch_id);
 }
 
-void SwitchActor::Initialize(const ControlNodeParserPtr &parser) {
+void SwitchActor::ParseInput(const ControlNodeParserPtr &parser) {
   std::vector<AnfNodePtr> inputs = node_->inputs();
 
   if (IsPrimitive(inputs[0], prim::kPrimSwitch)) {
-    InitSwitch();
+    ParseSwitchInput();
   } else if (IsPrimitive(inputs[0], prim::kPrimReturn)) {
-    InitReturn(parser);
+    ParseReturnInput(parser);
   } else {
-    InitSwitchLayer();
+    ParseSwitchLayerInput();
   }
   backend_parameters_.resize(input_nodes_.size());
 }
 
-void SwitchActor::InitPartial(const AnfNodePtr &node, const size_t branch_id) {
+void SwitchActor::ParsePartialInput(const AnfNodePtr &node, const size_t branch_id) {
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
     CNodePtr cnode = node->cast<CNodePtr>();
 
@@ -93,20 +93,50 @@ void SwitchActor::InitPartial(const AnfNodePtr &node, const size_t branch_id) {
     // [0] ValueNode<Primitive> kPartial.
     // [1] ValueNode<FuncGraphPtr>.
     // [2..] Inputs.
-    const auto &node_inputs = cnode->inputs();
-    if (node_inputs.size() <= kPartialFuncGraphPos) {
+    auto partial_inputs = cnode->inputs();
+    if (partial_inputs.size() <= kPartialFuncGraphPos) {
       MS_LOG(EXCEPTION) << "Invalid Partial node:" << AnfAlgo::GetNodeDebugString(cnode);
     }
 
-    const auto &func_graph = GetValueNode<FuncGraphPtr>(node_inputs[kPartialFuncGraphPos]);
+    auto func_graph = GetValueNode<FuncGraphPtr>(partial_inputs[kPartialFuncGraphPos]);
     if (func_graph->output()->isa<ValueNode>()) {
       AddInput(func_graph->output(), branch_id);
+      return;
+    } else if (AnfAlgo::CheckPrimitiveType(func_graph->output(), prim::kPrimPartial)) {
+      // If the funcgraph called by the partial returns a partial node, the switch actor should call the funcgraph
+      // of the sub partial. Similarly, the input node should also be the input of the sub partial.
+      is_mulit_call_ = true;
+      CNodePtr sub_partial = func_graph->output()->cast<CNodePtr>();
+      const auto &sub_partial_inputs = sub_partial->inputs();
+      if (sub_partial_inputs.size() <= kPartialFuncGraphPos) {
+        MS_LOG(EXCEPTION) << "Invalid Partial node:" << AnfAlgo::GetNodeDebugString(sub_partial);
+      }
+      const auto &sub_func_graph = GetValueNode<FuncGraphPtr>(sub_partial_inputs[kPartialFuncGraphPos]);
+
+      if (sub_func_graph->output()->isa<ValueNode>()) {
+        AddInput(sub_func_graph->output(), branch_id);
+        return;
+      }
+
+      branch_func_graph_[branch_id] = sub_func_graph;
+      const auto &sub_parameters = func_graph->parameters();
+
+      // Record the input that comes with the sub partial node.
+      for (size_t i = kPartialInputStartPos; i < sub_partial_inputs.size(); ++i) {
+        const auto &real_partial_input = AnfAlgo::VisitKernelWithReturnType(sub_partial_inputs[i], 0).first;
+        const auto &iter = find(sub_parameters.begin(), sub_parameters.end(), real_partial_input);
+        if ((iter != sub_parameters.end()) &&
+            ((iter - sub_parameters.begin()) < SizeToInt(partial_inputs.size() - kPartialInputStartPos))) {
+          AddInput(partial_inputs[iter - sub_parameters.begin() + kPartialInputStartPos], branch_id);
+        }
+      }
+
       return;
     }
 
     branch_func_graph_[branch_id] = func_graph;
-    for (size_t j = kPartialInputStartPos; j < node_inputs.size(); ++j) {
-      AddInput(node_inputs[j], branch_id);
+    for (size_t j = kPartialInputStartPos; j < partial_inputs.size(); ++j) {
+      AddInput(partial_inputs[j], branch_id);
     }
   } else {
     AddInput(node, branch_id);
@@ -122,15 +152,21 @@ void SwitchActor::InitVectorSize(const size_t num) {
   output_branch_branch_arrows_.resize(num);
 }
 
-void SwitchActor::InitReturn(const ControlNodeParserPtr &parser) {
+void SwitchActor::ParseReturnInput(const ControlNodeParserPtr &parser) {
   const auto &func_graph = node_->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto &call_num = parser->GetCallNumByFuncGraph(func_graph);
   InitVectorSize(call_num);
+
+  // If the return is a partial node or funcgraph, this subgraph will not be initialized and no input is required.
+  if (AnfAlgo::CheckPrimitiveType(func_graph->output(), prim::kPrimPartial) ||
+      (func_graph->output()->isa<ValueNode>() && IsValueNode<FuncGraph>(func_graph->output()))) {
+    return;
+  }
   AddCommonInput(func_graph->output());
 }
 
-void SwitchActor::InitSwitch() {
+void SwitchActor::ParseSwitchInput() {
   // The inputs of the switch node:
   // [0] ValueNode<Primitive> kSwitch.
   // [1] switch condition.
@@ -147,11 +183,11 @@ void SwitchActor::InitSwitch() {
   input_nodes_.push_back(cond_node);
   input_datas_num_++;
   // Init the two branches of switch node.
-  InitPartial(inputs[kSwitchFalseBranchPos], static_cast<size_t>(false));
-  InitPartial(inputs[kSwitchTrueBranchPos], static_cast<size_t>(true));
+  ParsePartialInput(inputs[kSwitchFalseBranchPos], static_cast<size_t>(false));
+  ParsePartialInput(inputs[kSwitchTrueBranchPos], static_cast<size_t>(true));
 }
 
-void SwitchActor::InitSwitchLayer() {
+void SwitchActor::ParseSwitchLayerInput() {
   // The inputs of the switch node:
   // [0] ValueNode<Primitive> kSwitchLayer.
   // [1] switchLayer index.
@@ -170,11 +206,30 @@ void SwitchActor::InitSwitchLayer() {
   InitVectorSize(branch_nodes.size() - 1);
 
   // Parse all branches.
-  for (size_t i = 1; i < branch_nodes.size(); ++i) {
+  for (size_t i = kMakeTupleInputStartPos; i < branch_nodes.size(); ++i) {
     if (AnfAlgo::CheckPrimitiveType(branch_nodes[i], prim::kPrimPartial)) {
-      InitPartial(branch_nodes[i], i - 1);
+      ParsePartialInput(branch_nodes[i], i - kMakeTupleInputStartPos);
     } else if (branch_nodes[i]->isa<ValueNode>()) {
-      branch_func_graph_[i - 1] = GetValueNode<FuncGraphPtr>(branch_nodes[i]);
+      const auto &func_graph = GetValueNode<FuncGraphPtr>(branch_nodes[i]);
+      const auto output = func_graph->output();
+
+      // The switch layer node has a second-order call connected to call. When the called funcgraph returns a partial
+      // node or funcgraph, the switch actor needs to call the funcgraph directly.
+      if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimPartial)) {
+        is_mulit_call_ = true;
+        branch_func_graph_[i - kMakeTupleInputStartPos] =
+          GetValueNode<FuncGraphPtr>(output->cast<CNodePtr>()->input(kPartialFuncGraphPos));
+      } else if (output->isa<ValueNode>() && IsValueNode<FuncGraph>(output)) {
+        is_mulit_call_ = true;
+        const auto &sub_func_graph = GetValueNode<FuncGraphPtr>(output);
+        if (sub_func_graph->output()->isa<ValueNode>()) {
+          AddInput(sub_func_graph->output(), i - kMakeTupleInputStartPos);
+          continue;
+        }
+        branch_func_graph_[i - kMakeTupleInputStartPos] = GetValueNode<FuncGraphPtr>(output);
+      } else {
+        branch_func_graph_[i - kMakeTupleInputStartPos] = func_graph;
+      }
     }
   }
 }
@@ -198,8 +253,12 @@ size_t SwitchActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
 void SwitchActor::AddInput(const KernelWithIndex node_with_index, const size_t branch) {
   const auto &node = node_with_index.first;
 
-  // Add weight and value node.
-  if ((AnfAlgo::CheckPrimitiveType(node_, prim::kPrimReturn) && node->isa<Parameter>() && HasAbstractRef(node)) ||
+  // The value node and weight node need to be placed in the device store. The switch actor has three inputs:
+  // 1) The input of the switch is the value node.
+  // 2) There is a weight node or value node in the return of the sub funcgraph.
+  // 3) When the switch actor is a second-order call, it does not distinguish between weight and parameter.
+  if (((AnfAlgo::CheckPrimitiveType(node_, prim::kPrimReturn) || is_mulit_call_) && node->isa<Parameter>() &&
+       HasAbstractRef(node)) ||
       node->isa<ValueNode>()) {
     const auto iter = find(input_nodes_.begin(), input_nodes_.end(), node_with_index);
     if (iter != input_nodes_.end()) {
@@ -243,7 +302,6 @@ void SwitchActor::AddInput(const AnfNodePtr &node, const size_t branch) {
   } else if (IsCallNode(real_input.first)) {
     std::vector<AnfNodePtr> call_nodes;
     const auto call_output_num = FetchOutputSizebyCallNode(real_input.first, &call_nodes);
-
     if (call_output_num <= 0) {
       MS_LOG(EXCEPTION) << "Invalid output num for call input:" << AnfAlgo::GetNodeDebugString(real_input.first);
     }
@@ -259,25 +317,26 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
   if (need_branch_id_input_) {
     if (input_branch_ids_.find(context->sequential_num_) == input_branch_ids_.end() ||
         input_branch_ids_[context->sequential_num_].empty()) {
-      MS_LOG(EXCEPTION) << "Invalid branch id for actor:" << GetAID();
+      MS_LOG(ERROR) << "Invalid branch id for actor:" + GetAID().Name();
     }
     size_t branch_id = input_branch_ids_[context->sequential_num_].top();
     input_branch_ids_[context->sequential_num_].pop();
     if (branch_id_to_index_.find(branch_id) == branch_id_to_index_.end()) {
-      MS_LOG(EXCEPTION) << "Invalid branch id for switch actor:" << GetAID() << " branch id:" << branch_id;
+      MS_LOG(ERROR) << "Invalid branch id for switch actor:" + GetAID().Name() +
+                         " branch id:" + std::to_string(branch_id);
     }
     return branch_id_to_index_[branch_id];
   }
 
   DeviceTensor *device_tensor = input_device_tensors_[0];
   if (device_tensor == nullptr) {
-    MS_LOG(EXCEPTION) << "Index of switch actor is empty:" << GetAID();
+    MS_LOG(ERROR) << "Index of switch actor is empty:" + GetAID().Name();
   }
   auto inputs = node_->inputs();
   TypeId type_id = AnfAlgo::GetOutputInferDataType(inputs[kSwitchCondPos], 0);
   size_t size = abstract::TypeIdSize(type_id);
   if (size > sizeof(int64_t)) {
-    MS_LOG(EXCEPTION) << "Index must be Int type.";
+    MS_LOG(ERROR) << "Index must be Int type.";
   }
 
   int64_t index = 0;
@@ -293,7 +352,7 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
     bool cond = (static_cast<bool *>(static_cast<void *>(buf)))[0];
     index = static_cast<int64_t>(cond ? 1 : 0);
   } else {
-    MS_LOG(EXCEPTION) << "Index must be Int type.";
+    MS_LOG(ERROR) << "Index must be Int type.";
   }
 
   // SwitchLayer node support negative index range [-size, -1].
@@ -352,7 +411,7 @@ void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
       DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
     if (device_tensor == nullptr) {
       std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
         ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
@@ -370,7 +429,8 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto index = GetIndex(context);
   if (index >= output_branch_arrows_.size()) {
-    MS_LOG(EXCEPTION) << "Switch actor invalid index:" << index;
+    std::string error_info = "Switch actor:" + GetAID().Name() + " invalid index:" + std::to_string(index);
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
   // Must be the execution order: send branch id --> send result --> send data --> send control, avoid the illegal
@@ -389,8 +449,10 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     auto &result_arrow = output_branch_result_arrow[i];
     MS_EXCEPTION_IF_NULL(result_arrow);
     if (result_arrow->from_output_index_ >= SizeToInt(branch_inputs_pos_[index].size())) {
-      MS_LOG(EXCEPTION) << "Invalid from index in switch actor, from index:" << result_arrow->from_output_index_
-                        << " total:" << branch_inputs_pos_[index].size() << " actor:" << GetAID();
+      std::string error_info =
+        "Invalid from index in switch actor, from index:" + std::to_string(result_arrow->from_output_index_) +
+        " total:" + std::to_string(branch_inputs_pos_[index].size()) + " actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     size_t from_index = branch_inputs_pos_[index][result_arrow->from_output_index_];
 
@@ -410,10 +472,12 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
       }
     }
     if (!is_send) {
-      MS_LOG(EXCEPTION) << "Failed to get backend node of switch actor output, actor:" << GetAID()
-                        << " branch:" << index << " index:" << result_arrow->from_output_index_ << " output pos"
-                        << branch_inputs_pos_[index][result_arrow->from_output_index_] << " output index"
-                        << result_arrow->to_input_index_;
+      std::string error_info = "Failed to get backend node of switch actor output, actor:" + GetAID().Name() +
+                               " branch:" + std::to_string(index) +
+                               " index:" + std::to_string(result_arrow->from_output_index_) + " output pos" +
+                               std::to_string(branch_inputs_pos_[index][result_arrow->from_output_index_]) +
+                               " output index" + std::to_string(result_arrow->to_input_index_);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   }
 
@@ -426,7 +490,6 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     MS_EXCEPTION_IF_NULL(data);
     data->data_ = input_device_tensors_[data_arrow->from_output_index_];
-
     Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
   }
 

@@ -47,7 +47,7 @@ constexpr size_t kReturnInputPos = 1;
 // collected at the entrance of the kernel graph.
 class GatherActor : public OpActor<DeviceTensor> {
  public:
-  GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const bool need_branch_id_input,
+  GatherActor(const std::string &name, const std::vector<KernelWithIndex> &parameters, const bool need_branch_id_input,
               const AID switch_aid, const AID gather_aid, const int branch_id)
       : OpActor(name),
         data_nodes_(parameters),
@@ -60,7 +60,7 @@ class GatherActor : public OpActor<DeviceTensor> {
   ~GatherActor() override = default;
 
   // Get the index of the parameter, the data_node needs to be the front node.
-  size_t FetchDataNodePosition(const AnfNodePtr &data_node) const;
+  size_t FetchDataNodePosition(const KernelWithIndex &data_node) const;
 
   // The gather actor run when receive the input data.
   void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
@@ -107,7 +107,7 @@ class GatherActor : public OpActor<DeviceTensor> {
   std::vector<AID> output_branch_arrows_;
 
   // Parameters of sub funcgraph, which is the front node.
-  std::vector<AnfNodePtr> data_nodes_;
+  std::vector<KernelWithIndex> data_nodes_;
   std::vector<DeviceContext *> device_contexts_;
   // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
   std::vector<std::pair<size_t, AnfNode *>> device_tensor_store_keys_;
