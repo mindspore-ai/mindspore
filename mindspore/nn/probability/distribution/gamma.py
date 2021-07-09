@@ -30,9 +30,9 @@ class Gamma(Distribution):
 
     Args:
         concentration (list, numpy.ndarray, Tensor): The concentration,
-          also know as alpha of the Gamma distribution.
+          also know as alpha of the Gamma distribution. Default: None.
         rate (list, numpy.ndarray, Tensor): The rate, also know as
-          beta of the Gamma distribution.
+          beta of the Gamma distribution. Default: None.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Gamma'.

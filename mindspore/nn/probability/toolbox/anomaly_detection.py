@@ -33,8 +33,8 @@ class VAEAnomalyDetection:
     Args:
         encoder(Cell): The Deep Neural Network (DNN) model defined as encoder.
         decoder(Cell): The DNN model defined as decoder.
-        hidden_size(int): The size of encoder's output tensor.
-        latent_size(int): The size of the latent space.
+        hidden_size(int): The size of encoder's output tensor. Default: 400.
+        latent_size(int): The size of the latent space. Default: 20.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

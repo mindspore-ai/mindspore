@@ -362,7 +362,7 @@ class Distribution(Cell):
 
         Args:
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             `dist_spec_args` must be passed in through list or dictionary. The order of `dist_spec_args`
@@ -394,7 +394,7 @@ class Distribution(Cell):
         Args:
             value (Tensor): value to be evaluated.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its dist_spec_args through
@@ -418,7 +418,7 @@ class Distribution(Cell):
         Args:
             value (Tensor): value to be evaluated.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its dist_spec_args through
@@ -442,7 +442,7 @@ class Distribution(Cell):
         Args:
             value (Tensor): value to be evaluated.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its dist_spec_args through
@@ -484,7 +484,7 @@ class Distribution(Cell):
         Args:
             value (Tensor): value to be evaluated.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict: the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its dist_spec_args through
@@ -508,7 +508,7 @@ class Distribution(Cell):
         Args:
             value (Tensor): value to be evaluated.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its dist_spec_args through
@@ -541,7 +541,7 @@ class Distribution(Cell):
         Args:
             value (Tensor): value to be evaluated.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its dist_spec_args through
@@ -568,7 +568,7 @@ class Distribution(Cell):
         Args:
             dist (str): type of the distribution.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             dist_spec_args of distribution b must be passed to the function through `args` or `kwargs`.
@@ -585,7 +585,7 @@ class Distribution(Cell):
 
         Args:
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
@@ -602,7 +602,7 @@ class Distribution(Cell):
 
         Args:
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
@@ -616,7 +616,7 @@ class Distribution(Cell):
 
         Args:
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict: the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
@@ -630,7 +630,7 @@ class Distribution(Cell):
 
         Args:
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
@@ -665,7 +665,7 @@ class Distribution(Cell):
 
         Args:
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
@@ -680,7 +680,7 @@ class Distribution(Cell):
         Args:
             dist (str): type of the distribution.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             dist_spec_args of distribution b must be passed to the function through `args` or `kwargs`.
@@ -707,7 +707,7 @@ class Distribution(Cell):
         Args:
             shape (tuple): shape of the sample.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
@@ -728,7 +728,7 @@ class Distribution(Cell):
         Args:
             name (str): The name of the function.
             *args (list): A list of positional arguments that the function needs.
-            **kwargs (dictionary): A dictionary of keyword arguments that the function needs.
+            **kwargs (dict): A dictionary of keyword arguments that the function needs.
         """
 
         if name == 'log_prob':

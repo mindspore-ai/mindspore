@@ -191,19 +191,19 @@ class ConvReparam(_ConvVariational):
             Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector.
             Default: False.
-        weight_prior_fn: The prior distribution for weight.
+        weight_prior_fn (Cell): The prior distribution for weight.
             It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
-        weight_posterior_fn: The posterior distribution for sampling weight.
+        weight_posterior_fn (function): The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
             distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
-        bias_prior_fn: The prior distribution for bias vector. It must return
+        bias_prior_fn (Cell): The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
             instance of standard normal distribution). The current version
             only supports normal distribution.
-        bias_posterior_fn: The posterior distribution for sampling bias vector.
+        bias_posterior_fn (function): The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
             distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
@@ -218,7 +218,11 @@ class ConvReparam(_ConvVariational):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = ConvReparam(120, 240, 4, has_bias=False)
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn.probability import bnn_layers
+        >>> net = bnn_layers.ConvReparam(120, 240, 4, has_bias=False)
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> output = net(input).shape
         >>> print(output)
