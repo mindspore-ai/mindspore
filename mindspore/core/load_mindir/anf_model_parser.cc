@@ -260,7 +260,7 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(parameter_proto);
   MS_EXCEPTION_IF_NULL(tensor_info);
   MS_LOG(DEBUG) << "Load parameter name: " << debug_info_name;
-  if (load_tensor_map.find(debug_info_name) == load_tensor_map.end()) {
+  if (!IsIncLoad() || load_tensor_map.find(debug_info_name) == load_tensor_map.end()) {
     load_tensor_map[debug_info_name] = tensor_info;
   } else {
     MS_LOG(DEBUG) << "Parameter: " << debug_info_name << " has been already loaded, use it again.";
