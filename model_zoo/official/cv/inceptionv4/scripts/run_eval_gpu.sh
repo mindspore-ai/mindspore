@@ -26,11 +26,10 @@ export RANK_SIZE=1
 
 DATA_DIR=$1
 CKPT_DIR=$2
-DS_TYPE=$3
 BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
 CONFIG_FILE="${BASE_PATH}/../default_config_gpu.yaml"
 
 echo "start evaluation"
 
-python eval.py --config_path=$CONFIG_FILE --dataset_path=$DATA_DIR --checkpoint_path=$CKPT_DIR --platform='GPU' \
---ds_type=$DS_TYPE > eval.log 2>&1 &
+python eval.py --config_path=$CONFIG_FILE --dataset_path=$DATA_DIR --checkpoint_path=$CKPT_DIR \
+--platform='GPU' > eval.log 2>&1 &
