@@ -347,12 +347,11 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
       auto res = received_data_[std::make_pair(rank_id, rank_request_id)];
       if (*output != nullptr) {
         MS_LOG(WARNING) << "The output is not empty.";
-      } else {
-        *output = res;
-        received_data_.erase(std::make_pair(rank_id, rank_request_id));
-        receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
-        MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
       }
+      *output = res;
+      received_data_.erase(std::make_pair(rank_id, rank_request_id));
+      receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
+      MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
     };
   }
   receive_callbacks_mutex_.unlock();
@@ -363,6 +362,7 @@ bool AbstractNode::CollectiveWait(std::pair<uint32_t, uint64_t> request_id, cons
   std::unique_lock<std::mutex> lock(receive_callbacks_mutex_);
   bool res =
     receive_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] { return receive_messages_done_[request_id]; });
+  receive_messages_done_[request_id] = true;
   return res;
 }
 
