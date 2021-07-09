@@ -14,6 +14,7 @@ enable_profiling: False
 # ==============================================================================
 # Training options
 model_name: "unet_nested"
+include_background: True
 run_eval: False
 run_distribute: False
 dataset: "Cell_nuclei"
