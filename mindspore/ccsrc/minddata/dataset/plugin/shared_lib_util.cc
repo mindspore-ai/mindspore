@@ -24,13 +24,15 @@ namespace dataset {
 void *SharedLibUtil::Load(const std::string &name) { return dlopen(name.c_str(), RTLD_LAZY); }
 void *SharedLibUtil::FindSym(void *handle, const std::string &name) { return dlsym(handle, name.c_str()); }
 int32_t SharedLibUtil::Close(void *handle) { return dlclose(handle); }
-std::string SharedLibUtil::ErrMsg() { return std::string(dlerror()); }
+std::string SharedLibUtil::ErrMsg() {
+  char *err_msg = dlerror();
+  return err_msg != nullptr ? std::string(err_msg) : "dlerror() returned a nullptr";
+}
 #else  // MindData currently doesn't support loading shared library on platform that doesn't support dlopen
 void *SharedLibUtil::Load(const std::string &name) { return nullptr; }
 void *SharedLibUtil::FindSym(void *handle, const std::string &name) { return nullptr; }
 int32_t SharedLibUtil::Close(void *handle) { return -1; }
 std::string SharedLibUtil::ErrMsg() { return std::string("Plugin on non-Linux platform is not yet supported."); }
 #endif
-
 }  // namespace dataset
 }  // namespace mindspore
