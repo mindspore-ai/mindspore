@@ -84,6 +84,13 @@ class GraphKernelFlags {
   bool enable_parallel_fusion{false};
 
   /**
+   * Parallel AKG's operators by level.
+   * 0: Parallel operators by local data relation analyzation with less memory influence.
+   * 1: Parallel operators with global analyzation with more memory influence.
+   */
+  unsigned int parallel_ops_level{OpLevel_0};
+
+  /**
    * Enable low precision in data transferring between graph kernel and computing in graph kernel
    * in graph kernel.
    * Experimental feature, enabled by the enable_low_precision flag

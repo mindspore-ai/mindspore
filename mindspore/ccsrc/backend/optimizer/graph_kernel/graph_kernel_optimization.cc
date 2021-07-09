@@ -56,6 +56,7 @@ using opt::GetitemTuple;
 using opt::GraphOptimizer;
 
 namespace {
+auto constexpr PARALLEL_OPS_LIMIT = 7;
 inline unsigned int GetPassLevelByFlag(bool flag) { return flag ? OptLevel_1 : OptLevel_MAX; }
 }  // namespace
 
@@ -175,8 +176,14 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
 PassManagerPtr GraphKernelOptimizer::Combine() const {
   auto pm = std::make_shared<GraphKernelPassManager>(5, "combine");
   // Enable parallel fusion for gpu device
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_parallel_fusion);
-  pm->AddPass(std::make_shared<ParallelOpFusion>(kGPUDevice, ParallelConfig(7)), level, is_gpu);
+  // Atomic-add GraphKernel node may be linked directly to UpdateState, it should be spread before parallel fusion!
+  pm->AddPass(std::make_shared<SpreadUpdateState>(), level);
+  pm->AddPass(std::make_shared<ParallelOpFusion>(target, ParallelConfig(PARALLEL_OPS_LIMIT)), level,
+              is_gpu || is_ascend);
 
   return pm;
 }

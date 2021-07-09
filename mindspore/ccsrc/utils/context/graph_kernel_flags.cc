@@ -213,6 +213,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   // Integer flags
   reg.AddFlag("online_tuning", &online_tuning);
   reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_ascend ? OpLevel_0 : OpLevel_MAX);
+  reg.AddFlag("parallel_ops_level", &parallel_ops_level);
 
   // String flags
   reg.AddFlag("repository_path", &repository_path);
@@ -242,6 +243,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
 
   json["opt_level"] = opt_level;
   json["fusion_ops_level"] = fusion_ops_level;
+  json["parallel_ops_level"] = parallel_ops_level;
   json["online_tuning"] = online_tuning;
 
   json["repository_path"] = repository_path;
