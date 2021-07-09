@@ -121,29 +121,29 @@ class BuiltinSampler:
         self.child_sampler = sampler
 
     def get_child(self):
-        """ add a child sampler. """
+        """ Get the child sampler. """
         return self.child_sampler
 
     def parse_child(self):
-        """Parse the child sampler."""
+        """ Parse the child sampler. """
         c_child_sampler = None
         if self.child_sampler is not None:
             c_child_sampler = self.child_sampler.parse()
         return c_child_sampler
 
     def parse_child_for_minddataset(self):
-        """Parse the child sampler for MindRecord."""
+        """ Parse the child sampler for MindRecord. """
         c_child_sampler = None
         if self.child_sampler is not None:
             c_child_sampler = self.child_sampler.parse_for_minddataset()
         return c_child_sampler
 
     def is_shuffled(self):
-        """ not implemented """
+        """ Not implemented. """
         raise NotImplementedError("Sampler must implement is_shuffled.")
 
     def is_sharded(self):
-        """ not implemented """
+        """ Not implemented. """
         raise NotImplementedError("Sampler must implement is_sharded.")
 
     def get_num_samples(self):
@@ -313,8 +313,10 @@ class DistributedSampler(BuiltinSampler):
         shard_id (int): Shard ID of the current shard, which should within the range of [0, num_shards-1].
         shuffle (bool, optional): If True, the indices are shuffled, otherwise it will not be shuffled(default=True).
         num_samples (int, optional): The number of samples to draw (default=None, which means sample all elements).
-        offset(int, optional): The starting shard ID where the elements in the dataset are sent to (default=-1), which
-            should be no more than num_shards.
+        offset(int, optional): The starting shard ID where the elements in the dataset are sent to, which
+            should be no more than num_shards. This parameter is only valid when a ConcatDataset takes
+            a DistributedSampler as its sampler. It will affect the number of samples of per shard
+            (default=-1, which means each shard has same number of samples).
 
     Examples:
         >>> # creates a distributed sampler with 10 shards in total. This shard is shard 5.
@@ -329,9 +331,9 @@ class DistributedSampler(BuiltinSampler):
         TypeError: If shuffle is not a boolean value.
         TypeError: If num_samples is not an integer value.
         TypeError: If offset is not an integer value.
+        ValueError: If num_samples is a negative value.
         RuntimeError: If num_shards is not a positive value.
         RuntimeError: If shard_id is smaller than 0 or equal to num_shards or larger than num_shards.
-        RuntimeError: If num_samples is a negative value.
         RuntimeError: If offset is greater than num_shards.
     """
 
@@ -411,7 +413,7 @@ class PKSampler(BuiltinSampler):
         num_class (int, optional): Number of classes to sample (default=None, sample all classes).
             The parameter does not supported to specify currently.
         shuffle (bool, optional): If True, the class IDs are shuffled, otherwise it will not be
-            shuffled(default=False).
+            shuffled (default=False).
         class_column (str, optional): Name of column with class labels for MindDataset (default='label').
         num_samples (int, optional): The number of samples to draw (default=None, which means sample all elements).
 
@@ -423,13 +425,12 @@ class PKSampler(BuiltinSampler):
         ...                                 sampler=sampler)
 
     Raises:
-        TypeError: If num_val is not a positive value.
         TypeError: If shuffle is not a boolean value.
         TypeError: If class_column is not a str value.
         TypeError: If num_samples is not an integer value.
         NotImplementedError: If num_class is not None.
         RuntimeError: If num_val is not a positive value.
-        RuntimeError: If num_samples is a negative value.
+        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, num_val, num_class=None, shuffle=False, class_column='label', num_samples=None):
@@ -508,7 +509,7 @@ class RandomSampler(BuiltinSampler):
     Raises:
         TypeError: If replacement is not a boolean value.
         TypeError: If num_samples is not an integer value.
-        RuntimeError: If num_samples is a negative value.
+        ValueError: If num_samples is a negative value.
      """
 
     def __init__(self, replacement=False, num_samples=None):
@@ -573,7 +574,7 @@ class SequentialSampler(BuiltinSampler):
         TypeError: If start_index is not an integer value.
         TypeError: If num_samples is not an integer value.
         RuntimeError: If start_index is a negative value.
-        RuntimeError: If num_samples is a negative value.
+        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, start_index=None, num_samples=None):
@@ -641,7 +642,7 @@ class SubsetSampler(BuiltinSampler):
     Raises:
         TypeError: If type of indices element is not a number.
         TypeError: If num_samples is not an integer value.
-        RuntimeError: If num_samples is a negative value.
+        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, indices, num_samples=None):
@@ -713,7 +714,7 @@ class SubsetRandomSampler(SubsetSampler):
     Samples the elements randomly from a sequence of indices.
 
     Args:
-        indices (Any iterable python object but string): A sequence of indices.
+        indices (Any iterable Python object but string): A sequence of indices.
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Examples:
@@ -726,7 +727,7 @@ class SubsetRandomSampler(SubsetSampler):
     Raises:
         TypeError: If type of indices element is not a number.
         TypeError: If num_samples is not an integer value.
-        RuntimeError: If num_samples is a negative value.
+        ValueError: If num_samples is a negative value.
     """
 
     def parse(self):
@@ -806,7 +807,7 @@ class WeightedRandomSampler(BuiltinSampler):
         TypeError: If num_samples is not an integer value.
         TypeError: If replacement is not a boolean value.
         RuntimeError: If weights is empty or all zero.
-        RuntimeError: If num_samples is a negative value.
+        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, weights, num_samples=None, replacement=True):

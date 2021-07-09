@@ -27,15 +27,15 @@ from ..vision.utils import Inter, Border, ImageBatchFormat
 
 def serialize(dataset, json_filepath=""):
     """
-    Serialize dataset pipeline into a json file.
+    Serialize dataset pipeline into a JSON file.
 
     Note:
-        Currently some python objects are not supported to be serialized.
-        For python function serialization of map operator, de.serialize will only return its function name.
+        Currently some Python objects are not supported to be serialized.
+        For Python function serialization of map operator, de.serialize will only return its function name.
 
     Args:
         dataset (Dataset): The starting node.
-        json_filepath (str): The filepath where a serialized json file will be generated.
+        json_filepath (str): The filepath where a serialized JSON file will be generated.
 
     Returns:
        Dict, The dictionary contains the serialized dataset graph.
@@ -48,7 +48,7 @@ def serialize(dataset, json_filepath=""):
         >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
         >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
         >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
-        >>> # serialize it to json file
+        >>> # serialize it to JSON file
         >>> ds.engine.serialize(dataset, json_filepath="/path/to/mnist_dataset_pipeline.json")
         >>> serialized_data = ds.engine.serialize(dataset)  # serialize it to Python dict
     """
@@ -57,27 +57,27 @@ def serialize(dataset, json_filepath=""):
 
 def deserialize(input_dict=None, json_filepath=None):
     """
-    Construct a de pipeline from a json file produced by de.serialize().
+    Construct a de pipeline from a JSON file produced by de.serialize().
 
     Note:
-        Currently python function deserialization of map operator are not supported.
+        Currently Python function deserialization of map operator are not supported.
 
     Args:
         input_dict (dict): A Python dictionary containing a serialized dataset graph.
-        json_filepath (str): A path to the json file.
+        json_filepath (str): A path to the JSON file.
 
     Returns:
         de.Dataset or None if error occurs.
 
     Raises:
-        OSError: Can not open the json file.
+        OSError: Can not open the JSON file.
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
         >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
         >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
         >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
-        >>> # Use case 1: to/from json file
+        >>> # Use case 1: to/from JSON file
         >>> ds.engine.serialize(dataset, json_filepath="/path/to/mnist_dataset_pipeline.json")
         >>> dataset = ds.engine.deserialize(json_filepath="/path/to/mnist_dataset_pipeline.json")
         >>> # Use case 2: to/from Python dictionary
@@ -113,8 +113,15 @@ def show(dataset, indentation=2):
 
     Args:
         dataset (Dataset): The starting node.
-        indentation (int, optional): The indentation used by the json print.
+        indentation (int, optional): The indentation used by the JSON print.
             Do not indent if indentation is None.
+
+    Examples:
+        >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
+        >>> one_hot_encode = c_transforms.OneHot(10)
+        >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
+        >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
+        >>> ds.show(dataset)
     """
 
     pipeline = dataset.to_json()
@@ -128,13 +135,21 @@ def compare(pipeline1, pipeline2):
     Args:
         pipeline1 (Dataset): a dataset pipeline.
         pipeline2 (Dataset): a dataset pipeline.
+
+    Returns:
+        Whether pipeline1 is equal to pipeline2.
+
+    Examples:
+        >>> pipeline1 = ds.MnistDataset(mnist_dataset_dir, 100)
+        >>> pipeline2 = ds.Cifar10Dataset(cifar_dataset_dir, 100)
+        >>> ds.compare(pipeline1, pipeline2)
     """
 
     return pipeline1.to_json() == pipeline2.to_json()
 
 
 def construct_pipeline(node):
-    """Construct the Python Dataset objects by following the dictionary deserialized from json file."""
+    """Construct the Python Dataset objects by following the dictionary deserialized from JSON file."""
     op_type = node.get('op_type')
     if not op_type:
         raise ValueError("op_type field in the json file can't be None.")

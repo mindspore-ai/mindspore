@@ -79,7 +79,6 @@ def set_seed(seed):
     If the seed is set, the generated random number will be fixed, this helps to
     produce deterministic results.
 
-
     Note:
         This set_seed function sets the seed in the Python random library and numpy.random library
         for deterministic Python augmentations using randomness. This set_seed function should
@@ -113,6 +112,11 @@ def get_seed():
 
     Returns:
         int, random number seed.
+
+    Examples:
+        >>> # Get the global configuration of seed.
+        >>> # If set_seed() is never called before, the default value(std::mt19937::default_seed) will be returned.
+        >>> seed = ds.config.get_seed()
     """
     return _config.get_seed()
 
@@ -147,6 +151,11 @@ def get_prefetch_size():
 
     Returns:
         int, total number of rows to be prefetched.
+
+    Examples:
+        >>> # Get the global configuration of prefetch size.
+        >>> # If set_prefetch_size() is never called before, the default value(20) will be returned.
+        >>> prefetch_size = ds.config.get_prefetch_size()
     """
     return _config.get_op_connector_size()
 
@@ -174,12 +183,17 @@ def set_num_parallel_workers(num):
 
 def get_num_parallel_workers():
     """
-    Get the default number of parallel workers.
+    Get the global configuration of number of parallel workers.
     This is the DEFAULT num_parallel_workers value used for each operation, it is not related
     to AutoNumWorker feature.
 
     Returns:
         int, number of parallel workers to be used as a default for each operation.
+
+    Examples:
+        >>> # Get the global configuration of parallel workers.
+        >>> # If set_num_parallel_workers() is never called before, the default value(8) will be returned.
+        >>> num_parallel_workers = ds.config.get_num_parallel_workers()
     """
     return _config.get_num_parallel_workers()
 
@@ -206,11 +220,15 @@ def set_numa_enable(numa_enable):
 
 def get_numa_enable():
     """
-    Get the default state of numa enabled.
+    Get the state of numa to indicate enabled/disabled.
     This is the DEFAULT numa enabled value used for the all process.
 
     Returns:
         bool, the default state of numa enabled.
+
+    Examples:
+        >>> # Get the global configuration of numa.
+        >>> numa_state = ds.config.get_numa_enable()
     """
     return _config.get_numa_enable()
 
@@ -236,10 +254,15 @@ def set_monitor_sampling_interval(interval):
 
 def get_monitor_sampling_interval():
     """
-    Get the default interval of performance monitor sampling.
+    Get the global configuration of sampling interval of performance monitor.
 
     Returns:
         int, interval (in milliseconds) for performance monitor sampling.
+
+    Examples:
+        >>> # Get the global configuration of monitor sampling interval.
+        >>> # If set_monitor_sampling_interval() is never called before, the default value(1000) will be returned.
+        >>> ds.config.get_monitor_sampling_interval()
     """
     return _config.get_monitor_sampling_interval()
 
@@ -299,9 +322,10 @@ def get_auto_num_workers():
     Get the setting (turned on or off) automatic number of workers.
 
     Returns:
-        bool, whether auto num worker feature is turned on.
+        bool, whether auto number worker feature is turned on.
 
     Examples:
+        >>> # Get the global configuration of auto number worker feature.
         >>> num_workers = ds.config.get_auto_num_workers()
     """
     return _config.get_auto_num_workers()
@@ -334,6 +358,11 @@ def get_callback_timeout():
 
     Returns:
         int, Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
+
+    Examples:
+        >>> # Get the global configuration of callback timeout.
+        >>> # If set_callback_timeout() is never called before, the default value(60) will be returned.
+        >>> ds.config.get_callback_timeout()
     """
     return _config.get_callback_timeout()
 
@@ -394,6 +423,10 @@ def get_enable_shared_mem():
 
     Returns:
         bool, the state of shared mem enabled variable (default=True).
+
+    Examples:
+        >>> # Get the flag of shared memory feature.
+        >>> shared_mem_flag = ds.config.get_enable_shared_mem()
     """
     return _config.get_enable_shared_mem()
 
@@ -410,11 +443,13 @@ def set_enable_shared_mem(enable):
         TypeError: If enable is not a boolean data type.
 
     Examples:
+        >>> # Enable shared memory feature to improve the performance of Python multiprocessing.
         >>> ds.config.set_enable_shared_mem(True)
     """
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
     _config.set_enable_shared_mem(enable)
+
 
 def set_sending_batches(batch_num):
     """
