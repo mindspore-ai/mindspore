@@ -63,7 +63,7 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
   // Enter new func graph.
   auto &current_node = current_stack_frame->CurrentNode();
   auto current_context = current_stack_frame->current_context();
-  AnfNodeConfigPtr call_conf = engine->MakeConfig(current_node, current_context);
+  AnfNodeConfigPtr call_conf = engine->MakeConfig(current_node, current_context, current_context->func_graph());
   auto evaluator = new_stack_frame->evaluator();
   MS_EXCEPTION_IF_NULL(evaluator);
   auto new_context = new_stack_frame->current_context();
@@ -158,7 +158,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
   });
   AbstractBasePtr res_base = nullptr;
   for (const auto &node : all_nodes) {
-    AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context);
+    AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context, fg);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
                   << ", node_conf: " << node_conf->ToString();
     auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
@@ -221,7 +221,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   for (size_t i = 0; i < nargs; i++) {
     const auto &arg = args_abs_list[i];
     const auto &node = parameters[i];
-    AnfNodeConfigPtr conf = engine->MakeConfig(node, context);
+    AnfNodeConfigPtr conf = engine->MakeConfig(node, context, fg);
     engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg, nullptr));
     MS_LOG(DEBUG) << GetInferThread() << "Set Param: " << conf->ToString() << "   =   " << arg->ToString();
   }
