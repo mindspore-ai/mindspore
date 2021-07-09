@@ -130,7 +130,7 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
     } else {
       RETURN_IF_NOT_OK(ValidateInColumns(in_columns_));
 
-      bool result;
+      bool result = false;
       RETURN_IF_NOT_OK(WorkerCompute(new_row, &result));
 
       if (result)

@@ -212,7 +212,7 @@ class MindRecordOp : public MappableLeafOp {
   std::string Name() const override { return "MindRecordOp"; }
 
  private:
-  Status GetRowFromReader(TensorRow *fetched_row, int64_t row_id, int32_t worker_id);
+  Status GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, int32_t worker_id);
 
   /// Parses a single cell and puts the data into a tensor
   /// @param tensor_row - the tensor row to put the parsed data in
@@ -233,7 +233,6 @@ class MindRecordOp : public MappableLeafOp {
   std::vector<std::string> columns_to_load_;               // Columns to load from dataset
   std::vector<std::shared_ptr<ShardOperator>> operators_;  // ShardOperators to use
   int32_t num_mind_record_workers_;                        // number of workers to be spawned by ShardReader
-  int32_t buffers_needed_;                                 // Counter for the buffers that were fetched
   std::atomic<int32_t> ended_worker_;
 
   int64_t num_padded_;
