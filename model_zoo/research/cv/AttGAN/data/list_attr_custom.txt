@@ -1,0 +1,8 @@
+6
+Bald Bangs Black_Hair Blond_Hair Brown_Hair Bushy_Eyebrows Eyeglasses Male Mouth_Slightly_Open Mustache No_Beard Pale_Skin Young
+donald_trump.jpg -1 -1 -1  1 -1  1 -1  1  1 -1  1 -1 -1
+emma_watson.jpg  -1  1 -1 -1  1 -1 -1 -1 -1 -1  1 -1  1
+jay_chou.jpeg    -1  1  1 -1 -1  1 -1  1  1 -1  1 -1  1 
+ji-eun_lee.jpg   -1  1 -1 -1  1 -1 -1 -1  1 -1  1 -1  1
+tom_cruise.jpg   -1 -1 -1 -1  1  1 -1  1  1 -1  1 -1 -1
+yui_aragaki.jpg  -1  1 -1 -1  1 -1 -1 -1 -1 -1  1 -1  1
