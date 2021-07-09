@@ -16,11 +16,14 @@
 package com.mindspore.flclient;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -125,11 +128,29 @@ public class Common {
         return (new String(message)).contains(safeModTag);
     }
 
+    public static String getRealPath (String path) {
+        LOGGER.info(addTag("[original path] " + path));
+        String[] paths = path.split(",");
+        for (int i = 0; i < paths.length; i++) {
+            LOGGER.info(addTag("[original path " + i + "] " + paths[i]));
+            File file = new File(paths[i]);
+            try {
+                paths[i] = file.getCanonicalPath();
+            } catch (IOException e) {
+                LOGGER.severe(addTag("[checkPath] catch IOException in file.getCanonicalPath(): " + e.getMessage()));
+                throw new RuntimeException();
+            }
+        }
+        path = String.join(",", Arrays.asList(paths));
+        LOGGER.info(addTag("[real path] " + path));
+        return path;
+    }
+
     public static boolean checkPath(String path) {
         boolean tag = true;
         String[] paths = path.split(",");
         for (int i = 0; i < paths.length; i++) {
-            LOGGER.info(addTag("[check path]:" + paths[i]));
+            LOGGER.info(addTag("[check path " + i + "] " + paths[i]));
             File file = new File(paths[i]);
             if (!file.exists()) {
                 tag = false;

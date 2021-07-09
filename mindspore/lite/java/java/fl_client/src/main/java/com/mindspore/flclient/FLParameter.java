@@ -83,7 +83,13 @@ public class FLParameter {
     }
 
     public void setCertPath(String certPath) {
-        this.certPath = certPath;
+        certPath = Common.getRealPath(certPath);
+        if (Common.checkPath(certPath)) {
+            this.certPath = certPath;
+        } else {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <certPath> is not exist, please check it before set"));
+            throw new RuntimeException();
+        }
     }
 
     public boolean isUseHttps() {
@@ -103,6 +109,7 @@ public class FLParameter {
     }
 
     public void setTrainDataset(String trainDataset) {
+        trainDataset = Common.getRealPath(trainDataset);
         if (Common.checkPath(trainDataset)) {
             this.trainDataset = trainDataset;
         } else {
@@ -120,6 +127,7 @@ public class FLParameter {
     }
 
     public void setVocabFile(String vocabFile) {
+        vocabFile = Common.getRealPath(vocabFile);
         if (Common.checkPath(vocabFile)) {
             this.vocabFile = vocabFile;
         } else {
@@ -137,6 +145,7 @@ public class FLParameter {
     }
 
     public void setIdsFile(String idsFile) {
+        idsFile = Common.getRealPath(idsFile);
         if (Common.checkPath(idsFile)) {
             this.idsFile = idsFile;
         } else {
@@ -150,6 +159,7 @@ public class FLParameter {
     }
 
     public void setTestDataset(String testDataset) {
+        testDataset = Common.getRealPath(testDataset);
         if (Common.checkPath(testDataset)) {
             this.testDataset = testDataset;
         } else {
@@ -184,6 +194,7 @@ public class FLParameter {
     }
 
     public void setTrainModelPath(String trainModelPath) {
+        trainModelPath = Common.getRealPath(trainModelPath);
         if (Common.checkPath(trainModelPath)) {
             this.trainModelPath = trainModelPath;
         } else {
@@ -201,6 +212,7 @@ public class FLParameter {
     }
 
     public void setInferModelPath(String inferModelPath) {
+        inferModelPath = Common.getRealPath(inferModelPath);
         if (Common.checkPath(inferModelPath)) {
             this.inferModelPath = inferModelPath;
         } else {

@@ -41,17 +41,20 @@ public class SyncFLJob {
     public SyncFLJob() {
     }
 
-    public void flJobRun() {
+    public FLClientStatus flJobRun() {
         localFLParameter.setFlID(flParameter.getClientID());
         FLLiteClient client = new FLLiteClient();
-        client.initSession();
-
         FLClientStatus curStatus;
+        curStatus = client.initSession();
+        if (curStatus == FLClientStatus.FAILED) {
+            LOGGER.severe(Common.addTag("init session failed"));
+            flJobResultCallback.onFlJobFinished(flParameter.getFlName(), client.getIterations(), client.getRetCode());
+            return curStatus;
+        }
+
         do {
             LOGGER.info(Common.addTag("flName: " + flParameter.getFlName()));
             int trainDataSize = client.setInput(flParameter.getTrainDataset());
-            LOGGER.info(Common.addTag("train path: " + flParameter.getTrainDataset()));
-            LOGGER.info(Common.addTag("train data size: " + trainDataSize));
             if (trainDataSize <= 0) {
                 LOGGER.severe(Common.addTag("unsolved error code in <client.setInput>: the return trainDataSize<=0"));
                 curStatus = FLClientStatus.FAILED;
@@ -109,7 +112,6 @@ public class SyncFLJob {
                 failed("[updateModel] updateModel", client.getIteration(), client.getRetCode(), curStatus);
                 break;
             }
-            LOGGER.info(Common.addTag("[updateModel] updateModel succeed"));
 
             // unmasking
             curStatus = client.unMasking();
@@ -134,7 +136,6 @@ public class SyncFLJob {
                 failed("[getModel] getModel", client.getIteration(), client.getRetCode(), curStatus);
                 break;
             }
-            LOGGER.info(Common.addTag("[getModel] getModel succeed"));
 
             // get the feature map after averaging and update dp_norm_clip
             updateDpNormClip(client);
@@ -156,6 +157,7 @@ public class SyncFLJob {
         client.finalize();
         LOGGER.info(Common.addTag("flJobRun finish"));
         flJobResultCallback.onFlJobFinished(flParameter.getFlName(), client.getIterations(), client.getRetCode());
+        return curStatus;
     }
 
     private void updateDpNormClip(FLLiteClient client) {
@@ -213,19 +215,19 @@ public class SyncFLJob {
         return featureMap;
     }
 
-    public int[] modelInference(String flName, String dataPath, String vocabFile, String idsFile, String modelPath) {
+    public int[] modelInference() {
         int[] labels = new int[0];
-        if (flName.equals(ALBERT)) {
+        if (flParameter.getFlName().equals(ALBERT)) {
             AlInferBert alInferBert = AlInferBert.getInstance();
             LOGGER.info(Common.addTag("===========model inference============="));
-            labels = alInferBert.inferModel(modelPath, dataPath, vocabFile, idsFile);
+            labels = alInferBert.inferModel(flParameter.getInferModelPath(), flParameter.getTestDataset(), flParameter.getVocabFile(), flParameter.getIdsFile());
             LOGGER.info(Common.addTag("[model inference] the predicted labels: " + Arrays.toString(labels)));
             SessionUtil.free(alInferBert.getTrainSession());
             LOGGER.info(Common.addTag("[model inference] inference finish"));
-        } else if (flName.equals(LENET)) {
+        } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             LOGGER.info(Common.addTag("===========model inference============="));
-            labels = trainLenet.inferModel(modelPath, dataPath.split(",")[0]);
+            labels = trainLenet.inferModel(flParameter.getInferModelPath(), flParameter.getTestDataset().split(",")[0]);
             LOGGER.info(Common.addTag("[model inference] the predicted labels: " + Arrays.toString(labels)));
             SessionUtil.free(trainLenet.getTrainSession());
             LOGGER.info(Common.addTag("[model inference] inference finish"));
@@ -363,7 +365,9 @@ public class SyncFLJob {
         SyncFLJob syncFLJob = new SyncFLJob();
         if (task.equals("train")) {
             flParameter.setUseHttps(useHttps);
-            flParameter.setCertPath(certPath);
+            if (useHttps) {
+                flParameter.setCertPath(certPath);
+            }
             flParameter.setHostName(ip);
             flParameter.setTrainDataset(trainDataset);
             flParameter.setFlName(flName);
@@ -382,10 +386,19 @@ public class SyncFLJob {
             }
             syncFLJob.flJobRun();
         } else if (task.equals("inference")) {
-            syncFLJob.modelInference(flName, testDataset, vocabFile, idsFile, inferModelPath);
+            flParameter.setFlName(flName);
+            flParameter.setTestDataset(testDataset);
+            flParameter.setInferModelPath(inferModelPath);
+            if (ALBERT.equals(flName)) {
+                flParameter.setVocabFile(vocabFile);
+                flParameter.setIdsFile(idsFile);
+            }
+            syncFLJob.modelInference();
         } else if (task.equals("getModel")) {
             flParameter.setUseHttps(useHttps);
-            flParameter.setCertPath(certPath);
+            if (useHttps) {
+                flParameter.setCertPath(certPath);
+            }
             flParameter.setHostName(ip);
             flParameter.setFlName(flName);
             flParameter.setTrainModelPath(trainModelPath);
