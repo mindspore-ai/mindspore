@@ -549,7 +549,7 @@ CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taski
     if (task_id == taskid && stream_id == streamid) {
       auto &execute_node = current_graph_->execution_order();
       auto node = std::find_if(execute_node.begin(), execute_node.end(),
-                               [&iter](const auto &node) { return node->fullname_with_scope() == iter.first; });
+                               [&iter](const auto &node) { return node->UniqueName() == iter.first; });
       if (node != execute_node.end()) {
         return *node;
       }

@@ -2163,5 +2163,16 @@ bool AnfRuntimeAlgorithm::IsControlOpExecInBackend(const AnfNodePtr &node) {
   static std::set<std::string> control_ops_exec_in_backend = {kBpropCutOpName};
   return control_ops_exec_in_backend.find(AnfAlgo::GetCNodeName(node)) != control_ops_exec_in_backend.end();
 }
+
+bool AnfRuntimeAlgorithm::IsNodeInputContainMonad(const AnfNodePtr &node) {
+  auto input_size = GetInputTensorNum(node);
+  for (size_t i = 0; i < input_size; ++i) {
+    auto input_with_index = GetPrevNodeOutput(node, i);
+    if (HasAbstractMonad(input_with_index.first)) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace session
 }  // namespace mindspore

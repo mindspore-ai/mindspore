@@ -122,7 +122,7 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
 
   stream_id_ = stream_id;
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr =
-    std::make_shared<MemcpyAsyncTaskInfo>(kernel_name_, stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr,
+    std::make_shared<MemcpyAsyncTaskInfo>(unique_name_, stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr,
                                           inputs[0]->size, RT_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
