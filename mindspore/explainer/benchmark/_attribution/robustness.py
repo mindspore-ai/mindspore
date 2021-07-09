@@ -79,7 +79,9 @@ class Robustness(LabelSensitiveMetric):
             >>> from mindspore import nn
             >>> from mindspore.explainer.explanation import Gradient
             >>> from mindspore.explainer.benchmark import Robustness
+            >>> from mindspore import context
             >>>
+            >>> context.set_context(mode=context.PYNATIVE_MODE)
             >>> # Initialize a Robustness benchmarker passing num_labels of the dataset.
             >>> num_labels = 10
             >>> activation_fn = nn.Softmax()

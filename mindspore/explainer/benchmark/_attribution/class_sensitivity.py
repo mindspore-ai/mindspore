@@ -55,7 +55,9 @@ class ClassSensitivity(LabelAgnosticMetric):
             >>> import mindspore as ms
             >>> from mindspore.explainer.benchmark import ClassSensitivity
             >>> from mindspore.explainer.explanation import Gradient
+            >>> from mindspore import context
             >>>
+            >>> context.set_context(mode=context.PYNATIVE_MODE)
             >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
             >>> net = LeNet5(10, num_channel=3)
             >>> # prepare your explainer to be evaluated, e.g., Gradient.

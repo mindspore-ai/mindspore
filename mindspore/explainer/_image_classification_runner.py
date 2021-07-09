@@ -259,7 +259,9 @@ class ImageClassificationRunner(_Verifier):
         >>> from mindspore.explainer.benchmark import Faithfulness
         >>> from mindspore.nn import Softmax
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
+        >>> from mindspore import context
         >>>
+        >>> context.set_context(mode=context.PYNATIVE_MODE)
         >>> # The detail of AlexNet is shown in model_zoo.official.cv.alexnet.src.alexnet.py
         >>> net = AlexNet(10)
         >>> # Load the checkpoint
